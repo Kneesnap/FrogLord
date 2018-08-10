@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="FrogLord">
+    <output-path>$PROJECT_DIR$/out/</output-path>
+    <root id="archive" name="FrogLord.jar">
+      <element id="module-output" name="FrogLord" />
+    </root>
+  </artifact>
+</component>
