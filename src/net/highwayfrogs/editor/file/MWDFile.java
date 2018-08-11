@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -38,10 +39,14 @@ public class MWDFile extends GameObject {
 
             reader.setIndex(entry.getArchiveOffset());
 
-            //TODO: Decompression.
+            // Read the file. Decompress if needed.
+            byte[] fileBytes = reader.readBytes(entry.getArchiveSize());
+            /*if (entry.isCompressed()) TODO: Enable this after compression is ready. Otherwise, we'll be making MWDs without compressed data.
+                fileBytes = PP20Unpacker.unpackData(fileBytes);*/
 
+            // Turn the byte data into the appropriate game-file.
             DummyFile file = new DummyFile(entry); //TODO: Support actual file-types.
-            file.load(reader);
+            file.load(new DataReader(new ArraySource(fileBytes)));
 
             entryMap.put(file, entry);
             files.add(file);
