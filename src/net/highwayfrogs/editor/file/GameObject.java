@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * This represents a single game-file, which can be turned into a byte array.
  * Created by Kneesnap on 8/10/2018.
  */
-public abstract class GameFile {
+public abstract class GameObject {
 
     /**
      * Loads information from the file into this object.

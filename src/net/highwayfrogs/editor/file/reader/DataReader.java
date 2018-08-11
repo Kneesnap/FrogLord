@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.file.reader;
 
+import net.highwayfrogs.editor.Constants;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -100,7 +102,7 @@ public class DataReader {
     /**
      * Read a string until a given byte is found.
      * @param terminator The byte which terminates the string. Usually 0.
-     * @return readStr
+     * @return strValue
      */
     public String readString(byte terminator) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -117,19 +119,23 @@ public class DataReader {
     }
 
     /**
+     * Read a string which is terminated by a null byte.
+     * @return strValue
+     */
+    public String readNullTerminatedString() {
+        return readString(Constants.NULL_BYTE);
+    }
+
+    /**
      * Read bytes from the source, respecting endian.
      * @param amount The amount of bytes to read.
      * @return readBytes
      */
     public byte[] readBytes(int amount) {
-
-        byte[] array;
         try {
-            array = source.readBytes(amount);
+            return source.readBytes(amount);
         } catch (IOException ex) {
             throw new RuntimeException("Error while reading bytes.", ex);
         }
-
-        return array;
     }
 }

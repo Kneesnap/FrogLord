@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -14,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 8/10/2018.
  */
 @Getter
-public class MWIFile extends GameFile {
+public class MWIFile extends GameObject {
     private List<FileEntry> entries = new ArrayList<>();
 
     private static final int ENTRY_LENGTH = 32;
@@ -30,7 +31,7 @@ public class MWIFile extends GameFile {
 
             FileEntry entry = new FileEntry();
             reader.jumpTemp(nameOffset);
-            entry.setFilePath(reader.readString((byte) 0));
+            entry.setFilePath(reader.readNullTerminatedString());
             reader.jumpReturn();
 
             entry.setFlags(reader.readInt());
@@ -43,13 +44,13 @@ public class MWIFile extends GameFile {
             getEntries().add(entry);
         }
 
-        // 84 WADS. All have Type ID -1, Flag: 20 (Automatic compression and is group)
+        // 84 WADS. All have Type ID -1, Flag: 20 (Automatic compression and is group) Type = STD, Manual handling.
         // 82 MAPS. All have Type ID 0, Flags: 33 (Manual Compression with single access)
         // 44 VLOS. All have Type ID 1, Flag: 17 (Automatic compression and is group)
         // 20 VB/VH All have Type ID 2, Flag: 1 (Single Access)
-        // 90 ENTITY All are Type ID 3, Flag: 2 (Group Access)
-        // 344 ENTITY_WIN95  Type ID 4, Flag: 2 (Group Access)
-        // Type ID 5 doesn't exist. Maybe in the code?
+        // 90 ENTITY All are Type ID 3, Flag: 2 (Group Access) MAP_MOF?
+        // 344 ENTITY_WIN95  Type ID 4, Flag: 2 (Group Access) MAP_ANIM_MOF?
+        // Type ID 5 doesn't exist. According to the code, it was a SPU file, which appears to have been a sound file type.
         // 42  DAT. All have Type ID 6, Flag: 1 (Single Access)
         // 40  PAL. All have Type ID 7, Flag: 1 (Single Access)
     }
@@ -86,7 +87,6 @@ public class MWIFile extends GameFile {
         private int unpackedSize;
         private String filePath;
 
-        public static final int SECTOR_SIZE = 0x800; // The size of one CD sector.
         public static final int FLAG_SINGLE_ACCESS = 1; // I assume this is for files loaded individually, by themselves.
         public static final int FLAG_GROUP_ACCESS = 2; // Cannot be loaded individually / by itself. Presumably this is for files in child-WADs.
         public static final int FLAG_IS_GROUP = 4; // Presumably this marks a child archive, where the next entries belong to this file.
@@ -99,7 +99,7 @@ public class MWIFile extends GameFile {
          * @return archiveOffset
          */
         public int getArchiveOffset() {
-            return sectorOffset * SECTOR_SIZE;
+            return sectorOffset * Constants.CD_SECTOR_SIZE;
         }
 
         /**

@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  *
  * Created by Kneesnap on 8/10/2018.
  */
-public class MWDFile extends GameFile {
+public class MWDFile extends GameObject {
 
     private static final String MARKER = "DAWM";
 

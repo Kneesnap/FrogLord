@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.writer;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.Constants;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,7 +17,7 @@ public class DataWriter {
     @Setter private ByteOrder endian = ByteOrder.LITTLE_ENDIAN;
     private DataReceiver output;
 
-    private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(4);
+    private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
 
     public DataWriter(DataReceiver output) {
         this.output = output;
@@ -60,7 +61,7 @@ public class DataWriter {
      * @param str The string to write.
      */
     public void writeTerminatorString(String str) {
-        writeTerminatorString(str, (byte) 0);
+        writeTerminatorString(str, Constants.NULL_BYTE);
     }
 
     /**
