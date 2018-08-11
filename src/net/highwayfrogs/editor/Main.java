@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor;
 
+import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
@@ -17,6 +18,9 @@ public class Main {
     public static void main(String[] args) throws Exception {
         MWIFile mwi = new MWIFile();
         mwi.load(new DataReader(new FileSource(new File("./debug/VANILLA.MWI"))));
-        mwi.save(new DataWriter(new FileReceiver(new File("./debug/OUTPUT.MWI"))));
+
+        MWDFile mwd = new MWDFile(mwi);
+        mwd.load(new DataReader(new FileSource(new File("./debug/VANILLA.MWD"))));
+        mwd.save(new DataWriter(new FileReceiver(new File("./debug/MODDED.MWD"))));
     }
 }

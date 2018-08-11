@@ -18,6 +18,18 @@ public class DataReader {
     }
 
     /**
+     * Set the reader index.
+     * @param newIndex The index to read data from.
+     */
+    public void setIndex(int newIndex) {
+        try {
+            source.setIndex(newIndex);
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to set reader index.", ex);
+        }
+    }
+
+    /**
      * Gets the current reader index.
      * @return readerIndex
      */
@@ -54,12 +66,8 @@ public class DataReader {
      * @param newIndex The offset to jump to.
      */
     public void jumpTemp(int newIndex) {
-        try {
-            this.oldAddress = getIndex();
-            source.setIndex(newIndex);
-        } catch (IOException ex) {
-            throw new RuntimeException("Failed to temporarily jump to an offset.", ex);
-        }
+        this.oldAddress = getIndex();
+        setIndex(newIndex);
     }
 
     /**
@@ -68,13 +76,8 @@ public class DataReader {
     public void jumpReturn() {
         if (oldAddress < 0)
             return;
-
-        try {
-            source.setIndex(this.oldAddress);
-            this.oldAddress = -1;
-        } catch (IOException ex) {
-            throw new RuntimeException("Failed to return to previous address.", ex);
-        }
+        setIndex(this.oldAddress);
+        this.oldAddress = -1;
     }
 
 
@@ -90,6 +93,7 @@ public class DataReader {
             value += ((long) data[i] & 0xFFL) << (8 * i);
         return value;
     }
+
     /**
      * Read a string of a pre-specified length.
      * @param length The length of the string.
