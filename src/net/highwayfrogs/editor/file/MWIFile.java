@@ -95,6 +95,14 @@ public class MWIFile extends GameObject {
         public static final int FLAG_MANUAL_COMPRESSION = 32;
 
         /**
+         * Get the amount of bytes this file will take up in the game archive.
+         * @return byteCount
+         */
+        public int getArchiveSize() {
+            return isCompressed() ? getPackedSize() : getUnpackedSize();
+        }
+
+        /**
          * Get the address where this file's data will start in the MWD file.
          * @return archiveOffset
          */

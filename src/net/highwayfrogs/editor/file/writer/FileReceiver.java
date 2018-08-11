@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.file.writer;
 
+import lombok.Getter;
+
 import java.io.*;
 
 /**
@@ -8,6 +10,7 @@ import java.io.*;
  */
 public class FileReceiver implements DataReceiver {
     private FileOutputStream output;
+    @Getter private int index;
 
     public FileReceiver(File file) throws FileNotFoundException {
         this.output = new FileOutputStream(file);
@@ -15,11 +18,13 @@ public class FileReceiver implements DataReceiver {
 
     @Override
     public void writeByte(byte value) throws IOException {
+        this.index++;
         output.write(value);
     }
 
     @Override
     public void writeBytes(byte[] values) throws IOException {
+        this.index += values.length;
         output.write(values);
     }
 }

@@ -19,4 +19,10 @@ public interface DataReceiver {
      * @param values The bytes to write.
      */
     public void writeBytes(byte[] values) throws IOException;
+
+    /**
+     * Get the current write index.
+     * @return writeIndex
+     */
+    public int getIndex() throws IOException;
 }

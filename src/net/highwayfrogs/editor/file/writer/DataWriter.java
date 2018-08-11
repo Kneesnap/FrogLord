@@ -24,6 +24,36 @@ public class DataWriter {
     }
 
     /**
+     * Write a given amount of null bytes.
+     * @param amount The amount of null bytes to write.
+     */
+    public void writeNull(int amount) {
+        writeBytes(new byte[amount]);
+    }
+
+    /**
+     * Jump to a given write offset, leaving null-bytes in between.
+     * @param address The address to jump to.
+     */
+    public void jumpTo(int address) {
+        int index = getIndex();
+        Constants.verify(address >= index, "Tried to jump to %s, which is before the current writer address (%s).", Integer.toHexString(address), Integer.toHexString(index));
+        writeNull(address - index);
+    }
+
+    /**
+     * Gets the writer index.
+     * @return index
+     */
+    public int getIndex() {
+        try {
+            return output.getIndex();
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to get writer index.", ex);
+        }
+    }
+
+    /**
      * Write a single byte to the receiver.
      * @param value The value to write.
      */

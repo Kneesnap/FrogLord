@@ -12,20 +12,18 @@ import java.nio.ByteBuffer;
  * Created by Kneesnap on 8/11/2018.
  */
 @Getter
-public class DummyFile extends GameObject {
+public class DummyFile extends GameFile {
     private FileEntry entry;
     private ByteBuffer buffer;
-    private int size;
 
     public DummyFile(FileEntry entry) {
         this.entry = entry;
-        this.size = entry.isCompressed() ? entry.getPackedSize() : entry.getUnpackedSize();
-        this.buffer = ByteBuffer.allocate(size);
+        this.buffer = ByteBuffer.allocate(entry.getArchiveSize());
     }
 
     @Override
     public void load(DataReader reader) {
-        this.buffer.put(reader.readBytes(size));
+        this.buffer.put(reader.readBytes(entry.getArchiveSize()));
     }
 
     @Override

@@ -6,10 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * MWAD File Format: Medieval WAD Archive.
@@ -19,7 +16,8 @@ import java.util.List;
  */
 public class MWDFile extends GameObject {
     private MWIFile wadIndexTable;
-    private List<GameObject> files = new ArrayList<>();
+    private List<GameFile> files = new ArrayList<>();
+    private Map<GameFile, FileEntry> entryMap = new HashMap<>();
 
     private static final String MARKER = "DAWM";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEEE, d MMMM yyyy");
@@ -35,6 +33,9 @@ public class MWDFile extends GameObject {
         Constants.verify(marker.equals(MARKER), "MWD Identifier %s was incorrectly read as %s!", MARKER, marker);
 
         for (FileEntry entry : wadIndexTable.getEntries()) {
+            if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
+                continue; // This file is part of a WAD archive, and isn't a file entry in the MWD, so we can't load it here.
+
             reader.setIndex(entry.getArchiveOffset());
 
             //TODO: Decompression.
@@ -42,6 +43,7 @@ public class MWDFile extends GameObject {
             DummyFile file = new DummyFile(entry); //TODO: Support actual file-types.
             file.load(reader);
 
+            entryMap.put(file, entry);
             files.add(file);
         }
     }
@@ -57,11 +59,13 @@ public class MWDFile extends GameObject {
                 + "\nThis map was changed using FrogLord.\n");
 
         //TODO: If the existing offsets need to expand, alert the user, so they can replace the MWI. The MWI needs to export with exactly the same size as before... This should probably go in a seperate method, not directly here.
-        for (GameObject file : files) {
-            writer.writeBytes(new byte[100]); //TODO: Write null bytes up until the next offset instead of this interim crap.
+        for (GameFile file : files) {
+            writer.jumpTo(entryMap.get(file).getArchiveOffset());
             file.save(writer); //TODO: Compression
         }
 
-        //TODO: Fill the rest of the MWD with white-space. ByteUtils.writeBytes(data, new byte[0x800 - (getFiles().get(getFiles().size() - 1).getRawData().length % 0x800)]);
+        // Fill the rest of the file with null bytes.
+        GameFile lastFile = files.get(files.size() - 1);
+        writer.writeNull(Constants.CD_SECTOR_SIZE - (entryMap.get(lastFile).getArchiveSize() % Constants.CD_SECTOR_SIZE));
     }
 }
