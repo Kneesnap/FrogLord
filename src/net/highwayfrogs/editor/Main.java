@@ -3,6 +3,8 @@ package net.highwayfrogs.editor;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
+import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.writer.FileReceiver;
 
 import java.io.File;
 
@@ -13,8 +15,8 @@ import java.io.File;
 public class Main {
 
     public static void main(String[] args) throws Exception {
-        File file = new File("./debug/VANILLA.MWI");
         MWIFile mwi = new MWIFile();
-        mwi.load(new DataReader(new FileSource(file)));
+        mwi.load(new DataReader(new FileSource(new File("./debug/VANILLA.MWI"))));
+        mwi.save(new DataWriter(new FileReceiver(new File("./debug/OUTPUT.MWI"))));
     }
 }

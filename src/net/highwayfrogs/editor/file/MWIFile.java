@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public class MWIFile extends GameFile {
     private List<FileEntry> entries = new ArrayList<>();
+
+    private static final int ENTRY_LENGTH = 32;
 
     @Override
     public void load(DataReader reader) {
@@ -49,6 +52,27 @@ public class MWIFile extends GameFile {
         // Type ID 5 doesn't exist. Maybe in the code?
         // 42  DAT. All have Type ID 6, Flag: 1 (Single Access)
         // 40  PAL. All have Type ID 7, Flag: 1 (Single Access)
+    }
+
+    @Override
+    public void save(DataWriter writer) {
+        int nameOffset = getEntries().size() * ENTRY_LENGTH;
+
+        for (FileEntry entry : getEntries()) {
+            writer.writeInt(nameOffset);
+            nameOffset += entry.getFilePath().getBytes().length + 1; // The amount of bytes written + the terminator byte predicts the offset it actually goes.
+            writer.writeInt(entry.getFlags());
+            writer.writeInt(entry.getTypeId());
+            writer.writeInt(entry.getSectorOffset());
+            writer.writeInt(entry.getLoadedAddress());
+            writer.writeInt(entry.getDepackedAddress());
+            writer.writeInt(entry.getPackedSize());
+            writer.writeInt(entry.getUnpackedSize());
+        }
+
+        getEntries().stream()
+                .map(FileEntry::getFilePath)
+                .forEach(writer::writeTerminatorString);
     }
 
     @Setter @Getter

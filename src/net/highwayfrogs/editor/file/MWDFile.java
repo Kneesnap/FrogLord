@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file;
 
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
  * MWAD File Format: Medieval WAD Archive.
@@ -14,6 +15,11 @@ public class MWDFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
+
+    }
+
+    @Override
+    public void save(DataWriter writer) {
 
     }
 }
