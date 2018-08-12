@@ -29,10 +29,10 @@ public class PP20Unpacker {
     public static byte[] unpackData(byte[] data) {
         Constants.verify(isCompressed(data), "Not PowerPacker (PP20) compressed data!");
         int[] offsetBitLengths = getOffsetBitLengths(data);
-        int skip = data[data.length - 1] & 255;
+        int skip = data[data.length - 1] & 0xFF;
         byte[] out = new byte[getDecodedDataSize(data)];
         int outPos = out.length;
-        BitReader in = new BitReader(data, data.length - 5, true);
+        BitReader in = new BitReader(data, data.length - 5);
         in.readBits(skip); // skipped bits
         while (outPos > 0)
             outPos = decodeSegment(in, out, outPos, offsetBitLengths);
@@ -48,7 +48,7 @@ public class PP20Unpacker {
 
     private static int getDecodedDataSize(byte[] data) {
         int i = data.length - 2;
-        return (data[i - 2] & 255) << 16 | (data[i - 1] & 255) << 8 | data[i] & 255;
+        return (data[i - 2] & 0xFF) << 16 | (data[i - 1] & 0xFF) << 8 | data[i] & 0xFF;
     }
 
     private static int decodeSegment(BitReader in, byte[] out, int outPos, int[] offsetBitLengths) {
@@ -59,69 +59,69 @@ public class PP20Unpacker {
         return outPos;
     }
 
-    private static int copyFromInput(BitReader in, byte[] out, int pos) {
+    // Appears to put it into the table.
+    private static int copyFromInput(BitReader in, byte[] out, int bytePos) {
         int count = 1, countInc;
-        while ((countInc = in.readBits(2)) == 3) // '11's + 1 + the last non '11'
+        while ((countInc = in.readBits(2)) == 3) // Read the string size. If it == 3, that means the length might be longer.
             count += 3;
-        for (count += countInc; count > 0; count--)
-            out[--pos] = (byte) in.readBits(8);
-        return pos;
+
+        System.out.print("Table Addition. Count: " + (count + countInc) + " = ");
+        for (count += countInc; count > 0; count--) { // Register the string in the table.
+            out[--bytePos] = (byte) in.readBits(8);
+            System.out.print((char) out[bytePos]);
+        }
+
+        System.out.println();
+        return bytePos;
     }
 
-    private static int copyFromDecoded(BitReader in, byte[] out, int pos, int[] offsetBitLengths) {
+    private static int copyFromDecoded(BitReader in, byte[] out, int bytePos, int[] offsetBitLengths) {
         int run = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
         int offBits = run == 3 && in.readBit() == 0 ? 7 : offsetBitLengths[run];
         int off = in.readBits(offBits);
+
         int runInc = 0;
-        if (run == 3)
-            while ((runInc = in.readBits(3)) == 7) // '111's + 2 + the last non '111'
+        if (run == 3) // The length might be extended further.
+            while ((runInc = in.readBits(3)) == 7) // Keep adding until the three read bits are not '111', meaning the length has stopped.
                 run += 7;
-        for (run += 2 + runInc; run > 0; run--, pos--)
-            out[pos - 1] = out[pos + off];
-        return pos;
+
+        System.out.print("Copy from decoded: " + off + ", Length: " + (run + 2 + runInc));
+        for (run += 2 + runInc; run > 0; run--, bytePos--) {
+            out[bytePos - 1] = out[bytePos + off];
+            System.out.print((char) out[bytePos - 1]);
+        }
+
+        System.out.println();
+        return bytePos;
     }
 
     public static final class BitReader {
         private final byte[] data;
-        private int pos;
-        private int bitPos = 7;
-        private int dir = 1;
+        private int bytePos;
+        private int bitPos = 0;
 
-        public BitReader(final byte[] data, final int pos, final boolean reverseByBits) {
+        public BitReader(final byte[] data, final int pos) {
             this.data = data;
-            this.pos = pos;
-            if (reverseByBits) {
-                bitPos = 0;
-                dir = -1;
-            }
-        }
-
-        public int readByte() {
-            final int x = data[pos] & 255;
-            pos += dir;
-            bitPos = dir < 0 ? 0 : 7;
-            return x;
+            this.bytePos = pos;
         }
 
         public int readBit() {
-            final int x = data[pos] >> bitPos & 1;
-            if (bitPos == (dir < 0 ? 7 : 0)) {
-                bitPos = dir < 0 ? 0 : 7;
-                pos += dir;
-            } else
-                bitPos -= dir;
+            final int x = data[bytePos] >> bitPos & 1; // Get the bit at the next position.
+
+            if (bitPos == Constants.BITS_PER_BYTE - 1) { // Reached the end of the bit.
+                this.bitPos = 0;
+                this.bytePos--;
+            } else {
+                this.bitPos++;
+            }
             return x;
         }
 
-        public int readBits(final int n) {
-            int x = 0;
-            for (int i = 0; i < n; i++)
-                x = x << 1 | readBit();
-            return x;
-        }
-
-        public int readSignBits(final int n) {
-            return readBits(n) << 32 - n >> 32 - n;
+        public int readBits(int amount) {
+            int num = 0;
+            for (int i = 0; i < amount; i++)
+                num = num << 1 | readBit(); // Shift the existing read bits left, and add the next available bit. If you read four bits, it will read it like an integer.
+            return num;
         }
     }
 }

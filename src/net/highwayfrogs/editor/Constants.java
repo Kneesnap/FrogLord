@@ -11,6 +11,8 @@ public class Constants {
     public static final int INTEGER_SIZE = 4;
     public static final byte NULL_BYTE = (byte) 0;
 
+    public static final int BITS_PER_BYTE = 8;
+
     /**
      * Verify a condition is true, otherwise throw an exception.
      * @param condition  The condition to verify is true.
