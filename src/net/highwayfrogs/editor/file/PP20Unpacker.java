@@ -33,7 +33,9 @@ public class PP20Unpacker {
         byte[] out = new byte[getDecodedDataSize(data)];
         int outPos = out.length;
         BitReader in = new BitReader(data, data.length - 5);
-        in.readBits(skip); // skipped bits
+        int read = in.readBits(skip); // skipped bits
+        System.out.println("Skipped " + skip + " bits. Number: " + read);
+
         while (outPos > 0)
             outPos = decodeSegment(in, out, outPos, offsetBitLengths);
         return out;
@@ -106,7 +108,7 @@ public class PP20Unpacker {
         }
 
         public int readBit() {
-            final int x = data[bytePos] >> bitPos & 1; // Get the bit at the next position.
+            final int bit = data[bytePos] >> bitPos & 1; // Get the bit at the next position.
 
             if (bitPos == Constants.BITS_PER_BYTE - 1) { // Reached the end of the bit.
                 this.bitPos = 0;
@@ -114,7 +116,7 @@ public class PP20Unpacker {
             } else {
                 this.bitPos++;
             }
-            return x;
+            return bit;
         }
 
         public int readBits(int amount) {
