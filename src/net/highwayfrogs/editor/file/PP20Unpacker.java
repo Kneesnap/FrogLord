@@ -3,11 +3,9 @@ package net.highwayfrogs.editor.file;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 
-import java.util.Arrays;
-
 /**
  * PP20 Unpacker: Unpacks PowerPacker compressed data.
- * <p>
+ *
  * Source:
  * Author: Josef Jelinek
  * URL: https://github.com/josef-jelinek/tiny-mod-player/blob/master/lib.gamod/src/gamod/unpack/PowerPacker.java
@@ -95,8 +93,6 @@ public class PP20Unpacker {
     }
 
     private static int copyFromDecoded(BitReader in, byte[] out, int bytePos, int[] offsetBitLengths) {
-        if (OUTPUT)
-            System.out.println("Trying to copy from decoded.");
         int run = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
         int offBits = run == 3 && in.readBit() == 0 ? 7 : offsetBitLengths[run];
         int off = in.readBits(offBits);
@@ -131,6 +127,8 @@ public class PP20Unpacker {
 
         public int readBit() {
             final int bit = data[bytePos] >> bitPos & 1; // Get the bit at the next position.
+            //if (PP20Unpacker.OUTPUT)
+            //    System.out.println("Read Bit: " + bit);
 
             if (bitPos == Constants.BITS_PER_BYTE - 1) { // Reached the end of the bit.
                 this.bitPos = 0;
