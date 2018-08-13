@@ -35,6 +35,12 @@ public class PP20Packer {
      * @return packedData
      */
     public static byte[] packData(byte[] data) {
+        for (int i = 0; i < data.length / 2; i++) { // Reverse the byte order.
+            byte temp = data[i];
+            data[i] = data[data.length - 1 - i];
+            data[data.length - 1 - i] = temp;
+        }
+
         // Take the compressed data, and pad it with the file structure. Then, we're done.
         byte[] compressedData = compressData(data);
         byte[] completeData = new byte[compressedData.length + 12];
@@ -44,9 +50,9 @@ public class PP20Packer {
             completeData[i] = (byte) MARKER.charAt(i);
 
         System.arraycopy(COMPRESSION_SETTINGS, 0, completeData, 4, COMPRESSION_SETTINGS.length);
-        byte[] array = ByteBuffer.allocate(Constants.INTEGER_SIZE).putInt(data.length - 11).array();
-        System.arraycopy(array, 1, completeData, completeData.length - 5, array.length - 1);
-        completeData[completeData.length - 1] += 7; //TODO: Include real bit skip info.
+        byte[] array = ByteBuffer.allocate(Constants.INTEGER_SIZE).putInt(data.length).array();
+        System.arraycopy(array, 1, completeData, completeData.length - 4, array.length - 1);
+        completeData[completeData.length - 1] += 0; //TODO: Include real bit skip info.
         return completeData;
     }
 

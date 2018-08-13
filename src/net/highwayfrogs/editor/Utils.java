@@ -68,7 +68,7 @@ public class Utils {
      * @return sameArray
      */
     public static <T> T[] reverse(T[] array) {
-        for (int i = 0; i < array.length; i++) {
+        for (int i = 0; i < array.length / 2; i++) {
             T temp = array[i];
             array[i] = array[array.length - i - 1];
             array[array.length - i - 1] = temp;

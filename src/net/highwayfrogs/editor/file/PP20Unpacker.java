@@ -38,7 +38,8 @@ public class PP20Unpacker {
         int outPos = out.length;
         BitReader in = new BitReader(data, data.length - 5);
         int read = in.readBits(skip); // skipped bits
-        System.out.println("Skipped " + skip + " bits. Number: " + read);
+        if (OUTPUT)
+            System.out.println("Skipped " + skip + " bits. Number: " + read + ". File Size: " + out.length);
 
         while (outPos > 0)
             outPos = decodeSegment(in, out, outPos, offsetBitLengths);
@@ -79,11 +80,6 @@ public class PP20Unpacker {
 
         if (OUTPUT)
             System.out.print("Reading New (" + (count + countInc) + "): ");
-
-        if (OUTPUT) {
-            reader.readBits(1);
-        }
-
 
         for (count += countInc; count > 0; count--) {// Register the string in the table.
             byte value = (byte) reader.readBits(Constants.BITS_PER_BYTE);
