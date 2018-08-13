@@ -30,7 +30,7 @@ public class PP20Packer {
     public static final int LENGTH_BIT_INTERVAL_DECODE = 3;
     public static final int WRITE_LENGTH_CONTINUE = 3;
     public static final int WRITE_LENGTH_CONTINUE_DECODE = 7;
-    public static final int READ_FROM_INPUT_BIT = 0;
+    public static final int READ_FROM_INPUT_BIT = Constants.BIT_FALSE;
 
     /**
      * Pack a byte array into PP20 compressed data.
@@ -55,7 +55,6 @@ public class PP20Packer {
         System.arraycopy(COMPRESSION_SETTINGS, 0, completeData, 4, COMPRESSION_SETTINGS.length);
         byte[] array = ByteBuffer.allocate(Constants.INTEGER_SIZE).putInt(data.length).array();
         System.arraycopy(array, 1, completeData, completeData.length - 4, array.length - 1);
-        completeData[completeData.length - 1] += 0; //TODO: Include real bit skip info.
         return completeData;
     }
 
@@ -63,9 +62,9 @@ public class PP20Packer {
         BitWriter writer = new BitWriter();
         writeInputData(writer, new ByteArrayWrapper(data));
 
-        Map<ByteArrayWrapper, Integer> dictionary = new HashMap<>();
+        /*Map<ByteArrayWrapper, Integer> dictionary = new HashMap<>();
 
-        /*List<ByteArrayWrapper> wrapperList = new ArrayList<>();
+        List<ByteArrayWrapper> wrapperList = new ArrayList<>();
         ByteArrayWrapper sequence = new ByteArrayWrapper(new byte[0]);
         int index = 0;
         for (int i = 0; i < data.length; i++) {
@@ -75,28 +74,28 @@ public class PP20Packer {
             if (dictionary.containsKey(checkMatch)) {
                  sequence = checkMatch;
             } else {
-                wrapperList.add(sequence); //TODO: May not work for starting characters. (Is this why we check that the data isn't length 1?)
-                if (!dictionary.containsKey(sequence))
-                    dictionary.put(sequence, index);
+                if (sequence.getData().length > 0)
+                    wrapperList.add(sequence); //TODO: May not work for starting characters. (Is this why we check that the data isn't length 1?)
+                dictionary.putIfAbsent(sequence, index);
+                dictionary.putIfAbsent(checkMatch, index); //TODO: Verify this is right.
 
-                dictionary.put(checkMatch, index); //TODO: Verify this is right.
                 sequence = new ByteArrayWrapper(temp);
                 index = i;
             }
         }
-        System.out.println("Dictionary Size: " + dictionary.size());
-        System.out.println("Data Size: " + data.length);
 
-        //Find the longest string with > 1 use. (If there is only one
         index = 0;
         for (ByteArrayWrapper wrapper : wrapperList) {
             int firstIndex = dictionary.get(wrapper);
 
-            if (wrapper.getData().length == 1 || firstIndex != index) { //TODO
+            if (wrapper.getData().length == 1 || firstIndex != index) { //TODO: Distance compare check.
                 writeInputData(writer, wrapper);
+                writeBlankLink(writer);
             } else {
                 writeDataLink(writer, wrapper, dictionary, index);
             }
+
+            index++;
         }*/
 
         // Map<String, Integer> <Substr, Index>
@@ -121,10 +120,19 @@ public class PP20Packer {
         return writer.toArray();
     }
 
+    private static void writeBlankLink(BitWriter writer) {
+        writer.writeBit(Constants.BIT_FALSE); // Compression Level Zero.
+        writer.writeBit(Constants.BIT_FALSE);
+        writer.writeBit(0);
+        for (int i = 0; i < 7; i++)
+            writer.writeBit(1);
+        writer.writeBit(0);
+    }
+
     private static void writeDataLink(BitWriter writer, ByteArrayWrapper wrapper, Map<ByteArrayWrapper, Integer> dictionary, int index) {
         int byteOffset = index - dictionary.get(wrapper);
         int maxCompressionIndex = COMPRESSION_SETTINGS.length - 1;
-        Utils.verify(Math.pow(2, COMPRESSION_SETTINGS[maxCompressionIndex]) > byteOffset, "Past max distance: %d.", byteOffset); //TODO: Max distance: COMPRESSION_SETTINGS
+        Utils.verify(Math.pow(2, COMPRESSION_SETTINGS[maxCompressionIndex]) > byteOffset, "Past max distance: %d.", byteOffset);
 
         writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
 
@@ -144,6 +152,7 @@ public class PP20Packer {
 
         int writeLength = wrapper.getData().length - compressionLevel;
         int writtenNum;
+
         do { // Write the length of the data.
             writtenNum = Math.min(writeLength, PP20Packer.WRITE_LENGTH_CONTINUE_DECODE);
             writeLength -= writtenNum;
@@ -192,7 +201,7 @@ public class PP20Packer {
 
         @Override
         public boolean equals(Object other) {
-            return Arrays.equals(this.data, ((ByteArrayWrapper) other).getData());
+            return other instanceof ByteArrayWrapper && Arrays.equals(this.data, ((ByteArrayWrapper) other).getData());
         }
 
         @Override
@@ -231,12 +240,8 @@ public class PP20Packer {
         }
 
         public byte[] toArray() {
-            int count = 0; //TODO
-            while (this.currentBit != Constants.BITS_PER_BYTE) {
+            while (this.currentBit != Constants.BITS_PER_BYTE)
                 writeBit(0);
-                count++;
-            }
-            System.out.println("Added " + count + " bits.");
 
             byte[] arr = new byte[bytes.size()];
             for (int i = 0; i < bytes.size(); i++)

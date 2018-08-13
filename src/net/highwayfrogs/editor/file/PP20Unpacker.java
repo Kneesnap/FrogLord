@@ -68,16 +68,11 @@ public class PP20Unpacker {
     private static int copyFromInput(BitReader reader, byte[] out, int bytePos) {
         int count = 1, countInc;
 
-        /*if (OUTPUT) {
-            System.out.println(Arrays.toString(Utils.getBits(reader.readBits(8), 8)));
-            System.exit(0);
-        }*/
-
         while ((countInc = reader.readBits(PP20Packer.LENGTH_BIT_INTERVAL)) == PP20Packer.WRITE_LENGTH_CONTINUE) // Read the string size. If it == 3, that means the length might be longer.
             count += PP20Packer.WRITE_LENGTH_CONTINUE;
 
         if (OUTPUT)
-            System.out.print("Reading New (" + (count + countInc) + "): ");
+            System.out.print("Reading New (" + (count + countInc) + "/" + bytePos + "): ");
 
         for (count += countInc; count > 0; count--) {// Register the string in the table.
             byte value = (byte) reader.readBits(Constants.BITS_PER_BYTE);
@@ -96,14 +91,17 @@ public class PP20Unpacker {
         int run = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
         int offBits = run == 3 && in.readBit() == 0 ? 7 : offsetBitLengths[run];
         int off = in.readBits(offBits);
+        if (OUTPUT)
+            System.out.println("Offset:" + offBits + " -> " + off);
 
         int runInc = 0;
         if (run == 3) // The length might be extended further.
             while ((runInc = in.readBits(3)) == 7) // Keep adding until the three read bits are not '111', meaning the length has stopped.
                 run += 7;
-
-        if (OUTPUT)
+        if (OUTPUT) {
             System.out.print("Copy from decoded: " + off + ", Length: " + (run + 2 + runInc) + ", ");
+            System.out.print("Bit Pos: " + in.bitPos + ", Byte Pos = " + in.bytePos + ", Length: " + in.data.length);
+        }
         for (run += 2 + runInc; run > 0; run--, bytePos--) {
             out[bytePos - 1] = out[bytePos + off];
             if (OUTPUT)
