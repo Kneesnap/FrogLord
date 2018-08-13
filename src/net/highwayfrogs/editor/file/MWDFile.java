@@ -1,11 +1,14 @@
 package net.highwayfrogs.editor.file;
 
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -31,7 +34,7 @@ public class MWDFile extends GameObject {
     @Override
     public void load(DataReader reader) {
         String marker = reader.readString(MARKER.length());
-        Constants.verify(marker.equals(MARKER), "MWD Identifier %s was incorrectly read as %s!", MARKER, marker);
+        Utils.verify(marker.equals(MARKER), "MWD Identifier %s was incorrectly read as %s!", MARKER, marker);
 
         for (FileEntry entry : wadIndexTable.getEntries()) {
             if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
@@ -43,6 +46,20 @@ public class MWDFile extends GameObject {
             byte[] fileBytes = reader.readBytes(entry.getArchiveSize());
             /*if (entry.isCompressed()) TODO: Enable this after compression is ready. Otherwise, we'll be making MWDs without compressed data.
                 fileBytes = PP20Unpacker.unpackData(fileBytes);*/
+
+            if (entry.getFilePath().contains("CAV1.MAP")) {
+                try {
+                    Files.write(new File("./debug/CAV_1_PACKED.MAP").toPath(), fileBytes);
+                    byte[] decompressed = PP20Unpacker.unpackData(fileBytes);
+                    Files.write(new File("./debug/CAV_1.MAP").toPath(), decompressed);
+                    byte[] repackedData = PP20Packer.packData(decompressed);
+                    Files.write(new File("./debug/CAV_1_REPACKED.MAP").toPath(), repackedData);
+                    PP20Unpacker.OUTPUT = true;
+                    Files.write(new File("./debug/CAV_1_REDEPACKED.MAP").toPath(), PP20Unpacker.unpackData(repackedData));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
 
             // Turn the byte data into the appropriate game-file.
             DummyFile file = new DummyFile(entry); //TODO: Support actual file-types.

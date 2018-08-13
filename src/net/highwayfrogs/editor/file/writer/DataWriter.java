@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.writer;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -37,7 +38,7 @@ public class DataWriter {
      */
     public void jumpTo(int address) {
         int index = getIndex();
-        Constants.verify(address >= index, "Tried to jump to %s, which is before the current writer address (%s).", Integer.toHexString(address), Integer.toHexString(index));
+        Utils.verify(address >= index, "Tried to jump to %s, which is before the current writer address (%s).", Integer.toHexString(address), Integer.toHexString(index));
         writeNull(address - index);
     }
 

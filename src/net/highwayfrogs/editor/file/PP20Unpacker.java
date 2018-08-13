@@ -1,16 +1,20 @@
 package net.highwayfrogs.editor.file;
 
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
+
+import java.util.Arrays;
 
 /**
  * PP20 Unpacker: Unpacks PowerPacker compressed data.
- *
+ * <p>
  * Source:
- *  Author: Josef Jelinek
- *  URL: https://github.com/josef-jelinek/tiny-mod-player/blob/master/lib.gamod/src/gamod/unpack/PowerPacker.java
- *  Copied on August 11, 2018. There is no license attached to the repository, however the author has explicitly granted permission to use this code.
+ * Author: Josef Jelinek
+ * URL: https://github.com/josef-jelinek/tiny-mod-player/blob/master/lib.gamod/src/gamod/unpack/PowerPacker.java
+ * Copied on August 11, 2018. There is no license attached to the repository, however the author has explicitly granted permission to use this code.
  */
 public class PP20Unpacker {
+    public static boolean OUTPUT;
 
     /**
      * Is a given byte array PP20 compressed data?
@@ -27,7 +31,7 @@ public class PP20Unpacker {
      * @return unpackedData
      */
     public static byte[] unpackData(byte[] data) {
-        Constants.verify(isCompressed(data), "Not PowerPacker (PP20) compressed data!");
+        Utils.verify(isCompressed(data), "Not PowerPacker (PP20) compressed data!");
         int[] offsetBitLengths = getOffsetBitLengths(data);
         int skip = data[data.length - 1] & 0xFF;
         byte[] out = new byte[getDecodedDataSize(data)];
@@ -54,7 +58,7 @@ public class PP20Unpacker {
     }
 
     private static int decodeSegment(BitReader in, byte[] out, int outPos, int[] offsetBitLengths) {
-        if (in.readBit() == 0)
+        if (in.readBit() == PP20Packer.READ_FROM_INPUT_BIT)
             outPos = copyFromInput(in, out, outPos);
         if (outPos > 0)
             outPos = copyFromDecoded(in, out, outPos, offsetBitLengths);
@@ -62,22 +66,41 @@ public class PP20Unpacker {
     }
 
     // Appears to put it into the table.
-    private static int copyFromInput(BitReader in, byte[] out, int bytePos) {
+    private static int copyFromInput(BitReader reader, byte[] out, int bytePos) {
         int count = 1, countInc;
-        while ((countInc = in.readBits(2)) == 3) // Read the string size. If it == 3, that means the length might be longer.
-            count += 3;
 
-        System.out.print("Table Addition. Count: " + (count + countInc) + " = ");
-        for (count += countInc; count > 0; count--) { // Register the string in the table.
-            out[--bytePos] = (byte) in.readBits(8);
-            System.out.print((char) out[bytePos]);
+        /*if (OUTPUT) {
+            System.out.println(Arrays.toString(Utils.getBits(reader.readBits(8), 8)));
+            System.exit(0);
+        }*/
+
+        while ((countInc = reader.readBits(PP20Packer.LENGTH_BIT_INTERVAL)) == PP20Packer.WRITE_LENGTH_CONTINUE) // Read the string size. If it == 3, that means the length might be longer.
+            count += PP20Packer.WRITE_LENGTH_CONTINUE;
+
+        if (OUTPUT)
+            System.out.print("Reading New (" + (count + countInc) + "): ");
+
+        if (OUTPUT) {
+            reader.readBits(1);
         }
 
-        System.out.println();
+
+        for (count += countInc; count > 0; count--) {// Register the string in the table.
+            byte value = (byte) reader.readBits(Constants.BITS_PER_BYTE);
+            out[--bytePos] = value;
+            if (OUTPUT)
+                System.out.print((char) value);
+        }
+
+        if (OUTPUT)
+            System.out.println();
+
         return bytePos;
     }
 
     private static int copyFromDecoded(BitReader in, byte[] out, int bytePos, int[] offsetBitLengths) {
+        if (OUTPUT)
+            System.out.println("Trying to copy from decoded.");
         int run = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
         int offBits = run == 3 && in.readBit() == 0 ? 7 : offsetBitLengths[run];
         int off = in.readBits(offBits);
@@ -87,13 +110,16 @@ public class PP20Unpacker {
             while ((runInc = in.readBits(3)) == 7) // Keep adding until the three read bits are not '111', meaning the length has stopped.
                 run += 7;
 
-        System.out.print("Copy from decoded: " + off + ", Length: " + (run + 2 + runInc));
+        if (OUTPUT)
+            System.out.print("Copy from decoded: " + off + ", Length: " + (run + 2 + runInc) + ", ");
         for (run += 2 + runInc; run > 0; run--, bytePos--) {
             out[bytePos - 1] = out[bytePos + off];
-            System.out.print((char) out[bytePos - 1]);
+            if (OUTPUT)
+                System.out.print((char) out[bytePos - 1]);
         }
 
-        System.out.println();
+        if (OUTPUT)
+            System.out.println();
         return bytePos;
     }
 
