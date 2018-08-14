@@ -7,7 +7,9 @@ import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.writer.FileReceiver;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -68,18 +70,30 @@ public class MWDFile extends GameObject {
         //TODO: If the existing offsets need to expand, alert the user, so they can replace the MWI. The MWI needs to export with exactly the same size as before... This should probably go in a seperate method, not directly here.
         for (GameFile file : files) {
             FileEntry entry = entryMap.get(file);
-            writer.jumpTo(entry.getArchiveOffset());
+            writer.jumpTo(entry.getArchiveOffset()); //TODO: Might need to expand if a file grows in size.
 
             System.out.println("Saving " + entry.getFilePath() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ")");
             ArrayReceiver receiver = new ArrayReceiver();
             file.save(new DataWriter(receiver));
 
             byte[] transfer = receiver.toArray();
-            writer.writeBytes(entry.isCompressed() ? PP20Packer.packData(transfer) : transfer);
+            if (entry.isCompressed()) {
+                transfer = PP20Packer.packData(transfer);
+                entry.setPackedSize(transfer.length);
+            }
+
+            writer.writeBytes(transfer);
         }
 
         // Fill the rest of the file with null bytes.
         GameFile lastFile = files.get(files.size() - 1);
         writer.writeNull(Constants.CD_SECTOR_SIZE - (entryMap.get(lastFile).getArchiveSize() % Constants.CD_SECTOR_SIZE));
+
+        try {
+            DataWriter mwiWriter = new DataWriter(new FileReceiver(new File("./debug/MODDED.MWI")));
+            wadIndexTable.save(mwiWriter);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }

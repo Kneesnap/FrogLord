@@ -6,7 +6,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -17,11 +18,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public class MWIFile extends GameObject {
     private List<FileEntry> entries = new ArrayList<>();
+    private int fileSize;
 
     private static final int ENTRY_LENGTH = 32;
 
     @Override
     public void load(DataReader reader) {
+        this.fileSize = reader.getSize();
         AtomicInteger nameStartAddress = null;
 
         while (nameStartAddress == null || nameStartAddress.get() > reader.getIndex()) { // Read entries until we reach file-names.
@@ -74,6 +77,8 @@ public class MWIFile extends GameObject {
         getEntries().stream()
                 .map(FileEntry::getFilePath)
                 .forEach(writer::writeTerminatorString);
+
+        writer.jumpTo(getFileSize()); // Our output file MUST match the exact size of the input file, because we're replacing this in the executable, so offsets matter. File paths appear to have a random (Cannot find any pattern) amount (1-4) of null bytes between them. Since we only have one null byte between the files, this is to make up for that lost space, since the file size must match.
     }
 
     @Setter @Getter
