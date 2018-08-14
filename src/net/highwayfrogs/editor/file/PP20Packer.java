@@ -1,7 +1,5 @@
 package net.highwayfrogs.editor.file;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 
@@ -60,7 +58,7 @@ public class PP20Packer {
         return completeData;
     }
 
-    private static int search(byte[] data, int bufferEnd, List<Byte> target) { //TODO: Test.
+    private static int search(byte[] data, int bufferEnd, List<Byte> target) { //TODO: This can be optimized by making it so it won't go further than the maximum distance.
         for (int search = bufferEnd - target.size(); search >= 0; search--) { // Search for anywhere in the buffer.
             boolean pass = true;
             for (int i = 0; i < target.size(); i++)
@@ -113,18 +111,18 @@ public class PP20Packer {
 
             searchList.remove(searchList.size() - 1); // Remove the byte that was not found.
 
-            if (searchList.size() >= MINIMUM_DECODE_DATA_LENGTH) { // Large enough that it can be compressed.
+            int byteOffset = i - bestIndex - 1;
+            if (searchList.size() >= MINIMUM_DECODE_DATA_LENGTH && isValidLink(searchList.size(), byteOffset)) { // Large enough that it can be compressed.
                 boolean writeQueue = !noMatchQueue.isEmpty();
                 if (writeQueue) { // When a compressed one has been reached, write all the data in-between, if there is any.
                     writeInputData(writer, Utils.toArray(noMatchQueue));
                     noMatchQueue.clear();
+                } else {
+                    //TODO: Move writing bit here.
                 }
 
-                if (writeDataLink(writer, Utils.toArray(searchList), i - bestIndex - 1, !writeQueue)) { // Data was written,
-                    i = readIndex - 1;
-                } else {
-                    noMatchQueue.add(temp);
-                }
+                writeDataLink(writer, Utils.toArray(searchList), byteOffset, !writeQueue);
+                i = readIndex - 1;
             } else { // It's not large enough to be compressed.
                 noMatchQueue.add(temp);
             }
@@ -136,8 +134,17 @@ public class PP20Packer {
         return writer.toArray();
     }
 
+    private static boolean isValidLink(int byteLength, int byteOffset) {
+        int maxCompressionIndex = COMPRESSION_SETTINGS.length - 1;
+        int compressionLevel = Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH);
+        boolean maxCompression = (compressionLevel == maxCompressionIndex);
+        boolean useSmallOffset = maxCompression && Math.pow(2, DEFAULT_OFFSET_BITS) > byteOffset;
+        int offsetSize = useSmallOffset ? DEFAULT_OFFSET_BITS : COMPRESSION_SETTINGS[compressionLevel];
+        return Math.pow(2, offsetSize) > byteOffset;
+    }
+
     //TODO: Make this accept the length, instead of the data itself, to save on memory. (After debugging.)
-    private static boolean writeDataLink(BitWriter writer, byte[] data, int byteOffset, boolean writeBit) {
+    private static void writeDataLink(BitWriter writer, byte[] data, int byteOffset, boolean writeBit) {
         int byteLength = data.length;
 
         // Calculate compression level.
@@ -147,8 +154,6 @@ public class PP20Packer {
         boolean maxCompression = (compressionLevel == maxCompressionIndex);
         boolean useSmallOffset = maxCompression && Math.pow(2, DEFAULT_OFFSET_BITS) > byteOffset;
         int offsetSize = useSmallOffset ? DEFAULT_OFFSET_BITS : COMPRESSION_SETTINGS[compressionLevel];
-        if (byteOffset >= Math.pow(2, offsetSize)) // Past the max distance. Instead, add the bytes to the queue.
-            return false;
 
         if (writeBit) // Should this write that there was no new data?
             writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
@@ -176,7 +181,6 @@ public class PP20Packer {
             if (writtenNum == PP20Packer.WRITE_LENGTH_CONTINUE_DECODE) // Write null terminator if the last value was the "continue" character.
                 writer.writeBits(new int[LENGTH_BIT_INTERVAL_DECODE]);
         }
-        return true;
     }
 
     private static void writeInputData(BitWriter writer, byte[] data) {

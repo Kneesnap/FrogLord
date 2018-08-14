@@ -28,10 +28,10 @@ public class Main {
         mwd.load(new DataReader(new FileSource(new File("./debug/VANILLA.MWD"))));
         mwd.save(new DataWriter(new FileReceiver(new File("./debug/MODDED.MWD"))));
 
-        testStr("AAAABBBBAADBBAAACBBBAAAABBBB");
+        /*testStr("AAAABBBBAADBBAAACBBBAAAABBBB");
         testStr("ALERTALERTALERT");
         PP20Unpacker.OUTPUT = true;
-        testStr("ALERTLERTERT");
+        testStr("ALERTLERTERT");*/
     }
 
     private static void testStr(String test) {

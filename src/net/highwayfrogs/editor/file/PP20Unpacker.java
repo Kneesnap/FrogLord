@@ -90,7 +90,8 @@ public class PP20Unpacker {
 
     private static int copyFromDecoded(BitReader in, byte[] out, int bytePos, int[] offsetBitLengths) {
         int run = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
-        System.out.println("Read Compression Level: " + run);
+        if (OUTPUT)
+            System.out.println("Read Compression Level: " + run);
 
         int offBits = run == 3 && in.readBit() == 0 ? 7 : offsetBitLengths[run];
         int off = in.readBits(offBits);
