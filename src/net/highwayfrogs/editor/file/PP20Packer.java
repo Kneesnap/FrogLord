@@ -17,7 +17,7 @@ import java.util.*;
  * - https://en.wikipedia.org/wiki/Lempel–Ziv–Welch
  * - https://eblong.com/zarf/blorb/mod-spec.txt
  *
- * TODO: Cleanup [More constant use, better constant names, remove logging & debug stuff.]
+ * TODO: Cleanup [More constant use, better constant names]
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
@@ -75,17 +75,6 @@ public class PP20Packer {
 
     private static byte[] compressData(byte[] data) {
         BitWriter writer = new BitWriter();
-
-        // Search buffer is the left-side of the string. [Symbols we've already seen and already processed.]
-        // The Look Ahead buffer is the right side of the string. [Contains symbols we haven't seen yet. 10s of symbols long.]
-
-        // Encoder reads a symbol from the LA buffer, and attempt to find a match in the search buffer.
-        // If it's found, read more from the Look Ahead buffer, and search backwards in the search buffer until it finds the longest match.
-        //   When that longest match is found, it is now the token. <Offset, Length>
-        //   Shift the window (Buffer seperator) to right after the token we just compressed. (Not the original token)
-        // Else, if the backwards search has no match, or we're seeing the search for the first time.
-        //   Until one is found, compound all the missing ones together, and write with writeInput.
-
         List<Byte> noMatchQueue = new ArrayList<>();
         List<Byte> searchList = new ArrayList<>();
 
@@ -120,7 +109,7 @@ public class PP20Packer {
                     writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
                 }
 
-                writeDataLink(writer, Utils.toArray(searchList), byteOffset);
+                writeDataLink(writer, searchList.size(), byteOffset);
                 i = readIndex - 1;
             } else { // It's not large enough to be compressed.
                 noMatchQueue.add(temp);
@@ -129,7 +118,6 @@ public class PP20Packer {
         if (!noMatchQueue.isEmpty()) // Add whatever remains at the end, if there is any.
             writeInputData(writer, Utils.toArray(noMatchQueue));
 
-        System.out.println("INFO STUFF: " + writer.currentByte + ", " + writer.currentBit);
         return writer.toArray();
     }
 
@@ -140,10 +128,7 @@ public class PP20Packer {
         return (int) Math.pow(2, offsetSize);
     }
 
-    //TODO: Make this accept the length, instead of the data itself, to save on memory. (After debugging.)
-    private static void writeDataLink(BitWriter writer, byte[] data, int byteOffset) {
-        int byteLength = data.length;
-
+    private static void writeDataLink(BitWriter writer, int byteLength, int byteOffset) {
         // Calculate compression level.
         int maxCompressionIndex = COMPRESSION_SETTINGS.length - 1;
         int compressionLevel = Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH);
@@ -161,8 +146,6 @@ public class PP20Packer {
         }
 
         writer.writeBits(Utils.getBits(byteOffset, offsetSize));
-
-        System.out.println("Writing Compressed: " + byteLength + " Real String: " + new String(data));
 
         if (maxCompression) {
             int writtenNum;
@@ -192,7 +175,6 @@ public class PP20Packer {
         if (writtenNum == PP20Packer.WRITE_LENGTH_CONTINUE) // Write null terminator if the last value was the "continue" character.
             writer.writeBits(new int[PP20Packer.LENGTH_BIT_INTERVAL]);
 
-        System.out.println("Writing Input Data: " + new String(data));
         for (byte toWrite : data) // Writes the data.
             writer.writeByte(toWrite);
     }

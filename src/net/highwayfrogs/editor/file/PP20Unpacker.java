@@ -36,9 +36,7 @@ public class PP20Unpacker {
         byte[] out = new byte[getDecodedDataSize(data)];
         int outPos = out.length;
         BitReader in = new BitReader(data, data.length - 5);
-        int read = in.readBits(skip); // skipped bits
-        if (OUTPUT)
-            System.out.println("Skipped " + skip + " bits. Number: " + read + ". File Size: " + out.length);
+        in.readBits(skip); // skipped bits
 
         while (outPos > 0)
             outPos = decodeSegment(in, out, outPos, offsetBitLengths);
@@ -68,36 +66,19 @@ public class PP20Unpacker {
     // Appears to put it into the table.
     private static int copyFromInput(BitReader reader, byte[] out, int bytePos) {
         int count = 1, countInc;
-
         while ((countInc = reader.readBits(PP20Packer.LENGTH_BIT_INTERVAL)) == PP20Packer.WRITE_LENGTH_CONTINUE) // Read the string size. If it == 3, that means the length might be longer.
             count += PP20Packer.WRITE_LENGTH_CONTINUE;
 
-        if (OUTPUT)
-            System.out.print("Reading New (" + (count + countInc) + "/" + bytePos + "): ");
-
-        for (count += countInc; count > 0; count--) {// Register the string in the table.
-            byte value = (byte) reader.readBits(Constants.BITS_PER_BYTE);
-            out[--bytePos] = value;
-            if (OUTPUT)
-                System.out.print((char) value);
-        }
-
-        if (OUTPUT)
-            System.out.println();
+        for (count += countInc; count > 0; count--) // Register the string in the table.
+            out[--bytePos] = (byte) reader.readBits(Constants.BITS_PER_BYTE);
 
         return bytePos;
     }
 
     private static int copyFromDecoded(BitReader in, byte[] out, int bytePos, int[] offsetBitLengths) {
         int run = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
-        if (OUTPUT)
-            System.out.println("Read Compression Level: " + run);
-
         int offBits = run == 3 && in.readBit() == 0 ? 7 : offsetBitLengths[run];
         int off = in.readBits(offBits);
-
-        if (OUTPUT)
-            System.out.println("Offset Bits: " + offBits + " -> " + Arrays.toString(Utils.getBits(off, offBits)) + " -> Read Offset: " + off);
 
         int runInc = 0;
         if (run == 3) // The length might be extended further.
@@ -106,17 +87,10 @@ public class PP20Unpacker {
 
         run += PP20Packer.MINIMUM_DECODE_DATA_LENGTH;
         run += runInc;
-        if (OUTPUT)
-            System.out.print("Read Length: " + run + ", ");
 
-        for (int i = 0; i < run; i++, bytePos--) {
+        for (int i = 0; i < run; i++, bytePos--)
             out[bytePos - 1] = out[bytePos + off];
-            if (OUTPUT)
-                System.out.print((char) out[bytePos - 1]);
-        }
 
-        if (OUTPUT)
-            System.out.println();
         return bytePos;
     }
 
@@ -132,8 +106,6 @@ public class PP20Unpacker {
 
         public int readBit() {
             final int bit = data[bytePos] >> bitPos & 1; // Get the bit at the next position.
-            //if (PP20Unpacker.OUTPUT)
-            //    System.out.println("Read Bit: " + bit);
 
             if (bitPos == Constants.BITS_PER_BYTE - 1) { // Reached the end of the bit.
                 this.bitPos = 0;
@@ -145,8 +117,6 @@ public class PP20Unpacker {
         }
 
         public int readBits(int amount) {
-            //if (PP20Unpacker.OUTPUT)
-            //    System.out.println("Batch Read: " + amount);
             int num = 0;
             for (int i = 0; i < amount; i++)
                 num = num << 1 | readBit(); // Shift the existing read bits left, and add the next available bit. If you read four bits, it will read it like an integer.
