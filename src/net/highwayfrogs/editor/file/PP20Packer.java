@@ -8,28 +8,27 @@ import java.util.*;
 
 /**
  * Packs a byte array into PP20 compressed data.
- * I was unable to find a compression sub-routine (Even in C) which encodes data.
- * So, this was created from research and attempts to reverse the unpacke.
+ * I was unable to find any code or documentation on how PP20 compresses data.
+ * So, this was created from research and attempts to reverse the unpacker.
  *
- * Appears to be loosely based on LZ77.
+ * PP20 is a Lz77 (sliding window compression) variant.
  *
  * Useful Links:
- * - https://en.wikipedia.org/wiki/Lempel–Ziv–Welch
+ * - https://en.wikipedia.org/wiki/LZ77_and_LZ78
  * - https://eblong.com/zarf/blorb/mod-spec.txt
  *
- * TODO: Cleanup [More constant use, better constant names]
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
-    private static final String MARKER = "PP20";
     private static final byte[] COMPRESSION_SETTINGS = {0x09, 0x0A, 0x0C, 0x0D}; // PP20 compression settings.
-    private static final int DEFAULT_OFFSET_BITS = 7;
-    public static final int LENGTH_BIT_INTERVAL = 2;
-    public static final int LENGTH_BIT_INTERVAL_DECODE = 3;
-    public static final int WRITE_LENGTH_CONTINUE = 3;
-    public static final int WRITE_LENGTH_CONTINUE_DECODE = 7;
+    public static final int OPTIONAL_BITS_SMALL_OFFSET = 7;
+    public static final int INPUT_BIT_LENGTH = 2;
+    public static final int INPUT_CONTINUE_WRITING_BITS = 3;
+    public static final int OFFSET_BIT_LENGTH = 3;
+    public static final int OFFSET_CONTINUE_WRITING_BITS = 7;
     public static final int READ_FROM_INPUT_BIT = Constants.BIT_FALSE;
     public static final int MINIMUM_DECODE_DATA_LENGTH = 2;
+    public static final String MARKER = "PP20";
 
     /**
      * Pack a byte array into PP20 compressed data.
@@ -134,8 +133,8 @@ public class PP20Packer {
         int compressionLevel = Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH);
 
         boolean maxCompression = (compressionLevel == maxCompressionIndex);
-        boolean useSmallOffset = maxCompression && Math.pow(2, DEFAULT_OFFSET_BITS) > byteOffset;
-        int offsetSize = useSmallOffset ? DEFAULT_OFFSET_BITS : COMPRESSION_SETTINGS[compressionLevel];
+        boolean useSmallOffset = maxCompression && Math.pow(2, OPTIONAL_BITS_SMALL_OFFSET) > byteOffset;
+        int offsetSize = useSmallOffset ? OPTIONAL_BITS_SMALL_OFFSET : COMPRESSION_SETTINGS[compressionLevel];
 
         int writeLength = byteLength - compressionLevel;
         writer.writeBits(Utils.getBits(compressionLevel, 2));
@@ -150,13 +149,13 @@ public class PP20Packer {
         if (maxCompression) {
             int writtenNum;
             do { // Write the length of the data.
-                writtenNum = Math.min(writeLength, PP20Packer.WRITE_LENGTH_CONTINUE_DECODE);
+                writtenNum = Math.min(writeLength, PP20Packer.OFFSET_CONTINUE_WRITING_BITS);
                 writeLength -= writtenNum;
-                writer.writeBits(Utils.getBits(writtenNum, PP20Packer.LENGTH_BIT_INTERVAL_DECODE));
+                writer.writeBits(Utils.getBits(writtenNum, PP20Packer.OFFSET_BIT_LENGTH));
             } while (writeLength > 0);
 
-            if (writtenNum == PP20Packer.WRITE_LENGTH_CONTINUE_DECODE) // Write null terminator if the last value was the "continue" character.
-                writer.writeBits(new int[LENGTH_BIT_INTERVAL_DECODE]);
+            if (writtenNum == PP20Packer.OFFSET_CONTINUE_WRITING_BITS) // Write null terminator if the last value was the "continue" character.
+                writer.writeBits(new int[OFFSET_BIT_LENGTH]);
         }
     }
 
@@ -167,13 +166,13 @@ public class PP20Packer {
         int writtenNum;
 
         do { // Write the length of the data.
-            writtenNum = Math.min(writeLength, PP20Packer.WRITE_LENGTH_CONTINUE);
+            writtenNum = Math.min(writeLength, PP20Packer.INPUT_CONTINUE_WRITING_BITS);
             writeLength -= writtenNum;
-            writer.writeBits(Utils.getBits(writtenNum, PP20Packer.LENGTH_BIT_INTERVAL));
+            writer.writeBits(Utils.getBits(writtenNum, PP20Packer.INPUT_BIT_LENGTH));
         } while (writeLength > 0);
 
-        if (writtenNum == PP20Packer.WRITE_LENGTH_CONTINUE) // Write null terminator if the last value was the "continue" character.
-            writer.writeBits(new int[PP20Packer.LENGTH_BIT_INTERVAL]);
+        if (writtenNum == PP20Packer.INPUT_CONTINUE_WRITING_BITS) // Write null terminator if the last value was the "continue" character.
+            writer.writeBits(new int[PP20Packer.INPUT_BIT_LENGTH]);
 
         for (byte toWrite : data) // Writes the data.
             writer.writeByte(toWrite);
@@ -185,7 +184,7 @@ public class PP20Packer {
         private byte currentByte;
 
         public void writeBit(int bit) {
-            Utils.verify(bit == 1 || bit == 0, "Invalid bit number %d.", bit);
+            Utils.verify(bit == Constants.BIT_TRUE || bit == Constants.BIT_FALSE, "Invalid bit number %d.", bit);
 
             // Add the bit to the current byte.
             int shiftedBit = bit << (Constants.BITS_PER_BYTE - this.currentBit);

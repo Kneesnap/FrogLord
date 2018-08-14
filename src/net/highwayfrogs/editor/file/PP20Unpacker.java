@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.file;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 
-import java.util.Arrays;
-
 /**
  * PP20 Unpacker: Unpacks PowerPacker compressed data.
  * Source:
@@ -21,7 +19,11 @@ public class PP20Unpacker {
      * @return isCompressed
      */
     public static boolean isCompressed(byte[] a) {
-        return a.length > 11 && a[0] == 'P' && a[1] == 'P' && a[2] == '2' && a[3] == '0';
+        byte[] headerTest = PP20Packer.MARKER.getBytes();
+        for (int i = 0; i < headerTest.length; i++)
+            if (headerTest[i] != a[i])
+                return false;
+        return a.length > 11;
     }
 
     /**
@@ -66,8 +68,8 @@ public class PP20Unpacker {
     // Appears to put it into the table.
     private static int copyFromInput(BitReader reader, byte[] out, int bytePos) {
         int count = 1, countInc;
-        while ((countInc = reader.readBits(PP20Packer.LENGTH_BIT_INTERVAL)) == PP20Packer.WRITE_LENGTH_CONTINUE) // Read the string size. If it == 3, that means the length might be longer.
-            count += PP20Packer.WRITE_LENGTH_CONTINUE;
+        while ((countInc = reader.readBits(PP20Packer.INPUT_BIT_LENGTH)) == PP20Packer.INPUT_CONTINUE_WRITING_BITS) // Read the string size. If it == 3, that means the length might be longer.
+            count += PP20Packer.INPUT_CONTINUE_WRITING_BITS;
 
         for (count += countInc; count > 0; count--) // Register the string in the table.
             out[--bytePos] = (byte) reader.readBits(Constants.BITS_PER_BYTE);
@@ -76,14 +78,16 @@ public class PP20Unpacker {
     }
 
     private static int copyFromDecoded(BitReader in, byte[] out, int bytePos, int[] offsetBitLengths) {
+        int maxCompressionLevel = offsetBitLengths.length - 1;
+
         int run = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
-        int offBits = run == 3 && in.readBit() == 0 ? 7 : offsetBitLengths[run];
+        int offBits = run == maxCompressionLevel && in.readBit() == 0 ? PP20Packer.OPTIONAL_BITS_SMALL_OFFSET : offsetBitLengths[run];
         int off = in.readBits(offBits);
 
         int runInc = 0;
-        if (run == 3) // The length might be extended further.
-            while ((runInc = in.readBits(3)) == 7) // Keep adding until the three read bits are not '111', meaning the length has stopped.
-                run += 7;
+        if (run == maxCompressionLevel) // The length might be extended further.
+            while ((runInc = in.readBits(PP20Packer.OFFSET_BIT_LENGTH)) == PP20Packer.OFFSET_CONTINUE_WRITING_BITS) // Keep adding until the three read bits are not '111', meaning the length has stopped.
+                run += PP20Packer.OFFSET_CONTINUE_WRITING_BITS;
 
         run += PP20Packer.MINIMUM_DECODE_DATA_LENGTH;
         run += runInc;
