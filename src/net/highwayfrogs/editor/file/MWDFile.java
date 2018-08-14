@@ -5,10 +5,9 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import java.io.File;
-import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -44,22 +43,8 @@ public class MWDFile extends GameObject {
 
             // Read the file. Decompress if needed.
             byte[] fileBytes = reader.readBytes(entry.getArchiveSize());
-            /*if (entry.isCompressed()) TODO: Enable this after compression is ready. Otherwise, we'll be making MWDs without compressed data.
-                fileBytes = PP20Unpacker.unpackData(fileBytes);*/
-
-            if (entry.getFilePath().contains("CAV1.MAP")) {
-                try {
-                    Files.write(new File("./debug/CAV_1_PACKED.MAP").toPath(), fileBytes);
-                    byte[] decompressed = PP20Unpacker.unpackData(fileBytes);
-                    Files.write(new File("./debug/CAV_1.MAP").toPath(), decompressed);
-                    byte[] repackedData = PP20Packer.packData(decompressed);
-                    Files.write(new File("./debug/CAV_1_REPACKED.MAP").toPath(), repackedData);
-                    PP20Unpacker.OUTPUT = true;
-                    Files.write(new File("./debug/CAV_1_REDEPACKED.MAP").toPath(), PP20Unpacker.unpackData(repackedData));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+            if (entry.isCompressed())
+                fileBytes = PP20Unpacker.unpackData(fileBytes);
 
             // Turn the byte data into the appropriate game-file.
             DummyFile file = new DummyFile(entry); //TODO: Support actual file-types.
@@ -82,8 +67,15 @@ public class MWDFile extends GameObject {
 
         //TODO: If the existing offsets need to expand, alert the user, so they can replace the MWI. The MWI needs to export with exactly the same size as before... This should probably go in a seperate method, not directly here.
         for (GameFile file : files) {
-            writer.jumpTo(entryMap.get(file).getArchiveOffset());
-            file.save(writer); //TODO: Compression
+            FileEntry entry = entryMap.get(file);
+            writer.jumpTo(entry.getArchiveOffset());
+
+            System.out.println("Saving " + entry.getFilePath() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ")");
+            ArrayReceiver receiver = new ArrayReceiver();
+            file.save(new DataWriter(receiver));
+
+            byte[] transfer = receiver.toArray();
+            writer.writeBytes(entry.isCompressed() ? PP20Packer.packData(transfer) : transfer);
         }
 
         // Fill the rest of the file with null bytes.

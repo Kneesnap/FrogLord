@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.writer;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,9 +35,6 @@ public class ArrayReceiver implements DataReceiver {
      * @return array
      */
     public byte[] toArray() {
-        byte[] array = new byte[bytes.size()];
-        for (int i = 0; i < array.length; i++)
-            array[i] = bytes.get(i);
-        return array;
+        return Utils.toArray(bytes);
     }
 }
