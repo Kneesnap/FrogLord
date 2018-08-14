@@ -10,10 +10,11 @@ import java.util.*;
 
 /**
  * Packs a byte array into PP20 compressed data.
- * I was unable to find a compression sub-routine (Even in C) which does this function.
- * So, this will/is being created from the documentation given below, and trying to reverse the unpacker.
+ * I was unable to find a compression sub-routine (Even in C) which encodes data.
+ * So, this was created from research and attempts to reverse the unpacke.
  *
- * Work backwards.
+ * Appears to be loosely based on LZ77.
+ *
  * Useful Links:
  * - https://en.wikipedia.org/wiki/Lempel–Ziv–Welch
  * - https://eblong.com/zarf/blorb/mod-spec.txt
@@ -31,6 +32,7 @@ public class PP20Packer {
     public static final int WRITE_LENGTH_CONTINUE = 3;
     public static final int WRITE_LENGTH_CONTINUE_DECODE = 7;
     public static final int READ_FROM_INPUT_BIT = Constants.BIT_FALSE;
+    public static final int MINIMUM_DECODE_DATA_LENGTH = 2;
 
     /**
      * Pack a byte array into PP20 compressed data.
@@ -60,14 +62,30 @@ public class PP20Packer {
 
     private static byte[] compressData(byte[] data) {
         BitWriter writer = new BitWriter();
-        writeInputData(writer, new ByteArrayWrapper(data));
+
+        // Wrote
+        writeDataLink(writer, new ByteArrayWrapper(new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0e}), new HashMap<>(), 0);
+
+        //writeInputData(writer, new ByteArrayWrapper(data));
+
+        // Search buffer is the left-side of the string. [Symbols we've already seen and already processed.]
+        // The Look Ahead buffer is the right side of the string. [Contains symbols we haven't seen yet. 10s of symbols long.]
+
+        // Encoder reads a symbol from the LA buffer, and attempt to find a match in the search buffer.
+        // If it's found, read more from the Look Ahead buffer, and search backwards in the search buffer until it finds the longest match.
+        //   When that longest match is found, it is now the token. <Offset, Length, Next Byte after Symbol>
+        //   Shift the window (Buffer seperator) to right after the token we just compressed. (Not the original token)
+        // Else, if the backwards search has no match, or we're seeing the search for the first time.
+        //   Until one is found, compound all the missing ones together, and write with writeInput.
+
+        //TODO: Will this work with the decode requirement?
 
         /*Map<ByteArrayWrapper, Integer> dictionary = new HashMap<>();
 
         List<ByteArrayWrapper> wrapperList = new ArrayList<>();
         ByteArrayWrapper sequence = new ByteArrayWrapper(new byte[0]);
-        int index = 0;
-        for (int i = 0; i < data.length; i++) {
+        int index = 0; //TODO: If data is one character, add a second one and try to build another dictionary input.
+        for (int i = 0; i < data.length; i++) { //TODO: Each iteration is a starting point.
             byte temp = data[i];
 
             ByteArrayWrapper checkMatch = sequence.appendNew(temp);
@@ -75,7 +93,7 @@ public class PP20Packer {
                  sequence = checkMatch;
             } else {
                 if (sequence.getData().length > 0)
-                    wrapperList.add(sequence); //TODO: May not work for starting characters. (Is this why we check that the data isn't length 1?)
+                    wrapperList.add(sequence); //TODO: May not work for starting characters.
                 dictionary.putIfAbsent(sequence, index);
                 dictionary.putIfAbsent(checkMatch, index); //TODO: Verify this is right.
 
@@ -120,39 +138,38 @@ public class PP20Packer {
         return writer.toArray();
     }
 
-    private static void writeBlankLink(BitWriter writer) {
-        writer.writeBit(Constants.BIT_FALSE); // Compression Level Zero.
-        writer.writeBit(Constants.BIT_FALSE);
-        writer.writeBit(0);
-        for (int i = 0; i < 7; i++)
-            writer.writeBit(1);
-        writer.writeBit(0);
-    }
-
+    //TODO: Verify this works fully.
     private static void writeDataLink(BitWriter writer, ByteArrayWrapper wrapper, Map<ByteArrayWrapper, Integer> dictionary, int index) {
-        int byteOffset = index - dictionary.get(wrapper);
+        int byteOffset = 128; // index - dictionary.get(wrapper); // TODO UNDO
+        int byteLength = wrapper.getData().length;
+
+        // Calculate compression level.
         int maxCompressionIndex = COMPRESSION_SETTINGS.length - 1;
-        Utils.verify(Math.pow(2, COMPRESSION_SETTINGS[maxCompressionIndex]) > byteOffset, "Past max distance: %d.", byteOffset);
+        int compressionLevel = Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH);
+
+        boolean maxCompression = (compressionLevel == maxCompressionIndex);
+        boolean useSmallOffset = maxCompression && Math.pow(2, DEFAULT_OFFSET_BITS) > byteOffset;
+        int offsetSize = useSmallOffset ? DEFAULT_OFFSET_BITS : COMPRESSION_SETTINGS[compressionLevel];
+
+        Utils.verify(Math.pow(2, offsetSize) > byteOffset, "Past max distance: %d.", byteOffset);
+
+        int writeLength = byteLength - compressionLevel;
 
         writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
-
-        int byteLength = wrapper.getData().length;
-        int compressionLevel = Math.min(maxCompressionIndex, byteLength);
         writer.writeBits(Utils.getBits(compressionLevel, 2));
+        System.out.println("Wrote Compression Level: " + compressionLevel);
 
-        int offsetSize = COMPRESSION_SETTINGS[compressionLevel];
-        if (compressionLevel == maxCompressionIndex) {
-            boolean useSetting = byteOffset >= Math.pow(2, DEFAULT_OFFSET_BITS);
-            writer.writeBit(useSetting ? Constants.BIT_TRUE : Constants.BIT_FALSE);
-            if (!useSetting)
-                offsetSize = DEFAULT_OFFSET_BITS;
+
+        if (maxCompression) {
+            writer.writeBit(useSmallOffset ? Constants.BIT_FALSE : Constants.BIT_TRUE);
+            writeLength -= MINIMUM_DECODE_DATA_LENGTH;
         }
 
+        System.out.println("Wrote Byte Offset " + byteOffset + " of bit-size: " + offsetSize + " bits.");
         writer.writeBits(Utils.getBits(byteOffset, offsetSize));
 
-        int writeLength = wrapper.getData().length - compressionLevel;
         int writtenNum;
-
+        System.out.println("Writing Length: " + byteLength);
         do { // Write the length of the data.
             writtenNum = Math.min(writeLength, PP20Packer.WRITE_LENGTH_CONTINUE_DECODE);
             writeLength -= writtenNum;

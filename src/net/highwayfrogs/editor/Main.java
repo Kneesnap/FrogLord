@@ -4,6 +4,7 @@ import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.PP20Packer;
 import net.highwayfrogs.editor.file.PP20Packer.BitWriter;
+import net.highwayfrogs.editor.file.PP20Unpacker;
 import net.highwayfrogs.editor.file.PP20Unpacker.BitReader;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
@@ -26,5 +27,19 @@ public class Main {
         MWDFile mwd = new MWDFile(mwi);
         mwd.load(new DataReader(new FileSource(new File("./debug/VANILLA.MWD"))));
         mwd.save(new DataWriter(new FileReceiver(new File("./debug/MODDED.MWD"))));
+
+        //testStr("AAAABBBBAADBBAAACBBBAAAABBBB");
+        //testStr("ALERTALERTALERT");
+        PP20Unpacker.OUTPUT = true;
+        testStr("ALERTLERTERT");
+    }
+
+    private static void testStr(String test) {
+        System.out.println("Testing: " + test);
+        byte[] start = test.getBytes();
+        byte[] compressed = PP20Packer.packData(start);
+        System.out.println(Utils.toByteString(compressed) + " -> (" + compressed.length + ") " + new String(compressed).replace("\n", "\\n").replace("\r", "\\r"));
+        byte[] decompressed = PP20Unpacker.unpackData(compressed);
+        System.out.println(Utils.toByteString(decompressed) + " -> (" + decompressed.length + ") " + new String(decompressed));
     }
 }

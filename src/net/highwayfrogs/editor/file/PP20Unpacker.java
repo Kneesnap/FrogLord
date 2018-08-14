@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.file;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 
+import java.util.Arrays;
+
 /**
  * PP20 Unpacker: Unpacks PowerPacker compressed data.
  *
@@ -91,26 +93,26 @@ public class PP20Unpacker {
         int run = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
         int offBits = run == 3 && in.readBit() == 0 ? 7 : offsetBitLengths[run];
         int off = in.readBits(offBits);
+
+        System.out.println("Read Compression Level: " + run);
         if (OUTPUT)
-            System.out.println("Offset:" + offBits + " -> " + off);
+            System.out.println("Offset Bits: " + offBits + " -> " + Arrays.toString(Utils.getBits(off, offBits)) + " -> Read Offset: " + off);
 
         int runInc = 0;
         if (run == 3) // The length might be extended further.
             while ((runInc = in.readBits(3)) == 7) // Keep adding until the three read bits are not '111', meaning the length has stopped.
                 run += 7;
-        if (OUTPUT) {
-            System.out.print("Copy from decoded: " + off + ", Length: " + (run + 2 + runInc) + ", ");
-            System.out.print("Bit Pos: " + in.bitPos + ", Byte Pos = " + in.bytePos + ", Length: " + in.data.length);
-        }
-        for (run += 2 + runInc; run > 0; run--, bytePos--) {
+        if (OUTPUT)
+            System.out.print("Read Length: " + (run + PP20Packer.MINIMUM_DECODE_DATA_LENGTH + runInc) + ", ");
+        /*for (run += 2 + runInc; run > 0; run--, bytePos--) {
             out[bytePos - 1] = out[bytePos + off];
             if (OUTPUT)
                 System.out.print((char) out[bytePos - 1]);
-        }
+        }*/
 
         if (OUTPUT)
             System.out.println();
-        return bytePos;
+        return 0;
     }
 
     public static final class BitReader {
