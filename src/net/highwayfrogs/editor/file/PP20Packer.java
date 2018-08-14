@@ -113,15 +113,14 @@ public class PP20Packer {
 
             int byteOffset = i - bestIndex - 1;
             if (searchList.size() >= MINIMUM_DECODE_DATA_LENGTH && isValidLink(searchList.size(), byteOffset)) { // Large enough that it can be compressed.
-                boolean writeQueue = !noMatchQueue.isEmpty();
-                if (writeQueue) { // When a compressed one has been reached, write all the data in-between, if there is any.
+                if (!noMatchQueue.isEmpty()) { // When a compressed one has been reached, write all the data in-between, if there is any.
                     writeInputData(writer, Utils.toArray(noMatchQueue));
                     noMatchQueue.clear();
                 } else {
-                    //TODO: Move writing bit here.
+                    writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
                 }
 
-                writeDataLink(writer, Utils.toArray(searchList), byteOffset, !writeQueue);
+                writeDataLink(writer, Utils.toArray(searchList), byteOffset);
                 i = readIndex - 1;
             } else { // It's not large enough to be compressed.
                 noMatchQueue.add(temp);
@@ -144,7 +143,7 @@ public class PP20Packer {
     }
 
     //TODO: Make this accept the length, instead of the data itself, to save on memory. (After debugging.)
-    private static void writeDataLink(BitWriter writer, byte[] data, int byteOffset, boolean writeBit) {
+    private static void writeDataLink(BitWriter writer, byte[] data, int byteOffset) {
         int byteLength = data.length;
 
         // Calculate compression level.
@@ -154,9 +153,6 @@ public class PP20Packer {
         boolean maxCompression = (compressionLevel == maxCompressionIndex);
         boolean useSmallOffset = maxCompression && Math.pow(2, DEFAULT_OFFSET_BITS) > byteOffset;
         int offsetSize = useSmallOffset ? DEFAULT_OFFSET_BITS : COMPRESSION_SETTINGS[compressionLevel];
-
-        if (writeBit) // Should this write that there was no new data?
-            writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
 
         int writeLength = byteLength - compressionLevel;
         writer.writeBits(Utils.getBits(compressionLevel, 2));
