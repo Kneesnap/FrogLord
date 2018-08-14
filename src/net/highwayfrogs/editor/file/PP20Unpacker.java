@@ -102,17 +102,21 @@ public class PP20Unpacker {
         if (run == 3) // The length might be extended further.
             while ((runInc = in.readBits(3)) == 7) // Keep adding until the three read bits are not '111', meaning the length has stopped.
                 run += 7;
+
+        run += PP20Packer.MINIMUM_DECODE_DATA_LENGTH;
+        run += runInc;
         if (OUTPUT)
             System.out.print("Read Length: " + (run + PP20Packer.MINIMUM_DECODE_DATA_LENGTH + runInc) + ", ");
-        /*for (run += 2 + runInc; run > 0; run--, bytePos--) {
+
+        for (int i = 0; i < run; i++, bytePos--) {
             out[bytePos - 1] = out[bytePos + off];
             if (OUTPUT)
                 System.out.print((char) out[bytePos - 1]);
-        }*/
+        }
 
         if (OUTPUT)
             System.out.println();
-        return 0;
+        return bytePos;
     }
 
     public static final class BitReader {

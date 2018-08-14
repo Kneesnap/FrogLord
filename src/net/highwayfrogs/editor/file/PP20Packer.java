@@ -62,11 +62,7 @@ public class PP20Packer {
 
     private static byte[] compressData(byte[] data) {
         BitWriter writer = new BitWriter();
-
-        // Wrote
-        writeDataLink(writer, new ByteArrayWrapper(new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0e}), new HashMap<>(), 0);
-
-        //writeInputData(writer, new ByteArrayWrapper(data));
+        writeInputData(writer, new ByteArrayWrapper(data)); //TODO: Remove.
 
         // Search buffer is the left-side of the string. [Symbols we've already seen and already processed.]
         // The Look Ahead buffer is the right side of the string. [Contains symbols we haven't seen yet. 10s of symbols long.]
@@ -78,7 +74,7 @@ public class PP20Packer {
         // Else, if the backwards search has no match, or we're seeing the search for the first time.
         //   Until one is found, compound all the missing ones together, and write with writeInput.
 
-        //TODO: Will this work with the decode requirement?
+        //TODO: Go through and try to step by step the string "ALERTLERTERT"
 
         /*Map<ByteArrayWrapper, Integer> dictionary = new HashMap<>();
 
@@ -138,9 +134,8 @@ public class PP20Packer {
         return writer.toArray();
     }
 
-    //TODO: Verify this works fully.
     private static void writeDataLink(BitWriter writer, ByteArrayWrapper wrapper, Map<ByteArrayWrapper, Integer> dictionary, int index) {
-        int byteOffset = 128; // index - dictionary.get(wrapper); // TODO UNDO
+        int byteOffset = index - dictionary.get(wrapper);
         int byteLength = wrapper.getData().length;
 
         // Calculate compression level.
