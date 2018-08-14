@@ -17,8 +17,7 @@ import java.util.*;
  * - https://en.wikipedia.org/wiki/Lempel–Ziv–Welch
  * - https://eblong.com/zarf/blorb/mod-spec.txt
  *
- * TODO: Compression.
- * TODO: Cleanup
+ * TODO: Cleanup [More constant use, better constant names, remove logging & debug stuff.]
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
@@ -58,16 +57,17 @@ public class PP20Packer {
         return completeData;
     }
 
-    private static int search(byte[] data, int bufferEnd, List<Byte> target) { //TODO: This can be optimized by making it so it won't go further than the maximum distance.
-        for (int search = bufferEnd - target.size(); search >= 0; search--) { // Search for anywhere in the buffer.
+    private static int search(byte[] data, int bufferEnd, List<Byte> target) {
+        int minIndex = Math.max(0, bufferEnd - getMaximumOffset(target.size())); // There's a certain point at which data will not be compressed. By calculating it here, it saves a lot of overheard, and prevents this from becoming O(n^2)
+
+        for (int search = bufferEnd - target.size(); search >= minIndex; search--) { // Search for anywhere in the buffer.
             boolean pass = true;
             for (int i = 0; i < target.size(); i++)
                 if (target.get(i) != data[search + i])
                     pass = false;
 
-            if (pass) {
+            if (pass)
                 return search;
-            }
         }
 
         return -1;
@@ -112,7 +112,7 @@ public class PP20Packer {
             searchList.remove(searchList.size() - 1); // Remove the byte that was not found.
 
             int byteOffset = i - bestIndex - 1;
-            if (searchList.size() >= MINIMUM_DECODE_DATA_LENGTH && isValidLink(searchList.size(), byteOffset)) { // Large enough that it can be compressed.
+            if (searchList.size() >= MINIMUM_DECODE_DATA_LENGTH) { // Large enough that it can be compressed.
                 if (!noMatchQueue.isEmpty()) { // When a compressed one has been reached, write all the data in-between, if there is any.
                     writeInputData(writer, Utils.toArray(noMatchQueue));
                     noMatchQueue.clear();
@@ -133,13 +133,11 @@ public class PP20Packer {
         return writer.toArray();
     }
 
-    private static boolean isValidLink(int byteLength, int byteOffset) {
+    private static int getMaximumOffset(int byteLength) {
         int maxCompressionIndex = COMPRESSION_SETTINGS.length - 1;
-        int compressionLevel = Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH);
-        boolean maxCompression = (compressionLevel == maxCompressionIndex);
-        boolean useSmallOffset = maxCompression && Math.pow(2, DEFAULT_OFFSET_BITS) > byteOffset;
-        int offsetSize = useSmallOffset ? DEFAULT_OFFSET_BITS : COMPRESSION_SETTINGS[compressionLevel];
-        return Math.pow(2, offsetSize) > byteOffset;
+        int compressionLevel = Math.max(0, Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH));
+        int offsetSize = COMPRESSION_SETTINGS[compressionLevel];
+        return (int) Math.pow(2, offsetSize);
     }
 
     //TODO: Make this accept the length, instead of the data itself, to save on memory. (After debugging.)
