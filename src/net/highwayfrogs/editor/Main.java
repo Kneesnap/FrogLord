@@ -28,18 +28,19 @@ public class Main {
         mwd.load(new DataReader(new FileSource(new File("./debug/VANILLA.MWD"))));
         mwd.save(new DataWriter(new FileReceiver(new File("./debug/MODDED.MWD"))));
 
-        //testStr("AAAABBBBAADBBAAACBBBAAAABBBB");
-        //testStr("ALERTALERTALERT");
+        testStr("AAAABBBBAADBBAAACBBBAAAABBBB");
+        testStr("ALERTALERTALERT");
         PP20Unpacker.OUTPUT = true;
         testStr("ALERTLERTERT");
     }
 
     private static void testStr(String test) {
-        System.out.println("Testing: " + test);
+        System.out.println("Testing: " + test + " (" + test.length() + ")");
         byte[] start = test.getBytes();
         byte[] compressed = PP20Packer.packData(start);
         System.out.println(Utils.toByteString(compressed) + " -> (" + compressed.length + ") " + new String(compressed).replace("\n", "\\n").replace("\r", "\\r"));
         byte[] decompressed = PP20Unpacker.unpackData(compressed);
         System.out.println(Utils.toByteString(decompressed) + " -> (" + decompressed.length + ") " + new String(decompressed));
+        Utils.verify(test.equals(new String(decompressed)), "TEST FAILED. %s %s", new String(compressed), test);
     }
 }

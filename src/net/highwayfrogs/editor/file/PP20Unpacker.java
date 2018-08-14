@@ -7,7 +7,6 @@ import java.util.Arrays;
 
 /**
  * PP20 Unpacker: Unpacks PowerPacker compressed data.
- *
  * Source:
  * Author: Josef Jelinek
  * URL: https://github.com/josef-jelinek/tiny-mod-player/blob/master/lib.gamod/src/gamod/unpack/PowerPacker.java
@@ -91,10 +90,11 @@ public class PP20Unpacker {
 
     private static int copyFromDecoded(BitReader in, byte[] out, int bytePos, int[] offsetBitLengths) {
         int run = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
+        System.out.println("Read Compression Level: " + run);
+
         int offBits = run == 3 && in.readBit() == 0 ? 7 : offsetBitLengths[run];
         int off = in.readBits(offBits);
 
-        System.out.println("Read Compression Level: " + run);
         if (OUTPUT)
             System.out.println("Offset Bits: " + offBits + " -> " + Arrays.toString(Utils.getBits(off, offBits)) + " -> Read Offset: " + off);
 
@@ -106,7 +106,7 @@ public class PP20Unpacker {
         run += PP20Packer.MINIMUM_DECODE_DATA_LENGTH;
         run += runInc;
         if (OUTPUT)
-            System.out.print("Read Length: " + (run + PP20Packer.MINIMUM_DECODE_DATA_LENGTH + runInc) + ", ");
+            System.out.print("Read Length: " + run + ", ");
 
         for (int i = 0; i < run; i++, bytePos--) {
             out[bytePos - 1] = out[bytePos + off];
@@ -144,6 +144,8 @@ public class PP20Unpacker {
         }
 
         public int readBits(int amount) {
+            //if (PP20Unpacker.OUTPUT)
+            //    System.out.println("Batch Read: " + amount);
             int num = 0;
             for (int i = 0; i < amount; i++)
                 num = num << 1 | readBit(); // Shift the existing read bits left, and add the next available bit. If you read four bits, it will read it like an integer.

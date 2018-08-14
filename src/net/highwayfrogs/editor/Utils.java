@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor;
 
+import java.util.List;
+
 /**
  * Some static utilities.
  * Created by Kneesnap on 8/12/2018.
@@ -83,5 +85,17 @@ public class Utils {
      */
     public static int flipBit(int bit) {
         return bit == Constants.BIT_TRUE ? Constants.BIT_FALSE : Constants.BIT_TRUE;
+    }
+
+    /**
+     * Turn a list of bytes into a byte array.
+     * @param list The list of bytes.
+     * @return byteArray
+     */
+    public static byte[] toArray(List<Byte> list) {
+        byte[] bytes = new byte[list.size()];
+        for (int i = 0; i < list.size(); i++)
+            bytes[i] = list.get(i);
+        return bytes;
     }
 }

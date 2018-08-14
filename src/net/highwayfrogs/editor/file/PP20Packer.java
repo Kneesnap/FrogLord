@@ -60,83 +60,85 @@ public class PP20Packer {
         return completeData;
     }
 
+    private static int search(byte[] data, int bufferEnd, List<Byte> target) { //TODO: Test.
+        for (int search = bufferEnd - target.size(); search >= 0; search--) { // Search for anywhere in the buffer.
+            boolean pass = true;
+            for (int i = 0; i < target.size(); i++)
+                if (target.get(i) != data[search + i])
+                    pass = false;
+
+            if (pass) {
+                return search;
+            }
+        }
+
+        return -1;
+    }
+
     private static byte[] compressData(byte[] data) {
         BitWriter writer = new BitWriter();
-        writeInputData(writer, new ByteArrayWrapper(data)); //TODO: Remove.
 
         // Search buffer is the left-side of the string. [Symbols we've already seen and already processed.]
         // The Look Ahead buffer is the right side of the string. [Contains symbols we haven't seen yet. 10s of symbols long.]
 
         // Encoder reads a symbol from the LA buffer, and attempt to find a match in the search buffer.
         // If it's found, read more from the Look Ahead buffer, and search backwards in the search buffer until it finds the longest match.
-        //   When that longest match is found, it is now the token. <Offset, Length, Next Byte after Symbol>
+        //   When that longest match is found, it is now the token. <Offset, Length>
         //   Shift the window (Buffer seperator) to right after the token we just compressed. (Not the original token)
         // Else, if the backwards search has no match, or we're seeing the search for the first time.
         //   Until one is found, compound all the missing ones together, and write with writeInput.
 
-        //TODO: Go through and try to step by step the string "ALERTLERTERT"
+        List<Byte> noMatchQueue = new ArrayList<>();
+        List<Byte> searchList = new ArrayList<>();
 
-        /*Map<ByteArrayWrapper, Integer> dictionary = new HashMap<>();
-
-        List<ByteArrayWrapper> wrapperList = new ArrayList<>();
-        ByteArrayWrapper sequence = new ByteArrayWrapper(new byte[0]);
-        int index = 0; //TODO: If data is one character, add a second one and try to build another dictionary input.
-        for (int i = 0; i < data.length; i++) { //TODO: Each iteration is a starting point.
+        for (int i = 0; i < data.length; i++) {
             byte temp = data[i];
 
-            ByteArrayWrapper checkMatch = sequence.appendNew(temp);
-            if (dictionary.containsKey(checkMatch)) {
-                 sequence = checkMatch;
-            } else {
-                if (sequence.getData().length > 0)
-                    wrapperList.add(sequence); //TODO: May not work for starting characters.
-                dictionary.putIfAbsent(sequence, index);
-                dictionary.putIfAbsent(checkMatch, index); //TODO: Verify this is right.
+            searchList.clear();
+            searchList.add(temp);
 
-                sequence = new ByteArrayWrapper(temp);
-                index = i;
+            int tempIndex;
+            int bestIndex = -1;
+            int readIndex = i;
+
+            while ((tempIndex = search(data, i, searchList)) >= 0) { // Find the longest compressable bunch of characters.
+                bestIndex = tempIndex;
+                if (data.length - 1 == readIndex) { // If we've reached the end of the data, exit. Add a null byte to the end because the end of this list will be removed.
+                    searchList.add(Constants.NULL_BYTE);
+                    break;
+                }
+
+                searchList.add(data[++readIndex]);
+            }
+
+            searchList.remove(searchList.size() - 1); // Remove the byte that was not found.
+
+            if (searchList.size() >= MINIMUM_DECODE_DATA_LENGTH) { // Large enough that it can be compressed.
+                boolean writeQueue = !noMatchQueue.isEmpty();
+                if (writeQueue) { // When a compressed one has been reached, write all the data in-between, if there is any.
+                    writeInputData(writer, Utils.toArray(noMatchQueue));
+                    noMatchQueue.clear();
+                }
+
+                if (writeDataLink(writer, Utils.toArray(searchList), i - bestIndex - 1, !writeQueue)) { // Data was written,
+                    i = readIndex - 1;
+                } else {
+                    noMatchQueue.add(temp);
+                }
+            } else { // It's not large enough to be compressed.
+                noMatchQueue.add(temp);
             }
         }
+        if (!noMatchQueue.isEmpty()) // Add whatever remains at the end, if there is any.
+            writeInputData(writer, Utils.toArray(noMatchQueue));
 
-        index = 0;
-        for (ByteArrayWrapper wrapper : wrapperList) {
-            int firstIndex = dictionary.get(wrapper);
-
-            if (wrapper.getData().length == 1 || firstIndex != index) { //TODO: Distance compare check.
-                writeInputData(writer, wrapper);
-                writeBlankLink(writer);
-            } else {
-                writeDataLink(writer, wrapper, dictionary, index);
-            }
-
-            index++;
-        }*/
-
-        // Map<String, Integer> <Substr, Index>
-        // Need to know: up will go decompressed.
-        // str = String to add.
-
-        //if (strLength == 1) or (str is the first occurance) or (Distance is past the compression setting)
-        //  writeBit(0) -> copyFromInput
-        //  write(strLength - 1) (0 -> writeBit(00). 1 -> writeBit(01). 2 -> writeBit(10). 3 -> writeBit(11) writeBit(00) 4 -> writeBit(11) writeBit(01). 5 -> writeBit(11) writeBit(10). 6 -> writeBit(11) writeBit(11) writeBit(00)
-        //  writeBytes(strBytes)
-        //else
-        //  writeBit(1) -> skip copyFromInput
-        //  int byteLength
-        //  writeBits(..?) <Length,Written> -> <0, 00>, <1, 01>, <2, 10>, <3+, 11> This writes the compression level.
-        //  wroteBit = Bit from last write. Compression setting?
-        //  if (wroteBit == 3)
-        //    writeBit(?) 0 = If the offset can fit in 7 bits. 1 = If the offset can not fit in 7 bits. If this is the case, it will use the compression level.
-        //  writeBits(offset) (Make sure offset matches with offset length.)
-        //  if (compressionSetting == 3) // wroteBit == 3
-        //    writeBit(addToByteLength) addToByteLength = (byteLength - 3) (3 Bits) 0 -> 000. 1 -> 001. 2 -> 010. 3 -> 011. 4 -> 100. 5 -> 101. 6 -> 110. 7 -> 111 000 (Make sure each three bits are grouped together in a writeBits call. But, if you have one that needs more than three bits, do it in multiple writeBits calls.)
-        //
+        System.out.println("INFO STUFF: " + writer.currentByte + ", " + writer.currentBit);
         return writer.toArray();
     }
 
-    private static void writeDataLink(BitWriter writer, ByteArrayWrapper wrapper, Map<ByteArrayWrapper, Integer> dictionary, int index) {
-        int byteOffset = index - dictionary.get(wrapper);
-        int byteLength = wrapper.getData().length;
+    //TODO: Make this accept the length, instead of the data itself, to save on memory. (After debugging.)
+    private static boolean writeDataLink(BitWriter writer, byte[] data, int byteOffset, boolean writeBit) {
+        int byteLength = data.length;
 
         // Calculate compression level.
         int maxCompressionIndex = COMPRESSION_SETTINGS.length - 1;
@@ -145,40 +147,42 @@ public class PP20Packer {
         boolean maxCompression = (compressionLevel == maxCompressionIndex);
         boolean useSmallOffset = maxCompression && Math.pow(2, DEFAULT_OFFSET_BITS) > byteOffset;
         int offsetSize = useSmallOffset ? DEFAULT_OFFSET_BITS : COMPRESSION_SETTINGS[compressionLevel];
+        if (byteOffset >= Math.pow(2, offsetSize)) // Past the max distance. Instead, add the bytes to the queue.
+            return false;
 
-        Utils.verify(Math.pow(2, offsetSize) > byteOffset, "Past max distance: %d.", byteOffset);
+        if (writeBit) // Should this write that there was no new data?
+            writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
 
         int writeLength = byteLength - compressionLevel;
-
-        writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
         writer.writeBits(Utils.getBits(compressionLevel, 2));
-        System.out.println("Wrote Compression Level: " + compressionLevel);
-
 
         if (maxCompression) {
             writer.writeBit(useSmallOffset ? Constants.BIT_FALSE : Constants.BIT_TRUE);
             writeLength -= MINIMUM_DECODE_DATA_LENGTH;
         }
 
-        System.out.println("Wrote Byte Offset " + byteOffset + " of bit-size: " + offsetSize + " bits.");
         writer.writeBits(Utils.getBits(byteOffset, offsetSize));
 
-        int writtenNum;
-        System.out.println("Writing Length: " + byteLength);
-        do { // Write the length of the data.
-            writtenNum = Math.min(writeLength, PP20Packer.WRITE_LENGTH_CONTINUE_DECODE);
-            writeLength -= writtenNum;
-            writer.writeBits(Utils.getBits(writtenNum, PP20Packer.LENGTH_BIT_INTERVAL_DECODE));
-        } while (writeLength > 0);
+        System.out.println("Writing Compressed: " + byteLength + " Real String: " + new String(data));
 
-        if (writtenNum == PP20Packer.WRITE_LENGTH_CONTINUE_DECODE) // Write null terminator if the last value was the "continue" character.
-            writer.writeBits(new int[LENGTH_BIT_INTERVAL_DECODE]);
+        if (maxCompression) {
+            int writtenNum;
+            do { // Write the length of the data.
+                writtenNum = Math.min(writeLength, PP20Packer.WRITE_LENGTH_CONTINUE_DECODE);
+                writeLength -= writtenNum;
+                writer.writeBits(Utils.getBits(writtenNum, PP20Packer.LENGTH_BIT_INTERVAL_DECODE));
+            } while (writeLength > 0);
+
+            if (writtenNum == PP20Packer.WRITE_LENGTH_CONTINUE_DECODE) // Write null terminator if the last value was the "continue" character.
+                writer.writeBits(new int[LENGTH_BIT_INTERVAL_DECODE]);
+        }
+        return true;
     }
 
-    private static void writeInputData(BitWriter writer, ByteArrayWrapper wrapper) {
+    private static void writeInputData(BitWriter writer, byte[] data) {
         writer.writeBit(READ_FROM_INPUT_BIT); // Indicates this should readFromInput, not readFromAbove.
 
-        int writeLength = wrapper.getData().length - 1;
+        int writeLength = data.length - 1;
         int writtenNum;
 
         do { // Write the length of the data.
@@ -190,36 +194,9 @@ public class PP20Packer {
         if (writtenNum == PP20Packer.WRITE_LENGTH_CONTINUE) // Write null terminator if the last value was the "continue" character.
             writer.writeBits(new int[PP20Packer.LENGTH_BIT_INTERVAL]);
 
-        for (byte toWrite : wrapper.getData()) // Writes the data.
+        System.out.println("Writing Input Data: " + new String(data));
+        for (byte toWrite : data) // Writes the data.
             writer.writeByte(toWrite);
-    }
-
-    @Getter
-    @AllArgsConstructor
-    // byte[] can't be used as a key in a HashMap, because of equals and hashCode. This class wraps around byte[] allowing us to use it in its place.
-    public static class ByteArrayWrapper {
-        private final byte[] data;
-
-        public ByteArrayWrapper(byte data) {
-            this(new byte[]{data});
-        }
-
-        public ByteArrayWrapper appendNew(byte append) {
-            byte[] newData = new byte[data.length + 1];
-            System.arraycopy(this.data, 0, newData, 0, data.length);
-            newData[newData.length - 1] = append;
-            return new ByteArrayWrapper(newData);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other instanceof ByteArrayWrapper && Arrays.equals(this.data, ((ByteArrayWrapper) other).getData());
-        }
-
-        @Override
-        public int hashCode() {
-            return Arrays.hashCode(this.data);
-        }
     }
 
     public static class BitWriter {
