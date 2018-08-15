@@ -15,7 +15,6 @@ import java.util.*;
 /**
  * MWAD File Format: Medieval WAD Archive.
  * This represents a loaded MWAD file.
- * TODO: Time how long it takes.
  * TODO: Full MWD file.
  * Created by Kneesnap on 8/10/2018.
  */
@@ -74,20 +73,20 @@ public class MWDFile extends GameObject {
             } while (writer.getIndex() > entry.getArchiveOffset());
             writer.jumpTo(entry.getArchiveOffset());
 
-            System.out.println("Saving " + entry.getFilePath() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ")");
+            long start = System.currentTimeMillis();
+            System.out.print("Saving " + entry.getFilePath() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ") ");
             ArrayReceiver receiver = new ArrayReceiver();
             file.save(new DataWriter(receiver));
 
             byte[] transfer = receiver.toArray();
             if (entry.isCompressed()) {
-                if (entry.getFilePath().contains("ORG")) {
-                    System.out.println("Compressing: " + entry.getFilePath());
+                if (entry.getFilePath().contains("ORG"))
                     transfer = PP20Packer.packData(transfer);
-                }
                 entry.setPackedSize(transfer.length);
             }
 
             writer.writeBytes(transfer);
+            System.out.println("Time: " + ((System.currentTimeMillis() - start) / 1000) + "s.");
         }
 
         // Fill the rest of the file with null bytes.
