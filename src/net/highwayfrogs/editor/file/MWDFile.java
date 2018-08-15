@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -47,7 +48,14 @@ public class MWDFile extends GameObject {
                 fileBytes = PP20Unpacker.unpackData(fileBytes);
 
             // Turn the byte data into the appropriate game-file.
-            DummyFile file = DummyFile.read(fileBytes); //TODO: Support actual file-types.
+            GameFile file;
+
+            if (entry.getTypeId() == PALFile.TYPE_ID) {
+                file = new PALFile();
+                file.load(new DataReader(new ArraySource(fileBytes)));
+            } else {
+                file = DummyFile.read(fileBytes); //TODO: Support actual file-types.
+            }
             entryMap.put(file, entry);
             files.add(file);
         }

@@ -18,6 +18,18 @@ public class DataReader {
     }
 
     /**
+     * Read the next byte.
+     * @return byteValue
+     */
+    public byte readByte() {
+        try {
+            return source.readByte();
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to read byte.", ex);
+        }
+    }
+
+    /**
      * Set the reader index.
      * @param newIndex The index to read data from.
      */
@@ -87,10 +99,23 @@ public class DataReader {
      * @return intValue
      */
     public int readInt() {
-        byte[] data = readBytes(4);
+        byte[] data = readBytes(Constants.INTEGER_SIZE);
         int value = 0;
         for (int i = 0; i < data.length; i++)
-            value += ((long) data[i] & 0xFFL) << (8 * i);
+            value += ((long) data[i] & 0xFFL) << (Constants.BITS_PER_BYTE * i);
+        return value;
+    }
+
+    /**
+     * Read the next bytes as a short.
+     * Reads two bytes.
+     * @return shortValue
+     */
+    public short readShort() {
+        byte[] data = readBytes(Constants.SHORT_SIZE);
+        short value = 0;
+        for (int i = 0; i < data.length; i++)
+            value += ((long) data[i] & 0xFFL) << (Constants.BITS_PER_BYTE * i);
         return value;
     }
 
@@ -113,7 +138,7 @@ public class DataReader {
 
         try {
             byte[] temp = new byte[1];
-            while ((temp[0] = source.readByte()) != terminator)
+            while ((temp[0] = readByte()) != terminator)
                 out.write(temp);
             out.close();
             return out.toString();

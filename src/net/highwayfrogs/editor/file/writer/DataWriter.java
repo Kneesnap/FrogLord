@@ -19,6 +19,7 @@ public class DataWriter {
     private DataReceiver output;
 
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
+    private static final ByteBuffer SHORT_BUFFER = ByteBuffer.allocate(Constants.SHORT_SIZE);
 
     public DataWriter(DataReceiver output) {
         this.output = output;
@@ -85,6 +86,27 @@ public class DataWriter {
     public void writeInt(int value) {
         INT_BUFFER.clear();
         writeBytes(INT_BUFFER.order(getEndian()).putInt(value).array());
+    }
+
+    /**
+     * Write a short to the receiver.
+     * @param value The short to write.
+     */
+    public void writeShort(short value) {
+        SHORT_BUFFER.clear();
+        writeBytes(SHORT_BUFFER.order(getEndian()).putShort(value).array());
+    }
+
+    /**
+     * Write the bytes to a string, then return the amount of bytes written.
+     * WARNING: This has no terminator or length, so only use this if you know what you're doing.
+     * @param str The string to write.
+     * @return byteCount
+     */
+    public int writeStringBytes(String str) {
+        byte[] bytes = str.getBytes();
+        writeBytes(bytes);
+        return bytes.length;
     }
 
     /**
