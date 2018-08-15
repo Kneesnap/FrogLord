@@ -46,11 +46,11 @@ public class MWDFile extends GameObject {
 
             // Read the file. Decompress if needed.
             byte[] fileBytes = reader.readBytes(entry.getArchiveSize());
-            if (entry.isCompressed() && entry.getFilePath().contains("ORG1.MAP"))
+            if (entry.isCompressed() && entry.getFilePath().contains("ORG1") && !entry.getFilePath().contains("WAD"))
                 fileBytes = PP20Unpacker.unpackData(fileBytes);
 
             // Turn the byte data into the appropriate game-file.
-            DummyFile file = new DummyFile(entry); //TODO: Support actual file-types.
+            DummyFile file = new DummyFile(fileBytes.length); //TODO: Support actual file-types.
             file.load(new DataReader(new ArraySource(fileBytes)));
 
             entryMap.put(file, entry);
@@ -79,7 +79,7 @@ public class MWDFile extends GameObject {
 
             byte[] transfer = receiver.toArray();
             if (entry.isCompressed()) {
-                if (entry.getFilePath().contains("ORG1.MAP"))
+                if (entry.getFilePath().contains("ORG1") && !entry.getFilePath().contains("WAD"))
                     transfer = PP20Packer.packData(transfer);
                 entry.setPackedSize(transfer.length);
             }

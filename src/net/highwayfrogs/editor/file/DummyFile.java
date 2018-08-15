@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -13,17 +12,17 @@ import java.nio.ByteBuffer;
  */
 @Getter
 public class DummyFile extends GameFile {
-    private FileEntry entry;
+    private int length;
     private ByteBuffer buffer;
 
-    public DummyFile(FileEntry entry) {
-        this.entry = entry;
-        this.buffer = ByteBuffer.allocate(entry.getArchiveSize());
+    public DummyFile(int length) {
+        this.length = length;
+        this.buffer = ByteBuffer.allocate(length);
     }
 
     @Override
     public void load(DataReader reader) {
-        this.buffer.put(reader.readBytes(entry.getArchiveSize()));
+        this.buffer.put(reader.readBytes(length));
     }
 
     @Override
