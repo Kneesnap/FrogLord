@@ -17,6 +17,7 @@ import java.util.*;
  * MWAD File Format: Medieval WAD Archive.
  * This represents a loaded MWAD file.
  *
+ * TODO: Crash on loading ORG1.
  * Created by Kneesnap on 8/10/2018.
  */
 public class MWDFile extends GameObject {
@@ -45,7 +46,7 @@ public class MWDFile extends GameObject {
 
             // Read the file. Decompress if needed.
             byte[] fileBytes = reader.readBytes(entry.getArchiveSize());
-            if (entry.isCompressed())
+            if (entry.isCompressed() && entry.getFilePath().contains("ORG1.MAP"))
                 fileBytes = PP20Unpacker.unpackData(fileBytes);
 
             // Turn the byte data into the appropriate game-file.
@@ -78,7 +79,8 @@ public class MWDFile extends GameObject {
 
             byte[] transfer = receiver.toArray();
             if (entry.isCompressed()) {
-                transfer = PP20Packer.packData(transfer);
+                if (entry.getFilePath().contains("ORG1.MAP"))
+                    transfer = PP20Packer.packData(transfer);
                 entry.setPackedSize(transfer.length);
             }
 

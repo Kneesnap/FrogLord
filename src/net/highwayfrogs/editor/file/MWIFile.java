@@ -88,7 +88,7 @@ public class MWIFile extends GameObject {
                 });
     }
 
-    private static final int getNullCount(int strByteLength) {
+    private static int getNullCount(int strByteLength) {
         return STR_TERMINATOR - (strByteLength % STR_TERMINATOR);
     }
 
