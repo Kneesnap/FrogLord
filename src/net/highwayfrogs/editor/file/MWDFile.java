@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -16,8 +15,8 @@ import java.util.*;
 /**
  * MWAD File Format: Medieval WAD Archive.
  * This represents a loaded MWAD file.
- *
- * TODO: Crash on loading ORG1.
+ * TODO: Time how long it takes.
+ * TODO: Full MWD file.
  * Created by Kneesnap on 8/10/2018.
  */
 public class MWDFile extends GameObject {
@@ -46,13 +45,11 @@ public class MWDFile extends GameObject {
 
             // Read the file. Decompress if needed.
             byte[] fileBytes = reader.readBytes(entry.getArchiveSize());
-            if (entry.isCompressed() && entry.getFilePath().contains("ORG1") && !entry.getFilePath().contains("WAD"))
+            if (entry.isCompressed() && entry.getFilePath().contains("ORG"))
                 fileBytes = PP20Unpacker.unpackData(fileBytes);
 
             // Turn the byte data into the appropriate game-file.
-            DummyFile file = new DummyFile(fileBytes.length); //TODO: Support actual file-types.
-            file.load(new DataReader(new ArraySource(fileBytes)));
-
+            DummyFile file = DummyFile.read(fileBytes); //TODO: Support actual file-types.
             entryMap.put(file, entry);
             files.add(file);
         }
@@ -68,10 +65,14 @@ public class MWDFile extends GameObject {
                 + "\nCreation Time: " + TIME_FORMAT.format(date)
                 + "\nThis map was changed using FrogLord.\n");
 
-        //TODO: If the existing offsets need to expand, alert the user, so they can replace the MWI. The MWI needs to export with exactly the same size as before... This should probably go in a seperate method, not directly here.
+        int sectorOffset = 0;
         for (GameFile file : files) {
             FileEntry entry = entryMap.get(file);
-            writer.jumpTo(entry.getArchiveOffset()); //TODO: Might need to expand if a file grows in size.
+
+            do { // Find the next unused sector, to write the next entry.
+                entry.setSectorOffset(++sectorOffset);
+            } while (writer.getIndex() > entry.getArchiveOffset());
+            writer.jumpTo(entry.getArchiveOffset());
 
             System.out.println("Saving " + entry.getFilePath() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ")");
             ArrayReceiver receiver = new ArrayReceiver();
@@ -79,8 +80,10 @@ public class MWDFile extends GameObject {
 
             byte[] transfer = receiver.toArray();
             if (entry.isCompressed()) {
-                if (entry.getFilePath().contains("ORG1") && !entry.getFilePath().contains("WAD"))
+                if (entry.getFilePath().contains("ORG")) {
+                    System.out.println("Compressing: " + entry.getFilePath());
                     transfer = PP20Packer.packData(transfer);
+                }
                 entry.setPackedSize(transfer.length);
             }
 
