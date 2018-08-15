@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Medieval Wad Index: Holds information about the MWD file.
  * Located in frogger.exe
+ * This should always export exactly the same size as the original MWI, as this gets pasted directly in the executable.
  * Created by Kneesnap on 8/10/2018.
  */
 @Getter
@@ -21,6 +22,7 @@ public class MWIFile extends GameObject {
     private int fileSize;
 
     private static final int ENTRY_LENGTH = 32;
+    private static final int STR_TERMINATOR = 4;
 
     @Override
     public void load(DataReader reader) {
@@ -64,7 +66,10 @@ public class MWIFile extends GameObject {
 
         for (FileEntry entry : getEntries()) {
             writer.writeInt(nameOffset);
-            nameOffset += entry.getFilePath().getBytes().length + 1; // The amount of bytes written + the terminator byte predicts the offset it actually goes.
+            int pathByteLength = entry.getFilePath().getBytes().length;
+            nameOffset += pathByteLength; // The amount of bytes written.
+            nameOffset += getNullCount(pathByteLength); // The terminator bytes predicts the offset it actually goes.
+
             writer.writeInt(entry.getFlags());
             writer.writeInt(entry.getTypeId());
             writer.writeInt(entry.getSectorOffset());
@@ -76,12 +81,19 @@ public class MWIFile extends GameObject {
 
         getEntries().stream()
                 .map(FileEntry::getFilePath)
-                .forEach(writer::writeTerminatorString);
-
-        writer.jumpTo(getFileSize()); // Our output file MUST match the exact size of the input file, because we're replacing this in the executable, so offsets matter. File paths appear to have a random (Cannot find any pattern) amount (1-4) of null bytes between them. Since we only have one null byte between the files, this is to make up for that lost space, since the file size must match.
+                .forEach(fileName -> {
+                    byte[] bytes = fileName.getBytes();
+                    writer.writeBytes(bytes);
+                    writer.writeNull(getNullCount(bytes.length));
+                });
     }
 
-    @Setter @Getter
+    private static final int getNullCount(int strByteLength) {
+        return STR_TERMINATOR - (strByteLength % STR_TERMINATOR);
+    }
+
+    @Setter
+    @Getter
     public static class FileEntry {
         private int flags; // Is a group? In a group? Compressed?
         private int typeId; //
@@ -135,7 +147,7 @@ public class MWIFile extends GameObject {
         @Override
         public String toString() {
             return "{" + getFilePath() + " Type: " + getTypeId() + ", Flags: " + getFlags() + ", Unpacked Size: "
-                    + getUnpackedSize() + ", "  + (isCompressed() ? "" : "Not ") + "Compressed}";
+                    + getUnpackedSize() + ", " + (isCompressed() ? "" : "Not ") + "Compressed}";
         }
     }
 }
