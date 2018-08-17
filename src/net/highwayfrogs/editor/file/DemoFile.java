@@ -29,16 +29,16 @@ public class DemoFile extends GameFile {
         this.startY = reader.readInt();
 
         while (true) {
-            int actionId = reader.readByte();
+            byte actionId = reader.readByte();
             DemoAction action = null;
 
             for (DemoAction test : DemoAction.values()) {
                 for (int check : test.getIds())
-                    if (actionId == check)
+                    if (actionId == (byte) check)
                         action = test;
             }
 
-            Utils.verify(action != null, "Unknown action for action id %d.", actionId);
+            Utils.verify(action != null, "Unknown action for action id 0x%s.", Utils.toByteString(actionId));
             getActions().add(action);
             if (action == DemoAction.STOP)
                 break;
