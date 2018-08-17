@@ -1,0 +1,57 @@
+Editor Features:
+
+- Finish demo parsing. Appears it supports multiple actions per-byte.
+
+- PAL parsing needs to be finished.
+
+- VLO Parsing:
+ Loading from VLO.
+ Exporting to BMP, PNG.
+ Importing from BMP, PNG.
+ Saving to VLO.
+
+ - MAP File
+ Loading from file.
+ Saving to file.
+
+ - .VB .VH File:
+ Loading from file.
+ Exporting to .WAV
+ Importing from .WAV
+ Saving to .VB, .VH.
+
+ - MOF File
+ Loading from file.
+ Saving to file.
+
+ - GUI Editor:
+  MWD Viewer (Folder Structure View)
+  Demo Editor
+  PAL Editor
+  Sound Editor
+  VLO Editor
+  Map Editor
+  MOF Editor
+
+Optimize PP20 compression further.
+Something which gets & saves the MWI from frogger.exe.
+Something which gets the remap table from frogger.exe.
+
+
+Non tool-development-related plans:
+ - Load the two developer maps.
+ - What are .PAL files even for?
+ - Differences between PSX and PC version files?
+
+
+TCRF Documentation Plans:
+ - Find unused textures
+ - Document unused developer stuff.
+ - Go through documents to look for information.
+ - Snail Racing
+ - Beta elements visible in game screenshots & videos.
+ - Interesting out of bounds / unused parts of levels.
+ - Original Menu Mockups.
+ - Extra undocumented cheat code.
+ - Ruins Zone
+ - Kao's Prototype.
