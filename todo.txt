@@ -1,7 +1,5 @@
 Editor Features:
 
-- Finish demo parsing. Appears it supports multiple actions per-byte.
-
 - PAL parsing needs to be finished.
 
 - VLO Parsing:

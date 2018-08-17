@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -14,7 +15,7 @@ import java.util.List;
  */
 @Getter
 public class DemoFile extends GameFile {
-    private List<DemoAction> actions = new ArrayList<>();
+    private List<List<DemoAction>> actions = new ArrayList<>();
     private int startX;
     private int startZ;
     private int startY;
@@ -30,17 +31,15 @@ public class DemoFile extends GameFile {
 
         while (reader.hasMore()) {
             byte actionId = reader.readByte();
-            DemoAction action = null;
 
-            for (DemoAction test : DemoAction.values()) {
-                for (int check : test.getIds())
-                    if (actionId == (byte) check)
-                        action = test;
-            }
+            List<DemoAction> actions = new ArrayList<>();
+            for (DemoAction action : DemoAction.values())
+                if (action.test(actionId))
+                    actions.add(action);
 
-            Utils.verify(action != null, "Unknown action for action id 0x%s.", Utils.toByteString(actionId));
-            getActions().add(action);
-            if (action == DemoAction.STOP)
+            Utils.verify(!actions.isEmpty(), "Unknown action for action id 0x%s.", Utils.toByteString(actionId));
+            getActions().add(actions);
+            if (actions.contains(DemoAction.STOP))
                 break;
         }
     }
@@ -50,30 +49,39 @@ public class DemoFile extends GameFile {
         writer.writeInt(getStartX());
         writer.writeInt(getStartZ());
         writer.writeInt(getStartY());
-        for (DemoAction action : getActions())
-            writer.writeByte((byte) action.getIds()[0]);
+
+        for (List<DemoAction> actions : getActions()) {
+            byte result = 0;
+            for (DemoAction action : actions)
+                result |= action.getId();
+            writer.writeByte(result);
+        }
+
         writer.jumpTo(FILE_SIZE); // Jump to end of file.
     }
 
     @Getter
+    @AllArgsConstructor
     public enum DemoAction {
-        UP("Move Up", 0, 4),
-        RIGHT("Move Right", 1, 5),
-        DOWN("Move Down", 2, 6),
-        LEFT("Move Left", 3, 7),
-        SUPER_HOP("Super Hop", 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x88),
-        ROTATE_COUNTER_CLOCKWISE("Rotate Camera Counter-Clockwise", 0x10, 0x20, 0xB0),
-        ROTATE_CLOCKWISE("Rotate Camera Clockwise", 0x30, 0x40, 0x50, 0xC0, 0xD0, 0xF0),
-        SKIP("Do Nothing", 0x80),
-        TONGUE("Tongue", 0x90),
-        STOP("End Demo", 0xA0);
+        UP("Move Up", 0x00, false),
+        RIGHT("Move Right", 0x01, false),
+        DOWN("Move Down", 0x02, false),
+        LEFT("Move Left", 0x03, false),
+        SUPER_HOP("Super Hop", 0x08, true),
+        TONGUE("Tongue", 0x10, true),
+        ROTATE_COUNTER_CLOCKWISE("Rotate Camera Counter-Clockwise", 0x20, true),
+        ROTATE_CLOCKWISE("Rotate Camera Clockwise", 0x40, true),
+        SKIP("Do Nothing", 0x80, true),
+        STOP("End Demo", 0xA0, false);
 
-        private int[] ids;
         private String info;
+        private int id;
+        private boolean additive;
 
-        DemoAction(String display, int... ids) {
-            this.info = display;
-            this.ids = ids;
+        public boolean test(byte actionId) {
+            return isAdditive()
+                    ? (actionId & getId()) == getId()
+                    : actionId == getId();
         }
     }
 }
