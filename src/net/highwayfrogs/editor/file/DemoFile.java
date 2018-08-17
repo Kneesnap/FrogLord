@@ -28,7 +28,7 @@ public class DemoFile extends GameFile {
         this.startZ = reader.readInt();
         this.startY = reader.readInt();
 
-        while (true) {
+        while (reader.hasMore()) {
             byte actionId = reader.readByte();
             DemoAction action = null;
 
@@ -61,7 +61,7 @@ public class DemoFile extends GameFile {
         RIGHT("Move Right", 1, 5),
         DOWN("Move Down", 2, 6),
         LEFT("Move Left", 3, 7),
-        SUPER_HOP("Super Hop", 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F),
+        SUPER_HOP("Super Hop", 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x88),
         ROTATE_COUNTER_CLOCKWISE("Rotate Camera Counter-Clockwise", 0x10, 0x20, 0xB0),
         ROTATE_CLOCKWISE("Rotate Camera Clockwise", 0x30, 0x40, 0x50, 0xC0, 0xD0, 0xF0),
         SKIP("Do Nothing", 0x80),

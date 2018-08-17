@@ -52,13 +52,19 @@ public class MWDFile extends GameObject {
 
             if (entry.getTypeId() == DemoFile.TYPE_ID) {
                 file = new DemoFile();
-                file.load(new DataReader(new ArraySource(fileBytes)));
             } else if (entry.getTypeId() == PALFile.TYPE_ID) {
                 file = new PALFile();
-                file.load(new DataReader(new ArraySource(fileBytes)));
             } else {
-                file = DummyFile.read(fileBytes); //TODO: Support actual file-types.
+                file = new DummyFile(fileBytes.length);  //TODO: Support actual file-types.
             }
+
+            try {
+                file.load(new DataReader(new ArraySource(fileBytes)));
+            } catch (Exception ex) {
+                throw new RuntimeException("Failed to load " + entry.getFilePath(), ex);
+            }
+
+
             entryMap.put(file, entry);
             files.add(file);
         }
