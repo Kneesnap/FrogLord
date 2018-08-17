@@ -81,6 +81,7 @@ public class MWDFile extends GameObject {
                 + "\nThis map was changed using FrogLord.\n");
 
         int sectorOffset = 0;
+        long mwdStart = System.currentTimeMillis();
         for (GameFile file : files) {
             FileEntry entry = entryMap.get(file);
 
@@ -103,6 +104,7 @@ public class MWDFile extends GameObject {
             writer.writeBytes(transfer);
             System.out.println("Time: " + ((System.currentTimeMillis() - start) / 1000) + "s.");
         }
+        System.out.println("MWD Built. Total Time: " + ((System.currentTimeMillis() - mwdStart) / 1000) + "s.");
 
         // Fill the rest of the file with null bytes.
         GameFile lastFile = files.get(files.size() - 1);
