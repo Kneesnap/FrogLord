@@ -38,10 +38,10 @@ public class PALFile extends GameFile {
         short colorCount = reader.readShort();
 
         for (int i = 0; i < colorCount; i++) {
-            byte red = reader.readByte();
-            byte green = reader.readByte();
-            byte blue = reader.readByte();
-            byte flag = reader.readByte();
+            int red = reader.readUnsignedByte();
+            int green = reader.readUnsignedByte();
+            int blue = reader.readUnsignedByte();
+            int flag = reader.readUnsignedByte();
             Utils.verify(flag == FLAG, "Unknown flag value.");
             getColors().add(new Color(red, green, blue));
         }
@@ -51,7 +51,7 @@ public class PALFile extends GameFile {
     public void save(DataWriter writer) {
         writer.writeStringBytes(RIFF_SIGNATURE);
 
-        int dataChunkSize = getColors().size() * COLOR_SIZE + 4;
+        int dataChunkSize = getColors().size() * COLOR_SIZE + (2 * Constants.INTEGER_SIZE);
         int fullSize = dataChunkSize + DATA_HEADER.length() + PAL_SIGNATURE.length() + Constants.INTEGER_SIZE + RIFF_SIGNATURE.length();
         writer.writeInt(fullSize);
 
@@ -63,9 +63,11 @@ public class PALFile extends GameFile {
 
         for (Color color : colors) {
             writer.writeByte((byte) color.getRed());
-            writer.writeByte((byte) color.getBlue());
             writer.writeByte((byte) color.getGreen());
+            writer.writeByte((byte) color.getBlue());
             writer.writeByte(FLAG);
         }
+
+        writer.writeNull(4); // Unsure what this serves, but it's there.
     }
 }

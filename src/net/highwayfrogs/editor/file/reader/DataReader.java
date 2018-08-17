@@ -92,6 +92,13 @@ public class DataReader {
         this.oldAddress = -1;
     }
 
+    /**
+     * Reads a single byte as an unsigned int.
+     * @return unsignedByte
+     */
+    public int readUnsignedByte() {
+        return Byte.toUnsignedInt(readByte());
+    }
 
     /**
      * Read the next bytes as an integer.

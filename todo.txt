@@ -1,7 +1,5 @@
 Editor Features:
 
-- PAL parsing needs to be finished.
-
 - VLO Parsing:
  Loading from VLO.
  Exporting to BMP, PNG.

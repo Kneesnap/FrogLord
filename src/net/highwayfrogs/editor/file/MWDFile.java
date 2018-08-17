@@ -52,9 +52,9 @@ public class MWDFile extends GameObject {
 
             if (entry.getTypeId() == DemoFile.TYPE_ID) {
                 file = new DemoFile();
-            } else /*if (entry.getTypeId() == PALFile.TYPE_ID) {
+            } else if (entry.getTypeId() == PALFile.TYPE_ID) {
                 file = new PALFile();
-            } else*/ {
+            } else {
                 file = new DummyFile(fileBytes.length);  //TODO: Support actual file-types.
             }
 
