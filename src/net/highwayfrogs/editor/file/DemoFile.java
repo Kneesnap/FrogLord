@@ -20,7 +20,7 @@ public class DemoFile extends GameFile {
     private int startY;
 
     public static final int TYPE_ID = 6;
-    private static final int FILE_SIZE = 714;
+    private static final int FILE_SIZE = 1812;
 
     @Override
     public void load(DataReader reader) {
