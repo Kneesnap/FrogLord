@@ -4,7 +4,10 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Packs a byte array into PP20 compressed data.
@@ -56,17 +59,31 @@ public class PP20Packer {
         return completeData;
     }
 
-    private static int search(byte[] data, int bufferEnd, List<Byte> target) {
+    private static int search(byte[] data, int bufferEnd, List<Byte> target, Map<Byte, List<Integer>> dictionary) {
         int minIndex = Math.max(0, bufferEnd - getMaximumOffset(target.size())); // There's a certain point at which data will not be compressed. By calculating it here, it saves a lot of overheard, and prevents this from becoming O(n^2)
 
-        for (int search = bufferEnd - target.size(); search >= minIndex; search--) { // Search for anywhere in the buffer.
-            boolean pass = true;
-            for (int i = 0; i < target.size(); i++)
-                if (target.get(i) != data[search + i])
-                    pass = false;
+        byte test = target.get(0);
+        if (!dictionary.containsKey(test))
+            return -1; // No results found.
 
-            if (pass)
-                return search;
+        List<Integer> possibleResults = dictionary.get(test);
+
+        for (int i = possibleResults.size() - 1; i >= 0; i--) {
+            int testIndex = possibleResults.get(i);
+            if (minIndex > testIndex)
+                break; // We've gone too far.
+
+            // Test this
+            boolean pass = true;
+            for (int j = 0; j < target.size(); j++) {
+                if (target.get(j) != data[j + testIndex]) {
+                    pass = false;
+                    break; // Break from the j for loop.
+                }
+            }
+
+            if (pass) // A match has been found. Return it.
+                return testIndex;
         }
 
         return -1;
@@ -77,6 +94,7 @@ public class PP20Packer {
         List<Byte> noMatchQueue = new ArrayList<>();
         List<Byte> searchList = new ArrayList<>();
 
+        Map<Byte, List<Integer>> dictionary = new HashMap<>();
         for (int i = 0; i < data.length; i++) {
             byte temp = data[i];
 
@@ -87,7 +105,7 @@ public class PP20Packer {
             int bestIndex = -1;
             int readIndex = i;
 
-            while ((tempIndex = search(data, i, searchList)) >= 0) { // Find the longest compressable bunch of characters.
+            while ((tempIndex = search(data, i, searchList, dictionary)) >= 0) { // Find the longest compressable bunch of characters.
                 bestIndex = tempIndex;
                 if (data.length - 1 == readIndex) { // If we've reached the end of the data, exit. Add a null byte to the end because the end of this list will be removed.
                     searchList.add(Constants.NULL_BYTE);
@@ -109,9 +127,23 @@ public class PP20Packer {
                 }
 
                 writeDataLink(writer, searchList.size(), byteOffset);
+
+                for (int j = 0; j < searchList.size(); j++) {
+                    int recordIndex = i + j;
+                    byte recordByte = searchList.get(j);
+                    if (!dictionary.containsKey(recordByte))
+                        dictionary.put(recordByte, new ArrayList<>());
+                    dictionary.get(recordByte).add(recordIndex);
+                }
+
                 i = readIndex - 1;
             } else { // It's not large enough to be compressed.
                 noMatchQueue.add(temp);
+
+                // Add current byte to the search dictionary.
+                if (!dictionary.containsKey(temp))
+                    dictionary.put(temp, new ArrayList<>());
+                dictionary.get(temp).add(i);
             }
         }
         if (!noMatchQueue.isEmpty()) // Add whatever remains at the end, if there is any.
