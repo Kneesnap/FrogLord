@@ -72,7 +72,7 @@ public class PP20Packer {
 
             // Test this
             boolean pass = true;
-            for (int j = 0; j < target.size(); j++) {
+            for (int j = 1; j < target.size(); j++) {
                 if (target.get(j) != data[j + testIndex]) {
                     pass = false;
                     break; // Break from the j for loop.
