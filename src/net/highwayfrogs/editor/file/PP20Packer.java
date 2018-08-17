@@ -4,10 +4,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Packs a byte array into PP20 compressed data.
@@ -211,7 +208,7 @@ public class PP20Packer {
     }
 
     public static class BitWriter {
-        private List<Byte> bytes = new ArrayList<>();
+        private LinkedList<Byte> bytes = new LinkedList<>();
         private int currentBit = Constants.BITS_PER_BYTE;
         private byte currentByte;
 
@@ -224,7 +221,7 @@ public class PP20Packer {
 
             // If the current byte is complete, add it to the list of bytes.
             if (--this.currentBit == 0) {
-                this.bytes.add(0, this.currentByte);
+                this.bytes.add(this.currentByte);
                 this.currentByte = 0;
                 this.currentBit = Constants.BITS_PER_BYTE;
             }
@@ -243,9 +240,12 @@ public class PP20Packer {
             while (this.currentBit != Constants.BITS_PER_BYTE)
                 writeBit(0);
 
-            byte[] arr = new byte[bytes.size()];
-            for (int i = 0; i < bytes.size(); i++)
-                arr[i] = bytes.get(i);
+            // Write in backwards order, because PP20 does that.
+            byte[] arr = new byte[this.bytes.size()];
+            int i = arr.length - 1;
+            for (Byte aByte : this.bytes)
+                arr[i--] = aByte;
+
             return arr;
         }
     }
