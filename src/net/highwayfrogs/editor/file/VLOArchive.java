@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -118,6 +119,41 @@ public class VLOArchive extends GameFile {
         private byte[] imageBytes;
 
         private static final int MAX_DIMENSION = 256;
+
+        /**
+         * Replace this texture with a new one.
+         * @param image The new image to use.
+         */
+        public void replaceImage(BufferedImage image) {
+            if (image.getType() != BufferedImage.TYPE_INT_ARGB) { // We can only parse TYPE_INT_ARGB, so if it's not that, we must convert the image to that, so it can be parsed properly.
+                BufferedImage sourceImage = image;
+                image = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                Graphics graphics = image.getGraphics();
+                graphics.drawImage(sourceImage, 0, 0, null);
+                graphics.dispose();
+            }
+
+            this.fullWidth = (short) image.getWidth();
+            this.fullHeight = (short) image.getHeight();
+
+            // Read image rgba data.
+            int[] array = new int[getFullHeight() * getFullWidth()];
+            image.getRGB(0, 0, getFullWidth(), getFullHeight(), array, 0, getFullWidth());
+
+            //Convert int array into byte array.
+            ByteBuffer buffer = ByteBuffer.allocate(array.length * Constants.INTEGER_SIZE);
+            buffer.asIntBuffer().put(array);
+            byte[] bytes = buffer.array();
+
+            // Convert BGRA -> ABGR, and write the new image bytes.
+            this.imageBytes = bytes; // Override existing image.
+            for (int i = 0; i < bytes.length; i += PIXEL_BYTES) { // Load image bytes.
+                this.imageBytes[i] = (byte) (0xFF - this.imageBytes[i]); // Flip alpha.
+                byte temp = this.imageBytes[i + 1];
+                this.imageBytes[i + 1] = this.imageBytes[i + 3];
+                this.imageBytes[i + 3] = temp;
+            }
+        }
 
         /**
          * Export this game image as a BufferedImage.

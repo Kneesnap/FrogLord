@@ -66,7 +66,6 @@ public class MWDFile extends GameObject {
                 throw new RuntimeException("Failed to load " + entry.getFilePath(), ex);
             }
 
-
             entryMap.put(file, entry);
             files.add(file);
         }
