@@ -171,7 +171,7 @@ public class DataReader {
         try {
             return source.readBytes(amount);
         } catch (IOException ex) {
-            throw new RuntimeException("Error while reading bytes.", ex);
+            throw new RuntimeException("Error while reading " + amount + " bytes.", ex);
         }
     }
 }

@@ -50,7 +50,9 @@ public class MWDFile extends GameObject {
             // Turn the byte data into the appropriate game-file.
             GameFile file;
 
-            if (entry.getTypeId() == DemoFile.TYPE_ID) {
+            if (entry.getTypeId() == VLOArchive.TYPE_ID) {
+                file = new VLOArchive();
+            } else if (entry.getTypeId() == DemoFile.TYPE_ID) {
                 file = new DemoFile();
             } else if (entry.getTypeId() == PALFile.TYPE_ID) {
                 file = new PALFile();
