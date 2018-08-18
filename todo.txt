@@ -1,10 +1,7 @@
 Editor Features:
 
 - VLO Parsing:
- Loading from VLO.
- Exporting to BMP, PNG.
  Importing from BMP, PNG.
- Saving to VLO.
 
  - MAP File
  Loading from file.
