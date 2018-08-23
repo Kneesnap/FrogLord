@@ -2,6 +2,6 @@
 .settings
 .classpath
 .project
-bin
+bin/
 out/
 debug/
