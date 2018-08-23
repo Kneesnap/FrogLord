@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor.file.reader;
 
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Stack;
 
 /**
  * A tool for reading information from a data source.
@@ -11,7 +13,7 @@ import java.io.IOException;
  */
 public class DataReader {
     private DataSource source;
-    private int oldAddress = -1;
+    private Stack<Integer> jumpStack = new Stack<>();
 
     public DataReader(DataSource source) {
         this.source = source;
@@ -75,10 +77,11 @@ public class DataReader {
 
     /**
      * Temporarily jump to an offset. Use jumpReturn to return.
+     * Jumps are recorded Last in First Out style.
      * @param newIndex The offset to jump to.
      */
     public void jumpTemp(int newIndex) {
-        this.oldAddress = getIndex();
+        this.jumpStack.add(getIndex());
         setIndex(newIndex);
     }
 
@@ -86,10 +89,7 @@ public class DataReader {
      * Return to the offset before jumpTemp was called.
      */
     public void jumpReturn() {
-        if (oldAddress < 0)
-            return;
-        setIndex(this.oldAddress);
-        this.oldAddress = -1;
+        setIndex(this.jumpStack.pop());
     }
 
     /**
@@ -133,6 +133,15 @@ public class DataReader {
      */
     public String readString(int length) {
         return new String(readBytes(length));
+    }
+
+    /**
+     * Verify the next few bytes match a string.
+     * @param verify The string to verify.
+     */
+    public void verifyString(String verify) {
+        String str = readString(verify.getBytes().length);
+        Utils.verify(str.equals(verify), "String verify failure! \"%s\" does not match \"%s\".", verify, str);
     }
 
     /**
