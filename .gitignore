@@ -1,2 +1,7 @@
+.idea
+.settings
+.classpath
+.project
+bin/
 out/
 debug/

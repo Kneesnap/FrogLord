@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.file.reader;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
 
 /**
  * Allows reading from a byte array.
