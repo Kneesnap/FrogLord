@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.sound;
 
-import com.sun.media.sound.WaveFileReader;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
@@ -115,7 +114,7 @@ public class VBFile extends GameFile {
          * @param file The file to replace this sound with.
          */
         public void replaceWithFile(File file) throws IOException, UnsupportedAudioFileException {
-            AudioInputStream inputStream = new WaveFileReader().getAudioInputStream(file);
+            AudioInputStream inputStream = AudioSystem.getAudioInputStream(file);
             getAudioData().clear();
 
             AudioFormat format = inputStream.getFormat();
