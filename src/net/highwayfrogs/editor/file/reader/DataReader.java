@@ -106,11 +106,7 @@ public class DataReader {
      * @return intValue
      */
     public int readInt() {
-        byte[] data = readBytes(Constants.INTEGER_SIZE);
-        int value = 0;
-        for (int i = 0; i < data.length; i++)
-            value += ((long) data[i] & 0xFFL) << (Constants.BITS_PER_BYTE * i);
-        return value;
+        return readInt(Constants.INTEGER_SIZE);
     }
 
     /**
@@ -121,6 +117,19 @@ public class DataReader {
     public short readShort() {
         byte[] data = readBytes(Constants.SHORT_SIZE);
         short value = 0;
+        for (int i = 0; i < data.length; i++)
+            value += ((long) data[i] & 0xFFL) << (Constants.BITS_PER_BYTE * i);
+        return value;
+    }
+
+    /**
+     * Read a variable number of bytes into an integer.
+     * @param bytes The number of bytes to read.
+     * @return intValue
+     */
+    public int readInt(int bytes) {
+        byte[] data = readBytes(bytes);
+        int value = 0;
         for (int i = 0; i < data.length; i++)
             value += ((long) data[i] & 0xFFL) << (Constants.BITS_PER_BYTE * i);
         return value;

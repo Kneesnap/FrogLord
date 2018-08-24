@@ -98,6 +98,23 @@ public class DataWriter {
     }
 
     /**
+     * Write a number, taking up a wanted amount of bytes.
+     * @param value The number value to write.
+     * @param bytes The number of bytes.
+     */
+    public void writeNumber(Number value, int bytes) {
+        if (bytes == Constants.BYTE_SIZE) {
+            writeByte(value.byteValue());
+        } else if (bytes == Constants.SHORT_SIZE) {
+            writeShort(value.shortValue());
+        } else if (bytes == Constants.INTEGER_SIZE) {
+            writeInt(value.intValue());
+        } else {
+            throw new RuntimeException("Failed to write " + value + ". Don't know how to write " + bytes + " bytes.");
+        }
+    }
+
+    /**
      * Write the bytes to a string, then return the amount of bytes written.
      * WARNING: This has no terminator or length, so only use this if you know what you're doing.
      * @param str The string to write.

@@ -8,6 +8,7 @@ public class Constants {
 
     public static final int CD_SECTOR_SIZE = 0x800;
 
+    public static final int BYTE_SIZE = 1;
     public static final int SHORT_SIZE = 2;
     public static final int INTEGER_SIZE = 4;
     public static final byte NULL_BYTE = (byte) 0;

@@ -1,29 +1,30 @@
 package net.highwayfrogs.editor.file;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineUnavailableException;
-
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.VHFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-// TODO: Write code to import/export WAV
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * Parses VB files and allows exporting to WAV, and importing audio files.
+ * TODO: Add support for importing audio files.
+ * TODO: Test exporting audio files.
+ * TODO: Move into a sound folder.
+ * Created by rdrpenguin04 on 8/22/2018.
+ */
 @Getter
 public class VBFile extends GameObject {
     private VHFile header;
-
-    private List<Byte> numChannels = new ArrayList<>();
-    private List<Integer> sampleRates = new ArrayList<>();
-    private List<Byte> bitWidths = new ArrayList<>();
-    private List<List<Integer>> audioData = new ArrayList<>();
+    private List<AudioEntry> audioEntries = new ArrayList<>();
 
     public VBFile(VHFile header) {
         this.header = header;
@@ -31,69 +32,108 @@ public class VBFile extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        for (FileEntry entry : header.getEntries()) {
-            getNumChannels().add((byte) entry.getChannels());
-            getSampleRates().add(entry.getSampleRate());
-            byte bitWidth;
-            getBitWidths().add(bitWidth = (byte) entry.getBitWidth());
-            reader.jumpTemp(entry.getDataStartOffset());
-            int size = entry.getDataSize();
-            List<Integer> curData;
-            getAudioData().add(curData = new ArrayList<Integer>());
-            for (int i = 0; i < size / bitWidth; i++) {
-                curData.add(bitWidth == 8 ? reader.readByte()
-                        : (bitWidth == 16 ? reader.readShort()
-                                : reader.readInt() /* Doubt we'll ever have 32-bit... */));
-            }
+        for (FileEntry vhEntry : header.getEntries()) {
+            AudioEntry audioEntry = new AudioEntry(vhEntry);
+
+            reader.jumpTemp(vhEntry.getDataStartOffset());
+            int readLength = vhEntry.getDataSize() / audioEntry.getBitWidth();
+            for (int i = 0; i < readLength; i++)
+                audioEntry.getAudioData().add(reader.readInt(audioEntry.getByteWidth()));
+            reader.jumpReturn();
+
+            this.audioEntries.add(audioEntry);
         }
     }
 
-    /**
-     * Run BEFORE saving the index back...
-     */
     @Override
     public void save(DataWriter writer) {
-        header.getEntries().clear();
-        int curPos = 0;
-        for (int i = 0; i < getAudioData().size(); i++) {
-            FileEntry entry = new FileEntry();
-            entry.setBitWidth(getBitWidths().get(i));
-            entry.setChannels(getNumChannels().get(i));
-            entry.setSampleRate(getSampleRates().get(i));
-            entry.setDataStartOffset(curPos);
-            List<Integer> data = getAudioData().get(i);
-            entry.setDataSize(data.size() * entry.getBitWidth() / 8);
-            for (int j = 0; j < data.size(); j++) {
-                if (entry.getBitWidth() == 8)
-                    writer.writeByte((byte) ((int) data.get(i)));
-                else if (entry.getBitWidth() == 16)
-                    writer.writeShort((short) ((int) data.get(i)));
-                else
-                    writer.writeInt(data.get(i));
-            }
-        }
+        for (AudioEntry entry : getAudioEntries())
+            for (int toWrite : entry.getAudioData())
+                writer.writeNumber(toWrite, entry.getByteWidth());
     }
 
-    public Clip toStandardAudio(int id) throws LineUnavailableException {
-        ArrayReceiver receiver = new ArrayReceiver();
-        DataWriter writer = new DataWriter(receiver);
-        // Copy-paste from save(DataWriter)
-        List<Integer> data = getAudioData().get(id);
-        for (int j = 0; j < data.size(); j++) {
-            if (getBitWidths().get(id) == 8)
-                writer.writeByte((byte) ((int) data.get(id)));
-            else if (getBitWidths().get(id) == 16)
-                writer.writeShort((short) ((int) data.get(id)));
-            else
-                writer.writeInt(data.get(id));
+    @Getter
+    private static class AudioEntry {
+        private FileEntry vhEntry;
+        private List<Integer> audioData = new ArrayList<>();
+
+        public AudioEntry(FileEntry vhEntry) {
+            this.vhEntry = vhEntry;
         }
 
-        byte[] byteData = receiver.toArray();
+        /**
+         * Export this audio entry as a standard audio clip.
+         * @return audioClip
+         */
+        public Clip toStandardAudio() throws LineUnavailableException {
+            ArrayReceiver receiver = new ArrayReceiver();
+            DataWriter writer = new DataWriter(receiver);
 
-        Clip result = AudioSystem.getClip();
-        result.open(new AudioFormat(getSampleRates().get(id), getBitWidths().get(id), getNumChannels().get(id), true,
-                false), byteData, 0, byteData.length);
+            for (int i = 0; i < getAudioData().size(); i++)
+                writer.writeNumber(getAudioData().get(i), getByteWidth());
+            byte[] byteData = receiver.toArray();
 
-        return result;
+            Clip result = AudioSystem.getClip();
+            result.open(new AudioFormat(getSampleRate(), getBitWidth(), getChannelCount(), true, false),
+                    byteData, 0, byteData.length);
+
+            return result;
+        }
+
+        /**
+         * Get the number of channels for this entry.
+         * @return channelCount
+         */
+        public int getChannelCount() {
+            return vhEntry.getChannels();
+        }
+
+        /**
+         * Set the number of channels for this entry.
+         * @param channelCount The new channel amount.
+         */
+        public void setChannelCount(int channelCount) {
+            vhEntry.setChannels(channelCount);
+        }
+
+        /**
+         * Gets the sample rate of this audio entry.
+         * @return sampleRate
+         */
+        public int getSampleRate() {
+            return vhEntry.getSampleRate();
+        }
+
+        /**
+         * Set the sample rate for this audio entry.
+         * @param newSampleRate The new sample rate.
+         */
+        public void setSampleRate(int newSampleRate) {
+            vhEntry.setSampleRate(newSampleRate);
+        }
+
+        /**
+         * Gets the bit width for this audio entry.
+         * @return bitWidth
+         */
+        public int getBitWidth() {
+            return vhEntry.getBitWidth();
+        }
+
+        /**
+         * Gets the byte width for this audio entry.
+         * @return byteWidth
+         */
+        public int getByteWidth() {
+            return getBitWidth() / Constants.BITS_PER_BYTE;
+        }
+
+        /**
+         * Sets the bit width for this audio entry.
+         * @param newBitWidth The new bit width.
+         */
+        public void setBitWidth(int newBitWidth) {
+            vhEntry.setBitWidth(newBitWidth);
+        }
     }
 }
