@@ -20,7 +20,6 @@ import java.util.List;
 /**
  * Parses VB files and allows exporting to WAV, and importing audio files.
  * TODO: Add support for importing audio files.
- * TODO: Test generating a MWD with this (MAPs disabled.)
  * Created by rdrpenguin04 on 8/22/2018.
  */
 @Getter

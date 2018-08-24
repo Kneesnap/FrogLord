@@ -11,8 +11,6 @@ import net.highwayfrogs.editor.Utils;
  * Copied on August 11, 2018. There is no license attached to the repository, however the author has explicitly granted permission to use this code.
  */
 public class PP20Unpacker {
-    public static boolean OUTPUT;
-
     /**
      * Is a given byte array PP20 compressed data?
      * @param a The bytes to test.

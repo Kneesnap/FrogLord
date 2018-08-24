@@ -5,10 +5,7 @@ Editor Features:
  Saving to file.
 
  - .VB .VH File:
- Loading from file.
- Exporting to .WAV
  Importing from .WAV
- Saving to .VB, .VH.
 
  - MOF File
  Loading from file.
