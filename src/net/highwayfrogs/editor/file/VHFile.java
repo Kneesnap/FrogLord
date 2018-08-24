@@ -34,10 +34,6 @@ public class VHFile extends GameObject {
             entry.setBitWidth(reader.readInt());
 
             getEntries().add(entry);
-            
-            if((i * ENTRY_LENGTH) < fileSize) {
-                throw new RuntimeException("Invalid number of entries in VH file!");
-            }
         }
     }
 
