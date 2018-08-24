@@ -8,17 +8,18 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.AudioFileFormat.Type;
+import javax.sound.sampled.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Parses VB files and allows exporting to WAV, and importing audio files.
  * TODO: Add support for importing audio files.
- * TODO: Test exporting audio files.
+ * TODO: Test generating a MWD with this (MAPs disabled.)
  * TODO: Move into a sound folder.
  * Created by rdrpenguin04 on 8/22/2018.
  */
@@ -48,12 +49,13 @@ public class VBFile extends GameFile {
             return;
         }
 
-        for (FileEntry vhEntry : header.getEntries()) {
-            AudioEntry audioEntry = new AudioEntry(SOUND_ID++, vhEntry);
+        while (header.getEntries().size() > SOUND_ID) {
+            FileEntry vhEntry = header.getEntries().get(SOUND_ID);
+            AudioEntry audioEntry = new AudioEntry(SOUND_ID, vhEntry);
 
-            reader.jumpTemp(vhEntry.getDataStartOffset());
-            int byteSize = vhEntry.getDataSize() / Constants.BITS_PER_BYTE;
+            int byteSize = vhEntry.getDataSize();
             int readLength = byteSize / audioEntry.getByteWidth();
+            reader.jumpTemp(vhEntry.getDataStartOffset());
 
             if (!reader.hasMore() || reader.getIndex() + byteSize > reader.getSize())
                 return; // For some reason, the .VH files have way more entries than the VB has files. It looks to me like the VH has entries for all audio files, not just ones present in the VB.
@@ -63,6 +65,7 @@ public class VBFile extends GameFile {
             reader.jumpReturn();
 
             this.audioEntries.add(audioEntry);
+            SOUND_ID++;
         }
     }
 
@@ -74,7 +77,7 @@ public class VBFile extends GameFile {
     }
 
     @Getter
-    private static class AudioEntry {
+    public static class AudioEntry {
         private FileEntry vhEntry;
         private int vanillaTrackId;
         private List<Integer> audioData = new ArrayList<>();
@@ -89,18 +92,42 @@ public class VBFile extends GameFile {
          * @return audioClip
          */
         public Clip toStandardAudio() throws LineUnavailableException {
+            byte[] byteData = toRawAudio();
+
+            Clip result = AudioSystem.getClip();
+            result.open(getAudioFormat(), byteData, 0, byteData.length);
+            return result;
+        }
+
+        /**
+         * Export this audio clip to a file.
+         * @param saveTo The audio file to export.
+         */
+        public void exportToFile(File saveTo) throws IOException, LineUnavailableException {
+            Clip clip = toStandardAudio();
+            AudioInputStream inputStream = new AudioInputStream(new ByteArrayInputStream(toRawAudio()), clip.getFormat(), clip.getFrameLength());
+            AudioSystem.write(inputStream, Type.WAVE, saveTo);
+        }
+
+        /**
+         * Gets the audio format used by this AudioEntry.
+         * @return audioFormat
+         */
+        public AudioFormat getAudioFormat() {
+            return new AudioFormat(getSampleRate(), getBitWidth(), getChannelCount(), true, false);
+        }
+
+        /**
+         * Return the audioentry as a raw audio byte array.
+         * @return byteData
+         */
+        public byte[] toRawAudio() {
             ArrayReceiver receiver = new ArrayReceiver();
             DataWriter writer = new DataWriter(receiver);
 
             for (int i = 0; i < getAudioData().size(); i++)
                 writer.writeNumber(getAudioData().get(i), getByteWidth());
-            byte[] byteData = receiver.toArray();
-
-            Clip result = AudioSystem.getClip();
-            result.open(new AudioFormat(getSampleRate(), getBitWidth(), getChannelCount(), true, false),
-                    byteData, 0, byteData.length);
-
-            return result;
+            return receiver.toArray();
         }
 
         /**
