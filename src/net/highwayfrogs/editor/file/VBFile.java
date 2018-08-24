@@ -19,7 +19,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 public class VBFile extends GameObject {
     private VHFile header;
-
+    
     private List<Byte> numChannels = new ArrayList<>();
     private List<Integer> sampleRates = new ArrayList<>();
     private List<Byte> bitWidths = new ArrayList<>();

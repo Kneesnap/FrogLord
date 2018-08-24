@@ -5,6 +5,7 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -21,7 +22,7 @@ public class VHFile extends GameObject {
 
         int numEntries = reader.readInt();
 
-        for (int i = 0; i < numEntries && ((i * ENTRY_LENGTH) < fileSize); i++) {
+        for (int i = 0; i < numEntries; i++) {
             FileEntry entry = new FileEntry();
 
             entry.setChannels(reader.readInt());
@@ -33,6 +34,10 @@ public class VHFile extends GameObject {
             entry.setBitWidth(reader.readInt());
 
             getEntries().add(entry);
+            
+            if((i * ENTRY_LENGTH) < fileSize) {
+                throw new RuntimeException("Invalid number of entries in VH file!");
+            }
         }
     }
 
