@@ -17,7 +17,7 @@ import java.util.List;
 @Getter
 public class VHFile extends GameFile {
     @Setter private VBFile VB;
-    private List<FileEntry> entries = new ArrayList<>();
+    private List<AudioHeader> entries = new ArrayList<>();
     private static final int ENTRY_LENGTH = 7 * Constants.INTEGER_SIZE;
     public static final int TYPE_ID = 2;
 
@@ -26,7 +26,7 @@ public class VHFile extends GameFile {
         int numEntries = reader.readInt();
 
         for (int i = 0; i < numEntries; i++) {
-            FileEntry entry = new FileEntry();
+            AudioHeader entry = new AudioHeader();
 
             entry.setChannels(reader.readInt());
             entry.setDataStartOffset(reader.readInt());
@@ -45,7 +45,7 @@ public class VHFile extends GameFile {
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(getEntries().size());
-        for (FileEntry entry : getEntries()) {
+        for (AudioHeader entry : getEntries()) {
             writer.writeInt(entry.getChannels());
             writer.writeInt(entry.getDataStartOffset());
             writer.writeInt(entry.getDataSize());
@@ -58,7 +58,7 @@ public class VHFile extends GameFile {
 
     @Setter
     @Getter
-    public static class FileEntry {
+    public static class AudioHeader {
         private int channels;
         private int dataStartOffset;
         private int dataSize;

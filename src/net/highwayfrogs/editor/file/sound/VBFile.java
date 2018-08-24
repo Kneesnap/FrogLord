@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.sound.VHFile.FileEntry;
+import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -25,7 +25,7 @@ import java.util.List;
 @Getter
 public class VBFile extends GameFile {
     private VHFile header;
-    private List<AudioEntry> audioEntries = new ArrayList<>();
+    private List<GameSound> audioEntries = new ArrayList<>();
     private DataReader cachedReader;
 
     public static int SOUND_ID;
@@ -49,8 +49,8 @@ public class VBFile extends GameFile {
         }
 
         while (header.getEntries().size() > SOUND_ID) {
-            FileEntry vhEntry = header.getEntries().get(SOUND_ID);
-            AudioEntry audioEntry = new AudioEntry(SOUND_ID, vhEntry);
+            AudioHeader vhEntry = header.getEntries().get(SOUND_ID);
+            GameSound audioEntry = new GameSound(SOUND_ID, vhEntry);
 
             int byteSize = vhEntry.getDataSize();
             int readLength = byteSize / audioEntry.getByteWidth();
@@ -70,20 +70,20 @@ public class VBFile extends GameFile {
 
     @Override
     public void save(DataWriter writer) {
-        for (AudioEntry entry : getAudioEntries())
+        for (GameSound entry : getAudioEntries())
             for (int toWrite : entry.getAudioData())
                 writer.writeNumber(toWrite, entry.getByteWidth());
     }
 
     @Getter
-    public static class AudioEntry {
-        private FileEntry vhEntry;
+    public static class GameSound {
+        private AudioHeader header;
         private int vanillaTrackId;
         private List<Integer> audioData = new ArrayList<>();
 
-        public AudioEntry(int vanillaTrackId, FileEntry vhEntry) {
+        public GameSound(int vanillaTrackId, AudioHeader vhEntry) {
             this.vanillaTrackId = vanillaTrackId;
-            this.vhEntry = vhEntry;
+            this.header = vhEntry;
         }
 
         /**
@@ -109,7 +109,15 @@ public class VBFile extends GameFile {
         }
 
         /**
-         * Gets the audio format used by this AudioEntry.
+         * Import a sound file to override
+         * @param file The file to replace this sound with.
+         */
+        public void replaceWithFile(File file) {
+
+        }
+
+        /**
+         * Gets the audio format used by this GameSound.
          * @return audioFormat
          */
         public AudioFormat getAudioFormat() {
@@ -134,7 +142,7 @@ public class VBFile extends GameFile {
          * @return channelCount
          */
         public int getChannelCount() {
-            return vhEntry.getChannels();
+            return header.getChannels();
         }
 
         /**
@@ -142,7 +150,7 @@ public class VBFile extends GameFile {
          * @param channelCount The new channel amount.
          */
         public void setChannelCount(int channelCount) {
-            vhEntry.setChannels(channelCount);
+            header.setChannels(channelCount);
         }
 
         /**
@@ -150,7 +158,7 @@ public class VBFile extends GameFile {
          * @return sampleRate
          */
         public int getSampleRate() {
-            return vhEntry.getSampleRate();
+            return header.getSampleRate();
         }
 
         /**
@@ -158,7 +166,7 @@ public class VBFile extends GameFile {
          * @param newSampleRate The new sample rate.
          */
         public void setSampleRate(int newSampleRate) {
-            vhEntry.setSampleRate(newSampleRate);
+            header.setSampleRate(newSampleRate);
         }
 
         /**
@@ -166,7 +174,7 @@ public class VBFile extends GameFile {
          * @return bitWidth
          */
         public int getBitWidth() {
-            return vhEntry.getBitWidth();
+            return header.getBitWidth();
         }
 
         /**
@@ -182,7 +190,7 @@ public class VBFile extends GameFile {
          * @param newBitWidth The new bit width.
          */
         public void setBitWidth(int newBitWidth) {
-            vhEntry.setBitWidth(newBitWidth);
+            header.setBitWidth(newBitWidth);
         }
     }
 }
