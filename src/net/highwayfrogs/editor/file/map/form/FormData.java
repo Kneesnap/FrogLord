@@ -15,7 +15,7 @@ public class FormData extends GameObject {
     private short height; // This is for if heightType is one height for the entire grid.
     private short[] gridFlags; // Believe this is ordered (z * xSize) + x
 
-    private static short FORM_HEIGHT_TYPE = (short) 0;
+    private static final short FORM_HEIGHT_TYPE = (short) 0;
 
     public FormData(Form parent) {
         this.parent = parent;
@@ -32,22 +32,13 @@ public class FormData extends GameObject {
         int heightsPointer = reader.readInt(); // Pointer to an array of grid heights. This would have been used in the "SQUARE" height mode, however that does not appear to be used in the vanilla game.
 
         int fullSize = parent.getXGridSquareCount() * parent.getZGridSquareCount();
-        if (fullSize % 2 == 0)
-            fullSize++;
+        if (fullSize % 2 > 0)
+            fullSize++; // Unfortunately, we don't understand how to generate the value that goes in that last spot. I think it'd be safe to have it be a null-short or something, but we may want to figure that out.
 
         reader.jumpTemp(squarePointer); // Really we don't need to jump, as the data is at the current read index, but this is to keep it in spec with the engine.
         this.gridFlags = new short[fullSize];
         for (int i = 0; i < gridFlags.length; i++)
             this.gridFlags[i] = reader.readShort();
-
-        // Maybe odd numbers get an extra byte?
-        // Maybe numbers that are the same?
-
-        // 01 01 -> Size: 2 (hmm) (1 * 1) + 1 = 2. ((1 + 1) * 1) = 2.
-        // 01 02 -> Size: 2 (huh.)(1 * 2) = 2. (
-        // 01 04 -> Size: 4 (1 * 4)
-        // 03 03 -> Size: 10 (3 * 3) + 1.
-        // 01 03 -> Size: 4
 
         reader.jumpReturn();
     }
