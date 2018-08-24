@@ -28,6 +28,8 @@ public class VBFile extends GameFile {
     private List<AudioEntry> audioEntries = new ArrayList<>();
     private DataReader cachedReader;
 
+    public static int SOUND_ID;
+
     /**
      * Load the VB file, with the mandatory VH file.
      * @param file The VHFile to load information from.
@@ -47,10 +49,15 @@ public class VBFile extends GameFile {
         }
 
         for (FileEntry vhEntry : header.getEntries()) {
-            AudioEntry audioEntry = new AudioEntry(vhEntry);
+            AudioEntry audioEntry = new AudioEntry(SOUND_ID++, vhEntry);
 
             reader.jumpTemp(vhEntry.getDataStartOffset());
-            int readLength = vhEntry.getDataSize() / audioEntry.getBitWidth();
+            int byteSize = vhEntry.getDataSize() / Constants.BITS_PER_BYTE;
+            int readLength = byteSize / audioEntry.getByteWidth();
+
+            if (!reader.hasMore() || reader.getIndex() + byteSize > reader.getSize())
+                return; // For some reason, the .VH files have way more entries than the VB has files. It looks to me like the VH has entries for all audio files, not just ones present in the VB.
+
             for (int i = 0; i < readLength; i++)
                 audioEntry.getAudioData().add(reader.readInt(audioEntry.getByteWidth()));
             reader.jumpReturn();
@@ -69,9 +76,11 @@ public class VBFile extends GameFile {
     @Getter
     private static class AudioEntry {
         private FileEntry vhEntry;
+        private int vanillaTrackId;
         private List<Integer> audioData = new ArrayList<>();
 
-        public AudioEntry(FileEntry vhEntry) {
+        public AudioEntry(int vanillaTrackId, FileEntry vhEntry) {
+            this.vanillaTrackId = vanillaTrackId;
             this.vhEntry = vhEntry;
         }
 

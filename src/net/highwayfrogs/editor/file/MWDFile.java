@@ -38,6 +38,8 @@ public class MWDFile extends GameObject {
         Utils.verify(marker.equals(MARKER), "MWD Identifier %s was incorrectly read as %s!", MARKER, marker);
 
         VBFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
+        VBFile.SOUND_ID = 0; // This must be reset when an MWD is loaded. Unfortunately, this also means we can only load one MWD at once. But, why would we do otherwise?
+
         for (FileEntry entry : wadIndexTable.getEntries()) {
             if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
                 continue; // This file is part of a WAD archive, and isn't a file entry in the MWD, so we can't load it here.

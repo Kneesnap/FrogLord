@@ -167,7 +167,7 @@ public class DataReader {
                 out.write(temp);
             out.close();
             return out.toString();
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("Failed to read terminating string.", ex);
         }
     }
@@ -188,7 +188,7 @@ public class DataReader {
     public byte[] readBytes(int amount) {
         try {
             return source.readBytes(amount);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("Error while reading " + amount + " bytes.", ex);
         }
     }
