@@ -141,7 +141,7 @@ public class DataReader {
      */
     public void verifyString(String verify) {
         String str = readString(verify.getBytes().length);
-        Utils.verify(str.equals(verify), "String verify failure! \"%s\" does not match \"%s\".", verify, str);
+        Utils.verify(str.equals(verify), "String verify failure! \"%s\" does not match \"%s\".", str, verify);
     }
 
     /**

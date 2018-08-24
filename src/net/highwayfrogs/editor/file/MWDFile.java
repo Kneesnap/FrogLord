@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
@@ -50,8 +51,17 @@ public class MWDFile extends GameObject {
             // Turn the byte data into the appropriate game-file.
             GameFile file;
 
-            if (entry.getTypeId() == VLOArchive.TYPE_ID) {
+            String fileName = entry.getFilePath();
+            fileName = fileName.substring(fileName.lastIndexOf("\\") + 1);
+
+            if (entry.getTypeId() == VLOArchive.TYPE_ID || fileName.startsWith("LS_ALL")) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
                 file = new VLOArchive();
+            } else if (entry.getTypeId() == MAPFile.TYPE_ID) {
+                if (fileName.startsWith("SKY_LAND")) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
+                    file = new DummyFile(fileBytes.length); // TODO: Parse this file later.
+                } else {
+                    file = new MAPFile();
+                }
             } else if (entry.getTypeId() == DemoFile.TYPE_ID) {
                 file = new DemoFile();
             } else if (entry.getTypeId() == PALFile.TYPE_ID) {

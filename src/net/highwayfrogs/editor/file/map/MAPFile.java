@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.map;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.map.form.Form;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -23,6 +24,7 @@ public class MAPFile extends GameFile {
     private SVector cameraSourceOffset;
     private SVector cameraTargetOffset;
     private List<Zone> zones = new ArrayList<>();
+    private List<Form> forms = new ArrayList<>();
 
     public static final int TYPE_ID = 0;
     private static final String SIGNATURE = "FROG";
@@ -95,19 +97,25 @@ public class MAPFile extends GameFile {
 
         for (int i = 0; i < zoneCount; i++) {
             reader.jumpTemp(reader.readInt()); // Move to the zone location.
-
             Zone zone = new Zone();
             zone.load(reader);
             this.zones.add(zone);
-
             reader.jumpReturn();
         }
 
+        // Read forms.
         reader.setIndex(formAddress);
         reader.verifyString(FORM_SIGNATURE);
         short formCount = reader.readShort();
         reader.readShort(); // Padding.
-        //TODO: Read forms.
+
+        for (int i = 0; i < formCount; i++) {
+            reader.jumpTemp(reader.readInt());
+            Form form = new Form();
+            form.load(reader);
+            forms.add(form);
+            reader.jumpReturn();
+        }
 
         //TODO: Read rest of map.
     }
