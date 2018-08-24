@@ -37,6 +37,7 @@ public class MWDFile extends GameObject {
         String marker = reader.readString(MARKER.length());
         Utils.verify(marker.equals(MARKER), "MWD Identifier %s was incorrectly read as %s!", MARKER, marker);
 
+        VBFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
         for (FileEntry entry : wadIndexTable.getEntries()) {
             if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
                 continue; // This file is part of a WAD archive, and isn't a file entry in the MWD, so we can't load it here.
@@ -66,6 +67,15 @@ public class MWDFile extends GameObject {
                 file = new DemoFile();
             } else if (entry.getTypeId() == PALFile.TYPE_ID) {
                 file = new PALFile();
+            } else if (entry.getTypeId() == VHFile.TYPE_ID) {
+                if (lastVB != null) {
+                    VHFile vhFile = new VHFile();
+                    vhFile.setVB(lastVB);
+                    file = vhFile;
+                } else {
+                    file = new VBFile();
+                }
+
             } else {
                 file = new DummyFile(fileBytes.length);  //TODO: Support actual file-types.
             }
@@ -78,6 +88,7 @@ public class MWDFile extends GameObject {
 
             entryMap.put(file, entry);
             files.add(file);
+            lastVB = file instanceof VBFile ? (VBFile) file : null;
         }
     }
 

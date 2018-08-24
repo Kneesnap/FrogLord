@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.VHFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
@@ -22,16 +23,29 @@ import java.util.List;
  * Created by rdrpenguin04 on 8/22/2018.
  */
 @Getter
-public class VBFile extends GameObject {
+public class VBFile extends GameFile {
     private VHFile header;
     private List<AudioEntry> audioEntries = new ArrayList<>();
+    private DataReader cachedReader;
 
-    public VBFile(VHFile header) {
-        this.header = header;
+    /**
+     * Load the VB file, with the mandatory VH file.
+     * @param file The VHFile to load information from.
+     */
+    public void load(VHFile file) {
+        Utils.verify(this.cachedReader != null, "Tried to load VB without a reader.");
+        this.header = file;
+        load(this.cachedReader);
+        this.cachedReader = null;
     }
 
     @Override
     public void load(DataReader reader) {
+        if (getHeader() == null) {
+            this.cachedReader = reader;
+            return;
+        }
+
         for (FileEntry vhEntry : header.getEntries()) {
             AudioEntry audioEntry = new AudioEntry(vhEntry);
 

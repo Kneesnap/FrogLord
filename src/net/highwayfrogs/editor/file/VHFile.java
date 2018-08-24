@@ -14,9 +14,11 @@ import java.util.List;
  * Created by rdrpenguin04 on 8/22/2018.
  */
 @Getter
-public class VHFile extends GameObject {
+public class VHFile extends GameFile {
+    @Setter private VBFile VB;
     private List<FileEntry> entries = new ArrayList<>();
     private static final int ENTRY_LENGTH = 7 * Constants.INTEGER_SIZE;
+    public static final int TYPE_ID = 2;
 
     @Override
     public void load(DataReader reader) {
@@ -35,6 +37,8 @@ public class VHFile extends GameObject {
 
             getEntries().add(entry);
         }
+
+        getVB().load(this); // Load the linked body file.
     }
 
     @Override
