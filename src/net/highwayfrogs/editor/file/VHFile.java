@@ -1,27 +1,28 @@
 package net.highwayfrogs.editor.file;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Parses VH files.
+ * Created by rdrpenguin04 on 8/22/2018.
+ */
 @Getter
 public class VHFile extends GameObject {
     private List<FileEntry> entries = new ArrayList<>();
-    private int fileSize;
-
-    private static final int ENTRY_LENGTH = 28;
+    private static final int ENTRY_LENGTH = 7 * Constants.INTEGER_SIZE;
 
     @Override
     public void load(DataReader reader) {
-        this.fileSize = reader.getSize();
-
         int numEntries = reader.readInt();
 
-        for (int i = 0; i < numEntries && ((i * ENTRY_LENGTH) < fileSize); i++) {
+        for (int i = 0; i < numEntries; i++) {
             FileEntry entry = new FileEntry();
 
             entry.setChannels(reader.readInt());
