@@ -1,10 +1,11 @@
-package net.highwayfrogs.editor.file;
+package net.highwayfrogs.editor.file.sound;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
-import net.highwayfrogs.editor.file.VHFile.FileEntry;
+import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.sound.VHFile.FileEntry;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -20,7 +21,6 @@ import java.util.List;
  * Parses VB files and allows exporting to WAV, and importing audio files.
  * TODO: Add support for importing audio files.
  * TODO: Test generating a MWD with this (MAPs disabled.)
- * TODO: Move into a sound folder.
  * Created by rdrpenguin04 on 8/22/2018.
  */
 @Getter

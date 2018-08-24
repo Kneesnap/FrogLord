@@ -1,8 +1,9 @@
-package net.highwayfrogs.editor.file;
+package net.highwayfrogs.editor.file.sound;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
