@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor.file.sound;
 
+import com.sun.media.sound.WaveFileReader;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
@@ -11,6 +13,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import javax.sound.sampled.AudioFileFormat.Type;
 import javax.sound.sampled.*;
+import javax.sound.sampled.AudioFormat.Encoding;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +22,6 @@ import java.util.List;
 
 /**
  * Parses VB files and allows exporting to WAV, and importing audio files.
- * TODO: Add support for importing audio files.
  * Created by rdrpenguin04 on 8/22/2018.
  */
 @Getter
@@ -112,8 +114,32 @@ public class VBFile extends GameFile {
          * Import a sound file to override
          * @param file The file to replace this sound with.
          */
-        public void replaceWithFile(File file) {
+        public void replaceWithFile(File file) throws IOException, UnsupportedAudioFileException {
+            AudioInputStream inputStream = new WaveFileReader().getAudioInputStream(file);
+            getAudioData().clear();
 
+            AudioFormat format = inputStream.getFormat();
+            Utils.verify(!format.isBigEndian(), "Big Endian audio files are not accepted.");
+            Utils.verify(format.getEncoding() == Encoding.PCM_SIGNED, "Unsigned audio files are not supported. (%s)", format.getEncoding());
+
+            header.setBitWidth(format.getSampleSizeInBits());
+            header.setChannels(format.getChannels());
+            header.setSampleRate((int) format.getSampleRate());
+
+            ArrayReceiver receiver = new ArrayReceiver();
+            DataWriter writer = new DataWriter(receiver);
+            int byteLength = getByteWidth();
+
+            byte[] buffer = new byte[byteLength];
+            while (inputStream.read(buffer) != -1)
+                writer.writeBytes(buffer);
+
+            byte[] data = receiver.toArray();
+            header.setDataSize(data.length);
+
+            DataReader reader = new DataReader(new ArraySource(data));
+            while (reader.hasMore())
+                this.audioData.add(reader.readInt(byteLength));
         }
 
         /**
@@ -146,27 +172,11 @@ public class VBFile extends GameFile {
         }
 
         /**
-         * Set the number of channels for this entry.
-         * @param channelCount The new channel amount.
-         */
-        public void setChannelCount(int channelCount) {
-            header.setChannels(channelCount);
-        }
-
-        /**
          * Gets the sample rate of this audio entry.
          * @return sampleRate
          */
         public int getSampleRate() {
             return header.getSampleRate();
-        }
-
-        /**
-         * Set the sample rate for this audio entry.
-         * @param newSampleRate The new sample rate.
-         */
-        public void setSampleRate(int newSampleRate) {
-            header.setSampleRate(newSampleRate);
         }
 
         /**
@@ -183,14 +193,6 @@ public class VBFile extends GameFile {
          */
         public int getByteWidth() {
             return getBitWidth() / Constants.BITS_PER_BYTE;
-        }
-
-        /**
-         * Sets the bit width for this audio entry.
-         * @param newBitWidth The new bit width.
-         */
-        public void setBitWidth(int newBitWidth) {
-            header.setBitWidth(newBitWidth);
         }
     }
 }

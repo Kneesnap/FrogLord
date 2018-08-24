@@ -45,14 +45,27 @@ public class VHFile extends GameFile {
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(getEntries().size());
+
+        int offset = 0;
+        int lastEntry = -1;
+        int lastSize = 0;
         for (AudioHeader entry : getEntries()) {
             writer.writeInt(entry.getChannels());
+
+            // Recalculate data offsets.
+            int currentOffset = entry.getDataStartOffset();
+            if (lastEntry >= 0 && currentOffset > lastEntry)
+                offset += lastSize;
+
+            entry.setDataStartOffset(offset);
             writer.writeInt(entry.getDataStartOffset());
             writer.writeInt(entry.getDataSize());
             writer.writeInt(entry.getUnknown1());
             writer.writeInt(entry.getUnknown2());
             writer.writeInt(entry.getSampleRate());
             writer.writeInt(entry.getBitWidth());
+            lastEntry = currentOffset;
+            lastSize = entry.getDataSize();
         }
     }
 

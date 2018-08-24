@@ -4,9 +4,6 @@ Editor Features:
  Loading from file.
  Saving to file.
 
- - .VB .VH File:
- Importing from .WAV
-
  - MOF File
  Loading from file.
  Saving to file.
