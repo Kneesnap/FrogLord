@@ -43,7 +43,7 @@ public class PP20Packer {
         }
 
         // Take the compressed data, and pad it with the file structure. Then, we're done.
-        byte[] compressedData = fastConvert(data);
+        byte[] compressedData = compressData(data);
         byte[] completeData = new byte[compressedData.length + 12];
         System.arraycopy(compressedData, 0, completeData, 8, compressedData.length); // Copy compressed data.
 
@@ -57,7 +57,7 @@ public class PP20Packer {
     }
 
     private static int search(byte[] data, int bufferEnd, List<Byte> target, Map<Byte, List<Integer>> dictionary) {
-        int minIndex = Math.max(0, bufferEnd - getMaximumOffset(target.size()));
+        int minIndex = Math.max(0, bufferEnd - getMaximumOffset(target.size())); // There's a certain point at which data will not be compressed. By calculating it here, it saves a lot of overheard, and prevents this from becoming O(n^2)
 
         byte test = target.get(0);
         if (!dictionary.containsKey(test))
@@ -84,21 +84,6 @@ public class PP20Packer {
         }
 
         return -1;
-    }
-    
-    private static byte[] fastConvert(byte[] data) {
-        BitWriter writer = new BitWriter();
-        int[] three = new int[] {1, 1};
-        
-        writer.writeBit(1);
-        for(int i = 0; i < data.length / 3; i++) {
-            writer.writeBits(three);
-        }
-        writer.writeBits(Utils.getBits(data.length - (data.length / 3) * 3, 2));
-        
-        for(int i = 0; i < data.length; i++) writer.writeByte(data[i]);
-        
-        return writer.toArray();
     }
 
     private static byte[] compressData(byte[] data) {
