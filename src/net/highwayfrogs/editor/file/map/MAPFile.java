@@ -2,7 +2,9 @@ package net.highwayfrogs.editor.file.map;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
+import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -25,6 +27,9 @@ public class MAPFile extends GameFile {
     private SVector cameraTargetOffset;
     private List<Zone> zones = new ArrayList<>();
     private List<Form> forms = new ArrayList<>();
+    private List<Entity> entities = new ArrayList<>();
+    private List<Light> lights = new ArrayList<>();
+    private SVector basePoint; // This is the bottom left of the map group grid.
 
     public static final int TYPE_ID = 0;
     private static final String SIGNATURE = "FROG";
@@ -34,6 +39,10 @@ public class MAPFile extends GameFile {
     private static final String PATH_SIGNATURE = "PATH";
     private static final String ZONE_SIGNATURE = "ZONE";
     private static final String FORM_SIGNATURE = "FORM";
+    private static final String ENTITY_SIGNATURE = "EMTP";
+    private static final String GRAPHICAL_SIGNATURE = "GRAP";
+    private static final String LIGHT_SIGNATURE = "LITE";
+    private static final String GROUP_SIGNATURE = "GROU";
 
     @Override
     public void load(DataReader reader) {
@@ -116,6 +125,48 @@ public class MAPFile extends GameFile {
             forms.add(form);
             reader.jumpReturn();
         }
+
+        // Read entities
+        reader.setIndex(entityAddress);
+        reader.verifyString(ENTITY_SIGNATURE);
+        int entityPacketLength = reader.readInt();
+        int entityCount = reader.readShort();
+        reader.readShort(); // Padding.
+
+        for (int i = 0; i < entityCount; i++) {
+            reader.jumpTemp(reader.readInt());
+            Entity entity = new Entity();
+            entity.load(reader);
+            entities.add(entity);
+            reader.jumpReturn();
+        }
+
+        reader.setIndex(graphicalAddress);
+        reader.verifyString(GRAPHICAL_SIGNATURE);
+        int lightAddress = reader.readInt();
+        int groupAddress = reader.readInt();
+        int polygonAddress = reader.readInt();
+        int vertexAddress = reader.readInt();
+        int gridAddress = reader.readInt();
+        int animAddress = reader.readInt();
+
+        reader.setIndex(lightAddress);
+        reader.verifyString(LIGHT_SIGNATURE);
+        int lightCount = reader.readInt();
+        for (int i = 0; i < lightCount; i++) {
+            Light light = new Light();
+            light.load(reader);
+            lights.add(light);
+        }
+
+        reader.setIndex(groupAddress);
+        reader.verifyString(GROUP_SIGNATURE);
+        this.basePoint = SVector.readWithPadding(reader);
+        short xNum = reader.readShort(); // Number of groups in x.
+        short zNum = reader.readShort(); // Number of groups in z.
+        short xLen = reader.readShort(); // Group X Length
+        short zLen = reader.readShort(); // Group Z Length
+        //TODO: Read MAP_GROUPs
 
         //TODO: Read rest of map.
     }

@@ -11,6 +11,7 @@ public class Constants {
     public static final int BYTE_SIZE = 1;
     public static final int SHORT_SIZE = 2;
     public static final int INTEGER_SIZE = 4;
+    public static final int POINTER_SIZE = INTEGER_SIZE;
     public static final byte NULL_BYTE = (byte) 0;
 
     public static final int BIT_TRUE = 1;
