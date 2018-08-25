@@ -67,6 +67,8 @@ public class MWDFile extends GameObject {
                 } else {
                     file = new MAPFile();
                 }
+            } else if (entry.getTypeId() == WADFile.TYPE_ID) {
+                file = new WADFile();
             } else if (entry.getTypeId() == DemoFile.TYPE_ID) {
                 file = new DemoFile();
             } else if (entry.getTypeId() == PALFile.TYPE_ID) {
