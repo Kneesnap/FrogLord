@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.mof.MAPMOFFile;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -36,18 +36,9 @@ public class WADFile extends GameFile {
             reader.readInt(); // Padding.
             byte[] data = reader.readBytes(size);
 
-            GameFile file;
-            switch (fileType) {
-                case MOFFile.TYPE_ID:
-                    file = new MOFFile();
-                    break;
-                case MAPMOFFile.TYPE_ID:
-                    file = new MAPMOFFile();
-                    break;
-                default:
-                    throw new RuntimeException("Unexpected WAD file of type: " + fileType);
-            }
+            Utils.verify(fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID, "Unexpected WAD file-type: %d.", fileType);
 
+            GameFile file = new MOFFile();
             file.load(new DataReader(new ArraySource(data)));
             files.add(new WADEntry(resourceId, fileType, file));
         }
