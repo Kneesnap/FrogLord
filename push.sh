@@ -1,4 +1,4 @@
-git rm .
+git rm -r --cached .
 git add .
 git commit
 git pull
