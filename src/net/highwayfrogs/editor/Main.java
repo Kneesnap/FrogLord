@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.gui.FrogFrame;
 
 import java.io.File;
 
@@ -22,5 +23,7 @@ public class Main {
         MWDFile mwd = new MWDFile(mwi);
         mwd.load(new DataReader(new FileSource(new File("./debug/VANILLA.MWD"))));
         mwd.save(new DataWriter(new FileReceiver(new File("./debug/MODDED.MWD"))));
+        
+        FrogFrame f = new FrogFrame();
     }
 }
