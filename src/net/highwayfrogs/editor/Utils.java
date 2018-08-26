@@ -98,4 +98,16 @@ public class Utils {
             bytes[i] = list.get(i);
         return bytes;
     }
+
+    /**
+     * Convert an unsigned byte
+     * @param unsignedByte The byte to convert to a float. 0x00 = 0.00. 0xFF = 1.000
+     * @return floatValue
+     */
+    public static float unsignedByteToFloat(byte unsignedByte) {
+        float num = (float) unsignedByte;
+        if (num < 0)
+            num += 256;
+        return num / 0xFF;
+    }
 }

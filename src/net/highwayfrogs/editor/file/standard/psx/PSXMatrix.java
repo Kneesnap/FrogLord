@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.standard;
+package net.highwayfrogs.editor.file.standard.psx;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

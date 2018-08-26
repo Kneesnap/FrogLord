@@ -8,9 +8,13 @@ import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
+import net.highwayfrogs.editor.file.standard.psx.prims.line.PSXLineType;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,6 +47,13 @@ public class MAPFile extends GameFile {
     private static final String GRAPHICAL_SIGNATURE = "GRAP";
     private static final String LIGHT_SIGNATURE = "LITE";
     private static final String GROUP_SIGNATURE = "GROU";
+
+    private static final List<PSXPrimitiveType> primitiveTypes = new ArrayList<>();
+
+    static {
+        primitiveTypes.addAll(Arrays.asList(PSXPolygonType.values()));
+        primitiveTypes.add(PSXLineType.G2);
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -166,6 +177,7 @@ public class MAPFile extends GameFile {
         short zNum = reader.readShort(); // Number of groups in z.
         short xLen = reader.readShort(); // Group X Length
         short zLen = reader.readShort(); // Group Z Length
+        int groupCount = xNum * zNum;
         //TODO: Read MAP_GROUPs
 
         //TODO: Read rest of map.

@@ -19,8 +19,6 @@ public class Light extends GameObject {
     private SVector direction;
     private short attribute0;
     private short attribute1;
-    private int framePointer; // Points to li_frame MR_FRAME object.
-    private int objectPointer; // Points to MR_OBJECT.
 
     @Override
     public void load(DataReader reader) {
@@ -34,11 +32,8 @@ public class Light extends GameObject {
         this.direction = SVector.readWithPadding(reader);
         this.attribute0 = reader.readShort();
         this.attribute1 = reader.readShort();
-        this.framePointer = reader.readInt();
-        this.objectPointer = reader.readInt();
-
-        //TODO: Read frame.
-        //TODO: Read object.
+        reader.readInt(); // Frame pointer. Only used at run-time.
+        reader.readInt(); // Object pointer. Only used at run-time.
     }
 
     @Override
@@ -53,10 +48,7 @@ public class Light extends GameObject {
         this.direction.saveWithPadding(writer);
         writer.writeShort(this.attribute0);
         writer.writeShort(this.attribute1);
-        writer.writeInt(this.framePointer);
-        writer.writeInt(this.objectPointer);
-
-        //TODO: Write frame.
-        //TODO: Write object.
+        writer.writeInt(0);
+        writer.writeInt(0);
     }
 }
