@@ -24,7 +24,7 @@ public interface PSXPrimitiveType {
      * Get a Supplier which will return a PSXGPUPrimitive when called.
      * @return maker
      */
-    public Supplier<PSXGPUPrimitive> getMaker();
+    public Supplier<? extends PSXGPUPrimitive> getMaker();
 
     /**
      * Return a new instance of the given primitive.

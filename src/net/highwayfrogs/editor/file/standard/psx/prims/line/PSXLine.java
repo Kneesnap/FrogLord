@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.file.standard.psx.prims.line;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public class PSXLine extends GameObject {
+public class PSXLine extends PSXGPUPrimitive {
     private short vertices[];
 
     public PSXLine(int verticeCount) {
