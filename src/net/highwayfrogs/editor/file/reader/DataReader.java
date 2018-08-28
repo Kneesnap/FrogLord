@@ -101,6 +101,14 @@ public class DataReader {
     }
 
     /**
+     * Reads a single byte as an unsigned byte, and returns it as a short. Since the java byte is -127 to 128, this allows us to read a byte as the appropriate value.
+     * @return unsignedByteShort.
+     */
+    public short readUnsignedByteAsShort() {
+        return Utils.byteToUnsignedShort(readByte());
+    }
+
+    /**
      * Read the next bytes as an integer.
      * Reads four bytes.
      * @return intValue

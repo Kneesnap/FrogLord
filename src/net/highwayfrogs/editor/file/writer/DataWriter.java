@@ -80,6 +80,14 @@ public class DataWriter {
     }
 
     /**
+     * Writes an unsigned byte short as an unsigned byte.
+     * @param value the short to write.
+     */
+    public void writeUnsignedByte(short value) {
+        writeByte(Utils.unsignedShortToByte(value));
+    }
+
+    /**
      * Write an integer to the receiver.
      * @param value The integer to write.
      */

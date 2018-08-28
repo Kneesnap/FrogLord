@@ -92,7 +92,7 @@ public class MOFFile extends GameFile {
 
         writer.writeByte(this.id);
         writer.writeBytes(MOF_SIGNATURE);
-        writer.writeInt(0); // File length. Why does anybody think it's okay to use 0 here? Fix later.
+        writer.writeInt(0); // File length. Should be ok to use zero for now, but if it causes problems, we know where to look.
         writer.writeInt(this.flags);
 
         if (animation != null) { // If this is an animation, save the animation.

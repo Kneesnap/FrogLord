@@ -2,20 +2,22 @@ package net.highwayfrogs.editor.file.map;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
+import net.highwayfrogs.editor.file.map.grid.GridSquare;
+import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
 import net.highwayfrogs.editor.file.standard.psx.prims.line.PSXLineType;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Parses Frogger MAP files.
@@ -33,7 +35,12 @@ public class MAPFile extends GameFile {
     private List<Form> forms = new ArrayList<>();
     private List<Entity> entities = new ArrayList<>();
     private List<Light> lights = new ArrayList<>();
+    private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> polygons = new HashMap<>();
+    private List<SVector> vertexes = new ArrayList<>();
     private SVector basePoint; // This is the bottom left of the map group grid.
+    private List<GridStack> gridStacks = new ArrayList<>();
+    private List<GridSquare> gridSquares = new ArrayList<>();
+    private List<MAPAnimation> mapAnimations = new ArrayList<>();
 
     public static final int TYPE_ID = 0;
     private static final String SIGNATURE = "FROG";
@@ -47,12 +54,16 @@ public class MAPFile extends GameFile {
     private static final String GRAPHICAL_SIGNATURE = "GRAP";
     private static final String LIGHT_SIGNATURE = "LITE";
     private static final String GROUP_SIGNATURE = "GROU";
+    private static final String POLYGON_SIGNATURE = "POLY";
+    private static final String VERTEX_SIGNATURE = "VRTX";
+    private static final String GRID_SIGNATURE = "GRID";
+    private static final String ANIMATION_SIGNATURE = "ANIM";
 
-    private static final List<PSXPrimitiveType> primitiveTypes = new ArrayList<>();
+    private static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
 
     static {
-        primitiveTypes.addAll(Arrays.asList(PSXPolygonType.values()));
-        primitiveTypes.add(PSXLineType.G2);
+        PRIMITIVE_TYPES.addAll(Arrays.asList(PSXPolygonType.values()));
+        PRIMITIVE_TYPES.add(PSXLineType.G2);
     }
 
     @Override
@@ -180,7 +191,86 @@ public class MAPFile extends GameFile {
         int groupCount = xNum * zNum;
         //TODO: Read MAP_GROUPs
 
-        //TODO: Read rest of map.
+        // Read POLY
+        reader.setIndex(polygonAddress);
+        reader.verifyString(POLYGON_SIGNATURE);
+
+        Map<PSXPrimitiveType, Short> polyCountMap = new HashMap<>();
+        Map<PSXPrimitiveType, Integer> polyOffsetMap = new HashMap<>();
+
+        for (PSXPrimitiveType type : PRIMITIVE_TYPES)
+            polyCountMap.put(type, reader.readShort());
+        reader.readShort(); // Padding.
+        for (PSXPrimitiveType type : PRIMITIVE_TYPES)
+            polyOffsetMap.put(type, reader.readInt());
+
+        for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
+            short polyCount = polyCountMap.get(type);
+            int polyOffset = polyOffsetMap.get(type);
+
+            List<PSXGPUPrimitive> primitives = new ArrayList<>();
+            polygons.put(type, primitives);
+
+            if (polyCount > 0) {
+                reader.jumpTemp(polyOffset);
+
+                for (int i = 0; i < polyCount; i++) {
+                    PSXGPUPrimitive primitive = type.newPrimitive();
+                    primitive.load(reader);
+                    primitives.add(primitive);
+                }
+
+                reader.jumpReturn();
+            }
+        }
+
+        // Read Vertexes.
+        reader.setIndex(vertexAddress);
+        reader.verifyString(VERTEX_SIGNATURE);
+        short vertexCount = reader.readShort();
+        reader.readShort(); // Padding.
+        for (int i = 0; i < vertexCount; i++)
+            this.vertexes.add(SVector.readWithPadding(reader));
+
+        // Read GRID data.
+        reader.setIndex(gridAddress);
+        reader.verifyString(GRID_SIGNATURE);
+        short gridXCount = reader.readShort(); // Number of grid squares in x.
+        short gridZCount = reader.readShort();
+        short gridXLength = reader.readShort(); // Grid square x length.
+        short gridZLength = reader.readShort();
+
+        int stackCount = gridXCount * gridZCount;
+        for (int i = 0; i < stackCount; i++) {
+            GridStack stack = new GridStack();
+            stack.load(reader);
+        }
+
+        // Find the total amount of squares to read.
+        int squareCount = 0;
+        for (GridStack stack : gridStacks)
+            squareCount = Math.max(squareCount, stack.getIndex() + stack.getSquareCount());
+
+        for (int i = 0; i < squareCount; i++) {
+            GridSquare square = new GridSquare();
+            square.load(reader);
+            gridSquares.add(square);
+        }
+
+        //TODO: Can two different grid stacks hold the same square?
+
+        // Read "ANIM".
+        reader.setIndex(animAddress);
+        reader.verifyString(ANIMATION_SIGNATURE);
+        int mapAnimCount = reader.readInt();
+        int mapAnimAddress = reader.readInt();
+        reader.setIndex(mapAnimAddress); // This points to right after the header.
+
+        for (int i = 0; i < mapAnimCount; i++) {
+            MAPAnimation animation = new MAPAnimation();
+            animation.load(reader);
+            mapAnimations.add(animation);
+        }
     }
 
     @Override

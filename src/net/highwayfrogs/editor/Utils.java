@@ -110,4 +110,26 @@ public class Utils {
             num += 256;
         return num / 0xFF;
     }
+
+    /**
+     * Convert an unsigned byte into a short, which can be converted back into a byte.
+     * @param unsignedByte The byte to convert into a short.
+     * @return unsignedShort
+     */
+    public static short byteToUnsignedShort(byte unsignedByte) {
+        short num = (short) unsignedByte;
+        if (num < 0)
+            num += 256;
+        return num;
+    }
+
+    /**
+     * Convert an unsigned short back into a unsigned byte.
+     * @param unsignedShort the short to turn back into a byte.
+     * @return byte
+     */
+    public static byte unsignedShortToByte(short unsignedShort) {
+        verify(unsignedShort >= 0 && unsignedShort <= 0xFF, "The provided short value is outside the range of an unsigned byte. [0,255]. Value: %d", unsignedShort);
+        return (byte) unsignedShort;
+    }
 }
