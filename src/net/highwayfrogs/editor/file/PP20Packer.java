@@ -20,7 +20,7 @@ import java.util.*;
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
-    private static final byte[] COMPRESSION_SETTINGS = {0x04, 0x05, 0x06, 0x07}; // PP20 compression settings.
+    private static final byte[] COMPRESSION_SETTINGS = {0x09, 0x0a, 0x0a, 0x0a}; // PP20 compression settings.
     public static final int OPTIONAL_BITS_SMALL_OFFSET = 7;
     public static final int INPUT_BIT_LENGTH = 2;
     public static final int INPUT_CONTINUE_WRITING_BITS = 3;
@@ -36,11 +36,7 @@ public class PP20Packer {
      * @return packedData
      */
     public static byte[] packData(byte[] data) {
-        for (int i = 0; i < data.length / 2; i++) { // Reverse the byte order.
-            byte temp = data[i];
-            data[i] = data[data.length - 1 - i];
-            data[data.length - 1 - i] = temp;
-        }
+        data = Utils.reverseCloneByteArray(data);
 
         // Take the compressed data, and pad it with the file structure. Then, we're done.
         byte[] compressedData = compressData(data);

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -131,5 +132,28 @@ public class Utils {
     public static byte unsignedShortToByte(short unsignedShort) {
         verify(unsignedShort >= 0 && unsignedShort <= 0xFF, "The provided short value is outside the range of an unsigned byte. [0,255]. Value: %d", unsignedShort);
         return (byte) unsignedShort;
+    }
+
+    /**
+     * Reverse an array, and store it in a new array, which is returned.
+     * @param array The array to reverse.
+     * @return clonedArray
+     */
+    public static byte[] reverseCloneByteArray(byte[] array) {
+        byte[] output = Arrays.copyOf(array, array.length);
+        reverseByteArray(output);
+        return output;
+    }
+
+    /**
+     * Reverse a byte array.
+     * @param array The array to reverse
+     */
+    public static void reverseByteArray(byte[] array) {
+        for (int i = 0; i < array.length / 2; i++) { // Reverse the byte order.
+            byte temp = array[i];
+            array[i] = array[array.length - 1 - i];
+            array[array.length - 1 - i] = temp;
+        }
     }
 }
