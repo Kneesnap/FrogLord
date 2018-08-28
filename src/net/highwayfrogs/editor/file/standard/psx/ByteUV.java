@@ -17,7 +17,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class BTextureUV extends GameObject {
+public class ByteUV extends GameObject {
     private byte u;
     private byte v;
 

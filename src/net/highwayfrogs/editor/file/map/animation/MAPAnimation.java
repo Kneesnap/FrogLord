@@ -1,24 +1,36 @@
 package net.highwayfrogs.editor.file.map.animation;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents the MAP_ANIM struct.
  * Created by Kneesnap on 8/27/2018.
  */
+@Getter
 public class MAPAnimation extends GameObject {
     private short uChange; // Delta U (Each frame)
     private short vChange;
     private short duration; // Frames before resetting.
 
-    private short celCount;
+    private List<Short> textures = new ArrayList<>(); // Non-remapped texture id array.
+    private short celPeriod;
 
     private short flags;
     private short polygonCount;
+    private List<MAPUVInfo> mapUVs = new ArrayList<>();
 
+    private static final int GLOBAL_TEXTURE_FLAG = 0x8000;
+    public static final int FLAG_UV_ANIMATION = 1;
+    public static final int FLAG_TEXTURE_ANIMATION = 2;
+
+    public static final int BYTE_SIZE = 2 + (7 * Constants.SHORT_SIZE) + (4 * Constants.INTEGER_SIZE);
 
     @Override
     public void load(DataReader reader) {
@@ -28,17 +40,32 @@ public class MAPAnimation extends GameObject {
         reader.readBytes(4); // Four run-time bytes.
 
         // Texture information.
-        this.celCount = reader.readShort();
+        int celCount = reader.readShort();
         reader.readShort(); // Run-time short.
-        int celListPointer = reader.readInt(); //TODO: Cel Animation :/
-        short celPeriod = reader.readShort(); // Frames before resetting.
+        int celListPointer = reader.readInt();
+        this.celPeriod = reader.readShort(); // Frames before resetting.
         reader.readShort(); // Run-time variable.
 
-        this.flags = reader.readShort(); //TODO: Port flags.
+        reader.jumpTemp(celListPointer);
+        for (int i = 0; i < celCount; i++)
+            textures.add(reader.readShort());
+        reader.jumpReturn();
+
+        this.flags = reader.readShort();
         this.polygonCount = reader.readShort();
         reader.readInt(); // Texture pointer. Generated at run-time.
 
-        int mapUvInfoPointer = reader.readInt(); //TODO. (Array Size = polygonCount)
+        int mapUvInfoPointer = reader.readInt();
+
+        reader.jumpTemp(mapUvInfoPointer);
+
+        for (int i = 0; i < this.polygonCount; i++) {
+            MAPUVInfo info = new MAPUVInfo();
+            info.load(reader);
+            mapUVs.add(info);
+        }
+
+        reader.jumpReturn();
     }
 
     @Override
@@ -47,10 +74,11 @@ public class MAPAnimation extends GameObject {
         writer.writeUnsignedByte(this.vChange);
         writer.writeShort(this.duration);
         writer.writeNull(4); // Run-time.
-        writer.writeShort(this.celCount);
+        writer.writeShort((short) this.textures.size());
         writer.writeNull(Constants.SHORT_SIZE); // Run-time.
-        //TODO: Cel-List pointer.
-        //TODO: celPeriod
+        //TODO: Cel-List pointer. (After all anims.)
+
+        writer.writeShort(this.celPeriod);
         writer.writeShort((short) 0); // Runtime.
         writer.writeShort(this.flags);
         writer.writeShort(this.polygonCount);

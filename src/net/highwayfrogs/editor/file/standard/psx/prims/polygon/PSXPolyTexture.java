@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.psx.BTextureUV;
+import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Setter
 public class PSXPolyTexture extends PSXPolygon {
     private short flags;
-    private BTextureUV[] uvs;
+    private ByteUV[] uvs;
     private short clutId;
     private short textureId;
     private PSXColorVector[] vectors;
@@ -31,7 +31,7 @@ public class PSXPolyTexture extends PSXPolygon {
 
     public PSXPolyTexture(int verticeCount, int colorCount) {
         super(verticeCount);
-        this.uvs = new BTextureUV[verticeCount];
+        this.uvs = new ByteUV[verticeCount];
         this.vectors = new PSXColorVector[colorCount];
     }
 
@@ -84,7 +84,7 @@ public class PSXPolyTexture extends PSXPolygon {
     }
 
     private void loadUV(int id, DataReader reader) {
-        this.uvs[id] = new BTextureUV();
+        this.uvs[id] = new ByteUV();
         this.uvs[id].load(reader);
     }
 
@@ -92,7 +92,7 @@ public class PSXPolyTexture extends PSXPolygon {
         if (this.uvs.length != 4)
             return;
 
-        BTextureUV temp = this.uvs[2];
+        ByteUV temp = this.uvs[2];
         this.uvs[2] = this.uvs[3];
         this.uvs[3] = temp;
     }
