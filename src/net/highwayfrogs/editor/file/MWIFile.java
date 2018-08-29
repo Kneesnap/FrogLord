@@ -42,10 +42,10 @@ public class MWIFile extends GameObject {
             entry.setFlags(reader.readInt());
             entry.setTypeId(reader.readInt());
             entry.setSectorOffset(reader.readInt());
-            entry.setLoadedAddress(reader.readInt());
-            entry.setDepackedAddress(reader.readInt());
+            reader.readInt(); // Should always be 0. This is used by the frogger.exe to locate where in RAM the file is located.
+            reader.readInt(); // Should always be 0. This is used by frogger.exe to locate where in RAM the file is depacked at.
             entry.setPackedSize(reader.readInt());
-            entry.setUnpackedSize(reader.readInt());
+            entry.unpackedSize = reader.readInt(); // Set the raw value, not through the setter.
             getEntries().add(entry);
         }
 
@@ -73,10 +73,10 @@ public class MWIFile extends GameObject {
             writer.writeInt(entry.getFlags());
             writer.writeInt(entry.getTypeId());
             writer.writeInt(entry.getSectorOffset());
-            writer.writeInt(entry.getLoadedAddress());
-            writer.writeInt(entry.getDepackedAddress());
+            writer.writeInt(0);
+            writer.writeInt(0);
             writer.writeInt(entry.getPackedSize());
-            writer.writeInt(entry.getUnpackedSize());
+            writer.writeInt(entry.unpackedSize); // Get the raw value, not through the getter.
         }
 
         getEntries().stream()
@@ -98,8 +98,6 @@ public class MWIFile extends GameObject {
         private int flags; // Is a group? In a group? Compressed?
         private int typeId; //
         private int sectorOffset; // The file's starting address in the MWD.
-        private int loadedAddress; // Should always be 0. This is used by the frogger.exe to locate where in RAM the file is located.
-        private int depackedAddress; // Should always be 0. This is used by frogger.exe to locate where in RAM the file is depacked at.
         private int packedSize;
         private int unpackedSize;
         private String filePath;
@@ -133,6 +131,24 @@ public class MWIFile extends GameObject {
          */
         public boolean isCompressed() {
             return testFlag(FLAG_AUTOMATIC_COMPRESSION) || testFlag(FLAG_MANUAL_COMPRESSION);
+        }
+
+        /**
+         * Get the unpacked file size in bytes.
+         * @return unpackedSize
+         */
+        public int getUnpackedSize() {
+            return isCompressed() ? this.unpackedSize & 0xFFFFFF : this.unpackedSize;
+        }
+
+        /**
+         * Sets the unpacked file size in bytes.
+         * @param newSize The new byte count for this file.
+         */
+        public void setUnpackedSize(int newSize) {
+            this.unpackedSize = newSize;
+            if (isCompressed())
+                this.unpackedSize |= (3 << 24);
         }
 
         /**

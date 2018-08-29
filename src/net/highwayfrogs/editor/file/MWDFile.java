@@ -123,10 +123,11 @@ public class MWDFile extends GameObject {
             file.save(new DataWriter(receiver));
 
             byte[] transfer = receiver.toArray();
-            if (entry.isCompressed()) {
+            entry.setUnpackedSize(transfer.length);
+            if (entry.isCompressed())
                 transfer = PP20Packer.packData(transfer);
-                entry.setPackedSize(transfer.length);
-            }
+
+            entry.setPackedSize(transfer.length);
 
             writer.writeBytes(transfer);
             System.out.println("Time: " + ((System.currentTimeMillis() - start) / 1000) + "s.");
