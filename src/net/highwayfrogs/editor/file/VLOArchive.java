@@ -135,6 +135,8 @@ public class VLOArchive extends GameFile {
 
             this.fullWidth = (short) image.getWidth();
             this.fullHeight = (short) image.getHeight();
+            setIngameWidth(this.fullWidth);
+            setIngameHeight(this.fullHeight);
 
             // Read image rgba data.
             int[] array = new int[getFullHeight() * getFullWidth()];
