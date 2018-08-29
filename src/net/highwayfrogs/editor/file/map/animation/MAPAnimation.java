@@ -40,7 +40,7 @@ public class MAPAnimation extends GameObject {
         reader.readBytes(4); // Four run-time bytes.
 
         // Texture information.
-        int celCount = reader.readShort();
+        short celCount = reader.readShort();
         reader.readShort(); // Run-time short.
         int celListPointer = reader.readInt();
         this.celPeriod = reader.readShort(); // Frames before resetting.

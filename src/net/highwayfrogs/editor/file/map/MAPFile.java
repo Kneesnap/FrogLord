@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
+import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -35,9 +36,10 @@ public class MAPFile extends GameFile {
     private List<Form> forms = new ArrayList<>();
     private List<Entity> entities = new ArrayList<>();
     private List<Light> lights = new ArrayList<>();
+    private SVector basePoint; // This is the bottom left of the map group grid.
+    private List<MAPGroup> groups = new ArrayList<>();
     private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> polygons = new HashMap<>();
     private List<SVector> vertexes = new ArrayList<>();
-    private SVector basePoint; // This is the bottom left of the map group grid.
     private List<GridStack> gridStacks = new ArrayList<>();
     private List<GridSquare> gridSquares = new ArrayList<>();
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
@@ -59,7 +61,7 @@ public class MAPFile extends GameFile {
     private static final String GRID_SIGNATURE = "GRID";
     private static final String ANIMATION_SIGNATURE = "ANIM";
 
-    private static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
+    public static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
 
     static {
         PRIMITIVE_TYPES.addAll(Arrays.asList(PSXPolygonType.values()));
@@ -105,7 +107,7 @@ public class MAPFile extends GameFile {
         for (int i = 0; i < pathCount; i++) {
             reader.jumpTemp(reader.readInt()); // Starts after the pointers.
 
-            int entityIndicePointer = reader.readInt(); //TODO: What is this? They seem to be placed right before EMTP, but after the zone data.
+            int entityIndicePointer = reader.readInt(); //Points to a -1 terminated short list of entities (that it can collide with?) TODO: Read this list.
             int segmentCount = reader.readInt();
             int segmentPointer = reader.readInt();
 
@@ -189,7 +191,12 @@ public class MAPFile extends GameFile {
         short xLen = reader.readShort(); // Group X Length
         short zLen = reader.readShort(); // Group Z Length
         int groupCount = xNum * zNum;
-        //TODO: Read MAP_GROUPs
+
+        for (int i = 0; i < groupCount; i++) {
+            MAPGroup group = new MAPGroup();
+            group.load(reader);
+            groups.add(group);
+        }
 
         // Read POLY
         reader.setIndex(polygonAddress);
