@@ -20,7 +20,7 @@ import java.util.*;
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
-    private static final byte[] COMPRESSION_SETTINGS = {0x09, 0x0a, 0x0a, 0x0a}; // PP20 compression settings.
+    private static final byte[] COMPRESSION_SETTINGS = {0x07, 0x07, 0x07, 0x07}; // PP20 compression settings.
     public static final int OPTIONAL_BITS_SMALL_OFFSET = 7;
     public static final int INPUT_BIT_LENGTH = 2;
     public static final int INPUT_CONTINUE_WRITING_BITS = 3;
