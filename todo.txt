@@ -33,9 +33,10 @@ TCRF Documentation Plans:
  - Document unused developer stuff.
  - Go through documents to look for information.
  - Snail Racing
- - Beta elements visible in game screenshots & videos.
+ - Beta elements visible in media. (Level screenshots, German Trailer, Credits video, Video linked on the forums of some guy playing Frogger.)
  - Interesting out of bounds / unused parts of levels.
  - Original Menu Mockups.
  - Extra undocumented cheat code.
  - Ruins Zone
- - Kao's Prototype.
+ - Kao's Prototype. (Debug features, analyze MWD)
+ - Analyze US PSX demo MWD.
