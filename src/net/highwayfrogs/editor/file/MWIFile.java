@@ -23,21 +23,25 @@ public class MWIFile extends GameObject {
 
     private static final int ENTRY_LENGTH = 32;
     private static final int STR_TERMINATOR = 4;
+    private static final int CODE_NO_FILE_NAME = 0xFFFFFFFF;
 
     @Override
     public void load(DataReader reader) {
         this.fileSize = reader.getSize();
         AtomicInteger nameStartAddress = null;
 
-        while (nameStartAddress == null || nameStartAddress.get() > reader.getIndex()) { // Read entries until we reach file-names.
+        while (reader.hasMore() && (nameStartAddress == null || nameStartAddress.get() > reader.getIndex())) { // Read entries until we reach file-names.
             int nameOffset = reader.readInt();
-            if (nameStartAddress == null) // Use the first name address as the address which starts the name table.
-                nameStartAddress = new AtomicInteger(nameOffset);
-
             FileEntry entry = new FileEntry();
-            reader.jumpTemp(nameOffset);
-            entry.setFilePath(reader.readNullTerminatedString());
-            reader.jumpReturn();
+
+            if (nameOffset != CODE_NO_FILE_NAME) { // If the file name is present, read the file name. (File-names are present on the PC version, but not the PSX version.)
+                if (nameStartAddress == null) // Use the first name address as the address which starts the name table.
+                    nameStartAddress = new AtomicInteger(nameOffset);
+
+                reader.jumpTemp(nameOffset);
+                entry.setFilePath(reader.readNullTerminatedString());
+                reader.jumpReturn();
+            }
 
             entry.setFlags(reader.readInt());
             entry.setTypeId(reader.readInt());
@@ -65,10 +69,15 @@ public class MWIFile extends GameObject {
         int nameOffset = getEntries().size() * ENTRY_LENGTH;
 
         for (FileEntry entry : getEntries()) {
-            writer.writeInt(nameOffset);
-            int pathByteLength = entry.getFilePath().getBytes().length;
-            nameOffset += pathByteLength; // The amount of bytes written.
-            nameOffset += getNullCount(pathByteLength); // The terminator bytes predicts the offset it actually goes.
+
+            if (entry.hasFilePath()) {
+                writer.writeInt(nameOffset);
+                int pathByteLength = entry.getFilePath().getBytes().length;
+                nameOffset += pathByteLength; // The amount of bytes written.
+                nameOffset += getNullCount(pathByteLength); // The terminator bytes predicts the offset it actually goes.
+            } else {
+                writer.writeInt(CODE_NO_FILE_NAME);
+            }
 
             writer.writeInt(entry.getFlags());
             writer.writeInt(entry.getTypeId());
@@ -80,6 +89,7 @@ public class MWIFile extends GameObject {
         }
 
         getEntries().stream()
+                .filter(FileEntry::hasFilePath)
                 .map(FileEntry::getFilePath)
                 .forEach(fileName -> {
                     byte[] bytes = fileName.getBytes();
@@ -149,6 +159,14 @@ public class MWIFile extends GameObject {
             this.unpackedSize = newSize;
             if (isCompressed())
                 this.unpackedSize |= (3 << 24);
+        }
+
+        /**
+         * Does this MWI entry have an associated file path?
+         * @return hasFilePath
+         */
+        public boolean hasFilePath() {
+            return getFilePath() != null;
         }
 
         /**
