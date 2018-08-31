@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.writer;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 
 import java.util.ArrayList;
@@ -13,10 +14,21 @@ import java.util.List;
 @Getter
 public class ArrayReceiver implements DataReceiver {
     private List<Byte> bytes = new ArrayList<>();
+    private int index;
 
     @Override
     public void writeByte(byte value)  {
-        bytes.add(value);
+        while (this.index > bytes.size()) // Add data up to the index.
+            bytes.add(Constants.NULL_BYTE);
+
+
+        if (bytes.size() > this.index) { // Writing over existing bytes.
+            bytes.set(this.index, value);
+        } else { // Index matches exactly. Append at end.
+            bytes.add(value);
+        }
+
+        this.index++; // Increment index.
     }
 
     @Override
@@ -26,8 +38,8 @@ public class ArrayReceiver implements DataReceiver {
     }
 
     @Override
-    public int getIndex() {
-        return bytes.size();
+    public void setIndex(int newIndex) {
+        this.index = newIndex;
     }
 
     /**

@@ -142,6 +142,7 @@ public class MWDFile extends GameObject {
         try {
             DataWriter mwiWriter = new DataWriter(new FileReceiver(new File("./debug/MODDED.MWI")));
             wadIndexTable.save(mwiWriter);
+            mwiWriter.closeReceiver();
         } catch (Exception ex) {
             ex.printStackTrace();
         }

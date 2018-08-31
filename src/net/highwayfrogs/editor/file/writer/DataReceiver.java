@@ -21,8 +21,21 @@ public interface DataReceiver {
     public void writeBytes(byte[] values) throws IOException;
 
     /**
+     * Set the current write index.
+     * @param newIndex The new index to write data at.
+     */
+    public void setIndex(int newIndex) throws IOException;
+
+    /**
      * Get the current write index.
      * @return writeIndex
      */
     public int getIndex() throws IOException;
+
+    /**
+     * Close this receiver. Should be called when all data has been written.
+     */
+    default void close() {
+
+    }
 }

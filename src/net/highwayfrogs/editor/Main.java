@@ -21,6 +21,9 @@ public class Main {
 
         MWDFile mwd = new MWDFile(mwi);
         mwd.load(new DataReader(new FileSource(new File("./debug/VANILLA.MWD"))));
-        mwd.save(new DataWriter(new FileReceiver(new File("./debug/MODDED.MWD"))));
+
+        DataWriter mwdWriter = new DataWriter(new FileReceiver(new File("./debug/MODDED.MWD")));
+        mwd.save(mwdWriter);
+        mwdWriter.closeReceiver();
     }
 }

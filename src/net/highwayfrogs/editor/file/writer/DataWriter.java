@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.Utils;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Stack;
 
 /**
  * Allows writing data to a receiver.
@@ -17,6 +18,7 @@ import java.nio.ByteOrder;
 public class DataWriter {
     @Setter private ByteOrder endian = ByteOrder.LITTLE_ENDIAN;
     private DataReceiver output;
+    private Stack<Integer> jumpStack = new Stack<>();
 
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
     private static final ByteBuffer SHORT_BUFFER = ByteBuffer.allocate(Constants.SHORT_SIZE);
@@ -41,6 +43,42 @@ public class DataWriter {
         int index = getIndex();
         Utils.verify(address >= index, "Tried to jump to %s, which is before the current writer address (%s).", Integer.toHexString(address), Integer.toHexString(index));
         writeNull(address - index);
+    }
+
+    /**
+     * Temporarily jump to an offset. Use jumpReturn to return.
+     * Jumps are recorded Last In First Out style.
+     * @param newIndex The offset to jump to.
+     */
+    public void jumpTemp(int newIndex) {
+        this.jumpStack.add(getIndex());
+        setIndex(newIndex);
+    }
+
+    /**
+     * Return to the offset before jumpTemp was called.
+     */
+    public void jumpReturn() {
+        setIndex(this.jumpStack.pop());
+    }
+
+    /**
+     * Set the writer index.
+     * @param newIndex The index to write data to.
+     */
+    public void setIndex(int newIndex) {
+        try {
+            output.setIndex(newIndex);
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to set writer index.", ex);
+        }
+    }
+
+    /**
+     * Close the DataReceiver from receiving more data. In-case of streams, this safely closes the stream.
+     */
+    public void closeReceiver() {
+        output.close();
     }
 
     /**
