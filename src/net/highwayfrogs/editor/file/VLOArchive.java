@@ -5,6 +5,8 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
+import net.highwayfrogs.editor.file.standard.psx.PSXRect;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.awt.*;
@@ -17,65 +19,81 @@ import java.util.List;
 
 /**
  * VLOArchive - Image archive format created by VorgPC/Vorg2.
- * MR_TXSETUP
  * ABGR 8888 = 24 + 8.
+ * TODO: Is clutId still zero on PSX vlos?
  * Created by Kneesnap on 8/17/2018.
  */
 @Getter
 public class VLOArchive extends GameFile {
     private List<GameImage> images = new ArrayList<>();
+    private List<ClutEntry> clutEntries = new ArrayList<>();
+    private boolean psxMode;
 
     public static final int TYPE_ID = 1;
     public static final int FLAG_TRANSLUCENT = 1;
     public static final int FLAG_ROTATED = 2; // Unused.
     public static final int FLAG_HIT_X = 4; //Appears to decrease width by 1?
     public static final int FLAG_HIT_Y = 8; //Appears to decrease height by 1?
-    public static final int FLAG_REFERENCED_BY_NAME = 16; // TODO: Wat
+    public static final int FLAG_REFERENCED_BY_NAME = 16; // Unsure.
     public static final int FLAG_BLACK_IS_TRANSPARENT = 32; // Seems like it may not be used. Would be weird if that were the case.
     public static final int FLAG_2D_SPRITE = 32768;
 
+    private static final String PC_SIGNATURE = "2GRP";
+    private static final String PSX_SIGNATURE = "2GRV";
+    private static final int SIGNATURE_LENGTH = 4;
 
-    private static final String SIGNATURE = "2GRP";
     private static final int IMAGE_INFO_BYTES = 24;
-    private static final int HEADER_SIZE = SIGNATURE.length() + 2 * Constants.INTEGER_SIZE;
+    private static final int HEADER_SIZE = SIGNATURE_LENGTH + (2 * Constants.INTEGER_SIZE);
     private static final int PIXEL_BYTES = 4;
 
     @Override
     public void load(DataReader reader) {
-        Utils.verify(reader.readString(SIGNATURE.length()).equals(SIGNATURE), "Invalid VLO signature.");
+        String readSignature = reader.readString(SIGNATURE_LENGTH);
+        if (readSignature.equals(PSX_SIGNATURE)) {
+            this.psxMode = true;
+        } else {
+            Utils.verify(readSignature.equals(PC_SIGNATURE), "Invalid VLO signature: %s.", readSignature);
+        }
+
         int fileCount = reader.readInt();
+        int textureOffset = reader.readInt();
 
-        reader.setIndex(reader.readInt());
-
+        // Load image data.
+        reader.jumpTemp(textureOffset);
         for (int i = 0; i < fileCount; i++) {
-            GameImage image = new GameImage();
-            image.setVramX(reader.readShort());
-            image.setVramY(reader.readShort());
-            image.setFullWidth(reader.readShort());
-            image.setFullHeight(reader.readShort());
-            int offset = reader.readInt();
-            image.setTextureId(reader.readShort());
-            image.setTexturePage(reader.readShort());
-            image.setFlags(reader.readShort());
-            image.setClutId(reader.readShort());
-            image.setU(reader.readByte());
-            image.setV(reader.readByte());
-            image.ingameWidth = reader.readByte();
-            image.ingameHeight = reader.readByte();
-
-            reader.jumpTemp(offset);
-            image.setImageBytes(reader.readBytes(image.getFullWidth() * image.getFullHeight() * PIXEL_BYTES));
-            reader.jumpReturn();
+            GameImage image = new GameImage(this);
+            image.load(reader);
             this.images.add(image);
+        }
+        reader.jumpReturn();
+
+        // Load clut data.
+        if (isPsxMode()) { // GRV file has clut data.
+            int clutCount = reader.readInt();
+            int clutOffset = reader.readInt();
+
+            reader.jumpTemp(clutOffset);
+            for (int i = 0; i < clutCount; i++) {
+                ClutEntry clut = new ClutEntry();
+                clut.load(reader);
+                clutEntries.add(clut);
+            }
+            reader.jumpReturn();
         }
     }
 
     @Override
     public void save(DataWriter writer) {
         int imageCount = getImages().size();
-        writer.writeStringBytes(SIGNATURE);
+        writer.writeStringBytes(isPsxMode() ? PSX_SIGNATURE : PC_SIGNATURE);
         writer.writeInt(imageCount);
         writer.writeInt(writer.getIndex() + Constants.INTEGER_SIZE); // Offset to the VLO table info.
+
+        int clutSetupStart = 0; //TODO: Calculate this right.
+        if (isPsxMode()) {
+            writer.writeInt(clutEntries.size());
+            writer.writeInt(clutSetupStart);
+        }
 
         int offset = IMAGE_INFO_BYTES * imageCount + HEADER_SIZE;
         for (GameImage image : getImages()) {
@@ -98,12 +116,68 @@ public class VLOArchive extends GameFile {
         getImages().stream()
                 .map(GameImage::getImageBytes)
                 .forEach(writer::writeBytes);
+
+
+        if (isPsxMode()) { // Save CLUT data.
+            int clutOffset = writer.getIndex() + (clutEntries.size() * ClutEntry.BYTE_SIZE);
+            for (ClutEntry entry : clutEntries)
+                clutOffset += entry.save(writer, clutOffset);
+        }
+    }
+
+
+    @Getter
+    @Setter
+    public static class ClutEntry extends GameObject {
+        private PSXRect clutRect = new PSXRect();
+        private List<PSXClutColor> colors = new ArrayList<>();
+        private int suppliedClutOffset = 0;
+
+        public static final int BYTE_SIZE = PSXRect.BYTE_SIZE + Constants.INTEGER_SIZE;
+
+        @Override
+        public void load(DataReader reader) {
+            this.clutRect.load(reader);
+            int clutOffset = reader.readInt();
+
+            reader.jumpTemp(clutOffset);
+
+            // Read clut.
+            int colorCount = getClutRect().getWidth() * getClutRect().getHeight();
+            for (int i = 0; i < colorCount; i++) {
+                PSXClutColor color = new PSXClutColor();
+                color.load(reader);
+                colors.add(color);
+            }
+
+            reader.jumpReturn();
+        }
+
+        @Override
+        public void save(DataWriter writer) {
+            Utils.verify(suppliedClutOffset != 0, "Clut offset was not supplied!"); // Call save(DataWriter, int) instead.
+            Utils.verify(getClutRect().getX() % 16 == 0, "Clut VRAM X must be a multiple of 16!"); // According to http://www.psxdev.net/forum/viewtopic.php?t=109
+            Utils.verify(getClutRect().getY() >= 0 && getClutRect().getY() <= 511, "Invalid CLUT VRAM Y!");
+
+            this.clutRect.save(writer);
+            writer.writeInt(suppliedClutOffset);
+
+            //TODO: Write CLUT data at the right offset. [Goes after txsetup data.]
+        }
+
+        public int save(DataWriter writer, int clutOffset) {
+            this.suppliedClutOffset = clutOffset;
+            save(writer);
+            this.suppliedClutOffset = 0;
+            return getClutRect().getWidth() * getClutRect().getHeight() * PSXClutColor.BYTE_SIZE;
+        }
     }
 
     @Getter
     @Setter
     @SuppressWarnings("unused")
-    public static class GameImage {
+    public static class GameImage extends GameObject {
+        private VLOArchive parent;
         private short vramX;
         private short vramY;
         private short fullWidth;
@@ -120,11 +194,47 @@ public class VLOArchive extends GameFile {
 
         private static final int MAX_DIMENSION = 256;
 
+        public GameImage(VLOArchive parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public void load(DataReader reader) {
+            this.vramX = reader.readShort();
+            this.vramY = reader.readShort();
+            this.fullWidth = reader.readShort();
+            this.fullHeight = reader.readShort();
+            int offset = reader.readInt();
+            this.textureId = reader.readShort();
+            this.texturePage = reader.readShort();
+            this.flags = reader.readShort();
+            this.clutId = reader.readShort();
+            this.u = reader.readByte();
+            this.v = reader.readByte();
+            this.ingameWidth = reader.readByte();
+            this.ingameHeight = reader.readByte();
+
+            reader.jumpTemp(offset);
+
+            if (getParent().isPsxMode()) {
+                //TODO.
+            } else {
+                this.imageBytes = reader.readBytes(getFullWidth() * getFullHeight() * PIXEL_BYTES);
+            }
+
+            reader.jumpReturn();
+        }
+
+        @Override
+        public void save(DataWriter writer) {
+
+        }
+
         /**
          * Replace this texture with a new one.
          * @param image The new image to use.
          */
-        public void replaceImage(BufferedImage image) {
+        public void replaceImage(BufferedImage image) { //TODO: PSX.
             if (image.getType() != BufferedImage.TYPE_INT_ARGB) { // We can only parse TYPE_INT_ARGB, so if it's not that, we must convert the image to that, so it can be parsed properly.
                 BufferedImage sourceImage = image;
                 image = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -162,7 +272,7 @@ public class VLOArchive extends GameFile {
          * @param trimEdges Should edges be trimmed so the textures are exactly how they appear in-game?
          * @return bufferedImage
          */
-        public BufferedImage toBufferedImage(boolean trimEdges) { //TODO: Actually make trimming work.
+        public BufferedImage toBufferedImage(boolean trimEdges) { //TODO: Actually make trimming work. {TODO: PSX}
             int height = trimEdges ? getIngameHeight() : getFullHeight();
             int width = trimEdges ? getIngameWidth() : getFullWidth();
 
