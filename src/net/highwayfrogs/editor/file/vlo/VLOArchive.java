@@ -5,31 +5,27 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * VLOArchive - Image archive format created by VorgPC/Vorg2.
  * ABGR 8888 = 24 + 8.
- * TODO: Is clutId still zero on PSX vlos?
  * Created by Kneesnap on 8/17/2018.
  */
 @Getter
 public class VLOArchive extends GameFile {
     private List<GameImage> images = new ArrayList<>();
     private List<ClutEntry> clutEntries = new ArrayList<>();
+    private BufferedImage clutImage;
     private boolean psxMode;
-
-    public static final int TYPE_ID = 1;
-    public static final int FLAG_TRANSLUCENT = 1;
-    public static final int FLAG_ROTATED = 2; // Unused.
-    public static final int FLAG_HIT_X = 4; //Appears to decrease width by 1?
-    public static final int FLAG_HIT_Y = 8; //Appears to decrease height by 1?
-    public static final int FLAG_REFERENCED_BY_NAME = 16; // Unsure.
-    public static final int FLAG_BLACK_IS_TRANSPARENT = 32; // Seems like it may not be used. Would be weird if that were the case.
-    public static final int FLAG_2D_SPRITE = 32768;
 
     private static final String PC_SIGNATURE = "2GRP";
     private static final String PSX_SIGNATURE = "2GRV";
@@ -37,6 +33,7 @@ public class VLOArchive extends GameFile {
 
     private static final int IMAGE_INFO_BYTES = 24;
     private static final int HEADER_SIZE = SIGNATURE_LENGTH + (2 * Constants.INTEGER_SIZE);
+    public static final int TYPE_ID = 1;
 
     @Override
     public void load(DataReader reader) {
@@ -50,15 +47,6 @@ public class VLOArchive extends GameFile {
         int fileCount = reader.readInt();
         int textureOffset = reader.readInt();
 
-        // Load image data.
-        reader.jumpTemp(textureOffset);
-        for (int i = 0; i < fileCount; i++) {
-            GameImage image = new GameImage(this);
-            image.load(reader);
-            this.images.add(image);
-        }
-        reader.jumpReturn();
-
         // Load clut data.
         if (isPsxMode()) { // GRV file has clut data.
             int clutCount = reader.readInt();
@@ -70,7 +58,43 @@ public class VLOArchive extends GameFile {
                 clut.load(reader);
                 clutEntries.add(clut);
             }
+
             reader.jumpReturn();
+            makeCLUTImage();
+        }
+
+        // Load image data.
+        reader.jumpTemp(textureOffset);
+        for (int i = 0; i < fileCount; i++) {
+            GameImage image = new GameImage(this);
+            image.load(reader);
+            this.images.add(image);
+        }
+        reader.jumpReturn();
+    }
+
+    private void makeCLUTImage() { //TODO: Remove this once PSX is fully supported.
+        this.clutImage = new BufferedImage(1024, 512, BufferedImage.TYPE_INT_ARGB);
+
+        for (ClutEntry entry : clutEntries) {
+            int startX = entry.getClutRect().getX();
+            int startY = entry.getClutRect().getY();
+            int width = entry.getClutRect().getWidth();
+            int height = entry.getClutRect().getHeight();
+
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    PSXClutColor color = entry.getColors().get((y * width) + x);
+                    this.clutImage.setRGB(x + startX, y + startY, toBGRA(color));
+                    System.out.println("[" + (x + startX) + ", " + (y + startY) + "] (" + color.getUnsignedScaledRed() + ", " + color.getUnsignedScaledGreen() + ", " + color.getUnsignedScaledBlue() + ") " + Integer.toHexString(color.getUnsignedScaledRed()) + " " + Integer.toHexString(color.getUnsignedScaledGreen()) + " " + Integer.toHexString(color.getUnsignedScaledBlue()));
+                }
+            }
+        }
+
+        try {
+            ImageIO.write(this.clutImage, "png", new File("debug/clut.png"));
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -79,27 +103,40 @@ public class VLOArchive extends GameFile {
         int imageCount = getImages().size();
         writer.writeStringBytes(isPsxMode() ? PSX_SIGNATURE : PC_SIGNATURE);
         writer.writeInt(imageCount);
-        writer.writeInt(writer.getIndex() + Constants.INTEGER_SIZE); // Offset to the VLO table info.
+        writer.writeInt(writer.getIndex() + ((isPsxMode() ? 3 : 1) * Constants.INTEGER_SIZE)); // Offset to the VLO table info.
 
-        int clutSetupStart = 0; //TODO: Calculate this right.
+        int clutFirstSetupIndex = -1;
         if (isPsxMode()) {
-            writer.writeInt(clutEntries.size());
-            writer.writeInt(clutSetupStart);
+            writer.writeInt(this.clutEntries.size());
+            clutFirstSetupIndex = writer.getIndex();
+            writer.writeNull(Constants.INTEGER_SIZE); // This will be written later.
         }
 
-        int offset = (IMAGE_INFO_BYTES * imageCount) + HEADER_SIZE;
-        for (GameImage image : getImages())
-            offset += image.save(writer, offset);
 
-        getImages().stream()
-                .map(GameImage::getImageBytes)
-                .forEach(writer::writeBytes);
+        AtomicInteger imageBytesOffset = new AtomicInteger((IMAGE_INFO_BYTES * imageCount) + HEADER_SIZE);
+        if (isPsxMode()) // Add room for clut setup data.
+            imageBytesOffset.addAndGet(getClutEntries().stream().mapToInt(ClutEntry::getByteSize).sum());
+
+        for (GameImage image : getImages())
+            image.save(writer, imageBytesOffset);
 
 
         if (isPsxMode()) { // Save CLUT data.
-            int clutOffset = writer.getIndex() + (clutEntries.size() * ClutEntry.BYTE_SIZE);
+            writer.jumpTemp(clutFirstSetupIndex);
+            writer.writeInt(imageBytesOffset.get());
+            writer.jumpReturn();
+
             for (ClutEntry entry : clutEntries)
-                clutOffset += entry.save(writer, clutOffset);
+                entry.save(writer, imageBytesOffset);
         }
+    }
+
+    public static int toBGRA(PSXClutColor color) {
+        byte[] bytes = new byte[4];
+        bytes[0] = Utils.unsignedShortToByte(color.getUnsignedScaledBlue());
+        bytes[1] = Utils.unsignedShortToByte(color.getUnsignedScaledGreen());
+        bytes[2] = Utils.unsignedShortToByte(color.getUnsignedScaledRed());
+        bytes[3] = (byte) (color.isTransparent() ? 0x00 : 0xFF); // FF = solid. 0 = Invisible.
+        return Utils.readNumberFromBytes(bytes);
     }
 }

@@ -8,14 +8,21 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A singular game image. MR_TXSETUP struct.
+ *
+ * Default CLUT offset (0 480)?
+ * Default vram image offset? (640 0)?
  * Created by Kneesnap on 8/30/2018.
  */
 @Getter
@@ -30,17 +37,26 @@ public class GameImage extends GameObject {
     private short textureId;
     private short texturePage;
     private short flags;
-    private short clutId; // Believed to always be zero.
+    private short clutId; // Believed to always be either 0 or 37.
     private byte u; // Unsure. Texture orientation?
     private byte v;
     private byte ingameWidth; // In-game texture width, used to remove texture padding.
     private byte ingameHeight;
     private byte[] imageBytes;
 
-    private int suppliedTextureOffset = 0;
+    private AtomicInteger suppliedTextureOffset;
 
+    public static int ID = 0;
     private static final int MAX_DIMENSION = 256;
     private static final int PIXEL_BYTES = 4;
+
+    public static final int FLAG_TRANSLUCENT = 1;
+    public static final int FLAG_ROTATED = 2; // Unused.
+    public static final int FLAG_HIT_X = 4; //Appears to decrease width by 1?
+    public static final int FLAG_HIT_Y = 8; //Appears to decrease height by 1?
+    public static final int FLAG_REFERENCED_BY_NAME = 16; // Unsure.
+    public static final int FLAG_BLACK_IS_TRANSPARENT = 32; // Seems like it may not be used. Would be weird if that were the case.
+    public static final int FLAG_2D_SPRITE = 32768;
 
     public GameImage(VLOArchive parent) {
         this.parent = parent;
@@ -52,6 +68,7 @@ public class GameImage extends GameObject {
         this.vramY = reader.readShort();
         this.fullWidth = reader.readShort();
         this.fullHeight = reader.readShort();
+
         int offset = reader.readInt();
         this.textureId = reader.readShort();
         this.texturePage = reader.readShort();
@@ -64,24 +81,74 @@ public class GameImage extends GameObject {
 
         reader.jumpTemp(offset);
 
+        int pixelCount = getFullWidth() * getFullHeight();
         if (getParent().isPsxMode()) {
-            //TODO.
+            pixelCount *= 2;
+
+            ByteBuffer buffer = ByteBuffer.allocate(2 * PIXEL_BYTES * pixelCount);
+
+            int clutX = ((clutId & 0x3F) << 4);
+            int clutY = (clutId >> 6) - 1;
+
+            System.out.println(Arrays.toString(Utils.getBits(clutId, 16)));
+            System.out.println(ID + " Clut X: " + clutX + " Clut Y: " + clutY + " ID: " + (clutY << 6 | (clutX >> 4) & 0x3F) + " (" + this.clutId + ")");
+
+            ClutEntry clut = parent.getClutEntries().get(Math.min(ID, parent.getClutEntries().size() - 1));
+            for (int i = 0; i < pixelCount; i++) {
+                short value = reader.readUnsignedByteAsShort();
+                int low = value & 0x0F;
+                int high = value >> 4;
+
+                readPSXPixel(low, clut, buffer);
+                readPSXPixel(high, clut, buffer);
+            }
+
+            this.imageBytes = buffer.array();
+
+            try {
+                ImageIO.write(toBufferedImage(false), "png", new File("debug/" + (ID++) + ".png"));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
         } else {
-            this.imageBytes = reader.readBytes(getFullWidth() * getFullHeight() * PIXEL_BYTES);
+            this.imageBytes = reader.readBytes(pixelCount * PIXEL_BYTES);
         }
 
         reader.jumpReturn();
+
+        if (ID >= 20)
+            System.exit(0);
+    }
+
+    private void readPSXPixel(int clutIndex, ClutEntry clut, ByteBuffer buffer) {
+        BufferedImage clutImage = parent.getClutImage();
+
+        int texY = clut.getClutRect().getY();
+        int texX = clut.getClutRect().getX() + clutIndex;
+
+        if (ID == 1)
+            System.out.println("X: " + texX + " Y: " + texY + " (" + clutIndex + ")");
+
+        byte[] arr = Utils.toByteArray(clutImage.getRGB(texX, texY));
+
+        //BGRA -> RGBA
+        byte temp = arr[0];
+        arr[0] = arr[2];
+        arr[2] = temp;
+        arr[3] = (byte) (0xFF - arr[3]);
+        buffer.putInt(Utils.readNumberFromBytes(arr));
     }
 
     @Override
     public void save(DataWriter writer) {
-        Utils.verify(this.suppliedTextureOffset != 0, "Image data offset was not specified.");
+        Utils.verify(this.suppliedTextureOffset != null, "Image data offset was not specified.");
 
         writer.writeShort(this.vramX);
         writer.writeShort(this.vramY);
         writer.writeShort(this.fullWidth);
         writer.writeShort(this.fullHeight);
-        writer.writeInt(this.suppliedTextureOffset);
+        writer.writeInt(this.suppliedTextureOffset.get());
         writer.writeShort(this.textureId);
         writer.writeShort(this.texturePage);
         writer.writeShort(this.flags);
@@ -91,21 +158,33 @@ public class GameImage extends GameObject {
         writer.writeByte(this.ingameWidth);
         writer.writeByte(this.ingameHeight);
 
-        //TODO: Directly write image bytes.
+        byte[] savedImageBytes = getSavedImageBytes();
+        int writeOffset = this.suppliedTextureOffset.getAndAdd(savedImageBytes.length); // Add offset.
+
+        writer.jumpTemp(writeOffset);
+        writer.writeBytes(savedImageBytes);
+        writer.jumpReturn();
     }
 
-    public int save(DataWriter writer, int textureOffset) {
+    public void save(DataWriter writer, AtomicInteger textureOffset) {
         this.suppliedTextureOffset = textureOffset;
         save(writer);
-        this.suppliedTextureOffset = 0;
-        return getImageBytes().length;
+        this.suppliedTextureOffset = null;
+    }
+
+    public byte[] getSavedImageBytes() {
+        if (!getParent().isPsxMode())
+            return getImageBytes(); // The image bytes as they are loaded are already as they should be when saved.
+
+        throw new RuntimeException("PSX not supported yet.");
+        //TODO: PSX
     }
 
     /**
      * Replace this texture with a new one.
      * @param image The new image to use.
      */
-    public void replaceImage(BufferedImage image) { //TODO: PSX.
+    public void replaceImage(BufferedImage image) {
         if (image.getType() != BufferedImage.TYPE_INT_ARGB) { // We can only parse TYPE_INT_ARGB, so if it's not that, we must convert the image to that, so it can be parsed properly.
             BufferedImage sourceImage = image;
             image = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -143,13 +222,13 @@ public class GameImage extends GameObject {
      * @param trimEdges Should edges be trimmed so the textures are exactly how they appear in-game?
      * @return bufferedImage
      */
-    public BufferedImage toBufferedImage(boolean trimEdges) { //TODO: Actually make trimming work. {TODO: PSX}
+    public BufferedImage toBufferedImage(boolean trimEdges) { //TODO: Actually make trimming work.
         int height = trimEdges ? getIngameHeight() : getFullHeight();
         int width = trimEdges ? getIngameWidth() : getFullWidth();
+        if (parent.isPsxMode())
+            width = width * 4;
 
-        byte[] cloneBytes = new byte[imageBytes.length]; // We don't want to make any changes to the original array.
-        System.arraycopy(imageBytes, 0, cloneBytes, 0, cloneBytes.length);
-
+        byte[] cloneBytes = Arrays.copyOf(getImageBytes(), getImageBytes().length); // We don't want to make changes to the original array.
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
         //ABGR -> BGRA
@@ -166,7 +245,7 @@ public class GameImage extends GameObject {
 
         int[] array = new int[buffer.remaining()];
         buffer.get(array);
-        image.setRGB(0, 0, width, height, array, 0, width);
+        image.setRGB(0, 0, image.getWidth(), image.getHeight(), array, 0, image.getWidth());
         return image;
     }
 

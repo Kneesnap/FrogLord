@@ -56,10 +56,9 @@ public class MWDFile extends GameObject {
             // Turn the byte data into the appropriate game-file.
             GameFile file;
 
-            String fileName = entry.getFilePath();
-            fileName = fileName.substring(fileName.lastIndexOf("\\") + 1);
+            String fileName = entry.getDisplayName();
 
-            if (entry.getTypeId() == VLOArchive.TYPE_ID || fileName.startsWith("LS_ALL")) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
+            if (entry.getTypeId() == VLOArchive.TYPE_ID || (fileName != null && fileName.startsWith("LS_ALL"))) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
                 file = new VLOArchive();
             } else /*if (entry.getTypeId() == MAPFile.TYPE_ID) {
                 if (fileName.startsWith("SKY_LAND")) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
@@ -89,7 +88,7 @@ public class MWDFile extends GameObject {
             try {
                 file.load(new DataReader(new ArraySource(fileBytes)));
             } catch (Exception ex) {
-                throw new RuntimeException("Failed to load " + entry.getFilePath(), ex);
+                throw new RuntimeException("Failed to load " + fileName, ex);
             }
 
             entryMap.put(file, entry);

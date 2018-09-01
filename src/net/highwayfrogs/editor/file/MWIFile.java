@@ -170,6 +170,14 @@ public class MWIFile extends GameObject {
         }
 
         /**
+         * Get the display name of this file entry.
+         * @return displayName
+         */
+        public String getDisplayName() {
+            return hasFilePath() ? getFilePath().substring(getFilePath().lastIndexOf("\\") + 1) : null;
+        }
+
+        /**
          * Test if a flag is valid for this entry.
          * @param flag The flag to test.
          * @return isFlagPresent

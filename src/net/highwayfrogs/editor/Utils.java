@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
 
@@ -8,6 +10,29 @@ import java.util.List;
  * Created by Kneesnap on 8/12/2018.
  */
 public class Utils {
+    private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
+
+    /**
+     * Convert a byte array to a number.
+     * @param data The data to turn into a number.
+     * @return intValue
+     */
+    public static int readNumberFromBytes(byte[] data) {
+        int value = 0;
+        for (int i = 0; i < data.length; i++)
+            value += ((long) data[i] & 0xFFL) << (Constants.BITS_PER_BYTE * i);
+        return value;
+    }
+
+    /**
+     * Turn an integer into a byte array.
+     * @param value The integer to turn into a byte array.
+     * @return byteArray
+     */
+    public static byte[] toByteArray(int value) {
+        INT_BUFFER.clear();
+        return INT_BUFFER.order(ByteOrder.LITTLE_ENDIAN).putInt(value).array();
+    }
 
     /**
      * Turn a byte array into a readable byte string.
@@ -46,7 +71,6 @@ public class Utils {
         if (!condition)
             throw new RuntimeException(formatting.length > 0 ? String.format(error, formatting) : error);
     }
-
 
     /**
      * Converts a number to a bit array.
