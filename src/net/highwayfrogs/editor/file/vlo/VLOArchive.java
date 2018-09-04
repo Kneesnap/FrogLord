@@ -136,7 +136,7 @@ public class VLOArchive extends GameFile {
         bytes[0] = Utils.unsignedShortToByte(color.getUnsignedScaledBlue());
         bytes[1] = Utils.unsignedShortToByte(color.getUnsignedScaledGreen());
         bytes[2] = Utils.unsignedShortToByte(color.getUnsignedScaledRed());
-        bytes[3] = (byte) (color.isTransparent() ? 0x00 : 0xFF); // FF = solid. 0 = Invisible.
+        bytes[3] = color.getAlpha(false); // FF = solid. 0 = Invisible.
         return Utils.readNumberFromBytes(bytes);
     }
 }

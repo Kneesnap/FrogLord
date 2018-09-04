@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 public class PSXClutColor extends GameObject {
-    private boolean stp;
+    private boolean stp; // stp -> "Semi Transparent" Flag.
     private byte red;
     private byte green;
     private byte blue;
@@ -77,13 +77,16 @@ public class PSXClutColor extends GameObject {
     }
 
     /**
-     * Checks if this image is drawn as transparent.
-     * @return isTransparent.
+     * Get this color's alpha value on a scale from 0 (Transparent) to 0xFF (Solid)
+     * @param semiTransparentMode Whether or not this color is rendered with semi-transparent blending on the PSX. (This is image-specific, not color-specific.)
+     * @return alphaColor
      */
-    public boolean isTransparent() {
+    public byte getAlpha(boolean semiTransparentMode) {
         boolean isBlack = (getRed() == 0) && (getGreen() == 0) && (getBlue() == 0);
-        // We're deviating from how I understand this to work on the website, because how it works on the website generates bad images it seems. This however may just be for Frogger, and not all PSX games.
-        // Normally, I understand the check to be isBlack != isStp().
-        return isBlack && !isStp(); // RGB {0, 0, 0} is a special-case, where the outcome is flipped.
+
+        if (!isStp())
+            return isBlack ? (byte) 0x00 : (byte) 0xFF;
+
+        return semiTransparentMode ? (byte) 127 : (byte) 0xFF;
     }
 }
