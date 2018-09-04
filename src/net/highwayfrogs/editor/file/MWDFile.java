@@ -6,7 +6,6 @@ import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.VBFile;
-import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -72,7 +71,7 @@ public class MWDFile extends GameObject {
                 file = new DemoFile();
             } else if (entry.getTypeId() == PALFile.TYPE_ID) {
                 file = new PALFile();
-            } else if (entry.getTypeId() == VHFile.TYPE_ID) {
+            } /*else if (entry.getTypeId() == VHFile.TYPE_ID) {
                 if (lastVB != null) {
                     VHFile vhFile = new VHFile();
                     vhFile.setVB(lastVB);
@@ -81,7 +80,7 @@ public class MWDFile extends GameObject {
                     file = new VBFile();
                 }
 
-            } else {
+            } */ else {
                 file = new DummyFile(fileBytes.length);  //TODO: Support actual file-types.
             }
 

@@ -8,9 +8,6 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class VLOArchive extends GameFile {
     private List<GameImage> images = new ArrayList<>();
     private List<ClutEntry> clutEntries = new ArrayList<>();
-    private BufferedImage clutImage;
     private boolean psxMode;
 
     private static final String PC_SIGNATURE = "2GRP";
@@ -60,7 +56,6 @@ public class VLOArchive extends GameFile {
             }
 
             reader.jumpReturn();
-            makeCLUTImage();
         }
 
         // Load image data.
@@ -71,31 +66,6 @@ public class VLOArchive extends GameFile {
             this.images.add(image);
         }
         reader.jumpReturn();
-    }
-
-    private void makeCLUTImage() { //TODO: Remove this once PSX is fully supported.
-        this.clutImage = new BufferedImage(1024, 512, BufferedImage.TYPE_INT_ARGB);
-
-        for (ClutEntry entry : clutEntries) {
-            int startX = entry.getClutRect().getX();
-            int startY = entry.getClutRect().getY();
-            int width = entry.getClutRect().getWidth();
-            int height = entry.getClutRect().getHeight();
-
-            for (int x = 0; x < width; x++) {
-                for (int y = 0; y < height; y++) {
-                    PSXClutColor color = entry.getColors().get((y * width) + x);
-                    this.clutImage.setRGB(x + startX, y + startY, toBGRA(color));
-                    System.out.println("[" + (x + startX) + ", " + (y + startY) + "] (" + color.getUnsignedScaledRed() + ", " + color.getUnsignedScaledGreen() + ", " + color.getUnsignedScaledBlue() + ") " + Integer.toHexString(color.getUnsignedScaledRed()) + " " + Integer.toHexString(color.getUnsignedScaledGreen()) + " " + Integer.toHexString(color.getUnsignedScaledBlue()));
-                }
-            }
-        }
-
-        try {
-            ImageIO.write(this.clutImage, "png", new File("debug/clut.png"));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
     }
 
     @Override

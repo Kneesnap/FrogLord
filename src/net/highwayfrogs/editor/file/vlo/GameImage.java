@@ -6,12 +6,11 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -46,7 +45,6 @@ public class GameImage extends GameObject {
 
     private AtomicInteger suppliedTextureOffset;
 
-    public static int ID = 0;
     private static final int MAX_DIMENSION = 256;
     private static final int PIXEL_BYTES = 4;
 
@@ -72,8 +70,8 @@ public class GameImage extends GameObject {
         int offset = reader.readInt();
         this.textureId = reader.readShort();
         this.texturePage = reader.readShort();
-        this.flags = reader.readShort();
         this.clutId = reader.readShort();
+        this.flags = reader.readShort();
         this.u = reader.readByte();
         this.v = reader.readByte();
         this.ingameWidth = reader.readByte();
@@ -88,12 +86,15 @@ public class GameImage extends GameObject {
             ByteBuffer buffer = ByteBuffer.allocate(2 * PIXEL_BYTES * pixelCount);
 
             int clutX = ((clutId & 0x3F) << 4);
-            int clutY = (clutId >> 6) - 1;
+            int clutY = (clutId >> 6);
 
-            System.out.println(Arrays.toString(Utils.getBits(clutId, 16)));
-            System.out.println(ID + " Clut X: " + clutX + " Clut Y: " + clutY + " ID: " + (clutY << 6 | (clutX >> 4) & 0x3F) + " (" + this.clutId + ")");
+            ClutEntry clut = getParent().getClutEntries().stream()
+                    .filter(entry -> entry.getClutRect().getX() == clutX)
+                    .filter(entry -> entry.getClutRect().getY() == clutY)
+                    .findAny().orElse(null);
 
-            ClutEntry clut = parent.getClutEntries().get(Math.min(ID, parent.getClutEntries().size() - 1));
+            Utils.verify(clut != null, "Failed to find clut for coordinates [%d,%d].", clutX, clutY);
+
             for (int i = 0; i < pixelCount; i++) {
                 short value = reader.readUnsignedByteAsShort();
                 int low = value & 0x0F;
@@ -105,38 +106,27 @@ public class GameImage extends GameObject {
 
             this.imageBytes = buffer.array();
 
-            try {
+            /*try {
                 ImageIO.write(toBufferedImage(false), "png", new File("debug/" + (ID++) + ".png"));
             } catch (Exception ex) {
                 ex.printStackTrace();
-            }
+            }*/
 
         } else {
             this.imageBytes = reader.readBytes(pixelCount * PIXEL_BYTES);
         }
 
         reader.jumpReturn();
-
-        if (ID >= 20)
-            System.exit(0);
     }
 
     private void readPSXPixel(int clutIndex, ClutEntry clut, ByteBuffer buffer) {
-        BufferedImage clutImage = parent.getClutImage();
+        PSXClutColor color = clut.getColors().get(clutIndex);
 
-        int texY = clut.getClutRect().getY();
-        int texX = clut.getClutRect().getX() + clutIndex;
-
-        if (ID == 1)
-            System.out.println("X: " + texX + " Y: " + texY + " (" + clutIndex + ")");
-
-        byte[] arr = Utils.toByteArray(clutImage.getRGB(texX, texY));
-
-        //BGRA -> RGBA
-        byte temp = arr[0];
-        arr[0] = arr[2];
-        arr[2] = temp;
-        arr[3] = (byte) (0xFF - arr[3]);
+        byte[] arr = new byte[4]; //RGBA
+        arr[0] = Utils.unsignedShortToByte(color.getUnsignedScaledRed());
+        arr[1] = Utils.unsignedShortToByte(color.getUnsignedScaledGreen());
+        arr[2] = Utils.unsignedShortToByte(color.getUnsignedScaledBlue());
+        arr[3] = (byte) (0xFF - color.getAlpha(false));
         buffer.putInt(Utils.readNumberFromBytes(arr));
     }
 
@@ -151,8 +141,8 @@ public class GameImage extends GameObject {
         writer.writeInt(this.suppliedTextureOffset.get());
         writer.writeShort(this.textureId);
         writer.writeShort(this.texturePage);
-        writer.writeShort(this.flags);
         writer.writeShort(this.clutId);
+        writer.writeShort(this.flags);
         writer.writeByte(this.u);
         writer.writeByte(this.v);
         writer.writeByte(this.ingameWidth);
