@@ -9,8 +9,10 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -19,9 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A singular game image. MR_TXSETUP struct.
- *
- * Default CLUT offset (0 480)?
- * Default vram image offset? (640 0)?
+ * TODO: Fix some PSX images having a slight offset.
+ * TODO: Support saving PSX VLOs.
  * Created by Kneesnap on 8/30/2018.
  */
 @Getter
@@ -47,6 +48,9 @@ public class GameImage extends GameObject {
 
     private static final int MAX_DIMENSION = 256;
     private static final int PIXEL_BYTES = 4;
+
+    public static int PACK_ID = 0;
+    public static int IMAGE_ID = 0;
 
     public static final int FLAG_TRANSLUCENT = 1;
     public static final int FLAG_ROTATED = 2; // Unused.
@@ -106,11 +110,15 @@ public class GameImage extends GameObject {
 
             this.imageBytes = buffer.array();
 
-            /*try {
-                ImageIO.write(toBufferedImage(false), "png", new File("debug/" + (ID++) + ".png"));
+            try {
+                File dir = new File("debug/" + PACK_ID + "/");
+                if (!dir.exists())
+                    dir.mkdirs();
+
+                ImageIO.write(toBufferedImage(false), "png", new File(dir, IMAGE_ID++ + ".png"));
             } catch (Exception ex) {
                 ex.printStackTrace();
-            }*/
+            }
 
         } else {
             this.imageBytes = reader.readBytes(pixelCount * PIXEL_BYTES);
@@ -166,8 +174,7 @@ public class GameImage extends GameObject {
         if (!getParent().isPsxMode())
             return getImageBytes(); // The image bytes as they are loaded are already as they should be when saved.
 
-        throw new RuntimeException("PSX not supported yet.");
-        //TODO: PSX
+        throw new RuntimeException("PSX not supported yet."); //TODO: Remove once supported.
     }
 
     /**

@@ -5,7 +5,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.ArrayList;
@@ -66,6 +65,9 @@ public class VLOArchive extends GameFile {
             this.images.add(image);
         }
         reader.jumpReturn();
+
+        GameImage.PACK_ID++;
+        GameImage.IMAGE_ID = 0;
     }
 
     @Override
@@ -99,14 +101,5 @@ public class VLOArchive extends GameFile {
             for (ClutEntry entry : clutEntries)
                 entry.save(writer, imageBytesOffset);
         }
-    }
-
-    public static int toBGRA(PSXClutColor color) {
-        byte[] bytes = new byte[4];
-        bytes[0] = Utils.unsignedShortToByte(color.getUnsignedScaledBlue());
-        bytes[1] = Utils.unsignedShortToByte(color.getUnsignedScaledGreen());
-        bytes[2] = Utils.unsignedShortToByte(color.getUnsignedScaledRed());
-        bytes[3] = color.getAlpha(false); // FF = solid. 0 = Invisible.
-        return Utils.readNumberFromBytes(bytes);
     }
 }
