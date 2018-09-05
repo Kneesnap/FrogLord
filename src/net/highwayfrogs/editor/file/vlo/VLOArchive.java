@@ -92,8 +92,8 @@ public class VLOArchive extends GameFile {
         for (GameImage image : getImages())
             image.save(writer, imageBytesOffset);
 
-
-        if (isPsxMode()) { // Save CLUT data.
+        // Save CLUT data. CLUT should be saved after images are saved, because changed images will generate a new CLUT.
+        if (isPsxMode()) {
             writer.jumpTemp(clutFirstSetupIndex);
             writer.writeInt(imageBytesOffset.get());
             writer.jumpReturn();

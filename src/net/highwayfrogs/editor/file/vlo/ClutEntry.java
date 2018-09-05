@@ -52,7 +52,7 @@ public class ClutEntry extends GameObject {
         this.clutRect.save(writer);
 
         int clutCount = getClutRect().getWidth() * getClutRect().getHeight();
-        Utils.verify(clutCount == colors.size(), "CLUT Information says there should be %d CLUTs, however we tried to save %d!", clutCount, colors.size());
+        Utils.verify(clutCount == colors.size(), "CLUT Information says there should be %d colors, however we tried to save %d!", clutCount, colors.size());
 
         int byteCount = getByteSize();
         int writtenOffset = this.suppliedClutOffset.getAndAdd(byteCount);

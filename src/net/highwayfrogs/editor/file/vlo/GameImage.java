@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * A singular game image. MR_TXSETUP struct.
  * TODO: Fix some PSX images having a slight offset.
- * TODO: Support saving PSX VLOs.
  * Created by Kneesnap on 8/30/2018.
  */
 @Getter
@@ -48,6 +47,8 @@ public class GameImage extends GameObject {
 
     private static final int MAX_DIMENSION = 256;
     private static final int PIXEL_BYTES = 4;
+    private static final int PSX_PIXELS_PER_INT = 2;
+    private static final int PSX_WIDTH_MODIFIER = 2;
 
     public static int PACK_ID = 0;
     public static int IMAGE_ID = 0;
@@ -85,19 +86,10 @@ public class GameImage extends GameObject {
 
         int pixelCount = getFullWidth() * getFullHeight();
         if (getParent().isPsxMode()) {
-            pixelCount *= 2;
+            pixelCount *= PSX_WIDTH_MODIFIER;
 
-            ByteBuffer buffer = ByteBuffer.allocate(2 * PIXEL_BYTES * pixelCount);
-
-            int clutX = ((clutId & 0x3F) << 4);
-            int clutY = (clutId >> 6);
-
-            ClutEntry clut = getParent().getClutEntries().stream()
-                    .filter(entry -> entry.getClutRect().getX() == clutX)
-                    .filter(entry -> entry.getClutRect().getY() == clutY)
-                    .findAny().orElse(null);
-
-            Utils.verify(clut != null, "Failed to find clut for coordinates [%d,%d].", clutX, clutY);
+            ByteBuffer buffer = ByteBuffer.allocate((PIXEL_BYTES / PSX_PIXELS_PER_INT) * PIXEL_BYTES * pixelCount);
+            ClutEntry clut = getClut();
 
             for (int i = 0; i < pixelCount; i++) {
                 short value = reader.readUnsignedByteAsShort();
@@ -138,6 +130,19 @@ public class GameImage extends GameObject {
         buffer.putInt(Utils.readNumberFromBytes(arr));
     }
 
+    private ClutEntry getClut() {
+        int clutX = ((clutId & 0x3F) << 4);
+        int clutY = (clutId >> 6);
+
+        ClutEntry clut = getParent().getClutEntries().stream()
+                .filter(entry -> entry.getClutRect().getX() == clutX)
+                .filter(entry -> entry.getClutRect().getY() == clutY)
+                .findAny().orElse(null);
+
+        Utils.verify(clut != null, "Failed to find clut for coordinates [%d,%d].", clutX, clutY);
+        return clut;
+    }
+
     @Override
     public void save(DataWriter writer) {
         Utils.verify(this.suppliedTextureOffset != null, "Image data offset was not specified.");
@@ -170,11 +175,48 @@ public class GameImage extends GameObject {
         this.suppliedTextureOffset = null;
     }
 
+    /**
+     * Get the byte[] which will be saved to the VLO file.
+     * @return vloImageByteArray
+     */
     public byte[] getSavedImageBytes() {
         if (!getParent().isPsxMode())
             return getImageBytes(); // The image bytes as they are loaded are already as they should be when saved.
 
-        throw new RuntimeException("PSX not supported yet."); //TODO: Remove once supported.
+        ClutEntry clut = getClut();
+        clut.getColors().clear(); // Generate a new clut.
+
+        ByteBuffer buffer = ByteBuffer.allocate((getImageBytes().length / PIXEL_BYTES) * PSX_PIXELS_PER_INT);
+        int maxColors = getClut().getClutRect().getWidth() * clut.getClutRect().getHeight();
+
+        for (int i = 0; i < getImageBytes().length; i += PIXEL_BYTES * PSX_PIXELS_PER_INT) {
+
+            // RGBA -> ClutColor
+            PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
+            PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PIXEL_BYTES);
+
+            int color1Index = clut.getColors().indexOf(color1);
+            if (color1Index == -1) {
+                color1Index = clut.getColors().size();
+                clut.getColors().add(color1);
+            }
+
+            int color2Index = clut.getColors().indexOf(color2);
+            if (color2Index == -1) {
+                color2Index = clut.getColors().size();
+                clut.getColors().add(color2);
+            }
+
+            Utils.verify(maxColors >= clut.getColors().size(), "Tried to import a PSX image with too many colors.");
+            buffer.putInt(color2Index | (color1Index << 4));
+        }
+
+        // For any unfilled part of the clut, fill it with black.
+        PSXClutColor unused = new PSXClutColor();
+        while (maxColors > clut.getColors().size())
+            clut.getColors().add(unused);
+
+        return buffer.array();
     }
 
     /**
@@ -223,7 +265,7 @@ public class GameImage extends GameObject {
         int height = trimEdges ? getIngameHeight() : getFullHeight();
         int width = trimEdges ? getIngameWidth() : getFullWidth();
         if (parent.isPsxMode())
-            width = width * 4;
+            width *= PSX_WIDTH_MODIFIER * PSX_PIXELS_PER_INT;
 
         byte[] cloneBytes = Arrays.copyOf(getImageBytes(), getImageBytes().length); // We don't want to make changes to the original array.
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);

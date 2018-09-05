@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.standard.psx;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
@@ -13,7 +14,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 public class PSXClutColor extends GameObject {
-    private boolean stp; // stp -> "Semi Transparent" Flag.
+    @Setter private boolean stp; // stp -> "Semi Transparent" Flag.
     private byte red;
     private byte green;
     private byte blue;
@@ -45,11 +46,53 @@ public class PSXClutColor extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
+        writer.writeShort(toShort());
+    }
+
+    /**
+     * Get this value as a short.
+     * @return shortValue
+     */
+    public short toShort() {
         short writeValue = (short) (this.stp ? STP_FLAG : 0);
         writeValue |= (getBlue() << BLUE_OFFSET);
         writeValue |= (getGreen() << GREEN_OFFSET);
         writeValue |= (getRed() << RED_OFFSET);
-        writer.writeShort(writeValue);
+        return writeValue;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof PSXClutColor && ((PSXClutColor) other).toShort() == this.toShort();
+    }
+
+    @Override
+    public int hashCode() {
+        return toShort();
+    }
+
+    /**
+     * Set the byte value scaled from 0 - 255.
+     * @param redByte The value to use.
+     */
+    public void setScaledRed(short redByte) {
+        this.red = Utils.unsignedShortToByte((short) (redByte >> TO_FULL_BYTE));
+    }
+
+    /**
+     * Set the byte value scaled from 0 - 255.
+     * @param greenByte The value to use.
+     */
+    public void setScaledGreen(short greenByte) {
+        this.green = Utils.unsignedShortToByte((short) (greenByte >> TO_FULL_BYTE));
+    }
+
+    /**
+     * Set the byte value scaled from 0 - 255.
+     * @param blueByte The value to use.
+     */
+    public void setScaledBlue(short blueByte) {
+        this.blue = Utils.unsignedShortToByte((short) (blueByte >> TO_FULL_BYTE));
     }
 
     /**
@@ -82,11 +125,50 @@ public class PSXClutColor extends GameObject {
      * @return alphaColor
      */
     public byte getAlpha(boolean semiTransparentMode) {
-        boolean isBlack = (getRed() == 0) && (getGreen() == 0) && (getBlue() == 0);
-
         if (!isStp())
-            return isBlack ? (byte) 0x00 : (byte) 0xFF;
+            return isBlack() ? (byte) 0x00 : (byte) 0xFF;
 
         return semiTransparentMode ? (byte) 127 : (byte) 0xFF;
+    }
+
+    /**
+     * Is this image devoid of all RGB colors, and equal to RGB {0, 0, 0}?
+     * @return isBlack
+     */
+    public boolean isBlack() {
+        return (getRed() == 0) && (getGreen() == 0) && (getBlue() == 0);
+    }
+
+    /**
+     * Turn red, green, blue, alpha values (0 -> 255) into a PSX Clut color.
+     * @param red   Red color value.
+     * @param green Green color value.
+     * @param blue  Blue color value.
+     * @param alpha Alpha value.
+     * @return clutColor
+     */
+    public static PSXClutColor fromRGBA(byte red, byte green, byte blue, byte alpha) {
+        PSXClutColor color = new PSXClutColor();
+
+        color.setScaledRed(Utils.byteToUnsignedShort(red));
+        color.setScaledGreen(Utils.byteToUnsignedShort(green));
+        color.setScaledBlue(Utils.byteToUnsignedShort(blue));
+
+        short alphaShort = Utils.byteToUnsignedShort(alpha);
+        color.setStp(alphaShort == 0xFF
+                ? color.isBlack() // STP-Bit is true if alpha is 0xFF and the color is black.
+                : alphaShort != 0); // If alpha is not zero, the stp bit is false. Otherwise, it's in semi-transparent mode, and the stp bit is true.
+
+        return color;
+    }
+
+    /**
+     * Turn an RGBA byte array into a PSXClutColor.
+     * @param array The array to read RGBA bytes from.
+     * @param index The index to read color data from.
+     * @return clutColor
+     */
+    public static PSXClutColor fromRGBA(byte[] array, int index) {
+        return fromRGBA(array[index], array[index + 1], array[index + 2], array[index + 3]);
     }
 }
