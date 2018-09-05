@@ -3,10 +3,10 @@ package net.highwayfrogs.editor.file;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -34,13 +34,23 @@ public class WADFile extends GameFile {
             int fileType = reader.readInt();
             int size = reader.readInt();
             reader.readInt(); // Padding.
+
             byte[] data = reader.readBytes(size);
+            boolean compressed = PP20Unpacker.isCompressed(data);
+            if (compressed)
+                data = PP20Unpacker.unpackData(data);
 
-            Utils.verify(fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID, "Unexpected WAD file-type: %d.", fileType);
+            GameFile file;
+            if (fileType == VLOArchive.WAD_TYPE || fileType == 1) {
+                file = new VLOArchive();
+            } else if (fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID) {
+                file = new MOFFile();
+            } else {
+                throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
+            }
 
-            GameFile file = new MOFFile();
             file.load(new DataReader(new ArraySource(data)));
-            files.add(new WADEntry(resourceId, fileType, file));
+            files.add(new WADEntry(resourceId, fileType, compressed, file));
         }
     }
 
@@ -52,7 +62,10 @@ public class WADFile extends GameFile {
 
             ArrayReceiver receiver = new ArrayReceiver();
             entry.getFile().save(new DataWriter(receiver));
+
             byte[] fileBytes = receiver.toArray();
+            if (entry.isCompressed())
+                fileBytes = PP20Packer.packData(fileBytes);
 
             writer.writeInt(fileBytes.length); // File length.
             writer.writeNull(Constants.INTEGER_SIZE); // Padding
@@ -68,6 +81,7 @@ public class WADFile extends GameFile {
     private static class WADEntry {
         private int resourceId;
         private int fileType;
+        private boolean compressed;
         private GameFile file;
     }
 }

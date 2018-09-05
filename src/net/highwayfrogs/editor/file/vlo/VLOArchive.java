@@ -29,6 +29,7 @@ public class VLOArchive extends GameFile {
     private static final int IMAGE_INFO_BYTES = 24;
     private static final int HEADER_SIZE = SIGNATURE_LENGTH + (2 * Constants.INTEGER_SIZE);
     public static final int TYPE_ID = 1;
+    public static final int WAD_TYPE = 0;
 
     @Override
     public void load(DataReader reader) {
@@ -66,6 +67,7 @@ public class VLOArchive extends GameFile {
         }
         reader.jumpReturn();
 
+        System.out.println("Saved Pack: " + GameImage.PACK_ID);
         GameImage.PACK_ID++;
         GameImage.IMAGE_ID = 0;
     }
