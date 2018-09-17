@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.mof;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.GameObject;
@@ -39,6 +40,7 @@ public class MOFFile extends GameFile {
     public static final int MOF_ID = 3;
     public static final int MAP_MOF_ID = 4;
 
+    private static final Image ICON = loadIcon("swampy");
     private static final byte[] MOF_SIGNATURE = "FOM".getBytes();
     private static final byte[] DUMMY_DATA = "DUMY".getBytes();
 
@@ -114,5 +116,10 @@ public class MOFFile extends GameFile {
      */
     public boolean testFlag(int flag) {
         return (this.flags & flag) == flag;
+    }
+
+    @Override
+    public Image getIcon() {
+        return ICON;
     }
 }

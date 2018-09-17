@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file;
 
+import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
@@ -21,6 +22,7 @@ import java.util.List;
 public class WADFile extends GameFile {
     private List<WADEntry> files = new ArrayList<>();
 
+    private static final Image ICON = loadIcon("packed");
     public static final int TYPE_ID = -1;
     private static final int TERMINATOR = -1;
 
@@ -74,6 +76,11 @@ public class WADFile extends GameFile {
 
         writer.writeInt(TERMINATOR);
         writer.writeNull(Constants.INTEGER_SIZE * 3);
+    }
+
+    @Override
+    public Image getIcon() {
+        return ICON;
     }
 
     @Getter

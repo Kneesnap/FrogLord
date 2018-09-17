@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -179,5 +181,23 @@ public class Utils {
             array[i] = array[array.length - 1 - i];
             array[array.length - 1 - i] = temp;
         }
+    }
+
+    /**
+     * Get a resource in the JAR.
+     * @param resourceName The resource name.
+     * @return resourceURL
+     */
+    public static URL getResource(String resourceName) {
+        return Utils.class.getClassLoader().getResource(resourceName);
+    }
+
+    /**
+     * Get a JAR resource as a stream.
+     * @param resourceName The name of the resource to load.
+     * @return resourceStream
+     */
+    public static InputStream getResourceStream(String resourceName) {
+        return Utils.class.getClassLoader().getResourceAsStream(resourceName);
     }
 }

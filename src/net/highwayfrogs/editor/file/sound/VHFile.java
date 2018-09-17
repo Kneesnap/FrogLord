@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.sound;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -18,8 +19,10 @@ import java.util.List;
 public class VHFile extends GameFile {
     @Setter private VBFile VB;
     private List<AudioHeader> entries = new ArrayList<>();
+
     private static final int ENTRY_LENGTH = 7 * Constants.INTEGER_SIZE;
     public static final int TYPE_ID = 2;
+    public static final Image ICON = loadIcon("sound");
 
     @Override
     public void load(DataReader reader) {
@@ -67,6 +70,11 @@ public class VHFile extends GameFile {
             lastEntry = currentOffset;
             lastSize = entry.getDataSize();
         }
+    }
+
+    @Override
+    public Image getIcon() {
+        return ICON;
     }
 
     @Setter

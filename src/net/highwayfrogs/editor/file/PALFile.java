@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
@@ -20,6 +21,7 @@ public class PALFile extends GameFile {
     private List<Color> colors = new ArrayList<>();
 
     public static final int TYPE_ID = 7;
+    public static final Image ICON = loadIcon("palette");
     private static final String RIFF_SIGNATURE = "RIFF";
     private static final String PAL_SIGNATURE = "PAL ";
     private static final String DATA_HEADER = "data";
@@ -69,5 +71,10 @@ public class PALFile extends GameFile {
         }
 
         writer.writeNull(4); // Unsure what this serves, but it's there.
+    }
+
+    @Override
+    public Image getIcon() {
+        return ICON;
     }
 }

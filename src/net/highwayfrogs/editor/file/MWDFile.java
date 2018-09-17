@@ -1,11 +1,13 @@
 package net.highwayfrogs.editor.file;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.VBFile;
+import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -20,6 +22,7 @@ import java.util.*;
  * This represents a loaded MWAD file.
  * Created by Kneesnap on 8/10/2018.
  */
+@Getter
 public class MWDFile extends GameObject {
     private MWIFile wadIndexTable;
     private List<GameFile> files = new ArrayList<>();
@@ -71,7 +74,7 @@ public class MWDFile extends GameObject {
                 file = new DemoFile();
             } else if (entry.getTypeId() == PALFile.TYPE_ID) {
                 file = new PALFile();
-            } /*else if (entry.getTypeId() == VHFile.TYPE_ID) { // Disabled until PSX is supported.
+            } else if (entry.getTypeId() == VHFile.TYPE_ID) { // Disabled until PSX is supported.
                 if (lastVB != null) {
                     VHFile vhFile = new VHFile();
                     vhFile.setVB(lastVB);
@@ -80,7 +83,7 @@ public class MWDFile extends GameObject {
                     file = new VBFile();
                 }
 
-            } */ else {
+            } else {
                 file = new DummyFile(fileBytes.length);
             }
 

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.sound;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
@@ -30,6 +31,11 @@ public class VBFile extends GameFile {
     private DataReader cachedReader;
 
     public static int SOUND_ID;
+
+    @Override
+    public Image getIcon() {
+        return VHFile.ICON;
+    }
 
     /**
      * Load the VB file, with the mandatory VH file.

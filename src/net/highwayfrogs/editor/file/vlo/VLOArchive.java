@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.vlo;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
@@ -31,6 +32,7 @@ public class VLOArchive extends GameFile {
     private static final int HEADER_SIZE = SIGNATURE_LENGTH + (2 * Constants.INTEGER_SIZE);
     public static final int TYPE_ID = 1;
     public static final int WAD_TYPE = 0;
+    public static final Image ICON = loadIcon("image");
 
     @Override
     public void load(DataReader reader) {
@@ -103,5 +105,10 @@ public class VLOArchive extends GameFile {
             for (ClutEntry entry : clutEntries)
                 entry.save(writer, imageBytesOffset);
         }
+    }
+
+    @Override
+    public Image getIcon() {
+        return ICON;
     }
 }

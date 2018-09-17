@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -15,6 +16,8 @@ import java.nio.ByteBuffer;
 public class DummyFile extends GameFile {
     private int length;
     private ByteBuffer buffer;
+
+    private static final Image ICON = loadIcon("unknown");
 
     public DummyFile(int length) {
         this.length = length;
@@ -40,5 +43,10 @@ public class DummyFile extends GameFile {
         DummyFile file = new DummyFile(source.length);
         file.load(new DataReader(new ArraySource(source)));
         return file;
+    }
+
+    @Override
+    public Image getIcon() {
+        return ICON;
     }
 }

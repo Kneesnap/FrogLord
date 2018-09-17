@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
@@ -65,6 +66,7 @@ public class MAPFile extends GameFile {
     private static final String GRID_SIGNATURE = "GRID";
     private static final String ANIMATION_SIGNATURE = "ANIM";
 
+    public static final Image ICON = loadIcon("map");
     public static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
 
     static {
@@ -277,5 +279,10 @@ public class MAPFile extends GameFile {
     @Override
     public void save(DataWriter writer) {
         //TODO: Save map.
+    }
+
+    @Override
+    public Image getIcon() {
+        return ICON;
     }
 }

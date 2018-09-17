@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file;
 
+import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
@@ -21,6 +22,7 @@ public class DemoFile extends GameFile {
     private int startY;
 
     public static final int TYPE_ID = 6;
+    private static final Image ICON = loadIcon("demo");
     private static final int FILE_SIZE = 1812;
 
     @Override
@@ -58,6 +60,11 @@ public class DemoFile extends GameFile {
         }
 
         writer.jumpTo(FILE_SIZE); // Jump to end of file.
+    }
+
+    @Override
+    public Image getIcon() {
+        return ICON;
     }
 
     @Getter
