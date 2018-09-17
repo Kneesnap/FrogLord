@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
@@ -9,6 +10,7 @@ import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
+import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -24,6 +26,7 @@ import java.util.*;
  * Parses Frogger MAP files.
  * Created by Kneesnap on 8/22/2018.
  */
+@Getter
 public class MAPFile extends GameFile {
     private short startXTile;
     private short startYTile;
@@ -32,6 +35,7 @@ public class MAPFile extends GameFile {
     private short checkPointTimers[] = new short[5]; // Each frog (checkpoint) has its own timer value. In the vanilla game, they all match.
     private SVector cameraSourceOffset;
     private SVector cameraTargetOffset;
+    private List<Path> paths = new ArrayList<>();
     private List<Zone> zones = new ArrayList<>();
     private List<Form> forms = new ArrayList<>();
     private List<Entity> entities = new ArrayList<>();
@@ -104,23 +108,13 @@ public class MAPFile extends GameFile {
         reader.verifyString(PATH_SIGNATURE);
         int pathCount = reader.readInt();
 
+        // PATH
         for (int i = 0; i < pathCount; i++) {
             reader.jumpTemp(reader.readInt()); // Starts after the pointers.
-
-            int entityIndicePointer = reader.readInt(); //Points to a -1 terminated short list of entities (that it can collide with?) TODO: Read this list.
-            int segmentCount = reader.readInt();
-            int segmentPointer = reader.readInt();
-
+            Path path = new Path();
+            path.load(reader);
+            this.paths.add(path);
             reader.jumpReturn();
-
-            // Read segments.
-            reader.jumpTemp(segmentPointer);
-            int[] segmentOffsets = new int[segmentCount];
-            for (int j = 0; j < segmentCount; j++)
-                segmentOffsets[j] = reader.readInt();
-            reader.jumpReturn();
-
-            //TODO: Finish.
         }
 
         // Read Camera Zones.

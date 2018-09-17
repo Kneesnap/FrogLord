@@ -17,6 +17,7 @@ public class Entity extends GameObject {
     private int pathRunnerPointer;
     private int nextEntity;
     private int previousEntity;
+    private transient int pointer;
 
     private static final int FLAG_HIDDEN = 1; // Don't create a live entity while this is set.
     private static final int FLAG_NO_DISPLAY = 2; // Don't display any mesh.
