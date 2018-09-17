@@ -59,19 +59,19 @@ public class MWDFile extends GameObject {
 
             if (entry.getTypeId() == VLOArchive.TYPE_ID || (fileName != null && fileName.startsWith("LS_ALL"))) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
                 file = new VLOArchive();
-            } else /*if (entry.getTypeId() == MAPFile.TYPE_ID) {
+            } else /*if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
                 if (fileName.startsWith("SKY_LAND")) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
-                    file = new DummyFile(fileBytes.length); // TODO: Parse this file later.
+                    file = new DummyFile(fileBytes.length); // TODO: Is this file even used?
                 } else {
                     file = new MAPFile();
                 }
-            } else /*if (entry.getTypeId() == WADFile.TYPE_ID) {
+            } else /*if (entry.getTypeId() == WADFile.TYPE_ID) { // Disabled until fully supported.
                 file = new WADFile();
             } else*/ if (entry.getTypeId() == DemoFile.TYPE_ID) {
                 file = new DemoFile();
             } else if (entry.getTypeId() == PALFile.TYPE_ID) {
                 file = new PALFile();
-            } /*else if (entry.getTypeId() == VHFile.TYPE_ID) {
+            } /*else if (entry.getTypeId() == VHFile.TYPE_ID) { // Disabled until PSX is supported.
                 if (lastVB != null) {
                     VHFile vhFile = new VHFile();
                     vhFile.setVB(lastVB);
@@ -81,7 +81,7 @@ public class MWDFile extends GameObject {
                 }
 
             } */ else {
-                file = new DummyFile(fileBytes.length);  //TODO: Support actual file-types.
+                file = new DummyFile(fileBytes.length);
             }
 
             try {
