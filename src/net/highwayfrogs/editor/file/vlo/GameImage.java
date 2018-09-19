@@ -261,9 +261,10 @@ public class GameImage extends GameObject {
      * @param trimEdges Should edges be trimmed so the textures are exactly how they appear in-game?
      * @return bufferedImage
      */
-    public BufferedImage toBufferedImage(boolean trimEdges) { //TODO: Actually make trimming work.
-        int height = trimEdges ? getIngameHeight() : getFullHeight();
-        int width = trimEdges ? getIngameWidth() : getFullWidth();
+    public BufferedImage toBufferedImage(boolean trimEdges) {
+        int height = getFullHeight();
+        int width = getFullWidth();
+
         if (parent.isPsxMode())
             width *= PSX_WIDTH_MODIFIER * PSX_PIXELS_PER_INT;
 
@@ -285,40 +286,55 @@ public class GameImage extends GameObject {
         int[] array = new int[buffer.remaining()];
         buffer.get(array);
         image.setRGB(0, 0, image.getWidth(), image.getHeight(), array, 0, image.getWidth());
-        return image;
+
+        BufferedImage returnImage = image;
+
+        if (trimEdges) {
+            int xTrim = getFullWidth() - getIngameWidth();
+            int yTrim = getFullHeight() - getIngameHeight();
+
+            BufferedImage trimImage = new BufferedImage(getIngameWidth(), getIngameHeight(), returnImage.getType());
+            Graphics2D graphics = trimImage.createGraphics();
+            graphics.drawImage(returnImage, -xTrim / 2, -yTrim / 2, getFullWidth(), getFullHeight(), null);
+            graphics.dispose();
+
+            returnImage = trimImage;
+        }
+
+        return returnImage;
     }
 
     /**
      * Gets the in-game height of this image.
      * @return ingameHeight
      */
-    public int getIngameHeight() {
-        return this.ingameHeight == 0 ? MAX_DIMENSION : this.ingameHeight;
+    public short getIngameHeight() {
+        return this.ingameHeight == 0 ? MAX_DIMENSION : Utils.byteToUnsignedShort(this.ingameHeight);
     }
 
     /**
      * Gets the in-game width of this image.
      * @return ingameWidth
      */
-    public int getIngameWidth() {
-        return this.ingameWidth == 0 ? MAX_DIMENSION : this.ingameWidth;
+    public short getIngameWidth() {
+        return this.ingameWidth == 0 ? MAX_DIMENSION : Utils.byteToUnsignedShort(this.ingameWidth);
     }
 
     /**
      * Set the in-game height of this image.
      * @param height The in-game height.
      */
-    public void setIngameHeight(int height) {
+    public void setIngameHeight(short height) {
         Utils.verify(height >= 0 && height <= MAX_DIMENSION, "Image height is not in the required range (0,%d].", MAX_DIMENSION);
-        this.ingameHeight = (byte) (height == MAX_DIMENSION ? 0 : height);
+        this.ingameHeight = (height == MAX_DIMENSION ? 0 : Utils.unsignedShortToByte(height));
     }
 
     /**
      * Set the in-game width of this image.
      * @param width The in-game width.
      */
-    public void setIngameWidth(int width) {
+    public void setIngameWidth(short width) {
         Utils.verify(width >= 0 && width <= MAX_DIMENSION, "Image width is not in the required range: (0,%d].", MAX_DIMENSION);
-        this.ingameWidth = (byte) (width == MAX_DIMENSION ? 0 : width);
+        this.ingameWidth = (width == MAX_DIMENSION ? 0 : Utils.unsignedShortToByte(width));
     }
 }
