@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.gui;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -11,9 +12,12 @@ import javafx.scene.control.TextArea;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -47,9 +51,28 @@ public class MainController implements Initializable {
         ObservableList<GameFile> gameFiles = FXCollections.observableArrayList(mwdFile.getFiles());
         fileList.setItems(gameFiles);
         fileList.setCellFactory(param -> new AttachmentListCell(mwdFile));
+        fileList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openEditor(newValue));
+        fileList.getSelectionModel().select(0);
+    }
 
-        fileList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) ->
-                System.out.println("You have selected " + mwdFile.getEntryMap().get(newValue).getDisplayName() + ". Later, this will open the editor menu."));
+    /**
+     * Open an editor for a given file.
+     * @param file The file to open the editor for.
+     */
+    @SneakyThrows
+    public void openEditor(GameFile file) {
+        editorPane.getChildren().clear(); // Remove any existing editor.
+
+        //TODO: Needs to be modular.
+        if (file instanceof VLOArchive) {
+            VLOController controller = new VLOController();
+
+            FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/vlo.fxml"));
+            loader.setController(controller);
+            editorPane.getChildren().add(loader.load());
+
+            controller.loadVLO((VLOArchive) file);
+        }
     }
 
 

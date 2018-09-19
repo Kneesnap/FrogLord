@@ -14,9 +14,11 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import java.io.File;
 
 public class GUIMain extends Application {
+    public static Stage MAIN_STAGE;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();
 
         File folder = new File("debug");

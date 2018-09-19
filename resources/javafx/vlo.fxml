@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
+            minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
+            xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <ListView fx:id="imageList" prefHeight="305.0" prefWidth="200.0"/>
+        <Button layoutX="199.0" layoutY="14.0" mnemonicParsing="false" onAction="#importImage" text="Import"
+                AnchorPane.bottomAnchor="266.0" AnchorPane.leftAnchor="199.0" AnchorPane.rightAnchor="340.0"
+                AnchorPane.topAnchor="14.0"/>
+        <Button layoutX="200.0" layoutY="39.0" mnemonicParsing="false" onAction="#exportImage" text="Export"/>
+        <Button layoutX="199.0" layoutY="266.0" mnemonicParsing="false" onAction="#exportAllImages" text="Export All"/>
+        <CheckBox fx:id="paddingCheckBox" layoutX="200.0" layoutY="248.0" mnemonicParsing="false"
+                  onAction="#onImageToggle" selected="true" text="Padding"/>
+        <CheckBox layoutX="200.0" layoutY="231.0" mnemonicParsing="false" onAction="#onImageToggle"
+                  text="Transparency"/>
+        <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" pickOnBounds="true" preserveRatio="true"
+                   x="344.0"/>
+        <Label fx:id="ingameDimensionLabel" alignment="CENTER" contentDisplay="CENTER" layoutX="335.0" layoutY="257.0"
+               nodeOrientation="LEFT_TO_RIGHT" prefHeight="17.0" prefWidth="256.0" text="Placeholder"
+               textAlignment="CENTER"/>
+        <Label fx:id="dimensionLabel" alignment="TOP_CENTER" contentDisplay="CENTER" layoutX="335.0" layoutY="270.0"
+               prefHeight="17.0" prefWidth="256.0" text="Placeholder" textAlignment="CENTER"/>
+        <Label fx:id="idLabel" alignment="CENTER" layoutX="335.0" layoutY="283.0" prefHeight="17.0" prefWidth="256.0"
+               text="Placeholder" textAlignment="CENTER"/>
+    </children>
+</AnchorPane>
