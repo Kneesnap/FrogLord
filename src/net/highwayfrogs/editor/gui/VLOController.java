@@ -23,7 +23,6 @@ import java.io.IOException;
 
 /**
  * Controls the VLO edit screen.
- * TODO: Transparency switch.
  * TODO: Control In-game width + height.
  * TODO: Show Flags?
  * Created by Kneesnap on 9/18/2018.
@@ -162,6 +161,6 @@ public class VLOController {
     }
 
     private BufferedImage toBufferedImage() {
-        return this.selectedImage.toBufferedImage(!this.paddingCheckBox.isSelected());
+        return this.selectedImage.toBufferedImage(!this.paddingCheckBox.isSelected(), this.transparencyCheckBox.isSelected());
     }
 }

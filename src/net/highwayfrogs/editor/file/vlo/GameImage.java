@@ -9,10 +9,10 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.RGBImageFilter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -101,17 +101,6 @@ public class GameImage extends GameObject {
             }
 
             this.imageBytes = buffer.array();
-
-            try {
-                File dir = new File("debug/" + PACK_ID + "/");
-                if (!dir.exists())
-                    dir.mkdirs();
-
-                ImageIO.write(toBufferedImage(false), "png", new File(dir, IMAGE_ID++ + ".png"));
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-
         } else {
             this.imageBytes = reader.readBytes(pixelCount * PIXEL_BYTES);
         }
@@ -261,7 +250,7 @@ public class GameImage extends GameObject {
      * @param trimEdges Should edges be trimmed so the textures are exactly how they appear in-game?
      * @return bufferedImage
      */
-    public BufferedImage toBufferedImage(boolean trimEdges) {
+    public BufferedImage toBufferedImage(boolean trimEdges, boolean allowTransparency) {
         int height = getFullHeight();
         int width = getFullWidth();
 
@@ -301,7 +290,29 @@ public class GameImage extends GameObject {
             returnImage = trimImage;
         }
 
+        if (allowTransparency) {
+            Image write = Toolkit.getDefaultToolkit().createImage(new FilteredImageSource(returnImage.getSource(), new TransparencyFilter())); // Make it transparent if marked.
+            BufferedImage newImage = new BufferedImage(returnImage.getWidth(), returnImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+            // Make transparent.
+            Graphics2D graphics = newImage.createGraphics();
+            graphics.drawImage(write, 0, 0, returnImage.getWidth(), returnImage.getHeight(), null); // Draw the image not flipped.
+            graphics.dispose();
+
+            returnImage = newImage;
+        }
+
         return returnImage;
+    }
+
+    private static class TransparencyFilter extends RGBImageFilter {
+        private static final int BLACK = 0x00;
+
+        @Override
+        public int filterRGB(int x, int y, int rgb) {
+            int colorWOAlpha = rgb & 0xFFFFFF;
+            return colorWOAlpha == BLACK ? colorWOAlpha : rgb;
+        }
     }
 
     /**

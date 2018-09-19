@@ -15,7 +15,8 @@
         <Button layoutX="199.0" layoutY="266.0" mnemonicParsing="false" onAction="#exportAllImages" text="Export All"/>
         <CheckBox fx:id="paddingCheckBox" layoutX="200.0" layoutY="248.0" mnemonicParsing="false"
                   onAction="#onImageToggle" selected="true" text="Padding"/>
-        <CheckBox layoutX="200.0" layoutY="231.0" mnemonicParsing="false" onAction="#onImageToggle"
+        <CheckBox fx:id="transparencyCheckBox" layoutX="200.0" layoutY="231.0" mnemonicParsing="false"
+                  onAction="#onImageToggle"
                   text="Transparency"/>
         <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" pickOnBounds="true" preserveRatio="true"
                    x="344.0"/>
