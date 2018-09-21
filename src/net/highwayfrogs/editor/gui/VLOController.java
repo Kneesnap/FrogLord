@@ -74,7 +74,7 @@ public class VLOController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Specify the file to export this image as...");
         fileChooser.getExtensionFilters().add(new ExtensionFilter("Image Files", "*.png"));
-        fileChooser.setInitialDirectory(new File("./"));
+        fileChooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
 
         File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
 
@@ -93,7 +93,7 @@ public class VLOController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select the image to import...");
         fileChooser.getExtensionFilters().add(new ExtensionFilter("Image Files", "*.png"));
-        fileChooser.setInitialDirectory(new File("./"));
+        fileChooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
 
         File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
         if (selectedFile == null)
@@ -113,7 +113,7 @@ public class VLOController {
     private void exportAllImages(ActionEvent event) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select the directory to export images to.");
-        chooser.setInitialDirectory(new File("./"));
+        chooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
 
         File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
         if (selectedFolder == null)
@@ -137,7 +137,6 @@ public class VLOController {
 
     @FXML
     private void onImageToggle(ActionEvent event) {
-        System.out.println("Updating image.");
         updateImage();
     }
 
