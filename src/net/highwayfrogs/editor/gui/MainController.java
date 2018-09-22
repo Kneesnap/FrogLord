@@ -63,7 +63,7 @@ public class MainController implements Initializable {
 
         Node node = file.makeEditor();
         if (node != null) // null = No editor.
-            editorPane.getChildren().add(node);
+            file.setupEditor(editorPane, node);
     }
 
 

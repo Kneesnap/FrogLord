@@ -4,6 +4,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.gui.editor.EditorController;
@@ -28,6 +29,15 @@ public abstract class GameFile extends GameObject {
      * @return editor
      */
     public abstract Node makeEditor();
+
+    /**
+     * Setup the editor.
+     * @param editorPane The parent pane holding the editor.
+     * @param node       The node created by makeEditor.
+     */
+    public void setupEditor(AnchorPane editorPane, Node node) {
+        editorPane.getChildren().add(node);
+    }
 
     /**
      * Load an icon by name.

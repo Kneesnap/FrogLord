@@ -31,6 +31,7 @@ import java.io.IOException;
 public class VLOController extends EditorController<VLOArchive> {
     @FXML private CheckBox paddingCheckBox;
     @FXML private CheckBox transparencyCheckBox;
+    @FXML private CheckBox sizeCheckBox;
     @FXML private ImageView imageView;
     @FXML private ListView<GameImage> imageList;
     @FXML private Label dimensionLabel;
@@ -38,6 +39,8 @@ public class VLOController extends EditorController<VLOArchive> {
     @FXML private Label idLabel;
 
     private GameImage selectedImage;
+
+    private static final int SCALE_DIMENSION = 256;
 
     @Override
     public void loadFile(VLOArchive vlo) {
@@ -152,8 +155,16 @@ public class VLOController extends EditorController<VLOArchive> {
     public void updateImage() {
         boolean hasImage = (this.selectedImage != null);
         imageView.setVisible(hasImage);
-        if (hasImage)
-            imageView.setImage(SwingFXUtils.toFXImage(toBufferedImage(), null));
+
+        if (hasImage) {
+            BufferedImage image = toBufferedImage();
+
+            boolean scaleSize = sizeCheckBox.isSelected();
+            imageView.setFitWidth(scaleSize ? SCALE_DIMENSION : image.getWidth());
+            imageView.setFitHeight(scaleSize ? SCALE_DIMENSION : image.getHeight());
+
+            imageView.setImage(SwingFXUtils.toFXImage(image, null));
+        }
     }
 
     private BufferedImage toBufferedImage() {
