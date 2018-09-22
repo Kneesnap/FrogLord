@@ -15,6 +15,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.gui.editor.EditorController;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -27,7 +28,7 @@ import java.io.IOException;
  * TODO: Show Flags?
  * Created by Kneesnap on 9/18/2018.
  */
-public class VLOController {
+public class VLOController extends EditorController<VLOArchive> {
     @FXML private CheckBox paddingCheckBox;
     @FXML private CheckBox transparencyCheckBox;
     @FXML private ImageView imageView;
@@ -36,17 +37,13 @@ public class VLOController {
     @FXML private Label ingameDimensionLabel;
     @FXML private Label idLabel;
 
-    private VLOArchive vloFile;
     private GameImage selectedImage;
 
-    /**
-     * Display a VLO file.
-     * @param vloArchive the VLO Archive to display.
-     */
-    public void loadVLO(VLOArchive vloArchive) {
-        this.vloFile = vloArchive;
+    @Override
+    public void loadFile(VLOArchive vlo) {
+        super.loadFile(vlo);
 
-        ObservableList<GameImage> gameImages = FXCollections.observableArrayList(vloFile.getImages());
+        ObservableList<GameImage> gameImages = FXCollections.observableArrayList(vlo.getImages());
         imageList.setItems(gameImages);
         imageList.setCellFactory(param -> new AttachmentListCell());
 
@@ -122,8 +119,8 @@ public class VLOController {
         GameImage originalImage = this.selectedImage;
 
         try {
-            for (int i = 0; i < vloFile.getImages().size(); i++) {
-                this.selectedImage = vloFile.getImages().get(i);
+            for (int i = 0; i < getFile().getImages().size(); i++) {
+                this.selectedImage = getFile().getImages().get(i);
                 File output = new File(selectedFolder, i + ".png");
                 ImageIO.write(toBufferedImage(), "png", output);
                 System.out.println("Exported image #" + i + ".");

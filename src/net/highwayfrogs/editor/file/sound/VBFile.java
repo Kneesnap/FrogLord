@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.sound;
 
+import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
@@ -35,6 +36,11 @@ public class VBFile extends GameFile {
     @Override
     public Image getIcon() {
         return VHFile.ICON;
+    }
+
+    @Override
+    public Node makeEditor() {
+        return null;
     }
 
     /**

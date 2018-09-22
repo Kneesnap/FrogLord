@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.gui;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
@@ -13,11 +13,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -63,16 +61,9 @@ public class MainController implements Initializable {
     public void openEditor(GameFile file) {
         editorPane.getChildren().clear(); // Remove any existing editor.
 
-        //TODO: Needs to be modular.
-        if (file instanceof VLOArchive) {
-            VLOController controller = new VLOController();
-
-            FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/vlo.fxml"));
-            loader.setController(controller);
-            editorPane.getChildren().add(loader.load());
-
-            controller.loadVLO((VLOArchive) file);
-        }
+        Node node = file.makeEditor();
+        if (node != null) // null = No editor.
+            editorPane.getChildren().add(node);
     }
 
 

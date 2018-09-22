@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.mof;
 
+import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameFile;
@@ -121,5 +122,10 @@ public class MOFFile extends GameFile {
     @Override
     public Image getIcon() {
         return ICON;
+    }
+
+    @Override
+    public Node makeEditor() {
+        return null;
     }
 }
