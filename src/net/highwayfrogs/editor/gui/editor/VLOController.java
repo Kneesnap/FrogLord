@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.gui;
+package net.highwayfrogs.editor.gui.editor;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,7 +15,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.gui.editor.EditorController;
+import net.highwayfrogs.editor.gui.GUIMain;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

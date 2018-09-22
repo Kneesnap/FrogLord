@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.VLOController;
+import net.highwayfrogs.editor.gui.editor.VLOController;
 
 import java.util.ArrayList;
 import java.util.List;
