@@ -31,7 +31,7 @@ public class VBFile extends GameFile {
     private List<GameSound> audioEntries = new ArrayList<>();
     private DataReader cachedReader;
 
-    public static int SOUND_ID;
+    public static int SOUND_ID; // Sound IDs seem to be for the entire project, not per-file. Static value isn't a great way to do this. TODO use a local variable passed on loading.            TODO: Also, this should be generated from zero while saving, instead of kept.
 
     @Override
     public Image getIcon() {
