@@ -29,6 +29,8 @@ public class MainController implements Initializable {
 
     public static MainController MAIN_WINDOW;
 
+    private static double DEFAULT_EDITOR_MAX_HEIGHT;
+
     /**
      * Print a message to the console window.
      * @param message    The message to print.
@@ -61,6 +63,9 @@ public class MainController implements Initializable {
     public void openEditor(GameFile file) {
         editorPane.getChildren().clear(); // Remove any existing editor.
 
+        // Some editors may change things about the regular editorPane. We need to reset that here.
+        editorPane.setMaxHeight(DEFAULT_EDITOR_MAX_HEIGHT);
+
         Node node = file.makeEditor();
         if (node != null) // null = No editor.
             file.setupEditor(editorPane, node);
@@ -89,6 +94,8 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         MAIN_WINDOW = this;
+        DEFAULT_EDITOR_MAX_HEIGHT = editorPane.getMaxHeight();
+
         System.out.println("Hello from FrogLord.");
     }
 }
