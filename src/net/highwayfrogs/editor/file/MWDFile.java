@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.file.writer.FileReceiver;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * MWAD File Format: Medieval WAD Archive.
@@ -42,7 +43,7 @@ public class MWDFile extends GameObject {
         Utils.verify(marker.equals(MARKER), "MWD Identifier %s was incorrectly read as %s!", MARKER, marker);
 
         VBFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
-        VBFile.SOUND_ID = 0; // This must be reset when an MWD is loaded. Unfortunately, this also means we can only load one MWD at once. But, why would we do otherwise?
+        AtomicInteger soundId = new AtomicInteger(0);
 
         for (FileEntry entry : wadIndexTable.getEntries()) {
             if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
@@ -88,7 +89,12 @@ public class MWDFile extends GameObject {
             }
 
             try {
-                file.load(new DataReader(new ArraySource(fileBytes)));
+                DataReader newReader = new DataReader(new ArraySource(fileBytes));
+                if (file instanceof VHFile) {
+                    ((VHFile) file).load(newReader, soundId);
+                } else {
+                    file.load(newReader);
+                }
             } catch (Exception ex) {
                 throw new RuntimeException("Failed to load " + fileName, ex);
             }

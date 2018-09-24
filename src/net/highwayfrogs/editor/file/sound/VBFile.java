@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Parses VB files and allows exporting to WAV, and importing audio files.
@@ -31,8 +32,6 @@ public class VBFile extends GameFile {
     private VHFile header;
     private List<GameSound> audioEntries = new ArrayList<>();
     private DataReader cachedReader;
-
-    public static int SOUND_ID; // Sound IDs seem to be for the entire project, not per-file. Static value isn't a great way to do this. TODO use a local variable passed on loading.            TODO: Also, this should be generated from zero while saving, instead of kept.
 
     @Override
     public Image getIcon() {
@@ -62,9 +61,10 @@ public class VBFile extends GameFile {
             return;
         }
 
-        while (header.getEntries().size() > SOUND_ID) {
-            AudioHeader vhEntry = header.getEntries().get(SOUND_ID);
-            GameSound audioEntry = new GameSound(SOUND_ID, vhEntry);
+        AtomicInteger atomicId = getHeader().getSuppliedSoundId();
+        while (header.getEntries().size() > atomicId.get()) {
+            AudioHeader vhEntry = header.getEntries().get(atomicId.get());
+            GameSound audioEntry = new GameSound(atomicId.get(), vhEntry);
 
             int byteSize = vhEntry.getDataSize();
             int readLength = byteSize / audioEntry.getByteWidth();
@@ -78,7 +78,7 @@ public class VBFile extends GameFile {
             reader.jumpReturn();
 
             this.audioEntries.add(audioEntry);
-            SOUND_ID++;
+            atomicId.incrementAndGet();
         }
     }
 

@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Parses VH files.
@@ -21,13 +22,26 @@ import java.util.List;
 public class VHFile extends GameFile {
     @Setter private VBFile VB;
     private List<AudioHeader> entries = new ArrayList<>();
+    private AtomicInteger suppliedSoundId;
 
     private static final int ENTRY_LENGTH = 7 * Constants.INTEGER_SIZE;
     public static final int TYPE_ID = 2;
     public static final Image ICON = loadIcon("sound");
 
+    /**
+     * Load this file.
+     * @param reader  The DataReader.
+     * @param soundId The supplied sound id.
+     */
+    public void load(DataReader reader, AtomicInteger soundId) {
+        this.suppliedSoundId = soundId;
+        this.load(reader);
+        this.suppliedSoundId = null;
+    }
+
     @Override
     public void load(DataReader reader) {
+        Utils.verify(this.suppliedSoundId != null, "Tried to load without a supplied sound id.");
         int numEntries = reader.readInt();
 
         for (int i = 0; i < numEntries; i++) {
