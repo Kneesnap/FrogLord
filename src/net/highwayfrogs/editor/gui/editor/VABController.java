@@ -9,8 +9,8 @@ import javafx.scene.control.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import net.highwayfrogs.editor.file.sound.GameSound;
 import net.highwayfrogs.editor.file.sound.VBFile;
-import net.highwayfrogs.editor.file.sound.VBFile.GameSound;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import javax.sound.sampled.Clip;
@@ -21,10 +21,10 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Controls the VB sound screen.
+ * Controls the VAB sound screen.
  * Created by Kneesnap on 9/18/2018.
  */
-public class VBController extends EditorController<VBFile> {
+public class VABController extends EditorController<VBFile> {
     @FXML private ListView<GameSound> soundList;
     @FXML private Button playButton;
     @FXML private Label label1;
@@ -56,7 +56,7 @@ public class VBController extends EditorController<VBFile> {
         @Override
         public void updateItem(GameSound sound, boolean empty) {
             super.updateItem(sound, empty);
-            setText(empty ? null : String.valueOf(getIndex()));
+            setText(empty ? null : sound.getSoundName());
         }
     }
 
@@ -154,7 +154,7 @@ public class VBController extends EditorController<VBFile> {
             return;
         }
 
-        this.selectedSound.getHeader().setSampleRate(newRate);
+        this.selectedSound.setSampleRate(newRate);
         updateSound();
     }
 

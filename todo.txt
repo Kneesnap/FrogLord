@@ -19,7 +19,7 @@ Editor Features:
 Optimize PP20 compression further.
 Something which gets & saves the MWI from frogger.exe.
 Something which gets the remap table from frogger.exe.
-A config file which allows specifying the names of sounds in the sound bank.
+There's a bug where if the editor is changed, the sound currently playing is not stopped.
 Finish support for Playstation VLO files.
 
 
