@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.editor.VBController;
 
 import javax.sound.sampled.AudioFileFormat.Type;
 import javax.sound.sampled.*;
@@ -40,7 +41,7 @@ public class VBFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return null;
+        return loadEditor(new VBController(), "vb", this);
     }
 
     /**

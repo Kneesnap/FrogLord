@@ -5,6 +5,7 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -80,7 +81,8 @@ public class VHFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return null;
+        Utils.verify(getVB() != null, "VB sound was null.");
+        return getVB().makeEditor(); // Build the editor for the right file.
     }
 
     @Setter

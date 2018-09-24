@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
+            minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0"
+            AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
+            xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <ListView fx:id="soundList" prefHeight="305.0" prefWidth="200.0"/>
+        <Button layoutX="199.0" layoutY="14.0" mnemonicParsing="false" onAction="#importSound" text="Import"/>
+        <Button layoutX="200.0" layoutY="39.0" mnemonicParsing="false" onAction="#exportSound" text="Export"/>
+        <Button layoutX="199.0" layoutY="266.0" mnemonicParsing="false" onAction="#exportAllSounds" text="Export All"/>
+        <Label fx:id="label1" alignment="TOP_CENTER" contentDisplay="CENTER" layoutX="448.0" layoutY="31.0"
+               prefHeight="17.0" prefWidth="151.0" text="Placeholder" textAlignment="CENTER"
+               AnchorPane.rightAnchor="1.0" AnchorPane.topAnchor="31.0"/>
+        <Label fx:id="label2" alignment="TOP_CENTER" contentDisplay="CENTER" layoutX="448.0" layoutY="43.0"
+               prefHeight="17.0" prefWidth="151.0" text="Placeholder" textAlignment="CENTER"
+               AnchorPane.rightAnchor="1.0" AnchorPane.topAnchor="43.0"/>
+        <Label fx:id="label3" alignment="TOP_CENTER" contentDisplay="CENTER" layoutX="467.0" layoutY="65.0"
+               prefHeight="17.0" prefWidth="74.0" text="Sample-Rate: " textAlignment="CENTER"
+               AnchorPane.rightAnchor="59.0" AnchorPane.topAnchor="65.0"/>
+        <Button fx:id="playButton" layoutX="490.0" layoutY="2.0" mnemonicParsing="false" onAction="#togglePlay"
+                text="Play" AnchorPane.rightAnchor="58.0" AnchorPane.topAnchor="2.0"/>
+        <TextField fx:id="sampleRateField" layoutX="541.0" layoutY="61.0" onAction="#onSampleRateUpdate"
+                   prefHeight="25.0" prefWidth="52.0" AnchorPane.rightAnchor="7.0" AnchorPane.topAnchor="61.0"/>
+        <CheckBox fx:id="repeatCheckBox" layoutX="200.0" layoutY="249.0" mnemonicParsing="false" text="Repeat"/>
+    </children>
+</AnchorPane>

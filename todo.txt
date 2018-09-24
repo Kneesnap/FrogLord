@@ -1,5 +1,7 @@
 Editor Features:
 
+ - VAB File (Seperate from VB VH)
+
  - MAP File
  Loading from file.
  Saving to file.
@@ -9,17 +11,16 @@ Editor Features:
  Saving to file.
 
  - GUI Editor:
-  MWD Viewer (Folder Structure View)
   Demo Editor
   PAL Editor
-  Sound Editor
-  VLO Editor
   Map Editor
   MOF Editor
 
 Optimize PP20 compression further.
 Something which gets & saves the MWI from frogger.exe.
 Something which gets the remap table from frogger.exe.
+A config file which allows specifying the names of sounds in the sound bank.
+Finish support for Playstation VLO files.
 
 
 Non tool-development-related plans:
