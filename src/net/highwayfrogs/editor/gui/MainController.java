@@ -12,10 +12,13 @@ import javafx.scene.control.TextArea;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.gui.editor.EditorController;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -28,8 +31,9 @@ public class MainController implements Initializable {
     private MWDFile mwdFile;
 
     public static MainController MAIN_WINDOW;
-
-    private static double DEFAULT_EDITOR_MAX_HEIGHT;
+    @Getter
+    @Setter
+    private static EditorController<?> currentController;
 
     /**
      * Print a message to the console window.
@@ -61,14 +65,17 @@ public class MainController implements Initializable {
      */
     @SneakyThrows
     public void openEditor(GameFile file) {
+        if (getCurrentController() != null)
+            getCurrentController().onClose(editorPane);
+        setCurrentController(null);
+
         editorPane.getChildren().clear(); // Remove any existing editor.
 
-        // Some editors may change things about the regular editorPane. We need to reset that here.
-        editorPane.setMaxHeight(DEFAULT_EDITOR_MAX_HEIGHT);
-
         Node node = file.makeEditor();
-        if (node != null) // null = No editor.
+        if (node != null) { // null = No editor.
+            getCurrentController().onInit(editorPane);
             file.setupEditor(editorPane, node);
+        }
     }
 
 
@@ -94,8 +101,6 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         MAIN_WINDOW = this;
-        DEFAULT_EDITOR_MAX_HEIGHT = editorPane.getMaxHeight();
-
         System.out.println("Hello from FrogLord.");
     }
 }

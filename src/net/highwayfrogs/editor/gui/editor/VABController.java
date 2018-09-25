@@ -6,6 +6,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
@@ -50,6 +51,12 @@ public class VABController extends EditorController<VBFile> {
         });
 
         soundList.getSelectionModel().select(0);
+    }
+
+    @Override
+    public void onClose(AnchorPane editorRoot) {
+        super.onClose(editorRoot);
+        closeClip();
     }
 
     private static class AttachmentListCell extends ListCell<GameSound> {
@@ -167,12 +174,19 @@ public class VABController extends EditorController<VBFile> {
         this.sampleRateField.setText(String.valueOf(selectedSound.getSampleRate()));
     }
 
+    private void closeClip() {
+        if (this.currentClip == null)
+            return;
+
+        this.currentClip.stop(); //Stop the old playing clip. Also sets the play button back to "Play", enables the repeat button, etc.
+        this.currentClip.close(); // Tell the old clip that we aren't going to use it again.
+    }
+
     /**
      * Update the displayed image.
      */
     public void updateSound() {
-        if (this.currentClip != null)
-            this.currentClip.stop(); // Stop the old playing clip.
+        closeClip();
 
         this.currentClip = makeClip(this.selectedSound);
         this.currentClip.addLineListener(e -> {

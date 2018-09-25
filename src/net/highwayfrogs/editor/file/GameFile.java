@@ -7,6 +7,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.EditorController;
 
 import javax.imageio.ImageIO;
@@ -62,6 +63,7 @@ public abstract class GameFile extends GameObject {
             loader.setController(controller);
             Node node = loader.load();
             controller.loadFile(editFile);
+            MainController.setCurrentController(controller);
 
             return node;
         } catch (IOException ex) {

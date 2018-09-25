@@ -10,6 +10,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
@@ -39,6 +40,7 @@ public class VLOController extends EditorController<VLOArchive> {
     @FXML private Label idLabel;
 
     private GameImage selectedImage;
+    private double defaultEditorMaxHeight;
 
     private static final int SCALE_DIMENSION = 256;
 
@@ -57,6 +59,18 @@ public class VLOController extends EditorController<VLOArchive> {
         });
 
         imageList.getSelectionModel().select(0);
+    }
+
+    @Override
+    public void onInit(AnchorPane editorRoot) {
+        super.onInit(editorRoot);
+        this.defaultEditorMaxHeight = editorRoot.getMaxHeight();
+    }
+
+    @Override
+    public void onClose(AnchorPane editorRoot) {
+        super.onClose(editorRoot);
+        editorRoot.setMaxHeight(this.defaultEditorMaxHeight);
     }
 
     private static class AttachmentListCell extends ListCell<GameImage> {
