@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.sound.VABHeaderFile;
 import net.highwayfrogs.editor.file.sound.VBFile;
 import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -75,7 +76,7 @@ public class MWDFile extends GameObject {
                 file = new DemoFile();
             } else if (entry.getTypeId() == PALFile.TYPE_ID) {
                 file = new PALFile();
-            } else if (entry.getTypeId() == VHFile.TYPE_ID) { // Disabled until PSX is supported.
+            } else if (entry.getTypeId() == VHFile.TYPE_ID && !testSignature(fileBytes, 0, VABHeaderFile.SIGNATURE)) { // PSX support is disabled until it is complete.
                 if (lastVB != null) {
                     VHFile vhFile = new VHFile();
                     vhFile.setVB(lastVB);
@@ -103,6 +104,13 @@ public class MWDFile extends GameObject {
             files.add(file);
             lastVB = file instanceof VBFile ? (VBFile) file : null;
         }
+    }
+
+    private static boolean testSignature(byte[] data, int startIndex, String test) {
+        byte[] testBytes = test.getBytes();
+        byte[] signatureBytes = new byte[testBytes.length];
+        System.arraycopy(data, startIndex, signatureBytes, 0, signatureBytes.length);
+        return Arrays.equals(testBytes, signatureBytes);
     }
 
     @Override
