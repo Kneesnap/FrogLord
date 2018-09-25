@@ -1,12 +1,15 @@
 package net.highwayfrogs.editor.file.vlo;
 
+import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.editor.VLOController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -110,5 +113,18 @@ public class VLOArchive extends GameFile {
     @Override
     public Image getIcon() {
         return ICON;
+    }
+
+    @Override
+    public Node makeEditor() {
+        return loadEditor(new VLOController(), "vlo", this);
+    }
+
+    @Override
+    public void setupEditor(AnchorPane editorPane, Node node) {
+        super.setupEditor(editorPane, node);
+
+        AnchorPane pane = (AnchorPane) node;
+        editorPane.setMaxHeight(pane.getMinHeight()); // Restricts the height of this editor, since there's nothing beyond the editing area.
     }
 }

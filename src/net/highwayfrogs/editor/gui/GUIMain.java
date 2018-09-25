@@ -4,6 +4,8 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWDFile;
@@ -15,20 +17,39 @@ import java.io.File;
 
 public class GUIMain extends Application {
     public static Stage MAIN_STAGE;
+    public static final File WORKING_DIRECTORY = new File("./");
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();
 
+        // Debug = automatically load files for convenience.
         File folder = new File("debug");
         if (folder.exists() && folder.isDirectory()) {
-            openGUI(primaryStage, new File(folder, "VANILLA.MWI"), new File(folder, "VANILLA.MWD"));
-            return;
+            File mwiFile = new File(folder, "VANILLA.MWI");
+            File mwdFile = new File(folder, "VANILLA.MWD");
+
+            if (mwiFile.exists() && mwdFile.exists()) {
+                openGUI(primaryStage, mwiFile, mwdFile);
+                return;
+            }
         }
 
-        //TODO: This will need to be a file choose dialogue later.
-        System.out.println("TODO: Need to bring up a file chooser to select MWD and MWI.");
+        // If this isn't a debug setup, prompt the user to select the files to load.
+        File mwdFile = promptFile("MWD", "Medievil WAD");
+        File mwiFile = promptFile("MWI", "Medievil WAD Index");
+        openGUI(primaryStage, mwiFile, mwdFile);
+    }
+
+    private File promptFile(String extension, String description) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select " + extension + " to open.");
+        fileChooser.getExtensionFilters().add(new ExtensionFilter(description, "*." + extension));
+        fileChooser.setInitialDirectory(WORKING_DIRECTORY);
+
+        File result = fileChooser.showOpenDialog(MAIN_STAGE);
+        return result != null ? result : promptFile(extension, description);
     }
 
 

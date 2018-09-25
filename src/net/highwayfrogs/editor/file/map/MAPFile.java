@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map;
 
+import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
@@ -284,5 +285,10 @@ public class MAPFile extends GameFile {
     @Override
     public Image getIcon() {
         return ICON;
+    }
+
+    @Override
+    public Node makeEditor() {
+        return null;
     }
 }

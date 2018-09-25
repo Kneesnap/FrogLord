@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.gui;
+package net.highwayfrogs.editor.gui.editor;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -10,11 +10,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.gui.GUIMain;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -27,26 +29,26 @@ import java.io.IOException;
  * TODO: Show Flags?
  * Created by Kneesnap on 9/18/2018.
  */
-public class VLOController {
+public class VLOController extends EditorController<VLOArchive> {
     @FXML private CheckBox paddingCheckBox;
     @FXML private CheckBox transparencyCheckBox;
+    @FXML private CheckBox sizeCheckBox;
     @FXML private ImageView imageView;
     @FXML private ListView<GameImage> imageList;
     @FXML private Label dimensionLabel;
     @FXML private Label ingameDimensionLabel;
     @FXML private Label idLabel;
 
-    private VLOArchive vloFile;
     private GameImage selectedImage;
+    private double defaultEditorMaxHeight;
 
-    /**
-     * Display a VLO file.
-     * @param vloArchive the VLO Archive to display.
-     */
-    public void loadVLO(VLOArchive vloArchive) {
-        this.vloFile = vloArchive;
+    private static final int SCALE_DIMENSION = 256;
 
-        ObservableList<GameImage> gameImages = FXCollections.observableArrayList(vloFile.getImages());
+    @Override
+    public void loadFile(VLOArchive vlo) {
+        super.loadFile(vlo);
+
+        ObservableList<GameImage> gameImages = FXCollections.observableArrayList(vlo.getImages());
         imageList.setItems(gameImages);
         imageList.setCellFactory(param -> new AttachmentListCell());
 
@@ -57,6 +59,18 @@ public class VLOController {
         });
 
         imageList.getSelectionModel().select(0);
+    }
+
+    @Override
+    public void onInit(AnchorPane editorRoot) {
+        super.onInit(editorRoot);
+        this.defaultEditorMaxHeight = editorRoot.getMaxHeight();
+    }
+
+    @Override
+    public void onClose(AnchorPane editorRoot) {
+        super.onClose(editorRoot);
+        editorRoot.setMaxHeight(this.defaultEditorMaxHeight);
     }
 
     private static class AttachmentListCell extends ListCell<GameImage> {
@@ -74,7 +88,7 @@ public class VLOController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Specify the file to export this image as...");
         fileChooser.getExtensionFilters().add(new ExtensionFilter("Image Files", "*.png"));
-        fileChooser.setInitialDirectory(new File("./"));
+        fileChooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
 
         File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
 
@@ -93,7 +107,7 @@ public class VLOController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select the image to import...");
         fileChooser.getExtensionFilters().add(new ExtensionFilter("Image Files", "*.png"));
-        fileChooser.setInitialDirectory(new File("./"));
+        fileChooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
 
         File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
         if (selectedFile == null)
@@ -113,7 +127,7 @@ public class VLOController {
     private void exportAllImages(ActionEvent event) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select the directory to export images to.");
-        chooser.setInitialDirectory(new File("./"));
+        chooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
 
         File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
         if (selectedFolder == null)
@@ -122,8 +136,8 @@ public class VLOController {
         GameImage originalImage = this.selectedImage;
 
         try {
-            for (int i = 0; i < vloFile.getImages().size(); i++) {
-                this.selectedImage = vloFile.getImages().get(i);
+            for (int i = 0; i < getFile().getImages().size(); i++) {
+                this.selectedImage = getFile().getImages().get(i);
                 File output = new File(selectedFolder, i + ".png");
                 ImageIO.write(toBufferedImage(), "png", output);
                 System.out.println("Exported image #" + i + ".");
@@ -137,7 +151,6 @@ public class VLOController {
 
     @FXML
     private void onImageToggle(ActionEvent event) {
-        System.out.println("Updating image.");
         updateImage();
     }
 
@@ -156,8 +169,16 @@ public class VLOController {
     public void updateImage() {
         boolean hasImage = (this.selectedImage != null);
         imageView.setVisible(hasImage);
-        if (hasImage)
-            imageView.setImage(SwingFXUtils.toFXImage(toBufferedImage(), null));
+
+        if (hasImage) {
+            BufferedImage image = toBufferedImage();
+
+            boolean scaleSize = sizeCheckBox.isSelected();
+            imageView.setFitWidth(scaleSize ? SCALE_DIMENSION : image.getWidth());
+            imageView.setFitHeight(scaleSize ? SCALE_DIMENSION : image.getHeight());
+
+            imageView.setImage(SwingFXUtils.toFXImage(image, null));
+        }
     }
 
     private BufferedImage toBufferedImage() {

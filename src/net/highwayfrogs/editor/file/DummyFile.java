@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file;
 
+import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.ArraySource;
@@ -48,5 +49,10 @@ public class DummyFile extends GameFile {
     @Override
     public Image getIcon() {
         return ICON;
+    }
+
+    @Override
+    public Node makeEditor() {
+        return null;
     }
 }

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file;
 
+import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
@@ -76,5 +77,10 @@ public class PALFile extends GameFile {
     @Override
     public Image getIcon() {
         return ICON;
+    }
+
+    @Override
+    public Node makeEditor() {
+        return null;
     }
 }
