@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * VLOArchive - Image archive format created by VorgPC/Vorg2.
- * TODO: PSX VLOs don't properly read images. Once that's fixed, test exporting valid PSX MWDs.
  * ABGR 8888 = 24 + 8.
  * Created by Kneesnap on 8/17/2018.
  */

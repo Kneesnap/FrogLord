@@ -15,7 +15,7 @@
         <CheckBox fx:id="sizeCheckBox" layoutX="200.0" layoutY="214.0" mnemonicParsing="false" onAction="#onImageToggle"
                   selected="true" text="Large Image"/>
         <CheckBox fx:id="paddingCheckBox" layoutX="200.0" layoutY="248.0" mnemonicParsing="false"
-                  onAction="#onImageToggle" selected="true" text="Padding"/>
+                  onAction="#onImageToggle" selected="true" text="Show Padding"/>
         <CheckBox fx:id="transparencyCheckBox" layoutX="200.0" layoutY="231.0" mnemonicParsing="false"
                   onAction="#onImageToggle" text="Transparency"/>
         <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" pickOnBounds="true" preserveRatio="true"

@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A singular game image. MR_TXSETUP struct.
- * TODO: Fix some PSX images having a slight offset.
  * Created by Kneesnap on 8/30/2018.
  */
 @Getter
@@ -36,7 +35,7 @@ public class GameImage extends GameObject {
     private short textureId;
     private short texturePage;
     private short flags;
-    private short clutId; // Believed to always be either 0 or 37.
+    private short clutId;
     private byte u; // Unsure. Texture orientation?
     private byte v;
     private byte ingameWidth; // In-game texture width, used to remove texture padding.
@@ -46,9 +45,9 @@ public class GameImage extends GameObject {
     private AtomicInteger suppliedTextureOffset;
 
     private static final int MAX_DIMENSION = 256;
-    private static final int PIXEL_BYTES = 4;
-    private static final int PSX_PIXELS_PER_INT = 2;
-    private static final int PSX_WIDTH_MODIFIER = 2;
+    private static final int PC_BYTES_PER_PIXEL = 4;
+    private static final int PSX_PIXELS_PER_PC = 2;
+    private static final int PSX_WIDTH_MODIFIER = 4;
 
     public static int PACK_ID = 0;
     public static int IMAGE_ID = 0;
@@ -86,12 +85,13 @@ public class GameImage extends GameObject {
 
         int pixelCount = getFullWidth() * getFullHeight();
         if (getParent().isPsxMode()) {
+            this.fullWidth *= PSX_WIDTH_MODIFIER;
             pixelCount *= PSX_WIDTH_MODIFIER;
 
-            ByteBuffer buffer = ByteBuffer.allocate((PIXEL_BYTES / PSX_PIXELS_PER_INT) * PIXEL_BYTES * pixelCount);
+            ByteBuffer buffer = ByteBuffer.allocate(PC_BYTES_PER_PIXEL * pixelCount);
             ClutEntry clut = getClut();
 
-            for (int i = 0; i < pixelCount; i++) {
+            for (int i = 0; i < pixelCount / PSX_PIXELS_PER_PC; i++) { // We read two pixels per iteration.
                 short value = reader.readUnsignedByteAsShort();
                 int low = value & 0x0F;
                 int high = value >> 4;
@@ -102,7 +102,7 @@ public class GameImage extends GameObject {
 
             this.imageBytes = buffer.array();
         } else {
-            this.imageBytes = reader.readBytes(pixelCount * PIXEL_BYTES);
+            this.imageBytes = reader.readBytes(pixelCount * PC_BYTES_PER_PIXEL);
         }
 
         reader.jumpReturn();
@@ -138,7 +138,12 @@ public class GameImage extends GameObject {
 
         writer.writeShort(this.vramX);
         writer.writeShort(this.vramY);
-        writer.writeShort(this.fullWidth);
+
+        short width = this.fullWidth;
+        if (getParent().isPsxMode())
+            width /= PSX_WIDTH_MODIFIER;
+        writer.writeShort(width);
+
         writer.writeShort(this.fullHeight);
         writer.writeInt(this.suppliedTextureOffset.get());
         writer.writeShort(this.textureId);
@@ -175,14 +180,14 @@ public class GameImage extends GameObject {
         ClutEntry clut = getClut();
         clut.getColors().clear(); // Generate a new clut.
 
-        ByteBuffer buffer = ByteBuffer.allocate((getImageBytes().length / PIXEL_BYTES) * PSX_PIXELS_PER_INT);
+        ByteBuffer buffer = ByteBuffer.allocate((getImageBytes().length / PC_BYTES_PER_PIXEL) * PSX_PIXELS_PER_PC);
         int maxColors = getClut().getClutRect().getWidth() * clut.getClutRect().getHeight();
 
-        for (int i = 0; i < getImageBytes().length; i += PIXEL_BYTES * PSX_PIXELS_PER_INT) {
+        for (int i = 0; i < getImageBytes().length; i += PC_BYTES_PER_PIXEL * PSX_PIXELS_PER_PC) {
 
             // RGBA -> ClutColor
             PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
-            PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PIXEL_BYTES);
+            PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PC_BYTES_PER_PIXEL);
 
             int color1Index = clut.getColors().indexOf(color1);
             if (color1Index == -1) {
@@ -237,7 +242,7 @@ public class GameImage extends GameObject {
 
         // Convert BGRA -> ABGR, and write the new image bytes.
         this.imageBytes = bytes; // Override existing image.
-        for (int i = 0; i < bytes.length; i += PIXEL_BYTES) { // Load image bytes.
+        for (int i = 0; i < bytes.length; i += PC_BYTES_PER_PIXEL) { // Load image bytes.
             this.imageBytes[i] = (byte) (0xFF - this.imageBytes[i]); // Flip alpha.
             byte temp = this.imageBytes[i + 1];
             this.imageBytes[i + 1] = this.imageBytes[i + 3];
@@ -254,16 +259,13 @@ public class GameImage extends GameObject {
         int height = getFullHeight();
         int width = getFullWidth();
 
-        if (parent.isPsxMode())
-            width *= PSX_WIDTH_MODIFIER * PSX_PIXELS_PER_INT;
-
         byte[] cloneBytes = Arrays.copyOf(getImageBytes(), getImageBytes().length); // We don't want to make changes to the original array.
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
         //ABGR -> BGRA
-        for (int temp = 0; temp < cloneBytes.length; temp += PIXEL_BYTES) {
+        for (int temp = 0; temp < cloneBytes.length; temp += PC_BYTES_PER_PIXEL) {
             byte alpha = cloneBytes[temp];
-            int alphaIndex = temp + PIXEL_BYTES - 1;
+            int alphaIndex = temp + PC_BYTES_PER_PIXEL - 1;
             System.arraycopy(cloneBytes, temp + 1, cloneBytes, temp, alphaIndex - temp);
             cloneBytes[alphaIndex] = (byte) (0xFF - alpha); // Alpha needs to be flipped.
         }
