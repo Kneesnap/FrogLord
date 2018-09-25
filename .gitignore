@@ -5,3 +5,6 @@ bin/
 out/
 debug/
 FrogLord.jar
+/nbproject/
+/build/
+/dist/
