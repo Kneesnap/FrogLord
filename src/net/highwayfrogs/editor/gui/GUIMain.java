@@ -27,8 +27,13 @@ public class GUIMain extends Application {
         // Debug = automatically load files for convenience.
         File folder = new File("debug");
         if (folder.exists() && folder.isDirectory()) {
-            openGUI(primaryStage, new File(folder, "VANILLA.MWI"), new File(folder, "VANILLA.MWD"));
-            return;
+            File mwiFile = new File(folder, "VANILLA.MWI");
+            File mwdFile = new File(folder, "VANILLA.MWD");
+
+            if (mwiFile.exists() && mwdFile.exists()) {
+                openGUI(primaryStage, mwiFile, mwdFile);
+                return;
+            }
         }
 
         // If this isn't a debug setup, prompt the user to select the files to load.
