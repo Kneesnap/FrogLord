@@ -49,9 +49,6 @@ public class GameImage extends GameObject {
     private static final int PSX_PIXELS_PER_PC = 2;
     private static final int PSX_WIDTH_MODIFIER = 4;
 
-    public static int PACK_ID = 0;
-    public static int IMAGE_ID = 0;
-
     public static final int FLAG_TRANSLUCENT = 1;
     public static final int FLAG_ROTATED = 2; // Unused.
     public static final int FLAG_HIT_X = 4; //Appears to decrease width by 1?

@@ -71,9 +71,6 @@ public class VLOArchive extends GameFile {
             this.images.add(image);
         }
         reader.jumpReturn();
-
-        GameImage.PACK_ID++;
-        GameImage.IMAGE_ID = 0;
     }
 
     @Override
