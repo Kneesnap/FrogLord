@@ -17,7 +17,7 @@
         <CheckBox fx:id="paddingCheckBox" layoutX="200.0" layoutY="248.0" mnemonicParsing="false"
                   onAction="#onImageToggle" selected="true" text="Show Padding"/>
         <CheckBox fx:id="transparencyCheckBox" layoutX="200.0" layoutY="231.0" mnemonicParsing="false"
-                  onAction="#onImageToggle" text="Transparency"/>
+                  onAction="#onImageToggle" selected="true" text="Transparency"/>
         <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" pickOnBounds="true" preserveRatio="true"
                    x="344.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
         <Label fx:id="ingameDimensionLabel" alignment="CENTER" contentDisplay="CENTER" layoutX="335.0" layoutY="257.0"

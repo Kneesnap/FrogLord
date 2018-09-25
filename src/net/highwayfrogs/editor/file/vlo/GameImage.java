@@ -74,8 +74,15 @@ public class GameImage extends GameObject {
         int offset = reader.readInt();
         this.textureId = reader.readShort();
         this.texturePage = reader.readShort();
-        this.clutId = reader.readShort();
-        this.flags = reader.readShort();
+
+        if (getParent().isPsxMode()) {
+            this.clutId = reader.readShort();
+            this.flags = reader.readShort();
+        } else {
+            this.flags = reader.readShort();
+            this.clutId = reader.readShort();
+        }
+
         this.u = reader.readByte();
         this.v = reader.readByte();
         this.ingameWidth = reader.readByte();
@@ -292,8 +299,11 @@ public class GameImage extends GameObject {
             returnImage = trimImage;
         }
 
-        if (allowTransparency) {
-            Image write = Toolkit.getDefaultToolkit().createImage(new FilteredImageSource(returnImage.getSource(), new TransparencyFilter())); // Make it transparent if marked.
+        boolean transparencyGoal = allowTransparency && testFlag(FLAG_BLACK_IS_TRANSPARENT);
+        boolean transparencyState = getParent().isPsxMode();
+
+        if (transparencyGoal != transparencyState) {
+            Image write = Toolkit.getDefaultToolkit().createImage(new FilteredImageSource(returnImage.getSource(), transparencyState ? new BlackFilter() : new TransparencyFilter())); // Make it transparent if marked.
             BufferedImage newImage = new BufferedImage(returnImage.getWidth(), returnImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
             // Make transparent.
@@ -308,13 +318,29 @@ public class GameImage extends GameObject {
     }
 
     private static class TransparencyFilter extends RGBImageFilter {
-        private static final int BLACK = 0x00;
-
         @Override
         public int filterRGB(int x, int y, int rgb) {
             int colorWOAlpha = rgb & 0xFFFFFF;
-            return colorWOAlpha == BLACK ? colorWOAlpha : rgb;
+            return colorWOAlpha == 0x000000 ? colorWOAlpha : rgb;
         }
+    }
+
+    private static class BlackFilter extends RGBImageFilter {
+        @Override
+        @SuppressWarnings("NumericOverflow")
+        public int filterRGB(int x, int y, int rgb) {
+            int alpha = rgb >>> (3 * Constants.BITS_PER_BYTE);
+            return alpha == 0 ? 0xFF000000 : rgb;
+        }
+    }
+
+    /**
+     * Test if a flag is present.
+     * @param test The flag to test.
+     * @return hasFlag
+     */
+    public boolean testFlag(int test) {
+        return (getFlags() & test) == test;
     }
 
     /**
