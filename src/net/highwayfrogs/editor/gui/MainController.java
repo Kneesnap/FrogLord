@@ -31,9 +31,7 @@ public class MainController implements Initializable {
     private MWDFile mwdFile;
 
     public static MainController MAIN_WINDOW;
-    @Getter
-    @Setter
-    private static EditorController<?> currentController;
+    @Getter @Setter private static EditorController<?> currentController;
 
     /**
      * Print a message to the console window.
