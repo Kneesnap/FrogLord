@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
+import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
@@ -17,7 +18,7 @@ import java.io.File;
 
 public class GUIMain extends Application {
     public static Stage MAIN_STAGE;
-    public static final File WORKING_DIRECTORY = new File("./");
+    @Getter private static File workingDirectory = new File("./");
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -46,12 +47,15 @@ public class GUIMain extends Application {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select " + extension + " to open.");
         fileChooser.getExtensionFilters().add(new ExtensionFilter(description, "*." + extension));
-        fileChooser.setInitialDirectory(WORKING_DIRECTORY);
+        fileChooser.setInitialDirectory(getWorkingDirectory());
 
         File result = fileChooser.showOpenDialog(MAIN_STAGE);
-        return result != null ? result : promptFile(extension, description);
-    }
+        if (result == null)
+            return promptFile(extension, description);
 
+        setWorkingDirectory(result.getParentFile());
+        return result;
+    }
 
     public static void main(String[] args) {
         launch(args);
@@ -72,5 +76,14 @@ public class GUIMain extends Application {
         mwd.load(new DataReader(new FileSource(mwdFile)));
 
         MainController.MAIN_WINDOW.loadMWD(mwd);
+    }
+
+    /**
+     * Set the current directory to open FileChoosers in.
+     * @param directory The directory to set.
+     */
+    public static void setWorkingDirectory(File directory) {
+        if (directory != null && directory.isDirectory())
+            workingDirectory = directory;
     }
 }

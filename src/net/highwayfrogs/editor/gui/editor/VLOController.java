@@ -88,13 +88,14 @@ public class VLOController extends EditorController<VLOArchive> {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Specify the file to export this image as...");
         fileChooser.getExtensionFilters().add(new ExtensionFilter("Image Files", "*.png"));
-        fileChooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
+        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
 
         File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
 
         if (selectedFile == null)
             return; // Cancelled.
 
+        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
         try {
             ImageIO.write(toBufferedImage(), "png", selectedFile);
         } catch (IOException ex) {
@@ -107,12 +108,13 @@ public class VLOController extends EditorController<VLOArchive> {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select the image to import...");
         fileChooser.getExtensionFilters().add(new ExtensionFilter("Image Files", "*.png"));
-        fileChooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
+        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
 
         File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
         if (selectedFile == null)
             return; // Cancelled.
 
+        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
         try {
             this.selectedImage.replaceImage(ImageIO.read(selectedFile));
         } catch (IOException ex) {
@@ -127,12 +129,13 @@ public class VLOController extends EditorController<VLOArchive> {
     private void exportAllImages(ActionEvent event) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select the directory to export images to.");
-        chooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
+        chooser.setInitialDirectory(GUIMain.getWorkingDirectory());
 
         File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
         if (selectedFolder == null)
             return; // Cancelled.
 
+        GUIMain.setWorkingDirectory(selectedFolder);
         GameImage originalImage = this.selectedImage;
 
         try {

@@ -72,14 +72,16 @@ public class VABController extends EditorController<VBFile> {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Specify the file to export this sound as...");
         fileChooser.getExtensionFilters().add(new ExtensionFilter("Sound Files", "*.wav"));
-        fileChooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
+        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
         fileChooser.setInitialFileName(this.selectedSound.getSoundName() + ".wav");
 
         File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
+        if (selectedFile == null)
+            return;
 
+        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
         try {
-            if (selectedFile != null)
-                this.selectedSound.exportToFile(selectedFile);
+            this.selectedSound.exportToFile(selectedFile);
         } catch (LineUnavailableException | IOException ex) {
             throw new RuntimeException("Failed to export sound as " + selectedFile.getName(), ex);
         }
@@ -90,12 +92,13 @@ public class VABController extends EditorController<VBFile> {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select the sound to import...");
         fileChooser.getExtensionFilters().add(new ExtensionFilter("Sound Files", "*.wav"));
-        fileChooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
+        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
 
         File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
         if (selectedFile == null)
             return; // Cancelled.
 
+        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
         try {
             this.selectedSound.replaceWithFile(selectedFile);
         } catch (UnsupportedAudioFileException | IOException ex) {
@@ -110,12 +113,13 @@ public class VABController extends EditorController<VBFile> {
     private void exportAllSounds(ActionEvent event) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select the directory to export sounds to.");
-        chooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
+        chooser.setInitialDirectory(GUIMain.getWorkingDirectory());
 
         File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
         if (selectedFolder == null)
             return; // Cancelled.
 
+        GUIMain.setWorkingDirectory(selectedFolder);
         try {
             for (GameSound sound : getFile().getAudioEntries()) {
                 sound.exportToFile(new File(selectedFolder, sound.getSoundName() + ".wav"));
