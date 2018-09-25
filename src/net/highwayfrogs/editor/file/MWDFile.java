@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
@@ -12,12 +13,11 @@ import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.file.writer.FileReceiver;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 /**
  * MWAD File Format: Medieval WAD Archive.
@@ -29,6 +29,7 @@ public class MWDFile extends GameObject {
     private MWIFile wadIndexTable;
     private List<GameFile> files = new ArrayList<>();
     private Map<GameFile, FileEntry> entryMap = new HashMap<>();
+    @Setter private BiConsumer<FileEntry, GameFile> saveCallback;
 
     private static final String MARKER = "DAWM";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEEE, d MMMM yyyy");
@@ -135,6 +136,9 @@ public class MWDFile extends GameObject {
 
             long start = System.currentTimeMillis();
             System.out.print("Saving " + entry.getFilePath() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ") ");
+            if (getSaveCallback() != null)
+                getSaveCallback().accept(entry, file);
+
             ArrayReceiver receiver = new ArrayReceiver();
             file.save(new DataWriter(receiver));
 
@@ -153,13 +157,5 @@ public class MWDFile extends GameObject {
         // Fill the rest of the file with null bytes.
         GameFile lastFile = files.get(files.size() - 1);
         writer.writeNull(Constants.CD_SECTOR_SIZE - (entryMap.get(lastFile).getArchiveSize() % Constants.CD_SECTOR_SIZE));
-
-        try {
-            DataWriter mwiWriter = new DataWriter(new FileReceiver(new File("./debug/MODDED.MWI")));
-            wadIndexTable.save(mwiWriter);
-            mwiWriter.closeReceiver();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
     }
 }

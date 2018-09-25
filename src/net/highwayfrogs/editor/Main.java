@@ -25,5 +25,9 @@ public class Main {
         DataWriter mwdWriter = new DataWriter(new FileReceiver(new File("./debug/MODDED.MWD")));
         mwd.save(mwdWriter);
         mwdWriter.closeReceiver();
+
+        DataWriter mwiWriter = new DataWriter(new FileReceiver(new File("./debug/MODDED.MWI")));
+        mwi.save(mwiWriter);
+        mwiWriter.closeReceiver();
     }
 }
