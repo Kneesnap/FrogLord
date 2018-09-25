@@ -73,6 +73,7 @@ public class VABController extends EditorController<VBFile> {
         fileChooser.setTitle("Specify the file to export this sound as...");
         fileChooser.getExtensionFilters().add(new ExtensionFilter("Sound Files", "*.wav"));
         fileChooser.setInitialDirectory(GUIMain.WORKING_DIRECTORY);
+        fileChooser.setInitialFileName(this.selectedSound.getSoundName() + ".wav");
 
         File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
 
@@ -116,10 +117,9 @@ public class VABController extends EditorController<VBFile> {
             return; // Cancelled.
 
         try {
-            for (int i = 0; i < getFile().getAudioEntries().size(); i++) {
-                File output = new File(selectedFolder, i + ".wav");
-                getFile().getAudioEntries().get(i).exportToFile(output);
-                System.out.println("Exported sound #" + i + ".");
+            for (GameSound sound : getFile().getAudioEntries()) {
+                sound.exportToFile(new File(selectedFolder, sound.getSoundName() + ".wav"));
+                System.out.println("Exported sound: " + sound.getSoundName());
             }
 
         } catch (IOException | LineUnavailableException ex) {
