@@ -39,11 +39,13 @@ public class SaveController {
     /**
      * Start saving the MWD File.
      * @param loadedMWD The loaded MWD file to save.
-     * @param mwdFile   The file to save the MWD to on disk.
      * @param loadedMWI The loaded MWI file to save.
-     * @param mwiFile   The file to save the MWD to on disk.
+     * @param folder    The folder to output the mwds.
      */
-    public void startSaving(MWDFile loadedMWD, File mwdFile, MWIFile loadedMWI, File mwiFile) {
+    public void startSaving(MWDFile loadedMWD, MWIFile loadedMWI, File folder) {
+        File mwiFile = new File(folder, "MODDED.MWI");
+        File mwdFile = new File(folder, "MODDED.MWD");
+
         DataWriter mwiWriter;
         DataWriter mwdWriter;
 

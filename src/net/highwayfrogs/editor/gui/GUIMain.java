@@ -90,13 +90,13 @@ public class GUIMain extends Application {
         KeyCombination ctrlS = new KeyCodeCombination(KeyCode.S, KeyCodeCombination.CONTROL_DOWN);
         scene.setOnKeyPressed(event -> {
             if (ctrlS.match(event))
-                saveFiles(mwi, mwiFile, mwd, mwdFile);
+                saveFiles(mwi, mwd, mwdFile.getParentFile());
         });
 
     }
 
     @SneakyThrows
-    private static void saveFiles(MWIFile loadedMWI, File mwiFile, MWDFile loadedMWD, File mwdFile) {
+    private static void saveFiles(MWIFile loadedMWI, MWDFile loadedMWD, File folder) {
         FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/save.fxml"));
 
         SaveController controller = new SaveController();
@@ -110,7 +110,7 @@ public class GUIMain extends Application {
         newStage.setMinHeight(100);
 
         controller.onInit(newStage);
-        controller.startSaving(loadedMWD, mwdFile, loadedMWI, mwiFile);
+        controller.startSaving(loadedMWD, loadedMWI, folder);
 
         newStage.initModality(Modality.APPLICATION_MODAL);
         newStage.initOwner(MAIN_STAGE);
