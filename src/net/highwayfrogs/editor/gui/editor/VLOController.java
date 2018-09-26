@@ -11,6 +11,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
@@ -22,11 +23,13 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Controls the VLO edit screen.
  * TODO: Control In-game width + height.
- * TODO: Show Flags?
  * Created by Kneesnap on 9/18/2018.
  */
 public class VLOController extends EditorController<VLOArchive> {
@@ -38,9 +41,11 @@ public class VLOController extends EditorController<VLOArchive> {
     @FXML private Label dimensionLabel;
     @FXML private Label ingameDimensionLabel;
     @FXML private Label idLabel;
+    @FXML private VBox flagBox;
 
     private GameImage selectedImage;
     private double defaultEditorMaxHeight;
+    private Map<Integer, CheckBox> flagCheckBoxMap = new HashMap<>();
 
     private static final int SCALE_DIMENSION = 256;
 
@@ -54,6 +59,7 @@ public class VLOController extends EditorController<VLOArchive> {
 
         imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             this.selectedImage = newValue;
+            this.updateFlags();
             this.updateImage();
             this.updateImageInfo();
         });
@@ -65,12 +71,45 @@ public class VLOController extends EditorController<VLOArchive> {
     public void onInit(AnchorPane editorRoot) {
         super.onInit(editorRoot);
         this.defaultEditorMaxHeight = editorRoot.getMaxHeight();
+
+        addFlag("Translucent", GameImage.FLAG_TRANSLUCENT);
+        addFlag("Rotated", GameImage.FLAG_ROTATED);
+        addFlag("Hit X", GameImage.FLAG_HIT_X);
+        addFlag("Hit Y", GameImage.FLAG_HIT_Y);
+        addFlag("Name Reference", GameImage.FLAG_REFERENCED_BY_NAME);
+        addFlag("Black is Transparent", GameImage.FLAG_BLACK_IS_TRANSPARENT);
+        addFlag("2D Sprite", GameImage.FLAG_2D_SPRITE);
     }
 
     @Override
     public void onClose(AnchorPane editorRoot) {
         super.onClose(editorRoot);
         editorRoot.setMaxHeight(this.defaultEditorMaxHeight);
+    }
+
+    private void addFlag(String display, int flag) {
+        CheckBox checkbox = new CheckBox(display);
+
+        checkbox.setOnAction(event -> {
+            short flagValue = this.selectedImage.getFlags();
+            if (this.selectedImage.testFlag(flag)) {
+                flagValue ^= flag;
+            } else {
+                flagValue |= flag;
+            }
+            this.selectedImage.setFlags(flagValue);
+
+            updateImage();
+            updateImageInfo();
+        });
+
+        flagBox.getChildren().add(checkbox);
+        flagCheckBoxMap.put(flag, checkbox);
+    }
+
+    private void updateFlags() {
+        for (Entry<Integer, CheckBox> entry : flagCheckBoxMap.entrySet())
+            entry.getValue().setSelected(this.selectedImage.testFlag(entry.getKey()));
     }
 
     private static class AttachmentListCell extends ListCell<GameImage> {
@@ -97,7 +136,7 @@ public class VLOController extends EditorController<VLOArchive> {
 
         GUIMain.setWorkingDirectory(selectedFile.getParentFile());
         try {
-            ImageIO.write(toBufferedImage(), "png", selectedFile);
+            ImageIO.write(toBufferedImage(this.selectedImage), "png", selectedFile);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -136,19 +175,15 @@ public class VLOController extends EditorController<VLOArchive> {
             return; // Cancelled.
 
         GUIMain.setWorkingDirectory(selectedFolder);
-        GameImage originalImage = this.selectedImage;
 
         try {
             for (int i = 0; i < getFile().getImages().size(); i++) {
-                this.selectedImage = getFile().getImages().get(i);
                 File output = new File(selectedFolder, i + ".png");
-                ImageIO.write(toBufferedImage(), "png", output);
+                ImageIO.write(toBufferedImage(getFile().getImages().get(i)), "png", output);
                 System.out.println("Exported image #" + i + ".");
             }
         } catch (IOException ex) {
             ex.printStackTrace();
-        } finally {
-            this.selectedImage = originalImage;
         }
     }
 
@@ -174,7 +209,7 @@ public class VLOController extends EditorController<VLOArchive> {
         imageView.setVisible(hasImage);
 
         if (hasImage) {
-            BufferedImage image = toBufferedImage();
+            BufferedImage image = toBufferedImage(this.selectedImage);
 
             boolean scaleSize = sizeCheckBox.isSelected();
             imageView.setFitWidth(scaleSize ? SCALE_DIMENSION : image.getWidth());
@@ -184,7 +219,7 @@ public class VLOController extends EditorController<VLOArchive> {
         }
     }
 
-    private BufferedImage toBufferedImage() {
-        return this.selectedImage.toBufferedImage(!this.paddingCheckBox.isSelected(), this.transparencyCheckBox.isSelected());
+    private BufferedImage toBufferedImage(GameImage image) {
+        return image.toBufferedImage(!this.paddingCheckBox.isSelected(), this.transparencyCheckBox.isSelected());
     }
 }

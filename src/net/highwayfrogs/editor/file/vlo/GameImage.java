@@ -152,8 +152,15 @@ public class GameImage extends GameObject {
         writer.writeInt(this.suppliedTextureOffset.get());
         writer.writeShort(this.textureId);
         writer.writeShort(this.texturePage);
-        writer.writeShort(this.clutId);
-        writer.writeShort(this.flags);
+
+        if (getParent().isPsxMode()) {
+            writer.writeShort(this.clutId);
+            writer.writeShort(this.flags);
+        } else {
+            writer.writeShort(this.flags);
+            writer.writeShort(this.clutId);
+        }
+
         writer.writeByte(this.u);
         writer.writeByte(this.v);
         writer.writeByte(this.ingameWidth);
