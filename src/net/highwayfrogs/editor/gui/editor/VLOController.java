@@ -79,6 +79,7 @@ public class VLOController extends EditorController<VLOArchive> {
         addFlag("Name Reference", GameImage.FLAG_REFERENCED_BY_NAME);
         addFlag("Black is Transparent", GameImage.FLAG_BLACK_IS_TRANSPARENT);
         addFlag("2D Sprite", GameImage.FLAG_2D_SPRITE);
+        this.updateFlags();
     }
 
     @Override
@@ -108,8 +109,9 @@ public class VLOController extends EditorController<VLOArchive> {
     }
 
     private void updateFlags() {
-        for (Entry<Integer, CheckBox> entry : flagCheckBoxMap.entrySet())
-            entry.getValue().setSelected(this.selectedImage.testFlag(entry.getKey()));
+        if (this.selectedImage != null)
+            for (Entry<Integer, CheckBox> entry : flagCheckBoxMap.entrySet())
+                entry.getValue().setSelected(this.selectedImage.testFlag(entry.getKey()));
     }
 
     private static class AttachmentListCell extends ListCell<GameImage> {
