@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Pallete file. We don't really know the purpose of this file, but it only appears on the PC version. There is one for every map.
+ * Pallete file. PC-Only file. Appears to not actually do anything though. Loading corrupted palettes doesn't seem to break anything, and they are not used on the PSX version. I have tested in both low poly mode and high poly mode.
  * Appears this might be "Windows 3.0 logical palette" or "LOGPALETTE"
  * Created by Kneesnap on 8/14/2018.
  */
