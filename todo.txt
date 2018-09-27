@@ -39,3 +39,4 @@ TCRF Documentation Plans:
  - Ruins Zone
  - Kao's Prototype. (Debug features, analyze MWD)
  - Analyze US PSX demo MWD.
+ - PAL Files
