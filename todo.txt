@@ -23,19 +23,18 @@ Something which gets the remap table from frogger.exe.
 
 Non tool-development-related plans:
  - Load the two developer maps.
- - What are .PAL files even for?
  - Differences between PSX and PC version files?
 
 
 TCRF Documentation Plans:
  - Find unused textures
- - Document unused developer stuff.
+ - Document unused code.
+ - Document debugging code.
  - Go through documents to look for information.
  - Snail Racing
  - Beta elements visible in media. (Level screenshots, German Trailer, Credits video, Video linked on the forums of some guy playing Frogger.)
  - Interesting out of bounds / unused parts of levels.
  - Original Menu Mockups.
- - Extra undocumented cheat code.
  - Ruins Zone
  - Kao's Prototype. (Debug features, analyze MWD)
  - Analyze US PSX demo MWD.
