@@ -12,6 +12,7 @@ import java.util.*;
  * So, this was created from research and attempts to reverse the unpacker.
  *
  * PP20 is a Lz77 (sliding window compression) variant.
+ * It resembles LZSS, but not exactly.
  *
  * Useful Links:
  * - https://en.wikipedia.org/wiki/LZ77_and_LZ78
