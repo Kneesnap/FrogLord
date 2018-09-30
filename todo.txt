@@ -16,7 +16,8 @@ Editor Features:
   Map Editor
   MOF Editor
 
-Optimize PP20 compression further.
+PP20 Compression should have a max length it will save offset for, to prevent overflow.
+PP20 Cruncher: Can we optimize it further?
 Something which gets & saves the MWI from frogger.exe.
 Something which gets the remap table from frogger.exe.
 
