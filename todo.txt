@@ -17,13 +17,12 @@ Editor Features:
   MOF Editor
 
 PP20 Cruncher: Can we optimize it further?
-Something which gets & saves the MWI from frogger.exe.
 Something which gets the remap table from frogger.exe.
-
 
 Non tool-development-related plans:
  - Load the two developer maps.
  - Differences between PSX and PC version files?
+ - Support Demo VLOs.
 
 
 TCRF Documentation Plans:
