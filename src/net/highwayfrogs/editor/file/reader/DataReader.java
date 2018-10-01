@@ -56,6 +56,41 @@ public class DataReader {
     }
 
     /**
+     * Find the bytes.
+     * @param query      The bytes to search for.
+     * @param placeAfter Should the cursor be placed after the bytes?
+     */
+    public void findBytes(byte[] query, boolean placeAfter) {
+        Utils.verify(query.length > 0, "Cannot search for empty query.");
+
+        while (hasMore()) {
+            if (readByte() != query[0])
+                continue;
+
+            jumpTemp(getIndex());
+
+            boolean pass = true;
+            for (int i = 1; i < query.length; i++) {
+                if (readByte() != query[i]) {
+                    pass = false;
+                    break;
+                }
+            }
+
+            jumpReturn();
+
+            if (pass) {
+                this.setIndex(this.getIndex() - 1);
+                if (placeAfter)
+                    this.readBytes(query.length);
+                return;
+            }
+        }
+
+        throw new RuntimeException("Failed to find the specified bytes.");
+    }
+
+    /**
      * Get the amount of readable bytes.
      * @return size
      */
@@ -73,6 +108,14 @@ public class DataReader {
      */
     public boolean hasMore() {
         return getSize() > getIndex();
+    }
+
+    /**
+     * Get the amount of remaining bytes.
+     * @return remainingCount
+     */
+    public int getRemaining() {
+        return getSize() - getIndex();
     }
 
     /**
