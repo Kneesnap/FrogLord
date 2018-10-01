@@ -55,12 +55,11 @@ public class PP20Packer {
 
     private static int search(byte[] data, int bufferEnd, List<Byte> target, Map<Byte, List<Integer>> dictionary) {
         int minIndex = Math.max(0, bufferEnd - getMaximumOffset(target.size())); // There's a certain point at which data will not be compressed. By calculating it here, it saves a lot of overheard, and prevents this from becoming O(n^2)
-
         byte test = target.get(0);
-        if (!dictionary.containsKey(test))
-            return -1; // No results found.
 
         List<Integer> possibleResults = dictionary.get(test);
+        if (possibleResults == null)
+            return -1; // No results found.
 
         for (int i = possibleResults.size() - 1; i >= 0; i--) {
             int testIndex = possibleResults.get(i);
