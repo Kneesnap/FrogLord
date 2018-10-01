@@ -5,12 +5,12 @@ import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.editor.WADController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,10 +22,15 @@ import java.util.List;
 @Getter
 public class WADFile extends GameFile {
     private List<WADEntry> files = new ArrayList<>();
+    private MWDFile parentMWD;
 
     private static final Image ICON = loadIcon("packed");
     public static final int TYPE_ID = -1;
     private static final int TERMINATOR = -1;
+
+    public WADFile(MWDFile file) {
+        this.parentMWD = file;
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -44,16 +49,17 @@ public class WADFile extends GameFile {
                 data = PP20Unpacker.unpackData(data);
 
             GameFile file;
-            if (fileType == VLOArchive.WAD_TYPE || fileType == 1) {
+            /*if (fileType == VLOArchive.WAD_TYPE || fileType == 1) { // Disabled until these files are supported.
                 file = new VLOArchive();
             } else if (fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID) {
                 file = new MOFFile();
             } else {
                 throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
-            }
+            }*/
+            file = new DummyFile(data.length);
 
             file.load(new DataReader(new ArraySource(data)));
-            files.add(new WADEntry(resourceId, fileType, compressed, file));
+            files.add(new WADEntry(resourceId, fileType, compressed, file, this.parentMWD.getWadIndexTable()));
         }
     }
 
@@ -86,15 +92,24 @@ public class WADFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return null;
+        return loadEditor(new WADController(), "wad", this);
     }
 
     @Getter
     @AllArgsConstructor
-    private static class WADEntry {
+    public static class WADEntry {
         private int resourceId;
         private int fileType;
         private boolean compressed;
         private GameFile file;
+        private MWIFile mwiFile;
+
+        /**
+         * Get the FileEntry for this WAD Entry.
+         * @return fileEntry
+         */
+        public FileEntry getFileEntry() {
+            return mwiFile.getEntries().get(resourceId);
+        }
     }
 }

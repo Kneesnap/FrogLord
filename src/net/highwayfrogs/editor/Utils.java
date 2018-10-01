@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -199,5 +200,36 @@ public class Utils {
      */
     public static InputStream getResourceStream(String resourceName) {
         return Utils.class.getClassLoader().getResourceAsStream(resourceName);
+    }
+
+    /**
+     * Get the first file with this name that does not exist. Appends stuff like (1).
+     * @param file The file to get.
+     * @return nonexistantFile.
+     */
+    public static File getNonExistantFile(File file) {
+        if (!file.exists())
+            return file;
+
+        int id = 0;
+
+        File result = file;
+        while (result.exists())
+            result = getFile(file, ++id);
+
+        return result;
+    }
+
+    private static File getFile(File file, int id) {
+        if (id == 0)
+            return file;
+
+        String fileName = file.getName();
+        String name = fileName.replaceFirst("[.][^.]+$", ""); // Remove extension.
+        name += " (" + id + ")";
+        if (fileName.contains("."))
+            name += fileName.substring(fileName.lastIndexOf(".") + 1);
+
+        return new File(file.getParentFile(), name);
     }
 }

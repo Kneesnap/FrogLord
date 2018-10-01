@@ -123,7 +123,6 @@ public class VLOController extends EditorController<VLOArchive> {
         }
     }
 
-
     @FXML
     private void exportImage(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
