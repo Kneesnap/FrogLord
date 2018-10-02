@@ -21,7 +21,8 @@ import java.util.*;
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
-    private static final byte[] COMPRESSION_SETTINGS = {0x07, 0x07, 0x07, 0x07}; // PP20 compression settings.
+    private static final byte[] COMPRESSION_SETTINGS = {0x09, 0x0A, 0x0C, 0x0D}; // PP20 compression settings.
+    private static int[] COMPRESSION_SETTING_MAX_OFFSETS;
     public static final int OPTIONAL_BITS_SMALL_OFFSET = 7;
     public static final int INPUT_BIT_LENGTH = 2;
     public static final int INPUT_CONTINUE_WRITING_BITS = 3;
@@ -53,33 +54,60 @@ public class PP20Packer {
         return completeData;
     }
 
-    private static int search(byte[] data, int bufferEnd, List<Byte> target, Map<Byte, List<Integer>> dictionary) {
-        int minIndex = Math.max(0, bufferEnd - getMaximumOffset(target.size())); // There's a certain point at which data will not be compressed. By calculating it here, it saves a lot of overheard, and prevents this from becoming O(n^2)
-        byte test = target.get(0);
+    private static int findLongest(byte[] data, int bufferEnd, List<Byte> target, Map<Byte, List<Integer>> dictionary) {
+        target.clear();
+        byte startByte = data[bufferEnd];
+        target.add(startByte);
 
-        List<Integer> possibleResults = dictionary.get(test);
+        List<Integer> possibleResults = dictionary.get(startByte);
         if (possibleResults == null)
-            return -1; // No results found.
+            return -1;
 
-        for (int i = possibleResults.size() - 1; i >= 0; i--) {
-            int testIndex = possibleResults.get(i);
+        if (COMPRESSION_SETTING_MAX_OFFSETS == null) { // Generate cached offset values. (This is a rather heavy operation, so we cache the stuff.)
+            COMPRESSION_SETTING_MAX_OFFSETS = new int[COMPRESSION_SETTINGS.length];
+            for (int i = 0; i < COMPRESSION_SETTINGS.length; i++)
+                COMPRESSION_SETTING_MAX_OFFSETS[i] = getMaximumOffset(i);
+        }
+
+        int bestIndex = -1;
+        int minIndex = 0;
+
+        for (int resultId = possibleResults.size() - 1; resultId >= 0; resultId--) {
+            int testIndex = possibleResults.get(resultId);
+            int targetSize = target.size();
+
+            if (COMPRESSION_SETTING_MAX_OFFSETS.length > targetSize) // We'd rather cache this variable, as it's rather expensive to calculate.
+                minIndex = Math.max(0, bufferEnd - COMPRESSION_SETTING_MAX_OFFSETS[targetSize]);
+
             if (minIndex > testIndex)
                 break; // We've gone too far.
 
-            // Test this
-            boolean pass = true;
-            for (int j = 1; j < target.size(); j++) {
-                if (data[j + bufferEnd] != data[j + testIndex]) {
-                    pass = false;
-                    break; // Break from the j for loop.
+            boolean existingPass = true;
+            for (int i = 1; i < targetSize; i++) {
+                if (data[i + bufferEnd] != data[i + testIndex]) {
+                    existingPass = false;
+                    break;
                 }
             }
 
-            if (pass) // A match has been found. Return it.
-                return testIndex;
+            if (!existingPass)
+                continue; // It didn't match existing data read up to here, it can't be the longest.
+
+            // Grow the target for as long as it matches.
+            byte temp;
+            int j = targetSize;
+            while (data.length > bufferEnd + j && (temp = data[j + bufferEnd]) == data[j + testIndex]) { // Break on reaching end of data, or when the data stops matching.
+                target.add(temp);
+                j++;
+            }
+
+            int newSize = target.size();
+            if (newSize >= MINIMUM_DECODE_DATA_LENGTH // Verify large enough that it can be compressed.
+                    && newSize != targetSize) // Prefer the ones closest to bufferEnd (Lower offsets = Smaller file). (Ie: They're read first, therefore if we found a duplicate example, we want to rely on the one we've already read.
+                bestIndex = testIndex;
         }
 
-        return -1;
+        return bestIndex;
     }
 
     private static byte[] compressData(byte[] data) {
@@ -91,27 +119,10 @@ public class PP20Packer {
         for (int i = 0; i < data.length; i++) {
             byte temp = data[i];
 
-            searchList.clear();
-            searchList.add(temp);
-
-            int tempIndex;
-            int bestIndex = -1;
-            int readIndex = i;
-
-            while ((tempIndex = search(data, i, searchList, dictionary)) >= 0) { // Find the longest compressable bunch of characters.
-                bestIndex = tempIndex;
-                if (data.length - 1 == readIndex) { // If we've reached the end of the data, exit. Add a null byte to the end because the end of this list will be removed.
-                    searchList.add(Constants.NULL_BYTE);
-                    break;
-                }
-
-                searchList.add(data[++readIndex]);
-            }
-
-            searchList.remove(searchList.size() - 1); // Remove the byte that was not found.
-
+            int bestIndex = findLongest(data, i, searchList, dictionary);
             int byteOffset = i - bestIndex - 1;
-            if (searchList.size() >= MINIMUM_DECODE_DATA_LENGTH) { // Large enough that it can be compressed.
+
+            if (bestIndex >= 0) { // Verify the compression index was found.
                 if (!noMatchQueue.isEmpty()) { // When a compressed one has been reached, write all the data in-between, if there is any.
                     writeInputData(writer, Utils.toArray(noMatchQueue));
                     noMatchQueue.clear();
@@ -121,15 +132,11 @@ public class PP20Packer {
 
                 writeDataLink(writer, searchList.size(), byteOffset);
 
-                for (int j = 0; j < searchList.size(); j++) {
-                    int recordIndex = i + j;
-                    byte recordByte = searchList.get(j);
-                    if (!dictionary.containsKey(recordByte))
-                        dictionary.put(recordByte, new ArrayList<>());
-                    dictionary.get(recordByte).add(recordIndex);
-                }
+                int recordIndex = i;
+                for (byte recordByte : searchList)
+                    dictionary.computeIfAbsent(recordByte, k -> new ArrayList<>()).add(recordIndex++);
 
-                i = readIndex - 1;
+                i += searchList.size() - 1;
             } else { // It's not large enough to be compressed.
                 noMatchQueue.add(temp);
 
