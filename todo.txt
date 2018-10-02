@@ -16,7 +16,6 @@ Editor Features:
   Map Editor
   MOF Editor
 
-PP20 Cruncher: Can we optimize it further?
 Something which gets the remap table from frogger.exe.
 
 Non tool-development-related plans:
