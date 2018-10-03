@@ -84,13 +84,22 @@ public class GUIMain extends Application {
         MWDFile mwd = new MWDFile(mwi);
         mwd.load(new DataReader(new FileSource(mwdFile)));
 
-        MainController.MAIN_WINDOW.loadMWD(mwd);
+        MainController controller = MainController.MAIN_WINDOW;
+        controller.loadMWD(mwd);
 
         // Ctrl + S -> Save MWD.
-        KeyCombination ctrlS = new KeyCodeCombination(KeyCode.S, KeyCodeCombination.CONTROL_DOWN);
+        KeyCombination ctrlS = new KeyCodeCombination(KeyCode.S, KeyCodeCombination.CONTROL_DOWN); // Save MWD.
+        KeyCombination ctrlI = new KeyCodeCombination(KeyCode.I, KeyCodeCombination.CONTROL_DOWN); // Import file.
+        KeyCombination ctrlO = new KeyCodeCombination(KeyCode.O, KeyCodeCombination.CONTROL_DOWN); // Output file.
+
         scene.setOnKeyPressed(event -> {
-            if (ctrlS.match(event))
+            if (ctrlS.match(event)) {
                 saveFiles(mwi, mwd, mwdFile.getParentFile());
+            } else if (ctrlI.match(event)) {
+                controller.importFile();
+            } else if (ctrlO.match(event)) {
+                controller.exportFile();
+            }
         });
 
     }

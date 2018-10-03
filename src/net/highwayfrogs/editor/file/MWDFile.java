@@ -58,37 +58,7 @@ public class MWDFile extends GameObject {
             if (entry.isCompressed())
                 fileBytes = PP20Unpacker.unpackData(fileBytes);
 
-            // Turn the byte data into the appropriate game-file.
-            GameFile file;
-
-            String fileName = entry.getDisplayName();
-
-            if (entry.getTypeId() == VLOArchive.TYPE_ID || (fileName != null && fileName.startsWith("LS_ALL"))) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
-                file = new VLOArchive();
-            } else /*if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
-                if (fileName.startsWith("SKY_LAND")) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
-                    file = new DummyFile(fileBytes.length); // TODO: Is this file even used?
-                } else {
-                    file = new MAPFile();
-                }
-            } else */ if (entry.getTypeId() == WADFile.TYPE_ID) { // Disabled until fully supported.
-                file = new WADFile(this);
-            } else if (entry.getTypeId() == DemoFile.TYPE_ID) {
-                file = new DemoFile();
-            } else if (entry.getTypeId() == PALFile.TYPE_ID) {
-                file = new PALFile();
-            } else if (entry.getTypeId() == VHFile.TYPE_ID && !testSignature(fileBytes, 0, VABHeaderFile.SIGNATURE)) { // PSX support is disabled until it is complete.
-                if (lastVB != null) {
-                    VHFile vhFile = new VHFile();
-                    vhFile.setVB(lastVB);
-                    file = vhFile;
-                } else {
-                    file = new VBFile();
-                }
-
-            } else {
-                file = new DummyFile(fileBytes.length);
-            }
+            GameFile file = loadFile(fileBytes, entry, lastVB);
 
             try {
                 DataReader newReader = new DataReader(new ArraySource(fileBytes));
@@ -98,13 +68,55 @@ public class MWDFile extends GameObject {
                     file.load(newReader);
                 }
             } catch (Exception ex) {
-                throw new RuntimeException("Failed to load " + fileName, ex);
+                throw new RuntimeException("Failed to load " + entry.getDisplayName(), ex);
             }
 
             entryMap.put(file, entry);
             files.add(file);
             lastVB = file instanceof VBFile ? (VBFile) file : null;
         }
+    }
+
+    /**
+     * Create a GameFile instance.
+     * @param fileBytes The data to read
+     * @param entry     The file entry being loaded.
+     * @param lastVB    The lastVB value.
+     * @return loadedFile
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends GameFile> T loadFile(byte[] fileBytes, FileEntry entry, VBFile lastVB) {
+        // Turn the byte data into the appropriate game-file.
+        GameFile file;
+
+        if (entry.getTypeId() == VLOArchive.TYPE_ID || (entry.hasFilePath() && entry.getDisplayName().startsWith("LS_ALL"))) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
+            file = new VLOArchive();
+        } else /*if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
+                if (fileName.startsWith("SKY_LAND")) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
+                    file = new DummyFile(fileBytes.length);
+                } else {
+                    file = new MAPFile();
+                }
+            } else */ if (entry.getTypeId() == WADFile.TYPE_ID) { // Disabled until fully supported.
+            file = new WADFile(this);
+        } else if (entry.getTypeId() == DemoFile.TYPE_ID) {
+            file = new DemoFile();
+        } else if (entry.getTypeId() == PALFile.TYPE_ID) {
+            file = new PALFile();
+        } else if (entry.getTypeId() == VHFile.TYPE_ID && !testSignature(fileBytes, 0, VABHeaderFile.SIGNATURE)) { // PSX support is disabled until it is complete.
+            if (lastVB != null) {
+                VHFile vhFile = new VHFile();
+                vhFile.setVB(lastVB);
+                file = vhFile;
+            } else {
+                file = new VBFile();
+            }
+
+        } else {
+            file = new DummyFile(fileBytes.length);
+        }
+
+        return (T) file;
     }
 
     private static boolean testSignature(byte[] data, int startIndex, String test) {

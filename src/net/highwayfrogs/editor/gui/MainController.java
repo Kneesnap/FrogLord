@@ -11,6 +11,8 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,9 +20,19 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.reader.ArraySource;
+import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.sound.VBFile;
+import net.highwayfrogs.editor.file.sound.VHFile;
+import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.editor.EditorController;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -55,6 +67,78 @@ public class MainController implements Initializable {
         fileList.setCellFactory(param -> new AttachmentListCell(mwdFile));
         fileList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openEditor(newValue));
         fileList.getSelectionModel().select(0);
+    }
+
+    private GameFile getCurrentFile() {
+        return this.fileList.getSelectionModel().getSelectedItem();
+    }
+
+    private FileEntry getFileEntry() {
+        return mwdFile.getEntryMap().get(getCurrentFile());
+    }
+
+    /**
+     * Import a file to replace the current file.
+     */
+    public void importFile() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select the file to import...");
+        fileChooser.getExtensionFilters().add(new ExtensionFilter("All Files", "*.*"));
+        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+
+        File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
+        if (selectedFile == null)
+            return; // Cancelled.
+
+        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+
+        byte[] fileBytes;
+        try {
+            fileBytes = Files.readAllBytes(selectedFile.toPath());
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to read file.", ex);
+        }
+
+        GameFile oldFile = getCurrentFile();
+        VBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
+        GameFile newFile = mwdFile.loadFile(fileBytes, getFileEntry(), lastVB);
+        newFile.load(new DataReader(new ArraySource(fileBytes)));
+
+        this.mwdFile.getEntryMap().put(newFile, getFileEntry());
+        int index = this.mwdFile.getFiles().indexOf(oldFile);
+        this.mwdFile.getFiles().set(index, newFile);
+        openEditor(newFile); // Open the editor for the new file.
+        System.out.println("Imported " + selectedFile.getName() + " as " + getFileEntry().getDisplayName() + ".");
+    }
+
+    /**
+     * Export the current file.
+     */
+    public void exportFile() {
+        GameFile currentFile = getCurrentFile();
+        FileEntry entry = getFileEntry();
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Specify the file to export this file as...");
+        fileChooser.getExtensionFilters().add(new ExtensionFilter("All Files", "*.*"));
+        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+        fileChooser.setInitialFileName(entry.hasFilePath() ? entry.getDisplayName() : "export.raw");
+
+        File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
+        if (selectedFile == null)
+            return; // Cancel.
+
+        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+
+        try {
+            DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
+            currentFile.save(writer);
+            writer.closeReceiver();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("Failed to export file " + selectedFile.getName() + ".", e);
+        }
+
+        System.out.println("Exported " + selectedFile.getName() + ".");
     }
 
     /**
