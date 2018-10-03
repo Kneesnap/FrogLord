@@ -17,6 +17,7 @@ Editor Features:
   MOF Editor
 
 Something which gets the remap table from frogger.exe.
+Build FrogPSX.H from MWD.
 
 Non tool-development-related plans:
  - Load the two developer maps.
