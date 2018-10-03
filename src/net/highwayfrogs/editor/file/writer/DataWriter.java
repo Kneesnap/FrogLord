@@ -46,6 +46,16 @@ public class DataWriter {
     }
 
     /**
+     * Write null bytes to a given address.
+     * @param address The address to end at.
+     */
+    public void writeTo(int address) {
+        int bytes = address - getIndex();
+        Utils.verify(bytes >= 0, "Cannot write backwards.");
+        writeNull(bytes);
+    }
+
+    /**
      * Temporarily jump to an offset. Use jumpReturn to return.
      * Jumps are recorded Last In First Out style.
      * @param newIndex The offset to jump to.

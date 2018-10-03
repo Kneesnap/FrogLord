@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -17,22 +18,22 @@ import java.util.List;
  */
 @Getter
 public class DemoFile extends GameFile {
-    private List<List<DemoAction>> actions = new ArrayList<>();
+    private List<List<DemoAction>> frames = new ArrayList<>();
     private int startX;
     private int startZ;
-    private int startY;
 
     public static final int TYPE_ID = 6;
     private static final Image ICON = loadIcon("demo");
-    private static final int FILE_SIZE = 1812;
+    private static final int MAX_DEMO_FRAMES = 30 * 60;
+    private static final int FILE_SIZE = MAX_DEMO_FRAMES + (3 * Constants.INTEGER_SIZE);
 
     @Override
     public void load(DataReader reader) {
+        int frameCount = reader.readInt();
         this.startX = reader.readInt();
         this.startZ = reader.readInt();
-        this.startY = reader.readInt();
 
-        while (reader.hasMore()) {
+        for (int i = 0; i < frameCount; i++) {
             byte actionId = reader.readByte();
 
             List<DemoAction> actions = new ArrayList<>();
@@ -41,7 +42,7 @@ public class DemoFile extends GameFile {
                     actions.add(action);
 
             Utils.verify(!actions.isEmpty(), "Unknown action for action id 0x%s.", Utils.toByteString(actionId));
-            getActions().add(actions);
+            getFrames().add(actions);
             if (actions.contains(DemoAction.STOP))
                 break;
         }
@@ -49,18 +50,18 @@ public class DemoFile extends GameFile {
 
     @Override
     public void save(DataWriter writer) {
+        writer.writeInt(getFrames().size());
         writer.writeInt(getStartX());
         writer.writeInt(getStartZ());
-        writer.writeInt(getStartY());
 
-        for (List<DemoAction> actions : getActions()) {
+        for (List<DemoAction> actions : getFrames()) {
             byte result = 0;
             for (DemoAction action : actions)
                 result |= action.getId();
             writer.writeByte(result);
         }
 
-        writer.jumpTo(FILE_SIZE); // Jump to end of file.
+        writer.writeTo(FILE_SIZE); // Jump to end of file.
     }
 
     @Override
