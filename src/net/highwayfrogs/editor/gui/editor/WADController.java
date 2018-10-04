@@ -85,7 +85,7 @@ public class WADController extends EditorController<WADFile> {
         try {
             for (WADEntry wadEntry : getFile().getFiles()) {
                 FileEntry fileEntry = wadEntry.getFileEntry();
-                File save = Utils.getNonExistantFile(new File(selectedFolder, fileEntry.getDisplayName()));
+                File save = Utils.getNonExistantFile(new File(selectedFolder, fileEntry.hasFilePath() ? fileEntry.getDisplayName() : String.valueOf(wadEntry.getResourceId())));
                 System.out.println("Saving: " + fileEntry.getDisplayName());
 
                 DataWriter writer = new DataWriter(new FileReceiver(save));
