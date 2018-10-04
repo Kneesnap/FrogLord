@@ -78,6 +78,19 @@ public class MWDFile extends GameObject {
     }
 
     /**
+     * Create a replacement file. (Does not actually update MWD)
+     * @param fileBytes The bytes to replace the file with.
+     * @param oldFile   The file to replace.
+     * @return replacementFile
+     */
+    public <T extends GameFile> T replaceFile(byte[] fileBytes, FileEntry entry, GameFile oldFile) {
+        VBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
+        T newFile = this.loadFile(fileBytes, entry, lastVB);
+        newFile.load(new DataReader(new ArraySource(fileBytes)));
+        return newFile;
+    }
+
+    /**
      * Create a GameFile instance.
      * @param fileBytes The data to read
      * @param entry     The file entry being loaded.

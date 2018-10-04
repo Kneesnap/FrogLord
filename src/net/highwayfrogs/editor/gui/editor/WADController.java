@@ -8,6 +8,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
@@ -18,6 +19,7 @@ import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 /**
  * A temporary WAD Controller. This is temporary.
@@ -46,7 +48,25 @@ public class WADController extends EditorController<WADFile> {
 
     @FXML
     private void importEntry(ActionEvent event) {
-        System.out.println("Importing is not yet supported."); //TODO
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select the WAD Entry to import...");
+        fileChooser.getExtensionFilters().add(new ExtensionFilter("All Files", "*.*"));
+        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+
+        File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
+        if (selectedFile == null)
+            return; // Cancelled.
+
+        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+        try {
+            byte[] newBytes = Files.readAllBytes(selectedFile.toPath());
+            this.selectedEntry.setFile(getFile().getParentMWD().replaceFile(newBytes, selectedEntry.getFileEntry(), selectedEntry.getFile()));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        updateEntry(); // Update the display.
+        System.out.println("Imported WAD Entry.");
     }
 
     @FXML

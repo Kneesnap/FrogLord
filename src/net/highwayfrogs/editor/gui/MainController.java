@@ -20,10 +20,6 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.reader.ArraySource;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.sound.VBFile;
-import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.editor.EditorController;
@@ -100,9 +96,7 @@ public class MainController implements Initializable {
         }
 
         GameFile oldFile = getCurrentFile();
-        VBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
-        GameFile newFile = mwdFile.loadFile(fileBytes, getFileEntry(), lastVB);
-        newFile.load(new DataReader(new ArraySource(fileBytes)));
+        GameFile newFile = mwdFile.replaceFile(fileBytes, getFileEntry(), oldFile);
 
         this.mwdFile.getEntryMap().put(newFile, getFileEntry());
         int index = this.mwdFile.getFiles().indexOf(oldFile);
