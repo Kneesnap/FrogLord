@@ -17,7 +17,7 @@ public class Path extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        int entityIndicePointer = reader.readInt();
+        int entityIndicePointer = reader.readInt(); // "Note that entity_indices points to a (-1) terminated list of indices into the global entity list. (ie. the list of pointers after the entity table packet header)"
         System.out.println("Entity Pointer: " + entityIndicePointer);
 
         /*if (entityIndicePointer > 0) {
