@@ -25,13 +25,13 @@ Non tool-development-related plans:
 
 
 TCRF Documentation Plans:
- - Find unused textures
- - Document unused code.
- - Document debugging code.
- - Go through documents to look for information.
- - Snail Racing
- - Beta elements visible in media. (Level screenshots, German Trailer, Credits video, Video linked on the forums of some guy playing Frogger.)
- - Original Menu Mockups.
  - Ruins Zone
+ - Document unused code.
+ - Snail Racing
+ - Original Menu Mockups.
+ - Go through documents to look for information.
+ - Beta elements visible in media. (Level screenshots, German Trailer, Credits video, Video linked on the forums of some guy playing Frogger.)
  - Kao's Prototype. (Debug features, analyze MWD)
+ - Document debugging code.
+ - Find unused textures
  - Analyze US PSX demo MWD.
