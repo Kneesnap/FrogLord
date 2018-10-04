@@ -32,9 +32,7 @@ TCRF Documentation Plans:
  - Go through documents to look for information.
  - Snail Racing
  - Beta elements visible in media. (Level screenshots, German Trailer, Credits video, Video linked on the forums of some guy playing Frogger.)
- - Interesting out of bounds / unused parts of levels.
  - Original Menu Mockups.
  - Ruins Zone
  - Kao's Prototype. (Debug features, analyze MWD)
  - Analyze US PSX demo MWD.
- - PAL Files
