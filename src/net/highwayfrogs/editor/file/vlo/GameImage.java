@@ -132,6 +132,9 @@ public class GameImage extends GameObject {
                 .filter(entry -> entry.getClutRect().getY() == clutY)
                 .findAny().orElse(null);
 
+        if (clut == null && clutX == 0 && clutY == 0) // The demo MWD seems to have some broken images or something.
+            return getParent().getClutEntries().get(0);
+
         Utils.verify(clut != null, "Failed to find clut for coordinates [%d,%d].", clutX, clutY);
         return clut;
     }

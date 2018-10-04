@@ -22,7 +22,6 @@ Build FrogPSX.H from MWD.
 Non tool-development-related plans:
  - Load the two developer maps.
  - Differences between PSX and PC version files?
- - Support Demo VLOs.
 
 
 TCRF Documentation Plans:
