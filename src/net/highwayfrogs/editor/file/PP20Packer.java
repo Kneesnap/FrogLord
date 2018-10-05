@@ -67,9 +67,6 @@ public class PP20Packer {
             COMPRESSION_SETTING_MAX_OFFSETS = new int[COMPRESSION_SETTINGS.length + MINIMUM_DECODE_DATA_LENGTH];
             for (int i = 0; i < COMPRESSION_SETTING_MAX_OFFSETS.length; i++)
                 COMPRESSION_SETTING_MAX_OFFSETS[i] = getMaximumOffset(i);
-
-            for (int i = 0; i < 10; i++)
-                System.out.println(i + ": " + COMPRESSION_SETTING_MAX_OFFSETS[Math.min(i, COMPRESSION_SETTING_MAX_OFFSETS.length - 1)] + ", " + getMaximumOffset(i));
         }
 
         int bestIndex = -1;
