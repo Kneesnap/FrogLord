@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.writer.BitWriter;
+import net.highwayfrogs.editor.system.IntList;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -58,12 +59,12 @@ public class PP20Packer {
         return completeData;
     }
 
-    private static int findLongest(byte[] data, int bufferEnd, List<Byte> target, Map<Byte, List<Integer>> dictionary) {
+    private static int findLongest(byte[] data, int bufferEnd, List<Byte> target, Map<Byte, IntList> dictionary) {
         target.clear();
         byte startByte = data[bufferEnd];
         target.add(startByte);
 
-        List<Integer> possibleResults = dictionary.get(startByte);
+        IntList possibleResults = dictionary.get(startByte);
         if (possibleResults == null)
             return -1;
 
@@ -121,7 +122,7 @@ public class PP20Packer {
         List<Byte> noMatchQueue = new ArrayList<>();
         List<Byte> searchList = new ArrayList<>();
 
-        Map<Byte, List<Integer>> dictionary = new HashMap<>();
+        Map<Byte, IntList> dictionary = new HashMap<>();
         for (int i = 0; i < data.length; i++) {
             byte temp = data[i];
 
@@ -140,7 +141,7 @@ public class PP20Packer {
 
                 int recordIndex = i;
                 for (byte recordByte : searchList)
-                    dictionary.computeIfAbsent(recordByte, k -> new ArrayList<>()).add(recordIndex++);
+                    dictionary.computeIfAbsent(recordByte, k -> new IntList()).add(recordIndex++);
 
                 i += searchList.size() - 1;
             } else { // It's not large enough to be compressed.
@@ -148,7 +149,7 @@ public class PP20Packer {
 
                 // Add current byte to the search dictionary.
                 if (!dictionary.containsKey(temp))
-                    dictionary.put(temp, new ArrayList<>());
+                    dictionary.put(temp, new IntList());
                 dictionary.get(temp).add(i);
             }
         }
