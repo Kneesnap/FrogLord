@@ -2,9 +2,13 @@ package net.highwayfrogs.editor.file;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.writer.BitWriter;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Packs a byte array into PP20 compressed data.
@@ -112,6 +116,8 @@ public class PP20Packer {
 
     private static byte[] compressData(byte[] data) {
         BitWriter writer = new BitWriter();
+        writer.setReverseBytes(true);
+
         List<Byte> noMatchQueue = new ArrayList<>();
         List<Byte> searchList = new ArrayList<>();
 
@@ -124,13 +130,13 @@ public class PP20Packer {
 
             if (bestIndex >= 0) { // Verify the compression index was found.
                 if (!noMatchQueue.isEmpty()) { // When a compressed one has been reached, write all the data in-between, if there is any.
-                    writeInputData(writer, Utils.toArray(noMatchQueue));
+                    writeRawData(writer, Utils.toArray(noMatchQueue));
                     noMatchQueue.clear();
                 } else {
                     writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
                 }
 
-                writeDataLink(writer, searchList.size(), byteOffset);
+                writeDataReference(writer, searchList.size(), byteOffset);
 
                 int recordIndex = i;
                 for (byte recordByte : searchList)
@@ -147,9 +153,9 @@ public class PP20Packer {
             }
         }
         if (!noMatchQueue.isEmpty()) // Add whatever remains at the end, if there is any.
-            writeInputData(writer, Utils.toArray(noMatchQueue));
+            writeRawData(writer, Utils.toArray(noMatchQueue));
 
-        return writer.toArray();
+        return writer.toByteArray();
     }
 
     private static int getMaximumOffset(int byteLength) {
@@ -159,7 +165,7 @@ public class PP20Packer {
         return (int) Math.pow(2, offsetSize);
     }
 
-    private static void writeDataLink(BitWriter writer, int byteLength, int byteOffset) {
+    private static void writeDataReference(BitWriter writer, int byteLength, int byteOffset) {
         // Calculate compression level.
         int maxCompressionIndex = COMPRESSION_SETTINGS.length - 1;
         int compressionLevel = Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH);
@@ -191,7 +197,7 @@ public class PP20Packer {
         }
     }
 
-    private static void writeInputData(BitWriter writer, byte[] data) {
+    private static void writeRawData(BitWriter writer, byte[] data) {
         writer.writeBit(READ_FROM_INPUT_BIT); // Indicates this should readFromInput, not readFromAbove.
 
         int writeLength = data.length - 1;
@@ -208,48 +214,5 @@ public class PP20Packer {
 
         for (byte toWrite : data) // Writes the data.
             writer.writeByte(toWrite);
-    }
-
-    public static class BitWriter {
-        private LinkedList<Byte> bytes = new LinkedList<>();
-        private int currentBit = Constants.BITS_PER_BYTE;
-        private byte currentByte;
-
-        public void writeBit(int bit) {
-            Utils.verify(bit == Constants.BIT_TRUE || bit == Constants.BIT_FALSE, "Invalid bit number %d.", bit);
-
-            // Add the bit to the current byte.
-            int shiftedBit = bit << (Constants.BITS_PER_BYTE - this.currentBit);
-            this.currentByte |= shiftedBit;
-
-            // If the current byte is complete, add it to the list of bytes.
-            if (--this.currentBit == 0) {
-                this.bytes.add(this.currentByte);
-                this.currentByte = 0;
-                this.currentBit = Constants.BITS_PER_BYTE;
-            }
-        }
-
-        public void writeBits(int[] bits) {
-            for (int bit : bits)
-                writeBit(bit);
-        }
-
-        public void writeByte(byte value) {
-            writeBits(Utils.getBits(value, Constants.BITS_PER_BYTE));
-        }
-
-        public byte[] toArray() {
-            while (this.currentBit != Constants.BITS_PER_BYTE)
-                writeBit(0);
-
-            // Write in backwards order, because PP20 does that.
-            byte[] arr = new byte[this.bytes.size()];
-            int i = arr.length - 1;
-            for (Byte aByte : this.bytes)
-                arr[i--] = aByte;
-
-            return arr;
-        }
     }
 }

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.writer.BitReader;
 
 /**
  * PP20 Unpacker: Unpacks PowerPacker compressed data.
@@ -94,35 +95,5 @@ public class PP20Unpacker {
             out[bytePos - 1] = out[bytePos + off];
 
         return bytePos;
-    }
-
-    public static final class BitReader {
-        private final byte[] data;
-        private int bytePos;
-        private int bitPos = 0;
-
-        public BitReader(final byte[] data, final int pos) {
-            this.data = data;
-            this.bytePos = pos;
-        }
-
-        public int readBit() {
-            final int bit = data[bytePos] >> bitPos & 1; // Get the bit at the next position.
-
-            if (bitPos == Constants.BITS_PER_BYTE - 1) { // Reached the end of the bit.
-                this.bitPos = 0;
-                this.bytePos--;
-            } else {
-                this.bitPos++;
-            }
-            return bit;
-        }
-
-        public int readBits(int amount) {
-            int num = 0;
-            for (int i = 0; i < amount; i++)
-                num = num << 1 | readBit(); // Shift the existing read bits left, and add the next available bit. If you read four bits, it will read it like an integer.
-            return num;
-        }
     }
 }
