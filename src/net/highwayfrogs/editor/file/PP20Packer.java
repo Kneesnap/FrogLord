@@ -26,7 +26,7 @@ import java.util.Map;
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
-    private static final byte[] COMPRESSION_SETTINGS = {0x09, 0x0A, 0x0C, 0x0D}; // PP20 compression settings.
+    private static final byte[] COMPRESSION_SETTINGS = {0x07, 0x07, 0x07, 0x07}; // PP20 compression settings.
     private static int[] COMPRESSION_SETTING_MAX_OFFSETS;
     public static final int OPTIONAL_BITS_SMALL_OFFSET = 7;
     public static final int INPUT_BIT_LENGTH = 2;
