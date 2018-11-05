@@ -24,7 +24,7 @@ import java.util.List;
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
-    private static final byte[] COMPRESSION_SETTINGS = {0x07, 0x07, 0x07, 0x07}; // PP20 compression settings.
+    private static final byte[] COMPRESSION_SETTINGS = {0x07, 0x07, 0x07, 0x07}; // PP20 compression settings. Extreme: 0x09, 0x0A, 0x0C, 0x0D
     private static int[] COMPRESSION_SETTING_MAX_OFFSETS;
     public static final int OPTIONAL_BITS_SMALL_OFFSET = 7;
     public static final int INPUT_BIT_LENGTH = 2;
@@ -57,7 +57,7 @@ public class PP20Packer {
         return completeData;
     }
 
-    private static int findLongest(byte[] data, int bufferEnd, List<Byte> target, IntList[] dictionary) {
+    private static int findLongest(byte[] data, int bufferEnd, ByteArrayWrapper target, IntList[] dictionary) {
         target.clear();
         byte startByte = data[bufferEnd];
         target.add(startByte);
@@ -118,13 +118,13 @@ public class PP20Packer {
         writer.setReverseBytes(true);
 
         List<Byte> noMatchQueue = new ArrayList<>();
-        List<Byte> searchList = new ArrayList<>();
+        ByteArrayWrapper searchBuffer = new ByteArrayWrapper(data.length);
 
         IntList[] dictionary = new IntList[256];
         for (int i = 0; i < data.length; i++) {
             byte temp = data[i];
 
-            int bestIndex = findLongest(data, i, searchList, dictionary);
+            int bestIndex = findLongest(data, i, searchBuffer, dictionary);
             int byteOffset = i - bestIndex - 1;
 
             if (bestIndex >= 0) { // Verify the compression index was found.
@@ -135,19 +135,18 @@ public class PP20Packer {
                     writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
                 }
 
-                writeDataReference(writer, searchList.size(), byteOffset);
+                writeDataReference(writer, searchBuffer.size(), byteOffset);
 
-                int recordIndex = i;
-                for (byte recordByte : searchList) {
-                    int hashCode = hashCode(recordByte);
+                for (int byteId = 0; byteId < searchBuffer.size(); byteId++) {
+                    int hashCode = hashCode(searchBuffer.get(byteId));
                     IntList list = dictionary[hashCode];
                     if (list == null)
                         dictionary[hashCode] = list = new IntList();
 
-                    list.add(recordIndex++);
+                    list.add(i++);
                 }
 
-                i += searchList.size() - 1;
+                i--;
             } else { // It's not large enough to be compressed.
                 noMatchQueue.add(temp);
 
@@ -226,5 +225,30 @@ public class PP20Packer {
 
         for (byte toWrite : data) // Writes the data.
             writer.writeByte(toWrite);
+    }
+
+    private static class ByteArrayWrapper {
+        private byte[] array;
+        private int length;
+
+        public ByteArrayWrapper(int size) {
+            this.array = new byte[size];
+        }
+
+        public void add(byte value) {
+            this.array[this.length++] = value;
+        }
+
+        public void clear() {
+            this.length = 0;
+        }
+
+        public byte get(int index) {
+            return this.array[index];
+        }
+
+        public int size() {
+            return this.length;
+        }
     }
 }
