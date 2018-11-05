@@ -7,9 +7,7 @@ import net.highwayfrogs.editor.system.IntList;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Packs a byte array into PP20 compressed data.
@@ -59,12 +57,12 @@ public class PP20Packer {
         return completeData;
     }
 
-    private static int findLongest(byte[] data, int bufferEnd, List<Byte> target, Map<Byte, IntList> dictionary) {
+    private static int findLongest(byte[] data, int bufferEnd, List<Byte> target, IntList[] dictionary) {
         target.clear();
         byte startByte = data[bufferEnd];
         target.add(startByte);
 
-        IntList possibleResults = dictionary.get(startByte);
+        IntList possibleResults = dictionary[hashCode(startByte)];
         if (possibleResults == null)
             return -1;
 
@@ -122,7 +120,7 @@ public class PP20Packer {
         List<Byte> noMatchQueue = new ArrayList<>();
         List<Byte> searchList = new ArrayList<>();
 
-        Map<Byte, IntList> dictionary = new HashMap<>();
+        IntList[] dictionary = new IntList[256];
         for (int i = 0; i < data.length; i++) {
             byte temp = data[i];
 
@@ -140,23 +138,36 @@ public class PP20Packer {
                 writeDataReference(writer, searchList.size(), byteOffset);
 
                 int recordIndex = i;
-                for (byte recordByte : searchList)
-                    dictionary.computeIfAbsent(recordByte, k -> new IntList()).add(recordIndex++);
+                for (byte recordByte : searchList) {
+                    int hashCode = hashCode(recordByte);
+                    IntList list = dictionary[hashCode];
+                    if (list == null)
+                        dictionary[hashCode] = list = new IntList();
+
+                    list.add(recordIndex++);
+                }
 
                 i += searchList.size() - 1;
             } else { // It's not large enough to be compressed.
                 noMatchQueue.add(temp);
 
                 // Add current byte to the search dictionary.
-                if (!dictionary.containsKey(temp))
-                    dictionary.put(temp, new IntList());
-                dictionary.get(temp).add(i);
+                int hashCode = hashCode(temp);
+                IntList list = dictionary[hashCode];
+                if (list == null)
+                    dictionary[hashCode] = list = new IntList();
+
+                list.add(i);
             }
         }
         if (!noMatchQueue.isEmpty()) // Add whatever remains at the end, if there is any.
             writeRawData(writer, Utils.toArray(noMatchQueue));
 
         return writer.toByteArray();
+    }
+
+    private static int hashCode(byte byteVal) {
+        return byteVal >= 0 ? byteVal : (int) Byte.MAX_VALUE - byteVal;
     }
 
     private static int getMaximumOffset(int byteLength) {
