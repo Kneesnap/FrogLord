@@ -16,6 +16,8 @@ Editor Features:
   Map Editor
   MOF Editor
 
+
+Unit testing for PP20 decompression. Unit testing for PP20 compression.
 Something which gets the remap table from frogger.exe.
 Build FrogPSX.H from MWD.
 

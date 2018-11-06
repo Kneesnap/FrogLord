@@ -3,11 +3,10 @@ package net.highwayfrogs.editor.file;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.writer.BitWriter;
+import net.highwayfrogs.editor.system.ByteArrayWrapper;
 import net.highwayfrogs.editor.system.IntList;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Packs a byte array into PP20 compressed data.
@@ -117,7 +116,7 @@ public class PP20Packer {
         BitWriter writer = new BitWriter();
         writer.setReverseBytes(true);
 
-        List<Byte> noMatchQueue = new ArrayList<>();
+        ByteArrayWrapper noMatchQueue = new ByteArrayWrapper(data.length);
         ByteArrayWrapper searchBuffer = new ByteArrayWrapper(data.length);
 
         IntList[] dictionary = new IntList[256];
@@ -128,8 +127,8 @@ public class PP20Packer {
             int byteOffset = i - bestIndex - 1;
 
             if (bestIndex >= 0) { // Verify the compression index was found.
-                if (!noMatchQueue.isEmpty()) { // When a compressed one has been reached, write all the data in-between, if there is any.
-                    writeRawData(writer, Utils.toArray(noMatchQueue));
+                if (noMatchQueue.size() > 0) { // When a compressed one has been reached, write all the data in-between, if there is any.
+                    writeRawData(writer, noMatchQueue);
                     noMatchQueue.clear();
                 } else {
                     writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
@@ -159,8 +158,8 @@ public class PP20Packer {
                 list.add(i);
             }
         }
-        if (!noMatchQueue.isEmpty()) // Add whatever remains at the end, if there is any.
-            writeRawData(writer, Utils.toArray(noMatchQueue));
+        if (noMatchQueue.size() > 0) // Add whatever remains at the end, if there is any.
+            writeRawData(writer, noMatchQueue);
 
         return writer.toByteArray();
     }
@@ -208,10 +207,10 @@ public class PP20Packer {
         }
     }
 
-    private static void writeRawData(BitWriter writer, byte[] data) {
+    private static void writeRawData(BitWriter writer, ByteArrayWrapper bytes) {
         writer.writeBit(READ_FROM_INPUT_BIT); // Indicates this should readFromInput, not readFromAbove.
 
-        int writeLength = data.length - 1;
+        int writeLength = bytes.size() - 1;
         int writtenNum;
 
         do { // Write the length of the data.
@@ -223,32 +222,7 @@ public class PP20Packer {
         if (writtenNum == PP20Packer.INPUT_CONTINUE_WRITING_BITS) // Write null terminator if the last value was the "continue" character.
             writer.writeBits(new int[PP20Packer.INPUT_BIT_LENGTH]);
 
-        for (byte toWrite : data) // Writes the data.
-            writer.writeByte(toWrite);
-    }
-
-    private static class ByteArrayWrapper {
-        private byte[] array;
-        private int length;
-
-        public ByteArrayWrapper(int size) {
-            this.array = new byte[size];
-        }
-
-        public void add(byte value) {
-            this.array[this.length++] = value;
-        }
-
-        public void clear() {
-            this.length = 0;
-        }
-
-        public byte get(int index) {
-            return this.array[index];
-        }
-
-        public int size() {
-            return this.length;
-        }
+        for (int i = 0; i < bytes.size(); i++) // Writes the data.
+            writer.writeByte(bytes.get(i));
     }
 }
