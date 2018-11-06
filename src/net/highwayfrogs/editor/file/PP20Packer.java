@@ -32,6 +32,7 @@ public class PP20Packer {
     public static final int OFFSET_CONTINUE_WRITING_BITS = 7;
     public static final int READ_FROM_INPUT_BIT = Constants.BIT_FALSE;
     public static final int MINIMUM_DECODE_DATA_LENGTH = 2;
+    public static final int OPTIONAL_BITS_SMALL_SIZE_MAX_OFFSET = (int) Math.pow(2, OPTIONAL_BITS_SMALL_OFFSET);
     public static final String MARKER = "PP20";
 
     /**
@@ -181,7 +182,7 @@ public class PP20Packer {
         int compressionLevel = Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH);
 
         boolean maxCompression = (compressionLevel == maxCompressionIndex);
-        boolean useSmallOffset = maxCompression && Math.pow(2, OPTIONAL_BITS_SMALL_OFFSET) > byteOffset;
+        boolean useSmallOffset = maxCompression && OPTIONAL_BITS_SMALL_SIZE_MAX_OFFSET > byteOffset;
         int offsetSize = useSmallOffset ? OPTIONAL_BITS_SMALL_OFFSET : COMPRESSION_SETTINGS[compressionLevel];
 
         int writeLength = byteLength - compressionLevel;

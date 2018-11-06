@@ -12,6 +12,8 @@ import net.highwayfrogs.editor.file.writer.BitReader;
  * Copied on August 11, 2018. There is no license attached to the repository, however the author has explicitly granted permission to use this code.
  */
 public class PP20Unpacker {
+    private static final int OFFSET_BIT_OPTIONS = 4;
+
     /**
      * Is a given byte array PP20 compressed data?
      * @param a The bytes to test.
@@ -45,9 +47,9 @@ public class PP20Unpacker {
     }
 
     private static int[] getOffsetBitLengths(byte[] data) {
-        int[] a = new int[4];
-        for (int i = 0; i < 4; i++)
-            a[i] = data[i + 4];
+        int[] a = new int[OFFSET_BIT_OPTIONS];
+        for (int i = 0; i < OFFSET_BIT_OPTIONS; i++)
+            a[i] = data[i + OFFSET_BIT_OPTIONS];
         return a;
     }
 
