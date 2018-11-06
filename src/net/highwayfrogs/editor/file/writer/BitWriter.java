@@ -56,6 +56,16 @@ public class BitWriter {
     }
 
     /**
+     * Write bits from an integer.
+     * @param number   The integer to write bits from.
+     * @param bitCount the number of bits.
+     */
+    public void writeBits(int number, int bitCount) {
+        for (int i = bitCount - 1; i >= 0; i--)
+            writeBit((number >> i) & Constants.BIT_TRUE);
+    }
+
+    /**
      * Write all the bits in a byte.
      * @param value The byte to write bits from.
      */
