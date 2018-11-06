@@ -5,9 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Write bits into a buffer.
@@ -19,7 +17,6 @@ import java.util.List;
 @Getter
 public class BitWriter {
     private LinkedList<Byte> bytes = new LinkedList<>();
-    private List<Integer> bits = new ArrayList<>(); //TODO: Avoid auto-boxing plz.
     private int currentBit = Constants.BITS_PER_BYTE;
     private byte currentByte;
     @Setter private boolean reverseBytes;
@@ -31,7 +28,6 @@ public class BitWriter {
      */
     public void writeBit(int bit) {
         Utils.verify(bit == Constants.BIT_TRUE || bit == Constants.BIT_FALSE, "Invalid bit number %d.", bit);
-        this.bits.add(bit);
 
         // Add the bit to the current byte.
         int bitShift = isReverseBits() ? this.currentBit : getCurrentReverseBitID();
@@ -65,20 +61,6 @@ public class BitWriter {
      */
     public void writeByte(byte value) {
         writeBits(Utils.getBits(value, Constants.BITS_PER_BYTE));
-    }
-
-    /**
-     * Export all written data as a bit array.
-     * Array order is the order the bits were entered.
-     * Gets the bits in the order they were entered?
-     * Gets the bits from the bytes?
-     * @return bitArray
-     */
-    public int[] toChronologicalBitArray() {
-        int[] bits = new int[this.bits.size()];
-        for (int i = 0; i < this.bits.size(); i++)
-            bits[i] = this.bits.get(i);
-        return bits;
     }
 
     /**
