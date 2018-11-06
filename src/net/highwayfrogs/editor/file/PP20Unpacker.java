@@ -79,21 +79,21 @@ public class PP20Unpacker {
     }
 
     private static int copyFromDecoded(BitReader in, byte[] out, int bytePos, int[] offsetBitLengths) {
-        int maxCompressionLevel = offsetBitLengths.length - 1;
-
-        int run = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
-        int offBits = run == maxCompressionLevel && in.readBit() == 0 ? PP20Packer.OPTIONAL_BITS_SMALL_OFFSET : offsetBitLengths[run];
+        int compressionLevel = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
+        boolean extraLengthData = (compressionLevel == PP20Packer.INPUT_CONTINUE_WRITING_BITS);
+        int offBits = extraLengthData && in.readBit() == 0 ? PP20Packer.OPTIONAL_BITS_SMALL_OFFSET : offsetBitLengths[compressionLevel];
         int off = in.readBits(offBits);
 
-        int runInc = 0;
-        if (run == maxCompressionLevel) // The length might be extended further.
-            while ((runInc = in.readBits(PP20Packer.OFFSET_BIT_LENGTH)) == PP20Packer.OFFSET_CONTINUE_WRITING_BITS) // Keep adding until the three read bits are not '111', meaning the length has stopped.
-                run += PP20Packer.OFFSET_CONTINUE_WRITING_BITS;
+        int copyLength = compressionLevel;
+        int lastLengthBits = 0;
+        if (extraLengthData) // The length might be extended further.
+            while ((lastLengthBits = in.readBits(PP20Packer.OFFSET_BIT_LENGTH)) == PP20Packer.OFFSET_CONTINUE_WRITING_BITS) // Keep adding until the three read bits are not '111', meaning the length has stopped.
+                copyLength += PP20Packer.OFFSET_CONTINUE_WRITING_BITS;
 
-        run += PP20Packer.MINIMUM_DECODE_DATA_LENGTH;
-        run += runInc;
+        copyLength += PP20Packer.MINIMUM_DECODE_DATA_LENGTH;
+        copyLength += lastLengthBits;
 
-        for (int i = 0; i < run; i++, bytePos--)
+        for (int i = 0; i < copyLength; i++, bytePos--)
             out[bytePos - 1] = out[bytePos + off];
 
         return bytePos;
