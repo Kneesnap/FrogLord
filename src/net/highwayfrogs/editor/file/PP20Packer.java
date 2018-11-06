@@ -179,23 +179,20 @@ public class PP20Packer {
     private static void writeDataReference(BitWriter writer, int byteLength, int byteOffset) {
         // Calculate compression level.
         int maxCompressionIndex = COMPRESSION_SETTINGS.length - 1;
-        int compressionLevel = Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH); //TODO: Find a better way of determining this value.
+        int compressionLevel = Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH);
 
         boolean maxCompression = (compressionLevel == maxCompressionIndex);
         boolean useSmallOffset = maxCompression && OPTIONAL_BITS_SMALL_SIZE_MAX_OFFSET > byteOffset;
         int offsetSize = useSmallOffset ? OPTIONAL_BITS_SMALL_OFFSET : COMPRESSION_SETTINGS[compressionLevel];
 
-        int writeLength = byteLength - compressionLevel;
         writer.writeBits(compressionLevel, 2);
-
-        if (maxCompression) {
+        if (maxCompression)
             writer.writeBit(useSmallOffset ? Constants.BIT_FALSE : Constants.BIT_TRUE);
-            writeLength -= MINIMUM_DECODE_DATA_LENGTH;
-        }
 
         writer.writeBits(byteOffset, offsetSize);
 
         if (maxCompression) {
+            int writeLength = byteLength - compressionLevel - MINIMUM_DECODE_DATA_LENGTH;
             int writtenNum;
             do { // Write the length of the data.
                 writtenNum = Math.min(writeLength, PP20Packer.OFFSET_CONTINUE_WRITING_BITS);
