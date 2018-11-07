@@ -45,6 +45,8 @@ public class MAPFile extends GameFile {
     private SVector basePoint; // This is the bottom left of the map group grid.
     private List<MAPGroup> groups = new ArrayList<>();
     private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> polygons = new HashMap<>();
+    private Map<PSXGPUPrimitive, Integer> polygonPointerMap = new HashMap<>();
+    private Map<Integer, PSXGPUPrimitive> pointerPolygonMap = new HashMap<>();
     private List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
     private List<GridSquare> gridSquares = new ArrayList<>();
@@ -88,6 +90,8 @@ public class MAPFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
+
+        pointerPolygonMap.clear();
         reader.verifyString(SIGNATURE);
         int fileLength = reader.readInt();
         reader.verifyString(VERSION);
@@ -232,6 +236,7 @@ public class MAPFile extends GameFile {
 
                 for (int i = 0; i < polyCount; i++) {
                     PSXGPUPrimitive primitive = type.newPrimitive();
+                    pointerPolygonMap.put(reader.getIndex(), primitive);
                     primitive.load(reader);
                     primitives.add(primitive);
                 }
@@ -269,7 +274,7 @@ public class MAPFile extends GameFile {
             squareCount = Math.max(squareCount, stack.getIndex() + stack.getSquareCount());
 
         for (int i = 0; i < squareCount; i++) {
-            GridSquare square = new GridSquare();
+            GridSquare square = new GridSquare(this);
             square.load(reader);
             gridSquares.add(square);
         }
@@ -288,10 +293,21 @@ public class MAPFile extends GameFile {
             animation.load(reader); //TODO: There's an issue where an error is thrown here. It seems to reach the end of the texture list, then it starts getting bad data about what is a texture and what is not.
             mapAnimations.add(animation);*/
         }
+
+        polygonPointerMap.clear(); // This should not be used after the load method.
     }
 
     @Override
     public void save(DataWriter writer) {
+        //TODO: As features are implemented, remove the clearing that's happening here:
+        getEntities().clear();
+        getZones().clear();
+        getPaths().clear();
+        getForms().clear();
+        getGroups().clear();
+        getMapAnimations().clear();
+
+        polygonPointerMap.clear();
         writer.writeStringBytes(SIGNATURE);
         writer.writeInt(0); // File length. (Unused)
         writer.writeStringBytes(VERSION);
@@ -306,6 +322,7 @@ public class MAPFile extends GameFile {
         int writeAddress = pathAddress + Constants.INTEGER_SIZE;
 
         // Write GENERAL.
+        writer.jumpTo(writeAddress);
         writer.jumpTemp(generalAddress);
         writer.writeInt(writeAddress);
         writer.jumpReturn();
@@ -393,7 +410,7 @@ public class MAPFile extends GameFile {
         writer.jumpReturn();
 
         writer.writeStringBytes(ENTITY_SIGNATURE);
-        //TODO: Write entityPacketLength.
+        writer.writeInt(0); //TODO: Write entityPacketLength.
         short entityCount = (short) this.entities.size();
         writer.writeShort(entityCount);
         writer.writeShort((short) 0); // Padding.
@@ -411,7 +428,7 @@ public class MAPFile extends GameFile {
         // Write GRAP.
         tempAddress = writer.getIndex();
         writer.jumpTemp(graphicalAddress);
-        writer.jumpTemp(tempAddress);
+        writer.writeInt(tempAddress);
         writer.jumpReturn();
 
         writer.writeStringBytes(GRAPHICAL_SIGNATURE);
@@ -470,11 +487,15 @@ public class MAPFile extends GameFile {
 
         for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
             tempAddress = writer.getIndex();
+
             writer.jumpTemp(polyAddresses.get(type));
             writer.writeInt(tempAddress);
             writer.jumpReturn();
 
-            getPolygons().get(type).forEach(polygon -> polygon.save(writer));
+            getPolygons().get(type).forEach(polygon -> {
+                polygonPointerMap.put(polygon, writer.getIndex());
+                polygon.save(writer);
+            });
         }
 
         // Write "VRTX."

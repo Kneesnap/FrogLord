@@ -2,7 +2,9 @@ package net.highwayfrogs.editor.file.map.grid;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -12,6 +14,12 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 public class GridSquare extends GameObject {
     private int flags;
+    private PSXGPUPrimitive polygon;
+    private MAPFile parent;
+
+    public GridSquare(MAPFile parent) {
+        this.parent = parent;
+    }
 
     public static final int FLAG_USABLE = 1; // Frog can jump here.
     public static final int FLAG_SAFE = 1 << 1; // Standard land.
@@ -30,12 +38,13 @@ public class GridSquare extends GameObject {
     @Override
     public void load(DataReader reader) {
         this.flags = reader.readInt();
-        int mapF4PolyPointer = reader.readInt(); // TODO: Read the singular MAP_F4 poly.
+        int polyF4Pointer = reader.readInt();
+        this.polygon = parent.getPointerPolygonMap().get(polyF4Pointer); //TODO This seems to sorta not work.
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(this.flags);
-        //TODO: Pointer to MAP_F4 poly.
+        writer.writeInt(parent.getPolygonPointerMap().getOrDefault(polygon, 0));
     }
 }
