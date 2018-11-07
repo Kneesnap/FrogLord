@@ -50,11 +50,22 @@ public class MAPFile extends GameFile {
     private List<GridSquare> gridSquares = new ArrayList<>();
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
 
+    private short groupXCount;
+    private short groupZCount;
+    private short groupXLength;
+    private short groupZLength;
+
+    private short gridXCount;
+    private short gridZCount;
+    private short gridXLength;
+    private short gridZLength;
+
     public static final int TYPE_ID = 0;
     private static final String SIGNATURE = "FROG";
     private static final String VERSION = "2.00";
     private static final String COMMENT = "Maybe this time it'll all work fine...";
     private static final int COMMENT_BYTES = 64;
+    private static final String GENERAL_SIGNATURE = "GENE";
     private static final String PATH_SIGNATURE = "PATH";
     private static final String ZONE_SIGNATURE = "ZONE";
     private static final String FORM_SIGNATURE = "FORM";
@@ -90,6 +101,7 @@ public class MAPFile extends GameFile {
         int pathAddress = reader.readInt();
 
         reader.setIndex(generalAddress);
+        reader.verifyString(GENERAL_SIGNATURE);
         this.startXTile = reader.readShort();
         this.startYTile = reader.readShort();
         this.startRotation = reader.readShort();
@@ -183,11 +195,11 @@ public class MAPFile extends GameFile {
         reader.setIndex(groupAddress);
         reader.verifyString(GROUP_SIGNATURE);
         this.basePoint = SVector.readWithPadding(reader);
-        short xNum = reader.readShort(); // Number of groups in x.
-        short zNum = reader.readShort(); // Number of groups in z.
-        short xLen = reader.readShort(); // Group X Length
-        short zLen = reader.readShort(); // Group Z Length
-        int groupCount = xNum * zNum;
+        this.groupXCount = reader.readShort(); // Number of groups in x.
+        this.groupZCount = reader.readShort(); // Number of groups in z.
+        this.groupXLength = reader.readShort(); // Group X Length
+        this.groupZLength = reader.readShort(); // Group Z Length
+        int groupCount = groupXCount * groupZCount;
 
         for (int i = 0; i < groupCount; i++) {
             MAPGroup group = new MAPGroup();
@@ -239,15 +251,16 @@ public class MAPFile extends GameFile {
         // Read GRID data.
         reader.setIndex(gridAddress);
         reader.verifyString(GRID_SIGNATURE);
-        short gridXCount = reader.readShort(); // Number of grid squares in x.
-        short gridZCount = reader.readShort();
-        short gridXLength = reader.readShort(); // Grid square x length.
-        short gridZLength = reader.readShort();
+        this.gridXCount = reader.readShort(); // Number of grid squares in x.
+        this.gridZCount = reader.readShort();
+        this.gridXLength = reader.readShort(); // Grid square x length.
+        this.gridZLength = reader.readShort();
 
         int stackCount = gridXCount * gridZCount;
         for (int i = 0; i < stackCount; i++) {
             GridStack stack = new GridStack();
             stack.load(reader);
+            getGridStacks().add(stack);
         }
 
         // Find the total amount of squares to read.
@@ -266,20 +279,242 @@ public class MAPFile extends GameFile {
         // Read "ANIM".
         reader.setIndex(animAddress);
         reader.verifyString(ANIMATION_SIGNATURE);
-        int mapAnimCount = reader.readInt();
-        int mapAnimAddress = reader.readInt();
+        int mapAnimCount = reader.readInt(); // 0c
+        int mapAnimAddress = reader.readInt(); // 0x2c144
         reader.setIndex(mapAnimAddress); // This points to right after the header.
 
         for (int i = 0; i < mapAnimCount; i++) {
-            MAPAnimation animation = new MAPAnimation();
-            animation.load(reader);
-            mapAnimations.add(animation);
+            /*MAPAnimation animation = new MAPAnimation();
+            animation.load(reader); //TODO: There's an issue where an error is thrown here. It seems to reach the end of the texture list, then it starts getting bad data about what is a texture and what is not.
+            mapAnimations.add(animation);*/
         }
     }
 
     @Override
     public void save(DataWriter writer) {
-        //TODO: Save map.
+        writer.writeStringBytes(SIGNATURE);
+        writer.writeInt(0); // File length. (Unused)
+        writer.writeStringBytes(VERSION);
+        writer.writeNull(COMMENT_BYTES);
+
+        int generalAddress = writer.getIndex();
+        int graphicalAddress = generalAddress + Constants.INTEGER_SIZE;
+        int formAddress = graphicalAddress + Constants.INTEGER_SIZE;
+        int entityAddress = formAddress + Constants.INTEGER_SIZE;
+        int zoneAddress = entityAddress + Constants.INTEGER_SIZE;
+        int pathAddress = zoneAddress + Constants.INTEGER_SIZE;
+        int writeAddress = pathAddress + Constants.INTEGER_SIZE;
+
+        // Write GENERAL.
+        writer.jumpTemp(generalAddress);
+        writer.writeInt(writeAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(GENERAL_SIGNATURE);
+        writer.writeShort(this.startXTile);
+        writer.writeShort(this.startYTile);
+        writer.writeShort(this.startRotation);
+        writer.writeShort(this.themeId);
+        for (short timerValue : this.checkPointTimers)
+            writer.writeShort(timerValue);
+
+        writer.writeShort((short) 0); // Unused perspective variable.
+        this.cameraSourceOffset.saveWithPadding(writer);
+        this.cameraTargetOffset.saveWithPadding(writer);
+        writer.writeNull(4 * Constants.SHORT_SIZE); // Unused "LEVEL_HEADER" data.
+
+        // Write "PATH".
+        int tempAddress = writer.getIndex();
+        writer.jumpTemp(pathAddress);
+        writer.writeInt(tempAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(PATH_SIGNATURE);
+
+        int pathCount = this.paths.size();
+        writer.writeInt(pathCount); // Path count.
+
+        int pathPointer = writer.getIndex() + (Constants.POINTER_SIZE * pathCount);
+        for (Path path : getPaths()) {
+            writer.writeInt(pathPointer);
+
+            writer.jumpTemp(pathPointer);
+            path.save(writer);
+            pathPointer = writer.getIndex();
+            writer.jumpReturn();
+        }
+
+        // Save "ZONE".
+        tempAddress = writer.getIndex();
+        writer.jumpTemp(zoneAddress);
+        writer.writeInt(tempAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(ZONE_SIGNATURE);
+
+        int zoneCount = this.zones.size();
+        writer.writeInt(zoneCount);
+
+        int zonePointer = writer.getIndex() + (Constants.POINTER_SIZE * zoneCount);
+        for (Zone zone : getZones()) {
+            writer.writeInt(zonePointer);
+
+            writer.jumpTemp(zonePointer);
+            zone.save(writer);
+            zonePointer = writer.getIndex();
+            writer.jumpReturn();
+        }
+
+        // Save "FORM".
+        tempAddress = writer.getIndex();
+        writer.jumpTemp(formAddress);
+        writer.writeInt(tempAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(FORM_SIGNATURE);
+        short formCount = (short) this.forms.size();
+        writer.writeShort(formCount);
+        writer.writeShort((short) 0); // Padding.
+
+        int formPointer = writer.getIndex() + (Constants.POINTER_SIZE * formCount);
+        for (Form form : getForms()) {
+            writer.writeInt(formPointer);
+
+            writer.jumpTemp(formPointer);
+            form.save(writer);
+            formPointer = writer.getIndex();
+            writer.jumpReturn();
+        }
+
+        // Write "EMTP".
+        tempAddress = writer.getIndex();
+        writer.jumpTemp(entityAddress);
+        writer.writeInt(tempAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(ENTITY_SIGNATURE);
+        //TODO: Write entityPacketLength.
+        short entityCount = (short) this.entities.size();
+        writer.writeShort(entityCount);
+        writer.writeShort((short) 0); // Padding.
+
+        int entityPointer = writer.getIndex() + (Constants.POINTER_SIZE * entityCount);
+        for (Entity entity : getEntities()) {
+            writer.writeInt(entityPointer);
+
+            writer.jumpTemp(entityPointer);
+            entity.save(writer);
+            entityPointer = writer.getIndex();
+            writer.jumpReturn();
+        }
+
+        // Write GRAP.
+        tempAddress = writer.getIndex();
+        writer.jumpTemp(graphicalAddress);
+        writer.jumpTemp(tempAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(GRAPHICAL_SIGNATURE);
+        int lightAddress = writer.getIndex();
+        int groupAddress = lightAddress + Constants.POINTER_SIZE;
+        int polygonAddress = groupAddress + Constants.POINTER_SIZE;
+        int vertexAddress = polygonAddress + Constants.POINTER_SIZE;
+        int gridAddress = vertexAddress + Constants.POINTER_SIZE;
+        int animAddress = gridAddress + Constants.POINTER_SIZE;
+        writer.setIndex(animAddress + Constants.POINTER_SIZE);
+
+
+        // Write LITE.
+        tempAddress = writer.getIndex();
+        writer.jumpTemp(lightAddress);
+        writer.writeInt(tempAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(LIGHT_SIGNATURE);
+        writer.writeInt(lights.size());
+        getLights().forEach(light -> light.save(writer));
+
+        // Write GROU.
+        tempAddress = writer.getIndex();
+        writer.jumpTemp(groupAddress);
+        writer.writeInt(tempAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(GROUP_SIGNATURE);
+        this.basePoint.saveWithPadding(writer);
+        writer.writeShort(this.groupXCount);
+        writer.writeShort(this.groupZCount);
+        writer.writeShort(this.groupXLength);
+        writer.writeShort(this.groupZLength);
+        getGroups().forEach(group -> group.save(writer));
+
+        // Read POLY
+        tempAddress = writer.getIndex();
+        writer.jumpTemp(polygonAddress);
+        writer.writeInt(tempAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(POLYGON_SIGNATURE);
+        for (PSXPrimitiveType type : PRIMITIVE_TYPES)
+            writer.writeShort((short) polygons.get(type).size());
+
+        writer.writeShort((short) 0); // Padding.
+
+        Map<PSXPrimitiveType, Integer> polyAddresses = new HashMap<>();
+
+        int lastPointer = writer.getIndex();
+        for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
+            polyAddresses.put(type, lastPointer);
+            lastPointer += Constants.POINTER_SIZE;
+        }
+
+        for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
+            tempAddress = writer.getIndex();
+            writer.jumpTemp(polyAddresses.get(type));
+            writer.writeInt(tempAddress);
+            writer.jumpReturn();
+
+            getPolygons().get(type).forEach(polygon -> polygon.save(writer));
+        }
+
+        // Write "VRTX."
+        tempAddress = writer.getIndex();
+        writer.jumpTemp(vertexAddress);
+        writer.writeInt(tempAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(VERTEX_SIGNATURE);
+        short vertexCount = (short) this.vertexes.size();
+        writer.writeShort(vertexCount);
+        writer.writeShort((short) 0); // Padding.
+        getVertexes().forEach(vertex -> vertex.saveWithPadding(writer));
+
+        // Read GRID data.
+        tempAddress = writer.getIndex();
+        writer.jumpTemp(gridAddress);
+        writer.writeInt(tempAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(GRID_SIGNATURE);
+        writer.writeShort(this.gridXCount);
+        writer.writeShort(this.gridZCount);
+        writer.writeShort(this.gridXLength);
+        writer.writeShort(this.gridZLength);
+
+        getGridStacks().forEach(gridStack -> gridStack.save(writer));
+        getGridStacks().forEach(square -> square.save(writer));
+
+        // Save "ANIM" data.
+        tempAddress = writer.getIndex();
+        writer.jumpTemp(animAddress);
+        writer.writeInt(tempAddress);
+        writer.jumpReturn();
+
+        writer.writeStringBytes(ANIMATION_SIGNATURE);
+        writer.writeInt(this.mapAnimations.size());
+        writer.writeInt(writer.getIndex() + Constants.POINTER_SIZE);
+
+        //TODO: Save ANIM.
     }
 
     @Override
