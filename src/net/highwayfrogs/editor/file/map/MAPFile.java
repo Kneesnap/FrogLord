@@ -485,6 +485,7 @@ public class MAPFile extends GameFile {
             lastPointer += Constants.POINTER_SIZE;
         }
 
+        writer.setIndex(lastPointer);
         for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
             tempAddress = writer.getIndex();
 
