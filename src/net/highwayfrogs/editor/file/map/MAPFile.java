@@ -49,6 +49,8 @@ import java.util.stream.Collectors;
  * Parses Frogger MAP files.
  * TODO: Disassemble.
  * TODO: Look over GRID.
+ * TODO: Could also be GROU.
+ * TODO: Make sure lights are not corrupted.
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
@@ -329,12 +331,13 @@ public class MAPFile extends GameFile {
     @Override
     public void save(DataWriter writer) {
         //TODO: As features are implemented, remove the clearing that's happening here:
-        getEntities().clear();
-        getZones().clear();
-        getPaths().clear();
-        getForms().clear();
-        getGroups().clear();
-        getMapAnimations().clear();
+        getEntities().clear(); // Confirmed safe to clear.
+        getZones().clear(); // Confirmed safe to clear.
+        getPaths().clear(); // Confirmed safe to clear, if entities are empty.
+        getForms().clear(); // Appears safe to delete. What even is this?
+        getGroups().clear(); //TODO: Without this, the world will not render.
+        getMapAnimations().clear(); //Confirmed safe to be cleared.
+        //TODO: Could lights be the problem? (Lights are safe to delete, but will make Frogger black.)
 
         polygonPointerMap.clear();
         writer.writeStringBytes(SIGNATURE);
