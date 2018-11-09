@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file.standard.psx.prims.polygon;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -13,6 +12,11 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 public class PSXPolygon extends PSXGPUPrimitive {
     private short vertices[];
+    private boolean flippedVertices;
+    private short padding;
+
+    public static final int REQUIRES_VERTEX_PADDING = 3;
+    public static final int REQUIRES_VERTEX_SWAPPING = 4;
 
     public PSXPolygon(int verticeCount) {
         this.vertices = new short[verticeCount];
@@ -24,27 +28,30 @@ public class PSXPolygon extends PSXGPUPrimitive {
             this.vertices[i] = reader.readShort();
 
         swapIfNeeded();
-        if (vertices.length % 2 == 0)
-            reader.readShort(); // Padding.
+        if (vertices.length == REQUIRES_VERTEX_PADDING)
+            this.padding = reader.readShort(); // Padding? This value seems to sometimes match the last vertices element, and sometimes it doesn't. I don't believe this value is used.
     }
 
     @Override
     public void save(DataWriter writer) {
+        if (isFlippedVertices())
+            swapIfNeeded(); // Swap back to default flip state.
+
         for (short vertice : vertices)
             writer.writeShort(vertice);
 
-        swapIfNeeded();
-        if (vertices.length % 2 != 0)
-            writer.writeNull(Constants.SHORT_SIZE);
+        if (vertices.length == REQUIRES_VERTEX_PADDING)
+            writer.writeShort(this.padding);
     }
 
     private void swapIfNeeded() {
-        if (vertices.length != 4)
+        if (vertices.length != REQUIRES_VERTEX_SWAPPING)
             return; // We only need to swap vertexes 2 and 3 if there are 4 vertexes.
 
         // I forget exactly why we swap this, but it seems to work right when we do.
         short swap = vertices[2];
         vertices[2] = vertices[3];
         vertices[3] = swap;
+        this.flippedVertices = !this.flippedVertices;
     }
 }

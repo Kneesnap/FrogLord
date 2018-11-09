@@ -32,6 +32,7 @@ public class MWDFile extends GameObject {
     private Map<GameFile, FileEntry> entryMap = new HashMap<>();
     @Setter private BiConsumer<FileEntry, GameFile> saveCallback;
 
+    public static String CURRENT_FILE_NAME = null;
     private static final String MARKER = "DAWM";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEEE, d MMMM yyyy");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
@@ -59,6 +60,7 @@ public class MWDFile extends GameObject {
             if (entry.isCompressed())
                 fileBytes = PP20Unpacker.unpackData(fileBytes);
 
+            CURRENT_FILE_NAME = entry.getDisplayName();
             GameFile file = loadFile(fileBytes, entry, lastVB);
 
             try {

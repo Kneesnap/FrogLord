@@ -20,6 +20,7 @@ public class PSXPolyTexture extends PSXPolygon {
     private short clutId;
     private short textureId;
     private PSXColorVector[] vectors;
+    private boolean flippedUVs;
 
     public static final int FLAG_SEMI_TRANSPARENT = 1; // setSemiTrans(true)
     public static final int FLAG_ENVIRONMENT_IMAGE = 1 << 1; // Show the solid environment bitmap. (For instance, how water appears as a solid body, or sludge in the sewer levels.)
@@ -51,7 +52,7 @@ public class PSXPolyTexture extends PSXPolygon {
             loadUV(i, reader);
 
         swapUVsIfNeeded();
-        if (this.uvs.length % 2 != 0)
+        if (this.uvs.length == 3)
             reader.readShort(); // Padding.
 
         for (int i = 0; i < this.vectors.length; i++) {
@@ -65,7 +66,9 @@ public class PSXPolyTexture extends PSXPolygon {
     public void save(DataWriter writer) {
         super.save(writer);
 
-        swapUVsIfNeeded();
+        if (isFlippedUVs())
+            swapUVsIfNeeded(); // Flip back to unflipped state.
+
         writer.writeShort(this.flags);
         writer.writeNull(Constants.SHORT_SIZE);
         this.uvs[0].save(writer);
@@ -76,7 +79,7 @@ public class PSXPolyTexture extends PSXPolygon {
         for (int i = 2; i < this.uvs.length; i++)
             this.uvs[i].save(writer);
 
-        if (this.uvs.length % 2 != 0)
+        if (this.uvs.length == 3)
             writer.writeNull(Constants.SHORT_SIZE);
 
         for (PSXColorVector colorVector : this.vectors)
@@ -95,5 +98,6 @@ public class PSXPolyTexture extends PSXPolygon {
         ByteUV temp = this.uvs[2];
         this.uvs[2] = this.uvs[3];
         this.uvs[3] = temp;
+        this.flippedUVs = !this.flippedUVs;
     }
 }

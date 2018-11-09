@@ -75,8 +75,8 @@ public class MAPFile extends GameFile {
     private static final String GRAPHICAL_SIGNATURE = "GRAP";
     private static final String LIGHT_SIGNATURE = "LITE";
     private static final String GROUP_SIGNATURE = "GROU";
-    private static final String POLYGON_SIGNATURE = "POLY";
-    private static final String VERTEX_SIGNATURE = "VRTX";
+    private static final String POLYGON_SIGNATURE = "POLY"; // Supported.
+    private static final String VERTEX_SIGNATURE = "VRTX"; // Supported.
     private static final String GRID_SIGNATURE = "GRID";
     private static final String ANIMATION_SIGNATURE = "ANIM";
 
@@ -288,11 +288,11 @@ public class MAPFile extends GameFile {
         int mapAnimAddress = reader.readInt(); // 0x2c144
         reader.setIndex(mapAnimAddress); // This points to right after the header.
 
-        for (int i = 0; i < mapAnimCount; i++) {
-            /*MAPAnimation animation = new MAPAnimation();
+        /*for (int i = 0; i < mapAnimCount; i++) {
+            MAPAnimation animation = new MAPAnimation();
             animation.load(reader); //TODO: There's an issue where an error is thrown here. It seems to reach the end of the texture list, then it starts getting bad data about what is a texture and what is not.
-            mapAnimations.add(animation);*/
-        }
+            mapAnimations.add(animation);
+        }*/
 
         polygonPointerMap.clear(); // This should not be used after the load method.
     }
@@ -487,6 +487,9 @@ public class MAPFile extends GameFile {
 
         writer.setIndex(lastPointer);
         for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
+            if (type == PSXLineType.G2)
+                continue; // G2 was only enabled as a debug rendering option. It is not enabled in the retail release fairly sure.
+
             tempAddress = writer.getIndex();
 
             writer.jumpTemp(polyAddresses.get(type));
