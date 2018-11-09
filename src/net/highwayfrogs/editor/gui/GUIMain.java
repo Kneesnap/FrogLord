@@ -17,15 +17,18 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.gui.editor.SaveController;
 
 import java.io.File;
+import java.io.IOException;
 
 public class GUIMain extends Application {
     public static Stage MAIN_STAGE;
     @Getter private static File workingDirectory = new File("./");
+    public static FroggerEXEInfo EXE_CONFIG; //TODO: Allow selecting which version to use.
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -136,5 +139,14 @@ public class GUIMain extends Application {
     public static void setWorkingDirectory(File directory) {
         if (directory != null && directory.isDirectory())
             workingDirectory = directory;
+    }
+
+    static {
+        try {
+            EXE_CONFIG = new FroggerEXEInfo(Utils.getResourceStream("exes/30e-music.cfg"));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            System.exit(0);
+        }
     }
 }

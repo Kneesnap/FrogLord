@@ -126,7 +126,7 @@ public class MainController implements Initializable {
         fileChooser.setTitle("Specify the file to export this file as...");
         fileChooser.getExtensionFilters().add(new ExtensionFilter("All Files", "*.*"));
         fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-        fileChooser.setInitialFileName(entry.hasFilePath() ? entry.getDisplayName() : "export.raw");
+        fileChooser.setInitialFileName(entry.getDisplayName());
 
         File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
         if (selectedFile == null)

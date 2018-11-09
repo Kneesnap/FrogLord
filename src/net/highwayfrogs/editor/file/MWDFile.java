@@ -105,13 +105,13 @@ public class MWDFile extends GameObject {
         // Turn the byte data into the appropriate game-file.
         GameFile file;
 
-        if (entry.getTypeId() == VLOArchive.TYPE_ID || (entry.hasFilePath() && entry.getDisplayName().startsWith("LS_ALL"))) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
+        if (entry.getTypeId() == VLOArchive.TYPE_ID || entry.getDisplayName().startsWith("LS_ALL")) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
             file = new VLOArchive();
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
             if (entry.getDisplayName().startsWith("SKY_LAND")) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
                     file = new DummyFile(fileBytes.length);
                 } else {
-                    file = new MAPFile();
+                file = new MAPFile(this);
                 }
         } else if (entry.getTypeId() == WADFile.TYPE_ID) { // Disabled until fully supported.
             file = new WADFile(this);

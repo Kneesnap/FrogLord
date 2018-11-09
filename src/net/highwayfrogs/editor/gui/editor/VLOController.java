@@ -176,16 +176,7 @@ public class VLOController extends EditorController<VLOArchive> {
             return; // Cancelled.
 
         GUIMain.setWorkingDirectory(selectedFolder);
-
-        try {
-            for (int i = 0; i < getFile().getImages().size(); i++) {
-                File output = new File(selectedFolder, i + ".png");
-                ImageIO.write(toBufferedImage(getFile().getImages().get(i)), "png", output);
-                System.out.println("Exported image #" + i + ".");
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+        getFile().exportAllImages(selectedFolder, !this.paddingCheckBox.isSelected(), this.transparencyCheckBox.isSelected());
     }
 
     @FXML

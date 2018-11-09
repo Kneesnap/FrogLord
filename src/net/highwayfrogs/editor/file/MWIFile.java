@@ -30,9 +30,10 @@ public class MWIFile extends GameObject {
         this.fileSize = reader.getSize();
         AtomicInteger nameStartAddress = null;
 
+        int loadingId = 0;
         while (reader.hasMore() && (nameStartAddress == null || nameStartAddress.get() > reader.getIndex())) { // Read entries until we reach file-names.
             int nameOffset = reader.readInt();
-            FileEntry entry = new FileEntry();
+            FileEntry entry = new FileEntry(loadingId++);
 
             if (nameOffset != CODE_NO_FILE_NAME) { // If the file name is present, read the file name. (File-names are present on the PC version, but not the PSX version.)
                 if (nameStartAddress == null) // Use the first name address as the address which starts the name table.
@@ -111,6 +112,7 @@ public class MWIFile extends GameObject {
         private int packedSize;
         private int unpackedSize;
         private String filePath;
+        private transient int loadedId;
 
         public static final int FLAG_SINGLE_ACCESS = 1; // I assume this is for files loaded individually, by themselves.
         public static final int FLAG_GROUP_ACCESS = 2; // Cannot be loaded individually / by itself. Presumably this is for files in child-WADs.
@@ -118,6 +120,10 @@ public class MWIFile extends GameObject {
         public static final int FLAG_ABSOLUTE_PATH = 8; // Appears to let you use absolute file paths instead of relative paths. However, this is functionality is likely not in the retail build.
         public static final int FLAG_AUTOMATIC_COMPRESSION = 16;
         public static final int FLAG_MANUAL_COMPRESSION = 32;
+
+        public FileEntry(int loadedId) {
+            this.loadedId = loadedId;
+        }
 
         /**
          * Get the amount of bytes this file will take up in the game archive.
@@ -174,7 +180,7 @@ public class MWIFile extends GameObject {
          * @return displayName
          */
         public String getDisplayName() {
-            return hasFilePath() ? getFilePath().substring(getFilePath().lastIndexOf("\\") + 1) : null;
+            return hasFilePath() ? getFilePath().substring(getFilePath().lastIndexOf("\\") + 1) : "File " + this.loadedId;
         }
 
         /**

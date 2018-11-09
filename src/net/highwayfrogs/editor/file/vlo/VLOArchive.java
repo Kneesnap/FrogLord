@@ -11,6 +11,9 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.editor.VLOController;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -103,6 +106,24 @@ public class VLOArchive extends GameFile {
 
             for (ClutEntry entry : clutEntries)
                 entry.save(writer, imageBytesOffset);
+        }
+    }
+
+    /**
+     * Export all images in this VLO archive.
+     * @param directory         The directory to save them in.
+     * @param trimEdges         Should image edges be trimmed?
+     * @param allowTransparency Should transparency be allowed?
+     */
+    public void exportAllImages(File directory, boolean trimEdges, boolean allowTransparency) {
+        try {
+            for (int i = 0; i < getImages().size(); i++) {
+                File output = new File(directory, i + ".png");
+                ImageIO.write(getImages().get(i).toBufferedImage(trimEdges, allowTransparency), "png", output);
+                System.out.println("Exported image #" + i + ".");
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
     }
 

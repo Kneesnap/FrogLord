@@ -1,5 +1,8 @@
 package net.highwayfrogs.editor;
 
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
@@ -240,5 +243,21 @@ public class Utils {
             name += fileName.substring(fileName.lastIndexOf(".") + 1);
 
         return new File(file.getParentFile(), name);
+    }
+
+    /**
+     * Resizes an image.
+     * @param img    The image to resize.
+     * @param width  The new width.
+     * @param height The new height.
+     * @return resized
+     */
+    public static BufferedImage resizeImage(BufferedImage img, int width, int height) {
+        BufferedImage newImage = new BufferedImage(width, height, img.getType());
+        Graphics2D graphics = newImage.createGraphics();
+        graphics.drawImage(img.getScaledInstance(width, height, Image.SCALE_SMOOTH), 0, 0, null);
+        graphics.dispose();
+
+        return newImage;
     }
 }

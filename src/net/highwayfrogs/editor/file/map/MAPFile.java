@@ -1,14 +1,19 @@
 package net.highwayfrogs.editor.file.map;
 
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
@@ -27,14 +32,18 @@ import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
 import net.highwayfrogs.editor.file.standard.psx.prims.line.PSXLineType;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.*;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.SelectionMenu;
 
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Parses Frogger MAP files.
@@ -66,6 +75,8 @@ public class MAPFile extends GameFile {
     private List<GridSquare> gridSquares = new ArrayList<>();
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
 
+    private MWDFile parentMWD;
+
     private short groupXCount;
     private short groupZCount;
     private short groupXLength;
@@ -96,6 +107,10 @@ public class MAPFile extends GameFile {
 
     public static final Image ICON = loadIcon("map");
     public static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
+
+    public MAPFile(MWDFile parent) {
+        this.parentMWD = parent;
+    }
 
     static {
         PRIMITIVE_TYPES.addAll(Arrays.asList(PSXPolygonType.values()));
@@ -563,13 +578,42 @@ public class MAPFile extends GameFile {
         dirChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
 
         File selectedFolder = dirChooser.showDialog(GUIMain.MAIN_STAGE);
-        if (selectedFolder != null)
-            exportToObj(selectedFolder, entry, false);
+        if (selectedFolder == null)
+            return;
+
+        FileChooser exeChooser = new FileChooser();
+        exeChooser.setTitle("Select the Frogger executable with the remap table.");
+        exeChooser.getExtensionFilters().add(new ExtensionFilter("Frogger PC Executable", "*.exe"));
+        exeChooser.getExtensionFilters().add(new ExtensionFilter("Frogger PSX Executable", "*.01", "*.02", "*.03", "*.04", "*.05", "*.06", "*.07", "*.08", "*.09"));
+        exeChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+        exeChooser.setInitialFileName("frogger.exe");
+
+        File selectedExe = exeChooser.showOpenDialog(GUIMain.MAIN_STAGE);
+        if (selectedExe == null)
+            return;
+
+        List<VLOArchive> allVLOs = getParentMWD().getFiles().stream()
+                .filter(VLOArchive.class::isInstance)
+                .map(VLOArchive.class::cast)
+                .collect(Collectors.toList());
+
+        SelectionMenu.promptSelection("Please select the VLO associated with this map.", vlo -> {
+            vlo.exportAllImages(selectedFolder, true, true); // Export VLO images.
+
+            String cleanName = entry.getDisplayName().split("\\.")[0];
+            exportToObj(selectedFolder, cleanName, entry, vlo, GUIMain.EXE_CONFIG.getRemapTable(cleanName, selectedExe));
+        }, allVLOs, vlo -> parentMWD.getEntryMap().get(vlo).getDisplayName(), vlo ->
+                new ImageView(SwingFXUtils.toFXImage(Utils.resizeImage(vlo.getImages().get(0).toBufferedImage(false, false), 25, 25), null)));
+    }
+
+    private void exportToObj(File directory, String cleanName, FileEntry entry) {
+        exportToObj(directory, cleanName, entry, null, null);
     }
 
     @SneakyThrows
-    private void exportToObj(File directory, FileEntry entry, boolean exportTextures) {
-        String cleanName = entry.hasFilePath() ? entry.getDisplayName().split("\\.")[0] : "map_export";
+    private void exportToObj(File directory, String cleanName, FileEntry entry, VLOArchive vloArchive, List<Short> remapTable) {
+        boolean exportTextures = vloArchive != null;
+
         System.out.println("Exporting " + cleanName + ".");
 
         String mtlName = cleanName + ".mtl";
@@ -611,20 +655,33 @@ public class MAPFile extends GameFile {
         AtomicInteger textureId = new AtomicInteger(Integer.MIN_VALUE);
         AtomicInteger counter = new AtomicInteger();
 
-        Set<Integer> textures = new HashSet<>();
+        Map<Integer, GameImage> textureMap = new HashMap<>();
         List<PSXColorVector> faceColors = new ArrayList<>();
         Map<PSXColorVector, List<PSXPolygon>> facesWithColors = new HashMap<>();
 
         allPolygons.forEach(polygon -> {
             if (polygon instanceof PSXPolyTexture) {
                 PSXPolyTexture texture = (PSXPolyTexture) polygon;
-                int newTextureId = texture.getTextureId();
 
-                if (exportTextures && newTextureId != textureId.get()) {
-                    textureId.set(newTextureId);
-                    textures.add(newTextureId);
-                    objWriter.write(Constants.NEWLINE);
-                    objWriter.write("usemtl tex" + newTextureId + Constants.NEWLINE);
+                if (exportTextures) {
+                    int newTextureId = texture.getTextureId();
+
+                    if (remapTable != null) { // Apply remap.
+                        GameImage image = textureMap.computeIfAbsent(newTextureId, key -> {
+                            int remapTextureId = remapTable.get(key);
+                            for (GameImage testImage : vloArchive.getImages())
+                                if (testImage.getTextureId() == remapTextureId)
+                                    return testImage;
+                            throw new RuntimeException("Could not find a texture with the id: " + remapTextureId + ".");
+                        });
+                        newTextureId = image.getTextureId();
+                    }
+
+                    if (newTextureId != textureId.get()) { // It's time to change the texture.
+                        textureId.set(newTextureId);
+                        objWriter.write(Constants.NEWLINE);
+                        objWriter.write("usemtl tex" + newTextureId + Constants.NEWLINE);
+                    }
                 }
 
                 objWriter.write(polygon.toObjFaceCommand(exportTextures, counter) + Constants.NEWLINE);
@@ -648,11 +705,11 @@ public class MAPFile extends GameFile {
         if (exportTextures) {
             @Cleanup PrintWriter mtlWriter = new PrintWriter(new File(directory, mtlName));
 
-            for (Integer i : textures) {
-                mtlWriter.write("newmtl tex" + i + Constants.NEWLINE);
+            for (GameImage image : textureMap.values()) {
+                mtlWriter.write("newmtl tex" + image.getTextureId() + Constants.NEWLINE);
                 mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE); // Diffuse color.
                 // "d 0.75" = Partially transparent, if we want to support this later.
-                mtlWriter.write("map_Kd " + i + ".png" + Constants.NEWLINE);
+                mtlWriter.write("map_Kd " + vloArchive.getImages().indexOf(image) + ".png" + Constants.NEWLINE);
                 mtlWriter.write(Constants.NEWLINE);
             }
 
