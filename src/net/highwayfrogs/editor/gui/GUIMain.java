@@ -91,6 +91,7 @@ public class GUIMain extends Application {
         KeyCombination ctrlS = new KeyCodeCombination(KeyCode.S, KeyCodeCombination.CONTROL_DOWN); // Save MWD.
         KeyCombination ctrlI = new KeyCodeCombination(KeyCode.I, KeyCodeCombination.CONTROL_DOWN); // Import file.
         KeyCombination ctrlO = new KeyCodeCombination(KeyCode.O, KeyCodeCombination.CONTROL_DOWN); // Output file.
+        KeyCombination ctrlE = new KeyCodeCombination(KeyCode.E, KeyCodeCombination.CONTROL_DOWN); // Export Alternative.
 
         scene.setOnKeyPressed(event -> {
             if (ctrlS.match(event)) {
@@ -99,6 +100,8 @@ public class GUIMain extends Application {
                 controller.importFile();
             } else if (ctrlO.match(event)) {
                 controller.exportFile();
+            } else if (ctrlE.match(event)) {
+                controller.getCurrentFile().exportAlternateFormat(controller.getFileEntry());
             }
         });
 

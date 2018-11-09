@@ -65,11 +65,19 @@ public class MainController implements Initializable {
         fileList.getSelectionModel().select(0);
     }
 
-    private GameFile getCurrentFile() {
+    /**
+     * Get the current file.
+     * @return currentFile
+     */
+    public GameFile getCurrentFile() {
         return this.fileList.getSelectionModel().getSelectedItem();
     }
 
-    private FileEntry getFileEntry() {
+    /**
+     * Get the FileEntry associated with the selected file.
+     * @return fileentry
+     */
+    public FileEntry getFileEntry() {
         return mwdFile.getEntryMap().get(getCurrentFile());
     }
 

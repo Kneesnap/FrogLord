@@ -2,9 +2,14 @@ package net.highwayfrogs.editor.file.map;
 
 import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.stage.DirectoryChooser;
+import lombok.Cleanup;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
@@ -16,16 +21,25 @@ import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.psx.ByteUV;
+import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
 import net.highwayfrogs.editor.file.standard.psx.prims.line.PSXLineType;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygonType;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.*;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIMain;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Parses Frogger MAP files.
+ * TODO: Disassemble.
+ * TODO: Look over GRID.
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
@@ -540,6 +554,119 @@ public class MAPFile extends GameFile {
         writer.writeInt(writer.getIndex() + Constants.POINTER_SIZE);
 
         //TODO: Save ANIM.
+    }
+
+    @Override
+    public void exportAlternateFormat(FileEntry entry) {
+        DirectoryChooser dirChooser = new DirectoryChooser();
+        dirChooser.setTitle("Select the folder to export this map into.");
+        dirChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+
+        File selectedFolder = dirChooser.showDialog(GUIMain.MAIN_STAGE);
+        if (selectedFolder != null)
+            exportToObj(selectedFolder, entry, false);
+    }
+
+    @SneakyThrows
+    private void exportToObj(File directory, FileEntry entry, boolean exportTextures) {
+        String cleanName = entry.hasFilePath() ? entry.getDisplayName().split("\\.")[0] : "map_export";
+        System.out.println("Exporting " + cleanName + ".");
+
+        String mtlName = cleanName + ".mtl";
+        @Cleanup PrintWriter objWriter = new PrintWriter(new File(directory, cleanName + ".obj"));
+
+        objWriter.write("# FrogLord Map Export" + Constants.NEWLINE);
+        objWriter.write("# Exported: " + Calendar.getInstance().getTime().toString() + Constants.NEWLINE);
+        objWriter.write("# Map Name: " + entry.getDisplayName() + Constants.NEWLINE);
+        objWriter.write(Constants.NEWLINE);
+
+        if (exportTextures) {
+            objWriter.write("mtllib " + mtlName + Constants.NEWLINE);
+            objWriter.write(Constants.NEWLINE);
+        }
+
+        // Write Vertexes.
+        getVertexes().forEach(vertex -> objWriter.write(vertex.toOBJString() + Constants.NEWLINE));
+        objWriter.write(Constants.NEWLINE);
+
+        // Write Faces.
+        List<PSXPolygon> allPolygons = new ArrayList<>();
+        polygons.values().forEach(ply -> ply.stream().map(PSXPolygon.class::cast).forEach(allPolygons::add));
+
+        // Register textures.
+        if (exportTextures) {
+            allPolygons.sort(Comparator.comparingInt(PSXPolygon::getOrderId));
+            objWriter.write("# Vertex Textures" + Constants.NEWLINE);
+
+            for (PSXPolygon poly : allPolygons)
+                if (poly instanceof PSXPolyTexture)
+                    for (ByteUV uvs : ((PSXPolyTexture) poly).getUvs())
+                        objWriter.write(uvs.toObjTextureString() + Constants.NEWLINE);
+
+            objWriter.write(Constants.NEWLINE);
+        }
+
+        objWriter.write("# Faces" + Constants.NEWLINE);
+
+        AtomicInteger textureId = new AtomicInteger(Integer.MIN_VALUE);
+        AtomicInteger counter = new AtomicInteger();
+
+        Set<Integer> textures = new HashSet<>();
+        List<PSXColorVector> faceColors = new ArrayList<>();
+        Map<PSXColorVector, List<PSXPolygon>> facesWithColors = new HashMap<>();
+
+        allPolygons.forEach(polygon -> {
+            if (polygon instanceof PSXPolyTexture) {
+                PSXPolyTexture texture = (PSXPolyTexture) polygon;
+                int newTextureId = texture.getTextureId();
+
+                if (exportTextures && newTextureId != textureId.get()) {
+                    textureId.set(newTextureId);
+                    textures.add(newTextureId);
+                    objWriter.write(Constants.NEWLINE);
+                    objWriter.write("usemtl tex" + newTextureId + Constants.NEWLINE);
+                }
+
+                objWriter.write(polygon.toObjFaceCommand(exportTextures, counter) + Constants.NEWLINE);
+            } else {
+                PSXColorVector color = (polygon instanceof PSXPolyFlat) ? ((PSXPolyFlat) polygon).getColor() : ((PSXPolyGouraud) polygon).getColors()[0];
+                if (!faceColors.contains(color))
+                    faceColors.add(color);
+                facesWithColors.computeIfAbsent(color, key -> new ArrayList<>()).add(polygon);
+            }
+        });
+
+        objWriter.append(Constants.NEWLINE);
+        objWriter.append("# Faces without textures.").append(Constants.NEWLINE);
+        for (Entry<PSXColorVector, List<PSXPolygon>> mapEntry : facesWithColors.entrySet()) {
+            objWriter.write("usemtl color" + faceColors.indexOf(mapEntry.getKey()) + Constants.NEWLINE);
+            mapEntry.getValue().forEach(poly -> objWriter.write(poly.toObjFaceCommand(exportTextures, null) + Constants.NEWLINE));
+        }
+
+
+        // Write MTL file.
+        if (exportTextures) {
+            @Cleanup PrintWriter mtlWriter = new PrintWriter(new File(directory, mtlName));
+
+            for (Integer i : textures) {
+                mtlWriter.write("newmtl tex" + i + Constants.NEWLINE);
+                mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE); // Diffuse color.
+                // "d 0.75" = Partially transparent, if we want to support this later.
+                mtlWriter.write("map_Kd " + i + ".png" + Constants.NEWLINE);
+                mtlWriter.write(Constants.NEWLINE);
+            }
+
+            for (int i = 0; i < faceColors.size(); i++) {
+                PSXColorVector color = faceColors.get(i);
+                mtlWriter.write("newmtl color" + i + Constants.NEWLINE);
+                if (i == 0)
+                    mtlWriter.write("d 1" + Constants.NEWLINE); // All further textures should be completely solid.
+                mtlWriter.write("Kd " + Utils.unsignedByteToFloat(color.getRed()) + " " + Utils.unsignedByteToFloat(color.getGreen()) + " " + Utils.unsignedByteToFloat(color.getBlue()) + Constants.NEWLINE); // Diffuse color.
+                mtlWriter.write(Constants.NEWLINE);
+            }
+        }
+
+        System.out.println("Export complete.");
     }
 
     @Override

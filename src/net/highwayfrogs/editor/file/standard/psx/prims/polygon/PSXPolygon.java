@@ -5,6 +5,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Represents Playstation polygon data.
  * Created by Kneesnap on 8/25/2018.
@@ -12,8 +14,8 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 public class PSXPolygon extends PSXGPUPrimitive {
     private short vertices[];
-    private boolean flippedVertices;
     private short padding;
+    private transient boolean flippedVertices;
 
     public static final int REQUIRES_VERTEX_PADDING = 3;
     public static final int REQUIRES_VERTEX_SWAPPING = 4;
@@ -53,5 +55,27 @@ public class PSXPolygon extends PSXGPUPrimitive {
         vertices[2] = vertices[3];
         vertices[3] = swap;
         this.flippedVertices = !this.flippedVertices;
+    }
+
+    /**
+     * Convert this into a wavefront object face command.
+     * @return faceCommand
+     */
+    public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter) {
+        StringBuilder builder = new StringBuilder("f");
+        for (short vertice : this.vertices) {
+            builder.append(" ").append(vertice + 1);
+            if (showTextures)
+                builder.append("/").append(textureCounter != null ? textureCounter.incrementAndGet() : 0);
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Get the order this should be put in a .obj file.
+     * @return orderId
+     */
+    public int getOrderId() {
+        return 0;
     }
 }

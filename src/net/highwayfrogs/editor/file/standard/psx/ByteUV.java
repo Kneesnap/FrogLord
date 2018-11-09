@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -33,5 +34,13 @@ public class ByteUV extends GameObject {
     public void save(DataWriter writer) {
         writer.writeByte(this.u);
         writer.writeByte(this.v);
+    }
+
+    /**
+     * Get this as an OBJ vt command.
+     * @return objTextureString
+     */
+    public String toObjTextureString() {
+        return "vt " + Utils.unsignedByteToFloat(this.u) + " " + Utils.unsignedByteToFloat(this.v);
     }
 }

@@ -128,7 +128,7 @@ public class Utils {
     }
 
     /**
-     * Convert an unsigned byte
+     * Convert an unsigned byte into a float 0-1.
      * @param unsignedByte The byte to convert to a float. 0x00 = 0.00. 0xFF = 1.000
      * @return floatValue
      */
@@ -137,6 +137,15 @@ public class Utils {
         if (num < 0)
             num += 256;
         return num / 0xFF;
+    }
+
+    /**
+     * Convert an unsigned byte into a float 0-1.
+     * @param unsignedShort The short to convert.
+     * @return floatValue
+     */
+    public static float unsignedShortToFloat(short unsignedShort) {
+        return (float) unsignedShort / (float) Short.MAX_VALUE;
     }
 
     /**

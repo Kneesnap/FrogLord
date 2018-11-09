@@ -52,6 +52,12 @@ public class PSXColorVector extends GameObject {
         return getRed() == other.getRed() && getGreen() == other.getGreen() && getBlue() == other.getBlue() && getCd() == other.getCd();
     }
 
+    @Override
+    public int hashCode() {
+        return ((0xFF & this.red) << 24) | ((0xFF & this.green) << 16) |
+                ((0xFF & this.blue) << 8) | (0xFF & this.cd);
+    }
+
     /**
      * Get this color as a Java color.
      * @return javaColor

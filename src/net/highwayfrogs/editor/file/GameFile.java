@@ -7,6 +7,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.EditorController;
 
@@ -30,6 +31,13 @@ public abstract class GameFile extends GameObject {
      * @return editor
      */
     public abstract Node makeEditor();
+
+    /**
+     * Export this file in a non-Frogger format.
+     */
+    public void exportAlternateFormat(FileEntry entry) {
+        System.out.println(entry.getDisplayName() + " (" + getClass().getSimpleName() + ") does not have an alternate file-type it can export as.");
+    }
 
     /**
      * Setup the editor.

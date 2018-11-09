@@ -100,4 +100,9 @@ public class PSXPolyTexture extends PSXPolygon {
         this.uvs[3] = temp;
         this.flippedUVs = !this.flippedUVs;
     }
+
+    @Override
+    public int getOrderId() {
+        return getTextureId();
+    }
 }

@@ -5,6 +5,7 @@ package net.highwayfrogs.editor;
  * Created by Kneesnap on 8/10/2018.
  */
 public class Constants {
+    public static final String NEWLINE = System.lineSeparator();
 
     public static final int CD_SECTOR_SIZE = 0x800;
 
