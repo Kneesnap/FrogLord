@@ -17,8 +17,9 @@ Editor Features:
   MOF Editor
 
 
+Make remaps for v3.0e Music Patch. v3.0e Stock, Retail PSX, Demo PSX.
+Some textures need to be flipped, probably based on their flags?
 Unit testing for PP20 decompression. Unit testing for PP20 compression.
-Something which gets the remap table from frogger.exe.
 Build FrogPSX.H from MWD.
 
 Non tool-development-related plans:
