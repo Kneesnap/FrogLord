@@ -260,4 +260,17 @@ public class Utils {
 
         return newImage;
     }
+
+    /**
+     * Raise x to the y. Math.pow is pretty intensive, so we do this instead.
+     * @param x The base.
+     * @param y The exponent.
+     * @return value
+     */
+    public static int power(int x, int y) {
+        int result = 1;
+        while (y-- > 0)
+            result *= x;
+        return result;
+    }
 }

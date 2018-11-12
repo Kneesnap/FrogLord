@@ -32,7 +32,7 @@ public class PP20Packer {
     public static final int OFFSET_CONTINUE_WRITING_BITS = 7;
     public static final int READ_FROM_INPUT_BIT = Constants.BIT_FALSE;
     public static final int MINIMUM_DECODE_DATA_LENGTH = 2;
-    public static final int OPTIONAL_BITS_SMALL_SIZE_MAX_OFFSET = (int) Math.pow(2, OPTIONAL_BITS_SMALL_OFFSET);
+    public static final int OPTIONAL_BITS_SMALL_SIZE_MAX_OFFSET = Utils.power(2, OPTIONAL_BITS_SMALL_OFFSET);
     public static final String MARKER = "PP20";
 
     /**
@@ -169,8 +169,7 @@ public class PP20Packer {
     private static int getMaximumOffset(int byteLength) {
         int maxCompressionIndex = COMPRESSION_SETTINGS.length - 1;
         int compressionLevel = Math.max(0, Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH));
-        int offsetSize = COMPRESSION_SETTINGS[compressionLevel];
-        return (int) Math.pow(2, offsetSize);
+        return Utils.power(2, COMPRESSION_SETTINGS[compressionLevel]);
     }
 
     private static void writeDataReference(BitWriter writer, int byteLength, int byteOffset) {
