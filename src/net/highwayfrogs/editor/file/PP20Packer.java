@@ -66,12 +66,6 @@ public class PP20Packer {
         if (possibleResults == null)
             return -1;
 
-        if (COMPRESSION_SETTING_MAX_OFFSETS == null) { // Generate cached offset values. (This is a rather heavy operation, so we cache the stuff.)
-            COMPRESSION_SETTING_MAX_OFFSETS = new int[COMPRESSION_SETTINGS.length + MINIMUM_DECODE_DATA_LENGTH];
-            for (int i = 0; i < COMPRESSION_SETTING_MAX_OFFSETS.length; i++)
-                COMPRESSION_SETTING_MAX_OFFSETS[i] = getMaximumOffset(i);
-        }
-
         int bestIndex = -1;
         int minIndex = 0;
 
@@ -105,15 +99,20 @@ public class PP20Packer {
             }
 
             int newSize = target.size();
-            if (newSize >= MINIMUM_DECODE_DATA_LENGTH // Verify large enough that it can be compressed.
-                    && newSize != targetSize) // Prefer the ones closest to bufferEnd (Lower offsets = Smaller file). (Ie: They're read first, therefore if we found a duplicate example, we want to rely on the one we've already read.
+            if (newSize > targetSize) // Prefer the ones closest to bufferEnd (Lower offsets = Smaller file). (Ie: They're read first, therefore if we found a duplicate example, we want to rely on the one we've already read.
                 bestIndex = testIndex;
         }
 
-        return bestIndex;
+        return target.size() >= MINIMUM_DECODE_DATA_LENGTH ? bestIndex : -1;
     }
 
     private static byte[] compressData(byte[] data) {
+        if (COMPRESSION_SETTING_MAX_OFFSETS == null) { // Generate cached offset values. (This is a rather heavy operation, so we cache the stuff.)
+            COMPRESSION_SETTING_MAX_OFFSETS = new int[COMPRESSION_SETTINGS.length + MINIMUM_DECODE_DATA_LENGTH];
+            for (int i = 0; i < COMPRESSION_SETTING_MAX_OFFSETS.length; i++)
+                COMPRESSION_SETTING_MAX_OFFSETS[i] = getMaximumOffset(i);
+        }
+
         BitWriter writer = new BitWriter();
         writer.setReverseBytes(true);
 
@@ -122,10 +121,7 @@ public class PP20Packer {
 
         IntList[] dictionary = new IntList[256];
         for (int i = 0; i < data.length; i++) {
-            byte temp = data[i];
-
             int bestIndex = findLongest(data, i, searchBuffer, dictionary);
-            int byteOffset = i - bestIndex - 1;
 
             if (bestIndex >= 0) { // Verify the compression index was found.
                 if (noMatchQueue.size() > 0) { // When a compressed one has been reached, write all the data in-between, if there is any.
@@ -135,7 +131,7 @@ public class PP20Packer {
                     writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
                 }
 
-                writeDataReference(writer, searchBuffer.size(), byteOffset);
+                writeDataReference(writer, searchBuffer.size(), i - bestIndex - 1);
 
                 for (int byteId = 0; byteId < searchBuffer.size(); byteId++) {
                     int hashCode = hashCode(searchBuffer.get(byteId));
@@ -148,6 +144,7 @@ public class PP20Packer {
 
                 i--;
             } else { // It's not large enough to be compressed.
+                byte temp = data[i];
                 noMatchQueue.add(temp);
 
                 // Add current byte to the search dictionary.
