@@ -49,8 +49,6 @@ import java.util.stream.Collectors;
  * Parses Frogger MAP files.
  * TODO: Disassemble.
  * TODO: Look over GRID.
- * TODO: Could also be GROU.
- * TODO: Make sure lights are not corrupted.
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
@@ -70,8 +68,10 @@ public class MAPFile extends GameFile {
     private SVector basePoint; // This is the bottom left of the map group grid.
     private List<MAPGroup> groups = new ArrayList<>();
     private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> polygons = new HashMap<>();
-    private Map<PSXGPUPrimitive, Integer> polygonPointerMap = new HashMap<>();
-    private Map<Integer, PSXGPUPrimitive> pointerPolygonMap = new HashMap<>();
+    private Map<PSXGPUPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
+    private Map<Integer, PSXGPUPrimitive> loadPointerPolygonMap = new HashMap<>();
+    private Map<PSXGPUPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
+    private Map<Integer, PSXGPUPrimitive> savePointerPolygonMap = new HashMap<>();
     private List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
     private List<GridSquare> gridSquares = new ArrayList<>();
@@ -121,8 +121,9 @@ public class MAPFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
+        getLoadPolygonPointerMap().clear();
+        getLoadPointerPolygonMap().clear();
 
-        pointerPolygonMap.clear();
         reader.verifyString(SIGNATURE);
         int fileLength = reader.readInt();
         reader.verifyString(VERSION);
@@ -237,7 +238,7 @@ public class MAPFile extends GameFile {
         int groupCount = groupXCount * groupZCount;
 
         for (int i = 0; i < groupCount; i++) {
-            MAPGroup group = new MAPGroup();
+            MAPGroup group = new MAPGroup(this);
             group.load(reader);
             groups.add(group);
         }
@@ -267,7 +268,8 @@ public class MAPFile extends GameFile {
 
                 for (int i = 0; i < polyCount; i++) {
                     PSXGPUPrimitive primitive = type.newPrimitive();
-                    pointerPolygonMap.put(reader.getIndex(), primitive);
+                    getLoadPolygonPointerMap().put(primitive, reader.getIndex());
+                    getLoadPointerPolygonMap().put(reader.getIndex(), primitive);
                     primitive.load(reader);
                     primitives.add(primitive);
                 }
@@ -324,8 +326,6 @@ public class MAPFile extends GameFile {
             animation.load(reader); //TODO: There's an issue where an error is thrown here. It seems to reach the end of the texture list, then it starts getting bad data about what is a texture and what is not.
             mapAnimations.add(animation);
         }*/
-
-        polygonPointerMap.clear(); // This should not be used after the load method.
     }
 
     @Override
@@ -337,9 +337,9 @@ public class MAPFile extends GameFile {
         getForms().clear(); // Appears safe to delete. What even is this?
         getGroups().clear(); //TODO: Without this, the world will not render.
         getMapAnimations().clear(); //Confirmed safe to be cleared.
-        //TODO: Could lights be the problem? (Lights are safe to delete, but will make Frogger black.)
 
-        polygonPointerMap.clear();
+        getSavePointerPolygonMap().clear();
+        getSavePolygonPointerMap().clear();
         writer.writeStringBytes(SIGNATURE);
         writer.writeInt(0); // File length. (Unused)
         writer.writeStringBytes(VERSION);
@@ -529,10 +529,14 @@ public class MAPFile extends GameFile {
             writer.jumpReturn();
 
             getPolygons().get(type).forEach(polygon -> {
-                polygonPointerMap.put(polygon, writer.getIndex());
+                getSavePointerPolygonMap().put(writer.getIndex(), polygon);
+                getSavePolygonPointerMap().put(polygon, writer.getIndex());
                 polygon.save(writer);
             });
         }
+
+        // Write MAP_GROUP polygon pointers, since we've written polygon data.
+        getGroups().forEach(group -> group.writePolygonPointers(writer));
 
         // Write "VRTX."
         tempAddress = writer.getIndex();

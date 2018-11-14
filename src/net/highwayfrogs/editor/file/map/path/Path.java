@@ -18,7 +18,7 @@ public class Path extends GameObject {
     @Override
     public void load(DataReader reader) {
         int entityIndicePointer = reader.readInt(); // "Note that entity_indices points to a (-1) terminated list of indices into the global entity list. (ie. the list of pointers after the entity table packet header)"
-        System.out.println("Entity Pointer: " + entityIndicePointer);
+        // System.out.println("Entity Pointer: " + entityIndicePointer);
 
         /*if (entityIndicePointer > 0) {
             reader.jumpTemp(entityIndicePointer);
@@ -33,7 +33,7 @@ public class Path extends GameObject {
         int segmentCount = reader.readInt();
         int segmentPointer = reader.readInt();
 
-        System.out.println("Segment Pointer: " + segmentPointer);
+        // System.out.println("Segment Pointer: " + segmentPointer);
 
         // Read segments. TODO: Bad pointer?
         /*reader.jumpTemp(segmentPointer);

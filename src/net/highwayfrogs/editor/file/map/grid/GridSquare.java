@@ -39,12 +39,12 @@ public class GridSquare extends GameObject {
     public void load(DataReader reader) {
         this.flags = reader.readInt();
         int polyF4Pointer = reader.readInt();
-        this.polygon = parent.getPointerPolygonMap().get(polyF4Pointer); //TODO This seems to sorta not work.
+        this.polygon = parent.getLoadPointerPolygonMap().get(polyF4Pointer); //TODO This seems to sorta not work.
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(this.flags);
-        writer.writeInt(parent.getPolygonPointerMap().getOrDefault(polygon, 0));
+        writer.writeInt(parent.getSavePolygonPointerMap().getOrDefault(polygon, 0));
     }
 }
