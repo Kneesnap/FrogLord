@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
  * Parses Frogger MAP files.
  * TODO: Disassemble.
  * TODO: Look over GRID.
+ * TODO: Fix GROU.
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
@@ -335,7 +336,6 @@ public class MAPFile extends GameFile {
         getZones().clear(); // Confirmed safe to clear.
         getPaths().clear(); // Confirmed safe to clear, if entities are empty.
         getForms().clear(); // Appears safe to delete. What even is this?
-        getGroups().clear(); //TODO: Without this, the world will not render.
         getMapAnimations().clear(); //Confirmed safe to be cleared.
 
         getSavePointerPolygonMap().clear();
@@ -472,7 +472,6 @@ public class MAPFile extends GameFile {
         int animAddress = gridAddress + Constants.POINTER_SIZE;
         writer.setIndex(animAddress + Constants.POINTER_SIZE);
 
-
         // Write LITE.
         tempAddress = writer.getIndex();
         writer.jumpTemp(lightAddress);
@@ -497,7 +496,7 @@ public class MAPFile extends GameFile {
         writer.writeShort(this.groupZLength);
         getGroups().forEach(group -> group.save(writer));
 
-        // Read POLY
+        // Write POLY
         tempAddress = writer.getIndex();
         writer.jumpTemp(polygonAddress);
         writer.writeInt(tempAddress);
@@ -550,7 +549,7 @@ public class MAPFile extends GameFile {
         writer.writeShort((short) 0); // Padding.
         getVertexes().forEach(vertex -> vertex.saveWithPadding(writer));
 
-        // Read GRID data.
+        // Save GRID data.
         tempAddress = writer.getIndex();
         writer.jumpTemp(gridAddress);
         writer.writeInt(tempAddress);
@@ -563,7 +562,7 @@ public class MAPFile extends GameFile {
         writer.writeShort(this.gridZLength);
 
         getGridStacks().forEach(gridStack -> gridStack.save(writer));
-        getGridStacks().forEach(square -> square.save(writer));
+        getGridSquares().forEach(square -> square.save(writer));
 
         // Save "ANIM" data.
         tempAddress = writer.getIndex();
@@ -574,8 +573,7 @@ public class MAPFile extends GameFile {
         writer.writeStringBytes(ANIMATION_SIGNATURE);
         writer.writeInt(this.mapAnimations.size());
         writer.writeInt(writer.getIndex() + Constants.POINTER_SIZE);
-
-        //TODO: Save ANIM.
+        getMapAnimations().forEach(anim -> anim.save(writer));
     }
 
     @Override

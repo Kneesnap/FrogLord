@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.map.grid;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -39,12 +40,16 @@ public class GridSquare extends GameObject {
     public void load(DataReader reader) {
         this.flags = reader.readInt();
         int polyF4Pointer = reader.readInt();
-        this.polygon = parent.getLoadPointerPolygonMap().get(polyF4Pointer); //TODO This seems to sorta not work.
+        this.polygon = parent.getLoadPointerPolygonMap().get(polyF4Pointer);
+        Utils.verify(this.polygon != null, "GridSquare's Polygon Pointer does not point to a polygon! (%d)", polyF4Pointer);
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(this.flags);
-        writer.writeInt(parent.getSavePolygonPointerMap().getOrDefault(polygon, 0));
+
+        Integer polyPointer = parent.getSavePolygonPointerMap().get(polygon);
+        Utils.verify(polyPointer != null, "A GridSquare's polygon was not saved! This means this GridSquare likely should not be saved!");
+        writer.writeInt(polyPointer);
     }
 }

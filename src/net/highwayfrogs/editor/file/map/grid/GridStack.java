@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file.map.grid;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -13,20 +12,20 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 public class GridStack extends GameObject {
     private short squareCount;
-    private byte averageHeight; // Unused.
+    private short averageHeight; // Unused.
     private short index; // Index of first stack square in the GRID_SQUARE array.
 
     @Override
     public void load(DataReader reader) {
-        this.squareCount = Utils.byteToUnsignedShort(reader.readByte());
-        this.averageHeight = reader.readByte();
+        this.squareCount = reader.readUnsignedByteAsShort();
+        this.averageHeight = reader.readUnsignedByteAsShort();
         this.index = reader.readShort();
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeByte(Utils.unsignedShortToByte(this.squareCount));
-        writer.writeByte(this.averageHeight);
+        writer.writeUnsignedByte(this.squareCount);
+        writer.writeUnsignedByte(this.averageHeight);
         writer.writeShort(this.index);
     }
 }
