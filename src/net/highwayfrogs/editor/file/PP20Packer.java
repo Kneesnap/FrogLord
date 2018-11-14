@@ -14,12 +14,14 @@ import java.nio.ByteBuffer;
  * So, this was created from research and attempts to reverse the unpacker.
  *
  * PP20 is a Lz77 (sliding window compression) variant.
- * It resembles LZSS, but not exactly.
+ * It resembles LzSS.
  *
  * Useful Links:
  * - https://en.wikipedia.org/wiki/LZ77_and_LZ78
  * - https://eblong.com/zarf/blorb/mod-spec.txt
+ * - https://books.google.com/books?id=ujnQogzx_2EC&printsec=frontcover (Specifically, the section about how LzSS improves upon Lz77)
  *
+ * TODO: Store the first MINIMUM_DECODE_DATA_LENGTH bytes for an IntList
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
