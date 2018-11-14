@@ -273,4 +273,13 @@ public class Utils {
             result *= x;
         return result;
     }
+
+    /**
+     * Get a byte value unsigned, as an integer.
+     * @param value The value to turn into an integer.
+     * @return unsignedInt
+     */
+    public static int getUnsignedByte(byte value) {
+        return value >= 0 ? value : (int) Byte.MAX_VALUE - value;
+    }
 }

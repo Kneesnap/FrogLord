@@ -20,8 +20,6 @@ import java.nio.ByteBuffer;
  * - https://en.wikipedia.org/wiki/LZ77_and_LZ78
  * - https://eblong.com/zarf/blorb/mod-spec.txt
  * - https://books.google.com/books?id=ujnQogzx_2EC&printsec=frontcover (Specifically, the section about how LzSS improves upon Lz77)
- *
- * TODO: Store the first MINIMUM_DECODE_DATA_LENGTH bytes for an IntList
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
@@ -165,7 +163,7 @@ public class PP20Packer {
     }
 
     private static int hashCode(byte byteVal) {
-        return byteVal >= 0 ? byteVal : (int) Byte.MAX_VALUE - byteVal;
+        return Utils.getUnsignedByte(byteVal);
     }
 
     private static int getMaximumOffset(int byteLength) {
