@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 
 /**
  * Parses Frogger MAP files.
+ * TODO: The cave levels crash. Potentially it relies on something we're clearing. Maybe there's something different with lights too.
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
@@ -600,12 +601,12 @@ public class MAPFile extends GameFile {
                 .collect(Collectors.toList());
 
         SelectionMenu.promptSelection("Please select the VLO associated with this map.", vlo -> {
-            vlo.exportAllImages(selectedFolder, true, true); // Export VLO images.
+            vlo.exportAllImages(selectedFolder, true, true, true); // Export VLO images.
 
             String cleanName = entry.getDisplayName().split("\\.")[0];
             exportToObj(selectedFolder, cleanName, entry, vlo, GUIMain.EXE_CONFIG.getRemapTable(cleanName, selectedExe));
         }, allVLOs, vlo -> parentMWD.getEntryMap().get(vlo).getDisplayName(), vlo ->
-                new ImageView(SwingFXUtils.toFXImage(Utils.resizeImage(vlo.getImages().get(0).toBufferedImage(false, false), 25, 25), null)));
+                new ImageView(SwingFXUtils.toFXImage(Utils.resizeImage(vlo.getImages().get(0).toBufferedImage(false, false, false), 25, 25), null)));
     }
 
     private void exportToObj(File directory, String cleanName, FileEntry entry) {

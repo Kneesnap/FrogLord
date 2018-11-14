@@ -176,7 +176,7 @@ public class VLOController extends EditorController<VLOArchive> {
             return; // Cancelled.
 
         GUIMain.setWorkingDirectory(selectedFolder);
-        getFile().exportAllImages(selectedFolder, !this.paddingCheckBox.isSelected(), this.transparencyCheckBox.isSelected());
+        getFile().exportAllImages(selectedFolder, !this.paddingCheckBox.isSelected(), this.transparencyCheckBox.isSelected(), false);
     }
 
     @FXML
@@ -212,6 +212,6 @@ public class VLOController extends EditorController<VLOArchive> {
     }
 
     private BufferedImage toBufferedImage(GameImage image) {
-        return image.toBufferedImage(!this.paddingCheckBox.isSelected(), this.transparencyCheckBox.isSelected());
+        return image.toBufferedImage(!this.paddingCheckBox.isSelected(), this.transparencyCheckBox.isSelected(), false);
     }
 }

@@ -269,7 +269,7 @@ public class GameImage extends GameObject {
      * @param trimEdges Should edges be trimmed so the textures are exactly how they appear in-game?
      * @return bufferedImage
      */
-    public BufferedImage toBufferedImage(boolean trimEdges, boolean allowTransparency) {
+    public BufferedImage toBufferedImage(boolean trimEdges, boolean allowTransparency, boolean allowFlip) {
         int height = getFullHeight();
         int width = getFullWidth();
 
@@ -301,6 +301,15 @@ public class GameImage extends GameObject {
             BufferedImage trimImage = new BufferedImage(getIngameWidth(), getIngameHeight(), returnImage.getType());
             Graphics2D graphics = trimImage.createGraphics();
             graphics.drawImage(returnImage, -xTrim / 2, -yTrim / 2, getFullWidth(), getFullHeight(), null);
+            graphics.dispose();
+
+            returnImage = trimImage;
+        }
+
+        if (allowFlip && !testFlag(FLAG_HIT_X)) {
+            BufferedImage trimImage = new BufferedImage(returnImage.getWidth(), returnImage.getHeight(), returnImage.getType());
+            Graphics2D graphics = trimImage.createGraphics();
+            graphics.drawImage(returnImage, 0, returnImage.getHeight(), returnImage.getWidth(), -returnImage.getHeight(), null);
             graphics.dispose();
 
             returnImage = trimImage;
