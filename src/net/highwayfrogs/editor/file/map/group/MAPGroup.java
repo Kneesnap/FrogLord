@@ -54,7 +54,7 @@ public class MAPGroup extends GameObject {
 
         writer.writeNull(3);
         this.pointerLocation = writer.getIndex();
-        writer.writeNull(Constants.POINTER_SIZE); // Save this pointer later, after polygons are saved.
+        writer.writeNull(MAPFile.PRIMITIVE_TYPES.size() * Constants.POINTER_SIZE); // Save this pointer later, after polygons are saved.
         writer.writeNull(5 * Constants.POINTER_SIZE);
         writer.writeInt(this.entityRootPointer = 0); //TODO: Automatically calculate this later.
     }

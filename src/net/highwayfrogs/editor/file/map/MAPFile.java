@@ -47,9 +47,6 @@ import java.util.stream.Collectors;
 
 /**
  * Parses Frogger MAP files.
- * TODO: Disassemble.
- * TODO: Look over GRID.
- * TODO: Fix GROU.
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
