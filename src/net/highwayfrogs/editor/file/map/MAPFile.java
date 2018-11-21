@@ -311,8 +311,6 @@ public class MAPFile extends GameFile {
             gridSquares.add(square);
         }
 
-        //TODO: Can two different grid stacks hold the same square?
-
         // Read "ANIM".
         reader.setIndex(animAddress);
         reader.verifyString(ANIMATION_SIGNATURE);
