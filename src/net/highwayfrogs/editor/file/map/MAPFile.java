@@ -329,7 +329,6 @@ public class MAPFile extends GameFile {
     public void save(DataWriter writer) {
         //TODO: As features are implemented, remove the clearing that's happening here:
         getEntities().clear(); // Confirmed safe to clear.
-        getZones().clear(); // Confirmed safe to clear.
         getPaths().clear(); // Confirmed safe to clear, if entities are empty.
         getForms().clear(); // Appears safe to delete. What even is this?
         getMapAnimations().clear(); //Confirmed safe to be cleared.
@@ -409,6 +408,7 @@ public class MAPFile extends GameFile {
             zonePointer = writer.getIndex();
             writer.jumpReturn();
         }
+        writer.setIndex(zonePointer); // Start writing FORM AFTER zone-data. Otherwise, it will write the form data to where the zone data goes.
 
         // Save "FORM".
         tempAddress = writer.getIndex();

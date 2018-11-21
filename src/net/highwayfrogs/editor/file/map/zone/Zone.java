@@ -34,8 +34,6 @@ public class Zone extends GameObject {
     private List<ZoneRegion> regions = new ArrayList<>();
     private CameraZone cameraZone;
 
-    private static final int BASE_SIZE = 6 * Constants.SHORT_SIZE + Constants.INTEGER_SIZE; // This does not include the size of camera data, or zone region data.
-
     @Override
     public void load(DataReader reader) {
         short zoneId = reader.readShort();
@@ -96,13 +94,5 @@ public class Zone extends GameObject {
      */
     public int getRegionCount() {
         return getRegions().size();
-    }
-
-    /**
-     * Get the amount of bytes this zone will take up.
-     * @return byteSize
-     */
-    public int getByteSize() {
-        return BASE_SIZE + (getRegionCount() * ZoneRegion.REGION_SIZE) + CameraZone.BYTE_SIZE;
     }
 }
