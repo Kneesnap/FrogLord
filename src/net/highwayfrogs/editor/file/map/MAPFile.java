@@ -318,11 +318,11 @@ public class MAPFile extends GameFile {
         int mapAnimAddress = reader.readInt(); // 0x2c144
         reader.setIndex(mapAnimAddress); // This points to right after the header.
 
-        /*for (int i = 0; i < mapAnimCount; i++) {
-            MAPAnimation animation = new MAPAnimation();
+        for (int i = 0; i < mapAnimCount; i++) {
+            MAPAnimation animation = new MAPAnimation(this);
             animation.load(reader); //TODO: There's an issue where an error is thrown here. It seems to reach the end of the texture list, then it starts getting bad data about what is a texture and what is not.
             mapAnimations.add(animation);
-        }*/
+        }
     }
 
     @Override
@@ -330,7 +330,7 @@ public class MAPFile extends GameFile {
         //TODO: As features are implemented, remove the clearing that's happening here:
         getEntities().clear(); // Confirmed safe to clear.
         getPaths().clear(); // Confirmed safe to clear, if entities are empty.
-        getForms().clear(); // Appears safe to delete. What even is this?
+        getForms().clear(); // Appears safe to delete. What even is this? Has something to do with entities.
         getMapAnimations().clear(); //Confirmed safe to be cleared.
 
         getSavePointerPolygonMap().clear();

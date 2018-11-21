@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.file.map.animation;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.MWDFile;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -26,11 +28,17 @@ public class MAPAnimation extends GameObject {
     private short polygonCount;
     private List<MAPUVInfo> mapUVs = new ArrayList<>();
 
+    private transient MAPFile parentMap;
+
     private static final int GLOBAL_TEXTURE_FLAG = 0x8000;
     public static final int FLAG_UV_ANIMATION = 1;
     public static final int FLAG_TEXTURE_ANIMATION = 2;
 
     public static final int BYTE_SIZE = 2 + (7 * Constants.SHORT_SIZE) + (4 * Constants.INTEGER_SIZE);
+
+    public MAPAnimation(MAPFile mapFile) {
+        this.parentMap = mapFile;
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -47,8 +55,16 @@ public class MAPAnimation extends GameObject {
         reader.readShort(); // Run-time variable.
 
         reader.jumpTemp(celListPointer);
-        for (int i = 0; i < celCount; i++)
-            textures.add(reader.readShort());
+        System.out.println("Reading " + celCount + " textures from: " + Integer.toHexString(celListPointer));
+        try {
+            if (!MWDFile.CURRENT_FILE_NAME.equals("JUN1.MAP") && !MWDFile.CURRENT_FILE_NAME.equals("JUN2.MAP")) {
+                for (int i = 0; i < celCount; i++)
+                    textures.add(reader.readShort());
+            }
+        } catch (Exception ex) {
+            System.out.println("Animation Index: " + getParentMap().getMapAnimations().size());
+            throw new RuntimeException(ex);
+        }
         reader.jumpReturn();
 
         this.flags = reader.readShort();
@@ -56,11 +72,10 @@ public class MAPAnimation extends GameObject {
         reader.readInt(); // Texture pointer. Generated at run-time.
 
         int mapUvInfoPointer = reader.readInt();
-
         reader.jumpTemp(mapUvInfoPointer);
 
         for (int i = 0; i < this.polygonCount; i++) {
-            MAPUVInfo info = new MAPUVInfo();
+            MAPUVInfo info = new MAPUVInfo(getParentMap());
             info.load(reader);
             mapUVs.add(info);
         }
