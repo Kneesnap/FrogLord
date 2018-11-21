@@ -59,7 +59,8 @@ public class MAPAnimation extends GameObject {
         this.celPeriod = reader.readUnsignedShortAsInt(); // Frames before resetting.
         reader.readShort(); // Run-time variable.
 
-        if (celCount <= 200) { //TODO: There appears to be straight up invalid data in the vanilla MWD.
+        //TODO: There appears to be corrupted animations in certain stages in the retail MWD. It has numbers that make no sense. I was unable to find any sort of condition in the data flagging it to not load textures. So, I'm just going a pretty nasty check here which seems to work more or less, but we really need to find a solution for this.
+        if (celCount <= 1000) {
             reader.jumpTemp(celListPointer);
             for (int i = 0; i < celCount; i++)
                 textures.add(reader.readShort());
