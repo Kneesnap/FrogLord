@@ -34,7 +34,7 @@ public class MAPUVInfo extends GameObject {
         int polyPointer = reader.readInt();
         this.polygon = getMap().getLoadPointerPolygonMap().get(polyPointer);
         Utils.verify(this.polygon != null, "No polygon was loaded from %s.", Integer.toHexString(polyPointer));
-        reader.readBytes(TOTAL_UV_BLOCK_SIZE); // There are a bunch of uvs, but they're run-time only. TODO: Confirm run-time only.
+        reader.readBytes(TOTAL_UV_BLOCK_SIZE); // There are a bunch of uvs, but they're run-time only.
     }
 
     @Override

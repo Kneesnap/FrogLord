@@ -136,6 +136,14 @@ public class DataWriter {
     }
 
     /**
+     * Writes an unsigned int short as an unsigned short.
+     * @param value The int to write.
+     */
+    public void writeUnsignedShort(int value) {
+        writeShort(Utils.unsignedIntToShort(value));
+    }
+
+    /**
      * Write an integer to the receiver.
      * @param value The integer to write.
      */

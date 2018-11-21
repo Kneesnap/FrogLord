@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.map.animation;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -13,22 +14,28 @@ import java.util.List;
 
 /**
  * Represents the MAP_ANIM struct.
+ * TODO: Issue with reading textures.
  * Created by Kneesnap on 8/27/2018.
  */
 @Getter
 public class MAPAnimation extends GameObject {
     private short uChange; // Delta U (Each frame)
     private short vChange;
-    private short duration; // Frames before resetting.
+    private int duration; // Frames before resetting.
 
     private List<Short> textures = new ArrayList<>(); // Non-remapped texture id array.
-    private short celPeriod;
+    private int celPeriod;
 
-    private short flags;
-    private short polygonCount;
+    private int flags;
+    private int polygonCount;
     private List<MAPUVInfo> mapUVs = new ArrayList<>();
 
     private transient MAPFile parentMap;
+    private transient int texturePointerAddress;
+    private transient int uvPointerAddress;
+
+    public static final int FLAG_UV = 1; // Uses UV animation.
+    public static final int FLAG_TEXTURE = 2; // Uses cel list animation.
 
     private static final int GLOBAL_TEXTURE_FLAG = 0x8000;
     public static final int FLAG_UV_ANIMATION = 1;
@@ -44,36 +51,29 @@ public class MAPAnimation extends GameObject {
     public void load(DataReader reader) {
         this.uChange = reader.readUnsignedByteAsShort();
         this.vChange = reader.readUnsignedByteAsShort();
-        this.duration = reader.readShort();
+        this.duration = reader.readUnsignedShortAsInt();
         reader.readBytes(4); // Four run-time bytes.
 
         // Texture information.
         short celCount = reader.readShort();
         reader.readShort(); // Run-time short.
         int celListPointer = reader.readInt();
-        this.celPeriod = reader.readShort(); // Frames before resetting.
+        this.celPeriod = reader.readUnsignedShortAsInt(); // Frames before resetting.
         reader.readShort(); // Run-time variable.
 
-        reader.jumpTemp(celListPointer);
-        System.out.println("Reading " + celCount + " textures from: " + Integer.toHexString(celListPointer));
-        try {
-            if (!MWDFile.CURRENT_FILE_NAME.equals("JUN1.MAP") && !MWDFile.CURRENT_FILE_NAME.equals("JUN2.MAP")) {
-                for (int i = 0; i < celCount; i++)
-                    textures.add(reader.readShort());
-            }
-        } catch (Exception ex) {
-            System.out.println("Animation Index: " + getParentMap().getMapAnimations().size());
-            throw new RuntimeException(ex);
+        if (testFlag(FLAG_TEXTURE)) { // Only read textures if the texture flag is set.
+            reader.jumpTemp(celListPointer);
+            for (int i = 0; i < celCount; i++)
+                textures.add(reader.readShort());
+            reader.jumpReturn();
+            System.out.println("Accepting: " + MWDFile.CURRENT_FILE_NAME + " (" + this.flags + ")");
         }
-        reader.jumpReturn();
 
-        this.flags = reader.readShort();
-        this.polygonCount = reader.readShort();
+        this.flags = reader.readUnsignedShortAsInt();
+        this.polygonCount = reader.readUnsignedShortAsInt();
         reader.readInt(); // Texture pointer. Generated at run-time.
 
-        int mapUvInfoPointer = reader.readInt();
-        reader.jumpTemp(mapUvInfoPointer);
-
+        reader.jumpTemp(reader.readInt()); // Map UV Pointer.
         for (int i = 0; i < this.polygonCount; i++) {
             MAPUVInfo info = new MAPUVInfo(getParentMap());
             info.load(reader);
@@ -87,17 +87,71 @@ public class MAPAnimation extends GameObject {
     public void save(DataWriter writer) {
         writer.writeUnsignedByte(this.uChange);
         writer.writeUnsignedByte(this.vChange);
-        writer.writeShort(this.duration);
+        writer.writeUnsignedShort(this.duration);
         writer.writeNull(4); // Run-time.
         writer.writeShort((short) this.textures.size());
         writer.writeNull(Constants.SHORT_SIZE); // Run-time.
-        //TODO: Cel-List pointer. (After all anims.)
 
-        writer.writeShort(this.celPeriod);
+        this.texturePointerAddress = writer.getIndex();
+        writer.writeNull(Constants.POINTER_SIZE);
+
+        writer.writeUnsignedShort(this.celPeriod);
         writer.writeShort((short) 0); // Runtime.
-        writer.writeShort(this.flags);
-        writer.writeShort(this.polygonCount);
+        writer.writeUnsignedShort(this.flags);
+        writer.writeUnsignedShort(this.polygonCount);
         writer.writeInt(0); // Run-time.
-        //TODO: MAPUV Pointer.
+
+        this.uvPointerAddress = writer.getIndex();
+        writer.writeNull(Constants.POINTER_SIZE);
+    }
+
+    /**
+     * Called after animations are saved, this saves texture ids.
+     * @param writer The writer to write to.
+     */
+    public void writeTextures(DataWriter writer) {
+        Utils.verify(getTexturePointerAddress() > 0, "There is no saved address to write the texture pointer at.");
+
+        if (!testFlag(FLAG_TEXTURE)) { // This doesn't have any textures, return.
+            this.texturePointerAddress = 0;
+            return;
+        }
+
+        int textureLocation = writer.getIndex();
+        writer.jumpTemp(this.texturePointerAddress);
+        writer.writeInt(textureLocation);
+        writer.jumpReturn();
+
+        for (short texId : getTextures())
+            writer.writeShort(texId);
+
+        this.texturePointerAddress = 0;
+    }
+
+    /**
+     * Called after textures are written, this saves Map UVs.
+     * @param writer The writer to write to.
+     */
+    public void writeMapUVs(DataWriter writer) {
+        Utils.verify(getUvPointerAddress() > 0, "There is no saved address to write the uv pointer at.");
+
+        int uvLocation = writer.getIndex();
+        writer.jumpTemp(this.uvPointerAddress);
+        writer.writeInt(uvLocation);
+        writer.jumpReturn();
+
+        for (MAPUVInfo mapUV : getMapUVs())
+            mapUV.save(writer);
+
+        this.uvPointerAddress = 0;
+    }
+
+    /**
+     * Test if a flag is present for this animation.
+     * @param flag The flag to test.
+     * @return isFlagPresent
+     */
+    public boolean testFlag(int flag) {
+        return (getFlags() & flag) == flag;
     }
 }

@@ -174,6 +174,28 @@ public class Utils {
     }
 
     /**
+     * Convert an unsigned short into an int, which can be converted back into a short.
+     * @param unsignedShort The short to convert into a int.
+     * @return unsignedShort
+     */
+    public static int shortToUnsignedInt(short unsignedShort) {
+        int num = (int) unsignedShort;
+        if (num < 0)
+            num += 65536;
+        return num;
+    }
+
+    /**
+     * Convert an unsigned int back into a unsigned short.
+     * @param unsignedInt the int to turn back into a short.
+     * @return byte
+     */
+    public static short unsignedIntToShort(int unsignedInt) {
+        verify(unsignedInt >= 0 && unsignedInt <= 0xFFFF, "The provided short value is outside the range of an unsigned byte. [0,65535]. Value: %d", unsignedInt);
+        return (short) unsignedInt;
+    }
+
+    /**
      * Reverse an array, and store it in a new array, which is returned.
      * @param array The array to reverse.
      * @return clonedArray

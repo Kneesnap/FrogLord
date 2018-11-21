@@ -106,6 +106,8 @@ public class MAPFile extends GameFile {
     private static final String GRID_SIGNATURE = "GRID";
     private static final String ANIMATION_SIGNATURE = "ANIM";
 
+    private static final short MAP_ANIMATION_TEXTURE_LIST_TERMINATOR = (short) 0xFFFF;
+
     public static final Image ICON = loadIcon("map");
     public static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
 
@@ -320,7 +322,7 @@ public class MAPFile extends GameFile {
 
         for (int i = 0; i < mapAnimCount; i++) {
             MAPAnimation animation = new MAPAnimation(this);
-            animation.load(reader); //TODO: There's an issue where an error is thrown here. It seems to reach the end of the texture list, then it starts getting bad data about what is a texture and what is not.
+            animation.load(reader);
             mapAnimations.add(animation);
         }
     }
@@ -331,7 +333,6 @@ public class MAPFile extends GameFile {
         getEntities().clear(); // Confirmed safe to clear.
         getPaths().clear(); // Confirmed safe to clear, if entities are empty.
         getForms().clear(); // Appears safe to delete. What even is this? Has something to do with entities.
-        getMapAnimations().clear(); //Confirmed safe to be cleared.
 
         getSavePointerPolygonMap().clear();
         getSavePolygonPointerMap().clear();
@@ -570,6 +571,9 @@ public class MAPFile extends GameFile {
         writer.writeInt(this.mapAnimations.size());
         writer.writeInt(writer.getIndex() + Constants.POINTER_SIZE);
         getMapAnimations().forEach(anim -> anim.save(writer));
+        getMapAnimations().forEach(anim -> anim.writeTextures(writer));
+        writer.writeShort(MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
+        getMapAnimations().forEach(anim -> anim.writeMapUVs(writer));
     }
 
     @Override
