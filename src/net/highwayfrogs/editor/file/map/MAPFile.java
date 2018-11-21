@@ -666,6 +666,7 @@ public class MAPFile extends GameFile {
         List<PSXColorVector> faceColors = new ArrayList<>();
         Map<PSXColorVector, List<PSXPolygon>> facesWithColors = new HashMap<>();
 
+        AtomicInteger maxUsedRemap = new AtomicInteger(Integer.MIN_VALUE);
         allPolygons.forEach(polygon -> {
             if (polygon instanceof PSXPolyTexture) {
                 PSXPolyTexture texture = (PSXPolyTexture) polygon;
@@ -676,6 +677,9 @@ public class MAPFile extends GameFile {
                     if (remapTable != null) { // Apply remap.
                         GameImage image = textureMap.computeIfAbsent(newTextureId, key -> {
                             int remapTextureId = remapTable.get(key);
+                            if (key > maxUsedRemap.get())
+                                maxUsedRemap.set(key);
+
                             for (GameImage testImage : vloArchive.getImages())
                                 if (testImage.getTextureId() == remapTextureId)
                                     return testImage;
@@ -731,6 +735,10 @@ public class MAPFile extends GameFile {
         }
 
         System.out.println("Export complete.");
+
+        int maxRemap = maxUsedRemap.get() + 1;
+        if (exportTextures && remapTable.size() > maxRemap)
+            System.out.println("This remap is probably bigger than it needs to be. It can be size " + maxRemap + ".");
     }
 
     @Override
