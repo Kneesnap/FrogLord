@@ -67,10 +67,6 @@ public class MAPFile extends GameFile {
     private SVector basePoint; // This is the bottom left of the map group grid.
     private List<MAPGroup> groups = new ArrayList<>();
     private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> polygons = new HashMap<>();
-    private Map<PSXGPUPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
-    private Map<Integer, PSXGPUPrimitive> loadPointerPolygonMap = new HashMap<>();
-    private Map<PSXGPUPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
-    private Map<Integer, PSXGPUPrimitive> savePointerPolygonMap = new HashMap<>();
     private List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
     private List<GridSquare> gridSquares = new ArrayList<>();
@@ -87,6 +83,12 @@ public class MAPFile extends GameFile {
     private short gridZCount;
     private short gridXLength;
     private short gridZLength;
+
+    private transient Map<PSXGPUPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
+    private transient Map<Integer, PSXGPUPrimitive> loadPointerPolygonMap = new HashMap<>();
+
+    private transient Map<PSXGPUPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
+    private transient Map<Integer, PSXGPUPrimitive> savePointerPolygonMap = new HashMap<>();
 
     public static final int TYPE_ID = 0;
     private static final String SIGNATURE = "FROG";

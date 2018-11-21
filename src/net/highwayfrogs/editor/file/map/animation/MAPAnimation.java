@@ -24,7 +24,7 @@ public class MAPAnimation extends GameObject {
     private List<Short> textures = new ArrayList<>(); // Non-remapped texture id array.
     private int celPeriod;
 
-    private int flags;
+    private int flags; // Appears this is always zero.
     private int polygonCount;
     private List<MAPUVInfo> mapUVs = new ArrayList<>();
 
@@ -109,11 +109,6 @@ public class MAPAnimation extends GameObject {
     public void writeTextures(DataWriter writer) {
         Utils.verify(getTexturePointerAddress() > 0, "There is no saved address to write the texture pointer at.");
 
-        if (!testFlag(FLAG_TEXTURE)) { // This doesn't have any textures, return.
-            this.texturePointerAddress = 0;
-            return;
-        }
-
         int textureLocation = writer.getIndex();
         writer.jumpTemp(this.texturePointerAddress);
         writer.writeInt(textureLocation);
@@ -141,14 +136,5 @@ public class MAPAnimation extends GameObject {
             mapUV.save(writer);
 
         this.uvPointerAddress = 0;
-    }
-
-    /**
-     * Test if a flag is present for this animation.
-     * @param flag The flag to test.
-     * @return isFlagPresent
-     */
-    public boolean testFlag(int flag) {
-        return (getFlags() & flag) == flag;
     }
 }
