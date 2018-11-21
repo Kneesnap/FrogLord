@@ -4,7 +4,6 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -14,7 +13,6 @@ import java.util.List;
 
 /**
  * Represents the MAP_ANIM struct.
- * TODO: Issue with reading textures.
  * Created by Kneesnap on 8/27/2018.
  */
 @Getter
@@ -61,12 +59,11 @@ public class MAPAnimation extends GameObject {
         this.celPeriod = reader.readUnsignedShortAsInt(); // Frames before resetting.
         reader.readShort(); // Run-time variable.
 
-        if (testFlag(FLAG_TEXTURE)) { // Only read textures if the texture flag is set.
+        if (celCount <= 200) { //TODO: There appears to be straight up invalid data in the vanilla MWD.
             reader.jumpTemp(celListPointer);
             for (int i = 0; i < celCount; i++)
                 textures.add(reader.readShort());
             reader.jumpReturn();
-            System.out.println("Accepting: " + MWDFile.CURRENT_FILE_NAME + " (" + this.flags + ")");
         }
 
         this.flags = reader.readUnsignedShortAsInt();
