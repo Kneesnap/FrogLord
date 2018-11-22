@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map.group;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
@@ -9,20 +10,23 @@ import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Represents the "MAP_GROUP" struct.
- * TODO: Are all Polygons owned by a map group? All polygons only have one map group, right? If the answer to both of these is true, MAP_GROUP should have a list of polygons, not MAPFile.
  * Created by Kneesnap on 8/29/2018.
  */
+@Getter
 public class MAPGroup extends GameObject {
-    private Map<PSXPrimitiveType, Short> polygonCountMap = new HashMap<>();
-    private Map<PSXPrimitiveType, Integer> polygonPointerMap = new HashMap<>();
+    private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> polygonMap = new HashMap<>();
     private int entityRootPointer; // Points to the linked list of entities which project over this map group. TODO.
 
     private transient MAPFile parent;
+    private transient Map<PSXPrimitiveType, Short> loadPolygonCountMap = new HashMap<>();
+    private transient Map<PSXPrimitiveType, Integer> loadPolygonPointerMap = new HashMap<>();
     private transient int pointerLocation;
 
     public MAPGroup(MAPFile parent) {
@@ -37,11 +41,11 @@ public class MAPGroup extends GameObject {
     @Override
     public void load(DataReader reader) {
         for (PSXPrimitiveType type : MAPFile.PRIMITIVE_TYPES)
-            polygonCountMap.put(type, reader.readUnsignedByteAsShort());
+            loadPolygonCountMap.put(type, reader.readUnsignedByteAsShort());
 
         reader.readBytes(3);
         for (PSXPrimitiveType type : MAPFile.PRIMITIVE_TYPES)
-            polygonPointerMap.put(type, reader.readInt());
+            loadPolygonPointerMap.put(type, reader.readInt());
 
         reader.readInt(5 * Constants.POINTER_SIZE); // 5 run-time pointers.
         this.entityRootPointer = reader.readInt();
@@ -50,7 +54,7 @@ public class MAPGroup extends GameObject {
     @Override
     public void save(DataWriter writer) {
         for (PSXPrimitiveType type : MAPFile.PRIMITIVE_TYPES)
-            writer.writeUnsignedByte(polygonCountMap.get(type));
+            writer.writeUnsignedByte((short) polygonMap.get(type).size());
 
         writer.writeNull(3);
         this.pointerLocation = writer.getIndex();
@@ -63,17 +67,16 @@ public class MAPGroup extends GameObject {
      * Write polygon pointers. Must be done after polygons are saved.
      */
     public void writePolygonPointers(DataWriter writer) {
-        Utils.verify(this.pointerLocation > 0 && parent.getSavePolygonPointerMap().size() > 0, "Cannot save polygon pointers before polygons are written.");
+        Utils.verify(this.pointerLocation > 0, "Cannot save polygon pointers before polygons are written.");
         writer.jumpTemp(this.pointerLocation);
 
         for (PSXPrimitiveType type : MAPFile.PRIMITIVE_TYPES) {
-            int pointer = polygonPointerMap.get(type);
-            if (pointer > 0 && polygonCountMap.get(type) > 0) {
-                PSXGPUPrimitive poly = parent.getLoadPointerPolygonMap().get(pointer);
-                Utils.verify(poly != null, "Failed to update group polygon address for %d (%s).", pointer, Integer.toHexString(pointer));
+            List<PSXGPUPrimitive> polyList = polygonMap.get(type);
 
-                Integer newPointer = parent.getSavePolygonPointerMap().get(poly);
-                Utils.verify(newPointer != null, "A starting MAP_GROUP polygon was not written. [%d]", pointer);
+            int pointer = 0;
+            if (!polyList.isEmpty()) {
+                Integer newPointer = parent.getSavePolygonPointerMap().get(polyList.get(0));
+                Utils.verify(newPointer != null, "A MAP_GROUP polygon was not written.");
                 pointer = newPointer;
             }
 
@@ -82,5 +85,28 @@ public class MAPGroup extends GameObject {
 
         this.pointerLocation = 0;
         writer.jumpReturn();
+    }
+
+    /**
+     * Called after polygons are loaded. Sets up polygon data.
+     */
+    public void setupPolygonData(Map<PSXPrimitiveType, List<PSXGPUPrimitive>> group) {
+        Utils.verify(this.loadPolygonCountMap.size() > 0, "Cannot setup polygon data twice.");
+
+        for (PSXPrimitiveType type : MAPFile.PRIMITIVE_TYPES) {
+            List<PSXGPUPrimitive> from = group.get(type);
+            int count = loadPolygonCountMap.get(type);
+            List<PSXGPUPrimitive> loadedPolys = new ArrayList<>();
+
+            if (count > 0 && from != null) {
+                int index = from.indexOf(getParent().getLoadPointerPolygonMap().get(loadPolygonPointerMap.get(type)));
+                for (int i = 0; i < count; i++)
+                    loadedPolys.add(from.remove(index));
+            }
+            polygonMap.put(type, loadedPolys);
+        }
+
+        this.loadPolygonCountMap.clear();
+        this.loadPolygonPointerMap.clear();
     }
 }

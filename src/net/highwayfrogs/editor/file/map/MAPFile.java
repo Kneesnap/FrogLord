@@ -66,11 +66,13 @@ public class MAPFile extends GameFile {
     private List<Light> lights = new ArrayList<>();
     private SVector basePoint; // This is the bottom left of the map group grid.
     private List<MAPGroup> groups = new ArrayList<>();
-    private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> polygons = new HashMap<>();
     private List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
     private List<GridSquare> gridSquares = new ArrayList<>();
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
+
+    private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> loosePolygons = new HashMap<>();
+    private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> cachedPolygons = new HashMap<>();
 
     private MWDFile parentMWD;
 
@@ -264,7 +266,7 @@ public class MAPFile extends GameFile {
             int polyOffset = polyOffsetMap.get(type);
 
             List<PSXGPUPrimitive> primitives = new ArrayList<>();
-            polygons.put(type, primitives);
+            loosePolygons.put(type, primitives);
 
             if (polyCount > 0) {
                 reader.jumpTemp(polyOffset);
@@ -280,6 +282,8 @@ public class MAPFile extends GameFile {
                 reader.jumpReturn();
             }
         }
+        getGroups().forEach(group -> group.setupPolygonData(getLoosePolygons()));
+        updatePolygonCache();
 
         // Read Vertexes.
         reader.setIndex(vertexAddress);
@@ -482,6 +486,8 @@ public class MAPFile extends GameFile {
         getLights().forEach(light -> light.save(writer));
 
         // Write GROU.
+        updatePolygonCache();
+
         tempAddress = writer.getIndex();
         writer.jumpTemp(groupAddress);
         writer.writeInt(tempAddress);
@@ -503,7 +509,7 @@ public class MAPFile extends GameFile {
 
         writer.writeStringBytes(POLYGON_SIGNATURE);
         for (PSXPrimitiveType type : PRIMITIVE_TYPES)
-            writer.writeShort((short) polygons.get(type).size());
+            writer.writeShort((short) getCachedPolygons().get(type).size());
 
         writer.writeShort((short) 0); // Padding.
 
@@ -526,7 +532,7 @@ public class MAPFile extends GameFile {
             writer.writeInt(tempAddress);
             writer.jumpReturn();
 
-            getPolygons().get(type).forEach(polygon -> {
+            getCachedPolygons().get(type).forEach(polygon -> {
                 getSavePointerPolygonMap().put(writer.getIndex(), polygon);
                 getSavePolygonPointerMap().put(polygon, writer.getIndex());
                 polygon.save(writer);
@@ -619,6 +625,7 @@ public class MAPFile extends GameFile {
 
     @SneakyThrows
     private void exportToObj(File directory, String cleanName, FileEntry entry, VLOArchive vloArchive, List<Short> remapTable) {
+        updatePolygonCache();
         boolean exportTextures = vloArchive != null;
 
         System.out.println("Exporting " + cleanName + ".");
@@ -642,7 +649,7 @@ public class MAPFile extends GameFile {
 
         // Write Faces.
         List<PSXPolygon> allPolygons = new ArrayList<>();
-        polygons.values().forEach(ply -> ply.stream().map(PSXPolygon.class::cast).forEach(allPolygons::add));
+        getCachedPolygons().values().forEach(ply -> ply.stream().map(PSXPolygon.class::cast).forEach(allPolygons::add));
 
         // Register textures.
         if (exportTextures) {
@@ -749,5 +756,19 @@ public class MAPFile extends GameFile {
     @Override
     public Node makeEditor() {
         return null;
+    }
+
+    /**
+     * Rebuild the cache of all polygons.
+     */
+    public void updatePolygonCache() {
+        cachedPolygons.clear();
+        addPolygons(getLoosePolygons());
+        getGroups().forEach(group -> addPolygons(group.getPolygonMap()));
+    }
+
+    private void addPolygons(Map<PSXPrimitiveType, List<PSXGPUPrimitive>> add) {
+        for (Entry<PSXPrimitiveType, List<PSXGPUPrimitive>> entry : add.entrySet())
+            cachedPolygons.computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).addAll(entry.getValue());
     }
 }
