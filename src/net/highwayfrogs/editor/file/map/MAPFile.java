@@ -37,6 +37,7 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.gui.editor.MAPController;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -755,7 +756,7 @@ public class MAPFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return null;
+        return loadEditor(new MAPController(), "map", this);
     }
 
     /**
