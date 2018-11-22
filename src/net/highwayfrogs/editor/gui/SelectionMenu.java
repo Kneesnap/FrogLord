@@ -51,7 +51,8 @@ public class SelectionMenu {
         newStage.setMinWidth(200);
         newStage.setMinHeight(100);
 
-        newStage.initModality(Modality.APPLICATION_MODAL);
+        newStage.initModality(Modality.WINDOW_MODAL);
+        newStage.setAlwaysOnTop(true);
         newStage.initOwner(GUIMain.MAIN_STAGE);
         newStage.showAndWait();
     }
