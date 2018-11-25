@@ -28,8 +28,7 @@ public class MAPController extends EditorController<MAPFile> {
     private double mouseXDelta;
     private double mouseYDelta;
 
-    private static final double ROTATION_SPEED = 0.1D;
-    private static final double MOUSE_SPEED = 0.1D;
+    private static final double ROTATION_SPEED = 0.35D;
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -54,13 +53,10 @@ public class MAPController extends EditorController<MAPFile> {
 
         Rotate rotX = new Rotate();
         Rotate rotY = new Rotate();
-        Rotate rotZ = new Rotate();
         rotX.setAxis(Rotate.X_AXIS);
         rotY.setAxis(Rotate.Y_AXIS);
-        rotZ.setAxis(Rotate.Z_AXIS);
-        camera.getTransforms().add(rotX);
-        camera.getTransforms().add(rotY);
-        camera.getTransforms().add(rotZ);
+        box.getTransforms().add(rotX);
+        box.getTransforms().add(rotY);
 
         Scene newScene = new Scene(cameraGroup, 400, 400, true);
         newScene.setFill(Color.GRAY);
@@ -103,9 +99,9 @@ public class MAPController extends EditorController<MAPFile> {
             mouseXDelta = (mouseX - oldMouseX);
             mouseYDelta = (mouseY - oldMouseY);
 
-            if (e.isPrimaryButtonDown()) { //TODO: Rotate the objects, don't transform them.
-                rotY.setAngle(rotY.getAngle() - (mouseXDelta * ROTATION_SPEED));  //
-                rotX.setAngle(rotX.getAngle() + (mouseYDelta * ROTATION_SPEED));  // -
+            if (e.isPrimaryButtonDown()) {
+                rotX.setAngle(rotX.getAngle() + (mouseYDelta * ROTATION_SPEED));
+                rotY.setAngle(rotY.getAngle() - (mouseXDelta * ROTATION_SPEED));
             }
         });
     }
