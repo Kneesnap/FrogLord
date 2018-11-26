@@ -80,7 +80,7 @@ public class GUIMain extends Application {
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(800);
         primaryStage.setMinHeight(400);
-        primaryStage.getIcons().add(GameFile.loadIcon("swampy"));
+        primaryStage.getIcons().add(GameFile.loadIcon("icon"));
         primaryStage.show();
 
         MWIFile mwi = new MWIFile();
