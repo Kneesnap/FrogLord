@@ -53,10 +53,10 @@ public class FroggerEXEInfo extends Config {
         List<Short> remapTable = new ArrayList<>();
 
         String remapData = getChild("Remaps").getString(levelName);
-        Utils.verify(remapData != null && !remapData.equalsIgnoreCase(NO_REMAP_DATA) && remapData.contains("|"), "There is no remap data for %s.", levelName);
+        Utils.verify(remapData != null && !remapData.equalsIgnoreCase(NO_REMAP_DATA), "There is no remap data for %s.", levelName);
         String[] split = remapData.split("\\|");
         int remapAddress = Integer.decode(split[0]);
-        int remapCount = Integer.parseInt(split[1]); // Amount of texture remaps. (Bytes / SHORT_SIZE)
+        int remapCount = split.length > 1 ? Integer.parseInt(split[1]) : 200; // Amount of texture remaps. (Bytes / SHORT_SIZE).
 
         DataReader reader;
         try {

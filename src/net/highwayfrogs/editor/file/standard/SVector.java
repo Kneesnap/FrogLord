@@ -49,8 +49,25 @@ public class SVector extends GameObject {
         writer.writeShort(getZ());
     }
 
+    /**
+     * Get this vector as a Wavefront-OBJ vertex command.
+     * @return vertexCommandString
+     */
     public String toOBJString() {
         return "v " + -Utils.unsignedShortToFloat(getX()) + " " + -Utils.unsignedShortToFloat(getY()) + " " + Utils.unsignedShortToFloat(getZ());
+    }
+
+    /**
+     * Get a coordinate string of this vector.
+     * @return coordinateString
+     */
+    public String toCoordinateString() {
+        return getX() + ", " + getY() + ", " + getZ();
+    }
+
+    @Override
+    public String toString() {
+        return "SVector[" + toCoordinateString() + "]";
     }
 
     /**
