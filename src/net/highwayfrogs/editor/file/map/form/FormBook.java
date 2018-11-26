@@ -278,6 +278,8 @@ public enum FormBook {
     SWP_PRESS(MAPTheme.SWAMP, 35, EntityBook.SWP_PRESS, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH),
     SWP_BIRD1(MAPTheme.SWAMP, 36, EntityBook.MOVING),
     SWP_WATER_NOISE(MAPTheme.SWAMP, 0, EntityBook.STATIC, FLAG_NO_MODEL),
+    SWP_UNKNOWN(MAPTheme.SWAMP, 37, EntityBook.STATIC, FLAG_NO_MODEL), //TODO: This may be wrong.
+    SWP_UNKNOWN2(MAPTheme.SWAMP, 38, EntityBook.STATIC, FLAG_NO_MODEL), //TODO: This may be wrong.
 
     SKY_JET1(MAPTheme.SKY, 0, EntityBook.MOVING),
     SKY_JET3(MAPTheme.SKY, 1, EntityBook.MOVING),
@@ -428,6 +430,17 @@ public enum FormBook {
         boolean useGeneral = theme == MAPTheme.GENERAL || (this == FOR_RIVER_NOISE || this == ORG_GOLD_FROG || this == JUN_OUTRO_GOLD_FROG);
         MAPTheme usedTheme = useGeneral ? MAPTheme.GENERAL : getTheme();
         return this.id + usedTheme.getFormOffset();
+    }
+
+    /**
+     * Gets the id used in the files.
+     * @return rawId
+     */
+    public int getRawId() {
+        int rawId = getBooks(getTheme()).indexOf(this);
+        if (getTheme() == MAPTheme.GENERAL)
+            rawId |= FLAG_GENERAL;
+        return rawId;
     }
 
     /**

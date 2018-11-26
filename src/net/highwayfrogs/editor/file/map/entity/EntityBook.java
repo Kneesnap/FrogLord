@@ -7,6 +7,7 @@ import static net.highwayfrogs.editor.file.map.entity.EntityTypeFlags.*;
 
 /**
  * A registry of all entity types. Akin to the form book.
+ * TODO: Associate scripts from the entry here.
  * Created by Kneesnap on 8/24/2018.
  */
 @Getter

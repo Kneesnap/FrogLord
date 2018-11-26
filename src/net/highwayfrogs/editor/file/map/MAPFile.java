@@ -204,13 +204,13 @@ public class MAPFile extends GameFile {
         // Read entities
         reader.setIndex(entityAddress);
         reader.verifyString(ENTITY_SIGNATURE);
-        int entityPacketLength = reader.readInt();
+        reader.readInt(); // Entity packet length.
         int entityCount = reader.readShort();
         reader.readShort(); // Padding.
 
         for (int i = 0; i < entityCount; i++) {
             reader.jumpTemp(reader.readInt());
-            Entity entity = new Entity();
+            Entity entity = new Entity(this);
             entity.load(reader);
             entities.add(entity);
             reader.jumpReturn();
@@ -336,11 +336,10 @@ public class MAPFile extends GameFile {
 
     @Override
     public void save(DataWriter writer) {
-        //TODO: As features are implemented, remove the clearing that's happening here:
-        getEntities().clear(); // Confirmed safe to clear.
-
         getSavePointerPolygonMap().clear();
         getSavePolygonPointerMap().clear();
+
+        // Write File Header
         writer.writeStringBytes(SIGNATURE);
         writer.writeInt(0); // File length. (Unused)
         writer.writeStringBytes(VERSION);
@@ -446,7 +445,7 @@ public class MAPFile extends GameFile {
         writer.jumpReturn();
 
         writer.writeStringBytes(ENTITY_SIGNATURE);
-        writer.writeInt(0); //TODO: Write entityPacketLength.
+        writer.writeInt(0); // This is the entity packet length. It is unused.
         short entityCount = (short) this.entities.size();
         writer.writeShort(entityCount);
         writer.writeShort((short) 0); // Padding.
