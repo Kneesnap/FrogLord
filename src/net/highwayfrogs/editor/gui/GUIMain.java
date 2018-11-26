@@ -15,6 +15,7 @@ import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
@@ -79,6 +80,7 @@ public class GUIMain extends Application {
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(800);
         primaryStage.setMinHeight(400);
+        primaryStage.getIcons().add(GameFile.loadIcon("swampy"));
         primaryStage.show();
 
         MWIFile mwi = new MWIFile();
