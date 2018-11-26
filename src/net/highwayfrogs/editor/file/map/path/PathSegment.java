@@ -20,22 +20,15 @@ public abstract class PathSegment extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        int dataPointer = reader.readInt();
-
-        reader.jumpTemp(dataPointer);
         this.length = reader.readInt();
         this.loadData(reader);
-        reader.jumpReturn();
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(getType().ordinal());
-
-        writer.jumpTemp(writer.getIndex()); //TODO: Pointer should go right after the path data.
         writer.writeInt(this.length);
         saveData(writer);
-        writer.jumpReturn();
     }
 
     /**

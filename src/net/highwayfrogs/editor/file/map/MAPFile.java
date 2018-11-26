@@ -338,7 +338,6 @@ public class MAPFile extends GameFile {
     public void save(DataWriter writer) {
         //TODO: As features are implemented, remove the clearing that's happening here:
         getEntities().clear(); // Confirmed safe to clear.
-        getPaths().clear(); // Confirmed safe to clear, if entities are empty.
 
         getSavePointerPolygonMap().clear();
         getSavePolygonPointerMap().clear();
@@ -544,6 +543,14 @@ public class MAPFile extends GameFile {
 
         // Write MAP_GROUP polygon pointers, since we've written polygon data.
         getGroups().forEach(group -> group.writePolygonPointers(writer));
+
+        AtomicInteger entityIndicePointer = new AtomicInteger(writer.getIndex());
+        getPaths().forEach(path -> {
+            writer.jumpTemp(entityIndicePointer.get());
+            path.writeEntityList(writer);
+            entityIndicePointer.set(writer.getIndex());
+            writer.jumpReturn();
+        });
 
         // Write "VRTX."
         tempAddress = writer.getIndex();
