@@ -29,7 +29,7 @@ public class FormData extends GameObject {
         this.height = reader.readShort();
 
         int squarePointer = reader.readInt(); // Pointer to array of (xCount * zCount) flags. (Type = short)
-        int heightsPointer = reader.readInt(); // Pointer to an array of grid heights. This would have been used in the "SQUARE" height mode, however that does not appear to be used in the vanilla game.
+        reader.readInt(); // Pointer to an array of grid heights. This would have been used in the "SQUARE" height mode, however that does not appear to be used in the vanilla game.
 
         int fullSize = parent.getXGridSquareCount() * parent.getZGridSquareCount();
         if (fullSize % 2 > 0)
@@ -46,9 +46,11 @@ public class FormData extends GameObject {
     @Override
     public void save(DataWriter writer) {
         writer.writeShort(FORM_HEIGHT_TYPE);
+
+        int heightsPointer = writer.getIndex();
         writer.writeShort(this.height);
         writer.writeInt(writer.getIndex() + (2 * Constants.INTEGER_SIZE));
-        writer.writeInt(writer.getIndex() - Constants.INTEGER_SIZE - Constants.SHORT_SIZE); // Points to an unused height pointer array, mentioned above. I don't believe this functions in the frogger engine.
+        writer.writeInt(heightsPointer); // Points to an unused height pointer array, mentioned above. I don't believe this functions in the frogger engine.
         for (short aShort : this.gridFlags)
             writer.writeShort(aShort);
     }

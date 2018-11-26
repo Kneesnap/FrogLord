@@ -68,8 +68,8 @@ public class MapMesh extends TriangleMesh {
     public void addRectangle(PSXPolygon poly) {
         short[] verts = poly.getVertices();
         Utils.verify(verts.length == PSXPolygon.QUAD_SIZE, "This polygon has %d vertices!", verts.length);
-        getFaces().addAll(verts[0], 0, verts[1], 1, verts[3], 3);
-        getFaces().addAll(verts[0], 0, verts[2], 2, verts[3], 3);
+        getFaces().addAll(verts[0], 0, verts[1], 0, verts[3], 0);
+        getFaces().addAll(verts[0], 0, verts[2], 0, verts[3], 0);
     }
 
     /**
@@ -78,10 +78,8 @@ public class MapMesh extends TriangleMesh {
      */
     public void addTriangle(PSXPolygon poly) {
         Utils.verify(poly.getVertices().length == PSXPolygon.TRI_SIZE, "This polygon has %d vertices!", poly.getVertices().length);
-
-        int vId = 0;
         for (short vertice : poly.getVertices())
-            getFaces().addAll(vertice, vId++);
+            getFaces().addAll(vertice, 0);
     }
 
     /**

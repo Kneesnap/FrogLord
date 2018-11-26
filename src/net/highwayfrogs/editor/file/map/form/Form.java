@@ -50,7 +50,7 @@ public class Form extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeInt(getDataCount());
+        writer.writeShort((short) getDataCount());
         writer.writeShort(this.maxY);
         writer.writeShort(this.xGridSquareCount);
         writer.writeShort(this.zGridSquareCount);

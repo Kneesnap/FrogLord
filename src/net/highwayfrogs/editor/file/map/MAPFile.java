@@ -339,7 +339,6 @@ public class MAPFile extends GameFile {
         //TODO: As features are implemented, remove the clearing that's happening here:
         getEntities().clear(); // Confirmed safe to clear.
         getPaths().clear(); // Confirmed safe to clear, if entities are empty.
-        getForms().clear(); // Appears safe to delete. What even is this? Has something to do with entities.
 
         getSavePointerPolygonMap().clear();
         getSavePolygonPointerMap().clear();
@@ -395,6 +394,7 @@ public class MAPFile extends GameFile {
             pathPointer = writer.getIndex();
             writer.jumpReturn();
         }
+        writer.setIndex(pathPointer);
 
         // Save "ZONE".
         tempAddress = writer.getIndex();
@@ -438,6 +438,7 @@ public class MAPFile extends GameFile {
             formPointer = writer.getIndex();
             writer.jumpReturn();
         }
+        writer.setIndex(formPointer);
 
         // Write "EMTP".
         tempAddress = writer.getIndex();
@@ -460,6 +461,7 @@ public class MAPFile extends GameFile {
             entityPointer = writer.getIndex();
             writer.jumpReturn();
         }
+        writer.setIndex(entityPointer);
 
         // Write GRAP.
         tempAddress = writer.getIndex();

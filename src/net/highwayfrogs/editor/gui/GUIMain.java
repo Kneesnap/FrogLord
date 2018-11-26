@@ -39,6 +39,7 @@ public class GUIMain extends Application {
         // Debug = automatically load files for convenience.
         File folder = new File("debug");
         if (folder.exists() && folder.isDirectory()) {
+            workingDirectory = folder;
             File mwiFile = new File(folder, "VANILLA.MWI");
             File mwdFile = new File(folder, "VANILLA.MWD");
 
