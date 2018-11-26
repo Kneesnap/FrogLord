@@ -18,7 +18,6 @@ Editor Features:
 
 
 Make remaps for v3.0e Music Patch. v3.0e Stock, Retail PSX, Demo PSX.
-Some textures need to be flipped, probably based on their flags?
 Unit testing for PP20 decompression. Unit testing for PP20 compression.
 Build FrogPSX.H from MWD.
 
@@ -33,4 +32,4 @@ TCRF Documentation Plans:
  - Kao's Prototype. (Debug features, analyze MWD)
  - Document debugging code.
  - Find unused textures
- - Analyze US PSX demo MWD.
+ - Analyze US PSX demo MWD vs retail PSX demo MWD.

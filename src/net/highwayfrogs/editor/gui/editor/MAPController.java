@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -99,27 +100,31 @@ public class MAPController extends EditorController<MAPFile> {
         setupMapViewer();
     }
 
-    private void setupMapViewer() {
-        Stage overrideStage = GUIMain.MAIN_STAGE;
-
+    private Node makeTempBox() {
         Box box = new Box(100, 100, 100);
         box.setRotate(30D);
         box.setMaterial(new PhongMaterial(Color.TAN));
+        return box;
+    }
 
+    private void setupMapViewer() {
+        Stage overrideStage = GUIMain.MAIN_STAGE;
+
+        Node displayNode = makeTempBox();
         PerspectiveCamera camera = new PerspectiveCamera(true);
         camera.setFarClip(Double.MAX_VALUE);
         camera.setTranslateZ(-500);
 
         Group cameraGroup = new Group();
-        cameraGroup.getChildren().add(box);
+        cameraGroup.getChildren().add(displayNode);
         cameraGroup.getChildren().add(camera);
 
         Rotate rotX = new Rotate();
         Rotate rotY = new Rotate();
         rotX.setAxis(Rotate.X_AXIS);
         rotY.setAxis(Rotate.Y_AXIS);
-        box.getTransforms().add(rotX);
-        box.getTransforms().add(rotY);
+        displayNode.getTransforms().add(rotX);
+        displayNode.getTransforms().add(rotY);
 
         Scene newScene = new Scene(cameraGroup, 400, 400, true);
         newScene.setFill(Color.GRAY);
