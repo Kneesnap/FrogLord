@@ -52,7 +52,7 @@ public enum EntityBook {
     SWP_SQUIRT(FLAG_IMMORTAL, EntitySquirt::new), // What is a squirt?
     SWP_CRUSHER(FLAG_IMMORTAL, EntityCrusher::new),
     TRIGGER(FLAG_IMMORTAL, TriggerEntity::new), // Unsure entirely what this is. Fingers crossed it's a generic trigger that can be used in any level to do things, this would be great for modding.
-    ORG_BABY_FROG(FLAG_IMMORTAL),
+    ORG_BABY_FROG(FLAG_IMMORTAL, null), //TODO
     DES_SNAKE(FLAG_PATH_RUNNER, PathInfo::new), // I think
     ORG_BEAVER(FLAG_PATH_RUNNER | FLAG_IMMORTAL, EntityBeaver::new),
     DES_VULTURE(FLAG_PATH_RUNNER, PathInfo::new), // I think

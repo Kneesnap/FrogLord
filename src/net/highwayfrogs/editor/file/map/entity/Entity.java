@@ -18,6 +18,7 @@ public class Entity extends GameObject {
     private int uniqueId;
     private FormBook formBook;
     private int flags;
+    private GameObject scriptData;
 
     private transient MAPFile map;
 
@@ -42,6 +43,11 @@ public class Entity extends GameObject {
         this.formBook = FormBook.getFormBook(map.getTheme(), reader.readUnsignedShortAsInt());
         this.flags = reader.readUnsignedShortAsInt();
         reader.readBytes(RUNTIME_POINTERS * Constants.POINTER_SIZE);
+
+        if (formBook.getEntity().getScriptDataMaker() != null) {
+            this.scriptData = formBook.getEntity().getScriptDataMaker().get();
+            this.scriptData.load(reader);
+        }
     }
 
     @Override
@@ -51,5 +57,7 @@ public class Entity extends GameObject {
         writer.writeUnsignedShort(getFormBook().getRawId());
         writer.writeUnsignedShort(this.flags);
         writer.writeNull(RUNTIME_POINTERS * Constants.POINTER_SIZE);
+        if (this.scriptData != null)
+            this.scriptData.save(writer);
     }
 }
