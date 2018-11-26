@@ -12,9 +12,14 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.DrawMode;
+import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
+import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.MapMesh;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.util.List;
@@ -100,22 +105,37 @@ public class MAPController extends EditorController<MAPFile> {
         setupMapViewer();
     }
 
-    private Node makeTempBox() {
-        Box box = new Box(100, 100, 100);
+    private Node makeTempBox(int size, int distance, Color color) {
+        Box box = new Box(size, size, size);
         box.setRotate(30D);
-        box.setMaterial(new PhongMaterial(Color.TAN));
+        box.setMaterial(new PhongMaterial(color));
+        box.setTranslateZ(distance);
         return box;
     }
 
+    @SneakyThrows
     private void setupMapViewer() {
         Stage overrideStage = GUIMain.MAIN_STAGE;
 
-        Node displayNode = makeTempBox();
+        //TODO: Maybe the scale is wonky and it's far off somewhere I can't see.
+        //TODO: Maybe there's invalid data?
+
+        MeshView displayNode = new MeshView(new MapMesh(getFile()));
+        displayNode.setDrawMode(DrawMode.LINE);
+        displayNode.setMaterial(new PhongMaterial(Color.DARKGREEN));
+        displayNode.setCullFace(CullFace.NONE);
+        displayNode.setTranslateZ(50);
+        displayNode.setScaleX(100);
+        displayNode.setScaleY(100);
+        displayNode.setScaleZ(100);
+
         PerspectiveCamera camera = new PerspectiveCamera(true);
         camera.setFarClip(Double.MAX_VALUE);
         camera.setTranslateZ(-500);
 
         Group cameraGroup = new Group();
+        cameraGroup.getChildren().add(makeTempBox(100, 250, Color.TAN));
+        cameraGroup.getChildren().add(makeTempBox(50, 150, Color.WHITE));
         cameraGroup.getChildren().add(displayNode);
         cameraGroup.getChildren().add(camera);
 
