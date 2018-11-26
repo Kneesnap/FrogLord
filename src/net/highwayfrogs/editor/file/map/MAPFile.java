@@ -56,7 +56,7 @@ public class MAPFile extends GameFile {
     private short startXTile;
     private short startYTile;
     private short startRotation;
-    private short themeId;
+    private MAPTheme theme;
     private short checkPointTimers[] = new short[5]; // Each frog (checkpoint) has its own timer value. In the vanilla game, they all match.
     private SVector cameraSourceOffset;
     private SVector cameraTargetOffset;
@@ -147,7 +147,7 @@ public class MAPFile extends GameFile {
         this.startXTile = reader.readShort();
         this.startYTile = reader.readShort();
         this.startRotation = reader.readShort();
-        this.themeId = reader.readShort();
+        this.theme = MAPTheme.values()[reader.readShort()];
 
         for (int i = 0; i < checkPointTimers.length; i++)
             this.checkPointTimers[i] = reader.readShort();
@@ -366,7 +366,7 @@ public class MAPFile extends GameFile {
         writer.writeShort(this.startXTile);
         writer.writeShort(this.startYTile);
         writer.writeShort(this.startRotation);
-        writer.writeShort(this.themeId);
+        writer.writeShort((short) getTheme().ordinal());
         for (short timerValue : this.checkPointTimers)
             writer.writeShort(timerValue);
 

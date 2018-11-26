@@ -14,7 +14,6 @@ import javafx.scene.shape.Box;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.util.List;
@@ -66,7 +65,7 @@ public class MAPController extends EditorController<MAPFile> {
     private void updateLabels() {
         MAPFile map = getFile();
 
-        themeIdLabel.setText("Theme: " + MAPTheme.values()[map.getThemeId()].getInternalName() + " [" + map.getThemeId() + "]");
+        themeIdLabel.setText("Theme: " + map.getTheme());
         startPosLabel.setText("Start Pos: (" + map.getStartXTile() + ", " + map.getStartYTile() + ") Rotation: " + map.getStartRotation());
         cameraSourceLabel.setText("Camera Source: (" + map.getCameraSourceOffset().toCoordinateString() + ")");
         cameraTargetLabel.setText("Camera Target: (" + map.getCameraTargetOffset().toCoordinateString() + ")");
