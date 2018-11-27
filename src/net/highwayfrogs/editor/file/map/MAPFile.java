@@ -208,12 +208,22 @@ public class MAPFile extends GameFile {
         int entityCount = reader.readShort();
         reader.readShort(); // Padding.
 
+        Entity lastEntity = null;
         for (int i = 0; i < entityCount; i++) {
-            reader.jumpTemp(reader.readInt());
+            int entityPointer = reader.readInt();
+
+            if (lastEntity != null) { // Note, this will miss the final entity.
+                int realSize = (entityPointer - lastEntity.getLoadScriptDataPointer());
+                if (realSize != lastEntity.getLoadReadLength())
+                    System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity #" + i + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormBook());
+            }
+
+            reader.jumpTemp(entityPointer);
             Entity entity = new Entity(this);
             entity.load(reader);
             entities.add(entity);
             reader.jumpReturn();
+            lastEntity = entity;
         }
 
         reader.setIndex(graphicalAddress);

@@ -20,6 +20,8 @@ public class Entity extends GameObject {
     private int flags;
     private GameObject scriptData;
 
+    private transient int loadScriptDataPointer;
+    private transient int loadReadLength;
     private transient MAPFile map;
 
     public Entity(MAPFile parentMap) {
@@ -44,10 +46,13 @@ public class Entity extends GameObject {
         this.flags = reader.readUnsignedShortAsInt();
         reader.readBytes(RUNTIME_POINTERS * Constants.POINTER_SIZE);
 
+        this.loadScriptDataPointer = reader.getIndex();
         if (formBook.getEntity().getScriptDataMaker() != null) {
             this.scriptData = formBook.getEntity().getScriptDataMaker().get();
             this.scriptData.load(reader);
         }
+
+        this.loadReadLength = reader.getIndex() - this.loadScriptDataPointer;
     }
 
     @Override
