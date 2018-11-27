@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -18,7 +19,8 @@ public class Entity extends GameObject {
     private int uniqueId;
     private FormBook formBook;
     private int flags;
-    private GameObject scriptData;
+    private GameObject entityData;
+    private EntityScriptData scriptData;
 
     private transient int loadScriptDataPointer;
     private transient int loadReadLength;
@@ -48,7 +50,12 @@ public class Entity extends GameObject {
 
         this.loadScriptDataPointer = reader.getIndex();
         if (formBook.getEntity().getScriptDataMaker() != null) {
-            this.scriptData = formBook.getEntity().getScriptDataMaker().get();
+            this.entityData = formBook.getEntity().getScriptDataMaker().get();
+            this.entityData.load(reader);
+        }
+
+        if (formBook.getScriptDataMaker() != null) {
+            this.scriptData = formBook.getScriptDataMaker().get();
             this.scriptData.load(reader);
         }
 
@@ -62,6 +69,8 @@ public class Entity extends GameObject {
         writer.writeUnsignedShort(getFormBook().getRawId());
         writer.writeUnsignedShort(this.flags);
         writer.writeNull(RUNTIME_POINTERS * Constants.POINTER_SIZE);
+        if (this.entityData != null)
+            this.entityData.save(writer);
         if (this.scriptData != null)
             this.scriptData.save(writer);
     }

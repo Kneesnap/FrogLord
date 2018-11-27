@@ -215,7 +215,7 @@ public class MAPFile extends GameFile {
             if (lastEntity != null) { // Note, this will miss the final entity.
                 int realSize = (entityPointer - lastEntity.getLoadScriptDataPointer());
                 if (realSize != lastEntity.getLoadReadLength())
-                    System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity #" + i + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormBook());
+                    System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormBook());
             }
 
             reader.jumpTemp(entityPointer);

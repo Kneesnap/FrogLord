@@ -57,7 +57,7 @@ public enum EntityBook {
     DES_SNAKE(FLAG_PATH_RUNNER, PathInfo::new), // I think
     ORG_BEAVER(FLAG_PATH_RUNNER | FLAG_IMMORTAL, EntityBeaver::new),
     DES_VULTURE(FLAG_PATH_RUNNER, PathInfo::new), // I think
-    ORG_FLY(FLAG_IMMORTAL | FLAG_TONGUEABLE, BonusFlyEntity::new),
+    ORG_FLY(FLAG_IMMORTAL | FLAG_TONGUEABLE, PSXMatrix::new), // This one is rather odd. The code suggests it uses a struct called ORG_BONUS_FLY, identical to GEN_BONUS_FLY. However, neither the demo files nor the retail files seem to have this.
     ORG_CROC_HEAD(FLAG_IMMORTAL, EntityRetroCrocodileHead::new), // Might be EntityOriginalCrocodile?
     FOR_HIVE(FLAG_IMMORTAL, BeeHiveEntity::new),
     SWP_PRESS(FLAG_IMMORTAL, EntityPress::new), // What's this?

@@ -44,6 +44,22 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
+     * Get the platform this was released on.
+     * @return platform
+     */
+    public TargetPlatform getPlatform() {
+        return getEnum("platform", TargetPlatform.class);
+    }
+
+    /**
+     * Gets if this is a major demo release.
+     * @return isDemo
+     */
+    public boolean isDemo() {
+        return getBoolean("demo");
+    }
+
+    /**
      * Loads the remap table from the Frogger EXE.
      * @param levelName  The name of the level.
      * @param executable The Frogger executable to read remap information from.

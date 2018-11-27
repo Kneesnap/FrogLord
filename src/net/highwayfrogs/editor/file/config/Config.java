@@ -109,6 +109,37 @@ public class Config {
     }
 
     /**
+     * Get a boolean value.
+     * @param keyName The name of the key.
+     * @return booleanValue
+     */
+    public boolean getBoolean(String keyName) {
+        return getString(keyName).equalsIgnoreCase("true");
+    }
+
+    /**
+     * Get an enum config value.
+     * @param keyName   The name of the key.
+     * @param enumClass The class of the enum to get.
+     * @return enumValue
+     */
+    public <E extends Enum<E>> E getEnum(String keyName, Class<E> enumClass) {
+        return Enum.valueOf(enumClass, getString(keyName));
+    }
+
+    /**
+     * Get an enum config value.
+     * @param keyName     The name of the key.
+     * @param defaultEnum The default enum value to return.
+     * @return enumValue
+     */
+    @SuppressWarnings("unchecked")
+    public <E extends Enum<E>> E getEnum(String keyName, E defaultEnum) {
+        Utils.verify(defaultEnum != null, "Default Enum cannot be null.");
+        return has(keyName) ? getEnum(keyName, (Class<E>) defaultEnum.getClass()) : defaultEnum;
+    }
+
+    /**
      * Get an integer config value.
      * @param keyName The name of the key.
      * @return intValue
