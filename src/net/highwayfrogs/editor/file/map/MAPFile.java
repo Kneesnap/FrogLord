@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 
 /**
  * Parses Frogger MAP files.
- * TODO: The cave levels crash. Potentially it relies on something we're clearing. Maybe there's something different with lights too.
+ * TODO: Header-data. What are the bytes? Date created? Version? Export time calculation? Number of vertexes? Or is it what-ever random junk was malloced?
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
@@ -209,12 +209,13 @@ public class MAPFile extends GameFile {
         reader.readShort(); // Padding.
 
         Entity lastEntity = null;
+        boolean showInvalid = true;
         for (int i = 0; i < entityCount; i++) {
             int entityPointer = reader.readInt();
 
             if (lastEntity != null) { // Note, this will miss the final entity.
                 int realSize = (entityPointer - lastEntity.getLoadScriptDataPointer());
-                if (realSize != lastEntity.getLoadReadLength())
+                if (realSize != lastEntity.getLoadReadLength() && showInvalid)
                     System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormBook());
             }
 
@@ -224,6 +225,13 @@ public class MAPFile extends GameFile {
             entities.add(entity);
             reader.jumpReturn();
             lastEntity = entity;
+        }
+
+        // Go over the last entity.
+        if (lastEntity != null) {
+            int realSize = (graphicalAddress - lastEntity.getLoadScriptDataPointer());
+            if (realSize != lastEntity.getLoadReadLength() && showInvalid)
+                System.out.println("[last_INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormBook());
         }
 
         reader.setIndex(graphicalAddress);

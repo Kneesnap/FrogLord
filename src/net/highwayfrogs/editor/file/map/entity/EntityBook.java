@@ -19,7 +19,6 @@ import net.highwayfrogs.editor.file.map.entity.data.jungle.EntityOutroPlinth;
 import net.highwayfrogs.editor.file.map.entity.data.jungle.EntityRopeBridge;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntityBabyFrog;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntityBeaver;
-import net.highwayfrogs.editor.file.map.entity.data.retro.EntityRetroCrocodileHead;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntitySnake;
 import net.highwayfrogs.editor.file.map.entity.data.suburbia.EntityDog;
 import net.highwayfrogs.editor.file.map.entity.data.suburbia.EntityTurtle;
@@ -58,7 +57,7 @@ public enum EntityBook {
     ORG_BEAVER(FLAG_PATH_RUNNER | FLAG_IMMORTAL, EntityBeaver::new),
     DES_VULTURE(FLAG_PATH_RUNNER, PathInfo::new), // I think
     ORG_FLY(FLAG_IMMORTAL | FLAG_TONGUEABLE, PSXMatrix::new), // This one is rather odd. The code suggests it uses a struct called ORG_BONUS_FLY, identical to GEN_BONUS_FLY. However, neither the demo files nor the retail files seem to have this.
-    ORG_CROC_HEAD(FLAG_IMMORTAL, EntityRetroCrocodileHead::new), // Might be EntityOriginalCrocodile?
+    ORG_CROC_HEAD(FLAG_IMMORTAL, PSXMatrix::new), // Appears to have used the struct ORG_CROC_HEAD, but in the demo + retail it does not have a struct...
     FOR_HIVE(FLAG_IMMORTAL, BeeHiveEntity::new),
     SWP_PRESS(FLAG_IMMORTAL, EntityPress::new), // What's this?
     CAV_FAT_FIRE_FLY(FLAG_STATIC | FLAG_TONGUEABLE, EntityFatFireFly::new),
