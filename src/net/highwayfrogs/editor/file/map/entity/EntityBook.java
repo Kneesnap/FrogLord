@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.file.map.entity.data.general.TriggerEntity;
 import net.highwayfrogs.editor.file.map.entity.data.jungle.EntityEvilPlant;
 import net.highwayfrogs.editor.file.map.entity.data.jungle.EntityOutroPlinth;
 import net.highwayfrogs.editor.file.map.entity.data.jungle.EntityRopeBridge;
+import net.highwayfrogs.editor.file.map.entity.data.retro.EntityBabyFrog;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntityBeaver;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntityRetroCrocodileHead;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntitySnake;
@@ -52,7 +53,7 @@ public enum EntityBook {
     SWP_SQUIRT(FLAG_IMMORTAL, EntitySquirt::new), // What is a squirt?
     SWP_CRUSHER(FLAG_IMMORTAL, EntityCrusher::new),
     TRIGGER(FLAG_IMMORTAL, TriggerEntity::new), // Unsure entirely what this is. Fingers crossed it's a generic trigger that can be used in any level to do things, this would be great for modding.
-    ORG_BABY_FROG(FLAG_IMMORTAL, null), //TODO
+    ORG_BABY_FROG(FLAG_IMMORTAL, EntityBabyFrog::new),
     DES_SNAKE(FLAG_PATH_RUNNER, PathInfo::new), // I think
     ORG_BEAVER(FLAG_PATH_RUNNER | FLAG_IMMORTAL, EntityBeaver::new),
     DES_VULTURE(FLAG_PATH_RUNNER, PathInfo::new), // I think

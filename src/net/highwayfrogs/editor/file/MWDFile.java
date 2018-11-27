@@ -163,7 +163,8 @@ public class MWDFile extends GameObject {
             writer.jumpTo(entry.getArchiveOffset());
 
             long start = System.currentTimeMillis();
-            System.out.print("Saving " + entry.getFilePath() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ") ");
+            CURRENT_FILE_NAME = entry.getDisplayName();
+            System.out.print("Saving " + entry.getDisplayName() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ") ");
             if (getSaveCallback() != null)
                 getSaveCallback().accept(entry, file);
 

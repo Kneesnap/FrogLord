@@ -1,9 +1,7 @@
 package net.highwayfrogs.editor.file.map.entity.data.general;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -16,8 +14,6 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 public class BonusFlyEntity extends GameObject {
     private PSXMatrix psxMatrix = new PSXMatrix();
     private int type; // Score type.
-
-    public static final int BYTE_SIZE = PathInfo.BYTE_SIZE + (2 * Constants.SHORT_SIZE);
 
     @Override
     public void load(DataReader reader) {
