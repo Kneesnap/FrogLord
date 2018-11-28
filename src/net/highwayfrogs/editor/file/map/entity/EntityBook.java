@@ -14,9 +14,7 @@ import net.highwayfrogs.editor.file.map.entity.data.forest.*;
 import net.highwayfrogs.editor.file.map.entity.data.general.BonusFlyEntity;
 import net.highwayfrogs.editor.file.map.entity.data.general.CheckpointEntity;
 import net.highwayfrogs.editor.file.map.entity.data.general.TriggerEntity;
-import net.highwayfrogs.editor.file.map.entity.data.jungle.EntityEvilPlant;
-import net.highwayfrogs.editor.file.map.entity.data.jungle.EntityOutroPlinth;
-import net.highwayfrogs.editor.file.map.entity.data.jungle.EntityRopeBridge;
+import net.highwayfrogs.editor.file.map.entity.data.jungle.*;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntityBabyFrog;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntityBeaver;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntitySnake;
@@ -77,7 +75,7 @@ public enum EntityBook {
     JUN_PLANT(FLAG_IMMORTAL, EntityEvilPlant::new),
     DES_ROLLING_ROCK(FLAG_PATH_RUNNER | FLAG_IMMORTAL, PathInfo::new), // I think
     JUN_ROPE_BRIDGE(FLAG_IMMORTAL, EntityRopeBridge::new),
-    JUN_HIPPO(FLAG_PATH_RUNNER, PathInfo::new), // I think
+    JUN_HIPPO(FLAG_PATH_RUNNER, EntityTurtle::new), // Cloned.
     VOL_FALLING_PLATFORM(FLAG_IMMORTAL, EntityCrack::new), // It shares DES_CRACK's structure.
     DES_TUMBLE_WEED(FLAG_PATH_RUNNER, PathInfo::new), // I think
     GEN_TOP_LEFT(FLAG_STATIC | FLAG_IMMORTAL, PSXMatrix::new), // "Fade Area" Appears to store the position of screen fading? I think
@@ -88,9 +86,9 @@ public enum EntityBook {
     JUN_OUTRO_DOOR(FLAG_IMMORTAL, PSXMatrix::new), // I think
     JUN_STATUE(FLAG_IMMORTAL, PSXMatrix::new), // I think
     JUN_PLINTH(FLAG_IMMORTAL, EntityOutroPlinth::new),
-    JUN_GOLD_FROG(FLAG_IMMORTAL, PSXMatrix::new), // I think
-    JUN_STONE_FROG(FLAG_IMMORTAL, PSXMatrix::new), // I think
-    JUN_OUTRO(FLAG_IMMORTAL, EntityOutroPlinth::new), // What does this do?
+    JUN_GOLD_FROG(FLAG_IMMORTAL, EntityPlinthFrog::new),
+    JUN_STONE_FROG(FLAG_IMMORTAL, EntityPlinthFrog::new),
+    JUN_OUTRO(FLAG_IMMORTAL, EntityOutroEntity::new), // What does this do?
     SWP_SLUG(FLAG_PATH_RUNNER | FLAG_IMMORTAL, EntitySlug::new),
     JUN_BOUNCY_MUSHROOM(FLAG_STATIC, PSXMatrix::new), // While technically used, it serves no purpose in-game. I think.
     SUB_LAWNMOWER(FLAG_PATH_RUNNER, PathInfo::new), // I think

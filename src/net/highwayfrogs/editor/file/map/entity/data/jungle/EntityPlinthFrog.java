@@ -7,23 +7,23 @@ import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
- * Represents "JUN_OUTRO_FROGPLINTH_DATA".
- * Created by Kneesnap on 11/26/2018.
+ * The frog on the plinth.
+ * Created by Kneesnap on 11/27/2018.
  */
 @Getter
-public class EntityOutroPlinth extends GameObject {
+public class EntityPlinthFrog extends GameObject {
     private PSXMatrix matrix = new PSXMatrix();
-    private int id;
+    private int plinthId;
 
     @Override
     public void load(DataReader reader) {
         this.matrix.load(reader);
-        this.id = reader.readInt();
+        this.plinthId = reader.readInt();
     }
 
     @Override
     public void save(DataWriter writer) {
         this.matrix.save(writer);
-        writer.writeInt(this.id);
+        writer.writeInt(this.plinthId);
     }
 }
