@@ -556,7 +556,7 @@ public class MAPFile extends GameFile {
             writer.jumpReturn();
         });
 
-        // Setup pa_entity_indices. The one problem with this is that
+        // Setup pa_entity_indices. The one problem with this is that the beaver will not render when we do this.
         int emptyEntityIdArray = writer.getIndex();
         writer.writeShort(MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
         getPaths().forEach(path -> path.writePointer(writer, emptyEntityIdArray));
