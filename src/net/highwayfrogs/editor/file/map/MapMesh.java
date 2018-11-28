@@ -59,7 +59,7 @@ public class MapMesh extends TriangleMesh {
      * Load polygon data.
      */
     public void loadPolygonData() {
-        map.getCachedPolygons().values().forEach(prim -> {
+        map.getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
             if (!(prim instanceof PSXPolygon))
                 return;
 
@@ -73,7 +73,7 @@ public class MapMesh extends TriangleMesh {
             } else {
                 throw new RuntimeException("Cannot handle " + vertCount + "vertices");
             }
-        });
+        }));
     }
 
     /**
@@ -101,8 +101,7 @@ public class MapMesh extends TriangleMesh {
      * Load vertex data.
      */
     public void loadVertices() {
-        //getPoints().clear();
         for (SVector vertex : map.getVertexes())
-            getPoints().addAll(-Utils.unsignedShortToFloat(vertex.getX()) * 100, -Utils.unsignedShortToFloat(vertex.getY()) * 100, Utils.unsignedShortToFloat(vertex.getZ()) * 100);
+            getPoints().addAll(Utils.unsignedShortToFloat(vertex.getX()) * 100, Utils.unsignedShortToFloat(vertex.getY()) * 100, -Utils.unsignedShortToFloat(vertex.getZ()) * 100);
     }
 }
