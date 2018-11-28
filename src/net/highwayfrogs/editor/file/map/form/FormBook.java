@@ -9,6 +9,8 @@ import net.highwayfrogs.editor.file.map.entity.script.ScriptButterflyData;
 import net.highwayfrogs.editor.file.map.entity.script.ScriptNoiseData;
 import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptBalloonData;
 import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptHeliumBalloon;
+import net.highwayfrogs.editor.file.map.entity.script.swamp.ScriptBobbingWasteData;
+import net.highwayfrogs.editor.file.map.entity.script.swamp.ScriptNuclearBarrelData;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptHawkData;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptHelicopterData;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptMechanismData;
@@ -265,7 +267,7 @@ public enum FormBook {
     SWP_PALLET(MAPTheme.SWAMP, 13, EntityBook.MOVING, FLAG_THICK, null),
     SWP_OIL(MAPTheme.SWAMP, 14, EntityBook.MOVING, null),
     SWP_WASTE_BARREL(MAPTheme.SWAMP, 15, EntityBook.MOVING, null),
-    SWP_NUCLEAR_BARREL(MAPTheme.SWAMP, 16, EntityBook.NUCLEAR_BARREL, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
+    SWP_NUCLEAR_BARREL(MAPTheme.SWAMP, 16, EntityBook.NUCLEAR_BARREL, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, ScriptNuclearBarrelData::new),
     SWP_STAT_PIPE_STR(MAPTheme.SWAMP, 17, EntityBook.STATIC, null),
     SWP_ST_PIPE_BIG_STR(MAPTheme.SWAMP, 18, EntityBook.STATIC, null),
     SWP_STAT_PIPE_HOLE(MAPTheme.SWAMP, 19, EntityBook.STATIC, null),
@@ -279,7 +281,7 @@ public enum FormBook {
     SWP_STAT_PIPE_SMALL_CUR(MAPTheme.SWAMP, 27, EntityBook.STATIC, null),
     SWP_SLUG(MAPTheme.SWAMP, 28, EntityBook.SWP_SLUG, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
     SWP_MUTANT_FISH(MAPTheme.SWAMP, 29, EntityBook.MOVING, null),
-    SWP_STAT_WASTE_BARREL(MAPTheme.SWAMP, 30, EntityBook.DYNAMIC, null),
+    SWP_STAT_WASTE_BARREL(MAPTheme.SWAMP, 30, EntityBook.DYNAMIC, ScriptBobbingWasteData::new),
     SWP_PIPE_MESH(MAPTheme.SWAMP, 31, EntityBook.STATIC, null),
     SWP_STAT_FRIDGE(MAPTheme.SWAMP, 32, EntityBook.STATIC, null),
     SWP_STAT_TYRE(MAPTheme.SWAMP, 33, EntityBook.STATIC, null),
@@ -287,9 +289,9 @@ public enum FormBook {
     SWP_CRUSHER2(MAPTheme.SWAMP, 34, EntityBook.SWP_CRUSHER, null),
     SWP_PRESS(MAPTheme.SWAMP, 35, EntityBook.SWP_PRESS, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
     SWP_BIRD1(MAPTheme.SWAMP, 36, EntityBook.MOVING, null),
-    SWP_WATER_NOISE(MAPTheme.SWAMP, 0, EntityBook.STATIC, FLAG_NO_MODEL, null),
-    SWP_UNKNOWN(MAPTheme.SWAMP, 37, EntityBook.STATIC, FLAG_NO_MODEL, null), //TODO: This may be wrong.
-    SWP_UNKNOWN2(MAPTheme.SWAMP, 38, EntityBook.STATIC, FLAG_NO_MODEL, null), //TODO: This may be wrong.
+    SWP_WATER_NOISE(MAPTheme.SWAMP, 0, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new),
+    SWP_WEIR_NOISE(MAPTheme.SWAMP, 37, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new), // These last two labels may not be accurate.
+    SWP_RECYCLE_BIN_NOISE(MAPTheme.SWAMP, 38, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new),
 
     SKY_JET1(MAPTheme.SKY, 0, EntityBook.MOVING, null),
     SKY_JET3(MAPTheme.SKY, 1, EntityBook.MOVING, null),
