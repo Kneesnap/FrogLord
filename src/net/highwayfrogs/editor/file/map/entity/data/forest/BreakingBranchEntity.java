@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
+ * Represents "FOREST_BREAKING_BRANCH".
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
@@ -20,7 +21,6 @@ public class BreakingBranchEntity extends GameObject {
         this.matrix.load(reader);
         this.breakDelay = reader.readUnsignedShortAsInt();
         this.fallSpeed = reader.readUnsignedShortAsInt();
-        reader.readShort();
     }
 
     @Override
@@ -28,6 +28,5 @@ public class BreakingBranchEntity extends GameObject {
         this.matrix.save(writer);
         writer.writeUnsignedShort(this.breakDelay);
         writer.writeUnsignedShort(this.fallSpeed);
-        writer.writeUnsignedShort(0);
     }
 }
