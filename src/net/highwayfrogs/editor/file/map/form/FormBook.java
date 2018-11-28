@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.entity.EntityBook;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.entity.script.ScriptNoiseData;
+import net.highwayfrogs.editor.file.map.entity.script.desert.ScriptButterflyData;
 import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptBalloonData;
 import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptHeliumBalloon;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptHawkData;
@@ -107,7 +108,7 @@ public enum FormBook {
     DES_STAT_BALLCACTUS4(MAPTheme.DESERT, 30, EntityBook.STATIC, null),
     DES_STAT_CACTUS4(MAPTheme.DESERT, 31, EntityBook.STATIC, null),
     DES_LIZARD_NOISE(MAPTheme.DESERT, 1, EntityBook.STATIC, FLAG_NO_MODEL, null),
-    DES_BUTTERFLY(MAPTheme.DESERT, 32, EntityBook.MOVING_TONGUEABLE, null),
+    DES_BUTTERFLY(MAPTheme.DESERT, 32, EntityBook.MOVING_TONGUEABLE, ScriptButterflyData::new),
     DES_CROCHEAD(MAPTheme.DESERT, 33, EntityBook.DES_CROC_HEAD, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
     DES_ROLLINGROCK(MAPTheme.DESERT, 6, EntityBook.DES_ROLLING_ROCK, null),
 
