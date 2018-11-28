@@ -20,6 +20,7 @@ Editor Features:
 Make remaps for v3.0e Music Patch. v3.0e Stock, Retail PSX, Demo PSX.
 Unit testing for PP20 decompression. Unit testing for PP20 compression.
 Build FrogPSX.H from MWD.
+MAP Files are larger than the input files. My guess is this is related to the entityIndiceLists.
 
 Non tool-development-related plans:
  - Load the two developer maps.

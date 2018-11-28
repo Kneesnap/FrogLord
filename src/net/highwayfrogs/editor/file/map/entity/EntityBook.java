@@ -73,7 +73,7 @@ public enum EntityBook {
     HEDGEHOG(FLAG_PATH_RUNNER, EntityHedgehog::new),
     MOVING_PLATFORM(FLAG_PATH_RUNNER | FLAG_IMMORTAL, PathInfo::new), // I think
     MOVING_TONGUEABLE(FLAG_PATH_RUNNER | FLAG_TONGUEABLE, PathInfo::new), // I think
-    FIREFLY(FLAG_PATH_RUNNER | FLAG_TONGUEABLE | FLAG_XZ_PARALLEL_TO_CAMERA, PSXMatrix::new), // I think.
+    FIREFLY(FLAG_PATH_RUNNER | FLAG_TONGUEABLE | FLAG_XZ_PARALLEL_TO_CAMERA, PathInfo::new), // This is a special-case in the code or something.
     JUN_PLANT(FLAG_IMMORTAL, EntityEvilPlant::new),
     DES_ROLLING_ROCK(FLAG_PATH_RUNNER | FLAG_IMMORTAL, PathInfo::new), // I think
     JUN_ROPE_BRIDGE(FLAG_IMMORTAL, EntityRopeBridge::new),

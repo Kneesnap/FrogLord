@@ -62,7 +62,7 @@ public enum FormBook {
     CAV_STAT_CRYSTALS(MAPTheme.CAVE, 8, EntityBook.STATIC, null),
     CAV_BAT_FLOCK(MAPTheme.CAVE, 9, EntityBook.STATIC, null),
     CAV_LAVADROP(MAPTheme.CAVE, 0, EntityBook.STATIC, null),
-    CAV_SNAIL(MAPTheme.CAVE, 10, EntityBook.STATIC, null),
+    CAV_SNAIL(MAPTheme.CAVE, 10, EntityBook.MOVING, null), // TODO: This is present in CAV3.MAP?
     CAV_SLIME(MAPTheme.CAVE, 11, EntityBook.STATIC, null),
     CAV_STAT_ROCKBLOCK2(MAPTheme.CAVE, 12, EntityBook.STATIC, null),
     CAV_STAT_WEBWALL(MAPTheme.CAVE, 13, EntityBook.STATIC, null),
