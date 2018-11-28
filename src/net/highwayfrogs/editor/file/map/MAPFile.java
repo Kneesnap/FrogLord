@@ -5,8 +5,6 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
-import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -625,13 +623,6 @@ public class MAPFile extends GameFile {
         if (selectedFolder == null)
             return;
 
-        FileChooser exeChooser = new FileChooser();
-        exeChooser.setTitle("Select the Frogger executable with the remap table.");
-        exeChooser.getExtensionFilters().add(new ExtensionFilter("Frogger PC Executable", "*.exe"));
-        exeChooser.getExtensionFilters().add(new ExtensionFilter("Frogger PSX Executable", "*.01", "*.02", "*.03", "*.04", "*.05", "*.06", "*.07", "*.08", "*.09"));
-        exeChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-        exeChooser.setInitialFileName("frogger.exe");
-
         List<VLOArchive> allVLOs = getParentMWD().getFiles().stream()
                 .filter(VLOArchive.class::isInstance)
                 .map(VLOArchive.class::cast)
@@ -641,18 +632,11 @@ public class MAPFile extends GameFile {
         SelectionMenu.promptSelection("Please select the VLO associated with this map.", vlo -> {
             boolean hasTextures = vlo != null;
 
-            File selectedExe = null;
-            if (hasTextures) {
-                selectedExe = exeChooser.showOpenDialog(GUIMain.MAIN_STAGE);
-                if (selectedExe == null)
-                    return;
-            }
-
             if (hasTextures)
                 vlo.exportAllImages(selectedFolder, true, true, true); // Export VLO images.
 
             String cleanName = entry.getDisplayName().split("\\.")[0];
-            exportToObj(selectedFolder, cleanName, entry, vlo, hasTextures ? GUIMain.EXE_CONFIG.getRemapTable(cleanName, selectedExe) : null);
+            exportToObj(selectedFolder, cleanName, entry, vlo, hasTextures ? GUIMain.EXE_CONFIG.getRemapTable(cleanName) : null);
         }, allVLOs, vlo -> vlo != null ? parentMWD.getEntryMap().get(vlo).getDisplayName() : "No Textures", vlo -> vlo == null ? null :
                 new ImageView(SwingFXUtils.toFXImage(Utils.resizeImage(vlo.getImages().get(0).toBufferedImage(false, false, false), 25, 25), null)));
     }

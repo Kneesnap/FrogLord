@@ -17,7 +17,6 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
-import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
@@ -40,7 +39,7 @@ public class GUIMain extends Application {
         File folder = new File("debug");
         if (folder.exists() && folder.isDirectory()) {
             workingDirectory = folder;
-            File mwiFile = new File(folder, "VANILLA.MWI");
+            File mwiFile = new File(folder, "VANILLA.EXE");
             File mwdFile = new File(folder, "VANILLA.MWD");
 
             if (mwiFile.exists() && mwdFile.exists()) {
@@ -51,7 +50,7 @@ public class GUIMain extends Application {
 
         // If this isn't a debug setup, prompt the user to select the files to load.
         File mwdFile = promptFile("MWD", "Medievil WAD");
-        File mwiFile = promptFile("MWI", "Medievil WAD Index");
+        File mwiFile = promptFile("EXE", "Frogger Executable");
         openGUI(primaryStage, mwiFile, mwdFile);
     }
 
@@ -73,7 +72,7 @@ public class GUIMain extends Application {
         launch(args);
     }
 
-    private void openGUI(Stage primaryStage, File mwiFile, File mwdFile) throws Exception {
+    private void openGUI(Stage primaryStage, File exeFile, File mwdFile) throws Exception {
         Parent root = FXMLLoader.load(Utils.getResource("javafx/main.fxml"));
         Scene scene = new Scene(root);
 
@@ -84,10 +83,13 @@ public class GUIMain extends Application {
         primaryStage.getIcons().add(GameFile.loadIcon("icon"));
         primaryStage.show();
 
-        MWIFile mwi = new MWIFile();
-        mwi.load(new DataReader(new FileSource(mwiFile)));
+        try {
+            EXE_CONFIG = new FroggerEXEInfo(exeFile, new File(exeFile.getParentFile(), "frogger.exe"), Utils.getResourceStream("exes/30e.cfg"));
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
 
-        MWDFile mwd = new MWDFile(mwi);
+        MWDFile mwd = new MWDFile(EXE_CONFIG.readMWI());
         mwd.load(new DataReader(new FileSource(mwdFile)));
 
         MainController controller = MainController.MAIN_WINDOW;
@@ -101,7 +103,7 @@ public class GUIMain extends Application {
 
         scene.setOnKeyPressed(event -> {
             if (ctrlS.match(event)) {
-                saveFiles(mwi, mwd, mwdFile.getParentFile());
+                saveFiles(EXE_CONFIG, mwd, mwdFile.getParentFile());
             } else if (ctrlI.match(event)) {
                 controller.importFile();
             } else if (ctrlO.match(event)) {
@@ -114,7 +116,7 @@ public class GUIMain extends Application {
     }
 
     @SneakyThrows
-    private static void saveFiles(MWIFile loadedMWI, MWDFile loadedMWD, File folder) {
+    private static void saveFiles(FroggerEXEInfo froggerEXE, MWDFile loadedMWD, File folder) {
         FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/save.fxml"));
 
         SaveController controller = new SaveController();
@@ -128,7 +130,7 @@ public class GUIMain extends Application {
         newStage.setMinHeight(100);
 
         controller.onInit(newStage);
-        controller.startSaving(loadedMWD, loadedMWI, folder);
+        controller.startSaving(loadedMWD, froggerEXE, folder);
 
         newStage.initModality(Modality.APPLICATION_MODAL);
         newStage.initOwner(MAIN_STAGE);
@@ -142,14 +144,5 @@ public class GUIMain extends Application {
     public static void setWorkingDirectory(File directory) {
         if (directory != null && directory.isDirectory())
             workingDirectory = directory;
-    }
-
-    static {
-        try {
-            EXE_CONFIG = new FroggerEXEInfo(Utils.getResourceStream("exes/30e-music.cfg"));
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            System.exit(0);
-        }
     }
 }

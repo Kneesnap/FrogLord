@@ -7,7 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.stage.Stage;
 import net.highwayfrogs.editor.file.MWDFile;
-import net.highwayfrogs.editor.file.MWIFile;
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 
@@ -39,18 +39,14 @@ public class SaveController {
     /**
      * Start saving the MWD File.
      * @param loadedMWD The loaded MWD file to save.
-     * @param loadedMWI The loaded MWI file to save.
+     * @param froggerEXE The executable to save data to.
      * @param folder    The folder to output the mwds.
      */
-    public void startSaving(MWDFile loadedMWD, MWIFile loadedMWI, File folder) {
-        File mwiFile = new File(folder, "MODDED.MWI");
-        File mwdFile = new File(folder, "MODDED.MWD");
-
-        DataWriter mwiWriter;
+    public void startSaving(MWDFile loadedMWD, FroggerEXEInfo froggerEXE, File folder) {
+        File mwdFile = new File(folder, "FROGPSX.MWD");
         DataWriter mwdWriter;
 
         try {
-            mwiWriter = new DataWriter(new FileReceiver(mwiFile));
             mwdWriter = new DataWriter(new FileReceiver(mwdFile));
         } catch (FileNotFoundException ex) {
             throw new RuntimeException("Failed to save files.", ex);
@@ -73,8 +69,8 @@ public class SaveController {
             mwdWriter.closeReceiver();
             loadedMWD.setSaveCallback(null);
 
-            loadedMWI.save(mwiWriter);
-            mwiWriter.closeReceiver();
+            froggerEXE.patchEXE(loadedMWD.getWadIndexTable());
+            froggerEXE.closeWriter();
             Platform.runLater(stage::close);
         }).start();
     }
