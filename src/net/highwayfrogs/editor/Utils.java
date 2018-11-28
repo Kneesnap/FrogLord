@@ -304,4 +304,13 @@ public class Utils {
     public static int getUnsignedByte(byte value) {
         return value >= 0 ? value : (int) Byte.MAX_VALUE - value;
     }
+
+    /**
+     * Strip the extension from a file name.
+     * @param name The file name.
+     * @return stripped
+     */
+    public static String stripExtension(String name) {
+        return name.split("\\.")[0];
+    }
 }

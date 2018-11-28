@@ -33,6 +33,16 @@ public abstract class GameFile extends GameObject {
     public abstract Node makeEditor();
 
     /**
+     * Called when this file is imported.
+     * @param oldFile          The old file.
+     * @param oldFileName      The old file's name.
+     * @param importedFileName The name of the file just imported.
+     */
+    public void onImport(GameFile oldFile, String oldFileName, String importedFileName) {
+
+    }
+
+    /**
      * Export this file in a non-Frogger format.
      */
     public void exportAlternateFormat(FileEntry entry) {

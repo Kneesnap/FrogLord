@@ -111,6 +111,7 @@ public class MainController implements Initializable {
         this.mwdFile.getFiles().set(index, newFile);
         this.fileList.getItems().set(index, newFile);
 
+        newFile.onImport(oldFile, getFileEntry().getDisplayName(), selectedFile.getName());
         openEditor(newFile); // Open the editor for the new file.
         System.out.println("Imported " + selectedFile.getName() + " as " + getFileEntry().getDisplayName() + ".");
     }

@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
@@ -143,14 +142,16 @@ public class FroggerEXEInfo extends Config {
      * @param levelName   The name of the level to patch a remap for.
      * @param remapImages The new image remap array.
      */
-    public void patchRemapInExe(String levelName, List<GameImage> remapImages) {
+    public void patchRemapInExe(String levelName, List<Integer> remapImages) {
+        ;
         DataWriter writer = getWriter();
-        int remapAddress = getRemapInfo(levelName).getKey();
+        Pair<Integer, Integer> pair = getRemapInfo(levelName);
+        int remapAddress = pair.getKey();
+        int remapCount = pair.getValue();
+        Utils.verify(remapCount >= remapImages.size(), "New remap table is larger than the old remap table.");
 
         writer.jumpTemp(remapAddress);
-        for (GameImage image : remapImages)
-            writer.writeShort(image.getTextureId());
-
+        remapImages.forEach(writer::writeUnsignedShort);
         writer.jumpReturn();
     }
 
