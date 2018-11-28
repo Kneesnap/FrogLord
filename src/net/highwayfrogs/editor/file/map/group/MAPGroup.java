@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
@@ -22,7 +23,7 @@ import java.util.Map;
 @Getter
 public class MAPGroup extends GameObject {
     private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> polygonMap = new HashMap<>();
-    private List<Short> entityList = new ArrayList<>(); // Points to the array of entity ids which project over this map group.
+    private List<Entity> entities = new ArrayList<>();
 
     private transient MAPFile parent;
     private transient Map<PSXPrimitiveType, Short> loadPolygonCountMap = new HashMap<>();
@@ -55,7 +56,7 @@ public class MAPGroup extends GameObject {
             reader.jumpTemp(entityRootPointer);
             short temp;
             while ((temp = reader.readShort()) != MAPFile.MAP_ANIMATION_TEXTURE_LIST_TERMINATOR)
-                getEntityList().add(temp);
+                getEntities().add(getParent().getEntities().get(temp));
             reader.jumpReturn();
         }
     }
@@ -125,7 +126,7 @@ public class MAPGroup extends GameObject {
      * @param writer The writer to write the data to.
      */
     public void writeEntityList(DataWriter writer) {
-        parent.writeEntityList(writer, getEntityList(), this.savePointerLocation);
+        parent.writeEntityList(writer, getEntities(), this.savePointerLocation);
         this.savePointerLocation = 0;
     }
 }

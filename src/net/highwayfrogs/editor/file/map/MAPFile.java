@@ -808,20 +808,22 @@ public class MAPFile extends GameFile {
      * @param entities        The list of entities to include.
      * @param pointerLocation A pointer to an integer which holds the pointer to the entity list.
      */
-    public void writeEntityList(DataWriter writer, List<Short> entities, int pointerLocation) {
+    public void writeEntityList(DataWriter writer, List<Entity> entities, int pointerLocation) {
         if (entities.isEmpty())
             return;
 
         Utils.verify(pointerLocation > 0, "Entity pointer location is not set!");
-
 
         int tempAddress = writer.getIndex();
         writer.jumpTemp(pointerLocation);
         writer.writeInt(tempAddress);
         writer.jumpReturn();
 
-        for (short id : entities)
-            writer.writeShort(id);
+        for (Entity entity : entities) {
+            int entityId = getEntities().indexOf(entity);
+            Utils.verify(entityId >= 0, "Tried to save a reference to an entity which is not tracked by the map!");
+            writer.writeUnsignedShort(entityId);
+        }
 
         writer.writeShort(MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
     }
