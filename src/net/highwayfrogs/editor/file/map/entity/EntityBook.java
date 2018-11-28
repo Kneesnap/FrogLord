@@ -78,7 +78,7 @@ public enum EntityBook {
     DES_ROLLING_ROCK(FLAG_PATH_RUNNER | FLAG_IMMORTAL, PathInfo::new), // I think
     JUN_ROPE_BRIDGE(FLAG_IMMORTAL, EntityRopeBridge::new),
     JUN_HIPPO(FLAG_PATH_RUNNER, PathInfo::new), // I think
-    VOL_FALLING_PLATFORM(FLAG_IMMORTAL, PSXMatrix::new), // I think
+    VOL_FALLING_PLATFORM(FLAG_IMMORTAL, EntityCrack::new), // It shares DES_CRACK's structure.
     DES_TUMBLE_WEED(FLAG_PATH_RUNNER, PathInfo::new), // I think
     GEN_TOP_LEFT(FLAG_STATIC | FLAG_IMMORTAL, PSXMatrix::new), // "Fade Area" Appears to store the position of screen fading? I think
     GEN_BOTTOM_RIGHT(FLAG_STATIC | FLAG_IMMORTAL, PSXMatrix::new), // I think

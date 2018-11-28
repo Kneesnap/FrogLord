@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
+ * Represents the "VOL_COLOUR_TRIGGER" struct.
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
@@ -15,7 +16,10 @@ public class EntityColorTrigger extends GameObject {
     private int type;
     private int color;
     private short[] uniqueIds = new short[COLOR_TRIGGER_MAX_IDS];
-    private int frameCount;
+
+    public static final int TYPE_FREEZE = 0;
+    public static final int TYPE_REVERSE = 1;
+    public static final int TYPE_START = 2;
 
     private static final int COLOR_TRIGGER_MAX_IDS = 10;
 
@@ -27,8 +31,6 @@ public class EntityColorTrigger extends GameObject {
 
         for (int i = 0; i < uniqueIds.length; i++)
             this.uniqueIds[i] = reader.readShort();
-
-        this.frameCount = reader.readInt();
     }
 
     @Override
@@ -38,6 +40,5 @@ public class EntityColorTrigger extends GameObject {
         writer.writeUnsignedShort(this.color);
         for (short id : uniqueIds)
             writer.writeShort(id);
-        writer.writeInt(this.frameCount);
     }
 }

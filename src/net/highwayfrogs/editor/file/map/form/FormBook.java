@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.entity.EntityBook;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.entity.script.ScriptNoiseData;
+import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptMechanismData;
+import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptPlatform2Data;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -392,16 +394,16 @@ public enum FormBook {
     VOL_STAT_ROCKS2(MAPTheme.VOLCANO, 2, EntityBook.STATIC, null),
     VOL_SWITCH(MAPTheme.VOLCANO, 3, EntityBook.TRIGGER, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
     VOL_PLATFORM1(MAPTheme.VOLCANO, 4, EntityBook.MOVING, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
-    VOL_PLATFORM2(MAPTheme.VOLCANO, 5, EntityBook.MOVING_PLATFORM, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
+    VOL_PLATFORM2(MAPTheme.VOLCANO, 5, EntityBook.MOVING_PLATFORM, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, ScriptPlatform2Data::new),
     VOL_FALLING_PLATFORM(MAPTheme.VOLCANO, 6, EntityBook.VOL_FALLING_PLATFORM, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH | FLAG_THICK, null),
-    VOL_MECHANISM(MAPTheme.VOLCANO, 7, EntityBook.DYNAMIC, null),
-    VOL_FURNACE_PLATFORM(MAPTheme.VOLCANO, 8, EntityBook.DYNAMIC, null),
+    VOL_MECHANISM(MAPTheme.VOLCANO, 7, EntityBook.DYNAMIC, ScriptMechanismData::new),
+    VOL_FURNACE_PLATFORM(MAPTheme.VOLCANO, 8, EntityBook.DYNAMIC, ScriptMechanismData::new),
     VOL_LAVA_SPRAY(MAPTheme.VOLCANO, 9, EntityBook.MOVING, null),
     VOL_SPINNER(MAPTheme.VOLCANO, 10, EntityBook.MOVING, null),
     VOL_COLOR_TRIGGER(MAPTheme.VOLCANO, 3, EntityBook.VOL_COLOUR_SWITCH, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
-    VOL_COG_NOISE(MAPTheme.VOLCANO, 11, EntityBook.STATIC, FLAG_NO_MODEL, null),
+    VOL_COG_NOISE(MAPTheme.VOLCANO, 11, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new),
     VOL_PLATFORM3(MAPTheme.VOLCANO, 12, EntityBook.MOVING_PLATFORM, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
-    VOL_LAVA_NOISE(MAPTheme.VOLCANO, 10, EntityBook.STATIC, FLAG_NO_MODEL, null);
+    VOL_LAVA_NOISE(MAPTheme.VOLCANO, 10, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new);
 
     private MAPTheme theme;
     private int id;
