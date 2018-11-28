@@ -20,21 +20,6 @@ public class MapMesh extends TriangleMesh {
     }
 
     /**
-     * An example mesh that works.
-     */
-    public void exampleWorks() {
-        getPoints().addAll(0F, 0F, 0F);
-        getPoints().addAll(0F, 10F, 0F);
-        getPoints().addAll(10F, 0F, 0F);
-        getPoints().addAll(10F, 10F, 0F);
-
-        loadTextureCoords();
-
-        getFaces().addAll(0, 0, 1, 0, 3, 0);
-        getFaces().addAll(0, 0, 2, 0, 3, 0);
-    }
-
-    /**
      * Load mesh data from the map.
      */
     public void loadData() {
@@ -42,7 +27,6 @@ public class MapMesh extends TriangleMesh {
         loadTextureCoords();
         loadPolygonData();
         //getFaceSmoothingGroups();
-        //getNormals();
     }
 
     /**
@@ -83,8 +67,8 @@ public class MapMesh extends TriangleMesh {
     public void addRectangle(PSXPolygon poly) {
         short[] verts = poly.getVertices();
         Utils.verify(verts.length == PSXPolygon.QUAD_SIZE, "This polygon has %d vertices!", verts.length);
-        getFaces().addAll(verts[0], 0, verts[1], 0, verts[3], 0);
-        getFaces().addAll(verts[0], 0, verts[2], 0, verts[3], 0);
+        getFaces().addAll(verts[3], 0, verts[1], 0, verts[0], 0);
+        getFaces().addAll(verts[3], 0, verts[2], 0, verts[0], 0);
     }
 
     /**
@@ -92,9 +76,9 @@ public class MapMesh extends TriangleMesh {
      * @param poly The triangle polygon.
      */
     public void addTriangle(PSXPolygon poly) {
-        Utils.verify(poly.getVertices().length == PSXPolygon.TRI_SIZE, "This polygon has %d vertices!", poly.getVertices().length);
-        for (short vertice : poly.getVertices())
-            getFaces().addAll(vertice, 0);
+        short[] verts = poly.getVertices();
+        Utils.verify(verts.length == PSXPolygon.TRI_SIZE, "This polygon has %d vertices!", poly.getVertices().length);
+        getFaces().addAll(verts[2], 0, verts[1], 0, verts[0], 0);
     }
 
     /**
@@ -102,6 +86,6 @@ public class MapMesh extends TriangleMesh {
      */
     public void loadVertices() {
         for (SVector vertex : map.getVertexes())
-            getPoints().addAll(Utils.unsignedShortToFloat(vertex.getX()) * 100, Utils.unsignedShortToFloat(vertex.getY()) * 100, -Utils.unsignedShortToFloat(vertex.getZ()) * 100);
+            getPoints().addAll(Utils.unsignedShortToFloat(vertex.getX()) * 100, Utils.unsignedShortToFloat(vertex.getY()) * 100, Utils.unsignedShortToFloat(vertex.getZ()) * 100);
     }
 }
