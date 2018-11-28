@@ -48,7 +48,6 @@ import java.util.stream.Collectors;
 
 /**
  * Parses Frogger MAP files.
- * TODO: Header-data. What are the bytes? Date created? Version? Export time calculation? Number of vertexes? Or is it what-ever random junk was malloced?
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
@@ -131,7 +130,7 @@ public class MAPFile extends GameFile {
         getLoadPointerPolygonMap().clear();
 
         reader.verifyString(SIGNATURE);
-        int fileLength = reader.readInt();
+        reader.readInt(); // File length.
         reader.verifyString(VERSION);
         reader.readString(COMMENT_BYTES); // Comment bytes.
 
@@ -616,26 +615,29 @@ public class MAPFile extends GameFile {
         exeChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
         exeChooser.setInitialFileName("frogger.exe");
 
-        File selectedExe = exeChooser.showOpenDialog(GUIMain.MAIN_STAGE);
-        if (selectedExe == null)
-            return;
-
         List<VLOArchive> allVLOs = getParentMWD().getFiles().stream()
                 .filter(VLOArchive.class::isInstance)
                 .map(VLOArchive.class::cast)
                 .collect(Collectors.toList());
+        allVLOs.add(0, null);
 
         SelectionMenu.promptSelection("Please select the VLO associated with this map.", vlo -> {
-            vlo.exportAllImages(selectedFolder, true, true, true); // Export VLO images.
+            boolean hasTextures = vlo != null;
+
+            File selectedExe = null;
+            if (hasTextures) {
+                selectedExe = exeChooser.showOpenDialog(GUIMain.MAIN_STAGE);
+                if (selectedExe == null)
+                    return;
+            }
+
+            if (hasTextures)
+                vlo.exportAllImages(selectedFolder, true, true, true); // Export VLO images.
 
             String cleanName = entry.getDisplayName().split("\\.")[0];
-            exportToObj(selectedFolder, cleanName, entry, vlo, GUIMain.EXE_CONFIG.getRemapTable(cleanName, selectedExe));
-        }, allVLOs, vlo -> parentMWD.getEntryMap().get(vlo).getDisplayName(), vlo ->
+            exportToObj(selectedFolder, cleanName, entry, vlo, hasTextures ? GUIMain.EXE_CONFIG.getRemapTable(cleanName, selectedExe) : null);
+        }, allVLOs, vlo -> vlo != null ? parentMWD.getEntryMap().get(vlo).getDisplayName() : "No Textures", vlo -> vlo == null ? null :
                 new ImageView(SwingFXUtils.toFXImage(Utils.resizeImage(vlo.getImages().get(0).toBufferedImage(false, false, false), 25, 25), null)));
-    }
-
-    private void exportToObj(File directory, String cleanName, FileEntry entry) {
-        exportToObj(directory, cleanName, entry, null, null);
     }
 
     @SneakyThrows
