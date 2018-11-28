@@ -1,12 +1,12 @@
-package net.highwayfrogs.editor.file.map.entity.script.desert;
+package net.highwayfrogs.editor.file.map.entity.script;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
-import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
+ * Holds onto butterfly data.
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter

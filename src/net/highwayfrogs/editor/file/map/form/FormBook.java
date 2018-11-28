@@ -5,8 +5,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.entity.EntityBook;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
+import net.highwayfrogs.editor.file.map.entity.script.ScriptButterflyData;
 import net.highwayfrogs.editor.file.map.entity.script.ScriptNoiseData;
-import net.highwayfrogs.editor.file.map.entity.script.desert.ScriptButterflyData;
 import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptBalloonData;
 import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptHeliumBalloon;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptHawkData;
@@ -350,10 +350,10 @@ public enum FormBook {
     SUB_STAT_GRASS(MAPTheme.SUBURBIA, 26, EntityBook.STATIC, null),
     SUB_FISH(MAPTheme.SUBURBIA, 27, EntityBook.MOVING, null),
     SUB_FISH3(MAPTheme.SUBURBIA, 28, EntityBook.MOVING, null),
-    SUB_BUTTERFLY(MAPTheme.SUBURBIA, 29, EntityBook.MOVING_TONGUEABLE, null),
+    SUB_BUTTERFLY(MAPTheme.SUBURBIA, 29, EntityBook.MOVING_TONGUEABLE, ScriptButterflyData::new),
     SUB_LAWNMOWERNOISE(MAPTheme.SUBURBIA, 30, EntityBook.DYNAMIC, FLAG_NO_MODEL, null),
-    SUB_BUTTERFLY2(MAPTheme.SUBURBIA, 30, EntityBook.MOVING_TONGUEABLE, null),
-    SUB_BUTTERFLY3(MAPTheme.SUBURBIA, 31, EntityBook.MOVING_TONGUEABLE, null),
+    SUB_BUTTERFLY2(MAPTheme.SUBURBIA, 30, EntityBook.MOVING_TONGUEABLE, ScriptButterflyData::new),
+    SUB_BUTTERFLY3(MAPTheme.SUBURBIA, 31, EntityBook.MOVING_TONGUEABLE, ScriptButterflyData::new),
     SUB_STAT_BULLRUSH2(MAPTheme.SUBURBIA, 32, EntityBook.STATIC, null),
     SUB_STAT_DAISY(MAPTheme.SUBURBIA, 33, EntityBook.STATIC, null),
     SUB_STAT_WEED(MAPTheme.SUBURBIA, 34, EntityBook.STATIC, null),
@@ -373,8 +373,8 @@ public enum FormBook {
     SUB_SMALL_BIRD(MAPTheme.SUBURBIA, 48, EntityBook.MOVING, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
     SUB_LOG3(MAPTheme.SUBURBIA, 49, EntityBook.MOVING, null),
     SUB_CLOUD_PLATFORM(MAPTheme.SUBURBIA, 50, EntityBook.MOVING, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
-    SUB_ROAD_NOISE(MAPTheme.SUBURBIA, 15, EntityBook.STATIC, FLAG_NO_MODEL, null),
-    SUB_WATER_NOISE(MAPTheme.SUBURBIA, 23, EntityBook.STATIC, FLAG_NO_MODEL, null),
+    SUB_ROAD_NOISE(MAPTheme.SUBURBIA, 15, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new),
+    SUB_WATER_NOISE(MAPTheme.SUBURBIA, 23, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new),
     SUB_CAR_BLUE(MAPTheme.SUBURBIA, 51, EntityBook.MOVING, null),
     SUB_CAR_PURPLE(MAPTheme.SUBURBIA, 52, EntityBook.MOVING, null),
     SUB_CAR_BLUE_ALTERNATE(MAPTheme.SUBURBIA, 53, EntityBook.MOVING, null),
