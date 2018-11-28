@@ -124,6 +124,15 @@ public class MAPFile extends GameFile {
         PRIMITIVE_TYPES.add(PSXLineType.G2);
     }
 
+    /**
+     * Remove an entity from this map.
+     * @param entity The entity to remove.
+     */
+    public void removeEntity(Entity entity) {
+        getEntities().remove(entity);
+        getGroups().forEach(group -> group.getEntities().remove(entity));
+    }
+
     @Override
     public void load(DataReader reader) {
         getLoadPolygonPointerMap().clear();
