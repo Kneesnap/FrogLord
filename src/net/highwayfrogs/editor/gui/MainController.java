@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
@@ -136,9 +137,7 @@ public class MainController implements Initializable {
         GUIMain.setWorkingDirectory(selectedFile.getParentFile());
 
         try {
-            if (selectedFile.exists()) // Don't merge files, create a new one.
-                selectedFile.delete();
-
+            Utils.deleteFile(selectedFile); // Don't merge files, create a new one.
             DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
             currentFile.save(writer);
             writer.closeReceiver();

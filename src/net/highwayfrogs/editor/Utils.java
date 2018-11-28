@@ -313,4 +313,14 @@ public class Utils {
     public static String stripExtension(String name) {
         return name.split("\\.")[0];
     }
+
+    /**
+     * Deletes a file.
+     * @param file The file to delete.
+     */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static void deleteFile(File file) {
+        if (file.exists())
+            file.delete();
+    }
 }

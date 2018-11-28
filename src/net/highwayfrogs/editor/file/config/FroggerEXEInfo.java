@@ -143,7 +143,6 @@ public class FroggerEXEInfo extends Config {
      * @param remapImages The new image remap array.
      */
     public void patchRemapInExe(String levelName, List<Integer> remapImages) {
-        ;
         DataWriter writer = getWriter();
         Pair<Integer, Integer> pair = getRemapInfo(levelName);
         int remapAddress = pair.getKey();
@@ -165,8 +164,7 @@ public class FroggerEXEInfo extends Config {
 
         // Delete existing file, copy input executable to output executable.
         try {
-            if (outputFile.exists())
-                outputFile.delete();
+            Utils.deleteFile(outputFile);
             Files.write(outputFile.toPath(), Files.readAllBytes(inputFile.toPath()));
         } catch (IOException ex) {
             throw new RuntimeException(ex);
