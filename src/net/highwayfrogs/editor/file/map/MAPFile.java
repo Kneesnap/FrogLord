@@ -353,6 +353,9 @@ public class MAPFile extends GameFile {
         getSavePointerPolygonMap().clear();
         getSavePolygonPointerMap().clear();
 
+        //if (MWDFile.CURRENT_FILE_NAME.equalsIgnoreCase("SUB1.MAP"))
+        //    fixDEV1();
+
         // Write File Header
         writer.writeStringBytes(SIGNATURE);
         writer.writeInt(0); // File length. (Unused)
@@ -808,7 +811,22 @@ public class MAPFile extends GameFile {
             return;
         int realSize = (endPointer - lastEntity.getLoadScriptDataPointer());
         if (realSize != lastEntity.getLoadReadLength())
-            System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormBook());
+            System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormBook());
+    }
+
+    /**
+     * This method fixes this MAP (If it is ISLAND.MAP) so it will load properly.
+     */
+    public void fixDEV1() {
+        removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity.
+
+        // Remove "SUB_PEDDLEBOAT" entities. These entities do not exist.
+        removeEntity(getEntities().get(7));
+        removeEntity(getEntities().get(5));
+        removeEntity(getEntities().get(3));
+        removeEntity(getEntities().get(2));
+
+        //TODO: Remap
     }
 
     /**
