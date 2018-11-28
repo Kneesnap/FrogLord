@@ -20,6 +20,21 @@ public class MapMesh extends TriangleMesh {
     }
 
     /**
+     * An example mesh that works.
+     */
+    public void exampleWorks() {
+        getPoints().addAll(0F, 0F, 0F);
+        getPoints().addAll(0F, 10F, 0F);
+        getPoints().addAll(10F, 0F, 0F);
+        getPoints().addAll(10F, 10F, 0F);
+
+        loadTextureCoords();
+
+        getFaces().addAll(0, 0, 1, 0, 3, 0);
+        getFaces().addAll(0, 0, 2, 0, 3, 0);
+    }
+
+    /**
      * Load mesh data from the map.
      */
     public void loadData() {
@@ -86,11 +101,8 @@ public class MapMesh extends TriangleMesh {
      * Load vertex data.
      */
     public void loadVertices() {
-        getPoints().clear();
+        //getPoints().clear();
         for (SVector vertex : map.getVertexes())
             getPoints().addAll(-Utils.unsignedShortToFloat(vertex.getX()) * 100, -Utils.unsignedShortToFloat(vertex.getY()) * 100, Utils.unsignedShortToFloat(vertex.getZ()) * 100);
-
-        for (int i = 0; i < 6; i++)
-            System.out.println(getPoints().get(i));
     }
 }
