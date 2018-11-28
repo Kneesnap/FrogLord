@@ -209,30 +209,18 @@ public class MAPFile extends GameFile {
         reader.readShort(); // Padding.
 
         Entity lastEntity = null;
-        boolean showInvalid = true;
         for (int i = 0; i < entityCount; i++) {
-            int entityPointer = reader.readInt();
+            int newEntityPointer = reader.readInt();
+            printInvalidEntityReadDetection(lastEntity, newEntityPointer);
 
-            if (lastEntity != null) { // Note, this will miss the final entity.
-                int realSize = (entityPointer - lastEntity.getLoadScriptDataPointer());
-                if (realSize != lastEntity.getLoadReadLength() && showInvalid)
-                    System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormBook());
-            }
-
-            reader.jumpTemp(entityPointer);
+            reader.jumpTemp(newEntityPointer);
             Entity entity = new Entity(this);
             entity.load(reader);
             entities.add(entity);
             reader.jumpReturn();
             lastEntity = entity;
         }
-
-        // Go over the last entity.
-        if (lastEntity != null) {
-            int realSize = (graphicalAddress - lastEntity.getLoadScriptDataPointer());
-            if (realSize != lastEntity.getLoadReadLength() && showInvalid)
-                System.out.println("[last_INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormBook());
-        }
+        printInvalidEntityReadDetection(lastEntity, graphicalAddress); // Go over the last entity.
 
         reader.setIndex(graphicalAddress);
         reader.verifyString(GRAPHICAL_SIGNATURE);
@@ -797,5 +785,13 @@ public class MAPFile extends GameFile {
     private void addPolygons(Map<PSXPrimitiveType, List<PSXGPUPrimitive>> add) {
         for (Entry<PSXPrimitiveType, List<PSXGPUPrimitive>> entry : add.entrySet())
             cachedPolygons.computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).addAll(entry.getValue());
+    }
+
+    private void printInvalidEntityReadDetection(Entity lastEntity, int endPointer) {
+        if (lastEntity == null)
+            return;
+        int realSize = (endPointer - lastEntity.getLoadScriptDataPointer());
+        if (realSize != lastEntity.getLoadReadLength())
+            System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormBook());
     }
 }
