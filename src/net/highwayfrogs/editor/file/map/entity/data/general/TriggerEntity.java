@@ -16,7 +16,6 @@ public class TriggerEntity extends GameObject {
     private PSXMatrix matrix = new PSXMatrix();
     private int type;
     private short[] uniqueIds = new short[ENTITY_TYPE_TRIGGER_MAX_IDS];
-    private int frameCount;
 
     public static final int ENTITY_TYPE_TRIGGER_MAX_IDS = 10;
     public static final int BYTE_SIZE = PSXMatrix.BYTE_SIZE + (10 * Constants.SHORT_SIZE) + (2 * Constants.INTEGER_SIZE);
@@ -28,7 +27,6 @@ public class TriggerEntity extends GameObject {
 
         for (int i = 0; i < uniqueIds.length; i++)
             this.uniqueIds[i] = reader.readShort();
-        this.frameCount = reader.readInt();
     }
 
     @Override
@@ -37,6 +35,5 @@ public class TriggerEntity extends GameObject {
         writer.writeInt(this.type);
         for (short id : uniqueIds)
             writer.writeShort(id);
-        writer.writeInt(this.frameCount);
     }
 }

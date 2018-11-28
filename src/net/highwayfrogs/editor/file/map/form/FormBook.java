@@ -6,6 +6,10 @@ import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.entity.EntityBook;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.entity.script.ScriptNoiseData;
+import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptBalloonData;
+import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptHeliumBalloon;
+import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptHawkData;
+import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptHelicopterData;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptMechanismData;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptPlatform2Data;
 
@@ -290,22 +294,22 @@ public enum FormBook {
     SKY_JET3(MAPTheme.SKY, 1, EntityBook.MOVING, null),
     SKY_BIPLANE1(MAPTheme.SKY, 2, EntityBook.MOVING, null),
     SKY_BIPLANE2(MAPTheme.SKY, 3, EntityBook.MOVING, null),
-    SKY_HELICOPTER(MAPTheme.SKY, 4, EntityBook.DYNAMIC, null),
+    SKY_HELICOPTER(MAPTheme.SKY, 4, EntityBook.DYNAMIC, ScriptHelicopterData::new),
     SKY_BIRD1(MAPTheme.SKY, 5, EntityBook.MOVING, null),
     SKY_BIRD2(MAPTheme.SKY, 6, EntityBook.MOVING, null),
     SKY_BIRD3(MAPTheme.SKY, 7, EntityBook.MOVING, null),
     SKY_BIRD4(MAPTheme.SKY, 8, EntityBook.MOVING, null),
     SKY_LITTLE_BIRD(MAPTheme.SKY, 9, EntityBook.MOVING, null),
     SKY_POPPING_BIRD(MAPTheme.SKY, 10, EntityBook.MOVING, null),
-    SKY_RUBBER_BALLOON1(MAPTheme.SKY, 11, EntityBook.DYNAMIC, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
-    SKY_RUBBER_BALLOON2(MAPTheme.SKY, 12, EntityBook.DYNAMIC, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
-    SKY_HELIUM_BALLOON3(MAPTheme.SKY, 13, EntityBook.DYNAMIC, FLAG_NO_ROTATION_SNAPPING | FLAG_NO_ENTITY_ANGLE | FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
+    SKY_RUBBER_BALLOON1(MAPTheme.SKY, 11, EntityBook.DYNAMIC, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, ScriptBalloonData::new),
+    SKY_RUBBER_BALLOON2(MAPTheme.SKY, 12, EntityBook.DYNAMIC, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, ScriptBalloonData::new),
+    SKY_HELIUM_BALLOON3(MAPTheme.SKY, 13, EntityBook.DYNAMIC, FLAG_NO_ROTATION_SNAPPING | FLAG_NO_ENTITY_ANGLE | FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, ScriptHeliumBalloon::new),
     SKY_BIPLANE_BANNER1(MAPTheme.SKY, 14, EntityBook.STATIC, null),
     SKY_CLOUD_PLATFORM1(MAPTheme.SKY, 0, EntityBook.STATIC, FLAG_NO_MODEL, null),
     SKY_CLOUD1(MAPTheme.SKY, 15, EntityBook.STATIC, null),
     SKY_CLOUD2(MAPTheme.SKY, 16, EntityBook.STATIC, null),
     SKY_CLOUD3(MAPTheme.SKY, 17, EntityBook.STATIC, null),
-    SKY_HAWK(MAPTheme.SKY, 18, EntityBook.STATIC, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
+    SKY_HAWK(MAPTheme.SKY, 18, EntityBook.STATIC, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, ScriptHawkData::new),
     SKY_BIRDHAWK(MAPTheme.SKY, 19, EntityBook.STATIC, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
     SKY_TORNADO_OBJECT(MAPTheme.SKY, 20, EntityBook.MOVING, null),
     SKY_FLOCKING_BIRD(MAPTheme.SKY, 21, EntityBook.MOVING, null),
