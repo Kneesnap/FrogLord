@@ -22,11 +22,12 @@ import java.util.Map;
 @Getter
 public class MAPGroup extends GameObject {
     private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> polygonMap = new HashMap<>();
-    private int entityRootPointer; // Points to the linked list of entities which project over this map group. TODO.
+    private List<Short> entityList = new ArrayList<>(); // Points to the array of entity ids which project over this map group.
 
     private transient MAPFile parent;
     private transient Map<PSXPrimitiveType, Short> loadPolygonCountMap = new HashMap<>();
     private transient Map<PSXPrimitiveType, Integer> loadPolygonPointerMap = new HashMap<>();
+    private transient int savePointerLocation;
     private transient int pointerLocation;
 
     public MAPGroup(MAPFile parent) {
@@ -48,7 +49,15 @@ public class MAPGroup extends GameObject {
             loadPolygonPointerMap.put(type, reader.readInt());
 
         reader.readInt(5 * Constants.POINTER_SIZE); // 5 run-time pointers.
-        this.entityRootPointer = reader.readInt();
+
+        int entityRootPointer = reader.readInt();
+        if (entityRootPointer > 0) {
+            reader.jumpTemp(entityRootPointer);
+            short temp;
+            while ((temp = reader.readShort()) != MAPFile.MAP_ANIMATION_TEXTURE_LIST_TERMINATOR)
+                getEntityList().add(temp);
+            reader.jumpReturn();
+        }
     }
 
     @Override
@@ -60,7 +69,8 @@ public class MAPGroup extends GameObject {
         this.pointerLocation = writer.getIndex();
         writer.writeNull(MAPFile.PRIMITIVE_TYPES.size() * Constants.POINTER_SIZE); // Save this pointer later, after polygons are saved.
         writer.writeNull(5 * Constants.POINTER_SIZE);
-        writer.writeInt(this.entityRootPointer = 0); //TODO: Automatically calculate this later.
+        this.savePointerLocation = writer.getIndex();
+        writer.writeInt(0); // Indice pointer, saved later.
     }
 
     /**
@@ -108,5 +118,14 @@ public class MAPGroup extends GameObject {
 
         this.loadPolygonCountMap.clear();
         this.loadPolygonPointerMap.clear();
+    }
+
+    /**
+     * Write the entity list.
+     * @param writer The writer to write the data to.
+     */
+    public void writeEntityList(DataWriter writer) {
+        parent.writeEntityList(writer, getEntityList(), this.savePointerLocation);
+        this.savePointerLocation = 0;
     }
 }

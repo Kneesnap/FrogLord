@@ -110,7 +110,7 @@ public class MAPFile extends GameFile {
     private static final String GRID_SIGNATURE = "GRID";
     private static final String ANIMATION_SIGNATURE = "ANIM";
 
-    private static final short MAP_ANIMATION_TEXTURE_LIST_TERMINATOR = (short) 0xFFFF;
+    public static final short MAP_ANIMATION_TEXTURE_LIST_TERMINATOR = (short) 0xFFFF;
 
     public static final Image ICON = loadIcon("map");
     public static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
@@ -549,12 +549,17 @@ public class MAPFile extends GameFile {
         getGroups().forEach(group -> group.writePolygonPointers(writer));
 
         AtomicInteger entityIndicePointer = new AtomicInteger(writer.getIndex());
-        getPaths().forEach(path -> {
+        getGroups().forEach(group -> {
             writer.jumpTemp(entityIndicePointer.get());
-            path.writeEntityList(writer);
+            group.writeEntityList(writer);
             entityIndicePointer.set(writer.getIndex());
             writer.jumpReturn();
         });
+
+        // Setup pa_entity_indices. The one problem with this is that
+        int emptyEntityIdArray = writer.getIndex();
+        writer.writeShort(MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
+        getPaths().forEach(path -> path.writePointer(writer, emptyEntityIdArray));
 
         // Write "VRTX."
         tempAddress = writer.getIndex();
@@ -795,5 +800,29 @@ public class MAPFile extends GameFile {
         int realSize = (endPointer - lastEntity.getLoadScriptDataPointer());
         if (realSize != lastEntity.getLoadReadLength())
             System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormBook());
+    }
+
+    /**
+     * Write an entity list.
+     * @param writer          The writer to write the list to.
+     * @param entities        The list of entities to include.
+     * @param pointerLocation A pointer to an integer which holds the pointer to the entity list.
+     */
+    public void writeEntityList(DataWriter writer, List<Short> entities, int pointerLocation) {
+        if (entities.isEmpty())
+            return;
+
+        Utils.verify(pointerLocation > 0, "Entity pointer location is not set!");
+
+
+        int tempAddress = writer.getIndex();
+        writer.jumpTemp(pointerLocation);
+        writer.writeInt(tempAddress);
+        writer.jumpReturn();
+
+        for (short id : entities)
+            writer.writeShort(id);
+
+        writer.writeShort(MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
     }
 }
