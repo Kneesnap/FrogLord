@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -11,8 +10,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
+import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
@@ -56,10 +55,10 @@ public class MAPController extends EditorController<MAPFile> {
     private double oldMouseY;
     private double mouseX;
     private double mouseY;
-    private double mouseXDelta;
-    private double mouseYDelta;
 
     private static final double ROTATION_SPEED = 0.35D;
+    private static final double SCROLL_SPEED = 5;
+    private static final double TRANSLATE_SPEED = 10;
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -101,26 +100,13 @@ public class MAPController extends EditorController<MAPFile> {
 
     @FXML
     private void onMapButtonClicked(ActionEvent event) {
-        setupMapViewer();
-    }
-
-    private Node makeTempBox(int size, int distance, Color color) {
-        Box box = new Box(size, size, size);
-        box.setRotate(30D);
-        box.setMaterial(new PhongMaterial(color));
-        box.setTranslateZ(distance);
-        return box;
+        setupMapViewer(GUIMain.MAIN_STAGE);
     }
 
     @SneakyThrows
-    private void setupMapViewer() {
-        Stage overrideStage = GUIMain.MAIN_STAGE;
-
-        //TODO: Maybe the scale is wonky and it's far off somewhere I can't see.
-        //TODO: Maybe there's invalid data?
-
+    private void setupMapViewer(Stage stageToOverride) {
         MeshView displayNode = new MeshView(new MapMesh(getFile()));
-        //displayNode.setDrawMode(DrawMode.LINE);
+        displayNode.setDrawMode(DrawMode.LINE);
         displayNode.setMaterial(new PhongMaterial(Color.DARKGREEN));
         displayNode.setCullFace(CullFace.NONE);
         displayNode.setTranslateZ(50);
@@ -133,50 +119,30 @@ public class MAPController extends EditorController<MAPFile> {
         camera.setTranslateZ(-500);
 
         Group cameraGroup = new Group();
-        cameraGroup.getChildren().add(makeTempBox(100, 250, Color.TAN));
-        cameraGroup.getChildren().add(makeTempBox(50, 150, Color.WHITE));
         cameraGroup.getChildren().add(displayNode);
         cameraGroup.getChildren().add(camera);
 
-        Rotate rotX = new Rotate();
-        Rotate rotY = new Rotate();
-        rotX.setAxis(Rotate.X_AXIS);
-        rotY.setAxis(Rotate.Y_AXIS);
-        displayNode.getTransforms().add(rotX);
-        displayNode.getTransforms().add(rotY);
+        Rotate rotX = new Rotate(0, Rotate.X_AXIS);
+        Rotate rotY = new Rotate(0, Rotate.Y_AXIS);
+        displayNode.getTransforms().addAll(rotX, rotY);
 
         Scene newScene = new Scene(cameraGroup, 400, 400, true);
         newScene.setFill(Color.GRAY);
-
-        Scene oldScene = GUIMain.MAIN_STAGE.getScene();
-        overrideStage.setScene(newScene);
         newScene.setCamera(camera);
 
+        Scene oldScene = stageToOverride.getScene();
+        stageToOverride.setScene(newScene);
+
         newScene.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ESCAPE) {
-                overrideStage.setScene(oldScene);
-            } else if (event.getCode() == KeyCode.LEFT) {
-                camera.setTranslateX(camera.getTranslateX() - 5);
-            } else if (event.getCode() == KeyCode.RIGHT) {
-                camera.setTranslateX(camera.getTranslateX() + 5);
-            } else if (event.getCode() == KeyCode.UP) {
-                camera.setTranslateY(camera.getTranslateY() - 5);
-            } else if (event.getCode() == KeyCode.DOWN) {
-                camera.setTranslateY(camera.getTranslateY() + 5);
-            } else if (event.getCode() == KeyCode.E) {
-                camera.setTranslateZ(camera.getTranslateZ() - 10);
-            } else if (event.getCode() == KeyCode.Q) {
-                camera.setTranslateZ(camera.getTranslateZ() + 10);
-            } else {
-                System.out.println(event.getCode());
-            }
+            if (event.getCode() == KeyCode.ESCAPE)
+                stageToOverride.setScene(oldScene); // Exit the viewer.
         });
 
+        newScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * SCROLL_SPEED)));
+
         newScene.setOnMousePressed(e -> {
-            mouseX = e.getSceneX();
-            oldMouseX = e.getSceneX();
-            mouseY = e.getSceneY();
-            oldMouseY = e.getSceneY();
+            mouseX = oldMouseX = e.getSceneX();
+            mouseY = oldMouseY = e.getSceneY();
         });
 
         newScene.setOnMouseDragged(e -> {
@@ -184,12 +150,15 @@ public class MAPController extends EditorController<MAPFile> {
             oldMouseY = mouseY;
             mouseX = e.getSceneX();
             mouseY = e.getSceneY();
-            mouseXDelta = (mouseX - oldMouseX);
-            mouseYDelta = (mouseY - oldMouseY);
+            double mouseXDelta = (mouseX - oldMouseX);
+            double mouseYDelta = (mouseY - oldMouseY);
 
             if (e.isPrimaryButtonDown()) {
-                rotX.setAngle(rotX.getAngle() + (mouseYDelta * ROTATION_SPEED));
+                rotX.setAngle(rotX.getAngle() + (mouseYDelta * ROTATION_SPEED)); // Rotate the object.
                 rotY.setAngle(rotY.getAngle() - (mouseXDelta * ROTATION_SPEED));
+            } else if (e.isMiddleButtonDown()) {
+                camera.setTranslateX(camera.getTranslateX() - (mouseXDelta * TRANSLATE_SPEED)); // Move the camera.
+                camera.setTranslateY(camera.getTranslateY() - (mouseYDelta * TRANSLATE_SPEED));
             }
         });
     }
