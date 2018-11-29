@@ -33,6 +33,7 @@ public class MapMesh extends TriangleMesh {
      * Load texture coordinates.
      */
     public void loadTextureCoords() {
+        getTexCoords().clear();
         getTexCoords().addAll(1, 1);
         getTexCoords().addAll(1, 0);
         getTexCoords().addAll(0, 1);
@@ -43,6 +44,7 @@ public class MapMesh extends TriangleMesh {
      * Load polygon data.
      */
     public void loadPolygonData() {
+        getFaces().clear();
         map.getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
             if (!(prim instanceof PSXPolygon))
                 return;
@@ -67,8 +69,10 @@ public class MapMesh extends TriangleMesh {
     public void addRectangle(PSXPolygon poly) {
         short[] verts = poly.getVertices();
         Utils.verify(verts.length == PSXPolygon.QUAD_SIZE, "This polygon has %d vertices!", verts.length);
-        getFaces().addAll(verts[3], 0, verts[1], 0, verts[0], 0);
-        getFaces().addAll(verts[3], 0, verts[2], 0, verts[0], 0);
+
+        // Alternate Option: [1 0 2] [2 0 3]
+        getFaces().addAll(verts[0], 0, verts[3], 0, verts[1], 0);
+        getFaces().addAll(verts[1], 0, verts[3], 0, verts[2], 0);
     }
 
     /**
@@ -85,7 +89,8 @@ public class MapMesh extends TriangleMesh {
      * Load vertex data.
      */
     public void loadVertices() {
+        getPoints().clear();
         for (SVector vertex : map.getVertexes())
-            getPoints().addAll(Utils.unsignedShortToFloat(vertex.getX()) * 100, Utils.unsignedShortToFloat(vertex.getY()) * 100, Utils.unsignedShortToFloat(vertex.getZ()) * 100);
+            getPoints().addAll(Utils.unsignedShortToFloat(vertex.getX()), Utils.unsignedShortToFloat(vertex.getY()), Utils.unsignedShortToFloat(vertex.getZ()));
     }
 }

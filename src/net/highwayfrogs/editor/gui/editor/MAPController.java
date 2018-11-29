@@ -106,14 +106,14 @@ public class MAPController extends EditorController<MAPFile> {
 
     @SneakyThrows
     private void setupMapViewer(Stage stageToOverride) {
-        MeshView displayNode = new MeshView(new MapMesh(getFile()));
-        displayNode.setDrawMode(DrawMode.LINE);
-        displayNode.setMaterial(new PhongMaterial(Color.DARKGREEN));
+        MapMesh mesh = new MapMesh(getFile());
+        MeshView displayNode = new MeshView(mesh);
+        displayNode.setMaterial(new PhongMaterial(Color.RED));
         displayNode.setCullFace(CullFace.NONE);
         displayNode.setTranslateZ(50);
-        displayNode.setScaleX(100);
-        displayNode.setScaleY(100);
-        displayNode.setScaleZ(100);
+        displayNode.setScaleX(10000);
+        displayNode.setScaleY(10000);
+        displayNode.setScaleZ(10000);
 
         PerspectiveCamera camera = new PerspectiveCamera(true);
         camera.setFarClip(Double.MAX_VALUE);
@@ -137,6 +137,8 @@ public class MAPController extends EditorController<MAPFile> {
         newScene.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ESCAPE)
                 stageToOverride.setScene(oldScene); // Exit the viewer.
+            if (event.getCode() == KeyCode.X)
+                displayNode.setDrawMode(displayNode.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
         });
 
         newScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * SCROLL_SPEED)));
