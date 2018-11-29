@@ -37,7 +37,8 @@ public class TextureMap {
 
         int height = vloSource.getImages().stream().mapToInt(GameImage::getFullHeight).max().getAsInt(); // Size of largest texture.
         int width = vloSource.getImages().stream().mapToInt(GameImage::getFullWidth).sum(); //Sum of all texture widths.
-        width += texMap.values().stream().mapToInt(BufferedImage::getWidth).sum(); // Add vertex colors.
+        width += (texMap.values().stream().mapToInt(BufferedImage::getWidth).sum() / (height / MAPFile.VERTEX_COLOR_IMAGE_SIZE)); // Add vertex colors.
+        width += MAPFile.VERTEX_COLOR_IMAGE_SIZE;
 
         BufferedImage fullImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = fullImage.createGraphics();
@@ -57,26 +58,10 @@ public class TextureMap {
             entry.setMinV((float) ((double) startY / (double) height));
             entry.setMaxV((float) ((double) (startY + image.getIngameHeight()) / (double) height));
             entryMap.put(image.getTextureId(), entry);
-            x += image.getFullHeight();
+            x += image.getFullWidth();
         }
 
         // Vertex Color Textures.
-        Map<Integer, TextureEntry> vertexColorMap = new HashMap<>();
-        for (Entry<Integer, BufferedImage> entry : texMap.entrySet()) {
-            BufferedImage image = entry.getValue();
-            graphics.drawImage(image, x, 0, image.getWidth(), image.getHeight(), null);
-
-            TextureEntry texEntry = new TextureEntry();
-            texEntry.setMinU((float) (x + 1) / width);
-            texEntry.setMaxU((float) (x + image.getWidth() - 2) / width);
-            texEntry.setMinV((float) 1 / height);
-            texEntry.setMaxV((float) (image.getHeight() - 2) / height);
-
-            vertexColorMap.put(entry.getKey(), texEntry);
-            x += image.getWidth();
-        }
-
-        /*
         int y = 0;
         Map<Integer, TextureEntry> vertexColorMap = new HashMap<>();
         for (Entry<Integer, BufferedImage> entry : texMap.entrySet()) {
@@ -98,7 +83,6 @@ public class TextureMap {
                 x += image.getWidth();
             }
         }
-         */
 
         graphics.dispose();
         return new TextureMap(vloSource, fullImage, entryMap, vertexColorMap, GUIMain.EXE_CONFIG.getRemapTable(Utils.stripExtension(mapName)));
