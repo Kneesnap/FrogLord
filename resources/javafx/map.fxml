@@ -22,8 +22,8 @@
         <Button fx:id="openEditorButton" layoutX="14.0" layoutY="266.0" mnemonicParsing="false"
                 onAction="#onMapButtonClicked" text="Open Viewer" AnchorPane.bottomAnchor="14.0"
                 AnchorPane.leftAnchor="14.0"/>
-        <VBox layoutX="214.0" layoutY="11.0" prefHeight="115.0" prefWidth="100.0" AnchorPane.leftAnchor="214.0"
-              AnchorPane.topAnchor="10.0">
+        <VBox layoutX="200.0" layoutY="176.0" prefHeight="67.0" prefWidth="100.0" AnchorPane.leftAnchor="200.0"
+              AnchorPane.topAnchor="176.0">
             <children>
                 <Label alignment="TOP_CENTER" prefHeight="17.0" prefWidth="113.0" text="Entity" underline="true"/>
                 <Label fx:id="entityCountLabel" text="Label"/>
@@ -41,14 +41,18 @@
                 <Label fx:id="mapAnimCountLabel" text="Label"/>
             </children>
         </VBox>
-        <VBox layoutX="214.0" layoutY="126.0" prefHeight="115.0" prefWidth="100.0" AnchorPane.leftAnchor="214.0">
+        <VBox layoutX="200.0" layoutY="10.0" prefHeight="83.0" prefWidth="100.0" AnchorPane.leftAnchor="200.0">
             <children>
                 <Label alignment="CENTER" prefHeight="17.0" prefWidth="100.0" text="Grid" underline="true"/>
                 <Label fx:id="gridStackLabel" text="Label"/>
                 <Label fx:id="gridSquareLabel" text="Label"/>
                 <Label fx:id="gridCountLabel" text="Label"/>
                 <Label fx:id="gridLengthLabel" text="Label"/>
-                <Label/>
+            </children>
+        </VBox>
+        <VBox layoutX="200.0" layoutY="102.0" prefHeight="68.0" prefWidth="100.0">
+            <children>
+                <Label alignment="CENTER" prefHeight="17.0" prefWidth="100.0" text="Group" underline="true"/>
                 <Label fx:id="groupLabel" text="Label"/>
                 <Label fx:id="groupCountLabel" text="Label"/>
                 <Label fx:id="groupLengthLabel" text="Label"/>
