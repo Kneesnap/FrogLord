@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.file.standard.psx.prims.polygon;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
+import net.highwayfrogs.editor.file.vlo.TextureMap;
+import net.highwayfrogs.editor.file.vlo.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -12,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public class PSXPolygon extends PSXGPUPrimitive {
+public abstract class PSXPolygon extends PSXGPUPrimitive {
     private short vertices[];
     private short padding;
     private transient boolean flippedVertices;
@@ -79,5 +81,16 @@ public class PSXPolygon extends PSXGPUPrimitive {
      */
     public int getOrderId() {
         return 0;
+    }
+
+    /**
+     * Get the TextureEntry for this polygon.
+     * @param map The map to get this from.
+     * @return entry
+     */
+    public abstract TextureEntry getEntry(TextureMap map);
+
+    public int getSecondaryHashCode() {
+        return hashCode();
     }
 }

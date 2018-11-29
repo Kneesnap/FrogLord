@@ -109,7 +109,7 @@ public class MAPController extends EditorController<MAPFile> {
 
     @SneakyThrows
     private void setupMapViewer(Stage stageToOverride, VLOArchive vloArchive) {
-        TextureMap textureMap = TextureMap.newTextureMap(vloArchive, getMWIEntry().getDisplayName());
+        TextureMap textureMap = TextureMap.newTextureMap(getFile(), vloArchive, getMWIEntry().getDisplayName());
 
         MapMesh mesh = new MapMesh(getFile(), textureMap);
         MeshView displayNode = new MeshView(mesh);

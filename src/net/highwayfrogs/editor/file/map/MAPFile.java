@@ -33,9 +33,12 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -107,6 +110,8 @@ public class MAPFile extends GameFile {
 
     public static final Image ICON = loadIcon("map");
     public static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
+
+    public static final int VERTEX_COLOR_IMAGE_SIZE = 8;
 
     public MAPFile(MWDFile parent) {
         this.parentMWD = parent;
@@ -752,6 +757,41 @@ public class MAPFile extends GameFile {
         int maxRemap = maxUsedRemap.get() + 1;
         if (exportTextures && remapTable.size() > maxRemap)
             System.out.println("This remap is probably bigger than it needs to be. It can be size " + maxRemap + ".");
+    }
+
+    /**
+     * Create a map of textures which were generated
+     * TODO: Shading.
+     * @return texMap
+     */
+    public Map<Integer, BufferedImage> makeVertexColorTextures() {
+        Map<Integer, BufferedImage> texMap = new HashMap<>();
+
+        getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
+            if (!(prim instanceof PSXPolygon))
+                return;
+
+            PSXPolygon poly = (PSXPolygon) prim;
+            PSXColorVector color;
+
+            if (poly instanceof PSXPolyFlat) {
+                color = ((PSXPolyFlat) poly).getColor();
+            } else if (poly instanceof PSXPolyGouraud) {
+                color = ((PSXPolyGouraud) poly).getColors()[0];
+            } else {
+                return;
+            }
+
+            BufferedImage image = new BufferedImage(VERTEX_COLOR_IMAGE_SIZE, VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D graphics = image.createGraphics();
+            graphics.setColor(color.toColor());
+            graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+            graphics.dispose();
+
+            texMap.put(poly.getSecondaryHashCode(), image);
+        }));
+
+        return texMap;
     }
 
     @Override

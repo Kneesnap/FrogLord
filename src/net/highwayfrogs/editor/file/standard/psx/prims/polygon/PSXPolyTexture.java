@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.file.vlo.TextureMap;
+import net.highwayfrogs.editor.file.vlo.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -116,5 +118,10 @@ public class PSXPolyTexture extends PSXPolygon {
     @Override
     public int getOrderId() {
         return getTextureId();
+    }
+
+    @Override
+    public TextureEntry getEntry(TextureMap map) {
+        return map.getEntryMap().get(map.getRemapList().get(getTextureId()));
     }
 }

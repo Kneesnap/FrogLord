@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Holds Map mesh information.
- * TODO: Support colored polygons. [in .obj too]
  * Created by Kneesnap on 11/25/2018.
  */
 public class MapMesh extends TriangleMesh {
@@ -34,7 +33,6 @@ public class MapMesh extends TriangleMesh {
     public void updateData() {
         updateVertices();
         updatePolygonData();
-        //getFaceSmoothingGroups();
     }
 
     /**
@@ -90,22 +88,24 @@ public class MapMesh extends TriangleMesh {
 
     private int addTexCoords(PSXPolygon poly, AtomicInteger texCoord) {
         int texId = texCoord.get();
+        int texCount = poly.getVertices().length;
+
+        texCoord.addAndGet(texCount);
+        TextureEntry entry = poly.getEntry(textureMap);
+
+        float uSize = (entry.getMaxU() - entry.getMinU());
+        float vSize = (entry.getMaxV() - entry.getMinV());
+
         if (poly instanceof PSXPolyTexture) {
-            int texCount = poly.getVertices().length;
-            texCoord.addAndGet(texCount);
-
-            PSXPolyTexture polyTex = (PSXPolyTexture) poly;
-            TextureEntry entry = textureMap.getEntryMap().get(textureMap.getRemapList().get(polyTex.getTextureId()));
-
-            float uSize = (entry.getMaxU() - entry.getMinU());
-            float vSize = (entry.getMaxV() - entry.getMinV());
-
-            ByteUV[] uvs = polyTex.getUvs();
+            ByteUV[] uvs = ((PSXPolyTexture) poly).getUvs();
             for (ByteUV uv : uvs)
                 getTexCoords().addAll(entry.getMinU() + (uSize * uv.getFloatU()), entry.getMinV() + (vSize * uv.getFloatV()));
-
-        } else { //TODO: These guys will have special handling later.
-            texId = 0;
+        } else {
+            getTexCoords().addAll(entry.getMinU(), entry.getMinV());
+            getTexCoords().addAll(entry.getMinU(), entry.getMaxV());
+            getTexCoords().addAll(entry.getMaxU(), entry.getMinV());
+            if (texCount == PSXPolygon.QUAD_SIZE)
+                getTexCoords().addAll(entry.getMaxU(), entry.getMaxV());
         }
 
         return texId;

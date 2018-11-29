@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.file.standard.psx.prims.polygon;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.file.vlo.TextureMap;
+import net.highwayfrogs.editor.file.vlo.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -27,5 +29,15 @@ public class PSXPolyFlat extends PSXPolygon {
     public void save(DataWriter writer) {
         super.save(writer);
         this.color.save(writer);
+    }
+
+    @Override
+    public TextureEntry getEntry(TextureMap map) {
+        return map.getVertexColorMap().get(getSecondaryHashCode());
+    }
+
+    @Override
+    public int getSecondaryHashCode() {
+        return color.hashCode();
     }
 }
