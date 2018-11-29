@@ -203,14 +203,6 @@ public class MWDFile extends GameObject {
      * @param allowNull Are null VLOs allowed?
      */
     public void promptVLOSelection(MAPTheme theme, Consumer<VLOArchive> handler, boolean allowNull) {
-        if (theme != null) {
-            VLOArchive cachedVLO = getVloThemeCache().get(theme);
-            if (cachedVLO != null) {
-                handler.accept(cachedVLO);
-                return;
-            }
-        }
-
         List<VLOArchive> allVLOs = getFiles().stream()
                 .filter(VLOArchive.class::isInstance)
                 .map(VLOArchive.class::cast)
@@ -218,6 +210,10 @@ public class MWDFile extends GameObject {
 
         if (allowNull)
             allVLOs.add(0, null);
+
+        VLOArchive cachedVLO = getVloThemeCache().get(theme); // Move cached vlo to the top.
+        if (cachedVLO != null && allVLOs.remove(cachedVLO))
+            allVLOs.add(0, cachedVLO);
 
         SelectionMenu.promptSelection("Select " + (theme != null ? theme.name() + "'s" : "a") + " VLO.", vlo -> {
                     if (vlo != null && theme != null)
