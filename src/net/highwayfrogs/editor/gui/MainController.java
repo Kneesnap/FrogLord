@@ -37,7 +37,7 @@ public class MainController implements Initializable {
     @FXML private ListView<GameFile> fileList;
     @FXML private AnchorPane editorPane;
     @FXML private TextArea consoleText;
-    private MWDFile mwdFile;
+    @Getter private MWDFile mwdFile;
 
     public static MainController MAIN_WINDOW;
     @Getter @Setter private static EditorController<?> currentController;

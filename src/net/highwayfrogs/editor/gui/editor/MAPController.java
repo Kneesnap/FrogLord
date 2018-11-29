@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Group;
@@ -18,6 +19,8 @@ import javafx.stage.Stage;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MapMesh;
+import net.highwayfrogs.editor.file.vlo.TextureMap;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.util.List;
@@ -101,14 +104,20 @@ public class MAPController extends EditorController<MAPFile> {
 
     @FXML
     private void onMapButtonClicked(ActionEvent event) {
-        setupMapViewer(GUIMain.MAIN_STAGE);
+        getFile().getParentMWD().promptVLOSelection(getFile().getTheme(), vlo -> setupMapViewer(GUIMain.MAIN_STAGE, vlo), false);
     }
 
     @SneakyThrows
-    private void setupMapViewer(Stage stageToOverride) {
-        MapMesh mesh = new MapMesh(getFile());
+    private void setupMapViewer(Stage stageToOverride, VLOArchive vloArchive) {
+        TextureMap textureMap = TextureMap.newTextureMap(vloArchive, getMWIEntry().getDisplayName());
+
+        MapMesh mesh = new MapMesh(getFile(), textureMap);
         MeshView displayNode = new MeshView(mesh);
-        displayNode.setMaterial(new PhongMaterial(Color.RED));
+
+        PhongMaterial material = new PhongMaterial();
+        material.setDiffuseMap(SwingFXUtils.toFXImage(textureMap.getImage(), null));
+        displayNode.setMaterial(material);
+
         displayNode.setCullFace(CullFace.NONE);
         displayNode.setTranslateZ(50);
         displayNode.setScaleX(10000);
