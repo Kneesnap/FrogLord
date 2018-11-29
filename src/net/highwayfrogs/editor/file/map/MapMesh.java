@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Holds Map mesh information.
+ * TODO: Support colored polygons. [in .obj too]
+ * TODO: Support per-polygon uvs.
  * Created by Kneesnap on 11/25/2018.
  */
 public class MapMesh extends TriangleMesh {
@@ -48,10 +50,10 @@ public class MapMesh extends TriangleMesh {
 
             double uSize = entry.getMaxU() - entry.getMinU();
             double vSize = entry.getMaxV() - entry.getMinV();
-            getTexCoords().addAll(entry.getMaxU(), entry.getMaxV());
-            getTexCoords().addAll(entry.getMaxU(), entry.getMinV());
-            getTexCoords().addAll(entry.getMinU(), entry.getMaxV());
             getTexCoords().addAll(entry.getMinU(), entry.getMinV());
+            getTexCoords().addAll(entry.getMinU(), entry.getMaxV());
+            getTexCoords().addAll(entry.getMaxU(), entry.getMinV());
+            getTexCoords().addAll(entry.getMaxU(), entry.getMaxV());
         }
     }
 
@@ -87,8 +89,17 @@ public class MapMesh extends TriangleMesh {
 
         // Alternate Option: [1 0 2] [2 0 3]
         int texId = getTextureId(poly);
-        getFaces().addAll(verts[0], texId, verts[3], texId + 3, verts[1], texId + 1);
-        getFaces().addAll(verts[1], texId + 1, verts[3], texId + 3, verts[2], texId + 2);
+        /*getFaces().addAll(verts[0], texId + 3, verts[3], texId + 1, verts[1], texId + 2);
+        getFaces().addAll(verts[1], texId + 2, verts[3], texId + 1, verts[2], texId);*/
+
+        // Vertical Ok, Horizontal Not Ok
+        /*
+        getFaces().addAll(verts[0], texId, verts[3], texId + 2, verts[1], texId + 1);
+        getFaces().addAll(verts[1], texId + 1, verts[3], texId + 2, verts[2], texId + 3);
+        */
+
+        getFaces().addAll(verts[0], texId, verts[3], texId + 2, verts[1], texId + 1);
+        getFaces().addAll(verts[1], texId + 1, verts[3], texId + 2, verts[2], texId + 3);
     }
 
     /**
@@ -100,7 +111,7 @@ public class MapMesh extends TriangleMesh {
         Utils.verify(verts.length == PSXPolygon.TRI_SIZE, "This polygon has %d vertices!", poly.getVertices().length);
 
         int texId = getTextureId(poly);
-        getFaces().addAll(verts[2], texId++, verts[1], texId++, verts[0], texId);
+        getFaces().addAll(verts[2], texId, verts[1], texId + 1, verts[0], texId + 2);
     }
 
     private int getTextureId(PSXPolygon poly) {
