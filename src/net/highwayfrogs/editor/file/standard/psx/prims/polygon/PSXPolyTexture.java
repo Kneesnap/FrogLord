@@ -51,8 +51,7 @@ public class PSXPolyTexture extends PSXPolygon {
         for (int i = 2; i < this.uvs.length; i++)
             loadUV(i, reader);
 
-        swapUVsIfNeeded();
-        if (this.uvs.length == 3)
+        if (this.uvs.length == PSXPolygon.TRI_SIZE)
             reader.readShort(); // Padding.
 
         for (int i = 0; i < this.vectors.length; i++) {
@@ -65,9 +64,6 @@ public class PSXPolyTexture extends PSXPolygon {
     @Override
     public void save(DataWriter writer) {
         super.save(writer);
-
-        if (isFlippedUVs())
-            swapUVsIfNeeded(); // Flip back to unflipped state.
 
         writer.writeShort(this.flags);
         writer.writeNull(Constants.SHORT_SIZE);
@@ -91,14 +87,30 @@ public class PSXPolyTexture extends PSXPolygon {
         this.uvs[id].load(reader);
     }
 
-    private void swapUVsIfNeeded() {
-        if (this.uvs.length != 4)
-            return;
+    /**
+     * Get the nth obj UV string.
+     * @param index The index to get.
+     * @return objUvString
+     */
+    public String getObjUVString(int index) {
+        boolean shouldSwap = (this.uvs.length == PSXPolygon.QUAD_SIZE);
 
-        ByteUV temp = this.uvs[2];
-        this.uvs[2] = this.uvs[3];
-        this.uvs[3] = temp;
-        this.flippedUVs = !this.flippedUVs;
+        if (shouldSwap) { // I believe we have to swap it due to the .obj format.
+            ByteUV temp = this.uvs[2];
+            this.uvs[2] = this.uvs[3];
+            this.uvs[3] = temp;
+        }
+
+        String uvString = this.uvs[index].toObjTextureString();
+
+        if (shouldSwap) {
+            ByteUV temp = this.uvs[2];
+            this.uvs[2] = this.uvs[3];
+            this.uvs[3] = temp;
+        }
+
+        return uvString;
+
     }
 
     @Override

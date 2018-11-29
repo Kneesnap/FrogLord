@@ -39,7 +39,7 @@ public class TextureMap {
         Map<Short, TextureEntry> entryMap = new HashMap<>();
         int x = 0;
         for (GameImage image : vloSource.getImages()) {
-            BufferedImage copyImage = image.toBufferedImage(false, true, true);
+            BufferedImage copyImage = image.toBufferedImage(false, true, false);
             graphics.drawImage(copyImage, x, 0, copyImage.getWidth(), copyImage.getHeight(), null);
 
             TextureEntry entry = new TextureEntry(image);

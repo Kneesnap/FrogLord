@@ -663,7 +663,7 @@ public class MAPFile extends GameFile {
                 if (poly instanceof PSXPolyTexture) {
                     PSXPolyTexture polyTex = (PSXPolyTexture) poly;
                     for (int i = polyTex.getUvs().length - 1; i >= 0; i--)
-                        objWriter.write(polyTex.getUvs()[i].toObjTextureString() + Constants.NEWLINE);
+                        objWriter.write(polyTex.getObjUVString(i) + Constants.NEWLINE);
                 }
             }
 

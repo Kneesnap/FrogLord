@@ -4,6 +4,7 @@ import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.file.vlo.TextureMap;
@@ -14,7 +15,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Holds Map mesh information.
  * TODO: Support colored polygons. [in .obj too]
- * TODO: Support per-polygon uvs.
  * Created by Kneesnap on 11/25/2018.
  */
 public class MapMesh extends TriangleMesh {
@@ -33,28 +33,8 @@ public class MapMesh extends TriangleMesh {
      */
     public void updateData() {
         updateVertices();
-        updateTextureCoords();
         updatePolygonData();
         //getFaceSmoothingGroups();
-    }
-
-    /**
-     * Load texture coordinates.
-     */
-    public void updateTextureCoords() {
-        getTexCoords().clear();
-
-        AtomicInteger id = new AtomicInteger();
-        for (TextureEntry entry : textureMap.getEntryMap().values()) {
-            entry.setCoordinateId(id.getAndAdd(4));
-
-            double uSize = entry.getMaxU() - entry.getMinU();
-            double vSize = entry.getMaxV() - entry.getMinV();
-            getTexCoords().addAll(entry.getMinU(), entry.getMinV());
-            getTexCoords().addAll(entry.getMinU(), entry.getMaxV());
-            getTexCoords().addAll(entry.getMaxU(), entry.getMinV());
-            getTexCoords().addAll(entry.getMaxU(), entry.getMaxV());
-        }
     }
 
     /**
@@ -62,6 +42,9 @@ public class MapMesh extends TriangleMesh {
      */
     public void updatePolygonData() {
         getFaces().clear();
+        getTexCoords().clear();
+
+        AtomicInteger texId = new AtomicInteger();
         map.getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
             if (!(prim instanceof PSXPolygon))
                 return;
@@ -70,11 +53,11 @@ public class MapMesh extends TriangleMesh {
             int vertCount = poly.getVertices().length;
 
             if (vertCount == PSXPolygon.TRI_SIZE) {
-                addTriangle(poly);
+                addTriangle(poly, texId);
             } else if (vertCount == PSXPolygon.QUAD_SIZE) {
-                addRectangle(poly);
+                addRectangle(poly, texId);
             } else {
-                throw new RuntimeException("Cannot handle " + vertCount + "vertices");
+                throw new RuntimeException("Cannot handle " + vertCount + " vertices");
             }
         }));
     }
@@ -83,21 +66,12 @@ public class MapMesh extends TriangleMesh {
      * Add a rectangle polygon.
      * @param poly The rectangle polygon.
      */
-    public void addRectangle(PSXPolygon poly) {
+    public void addRectangle(PSXPolygon poly, AtomicInteger texCoord) {
         short[] verts = poly.getVertices();
         Utils.verify(verts.length == PSXPolygon.QUAD_SIZE, "This polygon has %d vertices!", verts.length);
 
         // Alternate Option: [1 0 2] [2 0 3]
-        int texId = getTextureId(poly);
-        /*getFaces().addAll(verts[0], texId + 3, verts[3], texId + 1, verts[1], texId + 2);
-        getFaces().addAll(verts[1], texId + 2, verts[3], texId + 1, verts[2], texId);*/
-
-        // Vertical Ok, Horizontal Not Ok
-        /*
-        getFaces().addAll(verts[0], texId, verts[3], texId + 2, verts[1], texId + 1);
-        getFaces().addAll(verts[1], texId + 1, verts[3], texId + 2, verts[2], texId + 3);
-        */
-
+        int texId = addTexCoords(poly, texCoord);
         getFaces().addAll(verts[0], texId, verts[3], texId + 2, verts[1], texId + 1);
         getFaces().addAll(verts[1], texId + 1, verts[3], texId + 2, verts[2], texId + 3);
     }
@@ -106,20 +80,35 @@ public class MapMesh extends TriangleMesh {
      * Add a triangle polygon.
      * @param poly The triangle polygon.
      */
-    public void addTriangle(PSXPolygon poly) {
+    public void addTriangle(PSXPolygon poly, AtomicInteger texCoord) {
         short[] verts = poly.getVertices();
         Utils.verify(verts.length == PSXPolygon.TRI_SIZE, "This polygon has %d vertices!", poly.getVertices().length);
 
-        int texId = getTextureId(poly);
-        getFaces().addAll(verts[2], texId, verts[1], texId + 1, verts[0], texId + 2);
+        int texId = addTexCoords(poly, texCoord);
+        getFaces().addAll(verts[2], texId + 2, verts[1], texId + 1, verts[0], texId);
     }
 
-    private int getTextureId(PSXPolygon poly) {
-        if (!(poly instanceof PSXPolyTexture))
-            return 0; //TODO
+    private int addTexCoords(PSXPolygon poly, AtomicInteger texCoord) {
+        int texId = texCoord.get();
+        if (poly instanceof PSXPolyTexture) {
+            int texCount = poly.getVertices().length;
+            texCoord.addAndGet(texCount);
 
-        PSXPolyTexture polyTex = (PSXPolyTexture) poly;
-        return textureMap.getEntryMap().get(textureMap.getRemapList().get(polyTex.getTextureId())).getCoordinateId();
+            PSXPolyTexture polyTex = (PSXPolyTexture) poly;
+            TextureEntry entry = textureMap.getEntryMap().get(textureMap.getRemapList().get(polyTex.getTextureId()));
+
+            float uSize = (entry.getMaxU() - entry.getMinU());
+            float vSize = (entry.getMaxV() - entry.getMinV());
+
+            ByteUV[] uvs = polyTex.getUvs();
+            for (ByteUV uv : uvs)
+                getTexCoords().addAll(entry.getMinU() + (uSize * uv.getFloatU()), entry.getMinV() + (vSize * uv.getFloatV()));
+
+        } else { //TODO: These guys will have special handling later.
+            texId = 0;
+        }
+
+        return texId;
     }
 
     /**

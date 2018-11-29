@@ -19,21 +19,37 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ByteUV extends GameObject {
-    private byte u;
-    private byte v;
+    private short u;
+    private short v;
 
     public static final int BYTE_SIZE = 2 * Constants.BYTE_SIZE;
 
     @Override
     public void load(DataReader reader) {
-        this.u = reader.readByte();
-        this.v = reader.readByte();
+        this.u = reader.readUnsignedByteAsShort();
+        this.v = reader.readUnsignedByteAsShort();
+    }
+
+    /**
+     * Get U as a float ranging from 0 to 1.
+     * @return floatU
+     */
+    public float getFloatU() {
+        return Utils.unsignedByteToFloat(Utils.unsignedShortToByte(this.u));
+    }
+
+    /**
+     * Get V as a float ranging from 0 to 1.
+     * @return floatV
+     */
+    public float getFloatV() {
+        return Utils.unsignedByteToFloat(Utils.unsignedShortToByte(this.v));
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeByte(this.u);
-        writer.writeByte(this.v);
+        writer.writeUnsignedByte(this.u);
+        writer.writeUnsignedByte(this.v);
     }
 
     /**
@@ -41,6 +57,6 @@ public class ByteUV extends GameObject {
      * @return objTextureString
      */
     public String toObjTextureString() {
-        return "vt " + Utils.unsignedByteToFloat(this.u) + " " + Utils.unsignedByteToFloat(this.v);
+        return "vt " + getFloatU() + " " + getFloatV();
     }
 }
