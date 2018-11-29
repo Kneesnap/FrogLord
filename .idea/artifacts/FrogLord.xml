@@ -3,7 +3,6 @@
     <output-path>$PROJECT_DIR$/out/</output-path>
     <root id="archive" name="FrogLord.jar">
       <element id="module-output" name="FrogLord" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/libs/fxyz3d-0.4.0.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
