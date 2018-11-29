@@ -24,7 +24,6 @@ import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
@@ -671,10 +670,13 @@ public class MAPFile extends GameFile {
             allPolygons.sort(Comparator.comparingInt(PSXPolygon::getOrderId));
             objWriter.write("# Vertex Textures" + Constants.NEWLINE);
 
-            for (PSXPolygon poly : allPolygons)
-                if (poly instanceof PSXPolyTexture)
-                    for (ByteUV uvs : ((PSXPolyTexture) poly).getUvs())
-                        objWriter.write(uvs.toObjTextureString() + Constants.NEWLINE);
+            for (PSXPolygon poly : allPolygons) {
+                if (poly instanceof PSXPolyTexture) {
+                    PSXPolyTexture polyTex = (PSXPolyTexture) poly;
+                    for (int i = polyTex.getUvs().length - 1; i >= 0; i--)
+                        objWriter.write(polyTex.getUvs()[i].toObjTextureString() + Constants.NEWLINE);
+                }
+            }
 
             objWriter.write(Constants.NEWLINE);
         }

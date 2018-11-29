@@ -65,8 +65,8 @@ public class PSXPolygon extends PSXGPUPrimitive {
      */
     public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter) {
         StringBuilder builder = new StringBuilder("f");
-        for (short vertice : this.vertices) {
-            builder.append(" ").append(vertice + 1);
+        for (int i = this.vertices.length - 1; i >= 0; i--) {
+            builder.append(" ").append(this.vertices[i] + 1);
             if (showTextures)
                 builder.append("/").append(textureCounter != null ? textureCounter.incrementAndGet() : 0);
         }
