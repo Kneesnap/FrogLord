@@ -1,9 +1,7 @@
 package net.highwayfrogs.editor.file.map;
 
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.stage.DirectoryChooser;
 import lombok.Cleanup;
 import lombok.Getter;
@@ -33,7 +31,6 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 
 import java.io.File;
@@ -41,7 +38,6 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * Parses Frogger MAP files.
@@ -619,13 +615,7 @@ public class MAPFile extends GameFile {
         if (selectedFolder == null)
             return;
 
-        List<VLOArchive> allVLOs = getParentMWD().getFiles().stream()
-                .filter(VLOArchive.class::isInstance)
-                .map(VLOArchive.class::cast)
-                .collect(Collectors.toList());
-        allVLOs.add(0, null);
-
-        SelectionMenu.promptSelection("Please select the VLO associated with this map.", vlo -> {
+        getParentMWD().promptVLOSelection(getTheme(), vlo -> {
             boolean hasTextures = vlo != null;
 
             if (hasTextures)
@@ -633,8 +623,7 @@ public class MAPFile extends GameFile {
 
             String cleanName = Utils.stripExtension(entry.getDisplayName());
             exportToObj(selectedFolder, cleanName, entry, vlo, hasTextures ? GUIMain.EXE_CONFIG.getRemapTable(cleanName) : null);
-        }, allVLOs, vlo -> vlo != null ? parentMWD.getEntryMap().get(vlo).getDisplayName() : "No Textures", vlo -> vlo == null ? null :
-                new ImageView(SwingFXUtils.toFXImage(Utils.resizeImage(vlo.getImages().get(0).toBufferedImage(false, false, false), 25, 25), null)));
+        }, true);
     }
 
     @SneakyThrows

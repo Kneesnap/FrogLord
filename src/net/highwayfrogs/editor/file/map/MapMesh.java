@@ -23,16 +23,16 @@ public class MapMesh extends TriangleMesh {
      * Load mesh data from the map.
      */
     public void loadData() {
-        loadVertices();
-        loadTextureCoords();
-        loadPolygonData();
+        updateVertices();
+        updateTextureCoords();
+        updatePolygonData();
         //getFaceSmoothingGroups();
     }
 
     /**
      * Load texture coordinates.
      */
-    public void loadTextureCoords() {
+    public void updateTextureCoords() {
         getTexCoords().clear();
         getTexCoords().addAll(1, 1);
         getTexCoords().addAll(1, 0);
@@ -43,7 +43,7 @@ public class MapMesh extends TriangleMesh {
     /**
      * Load polygon data.
      */
-    public void loadPolygonData() {
+    public void updatePolygonData() {
         getFaces().clear();
         map.getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
             if (!(prim instanceof PSXPolygon))
@@ -88,7 +88,7 @@ public class MapMesh extends TriangleMesh {
     /**
      * Load vertex data.
      */
-    public void loadVertices() {
+    public void updateVertices() {
         getPoints().clear();
         for (SVector vertex : map.getVertexes())
             getPoints().addAll(Utils.unsignedShortToFloat(vertex.getX()), Utils.unsignedShortToFloat(vertex.getY()), Utils.unsignedShortToFloat(vertex.getZ()));

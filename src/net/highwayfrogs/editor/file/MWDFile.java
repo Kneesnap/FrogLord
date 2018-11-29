@@ -1,11 +1,14 @@
 package net.highwayfrogs.editor.file;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.ImageView;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.VABHeaderFile;
@@ -14,11 +17,14 @@ import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.SelectionMenu;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * MWAD File Format: Medieval WAD Archive.
@@ -31,6 +37,8 @@ public class MWDFile extends GameObject {
     private List<GameFile> files = new ArrayList<>();
     private Map<GameFile, FileEntry> entryMap = new HashMap<>();
     @Setter private BiConsumer<FileEntry, GameFile> saveCallback;
+
+    private transient Map<MAPTheme, VLOArchive> vloThemeCache = new HashMap<>();
 
     public static String CURRENT_FILE_NAME = null;
     private static final String MARKER = "DAWM";
@@ -109,10 +117,10 @@ public class MWDFile extends GameObject {
             file = new VLOArchive();
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
             if (entry.getDisplayName().startsWith("SKY_LAND")) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
-                    file = new DummyFile(fileBytes.length);
-                } else {
+                file = new DummyFile(fileBytes.length);
+            } else {
                 file = new MAPFile(this);
-                }
+            }
         } else if (entry.getTypeId() == WADFile.TYPE_ID) { // Disabled until fully supported.
             file = new WADFile(this);
         } else if (entry.getTypeId() == DemoFile.TYPE_ID) {
@@ -186,5 +194,37 @@ public class MWDFile extends GameObject {
         // Fill the rest of the file with null bytes.
         GameFile lastFile = files.get(files.size() - 1);
         writer.writeNull(Constants.CD_SECTOR_SIZE - (entryMap.get(lastFile).getArchiveSize() % Constants.CD_SECTOR_SIZE));
+    }
+
+    /**
+     * Get the VLO for a given map theme.
+     * @param theme     The theme to get it for. Can be null, will prompt user then.
+     * @param handler   The handler for when the VLO is determined.
+     * @param allowNull Are null VLOs allowed?
+     */
+    public void promptVLOSelection(MAPTheme theme, Consumer<VLOArchive> handler, boolean allowNull) {
+        if (theme != null) {
+            VLOArchive cachedVLO = getVloThemeCache().get(theme);
+            if (cachedVLO != null) {
+                handler.accept(cachedVLO);
+                return;
+            }
+        }
+
+        List<VLOArchive> allVLOs = getFiles().stream()
+                .filter(VLOArchive.class::isInstance)
+                .map(VLOArchive.class::cast)
+                .collect(Collectors.toList()); //TODO: Sort so good ones are on the top.
+
+        if (allowNull)
+            allVLOs.add(0, null);
+
+        SelectionMenu.promptSelection("Select " + (theme != null ? theme.name() + "'s" : "a") + " VLO.", vlo -> {
+                    if (vlo != null && theme != null)
+                        getVloThemeCache().put(theme, vlo);
+                    handler.accept(vlo);
+                }, allVLOs,
+                vlo -> vlo != null ? getEntryMap().get(vlo).getDisplayName() : "No Textures",
+                vlo -> vlo != null ? new ImageView(SwingFXUtils.toFXImage(Utils.resizeImage(vlo.getImages().get(0).toBufferedImage(false, false, false), 25, 25), null)) : null);
     }
 }
