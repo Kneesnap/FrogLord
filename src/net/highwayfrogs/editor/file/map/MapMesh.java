@@ -92,6 +92,7 @@ public class MapMesh extends TriangleMesh {
 
         texCoord.addAndGet(texCount);
         TextureEntry entry = poly.getEntry(textureMap);
+        Utils.verify(entry != null, "Failed to get TextureEntry for polygon.");
 
         float uSize = (entry.getMaxU() - entry.getMinU());
         float vSize = (entry.getMaxV() - entry.getMinV());

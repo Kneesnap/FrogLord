@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.standard.psx.prims.VertexColor;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.awt.*;
@@ -24,7 +25,6 @@ public class TextureMap {
     private VLOArchive vloArchive;
     private BufferedImage image;
     private Map<Short, TextureEntry> entryMap;
-    private Map<Integer, TextureEntry> vertexColorMap;
     private List<Short> remapList;
 
     /**
@@ -33,7 +33,7 @@ public class TextureMap {
      * @return newTextureMap
      */
     public static TextureMap newTextureMap(MAPFile mapFile, VLOArchive vloSource, String mapName) {
-        Map<Integer, BufferedImage> texMap = mapFile.makeVertexColorTextures();
+        Map<VertexColor, BufferedImage> texMap = mapFile.makeVertexColorTextures();
 
         int height = vloSource.getImages().stream().mapToInt(GameImage::getFullHeight).max().getAsInt(); // Size of largest texture.
         int width = vloSource.getImages().stream().mapToInt(GameImage::getFullWidth).sum(); //Sum of all texture widths.
@@ -63,19 +63,16 @@ public class TextureMap {
 
         // Vertex Color Textures.
         int y = 0;
-        Map<Integer, TextureEntry> vertexColorMap = new HashMap<>();
-        for (Entry<Integer, BufferedImage> entry : texMap.entrySet()) {
+        for (Entry<VertexColor, BufferedImage> entry : texMap.entrySet()) {
             BufferedImage image = entry.getValue();
             graphics.drawImage(image, x, y, image.getWidth(), image.getHeight(), null);
-
 
             TextureEntry texEntry = new TextureEntry();
             texEntry.setMinU((float) (x + 1) / width);
             texEntry.setMaxU((float) (x + image.getWidth() - 1) / width);
             texEntry.setMinV((float) (y + 1) / height);
             texEntry.setMaxV((float) (y + image.getHeight() - 1) / height);
-
-            vertexColorMap.put(entry.getKey(), texEntry);
+            entry.getKey().setTextureEntry(texEntry);
 
             // Condense these things.
             if ((y += image.getHeight()) > height - image.getHeight()) {
@@ -85,7 +82,7 @@ public class TextureMap {
         }
 
         graphics.dispose();
-        return new TextureMap(vloSource, fullImage, entryMap, vertexColorMap, GUIMain.EXE_CONFIG.getRemapTable(Utils.stripExtension(mapName)));
+        return new TextureMap(vloSource, fullImage, entryMap, GUIMain.EXE_CONFIG.getRemapTable(Utils.stripExtension(mapName)));
     }
 
     @Getter
@@ -95,6 +92,5 @@ public class TextureMap {
         private float maxU = 1;
         private float minV = 0;
         private float maxV = 1;
-        private int coordinateId;
     }
 }

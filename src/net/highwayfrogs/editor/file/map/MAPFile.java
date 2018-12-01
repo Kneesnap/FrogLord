@@ -25,6 +25,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
+import net.highwayfrogs.editor.file.standard.psx.prims.VertexColor;
 import net.highwayfrogs.editor.file.standard.psx.prims.line.PSXLineType;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.*;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -761,34 +762,22 @@ public class MAPFile extends GameFile {
 
     /**
      * Create a map of textures which were generated
-     * TODO: Shading.
      * @return texMap
      */
-    public Map<Integer, BufferedImage> makeVertexColorTextures() {
-        Map<Integer, BufferedImage> texMap = new HashMap<>();
+    public Map<VertexColor, BufferedImage> makeVertexColorTextures() {
+        Map<VertexColor, BufferedImage> texMap = new HashMap<>();
 
         getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
-            if (!(prim instanceof PSXPolygon))
+            if (!(prim instanceof VertexColor))
                 return;
 
-            PSXPolygon poly = (PSXPolygon) prim;
-            PSXColorVector color;
-
-            if (poly instanceof PSXPolyFlat) {
-                color = ((PSXPolyFlat) poly).getColor();
-            } else if (poly instanceof PSXPolyGouraud) {
-                color = ((PSXPolyGouraud) poly).getColors()[0];
-            } else {
-                return;
-            }
-
+            VertexColor vertexColor = (VertexColor) prim;
             BufferedImage image = new BufferedImage(VERTEX_COLOR_IMAGE_SIZE, VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D graphics = image.createGraphics();
-            graphics.setColor(color.toColor());
-            graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
-            graphics.dispose();
+            texMap.put(vertexColor, image);
 
-            texMap.put(poly.getSecondaryHashCode(), image);
+            Graphics2D graphics = image.createGraphics();
+            vertexColor.makeTexture(image, graphics);
+            graphics.dispose();
         }));
 
         return texMap;

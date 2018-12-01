@@ -89,8 +89,4 @@ public abstract class PSXPolygon extends PSXGPUPrimitive {
      * @return entry
      */
     public abstract TextureEntry getEntry(TextureMap map);
-
-    public int getSecondaryHashCode() {
-        return hashCode();
-    }
 }
