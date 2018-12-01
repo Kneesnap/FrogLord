@@ -13,6 +13,8 @@ Editor Features:
   MOF Editor
 
 
+Allow saving export file as input file.
+Allow your input file to be your output file.
 Make remaps for v3.0e Music Patch. v3.0e Stock, Retail PSX, Demo PSX.
 Unit testing for PP20 decompression. Unit testing for PP20 compression.
 Build FrogPSX.H from MWD.
