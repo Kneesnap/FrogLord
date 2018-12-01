@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.standard.psx.prims.polygon;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
@@ -22,6 +23,7 @@ public class PSXPolyGouraud extends PSXPolygon implements VertexColor {
     @Setter private transient TextureEntry textureEntry;
 
     private static final double SIZE_MULT = .5D;
+    private static final int SIZE = MAPFile.VERTEX_COLOR_IMAGE_SIZE / 2;
     private static final int[][] POSITION = {
             {0, 0},
             {0, 1},
@@ -62,11 +64,8 @@ public class PSXPolyGouraud extends PSXPolygon implements VertexColor {
     public void makeTexture(BufferedImage image, Graphics2D graphics) {
         for (int i = 0; i < colors.length; i++) {
             graphics.setColor(colors[i].toColor());
-
-            int width = (int) (image.getWidth() * SIZE_MULT);
-            int height = (int) (image.getHeight() * SIZE_MULT);
             int[] pos = POSITION[i];
-            graphics.fillRect(pos[0] * width, pos[1] * height, width, height);
+            graphics.fillRect(pos[0] * SIZE, pos[1] * SIZE, SIZE, SIZE);
         }
     }
 }
