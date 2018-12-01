@@ -49,15 +49,9 @@ public class TextureMap {
             BufferedImage copyImage = image.toBufferedImage(false, true, false);
             graphics.drawImage(copyImage, x, 0, copyImage.getWidth(), copyImage.getHeight(), null);
 
-            TextureEntry entry = new TextureEntry();
             int startX = x + ((image.getFullWidth() - image.getIngameWidth()) / 2);
             int startY = (image.getFullHeight() - image.getIngameHeight()) / 2;
-
-            entry.setMinU((float) ((double) startX / (double) width));
-            entry.setMaxU((float) ((double) (startX + image.getIngameWidth()) / (double) width));
-            entry.setMinV((float) ((double) startY / (double) height));
-            entry.setMaxV((float) ((double) (startY + image.getIngameHeight()) / (double) height));
-            entryMap.put(image.getTextureId(), entry);
+            entryMap.put(image.getTextureId(), TextureEntry.newEntry(startX, startY, image.getIngameWidth(), image.getIngameHeight(), width, height));
             x += image.getFullWidth();
         }
 
@@ -66,13 +60,7 @@ public class TextureMap {
         for (Entry<VertexColor, BufferedImage> entry : texMap.entrySet()) {
             BufferedImage image = entry.getValue();
             graphics.drawImage(image, x, y, image.getWidth(), image.getHeight(), null);
-
-            TextureEntry texEntry = new TextureEntry();
-            texEntry.setMinU((float) (x + 1) / width);
-            texEntry.setMaxU((float) (x + image.getWidth() - 1) / width);
-            texEntry.setMinV((float) (y + 1) / height);
-            texEntry.setMaxV((float) (y + image.getHeight() - 1) / height);
-            entry.getKey().setTextureEntry(texEntry);
+            entry.getKey().setTextureEntry(TextureEntry.newEntry(x + 1, y + 1, image.getWidth() - 2, image.getHeight() - 2, width, height));
 
             // Condense these things.
             if ((y += image.getHeight()) > height - image.getHeight()) {
@@ -92,5 +80,18 @@ public class TextureMap {
         private float maxU = 1;
         private float minV = 0;
         private float maxV = 1;
+
+        /**
+         * Create a new TextureEntry for a texture.
+         * @return texEntry
+         */
+        public static TextureEntry newEntry(int startX, int startY, int showWidth, int showHeight, int totalWidth, int totalHeight) {
+            TextureEntry entry = new TextureEntry();
+            entry.setMinU((float) startX / totalWidth);
+            entry.setMaxU((float) (startX + showWidth) / totalWidth);
+            entry.setMinV((float) startY / totalHeight);
+            entry.setMaxV((float) (startY + showHeight) / totalHeight);
+            return entry;
+        }
     }
 }
