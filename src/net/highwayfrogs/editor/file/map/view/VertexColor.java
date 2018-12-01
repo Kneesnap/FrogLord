@@ -1,6 +1,6 @@
-package net.highwayfrogs.editor.file.standard.psx.prims;
+package net.highwayfrogs.editor.file.map.view;
 
-import net.highwayfrogs.editor.file.vlo.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

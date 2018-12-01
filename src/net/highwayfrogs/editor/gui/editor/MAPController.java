@@ -18,8 +18,8 @@ import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.MapMesh;
-import net.highwayfrogs.editor.file.vlo.TextureMap;
+import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIMain;
 

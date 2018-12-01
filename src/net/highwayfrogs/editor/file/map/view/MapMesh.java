@@ -1,14 +1,14 @@
-package net.highwayfrogs.editor.file.map;
+package net.highwayfrogs.editor.file.map.view;
 
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
-import net.highwayfrogs.editor.file.vlo.TextureMap;
-import net.highwayfrogs.editor.file.vlo.TextureMap.TextureEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

@@ -1,11 +1,12 @@
-package net.highwayfrogs.editor.file.vlo;
+package net.highwayfrogs.editor.file.map.view;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.standard.psx.prims.VertexColor;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.awt.*;
