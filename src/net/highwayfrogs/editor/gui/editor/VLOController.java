@@ -16,6 +16,8 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIMain;
 
@@ -46,6 +48,7 @@ public class VLOController extends EditorController<VLOArchive> {
     private GameImage selectedImage;
     private double defaultEditorMaxHeight;
     private Map<Integer, CheckBox> flagCheckBoxMap = new HashMap<>();
+    private ImageFilterSettings imageFilterSettings = new ImageFilterSettings(ImageState.EXPORT);
 
     private static final int SCALE_DIMENSION = 256;
 
@@ -176,7 +179,8 @@ public class VLOController extends EditorController<VLOArchive> {
             return; // Cancelled.
 
         GUIMain.setWorkingDirectory(selectedFolder);
-        getFile().exportAllImages(selectedFolder, !this.paddingCheckBox.isSelected(), this.transparencyCheckBox.isSelected(), false);
+        updateFilter();
+        getFile().exportAllImages(selectedFolder, imageFilterSettings);
     }
 
     @FXML
@@ -212,6 +216,13 @@ public class VLOController extends EditorController<VLOArchive> {
     }
 
     private BufferedImage toBufferedImage(GameImage image) {
-        return image.toBufferedImage(!this.paddingCheckBox.isSelected(), this.transparencyCheckBox.isSelected(), false);
+        updateFilter();
+        return image.toBufferedImage(imageFilterSettings);
+    }
+
+    private void updateFilter() {
+        imageFilterSettings.setTrimEdges(!this.paddingCheckBox.isSelected());
+        imageFilterSettings.setAllowTransparency(this.transparencyCheckBox.isSelected());
+        imageFilterSettings.setAllowFlip(false);
     }
 }

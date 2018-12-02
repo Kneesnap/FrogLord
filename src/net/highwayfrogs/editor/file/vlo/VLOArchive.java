@@ -120,15 +120,13 @@ public class VLOArchive extends GameFile {
 
     /**
      * Export all images in this VLO archive.
-     * @param directory         The directory to save them in.
-     * @param trimEdges         Should image edges be trimmed?
-     * @param allowTransparency Should transparency be allowed?
+     *
      */
-    public void exportAllImages(File directory, boolean trimEdges, boolean allowTransparency, boolean allowFlip) {
+    public void exportAllImages(File directory, ImageFilterSettings settings) {
         try {
             for (int i = 0; i < getImages().size(); i++) {
                 File output = new File(directory, i + ".png");
-                ImageIO.write(getImages().get(i).toBufferedImage(trimEdges, allowTransparency, allowFlip), "png", output);
+                ImageIO.write(getImages().get(i).toBufferedImage(settings), "png", output);
                 System.out.println("Exported image #" + i + ".");
             }
         } catch (IOException ex) {

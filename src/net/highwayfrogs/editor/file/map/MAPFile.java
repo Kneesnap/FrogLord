@@ -29,6 +29,8 @@ import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
 import net.highwayfrogs.editor.file.standard.psx.prims.line.PSXLineType;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.*;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
@@ -113,6 +115,8 @@ public class MAPFile extends GameFile {
     public static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
 
     public static final int VERTEX_COLOR_IMAGE_SIZE = 8;
+    private static final ImageFilterSettings OBJ_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
+            .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
 
     public MAPFile(MWDFile parent) {
         this.parentMWD = parent;
@@ -625,7 +629,7 @@ public class MAPFile extends GameFile {
             boolean hasTextures = vlo != null;
 
             if (hasTextures)
-                vlo.exportAllImages(selectedFolder, true, true, true); // Export VLO images.
+                vlo.exportAllImages(selectedFolder, OBJ_EXPORT_FILTER); // Export VLO images.
 
             String cleanName = Utils.stripExtension(entry.getDisplayName());
             exportToObj(selectedFolder, cleanName, entry, vlo, hasTextures ? GUIMain.EXE_CONFIG.getRemapTable(cleanName) : null);

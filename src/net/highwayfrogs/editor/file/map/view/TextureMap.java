@@ -6,6 +6,8 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIMain;
 
@@ -28,6 +30,8 @@ public class TextureMap {
     private Map<Short, TextureEntry> entryMap;
     private List<Short> remapList;
 
+    private static final ImageFilterSettings DISPLAY_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setAllowTransparency(true);
+
     /**
      * Create a new texture map from an existing VLOArchive.
      * @param vloSource The source to create the map from.
@@ -36,7 +40,7 @@ public class TextureMap {
     public static TextureMap newTextureMap(MAPFile mapFile, VLOArchive vloSource, String mapName) {
         Map<VertexColor, BufferedImage> texMap = mapFile.makeVertexColorTextures();
 
-        int height = vloSource.getImages().stream().mapToInt(GameImage::getFullHeight).max().getAsInt(); // Size of largest texture.
+        int height = vloSource.getImages().stream().mapToInt(GameImage::getFullHeight).max().orElse(0); // Size of largest texture.
         int width = vloSource.getImages().stream().mapToInt(GameImage::getFullWidth).sum(); //Sum of all texture widths.
         width += (texMap.values().stream().mapToInt(BufferedImage::getWidth).sum() / (height / MAPFile.VERTEX_COLOR_IMAGE_SIZE)); // Add vertex colors.
         width += MAPFile.VERTEX_COLOR_IMAGE_SIZE;
@@ -47,7 +51,7 @@ public class TextureMap {
         Map<Short, TextureEntry> entryMap = new HashMap<>();
         int x = 0;
         for (GameImage image : vloSource.getImages()) {
-            BufferedImage copyImage = image.toBufferedImage(false, true, false);
+            BufferedImage copyImage = image.toBufferedImage(DISPLAY_SETTINGS);
             graphics.drawImage(copyImage, x, 0, copyImage.getWidth(), copyImage.getHeight(), null);
 
             int startX = x + ((image.getFullWidth() - image.getIngameWidth()) / 2);
