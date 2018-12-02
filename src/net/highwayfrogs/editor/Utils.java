@@ -4,12 +4,15 @@ package net.highwayfrogs.editor;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.CRC32;
 
 /**
  * Some static utilities.
@@ -17,6 +20,7 @@ import java.util.List;
  */
 public class Utils {
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
+    private static final CRC32 crc32 = new CRC32();
 
     /**
      * Convert a byte array to a number.
@@ -322,5 +326,22 @@ public class Utils {
     public static void deleteFile(File file) {
         if (file.exists())
             file.delete();
+    }
+
+    /**
+     * Get the CRC32 hash of a file.
+     * @param file The file to get the hash of.
+     * @return crc32Hash
+     */
+    public static long getCRC32(File file) {
+        crc32.reset();
+
+        try {
+            crc32.update(Files.readAllBytes(file.toPath()));
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        return crc32.getValue();
     }
 }

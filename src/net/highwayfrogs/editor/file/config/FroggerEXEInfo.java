@@ -25,15 +25,14 @@ import java.util.List;
 public class FroggerEXEInfo extends Config {
     private byte[] exeBytes;
     private File inputFile;
-    private File outputFile;
     private List<String> fallbackFileNames;
 
     private static final String NO_REMAP_DATA = "PLACEHOLDER";
+    public static final String FIELD_NAME = "name";
 
-    public FroggerEXEInfo(File inputExe, File outputExe, InputStream inputStream) throws IOException {
+    public FroggerEXEInfo(File inputExe, InputStream inputStream) throws IOException {
         super(inputStream);
         this.inputFile = inputExe;
-        this.outputFile = outputExe;
     }
 
     /**
@@ -208,10 +207,10 @@ public class FroggerEXEInfo extends Config {
     /**
      * Save the Frogger executable.
      */
-    public void saveExecutable() {
+    public void saveExecutable(File outputFile) {
         try {
-            Utils.deleteFile(this.outputFile);
-            Files.write(this.outputFile.toPath(), this.exeBytes);
+            Utils.deleteFile(outputFile);
+            Files.write(outputFile.toPath(), this.exeBytes);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }

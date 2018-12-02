@@ -70,7 +70,9 @@ public class SaveController {
             loadedMWD.setSaveCallback(null);
 
             froggerEXE.patchEXE(loadedMWD.getWadIndexTable());
-            froggerEXE.saveExecutable();
+
+            File outputFile = new File(froggerEXE.getInputFile().getParentFile(), "frogger.exe");
+            froggerEXE.saveExecutable(outputFile);
             Platform.runLater(stage::close);
         }).start();
     }

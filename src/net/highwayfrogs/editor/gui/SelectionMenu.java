@@ -48,6 +48,7 @@ public class SelectionMenu {
         AnchorPane anchorPane = loader.load();
 
         newStage.setScene(new Scene(anchorPane));
+        newStage.setResizable(false);
         newStage.setMinWidth(200);
         newStage.setMinHeight(100);
 

@@ -5,8 +5,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
@@ -17,6 +15,7 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
+import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
@@ -24,11 +23,18 @@ import net.highwayfrogs.editor.gui.editor.SaveController;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class GUIMain extends Application {
     public static Stage MAIN_STAGE;
     @Getter private static File workingDirectory = new File("./");
-    public static FroggerEXEInfo EXE_CONFIG; //TODO: Allow selecting which version to use.
+    public static FroggerEXEInfo EXE_CONFIG;
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -39,19 +45,53 @@ public class GUIMain extends Application {
         File folder = new File("debug");
         if (folder.exists() && folder.isDirectory()) {
             workingDirectory = folder;
-            File mwiFile = new File(folder, "VANILLA.EXE");
+            File exeFile = new File(folder, "VANILLA.EXE");
             File mwdFile = new File(folder, "VANILLA.MWD");
 
-            if (mwiFile.exists() && mwdFile.exists()) {
-                openGUI(primaryStage, mwiFile, mwdFile);
+            if (exeFile.exists() && mwdFile.exists()) {
+                resolveEXE(exeFile, () -> openGUI(primaryStage, mwdFile));
                 return;
             }
         }
 
         // If this isn't a debug setup, prompt the user to select the files to load.
         File mwdFile = promptFile("MWD", "Medievil WAD");
-        File mwiFile = promptFile("EXE", "Frogger Executable");
-        openGUI(primaryStage, mwiFile, mwdFile);
+        File exeFile = promptFile("EXE", "Frogger Executable");
+        resolveEXE(exeFile, () -> openGUI(primaryStage, mwdFile));
+    }
+
+    private void resolveEXE(File exeFile, Runnable onConfigLoad) throws IOException {
+        long crcHash = Utils.getCRC32(exeFile);
+
+        Config execRegistry = new Config(Utils.getResourceStream("executables.cfg"));
+        Map<String, String> configDisplayName = new HashMap<>();
+
+        for (String configName : execRegistry.keySet()) {
+            String[] hashes = execRegistry.getString(configName).split(",");
+            String resourcePath = "exes/" + configName + ".cfg";
+
+            for (String testHash : hashes) {
+                if (Long.parseLong(testHash) == crcHash) {
+                    makeExeConfig(exeFile, resourcePath);
+                    onConfigLoad.run();
+                    return;
+                }
+            }
+
+            Config loadedConfig = new Config(Utils.getResourceStream(resourcePath));
+            configDisplayName.put(resourcePath, loadedConfig.getString(FroggerEXEInfo.FIELD_NAME));
+        }
+
+        System.out.println("Executable CRC32: " + crcHash); // There was no configuration found, so display the CRC32, in-case we want to make a configuration.
+        SelectionMenu.promptSelection("Select a configuration.", resourcePath -> {
+            makeExeConfig(exeFile, resourcePath.getKey());
+            onConfigLoad.run();
+        }, configDisplayName.entrySet(), Entry::getValue, entry -> null);
+    }
+
+    @SneakyThrows
+    private void makeExeConfig(File inputExe, String resourcePath) {
+        EXE_CONFIG = new FroggerEXEInfo(inputExe, Utils.getResourceStream(resourcePath));
     }
 
     private File promptFile(String extension, String description) {
@@ -68,11 +108,8 @@ public class GUIMain extends Application {
         return result;
     }
 
-    public static void main(String[] args) {
-        launch(args);
-    }
-
-    private void openGUI(Stage primaryStage, File exeFile, File mwdFile) throws Exception {
+    @SneakyThrows
+    private void openGUI(Stage primaryStage, File mwdFile) {
         Parent root = FXMLLoader.load(Utils.getResource("javafx/main.fxml"));
         Scene scene = new Scene(root);
 
@@ -83,32 +120,23 @@ public class GUIMain extends Application {
         primaryStage.getIcons().add(GameFile.loadIcon("icon"));
         primaryStage.show();
 
-        try {
-            EXE_CONFIG = new FroggerEXEInfo(exeFile, new File(exeFile.getParentFile(), "frogger.exe"), Utils.getResourceStream("exes/30e.cfg"));
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
         MWDFile mwd = new MWDFile(EXE_CONFIG.readMWI());
         mwd.load(new DataReader(new FileSource(mwdFile)));
 
         MainController controller = MainController.MAIN_WINDOW;
         controller.loadMWD(mwd);
 
-        // Ctrl + S -> Save MWD.
-        KeyCombination ctrlS = new KeyCodeCombination(KeyCode.S, KeyCodeCombination.CONTROL_DOWN); // Save MWD.
-        KeyCombination ctrlI = new KeyCodeCombination(KeyCode.I, KeyCodeCombination.CONTROL_DOWN); // Import file.
-        KeyCombination ctrlO = new KeyCodeCombination(KeyCode.O, KeyCodeCombination.CONTROL_DOWN); // Output file.
-        KeyCombination ctrlE = new KeyCodeCombination(KeyCode.E, KeyCodeCombination.CONTROL_DOWN); // Export Alternative.
-
         scene.setOnKeyPressed(event -> {
-            if (ctrlS.match(event)) {
+            if (!event.isControlDown())
+                return;
+
+            if (event.getCode() == KeyCode.S) {
                 saveFiles(EXE_CONFIG, mwd, mwdFile.getParentFile());
-            } else if (ctrlI.match(event)) {
+            } else if (event.getCode() == KeyCode.I) {
                 controller.importFile();
-            } else if (ctrlO.match(event)) {
+            } else if (event.getCode() == KeyCode.O) {
                 controller.exportFile();
-            } else if (ctrlE.match(event)) {
+            } else if (event.getCode() == KeyCode.E) {
                 controller.getCurrentFile().exportAlternateFormat(controller.getFileEntry());
             }
         });
