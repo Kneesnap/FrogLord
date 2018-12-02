@@ -28,7 +28,10 @@ public class FroggerEXEInfo extends Config {
     private List<String> fallbackFileNames;
 
     private static final String NO_REMAP_DATA = "PLACEHOLDER";
+
     public static final String FIELD_NAME = "name";
+    private static final String FIELD_FILE_NAMES = "Files";
+    private static final String FIELD_REMAP_DATA = "Remaps";
 
     public FroggerEXEInfo(File inputExe, InputStream inputStream) throws IOException {
         super(inputStream);
@@ -44,8 +47,8 @@ public class FroggerEXEInfo extends Config {
             return this.fallbackFileNames;
 
         this.fallbackFileNames = new ArrayList<>();
-        if (hasChild("Files"))
-            this.fallbackFileNames.addAll(getChild("Files").getText());
+        if (hasChild(FIELD_FILE_NAMES))
+            this.fallbackFileNames.addAll(getChild(FIELD_FILE_NAMES).getText());
         return this.fallbackFileNames;
     }
 
@@ -87,12 +90,21 @@ public class FroggerEXEInfo extends Config {
      * @return remapInfo
      */
     public Pair<Integer, Integer> getRemapInfo(String levelName) {
-        String remapData = getChild("Remaps").getString(levelName);
+        String remapData = getChild(FIELD_REMAP_DATA).getString(levelName);
         Utils.verify(remapData != null && !remapData.equalsIgnoreCase(NO_REMAP_DATA), "There is no remap data for %s.", levelName);
         String[] split = remapData.split("\\|");
         int remapAddress = Integer.decode(split[0]);
         int remapCount = split.length > 1 ? Integer.parseInt(split[1]) : 200; // Amount of texture remaps. (Bytes / SHORT_SIZE).
         return new Pair<>(remapAddress, remapCount);
+    }
+
+    /**
+     * Test if this config has remap data for a given level name.
+     * @param levelName The name of the level to test.
+     * @return hasRemapInfo
+     */
+    public boolean hasRemapInfo(String levelName) {
+        return hasChild(FIELD_REMAP_DATA) && getChild(FIELD_REMAP_DATA).has(levelName);
     }
 
     /**

@@ -114,7 +114,7 @@ public class Config {
      * @return booleanValue
      */
     public boolean getBoolean(String keyName) {
-        return getString(keyName).equalsIgnoreCase("true");
+        return has(keyName) && getString(keyName).equalsIgnoreCase("true");
     }
 
     /**

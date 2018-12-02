@@ -16,7 +16,9 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
@@ -117,11 +119,18 @@ public class MAPController extends EditorController<MAPFile> {
 
             InputMenu.promptInput("Please enter the address to start reading from.", str -> {
                 int address;
-                try {
-                    address = Integer.decode(str);
-                } catch (Exception ex) {
-                    System.out.println(str + " is not formatted properly.");
-                    return;
+
+                String levelName = str.toUpperCase();
+                if (GUIMain.EXE_CONFIG.hasRemapInfo(levelName)) {
+                    Pair<Integer, Integer> remapData = GUIMain.EXE_CONFIG.getRemapInfo(levelName);
+                    address = remapData.getKey() + (Constants.SHORT_SIZE * remapData.getValue());
+                } else {
+                    try {
+                        address = Integer.decode(str);
+                    } catch (Exception ex) {
+                        System.out.println(str + " is not formatted properly.");
+                        return;
+                    }
                 }
 
                 setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), texMap, address, vlo.getImages().size()), texMap);
@@ -129,7 +138,6 @@ public class MAPController extends EditorController<MAPFile> {
 
         }, false);
     }
-
 
 
     @SneakyThrows

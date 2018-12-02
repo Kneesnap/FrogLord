@@ -8,6 +8,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -68,11 +69,21 @@ public class InputMenu {
         @Override
         public void initialize(URL location, ResourceBundle resources) {
             this.promptText.setText(this.text);
+
+            this.textField.setOnKeyPressed(evt -> {
+                if (evt.getCode() == KeyCode.ENTER)
+                    attemptSubmit();
+            });
+
             Platform.runLater(textField::requestFocus);
         }
 
         @FXML
         private void onAccept(ActionEvent event) {
+            attemptSubmit();
+        }
+
+        private void attemptSubmit() {
             String response = this.textField.getText();
             if (response == null || response.isEmpty())
                 return;
