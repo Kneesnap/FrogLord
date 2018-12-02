@@ -244,15 +244,22 @@ public class GameImage extends GameObject {
         short imageHeight = (short) image.getHeight();
         Utils.verify(imageWidth <= MAX_DIMENSION && imageHeight <= MAX_DIMENSION, "Imported image is too big.");
 
-        if (getFullWidth() < imageHeight || getFullWidth() < imageWidth)
-            System.out.println("Image expanding has not been implemented yet."); //TODO: It will just fill in the existing image dimensions. We want it to import the full image.
+        if (getFullWidth() != imageWidth) {
+            int xDiff = imageWidth - getFullWidth();
+            if (xDiff > 0)
+                this.vramX -= xDiff;
 
-        if (getFullWidth() > imageWidth) {
+            setU((short) ((getVramX() % MAX_DIMENSION) + 1));
             setFullWidth(imageWidth);
             setIngameWidth((short) (imageWidth - 2));
         }
 
-        if (getFullHeight() > imageHeight) {
+        if (getFullHeight() != imageHeight) {
+            int yDiff = imageHeight - getFullHeight();
+            if (yDiff > 0)
+                this.vramY -= yDiff;
+
+            setV((short) ((getVramY() % MAX_DIMENSION) + 1));
             setFullHeight(imageHeight);
             setIngameHeight((short) (imageHeight - 2));
         }
