@@ -7,6 +7,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.TargetPlatform;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.ArraySource;
@@ -19,6 +20,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 
 import java.text.SimpleDateFormat;
@@ -119,11 +121,12 @@ public class MWDFile extends GameObject {
         if (entry.getTypeId() == VLOArchive.TYPE_ID || entry.getDisplayName().startsWith("LS_ALL")) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
             file = new VLOArchive();
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
+            boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && GUIMain.EXE_CONFIG.isDemo() && GUIMain.EXE_CONFIG.getPlatform() == TargetPlatform.PSX);
             boolean isSkyLand = entry.getDisplayName().startsWith("SKY_LAND");
             boolean isIsland = entry.getDisplayName().startsWith("ISLAND.MAP");
             boolean isQB = entry.getDisplayName().startsWith("QB.MAP");
 
-            if (isSkyLand || isIsland || isQB) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
+            if (isDemoJungle || isSkyLand || isIsland || isQB) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
                 file = new DummyFile(fileBytes.length);
             } else {
                 file = new MAPFile(this);
