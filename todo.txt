@@ -13,7 +13,6 @@ Editor Features:
   MOF Editor
 
 
-Allow saving export file as input file.
 Jungle map fails to load now.
 When importing images, apply filters to them.
 Make remaps for v3.0e Music Patch. v3.0e Stock, Retail PSX, Demo PSX.
