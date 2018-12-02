@@ -13,11 +13,12 @@ Editor Features:
   MOF Editor
 
 
-When importing images, apply filters to them.
 Make remaps for v3.0e Music Patch. v3.0e Stock, Retail PSX, Demo PSX.
 Some faces (Dog-house + fence in SUB1 for example) seem to have a duplicate face and/or vertices. See if we can remove these duplicate faces / verts, because it shows funny in the editor.
 Build FrogPSX.H from MWD.
 Add bulk texture import.
+Sound importing may be broken.
+Allow editing padding.
 
 Non tool-development-related plans:
  - Load the two developer maps.

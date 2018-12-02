@@ -36,15 +36,15 @@ public class GameImage extends GameObject {
     private short texturePage;
     private short flags;
     private short clutId;
-    private byte u; // Unsure. Texture orientation?
-    private byte v;
+    private short u; // Unsure. Texture orientation?
+    private short v;
     private byte ingameWidth; // In-game texture width, used to remove texture padding.
     private byte ingameHeight;
     private byte[] imageBytes;
 
     private AtomicInteger suppliedTextureOffset;
 
-    private static final int MAX_DIMENSION = 256;
+    public static final int MAX_DIMENSION = 256;
     private static final int PC_BYTES_PER_PIXEL = 4;
     private static final int PSX_PIXELS_PER_PC = 2;
     private static final int PSX_WIDTH_MODIFIER = 4;
@@ -80,8 +80,8 @@ public class GameImage extends GameObject {
             this.clutId = reader.readShort();
         }
 
-        this.u = reader.readByte();
-        this.v = reader.readByte();
+        this.u = reader.readUnsignedByteAsShort();
+        this.v = reader.readUnsignedByteAsShort();
         this.ingameWidth = reader.readByte();
         this.ingameHeight = reader.readByte();
 
@@ -164,16 +164,14 @@ public class GameImage extends GameObject {
             writer.writeShort(this.clutId);
         }
 
-        writer.writeByte(this.u);
-        writer.writeByte(this.v);
+        writer.writeUnsignedByte(this.u);
+        writer.writeUnsignedByte(this.v);
         writer.writeByte(this.ingameWidth);
         writer.writeByte(this.ingameHeight);
 
-        byte[] savedImageBytes = getSavedImageBytes();
-        int writeOffset = this.suppliedTextureOffset.getAndAdd(savedImageBytes.length); // Add offset.
-
-        writer.jumpTemp(writeOffset);
-        writer.writeBytes(savedImageBytes);
+        writer.jumpTemp(this.suppliedTextureOffset.get());
+        writer.writeBytes(getSavedImageBytes());
+        this.suppliedTextureOffset.set(writer.getIndex());
         writer.jumpReturn();
     }
 
@@ -232,6 +230,8 @@ public class GameImage extends GameObject {
      * @param image The new image to use.
      */
     public void replaceImage(BufferedImage image) {
+        image = ImageWorkHorse.applyFilter(image, new BlackFilter());
+
         if (image.getType() != BufferedImage.TYPE_INT_ARGB) { // We can only parse TYPE_INT_ARGB, so if it's not that, we must convert the image to that, so it can be parsed properly.
             BufferedImage sourceImage = image;
             image = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -240,10 +240,16 @@ public class GameImage extends GameObject {
             graphics.dispose();
         }
 
-        this.fullWidth = (short) image.getWidth();
-        this.fullHeight = (short) image.getHeight();
-        setIngameWidth(this.fullWidth);
-        setIngameHeight(this.fullHeight);
+        short imageWidth = (short) image.getWidth();
+        short imageHeight = (short) image.getHeight();
+        Utils.verify(imageWidth <= MAX_DIMENSION && imageHeight <= MAX_DIMENSION, "Imported image is too big.");
+
+        if (imageWidth != getFullWidth() || imageHeight != getFullHeight()) { // If the size of the image changes, we can't use the old size.
+            setFullWidth(imageWidth);
+            setFullHeight(imageHeight);
+            setIngameWidth((short) (imageWidth - 2)); // This creates bad images, the user needs to be able to set this data.
+            setIngameHeight((short) (imageHeight - 2));
+        }
 
         // Read image rgba data.
         int[] array = new int[getFullHeight() * getFullWidth()];

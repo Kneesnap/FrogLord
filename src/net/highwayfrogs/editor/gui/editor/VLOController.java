@@ -194,7 +194,7 @@ public class VLOController extends EditorController<VLOArchive> {
     public void updateImageInfo() {
         dimensionLabel.setText("Archive Dimensions: [Width: " + this.selectedImage.getFullWidth() + ", Height: " + this.selectedImage.getFullHeight() + "]");
         ingameDimensionLabel.setText("In-Game Dimensions: [Width: " + this.selectedImage.getIngameWidth() + ", Height: " + this.selectedImage.getIngameHeight() + "]");
-        idLabel.setText("Texture ID: " + this.selectedImage.getTextureId() + ", Flags: " + this.selectedImage.getFlags());
+        idLabel.setText("Texture ID: " + this.selectedImage.getTextureId() + ", Flags: " + this.selectedImage.getFlags() + " Page: " + this.selectedImage.getTexturePage());
     }
 
     /**
@@ -221,8 +221,8 @@ public class VLOController extends EditorController<VLOArchive> {
     }
 
     private void updateFilter() {
+        imageFilterSettings.resetState();
         imageFilterSettings.setTrimEdges(!this.paddingCheckBox.isSelected());
         imageFilterSettings.setAllowTransparency(this.transparencyCheckBox.isSelected());
-        imageFilterSettings.setAllowFlip(false);
     }
 }

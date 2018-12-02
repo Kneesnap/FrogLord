@@ -64,6 +64,7 @@ public class ImageWorkHorse {
         return newImage;
     }
 
+    // Black -> Transparency
     public static class TransparencyFilter extends RGBImageFilter {
         @Override
         public int filterRGB(int x, int y, int rgb) {
@@ -72,6 +73,7 @@ public class ImageWorkHorse {
         }
     }
 
+    // Transparency -> Black
     public static class BlackFilter extends RGBImageFilter {
         @Override
         @SuppressWarnings("NumericOverflow")

@@ -13,9 +13,9 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class ImageFilterSettings {
     private ImageState state;
+    private boolean trimEdges;
     private boolean allowTransparency;
     private boolean allowFlip;
-    private boolean trimEdges;
 
     public ImageFilterSettings(ImageState state) {
         this.state = state;
@@ -34,7 +34,16 @@ public class ImageFilterSettings {
      * @return isExport
      */
     public boolean isExport() {
-        return getState() == ImageState.IMPORT;
+        return getState() == ImageState.EXPORT;
+    }
+
+    /**
+     * Reset all values in this setting object.
+     */
+    public void resetState() {
+        this.trimEdges = false;
+        this.allowTransparency = false;
+        this.allowFlip = false;
     }
 
     public enum ImageState {
