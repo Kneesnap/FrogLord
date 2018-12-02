@@ -66,6 +66,7 @@ public class InputMenu {
         @Override
         public void initialize(URL location, ResourceBundle resources) {
             this.promptText.setText(this.text);
+            this.textField.requestFocus();
         }
 
         @FXML
