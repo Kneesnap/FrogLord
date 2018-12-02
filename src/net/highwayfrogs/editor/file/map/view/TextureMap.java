@@ -28,7 +28,7 @@ public class TextureMap {
     private VLOArchive vloArchive;
     private BufferedImage image;
     private Map<Short, TextureEntry> entryMap;
-    private List<Short> remapList;
+    @Setter private List<Short> remapList;
 
     private static final ImageFilterSettings DISPLAY_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setAllowTransparency(true);
 
@@ -75,7 +75,7 @@ public class TextureMap {
         }
 
         graphics.dispose();
-        return new TextureMap(vloSource, fullImage, entryMap, GUIMain.EXE_CONFIG.getRemapTable(Utils.stripExtension(mapName)));
+        return new TextureMap(vloSource, fullImage, entryMap, mapName != null ? GUIMain.EXE_CONFIG.getRemapTable(Utils.stripExtension(mapName)) : null);
     }
 
     @Getter

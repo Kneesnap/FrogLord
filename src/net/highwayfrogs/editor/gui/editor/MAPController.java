@@ -20,7 +20,6 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.util.List;
@@ -104,18 +103,29 @@ public class MAPController extends EditorController<MAPFile> {
 
     @FXML
     private void onMapButtonClicked(ActionEvent event) {
-        getFile().getParentMWD().promptVLOSelection(getFile().getTheme(), vlo -> setupMapViewer(GUIMain.MAIN_STAGE, vlo), false);
+        getFile().getParentMWD().promptVLOSelection(getFile().getTheme(), vlo -> {
+            TextureMap textureMap = TextureMap.newTextureMap(getFile(), vlo, getMWIEntry().getDisplayName());
+            setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), textureMap), textureMap);
+        }, false);
     }
 
-    @SneakyThrows
-    private void setupMapViewer(Stage stageToOverride, VLOArchive vloArchive) {
-        TextureMap textureMap = TextureMap.newTextureMap(getFile(), vloArchive, getMWIEntry().getDisplayName());
+    @FXML
+    private void onRemapButtonClicked(ActionEvent event) {
+        getFile().getParentMWD().promptVLOSelection(getFile().getTheme(), vlo -> {
+            TextureMap texMap = TextureMap.newTextureMap(getFile(), vlo, null);
+            int address = 0x79E30; // TODO: GUI prompt.
+            setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), texMap, address, vlo.getImages().size()), texMap);
+        }, false);
+    }
 
-        MapMesh mesh = new MapMesh(getFile(), textureMap);
+
+
+    @SneakyThrows
+    private void setupMapViewer(Stage stageToOverride, MapMesh mesh, TextureMap texMap) {
         MeshView displayNode = new MeshView(mesh);
 
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseMap(SwingFXUtils.toFXImage(textureMap.getImage(), null));
+        material.setDiffuseMap(SwingFXUtils.toFXImage(texMap.getImage(), null));
         displayNode.setMaterial(material);
 
         displayNode.setCullFace(CullFace.NONE);
@@ -148,6 +158,8 @@ public class MAPController extends EditorController<MAPFile> {
                 stageToOverride.setScene(oldScene); // Exit the viewer.
             if (event.getCode() == KeyCode.X)
                 displayNode.setDrawMode(displayNode.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
+            if (event.getCode() == KeyCode.K)
+                mesh.findNextValidRemap();
         });
 
         newScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * SCROLL_SPEED)));
@@ -173,5 +185,7 @@ public class MAPController extends EditorController<MAPFile> {
                 camera.setTranslateY(camera.getTranslateY() - (mouseYDelta * TRANSLATE_SPEED));
             }
         });
+
+        mesh.findNextValidRemap();
     }
 }

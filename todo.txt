@@ -12,7 +12,6 @@ Editor Features:
   Map Editor
   MOF Editor
 
-Add a map viewer remap finder.
 Make remaps for v3.0e Music Patch. v3.0e Stock, Retail PSX, Demo PSX.
 Build FrogPSX.H from MWD.
 

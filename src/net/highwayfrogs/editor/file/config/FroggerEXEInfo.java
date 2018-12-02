@@ -87,13 +87,21 @@ public class FroggerEXEInfo extends Config {
      * @return remapTable
      */
     public List<Short> getRemapTable(String levelName) {
-        List<Short> remapTable = new ArrayList<>();
         Pair<Integer, Integer> data = getRemapInfo(levelName);
-        int remapAddress = data.getKey();
-        int remapCount = data.getValue();
+        return readRemapTable(data.getKey(), data.getValue());
+    }
 
+    /**
+     * Read a remap table from the exe.
+     * @param remapAddress The address to start reading from.
+     * @param remapCount   The amount of remaps to read.
+     * @return remapTable
+     */
+    public List<Short> readRemapTable(int remapAddress, int remapCount) {
         DataReader reader = getReader();
         reader.setIndex(remapAddress);
+
+        List<Short> remapTable = new ArrayList<>();
         for (int i = 0; i < remapCount; i++)
             remapTable.add(reader.readShort());
 

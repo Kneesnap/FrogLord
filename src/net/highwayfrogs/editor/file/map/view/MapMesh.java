@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
+import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -20,11 +21,56 @@ public class MapMesh extends TriangleMesh {
     private MAPFile map;
     private TextureMap textureMap;
 
+    private boolean remapFinder;
+    private int remapStart;
+    private int maxRemapSize;
+    private int currentRemap;
+
     public MapMesh(MAPFile file, TextureMap texMap) {
         super(VertexFormat.POINT_TEXCOORD);
         this.map = file;
         this.textureMap = texMap;
         updateData();
+    }
+
+    public MapMesh(MAPFile file, TextureMap texMap, int remapStart, int maxRemapSize) {
+        super(VertexFormat.POINT_TEXCOORD);
+        this.map = file;
+        this.textureMap = texMap;
+
+        this.remapFinder = true;
+        this.remapStart = remapStart - 1;
+        this.maxRemapSize = maxRemapSize;
+        this.currentRemap = this.remapStart;
+    }
+
+    /**
+     * Find the next valid remap range.
+     */
+    public void findNextValidRemap() {
+        if (!this.remapFinder)
+            return;
+
+        int totalSkips = 0;
+        while (true) {
+            this.currentRemap++;
+
+            try {
+                textureMap.setRemapList(GUIMain.EXE_CONFIG.readRemapTable(this.currentRemap, this.maxRemapSize));
+            } catch (Exception ex) {
+                System.out.println("Reached end of file. Restarting at beginning.");
+                this.currentRemap = this.remapStart;
+                continue;
+            }
+
+            try {
+                updateData();
+                System.out.println("[Skipped " + totalSkips + "]: Found Possible Remap at 0x" + Integer.toHexString(this.currentRemap) + ", " + this.maxRemapSize);
+                return;
+            } catch (Exception ex) { // Failed.
+                totalSkips++;
+            }
+        }
     }
 
     /**

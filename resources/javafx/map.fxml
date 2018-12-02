@@ -7,6 +7,11 @@
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
             xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
     <children>
+        <Button fx:id="openEditorButton" layoutX="14.0" layoutY="266.0" mnemonicParsing="false"
+                onAction="#onMapButtonClicked" text="Open Viewer" AnchorPane.bottomAnchor="14.0"
+                AnchorPane.leftAnchor="14.0"/>
+        <Button layoutX="114.0" layoutY="266.0" mnemonicParsing="false" onAction="#onRemapButtonClicked"
+                text="Remap Search"/>
         <VBox layoutX="14.0" layoutY="10.0" prefHeight="115.0" prefWidth="200.0" AnchorPane.leftAnchor="14.0"
               AnchorPane.topAnchor="10.0">
             <children>
@@ -19,9 +24,6 @@
                 <Label fx:id="basePointLabel" text="Label"/>
             </children>
         </VBox>
-        <Button fx:id="openEditorButton" layoutX="14.0" layoutY="266.0" mnemonicParsing="false"
-                onAction="#onMapButtonClicked" text="Open Viewer" AnchorPane.bottomAnchor="14.0"
-                AnchorPane.leftAnchor="14.0"/>
         <VBox layoutX="200.0" layoutY="176.0" prefHeight="67.0" prefWidth="100.0" AnchorPane.leftAnchor="200.0"
               AnchorPane.topAnchor="176.0">
             <children>
