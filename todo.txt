@@ -12,13 +12,13 @@ Editor Features:
   Map Editor
   MOF Editor
 
-
+Add a map viewer remap finder.
 Make remaps for v3.0e Music Patch. v3.0e Stock, Retail PSX, Demo PSX.
-Some faces (Dog-house + fence in SUB1 for example) seem to have a duplicate face and/or vertices. See if we can remove these duplicate faces / verts, because it shows funny in the editor.
 Build FrogPSX.H from MWD.
-Add bulk texture import.
-Sound importing may be broken.
+
 Allow editing padding.
+Allow editing vram positions. (Don't forget UV are dependent on vramPosition)
+Add bulk texture import.
 
 Non tool-development-related plans:
  - Load the two developer maps.

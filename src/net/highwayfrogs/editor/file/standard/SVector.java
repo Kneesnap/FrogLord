@@ -89,4 +89,18 @@ public class SVector extends GameObject {
         vector.loadWithPadding(reader);
         return vector;
     }
+
+    @Override
+    public int hashCode() {
+        return (this.x & 0xF800) + (this.z & 0x7C0) + (this.y & 0x3F);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof SVector))
+            return false;
+
+        SVector otherV = (SVector) other;
+        return otherV.getX() == getX() && otherV.getY() == getY() && otherV.getZ() == getZ();
+    }
 }
