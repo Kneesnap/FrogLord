@@ -244,21 +244,27 @@ public class GameImage extends GameObject {
         short imageHeight = (short) image.getHeight();
         Utils.verify(imageWidth <= MAX_DIMENSION && imageHeight <= MAX_DIMENSION, "Imported image is too big.");
 
-        if (getFullWidth() != imageWidth) {
-            int xDiff = imageWidth - getFullWidth();
-            if (xDiff > 0)
-                this.vramX -= xDiff;
+        int xDiff = imageWidth - getFullWidth();
+        int yDiff = imageHeight - getFullHeight();
 
+        if (yDiff > this.vramY || xDiff > this.vramX) {
+            System.out.println("This image is too close to the edge of the VRAM-border to be replaced by a larger image [" + getVramX() + ", " + getVramY() + "].");
+            return;
+        }
+
+        if (xDiff > 0)
+            this.vramX -= xDiff;
+
+        if (yDiff > 0)
+            this.vramY -= yDiff;
+
+        if (getFullWidth() != imageWidth) {
             setU((short) ((getVramX() % MAX_DIMENSION) + 1));
             setFullWidth(imageWidth);
             setIngameWidth((short) (imageWidth - 2));
         }
 
         if (getFullHeight() != imageHeight) {
-            int yDiff = imageHeight - getFullHeight();
-            if (yDiff > 0)
-                this.vramY -= yDiff;
-
             setV((short) ((getVramY() % MAX_DIMENSION) + 1));
             setFullHeight(imageHeight);
             setIngameHeight((short) (imageHeight - 2));
