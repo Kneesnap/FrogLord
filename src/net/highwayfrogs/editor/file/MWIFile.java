@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -180,7 +181,7 @@ public class MWIFile extends GameObject {
          * @return displayName
          */
         public String getDisplayName() {
-            return hasFilePath() ? getFilePath().substring(getFilePath().lastIndexOf("\\") + 1) : "File " + this.loadedId;
+            return hasFilePath() ? getFilePath().substring(getFilePath().lastIndexOf("\\") + 1) : (GUIMain.EXE_CONFIG.getFileNames().size() > this.loadedId ? GUIMain.EXE_CONFIG.getFileNames().get(this.loadedId) : "File " + this.loadedId);
         }
 
         /**

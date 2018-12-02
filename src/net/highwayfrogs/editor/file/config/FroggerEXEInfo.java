@@ -26,6 +26,7 @@ public class FroggerEXEInfo extends Config {
     private byte[] exeBytes;
     private File inputFile;
     private File outputFile;
+    private List<String> fallbackFileNames;
 
     private static final String NO_REMAP_DATA = "PLACEHOLDER";
 
@@ -33,6 +34,20 @@ public class FroggerEXEInfo extends Config {
         super(inputStream);
         this.inputFile = inputExe;
         this.outputFile = outputExe;
+    }
+
+    /**
+     * Get a list of hardcoded file names from this config.
+     * @return fileNames
+     */
+    public List<String> getFileNames() {
+        if (this.fallbackFileNames != null)
+            return this.fallbackFileNames;
+
+        this.fallbackFileNames = new ArrayList<>();
+        if (hasChild("Files"))
+            this.fallbackFileNames.addAll(getChild("Files").getText());
+        return this.fallbackFileNames;
     }
 
     /**

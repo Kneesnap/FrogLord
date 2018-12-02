@@ -82,7 +82,7 @@ public class MWDFile extends GameObject {
                     file.load(newReader);
                 }
             } catch (Exception ex) {
-                throw new RuntimeException("Failed to load " + entry.getDisplayName(), ex);
+                throw new RuntimeException("Failed to load " + entry.getDisplayName() + ", " + entry.getLoadedId(), ex);
             }
 
             entryMap.put(file, entry);
@@ -119,7 +119,11 @@ public class MWDFile extends GameObject {
         if (entry.getTypeId() == VLOArchive.TYPE_ID || entry.getDisplayName().startsWith("LS_ALL")) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
             file = new VLOArchive();
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
-            if (entry.getDisplayName().startsWith("SKY_LAND")) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
+            boolean isSkyLand = entry.getDisplayName().startsWith("SKY_LAND");
+            boolean isIsland = entry.getDisplayName().startsWith("ISLAND.MAP");
+            boolean isQB = entry.getDisplayName().startsWith("QB.MAP");
+
+            if (isSkyLand || isIsland || isQB) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
                 file = new DummyFile(fileBytes.length);
             } else {
                 file = new MAPFile(this);
