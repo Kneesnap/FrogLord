@@ -22,13 +22,25 @@ public class PSXPolyGouraud extends PSXPolygon implements VertexColor {
     private PSXColorVector[] colors;
     @Setter private transient TextureEntry textureEntry;
 
-    private static final double SIZE_MULT = .5D;
-    private static final int SIZE = MAPFile.VERTEX_COLOR_IMAGE_SIZE / 2;
+    private static final int FULL_SIZE = MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+    private static final int SMALL_SIZE = FULL_SIZE / 2;
+    private static final int TRIANGLE_SIZE = 3;
+
     private static final int[][] POSITION = {
             {0, 0},
             {0, 1},
             {1, 0},
             {1, 1}
+    };
+
+    //0-2
+    //| |
+    //1-3
+    private static final int[][][] TRIANGLE_POSITON = {
+            {{0, FULL_SIZE, 0}, {FULL_SIZE, 0, 0}},
+            {{0, FULL_SIZE, 0}, {0, FULL_SIZE, FULL_SIZE}},
+            {{0, FULL_SIZE, FULL_SIZE}, {0, FULL_SIZE, 0}},
+            {{0, FULL_SIZE, FULL_SIZE}, {FULL_SIZE, 0, FULL_SIZE}}
     };
 
     public PSXPolyGouraud(int verticeCount) {
@@ -60,12 +72,21 @@ public class PSXPolyGouraud extends PSXPolygon implements VertexColor {
         return textureEntry;
     }
 
-    @Override //TODO: Shading.
+    @Override
     public void makeTexture(BufferedImage image, Graphics2D graphics) {
         for (int i = 0; i < colors.length; i++) {
             graphics.setColor(colors[i].toColor());
             int[] pos = POSITION[i];
-            graphics.fillRect(pos[0] * SIZE, pos[1] * SIZE, SIZE, SIZE);
+            graphics.fillRect(pos[0] * SMALL_SIZE, pos[1] * SMALL_SIZE, SMALL_SIZE, SMALL_SIZE);
+        }
+
+        // Apply Vertex Shading.
+        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .5F));
+        for (int i = 0; i < colors.length; i++) {
+            graphics.setPaint(colors[i].toColor());
+
+            int[][] points = TRIANGLE_POSITON[i];
+            graphics.fillPolygon(points[0], points[1], TRIANGLE_SIZE);
         }
     }
 }
