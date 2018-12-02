@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.InputMenu;
 
 import java.util.List;
 
@@ -113,8 +114,19 @@ public class MAPController extends EditorController<MAPFile> {
     private void onRemapButtonClicked(ActionEvent event) {
         getFile().getParentMWD().promptVLOSelection(getFile().getTheme(), vlo -> {
             TextureMap texMap = TextureMap.newTextureMap(getFile(), vlo, null);
-            int address = 0x79E30; // TODO: GUI prompt.
-            setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), texMap, address, vlo.getImages().size()), texMap);
+
+            InputMenu.promptInput("Please enter the address to start reading from.", str -> {
+                int address;
+                try {
+                    address = Integer.decode(str);
+                } catch (Exception ex) {
+                    System.out.println(str + " is not formatted properly.");
+                    return;
+                }
+
+                setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), texMap, address, vlo.getImages().size()), texMap);
+            });
+
         }, false);
     }
 
