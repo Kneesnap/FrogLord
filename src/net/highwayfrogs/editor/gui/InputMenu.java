@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -66,7 +67,7 @@ public class InputMenu {
         @Override
         public void initialize(URL location, ResourceBundle resources) {
             this.promptText.setText(this.text);
-            this.textField.requestFocus();
+            Platform.runLater(textField::requestFocus);
         }
 
         @FXML

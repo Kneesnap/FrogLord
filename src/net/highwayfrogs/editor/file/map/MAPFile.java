@@ -761,7 +761,7 @@ public class MAPFile extends GameFile {
 
         int maxRemap = maxUsedRemap.get() + 1;
         if (exportTextures && remapTable.size() > maxRemap)
-            System.out.println("This remap is probably bigger than it needs to be. It can be size " + maxRemap + ".");
+            System.out.println("This remap is bigger than it needs to be. It can be size " + maxRemap + ".");
     }
 
     /**

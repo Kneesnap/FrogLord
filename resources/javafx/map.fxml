@@ -11,7 +11,7 @@
                 onAction="#onMapButtonClicked" text="Open Viewer" AnchorPane.bottomAnchor="14.0"
                 AnchorPane.leftAnchor="14.0"/>
         <Button layoutX="114.0" layoutY="266.0" mnemonicParsing="false" onAction="#onRemapButtonClicked"
-                text="Remap Search"/>
+                text="Remap Search" AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="114.0"/>
         <VBox layoutX="14.0" layoutY="10.0" prefHeight="115.0" prefWidth="200.0" AnchorPane.leftAnchor="14.0"
               AnchorPane.topAnchor="10.0">
             <children>
