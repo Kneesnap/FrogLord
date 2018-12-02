@@ -6,13 +6,11 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -25,7 +23,7 @@ import java.util.List;
  */
 @Getter
 public class FroggerEXEInfo extends Config {
-    private DataWriter writer;
+    private byte[] exeBytes;
     private File inputFile;
     private File outputFile;
 
@@ -132,8 +130,9 @@ public class FroggerEXEInfo extends Config {
         DataWriter exeWriter = getWriter();
         exeWriter.setIndex(mwiOffset);
         exeWriter.writeBytes(receiver.toArray());
+        exeWriter.closeReceiver();
 
-        int bytesWritten = writer.getIndex() - mwiOffset;
+        int bytesWritten = exeWriter.getIndex() - mwiOffset;
         Utils.verify(bytesWritten == getMWILength(), "MWI Patching Failed. The size of the written MWI does not match the correct MWI size! [%d/%d]", bytesWritten, getMWILength());
     }
 
@@ -152,6 +151,7 @@ public class FroggerEXEInfo extends Config {
         writer.jumpTemp(remapAddress);
         remapImages.forEach(writer::writeUnsignedShort);
         writer.jumpReturn();
+        writer.closeReceiver();
     }
 
     /**
@@ -159,24 +159,8 @@ public class FroggerEXEInfo extends Config {
      * @return writer
      */
     public DataWriter getWriter() {
-        if (this.writer != null)
-            return this.writer;
-
-        // Delete existing file, copy input executable to output executable.
-        try {
-            Utils.deleteFile(outputFile);
-            Files.write(outputFile.toPath(), Files.readAllBytes(inputFile.toPath()));
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        try {
-            writer = new DataWriter(new FileReceiver(outputFile));
-        } catch (FileNotFoundException fnfe) {
-            throw new RuntimeException(fnfe);
-        }
-
-        return this.writer;
+        loadExeData();
+        return new DataWriter(new FixedArrayReceiver(this.exeBytes));
     }
 
     /**
@@ -184,18 +168,29 @@ public class FroggerEXEInfo extends Config {
      * @return dataReader
      */
     public DataReader getReader() {
+        loadExeData();
+        return new DataReader(new ArraySource(exeBytes));
+    }
+
+    private void loadExeData() {
+        if (exeBytes != null)
+            return;
         try {
-            return new DataReader(new FileSource(inputFile));
-        } catch (FileNotFoundException fnfe) {
-            throw new RuntimeException(fnfe);
+            this.exeBytes = Files.readAllBytes(inputFile.toPath());
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
     /**
-     * Stop writing to the executable.
+     * Save the Frogger executable.
      */
-    public void closeWriter() {
-        if (this.writer != null)
-            this.writer.closeReceiver();
+    public void saveExecutable() {
+        try {
+            Utils.deleteFile(this.outputFile);
+            Files.write(this.outputFile.toPath(), this.exeBytes);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }
