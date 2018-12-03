@@ -14,14 +14,15 @@
         <Label fx:id="yLabel" layoutX="258.0" layoutY="44.0" text="Y:"/>
         <TextField fx:id="yField" layoutX="270.0" layoutY="40.0" prefHeight="25.0" prefWidth="47.0"/>
         <Label fx:id="pLabel" layoutX="321.0" layoutY="7.0" prefHeight="17.0" prefWidth="32.0" text="Page"/>
-        <TextField fx:id="pField" layoutX="320.0" layoutY="24.0" prefHeight="25.0" prefWidth="32.0"/>
+        <TextField fx:id="pField" layoutX="320.0" layoutY="24.0" prefHeight="25.0" prefWidth="36.0"/>
         <Button layoutX="280.0" layoutY="230.0" mnemonicParsing="false" onAction="#cancelChanges" text="Cancel"/>
         <Button layoutX="277.0" layoutY="204.0" mnemonicParsing="false" onAction="#confirmChanges" text="Confirm"/>
         <ImageView fx:id="miniView" fitHeight="60.0" fitWidth="60.0" layoutX="277.0" layoutY="110.0" pickOnBounds="true"
                    preserveRatio="true"/>
         <Button fx:id="applyButton" layoutX="280.0" layoutY="72.0" mnemonicParsing="false" onAction="#applyChanges"
                 text="Apply"/>
-        <Label layoutX="256.0" layoutY="170.0" prefHeight="17.0" prefWidth="94.0" text="Click: Edit Texture"/>
-        <Label layoutX="256.0" layoutY="187.0" prefHeight="17.0" prefWidth="94.0" text="Scroll: View More"/>
+        <Label fx:id="helpLabel" alignment="TOP_LEFT" layoutX="260.0" prefHeight="187.0" prefWidth="94.0"
+               text="To edit a texture, click on one. If you only see pink, you will need to use your scroll wheel."
+               visible="false" wrapText="true"/>
     </children>
 </AnchorPane>

@@ -65,13 +65,17 @@ public class ImagePaddingController implements Initializable {
 
         Platform.runLater(() -> stage.getScene().setOnKeyPressed(evt -> {
             if (evt.getCode() == KeyCode.UP) {
-                moveVertical(1);
-            } else if (evt.getCode() == KeyCode.DOWN) {
                 moveVertical(-1);
+                evt.consume();
+            } else if (evt.getCode() == KeyCode.DOWN) {
+                moveVertical(1);
+                evt.consume();
             } else if (evt.getCode() == KeyCode.LEFT) {
                 moveHorizontal(-1);
+                evt.consume();
             } else if (evt.getCode() == KeyCode.RIGHT) {
                 moveHorizontal(1);
+                evt.consume();
             } else if (evt.getCode() == KeyCode.ESCAPE) {
                 this.stage.close();
             }

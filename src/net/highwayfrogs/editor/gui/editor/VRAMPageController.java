@@ -44,6 +44,7 @@ public class VRAMPageController implements Initializable {
     @FXML private Label xLabel;
     @FXML private Label yLabel;
     @FXML private Label pLabel;
+    @FXML private Label helpLabel;
     @FXML private TextField xField;
     @FXML private TextField yField;
     @FXML private TextField pField;
@@ -131,6 +132,7 @@ public class VRAMPageController implements Initializable {
         pField.setVisible(hasSelectedImage);
         miniView.setVisible(hasSelectedImage);
         applyButton.setVisible(hasSelectedImage);
+        helpLabel.setVisible(!hasSelectedImage);
     }
 
     @FXML
