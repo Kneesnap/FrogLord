@@ -4,14 +4,19 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.VLOController;
+import net.highwayfrogs.editor.gui.editor.VRAMPageController;
 
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -140,5 +145,13 @@ public class VLOArchive extends GameFile {
 
         AnchorPane pane = (AnchorPane) node;
         editorPane.setMaxHeight(pane.getMinHeight()); // Restricts the height of this editor, since there's nothing beyond the editing area.
+    }
+
+    @Override
+    @SneakyThrows
+    public void exportAlternateFormat(FileEntry fileEntry) {
+        BufferedImage image = VRAMPageController.makeVRAMImage(this);
+        ImageIO.write(image, "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(fileEntry.getDisplayName()) + ".png"));
+        System.out.println("Exported VRAM Image.");
     }
 }
