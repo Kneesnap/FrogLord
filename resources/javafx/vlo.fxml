@@ -29,5 +29,6 @@
         <Label fx:id="idLabel" alignment="CENTER" layoutX="335.0" layoutY="283.0" prefHeight="17.0" prefWidth="256.0"
                text="Placeholder" textAlignment="CENTER" AnchorPane.rightAnchor="9.0"/>
         <VBox fx:id="flagBox" centerShape="false" layoutX="201.0" layoutY="67.0" prefHeight="135.0" prefWidth="138.0"/>
+        <Button layoutX="261.0" layoutY="14.0" mnemonicParsing="false" onAction="#openPaddingEditor" text="Padding"/>
     </children>
 </AnchorPane>

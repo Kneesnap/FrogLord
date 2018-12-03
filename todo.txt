@@ -15,8 +15,7 @@ Editor Features:
 Make remaps for Retail PSX, Demo PSX.
 Build FrogPSX.H from MWD.
 
-Allow editing padding.
-Allow editing vram positions. (Don't forget UV are dependent on vramPosition)
+Allow editing vram positions.
 Add bulk texture import.
 
 Non tool-development-related plans:

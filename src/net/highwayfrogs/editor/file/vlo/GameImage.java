@@ -36,8 +36,6 @@ public class GameImage extends GameObject {
     private short texturePage;
     private short flags;
     private short clutId;
-    private short u; // Unsure. Texture orientation?
-    private short v;
     private byte ingameWidth; // In-game texture width, used to remove texture padding.
     private byte ingameHeight;
     private byte[] imageBytes;
@@ -80,10 +78,11 @@ public class GameImage extends GameObject {
             this.clutId = reader.readShort();
         }
 
-        this.u = reader.readUnsignedByteAsShort();
-        this.v = reader.readUnsignedByteAsShort();
+        short readU = reader.readUnsignedByteAsShort();
+        short readV = reader.readUnsignedByteAsShort();
         this.ingameWidth = reader.readByte();
         this.ingameHeight = reader.readByte();
+        Utils.verify(readU == getU() && readV == getV(), "Image UV does not match the calculated one! [%d,%d] [%d, %d]", readU, readV, getU(), getV());
 
         reader.jumpTemp(offset);
 
@@ -110,6 +109,22 @@ public class GameImage extends GameObject {
         }
 
         reader.jumpReturn();
+    }
+
+    /**
+     * Generates the U value used by this image.
+     * @return uValue
+     */
+    public short getU() {
+        return (short) ((getVramX() % MAX_DIMENSION) + ((getFullWidth() - getIngameWidth()) / 2));
+    }
+
+    /**
+     * Generates the V value used by this image.
+     * @return vValue
+     */
+    public short getV() {
+        return (short) ((getVramY() % MAX_DIMENSION) + ((getFullHeight() - getIngameHeight()) / 2));
     }
 
     private void readPSXPixel(int clutIndex, ClutEntry clut, ByteBuffer buffer) {
@@ -164,8 +179,8 @@ public class GameImage extends GameObject {
             writer.writeShort(this.clutId);
         }
 
-        writer.writeUnsignedByte(this.u);
-        writer.writeUnsignedByte(this.v);
+        writer.writeUnsignedByte(getU());
+        writer.writeUnsignedByte(getV());
         writer.writeByte(this.ingameWidth);
         writer.writeByte(this.ingameHeight);
 
@@ -242,7 +257,7 @@ public class GameImage extends GameObject {
 
         short imageWidth = (short) image.getWidth();
         short imageHeight = (short) image.getHeight();
-        Utils.verify(imageWidth <= MAX_DIMENSION && imageHeight <= MAX_DIMENSION, "Imported image is too big.");
+        Utils.verify(imageWidth <= MAX_DIMENSION && imageHeight <= MAX_DIMENSION, "The imported image is too big. Frogger's engine only supports up to %dx%d.", MAX_DIMENSION, MAX_DIMENSION);
 
         int xDiff = imageWidth - getFullWidth();
         int yDiff = imageHeight - getFullHeight();
@@ -259,13 +274,11 @@ public class GameImage extends GameObject {
             this.vramY -= yDiff;
 
         if (getFullWidth() != imageWidth) {
-            setU((short) ((getVramX() % MAX_DIMENSION) + 1));
             setFullWidth(imageWidth);
             setIngameWidth((short) (imageWidth - 2));
         }
 
         if (getFullHeight() != imageHeight) {
-            setV((short) ((getVramY() % MAX_DIMENSION) + 1));
             setFullHeight(imageHeight);
             setIngameHeight((short) (imageHeight - 2));
         }

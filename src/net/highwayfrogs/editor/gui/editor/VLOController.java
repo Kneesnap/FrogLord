@@ -15,6 +15,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import lombok.Getter;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -45,7 +46,7 @@ public class VLOController extends EditorController<VLOArchive> {
     @FXML private Label idLabel;
     @FXML private VBox flagBox;
 
-    private GameImage selectedImage;
+    @Getter private GameImage selectedImage;
     private double defaultEditorMaxHeight;
     private Map<Integer, CheckBox> flagCheckBoxMap = new HashMap<>();
     private ImageFilterSettings imageFilterSettings = new ImageFilterSettings(ImageState.EXPORT);
@@ -186,6 +187,11 @@ public class VLOController extends EditorController<VLOArchive> {
     @FXML
     private void onImageToggle(ActionEvent event) {
         updateImage();
+    }
+
+    @FXML
+    private void openPaddingEditor(ActionEvent evt) {
+        ImagePaddingController.openPaddingMenu(this);
     }
 
     /**
