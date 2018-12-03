@@ -154,4 +154,14 @@ public class VLOArchive extends GameFile {
         ImageIO.write(image, "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(fileEntry.getDisplayName()) + ".png"));
         System.out.println("Exported VRAM Image.");
     }
+
+    /**
+     * Get an image that holds a specific vram coordinate.
+     */
+    public GameImage getImage(double x, double y) {
+        for (GameImage image : getImages())
+            if (image.contains(x, y))
+                return image;
+        return null;
+    }
 }

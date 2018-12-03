@@ -17,7 +17,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.util.Pair;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -25,6 +24,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.system.Tuple3;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -43,15 +43,17 @@ public class VRAMPageController implements Initializable {
     @FXML private ImageView miniView;
     @FXML private Label xLabel;
     @FXML private Label yLabel;
+    @FXML private Label pLabel;
     @FXML private TextField xField;
     @FXML private TextField yField;
+    @FXML private TextField pField;
     @FXML private Button applyButton;
 
     private Stage stage;
     private VLOArchive vloArchive;
     private VLOController controller;
     private GameImage selectedImage;
-    private Map<GameImage, Pair<Short, Short>> originalState = new HashMap<>();
+    private Map<GameImage, Tuple3<Short, Short, Short>> originalState = new HashMap<>();
 
     private static final ImageFilterSettings SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
     private static final int EXTRA_SCROLL_BUFFER = 30;
@@ -91,9 +93,7 @@ public class VRAMPageController implements Initializable {
                 return;
 
             Point2D coords = getImageCoords(imageView, evt.getX(), evt.getY());
-            GameImage newImage = vloArchive.getImages().stream()
-                    .filter(image -> image.contains(coords.getX(), coords.getY()))
-                    .findAny().orElse(null);
+            GameImage newImage = vloArchive.getImage(coords.getX(), coords.getY());
 
             if (newImage == this.selectedImage)
                 return; // Has not changed.
@@ -101,6 +101,7 @@ public class VRAMPageController implements Initializable {
             if (newImage != null) {
                 xField.setText(String.valueOf(newImage.getVramX()));
                 yField.setText(String.valueOf(newImage.getVramY()));
+                pField.setText(String.valueOf(newImage.getTexturePage()));
                 miniView.setImage(SwingFXUtils.toFXImage(newImage.toBufferedImage(SETTINGS), null));
             }
 
@@ -124,8 +125,10 @@ public class VRAMPageController implements Initializable {
         boolean hasSelectedImage = this.selectedImage != null;
         xLabel.setVisible(hasSelectedImage);
         yLabel.setVisible(hasSelectedImage);
+        pLabel.setVisible(hasSelectedImage);
         xField.setVisible(hasSelectedImage);
         yField.setVisible(hasSelectedImage);
+        pField.setVisible(hasSelectedImage);
         miniView.setVisible(hasSelectedImage);
         applyButton.setVisible(hasSelectedImage);
     }
@@ -136,11 +139,12 @@ public class VRAMPageController implements Initializable {
     }
 
     private void cancel() {
-        for (Entry<GameImage, Pair<Short, Short>> entry : originalState.entrySet()) {
+        for (Entry<GameImage, Tuple3<Short, Short, Short>> entry : originalState.entrySet()) {
             GameImage image = entry.getKey();
-            Pair<Short, Short> pair = entry.getValue();
-            image.setVramX(pair.getKey());
-            image.setVramY(pair.getValue());
+            Tuple3<Short, Short, Short> tuple = entry.getValue();
+            image.setVramX(tuple.getA());
+            image.setVramY(tuple.getB());
+            image.setTexturePage(tuple.getC());
         }
         originalState.clear();
 
@@ -157,6 +161,7 @@ public class VRAMPageController implements Initializable {
     private void applyChanges(ActionEvent evt) {
         short newX;
         short newY;
+        short newPage;
 
         try {
             newX = Short.parseShort(xField.getText());
@@ -172,9 +177,17 @@ public class VRAMPageController implements Initializable {
             return;
         }
 
-        if (!originalState.containsKey(this.selectedImage)) // Save original state, in case everything is cancelled.
-            originalState.put(this.selectedImage, new Pair<>(this.selectedImage.getVramX(), this.selectedImage.getVramY()));
+        try {
+            newPage = Short.parseShort(pField.getText());
+        } catch (NumberFormatException nfe) {
+            System.out.println(yField.getText() + " is not a valid number.");
+            return;
+        }
 
+        if (!originalState.containsKey(this.selectedImage)) // Save original state, in case everything is cancelled.
+            originalState.put(this.selectedImage, new Tuple3<>(this.selectedImage.getVramX(), this.selectedImage.getVramY(), this.selectedImage.getTexturePage()));
+
+        this.selectedImage.setTexturePage(newPage);
         this.selectedImage.setVramX(newX);
         this.selectedImage.setVramY(newY);
         updateImage();
