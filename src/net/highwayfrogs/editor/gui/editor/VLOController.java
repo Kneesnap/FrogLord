@@ -32,7 +32,6 @@ import java.util.Map.Entry;
 
 /**
  * Controls the VLO edit screen.
- * TODO: Control In-game width + height.
  * Created by Kneesnap on 9/18/2018.
  */
 public class VLOController extends EditorController<VLOArchive> {
@@ -64,8 +63,7 @@ public class VLOController extends EditorController<VLOArchive> {
         imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             this.selectedImage = newValue;
             this.updateFlags();
-            this.updateImage();
-            this.updateImageInfo();
+            this.updateDisplay();
         });
 
         imageList.getSelectionModel().select(0);
@@ -103,9 +101,7 @@ public class VLOController extends EditorController<VLOArchive> {
                 flagValue |= flag;
             }
             this.selectedImage.setFlags(flagValue);
-
-            updateImage();
-            updateImageInfo();
+            this.updateDisplay();
         });
 
         flagBox.getChildren().add(checkbox);
@@ -165,8 +161,7 @@ public class VLOController extends EditorController<VLOArchive> {
             ex.printStackTrace();
         }
 
-        updateImage();
-        updateImageInfo();
+        updateDisplay();
     }
 
     @FXML
@@ -194,6 +189,11 @@ public class VLOController extends EditorController<VLOArchive> {
         ImagePaddingController.openPaddingMenu(this);
     }
 
+    @FXML
+    private void openVramEditor(ActionEvent evt) {
+        VRAMPageController.openEditor(this);
+    }
+
     /**
      * Update the info displayed for the image.
      */
@@ -219,6 +219,14 @@ public class VLOController extends EditorController<VLOArchive> {
 
             imageView.setImage(SwingFXUtils.toFXImage(image, null));
         }
+    }
+
+    /**
+     * Update this GUI.
+     */
+    public void updateDisplay() {
+        updateImage();
+        updateImageInfo();
     }
 
     private BufferedImage toBufferedImage(GameImage image) {

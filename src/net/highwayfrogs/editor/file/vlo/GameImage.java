@@ -401,4 +401,15 @@ public class GameImage extends GameObject {
         Utils.verify(width >= 0 && width <= MAX_DIMENSION, "Image width is not in the required range: (0,%d].", MAX_DIMENSION);
         this.ingameWidth = (width == MAX_DIMENSION ? 0 : Utils.unsignedShortToByte(width));
     }
+
+    /**
+     * Test whether or not this image contains a certain coordinate in VRAM.
+     * @param x The x coordinate.
+     * @param y The y coordinate.
+     * @return contains
+     */
+    public boolean contains(double x, double y) {
+        return x >= getVramX() && x <= (getVramX() + getFullWidth())
+                && y >= getVramY() && y <= (getVramY() + getFullHeight());
+    }
 }

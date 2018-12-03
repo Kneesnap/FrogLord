@@ -115,8 +115,7 @@ public class ImagePaddingController implements Initializable {
     private void confirmChanges(ActionEvent evt) {
         this.image.setIngameWidth(this.width);
         this.image.setIngameHeight(this.height);
-        this.controller.updateImage();
-        this.controller.updateImageInfo();
+        this.controller.updateDisplay();
         this.stage.close();
     }
 
