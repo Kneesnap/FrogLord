@@ -43,7 +43,7 @@ public class ImagePaddingController implements Initializable {
     private short height;
     private int colorIndex;
 
-    private static final ImageFilterSettings SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setAllowFlip(true);
+    private static final ImageFilterSettings SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
     private static final Color[] COLORS = {
             Color.BLACK,
             Color.MAGENTA,
