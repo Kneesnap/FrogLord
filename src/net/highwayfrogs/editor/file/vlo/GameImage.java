@@ -62,6 +62,9 @@ public class GameImage extends GameObject {
     @Override
     public void load(DataReader reader) {
         this.vramX = reader.readShort();
+        if (getParent().isPsxMode())
+            this.vramX *= PSX_WIDTH_MODIFIER;
+
         this.vramY = reader.readShort();
         this.fullWidth = reader.readShort();
         this.fullHeight = reader.readShort();
@@ -82,7 +85,6 @@ public class GameImage extends GameObject {
         short readV = reader.readUnsignedByteAsShort();
         this.ingameWidth = reader.readByte();
         this.ingameHeight = reader.readByte();
-        Utils.verify(readU == getU() && readV == getV(), "Image UV does not match the calculated one! [%d,%d] [%d, %d]", readU, readV, getU(), getV());
 
         reader.jumpTemp(offset);
 
@@ -109,6 +111,9 @@ public class GameImage extends GameObject {
         }
 
         reader.jumpReturn();
+
+        Utils.verify(getParent().isPsxMode() || (readU == getU() && readV == getV()), "Image UV does not match the calculated one! [%d,%d] [%d, %d]", readU, readV, getU(), getV()); // Psx mode has this disabled because there are lots of problems with saving PSX VLOs right now.
+
     }
 
     /**
@@ -158,7 +163,10 @@ public class GameImage extends GameObject {
     public void save(DataWriter writer) {
         Utils.verify(this.suppliedTextureOffset != null, "Image data offset was not specified.");
 
-        writer.writeShort(this.vramX);
+        short vramX = this.vramX;
+        if (getParent().isPsxMode())
+            vramX /= PSX_WIDTH_MODIFIER;
+        writer.writeShort(vramX);
         writer.writeShort(this.vramY);
 
         short width = this.fullWidth;

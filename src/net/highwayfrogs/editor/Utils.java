@@ -351,10 +351,7 @@ public class Utils {
      * @return isInteger
      */
     public static boolean isInteger(String str) {
-        if (str == null)
-            return false;
-
-        if (str.isEmpty() || str.equals("-"))
+        if (str == null || str.isEmpty() || str.equals("-"))
             return false;
 
         int startIndex = str.startsWith("-") ? 1 : 0;
