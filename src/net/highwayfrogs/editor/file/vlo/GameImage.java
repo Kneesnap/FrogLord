@@ -259,27 +259,21 @@ public class GameImage extends GameObject {
         short imageHeight = (short) image.getHeight();
         Utils.verify(imageWidth <= MAX_DIMENSION && imageHeight <= MAX_DIMENSION, "The imported image is too big. Frogger's engine only supports up to %dx%d.", MAX_DIMENSION, MAX_DIMENSION);
 
-        int xDiff = imageWidth - getFullWidth();
-        int yDiff = imageHeight - getFullHeight();
-
-        if (yDiff > this.vramY || xDiff > this.vramX) {
-            System.out.println("This image is too close to the edge of the VRAM-border to be replaced by a larger image [" + getVramX() + ", " + getVramY() + "].");
+        if (imageWidth + getVramX() > MAX_DIMENSION) {
+            System.out.println("This image would not fit horizontally in VRAM. Use the VRAM editor to move it around.");
             return;
         }
 
-        if (xDiff > 0)
-            this.vramX -= xDiff;
-
-        if (yDiff > 0)
-            this.vramY -= yDiff;
-
-        if (getFullWidth() != imageWidth) {
-            setFullWidth(imageWidth);
-            setIngameWidth((short) (imageWidth - 2));
+        if (imageWidth > getFullWidth() || imageHeight > getFullHeight()) {
+            System.out.println("WARNING: The image you just imported is larger than the image it replaced.");
+            System.out.println("This may cause problems if it overlaps with another texture.");
+            System.out.println("Click on the 'VRAM' option to move the texture, if it overlaps.");
         }
 
-        if (getFullHeight() != imageHeight) {
+        if (getFullWidth() != imageWidth || getFullHeight() != imageHeight) {
+            setFullWidth(imageWidth);
             setFullHeight(imageHeight);
+            setIngameWidth((short) (imageWidth - 2));
             setIngameHeight((short) (imageHeight - 2));
         }
 
