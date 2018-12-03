@@ -30,6 +30,7 @@
                text="Placeholder" textAlignment="CENTER" AnchorPane.rightAnchor="9.0"/>
         <VBox fx:id="flagBox" centerShape="false" layoutX="201.0" layoutY="67.0" prefHeight="135.0" prefWidth="138.0"/>
         <Button layoutX="261.0" layoutY="14.0" mnemonicParsing="false" onAction="#openPaddingEditor" text="Padding"/>
-        <Button layoutX="267.0" layoutY="39.0" mnemonicParsing="false" onAction="#openVramEditor" text="VRAM"/>
+        <Button layoutX="272.0" layoutY="39.0" mnemonicParsing="false" onAction="#openVramEditor" text="VRAM"/>
+        <Button layoutX="271.0" layoutY="266.0" mnemonicParsing="false" onAction="#importAllImages" text="Import All"/>
     </children>
 </AnchorPane>

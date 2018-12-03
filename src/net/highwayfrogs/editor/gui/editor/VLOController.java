@@ -16,6 +16,8 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.Getter;
+import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -177,6 +179,41 @@ public class VLOController extends EditorController<VLOArchive> {
         GUIMain.setWorkingDirectory(selectedFolder);
         updateFilter();
         getFile().exportAllImages(selectedFolder, imageFilterSettings);
+    }
+
+    @FXML
+    @SneakyThrows
+    private void importAllImages(ActionEvent event) {
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Select the directory to import images from.");
+        chooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+        File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
+        if (selectedFolder == null)
+            return; // Cancelled.
+
+        File[] files = selectedFolder.listFiles();
+        if (files == null)
+            return;
+
+        GUIMain.setWorkingDirectory(selectedFolder);
+        updateFilter();
+
+        int importedFiles = 0;
+        for (File file : files) {
+            String name = Utils.stripExtension(file.getName());
+            if (!Utils.isInteger(name))
+                continue;
+
+            int id = Integer.parseInt(name);
+            if (id >= 0 && id < getFile().getImages().size()) {
+                getFile().getImages().get(id).replaceImage(ImageIO.read(file));
+                importedFiles++;
+            }
+
+        }
+
+        System.out.println("Imported " + importedFiles + " images.");
+        updateDisplay();
     }
 
     @FXML

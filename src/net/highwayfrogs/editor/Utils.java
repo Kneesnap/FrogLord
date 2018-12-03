@@ -344,4 +344,23 @@ public class Utils {
 
         return crc32.getValue();
     }
+
+    /**
+     * Test if a string is an integer.
+     * @param str The string to test.
+     * @return isInteger
+     */
+    public static boolean isInteger(String str) {
+        if (str == null)
+            return false;
+
+        if (str.isEmpty() || str.equals("-"))
+            return false;
+
+        int startIndex = str.startsWith("-") ? 1 : 0;
+        for (int i = startIndex; i < str.length(); i++)
+            if (Character.digit(str.charAt(i), 10) < 0)
+                return false;
+        return true;
+    }
 }

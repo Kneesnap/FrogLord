@@ -15,8 +15,6 @@ Editor Features:
 Make remaps for Retail PSX, Demo PSX.
 Build FrogPSX.H from MWD.
 
-Add bulk texture import.
-
 Non tool-development-related plans:
  - Load the two developer maps.
  - Differences between PSX and PC version files?
