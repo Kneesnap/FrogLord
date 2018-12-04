@@ -10,6 +10,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import lombok.AllArgsConstructor;
 import net.highwayfrogs.editor.Utils;
@@ -22,7 +23,6 @@ import java.util.function.Function;
 
 /**
  * Prompt the user to select something.
- * TODO: Center ListView + Button.
  * Created by Kneesnap on 11/8/2018.
  */
 public class SelectionMenu {
@@ -64,7 +64,12 @@ public class SelectionMenu {
             optionList.setCellFactory(param -> new AttachmentListCell<>(nameFunction, imageFunction));
             optionList.getSelectionModel().selectFirst();
             promptText.setText(prompt);
-            Utils.closeOnEscapeKey(stage, null);
+
+            // Since the l
+            optionList.setOnKeyPressed(evt -> {
+                if (evt.getCode() == KeyCode.ESCAPE)
+                    stage.close();
+            });
         }
 
         @FXML

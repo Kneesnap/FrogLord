@@ -7,12 +7,12 @@
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0"
             prefWidth="200.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
     <children>
-        <Label fx:id="promptText" alignment="TOP_CENTER" layoutY="1.0" prefHeight="0.0" prefWidth="200.0"
-               text="Placeholder" textAlignment="CENTER" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
-               AnchorPane.topAnchor="1.0"/>
-        <ListView fx:id="optionList" layoutX="22.0" layoutY="34.0" prefHeight="180.0" prefWidth="150.0"/>
+        <Label fx:id="promptText" alignment="TOP_CENTER" layoutY="1.0" prefHeight="32.0" prefWidth="200.0"
+               text="Placeholder" textAlignment="CENTER" wrapText="true" AnchorPane.leftAnchor="0.0"
+               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="1.0"/>
+        <ListView fx:id="optionList" layoutX="25.0" layoutY="34.0" prefHeight="180.0" prefWidth="150.0"/>
         <Button fx:id="accept" layoutX="79.0" layoutY="119.0" mnemonicParsing="false" onAction="#onAccept"
-                prefHeight="25.0" prefWidth="44.0" text="Ok" AnchorPane.bottomAnchor="6.0" AnchorPane.leftAnchor="79.0"
-                AnchorPane.rightAnchor="77.0"/>
+                prefHeight="25.0" prefWidth="50.0" text="Ok" AnchorPane.bottomAnchor="6.0" AnchorPane.leftAnchor="75.0"
+                AnchorPane.rightAnchor="75.0"/>
     </children>
 </AnchorPane>
