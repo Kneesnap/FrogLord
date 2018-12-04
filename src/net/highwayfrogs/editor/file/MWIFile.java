@@ -181,7 +181,13 @@ public class MWIFile extends GameObject {
          * @return displayName
          */
         public String getDisplayName() {
-            return hasFilePath() ? getFilePath().substring(getFilePath().lastIndexOf("\\") + 1) : (GUIMain.EXE_CONFIG.getFileNames().size() > this.loadedId ? GUIMain.EXE_CONFIG.getFileNames().get(this.loadedId) : "File " + this.loadedId);
+            if (hasFilePath())
+                return getFilePath().substring(getFilePath().lastIndexOf("\\") + 1);
+
+            if (GUIMain.EXE_CONFIG.getFileNames().size() > this.loadedId)
+                return GUIMain.EXE_CONFIG.getFileNames().get(this.loadedId);
+
+            return "File " + this.loadedId;
         }
 
         /**

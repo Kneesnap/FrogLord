@@ -216,10 +216,18 @@ public class MWDFile extends GameObject {
         List<VLOArchive> allVLOs = getFiles().stream()
                 .filter(VLOArchive.class::isInstance)
                 .map(VLOArchive.class::cast)
-                .collect(Collectors.toList()); //TODO: Sort so good ones are on the top.
+                .collect(Collectors.toList());
 
         if (allowNull)
             allVLOs.add(0, null);
+
+        if (theme != null) {
+            List<VLOArchive> movedVLOs = allVLOs.stream()
+                    .filter(vlo -> getEntryMap().get(vlo).getDisplayName().startsWith(theme.getInternalName()))
+                    .collect(Collectors.toList());
+            allVLOs.removeAll(movedVLOs);
+            allVLOs.addAll(0, movedVLOs);
+        }
 
         VLOArchive cachedVLO = getVloThemeCache().get(theme); // Move cached vlo to the top.
         if (cachedVLO != null && allVLOs.remove(cachedVLO))
