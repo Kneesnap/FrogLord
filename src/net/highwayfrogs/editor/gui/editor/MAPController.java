@@ -16,6 +16,7 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Pair;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
@@ -174,10 +175,30 @@ public class MAPController extends EditorController<MAPFile> {
         stageToOverride.setScene(newScene);
 
         newScene.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ESCAPE)
+
+            // Exit the viewer.
+            if (event.getCode() == KeyCode.ESCAPE) {
+                Window viewWindow = newScene.getWindow();
+                double width = viewWindow.getWidth();
+                double height = viewWindow.getHeight();
+                double x = viewWindow.getX();
+                double y = viewWindow.getY();
+
                 stageToOverride.setScene(oldScene); // Exit the viewer.
+
+                // Maintain the position the viewer Scene was at when it was closed.
+                Window normalWindow = oldScene.getWindow();
+                normalWindow.setX(x);
+                normalWindow.setY(y);
+                normalWindow.setWidth(width);
+                normalWindow.setHeight(height);
+            }
+
+            // Toggle wireframe mode.
             if (event.getCode() == KeyCode.X)
                 displayNode.setDrawMode(displayNode.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
+
+            // [Remap Mode] Find next non-crashing remap.
             if (event.getCode() == KeyCode.K)
                 mesh.findNextValidRemap();
         });
