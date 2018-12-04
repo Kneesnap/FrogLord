@@ -3,16 +3,11 @@ package net.highwayfrogs.editor.gui;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.AnchorPane;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 
 import java.net.URL;
@@ -21,6 +16,7 @@ import java.util.function.Consumer;
 
 /**
  * Prompt the user to reply.
+ * TODO: Make menu smaller.
  * Created by Kneesnap on 12/2/2018.
  */
 public class InputMenu {
@@ -30,26 +26,8 @@ public class InputMenu {
      * @param prompt  The prompt to display the user.
      * @param handler The behavior to execute when the user accepts.
      */
-    @SneakyThrows
     public static void promptInput(String prompt, Consumer<String> handler) {
-        FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/input.fxml"));
-
-        Stage newStage = new Stage();
-        newStage.setTitle("Please Reply.");
-
-        InputController controller = new InputController(newStage, prompt, handler);
-        loader.setController(controller);
-        AnchorPane anchorPane = loader.load();
-
-        newStage.setScene(new Scene(anchorPane));
-        newStage.setResizable(false);
-        newStage.setMinWidth(200);
-        newStage.setMinHeight(100);
-
-        newStage.initModality(Modality.WINDOW_MODAL);
-        newStage.setAlwaysOnTop(true);
-        newStage.initOwner(GUIMain.MAIN_STAGE);
-        newStage.showAndWait();
+        Utils.loadFXMLTemplate("input", "Waiting for user input...", newStage -> new InputController(newStage, prompt, handler));
     }
 
     public static class InputController implements Initializable {

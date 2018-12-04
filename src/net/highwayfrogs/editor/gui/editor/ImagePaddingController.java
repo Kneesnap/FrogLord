@@ -4,22 +4,16 @@ import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.AnchorPane;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -177,22 +171,7 @@ public class ImagePaddingController implements Initializable {
      * Open the padding menu for a particular image.
      * @param controller The VLO controller opening this.
      */
-    @SneakyThrows
     public static void openPaddingMenu(VLOController controller) {
-        FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/image-padding.fxml"));
-
-        Stage newStage = new Stage();
-        newStage.setTitle("Image Padding Editor");
-
-        loader.setController(new ImagePaddingController(newStage, controller));
-        AnchorPane anchorPane = loader.load();
-
-        newStage.setScene(new Scene(anchorPane));
-        newStage.setResizable(false);
-
-        newStage.initModality(Modality.WINDOW_MODAL);
-        newStage.setAlwaysOnTop(true);
-        newStage.initOwner(GUIMain.MAIN_STAGE);
-        newStage.showAndWait();
+        Utils.loadFXMLTemplate("image-padding", "Image Padding Editor", newStage -> new ImagePaddingController(newStage, controller));
     }
 }

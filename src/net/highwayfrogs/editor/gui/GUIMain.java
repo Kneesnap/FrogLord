@@ -5,8 +5,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.AnchorPane;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -100,11 +98,7 @@ public class GUIMain extends Application {
 
     @SneakyThrows
     private void openGUI(Stage primaryStage, File mwdFile) {
-        // Load MWD.
-        MWDFile mwd = new MWDFile(EXE_CONFIG.readMWI());
-        mwd.load(new DataReader(new FileSource(mwdFile)));
-
-        // Setup GUI
+        // Setup GUI (We display the uninitialized GUI before the MWD loads because it intangibly feels better this way.)
         Parent root = FXMLLoader.load(Utils.getResource("javafx/main.fxml"));
         Scene scene = new Scene(root);
 
@@ -115,6 +109,11 @@ public class GUIMain extends Application {
         primaryStage.getIcons().add(GameFile.loadIcon("icon"));
         primaryStage.show();
 
+        // Load MWD.
+        MWDFile mwd = new MWDFile(EXE_CONFIG.readMWI());
+        mwd.load(new DataReader(new FileSource(mwdFile)));
+
+        // Setup GUI.
         MainController controller = MainController.MAIN_WINDOW;
         controller.loadMWD(mwd);
 
@@ -123,7 +122,7 @@ public class GUIMain extends Application {
                 return;
 
             if (event.getCode() == KeyCode.S) {
-                saveFiles(EXE_CONFIG, mwd, mwdFile.getParentFile());
+                SaveController.saveFiles(EXE_CONFIG, mwd, mwdFile.getParentFile());
             } else if (event.getCode() == KeyCode.I) {
                 controller.importFile();
             } else if (event.getCode() == KeyCode.O) {
@@ -132,30 +131,6 @@ public class GUIMain extends Application {
                 controller.getCurrentFile().exportAlternateFormat(controller.getFileEntry());
             }
         });
-
-    }
-
-    @SneakyThrows
-    private static void saveFiles(FroggerEXEInfo froggerEXE, MWDFile loadedMWD, File folder) {
-        FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/save.fxml"));
-
-        SaveController controller = new SaveController();
-        loader.setController(controller);
-        AnchorPane anchorPane = loader.load();
-
-        Stage newStage = new Stage();
-        newStage.setTitle("Saving MWD");
-        newStage.setScene(new Scene(anchorPane));
-        newStage.setMinWidth(200);
-        newStage.setMinHeight(100);
-        newStage.setResizable(false);
-
-        controller.onInit(newStage);
-        controller.startSaving(loadedMWD, froggerEXE, folder);
-
-        newStage.initModality(Modality.APPLICATION_MODAL);
-        newStage.initOwner(MAIN_STAGE);
-        newStage.showAndWait();
     }
 
     /**

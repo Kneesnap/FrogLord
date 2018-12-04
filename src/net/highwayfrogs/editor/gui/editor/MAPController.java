@@ -143,29 +143,29 @@ public class MAPController extends EditorController<MAPFile> {
 
     @SneakyThrows
     private void setupMapViewer(Stage stageToOverride, MapMesh mesh, TextureMap texMap) {
-        MeshView displayNode = new MeshView(mesh);
+        MeshView meshView = new MeshView(mesh);
 
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(SwingFXUtils.toFXImage(texMap.getImage(), null));
-        displayNode.setMaterial(material);
+        meshView.setMaterial(material);
 
-        displayNode.setCullFace(CullFace.NONE);
-        displayNode.setTranslateZ(50);
-        displayNode.setScaleX(10000);
-        displayNode.setScaleY(10000);
-        displayNode.setScaleZ(10000);
+        meshView.setCullFace(CullFace.NONE);
+        meshView.setTranslateZ(50);
+        meshView.setScaleX(10000);
+        meshView.setScaleY(10000);
+        meshView.setScaleZ(10000);
 
         PerspectiveCamera camera = new PerspectiveCamera(true);
         camera.setFarClip(Double.MAX_VALUE);
         camera.setTranslateZ(-500);
 
         Group cameraGroup = new Group();
-        cameraGroup.getChildren().add(displayNode);
+        cameraGroup.getChildren().add(meshView);
         cameraGroup.getChildren().add(camera);
 
         Rotate rotX = new Rotate(0, Rotate.X_AXIS);
         Rotate rotY = new Rotate(0, Rotate.Y_AXIS);
-        displayNode.getTransforms().addAll(rotX, rotY);
+        meshView.getTransforms().addAll(rotX, rotY);
 
         Scene newScene = new Scene(cameraGroup, 400, 400, true);
         newScene.setFill(Color.GRAY);
@@ -196,7 +196,7 @@ public class MAPController extends EditorController<MAPFile> {
 
             // Toggle wireframe mode.
             if (event.getCode() == KeyCode.X)
-                displayNode.setDrawMode(displayNode.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
+                meshView.setDrawMode(meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
 
             // [Remap Mode] Find next non-crashing remap.
             if (event.getCode() == KeyCode.K)

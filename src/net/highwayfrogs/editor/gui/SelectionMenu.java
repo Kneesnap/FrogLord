@@ -4,19 +4,14 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.AnchorPane;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 
 import java.net.URL;
@@ -27,6 +22,7 @@ import java.util.function.Function;
 
 /**
  * Prompt the user to select something.
+ * TODO: Center ListView + Button.
  * Created by Kneesnap on 11/8/2018.
  */
 public class SelectionMenu {
@@ -36,26 +32,8 @@ public class SelectionMenu {
      * @param prompt  The prompt to display the user.
      * @param handler The behavior to execute when the user accepts.
      */
-    @SneakyThrows
     public static <T> void promptSelection(String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, ImageView> imageFunction) {
-        FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/select.fxml"));
-
-        Stage newStage = new Stage();
-        newStage.setTitle("Please Select.");
-
-        SelectionController<T> controller = new SelectionController<>(newStage, prompt, handler, values, nameFunction, imageFunction);
-        loader.setController(controller);
-        AnchorPane anchorPane = loader.load();
-
-        newStage.setScene(new Scene(anchorPane));
-        newStage.setResizable(false);
-        newStage.setMinWidth(200);
-        newStage.setMinHeight(100);
-
-        newStage.initModality(Modality.WINDOW_MODAL);
-        newStage.setAlwaysOnTop(true);
-        newStage.initOwner(GUIMain.MAIN_STAGE);
-        newStage.showAndWait();
+        Utils.loadFXMLTemplate("select", "Waiting for selection...", newStage -> new SelectionController<>(newStage, prompt, handler, values, nameFunction, imageFunction));
     }
 
     public static class SelectionController<T> implements Initializable {

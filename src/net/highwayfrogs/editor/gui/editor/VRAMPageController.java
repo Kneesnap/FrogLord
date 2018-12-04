@@ -4,7 +4,6 @@ import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
@@ -14,16 +13,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.AnchorPane;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.system.Tuple3;
 
 import java.awt.*;
@@ -229,22 +224,7 @@ public class VRAMPageController implements Initializable {
      * Open the VRAM editor.
      * @param controller The VLO controller we'll be modifying.
      */
-    @SneakyThrows
     public static void openEditor(VLOController controller) {
-        FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/vram-editor.fxml"));
-
-        Stage newStage = new Stage();
-        newStage.setTitle("VRAM Editor");
-
-        loader.setController(new VRAMPageController(newStage, controller));
-        AnchorPane anchorPane = loader.load();
-
-        newStage.setScene(new Scene(anchorPane));
-        newStage.setResizable(false);
-
-        newStage.initModality(Modality.WINDOW_MODAL);
-        newStage.setAlwaysOnTop(true);
-        newStage.initOwner(GUIMain.MAIN_STAGE);
-        newStage.showAndWait();
+        Utils.loadFXMLTemplate("vram-editor", "VRAM Editor", newStage -> new VRAMPageController(newStage, controller));
     }
 }

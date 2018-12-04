@@ -1,9 +1,15 @@
 package net.highwayfrogs.editor;
 
 
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import lombok.SneakyThrows;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.awt.*;
@@ -17,6 +23,8 @@ import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.zip.CRC32;
 
 /**
@@ -465,5 +473,47 @@ public class Utils {
         verify(directory.isDirectory(), "This is not a directory!");
         File[] files = directory.listFiles();
         return files != null ? files : EMPTY_FILE_ARRAY;
+    }
+
+    /**
+     * Load a FXML template as a new window.
+     * WARNING: This method is blocking.
+     * @param template   The name of the template to load. Should not be user-controllable, as there is no path sanitization.
+     * @param title      The title of the window to show.
+     * @param controller Makes the window controller.
+     */
+    @SneakyThrows
+    public static <T> void loadFXMLTemplate(String template, String title, Function<Stage, T> controller) {
+        loadFXMLTemplate(template, title, controller, null);
+    }
+
+    /**
+     * Load a FXML template as a new window.
+     * WARNING: This method is blocking.
+     * @param template   The name of the template to load. Should not be user-controllable, as there is no path sanitization.
+     * @param title      The title of the window to show.
+     * @param controller Makes the window controller.
+     */
+    @SneakyThrows
+    public static <T> void loadFXMLTemplate(String template, String title, Function<Stage, T> controller, BiConsumer<Stage, T> consumer) {
+        FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/" + template + ".fxml"));
+
+        Stage newStage = new Stage();
+        newStage.setTitle(title);
+
+        T controllerObject = controller.apply(newStage);
+        loader.setController(controllerObject);
+
+        Parent rootNode = loader.load();
+        newStage.setScene(new Scene(rootNode));
+        newStage.setResizable(false);
+
+        if (consumer != null)
+            consumer.accept(newStage, controllerObject);
+
+        newStage.initModality(Modality.WINDOW_MODAL);
+        newStage.setAlwaysOnTop(true);
+        newStage.initOwner(GUIMain.MAIN_STAGE);
+        newStage.showAndWait();
     }
 }
