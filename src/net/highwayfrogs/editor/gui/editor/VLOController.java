@@ -12,9 +12,6 @@ import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
-import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
@@ -22,12 +19,10 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.gui.GUIMain;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -126,57 +121,30 @@ public class VLOController extends EditorController<VLOArchive> {
     }
 
     @FXML
+    @SneakyThrows
     private void exportImage(ActionEvent event) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Specify the file to export this image as...");
-        fileChooser.getExtensionFilters().add(new ExtensionFilter("Image Files", "*.png"));
-        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-
-        File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
-
-        if (selectedFile == null)
-            return; // Cancelled.
-
-        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
-        try {
+        File selectedFile = Utils.promptFileSave("Specify the file to export this image as...", null, "Image Files", "png");
+        if (selectedFile != null)
             ImageIO.write(toBufferedImage(this.selectedImage), "png", selectedFile);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
     }
 
     @FXML
+    @SneakyThrows
     private void importImage(ActionEvent event) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select the image to import...");
-        fileChooser.getExtensionFilters().add(new ExtensionFilter("Image Files", "*.png"));
-        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-
-        File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
+        File selectedFile = Utils.promptFileOpen("Select the image to import...", "Image Files", "*.png");
         if (selectedFile == null)
             return; // Cancelled.
 
-        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
-        try {
-            this.selectedImage.replaceImage(ImageIO.read(selectedFile));
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-
+        this.selectedImage.replaceImage(ImageIO.read(selectedFile));
         updateDisplay();
     }
 
     @FXML
     private void exportAllImages(ActionEvent event) {
-        DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle("Select the directory to export images to.");
-        chooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-
-        File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
+        File selectedFolder = Utils.promptChooseDirectory("Select the directory to export images to.", true);
         if (selectedFolder == null)
             return; // Cancelled.
 
-        GUIMain.setWorkingDirectory(selectedFolder);
         updateFilter();
         getFile().exportAllImages(selectedFolder, imageFilterSettings);
     }
@@ -184,22 +152,13 @@ public class VLOController extends EditorController<VLOArchive> {
     @FXML
     @SneakyThrows
     private void importAllImages(ActionEvent event) {
-        DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle("Select the directory to import images from.");
-        chooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-        File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
+        File selectedFolder = Utils.promptChooseDirectory("Select the directory to import images from.", true);
         if (selectedFolder == null)
             return; // Cancelled.
 
-        File[] files = selectedFolder.listFiles();
-        if (files == null)
-            return;
-
-        GUIMain.setWorkingDirectory(selectedFolder);
         updateFilter();
-
         int importedFiles = 0;
-        for (File file : files) {
+        for (File file : Utils.listFiles(selectedFolder)) {
             String name = Utils.stripExtension(file.getName());
             if (!Utils.isInteger(name))
                 continue;

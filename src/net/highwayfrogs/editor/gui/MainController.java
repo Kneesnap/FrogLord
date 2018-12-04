@@ -11,8 +11,6 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
-import javafx.stage.FileChooser;
-import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,8 +24,6 @@ import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.editor.EditorController;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ResourceBundle;
@@ -85,25 +81,13 @@ public class MainController implements Initializable {
     /**
      * Import a file to replace the current file.
      */
+    @SneakyThrows
     public void importFile() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select the file to import...");
-        fileChooser.getExtensionFilters().add(new ExtensionFilter("All Files", "*.*"));
-        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-
-        File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
+        File selectedFile = Utils.promptFileOpen("Select the file to import...", "All Files", "*");
         if (selectedFile == null)
             return; // Cancelled.
 
-        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
-
-        byte[] fileBytes;
-        try {
-            fileBytes = Files.readAllBytes(selectedFile.toPath());
-        } catch (IOException ex) {
-            throw new RuntimeException("Failed to read file.", ex);
-        }
-
+        byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
         GameFile oldFile = getCurrentFile();
         GameFile newFile = mwdFile.replaceFile(fileBytes, getFileEntry(), oldFile);
 
@@ -120,30 +104,19 @@ public class MainController implements Initializable {
     /**
      * Export the current file.
      */
+    @SneakyThrows
     public void exportFile() {
         GameFile currentFile = getCurrentFile();
         FileEntry entry = getFileEntry();
 
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Specify the file to export this file as...");
-        fileChooser.getExtensionFilters().add(new ExtensionFilter("All Files", "*.*"));
-        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-        fileChooser.setInitialFileName(entry.getDisplayName());
-
-        File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
+        File selectedFile = Utils.promptFileSave("Specify the file to export this data as...", entry.getDisplayName(), "All Files", "*");
         if (selectedFile == null)
             return; // Cancel.
 
-        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
-
-        try {
-            Utils.deleteFile(selectedFile); // Don't merge files, create a new one.
-            DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
-            currentFile.save(writer);
-            writer.closeReceiver();
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("Failed to export file " + selectedFile.getName() + ".", e);
-        }
+        Utils.deleteFile(selectedFile); // Don't merge files, create a new one.
+        DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
+        currentFile.save(writer);
+        writer.closeReceiver();
 
         System.out.println("Exported " + selectedFile.getName() + ".");
     }

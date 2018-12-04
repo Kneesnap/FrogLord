@@ -6,19 +6,15 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
-import javafx.stage.FileChooser.ExtensionFilter;
+import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
-import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 
 /**
@@ -47,73 +43,46 @@ public class WADController extends EditorController<WADFile> {
     }
 
     @FXML
+    @SneakyThrows
     private void importEntry(ActionEvent event) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select the WAD Entry to import...");
-        fileChooser.getExtensionFilters().add(new ExtensionFilter("All Files", "*.*"));
-        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-
-        File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
+        File selectedFile = Utils.promptFileOpen("Select the WAD Entry to import...", "All Files", "*");
         if (selectedFile == null)
             return; // Cancelled.
 
-        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
-        try {
-            byte[] newBytes = Files.readAllBytes(selectedFile.toPath());
-            this.selectedEntry.setFile(getFile().getParentMWD().replaceFile(newBytes, selectedEntry.getFileEntry(), selectedEntry.getFile()));
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+        byte[] newBytes = Files.readAllBytes(selectedFile.toPath());
+        this.selectedEntry.setFile(getFile().getParentMWD().replaceFile(newBytes, selectedEntry.getFileEntry(), selectedEntry.getFile()));
 
         updateEntry(); // Update the display.
         System.out.println("Imported WAD Entry.");
     }
 
     @FXML
+    @SneakyThrows
     private void exportEntry(ActionEvent event) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Specify the file to export this entry as...");
-        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-        fileChooser.setInitialFileName(this.selectedEntry.getFileEntry().getDisplayName());
-
-        File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
+        File selectedFile = Utils.promptFileSave("Specify the file to export this entry as...", this.selectedEntry.getFileEntry().getDisplayName(), null, null);
         if (selectedFile == null)
             return; // Cancelled.
 
-        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
-        try {
-            DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
-            this.selectedEntry.getFile().save(writer);
-            writer.closeReceiver();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+        DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
+        this.selectedEntry.getFile().save(writer);
+        writer.closeReceiver();
     }
 
     @FXML
+    @SneakyThrows
     private void exportAll(ActionEvent event) {
-        DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle("Select the directory to export WAD contents to.");
-        chooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-
-        File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
+        File selectedFolder = Utils.promptChooseDirectory("Select the directory to export WAD contents to.", true);
         if (selectedFolder == null)
             return; // Cancelled.
 
-        GUIMain.setWorkingDirectory(selectedFolder);
+        for (WADEntry wadEntry : getFile().getFiles()) {
+            FileEntry fileEntry = wadEntry.getFileEntry();
+            File save = Utils.getNonExistantFile(new File(selectedFolder, fileEntry.getDisplayName()));
+            System.out.println("Saving: " + fileEntry.getDisplayName());
 
-        try {
-            for (WADEntry wadEntry : getFile().getFiles()) {
-                FileEntry fileEntry = wadEntry.getFileEntry();
-                File save = Utils.getNonExistantFile(new File(selectedFolder, fileEntry.getDisplayName()));
-                System.out.println("Saving: " + fileEntry.getDisplayName());
-
-                DataWriter writer = new DataWriter(new FileReceiver(save));
-                wadEntry.getFile().save(writer);
-                writer.closeReceiver();
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
+            DataWriter writer = new DataWriter(new FileReceiver(save));
+            wadEntry.getFile().save(writer);
+            writer.closeReceiver();
         }
     }
 

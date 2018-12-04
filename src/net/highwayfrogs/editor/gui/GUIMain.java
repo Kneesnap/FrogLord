@@ -6,8 +6,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
-import javafx.stage.FileChooser;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -55,8 +53,14 @@ public class GUIMain extends Application {
         }
 
         // If this isn't a debug setup, prompt the user to select the files to load.
-        File mwdFile = promptFile("MWD", "Medievil WAD");
-        File exeFile = promptFile("EXE", "Frogger Executable");
+        File mwdFile = Utils.promptFileOpen("Please select a Frogger MWAD", "Medievil WAD", "MWD");
+        if (mwdFile == null)
+            return; // No file given, shutdown.
+
+        File exeFile = Utils.promptFileOpen("Please select a Frogger executable", "Frogger Executable", "EXE");
+        if (exeFile == null)
+            return; // No file given, shutdown.
+
         resolveEXE(exeFile, () -> openGUI(primaryStage, mwdFile));
     }
 
@@ -94,22 +98,13 @@ public class GUIMain extends Application {
         EXE_CONFIG = new FroggerEXEInfo(inputExe, Utils.getResourceStream(resourcePath));
     }
 
-    private File promptFile(String extension, String description) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select " + extension + " to open.");
-        fileChooser.getExtensionFilters().add(new ExtensionFilter(description, "*." + extension));
-        fileChooser.setInitialDirectory(getWorkingDirectory());
-
-        File result = fileChooser.showOpenDialog(MAIN_STAGE);
-        if (result == null)
-            return promptFile(extension, description);
-
-        setWorkingDirectory(result.getParentFile());
-        return result;
-    }
-
     @SneakyThrows
     private void openGUI(Stage primaryStage, File mwdFile) {
+        // Load MWD.
+        MWDFile mwd = new MWDFile(EXE_CONFIG.readMWI());
+        mwd.load(new DataReader(new FileSource(mwdFile)));
+
+        // Setup GUI
         Parent root = FXMLLoader.load(Utils.getResource("javafx/main.fxml"));
         Scene scene = new Scene(root);
 
@@ -119,9 +114,6 @@ public class GUIMain extends Application {
         primaryStage.setMinHeight(400);
         primaryStage.getIcons().add(GameFile.loadIcon("icon"));
         primaryStage.show();
-
-        MWDFile mwd = new MWDFile(EXE_CONFIG.readMWI());
-        mwd.load(new DataReader(new FileSource(mwdFile)));
 
         MainController controller = MainController.MAIN_WINDOW;
         controller.loadMWD(mwd);
@@ -156,6 +148,7 @@ public class GUIMain extends Application {
         newStage.setScene(new Scene(anchorPane));
         newStage.setMinWidth(200);
         newStage.setMinHeight(100);
+        newStage.setResizable(false);
 
         controller.onInit(newStage);
         controller.startSaving(loadedMWD, froggerEXE, folder);

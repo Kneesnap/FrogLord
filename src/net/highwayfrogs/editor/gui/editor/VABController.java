@@ -7,12 +7,10 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
-import javafx.stage.FileChooser.ExtensionFilter;
+import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.sound.GameSound;
 import net.highwayfrogs.editor.file.sound.VBFile;
-import net.highwayfrogs.editor.gui.GUIMain;
 
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent.Type;
@@ -69,17 +67,10 @@ public class VABController extends EditorController<VBFile> {
 
     @FXML
     private void exportSound(ActionEvent event) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Specify the file to export this sound as...");
-        fileChooser.getExtensionFilters().add(new ExtensionFilter("Sound Files", "*.wav"));
-        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-        fileChooser.setInitialFileName(this.selectedSound.getSoundName() + ".wav");
-
-        File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
+        File selectedFile = Utils.promptFileSave("Specify the file to export this sound as...", this.selectedSound.getSoundName(), "Sound Files", "wav");
         if (selectedFile == null)
             return;
 
-        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
         try {
             this.selectedSound.exportToFile(selectedFile);
         } catch (LineUnavailableException | IOException ex) {
@@ -89,16 +80,10 @@ public class VABController extends EditorController<VBFile> {
 
     @FXML
     private void importSound(ActionEvent event) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select the sound to import...");
-        fileChooser.getExtensionFilters().add(new ExtensionFilter("Sound Files", "*.wav"));
-        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-
-        File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
+        File selectedFile = Utils.promptFileOpen("Select the sound to import...", "Sound Files", "wav");
         if (selectedFile == null)
             return; // Cancelled.
 
-        GUIMain.setWorkingDirectory(selectedFile.getParentFile());
         try {
             this.selectedSound.replaceWithFile(selectedFile);
         } catch (UnsupportedAudioFileException | IOException ex) {
@@ -110,24 +95,15 @@ public class VABController extends EditorController<VBFile> {
     }
 
     @FXML
+    @SneakyThrows
     private void exportAllSounds(ActionEvent event) {
-        DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle("Select the directory to export sounds to.");
-        chooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-
-        File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
+        File selectedFolder = Utils.promptChooseDirectory("Select the directory to export sounds to.", true);
         if (selectedFolder == null)
             return; // Cancelled.
 
-        GUIMain.setWorkingDirectory(selectedFolder);
-        try {
-            for (GameSound sound : getFile().getAudioEntries()) {
-                sound.exportToFile(new File(selectedFolder, sound.getSoundName() + ".wav"));
-                System.out.println("Exported sound: " + sound.getSoundName());
-            }
-
-        } catch (IOException | LineUnavailableException ex) {
-            ex.printStackTrace();
+        for (GameSound sound : getFile().getAudioEntries()) {
+            sound.exportToFile(new File(selectedFolder, sound.getSoundName() + ".wav"));
+            System.out.println("Exported sound: " + sound.getSoundName());
         }
     }
 

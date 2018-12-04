@@ -1,6 +1,11 @@
 package net.highwayfrogs.editor;
 
 
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
+import net.highwayfrogs.editor.gui.GUIMain;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -21,6 +26,7 @@ import java.util.zip.CRC32;
 public class Utils {
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
     private static final CRC32 crc32 = new CRC32();
+    private static final File[] EMPTY_FILE_ARRAY = new File[0];
 
     /**
      * Convert a byte array to a number.
@@ -359,5 +365,105 @@ public class Utils {
             if (Character.digit(str.charAt(i), 10) < 0)
                 return false;
         return true;
+    }
+
+    /**
+     * Prompt the user to select a file.
+     * @param title     The title of the window to display.
+     * @param typeInfo  The label to show for the file-type.
+     * @param extension Allowed extension.
+     * @return selectedFile, Can be null.
+     */
+    public static File promptFileOpen(String title, String typeInfo, String extension) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(title);
+
+        String type = "*." + extension; // Unix is case-sensitive, so we add both lower-case and upper-case.
+        String lowerCase = type.toLowerCase();
+        String upperCase = type.toUpperCase();
+
+        if (lowerCase.equals(upperCase)) {
+            fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, type));
+        } else {
+            fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, lowerCase, upperCase));
+        }
+
+        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+
+        File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
+        if (selectedFile != null)
+            GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+
+        return selectedFile;
+    }
+
+    /**
+     * Prompt the user to save a file.
+     * @param title       The title of the window to display.
+     * @param suggestName The initial name to suggest saving the file as.
+     * @param typeInfo    The label to show for the file-type.
+     * @param extension   Allowed extension.
+     * @return selectedFile, Can be null.
+     */
+    public static File promptFileSave(String title, String suggestName, String typeInfo, String extension) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(title);
+
+        if (extension != null) {
+            String type = "*." + extension; // Unix is case-sensitive, so we add both lower-case and upper-case.
+
+            String lowerCase = type.toLowerCase();
+            String upperCase = type.toUpperCase();
+
+            if (lowerCase.equals(upperCase)) {
+                fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, type));
+            } else {
+                fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, lowerCase, upperCase));
+            }
+        }
+
+        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+        if (suggestName != null) {
+            String initialName = suggestName;
+            if (extension != null && !extension.equals("*"))
+                initialName += "." + extension;
+
+            fileChooser.setInitialFileName(initialName);
+        }
+
+        File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
+        if (selectedFile != null)
+            GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+
+        return selectedFile;
+    }
+
+    /**
+     * Prompt the user to select a directory.
+     * @param title         The title of the window.
+     * @param saveDirectory Should this directory be saved as the current directory?
+     * @return directoryFile
+     */
+    public static File promptChooseDirectory(String title, boolean saveDirectory) {
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle(title);
+        chooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+
+        File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
+        if (selectedFolder != null && saveDirectory)
+            GUIMain.setWorkingDirectory(selectedFolder);
+
+        return selectedFolder;
+    }
+
+    /**
+     * A null-safe way of reading files from a directory.
+     * @param directory The directory to read files from.
+     * @return readFiles
+     */
+    public static File[] listFiles(File directory) {
+        verify(directory.isDirectory(), "This is not a directory!");
+        File[] files = directory.listFiles();
+        return files != null ? files : EMPTY_FILE_ARRAY;
     }
 }

@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.file.map;
 
 import javafx.scene.Node;
 import javafx.scene.image.Image;
-import javafx.stage.DirectoryChooser;
 import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -617,11 +616,7 @@ public class MAPFile extends GameFile {
 
     @Override
     public void exportAlternateFormat(FileEntry entry) {
-        DirectoryChooser dirChooser = new DirectoryChooser();
-        dirChooser.setTitle("Select the folder to export this map into.");
-        dirChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
-
-        File selectedFolder = dirChooser.showDialog(GUIMain.MAIN_STAGE);
+        File selectedFolder = Utils.promptChooseDirectory("Select the folder to export this map into.", false);
         if (selectedFolder == null)
             return;
 
