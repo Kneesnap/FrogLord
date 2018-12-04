@@ -64,6 +64,7 @@ public class SelectionMenu {
             optionList.setCellFactory(param -> new AttachmentListCell<>(nameFunction, imageFunction));
             optionList.getSelectionModel().selectFirst();
             promptText.setText(prompt);
+            Utils.closeOnEscapeKey(stage, null);
         }
 
         @FXML

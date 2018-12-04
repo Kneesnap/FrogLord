@@ -12,7 +12,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -79,10 +78,7 @@ public class VRAMPageController implements Initializable {
         });
 
         stage.setOnCloseRequest(evt -> cancel());
-        scene.setOnKeyPressed(evt -> {
-            if (evt.getCode() == KeyCode.ESCAPE)
-                cancel();
-        });
+        Utils.closeOnEscapeKey(stage, this::cancel);
 
         imageView.setOnMousePressed(evt -> {
             if (!evt.isPrimaryButtonDown())

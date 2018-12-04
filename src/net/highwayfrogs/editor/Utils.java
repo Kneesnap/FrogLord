@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor;
 
 
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyCode;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
@@ -515,5 +517,32 @@ public class Utils {
         newStage.setAlwaysOnTop(true);
         newStage.initOwner(GUIMain.MAIN_STAGE);
         newStage.showAndWait();
+    }
+
+    /**
+     * Make a given stage close when the escape key is pressed.
+     * @param stage   The stage to apply.
+     * @param onClose Behavior to run when the escape key is pressed.
+     */
+    public static void closeOnEscapeKey(Stage stage, Runnable onClose) {
+        closeOnEscapeKey(stage, onClose, true);
+    }
+
+    private static void closeOnEscapeKey(Stage stage, Runnable onClose, boolean firstTime) {
+        Scene scene = stage.getScene();
+        if (scene == null || !Platform.isFxApplicationThread()) {
+            if (firstTime)
+                Platform.runLater(() -> closeOnEscapeKey(stage, onClose, false));
+            return;
+        }
+
+        Utils.verify(scene.getOnKeyPressed() == null, "Scene already has a key-press listener!");
+        scene.setOnKeyPressed(evt -> {
+            if (evt.getCode() == KeyCode.ESCAPE) {
+                if (onClose != null)
+                    onClose.run();
+                stage.close();
+            }
+        });
     }
 }
