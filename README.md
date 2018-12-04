@@ -1,14 +1,30 @@
 # FrogLord
-An editor for Frogger: He's Back (1997)  
+FrogLord is a modding suite for Frogger (1997). Its purpose is to allow fans to change any and all game files.  
+To use this tool, you must have a copy of the game.  
 
 ## Usage:
-http://highwayfrogs.freeforums.net/  
+Download: [here](https://github.com/Kneesnap/FrogLord/releases)  
+Website: [here](http://highwayfrogs.freeforums.net/)  
+Discord: [here](http://highwayfrogs.freeforums.net/thread/26/discord-group)  
+If you need any help, have questions, or want to get in touch, don't hesitate to talk to us on our website or our discord.  
+
+## Can I Contribute?
+Yes! Pull requests are welcome.  
+
+## Build Instructions:
+Using the IntelliJ IDE, setting up FrogLord is very simple.  
+1. Select ``Git`` from the ``Check out from Version Control`` option on the main menu. (It may be ``File > New > Project from Version Control`` if you're not on the main menu.)  
+2. Clone this repository. The URL is: ``https://github.com/Kneesnap/FrogLord.git``.
+3. Install the Lombok IntelliJ Plugin using the steps found [here](https://projectlombok.org/setup/intellij).
+
+Run FrogLord: ``Run > Run 'FrogLord GUI'``  
+Create FrogLord.jar: ``Build > Build Artifacts... > FrogLord > Build``  
 
 ## Screenshots:
-![Image Example](https://i.imgur.com/AcjSDkE.png)
+![Image Example](https://i.imgur.com/AcjSDkE.png)  
 
 ## Special Thanks:  
- - Tim Closs
- - Xiron
- - Aluigi (QuickBMS Author)
- - Shakotay2 (XeNTax)
+ - Tim Closs (Frogger Programmer)
+ - Xiron (Highway Frogs Creator, Documented demo replay file format)
+ - Aluigi (QuickBMS Author, Documented the MWD and MWI file formats)
+ - Shakotay2 (XeNTax, Helped us figure out how 3D geometry was stored)
