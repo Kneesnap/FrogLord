@@ -16,7 +16,6 @@ import java.util.function.Consumer;
 
 /**
  * Prompt the user to reply.
- * TODO: Make menu smaller.
  * Created by Kneesnap on 12/2/2018.
  */
 public class InputMenu {

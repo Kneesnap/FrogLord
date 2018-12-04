@@ -4,16 +4,16 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.*?>
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="150.0"
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="93.0"
             prefWidth="300.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
     <children>
-        <Label fx:id="promptText" alignment="TOP_CENTER" layoutY="1.0" prefHeight="85.0" prefWidth="200.0"
-               text="Placeholder" textAlignment="CENTER" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
-               AnchorPane.topAnchor="1.0"/>
-        <Button layoutX="79.0" layoutY="119.0" mnemonicParsing="false" onAction="#onAccept" prefHeight="25.0"
-                prefWidth="50.0" text="Ok" AnchorPane.bottomAnchor="6.0" AnchorPane.leftAnchor="50.0"/>
-        <Button layoutX="79.0" layoutY="119.0" mnemonicParsing="false" onAction="#onCancel" prefHeight="25.0"
-                prefWidth="75.0" text="Cancel" AnchorPane.bottomAnchor="6.0" AnchorPane.rightAnchor="50.0"/>
+        <Label fx:id="promptText" alignment="TOP_CENTER" layoutY="1.0" prefHeight="31.0" prefWidth="300.0"
+               text="Placeholder" textAlignment="CENTER" wrapText="true" AnchorPane.leftAnchor="0.0"
+               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="1.0"/>
+        <Button layoutX="85.0" layoutY="62.0" mnemonicParsing="false" onAction="#onAccept" prefHeight="25.0"
+                prefWidth="50.0" text="Ok" AnchorPane.bottomAnchor="6.0" AnchorPane.leftAnchor="85.0"/>
+        <Button layoutX="151.0" layoutY="62.0" mnemonicParsing="false" onAction="#onCancel" prefHeight="25.0"
+                prefWidth="75.0" text="Cancel" AnchorPane.bottomAnchor="6.0" AnchorPane.rightAnchor="74.0"/>
         <TextField fx:id="textField" layoutX="76.0" layoutY="191.0" prefHeight="25.0" promptText="Enter Response"
                    AnchorPane.bottomAnchor="33.0"/>
     </children>
