@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
@@ -11,11 +12,12 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.util.Pair;
@@ -25,7 +27,14 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.entity.data.PathEntity;
 import net.highwayfrogs.editor.file.map.light.Light;
+import net.highwayfrogs.editor.file.map.path.Path;
+import net.highwayfrogs.editor.file.map.path.PathInfo;
+import net.highwayfrogs.editor.file.map.path.PathSegment;
+import net.highwayfrogs.editor.file.map.path.data.ArcSegment;
+import net.highwayfrogs.editor.file.map.path.data.LineSegment;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -89,7 +98,7 @@ public class MAPController extends EditorController<MAPFile> {
     private static final int VERTEX_SPEED = 3;
 
     private static final Image LIGHT_BULB = GameFile.loadIcon("lightbulb");
-
+    private static final Image SWAMPY = GameFile.loadIcon("swampy");
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -194,6 +203,7 @@ public class MAPController extends EditorController<MAPFile> {
         meshView.getTransforms().addAll(rotX, rotY);
 
         setupLights(cameraGroup, rotX, rotY);
+        setupEntities(cameraGroup, rotX, rotY);
 
         Scene mapScene = new Scene(cameraGroup, 400, 400, true);
         mapScene.setFill(Color.GRAY);
@@ -275,6 +285,8 @@ public class MAPController extends EditorController<MAPFile> {
                 } else {
                     setCursorPolygon(clickedPoly);
                     this.polygonSelected = true;
+                    Point3D hit = evt.getPickResult().getIntersectedPoint();
+                    System.out.println("Selected: " + hit.getX() + ", " + hit.getY() + ", " + hit.getZ());
                 }
             }
         });
@@ -283,36 +295,76 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void setupLights(Group cameraGroup, Rotate rotX, Rotate rotY) {
-        PhongMaterial material = new PhongMaterial();
-        material.setDiffuseMap(LIGHT_BULB);
+        ImagePattern pattern = new ImagePattern(LIGHT_BULB);
 
         for (Light light : getFile().getLights()) {
-            Box box = new Box(LIGHT_BULB.getWidth(), LIGHT_BULB.getWidth(), LIGHT_BULB.getHeight());
             SVector position = light.getPosition();
-            if (position.getX() == 0 && position.getY() == 0 && position.getZ() == 0)
-                continue;
-
-            box.setTranslateX(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(position.getX()));
-            box.setTranslateY(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(position.getY()));
-            box.setTranslateZ(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(position.getZ()));
-            box.setMaterial(material);
-
-            Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS);
-            Rotate lightRotateY = new Rotate(0, Rotate.Y_AXIS);
-            lightRotateX.angleProperty().bind(rotX.angleProperty());
-            lightRotateY.angleProperty().bind(rotY.angleProperty());
-
-            lightRotateX.setPivotX(-box.getTranslateX());
-            lightRotateX.setPivotY(-box.getTranslateY());
-            lightRotateX.setPivotZ(-box.getTranslateZ());
-            lightRotateY.setPivotX(-box.getTranslateX());
-            lightRotateY.setPivotY(-box.getTranslateY());
-            lightRotateY.setPivotZ(-box.getTranslateZ());
-
-            box.getTransforms().addAll(lightRotateX, lightRotateY);
-
-            cameraGroup.getChildren().add(box);
+            makeIcon(cameraGroup, pattern, rotX, rotY, position.getX(), position.getY(), position.getZ());
         }
+    }
+
+    private void setupEntities(Group cameraGroup, Rotate rotX, Rotate rotY) {
+        ImagePattern pattern = new ImagePattern(SWAMPY);
+
+        for (Entity entity : getFile().getEntities()) {
+
+            PathInfo pathInfo = null;
+            if (entity.getEntityData() instanceof PathEntity)
+                pathInfo = ((PathEntity) entity.getEntityData()).getPathInfo();
+            else if (entity.getEntityData() instanceof PathInfo)
+                pathInfo = (PathInfo) entity.getEntityData();
+
+            if (pathInfo != null) {
+                Path path = getFile().getPaths().get(pathInfo.getPathId());
+                PathSegment segment = path.getSegments().get(pathInfo.getSegmentId());
+
+                SVector start = null;
+                if (segment instanceof ArcSegment) {
+                    start = ((ArcSegment) segment).getStart();
+                } else if (segment instanceof LineSegment) {
+                    start = ((LineSegment) segment).getStart();
+                }
+
+                if (start != null) {
+                    Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, start.getX(), start.getY(), start.getZ());
+
+                    final SVector startPos = start;
+                    rect.setOnMouseClicked(evt -> {
+                        System.out.println("Hello, I am a " + entity.getFormBook());
+                        System.out.println("I was placed at " + startPos.getX() + ", " + startPos.getY() + ", " + startPos.getZ());
+                        System.out.println("I was placed at " + Utils.unsignedShortToFloat(startPos.getX()) + ", " + Utils.unsignedShortToFloat(startPos.getY()) + ", " + Utils.unsignedShortToFloat(startPos.getZ()));
+                        System.out.println("I think I am at: " + rect.getTranslateX() + ", " + rect.getTranslateY() + ", " + rect.getTranslateZ());
+                        Point3D clicked = evt.getPickResult().getIntersectedPoint();
+                        System.out.println("I am actually at: " + clicked.getX() + ", " + clicked.getY() + ", " + clicked.getZ());
+                    });
+                }
+            }
+        }
+    }
+
+    private Rectangle makeIcon(Group cameraGroup, ImagePattern image, Rotate rotX, Rotate rotY, short x, short y, short z) {
+        Rectangle rect = new Rectangle(image.getImage().getWidth(), image.getImage().getHeight());
+
+        rect.setTranslateX(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(x));
+        rect.setTranslateY(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(y));
+        rect.setTranslateZ(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(z));
+        rect.setFill(image);
+
+        Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS);
+        Rotate lightRotateY = new Rotate(0, Rotate.Y_AXIS);
+        lightRotateX.angleProperty().bind(rotX.angleProperty());
+        lightRotateY.angleProperty().bind(rotY.angleProperty());
+
+        lightRotateX.setPivotX(-rect.getTranslateX());
+        lightRotateX.setPivotY(-rect.getTranslateY());
+        lightRotateX.setPivotZ(-rect.getTranslateZ());
+        lightRotateY.setPivotX(-rect.getTranslateX());
+        lightRotateY.setPivotY(-rect.getTranslateY());
+        lightRotateY.setPivotZ(-rect.getTranslateZ());
+        rect.getTransforms().addAll(lightRotateX, lightRotateY);
+
+        cameraGroup.getChildren().add(rect);
+        return rect;
     }
 
     private void movePolygonX(int amount) {

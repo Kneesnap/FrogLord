@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.map.entity.data.retro;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.map.entity.data.MatrixEntity;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -11,7 +12,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
-public class EntityBabyFrog extends GameObject {
+public class EntityBabyFrog extends GameObject implements MatrixEntity {
     private PSXMatrix matrix = new PSXMatrix();
     private short logId; // The id of the log this frog will stand on.
     private short awardedPoints; // The points awarded when collected.

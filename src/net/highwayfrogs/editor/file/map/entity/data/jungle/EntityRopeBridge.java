@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.map.entity.data.jungle;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.map.entity.data.MatrixEntity;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -10,7 +11,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
-public class EntityRopeBridge extends GameObject {
+public class EntityRopeBridge extends GameObject implements MatrixEntity {
     private PSXMatrix matrix = new PSXMatrix();
     private int fallDelay;
     private int hopsBefore;

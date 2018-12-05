@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.map.entity.data.cave;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.map.entity.data.PathEntity;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -12,7 +13,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 @Setter
-public class EntityRaceSnail extends GameObject {
+public class EntityRaceSnail extends GameObject implements PathEntity {
     private PathInfo pathInfo = new PathInfo();
     private int forwardDistance;
     private int backwardDistance;
