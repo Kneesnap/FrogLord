@@ -17,6 +17,7 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.util.Pair;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
@@ -33,6 +34,7 @@ import java.util.List;
  * Sets up the map editor.
  * Created by Kneesnap on 11/22/2018.
  */
+@Getter
 public class MAPController extends EditorController<MAPFile> {
     @FXML private Label themeIdLabel;
     @FXML private Label startPosLabel;
@@ -65,6 +67,8 @@ public class MAPController extends EditorController<MAPFile> {
 
     private MapMesh mapMesh;
     private PSXPolygon selectedPolygon;
+    private PSXPolygon polygonImmuneToTarget;
+    private boolean polygonSelected;
 
     private static final double ROTATION_SPEED = 0.35D;
     private static final double SCROLL_SPEED = 5;
@@ -217,8 +221,25 @@ public class MAPController extends EditorController<MAPFile> {
             }
         });
 
-        mapScene.setOnMouseMoved(evt ->
-                setCursorPolygon(mesh.getFacePolyMap().get(evt.getPickResult().getIntersectedFace())));
+        mapScene.setOnMouseMoved(evt -> {
+            if (!isPolygonSelected())
+                setCursorPolygon(mesh.getFacePolyMap().get(evt.getPickResult().getIntersectedFace()));
+        });
+
+        mapScene.setOnMouseClicked(evt -> {
+            PSXPolygon clickedPoly = getMapMesh().getFacePolyMap().get(evt.getPickResult().getIntersectedFace());
+
+            if (getSelectedPolygon() != null && (getSelectedPolygon() == clickedPoly)) {
+                if (isPolygonSelected()) {
+                    this.polygonImmuneToTarget = getSelectedPolygon();
+                    removeCursorPolygon();
+                } else {
+                    setCursorPolygon(clickedPoly);
+                    this.polygonSelected = true;
+                }
+            }
+        });
+
         mesh.findNextValidRemap();
     }
 
@@ -229,6 +250,7 @@ public class MAPController extends EditorController<MAPFile> {
         if (this.selectedPolygon == null)
             return;
 
+        this.polygonSelected = false;
         this.selectedPolygon = null;
         mapMesh.getFaces().resize(mapMesh.getFaceCount());
         mapMesh.getTexCoords().resize(mapMesh.getTextureCount());
@@ -239,10 +261,11 @@ public class MAPController extends EditorController<MAPFile> {
      * @param newPoly The poly to highlight.
      */
     public void setCursorPolygon(PSXPolygon newPoly) {
-        if (newPoly == this.selectedPolygon)
+        if (newPoly == this.selectedPolygon || newPoly == this.polygonImmuneToTarget)
             return;
 
         removeCursorPolygon();
+        this.polygonImmuneToTarget = null;
         if (newPoly != null)
             renderCursor(this.selectedPolygon = newPoly);
     }
