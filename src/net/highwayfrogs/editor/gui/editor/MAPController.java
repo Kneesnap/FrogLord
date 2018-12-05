@@ -33,6 +33,14 @@ import java.util.List;
 
 /**
  * Sets up the map editor.
+ * TODO: Icon for entity
+ * TODO: Icon for lighting.
+ * TODO: Icon for animations, if we're unable to make them render in our tool.
+ * TODO: Grid mode,
+ * TODO: Edit Vertexes
+ * TODO: Edit polygons
+ * TODO: Show Paths.
+ * TODO: Zones.
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter
