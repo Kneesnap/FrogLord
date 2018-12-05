@@ -65,8 +65,6 @@ public class MAPController extends EditorController<MAPFile> {
 
     private MapMesh mapMesh;
     private PSXPolygon selectedPolygon;
-    private int oldTexSize;
-    private int oldFaceSize;
 
     private static final double ROTATION_SPEED = 0.35D;
     private static final double SCROLL_SPEED = 5;
@@ -232,8 +230,8 @@ public class MAPController extends EditorController<MAPFile> {
             return;
 
         this.selectedPolygon = null;
-        mapMesh.getFaces().resize(this.oldFaceSize);
-        mapMesh.getTexCoords().resize(this.oldTexSize);
+        mapMesh.getFaces().resize(mapMesh.getFaceCount());
+        mapMesh.getTexCoords().resize(mapMesh.getTextureCount());
     }
 
     /**
@@ -245,17 +243,15 @@ public class MAPController extends EditorController<MAPFile> {
             return;
 
         removeCursorPolygon();
-        if (newPoly == null)
-            return;
+        if (newPoly != null)
+            renderCursor(this.selectedPolygon = newPoly);
+    }
 
-        this.selectedPolygon = newPoly;
-        this.oldFaceSize = mapMesh.getFaces().size();
-        this.oldTexSize = mapMesh.getTexCoords().size();
-
+    private void renderCursor(PSXPolygon cursorPoly) {
         int increment = mapMesh.getVertexFormat().getVertexIndexSize();
-        boolean isQuad = (newPoly.getVertices().length == PSXPolygon.QUAD_SIZE);
+        boolean isQuad = (cursorPoly.getVertices().length == PSXPolygon.QUAD_SIZE);
 
-        int face = mapMesh.getPolyFaceMap().get(newPoly) * mapMesh.getFaceElementSize();
+        int face = mapMesh.getPolyFaceMap().get(cursorPoly) * mapMesh.getFaceElementSize();
         int v1 = mapMesh.getFaces().get(face);
         int v2 = mapMesh.getFaces().get(face + increment);
         int v3 = mapMesh.getFaces().get(face + (2 * increment));

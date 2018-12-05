@@ -32,6 +32,8 @@ public class MapMesh extends TriangleMesh {
     private int remapStart;
     private int maxRemapSize;
     private int currentRemap;
+    private int faceCount;
+    private int textureCount;
 
     public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
 
@@ -88,6 +90,8 @@ public class MapMesh extends TriangleMesh {
     public void updateData() {
         updateVertices();
         updatePolygonData();
+        this.faceCount = getFaces().size();
+        this.textureCount = getTexCoords().size();
     }
 
     /**
