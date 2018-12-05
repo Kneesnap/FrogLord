@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -85,6 +86,19 @@ public class TextureMap {
         private float maxU = 1;
         private float minV = 0;
         private float maxV = 1;
+
+        /**
+         * Apply this TextureEntry to a MapMesh.
+         * @param mesh      The mesh to apply this entry to.
+         * @param vertCount The amount of vertices to add.
+         */
+        public void applyMesh(MapMesh mesh, int vertCount) {
+            mesh.getTexCoords().addAll(getMinU(), getMinV());
+            mesh.getTexCoords().addAll(getMinU(), getMaxV());
+            mesh.getTexCoords().addAll(getMaxU(), getMinV());
+            if (vertCount == PSXPolygon.QUAD_SIZE)
+                mesh.getTexCoords().addAll(getMaxU(), getMaxV());
+        }
 
         /**
          * Create a new TextureEntry for a texture.

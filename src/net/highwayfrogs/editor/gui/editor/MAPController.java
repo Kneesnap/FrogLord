@@ -23,6 +23,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
 
@@ -61,6 +62,11 @@ public class MAPController extends EditorController<MAPFile> {
     private double oldMouseY;
     private double mouseX;
     private double mouseY;
+
+    private MapMesh mapMesh;
+    private PSXPolygon selectedPolygon;
+    private int oldTexSize;
+    private int oldFaceSize;
 
     private static final double ROTATION_SPEED = 0.35D;
     private static final double SCROLL_SPEED = 5;
@@ -143,6 +149,7 @@ public class MAPController extends EditorController<MAPFile> {
 
     @SneakyThrows
     private void setupMapViewer(Stage stageToOverride, MapMesh mesh, TextureMap texMap) {
+        this.mapMesh = mesh;
         MeshView meshView = new MeshView(mesh);
 
         PhongMaterial material = new PhongMaterial();
@@ -151,9 +158,9 @@ public class MAPController extends EditorController<MAPFile> {
 
         meshView.setCullFace(CullFace.NONE);
         meshView.setTranslateZ(50);
-        meshView.setScaleX(10000);
-        meshView.setScaleY(10000);
-        meshView.setScaleZ(10000);
+        meshView.setScaleX(Constants.MAP_VIEW_SCALE);
+        meshView.setScaleY(Constants.MAP_VIEW_SCALE);
+        meshView.setScaleZ(Constants.MAP_VIEW_SCALE);
 
         PerspectiveCamera camera = new PerspectiveCamera(true);
         camera.setFarClip(Double.MAX_VALUE);
@@ -227,6 +234,54 @@ public class MAPController extends EditorController<MAPFile> {
             }
         });
 
+        newScene.setOnMouseMoved(evt ->
+                setCursorPolygon(mesh.getFacePolyMap().get(evt.getPickResult().getIntersectedFace())));
         mesh.findNextValidRemap();
+    }
+
+    /**
+     * Supposedly removes the cursor polygon.
+     */
+    public void removeCursorPolygon() {
+        if (this.selectedPolygon == null)
+            return;
+
+        this.selectedPolygon = null;
+        mapMesh.getFaces().resize(this.oldFaceSize);
+        mapMesh.getTexCoords().resize(this.oldTexSize);
+    }
+
+    /**
+     * Set the polygon that the cursor is hovering over.
+     * @param newPoly The poly to highlight.
+     */
+    public void setCursorPolygon(PSXPolygon newPoly) {
+        if (newPoly == this.selectedPolygon)
+            return;
+
+        removeCursorPolygon();
+        if (newPoly == null)
+            return;
+
+        this.selectedPolygon = newPoly;
+        this.oldFaceSize = mapMesh.getFaces().size();
+        this.oldTexSize = mapMesh.getTexCoords().size();
+
+        int increment = mapMesh.getVertexFormat().getVertexIndexSize();
+        boolean isQuad = (newPoly.getVertices().length == PSXPolygon.QUAD_SIZE);
+
+        int face = mapMesh.getPolyFaceMap().get(newPoly) * mapMesh.getFaceElementSize();
+        int v1 = mapMesh.getFaces().get(face);
+        int v2 = mapMesh.getFaces().get(face + increment);
+        int v3 = mapMesh.getFaces().get(face + (2 * increment));
+
+        if (isQuad) {
+            int v4 = mapMesh.getFaces().get(face + (3 * increment));
+            int v5 = mapMesh.getFaces().get(face + (4 * increment));
+            int v6 = mapMesh.getFaces().get(face + (5 * increment));
+            mapMesh.addRectangle(MapMesh.CURSOR_COLOR.getTextureEntry(), v1, v2, v3, v4, v5, v6);
+        } else {
+            mapMesh.addTriangle(MapMesh.CURSOR_COLOR.getTextureEntry(), v1, v2, v3);
+        }
     }
 }

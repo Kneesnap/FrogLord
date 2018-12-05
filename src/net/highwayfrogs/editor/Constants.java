@@ -20,4 +20,6 @@ public class Constants {
 
     public static final int BITS_PER_BYTE = 8;
 
+    public static final int MAP_VIEW_SCALE = 10000;
+
 }
