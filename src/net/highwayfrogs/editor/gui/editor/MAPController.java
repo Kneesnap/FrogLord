@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
@@ -73,6 +74,7 @@ public class MAPController extends EditorController<MAPFile> {
     private static final double ROTATION_SPEED = 0.35D;
     private static final double SCROLL_SPEED = 5;
     private static final double TRANSLATE_SPEED = 10;
+    private static final int VERTEX_SPEED = 3;
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -195,6 +197,18 @@ public class MAPController extends EditorController<MAPFile> {
             // [Remap Mode] Find next non-crashing remap.
             if (event.getCode() == KeyCode.K)
                 mesh.findNextValidRemap();
+
+            if (isPolygonSelected()) {
+                if (event.getCode() == KeyCode.UP) {
+                    movePolygonY(VERTEX_SPEED);
+                } else if (event.getCode() == KeyCode.DOWN) {
+                    movePolygonY(-VERTEX_SPEED);
+                } else if (event.getCode() == KeyCode.LEFT) {
+                    movePolygonX(-VERTEX_SPEED);
+                } else if (event.getCode() == KeyCode.RIGHT) {
+                    movePolygonX(VERTEX_SPEED);
+                }
+            }
         });
 
         mapScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * SCROLL_SPEED)));
@@ -202,6 +216,14 @@ public class MAPController extends EditorController<MAPFile> {
         mapScene.setOnMousePressed(e -> {
             mouseX = oldMouseX = e.getSceneX();
             mouseY = oldMouseY = e.getSceneY();
+
+            if (!isPolygonSelected())
+                hideCursorPolygon();
+        });
+
+        mapScene.setOnMouseReleased(evt -> {
+            hideCursorPolygon();
+            renderCursor(getSelectedPolygon());
         });
 
         mapScene.setOnMouseDragged(e -> {
@@ -243,6 +265,33 @@ public class MAPController extends EditorController<MAPFile> {
         mesh.findNextValidRemap();
     }
 
+    private void movePolygonX(int amount) {
+        for (short vertice : getSelectedPolygon().getVertices()) {
+            SVector vertex = getFile().getVertexes().get(vertice);
+            vertex.setX((short) (vertex.getX() + amount));
+        }
+
+        refreshView();
+    }
+
+    private void movePolygonY(int amount) {
+        for (short vertice : getSelectedPolygon().getVertices()) {
+            SVector vertex = getFile().getVertexes().get(vertice);
+            vertex.setY((short) (vertex.getY() - amount));
+        }
+
+        refreshView();
+    }
+
+    private void movePolygonZ(int amount) {
+        for (short vertice : getSelectedPolygon().getVertices()) {
+            SVector vertex = getFile().getVertexes().get(vertice);
+            vertex.setZ((short) (vertex.getZ() + amount));
+        }
+
+        refreshView();
+    }
+
     /**
      * Supposedly removes the cursor polygon.
      */
@@ -252,6 +301,13 @@ public class MAPController extends EditorController<MAPFile> {
 
         this.polygonSelected = false;
         this.selectedPolygon = null;
+        hideCursorPolygon();
+    }
+
+    /**
+     * Hides the cursor polygon.
+     */
+    public void hideCursorPolygon() {
         mapMesh.getFaces().resize(mapMesh.getFaceCount());
         mapMesh.getTexCoords().resize(mapMesh.getTextureCount());
     }
@@ -271,6 +327,9 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void renderCursor(PSXPolygon cursorPoly) {
+        if (cursorPoly == null)
+            return;
+
         int increment = mapMesh.getVertexFormat().getVertexIndexSize();
         boolean isQuad = (cursorPoly.getVertices().length == PSXPolygon.QUAD_SIZE);
 
@@ -287,5 +346,13 @@ public class MAPController extends EditorController<MAPFile> {
         } else {
             mapMesh.addTriangle(MapMesh.CURSOR_COLOR.getTextureEntry(), v1, v2, v3);
         }
+    }
+
+    /**
+     * Refresh map data.
+     */
+    public void refreshView() {
+        mapMesh.updateData();
+        renderCursor(getSelectedPolygon());
     }
 }
