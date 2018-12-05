@@ -7,10 +7,12 @@ import javafx.scene.Group;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
@@ -21,7 +23,9 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -83,6 +87,9 @@ public class MAPController extends EditorController<MAPFile> {
     private static final double SCROLL_SPEED = 5;
     private static final double TRANSLATE_SPEED = 10;
     private static final int VERTEX_SPEED = 3;
+
+    private static final Image LIGHT_BULB = GameFile.loadIcon("lightbulb");
+
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -186,6 +193,8 @@ public class MAPController extends EditorController<MAPFile> {
         Rotate rotY = new Rotate(0, Rotate.Y_AXIS);
         meshView.getTransforms().addAll(rotX, rotY);
 
+        setupLights(cameraGroup, rotX, rotY);
+
         Scene mapScene = new Scene(cameraGroup, 400, 400, true);
         mapScene.setFill(Color.GRAY);
         mapScene.setCamera(camera);
@@ -271,6 +280,39 @@ public class MAPController extends EditorController<MAPFile> {
         });
 
         mesh.findNextValidRemap();
+    }
+
+    private void setupLights(Group cameraGroup, Rotate rotX, Rotate rotY) {
+        PhongMaterial material = new PhongMaterial();
+        material.setDiffuseMap(LIGHT_BULB);
+
+        for (Light light : getFile().getLights()) {
+            Box box = new Box(LIGHT_BULB.getWidth(), LIGHT_BULB.getWidth(), LIGHT_BULB.getHeight());
+            SVector position = light.getPosition();
+            if (position.getX() == 0 && position.getY() == 0 && position.getZ() == 0)
+                continue;
+
+            box.setTranslateX(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(position.getX()));
+            box.setTranslateY(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(position.getY()));
+            box.setTranslateZ(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(position.getZ()));
+            box.setMaterial(material);
+
+            Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS);
+            Rotate lightRotateY = new Rotate(0, Rotate.Y_AXIS);
+            lightRotateX.angleProperty().bind(rotX.angleProperty());
+            lightRotateY.angleProperty().bind(rotY.angleProperty());
+
+            lightRotateX.setPivotX(-box.getTranslateX());
+            lightRotateX.setPivotY(-box.getTranslateY());
+            lightRotateX.setPivotZ(-box.getTranslateZ());
+            lightRotateY.setPivotX(-box.getTranslateX());
+            lightRotateY.setPivotY(-box.getTranslateY());
+            lightRotateY.setPivotZ(-box.getTranslateZ());
+
+            box.getTransforms().addAll(lightRotateX, lightRotateY);
+
+            cameraGroup.getChildren().add(box);
+        }
     }
 
     private void movePolygonX(int amount) {
