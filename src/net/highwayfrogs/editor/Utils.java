@@ -6,11 +6,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
+import javafx.stage.*;
 import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
+import javafx.stage.Window;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.gui.GUIMain;
 
@@ -544,5 +542,32 @@ public class Utils {
                 stage.close();
             }
         });
+    }
+
+    /**
+     * Switch the Stage's scene without changing window size.
+     * @param stage    The stage that should own the scene.
+     * @param newScene The new scene to use.
+     * @return oldScene
+     */
+    public static Scene setSceneKeepPosition(Stage stage, Scene newScene) {
+        Scene oldScene = stage.getScene();
+
+        Window oldWindow = oldScene.getWindow();
+        double width = oldWindow.getWidth();
+        double height = oldWindow.getHeight();
+        double x = oldWindow.getX();
+        double y = oldWindow.getY();
+
+        stage.setScene(newScene); // Exit the viewer.
+
+        // Maintain the position the viewer Scene was at when it was closed.
+        Window newWindow = newScene.getWindow();
+        newWindow.setX(x);
+        newWindow.setY(y);
+        newWindow.setWidth(width);
+        newWindow.setHeight(height);
+
+        return oldScene;
     }
 }

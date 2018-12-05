@@ -16,10 +16,10 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
-import javafx.stage.Window;
 import javafx.util.Pair;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
@@ -174,32 +174,17 @@ public class MAPController extends EditorController<MAPFile> {
         Rotate rotY = new Rotate(0, Rotate.Y_AXIS);
         meshView.getTransforms().addAll(rotX, rotY);
 
-        Scene newScene = new Scene(cameraGroup, 400, 400, true);
-        newScene.setFill(Color.GRAY);
-        newScene.setCamera(camera);
+        Scene mapScene = new Scene(cameraGroup, 400, 400, true);
+        mapScene.setFill(Color.GRAY);
+        mapScene.setCamera(camera);
 
-        Scene oldScene = stageToOverride.getScene();
-        stageToOverride.setScene(newScene);
+        Scene defaultScene = Utils.setSceneKeepPosition(stageToOverride, mapScene);
 
-        newScene.setOnKeyPressed(event -> {
+        mapScene.setOnKeyPressed(event -> {
 
             // Exit the viewer.
-            if (event.getCode() == KeyCode.ESCAPE) {
-                Window viewWindow = newScene.getWindow();
-                double width = viewWindow.getWidth();
-                double height = viewWindow.getHeight();
-                double x = viewWindow.getX();
-                double y = viewWindow.getY();
-
-                stageToOverride.setScene(oldScene); // Exit the viewer.
-
-                // Maintain the position the viewer Scene was at when it was closed.
-                Window normalWindow = oldScene.getWindow();
-                normalWindow.setX(x);
-                normalWindow.setY(y);
-                normalWindow.setWidth(width);
-                normalWindow.setHeight(height);
-            }
+            if (event.getCode() == KeyCode.ESCAPE)
+                Utils.setSceneKeepPosition(stageToOverride, defaultScene);
 
             // Toggle wireframe mode.
             if (event.getCode() == KeyCode.X)
@@ -210,14 +195,14 @@ public class MAPController extends EditorController<MAPFile> {
                 mesh.findNextValidRemap();
         });
 
-        newScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * SCROLL_SPEED)));
+        mapScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * SCROLL_SPEED)));
 
-        newScene.setOnMousePressed(e -> {
+        mapScene.setOnMousePressed(e -> {
             mouseX = oldMouseX = e.getSceneX();
             mouseY = oldMouseY = e.getSceneY();
         });
 
-        newScene.setOnMouseDragged(e -> {
+        mapScene.setOnMouseDragged(e -> {
             oldMouseX = mouseX;
             oldMouseY = mouseY;
             mouseX = e.getSceneX();
@@ -234,7 +219,7 @@ public class MAPController extends EditorController<MAPFile> {
             }
         });
 
-        newScene.setOnMouseMoved(evt ->
+        mapScene.setOnMouseMoved(evt ->
                 setCursorPolygon(mesh.getFacePolyMap().get(evt.getPickResult().getIntersectedFace())));
         mesh.findNextValidRemap();
     }
