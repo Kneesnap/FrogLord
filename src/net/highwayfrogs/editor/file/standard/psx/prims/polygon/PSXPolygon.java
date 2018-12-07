@@ -40,7 +40,8 @@ public abstract class PSXPolygon extends PSXGPUPrimitive {
 
     @Override
     public void save(DataWriter writer) {
-        if (isFlippedVertices())
+        boolean swap = isFlippedVertices();
+        if (swap)
             swapIfNeeded(); // Swap back to default flip state.
 
         for (short vertice : vertices)
@@ -48,6 +49,9 @@ public abstract class PSXPolygon extends PSXGPUPrimitive {
 
         if (vertices.length == REQUIRES_VERTEX_PADDING)
             writer.writeShort(this.padding);
+
+        if (swap)
+            swapIfNeeded(); // Swap them back.
     }
 
     private void swapIfNeeded() {
