@@ -19,8 +19,8 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PSXMatrix extends GameObject {
-    private short[][] matrix = new short[DIMENSION][DIMENSION]; // Rotation Matrix.
-    private int[] transfer = new int[DIMENSION]; // Transfer vector.
+    private short[][] matrix = new short[DIMENSION][DIMENSION]; // 3x3 Rotation Matrix.
+    private int[] transform = new int[DIMENSION]; // Transform vector.
     private short unknown; //TODO: This value has an unknown purpose. It shouldn't exist according to the code, but it may have changed since then and release. Always 0 or -1. Need to test whether this is present in the demo files too. Also, maybe the padding is for a script?
 
     private static final int DIMENSION = 3;
@@ -32,8 +32,8 @@ public class PSXMatrix extends GameObject {
             for (int j = 0; j < this.matrix[i].length; j++)
                 this.matrix[i][j] = reader.readShort();
 
-        for (int i = 0; i < this.transfer.length; i++)
-            this.transfer[i] = reader.readInt();
+        for (int i = 0; i < this.transform.length; i++)
+            this.transform[i] = reader.readInt();
 
         this.unknown = reader.readShort();
         Utils.verify(unknown == 0 || unknown == -1, "Unknown value varied.");
@@ -45,7 +45,7 @@ public class PSXMatrix extends GameObject {
             for (short aShort : aMatrix)
                 writer.writeShort(aShort);
 
-        for (int aTransfer : this.transfer)
+        for (int aTransfer : this.transform)
             writer.writeInt(aTransfer);
         writer.writeShort(this.unknown);
     }

@@ -28,19 +28,19 @@ public class Entity extends GameObject {
     private transient int loadReadLength;
     private transient MAPFile map;
 
+    private static final int RUNTIME_POINTERS = 4;
+
+    public static final int FLAG_HIDDEN = 1; // Don't create a live entity while this is set.
+    public static final int FLAG_NO_DISPLAY = 2; // Don't display any mesh.
+    public static final int FLAG_NO_MOVEMENT = 4; // Don't allow entity movement.
+    public static final int FLAG_NO_COLLISION = 8; // Collision does not apply to this entity.
+    public static final int FLAG_ALIGN_TO_WORLD = 16; // Entity matrix always aligned to world axes.
+    public static final int FLAG_PROJECT_ON_LAND = 32; // Entity position is projected onto the landscape.
+    public static final int FLAG_LOCAL_ALIGN = 64; // Entity matrix is calculated locally (Using Y part of entity matrix.)
+
     public Entity(MAPFile parentMap) {
         this.map = parentMap;
     }
-
-    private static final int RUNTIME_POINTERS = 4;
-
-    private static final int FLAG_HIDDEN = 1; // Don't create a live entity while this is set.
-    private static final int FLAG_NO_DISPLAY = 2; // Don't display any mesh.
-    private static final int FLAG_NO_MOVEMENT = 4; // Don't allow entity movement.
-    private static final int FLAG_NO_COLLISION = 8; // Collision does not apply to this entity.
-    private static final int FLAG_ALIGN_TO_WORLD = 16; // Entity matrix always aligned to world axes.
-    private static final int FLAG_PROJECT_ON_LAND = 32; // Entity position is projected onto the landscape.
-    private static final int FLAG_LOCAL_ALIGN = 64; // Entity matrix is calculated locally (Using Y part of entity matrix.)
 
     @Override
     public void load(DataReader reader) {
@@ -75,5 +75,14 @@ public class Entity extends GameObject {
             this.entityData.save(writer);
         if (this.scriptData != null)
             this.scriptData.save(writer);
+    }
+
+    /**
+     * Test if this entity has a particular flag.
+     * @param flag The flag to test.
+     * @return hasFlag
+     */
+    public boolean testFlag(int flag) {
+        return (this.flags & flag) == flag;
     }
 }

@@ -161,12 +161,21 @@ public class Utils {
     }
 
     /**
-     * Convert an unsigned byte into a float 0-1.
+     * Convert an unsigned short into a float 0-1.
      * @param unsignedShort The short to convert.
      * @return floatValue
      */
     public static float unsignedShortToFloat(short unsignedShort) {
         return (float) unsignedShort / (float) Short.MAX_VALUE;
+    }
+
+    /**
+     * Convert an unsigned integer into a float 0-1.
+     * @param unsignedInt The integer to convert.
+     * @return floatValue
+     */
+    public static float unsignedIntToFloat(long unsignedInt) {
+        return (float) unsignedInt / (float) Integer.MAX_VALUE;
     }
 
     /**

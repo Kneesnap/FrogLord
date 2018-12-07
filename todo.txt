@@ -14,7 +14,6 @@ Editor Features:
 
 Make remaps for Retail PSX, Demo PSX.
 Build FrogPSX.H from MWD.
-Saving a MWD breaks the map viewer.
 
 Non tool-development-related plans:
  - Load the two developer maps.

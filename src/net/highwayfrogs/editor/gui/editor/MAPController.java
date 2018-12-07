@@ -28,16 +28,11 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
-import net.highwayfrogs.editor.file.map.entity.data.PathEntity;
-import net.highwayfrogs.editor.file.map.light.Light;
-import net.highwayfrogs.editor.file.map.path.Path;
-import net.highwayfrogs.editor.file.map.path.PathInfo;
-import net.highwayfrogs.editor.file.map.path.PathSegment;
-import net.highwayfrogs.editor.file.map.path.data.ArcSegment;
-import net.highwayfrogs.editor.file.map.path.data.LineSegment;
+import net.highwayfrogs.editor.file.map.entity.data.MatrixEntity;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
@@ -295,12 +290,12 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void setupLights(Group cameraGroup, Rotate rotX, Rotate rotY) {
-        ImagePattern pattern = new ImagePattern(LIGHT_BULB);
+        /*ImagePattern pattern = new ImagePattern(LIGHT_BULB);
 
         for (Light light : getFile().getLights()) {
             SVector position = light.getPosition();
             makeIcon(cameraGroup, pattern, rotX, rotY, position.getX(), position.getY(), position.getZ());
-        }
+        }*/
     }
 
     private void setupEntities(Group cameraGroup, Rotate rotX, Rotate rotY) {
@@ -308,7 +303,31 @@ public class MAPController extends EditorController<MAPFile> {
 
         for (Entity entity : getFile().getEntities()) {
 
-            PathInfo pathInfo = null;
+            PSXMatrix matrix = null;
+            if (entity.getEntityData() instanceof PSXMatrix)
+                matrix = ((PSXMatrix) entity.getEntityData());
+            else if (entity.getEntityData() instanceof MatrixEntity)
+                matrix = ((MatrixEntity) entity.getEntityData()).getMatrix();
+
+            if (matrix != null) {
+                int[] pos = matrix.getTransform();
+                float x = Utils.unsignedIntToFloat(pos[0]);
+                float y = Utils.unsignedIntToFloat(pos[1]);
+                float z = Utils.unsignedIntToFloat(pos[2]);
+                Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, x, y, z); //TODO: All of these entities seem to have their crap flipped.
+                System.out.println("Snap To Grid: " + entity.getFlags());
+
+                rect.setOnMouseClicked(evt -> {
+                    System.out.println("Hello, I am a " + entity.getFormBook());
+                    System.out.println("I was placed at " + pos[0] + ", " + pos[1] + ", " + pos[2]);
+                    System.out.println("I was placed at " + x + ", " + y + ", " + z);
+                    System.out.println("I think I am at: " + rect.getTranslateX() + ", " + rect.getTranslateY() + ", " + rect.getTranslateZ());
+                    Point3D clicked = evt.getPickResult().getIntersectedPoint();
+                    System.out.println("I am actually at: " + clicked.getX() + ", " + clicked.getY() + ", " + clicked.getZ());
+                });
+            }
+
+            /*PathInfo pathInfo = null;
             if (entity.getEntityData() instanceof PathEntity)
                 pathInfo = ((PathEntity) entity.getEntityData()).getPathInfo();
             else if (entity.getEntityData() instanceof PathInfo)
@@ -328,6 +347,10 @@ public class MAPController extends EditorController<MAPFile> {
                 if (start != null) {
                     Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, start.getX(), start.getY(), start.getZ());
 
+                    //TODO: For moving MOFs, if not FLAG_ALIGN_TO_WORLD,
+                    // if ENTITY_PROJECT_ON_LAND,
+                    //   y = gridInfo.y;
+
                     final SVector startPos = start;
                     rect.setOnMouseClicked(evt -> {
                         System.out.println("Hello, I am a " + entity.getFormBook());
@@ -338,28 +361,28 @@ public class MAPController extends EditorController<MAPFile> {
                         System.out.println("I am actually at: " + clicked.getX() + ", " + clicked.getY() + ", " + clicked.getZ());
                     });
                 }
-            }
+            }*/
         }
     }
 
-    private Rectangle makeIcon(Group cameraGroup, ImagePattern image, Rotate rotX, Rotate rotY, short x, short y, short z) {
+    private Rectangle makeIcon(Group cameraGroup, ImagePattern image, Rotate rotX, Rotate rotY, float x, float y, float z) {
         Rectangle rect = new Rectangle(image.getImage().getWidth(), image.getImage().getHeight());
 
-        rect.setTranslateX(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(x));
-        rect.setTranslateY(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(y));
-        rect.setTranslateZ(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(z));
+        rect.setTranslateX(Constants.MAP_VIEW_SCALE * x);
+        rect.setTranslateY(Constants.MAP_VIEW_SCALE * y);
+        rect.setTranslateZ(Constants.MAP_VIEW_SCALE * z);
         rect.setFill(image);
 
-        Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS);
-        Rotate lightRotateY = new Rotate(0, Rotate.Y_AXIS);
+        Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS); // Up, Down,
+        Rotate lightRotateY = new Rotate(0, Rotate.Y_AXIS); // Left, Right
         lightRotateX.angleProperty().bind(rotX.angleProperty());
         lightRotateY.angleProperty().bind(rotY.angleProperty());
 
         lightRotateX.setPivotX(-rect.getTranslateX());
-        lightRotateX.setPivotY(-rect.getTranslateY());
+        lightRotateX.setPivotY(-rect.getTranslateY() * 2);
         lightRotateX.setPivotZ(-rect.getTranslateZ());
         lightRotateY.setPivotX(-rect.getTranslateX());
-        lightRotateY.setPivotY(-rect.getTranslateY());
+        lightRotateY.setPivotY(-rect.getTranslateY() * 2);
         lightRotateY.setPivotZ(-rect.getTranslateZ());
         rect.getTransforms().addAll(lightRotateX, lightRotateY);
 
