@@ -5,9 +5,13 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.entity.data.MatrixEntity;
+import net.highwayfrogs.editor.file.map.entity.data.PathEntity;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.form.FormBook;
+import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -84,5 +88,33 @@ public class Entity extends GameObject {
      */
     public boolean testFlag(int flag) {
         return (this.flags & flag) == flag;
+    }
+
+    /**
+     * Get any PathInfo owned by this entity, if it has any.
+     * @return pathInfo
+     */
+    public PathInfo getPathInfo() {
+        if (getEntityData() instanceof PathEntity)
+            return ((PathEntity) getEntityData()).getPathInfo();
+
+        if (getEntityData() instanceof PathInfo)
+            return (PathInfo) getEntityData();
+
+        return null;
+    }
+
+    /**
+     * Get any PSXMatrix owned by this entity, if it has any.
+     * @return psxMatrix
+     */
+    public PSXMatrix getMatrixInfo() {
+        if (getEntityData() instanceof MatrixEntity)
+            return ((MatrixEntity) getEntityData()).getMatrix();
+
+        if (getEntityData() instanceof PSXMatrix)
+            return (PSXMatrix) getEntityData();
+
+        return null;
     }
 }

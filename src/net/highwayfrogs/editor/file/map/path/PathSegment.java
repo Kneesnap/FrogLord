@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.map.path;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -42,4 +43,11 @@ public abstract class PathSegment extends GameObject {
      * @param writer the receiver to write data to.
      */
     protected abstract void saveData(DataWriter writer);
+
+    /**
+     * Calculate the position after a path is completed.
+     * @param info The info to calculate with.
+     * @return finishPosition
+     */
+    protected abstract SVector calculatePosition(PathInfo info);
 }

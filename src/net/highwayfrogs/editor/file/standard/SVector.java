@@ -26,6 +26,10 @@ public class SVector extends GameObject {
     public static final int UNPADDED_BYTE_SIZE = 3 * Constants.SHORT_SIZE;
     public static final int PADDED_BYTE_SIZE = UNPADDED_BYTE_SIZE + Constants.SHORT_SIZE;
 
+    public SVector(SVector clone) {
+        this(clone.getX(), clone.getY(), clone.getZ());
+    }
+
     @Override
     public void load(DataReader reader) {
         this.x = reader.readShort();
@@ -50,24 +54,33 @@ public class SVector extends GameObject {
     }
 
     /**
-     * Get this vector as a Wavefront-OBJ vertex command.
-     * @return vertexCommandString
+     * Add another SVector to this one.
+     * @param other The other SVector to add.
      */
-    public String toOBJString() {
-        return "v " + -Utils.unsignedShortToFloat(getX()) + " " + -Utils.unsignedShortToFloat(getY()) + " " + Utils.unsignedShortToFloat(getZ());
+    public void add(SVector other) {
+        this.x += other.getX();
+        this.y += other.getY();
+        this.z += other.getZ();
     }
 
     /**
-     * Get a coordinate string of this vector.
-     * @return coordinateString
+     * Subtract another SVector from this one.
+     * @param other The other SVector to subtract.
      */
-    public String toCoordinateString() {
-        return getX() + ", " + getY() + ", " + getZ();
+    public void subtract(SVector other) {
+        this.x -= other.getX();
+        this.y -= other.getY();
+        this.z -= other.getZ();
     }
 
-    @Override
-    public String toString() {
-        return "SVector[" + toCoordinateString() + "]";
+    /**
+     * Multiply the values in this SVector.
+     * @param multiplier The multiplier.
+     */
+    public void multiply(double multiplier) {
+        this.x *= multiplier;
+        this.y *= multiplier;
+        this.z *= multiplier;
     }
 
     /**
@@ -102,5 +115,26 @@ public class SVector extends GameObject {
 
         SVector otherV = (SVector) other;
         return otherV.getX() == getX() && otherV.getY() == getY() && otherV.getZ() == getZ();
+    }
+
+    /**
+     * Get this vector as a Wavefront-OBJ vertex command.
+     * @return vertexCommandString
+     */
+    public String toOBJString() {
+        return "v " + -Utils.unsignedShortToFloat(getX()) + " " + -Utils.unsignedShortToFloat(getY()) + " " + Utils.unsignedShortToFloat(getZ());
+    }
+
+    /**
+     * Get a coordinate string of this vector.
+     * @return coordinateString
+     */
+    public String toCoordinateString() {
+        return getX() + ", " + getY() + ", " + getZ();
+    }
+
+    @Override
+    public String toString() {
+        return "SVector[" + toCoordinateString() + "]";
     }
 }

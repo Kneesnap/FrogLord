@@ -27,13 +27,8 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
-import net.highwayfrogs.editor.file.map.entity.data.MatrixEntity;
-import net.highwayfrogs.editor.file.map.entity.data.PathEntity;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
-import net.highwayfrogs.editor.file.map.path.PathSegment;
-import net.highwayfrogs.editor.file.map.path.data.ArcSegment;
-import net.highwayfrogs.editor.file.map.path.data.LineSegment;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -301,13 +296,7 @@ public class MAPController extends EditorController<MAPFile> {
         ImagePattern pattern = new ImagePattern(SWAMPY);
 
         for (Entity entity : getFile().getEntities()) {
-
-            PSXMatrix matrix = null;
-            if (entity.getEntityData() instanceof PSXMatrix)
-                matrix = ((PSXMatrix) entity.getEntityData());
-            else if (entity.getEntityData() instanceof MatrixEntity)
-                matrix = ((MatrixEntity) entity.getEntityData()).getMatrix();
-
+            PSXMatrix matrix = entity.getMatrixInfo();
             if (matrix != null) {
                 int[] pos = matrix.getTransform();
                 float x = Utils.unsignedIntToFloat(pos[0]);
@@ -318,32 +307,17 @@ public class MAPController extends EditorController<MAPFile> {
                 rect.setOnMouseClicked(evt -> System.out.println("Hello, I am a " + entity.getFormBook()));
             }
 
-            PathInfo pathInfo = null;
-            if (entity.getEntityData() instanceof PathEntity)
-                pathInfo = ((PathEntity) entity.getEntityData()).getPathInfo();
-            else if (entity.getEntityData() instanceof PathInfo)
-                pathInfo = (PathInfo) entity.getEntityData();
-
+            PathInfo pathInfo = entity.getPathInfo();
             if (pathInfo != null) {
                 Path path = getFile().getPaths().get(pathInfo.getPathId());
-                PathSegment segment = path.getSegments().get(pathInfo.getSegmentId());
+                SVector end = path.evaluatePosition(pathInfo);
 
-                SVector start = null;
-                if (segment instanceof ArcSegment) {
-                    start = ((ArcSegment) segment).getStart();
-                } else if (segment instanceof LineSegment) {
-                    start = ((LineSegment) segment).getStart();
-                }
+                float x = Utils.unsignedShortToFloat(end.getX());
+                float y = Utils.unsignedShortToFloat(end.getY());
+                float z = Utils.unsignedShortToFloat(end.getZ());
 
-                if (start != null) {
-                    float x = Utils.unsignedShortToFloat(start.getX());
-                    float y = Utils.unsignedShortToFloat(start.getY());
-                    float z = Utils.unsignedShortToFloat(start.getZ());
-                    //TODO: Place along the path based on PathInfo#getDistance.
-
-                    Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, x, y, z);
-                    rect.setOnMouseClicked(evt -> System.out.println("Hello, I am a " + entity.getFormBook()));
-                }
+                Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, x, y, z);
+                rect.setOnMouseClicked(evt -> System.out.println("Hello, I am a " + entity.getFormBook()));
             }
         }
     }

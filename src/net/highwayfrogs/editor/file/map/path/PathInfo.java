@@ -17,6 +17,8 @@ public class PathInfo extends GameObject {
     private int motionType;
     private int speed;
 
+    public static final int MOTION_TYPE_REPEAT = 8;
+
     @Override
     public void load(DataReader reader) {
         this.pathId = reader.readUnsignedShortAsInt();
@@ -24,7 +26,7 @@ public class PathInfo extends GameObject {
         this.segmentDistance = reader.readUnsignedShortAsInt();
         this.motionType = reader.readUnsignedShortAsInt();
         this.speed = reader.readUnsignedShortAsInt();
-        reader.readShort();
+        reader.readShort(); // Padding.
     }
 
     @Override

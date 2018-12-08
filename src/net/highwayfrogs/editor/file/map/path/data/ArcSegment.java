@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathSegment;
 import net.highwayfrogs.editor.file.map.path.PathType;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -39,5 +40,14 @@ public class ArcSegment extends PathSegment {
         this.normal.saveWithPadding(writer);
         writer.writeInt(this.radius);
         writer.writeInt(this.pitch);
+    }
+
+    @Override // Is not accurate.
+    protected SVector calculatePosition(PathInfo info) {
+        SVector vector = new SVector(center);
+        vector.subtract(start);
+        vector.multiply(info.getSegmentDistance() / getLength());
+        vector.add(start);
+        return vector;
     }
 }

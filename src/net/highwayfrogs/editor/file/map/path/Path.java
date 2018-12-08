@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.ArrayList;
@@ -62,5 +63,14 @@ public class Path extends GameObject {
         writer.jumpTemp(this.entityPointerLocation);
         writer.writeInt(location);
         writer.jumpReturn();
+    }
+
+    /**
+     * Gets the position of an entity on this path.
+     * @param pathInfo Information about this path.
+     * @return finishedPosition
+     */
+    public SVector evaluatePosition(PathInfo pathInfo) {
+        return getSegments().get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
     }
 }
