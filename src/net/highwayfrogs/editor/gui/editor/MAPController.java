@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
@@ -30,7 +29,6 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixEntity;
 import net.highwayfrogs.editor.file.map.entity.data.PathEntity;
-import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathSegment;
@@ -283,8 +281,6 @@ public class MAPController extends EditorController<MAPFile> {
                 } else {
                     setCursorPolygon(clickedPoly);
                     this.polygonSelected = true;
-                    Point3D hit = evt.getPickResult().getIntersectedPoint();
-                    System.out.println("Selected: " + hit.getX() + ", " + hit.getY() + ", " + hit.getZ());
                 }
             }
         });
@@ -293,12 +289,12 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void setupLights(Group cameraGroup, Rotate rotX, Rotate rotY) {
-        ImagePattern pattern = new ImagePattern(LIGHT_BULB);
+        /*ImagePattern pattern = new ImagePattern(LIGHT_BULB);
 
         for (Light light : getFile().getLights()) {
             SVector position = light.getPosition();
             makeIcon(cameraGroup, pattern, rotX, rotY, Utils.unsignedShortToFloat(position.getX()), Utils.unsignedShortToFloat(position.getY()), Utils.unsignedShortToFloat(position.getZ()));
-        }
+        }*/
     }
 
     private void setupEntities(Group cameraGroup, Rotate rotX, Rotate rotY) {
