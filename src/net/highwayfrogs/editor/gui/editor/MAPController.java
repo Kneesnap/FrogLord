@@ -29,7 +29,13 @@ import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixEntity;
+import net.highwayfrogs.editor.file.map.entity.data.PathEntity;
 import net.highwayfrogs.editor.file.map.light.Light;
+import net.highwayfrogs.editor.file.map.path.Path;
+import net.highwayfrogs.editor.file.map.path.PathInfo;
+import net.highwayfrogs.editor.file.map.path.PathSegment;
+import net.highwayfrogs.editor.file.map.path.data.ArcSegment;
+import net.highwayfrogs.editor.file.map.path.data.LineSegment;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -311,19 +317,12 @@ public class MAPController extends EditorController<MAPFile> {
                 float x = Utils.unsignedIntToFloat(pos[0]);
                 float y = Utils.unsignedIntToFloat(pos[1]);
                 float z = Utils.unsignedIntToFloat(pos[2]);
-                Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, x, y, z);
 
-                rect.setOnMouseClicked(evt -> {
-                    System.out.println("Hello, I am a " + entity.getFormBook());
-                    System.out.println("I was placed at " + pos[0] + ", " + pos[1] + ", " + pos[2]);
-                    System.out.println("I was placed at " + x + ", " + y + ", " + z);
-                    System.out.println("I think I am at: " + rect.getTranslateX() + ", " + rect.getTranslateY() + ", " + rect.getTranslateZ());
-                    Point3D clicked = evt.getPickResult().getIntersectedPoint();
-                    System.out.println("I am actually at: " + clicked.getX() + ", " + clicked.getY() + ", " + clicked.getZ());
-                });
+                Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, x, y, z);
+                rect.setOnMouseClicked(evt -> System.out.println("Hello, I am a " + entity.getFormBook()));
             }
 
-            /*PathInfo pathInfo = null;
+            PathInfo pathInfo = null;
             if (entity.getEntityData() instanceof PathEntity)
                 pathInfo = ((PathEntity) entity.getEntityData()).getPathInfo();
             else if (entity.getEntityData() instanceof PathInfo)
@@ -341,23 +340,15 @@ public class MAPController extends EditorController<MAPFile> {
                 }
 
                 if (start != null) {
-                    Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, start.getX(), start.getY(), start.getZ());
+                    float x = Utils.unsignedShortToFloat(start.getX());
+                    float y = Utils.unsignedShortToFloat(start.getY());
+                    float z = Utils.unsignedShortToFloat(start.getZ());
+                    //TODO: Place along the path based on PathInfo#getDistance.
 
-                    //TODO: For moving MOFs, if not FLAG_ALIGN_TO_WORLD,
-                    // if ENTITY_PROJECT_ON_LAND,
-                    //   y = gridInfo.y;
-
-                    final SVector startPos = start;
-                    rect.setOnMouseClicked(evt -> {
-                        System.out.println("Hello, I am a " + entity.getFormBook());
-                        System.out.println("I was placed at " + startPos.getX() + ", " + startPos.getY() + ", " + startPos.getZ());
-                        System.out.println("I was placed at " + Utils.unsignedShortToFloat(startPos.getX()) + ", " + Utils.unsignedShortToFloat(startPos.getY()) + ", " + Utils.unsignedShortToFloat(startPos.getZ()));
-                        System.out.println("I think I am at: " + rect.getTranslateX() + ", " + rect.getTranslateY() + ", " + rect.getTranslateZ());
-                        Point3D clicked = evt.getPickResult().getIntersectedPoint();
-                        System.out.println("I am actually at: " + clicked.getX() + ", " + clicked.getY() + ", " + clicked.getZ());
-                    });
+                    Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, x, y, z);
+                    rect.setOnMouseClicked(evt -> System.out.println("Hello, I am a " + entity.getFormBook()));
                 }
-            }*/
+            }
         }
     }
 
