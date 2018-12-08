@@ -347,6 +347,9 @@ public class MAPFile extends GameFile {
             animation.load(reader);
             mapAnimations.add(animation);
         }
+
+        if (Constants.DEV_ISLAND_NAME.equals(MWDFile.CURRENT_FILE_NAME))
+            fixDEV1(null);
     }
 
     @Override
@@ -792,7 +795,7 @@ public class MAPFile extends GameFile {
     public void onImport(GameFile oldFile, String oldFileName, String importedFileName) {
         super.onImport(oldFile, oldFileName, importedFileName);
 
-        if (importedFileName.equalsIgnoreCase("DEV1.MAP") || importedFileName.equalsIgnoreCase("ISLAND.MAP"))
+        if (importedFileName.equalsIgnoreCase(Constants.DEV_ISLAND_NAME))
             fixDEV1(Utils.stripExtension(oldFileName));
     }
 
@@ -809,7 +812,8 @@ public class MAPFile extends GameFile {
         removeEntity(getEntities().get(3));
         removeEntity(getEntities().get(2));
 
-        GUIMain.EXE_CONFIG.patchRemapInExe(oldTheme, Arrays.asList(0, 862, 860, 859, 688, 863, 857, 694, 722, 854, 729, 857, 854, 853, 850, 3, 863));
+        if (oldTheme != null)
+            GUIMain.EXE_CONFIG.patchRemapInExe(oldTheme, Arrays.asList(0, 862, 860, 859, 688, 863, 857, 694, 722, 854, 729, 857, 854, 853, 850, 3, 863));
     }
 
     /**

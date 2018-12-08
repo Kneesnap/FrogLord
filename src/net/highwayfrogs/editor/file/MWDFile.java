@@ -123,10 +123,9 @@ public class MWDFile extends GameObject {
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
             boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && GUIMain.EXE_CONFIG.isDemo() && GUIMain.EXE_CONFIG.getPlatform() == TargetPlatform.PSX);
             boolean isSkyLand = entry.getDisplayName().startsWith("SKY_LAND");
-            boolean isIsland = entry.getDisplayName().startsWith("ISLAND.MAP");
-            boolean isQB = entry.getDisplayName().startsWith("QB.MAP");
+            boolean isQB = entry.getDisplayName().startsWith(Constants.DEV_QB_NAME);
 
-            if (isDemoJungle || isSkyLand || isIsland || isQB) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
+            if (isDemoJungle || isSkyLand || isQB) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
                 file = new DummyFile(fileBytes.length);
             } else {
                 file = new MAPFile(this);
@@ -223,7 +222,10 @@ public class MWDFile extends GameObject {
 
         if (theme != null) {
             List<VLOArchive> movedVLOs = allVLOs.stream()
-                    .filter(vlo -> getEntryMap().get(vlo).getDisplayName().startsWith(theme.getInternalName()))
+                    .filter(vlo -> {
+                        FileEntry entry = getEntryMap().get(vlo);
+                        return entry != null && entry.getDisplayName().startsWith(theme.getInternalName());
+                    })
                     .collect(Collectors.toList());
             allVLOs.removeAll(movedVLOs);
             allVLOs.addAll(0, movedVLOs);
