@@ -29,6 +29,7 @@ import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixEntity;
+import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -178,12 +179,12 @@ public class MAPController extends EditorController<MAPFile> {
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(SwingFXUtils.toFXImage(texMap.getImage(), null));
         meshView.setMaterial(material);
-
         meshView.setCullFace(CullFace.NONE);
 
         PerspectiveCamera camera = new PerspectiveCamera(true);
         camera.setFarClip(Double.MAX_VALUE);
-        camera.setTranslateZ(-1000);
+        camera.setTranslateZ(-Constants.MAP_VIEW_SCALE);
+        camera.setTranslateY(-Constants.MAP_VIEW_SCALE / 7);
 
         Group cameraGroup = new Group();
         cameraGroup.getChildren().add(meshView);
@@ -286,12 +287,12 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void setupLights(Group cameraGroup, Rotate rotX, Rotate rotY) {
-        /*ImagePattern pattern = new ImagePattern(LIGHT_BULB);
+        ImagePattern pattern = new ImagePattern(LIGHT_BULB);
 
         for (Light light : getFile().getLights()) {
             SVector position = light.getPosition();
-            makeIcon(cameraGroup, pattern, rotX, rotY, position.getX(), position.getY(), position.getZ());
-        }*/
+            makeIcon(cameraGroup, pattern, rotX, rotY, Utils.unsignedShortToFloat(position.getX()), Utils.unsignedShortToFloat(position.getY()), Utils.unsignedShortToFloat(position.getZ()));
+        }
     }
 
     private void setupEntities(Group cameraGroup, Rotate rotX, Rotate rotY) {
