@@ -315,7 +315,7 @@ public class MAPController extends EditorController<MAPFile> {
                 float y = Utils.unsignedIntToFloat(pos[1]);
                 float z = Utils.unsignedIntToFloat(pos[2]);
                 Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, x, y, z); //TODO: All of these entities seem to have their crap flipped.
-                System.out.println("Snap To Grid: " + entity.getFlags());
+                System.out.println("Y: " + pos[1] + " -> " + y + ".");
 
                 rect.setOnMouseClicked(evt -> {
                     System.out.println("Hello, I am a " + entity.getFormBook());
@@ -378,12 +378,10 @@ public class MAPController extends EditorController<MAPFile> {
         lightRotateX.angleProperty().bind(rotX.angleProperty());
         lightRotateY.angleProperty().bind(rotY.angleProperty());
 
-        lightRotateX.setPivotX(-rect.getTranslateX());
         lightRotateX.setPivotY(-rect.getTranslateY() * 2);
-        lightRotateX.setPivotZ(-rect.getTranslateZ());
-        lightRotateY.setPivotX(-rect.getTranslateX());
-        lightRotateY.setPivotY(-rect.getTranslateY() * 2);
-        lightRotateY.setPivotZ(-rect.getTranslateZ());
+        lightRotateX.setPivotZ(-rect.getTranslateZ()); // Depth <Closest, Furthest>
+        lightRotateY.setPivotX(-rect.getTranslateX()); // <Left, Right>
+        lightRotateY.setPivotZ(-rect.getTranslateZ()); // Depth <Closest, Furthest>
         rect.getTransforms().addAll(lightRotateX, lightRotateY);
 
         cameraGroup.getChildren().add(rect);
