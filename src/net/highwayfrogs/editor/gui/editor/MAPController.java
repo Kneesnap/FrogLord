@@ -180,14 +180,10 @@ public class MAPController extends EditorController<MAPFile> {
         meshView.setMaterial(material);
 
         meshView.setCullFace(CullFace.NONE);
-        meshView.setTranslateZ(50);
-        meshView.setScaleX(Constants.MAP_VIEW_SCALE);
-        meshView.setScaleY(Constants.MAP_VIEW_SCALE);
-        meshView.setScaleZ(Constants.MAP_VIEW_SCALE);
 
         PerspectiveCamera camera = new PerspectiveCamera(true);
         camera.setFarClip(Double.MAX_VALUE);
-        camera.setTranslateZ(-500);
+        camera.setTranslateZ(-1000);
 
         Group cameraGroup = new Group();
         cameraGroup.getChildren().add(meshView);
@@ -314,8 +310,7 @@ public class MAPController extends EditorController<MAPFile> {
                 float x = Utils.unsignedIntToFloat(pos[0]);
                 float y = Utils.unsignedIntToFloat(pos[1]);
                 float z = Utils.unsignedIntToFloat(pos[2]);
-                Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, x, y, z); //TODO: All of these entities seem to have their crap flipped.
-                System.out.println("Y: " + pos[1] + " -> " + y + ".");
+                Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, x, y, z);
 
                 rect.setOnMouseClicked(evt -> {
                     System.out.println("Hello, I am a " + entity.getFormBook());
@@ -366,11 +361,13 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private Rectangle makeIcon(Group cameraGroup, ImagePattern image, Rotate rotX, Rotate rotY, float x, float y, float z) {
-        Rectangle rect = new Rectangle(image.getImage().getWidth(), image.getImage().getHeight());
+        double width = image.getImage().getWidth();
+        double height = image.getImage().getHeight();
+        Rectangle rect = new Rectangle(width, height);
 
-        rect.setTranslateX(Constants.MAP_VIEW_SCALE * x);
-        rect.setTranslateY(Constants.MAP_VIEW_SCALE * y);
-        rect.setTranslateZ(Constants.MAP_VIEW_SCALE * z);
+        rect.setTranslateX((Constants.MAP_VIEW_SCALE * x) - width);
+        rect.setTranslateY((Constants.MAP_VIEW_SCALE * y) - height);
+        rect.setTranslateZ((Constants.MAP_VIEW_SCALE * z));
         rect.setFill(image);
 
         Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS); // Up, Down,
@@ -378,7 +375,7 @@ public class MAPController extends EditorController<MAPFile> {
         lightRotateX.angleProperty().bind(rotX.angleProperty());
         lightRotateY.angleProperty().bind(rotY.angleProperty());
 
-        lightRotateX.setPivotY(-rect.getTranslateY() * 2);
+        lightRotateX.setPivotY(-rect.getTranslateY());
         lightRotateX.setPivotZ(-rect.getTranslateZ()); // Depth <Closest, Furthest>
         lightRotateY.setPivotX(-rect.getTranslateX()); // <Left, Right>
         lightRotateY.setPivotZ(-rect.getTranslateZ()); // Depth <Closest, Furthest>

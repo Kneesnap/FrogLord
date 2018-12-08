@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.map.view;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
@@ -204,6 +205,6 @@ public class MapMesh extends TriangleMesh {
     public void updateVertices() {
         getPoints().clear();
         for (SVector vertex : map.getVertexes())
-            getPoints().addAll(Utils.unsignedShortToFloat(vertex.getX()), Utils.unsignedShortToFloat(vertex.getY()), Utils.unsignedShortToFloat(vertex.getZ()));
+            getPoints().addAll(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(vertex.getX()), Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(vertex.getY()), Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(vertex.getZ()));
     }
 }
