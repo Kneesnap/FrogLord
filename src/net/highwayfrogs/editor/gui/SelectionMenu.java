@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -15,6 +16,7 @@ import javafx.stage.Stage;
 import lombok.AllArgsConstructor;
 import net.highwayfrogs.editor.Utils;
 
+import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.Collection;
 import java.util.ResourceBundle;
@@ -34,6 +36,15 @@ public class SelectionMenu {
      */
     public static <T> void promptSelection(String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, ImageView> imageFunction) {
         Utils.loadFXMLTemplate("select", "Waiting for selection...", newStage -> new SelectionController<>(newStage, prompt, handler, values, nameFunction, imageFunction));
+    }
+
+    /**
+     * Create an ImageView icon from a BufferedImage.
+     * @param image The image to make an icon from.
+     * @return imageIcon
+     */
+    public static ImageView makeIcon(BufferedImage image) {
+        return new ImageView(SwingFXUtils.toFXImage(Utils.resizeImage(image, 25, 25), null));
     }
 
     public static class SelectionController<T> implements Initializable {
@@ -95,7 +106,7 @@ public class SelectionMenu {
 
             setText(nameFunction.apply(selection));
             if (imageFunction != null)
-                setGraphic(imageFunction.apply(selection));
+                setGraphic(selection != null ? imageFunction.apply(selection) : null);
         }
     }
 }

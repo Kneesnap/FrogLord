@@ -24,5 +24,5 @@ public class Constants {
 
     public static final String DEV_ISLAND_NAME = "ISLAND.MAP";
     public static final String DEV_QB_NAME = "QB.MAP";
-
+    public static final String SKY_LAND_NAME = "SKY_LAND.MAP";
 }

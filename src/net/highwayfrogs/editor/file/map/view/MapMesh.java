@@ -59,7 +59,7 @@ public class MapMesh extends TriangleMesh {
     /**
      * Find the next valid remap range.
      */
-    public void findNextValidRemap() {
+    public void findNextValidRemap(int oldTexId, int newTexId, boolean findTexture) {
         if (!this.remapFinder)
             return;
 
@@ -72,10 +72,13 @@ public class MapMesh extends TriangleMesh {
             } catch (Exception ex) {
                 System.out.println("Reached end of file. Restarting at beginning.");
                 this.currentRemap = this.remapStart;
-                continue;
+                return;
             }
 
             try {
+                if (findTexture && textureMap.getRemapList().get(oldTexId) != newTexId)
+                    continue;
+
                 updateData();
                 System.out.println("[Skipped " + totalSkips + "]: Found Possible Remap at 0x" + Integer.toHexString(this.currentRemap).toUpperCase());
                 return;

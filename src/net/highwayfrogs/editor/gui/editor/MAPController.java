@@ -33,9 +33,13 @@ import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
+import net.highwayfrogs.editor.gui.SelectionMenu;
 
 import java.util.List;
 
@@ -87,11 +91,15 @@ public class MAPController extends EditorController<MAPFile> {
     private PSXPolygon polygonImmuneToTarget;
     private boolean polygonSelected;
 
+    private PerspectiveCamera camera;
+    private Group uiGroup = new Group();
+
     private static final double ROTATION_SPEED = 0.35D;
     private static final double SCROLL_SPEED = 5;
     private static final double TRANSLATE_SPEED = 10;
     private static final int VERTEX_SPEED = 3;
 
+    private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
     private static final Image LIGHT_BULB = GameFile.loadIcon("lightbulb");
     private static final Image SWAMPY = GameFile.loadIcon("swampy");
 
@@ -172,6 +180,7 @@ public class MAPController extends EditorController<MAPFile> {
 
     @SneakyThrows
     private void setupMapViewer(Stage stageToOverride, MapMesh mesh, TextureMap texMap) {
+        delete2DUI();
         this.mapMesh = mesh;
         MeshView meshView = new MeshView(mesh);
 
@@ -180,13 +189,14 @@ public class MAPController extends EditorController<MAPFile> {
         meshView.setMaterial(material);
         meshView.setCullFace(CullFace.NONE);
 
-        PerspectiveCamera camera = new PerspectiveCamera(true);
+        this.camera = new PerspectiveCamera(true);
         camera.setFarClip(Double.MAX_VALUE);
         camera.setTranslateZ(-Constants.MAP_VIEW_SCALE);
-        camera.setTranslateY(-Constants.MAP_VIEW_SCALE / 7);
+        //camera.setTranslateY(-Constants.MAP_VIEW_SCALE / 7);
 
         Group cameraGroup = new Group();
         cameraGroup.getChildren().add(meshView);
+        cameraGroup.getChildren().add(uiGroup);
         cameraGroup.getChildren().add(camera);
 
         Rotate rotX = new Rotate(0, Rotate.X_AXIS);
@@ -203,18 +213,40 @@ public class MAPController extends EditorController<MAPFile> {
         Scene defaultScene = Utils.setSceneKeepPosition(stageToOverride, mapScene);
 
         mapScene.setOnKeyPressed(event -> {
-
             // Exit the viewer.
-            if (event.getCode() == KeyCode.ESCAPE)
+            if (event.getCode() == KeyCode.ESCAPE) {
+                if (isPolygonSelected()) {
+                    removeCursorPolygon();
+                    return;
+                }
+
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
+            }
 
             // Toggle wireframe mode.
             if (event.getCode() == KeyCode.X)
                 meshView.setDrawMode(meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
 
             // [Remap Mode] Find next non-crashing remap.
-            if (event.getCode() == KeyCode.K)
-                mesh.findNextValidRemap();
+            if (mesh.isRemapFinder() && event.getCode() == KeyCode.K) {
+                if (!isPolygonSelected()) {
+                    System.out.println("You must select a polygon to perform a remap search.");
+                    return;
+                }
+
+                PSXPolygon poly = this.selectedPolygon;
+                if (!(poly instanceof PSXPolyTexture)) {
+                    System.out.println("This polygon is not textured.");
+                    return;
+                }
+
+                int replaceTexId = ((PSXPolyTexture) poly).getTextureId();
+                SelectionMenu.promptSelection("Select the replacement image.",
+                        image -> mesh.findNextValidRemap(replaceTexId, image.getTextureId(), true),
+                        mesh.getTextureMap().getVloArchive().getImages(),
+                        image -> String.valueOf(image.getTextureId()),
+                        image -> SelectionMenu.makeIcon(image.toBufferedImage(IMAGE_SETTINGS)));
+            }
 
             if (isPolygonSelected()) {
                 if (event.getCode() == KeyCode.UP) {
@@ -280,7 +312,7 @@ public class MAPController extends EditorController<MAPFile> {
             }
         });
 
-        mesh.findNextValidRemap();
+        mesh.findNextValidRemap(0, 0, false);
     }
 
     private void setupLights(Group cameraGroup, Rotate rotX, Rotate rotY) {
@@ -304,7 +336,15 @@ public class MAPController extends EditorController<MAPFile> {
                 float z = Utils.unsignedIntToFloat(pos[2]);
 
                 Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, x, y, z);
-                rect.setOnMouseClicked(evt -> System.out.println("Hello, I am a " + entity.getFormBook()));
+                rect.setOnMouseClicked(evt -> {
+                    System.out.println("Hello, I am a " + entity.getFormBook());
+
+                    System.out.println("Base: [" + evt.getX() + ", " + evt.getY() + ", " + evt.getZ() + "]");
+                    System.out.println("Scene: [" + evt.getSceneX() + ", " + evt.getSceneY() + "]");
+                    System.out.println("Screen: [" + evt.getScreenX() + ", " + evt.getScreenY() + "]");
+
+                    buildUI(evt.getSceneX(), evt.getSceneY());
+                });
             }
 
             PathInfo pathInfo = entity.getPathInfo();
@@ -436,5 +476,27 @@ public class MAPController extends EditorController<MAPFile> {
     public void refreshView() {
         mapMesh.updateData();
         renderCursor(getSelectedPolygon());
+    }
+
+    private void delete2DUI() {
+        uiGroup.getChildren().clear();
+    }
+
+    private void buildUI(double x, double y) {
+        System.out.println("Building UI.");
+        delete2DUI();
+
+        Group rectGroup = new Group();
+
+        Rectangle rect = new Rectangle(x, y, 100, 100);
+        Rectangle rect2 = new Rectangle(x + 10, y + 10, 80, 80);
+        rect.setFill(Color.RED);
+        rect2.setFill(Color.YELLOW);
+
+        rectGroup.getChildren().addAll(rect, rect2);
+        rectGroup.translateXProperty().bind(this.camera.translateXProperty());
+        rectGroup.translateYProperty().bind(this.camera.translateYProperty());
+
+        uiGroup.getChildren().add(rectGroup);
     }
 }

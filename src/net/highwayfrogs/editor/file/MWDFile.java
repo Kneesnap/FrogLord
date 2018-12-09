@@ -1,7 +1,5 @@
 package net.highwayfrogs.editor.file;
 
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.image.ImageView;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -121,8 +119,11 @@ public class MWDFile extends GameObject {
         if (entry.getTypeId() == VLOArchive.TYPE_ID || entry.getDisplayName().startsWith("LS_ALL")) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
             file = new VLOArchive();
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
-            boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && GUIMain.EXE_CONFIG.isDemo() && GUIMain.EXE_CONFIG.getPlatform() == TargetPlatform.PSX);
-            boolean isSkyLand = entry.getDisplayName().startsWith("SKY_LAND");
+            boolean isPSX = GUIMain.EXE_CONFIG.getPlatform() == TargetPlatform.PSX;
+            boolean isDemo = GUIMain.EXE_CONFIG.isDemo();
+
+            boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && isDemo && isPSX);
+            boolean isSkyLand = entry.getDisplayName().startsWith(Constants.SKY_LAND_NAME);
             boolean isQB = entry.getDisplayName().startsWith(Constants.DEV_QB_NAME);
 
             if (isDemoJungle || isSkyLand || isQB) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
@@ -241,6 +242,6 @@ public class MWDFile extends GameObject {
                     handler.accept(vlo);
                 }, allVLOs,
                 vlo -> vlo != null ? getEntryMap().get(vlo).getDisplayName() : "No Textures",
-                vlo -> vlo != null ? new ImageView(SwingFXUtils.toFXImage(Utils.resizeImage(vlo.getImages().get(0).toBufferedImage(VLO_ICON_SETTING), 25, 25), null)) : null);
+                vlo -> SelectionMenu.makeIcon(vlo.getImages().get(0).toBufferedImage(VLO_ICON_SETTING)));
     }
 }
