@@ -19,7 +19,6 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
-import javafx.util.Pair;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
@@ -40,6 +39,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.system.Tuple2;
 
 import java.util.List;
 
@@ -158,10 +158,10 @@ public class MAPController extends EditorController<MAPFile> {
             InputMenu.promptInput("Please enter the address to start reading from.", str -> {
                 int address;
 
-                String levelName = str.toUpperCase();
+                String levelName = Utils.getRawFileName(str);
                 if (GUIMain.EXE_CONFIG.hasRemapInfo(levelName)) {
-                    Pair<Integer, Integer> remapData = GUIMain.EXE_CONFIG.getRemapInfo(levelName);
-                    address = remapData.getKey() + (Constants.SHORT_SIZE * remapData.getValue());
+                    Tuple2<Integer, Integer> remapData = GUIMain.EXE_CONFIG.getRemapInfo(levelName);
+                    address = remapData.getA() + (Constants.SHORT_SIZE * remapData.getB());
                 } else {
                     try {
                         address = Integer.decode(str);

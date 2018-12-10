@@ -21,6 +21,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -386,24 +387,30 @@ public class Utils {
 
     /**
      * Prompt the user to select a file.
-     * @param title     The title of the window to display.
-     * @param typeInfo  The label to show for the file-type.
-     * @param extension Allowed extension.
+     * @param title      The title of the window to display.
+     * @param typeInfo   The label to show for the file-type.
+     * @param extensions Allowed extensions.
      * @return selectedFile, Can be null.
      */
-    public static File promptFileOpen(String title, String typeInfo, String extension) {
+    public static File promptFileOpenExtensions(String title, String typeInfo, String... extensions) {
+        Utils.verify(extensions.length > 0, "");
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(title);
 
-        String type = "*." + extension; // Unix is case-sensitive, so we add both lower-case and upper-case.
-        String lowerCase = type.toLowerCase();
-        String upperCase = type.toUpperCase();
+        List<String> allExtensions = new ArrayList<>();
+        for (String ext : extensions) {
+            String type = "*." + ext; // Unix is case-sensitive, so we add both lower-case and upper-case.
+            String lowerCase = type.toLowerCase();
+            String upperCase = type.toUpperCase();
 
-        if (lowerCase.equals(upperCase)) {
-            fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, type));
-        } else {
-            fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, lowerCase, upperCase));
+            if (lowerCase.equals(upperCase)) {
+                allExtensions.add(type);
+            } else {
+                allExtensions.add(lowerCase);
+                allExtensions.add(upperCase);
+            }
         }
+        fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, allExtensions));
 
         fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
 
@@ -412,6 +419,17 @@ public class Utils {
             GUIMain.setWorkingDirectory(selectedFile.getParentFile());
 
         return selectedFile;
+    }
+
+    /**
+     * Prompt the user to select a file.
+     * @param title     The title of the window to display.
+     * @param typeInfo  The label to show for the file-type.
+     * @param extension Allowed extension.
+     * @return selectedFile, Can be null.
+     */
+    public static File promptFileOpen(String title, String typeInfo, String extension) {
+        return promptFileOpenExtensions(title, typeInfo, extension);
     }
 
     /**
@@ -578,5 +596,24 @@ public class Utils {
         newWindow.setHeight(height);
 
         return oldScene;
+    }
+
+    /**
+     * Get the raw file name without an extension.
+     * @param fileName The file name to get raw.
+     * @return rawFileName
+     */
+    public static String getRawFileName(String fileName) {
+        return stripExtension(fileName).toUpperCase();
+    }
+
+    /**
+     * Turn an integer into a hex string.
+     * 255 -> 0xFF
+     * @param value The value to convert.
+     * @return hexString
+     */
+    public static String toHexString(int value) {
+        return "0x" + Integer.toHexString(value).toUpperCase();
     }
 }

@@ -1,21 +1,26 @@
 package net.highwayfrogs.editor.file.config;
 
-import javafx.util.Pair;
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
+import net.highwayfrogs.editor.system.Tuple2;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Information about a specific frogger.exe file.
@@ -27,7 +32,9 @@ public class FroggerEXEInfo extends Config {
     private File inputFile;
     private List<String> fallbackFileNames;
 
+    private static final String REMAP_SPLIT = "|";
     private static final String NO_REMAP_DATA = "PLACEHOLDER";
+    private static final int DEFAULT_REMAP_SIZE = 250;
 
     public static final String FIELD_NAME = "name";
     private static final String FIELD_FILE_NAMES = "Files";
@@ -36,6 +43,30 @@ public class FroggerEXEInfo extends Config {
     public FroggerEXEInfo(File inputExe, InputStream inputStream) throws IOException {
         super(inputStream);
         this.inputFile = inputExe;
+    }
+
+    /**
+     * Prints a calculated remap config.
+     * @param mwdFile The mwd file to get maps from.
+     */
+    public void printRemapConfig(MWDFile mwdFile) {
+        List<Tuple2<Integer, String>> remapDataHolder = new ArrayList<>();
+        for (GameFile file : mwdFile.getFiles()) {
+            if (!(file instanceof MAPFile))
+                continue;
+
+            MAPFile mapFile = (MAPFile) file;
+            String mapName = Utils.getRawFileName(mwdFile.getEntryMap().get(mapFile).getDisplayName());
+            if (!hasRemapInfo(mapName))
+                continue;
+
+            int startAddress = getRemapInfo(mapName).getA();
+            remapDataHolder.add(new Tuple2<>(startAddress, mapName + Config.VALUE_SPLIT + Utils.toHexString(startAddress) + REMAP_SPLIT + mapFile.getMaxRemap()));
+        }
+
+        remapDataHolder.sort(Comparator.comparingInt(Tuple2::getA));
+        for (Tuple2<Integer, String> data : remapDataHolder)
+            System.out.println(data.getB());
     }
 
     /**
@@ -89,13 +120,13 @@ public class FroggerEXEInfo extends Config {
      * @param levelName The level to get remap info for.
      * @return remapInfo
      */
-    public Pair<Integer, Integer> getRemapInfo(String levelName) {
+    public Tuple2<Integer, Integer> getRemapInfo(String levelName) {
         String remapData = getChild(FIELD_REMAP_DATA).getString(levelName);
         Utils.verify(remapData != null && !remapData.equalsIgnoreCase(NO_REMAP_DATA), "There is no remap data for %s.", levelName);
-        String[] split = remapData.split("\\|");
+        String[] split = remapData.split(Pattern.quote(REMAP_SPLIT));
         int remapAddress = Integer.decode(split[0]);
-        int remapCount = split.length > 1 ? Integer.parseInt(split[1]) : 200; // Amount of texture remaps. (Bytes / SHORT_SIZE).
-        return new Pair<>(remapAddress, remapCount);
+        int remapCount = split.length > 1 ? Integer.parseInt(split[1]) : DEFAULT_REMAP_SIZE; // Amount of texture remaps. (Bytes / SHORT_SIZE).
+        return new Tuple2<>(remapAddress, remapCount);
     }
 
     /**
@@ -113,8 +144,8 @@ public class FroggerEXEInfo extends Config {
      * @return remapTable
      */
     public List<Short> getRemapTable(String levelName) {
-        Pair<Integer, Integer> data = getRemapInfo(levelName);
-        return readRemapTable(data.getKey(), data.getValue());
+        Tuple2<Integer, Integer> data = getRemapInfo(levelName);
+        return readRemapTable(data.getA(), data.getB());
     }
 
     /**
@@ -177,9 +208,9 @@ public class FroggerEXEInfo extends Config {
      */
     public void patchRemapInExe(String levelName, List<Integer> remapImages) {
         DataWriter writer = getWriter();
-        Pair<Integer, Integer> pair = getRemapInfo(levelName);
-        int remapAddress = pair.getKey();
-        int remapCount = pair.getValue();
+        Tuple2<Integer, Integer> data = getRemapInfo(levelName);
+        int remapAddress = data.getA();
+        int remapCount = data.getB();
         Utils.verify(remapCount >= remapImages.size(), "New remap table is larger than the old remap table.");
 
         writer.jumpTemp(remapAddress);

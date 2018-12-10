@@ -80,7 +80,7 @@ public class MapMesh extends TriangleMesh {
                     continue;
 
                 updateData();
-                System.out.println("[Skipped " + totalSkips + "]: Found Possible Remap at 0x" + Integer.toHexString(this.currentRemap).toUpperCase());
+                System.out.println("[Skipped " + totalSkips + "]: Found Possible Remap at " + Utils.toHexString(this.currentRemap) + " (" + map.getMaxRemap() + ")");
                 return;
             } catch (Exception ex) { // Failed.
                 totalSkips++;

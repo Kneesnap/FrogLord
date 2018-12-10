@@ -12,7 +12,6 @@ Editor Features:
   Map Editor
   MOF Editor
 
-Make remaps for Retail PSX.
 Build FrogPSX.H from MWD.
 
 Non tool-development-related plans:

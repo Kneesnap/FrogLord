@@ -624,11 +624,10 @@ public class MAPFile extends GameFile {
 
         getParentMWD().promptVLOSelection(getTheme(), vlo -> {
             boolean hasTextures = vlo != null;
-
             if (hasTextures)
                 vlo.exportAllImages(selectedFolder, OBJ_EXPORT_FILTER); // Export VLO images.
 
-            String cleanName = Utils.stripExtension(entry.getDisplayName());
+            String cleanName = Utils.getRawFileName(entry.getDisplayName());
             exportToObj(selectedFolder, cleanName, entry, vlo, hasTextures ? GUIMain.EXE_CONFIG.getRemapTable(cleanName) : null);
         }, true);
     }
@@ -686,7 +685,6 @@ public class MAPFile extends GameFile {
         List<PSXColorVector> faceColors = new ArrayList<>();
         Map<PSXColorVector, List<PSXPolygon>> facesWithColors = new HashMap<>();
 
-        AtomicInteger maxUsedRemap = new AtomicInteger(Integer.MIN_VALUE);
         allPolygons.forEach(polygon -> {
             if (polygon instanceof PSXPolyTexture) {
                 PSXPolyTexture texture = (PSXPolyTexture) polygon;
@@ -697,12 +695,10 @@ public class MAPFile extends GameFile {
                     if (remapTable != null) { // Apply remap.
                         GameImage image = textureMap.computeIfAbsent(newTextureId, key -> {
                             int remapTextureId = remapTable.get(key);
-                            if (key > maxUsedRemap.get())
-                                maxUsedRemap.set(key);
-
                             for (GameImage testImage : vloArchive.getImages())
                                 if (testImage.getTextureId() == remapTextureId)
                                     return testImage;
+
                             throw new RuntimeException("Could not find a texture with the id: " + remapTextureId + ".");
                         });
                         newTextureId = image.getTextureId();
@@ -756,9 +752,26 @@ public class MAPFile extends GameFile {
 
         System.out.println("Export complete.");
 
-        int maxRemap = maxUsedRemap.get() + 1;
+        int maxRemap = getMaxRemap();
         if (exportTextures && remapTable.size() > maxRemap)
             System.out.println("This remap is bigger than it needs to be. It can be size " + maxRemap + ".");
+    }
+
+    /**
+     * Get the maximum remap size.
+     * @return maxRemap
+     */
+    public int getMaxRemap() {
+        AtomicInteger maxRemapId = new AtomicInteger();
+        getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
+            if (!(prim instanceof PSXPolyTexture))
+                return;
+            int newTex = ((PSXPolyTexture) prim).getTextureId();
+            if (newTex > maxRemapId.get())
+                maxRemapId.set(newTex);
+        }));
+
+        return maxRemapId.get() + 1;
     }
 
     /**

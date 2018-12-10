@@ -123,7 +123,7 @@ public class MWDFile extends GameObject {
             boolean isDemo = GUIMain.EXE_CONFIG.isDemo();
 
             boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && isDemo && isPSX);
-            boolean isSkyLand = entry.getDisplayName().startsWith(Constants.SKY_LAND_NAME);
+            boolean isSkyLand = entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX);
             boolean isQB = entry.getDisplayName().startsWith(Constants.DEV_QB_NAME);
 
             if (isDemoJungle || isSkyLand || isQB) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.

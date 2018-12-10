@@ -22,7 +22,10 @@ public class Config {
     @Getter private List<String> text = new ArrayList<>();
 
     public static final String VALUE_SPLIT = "=";
-    private static final String EMPTY_LINE = "``";
+    public static final String EMPTY_LINE = "``";
+    public static final String COMMENT_SPLIT = "#";
+    public static final String CHILD_OPEN_TAG = "[";
+    public static final String CHILD_CLOSE_TAG = "]";
 
     public Config(InputStream stream) throws IOException {
         InputStreamReader reader = new InputStreamReader(stream);
@@ -44,14 +47,14 @@ public class Config {
         boolean readingText = false;
 
         for (String line : lines) {
-            line = line.split("#")[0].trim(); // Remove comments.
+            line = line.split(COMMENT_SPLIT)[0].trim(); // Remove comments.
             if (line.isEmpty())
                 continue; // Skip empty lines.
 
             if (line.equalsIgnoreCase(EMPTY_LINE)) // If we want an actual empty line to be parsed. Since normal empty lines are skipped, we have to have this as an option.
                 line = "";
 
-            if (line.startsWith("[") && line.endsWith("]")) { // Defining a child-config.
+            if (line.startsWith(CHILD_OPEN_TAG) && line.endsWith(CHILD_CLOSE_TAG)) { // Defining a child-config.
                 if (childName != null) // Done with the current child, add it.
                     children.put(childName, new Config(childLines));
 
