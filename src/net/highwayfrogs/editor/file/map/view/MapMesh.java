@@ -76,8 +76,10 @@ public class MapMesh extends TriangleMesh {
             }
 
             try {
-                if (findTexture && textureMap.getRemapList().get(oldTexId) != newTexId)
+                if (findTexture && textureMap.getRemapList().get(oldTexId) != newTexId) {
+                    totalSkips++;
                     continue;
+                }
 
                 updateData();
                 System.out.println("[Skipped " + totalSkips + "]: Found Possible Remap at " + Utils.toHexString(this.currentRemap) + " (" + map.getMaxRemap() + ")");

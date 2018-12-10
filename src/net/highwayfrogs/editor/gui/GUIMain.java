@@ -55,7 +55,7 @@ public class GUIMain extends Application {
         if (mwdFile == null)
             return; // No file given, shutdown.
 
-        File exeFile = Utils.promptFileOpenExtensions("Please select a Frogger executable", "Frogger Executable", "EXE", "06");
+        File exeFile = Utils.promptFileOpenExtensions("Please select a Frogger executable", "Frogger Executable", "EXE", "06", "99");
         if (exeFile == null)
             return; // No file given, shutdown.
 
