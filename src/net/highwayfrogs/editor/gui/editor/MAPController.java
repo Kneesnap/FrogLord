@@ -3,9 +3,7 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Group;
-import javafx.scene.PerspectiveCamera;
-import javafx.scene.Scene;
+import javafx.scene.*;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
@@ -86,6 +84,7 @@ public class MAPController extends EditorController<MAPFile> {
     private double mouseX;
     private double mouseY;
 
+    private Scene mapScene;
     private MapMesh mapMesh;
     private PSXPolygon selectedPolygon;
     private PSXPolygon polygonImmuneToTarget;
@@ -190,9 +189,7 @@ public class MAPController extends EditorController<MAPFile> {
         meshView.setCullFace(CullFace.NONE);
 
         this.camera = new PerspectiveCamera(true);
-        camera.setFarClip(Double.MAX_VALUE);
-        camera.setTranslateZ(-Constants.MAP_VIEW_SCALE);
-        //camera.setTranslateY(-Constants.MAP_VIEW_SCALE / 7);
+        this.camera.setFarClip(Double.MAX_VALUE);
 
         Group cameraGroup = new Group();
         cameraGroup.getChildren().add(meshView);
@@ -206,11 +203,12 @@ public class MAPController extends EditorController<MAPFile> {
         setupLights(cameraGroup, rotX, rotY);
         setupEntities(cameraGroup, rotX, rotY);
 
-        Scene mapScene = new Scene(cameraGroup, 400, 400, true);
+        mapScene = new Scene(cameraGroup, 400, 400, true);
         mapScene.setFill(Color.GRAY);
         mapScene.setCamera(camera);
 
         Scene defaultScene = Utils.setSceneKeepPosition(stageToOverride, mapScene);
+        buildUI();
 
         mapScene.setOnKeyPressed(event -> {
             // Exit the viewer.
@@ -313,6 +311,8 @@ public class MAPController extends EditorController<MAPFile> {
         });
 
         mesh.findNextValidRemap(0, 0, false);
+        camera.setTranslateZ(-Constants.MAP_VIEW_SCALE);
+        camera.setTranslateY(-Constants.MAP_VIEW_SCALE / 7);
     }
 
     private void setupLights(Group cameraGroup, Rotate rotX, Rotate rotY) {
@@ -342,8 +342,6 @@ public class MAPController extends EditorController<MAPFile> {
                     System.out.println("Base: [" + evt.getX() + ", " + evt.getY() + ", " + evt.getZ() + "]");
                     System.out.println("Scene: [" + evt.getSceneX() + ", " + evt.getSceneY() + "]");
                     System.out.println("Screen: [" + evt.getScreenX() + ", " + evt.getScreenY() + "]");
-
-                    buildUI(evt.getSceneX(), evt.getSceneY());
                 });
             }
 
@@ -482,21 +480,70 @@ public class MAPController extends EditorController<MAPFile> {
         uiGroup.getChildren().clear();
     }
 
-    private void buildUI(double x, double y) {
+    //TODO: Support Z-Scaling
+    //TODO: Support translations.
+    private void buildUI() {
         System.out.println("Building UI.");
         delete2DUI();
 
         Group rectGroup = new Group();
 
-        Rectangle rect = new Rectangle(x, y, 100, 100);
-        Rectangle rect2 = new Rectangle(x + 10, y + 10, 80, 80);
+        System.out.println("Dimensions: [" + mapScene.getWidth() + ", " + mapScene.getHeight() + "]");
+        double x = -getViewportLeft();
+        double y = -getViewportUp();
+        System.out.println("Viewport: [" + x + ", " + y + "]");
+
+        Rectangle rect = new Rectangle(0, 0, 100, 100);
+        Rectangle rect2 = new Rectangle(10, 10, 80, 80);
         rect.setFill(Color.RED);
         rect2.setFill(Color.YELLOW);
 
         rectGroup.getChildren().addAll(rect, rect2);
-        rectGroup.translateXProperty().bind(this.camera.translateXProperty());
-        rectGroup.translateYProperty().bind(this.camera.translateYProperty());
+
+        camera.translateZProperty().addListener((observable, oldValue, newValue) -> {
+            System.out.println("Up: " + getViewportUp());
+            System.out.println("Down: " + getViewportDown());
+            System.out.println("Left: " + getViewportLeft());
+            System.out.println("Right: " + getViewportRight());
+            rectGroup.setTranslateX(camera.getTranslateX() - getViewportLeft());
+            rectGroup.setTranslateY(camera.getTranslateY() - getViewportUp());
+            rectGroup.setScaleX(mapScene.getWidth() / (2 * (getViewportLeft() + getViewportRight())));
+            rectGroup.setScaleY(mapScene.getHeight() / (2 * (getViewportUp() + getViewportDown())));
+        });
 
         uiGroup.getChildren().add(rectGroup);
+    }
+
+    /**
+     * Get the left viewport coordinate.
+     * Reference: https://stackoverflow.com/questions/47876768/computing-the-viewport-of-a-perspective-camera-javafx
+     * @return viewportLeft
+     */
+    public double getViewportLeft() {
+        return -camera.getTranslateZ() * (mapScene.getWidth() / mapScene.getHeight()) * Math.tan(Math.toRadians(camera.getFieldOfView() / 2));
+    }
+
+    /**
+     * Get the right viewport coordinate.
+     * @return viewportRight
+     */
+    public double getViewportRight() {
+        return mapScene.getWidth() - getViewportLeft();
+    }
+
+    /**
+     * Get the up viewport coordinate.
+     * @return viewportUp
+     */
+    public double getViewportUp() {
+        return -camera.getTranslateZ() * Math.tan(Math.toRadians(camera.getFieldOfView() / 2));
+    }
+
+    /**
+     * Get the down viewport coordinate.
+     * @return viewportDown
+     */
+    public double getViewportDown() {
+        return mapScene.getHeight() - getViewportUp();
     }
 }
