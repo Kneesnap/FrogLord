@@ -67,9 +67,9 @@ public abstract class GameSound {
         AudioFormat format = inputStream.getFormat();
         Utils.verify(!format.isBigEndian(), "Big Endian audio files are not accepted.");
         Utils.verify(format.getEncoding() == Encoding.PCM_SIGNED, "Unsigned audio files are not supported. (%s)", format.getEncoding());
+        Utils.verify(format.getChannels() == getChannelCount(), "%d-channel audio is not supported!", format.getChannels());
 
         setBitWidth(format.getSampleSizeInBits());
-        setChannelCount(format.getChannels());
         setSampleRate((int) format.getSampleRate());
 
         ArrayReceiver receiver = new ArrayReceiver();
