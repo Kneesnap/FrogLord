@@ -474,6 +474,7 @@ public class MAPController extends EditorController<MAPFile> {
     public void refreshView() {
         mapMesh.updateData();
         renderCursor(getSelectedPolygon());
+        updateUI();
     }
 
     private void delete2DUI() {
@@ -481,18 +482,11 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     //TODO: Support Z-Scaling
-    //TODO: Support translations.
     private void buildUI() {
         System.out.println("Building UI.");
         delete2DUI();
 
         Group rectGroup = new Group();
-
-        System.out.println("Dimensions: [" + mapScene.getWidth() + ", " + mapScene.getHeight() + "]");
-        double x = -getViewportLeft();
-        double y = -getViewportUp();
-        System.out.println("Viewport: [" + x + ", " + y + "]");
-
         Rectangle rect = new Rectangle(0, 0, 100, 100);
         Rectangle rect2 = new Rectangle(10, 10, 80, 80);
         rect.setFill(Color.RED);
@@ -506,21 +500,21 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void updateUI() {
-        System.out.println("UP: [" + getViewportUp() + "]");
-        System.out.println("LEFT: [" + getViewportLeft() + "]");
+        double viewportLeft = getViewportLeft(); // If it goes below the mapScene values, it scales funky.
+        double viewportUp = getViewportUp();
+        System.out.println("UP: [" + viewportUp + "] LEFT: [" + viewportLeft + "]");
         System.out.println("Width: [" + mapScene.getWidth() + ", " + mapScene.getHeight() + "]");
 
-        uiGroup.setScaleX((2 * getViewportLeft()) / mapScene.getWidth());
-        uiGroup.setScaleY((2 * getViewportUp()) / mapScene.getHeight());
+        uiGroup.setScaleX(viewportLeft / (mapScene.getWidth() / 2));
+        uiGroup.setScaleY(viewportUp / (mapScene.getHeight() / 2));
 
-        double viewportLeft = getViewportLeft();
-        double viewportUp = getViewportUp();
-        double xSize = viewportLeft * (uiGroup.getBoundsInLocal().getWidth() / mapScene.getWidth());
-        double ySize = viewportUp * (uiGroup.getBoundsInLocal().getHeight() / mapScene.getHeight());
+        double xSize = uiGroup.getBoundsInLocal().getWidth() * uiGroup.getScaleX();
+        double ySize = uiGroup.getBoundsInLocal().getHeight() * uiGroup.getScaleY();
         uiGroup.setTranslateX(camera.getTranslateX() + viewportLeft - xSize);
         uiGroup.setTranslateY(camera.getTranslateY() + viewportUp - ySize);
 
         System.out.println("Scale: [" + uiGroup.getScaleX() + ", " + uiGroup.getScaleY() + "]: " + camera.getTranslateZ());
+        System.out.println("Size: [" + xSize + ", " + ySize + "]");
     }
 
     /**
