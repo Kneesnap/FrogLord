@@ -500,18 +500,27 @@ public class MAPController extends EditorController<MAPFile> {
 
         rectGroup.getChildren().addAll(rect, rect2);
 
-        camera.translateZProperty().addListener((observable, oldValue, newValue) -> {
-            System.out.println("Up: " + getViewportUp());
-            System.out.println("Down: " + getViewportDown());
-            System.out.println("Left: " + getViewportLeft());
-            System.out.println("Right: " + getViewportRight());
-            rectGroup.setTranslateX(camera.getTranslateX() - getViewportLeft());
-            rectGroup.setTranslateY(camera.getTranslateY() - getViewportUp());
-            rectGroup.setScaleX(mapScene.getWidth() / (2 * (getViewportLeft() + getViewportRight())));
-            rectGroup.setScaleY(mapScene.getHeight() / (2 * (getViewportUp() + getViewportDown())));
-        });
-
+        camera.translateZProperty().addListener((observable, oldValue, newValue) -> updateUI());
         uiGroup.getChildren().add(rectGroup);
+        updateUI();
+    }
+
+    private void updateUI() {
+        System.out.println("UP: [" + getViewportUp() + "]");
+        System.out.println("LEFT: [" + getViewportLeft() + "]");
+        System.out.println("Width: [" + mapScene.getWidth() + ", " + mapScene.getHeight() + "]");
+
+        uiGroup.setScaleX((2 * getViewportLeft()) / mapScene.getWidth());
+        uiGroup.setScaleY((2 * getViewportUp()) / mapScene.getHeight());
+
+        double viewportLeft = getViewportLeft();
+        double viewportUp = getViewportUp();
+        double xSize = viewportLeft * (uiGroup.getBoundsInLocal().getWidth() / mapScene.getWidth());
+        double ySize = viewportUp * (uiGroup.getBoundsInLocal().getHeight() / mapScene.getHeight());
+        uiGroup.setTranslateX(camera.getTranslateX() + viewportLeft - xSize);
+        uiGroup.setTranslateY(camera.getTranslateY() + viewportUp - ySize);
+
+        System.out.println("Scale: [" + uiGroup.getScaleX() + ", " + uiGroup.getScaleY() + "]: " + camera.getTranslateZ());
     }
 
     /**
@@ -524,26 +533,10 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     /**
-     * Get the right viewport coordinate.
-     * @return viewportRight
-     */
-    public double getViewportRight() {
-        return mapScene.getWidth() - getViewportLeft();
-    }
-
-    /**
      * Get the up viewport coordinate.
      * @return viewportUp
      */
     public double getViewportUp() {
         return -camera.getTranslateZ() * Math.tan(Math.toRadians(camera.getFieldOfView() / 2));
-    }
-
-    /**
-     * Get the down viewport coordinate.
-     * @return viewportDown
-     */
-    public double getViewportDown() {
-        return mapScene.getHeight() - getViewportUp();
     }
 }
