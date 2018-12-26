@@ -21,6 +21,7 @@ public class Constants {
     public static final int BITS_PER_BYTE = 8;
 
     public static final int MAP_VIEW_SCALE = 10000;
+    public static final double MAP_VIEW_FAR_CLIP = 15000.0;
 
     public static final String DEV_ISLAND_NAME = "ISLAND.MAP";
     public static final String DEV_QB_NAME = "QB.MAP";
