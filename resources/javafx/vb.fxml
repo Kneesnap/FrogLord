@@ -1,29 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
-            minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0"
-            AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
-            xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
     <children>
-        <ListView fx:id="soundList" prefHeight="305.0" prefWidth="200.0"/>
-        <Button layoutX="199.0" layoutY="14.0" mnemonicParsing="false" onAction="#importSound" text="Import"/>
-        <Button layoutX="200.0" layoutY="39.0" mnemonicParsing="false" onAction="#exportSound" text="Export"/>
-        <Button layoutX="199.0" layoutY="266.0" mnemonicParsing="false" onAction="#exportAllSounds" text="Export All"/>
-        <Label fx:id="label1" alignment="TOP_CENTER" contentDisplay="CENTER" layoutX="448.0" layoutY="31.0"
-               prefHeight="17.0" prefWidth="151.0" text="Placeholder" textAlignment="CENTER"
-               AnchorPane.rightAnchor="1.0" AnchorPane.topAnchor="31.0"/>
-        <Label fx:id="label2" alignment="TOP_CENTER" contentDisplay="CENTER" layoutX="448.0" layoutY="43.0"
-               prefHeight="17.0" prefWidth="151.0" text="Placeholder" textAlignment="CENTER"
-               AnchorPane.rightAnchor="1.0" AnchorPane.topAnchor="43.0"/>
-        <Label fx:id="label3" alignment="TOP_CENTER" contentDisplay="CENTER" layoutX="467.0" layoutY="65.0"
-               prefHeight="17.0" prefWidth="74.0" text="Sample-Rate: " textAlignment="CENTER"
-               AnchorPane.rightAnchor="59.0" AnchorPane.topAnchor="65.0"/>
-        <Button fx:id="playButton" layoutX="490.0" layoutY="2.0" mnemonicParsing="false" onAction="#togglePlay"
-                text="Play" AnchorPane.rightAnchor="58.0" AnchorPane.topAnchor="2.0"/>
-        <TextField fx:id="sampleRateField" layoutX="541.0" layoutY="61.0" onAction="#onSampleRateUpdate"
-                   prefHeight="25.0" prefWidth="52.0" AnchorPane.rightAnchor="7.0" AnchorPane.topAnchor="61.0"/>
-        <CheckBox fx:id="repeatCheckBox" layoutX="200.0" layoutY="249.0" mnemonicParsing="false" text="Repeat"/>
+      <HBox prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+          <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="240.0" HBox.hgrow="NEVER">
+               <children>
+                  <VBox prefHeight="303.0" prefWidth="206.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="40.0" prefWidth="130.0" VBox.vgrow="NEVER">
+                           <children>
+                              <Label prefHeight="97.0" prefWidth="236.0" text="Audio File" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <font>
+                                    <Font name="System Bold" size="14.0" />
+                                 </font>
+                                 <graphic>
+                                    <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@/icons/sound.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Label>
+                           </children></AnchorPane>
+                        <AnchorPane prefHeight="72.0" prefWidth="144.0" VBox.vgrow="ALWAYS">
+                           <children>
+                                <ListView fx:id="soundList" prefHeight="223.0" prefWidth="144.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="0.0" />
+                           </children></AnchorPane>
+                        <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="48.0" prefWidth="130.0" VBox.vgrow="NEVER">
+                           <children>
+                              <HBox alignment="CENTER" prefHeight="100.0" prefWidth="236.0" spacing="2.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                      <Button mnemonicParsing="false" onAction="#importSound" prefHeight="25.0" prefWidth="72.0" text="Import" />
+                                      <Button mnemonicParsing="false" onAction="#exportSound" prefHeight="25.0" prefWidth="72.0" text="Export" />
+                                      <Button mnemonicParsing="false" onAction="#exportAllSounds" prefHeight="25.0" prefWidth="72.0" text="Export All" />
+                                 </children></HBox>
+                           </children></AnchorPane>
+                     </children></VBox>
+               </children>
+            </AnchorPane>
+            <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" HBox.hgrow="NEVER" />
+          <AnchorPane HBox.hgrow="ALWAYS">
+               <children>
+                  <Label layoutX="10.0" layoutY="143.0" text="Audio Information" AnchorPane.leftAnchor="10.0">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+                    <Label fx:id="label1" contentDisplay="CENTER" layoutX="15.0" layoutY="167.0" prefHeight="17.0" prefWidth="151.0" text="Placeholder" textAlignment="CENTER" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="184.0" AnchorPane.topAnchor="167.0" />
+                    <Label fx:id="label2" contentDisplay="CENTER" layoutX="15.0" layoutY="184.0" prefHeight="17.0" prefWidth="151.0" text="Placeholder" textAlignment="CENTER" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="184.0" AnchorPane.topAnchor="184.0" />
+                    <Label fx:id="label3" contentDisplay="CENTER" layoutX="7.0" layoutY="65.0" prefHeight="17.0" prefWidth="106.0" text="Sample-Rate (kHz):" textAlignment="CENTER" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="240.0" AnchorPane.topAnchor="65.0" />
+                    <Button fx:id="playButton" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#togglePlay" prefHeight="25.0" prefWidth="72.0" text="Play" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0" />
+                    <TextField fx:id="sampleRateField" alignment="CENTER" layoutX="116.0" layoutY="61.0" onAction="#onSampleRateUpdate" prefHeight="25.0" prefWidth="80.0" promptText="Rate" AnchorPane.leftAnchor="116.0" AnchorPane.topAnchor="61.0" />
+                    <CheckBox fx:id="repeatCheckBox" layoutX="91.0" layoutY="14.0" mnemonicParsing="false" text="Loop" />
+                  <Slider fx:id="sliderSampleRate" blockIncrement="25.0" layoutX="21.0" layoutY="92.0" majorTickUnit="11025.0" max="44100.0" min="11025.0" minorTickCount="0" prefHeight="38.0" prefWidth="315.0" showTickLabels="true" showTickMarks="true" value="11025.0" AnchorPane.leftAnchor="21.0" />
+               </children></AnchorPane>
+         </children>
+      </HBox>
     </children>
 </AnchorPane>
