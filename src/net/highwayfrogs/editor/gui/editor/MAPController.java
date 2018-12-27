@@ -4,7 +4,9 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.*;
-import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
@@ -37,6 +39,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.system.Tuple2;
 
 import java.util.List;
@@ -55,29 +58,9 @@ import java.util.List;
  */
 @Getter
 public class MAPController extends EditorController<MAPFile> {
-    @FXML private Label themeIdLabel;
-    @FXML private Label startPosLabel;
-    @FXML private Label cameraSourceLabel;
-    @FXML private Label cameraTargetLabel;
-    @FXML private Label basePointLabel; // This is the bottom left of the map group grid.
-
-    @FXML private Label pathCountLabel;
-    @FXML private Label formCountLabel;
-    @FXML private Label entityCountLabel;
-
-    @FXML private Label gridSquareLabel;
-    @FXML private Label gridStackLabel;
-    @FXML private Label gridCountLabel;
-    @FXML private Label gridLengthLabel;
-    @FXML private Label groupLabel;
-    @FXML private Label groupCountLabel;
-    @FXML private Label groupLengthLabel;
-
-    @FXML private Label zoneCountLabel;
-    @FXML private Label lightCountLabel;
-    @FXML private Label vertexCountLabel;
-    @FXML private Label polygonCountLabel;
-    @FXML private Label mapAnimCountLabel;
+    @FXML private TableView<NameValuePair> tableMAPFileData;
+    @FXML private TableColumn<Object, Object> tableColumnMAPFileData_Name;
+    @FXML private TableColumn<Object, Object> tableColumnMAPFileData_Value;
 
     private double oldMouseX;
     private double oldMouseY;
@@ -111,34 +94,40 @@ public class MAPController extends EditorController<MAPFile> {
     private void updateLabels() {
         MAPFile map = getFile();
 
-        themeIdLabel.setText("Theme: " + map.getTheme());
-        startPosLabel.setText("Start Pos: (" + map.getStartXTile() + ", " + map.getStartYTile() + ") Rotation: " + map.getStartRotation());
-        cameraSourceLabel.setText("Camera Source: (" + map.getCameraSourceOffset().toCoordinateString() + ")");
-        cameraTargetLabel.setText("Camera Target: (" + map.getCameraTargetOffset().toCoordinateString() + ")");
-        basePointLabel.setText("Base Point: (" + map.getBasePoint().toCoordinateString() + ")");
+        // Setup and initialise the table view
+        tableMAPFileData.getItems().clear();
+        tableColumnMAPFileData_Name.setCellValueFactory(new PropertyValueFactory<>("name"));
+        tableColumnMAPFileData_Value.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        // Labels in entity section.
-        pathCountLabel.setText("Paths: " + map.getPaths().size());
-        formCountLabel.setText("Forms: " + map.getForms().size());
-        entityCountLabel.setText("Entities: " + map.getEntities().size());
+        // General properties
+        tableMAPFileData.getItems().add(new NameValuePair("General - Theme", map.getTheme().toString()));
+        tableMAPFileData.getItems().add(new NameValuePair("General - Start Pos", "(" + map.getStartXTile() + ", " + map.getStartYTile() + ") Rotation: " + map.getStartRotation()));
+        tableMAPFileData.getItems().add(new NameValuePair("General - Camera Source", "(" + map.getCameraSourceOffset().toCoordinateString() + ")"));
+        tableMAPFileData.getItems().add(new NameValuePair("General - Camera Target", "(" + map.getCameraTargetOffset().toCoordinateString() + ")"));
+        tableMAPFileData.getItems().add(new NameValuePair("General - Base Point", "(" + map.getBasePoint().toCoordinateString() + ")"));
 
-        // Labels in environment section.
-        zoneCountLabel.setText("Zones: " + map.getZones().size());
-        lightCountLabel.setText("Lights: " + map.getLights().size());
-        vertexCountLabel.setText("Vertices: " + map.getVertexes().size());
-        polygonCountLabel.setText("Polygons: " + map.getCachedPolygons().values().stream().mapToInt(List::size).sum());
-        mapAnimCountLabel.setText("Animations: " + map.getMapAnimations().size());
+        // Entity properties
+        tableMAPFileData.getItems().add(new NameValuePair("Entity - Paths", Integer.toString(map.getPaths().size())));
+        tableMAPFileData.getItems().add(new NameValuePair("Entity - Forms", Integer.toString(map.getForms().size())));
+        tableMAPFileData.getItems().add(new NameValuePair("Entity - Entities", Integer.toString(map.getEntities().size())));
 
-        // Grid
-        gridStackLabel.setText("Grid Stacks: " + map.getGridStacks().size());
-        gridSquareLabel.setText("Grid Squares: " + map.getGridSquares().size());
-        gridCountLabel.setText("Count: [" + map.getGridXCount() + ", " + map.getGridZCount() + "]");
-        gridLengthLabel.setText("Length: [" + map.getGridXLength() + ", " + map.getGridZLength() + "]");
+        // Environment properties
+        tableMAPFileData.getItems().add(new NameValuePair("Environment - Zones", Integer.toString(map.getZones().size())));
+        tableMAPFileData.getItems().add(new NameValuePair("Environment - Lights", Integer.toString(map.getLights().size())));
+        tableMAPFileData.getItems().add(new NameValuePair("Environment - Vertices", Integer.toString(map.getVertexes().size())));
+        tableMAPFileData.getItems().add(new NameValuePair("Environment - Polygons", Integer.toString(map.getCachedPolygons().values().stream().mapToInt(List::size).sum())));
+        tableMAPFileData.getItems().add(new NameValuePair("Environment - Animations", Integer.toString(map.getMapAnimations().size())));
 
-        // Group
-        groupLabel.setText("Groups: " + map.getGroups().size());
-        groupCountLabel.setText("Count: [" + map.getGroupXCount() + ", " + map.getGroupZCount() + "]");
-        groupLengthLabel.setText("Length: [" + map.getGroupXLength() + ", " + map.getGroupZLength() + "]");
+        // Grid properties
+        tableMAPFileData.getItems().add(new NameValuePair("Grid - Grid Stacks", Integer.toString(map.getGridStacks().size())));
+        tableMAPFileData.getItems().add(new NameValuePair("Grid - Grid Squares", Integer.toString(map.getGridSquares().size())));
+        tableMAPFileData.getItems().add(new NameValuePair("Grid - Count", "[" + map.getGridXCount() + ", " + map.getGridZCount() + "]"));
+        tableMAPFileData.getItems().add(new NameValuePair("Grid - Length", "[" + map.getGridXLength() + ", " + map.getGridZLength() + "]"));
+
+        // Group properties
+        tableMAPFileData.getItems().add(new NameValuePair("Group - Groups", Integer.toString(map.getGroups().size())));
+        tableMAPFileData.getItems().add(new NameValuePair("Group - Count", "[" + map.getGroupXCount() + ", " + map.getGroupZCount() + "]"));
+        tableMAPFileData.getItems().add(new NameValuePair("Group - Length", "[" + map.getGroupXLength() + ", " + map.getGroupZLength() + "]"));
     }
 
     @FXML
@@ -189,7 +178,7 @@ public class MAPController extends EditorController<MAPFile> {
         meshView.setCullFace(CullFace.NONE);
 
         this.camera = new PerspectiveCamera(true);
-        this.camera.setFarClip(Double.MAX_VALUE);
+        this.camera.setFarClip(Constants.MAP_VIEW_FAR_CLIP);
 
         Group cameraGroup = new Group();
         cameraGroup.getChildren().add(meshView);

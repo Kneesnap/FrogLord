@@ -30,6 +30,7 @@ public class VABController extends EditorController<VBFile> {
     @FXML private Label label2;
     @FXML private TextField sampleRateField;
     @FXML private CheckBox repeatCheckBox;
+    @FXML private Slider sliderSampleRate;
 
     private GameSound selectedSound;
     private Clip currentClip;
@@ -37,6 +38,19 @@ public class VABController extends EditorController<VBFile> {
     @Override
     public void loadFile(VBFile vbFile) {
         super.loadFile(vbFile);
+
+        sliderSampleRate.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.equals(oldValue))
+            {
+                // Grab the new sample rate value from the slider
+                int newRate = newValue.intValue();
+                // Update the sample rate text field
+                this.sampleRateField.setText(Integer.toString(newRate));
+                // Apply the new sample rate to the currently selected sound and update
+                this.selectedSound.setSampleRate(newRate);
+                updateSound();
+            }
+        });
 
         ObservableList<GameSound> gameSounds = FXCollections.observableArrayList(vbFile.getAudioEntries());
         soundList.setItems(gameSounds);
@@ -143,6 +157,8 @@ public class VABController extends EditorController<VBFile> {
 
         this.selectedSound.setSampleRate(newRate);
         updateSound();
+
+        this.sliderSampleRate.setValue(selectedSound.getSampleRate());
     }
 
     /**
@@ -152,6 +168,7 @@ public class VABController extends EditorController<VBFile> {
         label1.setText("Vanilla Track ID: " + selectedSound.getVanillaTrackId());
         label2.setText("Channels: " + selectedSound.getChannelCount());
         this.sampleRateField.setText(String.valueOf(selectedSound.getSampleRate()));
+        this.sliderSampleRate.setValue(selectedSound.getSampleRate());
     }
 
     private void closeClip() {
