@@ -40,16 +40,11 @@ public class VABController extends EditorController<VBFile> {
         super.loadFile(vbFile);
 
         sliderSampleRate.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.equals(oldValue))
-            {
-                // Grab the new sample rate value from the slider
-                int newRate = newValue.intValue();
-                // Update the sample rate text field
-                this.sampleRateField.setText(Integer.toString(newRate));
-                // Apply the new sample rate to the currently selected sound and update
-                this.selectedSound.setSampleRate(newRate);
-                updateSound();
-            }
+            if (newValue.equals(oldValue))
+                return;
+
+            this.selectedSound.setSampleRate(newValue.intValue()); // Apply the new sample rate.
+            updateInterface();
         });
 
         ObservableList<GameSound> gameSounds = FXCollections.observableArrayList(vbFile.getAudioEntries());
@@ -58,8 +53,7 @@ public class VABController extends EditorController<VBFile> {
 
         soundList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             this.selectedSound = newValue;
-            this.updateSound();
-            this.updateSoundInfo();
+            this.updateInterface();
         });
 
         soundList.getSelectionModel().select(0);
@@ -104,8 +98,7 @@ public class VABController extends EditorController<VBFile> {
             throw new RuntimeException("Failed to import sound file " + selectedFile.getName(), ex);
         }
 
-        updateSound();
-        updateSoundInfo();
+        updateInterface();
     }
 
     @FXML
@@ -131,7 +124,7 @@ public class VABController extends EditorController<VBFile> {
         if (this.currentClip.isActive()) {
             this.currentClip.stop();
         } else {
-            this.repeatCheckBox.setDisable(true);
+            toggleComponents(true);
 
             if (this.repeatCheckBox.isSelected()) {
                 this.currentClip.loop(Clip.LOOP_CONTINUOUSLY);
@@ -156,9 +149,15 @@ public class VABController extends EditorController<VBFile> {
         }
 
         this.selectedSound.setSampleRate(newRate);
-        updateSound();
+        updateInterface();
+    }
 
-        this.sliderSampleRate.setValue(selectedSound.getSampleRate());
+    /**
+     * Update sound and sound info.
+     */
+    public void updateInterface() {
+        updateSound();
+        updateSoundInfo();
     }
 
     /**
@@ -192,7 +191,7 @@ public class VABController extends EditorController<VBFile> {
 
             Platform.runLater(() -> {
                 this.playButton.setText("Play");
-                this.repeatCheckBox.setDisable(false);
+                toggleComponents(false);
             });
         });
     }
@@ -203,5 +202,11 @@ public class VABController extends EditorController<VBFile> {
         } catch (LineUnavailableException ex) {
             throw new RuntimeException("Failed to make AudioClip for sound.", ex);
         }
+    }
+
+    private void toggleComponents(boolean newState) {
+        this.repeatCheckBox.setDisable(newState);
+        this.sampleRateField.setDisable(newState);
+        this.sliderSampleRate.setDisable(newState);
     }
 }

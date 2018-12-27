@@ -59,8 +59,8 @@ import java.util.List;
 @Getter
 public class MAPController extends EditorController<MAPFile> {
     @FXML private TableView<NameValuePair> tableMAPFileData;
-    @FXML private TableColumn<Object, Object> tableColumnMAPFileData_Name;
-    @FXML private TableColumn<Object, Object> tableColumnMAPFileData_Value;
+    @FXML private TableColumn<Object, Object> tableColumnMAPFileDataName;
+    @FXML private TableColumn<Object, Object> tableColumnMAPFileDataValue;
 
     private double oldMouseX;
     private double oldMouseY;
@@ -96,38 +96,42 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Setup and initialise the table view
         tableMAPFileData.getItems().clear();
-        tableColumnMAPFileData_Name.setCellValueFactory(new PropertyValueFactory<>("name"));
-        tableColumnMAPFileData_Value.setCellValueFactory(new PropertyValueFactory<>("value"));
+        tableColumnMAPFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        tableColumnMAPFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
 
         // General properties
-        tableMAPFileData.getItems().add(new NameValuePair("General - Theme", map.getTheme().toString()));
-        tableMAPFileData.getItems().add(new NameValuePair("General - Start Pos", "(" + map.getStartXTile() + ", " + map.getStartYTile() + ") Rotation: " + map.getStartRotation()));
-        tableMAPFileData.getItems().add(new NameValuePair("General - Camera Source", "(" + map.getCameraSourceOffset().toCoordinateString() + ")"));
-        tableMAPFileData.getItems().add(new NameValuePair("General - Camera Target", "(" + map.getCameraTargetOffset().toCoordinateString() + ")"));
-        tableMAPFileData.getItems().add(new NameValuePair("General - Base Point", "(" + map.getBasePoint().toCoordinateString() + ")"));
+        addTableEntry("MAP Theme: ", map.getTheme().toString());
+        addTableEntry("Start Position", "(" + map.getStartXTile() + ", " + map.getStartYTile() + ") Rotation: " + map.getStartRotation());
+        addTableEntry("Camera Source", "(" + map.getCameraSourceOffset().toCoordinateString() + ")");
+        addTableEntry("Camera Target", "(" + map.getCameraTargetOffset().toCoordinateString() + ")");
+        addTableEntry("Base Point", "(" + map.getBasePoint().toCoordinateString() + ")");
 
         // Entity properties
-        tableMAPFileData.getItems().add(new NameValuePair("Entity - Paths", Integer.toString(map.getPaths().size())));
-        tableMAPFileData.getItems().add(new NameValuePair("Entity - Forms", Integer.toString(map.getForms().size())));
-        tableMAPFileData.getItems().add(new NameValuePair("Entity - Entities", Integer.toString(map.getEntities().size())));
+        addTableEntry("Path Count", Integer.toString(map.getPaths().size()));
+        addTableEntry("Form Count", Integer.toString(map.getForms().size()));
+        addTableEntry("Entity Count", Integer.toString(map.getEntities().size()));
 
         // Environment properties
-        tableMAPFileData.getItems().add(new NameValuePair("Environment - Zones", Integer.toString(map.getZones().size())));
-        tableMAPFileData.getItems().add(new NameValuePair("Environment - Lights", Integer.toString(map.getLights().size())));
-        tableMAPFileData.getItems().add(new NameValuePair("Environment - Vertices", Integer.toString(map.getVertexes().size())));
-        tableMAPFileData.getItems().add(new NameValuePair("Environment - Polygons", Integer.toString(map.getCachedPolygons().values().stream().mapToInt(List::size).sum())));
-        tableMAPFileData.getItems().add(new NameValuePair("Environment - Animations", Integer.toString(map.getMapAnimations().size())));
+        addTableEntry("Zone Count", Integer.toString(map.getZones().size()));
+        addTableEntry("Light Count", Integer.toString(map.getLights().size()));
+        addTableEntry("Vertex Count", Integer.toString(map.getVertexes().size()));
+        addTableEntry("Polygon Count", Integer.toString(map.getCachedPolygons().values().stream().mapToInt(List::size).sum()));
+        addTableEntry("Animation Count", Integer.toString(map.getMapAnimations().size()));
 
         // Grid properties
-        tableMAPFileData.getItems().add(new NameValuePair("Grid - Grid Stacks", Integer.toString(map.getGridStacks().size())));
-        tableMAPFileData.getItems().add(new NameValuePair("Grid - Grid Squares", Integer.toString(map.getGridSquares().size())));
-        tableMAPFileData.getItems().add(new NameValuePair("Grid - Count", "[" + map.getGridXCount() + ", " + map.getGridZCount() + "]"));
-        tableMAPFileData.getItems().add(new NameValuePair("Grid - Length", "[" + map.getGridXLength() + ", " + map.getGridZLength() + "]"));
+        addTableEntry("Grid Stacks", Integer.toString(map.getGridStacks().size()));
+        addTableEntry("Grid Squares", Integer.toString(map.getGridSquares().size()));
+        addTableEntry("Grid Size Count", "[" + map.getGridXCount() + ", " + map.getGridZCount() + "]");
+        addTableEntry("Grid Size Length", "[" + map.getGridXLength() + ", " + map.getGridZLength() + "]");
 
         // Group properties
-        tableMAPFileData.getItems().add(new NameValuePair("Group - Groups", Integer.toString(map.getGroups().size())));
-        tableMAPFileData.getItems().add(new NameValuePair("Group - Count", "[" + map.getGroupXCount() + ", " + map.getGroupZCount() + "]"));
-        tableMAPFileData.getItems().add(new NameValuePair("Group - Length", "[" + map.getGroupXLength() + ", " + map.getGroupZLength() + "]"));
+        addTableEntry("Group Count", Integer.toString(map.getGroups().size()));
+        addTableEntry("Group Size Count", "[" + map.getGroupXCount() + ", " + map.getGroupZCount() + "]");
+        addTableEntry("Group Size Length", "[" + map.getGroupXLength() + ", " + map.getGroupZLength() + "]");
+    }
+
+    private void addTableEntry(String name, String value) {
+        tableMAPFileData.getItems().add(new NameValuePair(name, value));
     }
 
     @FXML

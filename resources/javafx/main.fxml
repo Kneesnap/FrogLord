@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Accordion?>
-<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextArea?>
-<?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
@@ -14,61 +12,7 @@
             <items>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0">
                     <children>
-                  <Accordion fx:id="accordionMain" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="350.0" snapToPixel="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                    <panes>
-                      <TitledPane fx:id="accPaneFilesVLO" animated="false" text="VLO Files">
-                        <content>
-                          <AnchorPane minHeight="0.0" minWidth="0.0">
-                                 <children>
-                                    <ListView fx:id="listFilesVLO" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                                 </children></AnchorPane>
-                        </content>
-                      </TitledPane>
-                      <TitledPane fx:id="accPaneFilesDAT" animated="false" text="DAT Files">
-                        <content>
-                          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                                 <children>
-                                    <ListView fx:id="listFilesDAT" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                                 </children></AnchorPane>
-                        </content>
-                      </TitledPane>
-                      <TitledPane fx:id="accPaneFilesMAP" animated="false" text="MAP Files">
-                        <content>
-                          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                                 <children>
-                                    <ListView fx:id="listFilesMAP" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                                 </children></AnchorPane>
-                        </content>
-                      </TitledPane>
-                        <TitledPane fx:id="accPaneFilesWAD" animated="false" text="WAD Files">
-                          <content>
-                            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                                 <children>
-                                    <ListView fx:id="listFilesWAD" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                                 </children>
-                              </AnchorPane>
-                          </content>
-                        </TitledPane>
-                        <TitledPane fx:id="accPaneFilesPAL" animated="false" text="PAL Files">
-                          <content>
-                            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                                 <children>
-                                    <ListView fx:id="listFilesPAL" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                                 </children>
-                              </AnchorPane>
-                          </content>
-                        </TitledPane>
-                        <TitledPane fx:id="accPaneFilesVBH" animated="false" text="VB/VH Files">
-                          <content>
-                            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                                 <children>
-                                    <ListView fx:id="listFilesVBH" layoutX="51.0" layoutY="36.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                                 </children>
-                              </AnchorPane>
-                          </content>
-                        </TitledPane>
-                    </panes>
-                  </Accordion>
+                  <Accordion fx:id="accordionMain" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="350.0" snapToPixel="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                     </children>
                 </AnchorPane>
                 <SplitPane dividerPositions="0.7774798927613941" orientation="VERTICAL" prefHeight="398.0" prefWidth="417.0">

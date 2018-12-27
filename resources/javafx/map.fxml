@@ -60,8 +60,8 @@
                            <children>
                               <TableView fx:id="tableMAPFileData" prefHeight="180.0" prefWidth="180.0" AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="8.0">
                                 <columns>
-                                  <TableColumn fx:id="tableColumnMAPFileData_Name" editable="false" prefWidth="75.0" text="Name" />
-                                  <TableColumn fx:id="tableColumnMAPFileData_Value" editable="false" prefWidth="75.0" text="Value" />
+                                  <TableColumn fx:id="tableColumnMAPFileDataName" editable="false" prefWidth="75.0" text="Name" />
+                                  <TableColumn fx:id="tableColumnMAPFileDataValue" editable="false" prefWidth="75.0" text="Value" />
                                 </columns>
                                  <columnResizePolicy>
                                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

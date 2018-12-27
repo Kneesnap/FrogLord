@@ -25,33 +25,23 @@ import net.highwayfrogs.editor.gui.editor.EditorController;
 import java.io.File;
 import java.net.URL;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 
+@Getter
 public class MainController implements Initializable {
     @FXML private SplitPane mainSplitPane;
-
     @FXML private Accordion accordionMain;
-    @FXML private TitledPane accPaneFilesVLO;
-    @FXML private TitledPane accPaneFilesDAT;
-    @FXML private TitledPane accPaneFilesMAP;
-    @FXML private TitledPane accPaneFilesWAD;
-    @FXML private TitledPane accPaneFilesPAL;
-    @FXML private TitledPane accPaneFilesVBH;
-    @FXML private ListView<GameFile> listFilesVLO;
-    @FXML private ListView<GameFile> listFilesDAT;
-    @FXML private ListView<GameFile> listFilesMAP;
-    @FXML private ListView<GameFile> listFilesWAD;
-    @FXML private ListView<GameFile> listFilesPAL;
-    @FXML private ListView<GameFile> listFilesVBH;
-
     @FXML private AnchorPane editorPane;
     @FXML private TextArea consoleText;
-    @Getter private MWDFile mwdFile;
-
-    @Getter @Setter private static ListView<GameFile> currentFilesList;
+    private MWDFile mwdFile;
+    private ListView<GameFile> currentFilesList;
 
     public static MainController MAIN_WINDOW;
-    @Getter @Setter private static EditorController<?> currentController;
+    @Getter
+    @Setter
+    private static EditorController<?> currentController;
 
     /**
      * Print a message to the console window.
@@ -70,93 +60,50 @@ public class MainController implements Initializable {
     public void loadMWD(MWDFile file) {
         this.mwdFile = file;
 
-        ObservableList<GameFile> gameFilesVLO = FXCollections.observableArrayList();
-        ObservableList<GameFile> gameFilesDAT = FXCollections.observableArrayList();
-        ObservableList<GameFile> gameFilesMAP = FXCollections.observableArrayList();
-        ObservableList<GameFile> gameFilesWAD = FXCollections.observableArrayList();
-        ObservableList<GameFile> gameFilesPAL = FXCollections.observableArrayList();
-        ObservableList<GameFile> gameFilesVBH = FXCollections.observableArrayList();
+        Map<Integer, ObservableList<GameFile>> gameFileRegistry = new HashMap<>();
 
-        for (GameFile gameFile : mwdFile.getFiles())
-        {
+        for (GameFile gameFile : mwdFile.getFiles()) {
             // Grab corresponding file entry information for the game file
             FileEntry fileEntry = mwdFile.getEntryMap().get(gameFile);
+            int type = fileEntry.getTypeId();
 
-            // Add the file to the relevant list (determined by game file type)
-            switch (fileEntry.getTypeId())
-            {
-                case WADFile.TYPE_ID:
-                    gameFilesWAD.add(gameFile);
-                    break;
+            if (type == MAPFile.TYPE_ID && fileEntry.getDisplayName().startsWith("LS_ALL")) // LS_ALL is masked as a MAP, when it is a VLO.
+                type = VLOArchive.TYPE_ID;
 
-                case MAPFile.TYPE_ID:
-                    // Special case test for level select VLOs...
-                    if (fileEntry.getDisplayName().startsWith("LS_ALL"))
-                    {
-                        // We actually need to add these to the VLO list!!!
-                        gameFilesVLO.add(gameFile);
-                    }
-                    else
-                    {
-                        gameFilesMAP.add(gameFile);
-                    }
-                    break;
+            if (!gameFileRegistry.containsKey(type))
+                gameFileRegistry.put(type, FXCollections.observableArrayList());
 
-                case VLOArchive.TYPE_ID:
-                    gameFilesVLO.add(gameFile);
-                    break;
-
-                case VHFile.TYPE_ID:
-                    gameFilesVBH.add(gameFile);
-                    break;
-
-                case DemoFile.TYPE_ID:
-                    gameFilesDAT.add(gameFile);
-                    break;
-
-                case PALFile.TYPE_ID:
-                    gameFilesPAL.add(gameFile);
-                    break;
-
-                default:
-                    // Unknown type
-                    break;
-            }
+            gameFileRegistry.get(type).add(gameFile);
         }
 
-        listFilesVLO.setItems(gameFilesVLO);
-        listFilesVLO.setCellFactory(param -> new AttachmentListCell(mwdFile));
-        listFilesVLO.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openEditor(listFilesVLO, newValue));
-        accPaneFilesVLO.setText("VLO Files (" + gameFilesVLO.size() + " items)");
+        addFileList(VLOArchive.TYPE_ID, "VLO", gameFileRegistry);
+        addFileList(DemoFile.TYPE_ID, "DAT", gameFileRegistry);
+        addFileList(MAPFile.TYPE_ID, "MAP", gameFileRegistry);
+        addFileList(WADFile.TYPE_ID, "WAD", gameFileRegistry);
+        addFileList(PALFile.TYPE_ID, "PAL", gameFileRegistry);
+        addFileList(VHFile.TYPE_ID, "VB/VH", gameFileRegistry);
+    }
 
-        listFilesDAT.setItems(gameFilesDAT);
-        listFilesDAT.setCellFactory(param -> new AttachmentListCell(mwdFile));
-        listFilesDAT.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openEditor(listFilesDAT, newValue));
-        accPaneFilesDAT.setText("DAT Files (" + gameFilesDAT.size() + " items)");
+    private void addFileList(int type, String name, Map<Integer, ObservableList<GameFile>> fileMap) {
+        TitledPane pane = new TitledPane();
+        pane.setPrefSize(200, 180);
+        pane.setAnimated(false);
 
-        listFilesMAP.setItems(gameFilesMAP);
-        listFilesMAP.setCellFactory(param -> new AttachmentListCell(mwdFile));
-        listFilesMAP.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openEditor(listFilesMAP, newValue));
-        accPaneFilesMAP.setText("MAP Files (" + gameFilesMAP.size() + " items)");
+        ListView<GameFile> listView = new ListView<>(fileMap.get(type));
+        listView.setCellFactory(param -> new AttachmentListCell(mwdFile));
+        listView.setItems(fileMap.get(type));
 
-        listFilesWAD.setItems(gameFilesWAD);
-        listFilesWAD.setCellFactory(param -> new AttachmentListCell(mwdFile));
-        listFilesWAD.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openEditor(listFilesWAD, newValue));
-        accPaneFilesWAD.setText("WAD Files (" + gameFilesWAD.size() + " items)");
+        pane.setContent(listView);
+        pane.setText(name + " Files (" + listView.getItems().size() + " items)");
+        accordionMain.getPanes().add(pane);
 
-        listFilesPAL.setItems(gameFilesPAL);
-        listFilesPAL.setCellFactory(param -> new AttachmentListCell(mwdFile));
-        listFilesPAL.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openEditor(listFilesPAL, newValue));
-        accPaneFilesPAL.setText("PAL Files (" + gameFilesPAL.size() + " items)");
+        listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openEditor(listView, newValue));
 
-        listFilesVBH.setItems(gameFilesVBH);
-        listFilesVBH.setCellFactory(param -> new AttachmentListCell(mwdFile));
-        listFilesVBH.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openEditor(listFilesVBH, newValue));
-        accPaneFilesVBH.setText("VB/VH Files (" + gameFilesVBH.size() + " items)");
-
-        // Default selection to first item in the VLO archives
-        listFilesVLO.getSelectionModel().select(0);
-        accPaneFilesVLO.setExpanded(true);
+        // Expand VLO.
+        if (type == VLOArchive.TYPE_ID) {
+            listView.getSelectionModel().selectFirst();
+            pane.setExpanded(true);
+        }
     }
 
     /**
@@ -194,7 +141,7 @@ public class MainController implements Initializable {
         getCurrentFilesList().getItems().set(index, newFile);
 
         newFile.onImport(oldFile, getFileEntry().getDisplayName(), selectedFile.getName());
-        openEditor(listFilesVLO, newFile); // Open the editor for the new file.
+        openEditor(getCurrentFilesList(), newFile); // Open the editor for the new file.
         System.out.println("Imported " + selectedFile.getName() + " as " + getFileEntry().getDisplayName() + ".");
     }
 
@@ -236,7 +183,7 @@ public class MainController implements Initializable {
             file.setupEditor(editorPane, node);
         }
 
-        setCurrentFilesList(activeList);
+        currentFilesList = activeList;
     }
 
 
