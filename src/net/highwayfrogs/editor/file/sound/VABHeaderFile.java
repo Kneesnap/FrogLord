@@ -25,9 +25,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class VABHeaderFile extends GameFile {
     private List<VABProgram> programs = new ArrayList<>();
     private List<Integer> vagAddresses = new ArrayList<>();
-    private int vabId;
-    private int waveformSize;
-    private short reserved1;
+    private int vabId; // Bank ID.
+    private int waveformSize; // File Size.
+    private short reserved1; // Unused.
     private short masterVolume;
     private short masterPan;
     private byte attr1; // "User defined"
@@ -66,6 +66,7 @@ public class VABHeaderFile extends GameFile {
             programs.add(vabProgram);
         }
 
+        //TODO: This may not be pointers. Check.
         reader.jumpTemp(toneAddress.get());
         reader.readShort(); // Padding.
 
@@ -73,6 +74,7 @@ public class VABHeaderFile extends GameFile {
             this.vagAddresses.add(reader.readShort() << 3);
 
         reader.jumpReturn();
+        //TODO: Export a PSX VAB Header, and compare its data with how this will read it.
     }
 
     @Override
@@ -207,7 +209,7 @@ public class VABHeaderFile extends GameFile {
         }
     }
 
-    // LIBSND.H: VagAtr "VAG Tone Headdings"
+    // LIBSND.H: VagAtr "VAG Tone Headings"
     @Getter
     @Setter
     private static class VABTone extends GameObject {
