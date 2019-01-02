@@ -3,12 +3,19 @@ package net.highwayfrogs.editor.file.mof;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
+import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIMain;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,14 +23,14 @@ import java.util.List;
 /**
  * Represents a MOF file.
  * TODO: 12ax and 11ax are animation files.
+ * TODO: model.C has an example MOF File.
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
 public class MOFFile extends GameFile {
-    private boolean dummy; // Is this dummied out?
+    private boolean dummy; // Is this dummied data?
     private GameObject animation; // Animation data. For some reason they thought it'd be a good idea to make MOF have two different data structures.
 
-    private byte id;
     private int flags;
     private int extra;
     private List<MOFPart> parts = new ArrayList<>();
@@ -47,12 +54,7 @@ public class MOFFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
-        byte id = reader.readByte();
-        byte[] follow = reader.readBytes(MOF_SIGNATURE.length);
-
-        if (Arrays.equals(follow, MOF_SIGNATURE)) { // Signature matches, read id. TODO: Accept 1ax too.
-            this.id = id;
-        } else {
+        if (Arrays.equals(DUMMY_DATA, reader.readBytes(DUMMY_DATA.length))) {
             this.dummy = true;
             return;
         }
@@ -65,8 +67,6 @@ public class MOFFile extends GameFile {
         } else {
             resolveStaticMOF(reader);
         }
-
-        //TODO
     }
 
     private void resolveStaticMOF(DataReader reader) {
@@ -87,13 +87,39 @@ public class MOFFile extends GameFile {
     }
 
     @Override
+    @SneakyThrows
+    public void exportAlternateFormat(MWIFile.FileEntry entry) {
+        if (isDummy()) {
+            System.out.println("Can't export dummied MOF.");
+            return;
+        }
+
+        List<String> objLines = new ArrayList<>();
+        getParts().forEach(part -> {
+            for (MOFPartcel partcel : part.getPartcels()) {
+
+                if (partcel.getVertices().size() > 0)
+                    objLines.add("# Partcel " + part.getPartcels().indexOf(partcel));
+
+                for (SVector vertex : partcel.getVertices())
+                    objLines.add(vertex.toOBJString());
+
+                objLines.add("");
+            }
+        });
+
+        System.out.println("Exporting MOF: " + entry.getDisplayName());
+        Files.write(new File(GUIMain.getWorkingDirectory(), entry.getDisplayName() + ".obj").toPath(), objLines);
+    }
+
+    @Override
     public void save(DataWriter writer) {
         if (dummy) {
             writer.writeBytes(DUMMY_DATA);
             return;
         }
 
-        writer.writeByte(this.id);
+        writer.writeByte(Constants.NULL_BYTE);
         writer.writeBytes(MOF_SIGNATURE);
         writer.writeInt(0); // File length. Should be ok to use zero for now, but if it causes problems, we know where to look.
         writer.writeInt(this.flags);
@@ -107,7 +133,7 @@ public class MOFFile extends GameFile {
         for (MOFPart part : getParts())
             part.save(writer);
 
-        //TODO
+        //TODO: SAVE
     }
 
     /**

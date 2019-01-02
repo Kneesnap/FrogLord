@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.mof;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -11,6 +12,7 @@ import java.util.List;
  * Represents the MR_PART struct.
  * Created by Kneesnap on 8/25/2018.
  */
+@Getter
 public class MOFPart extends GameObject {
     private short flags;
     private List<MOFPartcel> partcels = new ArrayList<>();
@@ -56,11 +58,11 @@ public class MOFPart extends GameObject {
         reader.jumpReturn();
 
 
-        //TODO
+        //TODO: BBox.
     }
 
     @Override
     public void save(DataWriter writer) {
-        //TODO
+        //TODO: Save logic.
     }
 }

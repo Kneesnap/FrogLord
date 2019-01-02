@@ -7,8 +7,10 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.editor.WADController;
@@ -49,15 +51,17 @@ public class WADFile extends GameFile {
             if (compressed)
                 data = PP20Unpacker.unpackData(data);
 
-            GameFile file;
-            /*if (fileType == VLOArchive.WAD_TYPE || fileType == 1) { // Disabled until these files are supported.
-                file = new VLOArchive();
-            } else if (fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID) {
-                file = new MOFFile();
-            } else {
-                throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
-            }*/
-            file = new DummyFile(data.length);
+            GameFile file = new DummyFile(data.length);
+
+            if (MWDFile.CURRENT_FILE_NAME.contains("ORG1")) {
+                if (fileType == VLOArchive.WAD_TYPE || fileType == 1) { // Disabled until these files are supported.
+                    file = new VLOArchive();
+                } else if (fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID) {
+                    file = new MOFFile();
+                } else {
+                    throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
+                }
+            }
 
             file.load(new DataReader(new ArraySource(data)));
             files.add(new WADEntry(resourceId, fileType, compressed, file, this.parentMWD.getWadIndexTable()));
@@ -89,6 +93,12 @@ public class WADFile extends GameFile {
     @Override
     public Image getIcon() {
         return ICON;
+    }
+
+    @Override
+    public void exportAlternateFormat(FileEntry entry) {
+        for (WADEntry wadEntry : getFiles())
+            wadEntry.getFile().exportAlternateFormat(wadEntry.getFileEntry());
     }
 
     @Override
