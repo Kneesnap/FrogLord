@@ -85,6 +85,9 @@ public class MainController implements Initializable {
     }
 
     private void addFileList(int type, String name, Map<Integer, ObservableList<GameFile>> fileMap) {
+        if (!fileMap.containsKey(type))
+            return; // There are no files of this type.
+
         TitledPane pane = new TitledPane();
         pane.setPrefSize(200, 180);
         pane.setAnimated(false);
