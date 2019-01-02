@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.mof.animation;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -31,6 +32,7 @@ public class MOFAnimation extends GameObject {
         int staticFilePointer = reader.readInt(); // Points to pointers which point to MR_MOF.
 
         // Read model sets.
+        /*
         reader.jumpTemp(modelSetPointer);
         for (int i = 0; i < modelSetCount; i++) {
             MOFAnimationModelSet modelSet = new MOFAnimationModelSet();
@@ -44,12 +46,21 @@ public class MOFAnimation extends GameObject {
         this.commonData = new MOFAnimCommonData();
         this.commonData.load(reader);
         reader.jumpReturn();
+        */
 
         reader.jumpTemp(staticFilePointer);
-        for (int i = 0; i < staticFileCount; i++) {
-            reader.jumpTemp(reader.readInt());
+
+        int[] mofPointers = new int[staticFileCount];
+        for (int i = 0; i < mofPointers.length; i++)
+            mofPointers[i] = reader.readInt();
+
+        for (int i = 0; i < mofPointers.length; i++) {
+            reader.jumpTemp(mofPointers[i]);
+            byte[] bytes = reader.readBytes(i == mofPointers.length - 1 ? reader.getRemaining() : mofPointers[i + 1] - reader.getIndex());
+            DataReader mofReader = new DataReader(new ArraySource(bytes));
+
             MOFFile mof = new MOFFile();
-            mof.load(reader);
+            mof.load(mofReader);
             mofFiles.add(mof);
             reader.jumpReturn();
         }

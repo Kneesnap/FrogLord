@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public class MOFFile extends GameFile {
     private boolean dummy; // Is this dummied data?
-    private GameObject animation; // Animation data. For some reason they thought it'd be a good idea to make MOF have two different data structures.
+    private MOFAnimation animation; // Animation data. For some reason they thought it'd be a good idea to make MOF have two different data structures.
 
     private int flags;
     private int extra;
@@ -84,7 +84,7 @@ public class MOFFile extends GameFile {
 
 
         if (testFlag(FLAG_ANIMATION_FILE)) {
-            //resolveAnimatedMOF(reader); TODO: Animated mofs are disabled until they can be loaded.
+            resolveAnimatedMOF(reader);
         } else {
             resolveStaticMOF(reader);
         }
@@ -112,15 +112,21 @@ public class MOFFile extends GameFile {
      * Not the cleanest thing in the world, but it doesn't need to be.
      */
     @SneakyThrows
-    public void exportObject(FileEntry entry, File folder, VLOArchive vloTable) {
+    public void exportObject(FileEntry entry, File folder, VLOArchive vloTable, String cleanName) {
         if (isDummy()) {
             System.out.println("Cannot export dummy MOF.");
             return;
         }
 
+        if (testFlag(FLAG_ANIMATION_FILE)) {
+            for (int i = 0; i < this.animation.getMofFiles().size(); i++)
+                this.animation.getMofFiles().get(i).exportObject(entry, folder, vloTable, cleanName + "-" + i);
+            return;
+        }
+
         boolean exportTextures = vloTable != null;
 
-        String cleanName = Utils.stripExtension(entry.getDisplayName());
+
         String mtlName = cleanName + ".mtl";
         @Cleanup PrintWriter objWriter = new PrintWriter(new File(folder, cleanName + ".obj"));
 
