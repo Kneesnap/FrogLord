@@ -217,6 +217,10 @@ public class MAPController extends EditorController<MAPFile> {
             if (event.getCode() == KeyCode.X)
                 meshView.setDrawMode(meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
 
+            // Toggle mesh visibility.
+            if (event.getCode() == KeyCode.V)
+                meshView.setVisible(!meshView.isVisible());
+
             // [Remap Mode] Find next non-crashing remap.
             if (mesh.isRemapFinder() && event.getCode() == KeyCode.K) {
                 if (!isPolygonSelected()) {
@@ -304,7 +308,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         mesh.findNextValidRemap(0, 0, false);
         camera.setTranslateZ(-Constants.MAP_VIEW_SCALE);
-        camera.setTranslateY(-Constants.MAP_VIEW_SCALE / 7);
+        camera.setTranslateY(-Constants.MAP_VIEW_SCALE / 7.0);
     }
 
     private void setupLights(Group cameraGroup, Rotate rotX, Rotate rotY) {
