@@ -62,8 +62,9 @@ public class MOFFile extends GameFile {
         reader.readInt(); // File length, including header.
         this.flags = reader.readInt();
 
+
         if (testFlag(FLAG_ANIMATION_FILE)) {
-            resolveAnimatedMOF(reader);
+            //resolveAnimatedMOF(reader); TODO: Animated mofs are disabled until they can be loaded.
         } else {
             resolveStaticMOF(reader);
         }

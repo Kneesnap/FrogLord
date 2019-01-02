@@ -53,14 +53,12 @@ public class WADFile extends GameFile {
 
             GameFile file = new DummyFile(data.length);
 
-            if (MWDFile.CURRENT_FILE_NAME.contains("ORG1")) {
-                if (fileType == VLOArchive.WAD_TYPE || fileType == 1) { // Disabled until these files are supported.
-                    file = new VLOArchive();
-                } else if (fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID) {
-                    file = new MOFFile();
-                } else {
-                    throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
-                }
+            if (fileType == VLOArchive.WAD_TYPE || fileType == 1) { // Disabled until these files are supported.
+                file = new VLOArchive();
+            } else if (fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID) {
+                file = new MOFFile();
+            } else {
+                throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
             }
 
             file.load(new DataReader(new ArraySource(data)));
