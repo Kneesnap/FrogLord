@@ -76,23 +76,7 @@ public class MOFPolyTexture extends MOFPolygon {
      * @return objUvString
      */
     public String getObjUVString(int index) {
-        boolean shouldSwap = (this.uvs.length == PSXPolygon.QUAD_SIZE);
-
-        if (shouldSwap) { // I believe we have to swap it due to the .obj format.
-            ByteUV temp = this.uvs[2];
-            this.uvs[2] = this.uvs[3];
-            this.uvs[3] = temp;
-        }
-
-        String uvString = this.uvs[index].toObjTextureString();
-
-        if (shouldSwap) {
-            ByteUV temp = this.uvs[2];
-            this.uvs[2] = this.uvs[3];
-            this.uvs[3] = temp;
-        }
-
-        return uvString;
+        return this.uvs[index].toObjTextureString();
 
     }
 

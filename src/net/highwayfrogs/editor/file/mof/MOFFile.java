@@ -2,23 +2,40 @@ package net.highwayfrogs.editor.file.mof;
 
 import javafx.scene.Node;
 import javafx.scene.image.Image;
+import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
+import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
+import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyFlat;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyGouraud;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represents a MOF file.
@@ -51,6 +68,9 @@ public class MOFFile extends GameFile {
     private static final Image ICON = loadIcon("swampy");
     private static final byte[] MOF_SIGNATURE = "FOM".getBytes();
     private static final byte[] DUMMY_DATA = "DUMY".getBytes();
+
+    public static final ImageFilterSettings MOF_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
+            .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
 
     @Override
     public void load(DataReader reader) {
@@ -87,35 +107,131 @@ public class MOFFile extends GameFile {
         this.animation.load(reader);
     }
 
-    @Override
+    /**
+     * Export this object to wavefront obj.
+     * Not the cleanest thing in the world, but it doesn't need to be.
+     */
     @SneakyThrows
-    public void exportAlternateFormat(MWIFile.FileEntry entry) {
+    public void exportObject(FileEntry entry, File folder, VLOArchive vloTable) {
         if (isDummy()) {
-            System.out.println("Can't export dummied MOF.");
+            System.out.println("Cannot export dummy MOF.");
             return;
         }
 
-        List<String> objLines = new ArrayList<>();
-        getParts().forEach(part -> {
-            for (MOFPartcel partcel : part.getPartcels()) {
+        boolean exportTextures = vloTable != null;
 
-                if (partcel.getVertices().size() > 0)
-                    objLines.add("# Partcel " + part.getPartcels().indexOf(partcel));
+        String cleanName = Utils.stripExtension(entry.getDisplayName());
+        String mtlName = cleanName + ".mtl";
+        @Cleanup PrintWriter objWriter = new PrintWriter(new File(folder, cleanName + ".obj"));
 
+        objWriter.write("# FrogLord MOF Export" + Constants.NEWLINE);
+        objWriter.write("# Exported: " + Calendar.getInstance().getTime().toString() + Constants.NEWLINE);
+        objWriter.write("# MOF Name: " + entry.getDisplayName() + Constants.NEWLINE);
+        objWriter.write(Constants.NEWLINE);
+
+        if (exportTextures) {
+            objWriter.write("mtllib " + mtlName + Constants.NEWLINE);
+            objWriter.write(Constants.NEWLINE);
+        }
+
+        // Write Vertices.
+        for (MOFPart part : getParts())
+            for (MOFPartcel partcel : part.getPartcels())
                 for (SVector vertex : partcel.getVertices())
-                    objLines.add(vertex.toOBJString());
+                    objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
+        objWriter.write(Constants.NEWLINE);
 
-                objLines.add("");
+        // Write Faces.
+        List<MOFPolygon> allPolygons = new ArrayList<>();
+        getParts().forEach(part -> part.getMofPolygons().values().forEach(allPolygons::addAll));
+
+        // Register textures.
+        if (exportTextures) {
+            allPolygons.sort(Comparator.comparingInt(MOFPolygon::getOrderId));
+            objWriter.write("# Vertex Textures" + Constants.NEWLINE);
+
+            for (MOFPolygon poly : allPolygons) {
+                if (poly instanceof MOFPolyTexture) {
+                    MOFPolyTexture mofTex = (MOFPolyTexture) poly;
+                    for (int i = mofTex.getUvs().length - 1; i >= 0; i--)
+                        objWriter.write(mofTex.getObjUVString(i) + Constants.NEWLINE);
+                }
+            }
+
+        }
+
+        objWriter.write("# Faces" + Constants.NEWLINE);
+
+        AtomicInteger textureId = new AtomicInteger(Integer.MIN_VALUE);
+        AtomicInteger counter = new AtomicInteger();
+
+        Map<Integer, GameImage> textureMap = new HashMap<>();
+        List<PSXColorVector> faceColors = new ArrayList<>();
+        Map<PSXColorVector, List<MOFPolygon>> facesWithColors = new HashMap<>();
+
+        allPolygons.forEach(polygon -> {
+            if (!(polygon instanceof MOFPolyTexture)) {
+                PSXColorVector color = polygon.getColor();
+                if (!faceColors.contains(color))
+                    faceColors.add(color);
+                facesWithColors.computeIfAbsent(color, key -> new ArrayList<>()).add(polygon);
+            } else {
+                MOFPolyTexture texture = (MOFPolyTexture) polygon;
+
+                if (exportTextures) {
+                    int newTextureId = texture.getImageId();
+
+                    GameImage image = textureMap.computeIfAbsent(newTextureId, key -> {
+                        for (GameImage testImage : vloTable.getImages())
+                            if (testImage.getTextureId() == texture.getImageId())
+                                return testImage;
+
+                        throw new RuntimeException("Failed to find: " + texture.getImageId());
+                    });
+                    newTextureId = image.getTextureId();
+
+                    if (newTextureId != textureId.get()) { // It's time to change the texture.
+                        textureId.set(newTextureId);
+                        objWriter.write(Constants.NEWLINE);
+                        objWriter.write("usemtl tex" + newTextureId + Constants.NEWLINE);
+                    }
+                }
+
+                objWriter.write(polygon.toObjFaceCommand(exportTextures, counter) + Constants.NEWLINE);
             }
         });
 
-        getParts().forEach(part -> {
-            part.getMofPolygons().values().forEach(list -> list.forEach(prim ->
-                    objLines.add(prim.toObjFaceCommand(false, null))));
-        });
+        objWriter.append(Constants.NEWLINE);
+        objWriter.append("# Faces without textures.").append(Constants.NEWLINE);
+        for (Entry<PSXColorVector, List<MOFPolygon>> mapEntry : facesWithColors.entrySet()) {
+            objWriter.write("usemtl color" + faceColors.indexOf(mapEntry.getKey()) + Constants.NEWLINE);
+            mapEntry.getValue().forEach(poly -> objWriter.write(poly.toObjFaceCommand(exportTextures, null) + Constants.NEWLINE));
+        }
 
-        System.out.println("Exporting MOF: " + entry.getDisplayName());
-        Files.write(new File(GUIMain.getWorkingDirectory(), entry.getDisplayName() + ".obj").toPath(), objLines);
+
+        // Write MTL file.
+        if (exportTextures) {
+            @Cleanup PrintWriter mtlWriter = new PrintWriter(new File(folder, mtlName));
+
+            for (GameImage image : textureMap.values()) {
+                mtlWriter.write("newmtl tex" + image.getTextureId() + Constants.NEWLINE);
+                mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE); // Diffuse color.
+                // "d 0.75" = Partially transparent, if we want to support this later.
+                mtlWriter.write("map_Kd " + vloTable.getImages().indexOf(image) + ".png" + Constants.NEWLINE);
+                mtlWriter.write(Constants.NEWLINE);
+            }
+
+            for (int i = 0; i < faceColors.size(); i++) {
+                PSXColorVector color = faceColors.get(i);
+                mtlWriter.write("newmtl color" + i + Constants.NEWLINE);
+                if (i == 0)
+                    mtlWriter.write("d 1" + Constants.NEWLINE); // All further textures should be completely solid.
+                mtlWriter.write("Kd " + Utils.unsignedByteToFloat(color.getRed()) + " " + Utils.unsignedByteToFloat(color.getGreen()) + " " + Utils.unsignedByteToFloat(color.getBlue()) + Constants.NEWLINE); // Diffuse color.
+                mtlWriter.write(Constants.NEWLINE);
+            }
+        }
+
+        System.out.println("MOF Exported.");
     }
 
     @Override

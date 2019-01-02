@@ -7,14 +7,17 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.WADController;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +28,7 @@ import java.util.List;
 @Getter
 public class WADFile extends GameFile {
     private List<WADEntry> files = new ArrayList<>();
+    private MAPTheme theme;
     private MWDFile parentMWD;
 
     private static final Image ICON = loadIcon("packed");
@@ -37,6 +41,7 @@ public class WADFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
+        this.theme = MAPTheme.getTheme(MWDFile.CURRENT_FILE_NAME);
         while (true) {
             int resourceId = reader.readInt();
             if (resourceId == TERMINATOR)
@@ -95,8 +100,20 @@ public class WADFile extends GameFile {
 
     @Override
     public void exportAlternateFormat(FileEntry entry) {
-        for (WADEntry wadEntry : getFiles())
-            wadEntry.getFile().exportAlternateFormat(wadEntry.getFileEntry());
+        getParentMWD().promptVLOSelection(getTheme(), vlo -> {
+            File folder = new File(GUIMain.getWorkingDirectory(), "mof_" + (getTheme() != null ? getTheme() : "unknown") + File.separator);
+            if (!folder.exists())
+                folder.mkdirs();
+
+            if (vlo != null)
+                vlo.exportAllImages(folder, MOFFile.MOF_EXPORT_FILTER);
+
+            for (WADEntry wadEntry : getFiles()) {
+                GameFile file = wadEntry.getFile();
+                if (file instanceof MOFFile)
+                    ((MOFFile) file).exportObject(wadEntry.getFileEntry(), folder, vlo);
+            }
+        }, true);
     }
 
     @Override

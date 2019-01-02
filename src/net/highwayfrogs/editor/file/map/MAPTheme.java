@@ -25,4 +25,23 @@ public enum MAPTheme {
     private String internalName;
     private int deathHeight; // Frog drowns under this height.
     private int formOffset;
+
+    /**
+     * Gets the theme from a file name.
+     * @param name The name of the file to get.
+     * @return theme
+     */
+    public static MAPTheme getTheme(String name) {
+        MAPTheme partialMatch = null;
+
+        for (MAPTheme theme : values()) {
+            if (name.contains(theme.name()))
+                return theme;
+
+            if (name.contains(theme.getInternalName()))
+                partialMatch = theme;
+        }
+
+        return partialMatch;
+    }
 }
