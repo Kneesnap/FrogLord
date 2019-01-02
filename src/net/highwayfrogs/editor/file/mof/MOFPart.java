@@ -1,12 +1,17 @@
 package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
+import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents the MR_PART struct.
@@ -16,6 +21,7 @@ import java.util.List;
 public class MOFPart extends GameObject {
     private short flags;
     private List<MOFPartcel> partcels = new ArrayList<>();
+    private Map<MOFPrimType, List<MOFPolygon>> mofPolygons = new HashMap<>();
 
     private static final int FLAG_ANIMATED_POLYS = 1; // Does this contain some animated texture polys?
 
@@ -48,11 +54,22 @@ public class MOFPart extends GameObject {
 
         // Read Primitives:
         reader.jumpTemp(primitivePointer);
-        for (int i = 0; i < primitiveCount; i++) {
+
+        while (primitiveCount > 0) {
             short primType = reader.readShort(); // MR_MPRIM_HEADER
             short primCount = reader.readShort();
 
-            //TODO: Read prims.
+            Utils.verify(MOFPrimType.values().length > primType, "Unknown prim-type: %d", primType);
+            MOFPrimType mofPrimType = MOFPrimType.values()[primType];
+
+            List<MOFPolygon> prims = new ArrayList<>(primCount);
+            for (int i = 0; i < primCount; i++) {
+                MOFPolygon newPoly = mofPrimType.getMaker().get();
+                newPoly.load(reader);
+                prims.add(newPoly);
+                primitiveCount--;
+            }
+            mofPolygons.put(mofPrimType, prims);
         }
 
         reader.jumpReturn();

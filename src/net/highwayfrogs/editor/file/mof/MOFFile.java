@@ -108,6 +108,11 @@ public class MOFFile extends GameFile {
             }
         });
 
+        getParts().forEach(part -> {
+            part.getMofPolygons().values().forEach(list -> list.forEach(prim ->
+                    objLines.add(prim.toObjFaceCommand(false, null))));
+        });
+
         System.out.println("Exporting MOF: " + entry.getDisplayName());
         Files.write(new File(GUIMain.getWorkingDirectory(), entry.getDisplayName() + ".obj").toPath(), objLines);
     }
