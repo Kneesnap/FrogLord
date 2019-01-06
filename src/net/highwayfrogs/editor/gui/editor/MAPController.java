@@ -4,25 +4,18 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
-import javafx.scene.text.TextAlignment;
 import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
-import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
@@ -77,7 +70,6 @@ public class MAPController extends EditorController<MAPFile> {
     private boolean polygonSelected;
 
     private PerspectiveCamera camera;
-    private Group uiGroup = new Group();
 
     private static final double ROTATION_SPEED = 0.35D;
     private static final double SCROLL_SPEED = 5;
@@ -175,86 +167,52 @@ public class MAPController extends EditorController<MAPFile> {
 
     @SneakyThrows
     private void setupMapViewer(Stage stageToOverride, MapMesh mesh, TextureMap texMap) {
-        /*
-        delete2DUI();
         this.mapMesh = mesh;
-        MeshView meshView = new MeshView(mesh);
 
+        // Create and setup material properties for rendering the level.
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(SwingFXUtils.toFXImage(texMap.getImage(), null));
-        meshView.setMaterial(material);
-        meshView.setCullFace(CullFace.NONE);
 
-        this.camera = new PerspectiveCamera(true);
-        this.camera.setFarClip(Constants.MAP_VIEW_FAR_CLIP);
-
-        Group cameraGroup = new Group();
-        cameraGroup.getChildren().add(meshView);
-        cameraGroup.getChildren().add(uiGroup);
-        cameraGroup.getChildren().add(camera);
-
-        Rotate rotX = new Rotate(0, Rotate.X_AXIS);
-        Rotate rotY = new Rotate(0, Rotate.Y_AXIS);
-        meshView.getTransforms().addAll(rotX, rotY);
-
-        setupLights(cameraGroup, rotX, rotY);
-        setupEntities(cameraGroup, rotX, rotY);
-
-        mapScene = new Scene(cameraGroup, 400, 400, true);
-        mapScene.setFill(Color.GRAY);
-        mapScene.setCamera(camera);
-
-        Scene defaultScene = Utils.setSceneKeepPosition(stageToOverride, mapScene);
-        buildUI();
-        */
-
-        //>>
-
-        // Load FXML for UI layout
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/javafx/mapui.fxml"));
-        Parent loadRoot = fxmlLoader.load();
-        MapUIController mapUIController = fxmlLoader.getController();
-
-        // Create the 3D elements and use them within a subscene.
-        this.mapMesh = mesh;
+        // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(mesh);
-
-        PhongMaterial material = new PhongMaterial();
-        material.setDiffuseMap(SwingFXUtils.toFXImage(texMap.getImage(), null));
-        meshView.setMaterial(material);
-        meshView.setCullFace(CullFace.NONE);
 
         Rotate rotX = new Rotate(0, Rotate.X_AXIS);
         Rotate rotY = new Rotate(0, Rotate.Y_AXIS);
         Rotate rotZ = new Rotate(0, Rotate.Z_AXIS);
         meshView.getTransforms().addAll(rotX, rotY, rotZ);
 
+        meshView.setMaterial(material);
+        meshView.setCullFace(CullFace.NONE);
+
+        // Setup a perspective camera through which the 3D view is realised.
         this.camera = new PerspectiveCamera(true);
         this.camera.setFarClip(Constants.MAP_VIEW_FAR_CLIP);
 
+        // Load FXML for UI layout.
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/javafx/mapui.fxml"));
+        Parent loadRoot = fxmlLoader.load();
+        // Get the custom mapui controller and setup bindings, etc.
+        MapUIController mapUIController = fxmlLoader.getController();
+        mapUIController.setupBindings(this.mapMesh, meshView, rotX, rotY, rotZ, this.camera);
+
+        // Create the 3D elements and use them within a subscene.
         Group root3D = new Group(this.camera, meshView);
+        SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - mapUIController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
+        subScene3D.setFill(Color.GRAY);
+        subScene3D.setCamera(this.camera);
 
-        SubScene mySubScene = new SubScene(root3D, stageToOverride.getScene().getWidth() - mapUIController.getAnchorPaneUIRoot().getPrefWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
-        mySubScene.setFill(Color.GRAY);
-        mySubScene.setCamera(this.camera);
+        // Setup the UI layout.
+        BorderPane uiPane = new BorderPane();
+        uiPane.setLeft(loadRoot);
+        uiPane.setCenter(subScene3D);
 
+        // Setup additional scene elements.
         setupLights(root3D, rotX, rotY, rotZ);
         setupEntities(root3D, rotX, rotY, rotZ);
 
-        // Create the 2D elements, which are the top-level scene.
-        BorderPane myPane = new BorderPane();
-        myPane.setCenter(mySubScene);
-        myPane.setLeft(loadRoot);
-
-        mapUIController.setBindings(this.mapMesh, meshView, rotX, rotY, rotZ, this.camera);
-
-        //------------
-
-        mapScene = new Scene(myPane);
-
+        // Create and set the scene.
+        mapScene = new Scene(uiPane);
         Scene defaultScene = Utils.setSceneKeepPosition(stageToOverride, mapScene);
-
-        //>>
 
         mapScene.setOnKeyPressed(event -> {
             // Exit the viewer.
@@ -369,16 +327,16 @@ public class MAPController extends EditorController<MAPFile> {
         camera.setTranslateY(-Constants.MAP_VIEW_SCALE / 7.0);
     }
 
-    private void setupLights(Group cameraGroup, Rotate rotX, Rotate rotY, Rotate rotZ) {
+    private void setupLights(Group root3D, Rotate rotX, Rotate rotY, Rotate rotZ) {
         /*ImagePattern pattern = new ImagePattern(LIGHT_BULB);
 
         for (Light light : getFile().getLights()) {
             SVector position = light.getPosition();
-            makeIcon(cameraGroup, pattern, rotX, rotY, Utils.unsignedShortToFloat(position.getX()), Utils.unsignedShortToFloat(position.getY()), Utils.unsignedShortToFloat(position.getZ()));
+            makeIcon(root3D, pattern, rotX, rotY, Utils.unsignedShortToFloat(position.getX()), Utils.unsignedShortToFloat(position.getY()), Utils.unsignedShortToFloat(position.getZ()));
         }*/
     }
 
-    private void setupEntities(Group cameraGroup, Rotate rotX, Rotate rotY, Rotate rotZ) {
+    private void setupEntities(Group root3D, Rotate rotX, Rotate rotY, Rotate rotZ) {
         ImagePattern pattern = new ImagePattern(SWAMPY);
 
         for (Entity entity : getFile().getEntities()) {
@@ -389,7 +347,7 @@ public class MAPController extends EditorController<MAPFile> {
                 float y = Utils.unsignedIntToFloat(pos[1]);
                 float z = Utils.unsignedIntToFloat(pos[2]);
 
-                Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, rotZ, x, y, z);
+                Rectangle rect = makeIcon(root3D, pattern, rotX, rotY, rotZ, x, y, z);
                 rect.setOnMouseClicked(evt -> {
                     System.out.println("Hello, I am a " + entity.getFormBook());
 
@@ -408,13 +366,13 @@ public class MAPController extends EditorController<MAPFile> {
                 float y = Utils.unsignedShortToFloat(end.getY());
                 float z = Utils.unsignedShortToFloat(end.getZ());
 
-                Rectangle rect = makeIcon(cameraGroup, pattern, rotX, rotY, rotZ, x, y, z);
+                Rectangle rect = makeIcon(root3D, pattern, rotX, rotY, rotZ, x, y, z);
                 rect.setOnMouseClicked(evt -> System.out.println("Hello, I am a " + entity.getFormBook()));
             }
         }
     }
 
-    private Rectangle makeIcon(Group cameraGroup, ImagePattern image, Rotate rotX, Rotate rotY, Rotate rotZ, float x, float y, float z) {
+    private Rectangle makeIcon(Group root3D, ImagePattern image, Rotate rotX, Rotate rotY, Rotate rotZ, float x, float y, float z) {
         double width = image.getImage().getWidth();
         double height = image.getImage().getHeight();
         Rectangle rect = new Rectangle(width, height);
@@ -439,7 +397,7 @@ public class MAPController extends EditorController<MAPFile> {
         lightRotateZ.setPivotY(-rect.getTranslateY()); // <Up, Down>
         rect.getTransforms().addAll(lightRotateX, lightRotateY, lightRotateZ);
 
-        cameraGroup.getChildren().add(rect);
+        root3D.getChildren().add(rect);
         return rect;
     }
 
@@ -532,63 +490,5 @@ public class MAPController extends EditorController<MAPFile> {
     public void refreshView() {
         mapMesh.updateData();
         renderCursor(getSelectedPolygon());
-        updateUI();
-    }
-
-    private void delete2DUI() {
-        uiGroup.getChildren().clear();
-    }
-
-    //TODO: Support Z-Scaling
-    private void buildUI() {
-        System.out.println("Building UI.");
-        delete2DUI();
-
-        Group rectGroup = new Group();
-        Rectangle rect = new Rectangle(0, 0, 100, 100);
-        Rectangle rect2 = new Rectangle(10, 10, 80, 80);
-        rect.setFill(Color.RED);
-        rect2.setFill(Color.YELLOW);
-
-        rectGroup.getChildren().addAll(rect, rect2);
-
-        camera.translateZProperty().addListener((observable, oldValue, newValue) -> updateUI());
-        uiGroup.getChildren().add(rectGroup);
-        updateUI();
-    }
-
-    private void updateUI() {
-        double viewportLeft = getViewportLeft(); // If it goes below the mapScene values, it scales funky.
-        double viewportUp = getViewportUp();
-        System.out.println("UP: [" + viewportUp + "] LEFT: [" + viewportLeft + "]");
-        System.out.println("Width: [" + mapScene.getWidth() + ", " + mapScene.getHeight() + "]");
-
-        uiGroup.setScaleX(viewportLeft / (mapScene.getWidth() / 2));
-        uiGroup.setScaleY(viewportUp / (mapScene.getHeight() / 2));
-
-        double xSize = uiGroup.getBoundsInLocal().getWidth() * uiGroup.getScaleX();
-        double ySize = uiGroup.getBoundsInLocal().getHeight() * uiGroup.getScaleY();
-        uiGroup.setTranslateX(camera.getTranslateX() + viewportLeft - xSize);
-        uiGroup.setTranslateY(camera.getTranslateY() + viewportUp - ySize);
-
-        System.out.println("Scale: [" + uiGroup.getScaleX() + ", " + uiGroup.getScaleY() + "]: " + camera.getTranslateZ());
-        System.out.println("Size: [" + xSize + ", " + ySize + "]");
-    }
-
-    /**
-     * Get the left viewport coordinate.
-     * Reference: https://stackoverflow.com/questions/47876768/computing-the-viewport-of-a-perspective-camera-javafx
-     * @return viewportLeft
-     */
-    public double getViewportLeft() {
-        return -camera.getTranslateZ() * (mapScene.getWidth() / mapScene.getHeight()) * Math.tan(Math.toRadians(camera.getFieldOfView() / 2));
-    }
-
-    /**
-     * Get the up viewport coordinate.
-     * @return viewportUp
-     */
-    public double getViewportUp() {
-        return -camera.getTranslateZ() * Math.tan(Math.toRadians(camera.getFieldOfView() / 2));
     }
 }
