@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.mof.MOFBBox;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -15,7 +16,7 @@ public class MOFAnimationModelSet extends GameObject {
     private int type;
     private List<MOFAnimationModel> models = new ArrayList<>();
     private List<MOFAnimationCelSet> celSets = new ArrayList<>();
-    private List<MOFAnimBBox> bboxes = new ArrayList<>();
+    private List<MOFBBox> bboxes = new ArrayList<>();
 
     @Override
     public void load(DataReader reader) {

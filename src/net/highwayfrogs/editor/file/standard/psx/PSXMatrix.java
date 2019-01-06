@@ -21,7 +21,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 public class PSXMatrix extends GameObject {
     private short[][] matrix = new short[DIMENSION][DIMENSION]; // 3x3 Rotation Matrix.
     private int[] transform = new int[DIMENSION]; // Transform vector.
-    private short unknown; //TODO: This value has an unknown purpose. It shouldn't exist according to the code, but it may have changed since then and release. Always 0 or -1. Need to test whether this is present in the demo files too. Also, maybe the padding is for a script?
+    private short padding; // This is not in the struct. It is present in all tested versions, so it may be added automatically by the compiler.
 
     private static final int DIMENSION = 3;
     public static final int BYTE_SIZE = (DIMENSION * DIMENSION * Constants.SHORT_SIZE) + (DIMENSION * Constants.INTEGER_SIZE);
@@ -35,8 +35,9 @@ public class PSXMatrix extends GameObject {
         for (int i = 0; i < this.transform.length; i++)
             this.transform[i] = reader.readInt();
 
-        this.unknown = reader.readShort();
-        Utils.verify(unknown == 0 || unknown == -1, "Unknown value varied.");
+        this.padding = reader.readShort();
+        if (this.padding != 0 && this.padding != -1)
+            throw new RuntimeException("Expected a padding value!");
     }
 
     @Override
@@ -47,6 +48,7 @@ public class PSXMatrix extends GameObject {
 
         for (int aTransfer : this.transform)
             writer.writeInt(aTransfer);
-        writer.writeShort(this.unknown);
+
+        writer.writeShort(this.padding);
     }
 }

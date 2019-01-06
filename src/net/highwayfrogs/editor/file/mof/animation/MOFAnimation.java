@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.mof.animation;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.mof.animation.transform.TransformType;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -17,11 +18,20 @@ import java.util.List;
  */
 @Getter
 public class MOFAnimation extends GameObject {
+    private MOFFile holderMOF;
     private List<MOFAnimationModelSet> modelSets = new ArrayList<>();
     private List<MOFFile> mofFiles = new ArrayList<>();
     private MOFAnimCommonData commonData;
 
-    private static final byte[] SIGNATURE = "1ax".getBytes();
+    public MOFAnimation(MOFFile file) {
+        this.holderMOF = file;
+    }
+
+    private static final byte[] SIGNATURE = "ax".getBytes();
+
+    // Byte #1.
+    public static final byte FILE_START_FRAME_AT_ZERO = (byte) 0x31; // '1'
+    // Byte #2: Transform Type.
 
     @Override
     public void load(DataReader reader) {
@@ -40,13 +50,13 @@ public class MOFAnimation extends GameObject {
             modelSets.add(modelSet);
         }
         reader.jumpReturn();
+        */
 
         // Read common data.
         reader.jumpTemp(commonDataPointer);
-        this.commonData = new MOFAnimCommonData();
+        this.commonData = new MOFAnimCommonData(this);
         this.commonData.load(reader);
         reader.jumpReturn();
-        */
 
         reader.jumpTemp(staticFilePointer);
 
@@ -69,6 +79,15 @@ public class MOFAnimation extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        //TODO
+        //TODO: Don't forget to update the header.
+        //TODO: Save
+    }
+
+    /**
+     * Get the TransformType for this animation.
+     * @return transformType.
+     */
+    public TransformType getTransformType() {
+        return TransformType.getType(getHolderMOF().getSignature()[1]);
     }
 }
