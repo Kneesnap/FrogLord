@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformType;
@@ -23,18 +24,16 @@ public class MOFAnimation extends GameObject {
     private List<MOFFile> mofFiles = new ArrayList<>();
     private MOFAnimCommonData commonData;
 
+    public static final byte FILE_START_FRAME_AT_ZERO = (byte) 0x31; // '1'
+
     public MOFAnimation(MOFFile file) {
         this.holderMOF = file;
     }
 
-    private static final byte[] SIGNATURE = "ax".getBytes();
-
-    // Byte #1.
-    public static final byte FILE_START_FRAME_AT_ZERO = (byte) 0x31; // '1'
-    // Byte #2: Transform Type.
-
     @Override
     public void load(DataReader reader) {
+        Utils.verify(shouldStartAtFrameZero(), "Animations which do not start at frame-zero are not currently supported.");
+
         short modelSetCount = reader.readShort();
         short staticFileCount = reader.readShort();
         int modelSetPointer = reader.readInt();   //
@@ -81,6 +80,14 @@ public class MOFAnimation extends GameObject {
     public void save(DataWriter writer) {
         //TODO: Don't forget to update the header.
         //TODO: Save
+    }
+
+    /**
+     * Does this animation start at frame zero?
+     * @return startAtFrameZero
+     */
+    public boolean shouldStartAtFrameZero() {
+        return getHolderMOF().getSignature()[0] == FILE_START_FRAME_AT_ZERO;
     }
 
     /**
