@@ -11,6 +11,7 @@ Editor Features:
   PAL Editor
   Map Editor
   MOF Editor
+  Handle window resizing when in 3D view
 
 Build FrogPSX.H from MWD.
 
