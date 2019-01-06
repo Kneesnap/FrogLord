@@ -62,7 +62,10 @@ public class MapUIController implements Initializable {
         accordionLeft.setExpandedPane(titledPaneCamera);
     }
 
-    public void setBindings(MapMesh mapMesh, MeshView meshView, Rotate rotX, Rotate rotY, Rotate rotZ, Camera camera) {
+    public double uiRootPaneWidth() { return anchorPaneUIRoot.getPrefWidth(); }
+    public double uiRootPaneHeight() { return anchorPaneUIRoot.getPrefHeight(); }
+
+    public void setupBindings(MapMesh mapMesh, MeshView meshView, Rotate rotX, Rotate rotY, Rotate rotZ, Camera camera) {
         // Setup number format and number->string converter
         NumberFormat decFormat = new DecimalFormat("####0.000000");
         NumberStringConverter numStringConverter = new NumberStringConverter(decFormat);
