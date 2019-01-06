@@ -145,6 +145,7 @@ public class MOFFile extends GameFile {
             for (MOFPartcel partcel : part.getPartcels())
                 for (SVector vertex : partcel.getVertices())
                     objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
+
         objWriter.write(Constants.NEWLINE);
 
         // Write Faces.

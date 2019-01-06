@@ -41,7 +41,6 @@ public class MOFAnimation extends GameObject {
         int staticFilePointer = reader.readInt(); // Points to pointers which point to MR_MOF.
 
         // Read model sets.
-        /*
         reader.jumpTemp(modelSetPointer);
         for (int i = 0; i < modelSetCount; i++) {
             MOFAnimationModelSet modelSet = new MOFAnimationModelSet();
@@ -49,7 +48,6 @@ public class MOFAnimation extends GameObject {
             modelSets.add(modelSet);
         }
         reader.jumpReturn();
-        */
 
         // Read common data.
         reader.jumpTemp(commonDataPointer);
