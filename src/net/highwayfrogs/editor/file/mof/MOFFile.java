@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represents a MOF file.
- * TODO: 12ax and 11ax are animation files.
  * TODO: model.C has an example MOF File.
  * Created by Kneesnap on 8/25/2018.
  */
@@ -48,6 +47,7 @@ public class MOFFile extends GameFile {
     private boolean dummy; // Is this dummied data?
     private MOFAnimation animation; // Animation data. For some reason they thought it'd be a good idea to make MOF have two different data structures.
 
+    private byte[] signature;
     private int flags;
     private int extra;
     private List<MOFPart> parts = new ArrayList<>();
@@ -74,14 +74,14 @@ public class MOFFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
-        if (Arrays.equals(DUMMY_DATA, reader.readBytes(DUMMY_DATA.length))) {
+        this.signature = reader.readBytes(4);
+        if (Arrays.equals(DUMMY_DATA, getSignature())) {
             this.dummy = true;
             return;
         }
 
         reader.readInt(); // File length, including header.
         this.flags = reader.readInt();
-
 
         if (testFlag(FLAG_ANIMATION_FILE)) {
             resolveAnimatedMOF(reader);
@@ -103,7 +103,7 @@ public class MOFFile extends GameFile {
     }
 
     private void resolveAnimatedMOF(DataReader reader) {
-        this.animation = new MOFAnimation();
+        this.animation = new MOFAnimation(this);
         this.animation.load(reader);
     }
 
@@ -145,6 +145,7 @@ public class MOFFile extends GameFile {
             for (MOFPartcel partcel : part.getPartcels())
                 for (SVector vertex : partcel.getVertices())
                     objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
+
         objWriter.write(Constants.NEWLINE);
 
         // Write Faces.
@@ -260,8 +261,6 @@ public class MOFFile extends GameFile {
         writer.writeInt(this.extra);
         for (MOFPart part : getParts())
             part.save(writer);
-
-        //TODO: SAVE
     }
 
     /**
