@@ -21,6 +21,8 @@ public class MOFAnimationModelSet extends GameObject {
     private List<MOFAnimationCelSet> celSets = new ArrayList<>();
     // BBOX Set is always empty, so we don't keep it.
 
+    public static final int FLAG_HIERARCHICAL = Constants.BIT_FLAG_0;
+
     @Override
     public void load(DataReader reader) {
         this.type = reader.readInt();

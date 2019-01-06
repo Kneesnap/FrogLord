@@ -5,10 +5,10 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
- * Represents the "MR_ANIM_CELS_PARTS" struct.
+ * Represents the "MR_ANIM_CELS" struct.
  * Created by Kneesnap on 8/25/2018.
  */
-public class MOFAnimationCelPart extends GameObject {
+public class MOFAnimationCels extends GameObject {
     @Override
     public void load(DataReader reader) {
         //TODO
