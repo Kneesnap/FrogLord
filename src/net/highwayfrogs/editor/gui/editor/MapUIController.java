@@ -12,16 +12,14 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.view.MapMesh;
 
 import java.net.URL;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ResourceBundle;
 
-import net.highwayfrogs.editor.file.map.view.MapMesh;
-
 /**
- * Manages the UI which is displayed when viewing 3D levelsup while saving a MWD.
+ * Manages the UI which is displayed when viewing Frogger maps.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter
@@ -54,32 +52,39 @@ public class MapUIController implements Initializable {
     @FXML private TextField textFieldMeshRotY;
     @FXML private TextField textFieldMeshRotZ;
 
-    public MapUIController() {
-    }
+    private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         accordionLeft.setExpandedPane(titledPaneCamera);
     }
 
-    public double uiRootPaneWidth() { return anchorPaneUIRoot.getPrefWidth(); }
-    public double uiRootPaneHeight() { return anchorPaneUIRoot.getPrefHeight(); }
+    /**
+     * Get the root pane width.
+     */
+    public double uiRootPaneWidth() {
+        return anchorPaneUIRoot.getPrefWidth();
+    }
+
+    /**
+     * Get the root pane height.
+     */
+    public double uiRootPaneHeight() {
+        return anchorPaneUIRoot.getPrefHeight();
+    }
 
     public void setupBindings(MapMesh mapMesh, MeshView meshView, Rotate rotX, Rotate rotY, Rotate rotZ, Camera camera) {
-        // Setup number format and number->string converter
-        NumberFormat decFormat = new DecimalFormat("####0.000000");
-        NumberStringConverter numStringConverter = new NumberStringConverter(decFormat);
 
         // Set informational bindings
         labelLevelName.setText(mapMesh.getMap().getTheme().toString());
 
         // Set camera bindings
-        textFieldCamNearClip.textProperty().bindBidirectional(camera.nearClipProperty(), numStringConverter);
-        textFieldCamFarClip.textProperty().bindBidirectional(camera.farClipProperty(), numStringConverter);
+        textFieldCamNearClip.textProperty().bindBidirectional(camera.nearClipProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamFarClip.textProperty().bindBidirectional(camera.farClipProperty(), NUM_TO_STRING_CONVERTER);
 
-        textFieldCamPosX.textProperty().bindBidirectional(camera.translateXProperty(), numStringConverter);
-        textFieldCamPosY.textProperty().bindBidirectional(camera.translateYProperty(), numStringConverter);
-        textFieldCamPosZ.textProperty().bindBidirectional(camera.translateZProperty(), numStringConverter);
+        textFieldCamPosX.textProperty().bindBidirectional(camera.translateXProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamPosY.textProperty().bindBidirectional(camera.translateYProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamPosZ.textProperty().bindBidirectional(camera.translateZProperty(), NUM_TO_STRING_CONVERTER);
 
         // Set mesh view bindings
         checkBoxShowMesh.selectedProperty().bindBidirectional(meshView.visibleProperty());
@@ -90,12 +95,12 @@ public class MapUIController implements Initializable {
         comboBoxMeshCullFace.getItems().setAll(CullFace.values());
         comboBoxMeshCullFace.valueProperty().bindBidirectional(meshView.cullFaceProperty());
 
-        textFieldMeshPosX.textProperty().bindBidirectional(meshView.translateXProperty(), numStringConverter);
-        textFieldMeshPosY.textProperty().bindBidirectional(meshView.translateYProperty(), numStringConverter);
-        textFieldMeshPosZ.textProperty().bindBidirectional(meshView.translateZProperty(), numStringConverter);
+        textFieldMeshPosX.textProperty().bindBidirectional(meshView.translateXProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldMeshPosY.textProperty().bindBidirectional(meshView.translateYProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldMeshPosZ.textProperty().bindBidirectional(meshView.translateZProperty(), NUM_TO_STRING_CONVERTER);
 
-        textFieldMeshRotX.textProperty().bindBidirectional(rotX.angleProperty(), numStringConverter);
-        textFieldMeshRotY.textProperty().bindBidirectional(rotY.angleProperty(), numStringConverter);
-        textFieldMeshRotZ.textProperty().bindBidirectional(rotZ.angleProperty(), numStringConverter);
+        textFieldMeshRotX.textProperty().bindBidirectional(rotX.angleProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldMeshRotY.textProperty().bindBidirectional(rotY.angleProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldMeshRotZ.textProperty().bindBidirectional(rotZ.angleProperty(), NUM_TO_STRING_CONVERTER);
     }
 }
