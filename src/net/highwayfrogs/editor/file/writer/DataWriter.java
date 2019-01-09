@@ -153,6 +153,16 @@ public class DataWriter {
     }
 
     /**
+     * Write a pointer which we'll come back to later.
+     * @return address
+     */
+    public int writeNullPointer() {
+        int index = getIndex();
+        writeInt(0);
+        return index;
+    }
+
+    /**
      * Write a short to the receiver.
      * @param value The short to write.
      */

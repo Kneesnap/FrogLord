@@ -30,7 +30,7 @@ public class MOFPartcel extends GameObject {
         int verticePointer = reader.readInt();
         int normalPointer = reader.readInt();
         int bboxPointer = reader.readInt();
-        reader.readInt(); // Padding.
+        reader.readInt(); // Unused.
 
         // Read Vertexes.
         reader.jumpTemp(verticePointer);
@@ -53,6 +53,23 @@ public class MOFPartcel extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        //TODO: Save
+        int vertexPointer = writer.writeNullPointer();
+        int normalPointer = writer.writeNullPointer();
+        int bboxPointer = writer.writeNullPointer();
+        writer.writeNullPointer(); // Unused.
+
+        // Read Vertexes.
+        writer.writeAddressTo(vertexPointer);
+        for (SVector vertex : getVertices())
+            vertex.saveWithPadding(writer);
+
+        // Read normals.
+        writer.writeAddressTo(normalPointer);
+        for (SVector vector : getNormals())
+            vector.saveWithPadding(writer);
+
+        // Read BBOX.
+        writer.writeAddressTo(bboxPointer);
+        this.bbox.save(writer);
     }
 }

@@ -57,7 +57,6 @@ public class MOFFile extends GameFile {
     public static final int MAP_MOF_ID = 4;
 
     private static final Image ICON = loadIcon("swampy");
-    private static final byte[] MOF_SIGNATURE = "FOM".getBytes();
     private static final byte[] DUMMY_DATA = "DUMY".getBytes();
 
     public static final ImageFilterSettings MOF_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
