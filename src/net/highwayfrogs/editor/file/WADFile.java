@@ -33,6 +33,7 @@ public class WADFile extends GameFile {
     private MWDFile parentMWD;
 
     private static final Image ICON = loadIcon("packed");
+    public static String CURRENT_FILE_NAME = null;
     public static final int TYPE_ID = -1;
     private static final int TERMINATOR = -1;
 
@@ -43,6 +44,8 @@ public class WADFile extends GameFile {
     @Override
     public void load(DataReader reader) {
         this.theme = MAPTheme.getTheme(MWDFile.CURRENT_FILE_NAME);
+        MWIFile mwiTable = getParentMWD().getWadIndexTable();
+
         while (true) {
             int resourceId = reader.readInt();
             if (resourceId == TERMINATOR)
@@ -52,24 +55,30 @@ public class WADFile extends GameFile {
             int size = reader.readInt();
             reader.readInt(); // Padding.
 
+            CURRENT_FILE_NAME = mwiTable.getEntries().get(resourceId).getDisplayName();
+
+            // Decompress if compressed.
             byte[] data = reader.readBytes(size);
             boolean compressed = PP20Unpacker.isCompressed(data);
             if (compressed)
                 data = PP20Unpacker.unpackData(data);
 
             GameFile file = new DummyFile(data.length);
-
-            if (fileType == VLOArchive.WAD_TYPE || fileType == 1) { // Disabled until these files are supported.
-                file = new VLOArchive();
-            } else if (fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID) {
-                file = new MOFFile();
-            } else {
-                throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
+            if (Constants.ENABLE_WAD_FORMATS) {
+                if (fileType == VLOArchive.WAD_TYPE || fileType == 1) { // Disabled until these files are supported.
+                    file = new VLOArchive();
+                } else if (fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID) {
+                    file = new MOFFile();
+                } else {
+                    throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
+                }
             }
 
             file.load(new DataReader(new ArraySource(data)));
-            files.add(new WADEntry(resourceId, fileType, compressed, file, this.parentMWD.getWadIndexTable()));
+            files.add(new WADEntry(resourceId, fileType, compressed, file, mwiTable));
         }
+
+        CURRENT_FILE_NAME = null;
     }
 
     @Override
@@ -78,6 +87,7 @@ public class WADFile extends GameFile {
             writer.writeInt(entry.getResourceId());
             writer.writeInt(entry.getFileType());
 
+            CURRENT_FILE_NAME = entry.getFileEntry().getDisplayName();
             ArrayReceiver receiver = new ArrayReceiver();
             entry.getFile().save(new DataWriter(receiver));
 
@@ -89,6 +99,7 @@ public class WADFile extends GameFile {
             writer.writeNull(Constants.INTEGER_SIZE); // Padding
             writer.writeBytes(fileBytes); // Write file contents.
         }
+        CURRENT_FILE_NAME = null;
 
         writer.writeInt(TERMINATOR);
         writer.writeNull(Constants.INTEGER_SIZE * 3);

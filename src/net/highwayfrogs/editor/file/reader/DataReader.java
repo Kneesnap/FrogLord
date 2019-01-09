@@ -251,4 +251,18 @@ public class DataReader {
             throw new RuntimeException("Error while reading " + amount + " bytes.", ex);
         }
     }
+
+    /**
+     * Create a sub-reader.
+     * @param startOffset The offset to start reading from.
+     * @param length      The length to read. -1 = Get remaining.
+     * @return newReader
+     */
+    public DataReader newReader(int startOffset, int length) {
+        jumpTemp(startOffset);
+        byte[] bytes = readBytes(length >= 0 ? length : getRemaining());
+        jumpReturn();
+
+        return new DataReader(new ArraySource(bytes));
+    }
 }
