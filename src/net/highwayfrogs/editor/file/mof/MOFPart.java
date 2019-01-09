@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.mof;
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -28,6 +29,7 @@ public class MOFPart extends GameObject {
     private PSXMatrix matrix;
     private MOFCollprim collprim;
     private MOFPartPolyAnim partPolyAnim;
+    private MOFFlipbook flipbook;
     private int verticeCount;
     private int normalCount;
 
@@ -58,7 +60,7 @@ public class MOFPart extends GameObject {
         int collprimPointer = reader.readInt(); // May be null.
         int matrixPointer = reader.readInt(); // May be null.
         int animatedTexturesPointer = reader.readInt(); // (Point to integer which is count.) Followed by: MR_PART_POLY_ANIM
-        int flipbookPointer = reader.readInt(); // MR_PART_FLIPBOOK (MR_PART_FLIPBOOK_ACTION may follow?) TODO: Support
+        int flipbookPointer = reader.readInt(); // MR_PART_FLIPBOOK (MR_PART_FLIPBOOK_ACTION may follow?)
 
         // Read Partcels.
         reader.jumpTemp(partcelPointer);
@@ -120,6 +122,13 @@ public class MOFPart extends GameObject {
             this.partPolyAnim.load(reader);
             reader.jumpReturn();
         }
+
+        if (flipbookPointer > 0) {
+            reader.jumpTemp(flipbookPointer);
+            this.flipbook = new MOFFlipbook();
+            this.flipbook.load(reader);
+            reader.jumpReturn();
+        }
     }
 
     @Override
@@ -174,7 +183,10 @@ public class MOFPart extends GameObject {
             getPartPolyAnim().save(writer);
         }
 
-        //TODO: Flipbook.
+        if (getFlipbook() != null) {
+            writer.writeAddressTo(getTempFlipbookPointer());
+            getFlipbook().save(writer);
+        }
 
         // Write Primitives.
         writer.writeAddressTo(getTempPrimitivePointer());
