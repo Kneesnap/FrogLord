@@ -21,12 +21,13 @@ import java.util.Map.Entry;
  */
 @Getter
 public class MOFPart extends GameObject {
+    private Map<MOFPrimType, List<MOFPolygon>> mofPolygons = new HashMap<>();
     private int flags;
     private List<MOFPartcel> partcels = new ArrayList<>();
     private List<MOFHilite> hilites = new ArrayList<>();
     private PSXMatrix matrix;
     private MOFCollprim collprim;
-    private Map<MOFPrimType, List<MOFPolygon>> mofPolygons = new HashMap<>();
+    private MOFPartPolyAnim partPolyAnim;
     private int verticeCount;
     private int normalCount;
 
@@ -56,7 +57,7 @@ public class MOFPart extends GameObject {
 
         int collprimPointer = reader.readInt(); // May be null.
         int matrixPointer = reader.readInt(); // May be null.
-        int animatedTexturesPointer = reader.readInt(); // (Point to integer which is count.) Followed by: MR_PART_POLY_ANIM TODO: Support
+        int animatedTexturesPointer = reader.readInt(); // (Point to integer which is count.) Followed by: MR_PART_POLY_ANIM
         int flipbookPointer = reader.readInt(); // MR_PART_FLIPBOOK (MR_PART_FLIPBOOK_ACTION may follow?) TODO: Support
 
         // Read Partcels.
@@ -112,6 +113,13 @@ public class MOFPart extends GameObject {
             hilites.add(hilite);
         }
         reader.jumpReturn();
+
+        if (animatedTexturesPointer > 0) {
+            reader.jumpTemp(animatedTexturesPointer);
+            this.partPolyAnim = new MOFPartPolyAnim();
+            this.partPolyAnim.load(reader);
+            reader.jumpReturn();
+        }
     }
 
     @Override
@@ -161,7 +169,11 @@ public class MOFPart extends GameObject {
             getMatrix().save(writer);
         }
 
-        //TODO: Textures
+        if (getPartPolyAnim() != null) {
+            writer.writeAddressTo(getTempAnimatedTexturesPointer());
+            getPartPolyAnim().save(writer);
+        }
+
         //TODO: Flipbook.
 
         // Write Primitives.
