@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 
@@ -52,7 +51,7 @@ public class MOFPolyTexture extends MOFPolygon {
 
     @Override
     public void onSave(DataWriter writer) {
-        super.save(writer);
+        super.onSave(writer);
 
         this.uvs[0].save(writer);
         writer.writeShort(this.clutId);
