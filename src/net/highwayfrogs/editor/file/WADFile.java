@@ -74,8 +74,12 @@ public class WADFile extends GameFile {
                 }
             }
 
-            file.load(new DataReader(new ArraySource(data)));
-            files.add(new WADEntry(resourceId, fileType, compressed, file, mwiTable));
+            try {
+                file.load(new DataReader(new ArraySource(data)));
+                files.add(new WADEntry(resourceId, fileType, compressed, file, mwiTable));
+            } catch (Exception ex) {
+                throw new RuntimeException("Failed to load " + CURRENT_FILE_NAME + ".", ex);
+            }
         }
 
         CURRENT_FILE_NAME = null;

@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Getter
 public class MOFAnimationCelSet extends GameObject {
-    private List<MOFAnimationCels> parts = new ArrayList<>();
+    private List<MOFAnimationCels> cels = new ArrayList<>();
     private transient int dataPointer;
 
     @Override
@@ -27,9 +27,9 @@ public class MOFAnimationCelSet extends GameObject {
 
         reader.setIndex(reader.readInt()); // Points to literally the exact index after reading.
         for (int i = 0; i < count; i++) {
-            MOFAnimationCels part = new MOFAnimationCels();
-            part.load(reader);
-            parts.add(part);
+            MOFAnimationCels cel = new MOFAnimationCels();
+            cel.load(reader);
+            cels.add(cel);
         }
     }
 
@@ -37,9 +37,10 @@ public class MOFAnimationCelSet extends GameObject {
     public void save(DataWriter writer) {
         this.dataPointer = writer.getIndex();
 
-        writer.writeUnsignedShort(parts.size());
+        writer.writeUnsignedShort(cels.size());
         writer.writeShort((short) 0); // Padding
         writer.writeInt(writer.getIndex() + Constants.POINTER_SIZE);
-        parts.forEach(part -> part.save(writer));
+        cels.forEach(cel -> cel.save(writer));
+        cels.forEach(cel -> cel.writeExtraData(writer));
     }
 }

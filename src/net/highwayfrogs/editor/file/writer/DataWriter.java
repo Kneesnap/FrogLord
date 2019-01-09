@@ -207,4 +207,15 @@ public class DataWriter {
         writeBytes(str.getBytes());
         writeByte(terminator);
     }
+
+    /**
+     * Write an address.
+     * @param writeTo The old address to write the current address to.
+     */
+    public void writeAddressTo(int writeTo) {
+        int tempAdress = getIndex();
+        jumpTemp(writeTo);
+        writeInt(tempAdress);
+        jumpReturn();
+    }
 }
