@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -18,13 +19,15 @@ public class MOFPartcel extends GameObject {
     @Getter private List<SVector> normals = new ArrayList<>();
     @Getter private MOFBBox bbox;
 
+    private transient MOFPart parent;
     private transient int vertexCount;
     private transient int normalCount;
     private transient int tempVertexPointer;
     private transient int tempNormalPointer;
     private transient int tempBboxPointer;
 
-    public MOFPartcel(int vertexCount, int normalCount) {
+    public MOFPartcel(MOFPart parent, int vertexCount, int normalCount) {
+        this.parent = parent;
         this.vertexCount = vertexCount;
         this.normalCount = normalCount;
     }
@@ -71,10 +74,13 @@ public class MOFPartcel extends GameObject {
      * @param writer The writer to save data to.
      */
     public void savePointerData(DataWriter writer) {
-        writer.writeInt(tempVertexPointer);
-        writer.writeInt(tempNormalPointer);
-        tempBboxPointer = writer.writeNullPointer();
+        writer.writeInt(this.tempVertexPointer);
+        writer.writeInt(this.tempNormalPointer);
+        this.tempBboxPointer = writer.writeNullPointer();
         writer.writeNullPointer(); // Unused.
+
+        this.tempVertexPointer = 0;
+        this.tempNormalPointer = 0;
     }
 
     /**
@@ -82,7 +88,16 @@ public class MOFPartcel extends GameObject {
      * @param writer The writer to write data to.
      */
     public void saveBboxData(DataWriter writer) {
-        writer.writeAddressTo(tempBboxPointer);
-        this.bbox.save(writer);
+        Utils.verify(this.tempBboxPointer > 0, "Invalid BBOX Pointer.");
+
+        if (parent.getSaveBoxMap().containsKey(getBbox())) {
+            writer.writeAddressAt(this.tempBboxPointer, parent.getSaveBoxMap().get(getBbox()));
+        } else {
+            parent.getSaveBoxMap().put(getBbox(), writer.getIndex());
+            writer.writeAddressTo(this.tempBboxPointer);
+            this.bbox.save(writer);
+        }
+
+        this.tempBboxPointer = 0;
     }
 }

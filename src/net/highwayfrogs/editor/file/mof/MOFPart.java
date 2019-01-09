@@ -19,6 +19,7 @@ import java.util.Map;
 /**
  * Represents the MR_PART struct.
  * TODO: MWD size is bloated by 2MB.
+ * TODO: Share pointers for matching Normals.
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
@@ -35,6 +36,7 @@ public class MOFPart extends GameObject {
     private int verticeCount;
     private int normalCount;
 
+    private transient Map<MOFBBox, Integer> saveBoxMap = new HashMap<>();
     private transient List<MOFPolygon> orderedByLoadPolygons = new ArrayList<>();
     private transient int tempPartcelPointer;
     private transient int tempPrimitivePointer;
@@ -69,7 +71,7 @@ public class MOFPart extends GameObject {
         if (partcelCount > 0) {
             reader.jumpTemp(partcelPointer);
             for (int i = 0; i < partcelCount; i++) {
-                MOFPartcel partcel = new MOFPartcel(verticeCount, normalCount);
+                MOFPartcel partcel = new MOFPartcel(this, verticeCount, normalCount);
                 partcel.load(reader);
                 partcels.add(partcel);
             }
@@ -178,6 +180,8 @@ public class MOFPart extends GameObject {
         // Write Partcels.
         if (getPartcels().size() > 0) {
             writer.writeInt(0); //TODO: There are 4 bytes here which are used by something regarding texture animation. They need to be handled properly, this line is a placeholder.
+            getSaveBoxMap().clear();
+
             getPartcels().forEach(partcel -> partcel.save(writer));
             writer.writeAddressTo(getTempPartcelPointer());
             getPartcels().forEach(partcel -> partcel.savePointerData(writer));
