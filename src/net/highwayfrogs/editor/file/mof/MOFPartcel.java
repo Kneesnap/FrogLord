@@ -17,8 +17,12 @@ public class MOFPartcel extends GameObject {
     @Getter private List<SVector> vertices = new ArrayList<>();
     @Getter private List<SVector> normals = new ArrayList<>();
     @Getter private MOFBBox bbox;
-    private int vertexCount;
-    private int normalCount;
+
+    private transient int vertexCount;
+    private transient int normalCount;
+    private transient int tempVertexPointer;
+    private transient int tempNormalPointer;
+    private transient int tempBboxPointer;
 
     public MOFPartcel(int vertexCount, int normalCount) {
         this.vertexCount = vertexCount;
@@ -53,23 +57,32 @@ public class MOFPartcel extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        int vertexPointer = writer.writeNullPointer();
-        int normalPointer = writer.writeNullPointer();
-        int bboxPointer = writer.writeNullPointer();
-        writer.writeNullPointer(); // Unused.
-
-        // Read Vertexes.
-        writer.writeAddressTo(vertexPointer);
+        this.tempVertexPointer = writer.getIndex();
         for (SVector vertex : getVertices())
             vertex.saveWithPadding(writer);
 
-        // Read normals.
-        writer.writeAddressTo(normalPointer);
+        this.tempNormalPointer = writer.getIndex();
         for (SVector vector : getNormals())
             vector.saveWithPadding(writer);
+    }
 
-        // Read BBOX.
-        writer.writeAddressTo(bboxPointer);
+    /**
+     * Save pointer data.
+     * @param writer The writer to save data to.
+     */
+    public void savePointerData(DataWriter writer) {
+        writer.writeInt(tempVertexPointer);
+        writer.writeInt(tempNormalPointer);
+        tempBboxPointer = writer.writeNullPointer();
+        writer.writeNullPointer(); // Unused.
+    }
+
+    /**
+     * Save BBOX data.
+     * @param writer The writer to write data to.
+     */
+    public void saveBboxData(DataWriter writer) {
+        writer.writeAddressTo(tempBboxPointer);
         this.bbox.save(writer);
     }
 }

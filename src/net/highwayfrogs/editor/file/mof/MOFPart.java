@@ -170,8 +170,12 @@ public class MOFPart extends GameObject {
     public void saveExtra(DataWriter writer) {
 
         // Write Partcels.
-        writer.writeAddressTo(getTempPartcelPointer());
-        getPartcels().forEach(partcel -> partcel.save(writer));
+        if (getPartcels().size() > 0) {
+            getPartcels().forEach(partcel -> partcel.save(writer));
+            writer.writeAddressTo(getTempPartcelPointer());
+            getPartcels().forEach(partcel -> partcel.savePointerData(writer));
+            getPartcels().forEach(partcel -> partcel.saveBboxData(writer));
+        }
 
         // Read Hilites
         if (getHilites().size() > 0) {
