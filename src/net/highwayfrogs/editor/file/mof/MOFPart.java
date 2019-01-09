@@ -33,6 +33,7 @@ public class MOFPart extends GameObject {
     private MOFFlipbook flipbook;
     private int verticeCount;
     private int normalCount;
+    private int partcelValue;
 
     private transient int tempPartcelPointer;
     private transient int tempPrimitivePointer;
@@ -64,13 +65,16 @@ public class MOFPart extends GameObject {
         int flipbookPointer = reader.readInt(); // MR_PART_FLIPBOOK (MR_PART_FLIPBOOK_ACTION may follow?)
 
         // Read Partcels.
-        reader.jumpTemp(partcelPointer);
-        for (int i = 0; i < partcelCount; i++) {
-            MOFPartcel partcel = new MOFPartcel(verticeCount, normalCount);
-            partcel.load(reader);
-            partcels.add(partcel);
+        if (partcelCount > 0) {
+            partcelValue = reader.readInt();
+            reader.jumpTemp(partcelPointer);
+            for (int i = 0; i < partcelCount; i++) {
+                MOFPartcel partcel = new MOFPartcel(verticeCount, normalCount);
+                partcel.load(reader);
+                partcels.add(partcel);
+            }
+            reader.jumpReturn();
         }
-        reader.jumpReturn();
 
         // Read matrix.
         if (matrixPointer > 0) {
@@ -171,7 +175,7 @@ public class MOFPart extends GameObject {
 
         // Write Partcels.
         if (getPartcels().size() > 0) {
-            writer.writeNullPointer();
+            writer.writeInt(getPartcelValue());
             getPartcels().forEach(partcel -> partcel.save(writer));
             writer.writeAddressTo(getTempPartcelPointer());
             getPartcels().forEach(partcel -> partcel.savePointerData(writer));
