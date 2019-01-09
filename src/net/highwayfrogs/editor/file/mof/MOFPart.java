@@ -19,20 +19,21 @@ import java.util.Map;
  */
 @Getter
 public class MOFPart extends GameObject {
-    private short flags;
+    private int flags;
     private List<MOFPartcel> partcels = new ArrayList<>();
+    private List<MOFHilite> hilites = new ArrayList<>();
     private Map<MOFPrimType, List<MOFPolygon>> mofPolygons = new HashMap<>();
 
     private static final int FLAG_ANIMATED_POLYS = 1; // Does this contain some animated texture polys?
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readShort();
-        short partcelCount = reader.readShort();
-        short verticeCount = reader.readShort();
-        short normalCount = reader.readShort();
-        short primitiveCount = reader.readShort();
-        short hiliteCount = reader.readShort();
+        this.flags = reader.readUnsignedShortAsInt();
+        int partcelCount = reader.readUnsignedShortAsInt();
+        int verticeCount = reader.readUnsignedShortAsInt();
+        int normalCount = reader.readUnsignedShortAsInt();
+        int primitiveCount = reader.readUnsignedShortAsInt();
+        int hiliteCount = reader.readUnsignedShortAsInt();
 
         int partcelPointer = reader.readInt();
         int primitivePointer = reader.readInt();
@@ -54,7 +55,6 @@ public class MOFPart extends GameObject {
 
         // Read Primitives:
         reader.jumpTemp(primitivePointer);
-
         while (primitiveCount > 0) {
             short primType = reader.readShort(); // MR_MPRIM_HEADER
             short primCount = reader.readShort();
@@ -71,11 +71,16 @@ public class MOFPart extends GameObject {
             }
             mofPolygons.put(mofPrimType, prims);
         }
-
         reader.jumpReturn();
 
-
-        //TODO: BBox.
+        // Read Hilites
+        reader.jumpTemp(hilitePointer);
+        for (int i = 0; i < hiliteCount; i++) {
+            MOFHilite hilite = new MOFHilite();
+            hilite.load(reader);
+            hilites.add(hilite);
+        }
+        reader.jumpReturn();
     }
 
     @Override

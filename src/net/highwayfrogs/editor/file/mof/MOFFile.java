@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represents a MOF file.
- * TODO: model.C has an example MOF File.
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
