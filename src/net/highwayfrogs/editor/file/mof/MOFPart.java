@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.ArrayList;
@@ -22,6 +23,8 @@ public class MOFPart extends GameObject {
     private int flags;
     private List<MOFPartcel> partcels = new ArrayList<>();
     private List<MOFHilite> hilites = new ArrayList<>();
+    private PSXMatrix matrix;
+    private MOFCollprim collprim;
     private Map<MOFPrimType, List<MOFPolygon>> mofPolygons = new HashMap<>();
 
     private static final int FLAG_ANIMATED_POLYS = 1; // Does this contain some animated texture polys?
@@ -38,11 +41,12 @@ public class MOFPart extends GameObject {
         int partcelPointer = reader.readInt();
         int primitivePointer = reader.readInt();
         int hilitePointer = reader.readInt(); // May be null
-        int buffSize = reader.readInt(); // Size of a single set of preset polygon for this model part in bytes. TODO: This needs to be generated, because it's zero in stored form.
+        reader.readInt(); // Run-time value.
+
         int collprimPointer = reader.readInt(); // May be null.
         int matrixPointer = reader.readInt(); // May be null.
-        int animatedTexturesPointer = reader.readInt(); // (Point to integer which is count.) Followed by: MR_PART_POLY_ANIM
-        int flipbookPointer = reader.readInt(); // MR_PART_FLIPBOOK (MR_PART_FLIPBOOK_ACTION may follow?)
+        int animatedTexturesPointer = reader.readInt(); // (Point to integer which is count.) Followed by: MR_PART_POLY_ANIM TODO: Support
+        int flipbookPointer = reader.readInt(); // MR_PART_FLIPBOOK (MR_PART_FLIPBOOK_ACTION may follow?) TODO: Support
 
         // Read Partcels.
         reader.jumpTemp(partcelPointer);
@@ -52,6 +56,22 @@ public class MOFPart extends GameObject {
             partcels.add(partcel);
         }
         reader.jumpReturn();
+
+        // Read matrix.
+        if (matrixPointer > 0) {
+            reader.jumpTemp(matrixPointer);
+            this.matrix = new PSXMatrix();
+            this.matrix.load(reader);
+            reader.jumpReturn();
+        }
+
+        // Read collprim.
+        if (collprimPointer > 0) {
+            reader.jumpTemp(collprimPointer);
+            this.collprim = new MOFCollprim();
+            this.collprim.load(reader);
+            reader.jumpReturn();
+        }
 
         // Read Primitives:
         reader.jumpTemp(primitivePointer);

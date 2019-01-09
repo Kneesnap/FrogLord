@@ -34,6 +34,8 @@ public class Constants {
     public static final int BIT_FLAG_4 = 1 << 4;
     public static final int BIT_FLAG_5 = 1 << 5;
     public static final int BIT_FLAG_6 = 1 << 6;
+    public static final int BIT_FLAG_7 = 1 << 7;
+    public static final int BIT_FLAG_8 = 1 << 8;
 
     public static final boolean ENABLE_WAD_FORMATS = true;
     public static final boolean COPY_STATIC_MOF = false;
