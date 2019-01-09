@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -18,8 +19,6 @@ import java.util.Map;
 
 /**
  * Represents the MR_PART struct.
- * TODO: MWD size is bloated by 2MB.
- * TODO: Share pointers for matching Normals.
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
@@ -36,6 +35,7 @@ public class MOFPart extends GameObject {
     private int verticeCount;
     private int normalCount;
 
+    private transient Map<List<SVector>, Integer> saveNormalMap = new HashMap<>();
     private transient Map<MOFBBox, Integer> saveBoxMap = new HashMap<>();
     private transient List<MOFPolygon> orderedByLoadPolygons = new ArrayList<>();
     private transient int tempPartcelPointer;
@@ -181,7 +181,7 @@ public class MOFPart extends GameObject {
         if (getPartcels().size() > 0) {
             writer.writeInt(0); //TODO: There are 4 bytes here which are used by something regarding texture animation. They need to be handled properly, this line is a placeholder.
             getSaveBoxMap().clear();
-
+            getSaveNormalMap().clear();
             getPartcels().forEach(partcel -> partcel.save(writer));
             writer.writeAddressTo(getTempPartcelPointer());
             getPartcels().forEach(partcel -> partcel.savePointerData(writer));

@@ -23,7 +23,6 @@ public class MOFPartcel extends GameObject {
     private transient int vertexCount;
     private transient int normalCount;
     private transient int tempVertexPointer;
-    private transient int tempNormalPointer;
     private transient int tempBboxPointer;
 
     public MOFPartcel(MOFPart parent, int vertexCount, int normalCount) {
@@ -64,9 +63,11 @@ public class MOFPartcel extends GameObject {
         for (SVector vertex : getVertices())
             vertex.saveWithPadding(writer);
 
-        this.tempNormalPointer = writer.getIndex();
-        for (SVector vector : getNormals())
-            vector.saveWithPadding(writer);
+        if (!parent.getSaveNormalMap().containsKey(getNormals())) {
+            parent.getSaveNormalMap().put(getNormals(), writer.getIndex());
+            for (SVector vector : getNormals())
+                vector.saveWithPadding(writer);
+        }
     }
 
     /**
@@ -74,13 +75,12 @@ public class MOFPartcel extends GameObject {
      * @param writer The writer to save data to.
      */
     public void savePointerData(DataWriter writer) {
+        Utils.verify(this.tempVertexPointer > 0, "Save has not been called yet.");
         writer.writeInt(this.tempVertexPointer);
-        writer.writeInt(this.tempNormalPointer);
+        writer.writeInt(parent.getSaveNormalMap().get(getNormals()));
         this.tempBboxPointer = writer.writeNullPointer();
         writer.writeNullPointer(); // Unused.
-
         this.tempVertexPointer = 0;
-        this.tempNormalPointer = 0;
     }
 
     /**
