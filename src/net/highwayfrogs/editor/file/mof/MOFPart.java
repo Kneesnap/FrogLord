@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Represents the MR_PART struct.
@@ -33,8 +32,8 @@ public class MOFPart extends GameObject {
     private MOFFlipbook flipbook;
     private int verticeCount;
     private int normalCount;
-    private int partcelValue;
 
+    private transient List<MOFPrimType> loadedPrimTypeOrder = new ArrayList<>();
     private transient int tempPartcelPointer;
     private transient int tempPrimitivePointer;
     private transient int tempHilitePointer;
@@ -66,7 +65,6 @@ public class MOFPart extends GameObject {
 
         // Read Partcels.
         if (partcelCount > 0) {
-            partcelValue = reader.readInt();
             reader.jumpTemp(partcelPointer);
             for (int i = 0; i < partcelCount; i++) {
                 MOFPartcel partcel = new MOFPartcel(verticeCount, normalCount);
@@ -93,6 +91,7 @@ public class MOFPart extends GameObject {
         }
 
         // Read Primitives:
+        loadedPrimTypeOrder.clear();
         reader.jumpTemp(primitivePointer);
         while (primitiveCount > 0) {
             short primType = reader.readShort(); // MR_MPRIM_HEADER
@@ -109,6 +108,7 @@ public class MOFPart extends GameObject {
                 primitiveCount--;
             }
             mofPolygons.put(mofPrimType, prims);
+            loadedPrimTypeOrder.add(mofPrimType);
         }
         reader.jumpReturn();
 
@@ -125,7 +125,7 @@ public class MOFPart extends GameObject {
             reader.jumpTemp(animatedTexturesPointer);
             int count = reader.readInt();
             for (int i = 0; i < count; i++) {
-                MOFPartPolyAnim partPolyAnim = new MOFPartPolyAnim();
+                MOFPartPolyAnim partPolyAnim = new MOFPartPolyAnim(this);
                 partPolyAnim.load(reader);
                 this.partPolyAnims.add(partPolyAnim);
             }
@@ -175,7 +175,7 @@ public class MOFPart extends GameObject {
 
         // Write Partcels.
         if (getPartcels().size() > 0) {
-            writer.writeInt(getPartcelValue());
+            writer.writeInt(0); //TODO: There are 4 bytes here which are used by something regarding texture animation. They need to be handled properly, this line is a placeholder.
             getPartcels().forEach(partcel -> partcel.save(writer));
             writer.writeAddressTo(getTempPartcelPointer());
             getPartcels().forEach(partcel -> partcel.savePointerData(writer));
@@ -218,10 +218,14 @@ public class MOFPart extends GameObject {
 
         // Write Primitives.
         writer.writeAddressTo(getTempPrimitivePointer());
-        for (Entry<MOFPrimType, List<MOFPolygon>> entry : getMofPolygons().entrySet()) {
-            writer.writeUnsignedShort(entry.getKey().ordinal()); // Write type.
-            writer.writeUnsignedShort(entry.getValue().size());
-            entry.getValue().forEach(prim -> prim.save(writer));
+        for (MOFPrimType primType : MOFPrimType.values()) { // NOTE: This erases the order which seems to not be consistent.
+            List<MOFPolygon> polygons = getMofPolygons().get(primType);
+            if (polygons == null)
+                continue;
+
+            writer.writeUnsignedShort(primType.ordinal()); // Write type.
+            writer.writeUnsignedShort(polygons.size());
+            polygons.forEach(prim -> prim.save(writer));
         }
     }
 }

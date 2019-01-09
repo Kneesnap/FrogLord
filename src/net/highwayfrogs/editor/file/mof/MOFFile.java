@@ -99,7 +99,7 @@ public class MOFFile extends GameFile {
         }
 
         writer.writeBytes(getSignature());
-        writer.writeInt(0); // File length. Should be ok to use zero for now, but if it causes problems, we know where to look.
+        int fileSizePointer = writer.writeNullPointer(); // Optional, but might as well.
         writer.writeInt(this.flags);
 
         if (animation != null) { // If this is an animation, save the animation.
@@ -110,6 +110,7 @@ public class MOFFile extends GameFile {
         writer.writeInt(this.extra);
         getParts().forEach(part -> part.save(writer));
         getParts().forEach(part -> part.saveExtra(writer));
+        writer.writeAddressTo(fileSizePointer);
     }
 
     private void resolveStaticMOF(DataReader reader) {
