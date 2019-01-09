@@ -53,6 +53,7 @@ public class MOFAnimationModelSet extends GameObject {
         for (int i = 0; i < modelCount; i++) {
             MOFAnimationModel model = new MOFAnimationModel(this);
             model.load(reader);
+            models.add(model);
         }
         reader.jumpReturn();
     }
