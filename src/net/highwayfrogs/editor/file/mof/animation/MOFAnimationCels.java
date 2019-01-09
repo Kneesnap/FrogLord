@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
@@ -13,6 +14,7 @@ import java.util.List;
  * Represents the "MR_ANIM_CELS" struct.
  * Created by Kneesnap on 8/25/2018.
  */
+@Getter
 public class MOFAnimationCels extends GameObject {
     private int partCount; // In the future maybe this can be calculated.
     private int flags;
@@ -35,22 +37,26 @@ public class MOFAnimationCels extends GameObject {
         int celNumberPointer = reader.readInt();
         int indicePointer = reader.readInt();
 
+        int totalIndiceCount = virtualCelCount * partCount;
         reader.jumpTemp(celNumberPointer);
+        if (celCount % 2 > 0)
+            celCount++;
+
         for (int i = 0; i < celCount; i++)
             celNumbers.add(reader.readUnsignedShortAsInt());
         reader.jumpReturn();
 
         reader.jumpTemp(indicePointer);
-        for (int i = 0; i < virtualCelCount; i++)
+        for (int i = 0; i < totalIndiceCount; i++)
             indices.add(reader.readShort());
         reader.jumpReturn();
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.celNumbers.size());
+        writer.writeUnsignedShort(this.celNumbers.size()); // This may need to have 1 subtracted if 1 is added while loading.
         writer.writeUnsignedShort(this.partCount);
-        writer.writeUnsignedShort(this.indices.size());
+        writer.writeUnsignedShort(this.indices.size() / getPartCount());
         writer.writeUnsignedShort(this.flags);
 
         this.tempCelNumberPointer = writer.getIndex();
