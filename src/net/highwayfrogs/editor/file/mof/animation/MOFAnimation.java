@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFFile;
@@ -70,8 +71,35 @@ public class MOFAnimation extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        //TODO: Don't forget to update the header.
-        //TODO: Save
+        writer.writeUnsignedShort(this.modelSets.size());
+        writer.writeUnsignedShort(this.mofFiles.size());
+
+        writer.writeInt(writer.getIndex() + (3 * Constants.POINTER_SIZE)); // Right after header.
+        int commonDataPointer = writer.getIndex(); // Right after model set data.
+        writer.writeInt(0);
+        int staticFilePointer = writer.getIndex(); // After common data.
+        writer.writeInt(0);
+
+        // Write model sets.
+        for (MOFAnimationModelSet modelSet : getModelSets())
+            modelSet.save(writer);
+
+        // Write common data.
+        writer.writeAddressTo(commonDataPointer);
+        this.commonData.save(writer);
+
+        // Write MOF Files.
+        writer.writeAddressTo(staticFilePointer);
+        int[] mofPointers = new int[getMofFiles().size()];
+        for (int i = 0; i < mofPointers.length; i++) {
+            mofPointers[i] = writer.getIndex();
+            writer.writeInt(0);
+        }
+
+        for (int i = 0; i < mofPointers.length; i++) {
+            writer.writeAddressTo(mofPointers[i]);
+            getMofFiles().get(i).save(writer);
+        }
     }
 
     /**

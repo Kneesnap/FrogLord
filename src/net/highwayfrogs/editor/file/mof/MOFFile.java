@@ -97,6 +97,7 @@ public class MOFFile extends GameFile {
         this.animation.load(reader);
     }
 
+
     /**
      * Export this object to wavefront obj.
      * Not the cleanest thing in the world, but it doesn't need to be.

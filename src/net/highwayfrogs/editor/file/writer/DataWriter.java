@@ -213,9 +213,9 @@ public class DataWriter {
      * @param writeTo The old address to write the current address to.
      */
     public void writeAddressTo(int writeTo) {
-        int tempAdress = getIndex();
+        int tempAddress = getIndex();
         jumpTemp(writeTo);
-        writeInt(tempAdress);
+        writeInt(tempAddress);
         jumpReturn();
     }
 }

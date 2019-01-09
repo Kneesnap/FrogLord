@@ -77,11 +77,7 @@ public class MOFAnimationModelSet extends GameObject {
         getModels().forEach(model -> model.save(writer));
 
         // Write Celset.
-        int tempAddress = writer.getIndex();
-        writer.jumpTemp(modelPointerAddress);
-        writer.writeInt(tempAddress);
-        writer.jumpReturn();
-
+        writer.writeAddressTo(modelPointerAddress);
         getCelSets().forEach(celSet -> celSet.save(writer));
 
         // Writes Cel Set Pointers. MUST BE CALLED AFTER
