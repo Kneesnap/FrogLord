@@ -66,19 +66,19 @@ public class MOFAnimationModelSet extends GameObject {
         writer.writeUnsignedByte((short) celSets.size());
         writer.writeNull(2); // BBOX Count + 1 byte of padding.
 
-        int modelPointerAddress = writer.getIndex();
-        writer.writeInt(0);
+        int modelSetPointer = writer.getIndex() + (3 * Constants.POINTER_SIZE);
+        writer.writeInt(modelSetPointer);
 
-        int calculatedCellPointer = writer.getIndex() + (2 * Constants.POINTER_SIZE);
-        writer.writeInt(calculatedCellPointer); // Right after struct.
+        int celSetPointer = writer.getIndex();
+        writer.writeInt(0); // Right after model.
         writer.writeInt(0); // BBOX Pointer
 
         // Write models.
-        Utils.verify(calculatedCellPointer == writer.getIndex(), "Calculated wrong cell pointer index: (%d, %d)", calculatedCellPointer, writer.getIndex());
+        Utils.verify(modelSetPointer == writer.getIndex(), "Calculated wrong cell pointer index: (%d, %d)", modelSetPointer, writer.getIndex());
         getModels().forEach(model -> model.save(writer));
 
         // Write Celset.
-        writer.writeAddressTo(modelPointerAddress);
+        writer.writeAddressTo(celSetPointer);
         getCelSets().forEach(celSet -> celSet.save(writer));
 
         // Writes Cel Set Pointers. MUST BE CALLED AFTER
