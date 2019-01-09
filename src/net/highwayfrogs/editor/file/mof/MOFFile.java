@@ -108,8 +108,8 @@ public class MOFFile extends GameFile {
         }
 
         writer.writeInt(this.extra);
-        for (MOFPart part : getParts())
-            part.save(writer);
+        getParts().forEach(part -> part.save(writer));
+        getParts().forEach(part -> part.saveExtra(writer));
     }
 
     private void resolveStaticMOF(DataReader reader) {

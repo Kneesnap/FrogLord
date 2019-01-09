@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Represents the MR_PART struct.
@@ -26,6 +27,16 @@ public class MOFPart extends GameObject {
     private PSXMatrix matrix;
     private MOFCollprim collprim;
     private Map<MOFPrimType, List<MOFPolygon>> mofPolygons = new HashMap<>();
+    private int verticeCount;
+    private int normalCount;
+
+    private transient int tempPartcelPointer;
+    private transient int tempPrimitivePointer;
+    private transient int tempHilitePointer;
+    private transient int tempCollPrimPointer;
+    private transient int tempMatrixPointer;
+    private transient int tempAnimatedTexturesPointer;
+    private transient int tempFlipbookPointer;
 
     private static final int FLAG_ANIMATED_POLYS = 1; // Does this contain some animated texture polys?
 
@@ -33,8 +44,8 @@ public class MOFPart extends GameObject {
     public void load(DataReader reader) {
         this.flags = reader.readUnsignedShortAsInt();
         int partcelCount = reader.readUnsignedShortAsInt();
-        int verticeCount = reader.readUnsignedShortAsInt();
-        int normalCount = reader.readUnsignedShortAsInt();
+        this.verticeCount = reader.readUnsignedShortAsInt();
+        this.normalCount = reader.readUnsignedShortAsInt();
         int primitiveCount = reader.readUnsignedShortAsInt();
         int hiliteCount = reader.readUnsignedShortAsInt();
 
@@ -105,6 +116,60 @@ public class MOFPart extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        //TODO: Save logic.
+        writer.writeUnsignedShort(this.flags);
+        writer.writeUnsignedShort(getPartcels().size());
+        writer.writeUnsignedShort(getVerticeCount());
+        writer.writeUnsignedShort(getNormalCount());
+        writer.writeUnsignedShort(getMofPolygons().values().stream().mapToInt(List::size).sum()); // PrimitiveCount.
+        writer.writeUnsignedShort(getHilites().size());
+
+        this.tempPartcelPointer = writer.writeNullPointer();
+        this.tempPrimitivePointer = writer.writeNullPointer();
+        this.tempHilitePointer = writer.writeNullPointer();
+        writer.writeInt(0); // Runtime value.
+        this.tempCollPrimPointer = writer.writeNullPointer();
+        this.tempMatrixPointer = writer.writeNullPointer();
+        this.tempAnimatedTexturesPointer = writer.writeNullPointer();
+        this.tempFlipbookPointer = writer.writeNullPointer();
+    }
+
+    /**
+     * Save extra data.
+     * @param writer Save extra data to a writer.
+     */
+    public void saveExtra(DataWriter writer) {
+
+        // Write Partcels.
+        writer.writeAddressTo(getTempPartcelPointer());
+        getPartcels().forEach(partcel -> partcel.save(writer));
+
+        // Read Hilites
+        if (getHilites().size() > 0) {
+            writer.writeAddressTo(getTempHilitePointer());
+            getHilites().forEach(hilite -> hilite.save(writer));
+        }
+
+        // Write collprim.
+        if (getCollprim() != null) {
+            writer.writeAddressTo(getTempCollPrimPointer());
+            getCollprim().save(writer);
+        }
+
+        // Write Matrix.
+        if (getMatrix() != null) {
+            writer.writeAddressTo(getTempMatrixPointer());
+            getMatrix().save(writer);
+        }
+
+        //TODO: Textures
+        //TODO: Flipbook.
+
+        // Write Primitives.
+        writer.writeAddressTo(getTempPrimitivePointer());
+        for (Entry<MOFPrimType, List<MOFPolygon>> entry : getMofPolygons().entrySet()) {
+            writer.writeUnsignedShort(entry.getKey().ordinal()); // Write type.
+            writer.writeUnsignedShort(entry.getValue().size());
+            entry.getValue().forEach(prim -> prim.save(writer));
+        }
     }
 }
