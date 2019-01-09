@@ -38,6 +38,7 @@ public class MOFFile extends GameFile {
     private MOFAnimation animation; // Animation data. For some reason they thought it'd be a good idea to make MOF have two different data structures.
 
     private byte[] signature;
+    private byte[] bytes;
     private int flags;
     private int extra;
     private List<MOFPart> parts = new ArrayList<>();
@@ -64,19 +65,23 @@ public class MOFFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
+        int mofStart = reader.getIndex();
+
         this.signature = reader.readBytes(4);
         if (Arrays.equals(DUMMY_DATA, getSignature())) {
             this.dummy = true;
             return;
         }
 
-        reader.readInt(); // File length, including header.
+        int fileSize = reader.readInt(); // File length, including header.
         this.flags = reader.readInt();
 
         if (testFlag(FLAG_ANIMATION_FILE)) {
             resolveAnimatedMOF(reader);
         } else {
-            resolveStaticMOF(reader);
+            reader.setIndex(mofStart);
+            this.bytes = reader.readBytes(fileSize);
+            //resolveStaticMOF(reader);
         }
     }
 
@@ -236,6 +241,11 @@ public class MOFFile extends GameFile {
     public void save(DataWriter writer) {
         if (dummy) {
             writer.writeBytes(DUMMY_DATA);
+            return;
+        }
+
+        if (this.bytes != null) {
+            writer.writeBytes(bytes);
             return;
         }
 
