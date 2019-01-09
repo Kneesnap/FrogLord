@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 public class MOFPolyGT4 extends MOFPolyTexture {
     public MOFPolyGT4() {
-        super(4, 4);
+        super(MOFPrimType.GT4, 4, 4);
     }
 
     @Override

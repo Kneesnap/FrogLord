@@ -32,8 +32,8 @@ public class MOFPolyTexture extends MOFPolygon {
     public static final int FLAG_ANIMATED_UV = 1 << 3; // Poly has an associated map animation using UV animation.
     public static final int FLAG_ANIMATED_TEXTURE = 1 << 4; // Poly has an associated map animation using cel list animation.
 
-    public MOFPolyTexture(int verticeCount, int normalCount) {
-        super(verticeCount, normalCount, 0);
+    public MOFPolyTexture(MOFPrimType type, int verticeCount, int normalCount) {
+        super(type, verticeCount, normalCount, 0);
         this.uvs = new ByteUV[verticeCount];
     }
 

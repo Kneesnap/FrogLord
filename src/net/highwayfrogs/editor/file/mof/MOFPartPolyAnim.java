@@ -29,7 +29,8 @@ public class MOFPartPolyAnim extends GameObject {
         this.primType = MOFPrimType.values()[reader.readInt()];
 
         int primId = reader.readInt();
-        this.mofPolygon = getParentPart().getPolygon(primId, this.primType);
+        this.mofPolygon = getParentPart().getPolygon(primId);
+        Utils.verify(getMofPolygon().getType() == getPrimType(), "Expected a polygon type %s, but got a %s.", getPrimType(), getMofPolygon().getType());
         Utils.verify(getMofPolygon() != null, "Failed to load MOF Polygon. (%s, %d)", getPrimType(), primId);
 
         reader.readInt(); // Runtime.

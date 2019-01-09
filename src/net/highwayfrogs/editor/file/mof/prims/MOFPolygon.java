@@ -21,12 +21,14 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
     private short normals[];
     private short padding;
     private PSXColorVector color = new PSXColorVector();
+    private MOFPrimType type;
 
     public static final int TRI_SIZE = 3;
     public static final int QUAD_SIZE = 4;
     public static final int REQUIRES_VERTEX_SWAPPING = QUAD_SIZE;
 
-    public MOFPolygon(int verticeCount, int normalCount, int enCount) {
+    public MOFPolygon(MOFPrimType type, int verticeCount, int normalCount, int enCount) {
+        this.type = type;
         this.vertices = new short[verticeCount];
         this.normals = new short[normalCount];
         this.en = new short[enCount];

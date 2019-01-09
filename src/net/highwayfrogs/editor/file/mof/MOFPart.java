@@ -18,7 +18,6 @@ import java.util.Map;
 
 /**
  * Represents the MR_PART struct.
- * TODO: Volcano zone has some mofs which don't display properly.
  * TODO: MWD size is bloated by 2MB.
  * Created by Kneesnap on 8/25/2018.
  */
@@ -36,7 +35,7 @@ public class MOFPart extends GameObject {
     private int verticeCount;
     private int normalCount;
 
-    private transient List<MOFPrimType> loadedPrimTypeOrder = new ArrayList<>();
+    private transient List<MOFPolygon> orderedByLoadPolygons = new ArrayList<>();
     private transient int tempPartcelPointer;
     private transient int tempPrimitivePointer;
     private transient int tempHilitePointer;
@@ -94,7 +93,7 @@ public class MOFPart extends GameObject {
         }
 
         // Read Primitives:
-        loadedPrimTypeOrder.clear();
+        orderedByLoadPolygons.clear();
         reader.jumpTemp(primitivePointer);
         while (primitiveCount > 0) {
             short primType = reader.readShort(); // MR_MPRIM_HEADER
@@ -103,15 +102,15 @@ public class MOFPart extends GameObject {
             Utils.verify(MOFPrimType.values().length > primType, "Unknown prim-type: %d", primType);
             MOFPrimType mofPrimType = MOFPrimType.values()[primType];
 
-            List<MOFPolygon> prims = new ArrayList<>(primCount);
+            List<MOFPolygon> prims = mofPolygons.computeIfAbsent(mofPrimType, type -> new ArrayList<>());
             for (int i = 0; i < primCount; i++) {
                 MOFPolygon newPoly = mofPrimType.getMaker().get();
                 newPoly.load(reader);
                 prims.add(newPoly);
-                primitiveCount--;
+                orderedByLoadPolygons.add(newPoly);
             }
-            mofPolygons.put(mofPrimType, prims);
-            loadedPrimTypeOrder.add(mofPrimType);
+
+            primitiveCount -= primCount;
         }
         reader.jumpReturn();
 
@@ -234,22 +233,11 @@ public class MOFPart extends GameObject {
 
     /**
      * Gets a polygon id, by the loaded order. (The way it turns out Frogger does it.)
-     * @param primId     The id to get.
-     * @param wantedType The PrimType we want it to be. Can be null.
+     * @param primId The id to get.
      * @return mofPolygon
      */
-    public MOFPolygon getPolygon(int primId, MOFPrimType wantedType) {
-        for (MOFPrimType type : getLoadedPrimTypeOrder()) {
-            List<MOFPolygon> polygons = getMofPolygons().get(type);
-            if (polygons.size() > primId) {
-                Utils.verify(wantedType == null || type == wantedType, "The PrimType is %s, but we expected %s.", type, wantedType);
-                return polygons.get(primId);
-            } else {
-                primId -= polygons.size();
-            }
-        }
-
-        return null;
+    public MOFPolygon getPolygon(int primId) {
+        return getOrderedByLoadPolygons().get(primId);
     }
 
     /**

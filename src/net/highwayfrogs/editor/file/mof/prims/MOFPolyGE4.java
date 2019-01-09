@@ -5,6 +5,6 @@ package net.highwayfrogs.editor.file.mof.prims;
  */
 public class MOFPolyGE4 extends MOFPolygon {
     public MOFPolyGE4() {
-        super(4, 4, 4);
+        super(MOFPrimType.GE4, 4, 4, 4);
     }
 }

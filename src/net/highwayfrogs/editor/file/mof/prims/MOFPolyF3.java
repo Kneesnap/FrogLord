@@ -5,6 +5,6 @@ package net.highwayfrogs.editor.file.mof.prims;
  */
 public class MOFPolyF3 extends MOFPolyFlat {
     public MOFPolyF3() {
-        super(3);
+        super(MOFPrimType.F3, 3);
     }
 }

@@ -17,8 +17,8 @@ import java.awt.image.BufferedImage;
 public class MOFPolyFlat extends MOFPolygon implements VertexColor {
     @Setter private transient TextureEntry textureEntry;
 
-    public MOFPolyFlat(int verticeCount) {
-        super(verticeCount, 1, 0);
+    public MOFPolyFlat(MOFPrimType type, int verticeCount) {
+        super(type, verticeCount, 1, 0);
     }
 
     @Override
