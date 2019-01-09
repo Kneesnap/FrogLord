@@ -49,10 +49,12 @@ public class WADController extends EditorController<WADFile> {
         if (selectedFile == null)
             return; // Cancelled.
 
+        WADFile.CURRENT_FILE_NAME = selectedEntry.getFileEntry().getDisplayName();
         byte[] newBytes = Files.readAllBytes(selectedFile.toPath());
         this.selectedEntry.setFile(getFile().getParentMWD().replaceFile(newBytes, selectedEntry.getFileEntry(), selectedEntry.getFile()));
 
         updateEntry(); // Update the display.
+        WADFile.CURRENT_FILE_NAME = null;
         System.out.println("Imported WAD Entry.");
     }
 
@@ -63,9 +65,11 @@ public class WADController extends EditorController<WADFile> {
         if (selectedFile == null)
             return; // Cancelled.
 
+        WADFile.CURRENT_FILE_NAME = selectedEntry.getFileEntry().getDisplayName();
         DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
         this.selectedEntry.getFile().save(writer);
         writer.closeReceiver();
+        WADFile.CURRENT_FILE_NAME = null;
     }
 
     @FXML
@@ -77,6 +81,8 @@ public class WADController extends EditorController<WADFile> {
 
         for (WADEntry wadEntry : getFile().getFiles()) {
             FileEntry fileEntry = wadEntry.getFileEntry();
+            WADFile.CURRENT_FILE_NAME = fileEntry.getDisplayName();
+
             File save = Utils.getNonExistantFile(new File(selectedFolder, fileEntry.getDisplayName()));
             System.out.println("Saving: " + fileEntry.getDisplayName());
 
@@ -84,6 +90,7 @@ public class WADController extends EditorController<WADFile> {
             wadEntry.getFile().save(writer);
             writer.closeReceiver();
         }
+        WADFile.CURRENT_FILE_NAME = null;
     }
 
     private static class AttachmentListCell extends ListCell<WADEntry> {
