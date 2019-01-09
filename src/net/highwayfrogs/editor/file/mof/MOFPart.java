@@ -125,14 +125,14 @@ public class MOFPart extends GameObject {
                 partPolyAnim.load(reader);
                 this.partPolyAnims.add(partPolyAnim);
             }
-            reader.jumpReturn();
 
-            reader.jumpTemp(getPartPolyAnims().get(0).getAnim());
-            for (int i = 0; i < count; i++) {
+            int entryCount = reader.readInt();
+            for (int i = 0; i < entryCount; i++) {
                 MOFPartPolyAnimEntry entry = new MOFPartPolyAnimEntry();
                 entry.load(reader);
                 this.partPolyAnimEntries.add(entry);
             }
+
             reader.jumpReturn();
         }
 
@@ -171,6 +171,7 @@ public class MOFPart extends GameObject {
 
         // Write Partcels.
         if (getPartcels().size() > 0) {
+            writer.writeNullPointer();
             getPartcels().forEach(partcel -> partcel.save(writer));
             writer.writeAddressTo(getTempPartcelPointer());
             getPartcels().forEach(partcel -> partcel.savePointerData(writer));
@@ -201,6 +202,8 @@ public class MOFPart extends GameObject {
             getPartPolyAnims().forEach(partPolyAnim -> partPolyAnim.save(writer));
             int pointer = writer.getIndex();
             getPartPolyAnims().forEach(mofPartPolyAnim -> mofPartPolyAnim.saveExtra(writer, pointer));
+
+            writer.writeInt(getPartPolyAnimEntries().size());
             getPartPolyAnimEntries().forEach(entry -> entry.save(writer));
         }
 
