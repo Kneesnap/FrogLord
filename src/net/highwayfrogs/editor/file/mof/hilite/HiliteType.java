@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.mof;
+package net.highwayfrogs.editor.file.mof.hilite;
 
 /**
  * Represents the different hilite types.

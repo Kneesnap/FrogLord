@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
+import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -117,7 +118,7 @@ public class MOFPart extends GameObject {
         // Read Hilites
         reader.jumpTemp(hilitePointer);
         for (int i = 0; i < hiliteCount; i++) {
-            MOFHilite hilite = new MOFHilite();
+            MOFHilite hilite = new MOFHilite(this);
             hilite.load(reader);
             hilites.add(hilite);
         }
@@ -229,5 +230,48 @@ public class MOFPart extends GameObject {
             writer.writeUnsignedShort(polygons.size());
             polygons.forEach(prim -> prim.save(writer));
         }
+    }
+
+    /**
+     * Gets a polygon id, by the loaded order. (The way it turns out Frogger does it.)
+     * @param primId     The id to get.
+     * @param wantedType The PrimType we want it to be. Can be null.
+     * @return mofPolygon
+     */
+    public MOFPolygon getPolygon(int primId, MOFPrimType wantedType) {
+        for (MOFPrimType type : getLoadedPrimTypeOrder()) {
+            List<MOFPolygon> polygons = getMofPolygons().get(type);
+            if (polygons.size() > primId) {
+                Utils.verify(wantedType == null || type == wantedType, "The PrimType is %s, but we expected %s.", type, wantedType);
+                return polygons.get(primId);
+            } else {
+                primId -= polygons.size();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets the ID that a given MOFPolygon should be saved as.
+     * @param poly The polygon to save.
+     * @return primId
+     */
+    public int getPolygonSaveID(MOFPolygon poly) {
+        int primId = 0;
+        for (MOFPrimType type : MOFPrimType.values()) {
+            List<MOFPolygon> polygons = getMofPolygons().get(type);
+            if (polygons == null)
+                continue;
+
+            int index = polygons.indexOf(poly);
+            if (index >= 0) {
+                return primId + index;
+            } else {
+                primId += polygons.size();
+            }
+        }
+
+        throw new IllegalArgumentException("This MOFPolygon is not registered, and therefore does not have an id!");
     }
 }
