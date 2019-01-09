@@ -13,21 +13,34 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 public class MOFPartPolyAnim extends GameObject {
     private int type; //TODO: Port.
     private int mprimPointer; //TODO: Calculate automagically.
-    private int polyOffset; //TODO: Calculate.
+    private int anim; // TODO: Auto calculate.
+
+    private transient int tempAnimAddress;
 
     @Override
     public void load(DataReader reader) {
         this.type = reader.readInt();
         this.mprimPointer = reader.readInt();
-        this.polyOffset = reader.readInt();
         reader.readInt(); // Runtime.
+        this.anim = reader.readInt();
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(this.type);
         writer.writeInt(this.mprimPointer);
-        writer.writeInt(this.polyOffset);
         writer.writeInt(0); // Runtime.
+        this.tempAnimAddress = writer.writeNullPointer();
+    }
+
+    /**
+     * Write extra data.
+     * @param writer  The writer to write data to.
+     * @param address The address to write.
+     */
+    public void saveExtra(DataWriter writer, int address) {
+        writer.jumpTemp(getTempAnimAddress());
+        writer.writeInt(address);
+        writer.jumpReturn();
     }
 }

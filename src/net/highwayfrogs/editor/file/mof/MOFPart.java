@@ -28,7 +28,8 @@ public class MOFPart extends GameObject {
     private List<MOFHilite> hilites = new ArrayList<>();
     private PSXMatrix matrix;
     private MOFCollprim collprim;
-    private MOFPartPolyAnim partPolyAnim;
+    private List<MOFPartPolyAnim> partPolyAnims = new ArrayList<>();
+    private List<MOFPartPolyAnimEntry> partPolyAnimEntries = new ArrayList<>();
     private MOFFlipbook flipbook;
     private int verticeCount;
     private int normalCount;
@@ -118,8 +119,20 @@ public class MOFPart extends GameObject {
 
         if (animatedTexturesPointer > 0) {
             reader.jumpTemp(animatedTexturesPointer);
-            this.partPolyAnim = new MOFPartPolyAnim();
-            this.partPolyAnim.load(reader);
+            int count = reader.readInt();
+            for (int i = 0; i < count; i++) {
+                MOFPartPolyAnim partPolyAnim = new MOFPartPolyAnim();
+                partPolyAnim.load(reader);
+                this.partPolyAnims.add(partPolyAnim);
+            }
+            reader.jumpReturn();
+
+            reader.jumpTemp(getPartPolyAnims().get(0).getAnim());
+            for (int i = 0; i < count; i++) {
+                MOFPartPolyAnimEntry entry = new MOFPartPolyAnimEntry();
+                entry.load(reader);
+                this.partPolyAnimEntries.add(entry);
+            }
             reader.jumpReturn();
         }
 
@@ -178,9 +191,13 @@ public class MOFPart extends GameObject {
             getMatrix().save(writer);
         }
 
-        if (getPartPolyAnim() != null) {
+        if (getPartPolyAnims().size() > 0) {
             writer.writeAddressTo(getTempAnimatedTexturesPointer());
-            getPartPolyAnim().save(writer);
+            writer.writeInt(getPartPolyAnims().size());
+            getPartPolyAnims().forEach(partPolyAnim -> partPolyAnim.save(writer));
+            int pointer = writer.getIndex();
+            getPartPolyAnims().forEach(mofPartPolyAnim -> mofPartPolyAnim.saveExtra(writer, pointer));
+            getPartPolyAnimEntries().forEach(entry -> entry.save(writer));
         }
 
         if (getFlipbook() != null) {
