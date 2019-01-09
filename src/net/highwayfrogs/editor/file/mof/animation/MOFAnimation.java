@@ -89,17 +89,15 @@ public class MOFAnimation extends GameObject {
         this.commonData.save(writer);
 
         // Write MOF Files.
-        writer.writeAddressTo(staticFilePointer);
         int[] mofPointers = new int[getMofFiles().size()];
         for (int i = 0; i < mofPointers.length; i++) {
             mofPointers[i] = writer.getIndex();
-            writer.writeInt(0);
-        }
-
-        for (int i = 0; i < mofPointers.length; i++) {
-            writer.writeAddressTo(mofPointers[i]);
             getMofFiles().get(i).save(writer);
         }
+
+        writer.writeAddressTo(staticFilePointer);
+        for (int mofPointer : mofPointers)
+            writer.writeInt(mofPointer);
     }
 
     /**
