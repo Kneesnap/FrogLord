@@ -8,31 +8,21 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.MWDFile;
-import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyFlat;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyGouraud;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -248,8 +238,7 @@ public class MOFFile extends GameFile {
             return;
         }
 
-        writer.writeByte(Constants.NULL_BYTE);
-        writer.writeBytes(MOF_SIGNATURE);
+        writer.writeBytes(getSignature());
         writer.writeInt(0); // File length. Should be ok to use zero for now, but if it causes problems, we know where to look.
         writer.writeInt(this.flags);
 

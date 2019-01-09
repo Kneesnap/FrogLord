@@ -9,9 +9,19 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 8/25/2018.
  */
 public class MOFAnimationCels extends GameObject {
+    private int flags; //TODO: Port
+
     @Override
     public void load(DataReader reader) {
-        //TODO
+        int celCount = reader.readUnsignedShortAsInt();
+        int partCount = reader.readUnsignedShortAsInt(); // celCount + 1.
+        int virtualCelCount = reader.readUnsignedShortAsInt();
+        this.flags = reader.readUnsignedShortAsInt();
+
+        int celNumberPointer = reader.readInt();
+        int transformPointer = reader.readInt(); // TODO: Union of two pointers for ac_indices and ac_transforms.
+        System.out.println("Number Pointer: " + celNumberPointer + ", Transform Pointer: " + transformPointer + ", Reader: " + reader.getIndex());
+
     }
 
     @Override

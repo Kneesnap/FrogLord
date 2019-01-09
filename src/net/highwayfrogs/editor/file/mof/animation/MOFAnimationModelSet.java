@@ -37,14 +37,7 @@ public class MOFAnimationModelSet extends GameObject {
         int bboxPointer = reader.readInt();
 
         Utils.verify(bboxCount == 0, "The ModelSet has a non-zero BBOX count. (%d, %d)", bboxCount, bboxPointer);
-
-        // Read Models.
-        reader.jumpTemp(modelPointer);
-        for (int i = 0; i < modelCount; i++) {
-            MOFAnimationModel model = new MOFAnimationModel();
-            model.load(reader);
-        }
-        reader.jumpReturn();
+        Utils.verify(modelCount == 1, "FrogLord does not currently support MOFs with more than one model! (%d)", modelCount);
 
         // Read Celset.
         reader.jumpTemp(celsetPointer);
@@ -52,6 +45,14 @@ public class MOFAnimationModelSet extends GameObject {
             MOFAnimationCelSet celSet = new MOFAnimationCelSet();
             celSet.load(reader);
             celSets.add(celSet);
+        }
+        reader.jumpReturn();
+
+        // Read Models. (After Celset so it can reference cel sets loaded previously.)
+        reader.jumpTemp(modelPointer);
+        for (int i = 0; i < modelCount; i++) {
+            MOFAnimationModel model = new MOFAnimationModel(this);
+            model.load(reader);
         }
         reader.jumpReturn();
     }
@@ -82,5 +83,8 @@ public class MOFAnimationModelSet extends GameObject {
         writer.jumpReturn();
 
         getCelSets().forEach(celSet -> celSet.save(writer));
+
+        // Writes Cel Set Pointers. MUST BE CALLED AFTER
+        getModels().forEach(model -> model.writeCelPointer(writer));
     }
 }

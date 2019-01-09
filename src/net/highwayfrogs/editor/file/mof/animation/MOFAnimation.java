@@ -5,7 +5,6 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformType;
-import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -34,11 +33,11 @@ public class MOFAnimation extends GameObject {
     public void load(DataReader reader) {
         Utils.verify(shouldStartAtFrameZero(), "Animations which do not start at frame-zero are not currently supported.");
 
-        short modelSetCount = reader.readShort();
-        short staticFileCount = reader.readShort();
-        int modelSetPointer = reader.readInt();   //
-        int commonDataPointer = reader.readInt(); // MR_ANIM_COMMON_DATA.
-        int staticFilePointer = reader.readInt(); // Points to pointers which point to MR_MOF.
+        int modelSetCount = reader.readUnsignedShortAsInt();
+        int staticFileCount = reader.readUnsignedShortAsInt();
+        int modelSetPointer = reader.readInt();   // Right after header.
+        int commonDataPointer = reader.readInt(); // Right after model set data.
+        int staticFilePointer = reader.readInt(); // After common data pointer.
 
         // Read model sets.
         reader.jumpTemp(modelSetPointer);
@@ -56,20 +55,15 @@ public class MOFAnimation extends GameObject {
         reader.jumpReturn();
 
         reader.jumpTemp(staticFilePointer);
-
         int[] mofPointers = new int[staticFileCount];
         for (int i = 0; i < mofPointers.length; i++)
             mofPointers[i] = reader.readInt();
 
         for (int i = 0; i < mofPointers.length; i++) {
-            reader.jumpTemp(mofPointers[i]);
-            byte[] bytes = reader.readBytes(i == mofPointers.length - 1 ? reader.getRemaining() : mofPointers[i + 1] - reader.getIndex());
-            DataReader mofReader = new DataReader(new ArraySource(bytes));
-
+            DataReader mofReader = reader.newReader(mofPointers[i], i == mofPointers.length - 1 ? -1 : mofPointers[i + 1] - reader.getIndex());
             MOFFile mof = new MOFFile();
             mof.load(mofReader);
             mofFiles.add(mof);
-            reader.jumpReturn();
         }
         reader.jumpReturn();
     }

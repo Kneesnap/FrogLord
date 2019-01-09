@@ -16,25 +16,29 @@ import java.util.List;
 @Getter
 public class MOFAnimationCelSet extends GameObject {
     private List<MOFAnimationCels> parts = new ArrayList<>();
+    private transient int dataPointer;
 
     @Override
     public void load(DataReader reader) {
-        short count = reader.readShort();
+        this.dataPointer = reader.getIndex();
+
+        int count = reader.readUnsignedShortAsInt();
         reader.readShort(); // Padding.
 
-        reader.jumpTemp(reader.readInt());
+        reader.setIndex(reader.readInt()); // Points to literally the exact index after reading.
         for (int i = 0; i < count; i++) {
             MOFAnimationCels part = new MOFAnimationCels();
             part.load(reader);
             parts.add(part);
         }
-        reader.jumpReturn();
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeInt((short) parts.size());
-        writer.writeShort((short) 0); //Padding
+        this.dataPointer = writer.getIndex();
+
+        writer.writeUnsignedShort(parts.size());
+        writer.writeShort((short) 0); // Padding
         writer.writeInt(writer.getIndex() + Constants.POINTER_SIZE);
         parts.forEach(part -> part.save(writer));
     }

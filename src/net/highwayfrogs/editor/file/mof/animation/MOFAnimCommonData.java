@@ -44,9 +44,9 @@ public class MOFAnimCommonData extends GameObject {
         int translationPointer = reader.readInt();
         int bboxPointer = reader.readInt();
 
-        Utils.verify(rotationCount == 0, "There is a non-zero rotation count!");
-        Utils.verify(translationCount == 0, "There is a non-zero translation count!");
-        Utils.verify(bboxCount == 0, "There is a non-zero bounding box count!");
+        Utils.verify(rotationCount == 0, "There is a non-zero rotation count! (%d, %d)", rotationCount, rotationPointer);
+        Utils.verify(translationCount == 0, "There is a non-zero translation count! (%d, %d)", translationCount, translationPointer);
+        Utils.verify(bboxCount == 0, "There is a non-zero bounding box count! (%d, %d)", bboxCount, bboxPointer);
 
         // Read Transforms.
         TransformType transformType = getParent().getTransformType();
