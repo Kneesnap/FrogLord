@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformType;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.ArrayList;
@@ -92,7 +93,12 @@ public class MOFAnimation extends GameObject {
         int[] mofPointers = new int[getMofFiles().size()];
         for (int i = 0; i < mofPointers.length; i++) {
             mofPointers[i] = writer.getIndex();
-            getMofFiles().get(i).save(writer);
+
+            ArrayReceiver receiver = new ArrayReceiver();
+            DataWriter mofWriter = new DataWriter(receiver);
+            getMofFiles().get(i).save(mofWriter);
+            mofWriter.closeReceiver();
+            writer.writeBytes(receiver.toArray());
         }
 
         writer.writeAddressTo(staticFilePointer);
