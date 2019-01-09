@@ -79,10 +79,39 @@ public class MOFFile extends GameFile {
         if (testFlag(FLAG_ANIMATION_FILE)) {
             resolveAnimatedMOF(reader);
         } else {
-            reader.setIndex(mofStart);
-            this.bytes = reader.readBytes(fileSize);
-            //resolveStaticMOF(reader);
+            if (Constants.COPY_STATIC_MOF) {
+                reader.setIndex(mofStart);
+                this.bytes = reader.readBytes(fileSize);
+            } else {
+                resolveStaticMOF(reader);
+            }
         }
+    }
+
+    @Override
+    public void save(DataWriter writer) {
+        if (dummy) {
+            writer.writeBytes(DUMMY_DATA);
+            return;
+        }
+
+        if (this.bytes != null && Constants.COPY_STATIC_MOF) {
+            writer.writeBytes(bytes);
+            return;
+        }
+
+        writer.writeBytes(getSignature());
+        writer.writeInt(0); // File length. Should be ok to use zero for now, but if it causes problems, we know where to look.
+        writer.writeInt(this.flags);
+
+        if (animation != null) { // If this is an animation, save the animation.
+            animation.save(writer);
+            return;
+        }
+
+        writer.writeInt(this.extra);
+        for (MOFPart part : getParts())
+            part.save(writer);
     }
 
     private void resolveStaticMOF(DataReader reader) {
@@ -235,32 +264,6 @@ public class MOFFile extends GameFile {
         }
 
         System.out.println("MOF Exported.");
-    }
-
-    @Override
-    public void save(DataWriter writer) {
-        if (dummy) {
-            writer.writeBytes(DUMMY_DATA);
-            return;
-        }
-
-        if (this.bytes != null) {
-            writer.writeBytes(bytes);
-            return;
-        }
-
-        writer.writeBytes(getSignature());
-        writer.writeInt(0); // File length. Should be ok to use zero for now, but if it causes problems, we know where to look.
-        writer.writeInt(this.flags);
-
-        if (animation != null) { // If this is an animation, save the animation.
-            animation.save(writer);
-            return;
-        }
-
-        writer.writeInt(this.extra);
-        for (MOFPart part : getParts())
-            part.save(writer);
     }
 
     /**
