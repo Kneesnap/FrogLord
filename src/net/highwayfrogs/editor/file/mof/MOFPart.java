@@ -17,6 +17,8 @@ import java.util.Map;
 
 /**
  * Represents the MR_PART struct.
+ * TODO: Volcano zone has some mofs which don't display properly.
+ * TODO: MWD size is bloated by 2MB.
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
