@@ -3,8 +3,8 @@ Editor Features:
  - VAB File (Seperate from VB VH)
 
  - MOF File
- Loading from file.
- Saving to file.
+ Some way of viewing animations.
+ Fix some mofs that have animation not exporting to .obj properly.
 
  - GUI Editor:
   Demo Editor
