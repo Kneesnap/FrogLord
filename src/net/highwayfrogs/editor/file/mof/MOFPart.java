@@ -37,6 +37,7 @@ public class MOFPart extends GameObject {
     private int verticeCount;
     private int normalCount;
 
+    private transient MOFFile parent;
     private transient Map<Integer, MOFPartPolyAnimEntryList> loadAnimEntryListMap = new HashMap<>();
     private transient Map<List<SVector>, Integer> saveNormalMap = new HashMap<>();
     private transient Map<MOFBBox, Integer> saveBoxMap = new HashMap<>();
@@ -50,6 +51,10 @@ public class MOFPart extends GameObject {
     private transient int tempFlipbookPointer;
 
     private static final int FLAG_ANIMATED_POLYS = 1; // Does this contain some animated texture polys?
+
+    public MOFPart(MOFFile parent) {
+        this.parent = parent;
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -72,6 +77,14 @@ public class MOFPart extends GameObject {
 
         // Read Partcels.
         if (partcelCount > 0) {
+            reader.jumpTemp(partcelPointer);
+            int readVal = reader.readInt();
+            reader.jumpReturn();
+            if (readVal == 0) { // This is probably an incomplete MOF, ABORT!
+                getParent().setIncompleteMOF(true);
+                return;
+            }
+
             reader.jumpTemp(partcelPointer);
             for (int i = 0; i < partcelCount; i++) {
                 MOFPartcel partcel = new MOFPartcel(this, verticeCount, normalCount);

@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Cleanup;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
@@ -30,20 +31,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Represents a MOF file.
  * Some files are off by 4-16 bytes. This is caused by us merging prim banks of matching types, meaning the header that was there before is removed.
- * TODO: Some files are way too large when exported
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
 public class MOFFile extends GameFile {
     private boolean dummy; // Is this dummied data?
     private MOFAnimation animation; // Animation data. For some reason they thought it'd be a good idea to make MOF have two different data structures.
-
     private byte[] signature;
     private byte[] bytes;
     private int flags;
     private int extra;
     private List<MOFPart> parts = new ArrayList<>();
     private int unknownValue;
+    @Setter private boolean incompleteMOF; // Some mofs are changed at run-time to share information. This attempts to handle that.
 
     public static final int FLAG_OFFSETS_RESOLVED = 1; // Fairly sure this is applied by frogger.exe runtime, and not something that should be true in the MWD. (Verify though.)
     public static final int FLAG_SIZES_RESOLVED = 2; // Like before, this is likely frogger.exe run-time only. But, we should confirm that.
@@ -66,26 +66,19 @@ public class MOFFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
-        int mofStart = reader.getIndex();
-
         this.signature = reader.readBytes(4);
         if (Arrays.equals(DUMMY_DATA, getSignature())) {
             this.dummy = true;
             return;
         }
 
-        int fileSize = reader.readInt(); // File length, including header.
+        reader.readInt(); // File length, including header.
         this.flags = reader.readInt();
 
         if (testFlag(FLAG_ANIMATION_FILE)) {
             resolveAnimatedMOF(reader);
         } else {
-            if (Constants.COPY_STATIC_MOF) {
-                reader.setIndex(mofStart);
-                this.bytes = reader.readBytes(fileSize);
-            } else {
-                resolveStaticMOF(reader);
-            }
+            resolveStaticMOF(reader);
         }
     }
 
@@ -96,7 +89,7 @@ public class MOFFile extends GameFile {
             return;
         }
 
-        if (this.bytes != null && Constants.COPY_STATIC_MOF) {
+        if (this.bytes != null && isIncompleteMOF()) {
             writer.writeBytes(bytes);
             return;
         }
@@ -122,12 +115,17 @@ public class MOFFile extends GameFile {
         int partCount = this.extra;
 
         for (int i = 0; i < partCount; i++) {
-            MOFPart part = new MOFPart();
+            MOFPart part = new MOFPart(this);
             part.load(reader);
             parts.add(part);
         }
 
         this.unknownValue = reader.readInt();
+
+        if (isIncompleteMOF()) { // Turns out something realized this was an incomplete MOF. In that case, scrap everything we've done and just copy the file directly.
+            reader.setIndex(0);
+            this.bytes = reader.readBytes(reader.getRemaining());
+        }
     }
 
     private void resolveAnimatedMOF(DataReader reader) {
@@ -143,6 +141,11 @@ public class MOFFile extends GameFile {
     public void exportObject(FileEntry entry, File folder, VLOArchive vloTable, String cleanName) {
         if (isDummy()) {
             System.out.println("Cannot export dummy MOF.");
+            return;
+        }
+
+        if (isIncompleteMOF()) {
+            System.out.println("Cannot export incomplete MOF.");
             return;
         }
 
