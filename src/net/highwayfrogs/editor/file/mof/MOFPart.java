@@ -183,6 +183,7 @@ public class MOFPart extends GameObject {
             getSaveBoxMap().clear();
             getSaveNormalMap().clear();
             getPartcels().forEach(partcel -> partcel.save(writer));
+            getPartcels().forEach(partcel -> partcel.saveNormalData(writer));
             writer.writeAddressTo(getTempPartcelPointer());
             getPartcels().forEach(partcel -> partcel.savePointerData(writer));
             getPartcels().forEach(partcel -> partcel.saveBboxData(writer));

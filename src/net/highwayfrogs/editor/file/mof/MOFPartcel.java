@@ -62,7 +62,13 @@ public class MOFPartcel extends GameObject {
         this.tempVertexPointer = writer.getIndex();
         for (SVector vertex : getVertices())
             vertex.saveWithPadding(writer);
+    }
 
+    /**
+     * Save normals data.
+     * @param writer The writer to write data to.
+     */
+    public void saveNormalData(DataWriter writer) {
         if (!parent.getSaveNormalMap().containsKey(getNormals())) {
             parent.getSaveNormalMap().put(getNormals(), writer.getIndex());
             for (SVector vector : getNormals())
