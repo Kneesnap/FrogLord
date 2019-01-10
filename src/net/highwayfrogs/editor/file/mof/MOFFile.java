@@ -41,6 +41,7 @@ public class MOFFile extends GameFile {
     private int flags;
     private int extra;
     private List<MOFPart> parts = new ArrayList<>();
+    private int unknownValue;
 
     public static final int FLAG_OFFSETS_RESOLVED = 1; // Fairly sure this is applied by frogger.exe runtime, and not something that should be true in the MWD. (Verify though.)
     public static final int FLAG_SIZES_RESOLVED = 2; // Like before, this is likely frogger.exe run-time only. But, we should confirm that.
@@ -109,6 +110,7 @@ public class MOFFile extends GameFile {
 
         writer.writeInt(this.extra);
         getParts().forEach(part -> part.save(writer));
+        writer.writeInt(this.unknownValue);
         getParts().forEach(part -> part.saveExtra(writer));
         writer.writeAddressTo(fileSizePointer);
     }
@@ -117,19 +119,19 @@ public class MOFFile extends GameFile {
         this.extra = reader.readInt();
         int partCount = this.extra;
 
-        // Read MR_Parts
         for (int i = 0; i < partCount; i++) {
             MOFPart part = new MOFPart();
             part.load(reader);
             parts.add(part);
         }
+
+        this.unknownValue = reader.readInt();
     }
 
     private void resolveAnimatedMOF(DataReader reader) {
         this.animation = new MOFAnimation(this);
         this.animation.load(reader);
     }
-
 
     /**
      * Export this object to wavefront obj.

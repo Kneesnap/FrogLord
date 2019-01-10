@@ -175,7 +175,6 @@ public class MOFPart extends GameObject {
 
         // Write Partcels.
         if (getPartcels().size() > 0) {
-            writer.writeInt(0); //TODO: There are 4 bytes here which are used by something regarding texture animation. They need to be handled properly, this line is a placeholder.
             getSaveBoxMap().clear();
             getSaveNormalMap().clear();
             getPartcels().forEach(partcel -> partcel.save(writer));
