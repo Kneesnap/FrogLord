@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represents a MOF file.
+ * Some files are off by 4-16 bytes. This is caused by us merging prim banks of matching types, meaning the header that was there before is removed.
+ * TODO: Some files are way too large when exported
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
