@@ -78,14 +78,6 @@ public class MOFPart extends GameObject {
         // Read Partcels.
         if (partcelCount > 0) {
             reader.jumpTemp(partcelPointer);
-            int readVal = reader.readInt();
-            reader.jumpReturn();
-            if (readVal == 0) { // This is probably an incomplete MOF, ABORT!
-                getParent().setIncompleteMOF(true);
-                return;
-            }
-
-            reader.jumpTemp(partcelPointer);
             for (int i = 0; i < partcelCount; i++) {
                 MOFPartcel partcel = new MOFPartcel(this, verticeCount, normalCount);
                 partcel.load(reader);

@@ -60,6 +60,7 @@ public class MOFFile extends GameFile {
 
     private static final Image ICON = loadIcon("swampy");
     private static final byte[] DUMMY_DATA = "DUMY".getBytes();
+    private static final int COMPLETE_TEST = 0x40;
 
     public static final ImageFilterSettings MOF_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
             .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
@@ -114,6 +115,16 @@ public class MOFFile extends GameFile {
         this.extra = reader.readInt();
         int partCount = this.extra;
 
+        reader.jumpTemp(COMPLETE_TEST);
+        this.incompleteMOF = (reader.readInt() == 0);
+        reader.jumpReturn();
+
+        if (isIncompleteMOF()) { // Just copy the MOF directly.
+            reader.setIndex(0);
+            this.bytes = reader.readBytes(reader.getRemaining());
+            return;
+        }
+
         for (int i = 0; i < partCount; i++) {
             MOFPart part = new MOFPart(this);
             part.load(reader);
@@ -121,11 +132,6 @@ public class MOFFile extends GameFile {
         }
 
         this.unknownValue = reader.readInt();
-
-        if (isIncompleteMOF()) { // Turns out something realized this was an incomplete MOF. In that case, scrap everything we've done and just copy the file directly.
-            reader.setIndex(0);
-            this.bytes = reader.readBytes(reader.getRemaining());
-        }
     }
 
     private void resolveAnimatedMOF(DataReader reader) {
