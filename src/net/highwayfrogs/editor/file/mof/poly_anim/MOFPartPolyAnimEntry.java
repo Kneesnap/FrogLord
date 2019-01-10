@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.mof;
+package net.highwayfrogs.editor.file.mof.poly_anim;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;

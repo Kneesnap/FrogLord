@@ -1,8 +1,9 @@
-package net.highwayfrogs.editor.file.mof;
+package net.highwayfrogs.editor.file.mof.poly_anim;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -16,6 +17,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 public class MOFPartPolyAnim extends GameObject {
     private MOFPrimType primType;
     private MOFPolygon mofPolygon;
+    private MOFPartPolyAnimEntryList entryList;
 
     private transient MOFPart parentPart;
     private transient int tempAnimAddress;
@@ -34,7 +36,15 @@ public class MOFPartPolyAnim extends GameObject {
         Utils.verify(getMofPolygon() != null, "Failed to load MOF Polygon. (%s, %d)", getPrimType(), primId);
 
         reader.readInt(); // Runtime.
-        reader.readInt(); // Animation pointer.
+        int animPointer = reader.readInt(); // Animation pointer.
+        if (getParentPart().getLoadAnimEntryListMap().containsKey(animPointer)) {
+            this.entryList = getParentPart().getLoadAnimEntryListMap().get(animPointer);
+        } else {
+            reader.jumpTemp(animPointer);
+            this.entryList = new MOFPartPolyAnimEntryList(getParentPart());
+            this.entryList.load(reader);
+            reader.jumpReturn();
+        }
     }
 
     @Override
@@ -47,14 +57,11 @@ public class MOFPartPolyAnim extends GameObject {
 
     /**
      * Write extra data.
-     * @param writer  The writer to write data to.
-     * @param address The address to write.
+     * @param writer The writer to write data to.
      */
-    public void saveExtra(DataWriter writer, int address) {
+    public void saveExtra(DataWriter writer) {
         Utils.verify(this.tempAnimAddress > 0, "save() was not called first.");
-        writer.jumpTemp(this.tempAnimAddress);
-        writer.writeInt(address);
-        writer.jumpReturn();
+        writer.writeAddressAt(this.tempAnimAddress, this.entryList.getTempSavePointer());
         this.tempAnimAddress = 0;
     }
 }

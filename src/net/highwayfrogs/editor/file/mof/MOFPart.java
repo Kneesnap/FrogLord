@@ -5,6 +5,8 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
+import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
+import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntryList;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -30,11 +32,12 @@ public class MOFPart extends GameObject {
     private PSXMatrix matrix;
     private MOFCollprim collprim;
     private List<MOFPartPolyAnim> partPolyAnims = new ArrayList<>();
-    private List<MOFPartPolyAnimEntry> partPolyAnimEntries = new ArrayList<>();
+    private List<MOFPartPolyAnimEntryList> partPolyAnimLists = new ArrayList<>();
     private MOFFlipbook flipbook;
     private int verticeCount;
     private int normalCount;
 
+    private transient Map<Integer, MOFPartPolyAnimEntryList> loadAnimEntryListMap = new HashMap<>();
     private transient Map<List<SVector>, Integer> saveNormalMap = new HashMap<>();
     private transient Map<MOFBBox, Integer> saveBoxMap = new HashMap<>();
     private transient List<MOFPolygon> orderedByLoadPolygons = new ArrayList<>();
@@ -126,6 +129,7 @@ public class MOFPart extends GameObject {
         reader.jumpReturn();
 
         if (animatedTexturesPointer > 0) {
+            loadAnimEntryListMap.clear();
             reader.jumpTemp(animatedTexturesPointer);
             int count = reader.readInt();
             for (int i = 0; i < count; i++) {
@@ -133,14 +137,6 @@ public class MOFPart extends GameObject {
                 partPolyAnim.load(reader);
                 this.partPolyAnims.add(partPolyAnim);
             }
-
-            int entryCount = reader.readInt();
-            for (int i = 0; i < entryCount; i++) {
-                MOFPartPolyAnimEntry entry = new MOFPartPolyAnimEntry();
-                entry.load(reader);
-                this.partPolyAnimEntries.add(entry);
-            }
-
             reader.jumpReturn();
         }
 
@@ -211,11 +207,8 @@ public class MOFPart extends GameObject {
             writer.writeAddressTo(getTempAnimatedTexturesPointer());
             writer.writeInt(getPartPolyAnims().size());
             getPartPolyAnims().forEach(partPolyAnim -> partPolyAnim.save(writer));
-            int pointer = writer.getIndex();
-            getPartPolyAnims().forEach(mofPartPolyAnim -> mofPartPolyAnim.saveExtra(writer, pointer));
-
-            writer.writeInt(getPartPolyAnimEntries().size());
-            getPartPolyAnimEntries().forEach(entry -> entry.save(writer));
+            getPartPolyAnimLists().forEach(list -> list.save(writer));
+            getPartPolyAnims().forEach(mofPartPolyAnim -> mofPartPolyAnim.saveExtra(writer));
         }
 
         if (getFlipbook() != null) {
