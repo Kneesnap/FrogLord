@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.beans.value.ChangeListener;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -9,6 +10,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
@@ -70,11 +72,6 @@ public class MAPController extends EditorController<MAPFile> {
     private boolean polygonSelected;
 
     private PerspectiveCamera camera;
-
-    private static final double ROTATION_SPEED = 0.35D;
-    private static final double SCROLL_SPEED = 5;
-    private static final double TRANSLATE_SPEED = 10;
-    private static final int VERTEX_SPEED = 3;
 
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
     private static final Image LIGHT_BULB = GameFile.loadIcon("lightbulb");
@@ -186,20 +183,19 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Setup a perspective camera through which the 3D view is realised.
         this.camera = new PerspectiveCamera(true);
-        this.camera.setFarClip(Constants.MAP_VIEW_FAR_CLIP);
 
         // Load FXML for UI layout.
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/javafx/mapui.fxml"));
         Parent loadRoot = fxmlLoader.load();
-        // Get the custom mapui controller and setup bindings, etc.
+        // Get the custom mapui controller
         MapUIController mapUIController = fxmlLoader.getController();
-        mapUIController.setupBindings(this.mapMesh, meshView, rotX, rotY, rotZ, this.camera);
 
         // Create the 3D elements and use them within a subscene.
         Group root3D = new Group(this.camera, meshView);
         SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - mapUIController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
-        subScene3D.setFill(Color.GRAY);
-        subScene3D.setCamera(this.camera);
+
+        //  Setup mapui controller bindings, etc.
+        mapUIController.setupBindings(subScene3D, this.mapMesh, meshView, rotX, rotY, rotZ, this.camera);
 
         // Setup the UI layout.
         BorderPane uiPane = new BorderPane();
@@ -214,6 +210,17 @@ public class MAPController extends EditorController<MAPFile> {
         mapScene = new Scene(uiPane);
         Scene defaultScene = Utils.setSceneKeepPosition(stageToOverride, mapScene);
 
+        // Listener that attempts to (partially) handle window resizing. Does not support Maximize / Fullscreen (yet).
+        ChangeListener<Number> stageSizeListener = (observable, oldValue, newValue) -> {
+            System.out.println("Height: " + stageToOverride.getHeight() + " Width: " + stageToOverride.getWidth());
+            subScene3D.setWidth(stageToOverride.getScene().getWidth() - mapUIController.uiRootPaneWidth());
+            subScene3D.setHeight(stageToOverride.getScene().getHeight());
+        };
+
+        stageToOverride.widthProperty().addListener(stageSizeListener);
+        stageToOverride.heightProperty().addListener(stageSizeListener);
+
+        // Input (key) event processing.
         mapScene.setOnKeyPressed(event -> {
             // Exit the viewer.
             if (event.getCode() == KeyCode.ESCAPE) {
@@ -260,18 +267,18 @@ public class MAPController extends EditorController<MAPFile> {
 
             if (isPolygonSelected()) {
                 if (event.getCode() == KeyCode.UP) {
-                    movePolygonY(VERTEX_SPEED);
+                    movePolygonY(MapUIController.getPropertyVertexSpeed().get());
                 } else if (event.getCode() == KeyCode.DOWN) {
-                    movePolygonY(-VERTEX_SPEED);
+                    movePolygonY(-MapUIController.getPropertyVertexSpeed().get());
                 } else if (event.getCode() == KeyCode.LEFT) {
-                    movePolygonX(-VERTEX_SPEED);
+                    movePolygonX(-MapUIController.getPropertyVertexSpeed().get());
                 } else if (event.getCode() == KeyCode.RIGHT) {
-                    movePolygonX(VERTEX_SPEED);
+                    movePolygonX(MapUIController.getPropertyVertexSpeed().get());
                 }
             }
         });
 
-        mapScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * SCROLL_SPEED)));
+        mapScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * MapUIController.getSpeedModifier(evt.isControlDown(), evt.isAltDown(), MapUIController.getPropertyScrollSpeed().get()))));
 
         mapScene.setOnMousePressed(e -> {
             mouseX = oldMouseX = e.getSceneX();
@@ -295,11 +302,11 @@ public class MAPController extends EditorController<MAPFile> {
             double mouseYDelta = (mouseY - oldMouseY);
 
             if (e.isPrimaryButtonDown()) {
-                rotX.setAngle(rotX.getAngle() + (mouseYDelta * ROTATION_SPEED)); // Rotate the object.
-                rotY.setAngle(rotY.getAngle() - (mouseXDelta * ROTATION_SPEED));
+                rotX.setAngle(rotX.getAngle() + (mouseYDelta * MapUIController.getSpeedModifier(e.isControlDown(), e.isAltDown(), MapUIController.getPropertyRotationSpeed().get()))); // Rotate the object.
+                rotY.setAngle(rotY.getAngle() - (mouseXDelta * MapUIController.getSpeedModifier(e.isControlDown(), e.isAltDown(), MapUIController.getPropertyRotationSpeed().get())));
             } else if (e.isMiddleButtonDown()) {
-                camera.setTranslateX(camera.getTranslateX() - (mouseXDelta * TRANSLATE_SPEED)); // Move the camera.
-                camera.setTranslateY(camera.getTranslateY() - (mouseYDelta * TRANSLATE_SPEED));
+                camera.setTranslateX(camera.getTranslateX() - (mouseXDelta * MapUIController.getSpeedModifier(e.isControlDown(), e.isAltDown(), MapUIController.getPropertyTranslateSpeed().get()))); // Move the camera.
+                camera.setTranslateY(camera.getTranslateY() - (mouseYDelta * MapUIController.getSpeedModifier(e.isControlDown(), e.isAltDown(), MapUIController.getPropertyTranslateSpeed().get())));
             }
         });
 
@@ -323,8 +330,8 @@ public class MAPController extends EditorController<MAPFile> {
         });
 
         mesh.findNextValidRemap(0, 0, false);
-        camera.setTranslateZ(-Constants.MAP_VIEW_SCALE);
-        camera.setTranslateY(-Constants.MAP_VIEW_SCALE / 7.0);
+        camera.setTranslateZ(-MapUIController.getPropertyMapViewScale().get());
+        camera.setTranslateY(-MapUIController.getPropertyMapViewScale().get() / 7.0);
     }
 
     private void setupLights(Group root3D, Rotate rotX, Rotate rotY, Rotate rotZ) {
@@ -377,9 +384,9 @@ public class MAPController extends EditorController<MAPFile> {
         double height = image.getImage().getHeight();
         Rectangle rect = new Rectangle(width, height);
 
-        rect.setTranslateX((Constants.MAP_VIEW_SCALE * x) - width);
-        rect.setTranslateY((Constants.MAP_VIEW_SCALE * y) - height);
-        rect.setTranslateZ((Constants.MAP_VIEW_SCALE * z));
+        rect.setTranslateX((MapUIController.getPropertyMapViewScale().get() * x) - width);
+        rect.setTranslateY((MapUIController.getPropertyMapViewScale().get() * y) - height);
+        rect.setTranslateZ((MapUIController.getPropertyMapViewScale().get() * z));
         rect.setFill(image);
 
         Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS); // Up, Down,
