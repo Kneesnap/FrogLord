@@ -4,6 +4,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.mof.MOFPart;
+import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
@@ -117,5 +119,16 @@ public class MOFAnimation extends GameObject {
      */
     public TransformType getTransformType() {
         return TransformType.getType(getHolderMOF().getSignature()[1]);
+    }
+
+    /**
+     * Get an animation transform.
+     * @param part      The MOFPart to apply to.
+     * @param cel       The cel who is changing.
+     * @param virtualId The id.
+     * @return transform
+     */
+    public TransformObject getTransform(MOFPart part, MOFAnimationCels cel, int virtualId) {
+        return getCommonData().getTransforms().get(cel.getTransformID(virtualId, part));
     }
 }
