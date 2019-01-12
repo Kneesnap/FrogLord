@@ -5,15 +5,20 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
-import javafx.scene.control.*;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.*;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.DrawMode;
+import javafx.scene.shape.MeshView;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -164,7 +169,6 @@ public class MAPController extends EditorController<MAPFile> {
         }, false);
     }
 
-
     @SneakyThrows
     private void setupMapViewer(Stage stageToOverride, MapMesh mesh, TextureMap texMap) {
         this.mapMesh = mesh;
@@ -212,8 +216,12 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Create and set the scene.
         mapScene = new Scene(uiPane);
-        Scene defaultScene = Utils.setSceneKeepPosition(stageToOverride, mapScene);
 
+        // Scale SubScene.
+        mapScene.widthProperty().addListener((observable, old, newVal) -> subScene3D.setWidth(newVal.doubleValue() - mapUIController.uiRootPaneWidth()));
+        subScene3D.heightProperty().bind(mapScene.heightProperty());
+
+        Scene defaultScene = Utils.setSceneKeepPosition(stageToOverride, mapScene);
         mapScene.setOnKeyPressed(event -> {
             // Exit the viewer.
             if (event.getCode() == KeyCode.ESCAPE) {

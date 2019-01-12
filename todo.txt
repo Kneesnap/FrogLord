@@ -1,6 +1,6 @@
 Editor Features:
 
- - VAB File (Seperate from VB VH) https://www.zophar.net/fileuploads/2/10730sbtsy/psfrip.txt
+ - VAB File (Separate from VB VH) https://www.zophar.net/fileuploads/2/10730sbtsy/psfrip.txt
 
  - MOF File
  Some way of viewing animations.
@@ -11,7 +11,6 @@ Editor Features:
   PAL Editor
   Map Editor
   MOF Editor
-  Handle window resizing when in 3D view
 
 Build FrogPSX.H from MWD.
 
