@@ -17,11 +17,12 @@ import java.util.List;
 @Getter
 public class MOFAnimationModelSet extends GameObject {
     private int type;
-    private List<MOFAnimationModel> models = new ArrayList<>();
+    private MOFAnimationModel model;
     private List<MOFAnimationCelSet> celSets = new ArrayList<>();
     // BBOX Set is always empty, so we don't keep it.
 
     public static final int FLAG_HIERARCHICAL = Constants.BIT_FLAG_0;
+    private static final int FORCED_MODEL_COUNT = 1;
 
     @Override
     public void load(DataReader reader) {
@@ -37,7 +38,7 @@ public class MOFAnimationModelSet extends GameObject {
         int bboxPointer = reader.readInt();
 
         Utils.verify(bboxCount == 0, "The ModelSet has a non-zero BBOX count. (%d, %d)", bboxCount, bboxPointer);
-        Utils.verify(modelCount == 1, "FrogLord does not currently support MOFs with more than one model! (%d)", modelCount);
+        Utils.verify(modelCount == FORCED_MODEL_COUNT, "FrogLord does not currently support MOFs with more than one model! (%d)", modelCount);
 
         // Read Celset.
         reader.jumpTemp(celsetPointer);
@@ -50,11 +51,8 @@ public class MOFAnimationModelSet extends GameObject {
 
         // Read Models. (After Celset so it can reference cel sets loaded previously.)
         reader.jumpTemp(modelPointer);
-        for (int i = 0; i < modelCount; i++) {
-            MOFAnimationModel model = new MOFAnimationModel(this);
-            model.load(reader);
-            models.add(model);
-        }
+        this.model = new MOFAnimationModel(this);
+        this.model.load(reader);
         reader.jumpReturn();
     }
 
@@ -62,26 +60,23 @@ public class MOFAnimationModelSet extends GameObject {
     public void save(DataWriter writer) {
         writer.writeInt(this.type);
 
-        writer.writeUnsignedByte((short) models.size());
+        writer.writeUnsignedByte((short) FORCED_MODEL_COUNT);
         writer.writeUnsignedByte((short) celSets.size());
         writer.writeNull(2); // BBOX Count + 1 byte of padding.
 
-        int modelSetPointer = writer.getIndex() + (3 * Constants.POINTER_SIZE);
-        writer.writeInt(modelSetPointer);
-
-        int celSetPointer = writer.getIndex();
-        writer.writeInt(0); // Right after model.
-        writer.writeInt(0); // BBOX Pointer
+        int modelSetPointer = writer.writeNullPointer();
+        int celSetPointer = writer.writeNullPointer(); // Right after model.
+        writer.writeNullPointer(); // BBOX Pointer
 
         // Write models.
-        Utils.verify(modelSetPointer == writer.getIndex(), "Calculated wrong cell pointer index: (%d, %d)", modelSetPointer, writer.getIndex());
-        getModels().forEach(model -> model.save(writer));
+        writer.writeAddressTo(modelSetPointer);
+        this.model.save(writer);
 
         // Write Celset.
         writer.writeAddressTo(celSetPointer);
         getCelSets().forEach(celSet -> celSet.save(writer));
 
         // Writes Cel Set Pointers. MUST BE CALLED AFTER
-        getModels().forEach(model -> model.writeCelPointer(writer));
+        this.model.writeCelPointer(writer);
     }
 }

@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -12,14 +13,15 @@ import java.util.List;
 
 /**
  * Represents the "MR_ANIM_CELS" struct.
+ * This is believed to be a single animation 'action'. Ie: 1 full animation.
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
 public class MOFAnimationCels extends GameObject {
     private int partCount; // In the future maybe this can be calculated.
     private int flags;
-    private List<Integer> celNumbers = new ArrayList<>();
-    private List<Short> indices = new ArrayList<>();
+    private List<Integer> celNumbers = new ArrayList<>(); // celNumbers[virtualId] -> actualCel
+    private List<Short> indices = new ArrayList<>(); // Transform Ids. [(actualCel * partCount) + part] part is ?.
 
     private transient int tempCelNumberPointer;
     private transient int tempIndicePointer;
@@ -58,12 +60,8 @@ public class MOFAnimationCels extends GameObject {
         writer.writeUnsignedShort(this.partCount);
         writer.writeUnsignedShort(this.indices.size() / getPartCount());
         writer.writeUnsignedShort(this.flags);
-
-        this.tempCelNumberPointer = writer.getIndex();
-        writer.writeInt(0);
-
-        this.tempIndicePointer = writer.getIndex();
-        writer.writeInt(0);
+        this.tempCelNumberPointer = writer.writeNullPointer();
+        this.tempIndicePointer = writer.writeNullPointer();
     }
 
     /**
@@ -83,5 +81,15 @@ public class MOFAnimationCels extends GameObject {
 
         this.tempIndicePointer = 0;
         this.tempCelNumberPointer = 0;
+    }
+
+    /**
+     * Gets the transform ID for an animation stage.
+     * @param virtualId The stage id.
+     * @param part      The mof part to get the animation for.
+     * @return transformId
+     */
+    public int getTransformID(int virtualId, MOFPart part) {
+        return (celNumbers.get(virtualId) * partCount) + part.getPartID();
     }
 }

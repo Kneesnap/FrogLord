@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
@@ -68,14 +67,13 @@ public class MOFAnimCommonData extends GameObject {
         writer.writeShort((short) 0);
         writer.writeShort((short) 0);
 
-        int transformPointer = writer.getIndex() + (4 * Constants.POINTER_SIZE);
-        writer.writeInt(transformPointer);
+        int transformPointer = writer.writeNullPointer();
         writer.writeInt(0);
         writer.writeInt(0);
         writer.writeInt(0);
 
         // Write Transforms.
-        Utils.verify(transformPointer == writer.getIndex(), "Transform Pointer calculated wrong! (%d, %d)", transformPointer, writer.getIndex());
+        writer.writeAddressTo(transformPointer);
         getTransforms().forEach(transform -> transform.save(writer));
         if (writer.getIndex() % 4 > 0) // Padding.
             writer.writeShort((short) 0);

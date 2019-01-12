@@ -264,4 +264,14 @@ public class MOFPart extends GameObject {
 
         throw new IllegalArgumentException("This MOFPolygon is not registered, and therefore does not have an id!");
     }
+
+    /**
+     * Gets the id of this part.
+     * @return partId
+     */
+    public int getPartID() {
+        int partId = getParent().getParts().indexOf(this);
+        Utils.verify(partId >= 0, "MOFPart is not registered!");
+        return partId;
+    }
 }

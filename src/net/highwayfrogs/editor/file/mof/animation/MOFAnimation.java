@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFFile;
@@ -21,7 +20,7 @@ import java.util.List;
 @Getter
 public class MOFAnimation extends GameObject {
     private MOFFile holderMOF;
-    private List<MOFAnimationModelSet> modelSets = new ArrayList<>();
+    private MOFAnimationModelSet modelSet;
     private List<MOFFile> mofFiles = new ArrayList<>();
     private MOFAnimCommonData commonData;
 
@@ -41,13 +40,12 @@ public class MOFAnimation extends GameObject {
         int commonDataPointer = reader.readInt(); // Right after model set data.
         int staticFilePointer = reader.readInt(); // After common data pointer.
 
+        Utils.verify(modelSetCount == 1, "Multiple model sets are not supported by FrogLord. (%d)", modelSetCount);
+
         // Read model sets.
         reader.jumpTemp(modelSetPointer);
-        for (int i = 0; i < modelSetCount; i++) {
-            MOFAnimationModelSet modelSet = new MOFAnimationModelSet();
-            modelSet.load(reader);
-            modelSets.add(modelSet);
-        }
+        this.modelSet = new MOFAnimationModelSet();
+        this.modelSet.load(reader);
         reader.jumpReturn();
 
         // Read common data.
@@ -72,18 +70,16 @@ public class MOFAnimation extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.modelSets.size());
+        writer.writeUnsignedShort(1); // Model Set Count.
         writer.writeUnsignedShort(this.mofFiles.size());
 
-        writer.writeInt(writer.getIndex() + (3 * Constants.POINTER_SIZE)); // Right after header.
-        int commonDataPointer = writer.getIndex(); // Right after model set data.
-        writer.writeInt(0);
-        int staticFilePointer = writer.getIndex(); // After common data.
-        writer.writeInt(0);
+        int modelSetPointer = writer.writeNullPointer(); // Right after header.
+        int commonDataPointer = writer.writeNullPointer(); // Right after model set data.
+        int staticFilePointer = writer.writeNullPointer(); // After common data.
 
         // Write model sets.
-        for (MOFAnimationModelSet modelSet : getModelSets())
-            modelSet.save(writer);
+        writer.writeAddressTo(modelSetPointer);
+        this.modelSet.save(writer);
 
         // Write common data.
         writer.writeAddressTo(commonDataPointer);
@@ -101,6 +97,7 @@ public class MOFAnimation extends GameObject {
             writer.writeBytes(receiver.toArray());
         }
 
+        // Write pointers to mof files after the files.
         writer.writeAddressTo(staticFilePointer);
         for (int mofPointer : mofPointers)
             writer.writeInt(mofPointer);

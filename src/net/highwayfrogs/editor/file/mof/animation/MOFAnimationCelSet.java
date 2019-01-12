@@ -11,6 +11,7 @@ import java.util.List;
 
 /**
  * Represents the "MR_ANIM_CEL_SET" struct.
+ * Each entry is a different animation.
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter

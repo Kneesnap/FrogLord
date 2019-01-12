@@ -16,8 +16,6 @@ import java.util.List;
  */
 @Getter
 public class MOFAnimationModel extends GameObject {
-    private MOFAnimationModelSet parent;
-    private int animationType;
     private int flags;
     private int partCount;
     private int staticModelId;
@@ -25,10 +23,13 @@ public class MOFAnimationModel extends GameObject {
     // Bounding Box Set is unused.
     // Constraint is unused.
 
+    private transient MOFAnimationModelSet parent;
     private transient int tempCelsetPointerAddress;
 
     public static final int FLAG_GLOBAL_BBOXES_INCLUDED = Constants.BIT_FLAG_0;
     public static final int FLAG_PERCEL_BBOXES_INCLUDED = Constants.BIT_FLAG_1;
+
+    private static final int DEFAULT_ANIMATION_TYPE = 1;
 
     public MOFAnimationModel(MOFAnimationModelSet set) {
         this.parent = set;
@@ -36,7 +37,9 @@ public class MOFAnimationModel extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        this.animationType = reader.readUnsignedShortAsInt();
+        int animationType = reader.readUnsignedShortAsInt();
+        Utils.verify(animationType == DEFAULT_ANIMATION_TYPE, "Unknown animation type: %d.", animationType);
+
         this.flags = reader.readUnsignedShortAsInt();
         this.partCount = reader.readUnsignedShortAsInt();
         this.staticModelId = reader.readUnsignedShortAsInt();
@@ -57,7 +60,7 @@ public class MOFAnimationModel extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.animationType);
+        writer.writeUnsignedShort(DEFAULT_ANIMATION_TYPE);
         writer.writeUnsignedShort(this.flags);
         writer.writeUnsignedShort(this.partCount);
         writer.writeUnsignedShort(this.staticModelId);
@@ -65,13 +68,12 @@ public class MOFAnimationModel extends GameObject {
         this.tempCelsetPointerAddress = writer.getIndex();
         writer.writeInt(0); // Right after BBOX
 
-        int calculatedBboxPointer = writer.getIndex() + (3 * Constants.POINTER_SIZE);
-        writer.writeInt(calculatedBboxPointer);
-        writer.writeInt(0);
-        writer.writeInt(0);
+        int calculatedBboxPointer = writer.writeNullPointer();
+        writer.writeNullPointer();
+        writer.writeNullPointer();
 
         // Write BBOX
-        Utils.verify(calculatedBboxPointer == writer.getIndex(), "Calculated wrong bbox pointer. (%d, %d)", calculatedBboxPointer, writer.getIndex());
+        writer.writeAddressTo(calculatedBboxPointer);
         this.boundingBox.save(writer);
     }
 
