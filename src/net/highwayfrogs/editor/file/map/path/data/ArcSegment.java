@@ -42,7 +42,7 @@ public class ArcSegment extends PathSegment {
         writer.writeInt(this.pitch);
     }
 
-    @Override // Is not accurate.
+    @Override // TODO: This is inaccurate.
     protected SVector calculatePosition(PathInfo info) {
         SVector vector = new SVector(center);
         vector.subtract(start);

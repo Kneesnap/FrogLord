@@ -375,7 +375,10 @@ public class MAPController extends EditorController<MAPFile> {
                 float z = Utils.unsignedShortToFloat(end.getZ());
 
                 Rectangle rect = makeIcon(root3D, pattern, rotX, rotY, rotZ, x, y, z);
-                rect.setOnMouseClicked(evt -> System.out.println("Hello, I am a " + entity.getFormBook()));
+                rect.setOnMouseClicked(evt -> {
+                    System.out.println("Hello, I am a " + entity.getFormBook() + ": ");
+                    System.out.println("Type: " + path.getSegments().get(pathInfo.getSegmentId()).getType());
+                });
             }
         }
     }

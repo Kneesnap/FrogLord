@@ -93,8 +93,8 @@ public class SplineSegment extends PathSegment {
         d >>= 13;
         d >>= 5;
 
-        d += (d * SPLINE_FIX_INTERVAL);
-        return ((d << 1) >> 1);
+        d += (i * SPLINE_FIX_INTERVAL);
+        return (d << 1) >> 1;
     }
 
     // I hate this.
