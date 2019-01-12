@@ -92,7 +92,6 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
 
     /**
      * Convert this into a wavefront object face command.
-     * TODO: Add normals.
      * @return faceCommand
      */
     public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter) {
