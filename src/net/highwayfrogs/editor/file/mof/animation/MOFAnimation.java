@@ -11,9 +11,6 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Represents the MR_ANIM_HEADER struct.
  * Must be encapsulated under MOFFile.
@@ -21,15 +18,17 @@ import java.util.List;
  */
 @Getter
 public class MOFAnimation extends GameObject {
-    private MOFFile holderMOF;
     private MOFAnimationModelSet modelSet;
-    private List<MOFFile> mofFiles = new ArrayList<>();
+    private MOFFile staticMOF;
     private MOFAnimCommonData commonData;
 
+    private transient MOFFile mofParent;
+
     public static final byte FILE_START_FRAME_AT_ZERO = (byte) 0x31; // '1'
+    private static final int STATIC_MOF_COUNT = 1;
 
     public MOFAnimation(MOFFile file) {
-        this.holderMOF = file;
+        this.mofParent = file;
     }
 
     @Override
@@ -43,6 +42,7 @@ public class MOFAnimation extends GameObject {
         int staticFilePointer = reader.readInt(); // After common data pointer.
 
         Utils.verify(modelSetCount == 1, "Multiple model sets are not supported by FrogLord. (%d)", modelSetCount);
+        Utils.verify(staticFileCount == 1, "FrogLord only supports one MOF. (%d)", staticFileCount);
 
         // Read model sets.
         reader.jumpTemp(modelSetPointer);
@@ -57,23 +57,18 @@ public class MOFAnimation extends GameObject {
         reader.jumpReturn();
 
         reader.jumpTemp(staticFilePointer);
-        int[] mofPointers = new int[staticFileCount];
-        for (int i = 0; i < mofPointers.length; i++)
-            mofPointers[i] = reader.readInt();
-
-        for (int i = 0; i < mofPointers.length; i++) {
-            DataReader mofReader = reader.newReader(mofPointers[i], i == mofPointers.length - 1 ? -1 : mofPointers[i + 1] - reader.getIndex());
-            MOFFile mof = new MOFFile();
-            mof.load(mofReader);
-            mofFiles.add(mof);
-        }
+        int mofPointer = reader.readInt();
         reader.jumpReturn();
+
+        DataReader mofReader = reader.newReader(mofPointer, staticFilePointer - mofPointer);
+        this.staticMOF = new MOFFile();
+        this.staticMOF.load(mofReader);
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedShort(1); // Model Set Count.
-        writer.writeUnsignedShort(this.mofFiles.size());
+        writer.writeUnsignedShort(STATIC_MOF_COUNT);
 
         int modelSetPointer = writer.writeNullPointer(); // Right after header.
         int commonDataPointer = writer.writeNullPointer(); // Right after model set data.
@@ -87,22 +82,17 @@ public class MOFAnimation extends GameObject {
         writer.writeAddressTo(commonDataPointer);
         this.commonData.save(writer);
 
-        // Write MOF Files.
-        int[] mofPointers = new int[getMofFiles().size()];
-        for (int i = 0; i < mofPointers.length; i++) {
-            mofPointers[i] = writer.getIndex();
+        // Write static MOF.
+        int mofPointer = writer.getIndex();
+        ArrayReceiver receiver = new ArrayReceiver();
+        DataWriter mofWriter = new DataWriter(receiver);
+        getStaticMOF().save(mofWriter);
+        mofWriter.closeReceiver();
+        writer.writeBytes(receiver.toArray());
 
-            ArrayReceiver receiver = new ArrayReceiver();
-            DataWriter mofWriter = new DataWriter(receiver);
-            getMofFiles().get(i).save(mofWriter);
-            mofWriter.closeReceiver();
-            writer.writeBytes(receiver.toArray());
-        }
-
-        // Write pointers to mof files after the files.
+        // Write pointers.
         writer.writeAddressTo(staticFilePointer);
-        for (int mofPointer : mofPointers)
-            writer.writeInt(mofPointer);
+        writer.writeInt(mofPointer);
     }
 
     /**
@@ -110,7 +100,7 @@ public class MOFAnimation extends GameObject {
      * @return startAtFrameZero
      */
     public boolean shouldStartAtFrameZero() {
-        return getHolderMOF().getSignature()[0] == FILE_START_FRAME_AT_ZERO;
+        return mofParent.getSignature()[0] == FILE_START_FRAME_AT_ZERO;
     }
 
     /**
@@ -118,7 +108,7 @@ public class MOFAnimation extends GameObject {
      * @return transformType.
      */
     public TransformType getTransformType() {
-        return TransformType.getType(getHolderMOF().getSignature()[1]);
+        return TransformType.getType(mofParent.getSignature()[1]);
     }
 
     /**

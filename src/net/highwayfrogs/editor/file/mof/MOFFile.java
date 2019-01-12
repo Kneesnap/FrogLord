@@ -156,8 +156,7 @@ public class MOFFile extends GameFile {
         }
 
         if (testFlag(FLAG_ANIMATION_FILE)) {
-            for (int i = 0; i < this.animation.getMofFiles().size(); i++)
-                this.animation.getMofFiles().get(i).exportObject(entry, folder, vloTable, cleanName + "-" + i);
+            this.animation.getStaticMOF().exportObject(entry, folder, vloTable, cleanName);
             return;
         }
 
