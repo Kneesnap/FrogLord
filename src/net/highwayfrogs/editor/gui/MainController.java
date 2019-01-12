@@ -119,7 +119,7 @@ public class MainController implements Initializable {
 
     /**
      * Get the FileEntry associated with the selected file.
-     * @return fileentry
+     * @return fileEntry
      */
     public FileEntry getFileEntry() {
         return mwdFile.getEntryMap().get(getCurrentFile());
@@ -137,11 +137,9 @@ public class MainController implements Initializable {
         byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
         GameFile oldFile = getCurrentFile();
         GameFile newFile = mwdFile.replaceFile(fileBytes, getFileEntry(), oldFile);
-
         this.mwdFile.getEntryMap().put(newFile, getFileEntry());
-        int index = this.mwdFile.getFiles().indexOf(oldFile);
-        this.mwdFile.getFiles().set(index, newFile);
-        getCurrentFilesList().getItems().set(index, newFile);
+        this.mwdFile.getFiles().set(this.mwdFile.getFiles().indexOf(oldFile), newFile);
+        getCurrentFilesList().getItems().set(getCurrentFilesList().getItems().indexOf(oldFile), newFile);
 
         newFile.onImport(oldFile, getFileEntry().getDisplayName(), selectedFile.getName());
         openEditor(getCurrentFilesList(), newFile); // Open the editor for the new file.

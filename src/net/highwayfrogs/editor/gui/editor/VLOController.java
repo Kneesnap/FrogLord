@@ -131,7 +131,7 @@ public class VLOController extends EditorController<VLOArchive> {
     @FXML
     @SneakyThrows
     private void importImage(ActionEvent event) {
-        File selectedFile = Utils.promptFileOpen("Select the image to import...", "Image Files", "*.png");
+        File selectedFile = Utils.promptFileOpen("Select the image to import...", "Image Files", "png");
         if (selectedFile == null)
             return; // Cancelled.
 

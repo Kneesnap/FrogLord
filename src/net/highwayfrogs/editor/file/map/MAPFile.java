@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.TargetPlatform;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
@@ -347,9 +348,31 @@ public class MAPFile extends GameFile {
             animation.load(reader);
             mapAnimations.add(animation);
         }
+    }
 
-        if (Constants.DEV_ISLAND_NAME.equals(MWDFile.CURRENT_FILE_NAME))
-            fixDEV1(null);
+    @Override
+    public void onImport(GameFile oldFile, String oldFileName, String importedFileName) {
+        super.onImport(oldFile, oldFileName, importedFileName);
+        tryFixIsland(importedFileName);
+    }
+
+    /**
+     * This method fixes this MAP (If it is ISLAND.MAP) so it will load properly.
+     */
+    public void tryFixIsland(String newName) {
+        if (!Constants.DEV_ISLAND_NAME.equals(newName))
+            return;
+
+        System.out.println("Fixing imported developer map.");
+        removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity.
+
+        // Remove "SUB_PEDDLEBOAT" entities. These entities do not exist.
+        removeEntity(getEntities().get(7));
+        removeEntity(getEntities().get(5));
+        removeEntity(getEntities().get(3));
+        removeEntity(getEntities().get(2));
+
+        GUIMain.EXE_CONFIG.patchRemapInExe(Constants.ISLAND_REMAP_NAME, GUIMain.EXE_CONFIG.getPlatform() == TargetPlatform.PC ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
     }
 
     @Override
@@ -800,31 +823,6 @@ public class MAPFile extends GameFile {
     @Override
     public Node makeEditor() {
         return loadEditor(new MAPController(), "map", this);
-    }
-
-    @Override
-    public void onImport(GameFile oldFile, String oldFileName, String importedFileName) {
-        super.onImport(oldFile, oldFileName, importedFileName);
-
-        if (importedFileName.equalsIgnoreCase(Constants.DEV_ISLAND_NAME))
-            fixDEV1(Utils.stripExtension(oldFileName));
-    }
-
-    /**
-     * This method fixes this MAP (If it is ISLAND.MAP) so it will load properly.
-     */
-    public void fixDEV1(String oldTheme) {
-        System.out.println("Fixing imported developer map.");
-        removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity.
-
-        // Remove "SUB_PEDDLEBOAT" entities. These entities do not exist.
-        removeEntity(getEntities().get(7));
-        removeEntity(getEntities().get(5));
-        removeEntity(getEntities().get(3));
-        removeEntity(getEntities().get(2));
-
-        if (oldTheme != null)
-            GUIMain.EXE_CONFIG.patchRemapInExe(oldTheme, Arrays.asList(0, 862, 860, 859, 688, 863, 857, 694, 722, 854, 729, 857, 854, 853, 850, 3, 863));
     }
 
     /**

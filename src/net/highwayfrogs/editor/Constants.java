@@ -1,5 +1,8 @@
 package net.highwayfrogs.editor;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Holds constant variables which may come in handy.
  * Created by Kneesnap on 8/10/2018.
@@ -38,4 +41,8 @@ public class Constants {
     public static final int BIT_FLAG_8 = 1 << 8;
 
     public static final boolean ENABLE_WAD_FORMATS = true;
+
+    public static final List<Integer> PC_ISLAND_REMAP = Arrays.asList(221, 862, 860, 859, 688, 863, 857, 694, 722, 854, 729, 857, 854, 853, 850, 3, 863);
+    public static final List<Integer> PSX_ISLAND_REMAP = Arrays.asList(363, 1191, 1189, 1188, 996, 1192, 1186, 1002, 1033, 1183, 1040, 1186, 1183, 1182, 1179, 4, 1192);
+    public static final String ISLAND_REMAP_NAME = "SUB1";
 }
