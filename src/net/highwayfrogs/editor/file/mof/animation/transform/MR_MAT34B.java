@@ -2,12 +2,11 @@ package net.highwayfrogs.editor.file.mof.animation.transform;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
- * Represents MR_MAT34B
+ * Represents the "MR_MAT34B" transformation struct.
  * Created by Kneesnap on 1/5/2019.
  */
 @Getter
