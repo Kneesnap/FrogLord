@@ -2,7 +2,9 @@ package net.highwayfrogs.editor.file.map.path;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -17,14 +19,21 @@ import java.util.List;
 @Getter
 public class Path extends GameObject {
     private List<PathSegment> segments = new ArrayList<>();
-    private transient int entityPointerLocation;
+    private List<Short> entityIds = new ArrayList<>();
+    private transient int tempEntityIndexPointer;
 
     @Override
     public void load(DataReader reader) {
-        int entityIndicePointer = reader.readInt(); // pa_entity_indices, "Note that entity_indices points to a (-1) terminated list of indices into the global entity list. (ie. the list of pointers after the entity table packet header)"
-        int segmentCount = reader.readInt();
+        int entityIndexPointer = reader.readInt(); // pa_entity_indices, "Note that entity_indices points to a (-1) terminated list of indices into the global entity list. (ie. the list of pointers after the entity table packet header)"
+
+        reader.jumpTemp(entityIndexPointer);
+        short tempShort;
+        while ((tempShort = reader.readShort()) != MAPFile.MAP_ANIMATION_TEXTURE_LIST_TERMINATOR)
+            entityIds.add(tempShort);
+        reader.jumpReturn();
 
         // Read segments.
+        int segmentCount = reader.readInt();
         for (int j = 0; j < segmentCount; j++) {
             reader.jumpTemp(reader.readInt());
             PathType type = PathType.values()[reader.readInt()];
@@ -37,8 +46,7 @@ public class Path extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        this.entityPointerLocation = writer.getIndex();
-        writer.writeInt(0); // Placeholder until it's actually written.
+        this.tempEntityIndexPointer = writer.writeNullPointer();
         writer.writeInt(segments.size());
 
         int segmentPointer = writer.getIndex() + (Constants.POINTER_SIZE * segments.size());
@@ -55,14 +63,17 @@ public class Path extends GameObject {
     }
 
     /**
-     * Write the pointer to the entity indice list.
-     * @param writer   The writer to write data to.
-     * @param location The pointer.
+     * Write the entity index list.
+     * @param writer he writer to write data to.
      */
-    public void writePointer(DataWriter writer, int location) {
-        writer.jumpTemp(this.entityPointerLocation);
-        writer.writeInt(location);
-        writer.jumpReturn();
+    public void writeEntityList(DataWriter writer) {
+        Utils.verify(this.tempEntityIndexPointer > 0, "Path has not been saved yet.");
+        writer.writeAddressTo(this.tempEntityIndexPointer);
+        this.tempEntityIndexPointer = 0;
+
+        for (short entityId : getEntityIds())
+            writer.writeShort(entityId);
+        writer.writeShort(MAPFile.MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
     }
 
     /**

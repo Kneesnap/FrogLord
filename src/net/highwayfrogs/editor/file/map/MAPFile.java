@@ -520,6 +520,9 @@ public class MAPFile extends GameFile {
         writer.writeShort(this.groupZLength);
         getGroups().forEach(group -> group.save(writer));
 
+        // Setup pa_entity_indices. The one problem with this is that the beaver will not render when we do this.
+        getPaths().forEach(path -> path.writeEntityList(writer));
+
         // Write POLY
         tempAddress = writer.getIndex();
         writer.jumpTemp(polygonAddress);
@@ -568,11 +571,6 @@ public class MAPFile extends GameFile {
             entityIndicePointer.set(writer.getIndex());
             writer.jumpReturn();
         });
-
-        // Setup pa_entity_indices. The one problem with this is that the beaver will not render when we do this.
-        int emptyEntityIdArray = writer.getIndex();
-        writer.writeShort(MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
-        getPaths().forEach(path -> path.writePointer(writer, emptyEntityIdArray));
 
         // Write "VRTX."
         tempAddress = writer.getIndex();
