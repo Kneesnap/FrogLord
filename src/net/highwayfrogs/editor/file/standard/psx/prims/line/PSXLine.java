@@ -11,21 +11,21 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 public class PSXLine extends PSXGPUPrimitive {
-    private short vertices[];
+    private int vertices[];
 
     public PSXLine(int verticeCount) {
-        this.vertices = new short[verticeCount];
+        this.vertices = new int[verticeCount];
     }
 
     @Override
     public void load(DataReader reader) {
         for (int i = 0; i < vertices.length; i++)
-            this.vertices[i] = reader.readShort();
+            this.vertices[i] = reader.readUnsignedShortAsInt();
     }
 
     @Override
     public void save(DataWriter writer) {
-        for (short vertice : vertices)
-            writer.writeShort(vertice);
+        for (int vertice : vertices)
+            writer.writeUnsignedShort(vertice);
     }
 }
