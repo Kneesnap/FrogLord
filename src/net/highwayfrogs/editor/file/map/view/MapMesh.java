@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -210,6 +211,6 @@ public class MapMesh extends TriangleMesh {
     public void updateVertices() {
         getPoints().clear();
         for (SVector vertex : map.getVertexes())
-            getPoints().addAll(Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(vertex.getX()), Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(vertex.getY()), Constants.MAP_VIEW_SCALE * Utils.unsignedShortToFloat(vertex.getZ()));
+            getPoints().addAll(MapUIController.getPropertyMapViewScale().get() * Utils.unsignedShortToFloat(vertex.getX()), MapUIController.getPropertyMapViewScale().get() * Utils.unsignedShortToFloat(vertex.getY()), MapUIController.getPropertyMapViewScale().get() * Utils.unsignedShortToFloat(vertex.getZ()));
     }
 }
