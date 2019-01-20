@@ -1,14 +1,13 @@
 package net.highwayfrogs.editor.gui.editor;
 
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.*;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Camera;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
+import javafx.scene.input.GestureEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
@@ -32,27 +31,27 @@ import java.util.ResourceBundle;
 public class MapUIController implements Initializable {
     // Useful constants and settings
     private static final int MAP_VIEW_SCALE = 10000;
-    @Getter public static IntegerProperty propertyMapViewScale = new SimpleIntegerProperty(MAP_VIEW_SCALE);
+    @Getter private static IntegerProperty propertyMapViewScale = new SimpleIntegerProperty(MAP_VIEW_SCALE);
 
     private static final double MAP_VIEW_FAR_CLIP = 15000.0;
 
     private static final double ROTATION_SPEED = 0.35D;
-    @Getter public static DoubleProperty propertyRotationSpeed = new SimpleDoubleProperty(ROTATION_SPEED);
+    @Getter private static DoubleProperty propertyRotationSpeed = new SimpleDoubleProperty(ROTATION_SPEED);
 
     private static final double SCROLL_SPEED = 4;
-    @Getter public static DoubleProperty propertyScrollSpeed = new SimpleDoubleProperty(SCROLL_SPEED);
+    @Getter private static DoubleProperty propertyScrollSpeed = new SimpleDoubleProperty(SCROLL_SPEED);
 
     private static final double TRANSLATE_SPEED = 10;
-    @Getter public static DoubleProperty propertyTranslateSpeed = new SimpleDoubleProperty(TRANSLATE_SPEED);
+    @Getter private static DoubleProperty propertyTranslateSpeed = new SimpleDoubleProperty(TRANSLATE_SPEED);
 
     private static final int VERTEX_SPEED = 3;
-    @Getter public static IntegerProperty propertyVertexSpeed = new SimpleIntegerProperty(VERTEX_SPEED);
+    @Getter private static IntegerProperty propertyVertexSpeed = new SimpleIntegerProperty(3);
 
     private static final double SPEED_DOWN_MULTIPLIER = 0.25;
-    @Getter public static DoubleProperty propertySpeedDownMultiplier = new SimpleDoubleProperty(SPEED_DOWN_MULTIPLIER);
+    @Getter private static DoubleProperty propertySpeedDownMultiplier = new SimpleDoubleProperty(SPEED_DOWN_MULTIPLIER);
 
     private static final double SPEED_UP_MULTIPLIER = 4.0;
-    @Getter public static DoubleProperty propertySpeedUpMultiplier = new SimpleDoubleProperty(SPEED_UP_MULTIPLIER);
+    @Getter private static DoubleProperty propertySpeedUpMultiplier = new SimpleDoubleProperty(SPEED_UP_MULTIPLIER);
 
     // Baseline UI components
     @FXML private AnchorPane anchorPaneUIRoot;
@@ -118,16 +117,30 @@ public class MapUIController implements Initializable {
     /**
      * Utility function affording the user different levels of speed control through multipliers.
      */
-    public static double getSpeedModifier(Boolean isCtrlDown, Boolean isAltDown, double defaultValue)
-    {
+    public static double getSpeedModifier(GestureEvent event, Property<Number> property) {
+        return getSpeedModifier(event.isControlDown(), event.isAltDown(), property.getValue().doubleValue());
+    }
+
+    /**
+     * Utility function affording the user different levels of speed control through multipliers.
+     */
+    public static double getSpeedModifier(MouseEvent event, Property<Number> property) {
+        return getSpeedModifier(event.isControlDown(), event.isAltDown(), property.getValue().doubleValue());
+    }
+
+    /**
+     * Utility function affording the user different levels of speed control through multipliers.
+     */
+    public static double getSpeedModifier(Boolean isCtrlDown, Boolean isAltDown, double defaultValue) {
+        double multiplier = 1;
+
         if (isCtrlDown) {
-            return (defaultValue * propertySpeedDownMultiplier.get());
-        }
-        else if (isAltDown) {
-            return (defaultValue * propertySpeedUpMultiplier.get());
+            multiplier = propertySpeedDownMultiplier.get();
+        } else if (isAltDown) {
+            multiplier = propertySpeedUpMultiplier.get();
         }
 
-        return defaultValue;
+        return defaultValue * multiplier;
     }
 
     /**

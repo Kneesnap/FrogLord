@@ -277,7 +277,7 @@ public class MAPController extends EditorController<MAPFile> {
             }
         });
 
-        mapScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * MapUIController.getSpeedModifier(evt.isControlDown(), evt.isAltDown(), MapUIController.getPropertyScrollSpeed().get()))));
+        mapScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * MapUIController.getSpeedModifier(evt, MapUIController.getPropertyScrollSpeed()))));
 
         mapScene.setOnMousePressed(e -> {
             mouseX = oldMouseX = e.getSceneX();
@@ -301,11 +301,11 @@ public class MAPController extends EditorController<MAPFile> {
             double mouseYDelta = (mouseY - oldMouseY);
 
             if (e.isPrimaryButtonDown()) {
-                rotX.setAngle(rotX.getAngle() + (mouseYDelta * MapUIController.getSpeedModifier(e.isControlDown(), e.isAltDown(), MapUIController.getPropertyRotationSpeed().get()))); // Rotate the object.
-                rotY.setAngle(rotY.getAngle() - (mouseXDelta * MapUIController.getSpeedModifier(e.isControlDown(), e.isAltDown(), MapUIController.getPropertyRotationSpeed().get())));
+                rotX.setAngle(rotX.getAngle() + (mouseYDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyRotationSpeed()))); // Rotate the object.
+                rotY.setAngle(rotY.getAngle() - (mouseXDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyRotationSpeed())));
             } else if (e.isMiddleButtonDown()) {
-                camera.setTranslateX(camera.getTranslateX() - (mouseXDelta * MapUIController.getSpeedModifier(e.isControlDown(), e.isAltDown(), MapUIController.getPropertyTranslateSpeed().get()))); // Move the camera.
-                camera.setTranslateY(camera.getTranslateY() - (mouseYDelta * MapUIController.getSpeedModifier(e.isControlDown(), e.isAltDown(), MapUIController.getPropertyTranslateSpeed().get())));
+                camera.setTranslateX(camera.getTranslateX() - (mouseXDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyTranslateSpeed()))); // Move the camera.
+                camera.setTranslateY(camera.getTranslateY() - (mouseYDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyTranslateSpeed())));
             }
         });
 
