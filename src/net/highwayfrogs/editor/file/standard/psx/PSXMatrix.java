@@ -5,8 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.mof.animation.transform.MR_MAT34B;
+import net.highwayfrogs.editor.file.mof.animation.transform.MR_QUATB_TRANS;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -50,5 +51,69 @@ public class PSXMatrix extends GameObject {
             writer.writeInt(aTransfer);
 
         writer.writeShort(this.padding);
+    }
+
+    /**
+     * Make a new PSXMatrix from a QUATB_TRANSLATION.
+     * @param quatB The QuatB to make the matrix from.
+     * @return psxMatrix
+     */
+    public static PSXMatrix makeMatrixFromQuatB(MR_QUATB_TRANS quatB) {
+        int xs = quatB.getX() << 1;
+        int ys = quatB.getY() << 1;
+        int zs = quatB.getZ() << 1;
+        int wx = quatB.getC() * xs;
+        int wy = quatB.getC() * ys;
+        int wz = quatB.getC() * zs;
+        int xx = quatB.getX() * xs;
+        int xy = quatB.getX() * ys;
+        int xz = quatB.getX() * zs;
+        int yy = quatB.getY() * ys;
+        int yz = quatB.getY() * zs;
+        int zz = quatB.getZ() * zs;
+
+        PSXMatrix matrix = new PSXMatrix();
+
+        // Oddly, every set is bit-shifted right 0 places. Not sure what that does, maybe it does something special in C.
+        matrix.matrix[0][0] = (short) (0x1000 - (yy + zz));
+        matrix.matrix[0][1] = (short) (xy + wz);
+        matrix.matrix[0][2] = (short) (xz - wy);
+        matrix.matrix[1][0] = (short) (xy - wz);
+        matrix.matrix[1][1] = (short) (0x1000 - (xx + zz));
+        matrix.matrix[1][2] = (short) (yz + wx);
+        matrix.matrix[2][0] = (short) (xz + wy);
+        matrix.matrix[2][1] = (short) (yz - wx);
+        matrix.matrix[2][2] = (short) (0x1000 - (xx + yy));
+
+        // Set transform.
+        matrix.transform[0] = quatB.getTransform()[0];
+        matrix.transform[1] = quatB.getTransform()[1];
+        matrix.transform[2] = quatB.getTransform()[2];
+
+        return matrix;
+    }
+
+    /**
+     * Makes a PSXMatrix from a MR_MAT34B.
+     * @param mat The matrix to make a new matrix from.
+     * @return matrix
+     */
+    public static PSXMatrix makeMatrixFromMat34B(MR_MAT34B mat) {
+        PSXMatrix matrix = new PSXMatrix();
+        matrix.matrix[0][0] = (short) (mat.getMatrix()[0][0] << 5);
+        matrix.matrix[0][1] = (short) (mat.getMatrix()[0][1] << 5);
+        matrix.matrix[0][2] = (short) (mat.getMatrix()[0][2] << 5);
+        matrix.matrix[1][0] = (short) (mat.getMatrix()[1][0] << 5);
+        matrix.matrix[1][1] = (short) (mat.getMatrix()[1][1] << 5);
+        matrix.matrix[1][2] = (short) (mat.getMatrix()[1][2] << 5);
+        matrix.matrix[2][0] = (short) (mat.getMatrix()[2][0] << 5);
+        matrix.matrix[2][1] = (short) (mat.getMatrix()[2][1] << 5);
+        matrix.matrix[2][2] = (short) (mat.getMatrix()[2][2] << 5);
+
+        // Copy translation
+        matrix.transform[0] = mat.getTransform()[0];
+        matrix.transform[1] = mat.getTransform()[1];
+        matrix.transform[2] = mat.getTransform()[2];
+        return matrix;
     }
 }

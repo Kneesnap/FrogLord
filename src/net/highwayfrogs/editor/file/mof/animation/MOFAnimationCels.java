@@ -52,6 +52,8 @@ public class MOFAnimationCels extends GameObject {
         for (int i = 0; i < totalIndiceCount; i++)
             indices.add(reader.readShort());
         reader.jumpReturn();
+
+        Utils.verify((getFlags() & FLAG_VIRTUAL_INTERPOLATION) == 0, "Model cel-set had interpolation enabled!"); // We don't support this mode as of now.
     }
 
     @Override

@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof.animation.transform;
 
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 
 /**
  * Represents a basic mof transform data holder.
@@ -13,4 +14,10 @@ public abstract class TransformObject extends GameObject {
      * @return transformData
      */
     public abstract short[] getTransform();
+
+    /**
+     * Creates a PSXMatrix with the animation data.
+     * @return matrix
+     */
+    public abstract PSXMatrix createMatrix();
 }
