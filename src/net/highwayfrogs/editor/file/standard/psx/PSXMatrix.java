@@ -9,6 +9,8 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.animation.transform.MR_MAT34B;
 import net.highwayfrogs.editor.file.mof.animation.transform.MR_QUATB_TRANS;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.IVector;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -115,5 +117,42 @@ public class PSXMatrix extends GameObject {
         matrix.transform[1] = mat.getTransform()[1];
         matrix.transform[2] = mat.getTransform()[2];
         return matrix;
+    }
+
+
+    /**
+     * Equivalent to MulMatrix0. (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0441.html?sidebar=outlines)
+     * @param m0 An input matrix.
+     * @param m1 Another input matrix.
+     * @param m2 Output matrix.
+     */
+    public static void MRMulMatrixABC(PSXMatrix m0, PSXMatrix m1, PSXMatrix m2) {
+        //TODO
+        throw new UnsupportedOperationException("MulMatrix0 is not implemented yet.");
+    }
+
+    /**
+     * Equivalent to ApplyMatrix. matrix.svec = vec (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0392.html?sidebar=outlines)
+     * @param matrix The matrix to multiply.
+     * @param vector The short vector to multiply the matrix by.
+     * @param output The output to write to.
+     */
+    public static void MRApplyMatrix(PSXMatrix matrix, SVector vector, IVector output) {
+        //TODO
+        throw new UnsupportedOperationException("ApplyMatrix is not implemented yet.");
+    }
+
+    /**
+     * Equivalent to ApplyMatrix. matrix.svec = vec (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0392.html?sidebar=outlines)
+     * @param matrix The matrix to multiply.
+     * @param vector The short vector to multiply the matrix by.
+     * @param output The output to write to.
+     */
+    public static void MRApplyMatrix(PSXMatrix matrix, SVector vector, int[] output) {
+        IVector outputVector = new IVector();
+        MRApplyMatrix(matrix, vector, outputVector);
+        output[0] = outputVector.getX();
+        output[1] = outputVector.getY();
+        output[2] = outputVector.getZ();
     }
 }
