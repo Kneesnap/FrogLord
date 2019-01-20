@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public abstract class PSXPolygon extends PSXGPUPrimitive {
-    private short vertices[];
+    private short[] vertices;
     private short padding;
     private transient boolean flippedVertices;
 
