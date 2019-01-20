@@ -22,7 +22,7 @@ public class EntityFallingRock extends GameObject implements MatrixEntity {
     private int sound; // Does this rock have a sound effect?
 
     public static final int ROCK_TARGET_COUNT = 12;
-    public static final int FLAG_TARGETS_RESOLVED = 1; // Believed to be a run-time flag.
+    public static final int FLAG_TARGETS_RESOLVED = Constants.BIT_FLAG_0; // Believed to be a run-time flag.
 
     @Override
     public void load(DataReader reader) {

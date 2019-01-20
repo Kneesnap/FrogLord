@@ -418,7 +418,7 @@ public enum FormBook {
     private int flags;
     private Supplier<EntityScriptData> scriptDataMaker;
 
-    private static final int FLAG_GENERAL = 0x8000;
+    private static final int FLAG_GENERAL = 0x8000; // or Constants.BIT_FLAG_15
     private static final Map<MAPTheme, List<FormBook>> themeFormsBooks = new HashMap<>();
 
     FormBook(MAPTheme theme, EntityBook entity, Supplier<EntityScriptData> maker) {

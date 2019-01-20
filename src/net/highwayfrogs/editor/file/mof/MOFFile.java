@@ -45,15 +45,15 @@ public class MOFFile extends GameFile {
     private int unknownValue;
     @Setter private boolean incompleteMOF; // Some mofs are changed at run-time to share information. This attempts to handle that.
 
-    public static final int FLAG_OFFSETS_RESOLVED = 1; // Fairly sure this is applied by frogger.exe runtime, and not something that should be true in the MWD. (Verify though.)
-    public static final int FLAG_SIZES_RESOLVED = 2; // Like before, this is likely frogger.exe run-time only. But, we should confirm that.
-    public static final int FLAG_TEXTURES_RESOLVED = 4; // Again.
-    public static final int FLAG_ANIMATION_FILE = 8; // This is an animation MOF file.
-    public static final int FLAG_ANIMATED_POLY_FILE = 16; // MOF contains some animated textured polys. What's the difference between this and the normal animation MOF?
-    public static final int FLAG_FLIPBOOK_FILE = 32; // Static flipbook file. (What does this mean?)
+    public static final int FLAG_OFFSETS_RESOLVED = Constants.BIT_FLAG_0; // Fairly sure this is applied by frogger.exe runtime, and not something that should be true in the MWD. (Verify though.)
+    public static final int FLAG_SIZES_RESOLVED = Constants.BIT_FLAG_1; // Like before, this is likely frogger.exe run-time only. But, we should confirm that.
+    public static final int FLAG_TEXTURES_RESOLVED = Constants.BIT_FLAG_2; // Again.
+    public static final int FLAG_ANIMATION_FILE = Constants.BIT_FLAG_3; // This is an animation MOF file.
+    public static final int FLAG_ANIMATED_POLY_FILE = Constants.BIT_FLAG_4; // MOF contains some animated textured polys. What's the difference between this and the normal animation MOF?
+    public static final int FLAG_FLIPBOOK_FILE = Constants.BIT_FLAG_5; // Static flipbook file. (What does this mean?)
 
-    public static final int FLAG_ANIM_TRANSFORMS_INDEXED = 1 << 16; // Appears like the only thing this is used for is making sure it's present. Otherwise, the game will crash.
-    public static final int FLAG_ANIM_INDEXED_TRANSFORMS_IN_PARTS = 1 << 17; // I believe this should always be false.
+    public static final int FLAG_ANIM_TRANSFORMS_INDEXED = Constants.BIT_FLAG_16; // Appears like the only thing this is used for is making sure it's present. Otherwise, the game will crash.
+    public static final int FLAG_ANIM_INDEXED_TRANSFORMS_IN_PARTS = Constants.BIT_FLAG_17; // I believe this should always be false.
 
     public static final int MOF_ID = 3;
     public static final int MAP_MOF_ID = 4;

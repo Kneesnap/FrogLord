@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.map.grid;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -22,19 +23,19 @@ public class GridSquare extends GameObject {
         this.parent = parent;
     }
 
-    public static final int FLAG_USABLE = 1; // Frog can jump here.
-    public static final int FLAG_SAFE = 1 << 1; // Standard land.
-    public static final int FLAG_DEADLY = 1 << 2; // Frogger dies.
-    public static final int FLAG_WATER = 1 << 3; // Frogger drowns here.
-    public static final int FLAG_SLIPPY = 1 << 4; // Frogger slides around.
-    public static final int FLAG_BOUNCY = 1 << 5; // Frogger bounces.
-    public static final int FLAG_CHECKPOINT = 1 << 6; // Checkpoint here?
-    public static final int FLAG_SLIPPY_CONTROL = 1 << 7; // Slippy but frogger can control.
-    public static final int FLAG_SOFT_GROUND = 1 << 8; // Frog won't die from fall damage.
-    public static final int FLAG_EXTEND_HOP_HEIGHT = 1 << 9; // Unused. Believe this was supposed to extend the height the frog can super jump at. But, it's not used.
-    public static final int FLAG_SIMPLE_SLIPPY = 1 << 10; // Not sure how this differs from the first slippy flag.
-    public static final int FLAG_CLIFF_DEATH = 1 << 11; // Kill the frog with a cliff death.
-    public static final int FLAG_POP_DEATH = 1 << 12; // Frog does a polygon-pop death.
+    public static final int FLAG_USABLE = Constants.BIT_FLAG_0; // Frog can jump here.
+    public static final int FLAG_SAFE = Constants.BIT_FLAG_1; // Standard land.
+    public static final int FLAG_DEADLY = Constants.BIT_FLAG_2; // Frogger dies.
+    public static final int FLAG_WATER = Constants.BIT_FLAG_3; // Frogger drowns here.
+    public static final int FLAG_SLIPPY = Constants.BIT_FLAG_4; // Frogger slides around.
+    public static final int FLAG_BOUNCY = Constants.BIT_FLAG_5; // Frogger bounces.
+    public static final int FLAG_CHECKPOINT = Constants.BIT_FLAG_6; // Checkpoint here?
+    public static final int FLAG_SLIPPY_CONTROL = Constants.BIT_FLAG_7; // Slippy but frogger can control.
+    public static final int FLAG_SOFT_GROUND = Constants.BIT_FLAG_8; // Frog won't die from fall damage.
+    public static final int FLAG_EXTEND_HOP_HEIGHT = Constants.BIT_FLAG_9; // Unused. Believe this was supposed to extend the height the frog can super jump at. But, it's not used.
+    public static final int FLAG_SIMPLE_SLIPPY = Constants.BIT_FLAG_10; // Not sure how this differs from the first slippy flag.
+    public static final int FLAG_CLIFF_DEATH = Constants.BIT_FLAG_11; // Kill the frog with a cliff death.
+    public static final int FLAG_POP_DEATH = Constants.BIT_FLAG_12; // Frog does a polygon-pop death.
 
     @Override
     public void load(DataReader reader) {

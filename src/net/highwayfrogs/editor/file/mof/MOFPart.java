@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
@@ -50,7 +51,7 @@ public class MOFPart extends GameObject {
     private transient int tempAnimatedTexturesPointer;
     private transient int tempFlipbookPointer;
 
-    private static final int FLAG_ANIMATED_POLYS = 1; // Does this contain some animated texture polys?
+    private static final int FLAG_ANIMATED_POLYS = Constants.BIT_FLAG_0; // Does this contain some animated texture polys?
 
     public MOFPart(MOFFile parent) {
         this.parent = parent;
