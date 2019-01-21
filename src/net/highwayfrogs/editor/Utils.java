@@ -627,6 +627,15 @@ public class Utils {
     }
 
     /**
+     * Get a Color object from an integer.
+     * @param rgb The integer to get the color from.
+     * @return color
+     */
+    public static Color fromBGR(int rgb) {
+        return Color.rgb(rgb & 0xFF, (rgb >> 8) & 0xFF, (rgb >> 16) & 0xFF);
+    }
+
+    /**
      * Get a integer from a color object.
      * @param color The color to turn into rgb.
      * @return rgbInt
@@ -635,6 +644,18 @@ public class Utils {
         int result = (int) (color.getRed() * 0xFF);
         result = (result << 8) + (int) (color.getGreen() * 0xFF);
         result = (result << 8) + (int) (color.getBlue() * 0xFF);
+        return result;
+    }
+
+    /**
+     * Get a integer from a color object.
+     * @param color The color to turn into bgr.
+     * @return rgbInt
+     */
+    public static int toBGR(Color color) {
+        int result = (int) (color.getBlue() * 0xFF);
+        result = (result << 8) + (int) (color.getGreen() * 0xFF);
+        result = (result << 8) + (int) (color.getRed() * 0xFF);
         return result;
     }
 }

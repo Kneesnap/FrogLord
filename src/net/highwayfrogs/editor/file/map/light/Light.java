@@ -2,10 +2,12 @@ package net.highwayfrogs.editor.file.map.light;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Holds lighting data, or the "LIGHT" struct in mapdisp.H
@@ -49,6 +51,19 @@ public class Light extends GameObject {
         writer.writeUnsignedShort((short) 0); // Unused 'attribute1'.
         writer.writeNullPointer();
         writer.writeNullPointer();
+    }
+
+    /**
+     * Makes a lighting editor.
+     * @param editor Lighting editor.
+     */
+    public void makeEditor(GUIEditorGrid editor) {
+        editor.addEnumSelector("Light Type", getType(), LightType.values(), false, this::setType);
+        editor.addEnumSelector("API Type", getApiType(), APILightType.values(), false, this::setApiType);
+
+        int rgbColor = Utils.toRGB(Utils.fromBGR(getColor()));
+        editor.addColorPicker("Color", rgbColor, newColor -> setColor(Utils.toBGR(Utils.fromRGB(newColor))));
+        editor.addSVector("Direction", getDirection(), this::setDirection);
     }
 
     /**

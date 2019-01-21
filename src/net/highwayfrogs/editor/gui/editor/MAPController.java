@@ -46,7 +46,6 @@ import java.util.List;
 
 /**
  * Sets up the map editor.
- * TODO: Light editor tab. [Not something located in the world.]
  * TODO: Icon for animations, if we're unable to make them render in our tool.
  * TODO: Grid mode,
  * TODO: Edit Vertexes

@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.file.map.MAPEditorGUI;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -81,6 +82,11 @@ public class MapUIController implements Initializable {
     @FXML private TitledPane entityPane;
     @FXML private GridPane entityGridPane;
     private MAPEditorGUI entityEditor;
+
+    // Light Pane.
+    @FXML private TitledPane lightPane;
+    @FXML private GridPane lightGridPane;
+    private GUIEditorGrid lightEditor;
 
     // Camera pane
     @FXML private TitledPane titledPaneCamera;
@@ -153,6 +159,20 @@ public class MapUIController implements Initializable {
         }
 
         return defaultValue * multiplier;
+    }
+
+    /**
+     * Sets up the lighting editor.
+     */
+    public void setupLights() {
+        if (lightEditor == null)
+            lightEditor = new GUIEditorGrid(lightGridPane);
+
+        lightEditor.clearEditor();
+        for (int i = 0; i < getController().getFile().getLights().size(); i++) {
+            lightEditor.addBoldLabel("Light #" + (i + 1) + ":");
+            getController().getFile().getLights().get(i).makeEditor(lightEditor);
+        }
     }
 
     /**
@@ -243,5 +263,8 @@ public class MapUIController implements Initializable {
         textFieldMeshRotX.textProperty().bindBidirectional(rotX.angleProperty(), NUM_TO_STRING_CONVERTER);
         textFieldMeshRotY.textProperty().bindBidirectional(rotY.angleProperty(), NUM_TO_STRING_CONVERTER);
         textFieldMeshRotZ.textProperty().bindBidirectional(rotZ.angleProperty(), NUM_TO_STRING_CONVERTER);
+
+        // Must be called after MAPController is passed.
+        setupLights();
     }
 }
