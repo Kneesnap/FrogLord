@@ -41,6 +41,7 @@ import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.system.Tuple2;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -73,6 +74,12 @@ public class MAPController extends EditorController<MAPFile> {
     private MapUIController mapUIController;
 
     private PerspectiveCamera camera;
+    private List<Rectangle> entityIcons = new ArrayList<>();
+
+    private Group root3D;
+    private Rotate rotX;
+    private Rotate rotY;
+    private Rotate rotZ;
 
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
     private static final Image LIGHT_BULB = GameFile.loadIcon("lightbulb");
@@ -173,9 +180,9 @@ public class MAPController extends EditorController<MAPFile> {
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(mesh);
 
-        Rotate rotX = new Rotate(0, Rotate.X_AXIS);
-        Rotate rotY = new Rotate(0, Rotate.Y_AXIS);
-        Rotate rotZ = new Rotate(0, Rotate.Z_AXIS);
+        this.rotX = new Rotate(0, Rotate.X_AXIS);
+        this.rotY = new Rotate(0, Rotate.Y_AXIS);
+        this.rotZ = new Rotate(0, Rotate.Z_AXIS);
         meshView.getTransforms().addAll(rotX, rotY, rotZ);
 
         meshView.setMaterial(material);
@@ -191,11 +198,11 @@ public class MAPController extends EditorController<MAPFile> {
         this.mapUIController = fxmlLoader.getController();
 
         // Create the 3D elements and use them within a subscene.
-        Group root3D = new Group(this.camera, meshView);
+        this.root3D = new Group(this.camera, meshView);
         SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - mapUIController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
 
         //  Setup mapui controller bindings, etc.
-        mapUIController.setupBindings(subScene3D, this.mapMesh, meshView, rotX, rotY, rotZ, this.camera);
+        mapUIController.setupBindings(this, subScene3D, meshView);
 
         // Setup the UI layout.
         BorderPane uiPane = new BorderPane();
@@ -203,7 +210,7 @@ public class MAPController extends EditorController<MAPFile> {
         uiPane.setCenter(subScene3D);
 
         // Setup additional scene elements.
-        setupEntities(root3D, rotX, rotY, rotZ);
+        setupEntities();
 
         // Create and set the scene.
         mapScene = new Scene(uiPane);
@@ -247,6 +254,7 @@ public class MAPController extends EditorController<MAPFile> {
                 getFile().getEntities().add(newEntity);
                 mapUIController.showEntityInfo(newEntity);
                 System.out.println("Created new entity.");
+                resetEntities();
             }
 
             // [Remap Mode] Find next non-crashing remap.
@@ -339,17 +347,27 @@ public class MAPController extends EditorController<MAPFile> {
         camera.setTranslateY(-MapUIController.getPropertyMapViewScale().get() / 7.0);
     }
 
-    private void setupEntities(Group root3D, Rotate rotX, Rotate rotY, Rotate rotZ) {
+    /**
+     * Reset entities as something has changed.
+     */
+    public void resetEntities() {
+        root3D.getChildren().removeAll(this.entityIcons);
+        this.entityIcons.clear();
+        setupEntities();
+    }
+
+    private void setupEntities() {
         ImagePattern pattern = new ImagePattern(SWAMPY);
 
         for (Entity entity : getFile().getEntities()) {
             float[] pos = entity.getPosition(getFile());
-            Rectangle rect = makeIcon(root3D, pattern, rotX, rotY, rotZ, pos[0], pos[1], pos[2]);
+            Rectangle rect = makeIcon(pattern, pos[0], pos[1], pos[2]);
             rect.setOnMouseClicked(evt -> this.mapUIController.showEntityInfo(entity));
+            this.entityIcons.add(rect);
         }
     }
 
-    private Rectangle makeIcon(Group root3D, ImagePattern image, Rotate rotX, Rotate rotY, Rotate rotZ, float x, float y, float z) {
+    private Rectangle makeIcon(ImagePattern image, float x, float y, float z) {
         double width = image.getImage().getWidth();
         double height = image.getImage().getHeight();
         Rectangle rect = new Rectangle(width, height);

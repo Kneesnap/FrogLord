@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.beans.property.*;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Camera;
+import javafx.scene.PerspectiveCamera;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
 import javafx.scene.input.GestureEvent;
@@ -55,6 +55,8 @@ public class MapUIController implements Initializable {
 
     private static final double SPEED_UP_MULTIPLIER = 4.0;
     @Getter private static DoubleProperty propertySpeedUpMultiplier = new SimpleDoubleProperty(SPEED_UP_MULTIPLIER);
+
+    private MAPController controller;
 
     // Baseline UI components
     @FXML private AnchorPane anchorPaneUIRoot;
@@ -181,6 +183,8 @@ public class MapUIController implements Initializable {
         if (entity.getScriptData() != null)
             entity.getScriptData().addData(this.entityEditor);
 
+        entityEditor.addButton("Update Entities", getController()::resetEntities);
+
         entityPane.setVisible(true);
         entityPane.setExpanded(true);
     }
@@ -188,7 +192,14 @@ public class MapUIController implements Initializable {
     /**
      * Primary function (entry point) for setting up data / control bindings, etc. (May be broken out and tidied up later in development).
      */
-    public void setupBindings(SubScene subScene3D, MapMesh mapMesh, MeshView meshView, Rotate rotX, Rotate rotY, Rotate rotZ, Camera camera) {
+    public void setupBindings(MAPController controller, SubScene subScene3D, MeshView meshView) {
+        this.controller = controller;
+        Rotate rotX = controller.getRotX();
+        Rotate rotY = controller.getRotY();
+        Rotate rotZ = controller.getRotZ();
+        PerspectiveCamera camera = controller.getCamera();
+        MapMesh mapMesh = controller.getMapMesh();
+
         camera.setFarClip(MAP_VIEW_FAR_CLIP);
         subScene3D.setFill(Color.GRAY);
         subScene3D.setCamera(camera);

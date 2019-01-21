@@ -46,7 +46,7 @@ public class GUIEditorGrid {
     public void addBoldLabel(String label) {
         Label labelText = setupSecondNode(new Label(label), true);
         labelText.setFont(Constants.SYSTEM_BOLD_FONT);
-        addRow(15);
+        addRow(20);
     }
 
     /**
@@ -235,6 +235,17 @@ public class GUIEditorGrid {
 
         addRow(25);
         return picker;
+    }
+
+    /**
+     * Add a button.
+     * @param text    The text on the button.
+     * @param onPress What to do when the button is pressed.
+     */
+    public void addButton(String text, Runnable onPress) {
+        Button button = setupSecondNode(new Button(text), true);
+        button.setOnAction(evt -> onPress.run());
+        addRow(15);
     }
 
     private Node setupNode(Node node) {
