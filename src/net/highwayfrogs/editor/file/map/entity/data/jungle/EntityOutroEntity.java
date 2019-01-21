@@ -1,19 +1,20 @@
 package net.highwayfrogs.editor.file.map.entity.data.jungle;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Represents JUN_OUTRO_ENTITY
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
+@Setter
 public class EntityOutroEntity extends MatrixData {
     private OutroTarget[] targets = new OutroTarget[TARGET_COUNT];
 
@@ -36,10 +37,10 @@ public class EntityOutroEntity extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
         for (int i = 0; i < getTargets().length; i++)
-            table.getItems().add(new NameValuePair("Target #" + (i + 1), getTargets()[i].getTime() + " -> " + getTargets()[i].getTarget()));
+            editor.addLabel("Target #" + (i + 1), getTargets()[i].getTime() + " -> " + getTargets()[i].getTarget());
     }
 
     @Getter // Represents JUN_OUTRO_TARGETS

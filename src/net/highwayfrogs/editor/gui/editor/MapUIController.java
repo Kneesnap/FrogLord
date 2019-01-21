@@ -6,12 +6,10 @@ import javafx.fxml.Initializable;
 import javafx.scene.Camera;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.GestureEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
@@ -23,7 +21,6 @@ import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.system.NameValuePair;
 
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -83,16 +80,6 @@ public class MapUIController implements Initializable {
     @FXML private GridPane entityGridPane;
     private GUIEditorGrid entityEditor;
 
-    @FXML private VBox entityBox;
-    @FXML private TableView<NameValuePair> entityTable;
-    @FXML private TableColumn<Object, Object> tableColumnEntityName;
-    @FXML private TableColumn<Object, Object> tableColumnEntityValue;
-
-    @FXML private VBox scriptBox;
-    @FXML private TableView<NameValuePair> scriptTable;
-    @FXML private TableColumn<Object, Object> tableColumnScriptName;
-    @FXML private TableColumn<Object, Object> tableColumnScriptValue;
-
     // Camera pane
     @FXML private TitledPane titledPaneCamera;
     @FXML private GridPane gridPaneCameraPos;
@@ -121,11 +108,6 @@ public class MapUIController implements Initializable {
         accordionLeft.setExpandedPane(titledPaneInformation);
         entityPane.setVisible(false);
         entityEditor = new GUIEditorGrid(entityGridPane);
-
-        tableColumnEntityName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        tableColumnEntityValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-        tableColumnScriptName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        tableColumnScriptValue.setCellValueFactory(new PropertyValueFactory<>("value"));
     }
 
     /**
@@ -190,16 +172,14 @@ public class MapUIController implements Initializable {
         entityEditor.addIntegerField("Flags", entity.getFlags(), entity::setFlags, null);
 
         // Populate Entity Data.
-        entityTable.getItems().clear();
+        entityEditor.addBoldLabel("Entity Data:");
         if (entity.getEntityData() != null)
-            entity.getEntityData().addData(this.entityTable);
-        entityBox.setVisible(entityTable.getItems().size() > 0);
+            entity.getEntityData().addData(this.entityEditor);
 
         // Populate Script Data.
-        scriptTable.getItems().clear();
+        entityEditor.addBoldLabel("Script Data:");
         if (entity.getScriptData() != null)
-            entity.getScriptData().addData(this.scriptTable);
-        scriptBox.setVisible(scriptTable.getItems().size() > 0);
+            entity.getScriptData().addData(this.entityEditor);
 
         entityPane.setVisible(true);
         entityPane.setExpanded(true);

@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.file.map.entity.data.jungle;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * The frog on the plinth.
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
+@Setter
 public class EntityPlinthFrog extends MatrixData {
     private int plinthId;
 
@@ -28,8 +29,8 @@ public class EntityPlinthFrog extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Plinth ID", String.valueOf(getPlinthId())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addIntegerField("Plinth ID", getPlinthId(), this::setPlinthId, null);
     }
 }

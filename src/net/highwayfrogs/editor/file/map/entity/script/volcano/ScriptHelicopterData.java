@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.file.map.entity.script.volcano;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Holds helicopter script data.
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
+@Setter
 public class ScriptHelicopterData extends EntityScriptData {
     private int destination;
     private int delta;
@@ -29,8 +30,8 @@ public class ScriptHelicopterData extends EntityScriptData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        table.getItems().add(new NameValuePair("Target", String.valueOf(destination)));
-        table.getItems().add(new NameValuePair("Delta", String.valueOf(delta)));
+    public void addData(GUIEditorGrid editor) {
+        editor.addIntegerField("Target", getDestination(), this::setDestination, null);
+        editor.addIntegerField("Delta", getDelta(), this::setDestination, null);
     }
 }

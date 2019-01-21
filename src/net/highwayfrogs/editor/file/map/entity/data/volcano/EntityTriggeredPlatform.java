@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.data.volcano;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityTriggeredPlatform extends PathData {
     private int initialMovement;
 
@@ -27,8 +28,8 @@ public class EntityTriggeredPlatform extends PathData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Initial Movement", String.valueOf(getInitialMovement())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addIntegerField("Initial Movement", getInitialMovement(), this::setInitialMovement, null);
     }
 }

@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.file.map.entity.data.swamp;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityRat extends MatrixData {
     private short speed;
     private SVector startTarget;
@@ -42,12 +43,12 @@ public class EntityRat extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Speed", String.valueOf(getSpeed())));
-        table.getItems().add(new NameValuePair("Start Target", getStartTarget().toString()));
-        table.getItems().add(new NameValuePair("Start Run Target", getStartRunTarget().toString()));
-        table.getItems().add(new NameValuePair("End Run Target", getEndRunTarget().toString()));
-        table.getItems().add(new NameValuePair("End Target", getEndTarget().toString()));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addShortField("Speed", getSpeed(), this::setSpeed, null);
+        editor.addLabel("Start Target", getStartTarget().toString());
+        editor.addLabel("Start Run Target", getStartRunTarget().toString());
+        editor.addLabel("End Run Target", getEndRunTarget().toString());
+        editor.addLabel("End Target", getEndTarget().toString());
     }
 }

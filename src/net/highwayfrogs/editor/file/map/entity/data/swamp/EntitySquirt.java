@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.file.map.entity.data.swamp;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntitySquirt extends MatrixData {
     private short timeDelay;
     private short dropTime;
@@ -34,10 +35,10 @@ public class EntitySquirt extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Time Delay", String.valueOf(getTimeDelay())));
-        table.getItems().add(new NameValuePair("Drop Time", String.valueOf(getDropTime())));
-        table.getItems().add(new NameValuePair("Target", getTarget().toString()));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addShortField("Time Delay", getTimeDelay(), this::setTimeDelay, null);
+        editor.addShortField("Drop Time", getDropTime(), this::setDropTime, null);
+        editor.addLabel("Target", getTarget().toString());
     }
 }

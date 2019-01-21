@@ -1,11 +1,10 @@
 package net.highwayfrogs.editor.file.map.entity.data;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Base entity data which holds path data.
@@ -26,11 +25,11 @@ public class PathData extends EntityData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        table.getItems().add(new NameValuePair("Path ID", String.valueOf(getPathInfo().getPathId())));
-        table.getItems().add(new NameValuePair("Segment", String.valueOf(getPathInfo().getSegmentId())));
-        table.getItems().add(new NameValuePair("Speed", String.valueOf(getPathInfo().getSpeed())));
-        table.getItems().add(new NameValuePair("Segment Distance", String.valueOf(getPathInfo().getSegmentDistance())));
-        table.getItems().add(new NameValuePair("Motion Type", String.valueOf(getPathInfo().getMotionType())));
+    public void addData(GUIEditorGrid editor) {
+        editor.addIntegerField("Path ID", getPathInfo().getPathId(), getPathInfo()::setPathId, null);
+        editor.addIntegerField("Segment", getPathInfo().getSegmentId(), getPathInfo()::setSegmentId, null);
+        editor.addIntegerField("Speed", getPathInfo().getSpeed(), getPathInfo()::setSpeed, null);
+        editor.addIntegerField("Segment Distance", getPathInfo().getSegmentDistance(), getPathInfo()::setSegmentDistance, null);
+        editor.addIntegerField("Motion Type", getPathInfo().getMotionType(), getPathInfo()::setMotionType, null);
     }
 }

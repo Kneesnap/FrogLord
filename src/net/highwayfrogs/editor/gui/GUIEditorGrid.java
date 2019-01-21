@@ -174,7 +174,8 @@ public class GUIEditorGrid {
     public <T> ComboBox<T> addSelectionBox(String label, T current, List<T> values, Consumer<T> setter) {
         addLabel(label);
         ComboBox<T> box = new ComboBox<>(FXCollections.observableArrayList(values));
-        box.valueProperty().setValue(current);
+        box.valueProperty().setValue(current); // Set the selected value.
+        box.getSelectionModel().select(current); // Automatically scroll to selected value.
         GridPane.setColumnIndex(box, 1);
         gridPane.getChildren().add(setupNode(box));
 

@@ -1,19 +1,21 @@
 package net.highwayfrogs.editor.file.map.entity.data.volcano;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
+import net.highwayfrogs.editor.file.map.entity.TriggerType;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Represents the "VOL_COLOUR_TRIGGER" struct.
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityColorTrigger extends MatrixData {
-    private int type;
+    private TriggerType type;
     private int color;
     private short[] uniqueIds = new short[COLOR_TRIGGER_MAX_IDS];
 
@@ -26,7 +28,7 @@ public class EntityColorTrigger extends MatrixData {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.type = reader.readUnsignedShortAsInt();
+        this.type = TriggerType.values()[reader.readUnsignedShortAsInt()];
         this.color = reader.readUnsignedShortAsInt();
 
         for (int i = 0; i < uniqueIds.length; i++)
@@ -36,19 +38,18 @@ public class EntityColorTrigger extends MatrixData {
     @Override
     public void save(DataWriter writer) {
         super.save(writer);
-        writer.writeUnsignedShort(this.type);
+        writer.writeUnsignedShort((short) this.type.ordinal());
         writer.writeUnsignedShort(this.color);
         for (short id : uniqueIds)
             writer.writeShort(id);
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Type", String.valueOf(getType())));
-        table.getItems().add(new NameValuePair("Color", String.valueOf(getColor())));
-
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addEnumSelector("Trigger Type", getType(), TriggerType.values(), false, this::setType);
+        editor.addIntegerField("Color", getColor(), this::setColor, null); //TODO: Use a color selector instead.
         for (int i = 0; i < getUniqueIds().length; i++)
-            table.getItems().add(new NameValuePair("Trigger #" + (i + 1), String.valueOf(getUniqueIds()[i])));
+            editor.addLabel("Trigger #" + (i + 1), String.valueOf(getUniqueIds()[i]));
     }
 }

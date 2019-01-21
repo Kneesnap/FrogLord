@@ -1,31 +1,32 @@
 package net.highwayfrogs.editor.file.map.entity.data.suburbia;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Represents the "SUBURBIA_TURTLE" struct.
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityTurtle extends PathData {
     private int diveDelay;
     private int riseDelay;
-    private int turtleType;
+    private boolean divingEnabled;
 
-    public static final int TYPE_DIVING = 0;
-    public static final int TYPE_NOT_DIVING = 1;
+    private static final int TYPE_DIVING = 0;
+    private static final int TYPE_NOT_DIVING = 1;
 
     @Override
     public void load(DataReader reader) {
         super.load(reader);
         this.diveDelay = reader.readInt();
         this.riseDelay = reader.readInt();
-        this.turtleType = reader.readInt();
+        this.divingEnabled = (reader.readInt() == TYPE_DIVING);
     }
 
     @Override
@@ -33,14 +34,14 @@ public class EntityTurtle extends PathData {
         super.save(writer);
         writer.writeInt(this.diveDelay);
         writer.writeInt(this.riseDelay);
-        writer.writeInt(this.turtleType);
+        writer.writeInt(isDivingEnabled() ? TYPE_DIVING : TYPE_NOT_DIVING);
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Dive Delay", String.valueOf(getDiveDelay())));
-        table.getItems().add(new NameValuePair("Rise Delay", String.valueOf(getRiseDelay())));
-        table.getItems().add(new NameValuePair("Turtle Type", String.valueOf(getTurtleType())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addIntegerField("Dive Delay", getDiveDelay(), this::setDiveDelay, null);
+        editor.addIntegerField("Rise Delay", getRiseDelay(), this::setRiseDelay, null);
+        editor.addCheckBox("Diving Allowed", isDivingEnabled(), this::setDivingEnabled);
     }
 }

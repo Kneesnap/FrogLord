@@ -1,19 +1,20 @@
 package net.highwayfrogs.editor.file.map.entity.data.desert;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityFallingRock extends MatrixData {
     private FallingRockTarget[] targets = new FallingRockTarget[ROCK_TARGET_COUNT];
     private int delay; // Delay until rock starts moving.
@@ -53,14 +54,14 @@ public class EntityFallingRock extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Delay", String.valueOf(getDelay())));
-        table.getItems().add(new NameValuePair("Bounces", String.valueOf(getBounceCount())));
-        table.getItems().add(new NameValuePair("Flags", String.valueOf(getFlags())));
-        table.getItems().add(new NameValuePair("Sound", String.valueOf(getSound())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addIntegerField("Delay", getDelay(), this::setDelay, null);
+        editor.addShortField("Bounces", getBounceCount(), this::setBounceCount, null);
+        editor.addIntegerField("Flags", getFlags(), this::setFlags, null);
+        editor.addIntegerField("Sound", getSound(), this::setSound, null);
         for (int i = 0; i < getTargets().length; i++)
-            table.getItems().add(new NameValuePair("Target #" + (i + 1), getTargets()[i].getTime() + " -> " + getTargets()[i].getTarget()));
+            editor.addLabel("Target #" + (i + 1), getTargets()[i].getTime() + " -> " + getTargets()[i].getTarget());
     }
 
     @Getter

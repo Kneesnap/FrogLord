@@ -1,8 +1,7 @@
 package net.highwayfrogs.editor.file.map.entity.data;
 
-import javafx.scene.control.TableView;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Represents game-data.
@@ -12,7 +11,7 @@ public abstract class EntityData extends GameObject {
 
     /**
      * Add entity data to a table.
-     * @param table The table to add data to.
+     * @param editor The editor to build on.
      */
-    public abstract void addData(TableView<NameValuePair> table);
+    public abstract void addData(GUIEditorGrid editor);
 }

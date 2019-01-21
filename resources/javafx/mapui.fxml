@@ -192,46 +192,6 @@
                                                                            minWidth="10.0" prefWidth="150.0"/>
                                                     </columnConstraints>
                                                 </GridPane>
-                                                <VBox fx:id="entityBox" prefHeight="170.0" prefWidth="232.0">
-                                                    <children>
-                                                        <Label text="Entity Data:">
-                                                            <font>
-                                                                <Font name="System Bold" size="12.0"/>
-                                                            </font>
-                                                        </Label>
-                                                        <TableView fx:id="entityTable" prefHeight="250.0"
-                                                                   prefWidth="232.0">
-                                                            <columns>
-                                                                <TableColumn fx:id="tableColumnEntityName"
-                                                                             editable="false" prefWidth="112.0"
-                                                                             text="Name"/>
-                                                                <TableColumn fx:id="tableColumnEntityValue"
-                                                                             editable="false" prefWidth="120.0"
-                                                                             text="Value"/>
-                                                            </columns>
-                                                        </TableView>
-                                                    </children>
-                                                </VBox>
-                                                <VBox fx:id="scriptBox" prefHeight="167.0" prefWidth="232.0">
-                                                    <children>
-                                                        <Label text="Script Data:">
-                                                            <font>
-                                                                <Font name="System Bold" size="12.0"/>
-                                                            </font>
-                                                        </Label>
-                                                        <TableView fx:id="scriptTable" prefHeight="250.0"
-                                                                   prefWidth="232.0">
-                                                            <columns>
-                                                                <TableColumn fx:id="tableColumnScriptName"
-                                                                             editable="false" prefWidth="113.0"
-                                                                             text="Name"/>
-                                                                <TableColumn fx:id="tableColumnScriptValue"
-                                                                             editable="false" prefWidth="120.0"
-                                                                             text="Value"/>
-                                                            </columns>
-                                                        </TableView>
-                                                    </children>
-                                                </VBox>
                                             </children>
                                         </VBox>
                                     </children>

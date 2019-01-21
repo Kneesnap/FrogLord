@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.file.map.entity.script.sky;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * It is unknown what these values are for.
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
+@Setter
 public class ScriptBalloonData extends EntityScriptData {
     private int unknown1;
     private int unknown2;
@@ -32,9 +33,9 @@ public class ScriptBalloonData extends EntityScriptData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        table.getItems().add(new NameValuePair("Unknown 1", String.valueOf(unknown1)));
-        table.getItems().add(new NameValuePair("Unknown 2", String.valueOf(unknown2)));
-        table.getItems().add(new NameValuePair("Unknown 3", String.valueOf(unknown3)));
+    public void addData(GUIEditorGrid editor) {
+        editor.addIntegerField("Unknown 1", getUnknown1(), this::setUnknown1, null);
+        editor.addIntegerField("Unknown 2", getUnknown2(), this::setUnknown2, null);
+        editor.addIntegerField("Unknown 3", getUnknown3(), this::setUnknown3, null);
     }
 }

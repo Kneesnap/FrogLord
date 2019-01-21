@@ -1,11 +1,10 @@
 package net.highwayfrogs.editor.file.map.entity.data;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 import java.util.Arrays;
 
@@ -28,9 +27,9 @@ public class MatrixData extends EntityData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        table.getItems().add(new NameValuePair("Matrix Position", Arrays.toString(matrix.getTransform())));
+    public void addData(GUIEditorGrid editor) {
+        editor.addLabel("Matrix Position", Arrays.toString(matrix.getTransform()));
         for (int i = 0; i < matrix.getMatrix().length; i++)
-            table.getItems().add(new NameValuePair("Matrix[" + i + "]", Arrays.toString(matrix.getMatrix()[i])));
+            editor.addLabel("Matrix[" + i + "]", Arrays.toString(matrix.getMatrix()[i]));
     }
 }

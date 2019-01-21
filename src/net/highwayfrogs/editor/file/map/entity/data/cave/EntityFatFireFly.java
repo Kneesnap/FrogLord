@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.file.map.entity.data.cave;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityFatFireFly extends MatrixData {
     private int type;
     private SVector target;
@@ -33,9 +34,9 @@ public class EntityFatFireFly extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Type", String.valueOf(getType())));
-        table.getItems().add(new NameValuePair("Target", target.toString()));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addLabel("Type", String.valueOf(getType()));
+        editor.addLabel("Target", target.toString());
     }
 }

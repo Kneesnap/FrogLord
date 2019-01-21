@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.data.retro;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntitySnake extends MatrixData {
     private short logId;
     private int speed;
@@ -30,9 +31,9 @@ public class EntitySnake extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Log ID", String.valueOf(getLogId())));
-        table.getItems().add(new NameValuePair("Speed", String.valueOf(getSpeed())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addShortField("Log ID", getLogId(), this::setLogId, null);
+        editor.addIntegerField("Speed", getSpeed(), this::setSpeed, null);
     }
 }
