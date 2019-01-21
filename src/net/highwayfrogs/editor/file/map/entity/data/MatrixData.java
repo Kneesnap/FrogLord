@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.map.entity.data;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -13,6 +14,7 @@ import java.util.Arrays;
  * Created by Kneesnap on 1/20/2019.
  */
 @Getter
+@Setter
 public class MatrixData extends EntityData {
     private PSXMatrix matrix = new PSXMatrix();
 

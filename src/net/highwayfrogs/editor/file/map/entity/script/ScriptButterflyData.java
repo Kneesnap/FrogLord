@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 @Setter
 public class ScriptButterflyData extends EntityScriptData {
-    private FlyScoreType type;
+    private FlyScoreType type = FlyScoreType.SCORE_10;
 
     @Override
     public void load(DataReader reader) {

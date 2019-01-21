@@ -15,10 +15,10 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Setter
 public class EntityRat extends MatrixData {
     private short speed;
-    private SVector startTarget;
-    private SVector startRunTarget;
-    private SVector endRunTarget;
-    private SVector endTarget;
+    private SVector startTarget = new SVector();
+    private SVector startRunTarget = new SVector();
+    private SVector endRunTarget = new SVector();
+    private SVector endTarget = new SVector();
 
     @Override
     public void load(DataReader reader) {

@@ -17,7 +17,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 @Setter
 public class TriggerEntity extends MatrixData {
-    private TriggerType type;
+    private TriggerType type = TriggerType.BEGIN;
     private short[] uniqueIds = new short[ENTITY_TYPE_TRIGGER_MAX_IDS];
 
     public static final int ENTITY_TYPE_TRIGGER_MAX_IDS = 10;
@@ -27,7 +27,6 @@ public class TriggerEntity extends MatrixData {
     public void load(DataReader reader) {
         super.load(reader);
         this.type = TriggerType.values()[reader.readInt()];
-
         for (int i = 0; i < uniqueIds.length; i++)
             this.uniqueIds[i] = reader.readShort();
     }

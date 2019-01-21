@@ -25,13 +25,16 @@ public class EntityFallingRock extends MatrixData {
     public static final int ROCK_TARGET_COUNT = 12;
     public static final int FLAG_TARGETS_RESOLVED = Constants.BIT_FLAG_0; // Believed to be a run-time flag.
 
+    public EntityFallingRock() {
+        for (int i = 0; i < targets.length; i++)
+            targets[i] = new FallingRockTarget();
+    }
+
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        for (int i = 0; i < targets.length; i++) {
-            targets[i] = new FallingRockTarget();
-            targets[i].load(reader);
-        }
+        for (FallingRockTarget target : targets)
+            target.load(reader);
 
         this.delay = reader.readUnsignedShortAsInt();
         this.bounceCount = reader.readUnsignedByteAsShort();
@@ -66,7 +69,7 @@ public class EntityFallingRock extends MatrixData {
 
     @Getter
     public static final class FallingRockTarget extends GameObject {
-        private SVector target; // Target Position.
+        private SVector target = new SVector(); // Target Position.
         private int time; // Time to reach target.
 
         @Override

@@ -16,8 +16,8 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 @Setter
 public class EntityFatFireFly extends MatrixData {
-    private BonusFlyType type;
-    private SVector target;
+    private BonusFlyType type = BonusFlyType.FAT_FIRE_FLY;
+    private SVector target = new SVector();
 
     @Override
     public void load(DataReader reader) {

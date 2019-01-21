@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 @Setter
 public class EntityRetroCrocodileHead extends MatrixData {
-    private CrocodileHeadState type;
+    private CrocodileHeadState type = CrocodileHeadState.WAITING;
 
     @Override
     public void load(DataReader reader) {

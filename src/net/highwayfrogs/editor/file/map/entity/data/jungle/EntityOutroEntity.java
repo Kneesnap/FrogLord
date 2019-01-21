@@ -20,13 +20,16 @@ public class EntityOutroEntity extends MatrixData {
 
     private static final int TARGET_COUNT = 11;
 
+    public EntityOutroEntity() {
+        for (int i = 0; i < targets.length; i++)
+            targets[i] = new OutroTarget();
+    }
+
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        for (int i = 0; i < this.targets.length; i++) {
-            this.targets[i] = new OutroTarget();
-            this.targets[i].load(reader);
-        }
+        for (OutroTarget target : this.targets)
+            target.load(reader);
     }
 
     @Override
@@ -45,7 +48,7 @@ public class EntityOutroEntity extends MatrixData {
 
     @Getter // Represents JUN_OUTRO_TARGETS
     public static final class OutroTarget extends GameObject {
-        private SVector target; // Target position.
+        private SVector target = new SVector(); // Target position.
         private int time; // Time to reach target.
 
         @Override

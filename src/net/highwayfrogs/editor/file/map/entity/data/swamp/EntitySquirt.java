@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 public class EntitySquirt extends MatrixData {
     private short timeDelay;
     private short dropTime;
-    private SVector target;
+    private SVector target = new SVector();
 
     @Override
     public void load(DataReader reader) {

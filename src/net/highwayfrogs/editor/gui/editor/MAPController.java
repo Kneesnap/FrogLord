@@ -27,6 +27,7 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -239,6 +240,14 @@ public class MAPController extends EditorController<MAPFile> {
             // Toggle fullscreen mode.
             if (event.isControlDown() && event.getCode() == KeyCode.ENTER)
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
+
+            // Create Entity (Temporary)
+            if (event.isControlDown() && event.getCode() == KeyCode.E) {
+                Entity newEntity = new Entity(getFile(), FormBook.values()[0]);
+                getFile().getEntities().add(newEntity);
+                mapUIController.showEntityInfo(newEntity);
+                System.out.println("Created new entity.");
+            }
 
             // [Remap Mode] Find next non-crashing remap.
             if (mesh.isRemapFinder() && event.getCode() == KeyCode.K) {

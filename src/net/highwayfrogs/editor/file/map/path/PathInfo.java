@@ -17,7 +17,7 @@ public class PathInfo extends GameObject {
     private int pathId;
     private int segmentId;
     private int segmentDistance;
-    private int motionType;
+    private int motionType = MOTION_TYPE_REPEAT;
     private int speed;
 
     public static final int MOTION_TYPE_REPEAT = Constants.BIT_FLAG_3;

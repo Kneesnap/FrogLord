@@ -18,6 +18,8 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
+import java.util.Objects;
+
 /**
  * Represents the "ENTITY" struct.
  * Created by Kneesnap on 8/24/2018.
@@ -48,6 +50,11 @@ public class Entity extends GameObject {
 
     public Entity(MAPFile parentMap) {
         this.map = parentMap;
+    }
+
+    public Entity(MAPFile file, FormBook formBook) {
+        this(file);
+        setFormBook(formBook);
     }
 
     @Override
@@ -130,5 +137,35 @@ public class Entity extends GameObject {
         }
 
         throw new UnsupportedOperationException("Tried to get the position of an entity without position data!");
+    }
+
+    /**
+     * Set this entity's form book.
+     * @param newBook This entities new form book.
+     */
+    public void setFormBook(FormBook newBook) {
+        if (this.formBook == null || !Objects.equals(newBook.getScriptDataMaker(), this.formBook.getScriptDataMaker())) {
+            this.scriptData = null;
+            if (newBook.getScriptDataMaker() != null)
+                this.scriptData = newBook.getScriptDataMaker().get();
+        }
+
+        if (this.formBook == null || !Objects.equals(newBook.getEntity().getScriptDataMaker(), this.formBook.getEntity().getScriptDataMaker())) {
+            PSXMatrix oldMatrix = getMatrixInfo(); // Call before setting entityData to null.
+            PathInfo oldPath = getPathInfo();
+            this.entityData = null;
+
+            if (newBook.getEntity().getScriptDataMaker() != null) {
+                this.entityData = newBook.getEntity().getScriptDataMaker().get();
+
+                if (this.entityData instanceof MatrixData && oldMatrix != null)
+                    ((MatrixData) this.entityData).setMatrix(oldMatrix);
+
+                if (this.entityData instanceof PathData && oldPath != null)
+                    ((PathData) this.entityData).setPathInfo(oldPath);
+            }
+        }
+
+        this.formBook = newBook;
     }
 }

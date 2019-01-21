@@ -15,8 +15,8 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 @Setter
 public class EntityColorTrigger extends MatrixData {
-    private TriggerType type;
-    private VolcanoTriggerColor color;
+    private TriggerType type = TriggerType.BEGIN;
+    private VolcanoTriggerColor color = VolcanoTriggerColor.RED;
     private short[] uniqueIds = new short[COLOR_TRIGGER_MAX_IDS];
 
     private static final int COLOR_TRIGGER_MAX_IDS = 10;

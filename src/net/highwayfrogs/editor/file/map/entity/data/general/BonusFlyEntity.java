@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 @Setter
 public class BonusFlyEntity extends MatrixData {
-    private BonusFlyType type; // Score type.
+    private BonusFlyType type = BonusFlyType.FLY_10; // Score type.
 
     @Override
     public void load(DataReader reader) {
