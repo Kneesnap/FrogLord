@@ -43,11 +43,8 @@ public class GUIEditorGrid {
      * @param label The label to add.
      */
     public void addBoldLabel(String label) {
-        Label labelText = new Label(label);
-        GridPane.setColumnSpan(labelText, 2);
+        Label labelText = setupSecondNode(new Label(label), true);
         labelText.setFont(Constants.SYSTEM_BOLD_FONT);
-
-        gridPane.getChildren().add(setupNode(labelText));
         addRow(15);
     }
 
@@ -68,10 +65,7 @@ public class GUIEditorGrid {
      */
     public Label addLabel(String label, String value) {
         addLabel(label);
-        Label valueText = new Label(value);
-        GridPane.setColumnIndex(valueText, 1);
-
-        gridPane.getChildren().add(setupNode(valueText));
+        Label valueText = setupSecondNode(new Label(value), false);
         addRow(15);
         return valueText;
     }
@@ -83,10 +77,7 @@ public class GUIEditorGrid {
      */
     public TextField addTextField(String label, String value) {
         addLabel(label);
-        TextField field = new TextField(value);
-        GridPane.setColumnIndex(field, 1);
-        gridPane.getChildren().add(setupNode(field));
-
+        TextField field = setupSecondNode(new TextField(value), false);
         addRow(25);
         return field;
     }
@@ -172,11 +163,9 @@ public class GUIEditorGrid {
     @SuppressWarnings("unchecked")
     public <T> ComboBox<T> addSelectionBox(String label, T current, List<T> values, Consumer<T> setter) {
         addLabel(label);
-        ComboBox<T> box = new ComboBox<>(FXCollections.observableArrayList(values));
+        ComboBox<T> box = setupSecondNode(new ComboBox<>(FXCollections.observableArrayList(values)), false);
         box.valueProperty().setValue(current); // Set the selected value.
         box.getSelectionModel().select(current); // Automatically scroll to selected value.
-        GridPane.setColumnIndex(box, 1);
-        gridPane.getChildren().add(setupNode(box));
 
         box.addEventFilter(ComboBox.ON_SHOWN, event -> // Show the selected value when the dropdown is opened.
                 ((ComboBoxListViewSkin<T>) box.getSkin()).getListView().scrollTo(box.getSelectionModel().getSelectedIndex()));
@@ -211,11 +200,8 @@ public class GUIEditorGrid {
      * @return checkBox
      */
     public CheckBox addCheckBox(String label, boolean currentState, Consumer<Boolean> setter) {
-        CheckBox box = new CheckBox(label);
-        GridPane.setColumnSpan(box, 2);
+        CheckBox box = setupSecondNode(new CheckBox(label), true);
         box.setSelected(currentState);
-        gridPane.getChildren().add(setupNode(box));
-
         box.selectedProperty().addListener((listener, oldVal, newVal) -> setter.accept(newVal));
 
         addRow(15);
@@ -231,9 +217,7 @@ public class GUIEditorGrid {
      */
     public ColorPicker addColorPicker(String text, int color, Consumer<Integer> handler) {
         addLabel(text);
-        ColorPicker picker = new ColorPicker(Utils.fromRGB(color));
-        GridPane.setColumnIndex(picker, 1);
-        gridPane.getChildren().add(setupNode(picker));
+        ColorPicker picker = setupSecondNode(new ColorPicker(Utils.fromRGB(color)), false);
         picker.valueProperty().addListener((observable, oldValue, newValue) -> handler.accept(Utils.toRGB(newValue)));
 
         addRow(25);
@@ -242,6 +226,17 @@ public class GUIEditorGrid {
 
     private Node setupNode(Node node) {
         GridPane.setRowIndex(node, this.rowIndex);
+        return node;
+    }
+
+    private <T extends Node> T setupSecondNode(T node, boolean fullSpan) {
+        if (fullSpan) {
+            GridPane.setColumnSpan(node, 2);
+        } else {
+            GridPane.setColumnIndex(node, 1);
+        }
+
+        gridPane.getChildren().add(setupNode(node));
         return node;
     }
 
