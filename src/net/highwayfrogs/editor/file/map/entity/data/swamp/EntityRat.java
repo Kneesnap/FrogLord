@@ -46,9 +46,9 @@ public class EntityRat extends MatrixData {
     public void addData(GUIEditorGrid editor) {
         super.addData(editor);
         editor.addShortField("Speed", getSpeed(), this::setSpeed, null);
-        editor.addLabel("Start Target", getStartTarget().toString());
-        editor.addLabel("Start Run Target", getStartRunTarget().toString());
-        editor.addLabel("End Run Target", getEndRunTarget().toString());
-        editor.addLabel("End Target", getEndTarget().toString());
+        editor.addSVector("Start Target", getStartTarget(), this::setStartTarget);
+        editor.addSVector("Start Run Target", getStartRunTarget(), this::setStartRunTarget);
+        editor.addSVector("End Run Target", getEndRunTarget(), this::setEndRunTarget);
+        editor.addSVector("End Target", getEndTarget(), this::setEndTarget);
     }
 }

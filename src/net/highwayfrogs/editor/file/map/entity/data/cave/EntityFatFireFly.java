@@ -39,6 +39,6 @@ public class EntityFatFireFly extends MatrixData {
     public void addData(GUIEditorGrid editor) {
         super.addData(editor);
         editor.addEnumSelector("Type", getType(), BonusFlyType.values(), false, this::setType);
-        editor.addLabel("Target", target.toString());
+        editor.addSVector("Target", getTarget(), this::setTarget);
     }
 }

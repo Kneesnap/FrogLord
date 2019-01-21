@@ -39,6 +39,6 @@ public class EntitySquirt extends MatrixData {
         super.addData(editor);
         editor.addShortField("Time Delay", getTimeDelay(), this::setTimeDelay, null);
         editor.addShortField("Drop Time", getDropTime(), this::setDropTime, null);
-        editor.addLabel("Target", getTarget().toString());
+        editor.addSVector("Target", getTarget(), this::setTarget);
     }
 }

@@ -9,6 +9,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.standard.SVector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -206,6 +207,18 @@ public class GUIEditorGrid {
 
         addRow(15);
         return box;
+    }
+
+    /**
+     * Add a SVector for editing. TODO: ALLOW EDITING
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     * @param setter The handler for if the SVector is updated.
+     */
+    public void addSVector(String text, SVector vector, Consumer<SVector> setter) {
+        addLabel(text);
+        setupSecondNode(new Label(vector.toString()), false);
+        addRow(15);
     }
 
     /**
