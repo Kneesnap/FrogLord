@@ -62,7 +62,7 @@ public class MapUIController implements Initializable {
     @FXML private AnchorPane anchorPaneUIRoot;
     @FXML private Accordion accordionLeft;
 
-    // Level Editor /  Information pane
+    // Control Settings Pane.
     @FXML private TitledPane titledPaneInformation;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldSpeedRotation;
@@ -75,6 +75,11 @@ public class MapUIController implements Initializable {
     @FXML private Button btnResetSpeedDownMultiplier;
     @FXML private TextField textFieldSpeedUpMultiplier;
     @FXML private Button btnResetSpeedUpMultiplier;
+    @FXML private TextField textFieldCamNearClip;
+    @FXML private TextField textFieldCamFarClip;
+    @FXML private TextField textFieldCamPosX;
+    @FXML private TextField textFieldCamPosY;
+    @FXML private TextField textFieldCamPosZ;
 
     // General pane.
     @FXML private TitledPane generalPane;
@@ -90,15 +95,6 @@ public class MapUIController implements Initializable {
     @FXML private TitledPane lightPane;
     @FXML private GridPane lightGridPane;
     private GUIEditorGrid lightEditor;
-
-    // Camera pane
-    @FXML private TitledPane titledPaneCamera;
-    @FXML private GridPane gridPaneCameraPos;
-    @FXML private TextField textFieldCamNearClip;
-    @FXML private TextField textFieldCamFarClip;
-    @FXML private TextField textFieldCamPosX;
-    @FXML private TextField textFieldCamPosY;
-    @FXML private TextField textFieldCamPosZ;
 
     // Mesh pane
     @FXML private CheckBox checkBoxShowMesh;

@@ -39,7 +39,35 @@
                         </ScrollPane>
                     </content>
                 </TitledPane>
-                <TitledPane fx:id="titledPaneInformation" animated="false" text="Level / Editor Information">
+                <TitledPane fx:id="lightPane" animated="false" text="Entity Lights">
+                    <content>
+                        <ScrollPane fitToWidth="true">
+                            <content>
+                                <AnchorPane>
+                                    <children>
+                                        <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                                              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                            <children>
+                                                <GridPane fx:id="lightGridPane" prefWidth="250.0">
+                                                    <columnConstraints>
+                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0"
+                                                                           minWidth="10.0" prefWidth="100.0"/>
+                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="140.0"
+                                                                           minWidth="10.0" prefWidth="150.0"/>
+                                                    </columnConstraints>
+                                                </GridPane>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </AnchorPane>
+                            </content>
+                            <padding>
+                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                            </padding>
+                        </ScrollPane>
+                    </content>
+                </TitledPane>
+                <TitledPane fx:id="titledPaneInformation" animated="false" text="Control Settings">
                     <content>
                         <ScrollPane fitToWidth="true">
                             <content>
@@ -58,17 +86,15 @@
                                                     <rowConstraints>
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0"
                                                                         vgrow="SOMETIMES"/>
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
-                                                                        vgrow="SOMETIMES"/>
                                                     </rowConstraints>
                                                     <children>
-                                                        <Label text="Background Color:" GridPane.columnSpan="2">
+                                                        <Label text="Background:">
                                                             <font>
                                                                 <Font name="System Bold" size="12.0"/>
                                                             </font>
                                                         </Label>
                                                         <ColorPicker fx:id="colorPickerLevelBackground"
-                                                                     GridPane.columnSpan="2" GridPane.rowIndex="1"/>
+                                                                     GridPane.columnIndex="1"/>
                                                     </children>
                                                 </GridPane>
                                                 <GridPane>
@@ -93,6 +119,21 @@
                                                                         vgrow="SOMETIMES"/>
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0"
                                                                         vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+
                                                     </rowConstraints>
                                                     <children>
                                                         <Label text="xxx_SPEED Values:" GridPane.columnSpan="2">
@@ -178,111 +219,34 @@
                                                                 </Button>
                                                             </children>
                                                         </HBox>
-                                                    </children>
-                                                </GridPane>
-                                            </children>
-                                        </VBox>
-                                    </children>
-                                </AnchorPane>
-                            </content>
-                            <padding>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
-                            </padding>
-                        </ScrollPane>
-                    </content>
-                </TitledPane>
-                <TitledPane fx:id="lightPane" animated="false" text="Entity Lights">
-                    <content>
-                        <ScrollPane fitToWidth="true">
-                            <content>
-                                <AnchorPane>
-                                    <children>
-                                        <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-                                              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                            <children>
-                                                <GridPane fx:id="lightGridPane" prefWidth="250.0">
-                                                    <columnConstraints>
-                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0"
-                                                                           minWidth="10.0" prefWidth="100.0"/>
-                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="140.0"
-                                                                           minWidth="10.0" prefWidth="150.0"/>
-                                                    </columnConstraints>
-                                                </GridPane>
-                                            </children>
-                                        </VBox>
-                                    </children>
-                                </AnchorPane>
-                            </content>
-                            <padding>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
-                            </padding>
-                        </ScrollPane>
-                    </content>
-                </TitledPane>
-                <TitledPane fx:id="titledPaneCamera" animated="false" text="Camera">
-                    <content>
-                        <ScrollPane fitToWidth="true">
-                            <content>
-                                <AnchorPane>
-                                    <children>
-                                        <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-                                              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                            <children>
-                                                <GridPane>
-                                                    <columnConstraints>
-                                                        <ColumnConstraints hgrow="NEVER" maxWidth="-Infinity"
-                                                                           minWidth="10.0" prefWidth="60.0"/>
-                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"
-                                                                           prefWidth="100.0"/>
-                                                    </columnConstraints>
-                                                    <rowConstraints>
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
-                                                                        vgrow="SOMETIMES"/>
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
-                                                                        vgrow="SOMETIMES"/>
-                                                    </rowConstraints>
-                                                    <children>
-                                                        <Label text="Near Clip:"/>
-                                                        <Label text="Far Clip:" GridPane.rowIndex="1"/>
-                                                        <TextField fx:id="textFieldCamNearClip" alignment="CENTER_RIGHT"
-                                                                   GridPane.columnIndex="1"/>
-                                                        <TextField fx:id="textFieldCamFarClip" alignment="CENTER_RIGHT"
-                                                                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                                                    </children>
-                                                </GridPane>
-                                                <GridPane fx:id="gridPaneCameraPos">
-                                                    <columnConstraints>
-                                                        <ColumnConstraints fillWidth="false" hgrow="NEVER"
-                                                                           maxWidth="-Infinity" minWidth="10.0"
-                                                                           prefWidth="20.0"/>
-                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"
-                                                                           prefWidth="100.0"/>
-                                                    </columnConstraints>
-                                                    <rowConstraints>
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
-                                                                        vgrow="SOMETIMES"/>
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
-                                                                        vgrow="SOMETIMES"/>
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
-                                                                        vgrow="SOMETIMES"/>
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
-                                                                        vgrow="SOMETIMES"/>
-                                                    </rowConstraints>
-                                                    <children>
-                                                        <Label text="Camera Position:" GridPane.columnSpan="2">
+                                                        <Label text="Camera Clip:" GridPane.columnSpan="2"
+                                                               GridPane.rowIndex="7">
                                                             <font>
                                                                 <Font name="System Bold" size="12.0"/>
                                                             </font>
                                                         </Label>
-                                                        <Label text="x:" GridPane.rowIndex="1"/>
-                                                        <Label text="y:" GridPane.rowIndex="2"/>
-                                                        <Label text="z:" GridPane.rowIndex="3"/>
+                                                        <Label text="Near Clip:" GridPane.rowIndex="8"/>
+                                                        <Label text="Far Clip:" GridPane.rowIndex="9"/>
+                                                        <TextField fx:id="textFieldCamNearClip" alignment="CENTER_RIGHT"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="8"/>
+                                                        <TextField fx:id="textFieldCamFarClip" alignment="CENTER_RIGHT"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="9"/>
+
+                                                        <Label text="Camera Position:" GridPane.columnSpan="2"
+                                                               GridPane.rowIndex="10">
+                                                            <font>
+                                                                <Font name="System Bold" size="12.0"/>
+                                                            </font>
+                                                        </Label>
+                                                        <Label text="x:" GridPane.rowIndex="11"/>
+                                                        <Label text="y:" GridPane.rowIndex="12"/>
+                                                        <Label text="z:" GridPane.rowIndex="13"/>
                                                         <TextField fx:id="textFieldCamPosX" alignment="CENTER_RIGHT"
-                                                                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="11"/>
                                                         <TextField fx:id="textFieldCamPosY" alignment="CENTER_RIGHT"
-                                                                   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="12"/>
                                                         <TextField fx:id="textFieldCamPosZ" alignment="CENTER_RIGHT"
-                                                                   GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="13"/>
                                                     </children>
                                                 </GridPane>
                                             </children>
