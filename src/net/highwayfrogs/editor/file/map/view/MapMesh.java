@@ -102,8 +102,6 @@ public class MapMesh extends TriangleMesh {
     public void updateData() {
         updateVertices();
         updatePolygonData();
-        this.faceCount = getFaces().size();
-        this.textureCount = getTexCoords().size();
     }
 
     /**
@@ -131,6 +129,9 @@ public class MapMesh extends TriangleMesh {
                 throw new RuntimeException("Cannot handle " + vertCount + " vertices");
             }
         }));
+
+        this.faceCount = getFaces().size();
+        this.textureCount = getTexCoords().size();
     }
 
     /**

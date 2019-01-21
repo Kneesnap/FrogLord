@@ -48,7 +48,6 @@ import java.util.List;
 
 /**
  * Sets up the map editor.
- * TODO: We need to make a system which allows different highlight reasons at once.
  * TODO: Animations
  * TODO: Grid mode, group.
  * TODO: Edit Vertexes
@@ -85,6 +84,7 @@ public class MAPController extends EditorController<MAPFile> {
     private Rotate rotZ;
 
     private MeshData cursorData;
+    private MeshData animatedIndicator;
 
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
     private static final Image SWAMPY = GameFile.loadIcon("swampy");
@@ -177,6 +177,10 @@ public class MAPController extends EditorController<MAPFile> {
     private void setupMapViewer(Stage stageToOverride, MapMesh mesh, TextureMap texMap) {
         this.mapMesh = mesh;
 
+        // These cause errors if not reset.
+        this.cursorData = null;
+        this.animatedIndicator = null;
+
         // Create and setup material properties for rendering the level.
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(SwingFXUtils.toFXImage(texMap.getImage(), null));
@@ -259,6 +263,19 @@ public class MAPController extends EditorController<MAPFile> {
                 mapUIController.showEntityInfo(newEntity);
                 System.out.println("Created new entity.");
                 resetEntities();
+            }
+
+            // Toggle Animation Viewer.
+            if (event.getCode() == KeyCode.A) {
+                if (animatedIndicator != null) {
+                    getMapMesh().getManager().removeMesh(animatedIndicator);
+                    animatedIndicator = null;
+                } else {
+                    getFile().getMapAnimations().forEach(mapAnim -> mapAnim.getMapUVs().forEach(uvInfo ->
+                            renderOverPolygon(uvInfo.getPolygon(), MapMesh.ANIMATION_COLOR)));
+
+                    animatedIndicator = getMapMesh().getManager().addMesh();
+                }
             }
 
             // [Remap Mode] Find next non-crashing remap.

@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -16,9 +17,9 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 public class MAPUVInfo extends GameObject {
-    private ByteUV[] uvs = new ByteUV[4]; // The UVs to apply to the poly address.
-    private PSXGPUPrimitive polygon;
-    private MAPFile map;
+    private ByteUV[] uvs = new ByteUV[UV_COUNT]; // The UVs to apply to the poly address.
+    private PSXPolygon polygon;
+    private transient MAPFile map;
 
     private static final int UV_COUNT = 4;
     private static final int TOTAL_UV_BLOCK_SIZE = UV_COUNT * ByteUV.BYTE_SIZE;
@@ -32,8 +33,12 @@ public class MAPUVInfo extends GameObject {
     @Override
     public void load(DataReader reader) {
         int polyPointer = reader.readInt();
-        this.polygon = getMap().getLoadPointerPolygonMap().get(polyPointer);
-        Utils.verify(this.polygon != null, "No polygon was loaded from %s.", Integer.toHexString(polyPointer));
+
+        PSXGPUPrimitive foundPrim = getMap().getLoadPointerPolygonMap().get(polyPointer);
+        Utils.verify(foundPrim != null, "No polygon was loaded from %s.", Integer.toHexString(polyPointer));
+        Utils.verify(foundPrim instanceof PSXPolygon, "Found prim was not a PSXPolygon.");
+
+        this.polygon = (PSXPolygon) foundPrim;
         reader.readBytes(TOTAL_UV_BLOCK_SIZE); // There are a bunch of uvs, but they're run-time only.
     }
 
