@@ -181,6 +181,9 @@ public class MapUIController implements Initializable {
      */
     public void showEntityInfo(Entity entity) {
         entityEditor.clearEditor();
+        if (entity == null)
+            return;
+
         entityEditor.addBoldLabel("General Information:");
         entityEditor.addLabel("Entity Type", entity.getFormBook().getEntity().name());
 
@@ -202,6 +205,12 @@ public class MapUIController implements Initializable {
         entityEditor.addBoldLabel("Script Data:");
         if (entity.getScriptData() != null)
             entity.getScriptData().addData(this.entityEditor);
+
+        entityEditor.addButton("Remove Entity", () -> {
+            getController().getFile().getEntities().remove(entity);
+            getController().resetEntities();
+            showEntityInfo(null); // Don't show the entity we just deleted.
+        });
 
         entityPane.setVisible(true);
         entityPane.setExpanded(true);
