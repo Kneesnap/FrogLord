@@ -284,7 +284,7 @@ public class GUIEditorGrid {
     public void addButton(String text, Runnable onPress) {
         Button button = setupSecondNode(new Button(text), true);
         button.setOnAction(evt -> onPress.run());
-        addRow(15);
+        addRow(25);
     }
 
     private Node setupNode(Node node) {

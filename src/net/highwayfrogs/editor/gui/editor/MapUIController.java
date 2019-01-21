@@ -185,6 +185,7 @@ public class MapUIController implements Initializable {
         entityEditor.clearEditor();
         if (entity == null) {
             entityEditor.addBoldLabel("There is no entity selected.");
+            entityEditor.addButton("New Entity", () -> addNewEntity(FormBook.values()[0]));
             return;
         }
 
@@ -216,7 +217,16 @@ public class MapUIController implements Initializable {
             showEntityInfo(null); // Don't show the entity we just deleted.
         });
 
+        entityEditor.addButton("New Entity", () -> addNewEntity(entity.getFormBook()));
+
         entityPane.setExpanded(true);
+    }
+
+    private void addNewEntity(FormBook book) {
+        Entity newEntity = new Entity(getController().getFile(), book);
+        getController().getFile().getEntities().add(newEntity);
+        showEntityInfo(newEntity);
+        getController().resetEntities();
     }
 
     /**
