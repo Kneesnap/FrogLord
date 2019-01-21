@@ -20,7 +20,6 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPEditorGUI;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
-import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 import java.net.URL;
@@ -65,7 +64,6 @@ public class MapUIController implements Initializable {
 
     // Level Editor /  Information pane
     @FXML private TitledPane titledPaneInformation;
-    @FXML private Label labelLevelThemeName;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldSpeedRotation;
     @FXML private Button btnResetSpeedRotation;
@@ -241,14 +239,12 @@ public class MapUIController implements Initializable {
         Rotate rotY = controller.getRotY();
         Rotate rotZ = controller.getRotZ();
         PerspectiveCamera camera = controller.getCamera();
-        MapMesh mapMesh = controller.getMapMesh();
 
         camera.setFarClip(MAP_VIEW_FAR_CLIP);
         subScene3D.setFill(Color.GRAY);
         subScene3D.setCamera(camera);
 
         // Set informational bindings and editor bindings
-        labelLevelThemeName.setText(mapMesh.getMap().getTheme().toString());
         colorPickerLevelBackground.setValue((Color)subScene3D.getFill());
         subScene3D.fillProperty().bind(colorPickerLevelBackground.valueProperty());
 
