@@ -19,6 +19,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPEditorGUI;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
+import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 import java.net.URL;
@@ -163,7 +164,18 @@ public class MapUIController implements Initializable {
         for (int i = 0; i < getController().getFile().getLights().size(); i++) {
             lightEditor.addBoldLabel("Light #" + (i + 1) + ":");
             getController().getFile().getLights().get(i).makeEditor(lightEditor);
+
+            final int tempIndex = i;
+            lightEditor.addButton("Remove Light #" + (i + 1), () -> {
+                getController().getFile().getLights().remove(tempIndex);
+                setupLights(); // Reload this.
+            });
         }
+
+        lightEditor.addButton("Add Light", () -> {
+            getController().getFile().getLights().add(new Light());
+            setupLights(); // Reload lights.
+        });
     }
 
     /**

@@ -56,7 +56,7 @@ public class MAPFile extends GameFile {
     @Setter private short startYTile;
     @Setter private short startRotation;
     private MAPTheme theme;
-    @Setter private short levelTimer; // Each frog (checkpoint) has its own timer value. In the vanilla game, they all match.
+    @Setter private short levelTimer;
     @Setter private SVector cameraSourceOffset;
     @Setter private SVector cameraTargetOffset;
     @Setter private SVector basePoint; // This is the bottom left of the map group grid.

@@ -16,10 +16,10 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 @Setter
 public class Light extends GameObject {
-    private LightType type;
-    private APILightType apiType;
+    private LightType type = LightType.STATIC;
+    private APILightType apiType = APILightType.AMBIENT;
     private int color; // BbGgRr
-    private SVector direction;
+    private SVector direction = new SVector();
 
     @Override
     public void load(DataReader reader) {
@@ -58,7 +58,7 @@ public class Light extends GameObject {
      * @param editor Lighting editor.
      */
     public void makeEditor(GUIEditorGrid editor) {
-        editor.addEnumSelector("Light Type", getType(), LightType.values(), false, this::setType);
+        // Don't need to edit the lightType, as static is the only one that does anything.
         editor.addEnumSelector("API Type", getApiType(), APILightType.values(), false, this::setApiType);
 
         int rgbColor = Utils.toRGB(Utils.fromBGR(getColor()));
