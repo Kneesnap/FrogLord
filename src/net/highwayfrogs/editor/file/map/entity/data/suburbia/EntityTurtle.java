@@ -1,19 +1,18 @@
 package net.highwayfrogs.editor.file.map.entity.data.suburbia;
 
+import javafx.scene.control.TableView;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.map.entity.data.PathEntity;
-import net.highwayfrogs.editor.file.map.path.PathInfo;
+import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.system.NameValuePair;
 
 /**
  * Represents the "SUBURBIA_TURTLE" struct.
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
-public class EntityTurtle extends GameObject implements PathEntity {
-    private PathInfo pathInfo = new PathInfo();
+public class EntityTurtle extends PathData {
     private int diveDelay;
     private int riseDelay;
     private int turtleType;
@@ -23,7 +22,7 @@ public class EntityTurtle extends GameObject implements PathEntity {
 
     @Override
     public void load(DataReader reader) {
-        this.pathInfo.load(reader);
+        super.load(reader);
         this.diveDelay = reader.readInt();
         this.riseDelay = reader.readInt();
         this.turtleType = reader.readInt();
@@ -31,9 +30,17 @@ public class EntityTurtle extends GameObject implements PathEntity {
 
     @Override
     public void save(DataWriter writer) {
-        this.pathInfo.save(writer);
+        super.save(writer);
         writer.writeInt(this.diveDelay);
         writer.writeInt(this.riseDelay);
         writer.writeInt(this.turtleType);
+    }
+
+    @Override
+    public void addData(TableView<NameValuePair> table) {
+        super.addData(table);
+        table.getItems().add(new NameValuePair("Dive Delay", String.valueOf(getDiveDelay())));
+        table.getItems().add(new NameValuePair("Rise Delay", String.valueOf(getRiseDelay())));
+        table.getItems().add(new NameValuePair("Turtle Type", String.valueOf(getTurtleType())));
     }
 }

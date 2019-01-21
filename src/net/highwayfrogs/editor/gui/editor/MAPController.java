@@ -27,12 +27,9 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
-import net.highwayfrogs.editor.file.map.path.Path;
-import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -72,6 +69,7 @@ public class MAPController extends EditorController<MAPFile> {
     private PSXPolygon selectedPolygon;
     private PSXPolygon polygonImmuneToTarget;
     private boolean polygonSelected;
+    private MapUIController mapUIController;
 
     private PerspectiveCamera camera;
 
@@ -189,7 +187,7 @@ public class MAPController extends EditorController<MAPFile> {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/javafx/mapui.fxml"));
         Parent loadRoot = fxmlLoader.load();
         // Get the custom mapui controller
-        MapUIController mapUIController = fxmlLoader.getController();
+        this.mapUIController = fxmlLoader.getController();
 
         // Create the 3D elements and use them within a subscene.
         Group root3D = new Group(this.camera, meshView);
@@ -346,38 +344,9 @@ public class MAPController extends EditorController<MAPFile> {
         ImagePattern pattern = new ImagePattern(SWAMPY);
 
         for (Entity entity : getFile().getEntities()) {
-            PSXMatrix matrix = entity.getMatrixInfo();
-            if (matrix != null) {
-                int[] pos = matrix.getTransform();
-                float x = Utils.unsignedIntToFloat(pos[0]);
-                float y = Utils.unsignedIntToFloat(pos[1]);
-                float z = Utils.unsignedIntToFloat(pos[2]);
-
-                Rectangle rect = makeIcon(root3D, pattern, rotX, rotY, rotZ, x, y, z);
-                rect.setOnMouseClicked(evt -> {
-                    System.out.println("Hello, I am a " + entity.getFormBook());
-
-                    System.out.println("Base: [" + evt.getX() + ", " + evt.getY() + ", " + evt.getZ() + "]");
-                    System.out.println("Scene: [" + evt.getSceneX() + ", " + evt.getSceneY() + "]");
-                    System.out.println("Screen: [" + evt.getScreenX() + ", " + evt.getScreenY() + "]");
-                });
-            }
-
-            PathInfo pathInfo = entity.getPathInfo();
-            if (pathInfo != null) {
-                Path path = getFile().getPaths().get(pathInfo.getPathId());
-                SVector end = path.evaluatePosition(pathInfo);
-
-                float x = Utils.unsignedShortToFloat(end.getX());
-                float y = Utils.unsignedShortToFloat(end.getY());
-                float z = Utils.unsignedShortToFloat(end.getZ());
-
-                Rectangle rect = makeIcon(root3D, pattern, rotX, rotY, rotZ, x, y, z);
-                rect.setOnMouseClicked(evt -> {
-                    System.out.println("Hello, I am a " + entity.getFormBook() + ": ");
-                    System.out.println("Type: " + path.getSegments().get(pathInfo.getSegmentId()).getType());
-                });
-            }
+            float[] pos = entity.getPosition(getFile());
+            Rectangle rect = makeIcon(root3D, pattern, rotX, rotY, rotZ, pos[0], pos[1], pos[2]);
+            rect.setOnMouseClicked(evt -> this.mapUIController.showEntityInfo(entity));
         }
     }
 

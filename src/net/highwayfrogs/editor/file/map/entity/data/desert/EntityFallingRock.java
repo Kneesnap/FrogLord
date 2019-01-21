@@ -1,20 +1,20 @@
 package net.highwayfrogs.editor.file.map.entity.data.desert;
 
+import javafx.scene.control.TableView;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.map.entity.data.MatrixEntity;
+import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.system.NameValuePair;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
-public class EntityFallingRock extends GameObject implements MatrixEntity {
-    private PSXMatrix matrix = new PSXMatrix(); // "Matrix of Entity"
+public class EntityFallingRock extends MatrixData {
     private FallingRockTarget[] targets = new FallingRockTarget[ROCK_TARGET_COUNT];
     private int delay; // Delay until rock starts moving.
     private short bounceCount; // Number of bounces.
@@ -26,7 +26,7 @@ public class EntityFallingRock extends GameObject implements MatrixEntity {
 
     @Override
     public void load(DataReader reader) {
-        this.matrix.load(reader);
+        super.load(reader);
         for (int i = 0; i < targets.length; i++) {
             targets[i] = new FallingRockTarget();
             targets[i].load(reader);
@@ -41,7 +41,7 @@ public class EntityFallingRock extends GameObject implements MatrixEntity {
 
     @Override
     public void save(DataWriter writer) {
-        this.matrix.save(writer);
+        super.save(writer);
         for (FallingRockTarget target : targets)
             target.save(writer);
 
@@ -50,6 +50,17 @@ public class EntityFallingRock extends GameObject implements MatrixEntity {
         writer.writeByte(Constants.NULL_BYTE);
         writer.writeInt(this.flags);
         writer.writeInt(this.sound);
+    }
+
+    @Override
+    public void addData(TableView<NameValuePair> table) {
+        super.addData(table);
+        table.getItems().add(new NameValuePair("Delay", String.valueOf(getDelay())));
+        table.getItems().add(new NameValuePair("Bounces", String.valueOf(getBounceCount())));
+        table.getItems().add(new NameValuePair("Flags", String.valueOf(getFlags())));
+        table.getItems().add(new NameValuePair("Sound", String.valueOf(getSound())));
+        for (int i = 0; i < getTargets().length; i++)
+            table.getItems().add(new NameValuePair("Target #" + (i + 1), getTargets()[i].getTime() + " -> " + getTargets()[i].getTarget()));
     }
 
     @Getter

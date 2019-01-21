@@ -6,10 +6,12 @@ import javafx.fxml.Initializable;
 import javafx.scene.Camera;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.GestureEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
@@ -17,7 +19,9 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.system.NameValuePair;
 
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -72,6 +76,24 @@ public class MapUIController implements Initializable {
     @FXML private TextField textFieldSpeedUpMultiplier;
     @FXML private Button btnResetSpeedUpMultiplier;
 
+    // Entity pane
+    @FXML private TitledPane entityPane;
+    @FXML private Label entityTypeLabel;
+    @FXML private Label formBookLabel;
+    @FXML private Label uniqueIdLabel;
+    @FXML private Label formGridIdLabel;
+    @FXML private Label flagLabel;
+
+    @FXML private VBox entityBox;
+    @FXML private TableView<NameValuePair> entityTable;
+    @FXML private TableColumn<Object, Object> tableColumnEntityName;
+    @FXML private TableColumn<Object, Object> tableColumnEntityValue;
+
+    @FXML private VBox scriptBox;
+    @FXML private TableView<NameValuePair> scriptTable;
+    @FXML private TableColumn<Object, Object> tableColumnScriptName;
+    @FXML private TableColumn<Object, Object> tableColumnScriptValue;
+
     // Camera pane
     @FXML private TitledPane titledPaneCamera;
     @FXML private GridPane gridPaneCameraPos;
@@ -97,7 +119,12 @@ public class MapUIController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        accordionLeft.setExpandedPane(titledPaneCamera);
+        accordionLeft.setExpandedPane(titledPaneInformation);
+        entityPane.setVisible(false);
+        tableColumnEntityName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        tableColumnEntityValue.setCellValueFactory(new PropertyValueFactory<>("value"));
+        tableColumnScriptName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        tableColumnScriptValue.setCellValueFactory(new PropertyValueFactory<>("value"));
     }
 
     /**
@@ -144,10 +171,38 @@ public class MapUIController implements Initializable {
     }
 
     /**
+     * Show entity information.
+     * @param entity The entity to show information for.
+     */
+    public void showEntityInfo(Entity entity) {
+        entityPane.setVisible(true);
+        entityPane.setExpanded(true);
+
+        entityTypeLabel.setText(entity.getFormBook().getEntity().name());
+        formBookLabel.setText(entity.getFormBook().name());
+        uniqueIdLabel.setText(String.valueOf(entity.getUniqueId()));
+        formGridIdLabel.setText(String.valueOf(entity.getFormGridId()));
+        flagLabel.setText(String.valueOf(entity.getFlags()));
+
+        // Populate Entity Data.
+        entityTable.getItems().clear();
+        if (entity.getEntityData() != null)
+            entity.getEntityData().addData(this.entityTable);
+        entityBox.setVisible(entityTable.getItems().size() > 0);
+
+        // Populate Script Data.
+        scriptTable.getItems().clear();
+        if (entity.getScriptData() != null)
+            entity.getScriptData().addData(this.scriptTable);
+        scriptBox.setVisible(scriptTable.getItems().size() > 0);
+
+
+    }
+
+    /**
      * Primary function (entry point) for setting up data / control bindings, etc. (May be broken out and tidied up later in development).
      */
     public void setupBindings(SubScene subScene3D, MapMesh mapMesh, MeshView meshView, Rotate rotX, Rotate rotY, Rotate rotZ, Camera camera) {
-
         camera.setFarClip(MAP_VIEW_FAR_CLIP);
         subScene3D.setFill(Color.GRAY);
         subScene3D.setCamera(camera);

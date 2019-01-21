@@ -1,20 +1,20 @@
 package net.highwayfrogs.editor.file.map.entity.data.general;
 
+import javafx.scene.control.TableView;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.map.entity.data.MatrixEntity;
+import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.system.NameValuePair;
 
 /**
  * Represents a trigger entity.
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
-public class TriggerEntity extends GameObject implements MatrixEntity {
-    private PSXMatrix matrix = new PSXMatrix();
+public class TriggerEntity extends MatrixData {
     private int type;
     private short[] uniqueIds = new short[ENTITY_TYPE_TRIGGER_MAX_IDS];
 
@@ -23,7 +23,7 @@ public class TriggerEntity extends GameObject implements MatrixEntity {
 
     @Override
     public void load(DataReader reader) {
-        matrix.load(reader);
+        super.load(reader);
         this.type = reader.readInt();
 
         for (int i = 0; i < uniqueIds.length; i++)
@@ -32,9 +32,17 @@ public class TriggerEntity extends GameObject implements MatrixEntity {
 
     @Override
     public void save(DataWriter writer) {
-        matrix.save(writer);
+        super.save(writer);
         writer.writeInt(this.type);
         for (short id : uniqueIds)
             writer.writeShort(id);
+    }
+
+    @Override
+    public void addData(TableView<NameValuePair> table) {
+        super.addData(table);
+        table.getItems().add(new NameValuePair("Type", String.valueOf(getType())));
+        for (int i = 0; i < getUniqueIds().length; i++)
+            table.getItems().add(new NameValuePair("Entity #" + (i + 1), String.valueOf(getUniqueIds()[i])));
     }
 }

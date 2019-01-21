@@ -3,14 +3,18 @@ package net.highwayfrogs.editor.file.map.entity;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.entity.data.MatrixEntity;
-import net.highwayfrogs.editor.file.map.entity.data.PathEntity;
+import net.highwayfrogs.editor.file.map.entity.data.EntityData;
+import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
+import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.form.FormBook;
+import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -25,7 +29,7 @@ public class Entity extends GameObject {
     private int uniqueId;
     private FormBook formBook;
     private int flags;
-    private GameObject entityData;
+    private EntityData entityData;
     private EntityScriptData scriptData;
 
     private transient int loadScriptDataPointer;
@@ -95,13 +99,7 @@ public class Entity extends GameObject {
      * @return pathInfo
      */
     public PathInfo getPathInfo() {
-        if (getEntityData() instanceof PathEntity)
-            return ((PathEntity) getEntityData()).getPathInfo();
-
-        if (getEntityData() instanceof PathInfo)
-            return (PathInfo) getEntityData();
-
-        return null;
+        return getEntityData() instanceof PathData ? ((PathData) getEntityData()).getPathInfo() : null;
     }
 
     /**
@@ -109,12 +107,28 @@ public class Entity extends GameObject {
      * @return psxMatrix
      */
     public PSXMatrix getMatrixInfo() {
-        if (getEntityData() instanceof MatrixEntity)
-            return ((MatrixEntity) getEntityData()).getMatrix();
+        return getEntityData() instanceof MatrixData ? ((MatrixData) getEntityData()).getMatrix() : null;
+    }
 
-        if (getEntityData() instanceof PSXMatrix)
-            return (PSXMatrix) getEntityData();
+    /**
+     * Get the x, y, z position of this entity.
+     * @param map The map file this entity presides in.
+     * @return position
+     */
+    public float[] getPosition(MAPFile map) {
+        PSXMatrix matrix = getMatrixInfo();
+        if (matrix != null) {
+            int[] pos = matrix.getTransform();
+            return new float[]{Utils.unsignedIntToFloat(pos[0]), Utils.unsignedIntToFloat(pos[1]), Utils.unsignedIntToFloat(pos[2])};
+        }
 
-        return null;
+        PathInfo pathInfo = getPathInfo();
+        if (pathInfo != null) {
+            Path path = map.getPaths().get(pathInfo.getPathId());
+            SVector end = path.evaluatePosition(pathInfo);
+            return new float[]{Utils.unsignedShortToFloat(end.getX()), Utils.unsignedShortToFloat(end.getY()), Utils.unsignedShortToFloat(end.getZ())};
+        }
+
+        throw new UnsupportedOperationException("Tried to get the position of an entity without position data!");
     }
 }

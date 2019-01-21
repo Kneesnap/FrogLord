@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.map.path;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -17,7 +18,7 @@ public class PathInfo extends GameObject {
     private int motionType;
     private int speed;
 
-    public static final int MOTION_TYPE_REPEAT = 8;
+    public static final int MOTION_TYPE_REPEAT = Constants.BIT_FLAG_3;
 
     @Override
     public void load(DataReader reader) {

@@ -145,6 +145,6 @@ public class SVector extends GameObject {
 
     @Override
     public String toString() {
-        return "SVector[" + toCoordinateString() + "]";
+        return "SVector<" + toCoordinateString() + ">";
     }
 }
