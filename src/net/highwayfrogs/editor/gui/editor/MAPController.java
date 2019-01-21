@@ -46,12 +46,14 @@ import java.util.List;
 
 /**
  * Sets up the map editor.
- * TODO: Icon for animations, if we're unable to make them render in our tool.
- * TODO: Grid mode,
+ * TODO: We need to make a system which allows different highlight reasons at once.
+ * TODO: Animations
+ * TODO: Grid mode, group.
  * TODO: Edit Vertexes
  * TODO: Edit polygons
- * TODO: Show Paths.
+ * TODO: Show Paths. (Can show an icon tracing the path in real-time)
  * TODO: Zones.
+ * TODO: Forms?
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter

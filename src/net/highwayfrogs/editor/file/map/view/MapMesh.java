@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file.map.view;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
@@ -38,6 +37,8 @@ public class MapMesh extends TriangleMesh {
     private int textureCount;
 
     public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
+    public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(Color.YELLOW, Color.BLACK);
+    public static final CursorVertexColor GRID_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
 
     public MapMesh(MAPFile file, TextureMap texMap) {
         super(VertexFormat.POINT_TEXCOORD);
