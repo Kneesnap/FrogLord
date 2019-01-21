@@ -24,7 +24,7 @@ public class PSXClutColor extends GameObject {
     private static final int GREEN_OFFSET = RED_OFFSET + BITS_PER_VALUE;
     private static final int BLUE_OFFSET = GREEN_OFFSET + BITS_PER_VALUE;
     private static final int TO_FULL_BYTE = Constants.BITS_PER_BYTE - BITS_PER_VALUE;
-    private static final int STP_FLAG = (1 << 15);
+    private static final int STP_FLAG = Constants.BIT_FLAG_15;
     public static final int BYTE_SIZE = Constants.SHORT_SIZE;
 
     @Override

@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor.file.map.entity.script.swamp;
 
+import javafx.scene.control.TableView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.system.NameValuePair;
 
 /**
  * Holds script data for nuclear barrels.
@@ -24,5 +26,11 @@ public class ScriptNuclearBarrelData extends EntityScriptData {
     public void save(DataWriter writer) {
         writer.writeInt(this.flags);
         writer.writeInt(this.distance);
+    }
+
+    @Override
+    public void addData(TableView<NameValuePair> table) {
+        table.getItems().add(new NameValuePair("Flags", String.valueOf(flags)));
+        table.getItems().add(new NameValuePair("Distance", String.valueOf(distance)));
     }
 }

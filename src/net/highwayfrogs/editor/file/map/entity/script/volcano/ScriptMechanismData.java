@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor.file.map.entity.script.volcano;
 
+import javafx.scene.control.TableView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.system.NameValuePair;
 
 /**
  * Represents the data loaded by SCRIPT_VOL_MECHANISM.
@@ -36,5 +38,15 @@ public class ScriptMechanismData extends EntityScriptData {
         writer.writeInt(this.returnTripDestination);
         writer.writeInt(this.destination);
         writer.writeInt(this.initialDelay);
+    }
+
+    @Override
+    public void addData(TableView<NameValuePair> table) {
+        table.getItems().add(new NameValuePair("Return Delay", String.valueOf(returnTripDelay)));
+        table.getItems().add(new NameValuePair("Delta", String.valueOf(destination)));
+        table.getItems().add(new NameValuePair("Direction Change Delay", String.valueOf(directionChangeDelay)));
+        table.getItems().add(new NameValuePair("Return Target", String.valueOf(returnTripDestination)));
+        table.getItems().add(new NameValuePair("Destination", String.valueOf(destination)));
+        table.getItems().add(new NameValuePair("Initial Delay", String.valueOf(initialDelay)));
     }
 }

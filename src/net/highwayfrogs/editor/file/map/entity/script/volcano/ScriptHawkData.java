@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor.file.map.entity.script.volcano;
 
+import javafx.scene.control.TableView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.system.NameValuePair;
 
 /**
  * Contains data about homing the frog.
@@ -24,5 +26,11 @@ public class ScriptHawkData extends EntityScriptData {
     public void save(DataWriter writer) {
         writer.writeInt(this.speed);
         writer.writeInt(this.aggroDistance);
+    }
+
+    @Override
+    public void addData(TableView<NameValuePair> table) {
+        table.getItems().add(new NameValuePair("Speed", String.valueOf(speed)));
+        table.getItems().add(new NameValuePair("Aggro Distance", String.valueOf(aggroDistance)));
     }
 }

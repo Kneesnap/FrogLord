@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor.file.map.entity.script.sky;
 
+import javafx.scene.control.TableView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.system.NameValuePair;
 
 /**
  * It is unknown what these values are for.
@@ -27,5 +29,12 @@ public class ScriptBalloonData extends EntityScriptData {
         writer.writeInt(this.unknown1);
         writer.writeInt(this.unknown2);
         writer.writeInt(this.unknown3);
+    }
+
+    @Override
+    public void addData(TableView<NameValuePair> table) {
+        table.getItems().add(new NameValuePair("Unknown 1", String.valueOf(unknown1)));
+        table.getItems().add(new NameValuePair("Unknown 2", String.valueOf(unknown2)));
+        table.getItems().add(new NameValuePair("Unknown 3", String.valueOf(unknown3)));
     }
 }

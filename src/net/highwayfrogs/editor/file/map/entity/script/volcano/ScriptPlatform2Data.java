@@ -1,10 +1,12 @@
 package net.highwayfrogs.editor.file.map.entity.script.volcano;
 
+import javafx.scene.control.TableView;
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.system.NameValuePair;
 
 /**
  * This holds data not present in the code, for the entity: vol_platform2.
@@ -27,5 +29,10 @@ public class ScriptPlatform2Data extends EntityScriptData {
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(isEnabledByDefault() ? ENABLE_STATE : DISABLE_STATE);
+    }
+
+    @Override
+    public void addData(TableView<NameValuePair> table) {
+        table.getItems().add(new NameValuePair("Enabled By Default", String.valueOf(enabledByDefault)));
     }
 }

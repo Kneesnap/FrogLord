@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.mof.animation.transform;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -31,5 +32,10 @@ public class MR_MAT34 extends TransformObject {
 
         for (short aTransfer : this.transform)
             writer.writeShort(aTransfer);
+    }
+
+    @Override
+    public PSXMatrix createMatrix() {
+        throw new UnsupportedOperationException();
     }
 }

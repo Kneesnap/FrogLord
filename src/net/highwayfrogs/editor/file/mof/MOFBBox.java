@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 public class MOFBBox extends GameObject {
-    private SVector vertices[];
+    private SVector[] vertices;
     private static final int COUNT = 8;
 
     @Override

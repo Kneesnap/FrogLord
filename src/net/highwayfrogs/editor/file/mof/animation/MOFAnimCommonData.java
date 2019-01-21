@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
@@ -21,10 +22,10 @@ public class MOFAnimCommonData extends GameObject {
     private int flags;
     private List<TransformObject> transforms = new ArrayList<>();
 
-    public static final int FLAG_TRANSFORM_PRESENT = 1;
-    public static final int FLAG_ROTATION_PRESENT = 1 << 1;
-    public static final int FLAG_TRANSLATION_PRESENT = 1 << 2;
-    public static final int FLAG_BBOX_PRESENT = 1 << 3;
+    public static final int FLAG_TRANSFORM_PRESENT = Constants.BIT_FLAG_0;
+    public static final int FLAG_ROTATION_PRESENT = Constants.BIT_FLAG_1;
+    public static final int FLAG_TRANSLATION_PRESENT = Constants.BIT_FLAG_2;
+    public static final int FLAG_BBOX_PRESENT = Constants.BIT_FLAG_3;
 
     public MOFAnimCommonData(MOFAnimation parent) {
         this.parent = parent;

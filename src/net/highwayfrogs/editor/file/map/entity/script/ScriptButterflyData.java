@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor.file.map.entity.script;
 
+import javafx.scene.control.TableView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.system.NameValuePair;
 
 /**
  * Holds onto butterfly data.
@@ -21,5 +23,10 @@ public class ScriptButterflyData extends EntityScriptData {
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(type.ordinal());
+    }
+
+    @Override
+    public void addData(TableView<NameValuePair> table) {
+        table.getItems().add(new NameValuePair("Type", type.name()));
     }
 }

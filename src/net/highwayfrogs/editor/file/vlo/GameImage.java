@@ -47,13 +47,13 @@ public class GameImage extends GameObject {
     private static final int PSX_PIXELS_PER_PC = 2;
     private static final int PSX_WIDTH_MODIFIER = 4;
 
-    public static final int FLAG_TRANSLUCENT = 1;
-    public static final int FLAG_ROTATED = 2; // Unused.
-    public static final int FLAG_HIT_X = 4; //Appears to decrease width by 1?
-    public static final int FLAG_HIT_Y = 8; //Appears to decrease height by 1?
-    public static final int FLAG_REFERENCED_BY_NAME = 16; // Unsure.
-    public static final int FLAG_BLACK_IS_TRANSPARENT = 32; // Seems like it may not be used. Would be weird if that were the case.
-    public static final int FLAG_2D_SPRITE = 32768;
+    public static final int FLAG_TRANSLUCENT = Constants.BIT_FLAG_0;
+    public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused.
+    public static final int FLAG_HIT_X = Constants.BIT_FLAG_2; //Appears to decrease width by 1?
+    public static final int FLAG_HIT_Y = Constants.BIT_FLAG_3; //Appears to decrease height by 1?
+    public static final int FLAG_REFERENCED_BY_NAME = Constants.BIT_FLAG_4; // Unsure.
+    public static final int FLAG_BLACK_IS_TRANSPARENT = Constants.BIT_FLAG_5; // Seems like it may not be used. Would be weird if that were the case.
+    public static final int FLAG_2D_SPRITE = Constants.BIT_FLAG_15;
 
     public GameImage(VLOArchive parent) {
         this.parent = parent;

@@ -32,12 +32,12 @@ public class MAPAnimation extends GameObject {
     private transient int texturePointerAddress;
     private transient int uvPointerAddress;
 
-    public static final int FLAG_UV = 1; // Uses UV animation.
-    public static final int FLAG_TEXTURE = 2; // Uses cel list animation.
+    public static final int FLAG_UV = Constants.BIT_FLAG_0; // Uses UV animation.
+    public static final int FLAG_TEXTURE = Constants.BIT_FLAG_1; // Uses cel list animation.
 
     private static final int GLOBAL_TEXTURE_FLAG = 0x8000;
-    public static final int FLAG_UV_ANIMATION = 1;
-    public static final int FLAG_TEXTURE_ANIMATION = 2;
+    public static final int FLAG_UV_ANIMATION = Constants.BIT_FLAG_0;
+    public static final int FLAG_TEXTURE_ANIMATION = Constants.BIT_FLAG_1;
 
     public static final int BYTE_SIZE = 2 + (7 * Constants.SHORT_SIZE) + (4 * Constants.INTEGER_SIZE);
 

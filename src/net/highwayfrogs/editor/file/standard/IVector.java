@@ -58,6 +58,16 @@ public class IVector extends GameObject {
     }
 
     /**
+     * Equivalent to MR_ADD_VEC(b)
+     * @param other The vector to add.
+     */
+    public void add(IVector other) {
+        this.x += other.x;
+        this.y += other.y;
+        this.z += other.z;
+    }
+
+    /**
      * Load a SVector with padding from a DataReader.
      * @param reader The data reader to read from.
      * @return vector

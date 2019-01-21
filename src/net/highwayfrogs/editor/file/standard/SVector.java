@@ -54,6 +54,16 @@ public class SVector extends GameObject {
     }
 
     /**
+     * Equivalent to MR_SVEC_EQUALS_VEC
+     * @param vec The array to read info from.
+     */
+    public void svecEqualsVec(int[] vec) {
+        this.x = (short) vec[0];
+        this.y = (short) vec[1];
+        this.z = (short) vec[2];
+    }
+
+    /**
      * Add another SVector to this one.
      * @param other The other SVector to add.
      */
@@ -135,6 +145,6 @@ public class SVector extends GameObject {
 
     @Override
     public String toString() {
-        return "SVector[" + toCoordinateString() + "]";
+        return "SVector<" + toCoordinateString() + ">";
     }
 }

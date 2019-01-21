@@ -115,12 +115,12 @@ public class MWIFile extends GameObject {
         private String filePath;
         private transient int loadedId;
 
-        public static final int FLAG_SINGLE_ACCESS = 1; // I assume this is for files loaded individually, by themselves.
-        public static final int FLAG_GROUP_ACCESS = 2; // Cannot be loaded individually / by itself. Presumably this is for files in child-WADs.
-        public static final int FLAG_IS_GROUP = 4; // Presumably this marks a child archive, where the next entries belong to this file.
-        public static final int FLAG_ABSOLUTE_PATH = 8; // Appears to let you use absolute file paths instead of relative paths. However, this is functionality is likely not in the retail build.
-        public static final int FLAG_AUTOMATIC_COMPRESSION = 16;
-        public static final int FLAG_MANUAL_COMPRESSION = 32;
+        public static final int FLAG_SINGLE_ACCESS = Constants.BIT_FLAG_0; // I assume this is for files loaded individually, by themselves.
+        public static final int FLAG_GROUP_ACCESS = Constants.BIT_FLAG_1; // Cannot be loaded individually / by itself. Presumably this is for files in child-WADs.
+        public static final int FLAG_IS_GROUP = Constants.BIT_FLAG_2; // Presumably this marks a child archive, where the next entries belong to this file.
+        public static final int FLAG_ABSOLUTE_PATH = Constants.BIT_FLAG_3; // Appears to let you use absolute file paths instead of relative paths. However, this is functionality is likely not in the retail build.
+        public static final int FLAG_AUTOMATIC_COMPRESSION = Constants.BIT_FLAG_4;
+        public static final int FLAG_MANUAL_COMPRESSION = Constants.BIT_FLAG_5;
 
         public FileEntry(int loadedId) {
             this.loadedId = loadedId;

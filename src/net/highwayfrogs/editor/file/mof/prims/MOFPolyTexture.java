@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.mof.prims;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -24,13 +25,13 @@ public class MOFPolyTexture extends MOFPolygon {
     private PSXColorVector color;
     private boolean flippedUVs;
 
-    public static final int FLAG_SEMI_TRANSPARENT = 1; // setSemiTrans(true)
-    public static final int FLAG_ENVIRONMENT_IMAGE = 1 << 1; // Show the solid environment bitmap. (For instance, how water appears as a solid body, or sludge in the sewer levels.)
-    public static final int FLAG_MAX_ORDER_TABLE = 1 << 2; // Puts at the back of the order table. Either the very lowest rendering priority, or the very highest.
+    public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_0; // setSemiTrans(true)
+    public static final int FLAG_ENVIRONMENT_IMAGE = Constants.BIT_FLAG_1; // Show the solid environment bitmap. (For instance, how water appears as a solid body, or sludge in the sewer levels.)
+    public static final int FLAG_MAX_ORDER_TABLE = Constants.BIT_FLAG_2; // Puts at the back of the order table. Either the very lowest rendering priority, or the very highest.
 
     // These are run-time-only it seems. They get applied from the anim section.
-    public static final int FLAG_ANIMATED_UV = 1 << 3; // Poly has an associated map animation using UV animation.
-    public static final int FLAG_ANIMATED_TEXTURE = 1 << 4; // Poly has an associated map animation using cel list animation.
+    public static final int FLAG_ANIMATED_UV = Constants.BIT_FLAG_3; // Poly has an associated map animation using UV animation.
+    public static final int FLAG_ANIMATED_TEXTURE = Constants.BIT_FLAG_4; // Poly has an associated map animation using cel list animation.
 
     public MOFPolyTexture(MOFPrimType type, int verticeCount, int normalCount) {
         super(type, verticeCount, normalCount, 0);
