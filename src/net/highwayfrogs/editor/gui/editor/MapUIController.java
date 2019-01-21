@@ -14,7 +14,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
-import javafx.scene.transform.Rotate;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPEditorGUI;
@@ -64,6 +63,9 @@ public class MapUIController implements Initializable {
 
     // Control Settings Pane.
     @FXML private TitledPane titledPaneInformation;
+    @FXML private CheckBox checkBoxShowMesh;
+    @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
+    @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldSpeedRotation;
     @FXML private Button btnResetSpeedRotation;
@@ -80,6 +82,9 @@ public class MapUIController implements Initializable {
     @FXML private TextField textFieldCamPosX;
     @FXML private TextField textFieldCamPosY;
     @FXML private TextField textFieldCamPosZ;
+    @FXML private TextField textFieldMeshPosX;
+    @FXML private TextField textFieldMeshPosY;
+    @FXML private TextField textFieldMeshPosZ;
 
     // General pane.
     @FXML private TitledPane generalPane;
@@ -96,24 +101,11 @@ public class MapUIController implements Initializable {
     @FXML private GridPane lightGridPane;
     private GUIEditorGrid lightEditor;
 
-    // Mesh pane
-    @FXML private CheckBox checkBoxShowMesh;
-    @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
-    @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
-
-    @FXML private TextField textFieldMeshPosX;
-    @FXML private TextField textFieldMeshPosY;
-    @FXML private TextField textFieldMeshPosZ;
-    @FXML private TextField textFieldMeshRotX;
-    @FXML private TextField textFieldMeshRotY;
-    @FXML private TextField textFieldMeshRotZ;
-
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         accordionLeft.setExpandedPane(generalPane);
-        entityPane.setVisible(false);
         entityEditor = new MAPEditorGUI(entityGridPane, this);
     }
 
@@ -191,8 +183,10 @@ public class MapUIController implements Initializable {
      */
     public void showEntityInfo(Entity entity) {
         entityEditor.clearEditor();
-        if (entity == null)
+        if (entity == null) {
+            entityEditor.addBoldLabel("There is no entity selected.");
             return;
+        }
 
         entityEditor.addBoldLabel("General Information:");
         entityEditor.addLabel("Entity Type", entity.getFormBook().getEntity().name());
@@ -222,7 +216,6 @@ public class MapUIController implements Initializable {
             showEntityInfo(null); // Don't show the entity we just deleted.
         });
 
-        entityPane.setVisible(true);
         entityPane.setExpanded(true);
     }
 
@@ -231,9 +224,6 @@ public class MapUIController implements Initializable {
      */
     public void setupBindings(MAPController controller, SubScene subScene3D, MeshView meshView) {
         this.controller = controller;
-        Rotate rotX = controller.getRotX();
-        Rotate rotY = controller.getRotY();
-        Rotate rotZ = controller.getRotZ();
         PerspectiveCamera camera = controller.getCamera();
 
         camera.setFarClip(MAP_VIEW_FAR_CLIP);
@@ -277,11 +267,8 @@ public class MapUIController implements Initializable {
         textFieldMeshPosY.textProperty().bindBidirectional(meshView.translateYProperty(), NUM_TO_STRING_CONVERTER);
         textFieldMeshPosZ.textProperty().bindBidirectional(meshView.translateZProperty(), NUM_TO_STRING_CONVERTER);
 
-        textFieldMeshRotX.textProperty().bindBidirectional(rotX.angleProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldMeshRotY.textProperty().bindBidirectional(rotY.angleProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldMeshRotZ.textProperty().bindBidirectional(rotZ.angleProperty(), NUM_TO_STRING_CONVERTER);
-
         // Must be called after MAPController is passed.
+        showEntityInfo(null);
         setupLights();
         setupGeneralEditor();
     }

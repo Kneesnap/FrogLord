@@ -244,14 +244,6 @@ public class MAPController extends EditorController<MAPFile> {
             if (event.getCode() == KeyCode.X)
                 meshView.setDrawMode(meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
 
-            // Toggle mesh visibility.
-            if (event.getCode() == KeyCode.V)
-                meshView.setVisible(!meshView.isVisible());
-
-            // Cycle through face culling modes (NONE, BACK, FRONT).
-            if (event.getCode() == KeyCode.C)
-                meshView.setCullFace(CullFace.values()[(meshView.getCullFace().ordinal() + 1) % CullFace.values().length]);
-
             // Toggle fullscreen mode.
             if (event.isControlDown() && event.getCode() == KeyCode.ENTER)
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
