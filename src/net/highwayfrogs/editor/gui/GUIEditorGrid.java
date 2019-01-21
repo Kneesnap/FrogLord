@@ -214,7 +214,7 @@ public class GUIEditorGrid {
             onChange();
         });
 
-        addRow(15);
+        addRow(20);
         return box;
     }
 

@@ -471,7 +471,12 @@ public class MAPController extends EditorController<MAPFile> {
         cursorData = mapMesh.getManager().addMesh();
     }
 
-    private void renderOverPolygon(PSXPolygon targetPoly, CursorVertexColor color) {
+    /**
+     * Render over an existing polygon.
+     * @param targetPoly The polygon to render over.
+     * @param color      The color to render.
+     */
+    public void renderOverPolygon(PSXPolygon targetPoly, CursorVertexColor color) {
         int increment = mapMesh.getVertexFormat().getVertexIndexSize();
         boolean isQuad = (targetPoly.getVertices().length == PSXPolygon.QUAD_SIZE);
 
