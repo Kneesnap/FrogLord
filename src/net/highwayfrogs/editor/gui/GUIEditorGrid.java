@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui;
 
+import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -168,13 +169,17 @@ public class GUIEditorGrid {
      * @param setter  The setter
      * @return comboBox
      */
+    @SuppressWarnings("unchecked")
     public <T> ComboBox<T> addSelectionBox(String label, T current, List<T> values, Consumer<T> setter) {
         addLabel(label);
         ComboBox<T> box = new ComboBox<>(FXCollections.observableArrayList(values));
         box.valueProperty().setValue(current); // Set the selected value.
-        box.getSelectionModel().select(current); // Automatically scroll to selected value. TODO: Show selected option
+        box.getSelectionModel().select(current); // Automatically scroll to selected value.
         GridPane.setColumnIndex(box, 1);
         gridPane.getChildren().add(setupNode(box));
+
+        box.addEventFilter(ComboBox.ON_SHOWN, event -> // Show the selected value when the dropdown is opened.
+                ((ComboBoxListViewSkin<T>) box.getSkin()).getListView().scrollTo(box.getSelectionModel().getSelectedIndex()));
 
         box.valueProperty().addListener((listener, oldVal, newVal) -> setter.accept(newVal));
 
