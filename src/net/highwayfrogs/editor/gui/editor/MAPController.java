@@ -44,7 +44,7 @@ import java.util.List;
 
 /**
  * Sets up the map editor.
- * TODO: Icon for lighting.
+ * TODO: Light editor tab. [Not something located in the world.]
  * TODO: Icon for animations, if we're unable to make them render in our tool.
  * TODO: Grid mode,
  * TODO: Edit Vertexes
@@ -202,7 +202,6 @@ public class MAPController extends EditorController<MAPFile> {
         uiPane.setCenter(subScene3D);
 
         // Setup additional scene elements.
-        setupLights(root3D, rotX, rotY, rotZ);
         setupEntities(root3D, rotX, rotY, rotZ);
 
         // Create and set the scene.
@@ -329,15 +328,6 @@ public class MAPController extends EditorController<MAPFile> {
         mesh.findNextValidRemap(0, 0, false);
         camera.setTranslateZ(-MapUIController.getPropertyMapViewScale().get());
         camera.setTranslateY(-MapUIController.getPropertyMapViewScale().get() / 7.0);
-    }
-
-    private void setupLights(Group root3D, Rotate rotX, Rotate rotY, Rotate rotZ) {
-        /*ImagePattern pattern = new ImagePattern(LIGHT_BULB);
-
-        for (Light light : getFile().getLights()) {
-            SVector position = light.getPosition();
-            makeIcon(root3D, pattern, rotX, rotY, Utils.unsignedShortToFloat(position.getX()), Utils.unsignedShortToFloat(position.getY()), Utils.unsignedShortToFloat(position.getZ()));
-        }*/
     }
 
     private void setupEntities(Group root3D, Rotate rotX, Rotate rotY, Rotate rotZ) {

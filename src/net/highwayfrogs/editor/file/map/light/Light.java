@@ -50,4 +50,12 @@ public class Light extends GameObject {
         writer.writeNullPointer();
         writer.writeNullPointer();
     }
+
+    /**
+     * It appears UNKNOWN API light-types are pointless.
+     * @return isWorthKeeping
+     */
+    public boolean isWorthKeeping() {
+        return getApiType() != APILightType.UNKNOWN;
+    }
 }

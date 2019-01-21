@@ -247,7 +247,8 @@ public class MAPFile extends GameFile {
         for (int i = 0; i < lightCount; i++) {
             Light light = new Light();
             light.load(reader);
-            lights.add(light);
+            if (light.isWorthKeeping())
+                lights.add(light);
         }
 
         reader.setIndex(groupAddress);
