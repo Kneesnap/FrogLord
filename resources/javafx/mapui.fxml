@@ -184,54 +184,13 @@
                                         <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
                                               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
-                                                <GridPane prefHeight="120.0" prefWidth="162.0">
+                                                <GridPane prefWidth="250.0" fx:id="entityGridPane">
                                                     <columnConstraints>
-                                                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="110.0"
-                                                                           minWidth="10.0" prefWidth="52.0"/>
-                                                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="166.0"
-                                                                           minWidth="10.0" prefWidth="159.0"/>
-                                                        <ColumnConstraints/>
-                                                        <ColumnConstraints/>
-                                                        <ColumnConstraints/>
-                                                        <ColumnConstraints/>
+                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0"
+                                                                           minWidth="10.0" prefWidth="100.0"/>
+                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="140.0"
+                                                                           minWidth="10.0" prefWidth="150.0"/>
                                                     </columnConstraints>
-                                                    <rowConstraints>
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
-                                                                        vgrow="SOMETIMES"/>
-                                                        <RowConstraints maxHeight="30.0" minHeight="10.0"
-                                                                        prefHeight="20.0" vgrow="SOMETIMES"/>
-                                                        <RowConstraints maxHeight="30.0" minHeight="10.0"
-                                                                        prefHeight="20.0" vgrow="SOMETIMES"/>
-                                                        <RowConstraints maxHeight="30.0" minHeight="10.0"
-                                                                        prefHeight="20.0"/>
-                                                        <RowConstraints maxHeight="30.0" minHeight="10.0"
-                                                                        prefHeight="20.0"/>
-                                                        <RowConstraints maxHeight="30.0" minHeight="20.0"
-                                                                        prefHeight="20.0"/>
-                                                    </rowConstraints>
-                                                    <children>
-                                                        <Label prefHeight="6.0" prefWidth="161.0"
-                                                               text="General Information:" GridPane.columnSpan="2">
-                                                            <font>
-                                                                <Font name="System Bold" size="12.0"/>
-                                                            </font>
-                                                        </Label>
-                                                        <Label text="Entity Type" GridPane.rowIndex="1"/>
-                                                        <Label fx:id="entityTypeLabel" text="Placeholder"
-                                                               GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                                                        <Label text="Form Type" GridPane.rowIndex="2"/>
-                                                        <Label fx:id="formBookLabel" text="Placeholder"
-                                                               GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                                                        <Label text="Entity ID" GridPane.rowIndex="3"/>
-                                                        <Label fx:id="uniqueIdLabel" text="Placeholder"
-                                                               GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                                                        <Label text="Grid ID" GridPane.rowIndex="4"/>
-                                                        <Label fx:id="formGridIdLabel" text="Placeholder"
-                                                               GridPane.columnIndex="1" GridPane.rowIndex="4"/>
-                                                        <Label text="Flags" GridPane.rowIndex="5"/>
-                                                        <Label fx:id="flagLabel" text="Placeholder"
-                                                               GridPane.columnIndex="1" GridPane.rowIndex="5"/>
-                                                    </children>
                                                 </GridPane>
                                                 <VBox fx:id="entityBox" prefHeight="170.0" prefWidth="232.0">
                                                     <children>

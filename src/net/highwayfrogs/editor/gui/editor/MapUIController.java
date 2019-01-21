@@ -21,6 +21,7 @@ import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.NameValuePair;
 
 import java.net.URL;
@@ -78,11 +79,8 @@ public class MapUIController implements Initializable {
 
     // Entity pane
     @FXML private TitledPane entityPane;
-    @FXML private Label entityTypeLabel;
-    @FXML private Label formBookLabel;
-    @FXML private Label uniqueIdLabel;
-    @FXML private Label formGridIdLabel;
-    @FXML private Label flagLabel;
+    @FXML private GridPane entityGridPane;
+    private GUIEditorGrid entityEditor;
 
     @FXML private VBox entityBox;
     @FXML private TableView<NameValuePair> entityTable;
@@ -121,6 +119,8 @@ public class MapUIController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         accordionLeft.setExpandedPane(titledPaneInformation);
         entityPane.setVisible(false);
+        entityEditor = new GUIEditorGrid(entityGridPane);
+
         tableColumnEntityName.setCellValueFactory(new PropertyValueFactory<>("name"));
         tableColumnEntityValue.setCellValueFactory(new PropertyValueFactory<>("value"));
         tableColumnScriptName.setCellValueFactory(new PropertyValueFactory<>("name"));
@@ -175,14 +175,14 @@ public class MapUIController implements Initializable {
      * @param entity The entity to show information for.
      */
     public void showEntityInfo(Entity entity) {
-        entityPane.setVisible(true);
-        entityPane.setExpanded(true);
+        entityEditor.clearEditor();
+        entityEditor.addLabel("General Information:");
+        entityEditor.addTextField("Entity Type", entity.getFormBook().getEntity().name());
+        entityEditor.addTextField("Form Type", entity.getFormBook().name());
+        entityEditor.addTextField("Entity ID", String.valueOf(entity.getUniqueId()));
+        entityEditor.addTextField("Grid ID", String.valueOf(entity.getFormGridId()));
+        entityEditor.addTextField("Flags", String.valueOf(entity.getFlags()));
 
-        entityTypeLabel.setText(entity.getFormBook().getEntity().name());
-        formBookLabel.setText(entity.getFormBook().name());
-        uniqueIdLabel.setText(String.valueOf(entity.getUniqueId()));
-        formGridIdLabel.setText(String.valueOf(entity.getFormGridId()));
-        flagLabel.setText(String.valueOf(entity.getFlags()));
 
         // Populate Entity Data.
         entityTable.getItems().clear();
@@ -196,7 +196,8 @@ public class MapUIController implements Initializable {
             entity.getScriptData().addData(this.scriptTable);
         scriptBox.setVisible(scriptTable.getItems().size() > 0);
 
-
+        entityPane.setVisible(true);
+        entityPane.setExpanded(true);
     }
 
     /**

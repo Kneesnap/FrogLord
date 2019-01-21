@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor;
 
+import javafx.scene.text.Font;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -43,6 +45,8 @@ public class Constants {
     public static final int BIT_FLAG_15 = 1 << 15;
     public static final int BIT_FLAG_16 = 1 << 16;
     public static final int BIT_FLAG_17 = 1 << 17;
+
+    public static final Font SYSTEM_BOLD_FONT = new Font("System Bold", 12);
 
     public static final boolean ENABLE_WAD_FORMATS = true;
 
