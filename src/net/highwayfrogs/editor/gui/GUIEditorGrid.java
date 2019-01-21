@@ -96,6 +96,9 @@ public class GUIEditorGrid {
                 field.setStyle("-fx-text-inner-color: darkgreen;");
             } else if (code == KeyCode.ENTER) {
                 boolean pass = setter.apply(field.getText());
+                if (pass)
+                    onChange();
+
                 field.setStyle(pass ? null : "-fx-text-inner-color: red;");
             }
         });
@@ -171,7 +174,10 @@ public class GUIEditorGrid {
         box.addEventFilter(ComboBox.ON_SHOWN, event -> // Show the selected value when the dropdown is opened.
                 ((ComboBoxListViewSkin<T>) box.getSkin()).getListView().scrollTo(box.getSelectionModel().getSelectedIndex()));
 
-        box.valueProperty().addListener((listener, oldVal, newVal) -> setter.accept(newVal));
+        box.valueProperty().addListener((listener, oldVal, newVal) -> {
+            setter.accept(newVal);
+            onChange();
+        });
 
         addRow(25);
         return box;
@@ -203,7 +209,10 @@ public class GUIEditorGrid {
     public CheckBox addCheckBox(String label, boolean currentState, Consumer<Boolean> setter) {
         CheckBox box = setupSecondNode(new CheckBox(label), true);
         box.setSelected(currentState);
-        box.selectedProperty().addListener((listener, oldVal, newVal) -> setter.accept(newVal));
+        box.selectedProperty().addListener((listener, oldVal, newVal) -> {
+            setter.accept(newVal);
+            onChange();
+        });
 
         addRow(15);
         return box;
@@ -231,7 +240,10 @@ public class GUIEditorGrid {
     public ColorPicker addColorPicker(String text, int color, Consumer<Integer> handler) {
         addLabel(text);
         ColorPicker picker = setupSecondNode(new ColorPicker(Utils.fromRGB(color)), false);
-        picker.valueProperty().addListener((observable, oldValue, newValue) -> handler.accept(Utils.toRGB(newValue)));
+        picker.valueProperty().addListener((observable, oldValue, newValue) -> {
+            handler.accept(Utils.toRGB(newValue));
+            onChange();
+        });
 
         addRow(25);
         return picker;
@@ -268,5 +280,12 @@ public class GUIEditorGrid {
         RowConstraints newRow = new RowConstraints(height + 1);
         gridPane.getRowConstraints().add(newRow);
         this.rowIndex++;
+    }
+
+    /**
+     * Called when a change occurs.
+     */
+    protected void onChange() {
+
     }
 }

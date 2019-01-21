@@ -17,10 +17,10 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.MAPEditorGUI;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -80,7 +80,7 @@ public class MapUIController implements Initializable {
     // Entity pane
     @FXML private TitledPane entityPane;
     @FXML private GridPane entityGridPane;
-    private GUIEditorGrid entityEditor;
+    private MAPEditorGUI entityEditor;
 
     // Camera pane
     @FXML private TitledPane titledPaneCamera;
@@ -109,7 +109,7 @@ public class MapUIController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         accordionLeft.setExpandedPane(titledPaneInformation);
         entityPane.setVisible(false);
-        entityEditor = new GUIEditorGrid(entityGridPane);
+        entityEditor = new MAPEditorGUI(entityGridPane, this);
     }
 
     /**
@@ -182,8 +182,6 @@ public class MapUIController implements Initializable {
         entityEditor.addBoldLabel("Script Data:");
         if (entity.getScriptData() != null)
             entity.getScriptData().addData(this.entityEditor);
-
-        entityEditor.addButton("Update Entities", getController()::resetEntities);
 
         entityPane.setVisible(true);
         entityPane.setExpanded(true);
