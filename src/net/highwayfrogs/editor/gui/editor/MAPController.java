@@ -28,6 +28,7 @@ import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
+import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -38,6 +39,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.system.Tuple2;
 
@@ -82,8 +84,9 @@ public class MAPController extends EditorController<MAPFile> {
     private Rotate rotY;
     private Rotate rotZ;
 
+    private MeshData cursorData;
+
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
-    private static final Image LIGHT_BULB = GameFile.loadIcon("lightbulb");
     private static final Image SWAMPY = GameFile.loadIcon("swampy");
 
     @Override
@@ -440,8 +443,11 @@ public class MAPController extends EditorController<MAPFile> {
      * Hides the cursor polygon.
      */
     public void hideCursorPolygon() {
-        mapMesh.getFaces().resize(mapMesh.getFaceCount());
-        mapMesh.getTexCoords().resize(mapMesh.getTextureCount());
+        if (cursorData == null)
+            return;
+
+        mapMesh.getManager().removeMesh(cursorData);
+        this.cursorData = null;
     }
 
     /**
@@ -462,10 +468,15 @@ public class MAPController extends EditorController<MAPFile> {
         if (cursorPoly == null)
             return;
 
-        int increment = mapMesh.getVertexFormat().getVertexIndexSize();
-        boolean isQuad = (cursorPoly.getVertices().length == PSXPolygon.QUAD_SIZE);
+        renderOverPolygon(cursorPoly, MapMesh.CURSOR_COLOR);
+        cursorData = mapMesh.getManager().addMesh();
+    }
 
-        int face = mapMesh.getPolyFaceMap().get(cursorPoly) * mapMesh.getFaceElementSize();
+    private void renderOverPolygon(PSXPolygon targetPoly, CursorVertexColor color) {
+        int increment = mapMesh.getVertexFormat().getVertexIndexSize();
+        boolean isQuad = (targetPoly.getVertices().length == PSXPolygon.QUAD_SIZE);
+
+        int face = mapMesh.getPolyFaceMap().get(targetPoly) * mapMesh.getFaceElementSize();
         int v1 = mapMesh.getFaces().get(face);
         int v2 = mapMesh.getFaces().get(face + increment);
         int v3 = mapMesh.getFaces().get(face + (2 * increment));
@@ -474,9 +485,9 @@ public class MAPController extends EditorController<MAPFile> {
             int v4 = mapMesh.getFaces().get(face + (3 * increment));
             int v5 = mapMesh.getFaces().get(face + (4 * increment));
             int v6 = mapMesh.getFaces().get(face + (5 * increment));
-            mapMesh.addRectangle(MapMesh.CURSOR_COLOR.getTextureEntry(), v1, v2, v3, v4, v5, v6);
+            mapMesh.addRectangle(color.getTextureEntry(), v1, v2, v3, v4, v5, v6);
         } else {
-            mapMesh.addTriangle(MapMesh.CURSOR_COLOR.getTextureEntry(), v1, v2, v3);
+            mapMesh.addTriangle(color.getTextureEntry(), v1, v2, v3);
         }
     }
 
@@ -484,6 +495,7 @@ public class MAPController extends EditorController<MAPFile> {
      * Refresh map data.
      */
     public void refreshView() {
+        hideCursorPolygon();
         mapMesh.updateData();
         renderCursor(getSelectedPolygon());
     }

@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.mesh.MeshManager;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ public class MapMesh extends TriangleMesh {
     private TextureMap textureMap;
     private Map<Integer, PSXPolygon> facePolyMap = new HashMap<>();
     private Map<PSXPolygon, Integer> polyFaceMap = new HashMap<>();
+    private MeshManager manager;
 
     private boolean remapFinder;
     private int remapStart;
@@ -44,6 +46,7 @@ public class MapMesh extends TriangleMesh {
         super(VertexFormat.POINT_TEXCOORD);
         this.map = file;
         this.textureMap = texMap;
+        this.manager = new MeshManager(this);
         updateData();
     }
 
@@ -56,6 +59,7 @@ public class MapMesh extends TriangleMesh {
         this.remapStart = remapStart - 1;
         this.maxRemapSize = maxRemapSize;
         this.currentRemap = this.remapStart;
+        this.manager = new MeshManager(this);
     }
 
     /**

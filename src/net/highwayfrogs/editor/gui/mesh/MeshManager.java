@@ -1,0 +1,82 @@
+package net.highwayfrogs.editor.gui.mesh;
+
+import javafx.collections.ObservableFloatArray;
+import javafx.collections.ObservableIntegerArray;
+import lombok.Getter;
+import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.map.view.MapMesh;
+
+import java.util.LinkedList;
+
+/**
+ * Manages mesh data.
+ * Created by Kneesnap on 1/21/2019.
+ */
+@Getter
+public class MeshManager {
+    private MapMesh mesh;
+    private LinkedList<MeshData> meshData = new LinkedList<>();
+
+    public MeshManager(MapMesh mesh) {
+        this.mesh = mesh;
+    }
+
+    /**
+     * Remove mesh data.
+     * @param data The data to remove.
+     */
+    public void removeMesh(MeshData data) {
+        int removeFaceIndex = getFaceIndex(data);
+        int removeTexIndex = getTexIndex(data);
+        Utils.verify(meshData.remove(data), "Failed to remove MeshData.");
+
+        ObservableIntegerArray faces = getMesh().getFaces();
+        int newFaceSize = faces.size() - data.getFaceCount();
+        for (int i = removeFaceIndex; i < newFaceSize; i++)
+            faces.set(i, faces.get(i + data.getFaceCount()));
+        faces.resize(newFaceSize);
+
+        ObservableFloatArray coords = getMesh().getTexCoords();
+        int newTexSize = coords.size() - data.getTexCoordCount();
+        for (int i = removeTexIndex; i < newTexSize; i++)
+            coords.set(i, coords.get(i + data.getTexCoordCount()));
+        coords.resize(newTexSize);
+    }
+
+    /**
+     * Record recent changes as mesh changes..
+     */
+    public MeshData addMesh() {
+        MeshData lastData = getMeshData().isEmpty() ? null : getMeshData().getLast();
+
+        int texIndex = lastData != null ? (getTexIndex(lastData) + lastData.getTexCoordCount()) : getMesh().getTextureCount();
+        int faceIndex = lastData != null ? (getFaceIndex(lastData) + lastData.getFaceCount()) : getMesh().getFaceCount();
+        MeshData newData = new MeshData(getMesh().getFaces().size() - faceIndex, getMesh().getTexCoords().size() - texIndex);
+        getMeshData().addLast(newData);
+        return newData;
+    }
+
+    private int getFaceIndex(MeshData data) {
+        int faceIndex = getMesh().getFaceCount();
+
+        for (MeshData tempData : getMeshData()) {
+            if (tempData == data)
+                return faceIndex;
+            faceIndex += tempData.getFaceCount();
+        }
+
+        throw new RuntimeException("MeshData is not registered in manager!");
+    }
+
+    private int getTexIndex(MeshData data) {
+        int texIndex = getMesh().getTextureCount();
+
+        for (MeshData tempData : getMeshData()) {
+            if (tempData == data)
+                return texIndex;
+            texIndex += tempData.getTexCoordCount();
+        }
+
+        throw new RuntimeException("MeshData is not registered in manager!");
+    }
+}
