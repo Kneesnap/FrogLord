@@ -20,6 +20,7 @@ import javafx.scene.transform.Rotate;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.NameValuePair;
@@ -176,13 +177,17 @@ public class MapUIController implements Initializable {
      */
     public void showEntityInfo(Entity entity) {
         entityEditor.clearEditor();
-        entityEditor.addLabel("General Information:");
-        entityEditor.addTextField("Entity Type", entity.getFormBook().getEntity().name());
-        entityEditor.addTextField("Form Type", entity.getFormBook().name());
-        entityEditor.addTextField("Entity ID", String.valueOf(entity.getUniqueId()));
-        entityEditor.addTextField("Grid ID", String.valueOf(entity.getFormGridId()));
-        entityEditor.addTextField("Flags", String.valueOf(entity.getFlags()));
+        entityEditor.addBoldLabel("General Information:");
+        entityEditor.addLabel("Entity Type", entity.getFormBook().getEntity().name());
 
+        entityEditor.addEnumSelector("Form Type", entity.getFormBook(), FormBook.values(), false, newBook -> {
+            entity.setFormBook(newBook);
+            showEntityInfo(entity); // Update entity type.
+        });
+
+        entityEditor.addIntegerField("Entity ID", entity.getUniqueId(), entity::setUniqueId, null);
+        entityEditor.addIntegerField("Grid ID", entity.getFormGridId(), entity::setFormGridId, null);
+        entityEditor.addIntegerField("Flags", entity.getFlags(), entity::setFlags, null);
 
         // Populate Entity Data.
         entityTable.getItems().clear();
