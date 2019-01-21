@@ -78,6 +78,11 @@ public class MapUIController implements Initializable {
     @FXML private TextField textFieldSpeedUpMultiplier;
     @FXML private Button btnResetSpeedUpMultiplier;
 
+    // General pane.
+    @FXML private TitledPane generalPane;
+    @FXML private GridPane generalGridPane;
+    private GUIEditorGrid generalEditor;
+
     // Entity pane
     @FXML private TitledPane entityPane;
     @FXML private GridPane entityGridPane;
@@ -113,7 +118,7 @@ public class MapUIController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        accordionLeft.setExpandedPane(titledPaneInformation);
+        accordionLeft.setExpandedPane(generalPane);
         entityPane.setVisible(false);
         entityEditor = new MAPEditorGUI(entityGridPane, this);
     }
@@ -173,6 +178,17 @@ public class MapUIController implements Initializable {
             lightEditor.addBoldLabel("Light #" + (i + 1) + ":");
             getController().getFile().getLights().get(i).makeEditor(lightEditor);
         }
+    }
+
+    /**
+     * Sets up the general editor.
+     */
+    public void setupGeneralEditor() {
+        if (generalEditor == null)
+            generalEditor = new GUIEditorGrid(generalGridPane);
+
+        generalEditor.clearEditor();
+        getController().getFile().setupEditor(generalEditor);
     }
 
     /**
@@ -275,5 +291,6 @@ public class MapUIController implements Initializable {
 
         // Must be called after MAPController is passed.
         setupLights();
+        setupGeneralEditor();
     }
 }
