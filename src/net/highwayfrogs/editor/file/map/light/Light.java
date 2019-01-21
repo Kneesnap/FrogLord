@@ -63,7 +63,7 @@ public class Light extends GameObject {
 
         int rgbColor = Utils.toRGB(Utils.fromBGR(getColor()));
         editor.addColorPicker("Color", rgbColor, newColor -> setColor(Utils.toBGR(Utils.fromRGB(newColor))));
-        editor.addSVector("Direction", getDirection(), this::setDirection);
+        editor.addSVector("Direction", getDirection());
     }
 
     /**

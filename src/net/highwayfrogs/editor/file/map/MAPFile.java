@@ -889,8 +889,8 @@ public class MAPFile extends GameFile {
         editor.addShortField("Start yTile", getStartYTile(), this::setStartYTile, null);
         editor.addShortField("Start Rotation", getStartRotation(), this::setStartRotation, null);
         editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
-        editor.addSVector("Base Point", getBasePoint(), this::setBasePoint);
-        editor.addSVector("Camera Source Offset", getCameraSourceOffset(), this::setCameraSourceOffset);
-        editor.addSVector("Camera Target Offset", getCameraTargetOffset(), this::setCameraTargetOffset);
+        editor.addSVector("Base Point", getBasePoint());
+        editor.addSVector("Camera Source Offset", getCameraSourceOffset());
+        editor.addSVector("Camera Target Offset", getCameraTargetOffset());
     }
 }

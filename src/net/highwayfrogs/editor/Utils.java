@@ -386,6 +386,19 @@ public class Utils {
     }
 
     /**
+     * Test if a string is a signed short.
+     * @param str The string to test.
+     * @return isSignedShort
+     */
+    public static boolean isSignedShort(String str) {
+        if (!Utils.isInteger(str))
+            return false;
+
+        int intTest = Integer.parseInt(str);
+        return intTest >= Short.MIN_VALUE && intTest <= Short.MAX_VALUE;
+    }
+
+    /**
      * Prompt the user to select a file.
      * @param title      The title of the window to display.
      * @param typeInfo   The label to show for the file-type.

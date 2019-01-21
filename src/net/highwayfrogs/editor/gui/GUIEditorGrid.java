@@ -219,15 +219,42 @@ public class GUIEditorGrid {
     }
 
     /**
-     * Add a SVector for editing. TODO: ALLOW EDITING
+     * Add a SVector for editing.
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
-     * @param setter The handler for if the SVector is updated.
      */
-    public void addSVector(String text, SVector vector, Consumer<SVector> setter) {
-        addLabel(text);
-        setupSecondNode(new Label(vector.toString()), false);
-        addRow(15);
+    public void addSVector(String text, SVector vector) {
+        addSVector(text, vector, null);
+    }
+
+    /**
+     * Add a SVector for editing.
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     * @param update The handler for if the SVector is updated.
+     */
+    public void addSVector(String text, SVector vector, Runnable update) {
+        addTextField(text, vector.toCoordinateString(), newText -> {
+            newText = newText.replace(" ", "");
+            if (!newText.contains(","))
+                return false;
+
+            String[] split = newText.split(",");
+            if (split.length != 3)
+                return false;
+
+            for (String testStr : split)
+                if (!Utils.isSignedShort(testStr))
+                    return false;
+
+            vector.setX(Short.parseShort(split[0]));
+            vector.setY(Short.parseShort(split[1]));
+            vector.setZ(Short.parseShort(split[2]));
+            if (update != null)
+                update.run();
+            onChange();
+            return true;
+        });
     }
 
     /**
