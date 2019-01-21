@@ -45,8 +45,10 @@ public class EntityColorTrigger extends MatrixData {
         super.addData(editor);
         editor.addEnumSelector("Trigger Type", getType(), TriggerType.values(), false, this::setType);
         editor.addEnumSelector("Color", getColor(), VolcanoTriggerColor.values(), false, this::setColor);
-        for (int i = 0; i < getUniqueIds().length; i++)
-            editor.addLabel("Trigger #" + (i + 1), String.valueOf(getUniqueIds()[i]));
+        for (int i = 0; i < getUniqueIds().length; i++) {
+            final int tempI = i;
+            editor.addShortField("Trigger #" + (i + 1), getUniqueIds()[i], newVal -> getUniqueIds()[tempI] = newVal, null);
+        }
     }
 
     public enum VolcanoTriggerColor {

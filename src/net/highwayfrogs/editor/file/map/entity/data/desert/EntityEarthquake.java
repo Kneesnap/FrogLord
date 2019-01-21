@@ -39,7 +39,9 @@ public class EntityEarthquake extends EntityData {
     @Override
     public void addData(GUIEditorGrid editor) {
         editor.addShortField("Time Flag", getTimeFlag(), this::setTimeFlag, null);
-        for (int i = 0; i < getPauseList().length; i++)
-            editor.addLabel("Pause #" + (i + 1), String.valueOf(getPauseList()[i]));
+        for (int i = 0; i < getPauseList().length; i++) {
+            final int tempIndex = i;
+            editor.addIntegerField("Pause #" + (i + 1), getPauseList()[i], newVal -> getPauseList()[tempIndex] = newVal, null);
+        }
     }
 }

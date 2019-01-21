@@ -156,7 +156,7 @@ public class GUIEditorGrid {
      * Add a selection-box.
      * @param label   The label text to add.
      * @param current The currently selected value.
-     * @param values  Accepted values. (If null is acceptible, add null to this list.)
+     * @param values  Accepted values. (If null is acceptable, add null to this list.)
      * @param setter  The setter
      * @return comboBox
      */

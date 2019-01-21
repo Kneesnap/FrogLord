@@ -44,7 +44,9 @@ public class TriggerEntity extends MatrixData {
     public void addData(GUIEditorGrid editor) {
         super.addData(editor);
         editor.addEnumSelector("Trigger Type", getType(), TriggerType.values(), false, this::setType);
-        for (int i = 0; i < getUniqueIds().length; i++)
-            editor.addLabel("Entity #" + (i + 1), String.valueOf(getUniqueIds()[i]));
+        for (int i = 0; i < getUniqueIds().length; i++) {
+            final int tempIndex = i;
+            editor.addShortField("Entity #" + (i + 1), getUniqueIds()[i], newVal -> getUniqueIds()[tempIndex] = newVal, null);
+        }
     }
 }
