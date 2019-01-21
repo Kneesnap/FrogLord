@@ -14,53 +14,40 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 @Setter
 public class Light extends GameObject {
-    private short type;
-    private short priority;
-    private int parentId;
-    private short apiType;
+    private LightType type;
+    private APILightType apiType;
     private int color; // BbGgRr
-    private SVector position;
     private SVector direction;
-    private int attribute0;
-    private int attribute1;
-
-    public static final int TYPE_DUMMY = 0;
-    public static final int TYPE_STATIC = 1;
-    public static final int TYPE_ENTITY = 2;
-
-    public static final int API_TYPE_AMBIENT = 1;
-    public static final int API_TYPE_PARALLEL = 2;
-    public static final int API_TYPE_POINT = 4;
 
     @Override
     public void load(DataReader reader) {
-        this.type = reader.readUnsignedByteAsShort();
-        this.priority = reader.readUnsignedByteAsShort();
-        this.parentId = reader.readUnsignedShortAsInt();
-        this.apiType = reader.readUnsignedByteAsShort();
+        this.type = LightType.values()[reader.readUnsignedByteAsShort()];
+        reader.readUnsignedByteAsShort(); // Unused 'priority'.
+        reader.readUnsignedShortAsInt(); // Unused 'parentId'.
+        this.apiType = APILightType.getType(reader.readUnsignedByteAsShort());
         reader.readBytes(3); // Padding
         this.color = reader.readInt();
-        this.position = SVector.readWithPadding(reader);
+        SVector.readWithPadding(reader); // Unused position.
         this.direction = SVector.readWithPadding(reader);
-        this.attribute0 = reader.readUnsignedShortAsInt();
-        this.attribute1 = reader.readUnsignedShortAsInt();
+        reader.readUnsignedShortAsInt(); // Unused 'attribute0'.
+        reader.readUnsignedShortAsInt(); // Unused 'attribute1'.
         reader.readInt(); // Frame pointer. Only used at run-time.
         reader.readInt(); // Object pointer. Only used at run-time.
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedByte(this.type);
-        writer.writeUnsignedByte(this.priority);
-        writer.writeUnsignedShort(this.parentId);
-        writer.writeUnsignedByte(this.apiType);
+        writer.writeUnsignedByte((short) this.type.ordinal());
+        writer.writeUnsignedByte((short) 0); // Unused 'priority'.
+        writer.writeUnsignedShort(0); // Unused 'parentId'.
+        writer.writeUnsignedByte((short) this.apiType.getFlag());
         writer.writeNull(3);
         writer.writeInt(this.color);
-        this.position.saveWithPadding(writer);
+        SVector.EMPTY.saveWithPadding(writer); // Unused 'position'.
         this.direction.saveWithPadding(writer);
-        writer.writeUnsignedShort(this.attribute0);
-        writer.writeUnsignedShort(this.attribute1);
-        writer.writeInt(0);
-        writer.writeInt(0);
+        writer.writeUnsignedShort((short) 0); // Unused 'attribute0'.
+        writer.writeUnsignedShort((short) 0); // Unused 'attribute1'.
+        writer.writeNullPointer();
+        writer.writeNullPointer();
     }
 }
