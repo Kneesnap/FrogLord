@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
+ * Completely lights up the cave.
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
