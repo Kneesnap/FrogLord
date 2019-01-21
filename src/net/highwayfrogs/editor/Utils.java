@@ -1,14 +1,14 @@
 package net.highwayfrogs.editor;
 
-
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
+import javafx.scene.paint.Color;
 import javafx.stage.*;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Window;
+import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.gui.GUIMain;
 
@@ -615,5 +615,26 @@ public class Utils {
      */
     public static String toHexString(int value) {
         return "0x" + Integer.toHexString(value).toUpperCase();
+    }
+
+    /**
+     * Get a Color object from an integer.
+     * @param rgb The integer to get the color from.
+     * @return color
+     */
+    public static Color fromRGB(int rgb) {
+        return Color.rgb((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+    }
+
+    /**
+     * Get a integer from a color object.
+     * @param color The color to turn into rgb.
+     * @return rgbInt
+     */
+    public static int toRGB(Color color) {
+        int result = (int) (color.getRed() * 0xFF);
+        result = (result << 8) + (int) (color.getGreen() * 0xFF);
+        result = (result << 8) + (int) (color.getBlue() * 0xFF);
+        return result;
     }
 }

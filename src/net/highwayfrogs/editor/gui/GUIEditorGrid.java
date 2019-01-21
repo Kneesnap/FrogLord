@@ -2,10 +2,7 @@ package net.highwayfrogs.editor.gui;
 
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
@@ -175,7 +172,7 @@ public class GUIEditorGrid {
         addLabel(label);
         ComboBox<T> box = new ComboBox<>(FXCollections.observableArrayList(values));
         box.valueProperty().setValue(current); // Set the selected value.
-        box.getSelectionModel().select(current); // Automatically scroll to selected value.
+        box.getSelectionModel().select(current); // Automatically scroll to selected value. TODO: Show selected option
         GridPane.setColumnIndex(box, 1);
         gridPane.getChildren().add(setupNode(box));
 
@@ -189,7 +186,7 @@ public class GUIEditorGrid {
      * Add a selection-box.
      * @param label   The label text to add.
      * @param current The currently selected value.
-     * @param values  Accepted values. (If null is acceptible, add null to this list.)
+     * @param values  Accepted values. (If null is acceptable, add null to this list.)
      * @param setter  The setter
      * @return comboBox
      */
@@ -218,6 +215,24 @@ public class GUIEditorGrid {
 
         addRow(15);
         return box;
+    }
+
+    /**
+     * Allow selecting a color.
+     * @param text    The description of the color.
+     * @param color   The starting color.
+     * @param handler What to do when a color is selected
+     * @return colorPicker
+     */
+    public ColorPicker addColorPicker(String text, int color, Consumer<Integer> handler) {
+        addLabel(text);
+        ColorPicker picker = new ColorPicker(Utils.fromRGB(color));
+        GridPane.setColumnIndex(picker, 1);
+        gridPane.getChildren().add(setupNode(picker));
+        picker.valueProperty().addListener((observable, oldValue, newValue) -> handler.accept(Utils.toRGB(newValue)));
+
+        addRow(25);
+        return picker;
     }
 
     private Node setupNode(Node node) {

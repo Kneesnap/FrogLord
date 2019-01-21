@@ -16,12 +16,8 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Setter
 public class EntityColorTrigger extends MatrixData {
     private TriggerType type;
-    private int color;
+    private VolcanoTriggerColor color;
     private short[] uniqueIds = new short[COLOR_TRIGGER_MAX_IDS];
-
-    public static final int TYPE_FREEZE = 0;
-    public static final int TYPE_REVERSE = 1;
-    public static final int TYPE_START = 2;
 
     private static final int COLOR_TRIGGER_MAX_IDS = 10;
 
@@ -29,7 +25,7 @@ public class EntityColorTrigger extends MatrixData {
     public void load(DataReader reader) {
         super.load(reader);
         this.type = TriggerType.values()[reader.readUnsignedShortAsInt()];
-        this.color = reader.readUnsignedShortAsInt();
+        this.color = VolcanoTriggerColor.values()[reader.readUnsignedShortAsInt()];
 
         for (int i = 0; i < uniqueIds.length; i++)
             this.uniqueIds[i] = reader.readShort();
@@ -39,7 +35,7 @@ public class EntityColorTrigger extends MatrixData {
     public void save(DataWriter writer) {
         super.save(writer);
         writer.writeUnsignedShort((short) this.type.ordinal());
-        writer.writeUnsignedShort(this.color);
+        writer.writeUnsignedShort((short) this.color.ordinal());
         for (short id : uniqueIds)
             writer.writeShort(id);
     }
@@ -48,8 +44,12 @@ public class EntityColorTrigger extends MatrixData {
     public void addData(GUIEditorGrid editor) {
         super.addData(editor);
         editor.addEnumSelector("Trigger Type", getType(), TriggerType.values(), false, this::setType);
-        editor.addIntegerField("Color", getColor(), this::setColor, null); //TODO: Use a color selector instead.
+        editor.addEnumSelector("Color", getColor(), VolcanoTriggerColor.values(), false, this::setColor);
         for (int i = 0; i < getUniqueIds().length; i++)
             editor.addLabel("Trigger #" + (i + 1), String.valueOf(getUniqueIds()[i]));
+    }
+
+    public enum VolcanoTriggerColor {
+        RED, BLUE, CYAN, GREEN, ORANGE, PINK, PURPLE, RED_ALTERNATE, WHITE
     }
 }
