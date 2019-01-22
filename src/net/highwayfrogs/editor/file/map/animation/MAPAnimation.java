@@ -28,7 +28,7 @@ import java.util.List;
 @Getter
 @Setter
 public class MAPAnimation extends GameObject {
-    private int flags;
+    private int flags = FLAG_UV;
     private short uChange; // Delta U (Each frame)
     private short vChange;
     private int uvDuration; // Frames before resetting.
@@ -184,7 +184,7 @@ public class MAPAnimation extends GameObject {
             editor.addRow(25);
         }
 
-        editor.addButton("Add Animation", () -> {
+        editor.addButton("Add Texture", () -> {
             getTextures().add(getTextures().isEmpty() ? 0 : getTextures().get(getTextures().size() - 1));
             controller.setupAnimationEditor();
         });
