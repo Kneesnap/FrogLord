@@ -28,7 +28,7 @@ import java.util.List;
 @Getter
 @Setter
 public class MAPAnimation extends GameObject {
-    private int flags = FLAG_UV;
+    private MAPAnimationType type = MAPAnimationType.UV;
     private short uChange; // Delta U (Each frame)
     private short vChange;
     private int uvDuration; // Frames before resetting.
@@ -40,8 +40,6 @@ public class MAPAnimation extends GameObject {
     private transient int texturePointerAddress;
     private transient int uvPointerAddress;
 
-    public static final int FLAG_UV = Constants.BIT_FLAG_0; // Uses UV animation.
-    public static final int FLAG_TEXTURE = Constants.BIT_FLAG_1; // Uses cel list animation.
     public static final int BYTE_SIZE = 2 + (7 * Constants.SHORT_SIZE) + (4 * Constants.INTEGER_SIZE);
 
     public MAPAnimation(MAPFile mapFile) {
@@ -61,11 +59,11 @@ public class MAPAnimation extends GameObject {
         int celListPointer = reader.readInt();
         this.texDuration = reader.readUnsignedShortAsInt(); // Frames before resetting.
         reader.readShort(); // Run-time variable.
-        this.flags = reader.readUnsignedShortAsInt();
+        this.type = MAPAnimationType.getType(reader.readUnsignedShortAsInt());
         int polygonCount = reader.readUnsignedShortAsInt();
         reader.readInt(); // Texture pointer. Generated at run-time.
 
-        if ((getFlags() & FLAG_TEXTURE) == FLAG_TEXTURE) {
+        if (getType() == MAPAnimationType.TEXTURE) {
             reader.jumpTemp(celListPointer);
             for (int i = 0; i < celCount; i++)
                 textures.add(reader.readShort());
@@ -93,7 +91,7 @@ public class MAPAnimation extends GameObject {
         this.texturePointerAddress = writer.writeNullPointer();
         writer.writeUnsignedShort(this.texDuration);
         writer.writeShort((short) 0); // Runtime.
-        writer.writeUnsignedShort(this.flags);
+        writer.writeUnsignedShort(getType().getFlag());
         writer.writeUnsignedShort(getMapUVs().size());
         writer.writeInt(0); // Run-time.
         this.uvPointerAddress = writer.writeNullPointer();
@@ -140,12 +138,26 @@ public class MAPAnimation extends GameObject {
      * @param editor The editor to setup under.
      */
     public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
-        editor.addIntegerField("Flags", getFlags(), this::setFlags, null);
-        editor.addShortField("u Frame Change", getUChange(), this::setUChange, null);
-        editor.addShortField("v Frame Change", getVChange(), this::setVChange, null);
-        editor.addIntegerField("UV Frame Count", getUvDuration(), this::setUvDuration, null);
-        editor.addIntegerField("Tex Frame Count", getTexDuration(), this::setTexDuration, null);
+        boolean isTexture = getType() == MAPAnimationType.TEXTURE;
+        boolean isUV = getType() == MAPAnimationType.UV;
+
+        editor.addEnumSelector("Type", getType(), MAPAnimationType.values(), false, newValue -> {
+            setType(newValue);
+            controller.setupAnimationEditor(); // Change what's visible.
+        });
+
+        if (isUV) {
+            editor.addShortField("u Frame Change", getUChange(), this::setUChange, null);
+            editor.addShortField("v Frame Change", getVChange(), this::setVChange, null);
+            editor.addIntegerField("Frame Count", getUvDuration(), this::setUvDuration, null);
+        } else if (isTexture) {
+            editor.addIntegerField("Frame Count", getTexDuration(), this::setTexDuration, null);
+        }
+
         editor.addButton("Edit", () -> controller.getController().editAnimation(this));
+
+        if (!isTexture)
+            return;
 
         DataReader reader = GUIMain.EXE_CONFIG.getReader();
         List<GameImage> images = new ArrayList<>(getTextures().size());
