@@ -17,8 +17,11 @@ import javafx.scene.shape.MeshView;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPEditorGUI;
+import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
+import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 import java.net.URL;
@@ -101,6 +104,11 @@ public class MapUIController implements Initializable {
     @FXML private GridPane lightGridPane;
     private GUIEditorGrid lightEditor;
 
+    // Animation pane.
+    @FXML private TitledPane animationPane;
+    @FXML private GridPane animationGridPane;
+    private GUIEditorGrid animationEditor;
+
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
     @Override
@@ -163,7 +171,18 @@ public class MapUIController implements Initializable {
         for (int i = 0; i < getController().getFile().getLights().size(); i++) {
             lightEditor.addBoldLabel("Light #" + (i + 1) + ":");
             getController().getFile().getLights().get(i).makeEditor(lightEditor);
+
+            final int tempIndex = i;
+            lightEditor.addButton("Remove Light #" + (i + 1), () -> {
+                getController().getFile().getLights().remove(tempIndex);
+                setupLights(); // Reload this.
+            });
         }
+
+        lightEditor.addButton("Add Light", () -> {
+            getController().getFile().getLights().add(new Light());
+            setupLights(); // Reload lights.
+        });
     }
 
     /**
@@ -178,6 +197,32 @@ public class MapUIController implements Initializable {
     }
 
     /**
+     * Setup the animation editor.
+     */
+    public void setupAnimationEditor() {
+        if (animationEditor == null)
+            animationEditor = new GUIEditorGrid(animationGridPane);
+
+        animationEditor.clearEditor();
+
+        for (int i = 0; i < getMap().getMapAnimations().size(); i++) {
+            animationEditor.addBoldLabel("Animation #" + (i + 1));
+            getMap().getMapAnimations().get(i).setupEditor(this, animationEditor);
+
+            final int tempIndex = i;
+            animationEditor.addButton("Delete Animation #" + (i + 1), () -> {
+                getMap().getMapAnimations().remove(tempIndex);
+                setupAnimationEditor();
+            });
+        }
+
+        animationEditor.addButton("Add Animation", () -> {
+            getMap().getMapAnimations().add(new MAPAnimation(getMap()));
+            setupAnimationEditor();
+        });
+    }
+
+    /**
      * Show entity information.
      * @param entity The entity to show information for.
      */
@@ -185,6 +230,7 @@ public class MapUIController implements Initializable {
         entityEditor.clearEditor();
         if (entity == null) {
             entityEditor.addBoldLabel("There is no entity selected.");
+            entityEditor.addButton("New Entity", () -> addNewEntity(FormBook.values()[0]));
             return;
         }
 
@@ -211,12 +257,21 @@ public class MapUIController implements Initializable {
             entity.getScriptData().addData(this.entityEditor);
 
         entityEditor.addButton("Remove Entity", () -> {
-            getController().getFile().getEntities().remove(entity);
+            getMap().getEntities().remove(entity);
             getController().resetEntities();
             showEntityInfo(null); // Don't show the entity we just deleted.
         });
 
+        entityEditor.addButton("New Entity", () -> addNewEntity(entity.getFormBook()));
+
         entityPane.setExpanded(true);
+    }
+
+    private void addNewEntity(FormBook book) {
+        Entity newEntity = new Entity(getMap(), book);
+        getMap().getEntities().add(newEntity);
+        showEntityInfo(newEntity);
+        getController().resetEntities();
     }
 
     /**
@@ -271,5 +326,14 @@ public class MapUIController implements Initializable {
         showEntityInfo(null);
         setupLights();
         setupGeneralEditor();
+        setupAnimationEditor();
+    }
+
+    /**
+     * Gets the map file being edited.
+     * @return mapFile
+     */
+    public MAPFile getMap() {
+        return getController().getFile();
     }
 }

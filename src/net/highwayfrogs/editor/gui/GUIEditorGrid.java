@@ -54,9 +54,7 @@ public class GUIEditorGrid {
      * @param text The text to add.
      */
     public Label addLabel(String text) {
-        Label newLabel = new Label(text);
-        gridPane.getChildren().add(setupNode(newLabel));
-        return newLabel;
+        return setupNode(new Label(text));
     }
 
     /**
@@ -214,7 +212,7 @@ public class GUIEditorGrid {
             onChange();
         });
 
-        addRow(15);
+        addRow(20);
         return box;
     }
 
@@ -284,26 +282,41 @@ public class GUIEditorGrid {
     public void addButton(String text, Runnable onPress) {
         Button button = setupSecondNode(new Button(text), true);
         button.setOnAction(evt -> onPress.run());
-        addRow(15);
+        addRow(25);
     }
 
-    private Node setupNode(Node node) {
+    /**
+     * Setup the first node.
+     * @param node The node to setup.
+     * @return node
+     */
+    public <T extends Node> T setupNode(T node) {
         GridPane.setRowIndex(node, this.rowIndex);
+        gridPane.getChildren().add(node);
         return node;
     }
 
-    private <T extends Node> T setupSecondNode(T node, boolean fullSpan) {
+    /**
+     * Setup a second node.
+     * @param node     The node to setup.
+     * @param fullSpan Whether it takes up two columns.
+     * @return node
+     */
+    public <T extends Node> T setupSecondNode(T node, boolean fullSpan) {
         if (fullSpan) {
             GridPane.setColumnSpan(node, 2);
         } else {
             GridPane.setColumnIndex(node, 1);
         }
 
-        gridPane.getChildren().add(setupNode(node));
-        return node;
+        return setupNode(node);
     }
 
-    private void addRow(double height) {
+    /**
+     * Add height to reach the next row.
+     * @param height The height to add.
+     */
+    public void addRow(double height) {
         RowConstraints newRow = new RowConstraints(height + 1);
         gridPane.getRowConstraints().add(newRow);
         this.rowIndex++;

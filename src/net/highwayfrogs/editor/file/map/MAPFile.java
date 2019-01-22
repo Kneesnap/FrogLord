@@ -56,7 +56,7 @@ public class MAPFile extends GameFile {
     @Setter private short startYTile;
     @Setter private short startRotation;
     private MAPTheme theme;
-    @Setter private short levelTimer; // Each frog (checkpoint) has its own timer value. In the vanilla game, they all match.
+    @Setter private short levelTimer;
     @Setter private SVector cameraSourceOffset;
     @Setter private SVector cameraTargetOffset;
     @Setter private SVector basePoint; // This is the bottom left of the map group grid.
@@ -71,11 +71,6 @@ public class MAPFile extends GameFile {
     private List<GridSquare> gridSquares = new ArrayList<>();
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
 
-    private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> loosePolygons = new HashMap<>();
-    private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> cachedPolygons = new HashMap<>();
-
-    private MWDFile parentMWD;
-
     private short groupXCount;
     private short groupZCount;
     private short groupXLength;
@@ -85,6 +80,12 @@ public class MAPFile extends GameFile {
     private short gridZCount;
     private short gridXLength;
     private short gridZLength;
+
+    @Setter private transient VLOArchive suppliedVLO;
+    @Setter private transient int suppliedRemapAddress;
+    private transient MWDFile parentMWD;
+    private transient Map<PSXPrimitiveType, List<PSXGPUPrimitive>> loosePolygons = new HashMap<>();
+    private transient Map<PSXPrimitiveType, List<PSXGPUPrimitive>> cachedPolygons = new HashMap<>();
 
     private transient Map<PSXGPUPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
     private transient Map<Integer, PSXGPUPrimitive> loadPointerPolygonMap = new HashMap<>();
@@ -718,14 +719,7 @@ public class MAPFile extends GameFile {
                     int newTextureId = texture.getTextureId();
 
                     if (remapTable != null) { // Apply remap.
-                        GameImage image = textureMap.computeIfAbsent(newTextureId, key -> {
-                            int remapTextureId = remapTable.get(key);
-                            for (GameImage testImage : vloArchive.getImages())
-                                if (testImage.getTextureId() == remapTextureId)
-                                    return testImage;
-
-                            throw new RuntimeException("Could not find a texture with the id: " + remapTextureId + ".");
-                        });
+                        GameImage image = textureMap.computeIfAbsent(newTextureId, key -> vloArchive.getImageByTextureId(remapTable.get(key)));
                         newTextureId = image.getTextureId();
                     }
 

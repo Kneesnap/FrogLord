@@ -10,8 +10,10 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.editor.VLOController;
 import net.highwayfrogs.editor.gui.editor.VRAMPageController;
 
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * VLOArchive - Image archive format created by VorgPC/Vorg2.
@@ -43,6 +46,7 @@ public class VLOArchive extends GameFile {
     public static final int TYPE_ID = 1;
     public static final int WAD_TYPE = 0;
     public static final Image ICON = loadIcon("image");
+    public static final ImageFilterSettings ICON_EXPORT = new ImageFilterSettings(ImageState.EXPORT).setAllowFlip(true);
 
     @Override
     public void load(DataReader reader) {
@@ -163,5 +167,34 @@ public class VLOArchive extends GameFile {
             if (image.contains(x, y))
                 return image;
         return null;
+    }
+
+    /**
+     * Gets an image by the given texture ID.
+     * @param textureId The texture ID to get.
+     * @return gameImage
+     */
+    public GameImage getImageByTextureId(int textureId) {
+        for (GameImage testImage : getImages())
+            if (testImage.getTextureId() == textureId)
+                return testImage;
+
+        throw new RuntimeException("Could not find a texture with the id: " + textureId + ".");
+    }
+
+    /**
+     * Select a VLO image
+     * @param handler   The handler for when the VLO is determined.
+     * @param allowNull Are null VLOs allowed?
+     */
+    public void promptImageSelection(Consumer<GameImage> handler, boolean allowNull) {
+        List<GameImage> allImages = new ArrayList<>(getImages());
+
+        if (allowNull)
+            allImages.add(0, null);
+
+        SelectionMenu.promptSelection("Select an image.", handler, allImages,
+                image -> image != null ? "#" + getImages().indexOf(image) + " (" + image.getTextureId() + ")" : "No Image",
+                image -> SelectionMenu.makeIcon(image.toBufferedImage(ICON_EXPORT)));
     }
 }
