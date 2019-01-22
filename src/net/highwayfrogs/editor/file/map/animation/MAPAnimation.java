@@ -56,23 +56,21 @@ public class MAPAnimation extends GameObject {
         reader.readBytes(4); // Four run-time bytes.
 
         // Texture information.
-        short celCount = reader.readShort();
+        int celCount = reader.readUnsignedShortAsInt();
         reader.readShort(); // Run-time short.
         int celListPointer = reader.readInt();
         this.texDuration = reader.readUnsignedShortAsInt(); // Frames before resetting.
         reader.readShort(); // Run-time variable.
+        this.flags = reader.readUnsignedShortAsInt();
+        int polygonCount = reader.readUnsignedShortAsInt();
+        reader.readInt(); // Texture pointer. Generated at run-time.
 
-        //TODO: There appears to be corrupted animations in certain stages in the retail MWD. It has numbers that make no sense. I was unable to find any sort of condition in the data flagging it to not load textures. So, I'm just going a pretty nasty check here which seems to work more or less, but we really need to find a solution for this.
-        if (celCount <= 1000) {
+        if ((getFlags() & FLAG_TEXTURE) == FLAG_TEXTURE) {
             reader.jumpTemp(celListPointer);
             for (int i = 0; i < celCount; i++)
                 textures.add(reader.readShort());
             reader.jumpReturn();
         }
-
-        this.flags = reader.readUnsignedShortAsInt();
-        int polygonCount = reader.readUnsignedShortAsInt();
-        reader.readInt(); // Texture pointer. Generated at run-time.
 
         reader.jumpTemp(reader.readInt()); // Map UV Pointer.
         for (int i = 0; i < polygonCount; i++) {
@@ -90,20 +88,15 @@ public class MAPAnimation extends GameObject {
         writer.writeUnsignedByte(this.vChange);
         writer.writeUnsignedShort(this.uvDuration);
         writer.writeNull(4); // Run-time.
-        writer.writeShort((short) this.textures.size());
+        writer.writeUnsignedShort(this.textures.size());
         writer.writeNull(Constants.SHORT_SIZE); // Run-time.
-
-        this.texturePointerAddress = writer.getIndex();
-        writer.writeNull(Constants.POINTER_SIZE);
-
+        this.texturePointerAddress = writer.writeNullPointer();
         writer.writeUnsignedShort(this.texDuration);
         writer.writeShort((short) 0); // Runtime.
         writer.writeUnsignedShort(this.flags);
         writer.writeUnsignedShort(getMapUVs().size());
         writer.writeInt(0); // Run-time.
-
-        this.uvPointerAddress = writer.getIndex();
-        writer.writeNull(Constants.POINTER_SIZE);
+        this.uvPointerAddress = writer.writeNullPointer();
     }
 
     /**
