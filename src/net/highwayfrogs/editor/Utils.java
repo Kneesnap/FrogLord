@@ -1,14 +1,14 @@
 package net.highwayfrogs.editor;
 
-
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
+import javafx.scene.paint.Color;
 import javafx.stage.*;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Window;
+import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.gui.GUIMain;
 
@@ -386,6 +386,19 @@ public class Utils {
     }
 
     /**
+     * Test if a string is a signed short.
+     * @param str The string to test.
+     * @return isSignedShort
+     */
+    public static boolean isSignedShort(String str) {
+        if (!Utils.isInteger(str))
+            return false;
+
+        int intTest = Integer.parseInt(str);
+        return intTest >= Short.MIN_VALUE && intTest <= Short.MAX_VALUE;
+    }
+
+    /**
      * Prompt the user to select a file.
      * @param title      The title of the window to display.
      * @param typeInfo   The label to show for the file-type.
@@ -615,5 +628,47 @@ public class Utils {
      */
     public static String toHexString(int value) {
         return "0x" + Integer.toHexString(value).toUpperCase();
+    }
+
+    /**
+     * Get a Color object from an integer.
+     * @param rgb The integer to get the color from.
+     * @return color
+     */
+    public static Color fromRGB(int rgb) {
+        return Color.rgb((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+    }
+
+    /**
+     * Get a Color object from an integer.
+     * @param rgb The integer to get the color from.
+     * @return color
+     */
+    public static Color fromBGR(int rgb) {
+        return Color.rgb(rgb & 0xFF, (rgb >> 8) & 0xFF, (rgb >> 16) & 0xFF);
+    }
+
+    /**
+     * Get a integer from a color object.
+     * @param color The color to turn into rgb.
+     * @return rgbInt
+     */
+    public static int toRGB(Color color) {
+        int result = (int) (color.getRed() * 0xFF);
+        result = (result << 8) + (int) (color.getGreen() * 0xFF);
+        result = (result << 8) + (int) (color.getBlue() * 0xFF);
+        return result;
+    }
+
+    /**
+     * Get a integer from a color object.
+     * @param color The color to turn into bgr.
+     * @return rgbInt
+     */
+    public static int toBGR(Color color) {
+        int result = (int) (color.getBlue() * 0xFF);
+        result = (result << 8) + (int) (color.getGreen() * 0xFF);
+        result = (result << 8) + (int) (color.getRed() * 0xFF);
+        return result;
     }
 }

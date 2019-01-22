@@ -1,25 +1,28 @@
 package net.highwayfrogs.editor.file.map.entity.data.cave;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
+import net.highwayfrogs.editor.file.map.entity.BonusFlyType;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
+ * Completely lights up the cave.
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityFatFireFly extends MatrixData {
-    private int type;
-    private SVector target;
+    private BonusFlyType type = BonusFlyType.FAT_FIRE_FLY;
+    private SVector target = new SVector();
 
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.type = reader.readUnsignedShortAsInt();
+        this.type = BonusFlyType.values()[reader.readUnsignedShortAsInt()];
         reader.readShort();
         this.target = SVector.readWithPadding(reader);
     }
@@ -27,15 +30,15 @@ public class EntityFatFireFly extends MatrixData {
     @Override
     public void save(DataWriter writer) {
         super.save(writer);
-        writer.writeUnsignedShort(this.type);
+        writer.writeUnsignedShort(this.type.ordinal());
         writer.writeUnsignedShort(0);
         this.target.saveWithPadding(writer);
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Type", String.valueOf(getType())));
-        table.getItems().add(new NameValuePair("Target", target.toString()));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addEnumSelector("Type", getType(), BonusFlyType.values(), false, this::setType);
+        editor.addSVector("Target", getTarget());
     }
 }

@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.data.desert;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.EntityData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityThermal extends EntityData {
     private int rotateTime;
 
@@ -27,7 +28,7 @@ public class EntityThermal extends EntityData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        table.getItems().add(new NameValuePair("Rotate Time", String.valueOf(getRotateTime())));
+    public void addData(GUIEditorGrid editor) {
+        editor.addIntegerField("Rotate Time", getRotateTime(), this::setRotateTime, null);
     }
 }

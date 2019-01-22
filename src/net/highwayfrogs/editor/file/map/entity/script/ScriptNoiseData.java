@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.script;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Loads and saves sound radius data.
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
+@Setter
 public class ScriptNoiseData extends EntityScriptData {
     private int minRadius;
     private int maxRadius;
@@ -28,8 +29,8 @@ public class ScriptNoiseData extends EntityScriptData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        table.getItems().add(new NameValuePair("Min Radius", String.valueOf(minRadius)));
-        table.getItems().add(new NameValuePair("Max Radius", String.valueOf(maxRadius)));
+    public void addData(GUIEditorGrid editor) {
+        editor.addIntegerField("Min Radius", getMinRadius(), this::setMinRadius, null);
+        editor.addIntegerField("Max Radius", getMaxRadius(), this::setMaxRadius, null);
     }
 }

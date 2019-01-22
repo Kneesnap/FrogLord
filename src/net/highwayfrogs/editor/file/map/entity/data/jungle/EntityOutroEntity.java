@@ -1,31 +1,35 @@
 package net.highwayfrogs.editor.file.map.entity.data.jungle;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Represents JUN_OUTRO_ENTITY
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
+@Setter
 public class EntityOutroEntity extends MatrixData {
     private OutroTarget[] targets = new OutroTarget[TARGET_COUNT];
 
     private static final int TARGET_COUNT = 11;
 
+    public EntityOutroEntity() {
+        for (int i = 0; i < targets.length; i++)
+            targets[i] = new OutroTarget();
+    }
+
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        for (int i = 0; i < this.targets.length; i++) {
-            this.targets[i] = new OutroTarget();
-            this.targets[i].load(reader);
-        }
+        for (OutroTarget target : this.targets)
+            target.load(reader);
     }
 
     @Override
@@ -36,15 +40,15 @@ public class EntityOutroEntity extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
         for (int i = 0; i < getTargets().length; i++)
-            table.getItems().add(new NameValuePair("Target #" + (i + 1), getTargets()[i].getTime() + " -> " + getTargets()[i].getTarget()));
+            editor.addLabel("Target #" + (i + 1), getTargets()[i].getTime() + " -> " + getTargets()[i].getTarget());
     }
 
     @Getter // Represents JUN_OUTRO_TARGETS
     public static final class OutroTarget extends GameObject {
-        private SVector target; // Target position.
+        private SVector target = new SVector(); // Target position.
         private int time; // Time to reach target.
 
         @Override

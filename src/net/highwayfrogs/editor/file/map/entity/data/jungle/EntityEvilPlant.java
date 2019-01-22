@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.data.jungle;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityEvilPlant extends MatrixData {
     private short snapTime;
     private short snapDelay;
@@ -30,9 +31,9 @@ public class EntityEvilPlant extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Snap Time", String.valueOf(getSnapTime())));
-        table.getItems().add(new NameValuePair("Snap Delay", String.valueOf(getSnapDelay())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addShortField("Snap Time", getSnapTime(), this::setSnapTime, null);
+        editor.addShortField("Snap Delay", getSnapDelay(), this::setSnapDelay, null);
     }
 }

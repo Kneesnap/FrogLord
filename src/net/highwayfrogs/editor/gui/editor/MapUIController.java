@@ -3,25 +3,23 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.beans.property.*;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Camera;
+import javafx.scene.PerspectiveCamera;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.GestureEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
-import javafx.scene.transform.Rotate;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.MAPEditorGUI;
 import net.highwayfrogs.editor.file.map.entity.Entity;
-import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.file.map.form.FormBook;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -57,13 +55,17 @@ public class MapUIController implements Initializable {
     private static final double SPEED_UP_MULTIPLIER = 4.0;
     @Getter private static DoubleProperty propertySpeedUpMultiplier = new SimpleDoubleProperty(SPEED_UP_MULTIPLIER);
 
+    private MAPController controller;
+
     // Baseline UI components
     @FXML private AnchorPane anchorPaneUIRoot;
     @FXML private Accordion accordionLeft;
 
-    // Level Editor /  Information pane
+    // Control Settings Pane.
     @FXML private TitledPane titledPaneInformation;
-    @FXML private Label labelLevelThemeName;
+    @FXML private CheckBox checkBoxShowMesh;
+    @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
+    @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldSpeedRotation;
     @FXML private Button btnResetSpeedRotation;
@@ -75,56 +77,36 @@ public class MapUIController implements Initializable {
     @FXML private Button btnResetSpeedDownMultiplier;
     @FXML private TextField textFieldSpeedUpMultiplier;
     @FXML private Button btnResetSpeedUpMultiplier;
-
-    // Entity pane
-    @FXML private TitledPane entityPane;
-    @FXML private Label entityTypeLabel;
-    @FXML private Label formBookLabel;
-    @FXML private Label uniqueIdLabel;
-    @FXML private Label formGridIdLabel;
-    @FXML private Label flagLabel;
-
-    @FXML private VBox entityBox;
-    @FXML private TableView<NameValuePair> entityTable;
-    @FXML private TableColumn<Object, Object> tableColumnEntityName;
-    @FXML private TableColumn<Object, Object> tableColumnEntityValue;
-
-    @FXML private VBox scriptBox;
-    @FXML private TableView<NameValuePair> scriptTable;
-    @FXML private TableColumn<Object, Object> tableColumnScriptName;
-    @FXML private TableColumn<Object, Object> tableColumnScriptValue;
-
-    // Camera pane
-    @FXML private TitledPane titledPaneCamera;
-    @FXML private GridPane gridPaneCameraPos;
     @FXML private TextField textFieldCamNearClip;
     @FXML private TextField textFieldCamFarClip;
     @FXML private TextField textFieldCamPosX;
     @FXML private TextField textFieldCamPosY;
     @FXML private TextField textFieldCamPosZ;
-
-    // Mesh pane
-    @FXML private CheckBox checkBoxShowMesh;
-    @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
-    @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
-
     @FXML private TextField textFieldMeshPosX;
     @FXML private TextField textFieldMeshPosY;
     @FXML private TextField textFieldMeshPosZ;
-    @FXML private TextField textFieldMeshRotX;
-    @FXML private TextField textFieldMeshRotY;
-    @FXML private TextField textFieldMeshRotZ;
+
+    // General pane.
+    @FXML private TitledPane generalPane;
+    @FXML private GridPane generalGridPane;
+    private GUIEditorGrid generalEditor;
+
+    // Entity pane
+    @FXML private TitledPane entityPane;
+    @FXML private GridPane entityGridPane;
+    private MAPEditorGUI entityEditor;
+
+    // Light Pane.
+    @FXML private TitledPane lightPane;
+    @FXML private GridPane lightGridPane;
+    private GUIEditorGrid lightEditor;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        accordionLeft.setExpandedPane(titledPaneInformation);
-        entityPane.setVisible(false);
-        tableColumnEntityName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        tableColumnEntityValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-        tableColumnScriptName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        tableColumnScriptValue.setCellValueFactory(new PropertyValueFactory<>("value"));
+        accordionLeft.setExpandedPane(generalPane);
+        entityEditor = new MAPEditorGUI(entityGridPane, this);
     }
 
     /**
@@ -171,44 +153,84 @@ public class MapUIController implements Initializable {
     }
 
     /**
+     * Sets up the lighting editor.
+     */
+    public void setupLights() {
+        if (lightEditor == null)
+            lightEditor = new GUIEditorGrid(lightGridPane);
+
+        lightEditor.clearEditor();
+        for (int i = 0; i < getController().getFile().getLights().size(); i++) {
+            lightEditor.addBoldLabel("Light #" + (i + 1) + ":");
+            getController().getFile().getLights().get(i).makeEditor(lightEditor);
+        }
+    }
+
+    /**
+     * Sets up the general editor.
+     */
+    public void setupGeneralEditor() {
+        if (generalEditor == null)
+            generalEditor = new GUIEditorGrid(generalGridPane);
+
+        generalEditor.clearEditor();
+        getController().getFile().setupEditor(generalEditor);
+    }
+
+    /**
      * Show entity information.
      * @param entity The entity to show information for.
      */
     public void showEntityInfo(Entity entity) {
-        entityPane.setVisible(true);
-        entityPane.setExpanded(true);
+        entityEditor.clearEditor();
+        if (entity == null) {
+            entityEditor.addBoldLabel("There is no entity selected.");
+            return;
+        }
 
-        entityTypeLabel.setText(entity.getFormBook().getEntity().name());
-        formBookLabel.setText(entity.getFormBook().name());
-        uniqueIdLabel.setText(String.valueOf(entity.getUniqueId()));
-        formGridIdLabel.setText(String.valueOf(entity.getFormGridId()));
-        flagLabel.setText(String.valueOf(entity.getFlags()));
+        entityEditor.addBoldLabel("General Information:");
+        entityEditor.addLabel("Entity Type", entity.getFormBook().getEntity().name());
+
+        entityEditor.addEnumSelector("Form Type", entity.getFormBook(), FormBook.values(), false, newBook -> {
+            entity.setFormBook(newBook);
+            showEntityInfo(entity); // Update entity type.
+        });
+
+        entityEditor.addIntegerField("Entity ID", entity.getUniqueId(), entity::setUniqueId, null);
+        entityEditor.addIntegerField("Grid ID", entity.getFormGridId(), entity::setFormGridId, null);
+        entityEditor.addIntegerField("Flags", entity.getFlags(), entity::setFlags, null);
 
         // Populate Entity Data.
-        entityTable.getItems().clear();
+        entityEditor.addBoldLabel("Entity Data:");
         if (entity.getEntityData() != null)
-            entity.getEntityData().addData(this.entityTable);
-        entityBox.setVisible(entityTable.getItems().size() > 0);
+            entity.getEntityData().addData(this.entityEditor);
 
         // Populate Script Data.
-        scriptTable.getItems().clear();
+        entityEditor.addBoldLabel("Script Data:");
         if (entity.getScriptData() != null)
-            entity.getScriptData().addData(this.scriptTable);
-        scriptBox.setVisible(scriptTable.getItems().size() > 0);
+            entity.getScriptData().addData(this.entityEditor);
 
+        entityEditor.addButton("Remove Entity", () -> {
+            getController().getFile().getEntities().remove(entity);
+            getController().resetEntities();
+            showEntityInfo(null); // Don't show the entity we just deleted.
+        });
 
+        entityPane.setExpanded(true);
     }
 
     /**
      * Primary function (entry point) for setting up data / control bindings, etc. (May be broken out and tidied up later in development).
      */
-    public void setupBindings(SubScene subScene3D, MapMesh mapMesh, MeshView meshView, Rotate rotX, Rotate rotY, Rotate rotZ, Camera camera) {
+    public void setupBindings(MAPController controller, SubScene subScene3D, MeshView meshView) {
+        this.controller = controller;
+        PerspectiveCamera camera = controller.getCamera();
+
         camera.setFarClip(MAP_VIEW_FAR_CLIP);
         subScene3D.setFill(Color.GRAY);
         subScene3D.setCamera(camera);
 
         // Set informational bindings and editor bindings
-        labelLevelThemeName.setText(mapMesh.getMap().getTheme().toString());
         colorPickerLevelBackground.setValue((Color)subScene3D.getFill());
         subScene3D.fillProperty().bind(colorPickerLevelBackground.valueProperty());
 
@@ -245,8 +267,9 @@ public class MapUIController implements Initializable {
         textFieldMeshPosY.textProperty().bindBidirectional(meshView.translateYProperty(), NUM_TO_STRING_CONVERTER);
         textFieldMeshPosZ.textProperty().bindBidirectional(meshView.translateZProperty(), NUM_TO_STRING_CONVERTER);
 
-        textFieldMeshRotX.textProperty().bindBidirectional(rotX.angleProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldMeshRotY.textProperty().bindBidirectional(rotY.angleProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldMeshRotZ.textProperty().bindBidirectional(rotZ.angleProperty(), NUM_TO_STRING_CONVERTER);
+        // Must be called after MAPController is passed.
+        showEntityInfo(null);
+        setupLights();
+        setupGeneralEditor();
     }
 }

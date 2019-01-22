@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Cleanup;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
@@ -34,6 +35,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 
@@ -50,19 +52,19 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public class MAPFile extends GameFile {
-    private short startXTile;
-    private short startYTile;
-    private short startRotation;
+    @Setter private short startXTile;
+    @Setter private short startYTile;
+    @Setter private short startRotation;
     private MAPTheme theme;
-    private short checkPointTimers[] = new short[5]; // Each frog (checkpoint) has its own timer value. In the vanilla game, they all match.
-    private SVector cameraSourceOffset;
-    private SVector cameraTargetOffset;
+    @Setter private short levelTimer; // Each frog (checkpoint) has its own timer value. In the vanilla game, they all match.
+    @Setter private SVector cameraSourceOffset;
+    @Setter private SVector cameraTargetOffset;
+    @Setter private SVector basePoint; // This is the bottom left of the map group grid.
     private List<Path> paths = new ArrayList<>();
     private List<Zone> zones = new ArrayList<>();
     private List<Form> forms = new ArrayList<>();
     private List<Entity> entities = new ArrayList<>();
     private List<Light> lights = new ArrayList<>();
-    private SVector basePoint; // This is the bottom left of the map group grid.
     private List<MAPGroup> groups = new ArrayList<>();
     private List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
@@ -109,6 +111,7 @@ public class MAPFile extends GameFile {
     private static final String ANIMATION_SIGNATURE = "ANIM";
 
     public static final short MAP_ANIMATION_TEXTURE_LIST_TERMINATOR = (short) 0xFFFF;
+    private static final int TOTAL_CHECKPOINT_TIMER_ENTRIES = 5;
 
     public static final Image ICON = loadIcon("map");
     public static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
@@ -159,8 +162,8 @@ public class MAPFile extends GameFile {
         this.startRotation = reader.readShort();
         this.theme = MAPTheme.values()[reader.readShort()];
 
-        for (int i = 0; i < checkPointTimers.length; i++)
-            this.checkPointTimers[i] = reader.readShort();
+        this.levelTimer = reader.readShort();
+        reader.readBytes((TOTAL_CHECKPOINT_TIMER_ENTRIES - 1) * Constants.SHORT_SIZE);
 
         reader.readShort(); // Unused perspective variable.
 
@@ -247,7 +250,8 @@ public class MAPFile extends GameFile {
         for (int i = 0; i < lightCount; i++) {
             Light light = new Light();
             light.load(reader);
-            lights.add(light);
+            if (light.isWorthKeeping())
+                lights.add(light);
         }
 
         reader.setIndex(groupAddress);
@@ -405,8 +409,8 @@ public class MAPFile extends GameFile {
         writer.writeShort(this.startYTile);
         writer.writeShort(this.startRotation);
         writer.writeShort((short) getTheme().ordinal());
-        for (short timerValue : this.checkPointTimers)
-            writer.writeShort(timerValue);
+        for (int i = 0; i < TOTAL_CHECKPOINT_TIMER_ENTRIES; i++)
+            writer.writeShort(getLevelTimer());
 
         writer.writeShort((short) 0); // Unused perspective variable.
         this.cameraSourceOffset.saveWithPadding(writer);
@@ -812,6 +816,8 @@ public class MAPFile extends GameFile {
         }));
 
         texMap.put(MapMesh.CURSOR_COLOR, MapMesh.CURSOR_COLOR.makeTexture());
+        texMap.put(MapMesh.ANIMATION_COLOR, MapMesh.ANIMATION_COLOR.makeTexture());
+        texMap.put(MapMesh.GRID_COLOR, MapMesh.GRID_COLOR.makeTexture());
         return texMap;
     }
 
@@ -871,5 +877,20 @@ public class MAPFile extends GameFile {
         }
 
         writer.writeShort(MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
+    }
+
+    /**
+     * Setup a GUI editor for this file.
+     * @param editor The editor to setup under.
+     */
+    public void setupEditor(GUIEditorGrid editor) {
+        editor.addLabel("Theme", getTheme().name()); // Should look into whether or not this is ok to edit.
+        editor.addShortField("Start xTile", getStartXTile(), this::setStartXTile, null);
+        editor.addShortField("Start yTile", getStartYTile(), this::setStartYTile, null);
+        editor.addShortField("Start Rotation", getStartRotation(), this::setStartRotation, null);
+        editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
+        editor.addSVector("Base Point", getBasePoint());
+        editor.addSVector("Camera Source Offset", getCameraSourceOffset());
+        editor.addSVector("Camera Target Offset", getCameraTargetOffset());
     }
 }

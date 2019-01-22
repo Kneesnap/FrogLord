@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file.map.view;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
@@ -13,6 +12,7 @@ import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.mesh.MeshManager;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -29,6 +29,7 @@ public class MapMesh extends TriangleMesh {
     private TextureMap textureMap;
     private Map<Integer, PSXPolygon> facePolyMap = new HashMap<>();
     private Map<PSXPolygon, Integer> polyFaceMap = new HashMap<>();
+    private MeshManager manager;
 
     private boolean remapFinder;
     private int remapStart;
@@ -38,11 +39,14 @@ public class MapMesh extends TriangleMesh {
     private int textureCount;
 
     public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
+    public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(Color.YELLOW, Color.BLACK);
+    public static final CursorVertexColor GRID_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
 
     public MapMesh(MAPFile file, TextureMap texMap) {
         super(VertexFormat.POINT_TEXCOORD);
         this.map = file;
         this.textureMap = texMap;
+        this.manager = new MeshManager(this);
         updateData();
     }
 
@@ -55,6 +59,7 @@ public class MapMesh extends TriangleMesh {
         this.remapStart = remapStart - 1;
         this.maxRemapSize = maxRemapSize;
         this.currentRemap = this.remapStart;
+        this.manager = new MeshManager(this);
     }
 
     /**
@@ -97,8 +102,6 @@ public class MapMesh extends TriangleMesh {
     public void updateData() {
         updateVertices();
         updatePolygonData();
-        this.faceCount = getFaces().size();
-        this.textureCount = getTexCoords().size();
     }
 
     /**
@@ -126,6 +129,9 @@ public class MapMesh extends TriangleMesh {
                 throw new RuntimeException("Cannot handle " + vertCount + " vertices");
             }
         }));
+
+        this.faceCount = getFaces().size();
+        this.textureCount = getTexCoords().size();
     }
 
     /**

@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.file.map.entity.script.swamp;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Holds script data for nuclear barrels.
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
+@Setter
 public class ScriptNuclearBarrelData extends EntityScriptData {
     private int flags;
     private int distance;
@@ -29,8 +30,8 @@ public class ScriptNuclearBarrelData extends EntityScriptData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        table.getItems().add(new NameValuePair("Flags", String.valueOf(flags)));
-        table.getItems().add(new NameValuePair("Distance", String.valueOf(distance)));
+    public void addData(GUIEditorGrid editor) {
+        editor.addIntegerField("Flags", getFlags(), this::setFlags, null);
+        editor.addIntegerField("Distance", getDistance(), this::setDistance, null);
     }
 }

@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.data.suburbia;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.EntityData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityOriginalCrocodile extends EntityData {
     private int mouthOpenDelay;
 
@@ -27,7 +28,7 @@ public class EntityOriginalCrocodile extends EntityData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        table.getItems().add(new NameValuePair("Mouth Open Delay", String.valueOf(getMouthOpenDelay())));
+    public void addData(GUIEditorGrid editor) {
+        editor.addIntegerField("Mouth Open Delay", getMouthOpenDelay(), this::setMouthOpenDelay, null);
     }
 }

@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.file.map.entity.data.retro;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Represents "ORG_BABY_FROG_DATA", which is the data for the pink frog you can pickup on the retro logs.
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
+@Setter
 public class EntityBabyFrog extends MatrixData {
     private short logId; // The id of the log this frog will stand on.
     private short awardedPoints; // The points awarded when collected.
@@ -31,9 +32,9 @@ public class EntityBabyFrog extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Log ID", String.valueOf(getLogId())));
-        table.getItems().add(new NameValuePair("Points", String.valueOf(getAwardedPoints())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addShortField("Log ID", getLogId(), this::setLogId, null);
+        editor.addShortField("Points", getAwardedPoints(), this::setAwardedPoints, null);
     }
 }

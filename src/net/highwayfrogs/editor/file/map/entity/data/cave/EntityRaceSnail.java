@@ -1,12 +1,11 @@
 package net.highwayfrogs.editor.file.map.entity.data.cave;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
@@ -32,9 +31,9 @@ public class EntityRaceSnail extends PathData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Forward Distance", String.valueOf(getForwardDistance())));
-        table.getItems().add(new NameValuePair("Backward Distance", String.valueOf(getBackwardDistance())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addIntegerField("Forward Distance", getForwardDistance(), this::setForwardDistance, null);
+        editor.addIntegerField("Backward Distance", getBackwardDistance(), this::setBackwardDistance, null);
     }
 }

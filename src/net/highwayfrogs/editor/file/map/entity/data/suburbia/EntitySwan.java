@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.data.suburbia;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.EntityData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntitySwan extends EntityData {
     private int splineDelay;
     private short swimmingTime;
@@ -34,10 +35,10 @@ public class EntitySwan extends EntityData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        table.getItems().add(new NameValuePair("Spline Delay", String.valueOf(getSplineDelay())));
-        table.getItems().add(new NameValuePair("Swimming Time", String.valueOf(getSwimmingTime())));
-        table.getItems().add(new NameValuePair("Flap Think Time", String.valueOf(getFlapThinkTime())));
-        table.getItems().add(new NameValuePair("Flapping Time", String.valueOf(getFlappingTime())));
+    public void addData(GUIEditorGrid editor) {
+        editor.addIntegerField("Spline Delay", getSplineDelay(), this::setSplineDelay, null);
+        editor.addShortField("Swimming Time", getSwimmingTime(), this::setSwimmingTime, null);
+        editor.addShortField("Flap Think Time", getFlapThinkTime(), this::setFlapThinkTime, null);
+        editor.addShortField("Flapping Time", getFlappingTime(), this::setFlappingTime, null);
     }
 }

@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.data.jungle;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityRopeBridge extends MatrixData {
     private int fallDelay;
     private int hopsBefore;
@@ -30,9 +31,9 @@ public class EntityRopeBridge extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Fall Delay", String.valueOf(getFallDelay())));
-        table.getItems().add(new NameValuePair("Hops Before", String.valueOf(getHopsBefore())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addIntegerField("Fall Delay", getFallDelay(), this::setFallDelay, null);
+        editor.addIntegerField("Hops Before", getHopsBefore(), this::setHopsBefore, null);
     }
 }

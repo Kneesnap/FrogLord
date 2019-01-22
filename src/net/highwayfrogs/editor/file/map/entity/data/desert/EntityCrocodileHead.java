@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.data.desert;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityCrocodileHead extends MatrixData {
     private int riseHeight;
     private int riseSpeed;
@@ -42,13 +43,13 @@ public class EntityCrocodileHead extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Rise Height", String.valueOf(getRiseHeight())));
-        table.getItems().add(new NameValuePair("Rise Speed", String.valueOf(getRiseSpeed())));
-        table.getItems().add(new NameValuePair("Snap Delay", String.valueOf(getSnapDelay())));
-        table.getItems().add(new NameValuePair("Pause Delay", String.valueOf(getPauseDelay())));
-        table.getItems().add(new NameValuePair("Should Snap", String.valueOf(getSnapOrNot())));
-        table.getItems().add(new NameValuePair("Submerged Delay", String.valueOf(getSubmergedDelay())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addIntegerField("Rise Height", getRiseHeight(), this::setRiseHeight, null);
+        editor.addIntegerField("Rise Speed", getRiseSpeed(), this::setRiseSpeed, null);
+        editor.addIntegerField("Snap Delay", getSnapDelay(), this::setSnapDelay, null);
+        editor.addIntegerField("Pause Delay", getPauseDelay(), this::setPauseDelay, null);
+        editor.addIntegerField("Should Snap", getSnapOrNot(), this::setSnapOrNot, null);
+        editor.addIntegerField("Submerged Delay", getSubmergedDelay(), this::setSubmergedDelay, null);
     }
 }

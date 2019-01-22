@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.data.cave;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityFrogLight extends MatrixData {
     private int minRadius;
     private int maxRadius;
@@ -39,13 +40,13 @@ public class EntityFrogLight extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Min Radius", String.valueOf(getMinRadius())));
-        table.getItems().add(new NameValuePair("Max Radius", String.valueOf(getMaxRadius())));
-        table.getItems().add(new NameValuePair("Die Speed", String.valueOf(getDieSpeed())));
-        table.getItems().add(new NameValuePair("Count", String.valueOf(getCount())));
-        table.getItems().add(new NameValuePair("Setup", String.valueOf(getSetup())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addIntegerField("Min Radius", getMinRadius(), this::setMinRadius, null);
+        editor.addIntegerField("Max Radius", getMaxRadius(), this::setMaxRadius, null);
+        editor.addIntegerField("Die Speed", getDieSpeed(), this::setDieSpeed, null);
+        editor.addIntegerField("Count", getCount(), this::setCount, null);
+        editor.addIntegerField("Setup", getSetup(), this::setSetup, null);
 
     }
 }

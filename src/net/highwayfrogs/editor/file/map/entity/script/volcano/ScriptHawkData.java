@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.file.map.entity.script.volcano;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Contains data about homing the frog.
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
+@Setter
 public class ScriptHawkData extends EntityScriptData {
     private int speed;
     private int aggroDistance;
@@ -29,8 +30,8 @@ public class ScriptHawkData extends EntityScriptData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        table.getItems().add(new NameValuePair("Speed", String.valueOf(speed)));
-        table.getItems().add(new NameValuePair("Aggro Distance", String.valueOf(aggroDistance)));
+    public void addData(GUIEditorGrid editor) {
+        editor.addIntegerField("Speed", getSpeed(), this::setSpeed, null);
+        editor.addIntegerField("Aggro Range", getAggroDistance(), this::setAggroDistance, null);
     }
 }

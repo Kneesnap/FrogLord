@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.data.swamp;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityCrusher extends MatrixData {
     private short speed;
     private short distance;
@@ -36,11 +37,11 @@ public class EntityCrusher extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Speed", String.valueOf(getSpeed())));
-        table.getItems().add(new NameValuePair("Distance", String.valueOf(getDistance())));
-        table.getItems().add(new NameValuePair("Direction", String.valueOf(getDirection())));
-        table.getItems().add(new NameValuePair("Delay", String.valueOf(getDelay())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addShortField("Speed", getSpeed(), this::setSpeed, null);
+        editor.addShortField("Distance", getDistance(), this::setDistance, null);
+        editor.addShortField("Direction", getDirection(), this::setDirection, null);
+        editor.addShortField("Delay", getDelay(), this::setDelay, null);
     }
 }

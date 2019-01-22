@@ -25,6 +25,7 @@ public class SVector extends GameObject {
 
     public static final int UNPADDED_BYTE_SIZE = 3 * Constants.SHORT_SIZE;
     public static final int PADDED_BYTE_SIZE = UNPADDED_BYTE_SIZE + Constants.SHORT_SIZE;
+    public static final SVector EMPTY = new SVector();
 
     public SVector(SVector clone) {
         this(clone.getX(), clone.getY(), clone.getZ());

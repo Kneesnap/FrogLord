@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.map.entity.data.forest;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class EntityHedgehog extends PathData {
     private int runTime;
     private int rollTime;
@@ -36,11 +37,11 @@ public class EntityHedgehog extends PathData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Run Time", String.valueOf(getRunTime())));
-        table.getItems().add(new NameValuePair("Roll Time", String.valueOf(getRollTime())));
-        table.getItems().add(new NameValuePair("Run Speed", String.valueOf(getRunSpeed())));
-        table.getItems().add(new NameValuePair("Roll Speed", String.valueOf(getRollSpeed())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addIntegerField("Run Time", getRunTime(), this::setRunTime, null);
+        editor.addIntegerField("Roll Time", getRollTime(), this::setRollTime, null);
+        editor.addIntegerField("Run Speed", getRunSpeed(), this::setRunSpeed, null);
+        editor.addIntegerField("Roll Speed", getRollSpeed(), this::setRollSpeed, null);
     }
 }

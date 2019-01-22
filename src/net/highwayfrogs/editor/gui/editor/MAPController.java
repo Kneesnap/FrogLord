@@ -27,6 +27,8 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.form.FormBook;
+import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -37,20 +39,22 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.system.Tuple2;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Sets up the map editor.
- * TODO: Icon for lighting.
- * TODO: Icon for animations, if we're unable to make them render in our tool.
- * TODO: Grid mode,
+ * TODO: Animations
+ * TODO: Grid mode, group.
  * TODO: Edit Vertexes
  * TODO: Edit polygons
- * TODO: Show Paths.
+ * TODO: Show Paths. (Can show an icon tracing the path in real-time)
  * TODO: Zones.
+ * TODO: Forms?
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter
@@ -72,9 +76,17 @@ public class MAPController extends EditorController<MAPFile> {
     private MapUIController mapUIController;
 
     private PerspectiveCamera camera;
+    private List<Rectangle> entityIcons = new ArrayList<>();
+
+    private Group root3D;
+    private Rotate rotX;
+    private Rotate rotY;
+    private Rotate rotZ;
+
+    private MeshData cursorData;
+    private MeshData animatedIndicator;
 
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
-    private static final Image LIGHT_BULB = GameFile.loadIcon("lightbulb");
     private static final Image SWAMPY = GameFile.loadIcon("swampy");
 
     @Override
@@ -165,6 +177,10 @@ public class MAPController extends EditorController<MAPFile> {
     private void setupMapViewer(Stage stageToOverride, MapMesh mesh, TextureMap texMap) {
         this.mapMesh = mesh;
 
+        // These cause errors if not reset.
+        this.cursorData = null;
+        this.animatedIndicator = null;
+
         // Create and setup material properties for rendering the level.
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(SwingFXUtils.toFXImage(texMap.getImage(), null));
@@ -172,9 +188,9 @@ public class MAPController extends EditorController<MAPFile> {
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(mesh);
 
-        Rotate rotX = new Rotate(0, Rotate.X_AXIS);
-        Rotate rotY = new Rotate(0, Rotate.Y_AXIS);
-        Rotate rotZ = new Rotate(0, Rotate.Z_AXIS);
+        this.rotX = new Rotate(0, Rotate.X_AXIS);
+        this.rotY = new Rotate(0, Rotate.Y_AXIS);
+        this.rotZ = new Rotate(0, Rotate.Z_AXIS);
         meshView.getTransforms().addAll(rotX, rotY, rotZ);
 
         meshView.setMaterial(material);
@@ -190,11 +206,11 @@ public class MAPController extends EditorController<MAPFile> {
         this.mapUIController = fxmlLoader.getController();
 
         // Create the 3D elements and use them within a subscene.
-        Group root3D = new Group(this.camera, meshView);
+        this.root3D = new Group(this.camera, meshView);
         SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - mapUIController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
 
         //  Setup mapui controller bindings, etc.
-        mapUIController.setupBindings(subScene3D, this.mapMesh, meshView, rotX, rotY, rotZ, this.camera);
+        mapUIController.setupBindings(this, subScene3D, meshView);
 
         // Setup the UI layout.
         BorderPane uiPane = new BorderPane();
@@ -202,8 +218,7 @@ public class MAPController extends EditorController<MAPFile> {
         uiPane.setCenter(subScene3D);
 
         // Setup additional scene elements.
-        setupLights(root3D, rotX, rotY, rotZ);
-        setupEntities(root3D, rotX, rotY, rotZ);
+        setupEntities();
 
         // Create and set the scene.
         mapScene = new Scene(uiPane);
@@ -229,17 +244,31 @@ public class MAPController extends EditorController<MAPFile> {
             if (event.getCode() == KeyCode.X)
                 meshView.setDrawMode(meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
 
-            // Toggle mesh visibility.
-            if (event.getCode() == KeyCode.V)
-                meshView.setVisible(!meshView.isVisible());
-
-            // Cycle through face culling modes (NONE, BACK, FRONT).
-            if (event.getCode() == KeyCode.C)
-                meshView.setCullFace(CullFace.values()[(meshView.getCullFace().ordinal() + 1) % CullFace.values().length]);
-
             // Toggle fullscreen mode.
             if (event.isControlDown() && event.getCode() == KeyCode.ENTER)
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
+
+            // Create Entity (Temporary)
+            if (event.isControlDown() && event.getCode() == KeyCode.E) {
+                Entity newEntity = new Entity(getFile(), FormBook.values()[0]);
+                getFile().getEntities().add(newEntity);
+                mapUIController.showEntityInfo(newEntity);
+                System.out.println("Created new entity.");
+                resetEntities();
+            }
+
+            // Toggle Animation Viewer.
+            if (event.getCode() == KeyCode.A) {
+                if (animatedIndicator != null) {
+                    getMapMesh().getManager().removeMesh(animatedIndicator);
+                    animatedIndicator = null;
+                } else {
+                    getFile().getMapAnimations().forEach(mapAnim -> mapAnim.getMapUVs().forEach(uvInfo ->
+                            renderOverPolygon(uvInfo.getPolygon(), MapMesh.ANIMATION_COLOR)));
+
+                    animatedIndicator = getMapMesh().getManager().addMesh();
+                }
+            }
 
             // [Remap Mode] Find next non-crashing remap.
             if (mesh.isRemapFinder() && event.getCode() == KeyCode.K) {
@@ -331,26 +360,27 @@ public class MAPController extends EditorController<MAPFile> {
         camera.setTranslateY(-MapUIController.getPropertyMapViewScale().get() / 7.0);
     }
 
-    private void setupLights(Group root3D, Rotate rotX, Rotate rotY, Rotate rotZ) {
-        /*ImagePattern pattern = new ImagePattern(LIGHT_BULB);
-
-        for (Light light : getFile().getLights()) {
-            SVector position = light.getPosition();
-            makeIcon(root3D, pattern, rotX, rotY, Utils.unsignedShortToFloat(position.getX()), Utils.unsignedShortToFloat(position.getY()), Utils.unsignedShortToFloat(position.getZ()));
-        }*/
+    /**
+     * Reset entities as something has changed.
+     */
+    public void resetEntities() {
+        root3D.getChildren().removeAll(this.entityIcons);
+        this.entityIcons.clear();
+        setupEntities();
     }
 
-    private void setupEntities(Group root3D, Rotate rotX, Rotate rotY, Rotate rotZ) {
+    private void setupEntities() {
         ImagePattern pattern = new ImagePattern(SWAMPY);
 
         for (Entity entity : getFile().getEntities()) {
             float[] pos = entity.getPosition(getFile());
-            Rectangle rect = makeIcon(root3D, pattern, rotX, rotY, rotZ, pos[0], pos[1], pos[2]);
+            Rectangle rect = makeIcon(pattern, pos[0], pos[1], pos[2]);
             rect.setOnMouseClicked(evt -> this.mapUIController.showEntityInfo(entity));
+            this.entityIcons.add(rect);
         }
     }
 
-    private Rectangle makeIcon(Group root3D, ImagePattern image, Rotate rotX, Rotate rotY, Rotate rotZ, float x, float y, float z) {
+    private Rectangle makeIcon(ImagePattern image, float x, float y, float z) {
         double width = image.getImage().getWidth();
         double height = image.getImage().getHeight();
         Rectangle rect = new Rectangle(width, height);
@@ -422,8 +452,11 @@ public class MAPController extends EditorController<MAPFile> {
      * Hides the cursor polygon.
      */
     public void hideCursorPolygon() {
-        mapMesh.getFaces().resize(mapMesh.getFaceCount());
-        mapMesh.getTexCoords().resize(mapMesh.getTextureCount());
+        if (cursorData == null)
+            return;
+
+        mapMesh.getManager().removeMesh(cursorData);
+        this.cursorData = null;
     }
 
     /**
@@ -444,10 +477,15 @@ public class MAPController extends EditorController<MAPFile> {
         if (cursorPoly == null)
             return;
 
-        int increment = mapMesh.getVertexFormat().getVertexIndexSize();
-        boolean isQuad = (cursorPoly.getVertices().length == PSXPolygon.QUAD_SIZE);
+        renderOverPolygon(cursorPoly, MapMesh.CURSOR_COLOR);
+        cursorData = mapMesh.getManager().addMesh();
+    }
 
-        int face = mapMesh.getPolyFaceMap().get(cursorPoly) * mapMesh.getFaceElementSize();
+    private void renderOverPolygon(PSXPolygon targetPoly, CursorVertexColor color) {
+        int increment = mapMesh.getVertexFormat().getVertexIndexSize();
+        boolean isQuad = (targetPoly.getVertices().length == PSXPolygon.QUAD_SIZE);
+
+        int face = mapMesh.getPolyFaceMap().get(targetPoly) * mapMesh.getFaceElementSize();
         int v1 = mapMesh.getFaces().get(face);
         int v2 = mapMesh.getFaces().get(face + increment);
         int v3 = mapMesh.getFaces().get(face + (2 * increment));
@@ -456,9 +494,9 @@ public class MAPController extends EditorController<MAPFile> {
             int v4 = mapMesh.getFaces().get(face + (3 * increment));
             int v5 = mapMesh.getFaces().get(face + (4 * increment));
             int v6 = mapMesh.getFaces().get(face + (5 * increment));
-            mapMesh.addRectangle(MapMesh.CURSOR_COLOR.getTextureEntry(), v1, v2, v3, v4, v5, v6);
+            mapMesh.addRectangle(color.getTextureEntry(), v1, v2, v3, v4, v5, v6);
         } else {
-            mapMesh.addTriangle(MapMesh.CURSOR_COLOR.getTextureEntry(), v1, v2, v3);
+            mapMesh.addTriangle(color.getTextureEntry(), v1, v2, v3);
         }
     }
 
@@ -466,6 +504,7 @@ public class MAPController extends EditorController<MAPFile> {
      * Refresh map data.
      */
     public void refreshView() {
+        hideCursorPolygon();
         mapMesh.updateData();
         renderCursor(getSelectedPolygon());
     }

@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.file.map.entity.data.forest;
 
-import javafx.scene.control.TableView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Represents "FOREST_BREAKING_BRANCH".
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class BreakingBranchEntity extends MatrixData {
     private int breakDelay;
     private int fallSpeed;
@@ -31,9 +32,9 @@ public class BreakingBranchEntity extends MatrixData {
     }
 
     @Override
-    public void addData(TableView<NameValuePair> table) {
-        super.addData(table);
-        table.getItems().add(new NameValuePair("Break Delay", String.valueOf(getBreakDelay())));
-        table.getItems().add(new NameValuePair("Fall Speed", String.valueOf(getFallSpeed())));
+    public void addData(GUIEditorGrid editor) {
+        super.addData(editor);
+        editor.addIntegerField("Break Delay", getBreakDelay(), this::setBreakDelay, null);
+        editor.addIntegerField("Fall Speed", getFallSpeed(), this::setFallSpeed, null);
     }
 }
