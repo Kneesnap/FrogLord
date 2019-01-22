@@ -1,5 +1,9 @@
 package net.highwayfrogs.editor.file.map.animation;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.control.Button;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -7,13 +11,14 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
-import net.highwayfrogs.editor.gui.mesh.MeshData;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -34,7 +39,6 @@ public class MAPAnimation extends GameObject {
     private transient MAPFile parentMap;
     private transient int texturePointerAddress;
     private transient int uvPointerAddress;
-    private transient MeshData tileHighlightData;
 
     public static final int FLAG_UV = Constants.BIT_FLAG_0; // Uses UV animation.
     public static final int FLAG_TEXTURE = Constants.BIT_FLAG_1; // Uses cel list animation.
@@ -148,8 +152,48 @@ public class MAPAnimation extends GameObject {
         editor.addShortField("v Frame Change", getVChange(), this::setVChange, null);
         editor.addIntegerField("UV Frame Count", getUvDuration(), this::setUvDuration, null);
         editor.addIntegerField("Tex Frame Count", getTexDuration(), this::setTexDuration, null);
-        editor.addLabel("Textures", Arrays.toString(getTextures().toArray())); //TODO: TEXTURES.  Non-remapped texture id array. TODO: MAKE TEXTURES. TODO: Allow editing.
-
         editor.addButton("Edit", () -> controller.getController().editAnimation(this));
+
+        DataReader reader = GUIMain.EXE_CONFIG.getReader();
+        List<GameImage> images = new ArrayList<>(getTextures().size());
+        for (short toRemap : getTextures()) {
+            reader.jumpTemp(getParentMap().getSuppliedRemapAddress() + (Constants.SHORT_SIZE * toRemap));
+            short texId = reader.readShort();
+            reader.jumpReturn();
+            images.add(getParentMap().getSuppliedVLO().getImageByTextureId(texId));
+        }
+
+        editor.addBoldLabel("Textures:");
+        for (int i = 0; i < images.size(); i++) {
+            final int tempIndex = i;
+            GameImage image = images.get(i);
+            VLOArchive vlo = getParentMap().getSuppliedVLO();
+
+            Image scaledImage = SwingFXUtils.toFXImage(Utils.resizeImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), 20, 20), null);
+            editor.setupNode(new ImageView(scaledImage)).setOnMouseClicked(evt -> vlo.promptImageSelection(newImage -> {
+                reader.jumpTemp(getParentMap().getSuppliedRemapAddress());
+
+                short read = -1;
+                do {
+                    read++;
+                } while (reader.hasMore() && reader.readShort() != newImage.getTextureId() && 1000 > read);
+                Utils.verify(reader.hasMore() && 1000 > read, "Failed to find remap for texture id: %d!", newImage.getTextureId());
+                getTextures().set(tempIndex, read);
+
+                controller.setupAnimationEditor();
+            }, false));
+
+            editor.setupSecondNode(new Button("Remove #" + vlo.getImages().indexOf(image) + " (" + image.getTextureId() + ")"), false).setOnAction(evt -> {
+                getTextures().remove(tempIndex);
+                controller.setupAnimationEditor();
+            });
+
+            editor.addRow(25);
+        }
+
+        editor.addButton("Add Animation", () -> {
+            getTextures().add(getTextures().isEmpty() ? 0 : getTextures().get(getTextures().size() - 1));
+            controller.setupAnimationEditor();
+        });
     }
 }

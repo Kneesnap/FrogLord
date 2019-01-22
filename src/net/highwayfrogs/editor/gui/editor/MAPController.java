@@ -49,7 +49,6 @@ import java.util.List;
 
 /**
  * Sets up the map editor.
- * TODO: Animations
  * TODO: Grid mode, group.
  * TODO: Edit Vertexes
  * TODO: Edit polygons
@@ -146,6 +145,8 @@ public class MAPController extends EditorController<MAPFile> {
     private void onMapButtonClicked(ActionEvent event) {
         getFile().getParentMWD().promptVLOSelection(getFile().getTheme(), vlo -> {
             TextureMap textureMap = TextureMap.newTextureMap(getFile(), vlo, getMWIEntry().getDisplayName());
+            getFile().setSuppliedVLO(vlo);
+            getFile().setSuppliedRemapAddress(GUIMain.EXE_CONFIG.getRemapInfo(Utils.stripExtension(getMWIEntry().getDisplayName())).getA());
             setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), textureMap), textureMap);
         }, false);
     }
@@ -171,6 +172,8 @@ public class MAPController extends EditorController<MAPFile> {
                     }
                 }
 
+                getFile().setSuppliedVLO(vlo);
+                getFile().setSuppliedRemapAddress(address);
                 setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), texMap, address, vlo.getImages().size()), texMap);
             });
 
