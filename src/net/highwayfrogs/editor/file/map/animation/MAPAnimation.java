@@ -6,7 +6,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -151,16 +150,6 @@ public class MAPAnimation extends GameObject {
         editor.addIntegerField("Tex Frame Count", getTexDuration(), this::setTexDuration, null);
         editor.addLabel("Textures", Arrays.toString(getTextures().toArray())); //TODO: TEXTURES.  Non-remapped texture id array. TODO: MAKE TEXTURES. TODO: Allow editing.
 
-        //TODO: Add and remove which tiles are controlled.
-
-        editor.addCheckBox("Highlight Tiles", getTileHighlightData() != null, newVal -> {
-            if (newVal) {
-                getMapUVs().forEach(uvInfo -> uvInfo.writeOver(controller.getController(), MapMesh.ANIMATION_COLOR));
-                this.tileHighlightData = controller.getController().getMapMesh().getManager().addMesh();
-            } else {
-                controller.getController().getMapMesh().getManager().removeMesh(this.tileHighlightData);
-                this.tileHighlightData = null;
-            }
-        });
+        editor.addButton("Edit", () -> controller.getController().editAnimation(this));
     }
 }

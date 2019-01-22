@@ -30,6 +30,11 @@ public class MAPUVInfo extends GameObject {
         this.map = map;
     }
 
+    public MAPUVInfo(MAPFile map, PSXPolygon selected) {
+        this(map);
+        this.polygon = selected;
+    }
+
     @Override
     public void load(DataReader reader) {
         int polyPointer = reader.readInt();
