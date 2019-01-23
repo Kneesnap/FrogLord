@@ -11,9 +11,9 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 8/23/2018.
  */
 public class FormData extends GameObject {
-    private Form parent;
     private short height; // This is for if heightType is one height for the entire grid.
     private short[] gridFlags; // Believe this is ordered (z * xSize) + x
+    private transient Form parent;
 
     private static final short FORM_HEIGHT_TYPE = (short) 0;
 
