@@ -19,7 +19,6 @@ public class MAPEditorGUI extends GUIEditorGrid {
     @Override
     protected void onChange() {
         super.onChange();
-        ;
         uiController.getController().resetEntities();
     }
 }

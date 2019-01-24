@@ -2,71 +2,66 @@ package net.highwayfrogs.editor.file.map.form;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Reads the "FORM" struct.
+ * Appears to be entity collision info, like being able to walk on logs or birds.
  * Created by Kneesnap on 8/23/2018.
  */
 @Getter
 @Setter
 public class Form extends GameObject {
-    private short maxY;
-    private short xGridSquareCount;
-    private short zGridSquareCount;
+    private short xGridSquareCount; // Number of x grid squares in this form.
+    private short zGridSquareCount; // Number of z grid squares in this form.
     private short xOffset; // Offset to bottom left or grid from entity origin.
     private short zOffset; // Offset to bottom left or grid from entity origin.
-    private List<FormData> data = new ArrayList<>();
+    private FormData data; // Null is allowed.
 
     @Override
     public void load(DataReader reader) {
         short dataCount = reader.readShort();
-        this.maxY = reader.readShort();
+        reader.readShort(); // Max Y, Runtime variable.
         this.xGridSquareCount = reader.readShort();
         this.zGridSquareCount = reader.readShort();
         this.xOffset = reader.readShort();
         this.zOffset = reader.readShort();
 
         if (dataCount == 0)
-            return; // Don't read further. (don't bother writing the offset either if dataCount == 0.
+            return; // There is no form data.
 
-        int dataPointer = reader.readInt();
-        reader.jumpTemp(dataPointer);
+        Utils.verify(dataCount == 1, "Invalid Form Data Count: " + dataCount); // The game only supports 1 form data even if it has a count for more.
 
-        for (int i = 0; i < dataCount; i++) {
-            FormData data = new FormData(this);
-            data.load(reader);
-            getData().add(data);
-        }
-
+        reader.jumpTemp(reader.readInt()); // Form Data Pointer.
+        this.data = new FormData(this);
+        data.load(reader);
         reader.jumpReturn();
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeShort((short) getDataCount());
-        writer.writeShort(this.maxY);
+        writer.writeUnsignedShort(hasData() ? 1 : 0);
+        writer.writeShort((short) 0);
         writer.writeShort(this.xGridSquareCount);
         writer.writeShort(this.zGridSquareCount);
         writer.writeShort(this.xOffset);
         writer.writeShort(this.zOffset);
-        if (getDataCount() > 0) { // If there are no form data objects, don't even write the offset.
-            writer.writeInt(writer.getIndex() + Constants.INTEGER_SIZE); //Write the pointer to the data. (In this case it's right after the FORM data.)
-            getData().forEach(data -> data.save(writer)); // Save form data.
+
+        if (hasData()) { // Save the form data if there's any.
+            int dataPointer = writer.writeNullPointer();
+            writer.writeAddressTo(dataPointer); // We don't write this if we don't have data. I forget why
+            getData().save(writer);
         }
     }
 
     /**
-     * Get the form data entry count.
-     * @return formDataCount
+     * Test if this form has form data.
+     * @return hasFormData
      */
-    public int getDataCount() {
-        return data.size();
+    public boolean hasData() {
+        return getData() != null;
     }
 }

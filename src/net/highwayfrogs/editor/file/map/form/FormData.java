@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.map.form;
 
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -12,7 +11,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 public class FormData extends GameObject {
     private short height; // This is for if heightType is one height for the entire grid.
-    private short[] gridFlags; // Believe this is ordered (z * xSize) + x
+    private int[] gridFlags; // Believe this is ordered (z * xSize) + x
     private transient Form parent;
 
     private static final short FORM_HEIGHT_TYPE = (short) 0;
@@ -27,7 +26,6 @@ public class FormData extends GameObject {
         Utils.verify(formHeightType == FORM_HEIGHT_TYPE, "Unsupported Form Height Type: %d.", formHeightType);
 
         this.height = reader.readShort();
-
         int squarePointer = reader.readInt(); // Pointer to array of (xCount * zCount) flags. (Type = short)
         reader.readInt(); // Pointer to an array of grid heights. This would have been used in the "SQUARE" height mode, however that does not appear to be used in the vanilla game.
 
@@ -36,9 +34,9 @@ public class FormData extends GameObject {
             fullSize++; // Unfortunately, we don't understand how to generate the value that goes in that last spot. I think it'd be safe to have it be a null-short or something, but we may want to figure that out.
 
         reader.jumpTemp(squarePointer); // Really we don't need to jump, as the data is at the current read index, but this is to keep it in spec with the engine.
-        this.gridFlags = new short[fullSize];
+        this.gridFlags = new int[fullSize];
         for (int i = 0; i < gridFlags.length; i++)
-            this.gridFlags[i] = reader.readShort();
+            this.gridFlags[i] = reader.readUnsignedShortAsInt();
 
         reader.jumpReturn();
     }
@@ -49,9 +47,11 @@ public class FormData extends GameObject {
 
         int heightsPointer = writer.getIndex();
         writer.writeShort(this.height);
-        writer.writeInt(writer.getIndex() + (2 * Constants.INTEGER_SIZE));
-        writer.writeInt(heightsPointer); // Points to an unused height pointer array, mentioned above. I don't believe this functions in the frogger engine.
-        for (short aShort : this.gridFlags)
-            writer.writeShort(aShort);
+        int squareFlagPointer = writer.writeNullPointer();
+        writer.writeInt(heightsPointer); // Points to an unused height pointer array, mentioned above. This functionality is not used in Frogger, it may or may not be functional.
+
+        writer.writeAddressTo(squareFlagPointer);
+        for (int flag : this.gridFlags)
+            writer.writeUnsignedShort(flag);
     }
 }
