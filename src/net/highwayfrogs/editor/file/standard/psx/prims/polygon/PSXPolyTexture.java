@@ -32,8 +32,8 @@ public class PSXPolyTexture extends PSXPolygon {
     public static final int FLAG_ANIMATED_UV = Constants.BIT_FLAG_3; // Poly has an associated map animation using UV animation.
     public static final int FLAG_ANIMATED_TEXTURE = Constants.BIT_FLAG_4; // Poly has an associated map animation using cel list animation.
 
-    public PSXPolyTexture(int verticeCount, int colorCount) {
-        super(verticeCount);
+    public PSXPolyTexture(PSXPolygonType type, int verticeCount, int colorCount) {
+        super(type, verticeCount);
         this.uvs = new ByteUV[verticeCount];
         this.vectors = new PSXColorVector[colorCount];
     }

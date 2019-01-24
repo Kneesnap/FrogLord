@@ -14,22 +14,33 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
+import javafx.util.StringConverter;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPEditorGUI;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
+import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
+import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
+import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.mesh.MeshData;
 
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
+ * TODO: ERROR SAVING MAP where not all polygons are registered.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter
@@ -108,6 +119,19 @@ public class MapUIController implements Initializable {
     @FXML private TitledPane animationPane;
     @FXML private GridPane animationGridPane;
     private GUIEditorGrid animationEditor;
+
+    // Group pane.
+    @FXML private TitledPane groupPane;
+    @FXML private GridPane groupGridPane;
+    private GUIEditorGrid groupEditor;
+    private MeshData groupMeshData;
+
+    private MAPAnimation editAnimation;
+    private MeshData animationMarker;
+
+    private boolean selectGroup;
+    private MAPGroup selectedGroup = MAPGroup.NULL_MAP_GROUP;
+    private boolean groupEditMode;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
@@ -223,6 +247,85 @@ public class MapUIController implements Initializable {
     }
 
     /**
+     * Sets the selected group.
+     * @param newGroup The new group.
+     */
+    public void setSelectedGroup(MAPGroup newGroup) {
+        if (newGroup == null)
+            newGroup = MAPGroup.NULL_MAP_GROUP;
+
+        if (groupMeshData != null) {
+            getController().getMapMesh().getManager().removeMesh(groupMeshData);
+            groupMeshData = null;
+        }
+
+        if (!newGroup.isNullGroup()) {
+            newGroup.getPolygonMap().values().forEach(list -> list.forEach(prim -> {
+                if (!(prim instanceof PSXPolygon))
+                    return;
+
+                PSXPolygon poly = (PSXPolygon) prim;
+                getController().renderOverPolygon(poly, MapMesh.GRID_COLOR);
+            }));
+
+            this.groupMeshData = getController().getMapMesh().getManager().addMesh();
+        }
+
+        this.selectedGroup = newGroup;
+        setupGroupEditor();
+    }
+
+    /**
+     * Setup the map group editor.
+     */
+    public void setupGroupEditor() {
+        if (this.groupEditor == null)
+            this.groupEditor = new GUIEditorGrid(groupGridPane);
+
+        groupEditor.clearEditor();
+
+        List<MAPGroup> groups = new ArrayList<>(getMap().getGroups());
+        groups.add(0, MAPGroup.NULL_MAP_GROUP);
+
+        ComboBox<MAPGroup> comboBox = groupEditor.addSelectionBox("Group Select", getSelectedGroup(), groups, this::setSelectedGroup);
+        comboBox.setConverter(new StringConverter<MAPGroup>() {
+            @Override
+            public String toString(MAPGroup group) {
+                return group.isNullGroup() ? "No Group" : "Group #" + groups.indexOf(group);
+            }
+
+            @Override
+            public MAPGroup fromString(String string) {
+                return null;
+            }
+        });
+
+        groupEditor.addButton((isSelectGroup() ? "Disable" : "Enable") + " Group Finder", () -> {
+            this.selectGroup = !this.selectGroup;
+            setupGroupEditor();
+        });
+
+        groupEditor.addButton((isGroupEditMode() ? "Disable" : "Enable") + " Group Editor", () -> {
+            this.groupEditMode = !this.groupEditMode;
+            setupGroupEditor();
+        }).setDisable(getSelectedGroup().isNullGroup());
+
+        // Remove Group.
+        groupEditor.addButton("Remove Group", () -> {
+            int index = getMap().getGroups().indexOf(getSelectedGroup());
+            getMap().getGroups().remove(index);
+            setSelectedGroup(index > 0 ? getMap().getGroups().get(index - 1) : null);
+        }).setDisable(getSelectedGroup().isNullGroup());
+
+        // Add Group.
+        groupEditor.addButton("Add Group", () -> {
+            MAPGroup group = new MAPGroup(getMap());
+            getMap().getGroups().add(group);
+            setSelectedGroup(group);
+        });
+    }
+
+    /**
      * Show entity information.
      * @param entity The entity to show information for.
      */
@@ -286,7 +389,7 @@ public class MapUIController implements Initializable {
         subScene3D.setCamera(camera);
 
         // Set informational bindings and editor bindings
-        colorPickerLevelBackground.setValue((Color)subScene3D.getFill());
+        colorPickerLevelBackground.setValue((Color) subScene3D.getFill());
         subScene3D.fillProperty().bind(colorPickerLevelBackground.valueProperty());
 
         textFieldSpeedRotation.textProperty().bindBidirectional(propertyRotationSpeed, NUM_TO_STRING_CONVERTER);
@@ -327,6 +430,7 @@ public class MapUIController implements Initializable {
         setupLights();
         setupGeneralEditor();
         setupAnimationEditor();
+        setupGroupEditor();
     }
 
     /**
@@ -335,5 +439,100 @@ public class MapUIController implements Initializable {
      */
     public MAPFile getMap() {
         return getController().getFile();
+    }
+
+    /**
+     * Gets the mesh being controlled.
+     * @return mapMesh
+     */
+    public MapMesh getMesh() {
+        return getController().getMapMesh();
+    }
+
+    /**
+     * Handle when a polygon is selected.
+     * @param event          The mouse event.
+     * @param clickedPolygon The polygon clicked.
+     * @return false = Not handled. True = handled.
+     */
+    public boolean handleClick(MouseEvent event, PSXPolygon clickedPolygon) {
+        if (isSelectGroup()) {
+            MAPGroup found = null;
+            for (MAPGroup group : getMap().getGroups())
+                for (List<PSXGPUPrimitive> primitives : group.getPolygonMap().values())
+                    if (primitives.contains(clickedPolygon))
+                        found = group;
+
+            this.selectGroup = false;
+            setSelectedGroup(found);
+            return true;
+        }
+
+        if (isGroupEditMode() && !getSelectedGroup().isNullGroup()) {
+            List<PSXGPUPrimitive> primList = getSelectedGroup().getPolygonMap().computeIfAbsent(clickedPolygon.getType(), key -> new LinkedList<>());
+            if (!primList.remove(clickedPolygon))
+                primList.add(clickedPolygon);
+
+            setSelectedGroup(getSelectedGroup()); // Redraw.
+            return true;
+        }
+
+        if (isAnimationMode()) {
+            boolean removed = this.editAnimation.getMapUVs().removeIf(uvInfo -> uvInfo.getPolygon().equals(clickedPolygon));
+            if (!removed)
+                this.editAnimation.getMapUVs().add(new MAPUVInfo(getMap(), clickedPolygon));
+
+            updateAnimation();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Start editing an animation.
+     * @param animation The animation to edit.
+     */
+    public void editAnimation(MAPAnimation animation) {
+        boolean match = animation.equals(this.editAnimation);
+        cancelAnimationEdit();
+        if (match)
+            return;
+
+        this.editAnimation = animation;
+        animation.getMapUVs().forEach(uvInfo -> uvInfo.writeOver(getController(), MapMesh.ANIMATION_COLOR));
+        this.animationMarker = getMesh().getManager().addMesh();
+    }
+
+    /**
+     * Test if animation edit mode is active.
+     * @return animationMode
+     */
+    public boolean isAnimationMode() {
+        return this.editAnimation != null && this.animationMarker != null;
+    }
+
+    /**
+     * Update animation data.
+     */
+    public void updateAnimation() {
+        if (!isAnimationMode())
+            return;
+
+        getMesh().getManager().removeMesh(this.animationMarker);
+        this.editAnimation.getMapUVs().forEach(uvInfo -> uvInfo.writeOver(getController(), MapMesh.ANIMATION_COLOR));
+        this.animationMarker = getMesh().getManager().addMesh();
+    }
+
+    /**
+     * Stop the current animation edit.
+     */
+    public void cancelAnimationEdit() {
+        if (!isAnimationMode())
+            return;
+
+        getMesh().getManager().removeMesh(getAnimationMarker());
+        this.animationMarker = null;
+        this.editAnimation = null;
     }
 }

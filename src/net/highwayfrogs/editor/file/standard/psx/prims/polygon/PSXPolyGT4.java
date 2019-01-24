@@ -6,6 +6,6 @@ package net.highwayfrogs.editor.file.standard.psx.prims.polygon;
  */
 public class PSXPolyGT4 extends PSXPolyTexture {
     public PSXPolyGT4() {
-        super(4, 4);
+        super(PSXPolygonType.GT4, 4, 4);
     }
 }

@@ -5,7 +5,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
@@ -23,13 +22,13 @@ import java.util.Map;
 @Getter
 public class MAPGroup extends GameObject {
     private Map<PSXPrimitiveType, List<PSXGPUPrimitive>> polygonMap = new HashMap<>();
-    private List<Entity> entities = new ArrayList<>();
 
     private transient MAPFile parent;
     private transient Map<PSXPrimitiveType, Short> loadPolygonCountMap = new HashMap<>();
     private transient Map<PSXPrimitiveType, Integer> loadPolygonPointerMap = new HashMap<>();
-    private transient int savePointerLocation;
     private transient int pointerLocation;
+
+    public static final MAPGroup NULL_MAP_GROUP = makeNullGroup();
 
     public MAPGroup(MAPFile parent) {
         this.parent = parent;
@@ -50,15 +49,7 @@ public class MAPGroup extends GameObject {
             loadPolygonPointerMap.put(type, reader.readInt());
 
         reader.readInt(5 * Constants.POINTER_SIZE); // 5 run-time pointers.
-
-        int entityRootPointer = reader.readInt();
-        if (entityRootPointer > 0) {
-            reader.jumpTemp(entityRootPointer);
-            short temp;
-            while ((temp = reader.readShort()) != MAPFile.MAP_ANIMATION_TEXTURE_LIST_TERMINATOR)
-                getEntities().add(getParent().getEntities().get(temp));
-            reader.jumpReturn();
-        }
+        Utils.verify(reader.readInt() == 0, "Entity root pointer is not zero!");
     }
 
     @Override
@@ -70,8 +61,7 @@ public class MAPGroup extends GameObject {
         this.pointerLocation = writer.getIndex();
         writer.writeNull(MAPFile.PRIMITIVE_TYPES.size() * Constants.POINTER_SIZE); // Save this pointer later, after polygons are saved.
         writer.writeNull(5 * Constants.POINTER_SIZE);
-        this.savePointerLocation = writer.getIndex();
-        writer.writeInt(0); // Indice pointer, saved later.
+        writer.writeNullPointer(); // Runtime pointer.
     }
 
     /**
@@ -122,11 +112,14 @@ public class MAPGroup extends GameObject {
     }
 
     /**
-     * Write the entity list.
-     * @param writer The writer to write the data to.
+     * Test if this is a null map group.
+     * @return isNull
      */
-    public void writeEntityList(DataWriter writer) {
-        parent.writeEntityList(writer, getEntities(), this.savePointerLocation);
-        this.savePointerLocation = 0;
+    public boolean isNullGroup() {
+        return this == NULL_MAP_GROUP;
+    }
+
+    private static MAPGroup makeNullGroup() {
+        return new MAPGroup(null);
     }
 }

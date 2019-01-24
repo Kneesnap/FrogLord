@@ -6,6 +6,6 @@ package net.highwayfrogs.editor.file.standard.psx.prims.polygon;
  */
 public class PSXPolyF4 extends PSXPolyFlat {
     public PSXPolyF4() {
-        super(4);
+        super(PSXPolygonType.F4, 4);
     }
 }

@@ -43,8 +43,8 @@ public class PSXPolyGouraud extends PSXPolygon implements VertexColor {
             {{0, FULL_SIZE, FULL_SIZE}, {FULL_SIZE, 0, FULL_SIZE}}
     };
 
-    public PSXPolyGouraud(int verticeCount) {
-        super(verticeCount);
+    public PSXPolyGouraud(PSXPolygonType type, int verticeCount) {
+        super(type, verticeCount);
         this.colors = new PSXColorVector[verticeCount];
     }
 

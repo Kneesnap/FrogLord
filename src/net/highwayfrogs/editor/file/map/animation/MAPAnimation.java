@@ -156,7 +156,10 @@ public class MAPAnimation extends GameObject {
         if (isTexture)
             editor.addIntegerField("Frame Count", getTexDuration(), this::setTexDuration, null);
 
-        editor.addButton("Edit", () -> controller.getController().editAnimation(this));
+        editor.addButton(this.equals(controller.getEditAnimation()) ? "Exit Edit Mode" : "Enable Edit Mode", () -> {
+            controller.editAnimation(this);
+            controller.setupAnimationEditor();
+        });
 
         if (!isTexture)
             return;

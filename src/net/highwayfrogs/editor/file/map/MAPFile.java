@@ -136,7 +136,6 @@ public class MAPFile extends GameFile {
      */
     public void removeEntity(Entity entity) {
         getEntities().remove(entity);
-        getGroups().forEach(group -> group.getEntities().remove(entity));
     }
 
     @Override
@@ -591,14 +590,6 @@ public class MAPFile extends GameFile {
 
         // Write MAP_GROUP polygon pointers, since we've written polygon data.
         getGroups().forEach(group -> group.writePolygonPointers(writer));
-
-        AtomicInteger entityIndicePointer = new AtomicInteger(writer.getIndex());
-        getGroups().forEach(group -> {
-            writer.jumpTemp(entityIndicePointer.get());
-            group.writeEntityList(writer);
-            entityIndicePointer.set(writer.getIndex());
-            writer.jumpReturn();
-        });
 
         // Write "VRTX."
         tempAddress = writer.getIndex();

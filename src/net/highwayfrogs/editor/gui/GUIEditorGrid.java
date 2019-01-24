@@ -279,10 +279,11 @@ public class GUIEditorGrid {
      * @param text    The text on the button.
      * @param onPress What to do when the button is pressed.
      */
-    public void addButton(String text, Runnable onPress) {
+    public Button addButton(String text, Runnable onPress) {
         Button button = setupSecondNode(new Button(text), true);
         button.setOnAction(evt -> onPress.run());
         addRow(25);
+        return button;
     }
 
     /**

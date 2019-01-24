@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class PSXPolygon extends PSXGPUPrimitive {
     private short[] vertices;
     private short padding;
+    private final PSXPolygonType type;
     private transient boolean flippedVertices;
 
     public static final int TRI_SIZE = 3;
@@ -24,7 +25,8 @@ public abstract class PSXPolygon extends PSXGPUPrimitive {
     public static final int REQUIRES_VERTEX_PADDING = TRI_SIZE;
     public static final int REQUIRES_VERTEX_SWAPPING = QUAD_SIZE;
 
-    public PSXPolygon(int verticeCount) {
+    public PSXPolygon(PSXPolygonType type, int verticeCount) {
+        this.type = type;
         this.vertices = new short[verticeCount];
     }
 
