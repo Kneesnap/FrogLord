@@ -17,6 +17,7 @@ import java.util.Map;
 
 /**
  * Represents the "MAP_GROUP" struct.
+ * This determines what polygons render.
  * Created by Kneesnap on 8/29/2018.
  */
 @Getter

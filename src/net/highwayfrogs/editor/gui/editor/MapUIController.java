@@ -40,7 +40,6 @@ import java.util.ResourceBundle;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
- * TODO: ERROR SAVING MAP where not all polygons are registered.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter
@@ -470,8 +469,15 @@ public class MapUIController implements Initializable {
 
         if (isGroupEditMode() && !getSelectedGroup().isNullGroup()) {
             List<PSXGPUPrimitive> primList = getSelectedGroup().getPolygonMap().computeIfAbsent(clickedPolygon.getType(), key -> new LinkedList<>());
-            if (!primList.remove(clickedPolygon))
+            List<PSXGPUPrimitive> looseList = getMap().getLoosePolygons().get(clickedPolygon.getType());
+
+            if (primList.remove(clickedPolygon)) {
+                looseList.add(clickedPolygon);
+            } else if (looseList.remove(clickedPolygon)) {
                 primList.add(clickedPolygon);
+            } else {
+                throw new RuntimeException("Polygon registries had an oopsie.");
+            }
 
             setSelectedGroup(getSelectedGroup()); // Redraw.
             return true;
