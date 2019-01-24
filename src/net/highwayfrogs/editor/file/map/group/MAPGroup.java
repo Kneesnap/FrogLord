@@ -27,7 +27,7 @@ public class MAPGroup extends GameObject {
     private transient MAPFile parent;
     private transient Map<PSXPrimitiveType, Short> loadPolygonCountMap = new HashMap<>();
     private transient Map<PSXPrimitiveType, Integer> loadPolygonPointerMap = new HashMap<>();
-    private transient int pointerLocation;
+    private transient int savePointerLocation;
 
     public static final MAPGroup NULL_MAP_GROUP = makeNullGroup();
 
@@ -59,7 +59,7 @@ public class MAPGroup extends GameObject {
             writer.writeUnsignedByte((short) polygonMap.get(type).size());
 
         writer.writeNull(3);
-        this.pointerLocation = writer.getIndex();
+        this.savePointerLocation = writer.getIndex();
         writer.writeNull(MAPFile.PRIMITIVE_TYPES.size() * Constants.POINTER_SIZE); // Save this pointer later, after polygons are saved.
         writer.writeNull(5 * Constants.POINTER_SIZE);
         writer.writeNullPointer(); // Runtime pointer.
@@ -69,8 +69,8 @@ public class MAPGroup extends GameObject {
      * Write polygon pointers. Must be done after polygons are saved.
      */
     public void writePolygonPointers(DataWriter writer) {
-        Utils.verify(this.pointerLocation > 0, "Cannot save polygon pointers before polygons are written.");
-        writer.jumpTemp(this.pointerLocation);
+        Utils.verify(this.savePointerLocation > 0, "Cannot save polygon pointers before polygons are written.");
+        writer.jumpTemp(this.savePointerLocation);
 
         for (PSXPrimitiveType type : MAPFile.PRIMITIVE_TYPES) {
             List<PSXGPUPrimitive> polyList = polygonMap.get(type);
@@ -85,7 +85,7 @@ public class MAPGroup extends GameObject {
             writer.writeInt(pointer);
         }
 
-        this.pointerLocation = 0;
+        this.savePointerLocation = 0;
         writer.jumpReturn();
     }
 

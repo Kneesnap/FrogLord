@@ -40,6 +40,7 @@ import java.util.ResourceBundle;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
+ * TODO: Automatically generate MAPGroups.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter
