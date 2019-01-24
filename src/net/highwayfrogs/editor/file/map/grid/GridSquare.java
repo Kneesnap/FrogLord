@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -16,8 +17,8 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 public class GridSquare extends GameObject {
     private int flags;
-    private PSXGPUPrimitive polygon;
-    private MAPFile parent;
+    private PSXPolygon polygon;
+    private transient MAPFile parent;
 
     public GridSquare(MAPFile parent) {
         this.parent = parent;
@@ -41,8 +42,11 @@ public class GridSquare extends GameObject {
     public void load(DataReader reader) {
         this.flags = reader.readInt();
         int polyF4Pointer = reader.readInt();
-        this.polygon = parent.getLoadPointerPolygonMap().get(polyF4Pointer);
-        Utils.verify(this.polygon != null, "GridSquare's Polygon Pointer does not point to a polygon! (%d)", polyF4Pointer);
+
+        PSXGPUPrimitive prim = parent.getLoadPointerPolygonMap().get(polyF4Pointer);
+        Utils.verify(prim != null, "GridSquare's Polygon Pointer does not point to a primitive! (%d)", polyF4Pointer);
+        Utils.verify(prim instanceof PSXPolygon, "GridSquare's Polygon Pointer does not point to a polygon! (%d)", polyF4Pointer);
+        this.polygon = (PSXPolygon) prim;
     }
 
     @Override

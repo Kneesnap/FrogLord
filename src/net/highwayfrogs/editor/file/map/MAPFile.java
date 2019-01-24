@@ -802,6 +802,7 @@ public class MAPFile extends GameFile {
 
         texMap.put(MapMesh.CURSOR_COLOR, MapMesh.CURSOR_COLOR.makeTexture());
         texMap.put(MapMesh.ANIMATION_COLOR, MapMesh.ANIMATION_COLOR.makeTexture());
+        texMap.put(MapMesh.GROUP_COLOR, MapMesh.GROUP_COLOR.makeTexture());
         texMap.put(MapMesh.GRID_COLOR, MapMesh.GRID_COLOR.makeTexture());
         return texMap;
     }

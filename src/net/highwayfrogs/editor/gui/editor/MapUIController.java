@@ -23,6 +23,7 @@ import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
+import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
@@ -125,6 +126,12 @@ public class MapUIController implements Initializable {
     @FXML private TitledPane pathPane;
     @FXML private GridPane pathGridPane;
     private GUIEditorGrid pathEditor;
+
+    // Grid Pane.
+    @FXML private TitledPane gridPane;
+    @FXML private GridPane gridGridPane;
+    private GUIEditorGrid gridEditor;
+    private MeshData gridOverlay;
 
     // Group pane.
     @FXML private TitledPane groupPane;
@@ -279,6 +286,28 @@ public class MapUIController implements Initializable {
     }
 
     /**
+     * Setup the grid editor.
+     */
+    public void setupGridEditor() {
+        if (this.gridEditor == null)
+            this.gridEditor = new GUIEditorGrid(this.gridGridPane);
+
+        this.gridEditor.clearEditor();
+        gridEditor.addCheckBox("Show Grid", gridOverlay != null, newState -> {
+            if (gridOverlay != null) {
+                getMesh().getManager().removeMesh(gridOverlay);
+                this.gridOverlay = null;
+                return;
+            }
+
+            for (GridSquare square : getMap().getGridSquares())
+                getController().renderOverPolygon(square.getPolygon(), MapMesh.GRID_COLOR);
+
+            this.gridOverlay = getMesh().getManager().addMesh();
+        });
+    }
+
+    /**
      * Sets the selected group.
      * @param newGroup The new group.
      */
@@ -297,7 +326,7 @@ public class MapUIController implements Initializable {
                     return;
 
                 PSXPolygon poly = (PSXPolygon) prim;
-                getController().renderOverPolygon(poly, MapMesh.GRID_COLOR);
+                getController().renderOverPolygon(poly, MapMesh.GROUP_COLOR);
             }));
 
             this.groupMeshData = getController().getMapMesh().getManager().addMesh();
@@ -464,6 +493,7 @@ public class MapUIController implements Initializable {
         setupAnimationEditor();
         setupGroupEditor();
         setupPathEditor();
+        setupGridEditor();
     }
 
     /**
