@@ -346,7 +346,7 @@ public class MapUIController implements Initializable {
         });
 
         entityEditor.addIntegerField("Entity ID", entity.getUniqueId(), entity::setUniqueId, null);
-        entityEditor.addIntegerField("Grid ID", entity.getFormGridId(), entity::setFormGridId, null);
+        entityEditor.addIntegerField("Form ID", entity.getFormGridId(), entity::setFormGridId, null);
         entityEditor.addIntegerField("Flags", entity.getFlags(), entity::setFlags, null);
 
         // Populate Entity Data.
