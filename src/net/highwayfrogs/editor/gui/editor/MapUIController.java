@@ -25,6 +25,7 @@ import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
+import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
@@ -119,6 +120,11 @@ public class MapUIController implements Initializable {
     @FXML private TitledPane animationPane;
     @FXML private GridPane animationGridPane;
     private GUIEditorGrid animationEditor;
+
+    // Path pane.
+    @FXML private TitledPane pathPane;
+    @FXML private GridPane pathGridPane;
+    private GUIEditorGrid pathEditor;
 
     // Group pane.
     @FXML private TitledPane groupPane;
@@ -243,6 +249,32 @@ public class MapUIController implements Initializable {
         animationEditor.addButton("Add Animation", () -> {
             getMap().getMapAnimations().add(new MAPAnimation(getMap()));
             setupAnimationEditor();
+        });
+    }
+
+    /**
+     * Setup the path editor.
+     */
+    public void setupPathEditor() {
+        if (this.pathEditor == null)
+            this.pathEditor = new GUIEditorGrid(this.pathGridPane);
+
+        this.pathEditor.clearEditor();
+
+        for (int i = 0; i < getMap().getPaths().size(); i++) {
+            final int tempIndex = i;
+
+            this.pathEditor.addBoldLabel("Path #" + (i + 1) + ":"); //TODO: It'd be nice to separate this into collapsible title panes.
+            getMap().getPaths().get(i).setupEditor(this, this.pathEditor);
+            this.pathEditor.addButton("Remove Path #" + (i + 1), () -> {
+                getMap().getPaths().remove(tempIndex);
+                setupPathEditor();
+            });
+        }
+
+        this.pathEditor.addButton("Add Path", () -> {
+            getMap().getPaths().add(new Path());
+            setupPathEditor();
         });
     }
 
@@ -431,6 +463,7 @@ public class MapUIController implements Initializable {
         setupGeneralEditor();
         setupAnimationEditor();
         setupGroupEditor();
+        setupPathEditor();
     }
 
     /**
@@ -476,9 +509,7 @@ public class MapUIController implements Initializable {
                 looseList.add(clickedPolygon);
             } else if (looseList.remove(clickedPolygon)) {
                 primList.add(clickedPolygon);
-            } else {
-                throw new RuntimeException("Polygon registries had an oopsie.");
-            }
+            } // Else: This polygon is probably registered by another group.
 
             setSelectedGroup(getSelectedGroup()); // Redraw.
             return true;

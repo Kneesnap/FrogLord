@@ -1,11 +1,17 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
+import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathSegment;
 import net.highwayfrogs.editor.file.map.path.PathType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
+
+import java.util.Arrays;
 
 /**
  * Holds Spline segment data.
@@ -121,5 +127,13 @@ public class SplineSegment extends PathSegment {
                 ((splineMatrix[3][2]) << SPLINE_WORLD_SHIFT)));
 
         return splinePoint;
+    }
+
+    @Override
+    public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
+        super.setupEditor(path, controller, editor);
+        editor.addLabel("Spline", Utils.matrixToString(this.splineMatrix));
+        editor.addLabel("Smooth T", Arrays.toString(this.smoothT));
+        editor.addLabel("Smooth C", Utils.matrixToString(this.smoothC));
     }
 }

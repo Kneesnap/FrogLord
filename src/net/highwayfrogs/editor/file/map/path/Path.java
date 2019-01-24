@@ -10,6 +10,8 @@ import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -56,6 +58,30 @@ public class Path extends GameObject {
         }
 
         writer.setIndex(segmentPointer);
+    }
+
+    /**
+     * Setup the editor.
+     * @param controller The ui controller.
+     * @param editor     The editor to setup under.
+     */
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+
+        for (int i = 0; i < getSegments().size(); i++) {
+            final int tempIndex = i;
+
+            editor.addBoldLabel("Segment #" + (i + 1) + ":");
+            getSegments().get(i).setupEditor(this, controller, editor);
+            editor.addButton("Remove Segment #" + (i + 1), () -> {
+                getSegments().remove(tempIndex);
+                controller.setupPathEditor();
+            });
+        }
+
+        editor.addButton("Add Segment", () -> {
+            getSegments().add(PathType.values()[0].getMaker().get());
+            controller.setupPathEditor();
+        });
     }
 
     /**
