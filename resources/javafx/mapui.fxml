@@ -39,6 +39,34 @@
                         </ScrollPane>
                     </content>
                 </TitledPane>
+                <TitledPane fx:id="geometryPane" animated="false" text="Geometry Data">
+                    <content>
+                        <ScrollPane fitToWidth="true">
+                            <content>
+                                <AnchorPane>
+                                    <children>
+                                        <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                                              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                            <children>
+                                                <GridPane fx:id="geometryGridPane" prefWidth="250.0">
+                                                    <columnConstraints>
+                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0"
+                                                                           minWidth="10.0" prefWidth="100.0"/>
+                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="140.0"
+                                                                           minWidth="10.0" prefWidth="150.0"/>
+                                                    </columnConstraints>
+                                                </GridPane>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </AnchorPane>
+                            </content>
+                            <padding>
+                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                            </padding>
+                        </ScrollPane>
+                    </content>
+                </TitledPane>
                 <TitledPane fx:id="entityPane" animated="false" text="Entity">
                     <content>
                         <ScrollPane fitToWidth="true">
@@ -123,34 +151,6 @@
                         </ScrollPane>
                     </content>
                 </TitledPane>
-                <TitledPane fx:id="gridPane" animated="false" text="Map Grid">
-                    <content>
-                        <ScrollPane fitToWidth="true">
-                            <content>
-                                <AnchorPane>
-                                    <children>
-                                        <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-                                              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                            <children>
-                                                <GridPane fx:id="gridGridPane" prefWidth="250.0">
-                                                    <columnConstraints>
-                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0"
-                                                                           minWidth="10.0" prefWidth="100.0"/>
-                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="140.0"
-                                                                           minWidth="10.0" prefWidth="150.0"/>
-                                                    </columnConstraints>
-                                                </GridPane>
-                                            </children>
-                                        </VBox>
-                                    </children>
-                                </AnchorPane>
-                            </content>
-                            <padding>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
-                            </padding>
-                        </ScrollPane>
-                    </content>
-                </TitledPane>
                 <TitledPane fx:id="pathPane" animated="false" text="Paths">
                     <content>
                         <ScrollPane fitToWidth="true">
@@ -161,34 +161,6 @@
                                               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
                                                 <GridPane fx:id="pathGridPane" prefWidth="250.0">
-                                                    <columnConstraints>
-                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0"
-                                                                           minWidth="10.0" prefWidth="100.0"/>
-                                                        <ColumnConstraints hgrow="ALWAYS" maxWidth="140.0"
-                                                                           minWidth="10.0" prefWidth="150.0"/>
-                                                    </columnConstraints>
-                                                </GridPane>
-                                            </children>
-                                        </VBox>
-                                    </children>
-                                </AnchorPane>
-                            </content>
-                            <padding>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
-                            </padding>
-                        </ScrollPane>
-                    </content>
-                </TitledPane>
-                <TitledPane fx:id="groupPane" animated="false" text="Map Rendering Groups">
-                    <content>
-                        <ScrollPane fitToWidth="true">
-                            <content>
-                                <AnchorPane>
-                                    <children>
-                                        <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-                                              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                            <children>
-                                                <GridPane fx:id="groupGridPane" prefWidth="250.0">
                                                     <columnConstraints>
                                                         <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0"
                                                                            minWidth="10.0" prefWidth="100.0"/>

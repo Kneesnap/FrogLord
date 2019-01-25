@@ -127,15 +127,10 @@ public class MapUIController implements Initializable {
     @FXML private GridPane pathGridPane;
     private GUIEditorGrid pathEditor;
 
-    // Grid Pane.
-    @FXML private TitledPane gridPane;
-    @FXML private GridPane gridGridPane;
-    private GUIEditorGrid gridEditor;
-
-    // Group pane.
-    @FXML private TitledPane groupPane;
-    @FXML private GridPane groupGridPane;
-    private GUIEditorGrid groupEditor;
+    // Geometry pane.
+    @FXML private TitledPane geometryPane;
+    @FXML private GridPane geometryGridPane;
+    private GUIEditorGrid geometryEditor;
     private MeshData groupMeshData;
 
     private MAPAnimation editAnimation;
@@ -288,17 +283,6 @@ public class MapUIController implements Initializable {
     }
 
     /**
-     * Setup the grid editor.
-     */
-    public void setupGridEditor() {
-        if (this.gridEditor == null)
-            this.gridEditor = new GUIEditorGrid(this.gridGridPane);
-
-        this.gridEditor.clearEditor();
-        this.gridEditor.addButton("Edit Grid", () -> GridController.openGridEditor(this));
-    }
-
-    /**
      * Sets the selected group.
      * @param newGroup The new group.
      */
@@ -331,15 +315,18 @@ public class MapUIController implements Initializable {
      * Setup the map group editor.
      */
     public void setupGroupEditor() {
-        if (this.groupEditor == null)
-            this.groupEditor = new GUIEditorGrid(groupGridPane);
+        if (this.geometryEditor == null)
+            this.geometryEditor = new GUIEditorGrid(geometryGridPane);
 
-        groupEditor.clearEditor();
+        this.geometryEditor.clearEditor();
+        this.geometryEditor.addBoldLabel("Collision Grid:");
+        this.geometryEditor.addButton("Edit Grid", () -> GridController.openGridEditor(this));
+        this.geometryEditor.addBoldLabel("Render Groups:");
 
         List<MAPGroup> groups = new ArrayList<>(getMap().getGroups());
         groups.add(0, MAPGroup.NULL_MAP_GROUP);
 
-        ComboBox<MAPGroup> comboBox = groupEditor.addSelectionBox("Group Select", getSelectedGroup(), groups, this::setSelectedGroup);
+        ComboBox<MAPGroup> comboBox = geometryEditor.addSelectionBox("Group Select", getSelectedGroup(), groups, this::setSelectedGroup);
         comboBox.setConverter(new StringConverter<MAPGroup>() {
             @Override
             public String toString(MAPGroup group) {
@@ -352,25 +339,25 @@ public class MapUIController implements Initializable {
             }
         });
 
-        groupEditor.addButton((isSelectGroup() ? "Disable" : "Enable") + " Group Finder", () -> {
+        geometryEditor.addButton((isSelectGroup() ? "Disable" : "Enable") + " Group Finder", () -> {
             this.selectGroup = !this.selectGroup;
             setupGroupEditor();
         });
 
-        groupEditor.addButton((isGroupEditMode() ? "Disable" : "Enable") + " Group Editor", () -> {
+        geometryEditor.addButton((isGroupEditMode() ? "Disable" : "Enable") + " Group Editor", () -> {
             this.groupEditMode = !this.groupEditMode;
             setupGroupEditor();
         }).setDisable(getSelectedGroup().isNullGroup());
 
         // Remove Group.
-        groupEditor.addButton("Remove Group", () -> {
+        geometryEditor.addButton("Remove Group", () -> {
             int index = getMap().getGroups().indexOf(getSelectedGroup());
             getMap().getGroups().remove(index);
             setSelectedGroup(index > 0 ? getMap().getGroups().get(index - 1) : null);
         }).setDisable(getSelectedGroup().isNullGroup());
 
         // Add Group.
-        groupEditor.addButton("Add Group", () -> {
+        geometryEditor.addButton("Add Group", () -> {
             MAPGroup group = new MAPGroup(getMap());
             getMap().getGroups().add(group);
             setSelectedGroup(group);
@@ -484,7 +471,6 @@ public class MapUIController implements Initializable {
         setupAnimationEditor();
         setupGroupEditor();
         setupPathEditor();
-        setupGridEditor();
     }
 
     /**
