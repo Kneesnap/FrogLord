@@ -33,10 +33,11 @@ public class MeshManager {
         ObservableIntegerArray faces = getMesh().getFaces();
         int newFaceSize = faces.size() - data.getFaceCount();
 
+        int textureIdDecrease = (data.getTexCoordCount() / getMesh().getTexCoordElementSize());
         for (int i = removeFaceIndex; i < newFaceSize; i++) {
             int value = faces.get(i + data.getFaceCount());
             if ((i - removeFaceIndex) % 2 > 0) // If it's a texture entry, since we just removed some texture entries, we need to decrease the texture ids in the faces.
-                value -= data.getTexCoordCount();
+                value -= textureIdDecrease;
 
             faces.set(i, value);
         }

@@ -53,7 +53,13 @@ public class GUIEditorGrid {
      * Adds a label
      * @param text The text to add.
      */
-    public Label addLabel(String text) {
+    public Label addNormalLabel(String text) {
+        Label label = setupSecondNode(new Label(text), true);
+        addRow(15);
+        return label;
+    }
+
+    private Label addLabel(String text) {
         return setupNode(new Label(text));
     }
 
@@ -279,10 +285,11 @@ public class GUIEditorGrid {
      * @param text    The text on the button.
      * @param onPress What to do when the button is pressed.
      */
-    public void addButton(String text, Runnable onPress) {
+    public Button addButton(String text, Runnable onPress) {
         Button button = setupSecondNode(new Button(text), true);
         button.setOnAction(evt -> onPress.run());
         addRow(25);
+        return button;
     }
 
     /**

@@ -86,6 +86,55 @@ public class TextureMap {
         private float maxU = 1;
         private float minV = 0;
         private float maxV = 1;
+        private transient BufferedImage cachedImage;
+
+        /**
+         * Get this texture's xPosition.
+         */
+        public double getX(TextureMap map) {
+            return minU * map.getImage().getWidth();
+        }
+
+        /**
+         * Get this texture's yPosition.
+         */
+        public double getY(TextureMap map) {
+            return minV * map.getImage().getHeight();
+        }
+
+        /**
+         * Get this texture's width.
+         */
+        public double getWidth(TextureMap map) {
+            return (maxU * map.getImage().getWidth()) - getX(map);
+        }
+
+        /**
+         * Get this texture's height.
+         */
+        public double getHeight(TextureMap map) {
+            return (maxV * map.getImage().getHeight()) - getY(map);
+        }
+
+        /**
+         * Get this entry as a BufferedImage
+         */
+        public BufferedImage getImage(TextureMap map) {
+            if (this.cachedImage != null)
+                return cachedImage;
+
+            int x = (int) getX(map);
+            int y = (int) getY(map);
+            int width = (int) getWidth(map);
+            int height = (int) getHeight(map);
+
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D graphics = image.createGraphics();
+            graphics.drawImage(map.getImage(), 0, 0, width, height, x, y, x + width, y + height, null);
+            graphics.dispose();
+            this.cachedImage = image;
+            return image;
+        }
 
         /**
          * Apply this TextureEntry to a MapMesh.

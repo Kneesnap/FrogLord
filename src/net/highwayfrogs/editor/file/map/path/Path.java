@@ -5,11 +5,16 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -19,18 +24,11 @@ import java.util.List;
 @Getter
 public class Path extends GameObject {
     private List<PathSegment> segments = new ArrayList<>();
-    private List<Short> entityIds = new ArrayList<>();
     private transient int tempEntityIndexPointer;
 
     @Override
     public void load(DataReader reader) {
-        int entityIndexPointer = reader.readInt(); // pa_entity_indices, "Note that entity_indices points to a (-1) terminated list of indices into the global entity list. (ie. the list of pointers after the entity table packet header)"
-
-        reader.jumpTemp(entityIndexPointer);
-        short tempShort;
-        while ((tempShort = reader.readShort()) != MAPFile.MAP_ANIMATION_TEXTURE_LIST_TERMINATOR)
-            entityIds.add(tempShort);
-        reader.jumpReturn();
+        reader.readInt(); // Points to a -1 terminated entity index list of entities using this path. Seems to be invalid data in many cases. Since it appears to only ever be used for the retro beaver, we auto-generate it in that scenario.
 
         // Read segments.
         int segmentCount = reader.readInt();
@@ -63,16 +61,47 @@ public class Path extends GameObject {
     }
 
     /**
+     * Setup the editor.
+     * @param controller The ui controller.
+     * @param editor     The editor to setup under.
+     */
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+
+        for (int i = 0; i < getSegments().size(); i++) {
+            final int tempIndex = i;
+
+            editor.addBoldLabel("Segment #" + (i + 1) + ":");
+            getSegments().get(i).setupEditor(this, controller, editor);
+            editor.addButton("Remove Segment #" + (i + 1), () -> {
+                getSegments().remove(tempIndex);
+                controller.setupPathEditor();
+            });
+        }
+
+        editor.addButton("Add Segment", () -> {
+            getSegments().add(PathType.values()[0].getMaker().get());
+            controller.setupPathEditor();
+        });
+    }
+
+    /**
      * Write the entity index list.
      * @param writer he writer to write data to.
      */
-    public void writeEntityList(DataWriter writer) {
+    public void writeEntityList(MAPFile mapFile, DataWriter writer) {
         Utils.verify(this.tempEntityIndexPointer > 0, "Path has not been saved yet.");
+
+        List<Entity> pathEntities = getEntities(mapFile);
+        if (!shouldSave(pathEntities)) {
+            this.tempEntityIndexPointer = 0;
+            return;
+        }
+
         writer.writeAddressTo(this.tempEntityIndexPointer);
         this.tempEntityIndexPointer = 0;
 
-        for (short entityId : getEntityIds())
-            writer.writeShort(entityId);
+        for (Entity entity : pathEntities)
+            writer.writeShort((short) mapFile.getEntities().indexOf(entity));
         writer.writeShort(MAPFile.MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
     }
 
@@ -83,5 +112,25 @@ public class Path extends GameObject {
      */
     public SVector evaluatePosition(PathInfo pathInfo) {
         return getSegments().get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
+    }
+
+    private boolean shouldSave(List<Entity> pathEntities) {
+        for (Entity testEntity : pathEntities)
+            if (testEntity.getFormBook() == FormBook.ORG_BEAVER)
+                return true; // This is the only case where this is ever used.
+        return false;
+    }
+
+    private List<Entity> getEntities(MAPFile mapFile) {
+        List<Entity> pathEntities = new LinkedList<>();
+        int myPathId = mapFile.getPaths().indexOf(this);
+
+        for (Entity entity : mapFile.getEntities()) {
+            PathInfo info = entity.getPathInfo();
+            if (info != null && info.getPathId() == myPathId)
+                pathEntities.add(entity);
+        }
+
+        return pathEntities;
     }
 }

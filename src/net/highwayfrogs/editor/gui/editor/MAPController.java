@@ -26,8 +26,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
-import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
@@ -49,7 +47,6 @@ import java.util.List;
 
 /**
  * Sets up the map editor.
- * TODO: Grid mode, group.
  * TODO: Edit Vertexes
  * TODO: Edit polygons
  * TODO: Show Paths. (Can show an icon tracing the path in real-time)
@@ -84,10 +81,6 @@ public class MAPController extends EditorController<MAPFile> {
     private Rotate rotZ;
 
     private MeshData cursorData;
-    private MeshData animatedIndicator;
-
-    private MAPAnimation editAnimation;
-    private MeshData animationMarker;
 
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
     private static final Image SWAMPY = GameFile.loadIcon("swampy");
@@ -127,7 +120,6 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Grid properties
         addTableEntry("Grid Stacks", Integer.toString(map.getGridStacks().size()));
-        addTableEntry("Grid Squares", Integer.toString(map.getGridSquares().size()));
         addTableEntry("Grid Size Count", "[" + map.getGridXCount() + ", " + map.getGridZCount() + "]");
         addTableEntry("Grid Size Length", "[" + map.getGridXLength() + ", " + map.getGridZLength() + "]");
 
@@ -186,9 +178,6 @@ public class MAPController extends EditorController<MAPFile> {
 
         // These cause errors if not reset.
         this.cursorData = null;
-        this.animatedIndicator = null;
-        this.editAnimation = null;
-        this.animationMarker = null;
 
         // Create and setup material properties for rendering the level.
         PhongMaterial material = new PhongMaterial();
@@ -246,6 +235,16 @@ public class MAPController extends EditorController<MAPFile> {
                     return;
                 }
 
+                if (getMapUIController() != null && getMapUIController().getOnSelect() != null) {
+                    getMapUIController().onSelect = null;
+                    if (getMapUIController().cancelSelection != null) {
+                        getMapUIController().cancelSelection.run();
+                        getMapUIController().cancelSelection = null;
+                    }
+
+                    return;
+                }
+
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
             }
 
@@ -256,19 +255,6 @@ public class MAPController extends EditorController<MAPFile> {
             // Toggle fullscreen mode.
             if (event.isControlDown() && event.getCode() == KeyCode.ENTER)
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
-
-            // Toggle Animation Viewer.
-            if (event.getCode() == KeyCode.A) {
-                if (animatedIndicator != null) {
-                    getMapMesh().getManager().removeMesh(animatedIndicator);
-                    animatedIndicator = null;
-                } else {
-                    getFile().getMapAnimations().forEach(mapAnim -> mapAnim.getMapUVs().forEach(uvInfo ->
-                            renderOverPolygon(uvInfo.getPolygon(), MapMesh.ANIMATION_COLOR)));
-
-                    animatedIndicator = getMapMesh().getManager().addMesh();
-                }
-            }
 
             // [Remap Mode] Find next non-crashing remap.
             if (mesh.isRemapFinder() && event.getCode() == KeyCode.K) {
@@ -348,13 +334,7 @@ public class MAPController extends EditorController<MAPFile> {
                 if (isPolygonSelected()) {
                     this.polygonImmuneToTarget = getSelectedPolygon();
                     removeCursorPolygon();
-                } else if (isAnimationMode()) { // We're in animation edit mode.
-                    boolean removed = this.editAnimation.getMapUVs().removeIf(uvInfo -> uvInfo.getPolygon().equals(clickedPoly));
-                    if (!removed)
-                        this.editAnimation.getMapUVs().add(new MAPUVInfo(getFile(), clickedPoly));
-
-                    updateAnimation();
-                } else {
+                } else if (mapUIController == null || !mapUIController.handleClick(evt, clickedPoly)) {
                     setCursorPolygon(clickedPoly);
                     this.polygonSelected = true;
                 }
@@ -518,52 +498,5 @@ public class MAPController extends EditorController<MAPFile> {
         hideCursorPolygon();
         mapMesh.updateData();
         renderCursor(getSelectedPolygon());
-    }
-
-    /**
-     * Start editing an animation.
-     * @param animation The animation to edit.
-     */
-    public void editAnimation(MAPAnimation animation) {
-        boolean match = animation.equals(this.editAnimation);
-        cancelAnimationEdit();
-        if (match)
-            return;
-
-        this.editAnimation = animation;
-        animation.getMapUVs().forEach(uvInfo -> uvInfo.writeOver(this, MapMesh.ANIMATION_COLOR));
-        this.animationMarker = getMapMesh().getManager().addMesh();
-    }
-
-    /**
-     * Test if animation edit mode is active.
-     * @return animationMode
-     */
-    public boolean isAnimationMode() {
-        return this.editAnimation != null && this.animationMarker != null;
-    }
-
-    /**
-     * Update animation data.
-     */
-    public void updateAnimation() {
-        if (!isAnimationMode())
-            return;
-
-        getMapMesh().getManager().removeMesh(this.animationMarker);
-        this.editAnimation.getMapUVs().forEach(uvInfo -> uvInfo.writeOver(this, MapMesh.ANIMATION_COLOR));
-        this.animationMarker = getMapMesh().getManager().addMesh();
-    }
-
-    /**
-     * Stop the current animation edit.
-     */
-    public void cancelAnimationEdit() {
-        if (this.editAnimation == null)
-            return;
-
-        getMapMesh().getManager().removeMesh(getAnimationMarker());
-        this.animationMarker = null;
-        this.editAnimation = null;
     }
 }

@@ -40,7 +40,8 @@ public class MapMesh extends TriangleMesh {
 
     public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(Color.YELLOW, Color.BLACK);
-    public static final CursorVertexColor GRID_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
+    public static final CursorVertexColor GROUP_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
+    public static final CursorVertexColor GRID_COLOR = new CursorVertexColor(Color.BLUE, Color.BLACK);
 
     public MapMesh(MAPFile file, TextureMap texMap) {
         super(VertexFormat.POINT_TEXCOORD);

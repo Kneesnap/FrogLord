@@ -63,7 +63,7 @@ public class MAPAnimation extends GameObject {
         int polygonCount = reader.readUnsignedShortAsInt();
         reader.readInt(); // Texture pointer. Generated at run-time.
 
-        if (getType() == MAPAnimationType.TEXTURE) {
+        if (getType() == MAPAnimationType.TEXTURE || getType() == MAPAnimationType.BOTH) {
             reader.jumpTemp(celListPointer);
             for (int i = 0; i < celCount; i++)
                 textures.add(reader.readShort());
@@ -138,8 +138,9 @@ public class MAPAnimation extends GameObject {
      * @param editor The editor to setup under.
      */
     public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
-        boolean isTexture = getType() == MAPAnimationType.TEXTURE;
-        boolean isUV = getType() == MAPAnimationType.UV;
+        boolean isBoth = getType() == MAPAnimationType.BOTH;
+        boolean isTexture = getType() == MAPAnimationType.TEXTURE || isBoth;
+        boolean isUV = getType() == MAPAnimationType.UV || isBoth;
 
         editor.addEnumSelector("Type", getType(), MAPAnimationType.values(), false, newValue -> {
             setType(newValue);
@@ -150,11 +151,15 @@ public class MAPAnimation extends GameObject {
             editor.addShortField("u Frame Change", getUChange(), this::setUChange, null);
             editor.addShortField("v Frame Change", getVChange(), this::setVChange, null);
             editor.addIntegerField("Frame Count", getUvDuration(), this::setUvDuration, null);
-        } else if (isTexture) {
-            editor.addIntegerField("Frame Count", getTexDuration(), this::setTexDuration, null);
         }
 
-        editor.addButton("Edit", () -> controller.getController().editAnimation(this));
+        if (isTexture)
+            editor.addIntegerField("Frame Count", getTexDuration(), this::setTexDuration, null);
+
+        editor.addButton(this.equals(controller.getEditAnimation()) ? "Exit Edit Mode" : "Enable Edit Mode", () -> {
+            controller.editAnimation(this);
+            controller.setupAnimationEditor();
+        });
 
         if (!isTexture)
             return;

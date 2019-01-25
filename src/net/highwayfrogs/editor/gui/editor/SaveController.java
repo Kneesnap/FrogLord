@@ -96,13 +96,27 @@ public class SaveController implements Initializable {
                 });
             });
 
-            mwdToSave.save(mwdWriter);
-            mwdWriter.closeReceiver();
-            mwdToSave.setSaveCallback(null);
+            try {
+                mwdToSave.save(mwdWriter);
+                mwdWriter.closeReceiver();
+                mwdToSave.setSaveCallback(null);
+            } catch (Exception ex) {
+                Platform.runLater(() -> {
+                    saveController.getStage().close();
+                    throw new RuntimeException("Failed to save MWD!", ex);
+                });
+            }
 
-            inputConfig.patchEXE(mwdToSave.getWadIndexTable());
-            inputConfig.saveExecutable(outputEXE);
-            Platform.runLater(saveController.getStage()::close);
+            try {
+                inputConfig.patchEXE(mwdToSave.getWadIndexTable());
+                inputConfig.saveExecutable(outputEXE);
+                Platform.runLater(saveController.getStage()::close);
+            } catch (Exception ex) {
+                Platform.runLater(() -> {
+                    saveController.getStage().close();
+                    throw new RuntimeException("Failed to patch EXE.", ex);
+                });
+            }
             return null;
         }
     }

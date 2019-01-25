@@ -21,8 +21,8 @@ public class PSXPolyFlat extends PSXPolygon implements VertexColor {
     private PSXColorVector color = new PSXColorVector();
     @Setter private transient TextureEntry textureEntry;
 
-    public PSXPolyFlat(int verticeCount) {
-        super(verticeCount);
+    public PSXPolyFlat(PSXPolygonType type, int verticeCount) {
+        super(type, verticeCount);
     }
 
     @Override

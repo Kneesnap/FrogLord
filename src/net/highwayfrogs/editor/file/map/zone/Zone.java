@@ -36,8 +36,7 @@ public class Zone extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        short zoneId = reader.readShort();
-        this.type = ZoneType.values()[zoneId];
+        this.type = ZoneType.values()[reader.readShort()];
         short regionCount = reader.readShort();
         this.xMin = reader.readShort();
         this.zMin = reader.readShort();

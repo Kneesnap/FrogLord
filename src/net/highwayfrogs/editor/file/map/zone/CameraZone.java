@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 @Setter
 public class CameraZone extends GameObject {
-    private short flags;
+    private int flags;
     private short direction; // Force camera rotation to this direction. -1 is none.
     private SVector northSourceOffset;
     private SVector northTargetOffset;
@@ -26,11 +26,13 @@ public class CameraZone extends GameObject {
     private SVector westSourceOffset;
     private SVector westTargetOffset;
 
+    public static final int FLAG_ABSOLUTE_Y = Constants.BIT_FLAG_3; // Use y offsets as world y position.
+
     public static final int BYTE_SIZE = (2 * Constants.SHORT_SIZE) + (8 * SVector.PADDED_BYTE_SIZE);
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readShort();
+        this.flags = reader.readUnsignedShortAsInt();
         this.direction = reader.readShort();
         this.northSourceOffset = SVector.readWithPadding(reader);
         this.northTargetOffset = SVector.readWithPadding(reader);
@@ -44,7 +46,7 @@ public class CameraZone extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeShort(getFlags());
+        writer.writeUnsignedShort(getFlags());
         writer.writeShort(getDirection());
         this.northSourceOffset.saveWithPadding(writer);
         this.northTargetOffset.saveWithPadding(writer);

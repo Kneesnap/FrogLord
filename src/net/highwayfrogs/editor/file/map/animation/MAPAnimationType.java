@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.file.map.animation;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
 
 /**
  * Represents a map animation type.
@@ -11,8 +10,9 @@ import net.highwayfrogs.editor.Constants;
 @Getter
 @AllArgsConstructor
 public enum MAPAnimationType {
-    UV(Constants.BIT_FLAG_0),
-    TEXTURE(Constants.BIT_FLAG_1);
+    UV(1),
+    TEXTURE(2),
+    BOTH(3);
 
     private final int flag;
 

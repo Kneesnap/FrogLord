@@ -671,4 +671,34 @@ public class Utils {
         result = (result << 8) + (int) (color.getRed() * 0xFF);
         return result;
     }
+
+    /**
+     * Turn a matrix into a string.
+     * @param matrix The matrix to turn into a string.
+     * @return matrixStr
+     */
+    public static String matrixToString(int[][] matrix) {
+        StringBuilder sb = new StringBuilder("[");
+
+        for (int i = 0; i < matrix.length; i++) {
+            if (i > 0)
+                sb.append(" ");
+            sb.append(Arrays.toString(matrix[i]));
+        }
+
+        return sb.append("]").toString();
+    }
+
+    /**
+     * Capitalize every letter after a space.
+     * @param sentence The sentence to capitalize.
+     * @return capitalized
+     */
+    public static String capitalize(String sentence) {
+        String[] split = sentence.replaceAll("_", " ").split(" ");
+        List<String> out = new ArrayList<>();
+        for (String s : split)
+            out.add(s.length() > 0 ? s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase() : "");
+        return String.join(" ", out);
+    }
 }

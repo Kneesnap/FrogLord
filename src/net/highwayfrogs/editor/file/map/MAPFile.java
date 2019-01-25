@@ -59,7 +59,7 @@ public class MAPFile extends GameFile {
     @Setter private short levelTimer;
     @Setter private SVector cameraSourceOffset;
     @Setter private SVector cameraTargetOffset;
-    @Setter private SVector basePoint; // This is the bottom left of the map group grid.
+    @Setter private SVector basePoint; // This is the bottom left of the map group grid. NOTE: Generated from [-(((xGridCount + C) * xGridLength) >> 1) - 1, 0, -(((zGridCount + C) * zGridLength) >> 1) - 1]
     private List<Path> paths = new ArrayList<>();
     private List<Zone> zones = new ArrayList<>();
     private List<Form> forms = new ArrayList<>();
@@ -68,18 +68,17 @@ public class MAPFile extends GameFile {
     private List<MAPGroup> groups = new ArrayList<>();
     private List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
-    private List<GridSquare> gridSquares = new ArrayList<>();
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
 
     private short groupXCount;
     private short groupZCount;
-    private short groupXLength;
-    private short groupZLength;
+    private short groupXLength; // Seems to always be 256, but probably can be changed in FrogLord.
+    private short groupZLength; // Seems to always be 256, but probably can be changed in FrogLord.
 
     private short gridXCount;
     private short gridZCount;
-    private short gridXLength;
-    private short gridZLength;
+    private short gridXLength; // Seems to always be 768, but probably can be changed in FrogLord.
+    private short gridZLength; // Seems to always be 768, but probably can be changed in FrogLord.
 
     @Setter private transient VLOArchive suppliedVLO;
     @Setter private transient int suppliedRemapAddress;
@@ -87,6 +86,7 @@ public class MAPFile extends GameFile {
     private transient Map<PSXPrimitiveType, List<PSXGPUPrimitive>> loosePolygons = new HashMap<>();
     private transient Map<PSXPrimitiveType, List<PSXGPUPrimitive>> cachedPolygons = new HashMap<>();
 
+    private transient List<GridSquare> loadGridSquares = new ArrayList<>();
     private transient Map<PSXGPUPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
     private transient Map<Integer, PSXGPUPrimitive> loadPointerPolygonMap = new HashMap<>();
 
@@ -136,7 +136,6 @@ public class MAPFile extends GameFile {
      */
     public void removeEntity(Entity entity) {
         getEntities().remove(entity);
-        getGroups().forEach(group -> group.getEntities().remove(entity));
     }
 
     @Override
@@ -333,13 +332,15 @@ public class MAPFile extends GameFile {
         // Find the total amount of squares to read.
         int squareCount = 0;
         for (GridStack stack : gridStacks)
-            squareCount = Math.max(squareCount, stack.getIndex() + stack.getSquareCount());
+            squareCount = Math.max(squareCount, stack.getTempIndex() + stack.getLoadedSquareCount());
 
         for (int i = 0; i < squareCount; i++) {
             GridSquare square = new GridSquare(this);
             square.load(reader);
-            gridSquares.add(square);
+            loadGridSquares.add(square);
         }
+
+        getGridStacks().forEach(stack -> stack.loadSquares(this));
 
         // Read "ANIM".
         reader.setIndex(animAddress);
@@ -548,8 +549,8 @@ public class MAPFile extends GameFile {
         writer.writeShort(this.groupZLength);
         getGroups().forEach(group -> group.save(writer));
 
-        // Setup pa_entity_indices. The one problem with this is that the beaver will not render when we do this.
-        getPaths().forEach(path -> path.writeEntityList(writer));
+        // Save entity indices. The beaver entity uses this.
+        getPaths().forEach(path -> path.writeEntityList(this, writer));
 
         // Write POLY
         tempAddress = writer.getIndex();
@@ -592,14 +593,6 @@ public class MAPFile extends GameFile {
         // Write MAP_GROUP polygon pointers, since we've written polygon data.
         getGroups().forEach(group -> group.writePolygonPointers(writer));
 
-        AtomicInteger entityIndicePointer = new AtomicInteger(writer.getIndex());
-        getGroups().forEach(group -> {
-            writer.jumpTemp(entityIndicePointer.get());
-            group.writeEntityList(writer);
-            entityIndicePointer.set(writer.getIndex());
-            writer.jumpReturn();
-        });
-
         // Write "VRTX."
         tempAddress = writer.getIndex();
         writer.jumpTemp(vertexAddress);
@@ -624,8 +617,14 @@ public class MAPFile extends GameFile {
         writer.writeShort(this.gridXLength);
         writer.writeShort(this.gridZLength);
 
+        List<GridSquare> saveSquares = new ArrayList<>();
+        getGridStacks().forEach(stack -> {
+            stack.setTempIndex(saveSquares.size());
+            saveSquares.addAll(stack.getGridSquares());
+        });
+
         getGridStacks().forEach(gridStack -> gridStack.save(writer));
-        getGridSquares().forEach(square -> square.save(writer));
+        saveSquares.forEach(gridSquare -> gridSquare.save(writer));
 
         // Save "ANIM" data.
         tempAddress = writer.getIndex();
@@ -811,6 +810,7 @@ public class MAPFile extends GameFile {
 
         texMap.put(MapMesh.CURSOR_COLOR, MapMesh.CURSOR_COLOR.makeTexture());
         texMap.put(MapMesh.ANIMATION_COLOR, MapMesh.ANIMATION_COLOR.makeTexture());
+        texMap.put(MapMesh.GROUP_COLOR, MapMesh.GROUP_COLOR.makeTexture());
         texMap.put(MapMesh.GRID_COLOR, MapMesh.GRID_COLOR.makeTexture());
         return texMap;
     }
@@ -848,32 +848,6 @@ public class MAPFile extends GameFile {
     }
 
     /**
-     * Write an entity list.
-     * @param writer          The writer to write the list to.
-     * @param entities        The list of entities to include.
-     * @param pointerLocation A pointer to an integer which holds the pointer to the entity list.
-     */
-    public void writeEntityList(DataWriter writer, List<Entity> entities, int pointerLocation) {
-        if (entities.isEmpty())
-            return;
-
-        Utils.verify(pointerLocation > 0, "Entity pointer location is not set!");
-
-        int tempAddress = writer.getIndex();
-        writer.jumpTemp(pointerLocation);
-        writer.writeInt(tempAddress);
-        writer.jumpReturn();
-
-        for (Entity entity : entities) {
-            int entityId = getEntities().indexOf(entity);
-            Utils.verify(entityId >= 0, "Tried to save a reference to an entity which is not tracked by the map!");
-            writer.writeUnsignedShort(entityId);
-        }
-
-        writer.writeShort(MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
-    }
-
-    /**
      * Setup a GUI editor for this file.
      * @param editor The editor to setup under.
      */
@@ -886,5 +860,33 @@ public class MAPFile extends GameFile {
         editor.addSVector("Base Point", getBasePoint());
         editor.addSVector("Camera Source Offset", getCameraSourceOffset());
         editor.addSVector("Camera Target Offset", getCameraTargetOffset());
+    }
+
+    /**
+     * Gets the grid X value from a world X value.
+     * @param worldX The world X coordinate.
+     * @return gridX
+     */
+    public int getGridX(int worldX) {
+        return (worldX - getBasePoint().getX()) >> 8;
+    }
+
+    /**
+     * Gets the grid Z value from a world Z value.
+     * @param worldZ The world Z coordinate.
+     * @return gridZ
+     */
+    public int getGridZ(int worldZ) {
+        return (worldZ - getBasePoint().getZ()) >> 8;
+    }
+
+    /**
+     * Gets a grid stack from grid coordinates.
+     * @param gridX The grid x coordinate.
+     * @param gridZ The grid z coordinate.
+     * @return gridStack
+     */
+    public GridStack getGridStack(int gridX, int gridZ) {
+        return getGridStacks().get((gridZ * getGridXCount()) + gridX);
     }
 }
