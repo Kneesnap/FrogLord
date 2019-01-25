@@ -116,6 +116,22 @@ public class TextureMap {
         }
 
         /**
+         * Get this entry as a BufferedImage
+         */
+        public BufferedImage getImage(TextureMap map) {
+            int x = (int) getX(map);
+            int y = (int) getY(map);
+            int width = (int) getWidth(map);
+            int height = (int) getHeight(map);
+
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D graphics = image.createGraphics();
+            graphics.drawImage(map.getImage(), 0, 0, width, height, x, y, x + width, y + height, null);
+            graphics.dispose();
+            return image;
+        }
+
+        /**
          * Apply this TextureEntry to a MapMesh.
          * @param mesh      The mesh to apply this entry to.
          * @param vertCount The amount of vertices to add.
