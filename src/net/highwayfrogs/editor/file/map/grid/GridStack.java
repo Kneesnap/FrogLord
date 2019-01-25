@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.map.grid;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -11,6 +12,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 8/27/2018.
  */
 @Getter
+@Setter
 public class GridStack extends GameObject {
     private short squareCount; // Either 0 or 1.
     private int index; // Index of first stack square in the GRID_SQUARE array.

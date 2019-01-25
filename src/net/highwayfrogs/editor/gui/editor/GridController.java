@@ -31,7 +31,6 @@ import java.util.ResourceBundle;
 
 /**
  * Manages the grid editor gui.
- * TODO: ADD LAYER.
  * Created by Kneesnap on 1/24/2019.
  */
 @Getter
@@ -79,8 +78,16 @@ public class GridController implements Initializable {
 
         gridCanvas.setOnMousePressed(evt -> {
             int gridX = (int) (evt.getSceneX() / getTileWidth());
-            int gridZ = getMap().getGridZCount() - (int) (evt.getSceneY() / getTileHeight()) - 1;
-            setSelectedStack(getMap().getGridStack(gridX, gridZ));
+            int gridZ = (int) (evt.getSceneY() / getTileHeight());
+            GridStack stack = getMap().getGridStack(gridX, getMap().getGridZCount() - gridZ - 1);
+
+            if (evt.isSecondaryButtonDown()) { // Remove.
+                stack.setSquareCount((short) 0);
+                stack.setIndex(getMap().getGridSquares().size());
+                updateCanvas();
+            }
+
+            setSelectedStack(stack);
         });
 
         graphics = gridCanvas.getGraphicsContext2D();
