@@ -306,13 +306,7 @@ public class MapUIController implements Initializable {
             this.gridOverlay = getMesh().getManager().addMesh();
         });
 
-        for (int z = getMap().getGridZCount() - 1; z >= 0; z--) {
-            StringBuilder sb = new StringBuilder();
-            for (int x = 0; x < getMap().getGridXCount(); x++)
-                sb.append(getMap().getGridStack(x, z).getSquareCount());
-
-            gridEditor.addNormalLabel(sb.toString());
-        }
+        gridEditor.addButton("Edit Grid", () -> GridController.openGridEditor(this));
     }
 
     /**

@@ -57,4 +57,13 @@ public class GridSquare extends GameObject {
         Utils.verify(polyPointer != null, "A GridSquare's polygon was not saved! This means this GridSquare likely should not be saved!");
         writer.writeInt(polyPointer);
     }
+
+    /**
+     * Test if a flag is present.
+     * @param flag The flag to test.
+     * @return isPresent
+     */
+    public boolean testFlag(int flag) {
+        return (getFlags() & flag) == flag;
+    }
 }

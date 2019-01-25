@@ -68,7 +68,7 @@ public class MAPFile extends GameFile {
     private List<MAPGroup> groups = new ArrayList<>();
     private List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
-    private List<GridSquare> gridSquares = new ArrayList<>();
+    private List<GridSquare> gridSquares = new ArrayList<>(); // These can be generated from GridStack (Minus flags)
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
 
     private short groupXCount;
