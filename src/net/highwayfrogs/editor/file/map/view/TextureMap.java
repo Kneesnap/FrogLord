@@ -86,6 +86,7 @@ public class TextureMap {
         private float maxU = 1;
         private float minV = 0;
         private float maxV = 1;
+        private transient BufferedImage cachedImage;
 
         /**
          * Get this texture's xPosition.
@@ -119,6 +120,9 @@ public class TextureMap {
          * Get this entry as a BufferedImage
          */
         public BufferedImage getImage(TextureMap map) {
+            if (this.cachedImage != null)
+                return cachedImage;
+
             int x = (int) getX(map);
             int y = (int) getY(map);
             int width = (int) getWidth(map);
@@ -128,6 +132,7 @@ public class TextureMap {
             Graphics2D graphics = image.createGraphics();
             graphics.drawImage(map.getImage(), 0, 0, width, height, x, y, x + width, y + height, null);
             graphics.dispose();
+            this.cachedImage = image;
             return image;
         }
 

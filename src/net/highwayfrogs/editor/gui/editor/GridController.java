@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
@@ -21,13 +22,17 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridSquareFlag;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
+import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
+import net.highwayfrogs.editor.gui.mesh.MeshData;
 
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 /**
  * Manages the grid editor gui.
@@ -129,14 +134,40 @@ public class GridController implements Initializable {
             graphics.strokeLine(0, z * getTileHeight(), gridCanvas.getWidth(), z * getTileHeight());
     }
 
+    private void selectSquare(Consumer<PSXPolygon> onSelect) {
+        stage.close();
+
+        for (GridStack stack : getMap().getGridStacks())
+            for (GridSquare square : stack.getGridSquares())
+                getController().getController().renderOverPolygon(square.getPolygon(), MapMesh.GRID_COLOR);
+        MeshData data = getController().getMesh().getManager().addMesh();
+
+        getController().selectPolygon(poly -> {
+            getController().getMesh().getManager().removeMesh(data);
+            onSelect.accept(poly);
+            updateCanvas();
+            Platform.runLater(stage::showAndWait);
+        }, () -> {
+            getController().getMesh().getManager().removeMesh(data);
+            Platform.runLater(stage::showAndWait);
+        });
+    }
+
     @FXML
     private void choosePolygon(ActionEvent evt) {
-        //TODO
+        selectSquare(poly -> {
+            getSelectedStack().getGridSquares().get(getSelectedLayer()).setPolygon(poly);
+            setSelectedSquare(getSelectedStack(), getSelectedLayer());
+        });
     }
 
     @FXML
     private void addLayer(ActionEvent evt) {
-        //TODO
+        selectSquare(poly -> {
+            getSelectedStack().getGridSquares().add(new GridSquare(poly, getMap()));
+            setSelectedStack(getSelectedStack());
+            setSelectedSquare(getSelectedStack(), getSelectedStack().getGridSquares().size() - 1);
+        });
     }
 
     @FXML

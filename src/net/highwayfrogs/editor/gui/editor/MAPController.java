@@ -236,6 +236,16 @@ public class MAPController extends EditorController<MAPFile> {
                     return;
                 }
 
+                if (getMapUIController() != null && getMapUIController().getOnSelect() != null) {
+                    getMapUIController().onSelect = null;
+                    if (getMapUIController().cancelSelection != null) {
+                        getMapUIController().cancelSelection.run();
+                        getMapUIController().cancelSelection = null;
+                    }
+
+                    return;
+                }
+
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
             }
 

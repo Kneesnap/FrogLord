@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.map.grid;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -16,11 +17,16 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 public class GridSquare extends GameObject {
     private int flags;
-    private PSXPolygon polygon;
+    @Setter private PSXPolygon polygon;
     private transient MAPFile parent;
 
     public GridSquare(MAPFile parent) {
         this.parent = parent;
+    }
+
+    public GridSquare(PSXPolygon poly, MAPFile parent) {
+        this(parent);
+        this.polygon = poly;
     }
 
     @Override

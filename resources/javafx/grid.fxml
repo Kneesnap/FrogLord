@@ -28,9 +28,9 @@
                                 <ImageView fx:id="selectedImage" fitHeight="60.0" fitWidth="60.0" layoutX="14.0"
                                            layoutY="14.0" pickOnBounds="true" preserveRatio="true"
                                            AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="14.0"/>
-                                <Button layoutX="84.0" layoutY="32.0" mnemonicParsing="false" prefHeight="25.0"
-                                        prefWidth="112.0" text="Choose Polygon" AnchorPane.rightAnchor="110.0"
-                                        AnchorPane.topAnchor="32.0"/>
+                                <Button layoutX="84.0" layoutY="32.0" mnemonicParsing="false" onAction="#choosePolygon"
+                                        prefHeight="25.0" prefWidth="112.0" text="Choose Polygon"
+                                        AnchorPane.rightAnchor="110.0" AnchorPane.topAnchor="32.0"/>
                                 <Button layoutX="195.0" layoutY="32.0" mnemonicParsing="false" onAction="#removeLayer"
                                         text="Remove Layer" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="32.0"/>
                                 <GridPane fx:id="flagTable" layoutY="60.0" prefHeight="141.0" prefWidth="300.0"

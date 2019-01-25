@@ -23,8 +23,6 @@ import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
-import net.highwayfrogs.editor.file.map.grid.GridSquare;
-import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
@@ -40,6 +38,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
@@ -132,7 +131,6 @@ public class MapUIController implements Initializable {
     @FXML private TitledPane gridPane;
     @FXML private GridPane gridGridPane;
     private GUIEditorGrid gridEditor;
-    private MeshData gridOverlay;
 
     // Group pane.
     @FXML private TitledPane groupPane;
@@ -146,6 +144,9 @@ public class MapUIController implements Initializable {
     private boolean selectGroup;
     private MAPGroup selectedGroup = MAPGroup.NULL_MAP_GROUP;
     private boolean groupEditMode;
+
+    protected Consumer<PSXPolygon> onSelect;
+    protected Runnable cancelSelection;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
@@ -294,21 +295,7 @@ public class MapUIController implements Initializable {
             this.gridEditor = new GUIEditorGrid(this.gridGridPane);
 
         this.gridEditor.clearEditor();
-        gridEditor.addCheckBox("Show Grid", gridOverlay != null, newState -> {
-            if (gridOverlay != null) {
-                getMesh().getManager().removeMesh(gridOverlay);
-                this.gridOverlay = null;
-                return;
-            }
-
-            for (GridStack stack : getMap().getGridStacks())
-                for (GridSquare square : stack.getGridSquares())
-                    getController().renderOverPolygon(square.getPolygon(), MapMesh.GRID_COLOR);
-
-            this.gridOverlay = getMesh().getManager().addMesh();
-        });
-
-        gridEditor.addButton("Edit Grid", () -> GridController.openGridEditor(this));
+        this.gridEditor.addButton("Edit Grid", () -> GridController.openGridEditor(this));
     }
 
     /**
@@ -523,6 +510,15 @@ public class MapUIController implements Initializable {
      * @return false = Not handled. True = handled.
      */
     public boolean handleClick(MouseEvent event, PSXPolygon clickedPolygon) {
+        // Highest priority.
+        if (getOnSelect() != null) {
+            getOnSelect().accept(clickedPolygon);
+            this.onSelect = null;
+            this.cancelSelection = null;
+            return true;
+        }
+
+
         if (isSelectGroup()) {
             MAPGroup found = null;
             for (MAPGroup group : getMap().getGroups())
@@ -606,5 +602,15 @@ public class MapUIController implements Initializable {
         getMesh().getManager().removeMesh(getAnimationMarker());
         this.animationMarker = null;
         this.editAnimation = null;
+    }
+
+    /**
+     * Waits for the the user to select a polygon.
+     * @param onSelect The behavior when selected.
+     * @param onCancel The behavior if cancelled.
+     */
+    public void selectPolygon(Consumer<PSXPolygon> onSelect, Runnable onCancel) {
+        this.onSelect = onSelect;
+        this.cancelSelection = onCancel;
     }
 }
