@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
+import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
@@ -300,8 +301,9 @@ public class MapUIController implements Initializable {
                 return;
             }
 
-            for (GridSquare square : getMap().getGridSquares())
-                getController().renderOverPolygon(square.getPolygon(), MapMesh.GRID_COLOR);
+            for (GridStack stack : getMap().getGridStacks())
+                for (GridSquare square : stack.getGridSquares())
+                    getController().renderOverPolygon(square.getPolygon(), MapMesh.GRID_COLOR);
 
             this.gridOverlay = getMesh().getManager().addMesh();
         });

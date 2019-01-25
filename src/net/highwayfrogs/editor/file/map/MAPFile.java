@@ -68,7 +68,6 @@ public class MAPFile extends GameFile {
     private List<MAPGroup> groups = new ArrayList<>();
     private List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
-    private List<GridSquare> gridSquares = new ArrayList<>(); // These can be generated from GridStack (Minus flags)
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
 
     private short groupXCount;
@@ -87,6 +86,7 @@ public class MAPFile extends GameFile {
     private transient Map<PSXPrimitiveType, List<PSXGPUPrimitive>> loosePolygons = new HashMap<>();
     private transient Map<PSXPrimitiveType, List<PSXGPUPrimitive>> cachedPolygons = new HashMap<>();
 
+    private transient List<GridSquare> loadGridSquares = new ArrayList<>();
     private transient Map<PSXGPUPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
     private transient Map<Integer, PSXGPUPrimitive> loadPointerPolygonMap = new HashMap<>();
 
@@ -332,13 +332,15 @@ public class MAPFile extends GameFile {
         // Find the total amount of squares to read.
         int squareCount = 0;
         for (GridStack stack : gridStacks)
-            squareCount = Math.max(squareCount, stack.getIndex() + stack.getSquareCount());
+            squareCount = Math.max(squareCount, stack.getTempIndex() + stack.getLoadedSquareCount());
 
         for (int i = 0; i < squareCount; i++) {
             GridSquare square = new GridSquare(this);
             square.load(reader);
-            gridSquares.add(square);
+            loadGridSquares.add(square);
         }
+
+        getGridStacks().forEach(stack -> stack.loadSquares(this));
 
         // Read "ANIM".
         reader.setIndex(animAddress);
@@ -615,8 +617,14 @@ public class MAPFile extends GameFile {
         writer.writeShort(this.gridXLength);
         writer.writeShort(this.gridZLength);
 
+        List<GridSquare> saveSquares = new ArrayList<>();
+        getGridStacks().forEach(stack -> {
+            stack.setTempIndex(saveSquares.size());
+            saveSquares.addAll(stack.getGridSquares());
+        });
+
         getGridStacks().forEach(gridStack -> gridStack.save(writer));
-        getGridSquares().forEach(square -> square.save(writer));
+        saveSquares.forEach(gridSquare -> gridSquare.save(writer));
 
         // Save "ANIM" data.
         tempAddress = writer.getIndex();

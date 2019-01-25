@@ -82,8 +82,7 @@ public class GridController implements Initializable {
             GridStack stack = getMap().getGridStack(gridX, getMap().getGridZCount() - gridZ - 1);
 
             if (evt.isSecondaryButtonDown()) { // Remove.
-                stack.setSquareCount((short) 0);
-                stack.setIndex(getMap().getGridSquares().size());
+                stack.getGridSquares().clear();
                 updateCanvas();
             }
 
@@ -112,8 +111,8 @@ public class GridController implements Initializable {
                 double xPos = getTileWidth() * x;
                 double yPos = getTileHeight() * (getMap().getGridZCount() - z - 1);
 
-                if (stack.getSquareCount() > 0) {
-                    GridSquare square = getMap().getGridSquares().get(stack.getIndex());
+                if (stack.getGridSquares().size() > 0) {
+                    GridSquare square = stack.getGridSquares().get(0);
                     TextureEntry entry = square.getPolygon().getEntry(texMap);
                     graphics.drawImage(fxTextureImage, entry.getX(texMap), entry.getY(texMap), entry.getWidth(texMap), entry.getHeight(texMap), xPos, yPos, getTileWidth(), getTileHeight());
                 } else {
@@ -142,7 +141,7 @@ public class GridController implements Initializable {
 
     @FXML
     private void removeLayer(ActionEvent evt) {
-        if (getSelectedStack().getSquareCount() == 0)
+        if (getSelectedStack().getGridSquares().isEmpty())
             return;
 
         //TODO
@@ -157,14 +156,13 @@ public class GridController implements Initializable {
         flagTable.getChildren().clear();
         this.selectedLayer = layer;
 
-        TextureMap texMap = getController().getMesh().getTextureMap();
-        int id = stack.getIndex() + layer;
-        if (id == getMap().getGridSquares().size()) {
+        if (stack.getGridSquares().isEmpty()) {
             selectedImage.setImage(null);
             return;
         }
 
-        GridSquare square = getMap().getGridSquares().get(id);
+        TextureMap texMap = getController().getMesh().getTextureMap();
+        GridSquare square = stack.getGridSquares().get(layer);
         TextureEntry entry = square.getPolygon().getEntry(texMap);
 
         selectedImage.setImage(SwingFXUtils.toFXImage(entry.getImage(texMap), null));
@@ -195,7 +193,7 @@ public class GridController implements Initializable {
 
         if (stack != null) {
             List<Integer> layers = new LinkedList<>();
-            for (int i = 0; i < stack.getSquareCount(); i++)
+            for (int i = 0; i < stack.getGridSquares().size(); i++)
                 layers.add(i);
 
             layerSelector.setItems(FXCollections.observableArrayList(layers));
@@ -205,7 +203,7 @@ public class GridController implements Initializable {
 
         flagTable.setVisible(stack != null);
         selectedImage.setVisible(stack != null);
-        layerSelector.setVisible(stack != null && stack.getSquareCount() > 1);
+        layerSelector.setVisible(stack != null && stack.getGridSquares().size() > 1);
     }
 
     /**

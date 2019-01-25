@@ -121,7 +121,6 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Grid properties
         addTableEntry("Grid Stacks", Integer.toString(map.getGridStacks().size()));
-        addTableEntry("Grid Squares", Integer.toString(map.getGridSquares().size()));
         addTableEntry("Grid Size Count", "[" + map.getGridXCount() + ", " + map.getGridZCount() + "]");
         addTableEntry("Grid Size Length", "[" + map.getGridXLength() + ", " + map.getGridZLength() + "]");
 
