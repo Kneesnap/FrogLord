@@ -144,7 +144,9 @@ public class GridController implements Initializable {
         if (getSelectedStack().getGridSquares().isEmpty())
             return;
 
-        //TODO
+        getSelectedStack().getGridSquares().remove(this.selectedLayer);
+        setSelectedStack(getSelectedStack());
+        updateCanvas();
     }
 
     /**
@@ -153,13 +155,7 @@ public class GridController implements Initializable {
      * @param layer The layer.
      */
     public void setSelectedSquare(GridStack stack, int layer) {
-        flagTable.getChildren().clear();
         this.selectedLayer = layer;
-
-        if (stack.getGridSquares().isEmpty()) {
-            selectedImage.setImage(null);
-            return;
-        }
 
         TextureMap texMap = getController().getMesh().getTextureMap();
         GridSquare square = stack.getGridSquares().get(layer);
@@ -169,6 +165,7 @@ public class GridController implements Initializable {
 
         int x = 1;
         int y = 0;
+        flagTable.getChildren().clear();
         for (GridSquareFlag flag : GridSquareFlag.values()) {
             if (x == 2) {
                 x = 0;
@@ -201,9 +198,10 @@ public class GridController implements Initializable {
                 layerSelector.getSelectionModel().select(0); // Automatically calls setSquare
         }
 
-        flagTable.setVisible(stack != null);
-        selectedImage.setVisible(stack != null);
-        layerSelector.setVisible(stack != null && stack.getGridSquares().size() > 1);
+        int squareCount = stack != null ? stack.getGridSquares().size() : 0;
+        flagTable.setVisible(squareCount > 0);
+        selectedImage.setVisible(squareCount > 0);
+        layerSelector.setVisible(squareCount > 1);
     }
 
     /**
