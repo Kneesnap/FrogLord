@@ -155,6 +155,9 @@ public class GridController implements Initializable {
 
     @FXML
     private void choosePolygon(ActionEvent evt) {
+        if (getSelectedStack() == null)
+            return;
+
         selectSquare(poly -> {
             getSelectedStack().getGridSquares().get(getSelectedLayer()).setPolygon(poly);
             setSelectedSquare(getSelectedStack(), getSelectedLayer());
@@ -163,6 +166,9 @@ public class GridController implements Initializable {
 
     @FXML
     private void addLayer(ActionEvent evt) {
+        if (getSelectedStack() == null)
+            return;
+
         selectSquare(poly -> {
             getSelectedStack().getGridSquares().add(new GridSquare(poly, getMap()));
             setSelectedStack(getSelectedStack());
@@ -172,7 +178,7 @@ public class GridController implements Initializable {
 
     @FXML
     private void removeLayer(ActionEvent evt) {
-        if (getSelectedStack().getGridSquares().isEmpty())
+        if (getSelectedStack() == null || getSelectedStack().getGridSquares().isEmpty())
             return;
 
         getSelectedStack().getGridSquares().remove(this.selectedLayer);

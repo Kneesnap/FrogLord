@@ -47,7 +47,6 @@ import java.util.List;
 
 /**
  * Sets up the map editor.
- * TODO: Grid Editor.
  * TODO: Edit Vertexes
  * TODO: Edit polygons
  * TODO: Show Paths. (Can show an icon tracing the path in real-time)
