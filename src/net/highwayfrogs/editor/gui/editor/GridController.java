@@ -142,16 +142,25 @@ public class GridController implements Initializable {
 
     @FXML
     private void removeLayer(ActionEvent evt) {
+        if (getSelectedStack().getSquareCount() == 0)
+            return;
+
         //TODO
     }
 
+    /**
+     * Select a square.
+     * @param stack The stack the square belongs to.
+     * @param layer The layer.
+     */
     public void setSelectedSquare(GridStack stack, int layer) {
+        flagTable.getChildren().clear();
         this.selectedLayer = layer;
 
         TextureMap texMap = getController().getMesh().getTextureMap();
         int id = stack.getIndex() + layer;
-        if (id == getMap().getGridSquares().size()) { //TODO
-            System.out.println("There is no square for this stack yet.");
+        if (id == getMap().getGridSquares().size()) {
+            selectedImage.setImage(null);
             return;
         }
 
@@ -160,12 +169,9 @@ public class GridController implements Initializable {
 
         selectedImage.setImage(SwingFXUtils.toFXImage(entry.getImage(texMap), null));
 
-        flagTable.getChildren().clear();
-
         int x = 1;
         int y = 0;
         for (GridSquareFlag flag : GridSquareFlag.values()) {
-
             if (x == 2) {
                 x = 0;
                 y++;
@@ -193,7 +199,8 @@ public class GridController implements Initializable {
                 layers.add(i);
 
             layerSelector.setItems(FXCollections.observableArrayList(layers));
-            layerSelector.getSelectionModel().select(0); // Automatically calls setSquare
+            if (layers.size() > 0)
+                layerSelector.getSelectionModel().select(0); // Automatically calls setSquare
         }
 
         flagTable.setVisible(stack != null);
