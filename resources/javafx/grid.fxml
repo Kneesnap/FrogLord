@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.canvas.Canvas?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
@@ -22,23 +20,22 @@
                 <HBox prefHeight="200.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
                       AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                     <children>
-                        <AnchorPane prefHeight="200.0" prefWidth="200.0">
+                        <AnchorPane prefHeight="200.0" prefWidth="300.0">
                             <children>
-                                <ComboBox fx:id="layerSelector" layoutX="25.0" layoutY="161.0" prefWidth="150.0"
-                                          AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="25.0"
-                                          AnchorPane.rightAnchor="25.0"/>
+                                <ComboBox fx:id="layerSelector" layoutX="79.0" layoutY="2.0" prefHeight="25.0"
+                                          prefWidth="112.0" AnchorPane.bottomAnchor="173.0" AnchorPane.leftAnchor="79.0"
+                                          AnchorPane.rightAnchor="109.0"/>
                                 <ImageView fx:id="selectedImage" fitHeight="60.0" fitWidth="60.0" layoutX="14.0"
                                            layoutY="14.0" pickOnBounds="true" preserveRatio="true"
                                            AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="14.0"/>
-                                <Button layoutX="105.0" layoutY="14.0" mnemonicParsing="false" text="Choose Poly"
-                                        AnchorPane.rightAnchor="13.0" AnchorPane.topAnchor="14.0"/>
-                                <Button layoutX="105.0" layoutY="44.0" mnemonicParsing="false" onAction="#removeLayer"
-                                        text="Remove Poly" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="44.0"/>
-                                <GridPane fx:id="flagTable" layoutY="100.0" prefHeight="60.0" prefWidth="200.0"
-                                          AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="0.0"
+                                <Button layoutX="94.0" layoutY="32.0" mnemonicParsing="false" text="Choose Poly"
+                                        AnchorPane.rightAnchor="124.0" AnchorPane.topAnchor="32.0"/>
+                                <Button layoutX="195.0" layoutY="32.0" mnemonicParsing="false" onAction="#removeLayer"
+                                        text="Remove Layer" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="32.0"/>
+                                <GridPane fx:id="flagTable" layoutY="60.0" prefHeight="141.0" prefWidth="300.0"
+                                          AnchorPane.bottomAnchor="-1.0" AnchorPane.leftAnchor="0.0"
                                           AnchorPane.rightAnchor="0.0">
                                     <columnConstraints>
-                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
                                         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
                                         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
                                     </columnConstraints>
@@ -47,8 +44,15 @@
                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                                     </rowConstraints>
                                 </GridPane>
+                                <Button layoutX="194.0" layoutY="2.0" mnemonicParsing="false" onAction="#addLayer"
+                                        prefHeight="25.0" prefWidth="91.0" text="Add Layer"
+                                        AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="2.0"/>
                             </children>
                         </AnchorPane>
                     </children>

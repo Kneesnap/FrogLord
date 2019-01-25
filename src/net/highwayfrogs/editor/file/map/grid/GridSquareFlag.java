@@ -25,12 +25,4 @@ public enum GridSquareFlag {
     POP_DEATH(Constants.BIT_FLAG_12); // Frog does a polygon-pop death.
 
     private final int flag;
-
-    /**
-     * Can this flag be skipped?
-     * @return canSkip
-     */
-    public boolean canSkip() {
-        return this == CHECKPOINT;
-    }
 }

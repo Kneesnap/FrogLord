@@ -688,4 +688,17 @@ public class Utils {
 
         return sb.append("]").toString();
     }
+
+    /**
+     * Capitalize every letter after a space.
+     * @param sentence The sentence to capitalize.
+     * @return capitalized
+     */
+    public static String capitalize(String sentence) {
+        String[] split = sentence.replaceAll("_", " ").split(" ");
+        List<String> out = new ArrayList<>();
+        for (String s : split)
+            out.add(s.length() > 0 ? s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase() : "");
+        return String.join(" ", out);
+    }
 }

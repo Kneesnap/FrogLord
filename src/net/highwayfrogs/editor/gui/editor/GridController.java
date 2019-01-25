@@ -129,6 +129,11 @@ public class GridController implements Initializable {
     }
 
     @FXML
+    private void addLayer(ActionEvent evt) {
+        //TODO
+    }
+
+    @FXML
     private void removeLayer(ActionEvent evt) {
         //TODO
     }
@@ -150,18 +155,16 @@ public class GridController implements Initializable {
 
         flagTable.getChildren().clear();
 
-        int x = 0;
+        int x = 1;
         int y = 0;
         for (GridSquareFlag flag : GridSquareFlag.values()) {
-            if (flag.canSkip())
-                continue;
 
-            if (x == 3) {
+            if (x == 2) {
                 x = 0;
                 y++;
             }
 
-            CheckBox checkBox = new CheckBox(flag.name());
+            CheckBox checkBox = new CheckBox(Utils.capitalize(flag.name()));
             GridPane.setRowIndex(checkBox, y);
             GridPane.setColumnIndex(checkBox, x++);
             checkBox.setSelected(square.testFlag(flag));
