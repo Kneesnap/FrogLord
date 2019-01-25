@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -11,6 +13,8 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
+import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -48,13 +52,23 @@ public class GridController implements Initializable {
 
         graphics.clearRect(0, 0, gridCanvas.getWidth(), gridCanvas.getHeight());
 
-        graphics.setFill(Color.GREEN);
+        TextureMap texMap = getController().getMesh().getTextureMap();
+        Image fxTextureImage = SwingFXUtils.toFXImage(texMap.getImage(), null);
+
+        graphics.setFill(Color.GRAY);
         for (int z = 0; z < getMap().getGridZCount(); z++) {
             for (int x = 0; x < getMap().getGridXCount(); x++) {
                 GridStack stack = getMap().getGridStack(x, z);
+
+                double xPos = getTileWidth() * x;
+                double yPos = getTileHeight() * (getMap().getGridZCount() - z - 1);
+
                 if (stack.getSquareCount() > 0) {
                     GridSquare square = getMap().getGridSquares().get(stack.getIndex()); //TODO: What about multiple squares per?
-                    graphics.fillRect((getTileWidth() * x), getTileHeight() * (getMap().getGridZCount() - z - 1), getTileWidth(), getTileHeight());
+                    TextureEntry entry = square.getPolygon().getEntry(texMap);
+                    graphics.drawImage(fxTextureImage, entry.getX(texMap), entry.getY(texMap), entry.getWidth(texMap), entry.getHeight(texMap), xPos, yPos, getTileWidth(), getTileHeight());
+                } else {
+                    graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
                 }
             }
         }

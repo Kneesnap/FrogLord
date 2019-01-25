@@ -88,6 +88,34 @@ public class TextureMap {
         private float maxV = 1;
 
         /**
+         * Get this texture's xPosition.
+         */
+        public double getX(TextureMap map) {
+            return minU * map.getImage().getWidth();
+        }
+
+        /**
+         * Get this texture's yPosition.
+         */
+        public double getY(TextureMap map) {
+            return minV * map.getImage().getHeight();
+        }
+
+        /**
+         * Get this texture's width.
+         */
+        public double getWidth(TextureMap map) {
+            return (maxU * map.getImage().getWidth()) - getX(map);
+        }
+
+        /**
+         * Get this texture's height.
+         */
+        public double getHeight(TextureMap map) {
+            return (maxV * map.getImage().getHeight()) - getY(map);
+        }
+
+        /**
          * Apply this TextureEntry to a MapMesh.
          * @param mesh      The mesh to apply this entry to.
          * @param vertCount The amount of vertices to add.
