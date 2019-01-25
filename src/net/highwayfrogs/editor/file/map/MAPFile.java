@@ -853,4 +853,32 @@ public class MAPFile extends GameFile {
         editor.addSVector("Camera Source Offset", getCameraSourceOffset());
         editor.addSVector("Camera Target Offset", getCameraTargetOffset());
     }
+
+    /**
+     * Gets the grid X value from a world X value.
+     * @param worldX The world X coordinate.
+     * @return gridX
+     */
+    public int getGridX(int worldX) {
+        return (worldX - getBasePoint().getX()) >> 8;
+    }
+
+    /**
+     * Gets the grid Z value from a world Z value.
+     * @param worldZ The world Z coordinate.
+     * @return gridZ
+     */
+    public int getGridZ(int worldZ) {
+        return (worldZ - getBasePoint().getZ()) >> 8;
+    }
+
+    /**
+     * Gets a grid stack from grid coordinates.
+     * @param gridX The grid x coordinate.
+     * @param gridZ The grid z coordinate.
+     * @return gridStack
+     */
+    public GridStack getGridStack(int gridX, int gridZ) {
+        return getGridStacks().get((gridZ * getGridXCount()) + gridX);
+    }
 }

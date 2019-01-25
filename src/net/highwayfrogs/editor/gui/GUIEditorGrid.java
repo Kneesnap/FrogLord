@@ -53,7 +53,13 @@ public class GUIEditorGrid {
      * Adds a label
      * @param text The text to add.
      */
-    public Label addLabel(String text) {
+    public Label addNormalLabel(String text) {
+        Label label = setupSecondNode(new Label(text), true);
+        addRow(15);
+        return label;
+    }
+
+    private Label addLabel(String text) {
         return setupNode(new Label(text));
     }
 
