@@ -134,6 +134,7 @@ public class MapUIController implements Initializable {
     @FXML private GridPane geometryGridPane;
     private GUIEditorGrid geometryEditor;
     private MeshData groupMeshData;
+    private MeshData looseMeshData;
 
     private MAPAnimation editAnimation;
     private MeshData animationMarker;
@@ -310,13 +311,13 @@ public class MapUIController implements Initializable {
         }
 
         this.selectedGroup = newGroup;
-        setupGroupEditor();
+        setupGeometryEditor();
     }
 
     /**
-     * Setup the map group editor.
+     * Setup the map geometry editor.
      */
-    public void setupGroupEditor() {
+    public void setupGeometryEditor() {
         if (this.geometryEditor == null)
             this.geometryEditor = new GUIEditorGrid(geometryGridPane);
 
@@ -341,15 +342,9 @@ public class MapUIController implements Initializable {
             }
         });
 
-        geometryEditor.addButton((isSelectGroup() ? "Disable" : "Enable") + " Group Finder", () -> {
-            this.selectGroup = !this.selectGroup;
-            setupGroupEditor();
-        });
-
-        geometryEditor.addButton((isGroupEditMode() ? "Disable" : "Enable") + " Group Editor", () -> {
-            this.groupEditMode = !this.groupEditMode;
-            setupGroupEditor();
-        }).setDisable(getSelectedGroup().isNullGroup());
+        geometryEditor.addCheckBox("Group Finder", isSelectGroup(), newState -> this.selectGroup = newState);
+        geometryEditor.addCheckBox("Group Editor", isGroupEditMode(), newState -> this.groupEditMode = newState)
+                .setDisable(getSelectedGroup().isNullGroup());
 
         // Remove Group.
         geometryEditor.addButton("Remove Group", () -> {
@@ -363,6 +358,22 @@ public class MapUIController implements Initializable {
             MAPGroup group = new MAPGroup(getMap());
             getMap().getGroups().add(group);
             setSelectedGroup(group);
+        });
+
+        this.geometryEditor.addCheckBox("Show Loose Polygons", this.looseMeshData != null, newState -> {
+            if (this.looseMeshData != null) {
+                getMesh().getManager().removeMesh(this.looseMeshData);
+                this.looseMeshData = null;
+            }
+
+            if (newState) {
+                getMap().getLoosePolygons().values().forEach(list -> list.forEach(prim -> {
+                    if (prim instanceof PSXPolygon)
+                        getController().renderOverPolygon((PSXPolygon) prim, MapMesh.GROUP_COLOR);
+                }));
+                this.looseMeshData = getMesh().getManager().addMesh();
+            }
+
         });
     }
 
@@ -471,7 +482,7 @@ public class MapUIController implements Initializable {
         setupLights();
         setupGeneralEditor();
         setupAnimationEditor();
-        setupGroupEditor();
+        setupGeometryEditor();
         setupPathEditor();
     }
 
