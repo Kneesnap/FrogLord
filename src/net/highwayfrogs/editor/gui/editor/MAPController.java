@@ -228,20 +228,13 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Input (key) event processing.
         mapScene.setOnKeyPressed(event -> {
+            if (getMapUIController() != null && getMapUIController().onKeyPress(event))
+                return; // Handled by the other controller.
+
             // Exit the viewer.
             if (event.getCode() == KeyCode.ESCAPE) {
                 if (isPolygonSelected()) {
                     removeCursorPolygon();
-                    return;
-                }
-
-                if (getMapUIController() != null && getMapUIController().getOnSelect() != null) {
-                    getMapUIController().onSelect = null;
-                    if (getMapUIController().cancelSelection != null) {
-                        getMapUIController().cancelSelection.run();
-                        getMapUIController().cancelSelection = null;
-                    }
-
                     return;
                 }
 

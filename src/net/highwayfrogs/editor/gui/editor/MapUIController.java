@@ -7,6 +7,8 @@ import javafx.scene.PerspectiveCamera;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
 import javafx.scene.input.GestureEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
@@ -140,8 +142,8 @@ public class MapUIController implements Initializable {
     private MAPGroup selectedGroup = MAPGroup.NULL_MAP_GROUP;
     private boolean groupEditMode;
 
-    protected Consumer<PSXPolygon> onSelect;
-    protected Runnable cancelSelection;
+    private Consumer<PSXPolygon> onSelect;
+    private Runnable cancelSelection;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
@@ -487,6 +489,25 @@ public class MapUIController implements Initializable {
      */
     public MapMesh getMesh() {
         return getController().getMapMesh();
+    }
+
+    /**
+     * Handle when a key is pressed.
+     * @param event The key event fired.
+     * @return wasHandled
+     */
+    public boolean onKeyPress(KeyEvent event) {
+        if (event.getCode() == KeyCode.ESCAPE && !getController().isPolygonSelected() && onSelect != null) {
+            onSelect = null;
+            if (cancelSelection != null) {
+                cancelSelection.run();
+                cancelSelection = null;
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
