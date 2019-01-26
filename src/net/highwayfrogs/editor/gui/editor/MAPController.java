@@ -257,25 +257,8 @@ public class MAPController extends EditorController<MAPFile> {
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
 
             // [Remap Mode] Find next non-crashing remap.
-            if (mesh.isRemapFinder() && event.getCode() == KeyCode.K) {
-                if (!isPolygonSelected()) {
-                    System.out.println("You must select a polygon to perform a remap search.");
-                    return;
-                }
-
-                PSXPolygon poly = this.selectedPolygon;
-                if (!(poly instanceof PSXPolyTexture)) {
-                    System.out.println("This polygon is not textured.");
-                    return;
-                }
-
-                int replaceTexId = ((PSXPolyTexture) poly).getTextureId();
-                SelectionMenu.promptSelection("Select the replacement image.",
-                        image -> mesh.findNextValidRemap(replaceTexId, image.getTextureId(), true),
-                        mesh.getTextureMap().getVloArchive().getImages(),
-                        image -> String.valueOf(image.getTextureId()),
-                        image -> SelectionMenu.makeIcon(image.toBufferedImage(IMAGE_SETTINGS)));
-            }
+            if (mesh.isRemapFinder() && event.getCode() == KeyCode.K)
+                findNextRemap();
 
             if (isPolygonSelected()) {
                 if (event.getCode() == KeyCode.UP) {
@@ -344,6 +327,26 @@ public class MAPController extends EditorController<MAPFile> {
         mesh.findNextValidRemap(0, 0, false);
         camera.setTranslateZ(-MapUIController.getPropertyMapViewScale().get());
         camera.setTranslateY(-MapUIController.getPropertyMapViewScale().get() / 7.0);
+    }
+
+    private void findNextRemap() {
+        if (!isPolygonSelected()) {
+            System.out.println("You must select a polygon to perform a remap search.");
+            return;
+        }
+
+        PSXPolygon poly = this.selectedPolygon;
+        if (!(poly instanceof PSXPolyTexture)) {
+            System.out.println("This polygon is not textured.");
+            return;
+        }
+
+        int replaceTexId = ((PSXPolyTexture) poly).getTextureId();
+        SelectionMenu.promptSelection("Select the replacement image.",
+                image -> getMapMesh().findNextValidRemap(replaceTexId, image.getTextureId(), true),
+                getMapMesh().getTextureMap().getVloArchive().getImages(),
+                image -> String.valueOf(image.getTextureId()),
+                image -> SelectionMenu.makeIcon(image.toBufferedImage(IMAGE_SETTINGS)));
     }
 
     /**
