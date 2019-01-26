@@ -30,6 +30,7 @@ public class MAPGroup extends GameObject {
     private transient int savePointerLocation;
 
     public static final MAPGroup NULL_MAP_GROUP = makeNullGroup();
+    private static final int NULL_POINTERS = 6; // 1 unused. 5 runtime pointers.
 
     public MAPGroup(MAPFile parent) {
         this.parent = parent;
@@ -49,8 +50,7 @@ public class MAPGroup extends GameObject {
         for (PSXPrimitiveType type : MAPFile.PRIMITIVE_TYPES)
             loadPolygonPointerMap.put(type, reader.readInt());
 
-        reader.readInt(5 * Constants.POINTER_SIZE); // 5 run-time pointers.
-        Utils.verify(reader.readInt() == 0, "Entity root pointer is not zero!");
+        reader.readInt(NULL_POINTERS * Constants.POINTER_SIZE);
     }
 
     @Override
@@ -61,8 +61,7 @@ public class MAPGroup extends GameObject {
         writer.writeNull(3);
         this.savePointerLocation = writer.getIndex();
         writer.writeNull(MAPFile.PRIMITIVE_TYPES.size() * Constants.POINTER_SIZE); // Save this pointer later, after polygons are saved.
-        writer.writeNull(5 * Constants.POINTER_SIZE);
-        writer.writeNullPointer(); // Runtime pointer.
+        writer.writeNull(NULL_POINTERS * Constants.POINTER_SIZE);
     }
 
     /**
