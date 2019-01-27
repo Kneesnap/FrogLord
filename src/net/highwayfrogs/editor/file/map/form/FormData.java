@@ -106,6 +106,10 @@ public class FormData extends GameObject {
                 if (changingState.get())
                     return;
 
+                boolean oldState = (this.gridFlags[selectedIndex.get()] & flag.getFlag()) == flag.getFlag();
+                if (oldState == newState)
+                    return; // Prevents the ^ operation from breaking the value.
+
                 if (newState) {
                     this.gridFlags[selectedIndex.get()] |= flag.getFlag();
                 } else {

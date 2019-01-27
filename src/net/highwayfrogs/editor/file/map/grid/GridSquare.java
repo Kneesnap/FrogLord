@@ -60,11 +60,15 @@ public class GridSquare extends GameObject {
 
     /**
      * Set the flag state.
-     * @param flag  The flag type.
-     * @param state The state of the flag.
+     * @param flag     The flag type.
+     * @param newState The new state of the flag.
      */
-    public void setFlag(GridSquareFlag flag, boolean state) {
-        if (state) {
+    public void setFlag(GridSquareFlag flag, boolean newState) {
+        boolean oldState = testFlag(flag);
+        if (oldState == newState)
+            return; // Prevents the ^ operation from breaking the value.
+
+        if (newState) {
             this.flags |= flag.getFlag();
         } else {
             this.flags ^= flag.getFlag();

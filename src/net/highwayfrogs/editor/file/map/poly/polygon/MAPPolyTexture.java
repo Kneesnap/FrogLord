@@ -1,8 +1,10 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -24,14 +26,6 @@ public class MAPPolyTexture extends MAPPolygon {
     private short clutId;
     private short textureId;
     private PSXColorVector[] vectors;
-
-    public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_0; // setSemiTrans(true)
-    public static final int FLAG_ENVIRONMENT_IMAGE = Constants.BIT_FLAG_1; // Show the solid environment bitmap. (For instance, how water appears as a solid body, or sludge in the sewer levels.)
-    public static final int FLAG_MAX_ORDER_TABLE = Constants.BIT_FLAG_2; // Puts at the back of the order table. Either the very lowest rendering priority, or the very highest.
-
-    // These are run-time-only it seems. They get applied from the anim section.
-    public static final int FLAG_ANIMATED_UV = Constants.BIT_FLAG_3; // Poly has an associated map animation using UV animation.
-    public static final int FLAG_ANIMATED_TEXTURE = Constants.BIT_FLAG_4; // Poly has an associated map animation using cel list animation.
 
     public MAPPolyTexture(MAPPolygonType type, int verticeCount, int colorCount) {
         super(type, verticeCount);
@@ -129,9 +123,12 @@ public class MAPPolyTexture extends MAPPolygon {
     @Override
     public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(controller, editor);
-        editor.addShortField("Flags", getFlags(), this::setFlags, null);
+
         editor.addShortField("Clut ID", getClutId(), this::setClutId, null);
         editor.addShortField("Texture ID", getTextureId(), this::setTextureId, null);
+        editor.addBoldLabel("Flags:");
+        for (PolyTextureFlag flag : PolyTextureFlag.values())
+            editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> setFlag(flag, newState));
 
         int id = 0;
         for (PSXColorVector colorVec : getVectors())
@@ -142,5 +139,41 @@ public class MAPPolyTexture extends MAPPolygon {
             editor.addBoldLabel("UV #" + (++id) + ":");
             byteUV.setupEditor(editor);
         }
+    }
+
+    /**
+     * Test if a flag is present.
+     * @param flag The flag in question.
+     * @return flagPresent
+     */
+    public boolean testFlag(PolyTextureFlag flag) {
+        return (this.flags & flag.getFlag()) == flag.getFlag();
+    }
+
+    /**
+     * Set a flag state.
+     * @param flag     The flag to set.
+     * @param newState The new flag state.
+     */
+    public void setFlag(PolyTextureFlag flag, boolean newState) {
+        boolean currentState = testFlag(flag);
+        if (currentState == newState)
+            return; // Prevents the ^ operation from breaking the value.
+
+        if (newState) {
+            this.flags |= flag.getFlag();
+        } else {
+            this.flags ^= flag.getFlag();
+        }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum PolyTextureFlag {
+        SEMI_TRANSPARENT(Constants.BIT_FLAG_0), // setSemiTrans(true)
+        ENVIRONMENT_IMAGE(Constants.BIT_FLAG_1), // Show the solid environment bitmap. (For instance, how water appears as a solid body, or sludge in the sewer levels.)
+        MAX_ORDER_TABLE(Constants.BIT_FLAG_2); // Puts at the back of the order table. Either the very lowest rendering priority, or the very highest.
+
+        private final int flag;
     }
 }
