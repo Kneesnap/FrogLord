@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.standard.psx.prims.polygon;
+package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 @Setter
-public class PSXPolyTexture extends PSXPolygon {
+public class MAPPolyTexture extends MAPPolygon {
     private short flags;
     private ByteUV[] uvs;
     private short clutId;
@@ -32,7 +32,7 @@ public class PSXPolyTexture extends PSXPolygon {
     public static final int FLAG_ANIMATED_UV = Constants.BIT_FLAG_3; // Poly has an associated map animation using UV animation.
     public static final int FLAG_ANIMATED_TEXTURE = Constants.BIT_FLAG_4; // Poly has an associated map animation using cel list animation.
 
-    public PSXPolyTexture(PSXPolygonType type, int verticeCount, int colorCount) {
+    public MAPPolyTexture(MAPPolygonType type, int verticeCount, int colorCount) {
         super(type, verticeCount);
         this.uvs = new ByteUV[verticeCount];
         this.vectors = new PSXColorVector[colorCount];
@@ -53,7 +53,7 @@ public class PSXPolyTexture extends PSXPolygon {
         for (int i = 2; i < this.uvs.length; i++)
             loadUV(i, reader);
 
-        if (this.uvs.length == PSXPolygon.TRI_SIZE)
+        if (this.uvs.length == MAPPolygon.TRI_SIZE)
             reader.readShort(); // Padding.
 
         for (int i = 0; i < this.vectors.length; i++) {
@@ -95,7 +95,7 @@ public class PSXPolyTexture extends PSXPolygon {
      * @return objUvString
      */
     public String getObjUVString(int index) {
-        boolean shouldSwap = (this.uvs.length == PSXPolygon.QUAD_SIZE);
+        boolean shouldSwap = (this.uvs.length == MAPPolygon.QUAD_SIZE);
 
         if (shouldSwap) { // I believe we have to swap it due to the .obj format.
             ByteUV temp = this.uvs[2];

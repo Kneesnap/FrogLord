@@ -1,8 +1,9 @@
-package net.highwayfrogs.editor.file.standard.psx.prims.line;
+package net.highwayfrogs.editor.file.map.poly.line;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
+import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -10,10 +11,11 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public class PSXLine extends PSXGPUPrimitive {
-    private int vertices[];
+public class MAPLine extends MAPPrimitive {
+    private int[] vertices;
 
-    public PSXLine(int verticeCount) {
+    public MAPLine(MAPPrimitiveType type, int verticeCount) {
+        super(type);
         this.vertices = new int[verticeCount];
     }
 

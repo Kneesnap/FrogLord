@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.standard.psx.prims.line;
+package net.highwayfrogs.editor.file.map.poly.line;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -10,12 +10,12 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public class PSXLineG2 extends PSXLine {
+public class MAPLineG2 extends MAPLine {
     private PSXColorVector color1 = new PSXColorVector();
     private PSXColorVector color2 = new PSXColorVector();
 
-    public PSXLineG2() {
-        super(2);
+    public MAPLineG2() {
+        super(MAPLineType.G2, 2);
     }
 
     @Override

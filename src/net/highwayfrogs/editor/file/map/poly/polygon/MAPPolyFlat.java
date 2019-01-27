@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.standard.psx.prims.polygon;
+package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -17,11 +17,11 @@ import java.awt.image.BufferedImage;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public class PSXPolyFlat extends PSXPolygon implements VertexColor {
+public class MAPPolyFlat extends MAPPolygon implements VertexColor {
     private PSXColorVector color = new PSXColorVector();
     @Setter private transient TextureEntry textureEntry;
 
-    public PSXPolyFlat(PSXPolygonType type, int verticeCount) {
+    public MAPPolyFlat(MAPPolygonType type, int verticeCount) {
         super(type, verticeCount);
     }
 

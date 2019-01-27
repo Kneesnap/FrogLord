@@ -27,12 +27,12 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.gui.GUIMain;
@@ -67,8 +67,8 @@ public class MAPController extends EditorController<MAPFile> {
 
     private Scene mapScene;
     private MapMesh mapMesh;
-    private PSXPolygon selectedPolygon;
-    private PSXPolygon polygonImmuneToTarget;
+    private MAPPolygon selectedPolygon;
+    private MAPPolygon polygonImmuneToTarget;
     private boolean polygonSelected;
     private MapUIController mapUIController;
 
@@ -304,7 +304,7 @@ public class MAPController extends EditorController<MAPFile> {
         });
 
         mapScene.setOnMouseClicked(evt -> {
-            PSXPolygon clickedPoly = getMapMesh().getFacePolyMap().get(evt.getPickResult().getIntersectedFace());
+            MAPPolygon clickedPoly = getMapMesh().getFacePolyMap().get(evt.getPickResult().getIntersectedFace());
 
             if (getSelectedPolygon() != null && (getSelectedPolygon() == clickedPoly)) {
                 if (isPolygonSelected()) {
@@ -328,13 +328,13 @@ public class MAPController extends EditorController<MAPFile> {
             return;
         }
 
-        PSXPolygon poly = this.selectedPolygon;
-        if (!(poly instanceof PSXPolyTexture)) {
+        MAPPolygon poly = this.selectedPolygon;
+        if (!(poly instanceof MAPPolyTexture)) {
             System.out.println("This polygon is not textured.");
             return;
         }
 
-        int replaceTexId = ((PSXPolyTexture) poly).getTextureId();
+        int replaceTexId = ((MAPPolyTexture) poly).getTextureId();
         SelectionMenu.promptSelection("Select the replacement image.",
                 image -> getMapMesh().findNextValidRemap(replaceTexId, image.getTextureId(), true),
                 getMapMesh().getTextureMap().getVloArchive().getImages(),
@@ -445,7 +445,7 @@ public class MAPController extends EditorController<MAPFile> {
      * Set the polygon that the cursor is hovering over.
      * @param newPoly The poly to highlight.
      */
-    public void setCursorPolygon(PSXPolygon newPoly) {
+    public void setCursorPolygon(MAPPolygon newPoly) {
         if (newPoly == this.selectedPolygon || newPoly == this.polygonImmuneToTarget)
             return;
 
@@ -455,7 +455,7 @@ public class MAPController extends EditorController<MAPFile> {
             renderCursor(this.selectedPolygon = newPoly);
     }
 
-    private void renderCursor(PSXPolygon cursorPoly) {
+    private void renderCursor(MAPPolygon cursorPoly) {
         if (cursorPoly == null)
             return;
 
@@ -468,9 +468,9 @@ public class MAPController extends EditorController<MAPFile> {
      * @param targetPoly The polygon to render over.
      * @param color      The color to render.
      */
-    public void renderOverPolygon(PSXPolygon targetPoly, CursorVertexColor color) {
+    public void renderOverPolygon(MAPPolygon targetPoly, CursorVertexColor color) {
         int increment = mapMesh.getVertexFormat().getVertexIndexSize();
-        boolean isQuad = (targetPoly.getVertices().length == PSXPolygon.QUAD_SIZE);
+        boolean isQuad = (targetPoly.getVertices().length == MAPPolygon.QUAD_SIZE);
 
         int face = mapMesh.getPolyFaceMap().get(targetPoly) * mapMesh.getFaceElementSize();
         int v1 = mapMesh.getFaces().get(face);

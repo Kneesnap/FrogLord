@@ -22,10 +22,10 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridSquareFlag;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 
 import java.net.URL;
@@ -134,7 +134,7 @@ public class GridController implements Initializable {
             graphics.strokeLine(0, z * getTileHeight(), gridCanvas.getWidth(), z * getTileHeight());
     }
 
-    private void selectSquare(Consumer<PSXPolygon> onSelect) {
+    private void selectSquare(Consumer<MAPPolygon> onSelect) {
         stage.close();
 
         for (GridStack stack : getMap().getGridStacks())

@@ -5,11 +5,11 @@ import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolyTexture;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.mesh.MeshManager;
@@ -27,8 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MapMesh extends TriangleMesh {
     private MAPFile map;
     private TextureMap textureMap;
-    private Map<Integer, PSXPolygon> facePolyMap = new HashMap<>();
-    private Map<PSXPolygon, Integer> polyFaceMap = new HashMap<>();
+    private Map<Integer, MAPPolygon> facePolyMap = new HashMap<>();
+    private Map<MAPPolygon, Integer> polyFaceMap = new HashMap<>();
     private MeshManager manager;
 
     private boolean remapFinder;
@@ -116,15 +116,15 @@ public class MapMesh extends TriangleMesh {
 
         AtomicInteger texId = new AtomicInteger();
         map.getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
-            if (!(prim instanceof PSXPolygon))
+            if (!(prim instanceof MAPPolygon))
                 return;
 
-            PSXPolygon poly = (PSXPolygon) prim;
+            MAPPolygon poly = (MAPPolygon) prim;
             int vertCount = poly.getVertices().length;
 
-            if (vertCount == PSXPolygon.TRI_SIZE) {
+            if (vertCount == MAPPolygon.TRI_SIZE) {
                 addTriangle(poly, texId);
-            } else if (vertCount == PSXPolygon.QUAD_SIZE) {
+            } else if (vertCount == MAPPolygon.QUAD_SIZE) {
                 addRectangle(poly, texId);
             } else {
                 throw new RuntimeException("Cannot handle " + vertCount + " vertices");
@@ -139,9 +139,9 @@ public class MapMesh extends TriangleMesh {
      * Add a rectangle polygon.
      * @param poly The rectangle polygon.
      */
-    public void addRectangle(PSXPolygon poly, AtomicInteger texCoord) {
+    public void addRectangle(MAPPolygon poly, AtomicInteger texCoord) {
         short[] verts = poly.getVertices();
-        Utils.verify(verts.length == PSXPolygon.QUAD_SIZE, "This polygon has %d vertices!", verts.length);
+        Utils.verify(verts.length == MAPPolygon.QUAD_SIZE, "This polygon has %d vertices!", verts.length);
 
         int face = getFaces().size() / getFaceElementSize();
         polyFaceMap.put(poly, face);
@@ -159,7 +159,7 @@ public class MapMesh extends TriangleMesh {
      */
     public void addRectangle(TextureEntry entry, int v1, int v2, int v3, int v4, int v5, int v6) {
         int texId = getTexCoords().size() / getTexCoordElementSize();
-        entry.applyMesh(this, PSXPolygon.QUAD_SIZE);
+        entry.applyMesh(this, MAPPolygon.QUAD_SIZE);
         getFaces().addAll(v1, texId, v2, texId + 1, v3, texId + 2);
         getFaces().addAll(v4, texId + 1, v5, texId + 2, v6, texId + 3);
     }
@@ -168,9 +168,9 @@ public class MapMesh extends TriangleMesh {
      * Add a triangle polygon.
      * @param poly The triangle polygon.
      */
-    public void addTriangle(PSXPolygon poly, AtomicInteger texCoord) {
+    public void addTriangle(MAPPolygon poly, AtomicInteger texCoord) {
         short[] verts = poly.getVertices();
-        Utils.verify(verts.length == PSXPolygon.TRI_SIZE, "This polygon has %d vertices!", poly.getVertices().length);
+        Utils.verify(verts.length == MAPPolygon.TRI_SIZE, "This polygon has %d vertices!", poly.getVertices().length);
 
         int face = getFaces().size() / getFaceElementSize();
         facePolyMap.put(face, poly);
@@ -186,11 +186,11 @@ public class MapMesh extends TriangleMesh {
      */
     public void addTriangle(TextureEntry entry, int v1, int v2, int v3) {
         int texId = getTexCoords().size() / getTexCoordElementSize();
-        entry.applyMesh(this, PSXPolygon.TRI_SIZE);
+        entry.applyMesh(this, MAPPolygon.TRI_SIZE);
         getFaces().addAll(v1, texId, v2, texId + 1, v3, texId + 2);
     }
 
-    private int addTexCoords(PSXPolygon poly, AtomicInteger texCoord) {
+    private int addTexCoords(MAPPolygon poly, AtomicInteger texCoord) {
         int texId = texCoord.get();
         int texCount = poly.getVertices().length;
 
@@ -201,8 +201,8 @@ public class MapMesh extends TriangleMesh {
         float uSize = (entry.getMaxU() - entry.getMinU());
         float vSize = (entry.getMaxV() - entry.getMinV());
 
-        if (poly instanceof PSXPolyTexture) {
-            ByteUV[] uvs = ((PSXPolyTexture) poly).getUvs();
+        if (poly instanceof MAPPolyTexture) {
+            ByteUV[] uvs = ((MAPPolyTexture) poly).getUvs();
             for (ByteUV uv : uvs)
                 getTexCoords().addAll(entry.getMinU() + (uSize * uv.getFloatU()), entry.getMinV() + (vSize * uv.getFloatV()));
         } else {

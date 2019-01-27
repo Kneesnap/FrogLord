@@ -20,16 +20,16 @@ import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
+import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
+import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
+import net.highwayfrogs.editor.file.map.poly.line.MAPLineType;
+import net.highwayfrogs.editor.file.map.poly.polygon.*;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
-import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
-import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
-import net.highwayfrogs.editor.file.standard.psx.prims.line.PSXLineType;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.*;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -83,15 +83,15 @@ public class MAPFile extends GameFile {
     @Setter private transient VLOArchive suppliedVLO;
     @Setter private transient int suppliedRemapAddress;
     private transient MWDFile parentMWD;
-    private transient Map<PSXPrimitiveType, List<PSXGPUPrimitive>> loosePolygons = new HashMap<>();
-    private transient Map<PSXPrimitiveType, List<PSXGPUPrimitive>> cachedPolygons = new HashMap<>();
+    private transient Map<MAPPrimitiveType, List<MAPPrimitive>> loosePolygons = new HashMap<>();
+    private transient Map<MAPPrimitiveType, List<MAPPrimitive>> cachedPolygons = new HashMap<>();
 
     private transient List<GridSquare> loadGridSquares = new ArrayList<>();
-    private transient Map<PSXGPUPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
-    private transient Map<Integer, PSXGPUPrimitive> loadPointerPolygonMap = new HashMap<>();
+    private transient Map<MAPPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
+    private transient Map<Integer, MAPPrimitive> loadPointerPolygonMap = new HashMap<>();
 
-    private transient Map<PSXGPUPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
-    private transient Map<Integer, PSXGPUPrimitive> savePointerPolygonMap = new HashMap<>();
+    private transient Map<MAPPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
+    private transient Map<Integer, MAPPrimitive> savePointerPolygonMap = new HashMap<>();
 
     public static final int TYPE_ID = 0;
     private static final String SIGNATURE = "FROG";
@@ -115,7 +115,7 @@ public class MAPFile extends GameFile {
     private static final int TOTAL_CHECKPOINT_TIMER_ENTRIES = 5;
 
     public static final Image ICON = loadIcon("map");
-    public static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
+    public static final List<MAPPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
 
     public static final int VERTEX_COLOR_IMAGE_SIZE = 8;
     private static final ImageFilterSettings OBJ_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
@@ -126,8 +126,8 @@ public class MAPFile extends GameFile {
     }
 
     static {
-        PRIMITIVE_TYPES.addAll(Arrays.asList(PSXPolygonType.values()));
-        PRIMITIVE_TYPES.add(PSXLineType.G2);
+        PRIMITIVE_TYPES.addAll(Arrays.asList(MAPPolygonType.values()));
+        PRIMITIVE_TYPES.add(MAPLineType.G2);
     }
 
     /**
@@ -264,7 +264,7 @@ public class MAPFile extends GameFile {
         int groupCount = groupXCount * groupZCount;
 
         for (int i = 0; i < groupCount; i++) {
-            MAPGroup group = new MAPGroup(this);
+            MAPGroup group = new MAPGroup();
             group.load(reader);
             groups.add(group);
         }
@@ -273,27 +273,27 @@ public class MAPFile extends GameFile {
         reader.setIndex(polygonAddress);
         reader.verifyString(POLYGON_SIGNATURE);
 
-        Map<PSXPrimitiveType, Short> polyCountMap = new HashMap<>();
-        Map<PSXPrimitiveType, Integer> polyOffsetMap = new HashMap<>();
+        Map<MAPPrimitiveType, Short> polyCountMap = new HashMap<>();
+        Map<MAPPrimitiveType, Integer> polyOffsetMap = new HashMap<>();
 
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES)
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES)
             polyCountMap.put(type, reader.readShort());
         reader.readShort(); // Padding.
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES)
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES)
             polyOffsetMap.put(type, reader.readInt());
 
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES) {
             short polyCount = polyCountMap.get(type);
             int polyOffset = polyOffsetMap.get(type);
 
-            List<PSXGPUPrimitive> primitives = new ArrayList<>();
+            List<MAPPrimitive> primitives = new ArrayList<>();
             loosePolygons.put(type, primitives);
 
             if (polyCount > 0) {
                 reader.jumpTemp(polyOffset);
 
                 for (int i = 0; i < polyCount; i++) {
-                    PSXGPUPrimitive primitive = type.newPrimitive();
+                    MAPPrimitive primitive = type.newPrimitive();
                     getLoadPolygonPointerMap().put(primitive, reader.getIndex());
                     getLoadPointerPolygonMap().put(reader.getIndex(), primitive);
                     primitive.load(reader);
@@ -303,7 +303,7 @@ public class MAPFile extends GameFile {
                 reader.jumpReturn();
             }
         }
-        getGroups().forEach(group -> group.setupPolygonData(getLoosePolygons()));
+        getGroups().forEach(group -> group.setupPolygonData(this, getLoosePolygons()));
         updatePolygonCache();
 
         // Read Vertexes.
@@ -559,22 +559,22 @@ public class MAPFile extends GameFile {
         writer.jumpReturn();
 
         writer.writeStringBytes(POLYGON_SIGNATURE);
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES)
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES)
             writer.writeShort((short) getCachedPolygons().get(type).size());
 
         writer.writeShort((short) 0); // Padding.
 
-        Map<PSXPrimitiveType, Integer> polyAddresses = new HashMap<>();
+        Map<MAPPrimitiveType, Integer> polyAddresses = new HashMap<>();
 
         int lastPointer = writer.getIndex();
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES) {
             polyAddresses.put(type, lastPointer);
             lastPointer += Constants.POINTER_SIZE;
         }
 
         writer.setIndex(lastPointer);
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
-            if (type == PSXLineType.G2)
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES) {
+            if (type == MAPLineType.G2)
                 continue; // G2 was only enabled as a debug rendering option. It is not enabled in the retail release fairly sure.
 
             tempAddress = writer.getIndex();
@@ -591,7 +591,7 @@ public class MAPFile extends GameFile {
         }
 
         // Write MAP_GROUP polygon pointers, since we've written polygon data.
-        getGroups().forEach(group -> group.writePolygonPointers(writer));
+        getGroups().forEach(group -> group.writePolygonPointers(this, writer));
 
         // Write "VRTX."
         tempAddress = writer.getIndex();
@@ -682,17 +682,17 @@ public class MAPFile extends GameFile {
         objWriter.write(Constants.NEWLINE);
 
         // Write Faces.
-        List<PSXPolygon> allPolygons = new ArrayList<>();
-        getCachedPolygons().values().forEach(ply -> ply.stream().map(PSXPolygon.class::cast).forEach(allPolygons::add));
+        List<MAPPolygon> allPolygons = new ArrayList<>();
+        getCachedPolygons().values().forEach(ply -> ply.stream().map(MAPPolygon.class::cast).forEach(allPolygons::add));
 
         // Register textures.
         if (exportTextures) {
-            allPolygons.sort(Comparator.comparingInt(PSXPolygon::getOrderId));
+            allPolygons.sort(Comparator.comparingInt(MAPPolygon::getOrderId));
             objWriter.write("# Vertex Textures" + Constants.NEWLINE);
 
-            for (PSXPolygon poly : allPolygons) {
-                if (poly instanceof PSXPolyTexture) {
-                    PSXPolyTexture polyTex = (PSXPolyTexture) poly;
+            for (MAPPolygon poly : allPolygons) {
+                if (poly instanceof MAPPolyTexture) {
+                    MAPPolyTexture polyTex = (MAPPolyTexture) poly;
                     for (int i = polyTex.getUvs().length - 1; i >= 0; i--)
                         objWriter.write(polyTex.getObjUVString(i) + Constants.NEWLINE);
                 }
@@ -708,11 +708,11 @@ public class MAPFile extends GameFile {
 
         Map<Integer, GameImage> textureMap = new HashMap<>();
         List<PSXColorVector> faceColors = new ArrayList<>();
-        Map<PSXColorVector, List<PSXPolygon>> facesWithColors = new HashMap<>();
+        Map<PSXColorVector, List<MAPPolygon>> facesWithColors = new HashMap<>();
 
         allPolygons.forEach(polygon -> {
-            if (polygon instanceof PSXPolyTexture) {
-                PSXPolyTexture texture = (PSXPolyTexture) polygon;
+            if (polygon instanceof MAPPolyTexture) {
+                MAPPolyTexture texture = (MAPPolyTexture) polygon;
 
                 if (exportTextures) {
                     int newTextureId = texture.getTextureId();
@@ -731,7 +731,7 @@ public class MAPFile extends GameFile {
 
                 objWriter.write(polygon.toObjFaceCommand(exportTextures, counter) + Constants.NEWLINE);
             } else {
-                PSXColorVector color = (polygon instanceof PSXPolyFlat) ? ((PSXPolyFlat) polygon).getColor() : ((PSXPolyGouraud) polygon).getColors()[0];
+                PSXColorVector color = (polygon instanceof MAPPolyFlat) ? ((MAPPolyFlat) polygon).getColor() : ((MAPPolyGouraud) polygon).getColors()[0];
                 if (!faceColors.contains(color))
                     faceColors.add(color);
                 facesWithColors.computeIfAbsent(color, key -> new ArrayList<>()).add(polygon);
@@ -740,7 +740,7 @@ public class MAPFile extends GameFile {
 
         objWriter.append(Constants.NEWLINE);
         objWriter.append("# Faces without textures.").append(Constants.NEWLINE);
-        for (Entry<PSXColorVector, List<PSXPolygon>> mapEntry : facesWithColors.entrySet()) {
+        for (Entry<PSXColorVector, List<MAPPolygon>> mapEntry : facesWithColors.entrySet()) {
             objWriter.write("usemtl color" + faceColors.indexOf(mapEntry.getKey()) + Constants.NEWLINE);
             mapEntry.getValue().forEach(poly -> objWriter.write(poly.toObjFaceCommand(exportTextures, null) + Constants.NEWLINE));
         }
@@ -782,9 +782,9 @@ public class MAPFile extends GameFile {
     public int getMaxRemap() {
         AtomicInteger maxRemapId = new AtomicInteger();
         getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
-            if (!(prim instanceof PSXPolyTexture))
+            if (!(prim instanceof MAPPolyTexture))
                 return;
-            int newTex = ((PSXPolyTexture) prim).getTextureId();
+            int newTex = ((MAPPolyTexture) prim).getTextureId();
             if (newTex > maxRemapId.get())
                 maxRemapId.set(newTex);
         }));
@@ -834,8 +834,8 @@ public class MAPFile extends GameFile {
         getGroups().forEach(group -> addPolygons(group.getPolygonMap()));
     }
 
-    private void addPolygons(Map<PSXPrimitiveType, List<PSXGPUPrimitive>> add) {
-        for (Entry<PSXPrimitiveType, List<PSXGPUPrimitive>> entry : add.entrySet())
+    private void addPolygons(Map<MAPPrimitiveType, List<MAPPrimitive>> add) {
+        for (Entry<MAPPrimitiveType, List<MAPPrimitive>> entry : add.entrySet())
             cachedPolygons.computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).addAll(entry.getValue());
     }
 
@@ -897,6 +897,16 @@ public class MAPFile extends GameFile {
     }
 
     /**
+     * Gets a grid stack from grid coordinates.
+     * @param gridX The grid x coordinate.
+     * @param gridZ The grid z coordinate.
+     * @return gridStack
+     */
+    public GridStack getGridStack(int gridX, int gridZ) {
+        return getGridStacks().get((gridZ * getGridXCount()) + gridX);
+    }
+
+    /**
      * Get the group X value from a world X value.
      * @param worldX The world X coordinate.
      * @return groupX
@@ -915,12 +925,33 @@ public class MAPFile extends GameFile {
     }
 
     /**
-     * Gets a grid stack from grid coordinates.
-     * @param gridX The grid x coordinate.
-     * @param gridZ The grid z coordinate.
-     * @return gridStack
+     * Gets a map group from group coordinates.
+     * @param groupX The group x coordinate.
+     * @param groupZ The group z coordinate.
+     * @return group
      */
-    public GridStack getGridStack(int gridX, int gridZ) {
-        return getGridStacks().get((gridZ * getGridXCount()) + gridX);
+    public MAPGroup getGroup(int groupX, int groupZ) {
+        return getGroups().get((groupZ * getGroupXCount()) + groupX);
+    }
+
+    /**
+     * Recalculate map groups.
+     * TODO: Ignore loose polygons.
+     */
+    public void calculateGroups() {
+        cachedPolygons.clear(); // updatePolygonCache but it doesn't add loose polygons, which is a temporary fix.
+        getGroups().forEach(group -> addPolygons(group.getPolygonMap()));
+
+        // Clear group data.
+        getGroups().forEach(group -> group.getPolygonMap().clear());
+
+        // Recalculate it.
+        getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
+
+            //TODO: Get world position from vertices.
+            //TODO: Get group.
+            //TODO: Add to group.
+        }));
+
     }
 }

@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.standard.psx.prims;
+package net.highwayfrogs.editor.file.map.poly;
 
 import java.util.function.Supplier;
 
@@ -6,7 +6,7 @@ import java.util.function.Supplier;
  * All drawable primitive enum registries should implement this interface.
  * Created by Kneesnap on 8/25/2018.
  */
-public interface PSXPrimitiveType {
+public interface MAPPrimitiveType {
 
     /**
      * Gets the enum name.
@@ -24,13 +24,13 @@ public interface PSXPrimitiveType {
      * Get a Supplier which will return a PSXGPUPrimitive when called.
      * @return maker
      */
-    public Supplier<? extends PSXGPUPrimitive> getMaker();
+    public Supplier<? extends MAPPrimitive> getMaker();
 
     /**
      * Return a new instance of the given primitive.
      * @return newPrimitive
      */
-    default PSXGPUPrimitive newPrimitive() {
+    default MAPPrimitive newPrimitive() {
         return getMaker().get();
     }
 }

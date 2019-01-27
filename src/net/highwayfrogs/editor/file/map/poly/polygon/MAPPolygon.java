@@ -1,10 +1,10 @@
-package net.highwayfrogs.editor.file.standard.psx.prims.polygon;
+package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,10 +14,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public abstract class PSXPolygon extends PSXGPUPrimitive {
+public abstract class MAPPolygon extends MAPPrimitive {
     private short[] vertices;
     private short padding;
-    private final PSXPolygonType type;
     private transient boolean flippedVertices;
 
     public static final int TRI_SIZE = 3;
@@ -25,9 +24,14 @@ public abstract class PSXPolygon extends PSXGPUPrimitive {
     public static final int REQUIRES_VERTEX_PADDING = TRI_SIZE;
     public static final int REQUIRES_VERTEX_SWAPPING = QUAD_SIZE;
 
-    public PSXPolygon(PSXPolygonType type, int verticeCount) {
-        this.type = type;
+    public MAPPolygon(MAPPolygonType type, int verticeCount) {
+        super(type);
         this.vertices = new short[verticeCount];
+    }
+
+    @Override
+    public MAPPolygonType getType() {
+        return (MAPPolygonType) super.getType();
     }
 
     @Override

@@ -28,9 +28,9 @@ import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
+import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 
@@ -143,7 +143,7 @@ public class MapUIController implements Initializable {
     private MAPGroup selectedGroup = MAPGroup.NULL_MAP_GROUP;
     private boolean groupEditMode;
 
-    private Consumer<PSXPolygon> onSelect;
+    private Consumer<MAPPolygon> onSelect;
     private Runnable cancelSelection;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
@@ -300,10 +300,10 @@ public class MapUIController implements Initializable {
 
         if (!newGroup.isNullGroup()) {
             newGroup.getPolygonMap().values().forEach(list -> list.forEach(prim -> {
-                if (!(prim instanceof PSXPolygon))
+                if (!(prim instanceof MAPPolygon))
                     return;
 
-                PSXPolygon poly = (PSXPolygon) prim;
+                MAPPolygon poly = (MAPPolygon) prim;
                 getController().renderOverPolygon(poly, MapMesh.GROUP_COLOR);
             }));
 
@@ -355,9 +355,14 @@ public class MapUIController implements Initializable {
 
         // Add Group.
         geometryEditor.addButton("Add Group", () -> {
-            MAPGroup group = new MAPGroup(getMap());
+            MAPGroup group = new MAPGroup();
             getMap().getGroups().add(group);
             setSelectedGroup(group);
+        });
+
+        this.geometryEditor.addButton("Generate Groups", () -> { // Temporary.
+            getMap().calculateGroups();
+            setSelectedGroup(null);
         });
 
         this.geometryEditor.addCheckBox("Show Loose Polygons", this.looseMeshData != null, newState -> {
@@ -368,12 +373,11 @@ public class MapUIController implements Initializable {
 
             if (newState) {
                 getMap().getLoosePolygons().values().forEach(list -> list.forEach(prim -> {
-                    if (prim instanceof PSXPolygon)
-                        getController().renderOverPolygon((PSXPolygon) prim, MapMesh.GROUP_COLOR);
+                    if (prim instanceof MAPPolygon)
+                        getController().renderOverPolygon((MAPPolygon) prim, MapMesh.GROUP_COLOR);
                 }));
                 this.looseMeshData = getMesh().getManager().addMesh();
             }
-
         });
     }
 
@@ -527,7 +531,7 @@ public class MapUIController implements Initializable {
      * @param clickedPolygon The polygon clicked.
      * @return false = Not handled. True = handled.
      */
-    public boolean handleClick(MouseEvent event, PSXPolygon clickedPolygon) {
+    public boolean handleClick(MouseEvent event, MAPPolygon clickedPolygon) {
         // Highest priority.
         if (getOnSelect() != null) {
             getOnSelect().accept(clickedPolygon);
@@ -536,11 +540,10 @@ public class MapUIController implements Initializable {
             return true;
         }
 
-
         if (isSelectGroup()) {
             MAPGroup found = null;
             for (MAPGroup group : getMap().getGroups())
-                for (List<PSXGPUPrimitive> primitives : group.getPolygonMap().values())
+                for (List<MAPPrimitive> primitives : group.getPolygonMap().values())
                     if (primitives.contains(clickedPolygon))
                         found = group;
 
@@ -550,8 +553,8 @@ public class MapUIController implements Initializable {
         }
 
         if (isGroupEditMode() && !getSelectedGroup().isNullGroup()) {
-            List<PSXGPUPrimitive> primList = getSelectedGroup().getPolygonMap().computeIfAbsent(clickedPolygon.getType(), key -> new LinkedList<>());
-            List<PSXGPUPrimitive> looseList = getMap().getLoosePolygons().get(clickedPolygon.getType());
+            List<MAPPrimitive> primList = getSelectedGroup().getPolygonMap().computeIfAbsent(clickedPolygon.getType(), key -> new LinkedList<>());
+            List<MAPPrimitive> looseList = getMap().getLoosePolygons().get(clickedPolygon.getType());
 
             if (primList.remove(clickedPolygon)) {
                 looseList.add(clickedPolygon);
@@ -627,7 +630,7 @@ public class MapUIController implements Initializable {
      * @param onSelect The behavior when selected.
      * @param onCancel The behavior if cancelled.
      */
-    public void selectPolygon(Consumer<PSXPolygon> onSelect, Runnable onCancel) {
+    public void selectPolygon(Consumer<MAPPolygon> onSelect, Runnable onCancel) {
         this.onSelect = onSelect;
         this.cancelSelection = onCancel;
     }

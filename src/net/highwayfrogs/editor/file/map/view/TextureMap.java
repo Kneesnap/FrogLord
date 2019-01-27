@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -145,7 +145,7 @@ public class TextureMap {
             mesh.getTexCoords().addAll(getMinU(), getMinV());
             mesh.getTexCoords().addAll(getMinU(), getMaxV());
             mesh.getTexCoords().addAll(getMaxU(), getMinV());
-            if (vertCount == PSXPolygon.QUAD_SIZE)
+            if (vertCount == MAPPolygon.QUAD_SIZE)
                 mesh.getTexCoords().addAll(getMaxU(), getMaxV());
         }
 

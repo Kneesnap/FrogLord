@@ -5,11 +5,11 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
-import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
+import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 
@@ -19,7 +19,7 @@ import net.highwayfrogs.editor.gui.editor.MAPController;
  */
 @Getter
 public class MAPUVInfo extends GameObject {
-    private PSXPolygon polygon;
+    private MAPPolygon polygon;
     private transient MAPFile map;
 
     private static final int UV_COUNT = 4;
@@ -30,7 +30,7 @@ public class MAPUVInfo extends GameObject {
         this.map = map;
     }
 
-    public MAPUVInfo(MAPFile map, PSXPolygon selected) {
+    public MAPUVInfo(MAPFile map, MAPPolygon selected) {
         this(map);
         this.polygon = selected;
     }
@@ -41,9 +41,9 @@ public class MAPUVInfo extends GameObject {
 
         PSXGPUPrimitive foundPrim = getMap().getLoadPointerPolygonMap().get(polyPointer);
         Utils.verify(foundPrim != null, "No polygon was loaded from %s.", Integer.toHexString(polyPointer));
-        Utils.verify(foundPrim instanceof PSXPolygon, "Found prim was not a PSXPolygon.");
+        Utils.verify(foundPrim instanceof MAPPolygon, "Found prim was not a MAPPolygon.");
 
-        this.polygon = (PSXPolygon) foundPrim;
+        this.polygon = (MAPPolygon) foundPrim;
         reader.readBytes(TOTAL_UV_BLOCK_SIZE); // There are a bunch of uvs, but they're run-time only.
     }
 
