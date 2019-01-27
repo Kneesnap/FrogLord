@@ -24,10 +24,7 @@ public class FormData extends GameObject {
     private static final short FORM_HEIGHT_TYPE = (short) 0;
 
     public FormData(Form parent) {
-        int fullSize = parent.getXGridSquareCount() * parent.getZGridSquareCount();
-        if (fullSize % 2 > 0)
-            fullSize++; // Unfortunately, we don't understand how to generate the value that goes in that last spot. I think it'd be safe to have it be a null-short or something, but we may want to figure that out.
-        this.gridFlags = new int[fullSize];
+        this.gridFlags = new int[parent.getXGridSquareCount() * parent.getZGridSquareCount()];
     }
 
     @Override
