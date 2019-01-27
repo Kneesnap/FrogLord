@@ -204,7 +204,7 @@ public class MAPFile extends GameFile {
         // Read forms.
         reader.setIndex(formAddress);
         reader.verifyString(FORM_SIGNATURE);
-        short formCount = reader.readShort();
+        int formCount = reader.readUnsignedShortAsInt();
         reader.readShort(); // Padding.
 
         for (int i = 0; i < formCount; i++) {
@@ -476,9 +476,9 @@ public class MAPFile extends GameFile {
         writer.jumpReturn();
 
         writer.writeStringBytes(FORM_SIGNATURE);
-        short formCount = (short) this.forms.size();
-        writer.writeShort(formCount);
-        writer.writeShort((short) 0); // Padding.
+        int formCount = this.forms.size();
+        writer.writeUnsignedShort(formCount);
+        writer.writeUnsignedShort(0); // Padding.
 
         int formPointer = writer.getIndex() + (Constants.POINTER_SIZE * formCount);
         for (Form form : getForms()) {

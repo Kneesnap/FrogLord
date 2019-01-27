@@ -305,9 +305,9 @@ public class MapUIController implements Initializable {
         for (int i = 0; i < getMap().getForms().size(); i++) {
             final int tempIndex = i;
 
-            this.formEditor.addBoldLabel("Form #" + (i + 1) + ":");
+            this.formEditor.addBoldLabel("Form #" + i + ":"); // Show the actual ID because otherwise if you tried to find an entity's form from their form id, you'd find the wrong one.
             getMap().getForms().get(i).setupEditor(this, this.formEditor);
-            this.formEditor.addButton("Remove Form #" + (i + 1), () -> {
+            this.formEditor.addButton("Remove Form #" + i, () -> {
                 getMap().getForms().remove(tempIndex);
                 setupFormEditor();
             });
