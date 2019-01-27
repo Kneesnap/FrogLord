@@ -95,6 +95,15 @@ public class SVector extends GameObject {
     }
 
     /**
+     * Set all values held to zero.
+     */
+    public void zero() {
+        this.x = (short) 0;
+        this.y = (short) 0;
+        this.z = (short) 0;
+    }
+
+    /**
      * Write an SVector with an extra 2 bytes of padding.
      * @param writer The writer to write data to.
      */

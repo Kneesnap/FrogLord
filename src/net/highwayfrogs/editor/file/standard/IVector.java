@@ -68,6 +68,15 @@ public class IVector extends GameObject {
     }
 
     /**
+     * Set all values held to zero.
+     */
+    public void zero() {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+    }
+
+    /**
      * Load a SVector with padding from a DataReader.
      * @param reader The data reader to read from.
      * @return vector

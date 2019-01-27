@@ -947,10 +947,8 @@ public class MAPFile extends GameFile {
 
         // Recalculate it.
         getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
-
-            //TODO: Get world position from vertices.
-            //TODO: Get group.
-            //TODO: Add to group.
+            SVector vertex = getVertexes().get(prim.getVertices()[prim.getVerticeCount() - 1]);
+            getGroup(getGroupX(vertex.getX()), getGroupZ(vertex.getZ())).getPolygonMap().computeIfAbsent(prim.getType(), key -> new LinkedList<>()).add(prim);
         }));
 
     }
