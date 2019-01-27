@@ -104,7 +104,7 @@ public class MAPController extends EditorController<MAPFile> {
         addTableEntry("Start Position", "(" + map.getStartXTile() + ", " + map.getStartYTile() + ") Rotation: " + map.getStartRotation());
         addTableEntry("Camera Source", "(" + map.getCameraSourceOffset().toCoordinateString() + ")");
         addTableEntry("Camera Target", "(" + map.getCameraTargetOffset().toCoordinateString() + ")");
-        addTableEntry("Base Point", "(" + map.getBasePoint().toCoordinateString() + ")");
+        addTableEntry("Base Point", "[" + map.getBaseXTile() + ", " + map.getBaseZTile() + "]");
 
         // Entity properties
         addTableEntry("Path Count", Integer.toString(map.getPaths().size()));

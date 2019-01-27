@@ -60,7 +60,8 @@ public class MAPFile extends GameFile {
     @Setter private short levelTimer;
     @Setter private SVector cameraSourceOffset;
     @Setter private SVector cameraTargetOffset;
-    @Setter private SVector basePoint; // This is the bottom left of the map group grid. Used to determine map group for things like entity collision. TODO: How to calculate?
+    @Setter private short baseXTile; // These point to the bottom left of the map group grid.
+    @Setter private short baseZTile;
     private List<Path> paths = new ArrayList<>();
     private List<Zone> zones = new ArrayList<>();
     private List<Form> forms = new ArrayList<>();
@@ -255,7 +256,7 @@ public class MAPFile extends GameFile {
 
         reader.setIndex(groupAddress);
         reader.verifyString(GROUP_SIGNATURE);
-        this.basePoint = SVector.readWithPadding(reader);
+        SVector loadedBasePoint = SVector.readWithPadding(reader);
         this.groupXCount = reader.readShort(); // Number of groups in x.
         this.groupZCount = reader.readShort(); // Number of groups in z.
         this.groupXSize = reader.readShort(); // Group X Length
@@ -321,6 +322,10 @@ public class MAPFile extends GameFile {
         this.gridZCount = reader.readShort();
         this.gridXSize = reader.readShort(); // Grid square x length.
         this.gridZSize = reader.readShort();
+
+        this.baseXTile = (short) ((loadedBasePoint.getX() + 1) / getGridXSize());
+        this.baseZTile = (short) ((loadedBasePoint.getZ() + 1) / getGridZSize());
+        Utils.verify(loadedBasePoint.getY() == 0, "Base-Point Y is not zero!");
 
         int stackCount = gridXCount * gridZCount;
         for (int i = 0; i < stackCount; i++) {
@@ -549,7 +554,8 @@ public class MAPFile extends GameFile {
         writer.jumpReturn();
 
         writer.writeStringBytes(GROUP_SIGNATURE);
-        this.basePoint.saveWithPadding(writer);
+
+        makeBasePoint().saveWithPadding(writer);
         writer.writeShort(this.groupXCount);
         writer.writeShort(this.groupZCount);
         writer.writeShort(this.groupXSize);
@@ -853,7 +859,8 @@ public class MAPFile extends GameFile {
         editor.addShortField("Start yTile", getStartYTile(), this::setStartYTile, null);
         editor.addShortField("Start Rotation", getStartRotation(), this::setStartRotation, null);
         editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
-        editor.addSVector("Base Point", getBasePoint());
+        editor.addShortField("Base Point xTile", getBaseXTile(), this::setBaseXTile, null);
+        editor.addShortField("Base Point zTile", getBaseZTile(), this::setBaseZTile, null);
         editor.addSVector("Camera Source Offset", getCameraSourceOffset());
         editor.addSVector("Camera Target Offset", getCameraTargetOffset());
     }
@@ -903,12 +910,36 @@ public class MAPFile extends GameFile {
     }
 
     /**
+     * Gets the base point's world x coordinate.
+     * @return worldX
+     */
+    public short getBasePointWorldX() {
+        return (short) ((getBaseXTile() * getGridXSize()) - 1);
+    }
+
+    /**
+     * Gets the base point's world Z coordinate.
+     * @return worldZ
+     */
+    public short getBasePointWorldZ() {
+        return (short) ((getBaseZTile() * getGridZSize()) - 1);
+    }
+
+    /**
+     * Makes a BasePoint SVector.
+     * @return basePoint
+     */
+    public SVector makeBasePoint() {
+        return new SVector(getBasePointWorldX(), (short) 0, getBasePointWorldZ());
+    }
+
+    /**
      * Get the group X value from a world X value.
      * @param worldX The world X coordinate.
      * @return groupX
      */
     public int getGroupX(int worldX) {
-        return (worldX - getBasePoint().getX()) / getGroupXSize();
+        return (worldX - getBasePointWorldX()) / getGroupXSize();
     }
 
     /**
@@ -917,7 +948,7 @@ public class MAPFile extends GameFile {
      * @return groupZ
      */
     public int getGroupZ(int worldZ) {
-        return (worldZ - getBasePoint().getZ()) / getGroupZSize();
+        return (worldZ - getBasePointWorldZ()) / getGroupZSize();
     }
 
     /**
