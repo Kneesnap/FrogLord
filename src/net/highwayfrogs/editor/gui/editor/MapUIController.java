@@ -31,6 +31,7 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
+import net.highwayfrogs.editor.system.AbstractStringConverter;
 
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -39,7 +40,6 @@ import java.util.function.Consumer;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
- * TODO: Finish form editor.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter
@@ -131,6 +131,7 @@ public class MapUIController implements Initializable {
     @FXML private TitledPane formPane;
     @FXML private GridPane formGridPane;
     private GUIEditorGrid formEditor;
+    private Form selectedForm;
 
     // Path pane.
     @FXML private TitledPane pathPane;
@@ -300,23 +301,33 @@ public class MapUIController implements Initializable {
         if (this.formEditor == null)
             this.formEditor = new GUIEditorGrid(formGridPane);
 
+        if (this.selectedForm == null)
+            this.selectedForm = getMap().getForms().get(0);
+
         this.formEditor.clearEditor();
 
-        for (int i = 0; i < getMap().getForms().size(); i++) {
-            final int tempIndex = i;
-
-            this.formEditor.addBoldLabel("Form #" + i + ":"); // Show the actual ID because otherwise if you tried to find an entity's form from their form id, you'd find the wrong one.
-            getMap().getForms().get(i).setupEditor(this, this.formEditor);
-            this.formEditor.addButton("Remove Form #" + i, () -> {
-                getMap().getForms().remove(tempIndex);
-                setupFormEditor();
-            });
-        }
-
-        this.formEditor.addButton("Add Form", () -> {
-            getMap().getForms().add(new Form());
+        ComboBox<Form> box = this.formEditor.addSelectionBox("Form", getSelectedForm(), getMap().getForms(), newForm -> {
+            this.selectedForm = newForm;
             setupFormEditor();
         });
+
+        box.setConverter(new AbstractStringConverter<>(form -> "Form #" + getMap().getForms().indexOf(form)));
+
+        this.formEditor.addBoldLabel("Management:");
+        this.formEditor.addButton("Add Form", () -> {
+            this.selectedForm = new Form();
+            getMap().getForms().add(this.selectedForm);
+            setupFormEditor();
+        });
+
+        this.formEditor.addButton("Remove Form", () -> {
+            getMap().getForms().remove(getSelectedForm());
+            this.selectedForm = null;
+            setupFormEditor();
+        });
+
+        if (getSelectedForm() != null)
+            getSelectedForm().setupEditor(this, this.formEditor);
     }
 
     private void updateVisibility(boolean drawState) {

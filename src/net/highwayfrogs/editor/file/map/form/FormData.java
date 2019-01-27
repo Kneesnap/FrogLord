@@ -1,15 +1,23 @@
 package net.highwayfrogs.editor.file.map.form;
 
+import javafx.scene.control.CheckBox;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.map.grid.GridSquareFlag;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.system.AbstractStringConverter;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Parses the "FORM_DATA" struct.
@@ -60,9 +68,61 @@ public class FormData extends GameObject {
      * Setup a form editor.
      * @param editor The editor to setup under.
      */
-    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+    public void setupEditor(Form form, GUIEditorGrid editor) {
+        editor.addBoldLabel("Form Data:");
         editor.addShortField("Height", getHeight(), this::setHeight, null);
-        editor.addLabel("Flags", Arrays.toString(getGridFlags())); //TODO
+        if (getGridFlags().length == 0)
+            return;
+
+        List<Integer> flagIndexList = new ArrayList<>();
+        for (int i = 0; i < getGridFlags().length; i++)
+            flagIndexList.add(i);
+
+        AtomicBoolean changingState = new AtomicBoolean();
+        AtomicInteger selectedIndex = new AtomicInteger();
+        Map<GridSquareFlag, CheckBox> flagToggles = new HashMap<>();
+
+        editor.addSelectionBox("Tile (Top Left)", selectedIndex.get(), flagIndexList, newIndex -> {
+            int x = (newIndex % form.getZGridSquareCount());
+            int z = (newIndex / form.getZGridSquareCount());
+            newIndex = (x * form.getZGridSquareCount()) + z;
+
+            selectedIndex.set(newIndex);
+            changingState.set(true);
+            for (Entry<GridSquareFlag, CheckBox> entry : flagToggles.entrySet()) // Update checkboxes.
+                entry.getValue().setSelected((this.gridFlags[newIndex] & entry.getKey().getFlag()) == entry.getKey().getFlag());
+            changingState.set(false);
+        }).setConverter(new AbstractStringConverter<>(index -> {
+            int x = (index % form.getZGridSquareCount());
+            int z = (index / form.getZGridSquareCount());
+            return "Tile " + index + " (X: " + x + ", Z: " + z + ")";
+        }));
+
+        boolean right = false;
+        for (GridSquareFlag flag : GridSquareFlag.values()) {
+            CheckBox box = new CheckBox(Utils.capitalize(flag.name()));
+            box.setSelected((getGridFlags()[selectedIndex.get()] & flag.getFlag()) == flag.getFlag());
+            box.selectedProperty().addListener((listener, oldVal, newState) -> {
+                if (changingState.get())
+                    return;
+
+                if (newState) {
+                    this.gridFlags[selectedIndex.get()] |= flag.getFlag();
+                } else {
+                    this.gridFlags[selectedIndex.get()] ^= flag.getFlag();
+                }
+            });
+
+            if (right) {
+                editor.setupSecondNode(box, false);
+                editor.addRow(20);
+            } else {
+                editor.setupNode(box);
+            }
+
+            flagToggles.put(flag, box);
+            right = !right;
+        }
     }
 
 }

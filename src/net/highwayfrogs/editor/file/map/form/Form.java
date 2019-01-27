@@ -77,23 +77,29 @@ public class Form extends GameObject {
      * @param editor The editor to setup under.
      */
     public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
-        editor.addShortField("X Grid Square Count", getXGridSquareCount(), this::setXGridSquareCount, null);
-        editor.addShortField("Z Grid Square Count", getZGridSquareCount(), this::setZGridSquareCount, null);
-        editor.addShortField("xOffset", getXOffset(), this::setXOffset, null);
-        editor.addShortField("zOffset", getZOffset(), this::setZOffset, null);
-
         if (hasData()) {
-            editor.addBoldLabel("Form Data:");
-            getData().setupEditor(controller, editor);
             editor.addButton("Remove Data", () -> {
                 setData(null);
                 controller.setupFormEditor();
             });
         } else {
             editor.addButton("Add Data", () -> {
+                if (getXGridSquareCount() <= 0 || getZGridSquareCount() <= 0) {
+                    System.out.println("Grid Counts must be positive non-zero numbers!"); // Might want to make this a popup in the future.
+                    return;
+                }
+
                 setData(new FormData(this));
                 controller.setupFormEditor();
             });
         }
+
+        editor.addBoldLabel("Form:");
+        editor.addShortField("X Grid Count", getXGridSquareCount(), this::setXGridSquareCount, null);
+        editor.addShortField("Z Grid Count", getZGridSquareCount(), this::setZGridSquareCount, null);
+        editor.addShortField("xOffset", getXOffset(), this::setXOffset, null);
+        editor.addShortField("zOffset", getZOffset(), this::setZOffset, null);
+        if (hasData())
+            getData().setupEditor(this, editor);
     }
 }

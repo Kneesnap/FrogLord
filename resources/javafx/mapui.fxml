@@ -123,7 +123,7 @@
                         </ScrollPane>
                     </content>
                 </TitledPane>
-                <TitledPane fx:id="lightPane" animated="false" text="Entity Lights">
+                <TitledPane fx:id="formPane" animated="false" text="Forms">
                     <content>
                         <ScrollPane fitToWidth="true">
                             <content>
@@ -132,7 +132,7 @@
                                         <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
                                               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
-                                                <GridPane fx:id="lightGridPane" prefWidth="250.0">
+                                                <GridPane fx:id="formGridPane" prefWidth="250.0">
                                                     <columnConstraints>
                                                         <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0"
                                                                            minWidth="10.0" prefWidth="100.0"/>
@@ -151,7 +151,7 @@
                         </ScrollPane>
                     </content>
                 </TitledPane>
-                <TitledPane fx:id="formPane" animated="false" text="Forms">
+                <TitledPane fx:id="lightPane" animated="false" text="Entity Lights">
                     <content>
                         <ScrollPane fitToWidth="true">
                             <content>
@@ -160,7 +160,7 @@
                                         <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
                                               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
-                                                <GridPane fx:id="formGridPane" prefWidth="250.0">
+                                                <GridPane fx:id="lightGridPane" prefWidth="250.0">
                                                     <columnConstraints>
                                                         <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0"
                                                                            minWidth="10.0" prefWidth="100.0"/>
