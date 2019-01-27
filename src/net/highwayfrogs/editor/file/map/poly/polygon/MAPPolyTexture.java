@@ -23,7 +23,6 @@ import net.highwayfrogs.editor.gui.editor.MapUIController;
 public class MAPPolyTexture extends MAPPolygon {
     private short flags;
     private ByteUV[] uvs;
-    private short clutId;
     private short textureId;
     private PSXColorVector[] vectors;
 
@@ -41,7 +40,7 @@ public class MAPPolyTexture extends MAPPolygon {
         reader.readShort(); // Padding
 
         loadUV(0, reader);
-        this.clutId = reader.readShort();
+        reader.readShort(); // Runtime clut-id.
         loadUV(1, reader);
         this.textureId = reader.readShort();
 
@@ -65,7 +64,7 @@ public class MAPPolyTexture extends MAPPolygon {
         writer.writeShort(this.flags);
         writer.writeNull(Constants.SHORT_SIZE);
         this.uvs[0].save(writer);
-        writer.writeShort(this.clutId);
+        writer.writeShort((short) 0); // Runtime value.
         this.uvs[1].save(writer);
         writer.writeShort(this.textureId);
 
@@ -107,7 +106,6 @@ public class MAPPolyTexture extends MAPPolygon {
         }
 
         return uvString;
-
     }
 
     @Override
@@ -123,10 +121,8 @@ public class MAPPolyTexture extends MAPPolygon {
     @Override
     public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(controller, editor);
-
-        editor.addShortField("Clut ID", getClutId(), this::setClutId, null);
         editor.addShortField("Texture ID", getTextureId(), this::setTextureId, null);
-        editor.addBoldLabel("Flags:");
+
         for (PolyTextureFlag flag : PolyTextureFlag.values())
             editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> setFlag(flag, newState));
 
