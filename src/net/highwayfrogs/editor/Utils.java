@@ -661,6 +661,17 @@ public class Utils {
     }
 
     /**
+     * Get a integer from color bytes.
+     * @return rgbInt
+     */
+    public static int toRGB(byte red, byte green, byte blue) {
+        int result = byteToUnsignedShort(red);
+        result = (result << 8) + byteToUnsignedShort(green);
+        result = (result << 8) + byteToUnsignedShort(blue);
+        return result;
+    }
+
+    /**
      * Get a integer from a color object.
      * @param color The color to turn into bgr.
      * @return rgbInt

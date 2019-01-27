@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -292,6 +293,12 @@ public class MapUIController implements Initializable {
         this.geometryEditor.addBoldLabel("Collision Grid:");
         this.geometryEditor.addButton("Edit Grid", () -> GridController.openGridEditor(this));
         this.geometryEditor.addCheckBox("Toggle Polygon Visibility", this.looseMeshData != null, this::updateVisibility);
+
+        MAPPolygon showPolygon = getController().getSelectedPolygon();
+        if (showPolygon != null) {
+            this.geometryEditor.addBoldLabel("Selected Polygon:");
+            showPolygon.setupEditor(this, this.geometryEditor);
+        }
     }
 
     /**
@@ -520,6 +527,7 @@ public class MapUIController implements Initializable {
             return true;
         }
 
+        Platform.runLater(this::setupGeometryEditor);
         return false;
     }
 

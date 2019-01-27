@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Holds texture UV information.
@@ -58,5 +59,14 @@ public class ByteUV extends GameObject {
      */
     public String toObjTextureString() {
         return "vt " + getFloatU() + " " + getFloatV();
+    }
+
+    /**
+     * Setup an editor.
+     * @param editor The editor to setup under.
+     */
+    public void setupEditor(GUIEditorGrid editor) {
+        editor.addShortField("U", getU(), this::setU, null);
+        editor.addShortField("V", getV(), this::setV, null);
     }
 }

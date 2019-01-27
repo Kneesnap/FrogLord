@@ -66,4 +66,22 @@ public class PSXColorVector extends GameObject {
     public Color toColor() {
         return new Color(Utils.byteToUnsignedShort(getRed()), Utils.byteToUnsignedShort(getGreen()), Utils.byteToUnsignedShort(getBlue()));
     }
+
+    /**
+     * Turn this color into an RGB integer.
+     * @return rgbValue
+     */
+    public int toRGB() {
+        return Utils.toRGB(getRed(), getGreen(), getBlue());
+    }
+
+    /**
+     * Read color data from an integer value.
+     * @param rgbValue The value to read from.
+     */
+    public void fromRGB(int rgbValue) {
+        this.red = Utils.unsignedShortToByte((short) ((rgbValue >> 16) & 0xFF));
+        this.green = Utils.unsignedShortToByte((short) ((rgbValue >> 8) & 0xFF));
+        this.blue = Utils.unsignedShortToByte((short) (rgbValue & 0xFF));
+    }
 }

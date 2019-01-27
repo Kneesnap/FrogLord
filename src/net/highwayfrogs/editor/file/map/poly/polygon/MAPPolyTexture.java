@@ -9,6 +9,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 /**
  * Represents PSX polgons with a texture.
@@ -22,7 +24,6 @@ public class MAPPolyTexture extends MAPPolygon {
     private short clutId;
     private short textureId;
     private PSXColorVector[] vectors;
-    private boolean flippedUVs;
 
     public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_0; // setSemiTrans(true)
     public static final int FLAG_ENVIRONMENT_IMAGE = Constants.BIT_FLAG_1; // Show the solid environment bitmap. (For instance, how water appears as a solid body, or sludge in the sewer levels.)
@@ -123,5 +124,23 @@ public class MAPPolyTexture extends MAPPolygon {
     @Override
     public TextureEntry getEntry(TextureMap map) {
         return map.getEntryMap().get(map.getRemapList().get(getTextureId()));
+    }
+
+    @Override
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+        super.setupEditor(controller, editor);
+        editor.addShortField("Flags", getFlags(), this::setFlags, null);
+        editor.addShortField("Clut ID", getClutId(), this::setClutId, null);
+        editor.addShortField("Texture ID", getTextureId(), this::setTextureId, null);
+
+        int id = 0;
+        for (PSXColorVector colorVec : getVectors())
+            editor.addColorPicker("Color #" + (++id), colorVec.toRGB(), colorVec::fromRGB);
+
+        id = 0;
+        for (ByteUV byteUV : getUvs()) {
+            editor.addBoldLabel("UV #" + (++id) + ":");
+            byteUV.setupEditor(editor);
+        }
     }
 }
