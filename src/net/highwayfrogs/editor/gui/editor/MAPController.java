@@ -392,7 +392,7 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void movePolygonX(int amount) {
-        for (short vertice : getSelectedPolygon().getVertices()) {
+        for (int vertice : getSelectedPolygon().getVertices()) {
             SVector vertex = getFile().getVertexes().get(vertice);
             vertex.setX((short) (vertex.getX() + amount));
         }
@@ -401,7 +401,7 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void movePolygonY(int amount) {
-        for (short vertice : getSelectedPolygon().getVertices()) {
+        for (int vertice : getSelectedPolygon().getVertices()) {
             SVector vertex = getFile().getVertexes().get(vertice);
             vertex.setY((short) (vertex.getY() - amount));
         }
@@ -410,7 +410,7 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void movePolygonZ(int amount) {
-        for (short vertice : getSelectedPolygon().getVertices()) {
+        for (int vertice : getSelectedPolygon().getVertices()) {
             SVector vertex = getFile().getVertexes().get(vertice);
             vertex.setZ((short) (vertex.getZ() + amount));
         }

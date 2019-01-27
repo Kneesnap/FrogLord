@@ -140,7 +140,7 @@ public class MapMesh extends TriangleMesh {
      * @param poly The rectangle polygon.
      */
     public void addRectangle(MAPPolygon poly, AtomicInteger texCoord) {
-        short[] verts = poly.getVertices();
+        int[] verts = poly.getVertices();
         Utils.verify(verts.length == MAPPolygon.QUAD_SIZE, "This polygon has %d vertices!", verts.length);
 
         int face = getFaces().size() / getFaceElementSize();
@@ -169,7 +169,7 @@ public class MapMesh extends TriangleMesh {
      * @param poly The triangle polygon.
      */
     public void addTriangle(MAPPolygon poly, AtomicInteger texCoord) {
-        short[] verts = poly.getVertices();
+        int[] verts = poly.getVertices();
         Utils.verify(verts.length == MAPPolygon.TRI_SIZE, "This polygon has %d vertices!", poly.getVertices().length);
 
         int face = getFaces().size() / getFaceElementSize();
