@@ -135,10 +135,8 @@ public class MAPPolyTexture extends MAPPolygon {
             editor.addColorPicker("Color #" + (++id), colorVec.toRGB(), colorVec::fromRGB);
 
         id = 0;
-        for (ByteUV byteUV : getUvs()) {
-            editor.addBoldLabel("UV #" + (++id) + ":");
-            byteUV.setupEditor(editor);
-        }
+        for (ByteUV byteUV : getUvs())
+            byteUV.setupEditor("UV #" + (++id), editor);
     }
 
     /**

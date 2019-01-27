@@ -24,6 +24,7 @@ public class ByteUV extends GameObject {
     private short v;
 
     public static final int BYTE_SIZE = 2 * Constants.BYTE_SIZE;
+    private static final String SPLIT_CHAR = ",";
 
     @Override
     public void load(DataReader reader) {
@@ -65,8 +66,18 @@ public class ByteUV extends GameObject {
      * Setup an editor.
      * @param editor The editor to setup under.
      */
-    public void setupEditor(GUIEditorGrid editor) {
-        editor.addShortField("U", getU(), this::setU, null);
-        editor.addShortField("V", getV(), this::setV, null);
+    public void setupEditor(String label, GUIEditorGrid editor) {
+        editor.addTextField(label, getU() + SPLIT_CHAR + getV(), newStr -> {
+            if (!newStr.contains(SPLIT_CHAR))
+                return false;
+
+            String[] split = newStr.split(SPLIT_CHAR);
+            if (split.length != 2 || !Utils.isUnsignedByte(split[0]) || !Utils.isUnsignedByte(split[1]))
+                return false;
+
+            this.u = Short.parseShort(split[0]);
+            this.v = Short.parseShort(split[1]);
+            return true;
+        });
     }
 }

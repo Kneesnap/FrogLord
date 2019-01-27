@@ -32,6 +32,7 @@ import java.util.zip.CRC32;
  * Some static utilities.
  * Created by Kneesnap on 8/12/2018.
  */
+@SuppressWarnings({"BooleanMethodIsAlwaysInverted", "unused"})
 public class Utils {
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
     private static final CRC32 crc32 = new CRC32();
@@ -396,6 +397,19 @@ public class Utils {
 
         int intTest = Integer.parseInt(str);
         return intTest >= Short.MIN_VALUE && intTest <= Short.MAX_VALUE;
+    }
+
+    /**
+     * Test if a string is an unsigned byte.
+     * @param str The string to test.
+     * @return isUnsignedByte
+     */
+    public static boolean isUnsignedByte(String str) {
+        if (!Utils.isInteger(str))
+            return false;
+
+        int intTest = Integer.parseInt(str);
+        return intTest >= 0 && intTest <= 0xFF;
     }
 
     /**
