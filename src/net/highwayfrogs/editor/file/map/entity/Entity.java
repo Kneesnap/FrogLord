@@ -122,18 +122,24 @@ public class Entity extends GameObject {
      * @param map The map file this entity presides in.
      * @return position
      */
-    public float[] getPosition(MAPFile map) {
+    public float[] getPosition(float[] position, MAPFile map) {
         PSXMatrix matrix = getMatrixInfo();
         if (matrix != null) {
             int[] pos = matrix.getTransform();
-            return new float[]{Utils.unsignedIntToFloat(pos[0]), Utils.unsignedIntToFloat(pos[1]), Utils.unsignedIntToFloat(pos[2])};
+            position[0] = Utils.unsignedIntToFloat(pos[0]);
+            position[1] = Utils.unsignedIntToFloat(pos[1]);
+            position[2] = Utils.unsignedIntToFloat(pos[2]);
+            return position;
         }
 
         PathInfo pathInfo = getPathInfo();
         if (pathInfo != null) {
             Path path = map.getPaths().get(pathInfo.getPathId());
             SVector end = path.evaluatePosition(pathInfo);
-            return new float[]{Utils.unsignedShortToFloat(end.getX()), Utils.unsignedShortToFloat(end.getY()), Utils.unsignedShortToFloat(end.getZ())};
+            position[0] = Utils.unsignedShortToFloat(end.getX());
+            position[1] = Utils.unsignedShortToFloat(end.getY());
+            position[2] = Utils.unsignedShortToFloat(end.getZ());
+            return position;
         }
 
         throw new UnsupportedOperationException("Tried to get the position of an entity without position data!");

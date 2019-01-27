@@ -354,8 +354,9 @@ public class MAPController extends EditorController<MAPFile> {
     private void setupEntities() {
         ImagePattern pattern = new ImagePattern(SWAMPY);
 
+        float[] pos = new float[3];
         for (Entity entity : getFile().getEntities()) {
-            float[] pos = entity.getPosition(getFile());
+            entity.getPosition(pos, getFile());
             Rectangle rect = makeIcon(pattern, pos[0], pos[1], pos[2]);
             rect.setOnMouseClicked(evt -> this.mapUIController.showEntityInfo(entity));
             this.entityIcons.add(rect);
@@ -363,14 +364,15 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private Rectangle makeIcon(ImagePattern image, float x, float y, float z) {
-        double width = image.getImage().getWidth();
-        double height = image.getImage().getHeight();
-        Rectangle rect = new Rectangle(width, height);
-
-        rect.setTranslateX((MapUIController.getPropertyMapViewScale().get() * x) - width);
-        rect.setTranslateY((MapUIController.getPropertyMapViewScale().get() * y) - height);
-        rect.setTranslateZ((MapUIController.getPropertyMapViewScale().get() * z));
+        Rectangle rect = new Rectangle(image.getImage().getWidth(), image.getImage().getHeight());
         rect.setFill(image);
+        return setupNode(rect, x, y, z, rect.getWidth(), rect.getHeight());
+    }
+
+    private <T extends Node> T setupNode(T node, float x, float y, float z, double width, double height) {
+        node.setTranslateX((MapUIController.getPropertyMapViewScale().get() * x) - width);
+        node.setTranslateY((MapUIController.getPropertyMapViewScale().get() * y) - height);
+        node.setTranslateZ((MapUIController.getPropertyMapViewScale().get() * z));
 
         Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS); // Up, Down,
         Rotate lightRotateY = new Rotate(0, Rotate.Y_AXIS); // Left, Right
@@ -379,16 +381,16 @@ public class MAPController extends EditorController<MAPFile> {
         lightRotateY.angleProperty().bind(rotY.angleProperty());
         lightRotateZ.angleProperty().bind(rotZ.angleProperty());
 
-        lightRotateX.setPivotY(-rect.getTranslateY());
-        lightRotateX.setPivotZ(-rect.getTranslateZ()); // Depth <Closest, Furthest>
-        lightRotateY.setPivotX(-rect.getTranslateX()); // <Left, Right>
-        lightRotateY.setPivotZ(-rect.getTranslateZ()); // Depth <Closest, Furthest>
-        lightRotateZ.setPivotX(-rect.getTranslateX()); // <Left, Right>
-        lightRotateZ.setPivotY(-rect.getTranslateY()); // <Up, Down>
-        rect.getTransforms().addAll(lightRotateX, lightRotateY, lightRotateZ);
+        lightRotateX.setPivotY(-node.getTranslateY());
+        lightRotateX.setPivotZ(-node.getTranslateZ()); // Depth <Closest, Furthest>
+        lightRotateY.setPivotX(-node.getTranslateX()); // <Left, Right>
+        lightRotateY.setPivotZ(-node.getTranslateZ()); // Depth <Closest, Furthest>
+        lightRotateZ.setPivotX(-node.getTranslateX()); // <Left, Right>
+        lightRotateZ.setPivotY(-node.getTranslateY()); // <Up, Down>
+        node.getTransforms().addAll(lightRotateX, lightRotateY, lightRotateZ);
 
-        root3D.getChildren().add(rect);
-        return rect;
+        root3D.getChildren().add(node);
+        return node;
     }
 
     private void movePolygonX(int amount) {
