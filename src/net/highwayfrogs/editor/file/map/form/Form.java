@@ -32,8 +32,13 @@ public class Form extends GameObject {
         this.xOffset = reader.readShort();
         this.zOffset = reader.readShort();
 
-        if (dataCount == 0)
+        if (dataCount == 0) {
+            this.xGridSquareCount = -1;
+            this.zGridSquareCount = -1;
+            this.xOffset = -1;
+            this.zOffset = -1;
             return; // There is no form data.
+        }
 
         Utils.verify(dataCount == 1, "Invalid Form Data Count: " + dataCount); // The game only supports 1 form data even if it has a count for more.
 
