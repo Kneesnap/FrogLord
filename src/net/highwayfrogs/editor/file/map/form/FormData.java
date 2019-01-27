@@ -1,23 +1,33 @@
 package net.highwayfrogs.editor.file.map.form;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
+
+import java.util.Arrays;
 
 /**
  * Parses the "FORM_DATA" struct.
  * Created by Kneesnap on 8/23/2018.
  */
+@Getter
+@Setter
 public class FormData extends GameObject {
     private short height; // This is for if heightType is one height for the entire grid.
     private int[] gridFlags; // Believe this is ordered (z * xSize) + x
-    private transient Form parent;
 
     private static final short FORM_HEIGHT_TYPE = (short) 0;
 
     public FormData(Form parent) {
-        this.parent = parent;
+        int fullSize = parent.getXGridSquareCount() * parent.getZGridSquareCount();
+        if (fullSize % 2 > 0)
+            fullSize++; // Unfortunately, we don't understand how to generate the value that goes in that last spot. I think it'd be safe to have it be a null-short or something, but we may want to figure that out.
+        this.gridFlags = new int[fullSize];
     }
 
     @Override
@@ -29,15 +39,9 @@ public class FormData extends GameObject {
         int squarePointer = reader.readInt(); // Pointer to array of (xCount * zCount) flags. (Type = short)
         reader.readInt(); // Pointer to an array of grid heights. This would have been used in the "SQUARE" height mode, however that does not appear to be used in the vanilla game.
 
-        int fullSize = parent.getXGridSquareCount() * parent.getZGridSquareCount();
-        if (fullSize % 2 > 0)
-            fullSize++; // Unfortunately, we don't understand how to generate the value that goes in that last spot. I think it'd be safe to have it be a null-short or something, but we may want to figure that out.
-
         reader.jumpTemp(squarePointer); // Really we don't need to jump, as the data is at the current read index, but this is to keep it in spec with the engine.
-        this.gridFlags = new int[fullSize];
         for (int i = 0; i < gridFlags.length; i++)
             this.gridFlags[i] = reader.readUnsignedShortAsInt();
-
         reader.jumpReturn();
     }
 
@@ -54,4 +58,14 @@ public class FormData extends GameObject {
         for (int flag : this.gridFlags)
             writer.writeUnsignedShort(flag);
     }
+
+    /**
+     * Setup a form editor.
+     * @param editor The editor to setup under.
+     */
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+        editor.addShortField("Height", getHeight(), this::setHeight, null);
+        editor.addLabel("Flags", Arrays.toString(getGridFlags())); //TODO
+    }
+
 }

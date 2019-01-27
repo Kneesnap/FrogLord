@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 /**
  * Reads the "FORM" struct.
@@ -63,5 +65,30 @@ public class Form extends GameObject {
      */
     public boolean hasData() {
         return getData() != null;
+    }
+
+    /**
+     * Setup a form editor.
+     * @param editor The editor to setup under.
+     */
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+        editor.addShortField("X Grid Square Count", getXGridSquareCount(), this::setXGridSquareCount, null);
+        editor.addShortField("Z Grid Square Count", getZGridSquareCount(), this::setZGridSquareCount, null);
+        editor.addShortField("xOffset", getXOffset(), this::setXOffset, null);
+        editor.addShortField("zOffset", getZOffset(), this::setZOffset, null);
+
+        if (hasData()) {
+            editor.addBoldLabel("Form Data:");
+            getData().setupEditor(controller, editor);
+            editor.addButton("Remove Data", () -> {
+                setData(null);
+                controller.setupFormEditor();
+            });
+        } else {
+            editor.addButton("Add Data", () -> {
+                setData(new FormData(this));
+                controller.setupFormEditor();
+            });
+        }
     }
 }

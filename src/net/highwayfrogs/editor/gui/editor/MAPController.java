@@ -51,7 +51,6 @@ import java.util.List;
  * TODO: Edit polygons
  * TODO: Show Paths. (Can show an icon tracing the path in real-time)
  * TODO: Zones.
- * TODO: Forms?
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter

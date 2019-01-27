@@ -23,6 +23,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.form.Form;
 import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
@@ -38,6 +39,7 @@ import java.util.function.Consumer;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
+ * TODO: Finish form editor.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter
@@ -102,6 +104,19 @@ public class MapUIController implements Initializable {
     @FXML private GridPane generalGridPane;
     private GUIEditorGrid generalEditor;
 
+    // Geometry pane.
+    @FXML private TitledPane geometryPane;
+    @FXML private GridPane geometryGridPane;
+    private GUIEditorGrid geometryEditor;
+    private MeshData looseMeshData;
+
+    // Animation pane.
+    @FXML private TitledPane animationPane;
+    @FXML private GridPane animationGridPane;
+    private GUIEditorGrid animationEditor;
+    private MAPAnimation editAnimation;
+    private MeshData animationMarker;
+
     // Entity pane
     @FXML private TitledPane entityPane;
     @FXML private GridPane entityGridPane;
@@ -112,25 +127,17 @@ public class MapUIController implements Initializable {
     @FXML private GridPane lightGridPane;
     private GUIEditorGrid lightEditor;
 
-    // Animation pane.
-    @FXML private TitledPane animationPane;
-    @FXML private GridPane animationGridPane;
-    private GUIEditorGrid animationEditor;
+    // Form pane.
+    @FXML private TitledPane formPane;
+    @FXML private GridPane formGridPane;
+    private GUIEditorGrid formEditor;
 
     // Path pane.
     @FXML private TitledPane pathPane;
     @FXML private GridPane pathGridPane;
     private GUIEditorGrid pathEditor;
 
-    // Geometry pane.
-    @FXML private TitledPane geometryPane;
-    @FXML private GridPane geometryGridPane;
-    private GUIEditorGrid geometryEditor;
-    private MeshData looseMeshData;
-
-    private MAPAnimation editAnimation;
-    private MeshData animationMarker;
-
+    // Non-GUI.
     private Consumer<MAPPolygon> onSelect;
     private Runnable cancelSelection;
 
@@ -286,6 +293,32 @@ public class MapUIController implements Initializable {
         this.geometryEditor.addCheckBox("Toggle Polygon Visibility", this.looseMeshData != null, this::updateVisibility);
     }
 
+    /**
+     * Setup the map form editor.
+     */
+    public void setupFormEditor() {
+        if (this.formEditor == null)
+            this.formEditor = new GUIEditorGrid(formGridPane);
+
+        this.formEditor.clearEditor();
+
+        for (int i = 0; i < getMap().getForms().size(); i++) {
+            final int tempIndex = i;
+
+            this.formEditor.addBoldLabel("Form #" + (i + 1) + ":");
+            getMap().getForms().get(i).setupEditor(this, this.formEditor);
+            this.formEditor.addButton("Remove Form #" + (i + 1), () -> {
+                getMap().getForms().remove(tempIndex);
+                setupFormEditor();
+            });
+        }
+
+        this.formEditor.addButton("Add Form", () -> {
+            getMap().getForms().add(new Form());
+            setupFormEditor();
+        });
+    }
+
     private void updateVisibility(boolean drawState) {
         if (this.looseMeshData != null) {
             getMesh().getManager().removeMesh(this.looseMeshData);
@@ -408,6 +441,7 @@ public class MapUIController implements Initializable {
         setupAnimationEditor();
         setupGeometryEditor();
         setupPathEditor();
+        setupFormEditor();
     }
 
     /**
