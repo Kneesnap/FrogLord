@@ -285,7 +285,7 @@ public class MAPFile extends GameFile {
             short polyCount = polyCountMap.get(type);
             int polyOffset = polyOffsetMap.get(type);
 
-            List<MAPPrimitive> primitives = new ArrayList<>();
+            List<MAPPrimitive> primitives = new LinkedList<>();
             polygons.put(type, primitives);
 
             if (polyCount > 0) {
@@ -524,8 +524,6 @@ public class MAPFile extends GameFile {
         writer.setIndex(animAddress + Constants.POINTER_SIZE);
 
         // Write LITE.
-        List<MAPGroup> saveGroups = calculateGroups();
-
         tempAddress = writer.getIndex();
         writer.jumpTemp(lightAddress);
         writer.writeInt(tempAddress);
@@ -536,6 +534,15 @@ public class MAPFile extends GameFile {
         getLights().forEach(light -> light.save(writer));
 
         // Write GROU.
+        List<MAPGroup> saveGroups = calculateGroups();
+
+        // This orders polygons a certain way so MAPGroup will have all of its polygons sequentially, which is required for MAPGroup to work properly.
+        getPolygons().values().forEach(list -> list.removeIf(MAPPrimitive::isAllowDisplay));
+        saveGroups.forEach(group -> {
+            for (Entry<MAPPrimitiveType, List<MAPPrimitive>> entry : group.getPolygonMap().entrySet())
+                getPolygons().get(entry.getKey()).addAll(entry.getValue());
+        });
+
         tempAddress = writer.getIndex();
         writer.jumpTemp(groupAddress);
         writer.writeInt(tempAddress);
