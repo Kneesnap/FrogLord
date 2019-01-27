@@ -38,6 +38,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MAPController;
+import net.highwayfrogs.editor.system.AbstractStringConverter;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -55,7 +56,7 @@ import java.util.function.Consumer;
 public class MAPFile extends GameFile {
     @Setter private short startXTile;
     @Setter private short startYTile;
-    @Setter private short startRotation;
+    @Setter private StartRotation startRotation;
     private MAPTheme theme;
     @Setter private short levelTimer;
     @Setter private SVector cameraSourceOffset;
@@ -159,7 +160,7 @@ public class MAPFile extends GameFile {
         reader.verifyString(GENERAL_SIGNATURE);
         this.startXTile = reader.readShort();
         this.startYTile = reader.readShort();
-        this.startRotation = reader.readShort();
+        this.startRotation = StartRotation.values()[reader.readShort()];
         this.theme = MAPTheme.values()[reader.readShort()];
 
         this.levelTimer = reader.readShort();
@@ -414,7 +415,7 @@ public class MAPFile extends GameFile {
         writer.writeStringBytes(GENERAL_SIGNATURE);
         writer.writeShort(this.startXTile);
         writer.writeShort(this.startYTile);
-        writer.writeShort(this.startRotation);
+        writer.writeShort((short) this.startRotation.ordinal());
         writer.writeShort((short) getTheme().ordinal());
         for (int i = 0; i < TOTAL_CHECKPOINT_TIMER_ENTRIES; i++)
             writer.writeShort(getLevelTimer());
@@ -857,7 +858,9 @@ public class MAPFile extends GameFile {
         editor.addLabel("Theme", getTheme().name()); // Should look into whether or not this is ok to edit.
         editor.addShortField("Start xTile", getStartXTile(), this::setStartXTile, null);
         editor.addShortField("Start yTile", getStartYTile(), this::setStartYTile, null);
-        editor.addShortField("Start Rotation", getStartRotation(), this::setStartRotation, null);
+        editor.addEnumSelector("Start Rotation", getStartRotation(), StartRotation.values(), false, this::setStartRotation)
+                .setConverter(new AbstractStringConverter<>(StartRotation::getArrow));
+
         editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
         editor.addShortField("Base Point xTile", getBaseXTile(), this::setBaseXTile, null);
         editor.addShortField("Base Point zTile", getBaseZTile(), this::setBaseZTile, null);

@@ -15,7 +15,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.util.StringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -27,6 +26,7 @@ import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
+import net.highwayfrogs.editor.system.AbstractStringConverter;
 
 import java.net.URL;
 import java.util.LinkedList;
@@ -69,17 +69,7 @@ public class GridController implements Initializable {
                 setSelectedSquare(getSelectedStack(), newValue);
         }));
 
-        layerSelector.setConverter(new StringConverter<Integer>() {
-            @Override
-            public String toString(Integer id) {
-                return "Layer #" + (id + 1);
-            }
-
-            @Override
-            public Integer fromString(String string) {
-                return null;
-            }
-        });
+        layerSelector.setConverter(new AbstractStringConverter<>(id -> "Layer #" + (id + 1)));
 
         gridCanvas.setOnMousePressed(evt -> {
             int gridX = (int) (evt.getSceneX() / getTileWidth());
