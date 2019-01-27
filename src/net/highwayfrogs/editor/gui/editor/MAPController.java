@@ -470,7 +470,7 @@ public class MAPController extends EditorController<MAPFile> {
      */
     public void renderOverPolygon(MAPPolygon targetPoly, CursorVertexColor color) {
         int increment = mapMesh.getVertexFormat().getVertexIndexSize();
-        boolean isQuad = (targetPoly.getVertices().length == MAPPolygon.QUAD_SIZE);
+        boolean isQuad = (targetPoly.getVerticeCount() == MAPPolygon.QUAD_SIZE);
 
         int face = mapMesh.getPolyFaceMap().get(targetPoly) * mapMesh.getFaceElementSize();
         int v1 = mapMesh.getFaces().get(face);

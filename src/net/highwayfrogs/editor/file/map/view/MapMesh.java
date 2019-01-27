@@ -120,7 +120,7 @@ public class MapMesh extends TriangleMesh {
                 return;
 
             MAPPolygon poly = (MAPPolygon) prim;
-            int vertCount = poly.getVertices().length;
+            int vertCount = poly.getVerticeCount();
 
             if (vertCount == MAPPolygon.TRI_SIZE) {
                 addTriangle(poly, texId);
@@ -140,9 +140,9 @@ public class MapMesh extends TriangleMesh {
      * @param poly The rectangle polygon.
      */
     public void addRectangle(MAPPolygon poly, AtomicInteger texCoord) {
-        int[] verts = poly.getVertices();
-        Utils.verify(verts.length == MAPPolygon.QUAD_SIZE, "This polygon has %d vertices!", verts.length);
+        Utils.verify(poly.getVerticeCount() == MAPPolygon.QUAD_SIZE, "This polygon has %d vertices!", poly.getVerticeCount());
 
+        int[] verts = poly.getVertices();
         int face = getFaces().size() / getFaceElementSize();
         polyFaceMap.put(poly, face);
         facePolyMap.put(face, poly);
@@ -169,9 +169,9 @@ public class MapMesh extends TriangleMesh {
      * @param poly The triangle polygon.
      */
     public void addTriangle(MAPPolygon poly, AtomicInteger texCoord) {
-        int[] verts = poly.getVertices();
-        Utils.verify(verts.length == MAPPolygon.TRI_SIZE, "This polygon has %d vertices!", poly.getVertices().length);
+        Utils.verify(poly.getVerticeCount() == MAPPolygon.TRI_SIZE, "This polygon has %d vertices!", poly.getVerticeCount());
 
+        int[] verts = poly.getVertices();
         int face = getFaces().size() / getFaceElementSize();
         facePolyMap.put(face, poly);
         polyFaceMap.put(poly, face);
@@ -192,7 +192,7 @@ public class MapMesh extends TriangleMesh {
 
     private int addTexCoords(MAPPolygon poly, AtomicInteger texCoord) {
         int texId = texCoord.get();
-        int texCount = poly.getVertices().length;
+        int texCount = poly.getVerticeCount();
 
         texCoord.addAndGet(texCount);
         TextureEntry entry = poly.getEntry(textureMap);
