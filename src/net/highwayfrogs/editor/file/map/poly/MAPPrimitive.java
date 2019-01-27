@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.map.poly;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -13,6 +14,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 public abstract class MAPPrimitive extends PSXGPUPrimitive {
     private int[] vertices;
     private MAPPrimitiveType type;
+    @Setter private boolean allowDisplay; // Whether or not this prim can be included in a MAP_GROUP.
 
     public MAPPrimitive(MAPPrimitiveType type, int verticeCount) {
         this.type = type;

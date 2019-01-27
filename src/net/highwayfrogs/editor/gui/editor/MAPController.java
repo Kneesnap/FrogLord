@@ -115,7 +115,7 @@ public class MAPController extends EditorController<MAPFile> {
         addTableEntry("Zone Count", Integer.toString(map.getZones().size()));
         addTableEntry("Light Count", Integer.toString(map.getLights().size()));
         addTableEntry("Vertex Count", Integer.toString(map.getVertexes().size()));
-        addTableEntry("Polygon Count", Integer.toString(map.getCachedPolygons().values().stream().mapToInt(List::size).sum()));
+        addTableEntry("Polygon Count", Integer.toString(map.getPolygons().values().stream().mapToInt(List::size).sum()));
         addTableEntry("Animation Count", Integer.toString(map.getMapAnimations().size()));
 
         // Grid properties
@@ -124,7 +124,7 @@ public class MAPController extends EditorController<MAPFile> {
         addTableEntry("Grid Size Length", "[" + map.getGridXSize() + ", " + map.getGridZSize() + "]");
 
         // Group properties
-        addTableEntry("Group Count", Integer.toString(map.getGroups().size()));
+        addTableEntry("Group Count", Integer.toString(map.getGroupCount()));
         addTableEntry("Group Size Count", "[" + map.getGroupXCount() + ", " + map.getGroupZCount() + "]");
         addTableEntry("Group Size Length", "[" + map.getGroupXSize() + ", " + map.getGroupZSize() + "]");
     }

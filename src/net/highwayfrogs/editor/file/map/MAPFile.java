@@ -45,6 +45,7 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * Parses Frogger MAP files.
@@ -65,7 +66,6 @@ public class MAPFile extends GameFile {
     private List<Form> forms = new ArrayList<>();
     private List<Entity> entities = new ArrayList<>();
     private List<Light> lights = new ArrayList<>();
-    private List<MAPGroup> groups = new ArrayList<>();
     private List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
@@ -83,8 +83,7 @@ public class MAPFile extends GameFile {
     @Setter private transient VLOArchive suppliedVLO;
     @Setter private transient int suppliedRemapAddress;
     private transient MWDFile parentMWD;
-    private transient Map<MAPPrimitiveType, List<MAPPrimitive>> loosePolygons = new HashMap<>();
-    private transient Map<MAPPrimitiveType, List<MAPPrimitive>> cachedPolygons = new HashMap<>();
+    private transient Map<MAPPrimitiveType, List<MAPPrimitive>> polygons = new HashMap<>();
 
     private transient List<GridSquare> loadGridSquares = new ArrayList<>();
     private transient Map<MAPPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
@@ -261,12 +260,12 @@ public class MAPFile extends GameFile {
         this.groupZCount = reader.readShort(); // Number of groups in z.
         this.groupXSize = reader.readShort(); // Group X Length
         this.groupZSize = reader.readShort(); // Group Z Length
-        int groupCount = groupXCount * groupZCount;
 
-        for (int i = 0; i < groupCount; i++) {
+        MAPGroup[] loadGroups = new MAPGroup[getGroupCount()];
+        for (int i = 0; i < loadGroups.length; i++) {
             MAPGroup group = new MAPGroup();
             group.load(reader);
-            groups.add(group);
+            loadGroups[i] = group;
         }
 
         // Read POLY
@@ -287,7 +286,7 @@ public class MAPFile extends GameFile {
             int polyOffset = polyOffsetMap.get(type);
 
             List<MAPPrimitive> primitives = new ArrayList<>();
-            loosePolygons.put(type, primitives);
+            polygons.put(type, primitives);
 
             if (polyCount > 0) {
                 reader.jumpTemp(polyOffset);
@@ -303,8 +302,9 @@ public class MAPFile extends GameFile {
                 reader.jumpReturn();
             }
         }
-        getGroups().forEach(group -> group.setupPolygonData(this, getLoosePolygons()));
-        updatePolygonCache();
+
+        for (MAPGroup group : loadGroups)
+            group.setupPolygonData(this, getPolygons());
 
         // Read Vertexes.
         reader.setIndex(vertexAddress);
@@ -524,6 +524,8 @@ public class MAPFile extends GameFile {
         writer.setIndex(animAddress + Constants.POINTER_SIZE);
 
         // Write LITE.
+        List<MAPGroup> saveGroups = calculateGroups();
+
         tempAddress = writer.getIndex();
         writer.jumpTemp(lightAddress);
         writer.writeInt(tempAddress);
@@ -534,8 +536,6 @@ public class MAPFile extends GameFile {
         getLights().forEach(light -> light.save(writer));
 
         // Write GROU.
-        updatePolygonCache();
-
         tempAddress = writer.getIndex();
         writer.jumpTemp(groupAddress);
         writer.writeInt(tempAddress);
@@ -547,7 +547,7 @@ public class MAPFile extends GameFile {
         writer.writeShort(this.groupZCount);
         writer.writeShort(this.groupXSize);
         writer.writeShort(this.groupZSize);
-        getGroups().forEach(group -> group.save(writer));
+        saveGroups.forEach(group -> group.save(writer));
 
         // Save entity indices. The beaver entity uses this.
         getPaths().forEach(path -> path.writeEntityList(this, writer));
@@ -560,7 +560,7 @@ public class MAPFile extends GameFile {
 
         writer.writeStringBytes(POLYGON_SIGNATURE);
         for (MAPPrimitiveType type : PRIMITIVE_TYPES)
-            writer.writeShort((short) getCachedPolygons().get(type).size());
+            writer.writeShort((short) getPolygons().get(type).size());
 
         writer.writeShort((short) 0); // Padding.
 
@@ -583,7 +583,7 @@ public class MAPFile extends GameFile {
             writer.writeInt(tempAddress);
             writer.jumpReturn();
 
-            getCachedPolygons().get(type).forEach(polygon -> {
+            getPolygons().get(type).forEach(polygon -> {
                 getSavePointerPolygonMap().put(writer.getIndex(), polygon);
                 getSavePolygonPointerMap().put(polygon, writer.getIndex());
                 polygon.save(writer);
@@ -591,7 +591,7 @@ public class MAPFile extends GameFile {
         }
 
         // Write MAP_GROUP polygon pointers, since we've written polygon data.
-        getGroups().forEach(group -> group.writePolygonPointers(this, writer));
+        saveGroups.forEach(group -> group.writePolygonPointers(this, writer));
 
         // Write "VRTX."
         tempAddress = writer.getIndex();
@@ -659,7 +659,6 @@ public class MAPFile extends GameFile {
 
     @SneakyThrows
     private void exportToObj(File directory, String cleanName, FileEntry entry, VLOArchive vloArchive, List<Short> remapTable) {
-        updatePolygonCache();
         boolean exportTextures = vloArchive != null;
 
         System.out.println("Exporting " + cleanName + ".");
@@ -683,7 +682,10 @@ public class MAPFile extends GameFile {
 
         // Write Faces.
         List<MAPPolygon> allPolygons = new ArrayList<>();
-        getCachedPolygons().values().forEach(ply -> ply.stream().map(MAPPolygon.class::cast).forEach(allPolygons::add));
+        forEachPrimitive(prim -> {
+            if (prim instanceof MAPPolygon)
+                allPolygons.add((MAPPolygon) prim);
+        });
 
         // Register textures.
         if (exportTextures) {
@@ -781,13 +783,14 @@ public class MAPFile extends GameFile {
      */
     public int getMaxRemap() {
         AtomicInteger maxRemapId = new AtomicInteger();
-        getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
+        forEachPrimitive(prim -> {
             if (!(prim instanceof MAPPolyTexture))
                 return;
+
             int newTex = ((MAPPolyTexture) prim).getTextureId();
             if (newTex > maxRemapId.get())
                 maxRemapId.set(newTex);
-        }));
+        });
 
         return maxRemapId.get() + 1;
     }
@@ -799,18 +802,18 @@ public class MAPFile extends GameFile {
     public Map<VertexColor, BufferedImage> makeVertexColorTextures() {
         Map<VertexColor, BufferedImage> texMap = new HashMap<>();
 
-        getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
+        forEachPrimitive(prim -> {
             if (!(prim instanceof VertexColor))
                 return;
 
             VertexColor vertexColor = (VertexColor) prim;
             BufferedImage image = vertexColor.makeTexture();
             texMap.put(vertexColor, image);
-        }));
+        });
 
         texMap.put(MapMesh.CURSOR_COLOR, MapMesh.CURSOR_COLOR.makeTexture());
         texMap.put(MapMesh.ANIMATION_COLOR, MapMesh.ANIMATION_COLOR.makeTexture());
-        texMap.put(MapMesh.GROUP_COLOR, MapMesh.GROUP_COLOR.makeTexture());
+        texMap.put(MapMesh.INVISIBLE_COLOR, MapMesh.INVISIBLE_COLOR.makeTexture());
         texMap.put(MapMesh.GRID_COLOR, MapMesh.GRID_COLOR.makeTexture());
         return texMap;
     }
@@ -823,20 +826,6 @@ public class MAPFile extends GameFile {
     @Override
     public Node makeEditor() {
         return loadEditor(new MAPController(), "map", this);
-    }
-
-    /**
-     * Rebuild the cache of all polygons.
-     */
-    public void updatePolygonCache() {
-        cachedPolygons.clear();
-        addPolygons(getLoosePolygons());
-        getGroups().forEach(group -> addPolygons(group.getPolygonMap()));
-    }
-
-    private void addPolygons(Map<MAPPrimitiveType, List<MAPPrimitive>> add) {
-        for (Entry<MAPPrimitiveType, List<MAPPrimitive>> entry : add.entrySet())
-            cachedPolygons.computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).addAll(entry.getValue());
     }
 
     private void printInvalidEntityReadDetection(Entity lastEntity, int endPointer) {
@@ -930,26 +919,45 @@ public class MAPFile extends GameFile {
      * @param groupZ The group z coordinate.
      * @return group
      */
-    public MAPGroup getGroup(int groupX, int groupZ) {
-        return getGroups().get((groupZ * getGroupXCount()) + groupX);
+    public int getGroupIndex(int groupX, int groupZ) {
+        return (groupZ * getGroupXCount()) + groupX;
+    }
+
+    /**
+     * Gets the number of groups in this map.
+     * @return groupCount
+     */
+    public int getGroupCount() {
+        return getGroupXCount() * getGroupZCount();
+    }
+
+    /**
+     * Executes behavior for each map primitive.
+     * @param handler Behavior to execute.
+     */
+    public void forEachPrimitive(Consumer<MAPPrimitive> handler) {
+        getPolygons().values().forEach(list -> list.forEach(handler));
     }
 
     /**
      * Recalculate map groups.
-     * TODO: Ignore loose polygons.
      */
-    public void calculateGroups() {
-        cachedPolygons.clear(); // updatePolygonCache but it doesn't add loose polygons, which is a temporary fix.
-        getGroups().forEach(group -> addPolygons(group.getPolygonMap()));
-
-        // Clear group data.
-        getGroups().forEach(group -> group.getPolygonMap().clear());
+    public List<MAPGroup> calculateGroups() {
+        List<MAPGroup> groups = new ArrayList<>(getGroupCount());
+        for (int i = 0; i < getGroupCount(); i++)
+            groups.add(new MAPGroup());
 
         // Recalculate it.
-        getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
-            SVector vertex = getVertexes().get(prim.getVertices()[prim.getVerticeCount() - 1]);
-            getGroup(getGroupX(vertex.getX()), getGroupZ(vertex.getZ())).getPolygonMap().computeIfAbsent(prim.getType(), key -> new LinkedList<>()).add(prim);
-        }));
+        forEachPrimitive(prim -> {
+            if (!prim.isAllowDisplay())
+                return;
 
+            SVector vertex = getVertexes().get(prim.getVertices()[prim.getVerticeCount() - 1]);
+            int groupX = getGroupX(vertex.getX());
+            int groupZ = getGroupZ(vertex.getZ());
+            groups.get(getGroupIndex(groupX, groupZ)).getPolygonMap().get(prim.getType()).add(prim);
+        });
+
+        return groups;
     }
 }

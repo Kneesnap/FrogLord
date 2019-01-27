@@ -40,7 +40,7 @@ public class MapMesh extends TriangleMesh {
 
     public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(Color.YELLOW, Color.BLACK);
-    public static final CursorVertexColor GROUP_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
+    public static final CursorVertexColor INVISIBLE_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
     public static final CursorVertexColor GRID_COLOR = new CursorVertexColor(Color.BLUE, Color.BLACK);
 
     public MapMesh(MAPFile file, TextureMap texMap) {
@@ -115,7 +115,7 @@ public class MapMesh extends TriangleMesh {
         getTexCoords().clear();
 
         AtomicInteger texId = new AtomicInteger();
-        map.getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
+        map.forEachPrimitive(prim -> {
             if (!(prim instanceof MAPPolygon))
                 return;
 
@@ -129,7 +129,7 @@ public class MapMesh extends TriangleMesh {
             } else {
                 throw new RuntimeException("Cannot handle " + vertCount + " vertices");
             }
-        }));
+        });
 
         this.faceCount = getFaces().size();
         this.textureCount = getTexCoords().size();

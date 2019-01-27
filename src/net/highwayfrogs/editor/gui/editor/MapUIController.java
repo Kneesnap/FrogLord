@@ -16,7 +16,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
-import javafx.util.StringConverter;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPEditorGUI;
@@ -25,10 +24,8 @@ import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
-import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
-import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -36,15 +33,11 @@ import net.highwayfrogs.editor.gui.mesh.MeshData;
 
 import java.net.URL;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
- * TODO: Automatically generate MAPGroups.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter
@@ -133,15 +126,10 @@ public class MapUIController implements Initializable {
     @FXML private TitledPane geometryPane;
     @FXML private GridPane geometryGridPane;
     private GUIEditorGrid geometryEditor;
-    private MeshData groupMeshData;
     private MeshData looseMeshData;
 
     private MAPAnimation editAnimation;
     private MeshData animationMarker;
-
-    private boolean selectGroup;
-    private MAPGroup selectedGroup = MAPGroup.NULL_MAP_GROUP;
-    private boolean groupEditMode;
 
     private Consumer<MAPPolygon> onSelect;
     private Runnable cancelSelection;
@@ -286,35 +274,6 @@ public class MapUIController implements Initializable {
     }
 
     /**
-     * Sets the selected group.
-     * @param newGroup The new group.
-     */
-    public void setSelectedGroup(MAPGroup newGroup) {
-        if (newGroup == null)
-            newGroup = MAPGroup.NULL_MAP_GROUP;
-
-        if (groupMeshData != null) {
-            getController().getMapMesh().getManager().removeMesh(groupMeshData);
-            groupMeshData = null;
-        }
-
-        if (!newGroup.isNullGroup()) {
-            newGroup.getPolygonMap().values().forEach(list -> list.forEach(prim -> {
-                if (!(prim instanceof MAPPolygon))
-                    return;
-
-                MAPPolygon poly = (MAPPolygon) prim;
-                getController().renderOverPolygon(poly, MapMesh.GROUP_COLOR);
-            }));
-
-            this.groupMeshData = getController().getMapMesh().getManager().addMesh();
-        }
-
-        this.selectedGroup = newGroup;
-        setupGeometryEditor();
-    }
-
-    /**
      * Setup the map geometry editor.
      */
     public void setupGeometryEditor() {
@@ -324,61 +283,22 @@ public class MapUIController implements Initializable {
         this.geometryEditor.clearEditor();
         this.geometryEditor.addBoldLabel("Collision Grid:");
         this.geometryEditor.addButton("Edit Grid", () -> GridController.openGridEditor(this));
-        this.geometryEditor.addBoldLabel("Render Groups:");
+        this.geometryEditor.addCheckBox("Toggle Polygon Visibility", this.looseMeshData != null, this::updateVisibility);
+    }
 
-        List<MAPGroup> groups = new ArrayList<>(getMap().getGroups());
-        groups.add(0, MAPGroup.NULL_MAP_GROUP);
+    private void updateVisibility(boolean drawState) {
+        if (this.looseMeshData != null) {
+            getMesh().getManager().removeMesh(this.looseMeshData);
+            this.looseMeshData = null;
+        }
 
-        ComboBox<MAPGroup> comboBox = geometryEditor.addSelectionBox("Group Select", getSelectedGroup(), groups, this::setSelectedGroup);
-        comboBox.setConverter(new StringConverter<MAPGroup>() {
-            @Override
-            public String toString(MAPGroup group) {
-                return group.isNullGroup() ? "No Group" : "Group #" + groups.indexOf(group);
-            }
-
-            @Override
-            public MAPGroup fromString(String string) {
-                return null;
-            }
-        });
-
-        geometryEditor.addCheckBox("Group Finder", isSelectGroup(), newState -> this.selectGroup = newState);
-        geometryEditor.addCheckBox("Group Editor", isGroupEditMode(), newState -> this.groupEditMode = newState)
-                .setDisable(getSelectedGroup().isNullGroup());
-
-        // Remove Group.
-        geometryEditor.addButton("Remove Group", () -> {
-            int index = getMap().getGroups().indexOf(getSelectedGroup());
-            getMap().getGroups().remove(index);
-            setSelectedGroup(index > 0 ? getMap().getGroups().get(index - 1) : null);
-        }).setDisable(getSelectedGroup().isNullGroup());
-
-        // Add Group.
-        geometryEditor.addButton("Add Group", () -> {
-            MAPGroup group = new MAPGroup();
-            getMap().getGroups().add(group);
-            setSelectedGroup(group);
-        });
-
-        this.geometryEditor.addButton("Generate Groups", () -> { // Temporary.
-            getMap().calculateGroups();
-            setSelectedGroup(null);
-        });
-
-        this.geometryEditor.addCheckBox("Show Loose Polygons", this.looseMeshData != null, newState -> {
-            if (this.looseMeshData != null) {
-                getMesh().getManager().removeMesh(this.looseMeshData);
-                this.looseMeshData = null;
-            }
-
-            if (newState) {
-                getMap().getLoosePolygons().values().forEach(list -> list.forEach(prim -> {
-                    if (prim instanceof MAPPolygon)
-                        getController().renderOverPolygon((MAPPolygon) prim, MapMesh.GROUP_COLOR);
-                }));
-                this.looseMeshData = getMesh().getManager().addMesh();
-            }
-        });
+        if (drawState) {
+            getMap().forEachPrimitive(prim -> {
+                if (!prim.isAllowDisplay() && prim instanceof MAPPolygon)
+                    getController().renderOverPolygon((MAPPolygon) prim, MapMesh.INVISIBLE_COLOR);
+            });
+            this.looseMeshData = getMesh().getManager().addMesh();
+        }
     }
 
     /**
@@ -540,29 +460,9 @@ public class MapUIController implements Initializable {
             return true;
         }
 
-        if (isSelectGroup()) {
-            MAPGroup found = null;
-            for (MAPGroup group : getMap().getGroups())
-                for (List<MAPPrimitive> primitives : group.getPolygonMap().values())
-                    if (primitives.contains(clickedPolygon))
-                        found = group;
-
-            this.selectGroup = false;
-            setSelectedGroup(found);
-            return true;
-        }
-
-        if (isGroupEditMode() && !getSelectedGroup().isNullGroup()) {
-            List<MAPPrimitive> primList = getSelectedGroup().getPolygonMap().computeIfAbsent(clickedPolygon.getType(), key -> new LinkedList<>());
-            List<MAPPrimitive> looseList = getMap().getLoosePolygons().get(clickedPolygon.getType());
-
-            if (primList.remove(clickedPolygon)) {
-                looseList.add(clickedPolygon);
-            } else if (looseList.remove(clickedPolygon)) {
-                primList.add(clickedPolygon);
-            } // Else: This polygon is probably registered by another group.
-
-            setSelectedGroup(getSelectedGroup()); // Redraw.
+        if (getLooseMeshData() != null) { // Toggle visibility.
+            clickedPolygon.setAllowDisplay(!clickedPolygon.isAllowDisplay());
+            updateVisibility(true);
             return true;
         }
 

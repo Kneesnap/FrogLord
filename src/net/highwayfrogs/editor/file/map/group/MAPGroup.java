@@ -10,8 +10,8 @@ import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -28,8 +28,12 @@ public class MAPGroup extends GameObject {
     private transient Map<MAPPrimitiveType, Integer> loadPolygonPointerMap = new HashMap<>();
     private transient int savePointerLocation;
 
-    public static final MAPGroup NULL_MAP_GROUP = new MAPGroup();
     private static final int NULL_POINTERS = 6; // 1 unused. 5 runtime pointers.
+
+    public MAPGroup() {
+        for (MAPPrimitiveType type : MAPFile.PRIMITIVE_TYPES)
+            polygonMap.put(type, new LinkedList<>());
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -87,25 +91,15 @@ public class MAPGroup extends GameObject {
         for (MAPPrimitiveType type : MAPFile.PRIMITIVE_TYPES) {
             List<MAPPrimitive> from = group.get(type);
             int count = loadPolygonCountMap.get(type);
-            List<MAPPrimitive> loadedPolys = new ArrayList<>();
 
             if (count > 0 && from != null) {
                 int index = from.indexOf(map.getLoadPointerPolygonMap().get(loadPolygonPointerMap.get(type)));
                 for (int i = 0; i < count; i++)
-                    loadedPolys.add(from.remove(index));
+                    from.get(index + i).setAllowDisplay(true);
             }
-            polygonMap.put(type, loadedPolys);
         }
 
         this.loadPolygonCountMap.clear();
         this.loadPolygonPointerMap.clear();
-    }
-
-    /**
-     * Test if this is a null map group.
-     * @return isNull
-     */
-    public boolean isNullGroup() {
-        return this == NULL_MAP_GROUP;
     }
 }
