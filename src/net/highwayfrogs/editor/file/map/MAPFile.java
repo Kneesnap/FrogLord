@@ -59,7 +59,7 @@ public class MAPFile extends GameFile {
     @Setter private short levelTimer;
     @Setter private SVector cameraSourceOffset;
     @Setter private SVector cameraTargetOffset;
-    @Setter private SVector basePoint; // This is the bottom left of the map group grid. NOTE: Generated from [-(((xGridCount + C) * xGridLength) >> 1) - 1, 0, -(((zGridCount + C) * zGridLength) >> 1) - 1]
+    @Setter private SVector basePoint; // This is the bottom left of the map group grid. Used to determine map group for things like entity collision. TODO: How to calculate?
     private List<Path> paths = new ArrayList<>();
     private List<Zone> zones = new ArrayList<>();
     private List<Form> forms = new ArrayList<>();
@@ -72,13 +72,13 @@ public class MAPFile extends GameFile {
 
     private short groupXCount;
     private short groupZCount;
-    private short groupXLength; // Seems to always be 256, but probably can be changed in FrogLord.
-    private short groupZLength; // Seems to always be 256, but probably can be changed in FrogLord.
+    private short groupXSize; // Seems to always be 256. Appears to be related to the X size of one group.
+    private short groupZSize; // Seems to always be 256. Appears to be related to the Z size of one group.
 
     private short gridXCount;
     private short gridZCount;
-    private short gridXLength; // Seems to always be 768, but probably can be changed in FrogLord.
-    private short gridZLength; // Seems to always be 768, but probably can be changed in FrogLord.
+    private short gridXSize; // Seems to always be 768.
+    private short gridZSize; // Seems to always be 768.
 
     @Setter private transient VLOArchive suppliedVLO;
     @Setter private transient int suppliedRemapAddress;
@@ -259,8 +259,8 @@ public class MAPFile extends GameFile {
         this.basePoint = SVector.readWithPadding(reader);
         this.groupXCount = reader.readShort(); // Number of groups in x.
         this.groupZCount = reader.readShort(); // Number of groups in z.
-        this.groupXLength = reader.readShort(); // Group X Length
-        this.groupZLength = reader.readShort(); // Group Z Length
+        this.groupXSize = reader.readShort(); // Group X Length
+        this.groupZSize = reader.readShort(); // Group Z Length
         int groupCount = groupXCount * groupZCount;
 
         for (int i = 0; i < groupCount; i++) {
@@ -319,8 +319,8 @@ public class MAPFile extends GameFile {
         reader.verifyString(GRID_SIGNATURE);
         this.gridXCount = reader.readShort(); // Number of grid squares in x.
         this.gridZCount = reader.readShort();
-        this.gridXLength = reader.readShort(); // Grid square x length.
-        this.gridZLength = reader.readShort();
+        this.gridXSize = reader.readShort(); // Grid square x length.
+        this.gridZSize = reader.readShort();
 
         int stackCount = gridXCount * gridZCount;
         for (int i = 0; i < stackCount; i++) {
@@ -545,8 +545,8 @@ public class MAPFile extends GameFile {
         this.basePoint.saveWithPadding(writer);
         writer.writeShort(this.groupXCount);
         writer.writeShort(this.groupZCount);
-        writer.writeShort(this.groupXLength);
-        writer.writeShort(this.groupZLength);
+        writer.writeShort(this.groupXSize);
+        writer.writeShort(this.groupZSize);
         getGroups().forEach(group -> group.save(writer));
 
         // Save entity indices. The beaver entity uses this.
@@ -614,8 +614,8 @@ public class MAPFile extends GameFile {
         writer.writeStringBytes(GRID_SIGNATURE);
         writer.writeShort(this.gridXCount);
         writer.writeShort(this.gridZCount);
-        writer.writeShort(this.gridXLength);
-        writer.writeShort(this.gridZLength);
+        writer.writeShort(this.gridXSize);
+        writer.writeShort(this.gridZSize);
 
         List<GridSquare> saveSquares = new ArrayList<>();
         getGridStacks().forEach(stack -> {
@@ -863,12 +863,28 @@ public class MAPFile extends GameFile {
     }
 
     /**
+     * Get the world X the grid starts at.
+     * @return baseGridX
+     */
+    public short getBaseGridX() {
+        return (short) (-(getGridXSize() * getGridXCount()) >> 1);
+    }
+
+    /**
+     * Get the world Z the grid starts at.
+     * @return baseGridZ
+     */
+    public short getBaseGridZ() {
+        return (short) (-(getGridZSize() * getGridZCount()) >> 1);
+    }
+
+    /**
      * Gets the grid X value from a world X value.
      * @param worldX The world X coordinate.
      * @return gridX
      */
     public int getGridX(int worldX) {
-        return (worldX - getBasePoint().getX()) >> 8;
+        return (worldX - getBaseGridX()) >> 8;
     }
 
     /**
@@ -877,7 +893,25 @@ public class MAPFile extends GameFile {
      * @return gridZ
      */
     public int getGridZ(int worldZ) {
-        return (worldZ - getBasePoint().getZ()) >> 8;
+        return (worldZ - getBaseGridZ()) >> 8;
+    }
+
+    /**
+     * Get the group X value from a world X value.
+     * @param worldX The world X coordinate.
+     * @return groupX
+     */
+    public int getGroupX(int worldX) {
+        return (worldX - getBasePoint().getX()) / getGroupXSize();
+    }
+
+    /**
+     * Get the group Z value from a world Z value.
+     * @param worldZ The world Z coordinate.
+     * @return groupZ
+     */
+    public int getGroupZ(int worldZ) {
+        return (worldZ - getBasePoint().getZ()) / getGroupZSize();
     }
 
     /**

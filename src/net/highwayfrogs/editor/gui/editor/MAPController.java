@@ -121,12 +121,12 @@ public class MAPController extends EditorController<MAPFile> {
         // Grid properties
         addTableEntry("Grid Stacks", Integer.toString(map.getGridStacks().size()));
         addTableEntry("Grid Size Count", "[" + map.getGridXCount() + ", " + map.getGridZCount() + "]");
-        addTableEntry("Grid Size Length", "[" + map.getGridXLength() + ", " + map.getGridZLength() + "]");
+        addTableEntry("Grid Size Length", "[" + map.getGridXSize() + ", " + map.getGridZSize() + "]");
 
         // Group properties
         addTableEntry("Group Count", Integer.toString(map.getGroups().size()));
         addTableEntry("Group Size Count", "[" + map.getGroupXCount() + ", " + map.getGroupZCount() + "]");
-        addTableEntry("Group Size Length", "[" + map.getGroupXLength() + ", " + map.getGroupZLength() + "]");
+        addTableEntry("Group Size Length", "[" + map.getGroupXSize() + ", " + map.getGroupZSize() + "]");
     }
 
     private void addTableEntry(String name, String value) {
