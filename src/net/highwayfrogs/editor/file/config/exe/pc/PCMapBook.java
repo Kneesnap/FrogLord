@@ -68,4 +68,9 @@ public class PCMapBook extends MapBook {
                 || this.highMapId == test.getLoadedId()
                 || this.highWadId == test.getLoadedId();
     }
+
+    @Override
+    public void handleCorrection(String[] args) {
+        throw new UnsupportedOperationException("This will be implemented if we find a version which requires it.");
+    }
 }

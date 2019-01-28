@@ -68,4 +68,9 @@ public class PCThemeBook extends ThemeBook {
     public boolean isValid() {
         return this.highVloId != 0 || this.lowVloId != 0 || this.formLibraryPointer != 0;
     }
+
+    @Override
+    public void handleCorrection(String[] args) {
+        throw new UnsupportedOperationException("This will be implemented if we find a version which requires it.");
+    }
 }

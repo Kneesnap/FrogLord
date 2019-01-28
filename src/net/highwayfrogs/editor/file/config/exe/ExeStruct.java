@@ -16,4 +16,18 @@ public abstract class ExeStruct extends GameObject {
     public FroggerEXEInfo getConfig() {
         return GUIMain.EXE_CONFIG;
     }
+
+    /**
+     * Handle a manual correction.
+     * @param args The arguments supplied.
+     */
+    public abstract void handleCorrection(String[] args);
+
+    /**
+     * Handle a manual correction.
+     * @param str The string containing the arguments.
+     */
+    public void handleCorrection(String str) {
+        handleCorrection(str.split(","));
+    }
 }

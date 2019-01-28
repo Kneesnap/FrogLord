@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.map.MAPLevel;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -42,6 +43,9 @@ public class FroggerEXEInfo extends Config {
 
     public static final String FIELD_NAME = "name";
     private static final String FIELD_FILE_NAMES = "Files";
+
+    private static final String CHILD_RESTORE_MAP_BOOK = "MapBookRestore";
+    private static final String CHILD_RESTORE_THEME_BOOK = "ThemeBookRestore";
 
     public FroggerEXEInfo(File inputExe, InputStream inputStream) throws IOException {
         super(inputStream);
@@ -170,6 +174,17 @@ public class FroggerEXEInfo extends Config {
             book.load(reader);
             themeLibrary[i] = book;
         }
+
+        if (!hasChild(CHILD_RESTORE_THEME_BOOK))
+            return;
+
+        Config themeBookRestore = getChild(CHILD_RESTORE_THEME_BOOK);
+
+        for (String key : themeBookRestore.keySet()) {
+            MAPTheme theme = MAPTheme.getTheme(key);
+            Utils.verify(theme != null, "Unknown theme: '%s'", key);
+            getThemeBook(theme).handleCorrection(themeBookRestore.getString(key));
+        }
     }
 
     private void readMapLibrary() {
@@ -181,6 +196,17 @@ public class FroggerEXEInfo extends Config {
             MapBook book = getPlatform().getMapBookMaker().get();
             book.load(reader);
             this.mapLibrary.add(book);
+        }
+
+        if (!hasChild(CHILD_RESTORE_MAP_BOOK))
+            return;
+
+        Config mapBookRestore = getChild(CHILD_RESTORE_MAP_BOOK);
+        for (String key : mapBookRestore.keySet()) {
+            MAPLevel level = MAPLevel.getByName(key);
+            Utils.verify(level != null, "Unknown level: '%s'", key);
+            Utils.verify(level.isExists(), "Cannot modify %s, its level doesn't exist.", key);
+            getMapBook(level).handleCorrection(mapBookRestore.getString(key));
         }
     }
 
@@ -296,5 +322,14 @@ public class FroggerEXEInfo extends Config {
      */
     public ThemeBook getThemeBook(MAPTheme theme) {
         return this.themeLibrary[theme.ordinal()];
+    }
+
+    /**
+     * Get a map book by a MAPLevel.
+     * @param level The level to get the book for.
+     * @return mapBook
+     */
+    public MapBook getMapBook(MAPLevel level) {
+        return this.mapLibrary.get(level.ordinal());
     }
 }

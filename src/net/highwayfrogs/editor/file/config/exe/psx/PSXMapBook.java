@@ -49,4 +49,11 @@ public class PSXMapBook extends MapBook {
     public boolean isEntry(FileEntry test) {
         return this.mapId == test.getLoadedId() || this.wadId == test.getLoadedId();
     }
+
+    @Override
+    public void handleCorrection(String[] args) {
+        this.mapId = Integer.parseInt(args[0]);
+        this.remapPointer = Long.decode(args[1]) + getConfig().getRamPointerOffset();
+        this.wadId = Integer.parseInt(args[2]);
+    }
 }

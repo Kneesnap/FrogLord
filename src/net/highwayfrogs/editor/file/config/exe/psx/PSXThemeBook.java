@@ -17,13 +17,13 @@ public class PSXThemeBook extends ThemeBook {
     private int vloId;
     private int multiplayerWadId;
     private int multiplayerVloId;
-    private int formLibraryPointer;
+    private long formLibraryPointer;
     private int deathHeight;
 
     @Override
     public void load(DataReader reader) {
         this.wadId = reader.readInt();
-        this.formLibraryPointer = reader.readInt();
+        this.formLibraryPointer = reader.readUnsignedIntAsLong();
         this.vloId = reader.readInt();
         this.deathHeight = reader.readInt();
         this.multiplayerWadId = reader.readInt();
@@ -33,7 +33,7 @@ public class PSXThemeBook extends ThemeBook {
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(this.wadId);
-        writer.writeInt(this.formLibraryPointer);
+        writer.writeUnsignedInt(this.formLibraryPointer);
         writer.writeInt(this.vloId);
         writer.writeInt(this.deathHeight);
         writer.writeInt(this.multiplayerWadId);
@@ -48,5 +48,14 @@ public class PSXThemeBook extends ThemeBook {
     @Override
     public boolean isValid() {
         return this.vloId != 0 || this.formLibraryPointer != 0 || this.wadId != 0;
+    }
+
+    @Override
+    public void handleCorrection(String[] args) {
+        this.wadId = Integer.parseInt(args[0]);
+        this.vloId = Integer.parseInt(args[1]);
+        this.multiplayerWadId = Integer.parseInt(args[2]);
+        this.multiplayerVloId = Integer.parseInt(args[3]);
+        this.formLibraryPointer = Long.decode(args[4]) + getConfig().getRamPointerOffset();
     }
 }
