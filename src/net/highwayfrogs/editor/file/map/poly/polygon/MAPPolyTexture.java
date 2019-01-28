@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
+import javafx.scene.image.ImageView;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,9 +11,15 @@ import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+
+import java.util.List;
 
 /**
  * Represents PSX polgons with a texture.
@@ -25,6 +32,9 @@ public class MAPPolyTexture extends MAPPolygon {
     private ByteUV[] uvs;
     private short textureId;
     private PSXColorVector[] vectors;
+
+    private static final ImageFilterSettings SHOW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true).setAllowFlip(true);
+    private static final int SHOW_SIZE = 150;
 
     public MAPPolyTexture(MAPPolygonType type, int verticeCount, int colorCount) {
         super(type, verticeCount);
@@ -121,7 +131,23 @@ public class MAPPolyTexture extends MAPPolygon {
     @Override
     public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(controller, editor);
-        editor.addShortField("Texture ID", getTextureId(), this::setTextureId, null);
+
+        List<Short> remapList = controller.getMesh().getTextureMap().getRemapList();
+        VLOArchive suppliedVLO = controller.getMap().getSuppliedVLO();
+        GameImage image = suppliedVLO.getImageByTextureId(remapList.get(getTextureId()));
+
+        ImageView view = editor.addCenteredImage(image.toFXImage(SHOW_SETTINGS), 150);
+        view.setOnMouseClicked(evt -> suppliedVLO.promptImageSelection(newImage -> {
+            int newValue = remapList.indexOf(newImage.getTextureId());
+            if (newValue == -1) {
+                System.out.println("This image is not part of the remap! It can't be used!"); // Show this as a popup maybe.
+                return;
+            }
+
+            this.textureId = (short) newValue;
+            view.setImage(newImage.toFXImage(SHOW_SETTINGS));
+            controller.getController().refreshView();
+        }, false));
 
         for (PolyTextureFlag flag : PolyTextureFlag.values())
             editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> setFlag(flag, newState));

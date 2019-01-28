@@ -99,6 +99,7 @@ public class MapMesh extends TriangleMesh {
 
     /**
      * Load mesh data from the map.
+     * TODO: Keep everything added after polygon data.
      */
     public void updateData() {
         updateVertices();

@@ -2,8 +2,11 @@ package net.highwayfrogs.editor.gui;
 
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.collections.FXCollections;
+import javafx.geometry.HPos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
@@ -294,6 +297,22 @@ public class GUIEditorGrid {
         button.setOnAction(evt -> onPress.run());
         addRow(25);
         return button;
+    }
+
+    /**
+     * Adds a centered image.
+     * @param image      The image to add.
+     * @param dimensions The dimensions to display at.
+     * @return imageView
+     */
+    public ImageView addCenteredImage(Image image, double dimensions) {
+        ImageView view = new ImageView(image);
+        GridPane.setHalignment(view, HPos.CENTER);
+        view.setFitWidth(dimensions);
+        view.setFitHeight(dimensions);
+        setupSecondNode(view, true);
+        addRow(dimensions + 5);
+        return view;
     }
 
     /**
