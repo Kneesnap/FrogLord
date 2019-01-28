@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 /**
  * Reads the "FORM" struct.
@@ -23,15 +25,20 @@ public class Form extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        short dataCount = reader.readShort();
+        int dataCount = reader.readUnsignedShortAsInt();
         reader.readShort(); // Max Y, Runtime variable.
         this.xGridSquareCount = reader.readShort();
         this.zGridSquareCount = reader.readShort();
         this.xOffset = reader.readShort();
         this.zOffset = reader.readShort();
 
-        if (dataCount == 0)
+        if (dataCount == 0) {
+            this.xGridSquareCount = -1;
+            this.zGridSquareCount = -1;
+            this.xOffset = -1;
+            this.zOffset = -1;
             return; // There is no form data.
+        }
 
         Utils.verify(dataCount == 1, "Invalid Form Data Count: " + dataCount); // The game only supports 1 form data even if it has a count for more.
 
@@ -63,5 +70,36 @@ public class Form extends GameObject {
      */
     public boolean hasData() {
         return getData() != null;
+    }
+
+    /**
+     * Setup a form editor.
+     * @param editor The editor to setup under.
+     */
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+        if (hasData()) {
+            editor.addButton("Remove Data", () -> {
+                setData(null);
+                controller.setupFormEditor();
+            });
+        } else {
+            editor.addButton("Add Data", () -> {
+                if (getXGridSquareCount() <= 0 || getZGridSquareCount() <= 0) {
+                    System.out.println("Grid Counts must be positive non-zero numbers!"); // Might want to make this a popup in the future.
+                    return;
+                }
+
+                setData(new FormData(this));
+                controller.setupFormEditor();
+            });
+        }
+
+        editor.addBoldLabel("Form:");
+        editor.addShortField("X Grid Count", getXGridSquareCount(), this::setXGridSquareCount, null);
+        editor.addShortField("Z Grid Count", getZGridSquareCount(), this::setZGridSquareCount, null);
+        editor.addShortField("xOffset", getXOffset(), this::setXOffset, null);
+        editor.addShortField("zOffset", getZOffset(), this::setZOffset, null);
+        if (hasData())
+            getData().setupEditor(this, editor);
     }
 }

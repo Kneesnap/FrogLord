@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.standard.psx.prims.polygon;
+package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +9,8 @@ import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -18,7 +20,7 @@ import java.awt.image.BufferedImage;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public class PSXPolyGouraud extends PSXPolygon implements VertexColor {
+public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
     private PSXColorVector[] colors;
     @Setter private transient TextureEntry textureEntry;
 
@@ -43,7 +45,7 @@ public class PSXPolyGouraud extends PSXPolygon implements VertexColor {
             {{0, FULL_SIZE, FULL_SIZE}, {FULL_SIZE, 0, FULL_SIZE}}
     };
 
-    public PSXPolyGouraud(PSXPolygonType type, int verticeCount) {
+    public MAPPolyGouraud(MAPPolygonType type, int verticeCount) {
         super(type, verticeCount);
         this.colors = new PSXColorVector[verticeCount];
     }
@@ -88,5 +90,14 @@ public class PSXPolyGouraud extends PSXPolygon implements VertexColor {
             int[][] points = TRIANGLE_POSITON[i];
             graphics.fillPolygon(points[0], points[1], TRIANGLE_SIZE);
         }
+    }
+
+    @Override
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+        super.setupEditor(controller, editor);
+
+        int id = 0;
+        for (PSXColorVector colorVec : getColors())
+            editor.addColorPicker("Color #" + (++id), colorVec.toRGB(), colorVec::fromRGB);
     }
 }

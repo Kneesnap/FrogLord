@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.file.vlo;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.WritableImage;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -340,6 +342,15 @@ public class GameImage extends GameObject {
      */
     public BufferedImage toBufferedImage(ImageFilterSettings settings) {
         return applyFilters(toBufferedImage(), settings);
+    }
+
+    /**
+     * Export this game image as a JavaFX image.
+     * @param settings The settings to export this image with.
+     * @return fxImage
+     */
+    public WritableImage toFXImage(ImageFilterSettings settings) {
+        return SwingFXUtils.toFXImage(toBufferedImage(settings), null);
     }
 
     /**

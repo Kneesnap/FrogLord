@@ -5,9 +5,9 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.PSXPolygon;
+import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -17,14 +17,14 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 public class GridSquare extends GameObject {
     private int flags;
-    @Setter private PSXPolygon polygon;
+    @Setter private MAPPolygon polygon;
     private transient MAPFile parent;
 
     public GridSquare(MAPFile parent) {
         this.parent = parent;
     }
 
-    public GridSquare(PSXPolygon poly, MAPFile parent) {
+    public GridSquare(MAPPolygon poly, MAPFile parent) {
         this(parent);
         this.polygon = poly;
     }
@@ -36,8 +36,8 @@ public class GridSquare extends GameObject {
 
         PSXGPUPrimitive prim = parent.getLoadPointerPolygonMap().get(polyF4Pointer);
         Utils.verify(prim != null, "GridSquare's Polygon Pointer does not point to a primitive! (%d)", polyF4Pointer);
-        Utils.verify(prim instanceof PSXPolygon, "GridSquare's Polygon Pointer does not point to a polygon! (%d)", polyF4Pointer);
-        this.polygon = (PSXPolygon) prim;
+        Utils.verify(prim instanceof MAPPolygon, "GridSquare's Polygon Pointer does not point to a polygon! (%d)", polyF4Pointer);
+        this.polygon = (MAPPolygon) prim;
     }
 
     @Override
@@ -60,11 +60,15 @@ public class GridSquare extends GameObject {
 
     /**
      * Set the flag state.
-     * @param flag  The flag type.
-     * @param state The state of the flag.
+     * @param flag     The flag type.
+     * @param newState The new state of the flag.
      */
-    public void setFlag(GridSquareFlag flag, boolean state) {
-        if (state) {
+    public void setFlag(GridSquareFlag flag, boolean newState) {
+        boolean oldState = testFlag(flag);
+        if (oldState == newState)
+            return; // Prevents the ^ operation from breaking the value.
+
+        if (newState) {
             this.flags |= flag.getFlag();
         } else {
             this.flags ^= flag.getFlag();

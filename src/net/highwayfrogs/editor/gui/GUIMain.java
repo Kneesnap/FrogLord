@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.gui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -52,12 +53,16 @@ public class GUIMain extends Application {
 
         // If this isn't a debug setup, prompt the user to select the files to load.
         File mwdFile = Utils.promptFileOpen("Please select a Frogger MWAD", "Medievil WAD", "MWD");
-        if (mwdFile == null)
-            return; // No file given, shutdown.
+        if (mwdFile == null) {
+            Platform.exit(); // No file given, shutdown.
+            return;
+        }
 
         File exeFile = Utils.promptFileOpenExtensions("Please select a Frogger executable", "Frogger Executable", "EXE", "dat", "04", "06", "99");
-        if (exeFile == null)
-            return; // No file given, shutdown.
+        if (exeFile == null) {
+            Platform.exit(); // No file given, shutdown.
+            return;
+        }
 
         resolveEXE(exeFile, () -> openGUI(primaryStage, mwdFile));
     }

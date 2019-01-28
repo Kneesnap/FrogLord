@@ -2,8 +2,11 @@ package net.highwayfrogs.editor.gui;
 
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.collections.FXCollections;
+import javafx.geometry.HPos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
@@ -14,6 +17,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -175,8 +179,11 @@ public class GUIEditorGrid {
         box.valueProperty().setValue(current); // Set the selected value.
         box.getSelectionModel().select(current); // Automatically scroll to selected value.
 
-        box.addEventFilter(ComboBox.ON_SHOWN, event -> // Show the selected value when the dropdown is opened.
-                ((ComboBoxListViewSkin<T>) box.getSkin()).getListView().scrollTo(box.getSelectionModel().getSelectedIndex()));
+        AtomicBoolean firstOpen = new AtomicBoolean(true);
+        box.addEventFilter(ComboBox.ON_SHOWN, event -> { // Show the selected value when the dropdown is opened.
+            if (firstOpen.getAndSet(false))
+                ((ComboBoxListViewSkin<T>) box.getSkin()).getListView().scrollTo(box.getValue());
+        });
 
         box.valueProperty().addListener((listener, oldVal, newVal) -> {
             setter.accept(newVal);
@@ -290,6 +297,22 @@ public class GUIEditorGrid {
         button.setOnAction(evt -> onPress.run());
         addRow(25);
         return button;
+    }
+
+    /**
+     * Adds a centered image.
+     * @param image      The image to add.
+     * @param dimensions The dimensions to display at.
+     * @return imageView
+     */
+    public ImageView addCenteredImage(Image image, double dimensions) {
+        ImageView view = new ImageView(image);
+        GridPane.setHalignment(view, HPos.CENTER);
+        view.setFitWidth(dimensions);
+        view.setFitHeight(dimensions);
+        setupSecondNode(view, true);
+        addRow(dimensions + 5);
+        return view;
     }
 
     /**

@@ -20,16 +20,16 @@ import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
+import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
+import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
+import net.highwayfrogs.editor.file.map.poly.line.MAPLineType;
+import net.highwayfrogs.editor.file.map.poly.polygon.*;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
-import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
-import net.highwayfrogs.editor.file.standard.psx.prims.PSXPrimitiveType;
-import net.highwayfrogs.editor.file.standard.psx.prims.line.PSXLineType;
-import net.highwayfrogs.editor.file.standard.psx.prims.polygon.*;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -38,6 +38,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MAPController;
+import net.highwayfrogs.editor.system.AbstractStringConverter;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -45,6 +46,7 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * Parses Frogger MAP files.
@@ -54,44 +56,43 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MAPFile extends GameFile {
     @Setter private short startXTile;
     @Setter private short startYTile;
-    @Setter private short startRotation;
+    @Setter private StartRotation startRotation;
     private MAPTheme theme;
     @Setter private short levelTimer;
     @Setter private SVector cameraSourceOffset;
     @Setter private SVector cameraTargetOffset;
-    @Setter private SVector basePoint; // This is the bottom left of the map group grid. NOTE: Generated from [-(((xGridCount + C) * xGridLength) >> 1) - 1, 0, -(((zGridCount + C) * zGridLength) >> 1) - 1]
+    @Setter private short baseXTile; // These point to the bottom left of the map group grid.
+    @Setter private short baseZTile;
     private List<Path> paths = new ArrayList<>();
     private List<Zone> zones = new ArrayList<>();
     private List<Form> forms = new ArrayList<>();
     private List<Entity> entities = new ArrayList<>();
     private List<Light> lights = new ArrayList<>();
-    private List<MAPGroup> groups = new ArrayList<>();
     private List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
 
     private short groupXCount;
     private short groupZCount;
-    private short groupXLength; // Seems to always be 256, but probably can be changed in FrogLord.
-    private short groupZLength; // Seems to always be 256, but probably can be changed in FrogLord.
+    private short groupXSize; // Seems to always be 256. Appears to be related to the X size of one group.
+    private short groupZSize; // Seems to always be 256. Appears to be related to the Z size of one group.
 
     private short gridXCount;
     private short gridZCount;
-    private short gridXLength; // Seems to always be 768, but probably can be changed in FrogLord.
-    private short gridZLength; // Seems to always be 768, but probably can be changed in FrogLord.
+    private short gridXSize; // Seems to always be 768.
+    private short gridZSize; // Seems to always be 768.
 
     @Setter private transient VLOArchive suppliedVLO;
     @Setter private transient int suppliedRemapAddress;
     private transient MWDFile parentMWD;
-    private transient Map<PSXPrimitiveType, List<PSXGPUPrimitive>> loosePolygons = new HashMap<>();
-    private transient Map<PSXPrimitiveType, List<PSXGPUPrimitive>> cachedPolygons = new HashMap<>();
+    private transient Map<MAPPrimitiveType, List<MAPPrimitive>> polygons = new HashMap<>();
 
     private transient List<GridSquare> loadGridSquares = new ArrayList<>();
-    private transient Map<PSXGPUPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
-    private transient Map<Integer, PSXGPUPrimitive> loadPointerPolygonMap = new HashMap<>();
+    private transient Map<MAPPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
+    private transient Map<Integer, MAPPrimitive> loadPointerPolygonMap = new HashMap<>();
 
-    private transient Map<PSXGPUPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
-    private transient Map<Integer, PSXGPUPrimitive> savePointerPolygonMap = new HashMap<>();
+    private transient Map<MAPPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
+    private transient Map<Integer, MAPPrimitive> savePointerPolygonMap = new HashMap<>();
 
     public static final int TYPE_ID = 0;
     private static final String SIGNATURE = "FROG";
@@ -115,7 +116,7 @@ public class MAPFile extends GameFile {
     private static final int TOTAL_CHECKPOINT_TIMER_ENTRIES = 5;
 
     public static final Image ICON = loadIcon("map");
-    public static final List<PSXPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
+    public static final List<MAPPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
 
     public static final int VERTEX_COLOR_IMAGE_SIZE = 8;
     private static final ImageFilterSettings OBJ_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
@@ -126,8 +127,8 @@ public class MAPFile extends GameFile {
     }
 
     static {
-        PRIMITIVE_TYPES.addAll(Arrays.asList(PSXPolygonType.values()));
-        PRIMITIVE_TYPES.add(PSXLineType.G2);
+        PRIMITIVE_TYPES.addAll(Arrays.asList(MAPPolygonType.values()));
+        PRIMITIVE_TYPES.add(MAPLineType.G2);
     }
 
     /**
@@ -159,7 +160,7 @@ public class MAPFile extends GameFile {
         reader.verifyString(GENERAL_SIGNATURE);
         this.startXTile = reader.readShort();
         this.startYTile = reader.readShort();
-        this.startRotation = reader.readShort();
+        this.startRotation = StartRotation.values()[reader.readShort()];
         this.theme = MAPTheme.values()[reader.readShort()];
 
         this.levelTimer = reader.readShort();
@@ -203,7 +204,7 @@ public class MAPFile extends GameFile {
         // Read forms.
         reader.setIndex(formAddress);
         reader.verifyString(FORM_SIGNATURE);
-        short formCount = reader.readShort();
+        int formCount = reader.readUnsignedShortAsInt();
         reader.readShort(); // Padding.
 
         for (int i = 0; i < formCount; i++) {
@@ -256,44 +257,44 @@ public class MAPFile extends GameFile {
 
         reader.setIndex(groupAddress);
         reader.verifyString(GROUP_SIGNATURE);
-        this.basePoint = SVector.readWithPadding(reader);
+        SVector loadedBasePoint = SVector.readWithPadding(reader);
         this.groupXCount = reader.readShort(); // Number of groups in x.
         this.groupZCount = reader.readShort(); // Number of groups in z.
-        this.groupXLength = reader.readShort(); // Group X Length
-        this.groupZLength = reader.readShort(); // Group Z Length
-        int groupCount = groupXCount * groupZCount;
+        this.groupXSize = reader.readShort(); // Group X Length
+        this.groupZSize = reader.readShort(); // Group Z Length
 
-        for (int i = 0; i < groupCount; i++) {
-            MAPGroup group = new MAPGroup(this);
+        MAPGroup[] loadGroups = new MAPGroup[getGroupCount()];
+        for (int i = 0; i < loadGroups.length; i++) {
+            MAPGroup group = new MAPGroup();
             group.load(reader);
-            groups.add(group);
+            loadGroups[i] = group;
         }
 
         // Read POLY
         reader.setIndex(polygonAddress);
         reader.verifyString(POLYGON_SIGNATURE);
 
-        Map<PSXPrimitiveType, Short> polyCountMap = new HashMap<>();
-        Map<PSXPrimitiveType, Integer> polyOffsetMap = new HashMap<>();
+        Map<MAPPrimitiveType, Short> polyCountMap = new HashMap<>();
+        Map<MAPPrimitiveType, Integer> polyOffsetMap = new HashMap<>();
 
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES)
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES)
             polyCountMap.put(type, reader.readShort());
         reader.readShort(); // Padding.
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES)
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES)
             polyOffsetMap.put(type, reader.readInt());
 
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES) {
             short polyCount = polyCountMap.get(type);
             int polyOffset = polyOffsetMap.get(type);
 
-            List<PSXGPUPrimitive> primitives = new ArrayList<>();
-            loosePolygons.put(type, primitives);
+            List<MAPPrimitive> primitives = new LinkedList<>();
+            polygons.put(type, primitives);
 
             if (polyCount > 0) {
                 reader.jumpTemp(polyOffset);
 
                 for (int i = 0; i < polyCount; i++) {
-                    PSXGPUPrimitive primitive = type.newPrimitive();
+                    MAPPrimitive primitive = type.newPrimitive();
                     getLoadPolygonPointerMap().put(primitive, reader.getIndex());
                     getLoadPointerPolygonMap().put(reader.getIndex(), primitive);
                     primitive.load(reader);
@@ -303,8 +304,9 @@ public class MAPFile extends GameFile {
                 reader.jumpReturn();
             }
         }
-        getGroups().forEach(group -> group.setupPolygonData(getLoosePolygons()));
-        updatePolygonCache();
+
+        for (MAPGroup group : loadGroups)
+            group.setupPolygonData(this, getPolygons());
 
         // Read Vertexes.
         reader.setIndex(vertexAddress);
@@ -319,8 +321,12 @@ public class MAPFile extends GameFile {
         reader.verifyString(GRID_SIGNATURE);
         this.gridXCount = reader.readShort(); // Number of grid squares in x.
         this.gridZCount = reader.readShort();
-        this.gridXLength = reader.readShort(); // Grid square x length.
-        this.gridZLength = reader.readShort();
+        this.gridXSize = reader.readShort(); // Grid square x length.
+        this.gridZSize = reader.readShort();
+
+        this.baseXTile = (short) ((loadedBasePoint.getX() + 1) / getGridXSize());
+        this.baseZTile = (short) ((loadedBasePoint.getZ() + 1) / getGridZSize());
+        Utils.verify(loadedBasePoint.getY() == 0, "Base-Point Y is not zero!");
 
         int stackCount = gridXCount * gridZCount;
         for (int i = 0; i < stackCount; i++) {
@@ -409,7 +415,7 @@ public class MAPFile extends GameFile {
         writer.writeStringBytes(GENERAL_SIGNATURE);
         writer.writeShort(this.startXTile);
         writer.writeShort(this.startYTile);
-        writer.writeShort(this.startRotation);
+        writer.writeShort((short) this.startRotation.ordinal());
         writer.writeShort((short) getTheme().ordinal());
         for (int i = 0; i < TOTAL_CHECKPOINT_TIMER_ENTRIES; i++)
             writer.writeShort(getLevelTimer());
@@ -470,9 +476,9 @@ public class MAPFile extends GameFile {
         writer.jumpReturn();
 
         writer.writeStringBytes(FORM_SIGNATURE);
-        short formCount = (short) this.forms.size();
-        writer.writeShort(formCount);
-        writer.writeShort((short) 0); // Padding.
+        int formCount = this.forms.size();
+        writer.writeUnsignedShort(formCount);
+        writer.writeUnsignedShort(0); // Padding.
 
         int formPointer = writer.getIndex() + (Constants.POINTER_SIZE * formCount);
         for (Form form : getForms()) {
@@ -534,7 +540,14 @@ public class MAPFile extends GameFile {
         getLights().forEach(light -> light.save(writer));
 
         // Write GROU.
-        updatePolygonCache();
+        List<MAPGroup> saveGroups = calculateGroups();
+
+        // This orders polygons a certain way so MAPGroup will have all of its polygons sequentially, which is required for MAPGroup to work properly.
+        getPolygons().values().forEach(list -> list.removeIf(MAPPrimitive::isAllowDisplay));
+        saveGroups.forEach(group -> {
+            for (Entry<MAPPrimitiveType, List<MAPPrimitive>> entry : group.getPolygonMap().entrySet())
+                getPolygons().get(entry.getKey()).addAll(entry.getValue());
+        });
 
         tempAddress = writer.getIndex();
         writer.jumpTemp(groupAddress);
@@ -542,12 +555,13 @@ public class MAPFile extends GameFile {
         writer.jumpReturn();
 
         writer.writeStringBytes(GROUP_SIGNATURE);
-        this.basePoint.saveWithPadding(writer);
+
+        makeBasePoint().saveWithPadding(writer);
         writer.writeShort(this.groupXCount);
         writer.writeShort(this.groupZCount);
-        writer.writeShort(this.groupXLength);
-        writer.writeShort(this.groupZLength);
-        getGroups().forEach(group -> group.save(writer));
+        writer.writeShort(this.groupXSize);
+        writer.writeShort(this.groupZSize);
+        saveGroups.forEach(group -> group.save(writer));
 
         // Save entity indices. The beaver entity uses this.
         getPaths().forEach(path -> path.writeEntityList(this, writer));
@@ -559,22 +573,22 @@ public class MAPFile extends GameFile {
         writer.jumpReturn();
 
         writer.writeStringBytes(POLYGON_SIGNATURE);
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES)
-            writer.writeShort((short) getCachedPolygons().get(type).size());
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES)
+            writer.writeShort((short) getPolygons().get(type).size());
 
         writer.writeShort((short) 0); // Padding.
 
-        Map<PSXPrimitiveType, Integer> polyAddresses = new HashMap<>();
+        Map<MAPPrimitiveType, Integer> polyAddresses = new HashMap<>();
 
         int lastPointer = writer.getIndex();
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES) {
             polyAddresses.put(type, lastPointer);
             lastPointer += Constants.POINTER_SIZE;
         }
 
         writer.setIndex(lastPointer);
-        for (PSXPrimitiveType type : PRIMITIVE_TYPES) {
-            if (type == PSXLineType.G2)
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES) {
+            if (type == MAPLineType.G2)
                 continue; // G2 was only enabled as a debug rendering option. It is not enabled in the retail release fairly sure.
 
             tempAddress = writer.getIndex();
@@ -583,7 +597,7 @@ public class MAPFile extends GameFile {
             writer.writeInt(tempAddress);
             writer.jumpReturn();
 
-            getCachedPolygons().get(type).forEach(polygon -> {
+            getPolygons().get(type).forEach(polygon -> {
                 getSavePointerPolygonMap().put(writer.getIndex(), polygon);
                 getSavePolygonPointerMap().put(polygon, writer.getIndex());
                 polygon.save(writer);
@@ -591,7 +605,7 @@ public class MAPFile extends GameFile {
         }
 
         // Write MAP_GROUP polygon pointers, since we've written polygon data.
-        getGroups().forEach(group -> group.writePolygonPointers(writer));
+        saveGroups.forEach(group -> group.writePolygonPointers(this, writer));
 
         // Write "VRTX."
         tempAddress = writer.getIndex();
@@ -614,8 +628,8 @@ public class MAPFile extends GameFile {
         writer.writeStringBytes(GRID_SIGNATURE);
         writer.writeShort(this.gridXCount);
         writer.writeShort(this.gridZCount);
-        writer.writeShort(this.gridXLength);
-        writer.writeShort(this.gridZLength);
+        writer.writeShort(this.gridXSize);
+        writer.writeShort(this.gridZSize);
 
         List<GridSquare> saveSquares = new ArrayList<>();
         getGridStacks().forEach(stack -> {
@@ -659,7 +673,6 @@ public class MAPFile extends GameFile {
 
     @SneakyThrows
     private void exportToObj(File directory, String cleanName, FileEntry entry, VLOArchive vloArchive, List<Short> remapTable) {
-        updatePolygonCache();
         boolean exportTextures = vloArchive != null;
 
         System.out.println("Exporting " + cleanName + ".");
@@ -682,17 +695,20 @@ public class MAPFile extends GameFile {
         objWriter.write(Constants.NEWLINE);
 
         // Write Faces.
-        List<PSXPolygon> allPolygons = new ArrayList<>();
-        getCachedPolygons().values().forEach(ply -> ply.stream().map(PSXPolygon.class::cast).forEach(allPolygons::add));
+        List<MAPPolygon> allPolygons = new ArrayList<>();
+        forEachPrimitive(prim -> {
+            if (prim instanceof MAPPolygon)
+                allPolygons.add((MAPPolygon) prim);
+        });
 
         // Register textures.
         if (exportTextures) {
-            allPolygons.sort(Comparator.comparingInt(PSXPolygon::getOrderId));
+            allPolygons.sort(Comparator.comparingInt(MAPPolygon::getOrderId));
             objWriter.write("# Vertex Textures" + Constants.NEWLINE);
 
-            for (PSXPolygon poly : allPolygons) {
-                if (poly instanceof PSXPolyTexture) {
-                    PSXPolyTexture polyTex = (PSXPolyTexture) poly;
+            for (MAPPolygon poly : allPolygons) {
+                if (poly instanceof MAPPolyTexture) {
+                    MAPPolyTexture polyTex = (MAPPolyTexture) poly;
                     for (int i = polyTex.getUvs().length - 1; i >= 0; i--)
                         objWriter.write(polyTex.getObjUVString(i) + Constants.NEWLINE);
                 }
@@ -708,11 +724,11 @@ public class MAPFile extends GameFile {
 
         Map<Integer, GameImage> textureMap = new HashMap<>();
         List<PSXColorVector> faceColors = new ArrayList<>();
-        Map<PSXColorVector, List<PSXPolygon>> facesWithColors = new HashMap<>();
+        Map<PSXColorVector, List<MAPPolygon>> facesWithColors = new HashMap<>();
 
         allPolygons.forEach(polygon -> {
-            if (polygon instanceof PSXPolyTexture) {
-                PSXPolyTexture texture = (PSXPolyTexture) polygon;
+            if (polygon instanceof MAPPolyTexture) {
+                MAPPolyTexture texture = (MAPPolyTexture) polygon;
 
                 if (exportTextures) {
                     int newTextureId = texture.getTextureId();
@@ -731,7 +747,7 @@ public class MAPFile extends GameFile {
 
                 objWriter.write(polygon.toObjFaceCommand(exportTextures, counter) + Constants.NEWLINE);
             } else {
-                PSXColorVector color = (polygon instanceof PSXPolyFlat) ? ((PSXPolyFlat) polygon).getColor() : ((PSXPolyGouraud) polygon).getColors()[0];
+                PSXColorVector color = (polygon instanceof MAPPolyFlat) ? ((MAPPolyFlat) polygon).getColor() : ((MAPPolyGouraud) polygon).getColors()[0];
                 if (!faceColors.contains(color))
                     faceColors.add(color);
                 facesWithColors.computeIfAbsent(color, key -> new ArrayList<>()).add(polygon);
@@ -740,7 +756,7 @@ public class MAPFile extends GameFile {
 
         objWriter.append(Constants.NEWLINE);
         objWriter.append("# Faces without textures.").append(Constants.NEWLINE);
-        for (Entry<PSXColorVector, List<PSXPolygon>> mapEntry : facesWithColors.entrySet()) {
+        for (Entry<PSXColorVector, List<MAPPolygon>> mapEntry : facesWithColors.entrySet()) {
             objWriter.write("usemtl color" + faceColors.indexOf(mapEntry.getKey()) + Constants.NEWLINE);
             mapEntry.getValue().forEach(poly -> objWriter.write(poly.toObjFaceCommand(exportTextures, null) + Constants.NEWLINE));
         }
@@ -781,13 +797,14 @@ public class MAPFile extends GameFile {
      */
     public int getMaxRemap() {
         AtomicInteger maxRemapId = new AtomicInteger();
-        getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
-            if (!(prim instanceof PSXPolyTexture))
+        forEachPrimitive(prim -> {
+            if (!(prim instanceof MAPPolyTexture))
                 return;
-            int newTex = ((PSXPolyTexture) prim).getTextureId();
+
+            int newTex = ((MAPPolyTexture) prim).getTextureId();
             if (newTex > maxRemapId.get())
                 maxRemapId.set(newTex);
-        }));
+        });
 
         return maxRemapId.get() + 1;
     }
@@ -799,18 +816,18 @@ public class MAPFile extends GameFile {
     public Map<VertexColor, BufferedImage> makeVertexColorTextures() {
         Map<VertexColor, BufferedImage> texMap = new HashMap<>();
 
-        getCachedPolygons().values().forEach(list -> list.forEach(prim -> {
+        forEachPrimitive(prim -> {
             if (!(prim instanceof VertexColor))
                 return;
 
             VertexColor vertexColor = (VertexColor) prim;
             BufferedImage image = vertexColor.makeTexture();
             texMap.put(vertexColor, image);
-        }));
+        });
 
         texMap.put(MapMesh.CURSOR_COLOR, MapMesh.CURSOR_COLOR.makeTexture());
         texMap.put(MapMesh.ANIMATION_COLOR, MapMesh.ANIMATION_COLOR.makeTexture());
-        texMap.put(MapMesh.GROUP_COLOR, MapMesh.GROUP_COLOR.makeTexture());
+        texMap.put(MapMesh.INVISIBLE_COLOR, MapMesh.INVISIBLE_COLOR.makeTexture());
         texMap.put(MapMesh.GRID_COLOR, MapMesh.GRID_COLOR.makeTexture());
         return texMap;
     }
@@ -823,20 +840,6 @@ public class MAPFile extends GameFile {
     @Override
     public Node makeEditor() {
         return loadEditor(new MAPController(), "map", this);
-    }
-
-    /**
-     * Rebuild the cache of all polygons.
-     */
-    public void updatePolygonCache() {
-        cachedPolygons.clear();
-        addPolygons(getLoosePolygons());
-        getGroups().forEach(group -> addPolygons(group.getPolygonMap()));
-    }
-
-    private void addPolygons(Map<PSXPrimitiveType, List<PSXGPUPrimitive>> add) {
-        for (Entry<PSXPrimitiveType, List<PSXGPUPrimitive>> entry : add.entrySet())
-            cachedPolygons.computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).addAll(entry.getValue());
     }
 
     private void printInvalidEntityReadDetection(Entity lastEntity, int endPointer) {
@@ -855,11 +858,30 @@ public class MAPFile extends GameFile {
         editor.addLabel("Theme", getTheme().name()); // Should look into whether or not this is ok to edit.
         editor.addShortField("Start xTile", getStartXTile(), this::setStartXTile, null);
         editor.addShortField("Start yTile", getStartYTile(), this::setStartYTile, null);
-        editor.addShortField("Start Rotation", getStartRotation(), this::setStartRotation, null);
+        editor.addEnumSelector("Start Rotation", getStartRotation(), StartRotation.values(), false, this::setStartRotation)
+                .setConverter(new AbstractStringConverter<>(StartRotation::getArrow));
+
         editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
-        editor.addSVector("Base Point", getBasePoint());
+        editor.addShortField("Base Point xTile", getBaseXTile(), this::setBaseXTile, null);
+        editor.addShortField("Base Point zTile", getBaseZTile(), this::setBaseZTile, null);
         editor.addSVector("Camera Source Offset", getCameraSourceOffset());
         editor.addSVector("Camera Target Offset", getCameraTargetOffset());
+    }
+
+    /**
+     * Get the world X the grid starts at.
+     * @return baseGridX
+     */
+    public short getBaseGridX() {
+        return (short) (-(getGridXSize() * getGridXCount()) >> 1);
+    }
+
+    /**
+     * Get the world Z the grid starts at.
+     * @return baseGridZ
+     */
+    public short getBaseGridZ() {
+        return (short) (-(getGridZSize() * getGridZCount()) >> 1);
     }
 
     /**
@@ -868,7 +890,7 @@ public class MAPFile extends GameFile {
      * @return gridX
      */
     public int getGridX(int worldX) {
-        return (worldX - getBasePoint().getX()) >> 8;
+        return (worldX - getBaseGridX()) >> 8;
     }
 
     /**
@@ -877,7 +899,7 @@ public class MAPFile extends GameFile {
      * @return gridZ
      */
     public int getGridZ(int worldZ) {
-        return (worldZ - getBasePoint().getZ()) >> 8;
+        return (worldZ - getBaseGridZ()) >> 8;
     }
 
     /**
@@ -888,5 +910,95 @@ public class MAPFile extends GameFile {
      */
     public GridStack getGridStack(int gridX, int gridZ) {
         return getGridStacks().get((gridZ * getGridXCount()) + gridX);
+    }
+
+    /**
+     * Gets the base point's world x coordinate.
+     * @return worldX
+     */
+    public short getBasePointWorldX() {
+        return (short) ((getBaseXTile() * getGridXSize()) - 1);
+    }
+
+    /**
+     * Gets the base point's world Z coordinate.
+     * @return worldZ
+     */
+    public short getBasePointWorldZ() {
+        return (short) ((getBaseZTile() * getGridZSize()) - 1);
+    }
+
+    /**
+     * Makes a BasePoint SVector.
+     * @return basePoint
+     */
+    public SVector makeBasePoint() {
+        return new SVector(getBasePointWorldX(), (short) 0, getBasePointWorldZ());
+    }
+
+    /**
+     * Get the group X value from a world X value.
+     * @param worldX The world X coordinate.
+     * @return groupX
+     */
+    public int getGroupX(int worldX) {
+        return (worldX - getBasePointWorldX()) / getGroupXSize();
+    }
+
+    /**
+     * Get the group Z value from a world Z value.
+     * @param worldZ The world Z coordinate.
+     * @return groupZ
+     */
+    public int getGroupZ(int worldZ) {
+        return (worldZ - getBasePointWorldZ()) / getGroupZSize();
+    }
+
+    /**
+     * Gets a map group from group coordinates.
+     * @param groupX The group x coordinate.
+     * @param groupZ The group z coordinate.
+     * @return group
+     */
+    public int getGroupIndex(int groupX, int groupZ) {
+        return (groupZ * getGroupXCount()) + groupX;
+    }
+
+    /**
+     * Gets the number of groups in this map.
+     * @return groupCount
+     */
+    public int getGroupCount() {
+        return getGroupXCount() * getGroupZCount();
+    }
+
+    /**
+     * Executes behavior for each map primitive.
+     * @param handler Behavior to execute.
+     */
+    public void forEachPrimitive(Consumer<MAPPrimitive> handler) {
+        getPolygons().values().forEach(list -> list.forEach(handler));
+    }
+
+    /**
+     * Recalculate map groups.
+     */
+    public List<MAPGroup> calculateGroups() {
+        List<MAPGroup> groups = new ArrayList<>(getGroupCount());
+        for (int i = 0; i < getGroupCount(); i++)
+            groups.add(new MAPGroup());
+
+        // Recalculate it.
+        forEachPrimitive(prim -> {
+            if (!prim.isAllowDisplay())
+                return;
+
+            SVector vertex = getVertexes().get(prim.getVertices()[prim.getVerticeCount() - 1]);
+            int groupX = getGroupX(vertex.getX());
+            int groupZ = getGroupZ(vertex.getZ());
+            groups.get(getGroupIndex(groupX, groupZ)).getPolygonMap().get(prim.getType()).add(prim);
+        });
+
+        return groups;
     }
 }

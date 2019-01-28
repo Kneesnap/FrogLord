@@ -32,6 +32,7 @@ import java.util.zip.CRC32;
  * Some static utilities.
  * Created by Kneesnap on 8/12/2018.
  */
+@SuppressWarnings({"BooleanMethodIsAlwaysInverted", "unused"})
 public class Utils {
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
     private static final CRC32 crc32 = new CRC32();
@@ -399,6 +400,19 @@ public class Utils {
     }
 
     /**
+     * Test if a string is an unsigned byte.
+     * @param str The string to test.
+     * @return isUnsignedByte
+     */
+    public static boolean isUnsignedByte(String str) {
+        if (!Utils.isInteger(str))
+            return false;
+
+        int intTest = Integer.parseInt(str);
+        return intTest >= 0 && intTest <= 0xFF;
+    }
+
+    /**
      * Prompt the user to select a file.
      * @param title      The title of the window to display.
      * @param typeInfo   The label to show for the file-type.
@@ -657,6 +671,17 @@ public class Utils {
         int result = (int) (color.getRed() * 0xFF);
         result = (result << 8) + (int) (color.getGreen() * 0xFF);
         result = (result << 8) + (int) (color.getBlue() * 0xFF);
+        return result;
+    }
+
+    /**
+     * Get a integer from color bytes.
+     * @return rgbInt
+     */
+    public static int toRGB(byte red, byte green, byte blue) {
+        int result = byteToUnsignedShort(red);
+        result = (result << 8) + byteToUnsignedShort(green);
+        result = (result << 8) + byteToUnsignedShort(blue);
         return result;
     }
 

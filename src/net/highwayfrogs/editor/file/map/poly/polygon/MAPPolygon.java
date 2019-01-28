@@ -1,10 +1,10 @@
-package net.highwayfrogs.editor.file.standard.psx.prims.polygon;
+package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.psx.prims.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,10 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public abstract class PSXPolygon extends PSXGPUPrimitive {
-    private short[] vertices;
+public abstract class MAPPolygon extends MAPPrimitive {
     private short padding;
-    private final PSXPolygonType type;
     private transient boolean flippedVertices;
 
     public static final int TRI_SIZE = 3;
@@ -25,18 +23,21 @@ public abstract class PSXPolygon extends PSXGPUPrimitive {
     public static final int REQUIRES_VERTEX_PADDING = TRI_SIZE;
     public static final int REQUIRES_VERTEX_SWAPPING = QUAD_SIZE;
 
-    public PSXPolygon(PSXPolygonType type, int verticeCount) {
-        this.type = type;
-        this.vertices = new short[verticeCount];
+    public MAPPolygon(MAPPolygonType type, int verticeCount) {
+        super(type, verticeCount);
+    }
+
+    @Override
+    public MAPPolygonType getType() {
+        return (MAPPolygonType) super.getType();
     }
 
     @Override
     public void load(DataReader reader) {
-        for (int i = 0; i < vertices.length; i++)
-            this.vertices[i] = reader.readShort();
+        super.load(reader);
 
         swapIfNeeded();
-        if (vertices.length == REQUIRES_VERTEX_PADDING)
+        if (getVerticeCount() == REQUIRES_VERTEX_PADDING)
             this.padding = reader.readShort(); // Padding? This value seems to sometimes match the last vertices element, and sometimes it doesn't. I don't believe this value is used.
     }
 
@@ -46,10 +47,9 @@ public abstract class PSXPolygon extends PSXGPUPrimitive {
         if (swap)
             swapIfNeeded(); // Swap back to default flip state.
 
-        for (short vertice : vertices)
-            writer.writeShort(vertice);
+        super.save(writer);
 
-        if (vertices.length == REQUIRES_VERTEX_PADDING)
+        if (getVerticeCount() == REQUIRES_VERTEX_PADDING)
             writer.writeShort(this.padding);
 
         if (swap)
@@ -57,13 +57,13 @@ public abstract class PSXPolygon extends PSXGPUPrimitive {
     }
 
     private void swapIfNeeded() {
-        if (vertices.length != REQUIRES_VERTEX_SWAPPING)
+        if (getVerticeCount() != REQUIRES_VERTEX_SWAPPING)
             return; // We only need to swap vertexes 2 and 3 if there are 4 vertexes.
 
         // I forget exactly why we swap this, but it seems to work right when we do.
-        short swap = vertices[2];
-        vertices[2] = vertices[3];
-        vertices[3] = swap;
+        int swap = getVertices()[2];
+        getVertices()[2] = getVertices()[3];
+        getVertices()[3] = swap;
         this.flippedVertices = !this.flippedVertices;
     }
 
@@ -73,8 +73,8 @@ public abstract class PSXPolygon extends PSXGPUPrimitive {
      */
     public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter) {
         StringBuilder builder = new StringBuilder("f");
-        for (int i = this.vertices.length - 1; i >= 0; i--) {
-            builder.append(" ").append(this.vertices[i] + 1);
+        for (int i = getVerticeCount() - 1; i >= 0; i--) {
+            builder.append(" ").append(getVertices()[i] + 1);
             if (showTextures)
                 builder.append("/").append(textureCounter != null ? textureCounter.incrementAndGet() : 0);
         }

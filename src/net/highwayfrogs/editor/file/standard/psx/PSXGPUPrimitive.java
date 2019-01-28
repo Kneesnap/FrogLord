@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.standard.psx.prims;
+package net.highwayfrogs.editor.file.standard.psx;
 
 import net.highwayfrogs.editor.file.GameObject;
 
