@@ -5,7 +5,10 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
+import net.highwayfrogs.editor.file.config.exe.MapBook;
+import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
@@ -24,10 +27,16 @@ import java.util.regex.Pattern;
 
 /**
  * Information about a specific frogger.exe file.
+ * TODO: Setup other configs.
+ * TODO: Can we stop using remaps and use this instead?
  * Created by Kneesnap on 8/18/2018.
  */
 @Getter
 public class FroggerEXEInfo extends Config {
+    private MWIFile MWI;
+    private ThemeBook[] themeLibrary;
+    private List<MapBook> mapLibrary = new ArrayList<>();
+
     private byte[] exeBytes;
     private File inputFile;
     private List<String> fallbackFileNames;
@@ -100,6 +109,20 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
+     * Get the address of the theme book.
+     */
+    public int getThemeBookAddress() {
+        return getInt("themeBook");
+    }
+
+    /**
+     * Get the address of the map book.
+     */
+    public int getMapBookAddress() {
+        return getInt("mapBook");
+    }
+
+    /**
      * Get the platform this was released on.
      * @return platform
      */
@@ -166,10 +189,18 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
-     * Read the MWI file from the executable.
-     * @return mwiFile
+     * Read data from the EXE which needs reading.
      */
-    public MWIFile readMWI() {
+    public void setup() {
+        readMWI();
+        readThemeLibrary();
+        readMapLibrary();
+    }
+
+    /**
+     * Read the MWI file from the executable.
+     */
+    private void readMWI() {
         DataReader reader = getReader();
 
         reader.setIndex(getMWIOffset());
@@ -178,14 +209,48 @@ public class FroggerEXEInfo extends Config {
         DataReader arrayReader = new DataReader(new ArraySource(mwiBytes));
         MWIFile mwiFile = new MWIFile();
         mwiFile.load(arrayReader);
-        return mwiFile;
+        this.MWI = mwiFile;
+    }
+
+    private void readThemeLibrary() {
+        themeLibrary = new ThemeBook[MAPTheme.values().length];
+
+        DataReader reader = getReader();
+        reader.setIndex(getThemeBookAddress());
+
+        for (int i = 0; i < themeLibrary.length; i++) {
+            ThemeBook book = getPlatform().getThemeBookMaker().get();
+            book.load(reader);
+            themeLibrary[i] = book;
+        }
+    }
+
+    private void readMapLibrary() {
+        DataReader reader = getReader();
+        reader.setIndex(getMapBookAddress());
+
+        int themeAddress = getThemeBookAddress();
+        while (themeAddress > reader.getIndex()) {
+            MapBook book = getPlatform().getMapBookMaker().get();
+            book.load(reader);
+            this.mapLibrary.add(book);
+        }
+    }
+
+    /**
+     * Patch this exe when its time to be saved.
+     */
+    public void patchEXE() {
+        patchMWI(getMWI());
+        patchThemeLibrary();
+        patchMapLibrary();
     }
 
     /**
      * Patch Frogger.exe to use a modded MWI.
-     * @param mwiFile    The MWI file to save.
+     * @param mwiFile The MWI file to save.
      */
-    public void patchEXE(MWIFile mwiFile) {
+    private void patchMWI(MWIFile mwiFile) {
         ArrayReceiver receiver = new ArrayReceiver();
         DataWriter mwiWriter = new DataWriter(receiver);
         mwiFile.save(mwiWriter);
@@ -199,6 +264,21 @@ public class FroggerEXEInfo extends Config {
 
         int bytesWritten = exeWriter.getIndex() - mwiOffset;
         Utils.verify(bytesWritten == getMWILength(), "MWI Patching Failed. The size of the written MWI does not match the correct MWI size! [%d/%d]", bytesWritten, getMWILength());
+    }
+
+    private void patchThemeLibrary() {
+        DataWriter exeWriter = getWriter();
+        exeWriter.setIndex(getThemeBookAddress());
+        for (ThemeBook book : getThemeLibrary())
+            book.save(exeWriter);
+        exeWriter.closeReceiver();
+    }
+
+    private void patchMapLibrary() {
+        DataWriter exeWriter = getWriter();
+        exeWriter.setIndex(getMapBookAddress());
+        getMapLibrary().forEach(book -> book.save(exeWriter));
+        exeWriter.closeReceiver();
     }
 
     /**
@@ -257,5 +337,14 @@ public class FroggerEXEInfo extends Config {
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    /**
+     * Get a theme book by a theme.
+     * @param theme The theme to get the book for.
+     * @return themeBook
+     */
+    public ThemeBook getThemeBook(MAPTheme theme) {
+        return this.themeLibrary[theme.ordinal()];
     }
 }

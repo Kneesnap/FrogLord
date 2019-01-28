@@ -57,7 +57,7 @@ public class MAPFile extends GameFile {
     @Setter private short startXTile;
     @Setter private short startYTile;
     @Setter private StartRotation startRotation;
-    private MAPTheme theme;
+    private MAPTheme theme; // This controls loads of things. It's dubious we'd be able to change this safely.
     @Setter private short levelTimer;
     @Setter private SVector cameraSourceOffset;
     @Setter private SVector cameraTargetOffset;

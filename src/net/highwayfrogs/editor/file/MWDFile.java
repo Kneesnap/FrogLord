@@ -99,6 +99,7 @@ public class MWDFile extends GameObject {
      */
     public <T extends GameFile> T replaceFile(byte[] fileBytes, FileEntry entry, GameFile oldFile) {
         VBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
+        CURRENT_FILE_NAME = entry.getDisplayName();
         T newFile = this.loadFile(fileBytes, entry, lastVB);
         newFile.load(new DataReader(new ArraySource(fileBytes)));
         return newFile;
