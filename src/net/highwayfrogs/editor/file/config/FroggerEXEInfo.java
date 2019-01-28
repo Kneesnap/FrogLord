@@ -25,8 +25,6 @@ import java.util.Map;
 
 /**
  * Information about a specific frogger.exe file.
- * TODO: Setup other configs.
- * TODO: PSX support is a little dinged.
  * Created by Kneesnap on 8/18/2018.
  */
 @Getter
