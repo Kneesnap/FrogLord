@@ -22,12 +22,10 @@ import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
@@ -36,11 +34,8 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.NameValuePair;
-import net.highwayfrogs.editor.system.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -134,41 +129,8 @@ public class MAPController extends EditorController<MAPFile> {
 
     @FXML
     private void onMapButtonClicked(ActionEvent event) {
-        getFile().getParentMWD().promptVLOSelection(getFile().getTheme(), vlo -> {
-            TextureMap textureMap = TextureMap.newTextureMap(getFile(), vlo, getMWIEntry().getDisplayName());
-            getFile().setSuppliedVLO(vlo);
-            getFile().setSuppliedRemapAddress(GUIMain.EXE_CONFIG.getRemapInfo(Utils.stripExtension(getMWIEntry().getDisplayName())).getA());
-            setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), textureMap), textureMap);
-        }, false);
-    }
-
-    @FXML
-    private void onRemapButtonClicked(ActionEvent event) {
-        getFile().getParentMWD().promptVLOSelection(getFile().getTheme(), vlo -> {
-            TextureMap texMap = TextureMap.newTextureMap(getFile(), vlo, null);
-
-            InputMenu.promptInput("Please enter the address to start reading from.", str -> {
-                int address;
-
-                String levelName = Utils.getRawFileName(str);
-                if (GUIMain.EXE_CONFIG.hasRemapInfo(levelName)) {
-                    Tuple2<Integer, Integer> remapData = GUIMain.EXE_CONFIG.getRemapInfo(levelName);
-                    address = remapData.getA() + (Constants.SHORT_SIZE * remapData.getB());
-                } else {
-                    try {
-                        address = Integer.decode(str);
-                    } catch (Exception ex) {
-                        System.out.println(str + " is not formatted properly.");
-                        return;
-                    }
-                }
-
-                getFile().setSuppliedVLO(vlo);
-                getFile().setSuppliedRemapAddress(address);
-                setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), texMap, address, vlo.getImages().size()), texMap);
-            });
-
-        }, false);
+        TextureMap textureMap = TextureMap.newTextureMap(getFile());
+        setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), textureMap), textureMap);
     }
 
     @SneakyThrows
@@ -248,10 +210,6 @@ public class MAPController extends EditorController<MAPFile> {
             if (event.isControlDown() && event.getCode() == KeyCode.ENTER)
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
 
-            // [Remap Mode] Find next non-crashing remap.
-            if (mesh.isRemapFinder() && event.getCode() == KeyCode.K)
-                findNextRemap();
-
             if (isPolygonSelected()) {
                 if (event.getCode() == KeyCode.UP) {
                     movePolygonY(MapUIController.getPropertyVertexSpeed().get());
@@ -316,29 +274,8 @@ public class MAPController extends EditorController<MAPFile> {
             }
         });
 
-        mesh.findNextValidRemap(0, 0, false);
         camera.setTranslateZ(-MapUIController.getPropertyMapViewScale().get());
         camera.setTranslateY(-MapUIController.getPropertyMapViewScale().get() / 7.0);
-    }
-
-    private void findNextRemap() {
-        if (!isPolygonSelected()) {
-            System.out.println("You must select a polygon to perform a remap search.");
-            return;
-        }
-
-        MAPPolygon poly = this.selectedPolygon;
-        if (!(poly instanceof MAPPolyTexture)) {
-            System.out.println("This polygon is not textured.");
-            return;
-        }
-
-        int replaceTexId = ((MAPPolyTexture) poly).getTextureId();
-        SelectionMenu.promptSelection("Select the replacement image.",
-                image -> getMapMesh().findNextValidRemap(replaceTexId, image.getTextureId(), true),
-                getMapMesh().getTextureMap().getVloArchive().getImages(),
-                image -> String.valueOf(image.getTextureId()),
-                image -> SelectionMenu.makeIcon(image.toBufferedImage(IMAGE_SETTINGS)));
     }
 
     /**

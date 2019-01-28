@@ -137,7 +137,6 @@ public class MainController implements Initializable {
         byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
         GameFile oldFile = getCurrentFile();
         GameFile newFile = mwdFile.replaceFile(fileBytes, getFileEntry(), oldFile);
-        this.mwdFile.getEntryMap().put(newFile, getFileEntry());
         this.mwdFile.getFiles().set(this.mwdFile.getFiles().indexOf(oldFile), newFile);
         getCurrentFilesList().getItems().set(getCurrentFilesList().getItems().indexOf(oldFile), newFile);
 

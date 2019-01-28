@@ -43,6 +43,14 @@ public abstract class GameFile extends GameObject {
     }
 
     /**
+     * Gets this file's MWI FileEntry.
+     * @return fileEntry
+     */
+    public FileEntry getFileEntry() {
+        return getMWD().getEntryMap().get(this);
+    }
+
+    /**
      * Export this file in a non-Frogger format.
      */
     public void exportAlternateFormat(FileEntry entry) {

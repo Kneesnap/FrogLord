@@ -116,7 +116,7 @@ public class GUIMain extends Application {
 
         // Load MWD.
         EXE_CONFIG.setup();
-        MWDFile mwd = new MWDFile(EXE_CONFIG.getMWI());
+        MWDFile mwd = EXE_CONFIG.getMWD();
         mwd.load(new DataReader(new FileSource(mwdFile)));
 
         // Setup GUI.

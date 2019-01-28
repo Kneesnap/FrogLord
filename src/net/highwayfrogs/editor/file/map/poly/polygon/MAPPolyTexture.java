@@ -133,7 +133,7 @@ public class MAPPolyTexture extends MAPPolygon {
         super.setupEditor(controller, editor);
 
         List<Short> remapList = controller.getMesh().getTextureMap().getRemapList();
-        VLOArchive suppliedVLO = controller.getMap().getSuppliedVLO();
+        VLOArchive suppliedVLO = controller.getMap().getVlo();
         GameImage image = suppliedVLO.getImageByTextureId(remapList.get(getTextureId()));
 
         ImageView view = editor.addCenteredImage(image.toFXImage(SHOW_SETTINGS), 150);

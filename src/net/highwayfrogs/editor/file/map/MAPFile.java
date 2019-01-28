@@ -82,8 +82,7 @@ public class MAPFile extends GameFile {
     private short gridXSize; // Seems to always be 768.
     private short gridZSize; // Seems to always be 768.
 
-    @Setter private transient VLOArchive suppliedVLO;
-    @Setter private transient int suppliedRemapAddress;
+    private transient VLOArchive vlo;
     private transient MWDFile parentMWD;
     private transient Map<MAPPrimitiveType, List<MAPPrimitive>> polygons = new HashMap<>();
 
@@ -360,6 +359,8 @@ public class MAPFile extends GameFile {
             animation.load(reader);
             mapAnimations.add(animation);
         }
+
+        this.vlo = GUIMain.EXE_CONFIG.getThemeBook(getTheme()).getVLO(this);
     }
 
     @Override
@@ -384,7 +385,7 @@ public class MAPFile extends GameFile {
         removeEntity(getEntities().get(3));
         removeEntity(getEntities().get(2));
 
-        GUIMain.EXE_CONFIG.patchRemapInExe(Constants.ISLAND_REMAP_NAME, GUIMain.EXE_CONFIG.getPlatform() == TargetPlatform.PC ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
+        GUIMain.EXE_CONFIG.changeRemap(getFileEntry(), GUIMain.EXE_CONFIG.getPlatform() == TargetPlatform.PC ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
     }
 
     @Override
@@ -661,18 +662,15 @@ public class MAPFile extends GameFile {
         if (selectedFolder == null)
             return;
 
-        getParentMWD().promptVLOSelection(getTheme(), vlo -> {
-            boolean hasTextures = vlo != null;
-            if (hasTextures)
-                vlo.exportAllImages(selectedFolder, OBJ_EXPORT_FILTER); // Export VLO images.
+        if (getVlo() != null)
+            getVlo().exportAllImages(selectedFolder, OBJ_EXPORT_FILTER); // Export VLO images.
 
-            String cleanName = Utils.getRawFileName(entry.getDisplayName());
-            exportToObj(selectedFolder, cleanName, entry, vlo, hasTextures ? GUIMain.EXE_CONFIG.getRemapTable(cleanName) : null);
-        }, true);
+        exportToObj(selectedFolder, entry, vlo, GUIMain.EXE_CONFIG.getRemapTable(getFileEntry()));
     }
 
     @SneakyThrows
-    private void exportToObj(File directory, String cleanName, FileEntry entry, VLOArchive vloArchive, List<Short> remapTable) {
+    private void exportToObj(File directory, FileEntry entry, VLOArchive vloArchive, List<Short> remapTable) {
+        String cleanName = Utils.getRawFileName(entry.getDisplayName());
         boolean exportTextures = vloArchive != null;
 
         System.out.println("Exporting " + cleanName + ".");
@@ -1000,5 +998,23 @@ public class MAPFile extends GameFile {
         });
 
         return groups;
+    }
+
+    /**
+     * Checks if this map is a multiplayer map.
+     * Unfortunately, nothing distinguishes the map files besides where you can access them from and the names.
+     * @return isMultiplayer
+     */
+    public boolean isMultiplayer() {
+        return getFileEntry().getDisplayName().startsWith(getTheme().getInternalName() + "M");
+    }
+
+    /**
+     * Checks if this map is a low-poly map.
+     * Unfortunately, nothing distinguishes the map files besides where you can access them from and the names.
+     * @return isLowPolyMode
+     */
+    public boolean isLowPolyMode() {
+        return getFileEntry().getDisplayName().contains("_WIN95");
     }
 }

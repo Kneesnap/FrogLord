@@ -2,7 +2,9 @@ package net.highwayfrogs.editor.file.config.exe.psx;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -36,5 +38,15 @@ public class PSXThemeBook extends ThemeBook {
         writer.writeInt(this.deathHeight);
         writer.writeInt(this.multiplayerWadId);
         writer.writeInt(this.multiplayerVloId);
+    }
+
+    @Override
+    public VLOArchive getVLO(MAPFile map) {
+        return isValid() ? map.getMWD().getGameFile(map.isMultiplayer() ? getMultiplayerVloId() : getVloId()) : null;
+    }
+
+    @Override
+    public boolean isValid() {
+        return this.vloId != 0 || this.formLibraryPointer != 0 || this.wadId != 0;
     }
 }

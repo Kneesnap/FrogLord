@@ -225,6 +225,30 @@ public class Utils {
     }
 
     /**
+     * Convert an unsigned int into an long, which can be converted back into a long.
+     * @param unsignedInt The int to convert into a long.
+     * @return unsignedLong
+     */
+    public static long intToUnsignedLong(int unsignedInt) {
+        long num = (long) unsignedInt;
+        if (num < 0) {
+            num += Integer.MAX_VALUE;
+            num++;
+        }
+        return num;
+    }
+
+    /**
+     * Convert an unsigned long back into a unsigned int.
+     * @param unsignedLong the long to turn back into an int.
+     * @return int
+     */
+    public static int unsignedLongToInt(long unsignedLong) {
+        verify(unsignedLong >= 0 && unsignedLong <= 0xFFFFFFFFL, "The provided short value is outside the range of an unsigned byte. [0,0xFFFFFFFF]. Value: %d", unsignedLong);
+        return (int) unsignedLong;
+    }
+
+    /**
      * Reverse an array, and store it in a new array, which is returned.
      * @param array The array to reverse.
      * @return clonedArray

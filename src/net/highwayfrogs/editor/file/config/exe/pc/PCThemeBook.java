@@ -2,7 +2,9 @@ package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 /**
@@ -48,5 +50,22 @@ public class PCThemeBook extends ThemeBook {
         writer.writeInt(this.lowVloId);
         writer.writeInt(this.lowMultiplayerWadId);
         writer.writeInt(this.lowMultiplayerVloId);
+    }
+
+    @Override
+    public VLOArchive getVLO(MAPFile map) {
+        if (!isValid())
+            return null;
+
+        if (map.isMultiplayer()) {
+            return map.getMWD().getGameFile(map.isLowPolyMode() ? getLowMultiplayerVloId() : getHighMultiplayerVloId());
+        } else {
+            return map.getMWD().getGameFile(map.isLowPolyMode() ? getLowVloId() : getHighVloId());
+        }
+    }
+
+    @Override
+    public boolean isValid() {
+        return this.highVloId != 0 || this.lowVloId != 0 || this.formLibraryPointer != 0;
     }
 }

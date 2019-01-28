@@ -10,7 +10,6 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.mesh.MeshManager;
 
@@ -31,10 +30,6 @@ public class MapMesh extends TriangleMesh {
     private Map<MAPPolygon, Integer> polyFaceMap = new HashMap<>();
     private MeshManager manager;
 
-    private boolean remapFinder;
-    private int remapStart;
-    private int maxRemapSize;
-    private int currentRemap;
     private int faceCount;
     private int textureCount;
 
@@ -49,52 +44,6 @@ public class MapMesh extends TriangleMesh {
         this.textureMap = texMap;
         this.manager = new MeshManager(this);
         updateData();
-    }
-
-    public MapMesh(MAPFile file, TextureMap texMap, int remapStart, int maxRemapSize) {
-        super(VertexFormat.POINT_TEXCOORD);
-        this.map = file;
-        this.textureMap = texMap;
-
-        this.remapFinder = true;
-        this.remapStart = remapStart - 1;
-        this.maxRemapSize = maxRemapSize;
-        this.currentRemap = this.remapStart;
-        this.manager = new MeshManager(this);
-    }
-
-    /**
-     * Find the next valid remap range.
-     */
-    public void findNextValidRemap(int oldTexId, int newTexId, boolean findTexture) {
-        if (!this.remapFinder)
-            return;
-
-        int totalSkips = 0;
-        while (true) {
-            this.currentRemap++;
-
-            try {
-                textureMap.setRemapList(GUIMain.EXE_CONFIG.readRemapTable(this.currentRemap, this.maxRemapSize));
-            } catch (Exception ex) {
-                System.out.println("Reached end of file. Restarting at beginning.");
-                this.currentRemap = this.remapStart;
-                return;
-            }
-
-            try {
-                if (findTexture && textureMap.getRemapList().get(oldTexId) != newTexId) {
-                    totalSkips++;
-                    continue;
-                }
-
-                updateData();
-                System.out.println("[Skipped " + totalSkips + "]: Found Possible Remap at " + Utils.toHexString(this.currentRemap) + " (" + map.getMaxRemap() + ")");
-                return;
-            } catch (Exception ex) { // Failed.
-                totalSkips++;
-            }
-        }
     }
 
     /**

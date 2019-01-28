@@ -160,6 +160,14 @@ public class DataReader {
     }
 
     /**
+     * Reads a single integer as an unsigned integer, returning it as a long.
+     * @return unsignedIntLong
+     */
+    public long readUnsignedIntAsLong() {
+        return Utils.intToUnsignedLong(readInt());
+    }
+
+    /**
      * Read the next bytes as an integer.
      * Reads four bytes.
      * @return intValue

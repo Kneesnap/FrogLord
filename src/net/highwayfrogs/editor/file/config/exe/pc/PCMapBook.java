@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -45,5 +47,25 @@ public class PCMapBook extends MapBook {
         writer.writeInt(this.highWadId);
         writer.writeInt(this.lowWadId);
         writer.writeInt(this.paletteId);
+    }
+
+    @Override
+    public void readRemapData(FroggerEXEInfo config) {
+        this.readRemap(config, this.highMapId, this.highRemapPointer);
+        this.readRemap(config, this.lowMapId, this.lowRemapPointer);
+    }
+
+    @Override
+    public void saveRemapData(FroggerEXEInfo config) {
+        this.saveRemap(config, this.highMapId, this.highRemapPointer);
+        this.saveRemap(config, this.lowMapId, this.lowRemapPointer);
+    }
+
+    @Override
+    public boolean isEntry(FileEntry test) {
+        return this.lowMapId == test.getLoadedId()
+                || this.lowWadId == test.getLoadedId()
+                || this.highMapId == test.getLoadedId()
+                || this.highWadId == test.getLoadedId();
     }
 }

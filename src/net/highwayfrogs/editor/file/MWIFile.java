@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
@@ -203,6 +204,17 @@ public class MWIFile extends GameObject {
         public String toString() {
             return "{" + getFilePath() + " Type: " + getTypeId() + ", Flags: " + getFlags() + ", Unpacked Size: "
                     + getUnpackedSize() + ", " + (isCompressed() ? "" : "Not ") + "Compressed}";
+        }
+
+        /**
+         * Get the book which holds this FileEntry.
+         * @return book
+         */
+        public MapBook getBook() {
+            for (MapBook book : GUIMain.EXE_CONFIG.getMapLibrary())
+                if (book.isEntry(this))
+                    return book;
+            throw new RuntimeException("Failed to find MapBook for FileEntry.");
         }
     }
 }
