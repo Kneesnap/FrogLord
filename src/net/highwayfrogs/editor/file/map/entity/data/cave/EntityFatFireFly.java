@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.file.map.entity.data.cave;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.map.entity.BonusFlyType;
+import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -16,13 +16,13 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 @Setter
 public class EntityFatFireFly extends MatrixData {
-    private BonusFlyType type = BonusFlyType.FAT_FIRE_FLY;
+    private FlyScoreType type = FlyScoreType.SUPER_LIGHT;
     private SVector target = new SVector();
 
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.type = BonusFlyType.values()[reader.readUnsignedShortAsInt()];
+        this.type = FlyScoreType.values()[reader.readUnsignedShortAsInt()];
         reader.readShort();
         this.target = SVector.readWithPadding(reader);
     }
@@ -38,7 +38,7 @@ public class EntityFatFireFly extends MatrixData {
     @Override
     public void addData(GUIEditorGrid editor) {
         super.addData(editor);
-        editor.addEnumSelector("Type", getType(), BonusFlyType.values(), false, this::setType);
+        editor.addEnumSelector("Type", getType(), FlyScoreType.values(), false, this::setType);
         editor.addSVector("Target", getTarget());
     }
 }
