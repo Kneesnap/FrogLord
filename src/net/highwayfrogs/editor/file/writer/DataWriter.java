@@ -144,6 +144,14 @@ public class DataWriter {
     }
 
     /**
+     * Writes an unsigned long int as an unsigned int.
+     * @param value The long to write.
+     */
+    public void writeUnsignedInt(long value) {
+        writeInt(Utils.unsignedLongToInt(value));
+    }
+
+    /**
      * Write an integer to the receiver.
      * @param value The integer to write.
      */

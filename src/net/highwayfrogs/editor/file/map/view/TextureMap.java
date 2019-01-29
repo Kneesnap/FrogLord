@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file.map.view;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -35,10 +34,10 @@ public class TextureMap {
 
     /**
      * Create a new texture map from an existing VLOArchive.
-     * @param vloSource The source to create the map from.
      * @return newTextureMap
      */
-    public static TextureMap newTextureMap(MAPFile mapFile, VLOArchive vloSource, String mapName) {
+    public static TextureMap newTextureMap(MAPFile mapFile) {
+        VLOArchive vloSource = mapFile.getVlo();
         Map<VertexColor, BufferedImage> texMap = mapFile.makeVertexColorTextures();
 
         int height = vloSource.getImages().stream().mapToInt(GameImage::getFullHeight).max().orElse(0); // Size of largest texture.
@@ -76,7 +75,7 @@ public class TextureMap {
         }
 
         graphics.dispose();
-        return new TextureMap(vloSource, fullImage, entryMap, mapName != null ? GUIMain.EXE_CONFIG.getRemapTable(Utils.stripExtension(mapName)) : null);
+        return new TextureMap(vloSource, fullImage, entryMap, GUIMain.EXE_CONFIG.getRemapTable(mapFile.getFileEntry()));
     }
 
     @Getter

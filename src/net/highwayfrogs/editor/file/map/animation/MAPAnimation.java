@@ -164,32 +164,21 @@ public class MAPAnimation extends GameObject {
         if (!isTexture)
             return;
 
-        DataReader reader = GUIMain.EXE_CONFIG.getReader();
+        VLOArchive vlo = getParentMap().getVlo();
+        List<Short> remap = GUIMain.EXE_CONFIG.getRemapTable(getParentMap().getFileEntry());
         List<GameImage> images = new ArrayList<>(getTextures().size());
-        for (short toRemap : getTextures()) {
-            reader.jumpTemp(getParentMap().getSuppliedRemapAddress() + (Constants.SHORT_SIZE * toRemap));
-            short texId = reader.readShort();
-            reader.jumpReturn();
-            images.add(getParentMap().getSuppliedVLO().getImageByTextureId(texId));
-        }
+        getTextures().forEach(toRemap -> images.add(vlo.getImageByTextureId(remap.get(toRemap))));
 
         editor.addBoldLabel("Textures:");
         for (int i = 0; i < images.size(); i++) {
             final int tempIndex = i;
             GameImage image = images.get(i);
-            VLOArchive vlo = getParentMap().getSuppliedVLO();
 
             Image scaledImage = SwingFXUtils.toFXImage(Utils.resizeImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), 20, 20), null);
             editor.setupNode(new ImageView(scaledImage)).setOnMouseClicked(evt -> vlo.promptImageSelection(newImage -> {
-                reader.jumpTemp(getParentMap().getSuppliedRemapAddress());
-
-                short read = -1;
-                do {
-                    read++;
-                } while (reader.hasMore() && reader.readShort() != newImage.getTextureId() && 1000 > read);
-                Utils.verify(reader.hasMore() && 1000 > read, "Failed to find remap for texture id: %d!", newImage.getTextureId());
-                getTextures().set(tempIndex, read);
-
+                int newIndex = remap.indexOf(newImage.getTextureId());
+                Utils.verify(newIndex >= 0, "Failed to find remap for texture id: %d!", newImage.getTextureId());
+                getTextures().set(tempIndex, (short) newIndex);
                 controller.setupAnimationEditor();
             }, false));
 

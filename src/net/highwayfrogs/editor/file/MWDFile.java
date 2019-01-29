@@ -38,6 +38,7 @@ public class MWDFile extends GameObject {
     private MWIFile wadIndexTable;
     private List<GameFile> files = new ArrayList<>();
     private Map<GameFile, FileEntry> entryMap = new HashMap<>();
+    private Map<FileEntry, GameFile> entryFileMap = new HashMap<>();
     @Setter private BiConsumer<FileEntry, GameFile> saveCallback;
 
     private transient Map<MAPTheme, VLOArchive> vloThemeCache = new HashMap<>();
@@ -85,7 +86,6 @@ public class MWDFile extends GameObject {
                 throw new RuntimeException("Failed to load " + entry.getDisplayName() + ", " + entry.getLoadedId(), ex);
             }
 
-            entryMap.put(file, entry);
             files.add(file);
             lastVB = file instanceof VBFile ? (VBFile) file : null;
         }
@@ -98,6 +98,7 @@ public class MWDFile extends GameObject {
      * @return replacementFile
      */
     public <T extends GameFile> T replaceFile(byte[] fileBytes, FileEntry entry, GameFile oldFile) {
+        CURRENT_FILE_NAME = entry.getDisplayName();
         VBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
         T newFile = this.loadFile(fileBytes, entry, lastVB);
         newFile.load(new DataReader(new ArraySource(fileBytes)));
@@ -150,6 +151,8 @@ public class MWDFile extends GameObject {
             file = new DummyFile(fileBytes.length);
         }
 
+        entryMap.put(file, entry);
+        entryFileMap.put(entry, file);
         return (T) file;
     }
 
@@ -243,5 +246,15 @@ public class MWDFile extends GameObject {
                 }, allVLOs,
                 vlo -> vlo != null ? getEntryMap().get(vlo).getDisplayName() : "No Textures",
                 vlo -> SelectionMenu.makeIcon(vlo.getImages().get(0).toBufferedImage(VLO_ICON_SETTING)));
+    }
+
+    /**
+     * Get a GameFile by its resource id.
+     * @param resourceId The resource id.
+     * @return gameFile
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends GameFile> T getGameFile(int resourceId) {
+        return (T) getEntryFileMap().get(getWadIndexTable().getEntries().get(resourceId));
     }
 }

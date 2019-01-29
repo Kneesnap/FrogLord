@@ -10,20 +10,19 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum MAPTheme {
-    GENERAL("GEN", 0x100, 128),
-    CAVE("CAV", 0x1000, 0),
-    DESERT("DES", 0x100, 2),
-    FOREST("FOR", 0x100, 0),
-    JUNGLE("JUN", 0x100, 8),
-    ORIGINAL("ORG", 0x100, 0),
-    RUINED("ARN", 0x100, 0),
-    SWAMP("SWP", 0x100, 0),
-    SKY("SKY", 0x1800 << 1, 0), // SKY_LAND_HEIGHT = 0x1800
-    SUBURBIA("SUB", 0x100, 0),
-    VOLCANO("VOL", 0x100, 8); // Also sometimes called Industrial or IND.
+    GENERAL("GEN", 128),
+    CAVE("CAV", 0),
+    DESERT("DES", 2),
+    FOREST("FOR", 0),
+    JUNGLE("JUN", 8),
+    ORIGINAL("ORG", 0),
+    RUINED("ARN", 0),
+    SWAMP("SWP", 0),
+    SKY("SKY", 0),
+    SUBURBIA("SUB", 0),
+    VOLCANO("VOL", 8); // Also sometimes called Industrial or IND.
 
     private String internalName;
-    private int deathHeight; // Frog drowns under this height.
     private int formOffset;
 
     /**

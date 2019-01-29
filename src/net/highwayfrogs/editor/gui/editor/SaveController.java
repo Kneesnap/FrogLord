@@ -108,7 +108,7 @@ public class SaveController implements Initializable {
             }
 
             try {
-                inputConfig.patchEXE(mwdToSave.getWadIndexTable());
+                inputConfig.patchEXE();
                 inputConfig.saveExecutable(outputEXE);
                 Platform.runLater(saveController.getStage()::close);
             } catch (Exception ex) {

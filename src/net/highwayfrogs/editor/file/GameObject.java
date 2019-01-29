@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file;
 
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIMain;
 
 /**
  * This represents a single game-file, which can be turned into a byte array.
@@ -20,4 +21,12 @@ public abstract class GameObject {
      * @param writer The writer to save information into.
      */
     public abstract void save(DataWriter writer);
+
+    /**
+     * Get the parent MWD file.
+     * @return mwdFile
+     */
+    public MWDFile getMWD() {
+        return GUIMain.EXE_CONFIG.getMWD();
+    }
 }
