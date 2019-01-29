@@ -23,9 +23,10 @@ public abstract class MapBook extends ExeStruct {
 
     /**
      * Save remap data into the exe.
+     * @param writer The writer to save data to.
      * @param config the config to save it from.
      */
-    public abstract void saveRemapData(FroggerEXEInfo config);
+    public abstract void saveRemapData(DataWriter writer, FroggerEXEInfo config);
 
     /**
      * Read a remap.
@@ -47,7 +48,7 @@ public abstract class MapBook extends ExeStruct {
         while ((tempShort = reader.readShort()) != TERMINATOR)
             shortList.add(tempShort);
 
-        config.getRemapTable().put(config.getMWI().getEntries().get(resourceId), shortList);
+        config.getRemapTable().put(config.getResourceEntry(resourceId), shortList);
     }
 
     /**
@@ -56,19 +57,16 @@ public abstract class MapBook extends ExeStruct {
      * @param resourceId   The map's resource id.
      * @param remapAddress The address the remap starts at.
      */
-    protected void saveRemap(FroggerEXEInfo config, int resourceId, long remapAddress) {
+    protected void saveRemap(DataWriter writer, FroggerEXEInfo config, int resourceId, long remapAddress) {
         if (remapAddress == 0 || resourceId == 0)
             return; // Dummied out book.
 
-        DataWriter exeWriter = config.getWriter();
         int fileAddress = (int) (remapAddress - config.getRamPointerOffset());
-        exeWriter.setIndex(fileAddress);
+        writer.setIndex(fileAddress);
 
-        List<Short> entries = config.getRemapTable(config.getMWI().getEntries().get(resourceId));
-        entries.forEach(exeWriter::writeShort);
-        exeWriter.writeShort(TERMINATOR);
-
-        exeWriter.closeReceiver();
+        List<Short> entries = config.getRemapTable(config.getResourceEntry(resourceId));
+        entries.forEach(writer::writeShort);
+        writer.writeShort(TERMINATOR);
     }
 
     /**

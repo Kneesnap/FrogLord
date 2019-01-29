@@ -56,9 +56,9 @@ public class PCMapBook extends MapBook {
     }
 
     @Override
-    public void saveRemapData(FroggerEXEInfo config) {
-        this.saveRemap(config, this.highMapId, this.highRemapPointer);
-        this.saveRemap(config, this.lowMapId, this.lowRemapPointer);
+    public void saveRemapData(DataWriter writer, FroggerEXEInfo config) {
+        this.saveRemap(writer, config, this.highMapId, this.highRemapPointer);
+        this.saveRemap(writer, config, this.lowMapId, this.lowRemapPointer);
     }
 
     @Override
