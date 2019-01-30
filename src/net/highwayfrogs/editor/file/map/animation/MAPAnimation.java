@@ -15,7 +15,6 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.util.ArrayList;
@@ -165,7 +164,7 @@ public class MAPAnimation extends GameObject {
             return;
 
         VLOArchive vlo = getParentMap().getVlo();
-        List<Short> remap = GUIMain.EXE_CONFIG.getRemapTable(getParentMap().getFileEntry());
+        List<Short> remap = getConfig().getRemapTable(getParentMap().getFileEntry());
         List<GameImage> images = new ArrayList<>(getTextures().size());
         getTextures().forEach(toRemap -> images.add(vlo.getImageByTextureId(remap.get(toRemap))));
 

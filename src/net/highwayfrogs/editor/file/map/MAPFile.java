@@ -36,7 +36,6 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 
@@ -360,7 +359,7 @@ public class MAPFile extends GameFile {
             mapAnimations.add(animation);
         }
 
-        this.vlo = GUIMain.EXE_CONFIG.getThemeBook(getTheme()).getVLO(this);
+        this.vlo = getConfig().getThemeBook(getTheme()).getVLO(this);
     }
 
     @Override
@@ -376,16 +375,9 @@ public class MAPFile extends GameFile {
         if (!Constants.DEV_ISLAND_NAME.equals(newName))
             return;
 
-        System.out.println("Fixing imported developer map.");
+        System.out.println("Changing developer map remap.");
         removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity.
-
-        // Remove "SUB_PEDDLEBOAT" entities. These entities do not exist.
-        removeEntity(getEntities().get(7));
-        removeEntity(getEntities().get(5));
-        removeEntity(getEntities().get(3));
-        removeEntity(getEntities().get(2));
-
-        GUIMain.EXE_CONFIG.changeRemap(getFileEntry(), GUIMain.EXE_CONFIG.getPlatform() == TargetPlatform.PC ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
+        getConfig().changeRemap(getFileEntry(), getConfig().getPlatform() == TargetPlatform.PC ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
     }
 
     @Override
@@ -395,7 +387,7 @@ public class MAPFile extends GameFile {
 
         // Write File Header
         writer.writeStringBytes(SIGNATURE);
-        writer.writeInt(0); // File length. (Unused)
+        int fileLengthPointer = writer.writeNullPointer();
         writer.writeStringBytes(VERSION);
         writer.writeNull(COMMENT_BYTES);
 
@@ -654,6 +646,8 @@ public class MAPFile extends GameFile {
         getMapAnimations().forEach(anim -> anim.writeTextures(writer));
         writer.writeShort(MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
         getMapAnimations().forEach(anim -> anim.writeMapUVs(writer));
+
+        writer.writeAddressTo(fileLengthPointer); // Write file length to start of file.
     }
 
     @Override
@@ -665,7 +659,7 @@ public class MAPFile extends GameFile {
         if (getVlo() != null)
             getVlo().exportAllImages(selectedFolder, OBJ_EXPORT_FILTER); // Export VLO images.
 
-        exportToObj(selectedFolder, entry, vlo, GUIMain.EXE_CONFIG.getRemapTable(getFileEntry()));
+        exportToObj(selectedFolder, entry, vlo, getConfig().getRemapTable(getFileEntry()));
     }
 
     @SneakyThrows

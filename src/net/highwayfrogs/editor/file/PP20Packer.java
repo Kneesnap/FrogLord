@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
  * Packs a byte array into PP20 compressed data.
  * I was unable to find any code or documentation on how PP20 compresses data.
  * So, this was created from research and attempts to reverse the unpacker.
+ * This packer is not thread-safe, but it wouldn't take much effort to make it thread-safe.
  *
  * PP20 is a Lz77 (sliding window compression) variant.
  * It resembles LzSS.
@@ -34,6 +35,12 @@ public class PP20Packer {
     public static final int MINIMUM_DECODE_DATA_LENGTH = 2;
     public static final int OPTIONAL_BITS_SMALL_SIZE_MAX_OFFSET = Utils.power(2, OPTIONAL_BITS_SMALL_OFFSET);
     public static final String MARKER = "PP20";
+    public static final byte[] MARKER_BYTES = MARKER.getBytes();
+
+    private static final IntList[] DICTIONARY = new IntList[256];
+    private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
+    private static final ByteArrayWrapper searchBuffer = new ByteArrayWrapper(0);
+    private static final ByteArrayWrapper noMatchQueue = new ByteArrayWrapper(0);
 
     /**
      * Pack a byte array into PP20 compressed data.
@@ -45,24 +52,20 @@ public class PP20Packer {
 
         // Take the compressed data, and pad it with the file structure. Then, we're done.
         byte[] compressedData = compressData(data);
-        byte[] completeData = new byte[compressedData.length + 12];
-        System.arraycopy(compressedData, 0, completeData, 8, compressedData.length); // Copy compressed data.
+        System.arraycopy(MARKER_BYTES, 0, compressedData, 0, MARKER_BYTES.length);
+        System.arraycopy(COMPRESSION_SETTINGS, 0, compressedData, 4, COMPRESSION_SETTINGS.length);
 
-        for (int i = 0; i < MARKER.length(); i++)
-            completeData[i] = (byte) MARKER.charAt(i);
-
-        System.arraycopy(COMPRESSION_SETTINGS, 0, completeData, 4, COMPRESSION_SETTINGS.length);
-        byte[] array = ByteBuffer.allocate(Constants.INTEGER_SIZE).putInt(data.length).array();
-        System.arraycopy(array, 1, completeData, completeData.length - 4, array.length - 1);
-        return completeData;
+        INT_BUFFER.clear();
+        System.arraycopy(INT_BUFFER.putInt(data.length).array(), 1, compressedData, compressedData.length - 4, Constants.INTEGER_SIZE - 1);
+        return compressedData;
     }
 
-    private static int findLongest(byte[] data, int bufferEnd, ByteArrayWrapper target, IntList[] dictionary) {
+    private static int findLongest(byte[] data, int bufferEnd, ByteArrayWrapper target) {
         target.clear();
         byte startByte = data[bufferEnd];
         target.add(startByte);
 
-        IntList possibleResults = dictionary[hashCode(startByte)];
+        IntList possibleResults = DICTIONARY[hashCode(startByte)];
         if (possibleResults == null)
             return -1;
 
@@ -113,15 +116,19 @@ public class PP20Packer {
                 COMPRESSION_SETTING_MAX_OFFSETS[i] = getMaximumOffset(i);
         }
 
+        // Clear dictionary.
+        for (IntList list : DICTIONARY)
+            if (list != null)
+                list.clear();
+
         BitWriter writer = new BitWriter();
         writer.setReverseBytes(true);
 
-        ByteArrayWrapper noMatchQueue = new ByteArrayWrapper(data.length);
-        ByteArrayWrapper searchBuffer = new ByteArrayWrapper(data.length);
+        noMatchQueue.clearExpand(data.length);
+        searchBuffer.clearExpand(data.length);
 
-        IntList[] dictionary = new IntList[256];
         for (int i = 0; i < data.length; i++) {
-            int bestIndex = findLongest(data, i, searchBuffer, dictionary);
+            int bestIndex = findLongest(data, i, searchBuffer);
 
             if (bestIndex >= 0) { // Verify the compression index was found.
                 if (noMatchQueue.size() > 0) { // When a compressed one has been reached, write all the data in-between, if there is any.
@@ -135,9 +142,9 @@ public class PP20Packer {
 
                 for (int byteId = 0; byteId < searchBuffer.size(); byteId++) {
                     int hashCode = hashCode(searchBuffer.get(byteId));
-                    IntList list = dictionary[hashCode];
+                    IntList list = DICTIONARY[hashCode];
                     if (list == null)
-                        dictionary[hashCode] = list = new IntList();
+                        DICTIONARY[hashCode] = list = new IntList();
 
                     list.add(i++);
                 }
@@ -149,9 +156,9 @@ public class PP20Packer {
 
                 // Add current byte to the search dictionary.
                 int hashCode = hashCode(temp);
-                IntList list = dictionary[hashCode];
+                IntList list = DICTIONARY[hashCode];
                 if (list == null)
-                    dictionary[hashCode] = list = new IntList();
+                    DICTIONARY[hashCode] = list = new IntList();
 
                 list.add(i);
             }
@@ -159,7 +166,7 @@ public class PP20Packer {
         if (noMatchQueue.size() > 0) // Add whatever remains at the end, if there is any.
             writeRawData(writer, noMatchQueue);
 
-        return writer.toByteArray();
+        return writer.toByteArray(8, 4);
     }
 
     private static int hashCode(byte byteVal) {
@@ -197,7 +204,7 @@ public class PP20Packer {
             } while (writeLength > 0);
 
             if (writtenNum == PP20Packer.OFFSET_CONTINUE_WRITING_BITS) // Write null terminator if the last value was the "continue" character.
-                writer.writeBits(new int[OFFSET_BIT_LENGTH]);
+                writer.writeFalseBits(OFFSET_BIT_LENGTH);
         }
     }
 
@@ -214,7 +221,7 @@ public class PP20Packer {
         } while (writeLength > 0);
 
         if (writtenNum == PP20Packer.INPUT_CONTINUE_WRITING_BITS) // Write null terminator if the last value was the "continue" character.
-            writer.writeBits(new int[PP20Packer.INPUT_BIT_LENGTH]);
+            writer.writeFalseBits(PP20Packer.INPUT_BIT_LENGTH);
 
         for (int i = 0; i < bytes.size(); i++) // Writes the data.
             writer.writeByte(bytes.get(i));

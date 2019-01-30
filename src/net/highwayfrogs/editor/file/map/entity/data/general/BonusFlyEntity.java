@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.file.map.entity.data.general;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.map.entity.BonusFlyType;
+import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -15,12 +15,12 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 @Setter
 public class BonusFlyEntity extends MatrixData {
-    private BonusFlyType type = BonusFlyType.FLY_10; // Score type.
+    private FlyScoreType type = FlyScoreType.SCORE_10;
 
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.type = BonusFlyType.values()[reader.readInt()];
+        this.type = FlyScoreType.values()[reader.readInt()];
     }
 
     @Override
@@ -32,6 +32,6 @@ public class BonusFlyEntity extends MatrixData {
     @Override
     public void addData(GUIEditorGrid editor) {
         super.addData(editor);
-        editor.addEnumSelector("Fly Type", getType(), BonusFlyType.values(), false, this::setType);
+        editor.addEnumSelector("Fly Type", getType(), FlyScoreType.values(), false, this::setType);
     }
 }

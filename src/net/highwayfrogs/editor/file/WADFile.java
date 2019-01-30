@@ -55,7 +55,7 @@ public class WADFile extends GameFile {
             int size = reader.readInt();
             reader.readInt(); // Padding.
 
-            CURRENT_FILE_NAME = mwiTable.getEntries().get(resourceId).getDisplayName();
+            CURRENT_FILE_NAME = getConfig().getResourceEntry(resourceId).getDisplayName();
 
             // Decompress if compressed.
             byte[] data = reader.readBytes(size);

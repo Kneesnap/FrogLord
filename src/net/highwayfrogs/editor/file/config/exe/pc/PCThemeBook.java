@@ -58,9 +58,9 @@ public class PCThemeBook extends ThemeBook {
             return null;
 
         if (map.isMultiplayer()) {
-            return map.getMWD().getGameFile(map.isLowPolyMode() ? getLowMultiplayerVloId() : getHighMultiplayerVloId());
+            return getConfig().getGameFile(map.isLowPolyMode() ? getLowMultiplayerVloId() : getHighMultiplayerVloId());
         } else {
-            return map.getMWD().getGameFile(map.isLowPolyMode() ? getLowVloId() : getHighVloId());
+            return getConfig().getGameFile(map.isLowPolyMode() ? getLowVloId() : getHighVloId());
         }
     }
 

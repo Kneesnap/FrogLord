@@ -42,7 +42,7 @@ public class PSXThemeBook extends ThemeBook {
 
     @Override
     public VLOArchive getVLO(MAPFile map) {
-        return isValid() ? map.getMWD().getGameFile(map.isMultiplayer() ? getMultiplayerVloId() : getVloId()) : null;
+        return isValid() ? getConfig().getGameFile(map.isMultiplayer() ? getMultiplayerVloId() : getVloId()) : null;
     }
 
     @Override

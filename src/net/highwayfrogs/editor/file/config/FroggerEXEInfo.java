@@ -2,12 +2,14 @@ package net.highwayfrogs.editor.file.config;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.data.MAPLevel;
+import net.highwayfrogs.editor.file.config.data.MusicTrack;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.map.MAPLevel;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -35,6 +37,17 @@ public class FroggerEXEInfo extends Config {
     private ThemeBook[] themeLibrary;
     private List<MapBook> mapLibrary = new ArrayList<>();
     private Map<FileEntry, List<Short>> remapTable = new HashMap<>();
+    private List<MusicTrack> musicTracks = new ArrayList<>();
+
+    private long ramPointerOffset;
+    private int MWIOffset;
+    private int MWILength;
+    private int mapBookAddress;
+    private int themeBookAddress;
+    private int musicAddress;
+    private boolean prototype;
+    private boolean demo;
+    private TargetPlatform platform;
 
     private DataReader reader;
     private byte[] exeBytes;
@@ -67,68 +80,6 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
-     * Gets the byte-location of this executable's MWI.
-     * @return mwiOffset
-     */
-    public int getMWIOffset() {
-        return getInt("mwiOffset");
-    }
-
-    /**
-     * Get the byte-length of this executable's MWI.
-     * @return mwiLength
-     */
-    public int getMWILength() {
-        return getInt("mwiLength");
-    }
-
-    /**
-     * Get the address of the theme book.
-     */
-    public int getThemeBookAddress() {
-        return getInt("themeBook");
-    }
-
-    /**
-     * Get the address of the map book.
-     */
-    public int getMapBookAddress() {
-        return getInt("mapBook");
-    }
-
-    /**
-     * Gets the pointer offset when a value is in ram vs in the file.
-     * @return ramPointerOffset
-     */
-    public long getRamPointerOffset() {
-        return getLong("ramOffset");
-    }
-
-    /**
-     * Get the platform this was released on.
-     * @return platform
-     */
-    public TargetPlatform getPlatform() {
-        return getEnum("platform", TargetPlatform.class);
-    }
-
-    /**
-     * Gets if this is a major demo release.
-     * @return isDemo
-     */
-    public boolean isDemo() {
-        return getBoolean("demo");
-    }
-
-    /**
-     * Test if this is a prototype build.
-     * @return isPrototype
-     */
-    public boolean isPrototype() {
-        return getBoolean("prototype");
-    }
-
-    /**
      * Loads the remap table from the Frogger EXE.
      * @param mapEntry the map file entry.
      * @return remapTable
@@ -141,11 +92,25 @@ public class FroggerEXEInfo extends Config {
      * Read data from the EXE which needs reading.
      */
     public void setup() {
+        readConfig();
         readMWI();
         readThemeLibrary();
         readMapLibrary();
         readRemapData();
+        readMusicData();
         this.MWD = new MWDFile(getMWI());
+    }
+
+    private void readConfig() {
+        this.MWIOffset = getInt("mwiOffset");
+        this.MWILength = getInt("mwiLength");
+        this.themeBookAddress = getInt("themeBook");
+        this.mapBookAddress = getInt("mapBook");
+        this.ramPointerOffset = getLong("ramOffset");
+        this.platform = getEnum("platform", TargetPlatform.class);
+        this.musicAddress = getInt("musicAddress");
+        this.demo = getBoolean("demo");
+        this.prototype = getBoolean("prototype");
     }
 
     /**
@@ -214,53 +179,63 @@ public class FroggerEXEInfo extends Config {
         getMapLibrary().forEach(book -> book.readRemapData(this));
     }
 
+    private void readMusicData() {
+        getReader().setIndex(getMusicAddress());
+
+        byte readByte;
+        while ((readByte = getReader().readByte()) != MusicTrack.TERMINATOR)
+            getMusicTracks().add(MusicTrack.getTrackById(getPlatform(), readByte));
+    }
+
     /**
      * Patch this exe when its time to be saved.
      */
     public void patchEXE() {
-        patchMWI(getMWI());
-        patchThemeLibrary();
-        patchMapLibrary();
-        patchRemapData();
+        DataWriter exeWriter = getWriter();
+        patchMWI(exeWriter, getMWI());
+        patchThemeLibrary(exeWriter);
+        patchMapLibrary(exeWriter);
+        patchRemapData(exeWriter);
+        patchMusicData(exeWriter);
+        exeWriter.closeReceiver();
     }
 
     /**
      * Patch Frogger.exe to use a modded MWI.
      * @param mwiFile The MWI file to save.
      */
-    private void patchMWI(MWIFile mwiFile) {
+    private void patchMWI(DataWriter exeWriter, MWIFile mwiFile) {
         ArrayReceiver receiver = new ArrayReceiver();
         DataWriter mwiWriter = new DataWriter(receiver);
         mwiFile.save(mwiWriter);
         mwiWriter.closeReceiver();
 
-        int mwiOffset = getMWIOffset();
-        DataWriter exeWriter = getWriter();
-        exeWriter.setIndex(mwiOffset);
+        exeWriter.setIndex(getMWIOffset());
         exeWriter.writeBytes(receiver.toArray());
-        exeWriter.closeReceiver();
 
-        int bytesWritten = exeWriter.getIndex() - mwiOffset;
+        int bytesWritten = exeWriter.getIndex() - getMWIOffset();
         Utils.verify(bytesWritten == getMWILength(), "MWI Patching Failed. The size of the written MWI does not match the correct MWI size! [%d/%d]", bytesWritten, getMWILength());
     }
 
-    private void patchThemeLibrary() {
-        DataWriter exeWriter = getWriter();
+    private void patchThemeLibrary(DataWriter exeWriter) {
         exeWriter.setIndex(getThemeBookAddress());
         for (ThemeBook book : getThemeLibrary())
             book.save(exeWriter);
-        exeWriter.closeReceiver();
     }
 
-    private void patchMapLibrary() {
-        DataWriter exeWriter = getWriter();
+    private void patchMapLibrary(DataWriter exeWriter) {
         exeWriter.setIndex(getMapBookAddress());
         getMapLibrary().forEach(book -> book.save(exeWriter));
-        exeWriter.closeReceiver();
     }
 
-    private void patchRemapData() {
-        getMapLibrary().forEach(book -> book.saveRemapData(this));
+    private void patchRemapData(DataWriter exeWriter) {
+        getMapLibrary().forEach(book -> book.saveRemapData(exeWriter, this));
+    }
+
+    private void patchMusicData(DataWriter exeWriter) {
+        exeWriter.setIndex(getMusicAddress());
+        getMusicTracks().forEach(track -> exeWriter.writeByte(track.getTrack(getPlatform())));
+        exeWriter.writeByte(MusicTrack.TERMINATOR);
     }
 
     /**
@@ -279,7 +254,7 @@ public class FroggerEXEInfo extends Config {
      * Gets a writer which rights to the executable.
      * @return writer
      */
-    public DataWriter getWriter() {
+    private DataWriter getWriter() {
         loadExeData();
         return new DataWriter(new FixedArrayReceiver(this.exeBytes));
     }
@@ -331,5 +306,24 @@ public class FroggerEXEInfo extends Config {
      */
     public MapBook getMapBook(MAPLevel level) {
         return this.mapLibrary.get(level.ordinal());
+    }
+
+    /**
+     * Get the FileEntry for a given resource id.
+     * @param resourceId The resource id.
+     * @return fileEntry
+     */
+    public FileEntry getResourceEntry(int resourceId) {
+        return getMWI().getEntries().get(resourceId);
+    }
+
+    /**
+     * Gets a GameFile by its resource id.
+     * @param resourceId The file's resource id.
+     * @return gameFile
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends GameFile> T getGameFile(int resourceId) {
+        return (T) getMWD().getEntryFileMap().get(getResourceEntry(resourceId));
     }
 }

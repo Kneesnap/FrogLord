@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameFile;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.gui.MainController;
 
 /**
  * Represents a base froglord editor controller.
@@ -36,13 +34,5 @@ public class EditorController<T extends GameFile> {
      */
     public void onClose(AnchorPane editorRoot) {
 
-    }
-
-    /**
-     * Get the MWI entry for the this file.
-     * @return mwiEntry
-     */
-    public FileEntry getMWIEntry() {
-        return MainController.MAIN_WINDOW.getMwdFile().getEntryMap().get(getFile());
     }
 }

@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.TargetPlatform;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -18,12 +17,10 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -55,11 +52,9 @@ public class MWDFile extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        String marker = reader.readString(MARKER.length());
-        Utils.verify(marker.equals(MARKER), "MWD Identifier %s was incorrectly read as %s!", MARKER, marker);
+        reader.verifyString(MARKER);
 
         VBFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
-        AtomicInteger soundId = new AtomicInteger(0);
 
         for (FileEntry entry : wadIndexTable.getEntries()) {
             if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
@@ -72,16 +67,10 @@ public class MWDFile extends GameObject {
             if (entry.isCompressed())
                 fileBytes = PP20Unpacker.unpackData(fileBytes);
 
-            CURRENT_FILE_NAME = entry.getDisplayName();
             GameFile file = loadFile(fileBytes, entry, lastVB);
 
             try {
-                DataReader newReader = new DataReader(new ArraySource(fileBytes));
-                if (file instanceof VHFile) {
-                    ((VHFile) file).load(newReader, soundId);
-                } else {
-                    file.load(newReader);
-                }
+                file.load(new DataReader(new ArraySource(fileBytes)));
             } catch (Exception ex) {
                 throw new RuntimeException("Failed to load " + entry.getDisplayName() + ", " + entry.getLoadedId(), ex);
             }
@@ -98,7 +87,6 @@ public class MWDFile extends GameObject {
      * @return replacementFile
      */
     public <T extends GameFile> T replaceFile(byte[] fileBytes, FileEntry entry, GameFile oldFile) {
-        CURRENT_FILE_NAME = entry.getDisplayName();
         VBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
         T newFile = this.loadFile(fileBytes, entry, lastVB);
         newFile.load(new DataReader(new ArraySource(fileBytes)));
@@ -120,8 +108,8 @@ public class MWDFile extends GameObject {
         if (entry.getTypeId() == VLOArchive.TYPE_ID || entry.getDisplayName().startsWith("LS_ALL")) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
             file = new VLOArchive();
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
-            boolean isPSX = GUIMain.EXE_CONFIG.getPlatform() == TargetPlatform.PSX;
-            boolean isDemo = GUIMain.EXE_CONFIG.isDemo();
+            boolean isPSX = getConfig().getPlatform() == TargetPlatform.PSX;
+            boolean isDemo = getConfig().isDemo();
 
             boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && isDemo && isPSX);
             boolean isSkyLand = entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX);
@@ -153,6 +141,7 @@ public class MWDFile extends GameObject {
 
         entryMap.put(file, entry);
         entryFileMap.put(entry, file);
+        CURRENT_FILE_NAME = entry.getDisplayName();
         return (T) file;
     }
 
@@ -246,15 +235,5 @@ public class MWDFile extends GameObject {
                 }, allVLOs,
                 vlo -> vlo != null ? getEntryMap().get(vlo).getDisplayName() : "No Textures",
                 vlo -> SelectionMenu.makeIcon(vlo.getImages().get(0).toBufferedImage(VLO_ICON_SETTING)));
-    }
-
-    /**
-     * Get a GameFile by its resource id.
-     * @param resourceId The resource id.
-     * @return gameFile
-     */
-    @SuppressWarnings("unchecked")
-    public <T extends GameFile> T getGameFile(int resourceId) {
-        return (T) getEntryFileMap().get(getWadIndexTable().getEntries().get(resourceId));
     }
 }

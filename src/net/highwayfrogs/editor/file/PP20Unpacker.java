@@ -20,9 +20,8 @@ public class PP20Unpacker {
      * @return isCompressed
      */
     public static boolean isCompressed(byte[] a) {
-        byte[] headerTest = PP20Packer.MARKER.getBytes();
-        for (int i = 0; i < headerTest.length; i++)
-            if (headerTest[i] != a[i])
+        for (int i = 0; i < PP20Packer.MARKER_BYTES.length; i++)
+            if (PP20Packer.MARKER_BYTES[i] != a[i])
                 return false;
         return a.length > 11;
     }

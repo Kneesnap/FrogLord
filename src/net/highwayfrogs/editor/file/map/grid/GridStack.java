@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.file.map.grid;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -19,6 +18,7 @@ import java.util.List;
 @Setter
 public class GridStack extends GameObject {
     private List<GridSquare> gridSquares = new ArrayList<>();
+    private short averageHeight; // This appears unused, but it isn't. Removing it can cause broken behavior for some grid squares like cliffs.
 
     private transient int loadedSquareCount;
     private transient int tempIndex;
@@ -26,15 +26,31 @@ public class GridStack extends GameObject {
     @Override
     public void load(DataReader reader) {
         this.loadedSquareCount = reader.readUnsignedByteAsShort();
-        reader.readByte(); // Unused
+        this.averageHeight = reader.readUnsignedByteAsShort();
         this.tempIndex = reader.readUnsignedShortAsInt();
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedByte((short) gridSquares.size());
-        writer.writeByte(Constants.NULL_BYTE); // Unused.
+        writer.writeUnsignedByte(this.averageHeight);
         writer.writeUnsignedShort(this.tempIndex);
+    }
+
+    /**
+     * Gets the stack height
+     * @return height
+     */
+    public int getHeight() {
+        return (this.averageHeight << 6);
+    }
+
+    /**
+     * Set the height of this stack.
+     * @param newHeight The new height.
+     */
+    public void setHeight(int newHeight) {
+        this.averageHeight = (short) (newHeight >> 6);
     }
 
     /**

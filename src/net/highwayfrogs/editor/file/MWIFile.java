@@ -3,10 +3,10 @@ package net.highwayfrogs.editor.file;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ public class MWIFile extends GameObject {
         int loadingId = 0;
         while (reader.hasMore() && (nameStartAddress == null || nameStartAddress.get() > reader.getIndex())) { // Read entries until we reach file-names.
             int nameOffset = reader.readInt();
-            FileEntry entry = new FileEntry(loadingId++);
+            FileEntry entry = new FileEntry(getConfig(), loadingId++);
 
             if (nameOffset != CODE_NO_FILE_NAME) { // If the file name is present, read the file name. (File-names are present on the PC version, but not the PSX version.)
                 if (nameStartAddress == null) // Use the first name address as the address which starts the name table.
@@ -115,6 +115,7 @@ public class MWIFile extends GameObject {
         private int unpackedSize;
         private String filePath;
         private transient int loadedId;
+        private transient FroggerEXEInfo config;
 
         public static final int FLAG_SINGLE_ACCESS = Constants.BIT_FLAG_0; // I assume this is for files loaded individually, by themselves.
         public static final int FLAG_GROUP_ACCESS = Constants.BIT_FLAG_1; // Cannot be loaded individually / by itself. Presumably this is for files in child-WADs.
@@ -123,8 +124,9 @@ public class MWIFile extends GameObject {
         public static final int FLAG_AUTOMATIC_COMPRESSION = Constants.BIT_FLAG_4;
         public static final int FLAG_MANUAL_COMPRESSION = Constants.BIT_FLAG_5;
 
-        public FileEntry(int loadedId) {
+        public FileEntry(FroggerEXEInfo config, int loadedId) {
             this.loadedId = loadedId;
+            this.config = config;
         }
 
         /**
@@ -185,8 +187,8 @@ public class MWIFile extends GameObject {
             if (hasFilePath())
                 return getFilePath().substring(getFilePath().lastIndexOf("\\") + 1);
 
-            if (GUIMain.EXE_CONFIG.getFileNames().size() > this.loadedId)
-                return GUIMain.EXE_CONFIG.getFileNames().get(this.loadedId);
+            if (getConfig().getFileNames().size() > this.loadedId)
+                return getConfig().getFileNames().get(this.loadedId);
 
             return "File " + this.loadedId;
         }
@@ -211,7 +213,7 @@ public class MWIFile extends GameObject {
          * @return book
          */
         public MapBook getBook() {
-            for (MapBook book : GUIMain.EXE_CONFIG.getMapLibrary())
+            for (MapBook book : getConfig().getMapLibrary())
                 if (book.isEntry(this))
                     return book;
             throw new RuntimeException("Failed to find MapBook for FileEntry.");

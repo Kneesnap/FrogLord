@@ -13,15 +13,15 @@ public enum FlyScoreType {
     SCORE_500,
     SCORE_1000,
     SCORE_5000,
-    LIGHT_5,
-    ADD_SUPER_LIGHT,
+    LIGHT_BOOST, // Glow Worm, Light 5.
+    SUPER_LIGHT, // Fat Fire Fly.
     TIME_MIN,
     TIME_MED,
     TIME_MAX,
-    REDUCE_SCORE_100,
-    ADD_TIMER_SPEED,
+    REDUCE_SCORE_100, // Bad Effect.
+    FAST_TIMER_SPEED, // Bad Effect.
     ADD_EXTRA_LIFE,
-    ADD_SUPER_TONGUE,
-    ADD_QUICK_JUMP,
-    ADD_AUTO_HOP;
+    FROG_SUPER_TONGUE,
+    FROG_QUICK_JUMP,
+    FROG_AUTO_HOP;
 }

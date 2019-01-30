@@ -41,8 +41,8 @@ public class PSXMapBook extends MapBook {
     }
 
     @Override
-    public void saveRemapData(FroggerEXEInfo config) {
-        this.saveRemap(config, this.mapId, this.remapPointer);
+    public void saveRemapData(DataWriter writer, FroggerEXEInfo config) {
+        this.saveRemap(writer, config, this.mapId, this.remapPointer);
     }
 
     @Override
