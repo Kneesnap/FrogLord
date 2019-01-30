@@ -7,12 +7,12 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Parses VH files.
@@ -20,42 +20,29 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public class VHFile extends GameFile {
-    @Setter private VBFile VB;
     private List<AudioHeader> entries = new ArrayList<>();
-    private AtomicInteger suppliedSoundId;
+    @Setter private transient VBFile VB;
 
-    private static final int ENTRY_LENGTH = 7 * Constants.INTEGER_SIZE;
     public static final int TYPE_ID = 2;
     public static final Image ICON = loadIcon("sound");
 
-    /**
-     * Load this file.
-     * @param reader  The DataReader.
-     * @param soundId The supplied sound id.
-     */
-    public void load(DataReader reader, AtomicInteger soundId) {
-        this.suppliedSoundId = soundId;
-        this.load(reader);
-        this.suppliedSoundId = null;
-    }
-
     @Override
     public void load(DataReader reader) {
-        Utils.verify(this.suppliedSoundId != null, "Tried to load without a supplied sound id.");
         int numEntries = reader.readInt();
-
         for (int i = 0; i < numEntries; i++) {
             AudioHeader entry = new AudioHeader();
-
-            entry.setChannels(reader.readInt());
-            entry.setDataStartOffset(reader.readInt());
-            entry.setDataSize(reader.readInt());
-            entry.setUnknown1(reader.readInt());
-            entry.setUnknown2(reader.readInt());
-            entry.setSampleRate(reader.readInt());
-            entry.setBitWidth(reader.readInt());
-
+            entry.load(reader);
             getEntries().add(entry);
+        }
+
+        AudioHeader lastEntry = getEntries().get(0);
+        for (int i = 1; i < getEntries().size(); i++) {
+            AudioHeader entry = getEntries().get(i);
+
+            boolean isPresent = entry.getDataStartOffset() > lastEntry.getDataStartOffset();
+            entry.setAudioPresent(isPresent);
+            lastEntry.setAudioPresent(isPresent);
+            lastEntry = entry;
         }
 
         getVB().load(this); // Load the linked body file.
@@ -66,25 +53,11 @@ public class VHFile extends GameFile {
         writer.writeInt(getEntries().size());
 
         int offset = 0;
-        int lastEntry = -1;
-        int lastSize = 0;
         for (AudioHeader entry : getEntries()) {
-            writer.writeInt(entry.getChannels());
-
-            // Recalculate data offsets.
-            int currentOffset = entry.getDataStartOffset();
-            if (lastEntry >= 0 && currentOffset > lastEntry)
-                offset += lastSize;
-
             entry.setDataStartOffset(offset);
-            writer.writeInt(entry.getDataStartOffset());
-            writer.writeInt(entry.getDataSize());
-            writer.writeInt(entry.getUnknown1());
-            writer.writeInt(entry.getUnknown2());
-            writer.writeInt(entry.getSampleRate());
-            writer.writeInt(entry.getBitWidth());
-            lastEntry = currentOffset;
-            lastSize = entry.getDataSize();
+            entry.save(writer);
+            if (entry.isAudioPresent())
+                offset += entry.getDataSize();
         }
     }
 
@@ -101,7 +74,7 @@ public class VHFile extends GameFile {
 
     @Setter
     @Getter
-    public static class AudioHeader {
+    public static class AudioHeader extends GameObject {
         private int channels;
         private int dataStartOffset;
         private int dataSize;
@@ -109,5 +82,37 @@ public class VHFile extends GameFile {
         private int unknown2;
         private int sampleRate;
         private int bitWidth;
+
+        private transient boolean audioPresent;
+
+        @Override
+        public void load(DataReader reader) {
+            this.channels = reader.readInt();
+            this.dataStartOffset = reader.readInt();
+            this.dataSize = reader.readInt();
+            this.unknown1 = reader.readInt();
+            this.unknown2 = reader.readInt();
+            this.sampleRate = reader.readInt();
+            this.bitWidth = reader.readInt();
+        }
+
+        @Override
+        public void save(DataWriter writer) {
+            writer.writeInt(this.channels);
+            writer.writeInt(this.dataStartOffset);
+            writer.writeInt(this.dataSize);
+            writer.writeInt(this.unknown1);
+            writer.writeInt(this.unknown2);
+            writer.writeInt(this.sampleRate);
+            writer.writeInt(this.bitWidth);
+        }
+
+        /**
+         * Get the byte-width for this sound.
+         * @return byteWidth
+         */
+        public int getByteWidth() {
+            return getBitWidth() / Constants.BITS_PER_BYTE;
+        }
     }
 }

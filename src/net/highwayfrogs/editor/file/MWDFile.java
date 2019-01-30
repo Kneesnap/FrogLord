@@ -23,7 +23,6 @@ import net.highwayfrogs.editor.gui.SelectionMenu;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -59,7 +58,6 @@ public class MWDFile extends GameObject {
         Utils.verify(marker.equals(MARKER), "MWD Identifier %s was incorrectly read as %s!", MARKER, marker);
 
         VBFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
-        AtomicInteger soundId = new AtomicInteger(0);
 
         for (FileEntry entry : wadIndexTable.getEntries()) {
             if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
@@ -77,11 +75,7 @@ public class MWDFile extends GameObject {
 
             try {
                 DataReader newReader = new DataReader(new ArraySource(fileBytes));
-                if (file instanceof VHFile) {
-                    ((VHFile) file).load(newReader, soundId);
-                } else {
-                    file.load(newReader);
-                }
+                file.load(newReader);
             } catch (Exception ex) {
                 throw new RuntimeException("Failed to load " + entry.getDisplayName() + ", " + entry.getLoadedId(), ex);
             }

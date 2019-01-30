@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.gui.editor.VABController;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Parses VB files and allows exporting to WAV, and importing audio files.
@@ -20,19 +19,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public class VBFile extends GameFile {
-    private VHFile header;
     private List<GameSound> audioEntries = new ArrayList<>();
-    private DataReader cachedReader;
-
-    @Override
-    public Image getIcon() {
-        return VHFile.ICON;
-    }
-
-    @Override
-    public Node makeEditor() {
-        return loadEditor(new VABController(), "vb", this);
-    }
+    private transient DataReader cachedReader;
+    private transient VHFile header;
 
     /**
      * Load the VB file, with the mandatory VH file.
@@ -52,24 +41,26 @@ public class VBFile extends GameFile {
             return;
         }
 
-        AtomicInteger atomicId = getHeader().getSuppliedSoundId();
-        while (header.getEntries().size() > atomicId.get()) {
-            AudioHeader vhEntry = header.getEntries().get(atomicId.get());
-            GameSound audioEntry = new PCSound(atomicId.get(), vhEntry);
+        for (int id = 0; id < header.getEntries().size(); id++) {
+            AudioHeader vhEntry = header.getEntries().get(id);
+            if (!vhEntry.isAudioPresent()) { // If we don't have the audio for this entry...
+                if (getAudioEntries().isEmpty()) {
+                    continue; // and we haven't loaded any entries yet, keep going.
+                } else {
+                    return; // and we've already loaded at least one entry, we're done reading entries.
+                }
+            }
 
             int byteSize = vhEntry.getDataSize();
-            int readLength = byteSize / audioEntry.getByteWidth();
+            int readLength = byteSize / vhEntry.getByteWidth();
+
             reader.jumpTemp(vhEntry.getDataStartOffset());
-
-            if (!reader.hasMore() || reader.getIndex() + byteSize > reader.getSize())
-                return; // For some reason, the .VH files have way more entries than the VB has files. It looks to me like the VH has entries for all audio files, not just ones present in the VB.
-
+            GameSound gameSound = new PCSound(id, vhEntry);
             for (int i = 0; i < readLength; i++)
-                audioEntry.getAudioData().add(reader.readInt(audioEntry.getByteWidth()));
+                gameSound.getAudioData().add(reader.readInt(vhEntry.getByteWidth()));
             reader.jumpReturn();
 
-            this.audioEntries.add(audioEntry);
-            atomicId.incrementAndGet();
+            this.audioEntries.add(gameSound);
         }
     }
 
@@ -78,6 +69,16 @@ public class VBFile extends GameFile {
         for (GameSound entry : getAudioEntries())
             for (int toWrite : entry.getAudioData())
                 writer.writeNumber(toWrite, entry.getByteWidth());
+    }
+
+    @Override
+    public Image getIcon() {
+        return VHFile.ICON;
+    }
+
+    @Override
+    public Node makeEditor() {
+        return loadEditor(new VABController(), "vb", this);
     }
 
     @Getter
