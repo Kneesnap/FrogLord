@@ -375,15 +375,8 @@ public class MAPFile extends GameFile {
         if (!Constants.DEV_ISLAND_NAME.equals(newName))
             return;
 
-        System.out.println("Fixing imported developer map.");
+        System.out.println("Changing developer map remap.");
         removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity.
-
-        // Remove "SUB_PEDDLEBOAT" entities. These entities do not exist.
-        removeEntity(getEntities().get(7));
-        removeEntity(getEntities().get(5));
-        removeEntity(getEntities().get(3));
-        removeEntity(getEntities().get(2));
-
         getConfig().changeRemap(getFileEntry(), getConfig().getPlatform() == TargetPlatform.PC ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
     }
 

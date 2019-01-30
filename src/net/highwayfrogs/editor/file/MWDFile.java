@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.TargetPlatform;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -54,8 +53,6 @@ public class MWDFile extends GameObject {
     @Override
     public void load(DataReader reader) {
         reader.verifyString(MARKER);
-        String marker = reader.readString(MARKER.length());
-        Utils.verify(marker.equals(MARKER), "MWD Identifier %s was incorrectly read as %s!", MARKER, marker);
 
         VBFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
 
@@ -73,8 +70,7 @@ public class MWDFile extends GameObject {
             GameFile file = loadFile(fileBytes, entry, lastVB);
 
             try {
-                DataReader newReader = new DataReader(new ArraySource(fileBytes));
-                file.load(newReader);
+                file.load(new DataReader(new ArraySource(fileBytes)));
             } catch (Exception ex) {
                 throw new RuntimeException("Failed to load " + entry.getDisplayName() + ", " + entry.getLoadedId(), ex);
             }
