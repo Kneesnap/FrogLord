@@ -53,6 +53,7 @@ public class MWDFile extends GameObject {
 
     @Override
     public void load(DataReader reader) {
+        reader.verifyString(MARKER);
         String marker = reader.readString(MARKER.length());
         Utils.verify(marker.equals(MARKER), "MWD Identifier %s was incorrectly read as %s!", MARKER, marker);
 
@@ -69,7 +70,6 @@ public class MWDFile extends GameObject {
             if (entry.isCompressed())
                 fileBytes = PP20Unpacker.unpackData(fileBytes);
 
-            CURRENT_FILE_NAME = entry.getDisplayName();
             GameFile file = loadFile(fileBytes, entry, lastVB);
 
             try {
@@ -91,7 +91,6 @@ public class MWDFile extends GameObject {
      * @return replacementFile
      */
     public <T extends GameFile> T replaceFile(byte[] fileBytes, FileEntry entry, GameFile oldFile) {
-        CURRENT_FILE_NAME = entry.getDisplayName();
         VBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
         T newFile = this.loadFile(fileBytes, entry, lastVB);
         newFile.load(new DataReader(new ArraySource(fileBytes)));
@@ -146,6 +145,7 @@ public class MWDFile extends GameObject {
 
         entryMap.put(file, entry);
         entryFileMap.put(entry, file);
+        CURRENT_FILE_NAME = entry.getDisplayName();
         return (T) file;
     }
 
