@@ -395,7 +395,7 @@ public class MAPFile extends GameFile {
 
         // Write File Header
         writer.writeStringBytes(SIGNATURE);
-        writer.writeInt(0); // File length. (Unused)
+        int fileLengthPointer = writer.writeNullPointer();
         writer.writeStringBytes(VERSION);
         writer.writeNull(COMMENT_BYTES);
 
@@ -654,6 +654,8 @@ public class MAPFile extends GameFile {
         getMapAnimations().forEach(anim -> anim.writeTextures(writer));
         writer.writeShort(MAP_ANIMATION_TEXTURE_LIST_TERMINATOR);
         getMapAnimations().forEach(anim -> anim.writeMapUVs(writer));
+
+        writer.writeAddressTo(fileLengthPointer); // Write file length to start of file.
     }
 
     @Override
