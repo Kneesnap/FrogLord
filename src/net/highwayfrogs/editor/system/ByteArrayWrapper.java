@@ -47,6 +47,16 @@ public class ByteArrayWrapper {
     }
 
     /**
+     * Clear the contents of this array and expand it.
+     * @param newSize The size to expand to. (Silently does nothing if it's larger than the current size)
+     */
+    public void clearExpand(int newSize) {
+        clear();
+        if (newSize > arraySize())
+            resize(newSize);
+    }
+
+    /**
      * Get the value at a given index.
      * @param index The index to get.
      * @return value

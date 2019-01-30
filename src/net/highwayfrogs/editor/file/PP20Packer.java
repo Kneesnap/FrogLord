@@ -39,6 +39,8 @@ public class PP20Packer {
 
     private static final IntList[] DICTIONARY = new IntList[256];
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
+    private static final ByteArrayWrapper searchBuffer = new ByteArrayWrapper(0);
+    private static final ByteArrayWrapper noMatchQueue = new ByteArrayWrapper(0);
 
     /**
      * Pack a byte array into PP20 compressed data.
@@ -122,8 +124,8 @@ public class PP20Packer {
         BitWriter writer = new BitWriter();
         writer.setReverseBytes(true);
 
-        ByteArrayWrapper noMatchQueue = new ByteArrayWrapper(data.length);
-        ByteArrayWrapper searchBuffer = new ByteArrayWrapper(data.length);
+        noMatchQueue.clearExpand(data.length);
+        searchBuffer.clearExpand(data.length);
 
         for (int i = 0; i < data.length; i++) {
             int bestIndex = findLongest(data, i, searchBuffer);
