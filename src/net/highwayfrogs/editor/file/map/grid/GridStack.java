@@ -38,6 +38,22 @@ public class GridStack extends GameObject {
     }
 
     /**
+     * Gets the stack height
+     * @return height
+     */
+    public int getHeight() {
+        return (this.averageHeight << 6);
+    }
+
+    /**
+     * Set the height of this stack.
+     * @param newHeight The new height.
+     */
+    public void setHeight(int newHeight) {
+        this.averageHeight = (short) (newHeight >> 6);
+    }
+
+    /**
      * Load squares after they're loaded.
      * @param file The file to read the squares from.
      */
