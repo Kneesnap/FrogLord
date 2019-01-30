@@ -9,7 +9,6 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -75,7 +74,7 @@ public class TextureMap {
         }
 
         graphics.dispose();
-        return new TextureMap(vloSource, fullImage, entryMap, GUIMain.EXE_CONFIG.getRemapTable(mapFile.getFileEntry()));
+        return new TextureMap(vloSource, fullImage, entryMap, mapFile.getConfig().getRemapTable(mapFile.getFileEntry()));
     }
 
     @Getter

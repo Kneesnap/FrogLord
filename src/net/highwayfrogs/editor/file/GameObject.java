@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file;
 
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
@@ -23,10 +24,18 @@ public abstract class GameObject {
     public abstract void save(DataWriter writer);
 
     /**
+     * Get the exe config.
+     * @return exeConfig
+     */
+    public FroggerEXEInfo getConfig() {
+        return GUIMain.EXE_CONFIG;
+    }
+
+    /**
      * Get the parent MWD file.
      * @return mwdFile
      */
     public MWDFile getMWD() {
-        return GUIMain.EXE_CONFIG.getMWD();
+        return getConfig().getMWD();
     }
 }

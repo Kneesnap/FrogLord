@@ -18,7 +18,6 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 
 import java.text.SimpleDateFormat;
@@ -114,8 +113,8 @@ public class MWDFile extends GameObject {
         if (entry.getTypeId() == VLOArchive.TYPE_ID || entry.getDisplayName().startsWith("LS_ALL")) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
             file = new VLOArchive();
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
-            boolean isPSX = GUIMain.EXE_CONFIG.getPlatform() == TargetPlatform.PSX;
-            boolean isDemo = GUIMain.EXE_CONFIG.isDemo();
+            boolean isPSX = getConfig().getPlatform() == TargetPlatform.PSX;
+            boolean isDemo = getConfig().isDemo();
 
             boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && isDemo && isPSX);
             boolean isSkyLand = entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX);
@@ -240,15 +239,5 @@ public class MWDFile extends GameObject {
                 }, allVLOs,
                 vlo -> vlo != null ? getEntryMap().get(vlo).getDisplayName() : "No Textures",
                 vlo -> SelectionMenu.makeIcon(vlo.getImages().get(0).toBufferedImage(VLO_ICON_SETTING)));
-    }
-
-    /**
-     * Get a GameFile by its resource id.
-     * @param resourceId The resource id.
-     * @return gameFile
-     */
-    @SuppressWarnings("unchecked")
-    public <T extends GameFile> T getGameFile(int resourceId) {
-        return (T) getEntryFileMap().get(getWadIndexTable().getEntries().get(resourceId));
     }
 }

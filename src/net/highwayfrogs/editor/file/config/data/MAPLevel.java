@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.map.data;
+package net.highwayfrogs.editor.file.config.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

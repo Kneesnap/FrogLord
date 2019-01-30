@@ -2,14 +2,15 @@ package net.highwayfrogs.editor.file.config;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.data.MusicTrack;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
-import net.highwayfrogs.editor.file.map.data.MAPLevel;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
@@ -76,14 +77,6 @@ public class FroggerEXEInfo extends Config {
         if (hasChild(FIELD_FILE_NAMES))
             this.fallbackFileNames.addAll(getChild(FIELD_FILE_NAMES).getText());
         return this.fallbackFileNames;
-    }
-
-    /**
-     * Get the platform this was released on.
-     * @return platform
-     */
-    public TargetPlatform getPlatform() {
-        return getEnum("platform", TargetPlatform.class);
     }
 
     /**
@@ -322,5 +315,15 @@ public class FroggerEXEInfo extends Config {
      */
     public FileEntry getResourceEntry(int resourceId) {
         return getMWI().getEntries().get(resourceId);
+    }
+
+    /**
+     * Gets a GameFile by its resource id.
+     * @param resourceId The file's resource id.
+     * @return gameFile
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends GameFile> T getGameFile(int resourceId) {
+        return (T) getMWD().getEntryFileMap().get(getResourceEntry(resourceId));
     }
 }

@@ -36,7 +36,6 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 
@@ -360,7 +359,7 @@ public class MAPFile extends GameFile {
             mapAnimations.add(animation);
         }
 
-        this.vlo = GUIMain.EXE_CONFIG.getThemeBook(getTheme()).getVLO(this);
+        this.vlo = getConfig().getThemeBook(getTheme()).getVLO(this);
     }
 
     @Override
@@ -385,7 +384,7 @@ public class MAPFile extends GameFile {
         removeEntity(getEntities().get(3));
         removeEntity(getEntities().get(2));
 
-        GUIMain.EXE_CONFIG.changeRemap(getFileEntry(), GUIMain.EXE_CONFIG.getPlatform() == TargetPlatform.PC ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
+        getConfig().changeRemap(getFileEntry(), getConfig().getPlatform() == TargetPlatform.PC ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
     }
 
     @Override
@@ -667,7 +666,7 @@ public class MAPFile extends GameFile {
         if (getVlo() != null)
             getVlo().exportAllImages(selectedFolder, OBJ_EXPORT_FILTER); // Export VLO images.
 
-        exportToObj(selectedFolder, entry, vlo, GUIMain.EXE_CONFIG.getRemapTable(getFileEntry()));
+        exportToObj(selectedFolder, entry, vlo, getConfig().getRemapTable(getFileEntry()));
     }
 
     @SneakyThrows
