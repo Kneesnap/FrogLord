@@ -19,15 +19,22 @@ public class ByteArrayWrapper {
     }
 
     /**
+     * Resize the underlying array.
+     * @param newSize The underlying array's new size.
+     */
+    public void resize(int newSize) {
+        byte[] newArray = new byte[newSize];
+        System.arraycopy(this.array, 0, newArray, 0, arraySize());
+        this.array = newArray;
+    }
+
+    /**
      * Add a byte to this array.
      * @param value The value to add.
      */
     public void add(byte value) {
-        if (this.growthFactor > 0 && this.length >= this.array.length) { // We've reached the end of our array, it needs to expand.
-            byte[] newArray = new byte[this.array.length + this.growthFactor];
-            System.arraycopy(this.array, 0, newArray, 0, this.array.length);
-            this.array = newArray;
-        }
+        if (this.growthFactor > 0 && this.length >= arraySize()) // We've reached the end of our array, it needs to expand.
+            resize(arraySize() + this.growthFactor);
 
         this.array[this.length++] = value;
     }
@@ -54,5 +61,13 @@ public class ByteArrayWrapper {
      */
     public int size() {
         return this.length;
+    }
+
+    /**
+     * Gets the size of the underlying array.
+     * @return arraySize
+     */
+    public int arraySize() {
+        return this.array.length;
     }
 }
