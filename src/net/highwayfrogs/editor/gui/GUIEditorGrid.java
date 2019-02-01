@@ -3,12 +3,14 @@ package net.highwayfrogs.editor.gui;
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.RowConstraints;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
@@ -313,6 +315,28 @@ public class GUIEditorGrid {
         setupSecondNode(view, true);
         addRow(dimensions + 5);
         return view;
+    }
+
+    public HBox addVector3D(float[] vec3D, double height)
+    {
+        HBox container;
+
+        // Check to ensure we are receiving a 3-component vector
+        if (vec3D.length != 3) {
+            container = setupSecondNode(new HBox(new Label("(*Invalid vector length!)")), true);
+        }
+        else {
+            TextField[] textFields = new TextField[vec3D.length];
+            for (int i = 0; i < vec3D.length; i++) {
+                textFields[i] = new TextField(Float.toString(vec3D[i]));
+                textFields[i].setAlignment(Pos.CENTER_RIGHT);
+            }
+
+            container = setupSecondNode(new HBox(1.0, textFields[0], textFields[1], textFields[2]), true);
+        }
+
+        addRow(height);
+        return container;
     }
 
     /**
