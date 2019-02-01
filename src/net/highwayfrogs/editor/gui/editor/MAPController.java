@@ -273,8 +273,10 @@ public class MAPController extends EditorController<MAPFile> {
             }
         });
 
-        camera.setTranslateZ(-MapUIController.getPropertyMapViewScale().get());
-        camera.setTranslateY(-MapUIController.getPropertyMapViewScale().get() / 7.0);
+        // Set the initial camera position to somewhere sensible :)
+        //  - Maybe calculate this based on some metric rather than supplying arbitrary values?
+        camera.setTranslateZ(-1000.0);
+        camera.setTranslateY(-100.0);
     }
 
     /**
@@ -305,9 +307,9 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private <T extends Node> T setupNode(T node, float x, float y, float z, double width, double height) {
-        node.setTranslateX((MapUIController.getPropertyMapViewScale().get() * x) - width);
-        node.setTranslateY((MapUIController.getPropertyMapViewScale().get() * y) - height);
-        node.setTranslateZ((MapUIController.getPropertyMapViewScale().get() * z));
+        node.setTranslateX(x - (width * 0.5));
+        node.setTranslateY(y - (height * 0.5));
+        node.setTranslateZ(z);
 
         Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS); // Up, Down,
         Rotate lightRotateY = new Rotate(0, Rotate.Y_AXIS); // Left, Right
