@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.gui.editor;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
@@ -212,8 +211,7 @@ public class VLOController extends EditorController<VLOArchive> {
             boolean scaleSize = sizeCheckBox.isSelected();
             imageView.setFitWidth(scaleSize ? SCALE_DIMENSION : image.getWidth());
             imageView.setFitHeight(scaleSize ? SCALE_DIMENSION : image.getHeight());
-
-            imageView.setImage(SwingFXUtils.toFXImage(image, null));
+            imageView.setImage(Utils.toFXImage(image, true));
         }
     }
 
@@ -231,7 +229,6 @@ public class VLOController extends EditorController<VLOArchive> {
     }
 
     private void updateFilter() {
-        imageFilterSettings.resetState();
         imageFilterSettings.setTrimEdges(!this.paddingCheckBox.isSelected());
         imageFilterSettings.setAllowTransparency(this.transparencyCheckBox.isSelected());
     }

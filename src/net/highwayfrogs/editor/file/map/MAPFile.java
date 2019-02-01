@@ -590,11 +590,12 @@ public class MAPFile extends GameFile {
             writer.writeInt(tempAddress);
             writer.jumpReturn();
 
-            getPolygons().get(type).forEach(polygon -> {
-                getSavePointerPolygonMap().put(writer.getIndex(), polygon);
-                getSavePolygonPointerMap().put(polygon, writer.getIndex());
-                polygon.save(writer);
-            });
+            for (MAPPrimitive prim : getPolygons().get(type)) {
+                Integer index = writer.getIndex();
+                getSavePointerPolygonMap().put(index, prim);
+                getSavePolygonPointerMap().put(prim, index);
+                prim.save(writer);
+            }
         }
 
         // Write MAP_GROUP polygon pointers, since we've written polygon data.

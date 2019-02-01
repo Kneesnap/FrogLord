@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.gui.editor;
 
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -142,7 +141,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Create and setup material properties for rendering the level.
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseMap(SwingFXUtils.toFXImage(texMap.getImage(), null));
+        material.setDiffuseMap(Utils.toFXImage(texMap.getImage(), true));
 
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(mesh);

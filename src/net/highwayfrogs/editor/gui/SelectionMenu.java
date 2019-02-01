@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.gui;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -44,7 +43,10 @@ public class SelectionMenu {
      * @return imageIcon
      */
     public static ImageView makeIcon(BufferedImage image) {
-        return new ImageView(SwingFXUtils.toFXImage(Utils.resizeImage(image, 25, 25), null));
+        ImageView view = new ImageView(Utils.toFXImage(image, true));
+        view.setFitWidth(25);
+        view.setFitHeight(25);
+        return view;
     }
 
     public static class SelectionController<T> implements Initializable {

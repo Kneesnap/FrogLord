@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.gui.editor;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -10,8 +9,11 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -46,6 +48,10 @@ public class GridController implements Initializable {
     @FXML private ImageView selectedImage;
     @FXML private ComboBox<Integer> layerSelector;
     @FXML private GridPane flagTable;
+
+    @FXML private AnchorPane stackPane;
+    @FXML private Label stackIdLabel;
+    @FXML private TextField stackHeightField;
 
     private Stage stage;
     private MapUIController controller;
@@ -96,7 +102,7 @@ public class GridController implements Initializable {
         graphics.clearRect(0, 0, gridCanvas.getWidth(), gridCanvas.getHeight());
 
         TextureMap texMap = getController().getMesh().getTextureMap();
-        Image fxTextureImage = SwingFXUtils.toFXImage(texMap.getImage(), null);
+        Image fxTextureImage = Utils.toFXImage(texMap.getImage(), true);
 
         graphics.setFill(Color.GRAY);
         for (int z = 0; z < getMap().getGridZCount(); z++) {
@@ -176,6 +182,13 @@ public class GridController implements Initializable {
         updateCanvas();
     }
 
+    @FXML
+    private void onUpdateHeight(ActionEvent evt) {
+        String text = stackHeightField.getText();
+        if (Utils.isSignedShort(text))
+            this.selectedStack.setAverageHeight(Short.parseShort(text));
+    }
+
     /**
      * Select a square.
      * @param stack The stack the square belongs to.
@@ -188,7 +201,7 @@ public class GridController implements Initializable {
         GridSquare square = stack.getGridSquares().get(layer);
         TextureEntry entry = square.getPolygon().getEntry(texMap);
 
-        selectedImage.setImage(SwingFXUtils.toFXImage(entry.getImage(texMap), null));
+        selectedImage.setImage(Utils.toFXImage(entry.getImage(texMap), false));
 
         int x = 1;
         int y = 0;
@@ -229,6 +242,12 @@ public class GridController implements Initializable {
         flagTable.setVisible(squareCount > 0);
         selectedImage.setVisible(squareCount > 0);
         layerSelector.setVisible(squareCount > 1);
+
+        stackPane.setVisible(stack != null);
+        if (stack != null) {
+            stackIdLabel.setText("Stack ID: #" + (getMap().getGridStacks().indexOf(stack)));
+            stackHeightField.setText(String.valueOf(stack.getAverageHeight()));
+        }
     }
 
     /**

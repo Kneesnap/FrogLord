@@ -76,7 +76,6 @@ public class ImageWorkHorse {
     // Transparency -> Black
     public static class BlackFilter extends RGBImageFilter {
         @Override
-        @SuppressWarnings("NumericOverflow")
         public int filterRGB(int x, int y, int rgb) {
             int alpha = rgb >>> (3 * Constants.BITS_PER_BYTE);
             return alpha == 0 ? 0xFF000000 : rgb;

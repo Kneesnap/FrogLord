@@ -160,7 +160,7 @@ public class MWDFile extends GameObject {
         Date date = Date.from(Calendar.getInstance().toInstant());
         writer.writeTerminatorString("\nCreation Date: " + DATE_FORMAT.format(date)
                 + "\nCreation Time: " + TIME_FORMAT.format(date)
-                + "\nThis MWD was changed using FrogLord.\n");
+                + "\nThis MWD was built using FrogLord.\n");
 
         int sectorOffset = 0;
         long mwdStart = System.currentTimeMillis();

@@ -48,7 +48,7 @@ public class PP20Packer {
      * @return packedData
      */
     public static byte[] packData(byte[] data) {
-        data = Utils.reverseCloneByteArray(data);
+        Utils.reverseByteArray(data); // Does this cause problems?
 
         // Take the compressed data, and pad it with the file structure. Then, we're done.
         byte[] compressedData = compressData(data);
@@ -57,6 +57,7 @@ public class PP20Packer {
 
         INT_BUFFER.clear();
         System.arraycopy(INT_BUFFER.putInt(data.length).array(), 1, compressedData, compressedData.length - 4, Constants.INTEGER_SIZE - 1);
+        Utils.reverseByteArray(data); // Makes sure the input array's contents have no net change when this method finishes.
         return compressedData;
     }
 

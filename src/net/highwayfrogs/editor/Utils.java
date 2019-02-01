@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor;
 
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.stage.*;
@@ -21,9 +23,9 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.zip.CRC32;
@@ -37,6 +39,8 @@ public class Utils {
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
     private static final CRC32 crc32 = new CRC32();
     private static final File[] EMPTY_FILE_ARRAY = new File[0];
+    private static final Map<BufferedImage, TextureCache> imageCacheMap = new HashMap<>();
+    private static final long IMAGE_CACHE_EXPIRE = TimeUnit.MINUTES.toMillis(5);
 
     /**
      * Convert a byte array to a number.
@@ -198,7 +202,8 @@ public class Utils {
      * @return byte
      */
     public static byte unsignedShortToByte(short unsignedShort) {
-        verify(unsignedShort >= 0 && unsignedShort <= 0xFF, "The provided short value is outside the range of an unsigned byte. [0,255]. Value: %d", unsignedShort);
+        if (unsignedShort < 0 || unsignedShort > 0xFF)
+            throw new RuntimeException("The provided short value is outside the range of an unsigned byte. [0,255]. Value: " + unsignedShort);
         return (byte) unsignedShort;
     }
 
@@ -220,7 +225,8 @@ public class Utils {
      * @return byte
      */
     public static short unsignedIntToShort(int unsignedInt) {
-        verify(unsignedInt >= 0 && unsignedInt <= 0xFFFF, "The provided short value is outside the range of an unsigned byte. [0,65535]. Value: %d", unsignedInt);
+        if (unsignedInt < 0 || unsignedInt > 0xFFFF)
+            throw new RuntimeException("The provided short value is outside the range of an unsigned byte. [0,65535]. Value: " + unsignedInt);
         return (short) unsignedInt;
     }
 
@@ -244,7 +250,8 @@ public class Utils {
      * @return int
      */
     public static int unsignedLongToInt(long unsignedLong) {
-        verify(unsignedLong >= 0 && unsignedLong <= 0xFFFFFFFFL, "The provided short value is outside the range of an unsigned byte. [0,0xFFFFFFFF]. Value: %d", unsignedLong);
+        if (unsignedLong < 0 || unsignedLong > 0xFFFFFFFFL)
+            throw new RuntimeException("The provided short value is outside the range of an unsigned byte. [0,0xFFFFFFFF]. Value: " + unsignedLong);
         return (int) unsignedLong;
     }
 
@@ -330,7 +337,7 @@ public class Utils {
     public static BufferedImage resizeImage(BufferedImage img, int width, int height) {
         BufferedImage newImage = new BufferedImage(width, height, img.getType());
         Graphics2D graphics = newImage.createGraphics();
-        graphics.drawImage(img.getScaledInstance(width, height, Image.SCALE_SMOOTH), 0, 0, null);
+        graphics.drawImage(img.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH), 0, 0, null);
         graphics.dispose();
 
         return newImage;
@@ -566,6 +573,15 @@ public class Utils {
     }
 
     /**
+     * Gets the FXMLLoader by its name.
+     * @param template The template name.
+     * @return loader
+     */
+    public static FXMLLoader getFXMLLoader(String template) {
+        return new FXMLLoader(getResource("javafx/" + template + ".fxml"));
+    }
+
+    /**
      * Load a FXML template as a new window.
      * WARNING: This method is blocking.
      * @param template   The name of the template to load. Should not be user-controllable, as there is no path sanitization.
@@ -574,7 +590,7 @@ public class Utils {
      */
     @SneakyThrows
     public static <T> void loadFXMLTemplate(String template, String title, Function<Stage, T> controller, BiConsumer<Stage, T> consumer) {
-        FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/" + template + ".fxml"));
+        FXMLLoader loader = getFXMLLoader(template);
 
         Stage newStage = new Stage();
         newStage.setTitle(title);
@@ -592,6 +608,7 @@ public class Utils {
         newStage.initModality(Modality.WINDOW_MODAL);
         newStage.setAlwaysOnTop(true);
         newStage.initOwner(GUIMain.MAIN_STAGE);
+        newStage.getIcons().add(GUIMain.NORMAL_ICON);
         newStage.showAndWait();
     }
 
@@ -749,5 +766,43 @@ public class Utils {
         for (String s : split)
             out.add(s.length() > 0 ? s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase() : "");
         return String.join(" ", out);
+    }
+
+    /**
+     * Turn a BufferedImage into an FX Image.
+     * @param image The image to convert.
+     * @return convertedImage
+     */
+    public static Image toFXImage(BufferedImage image, boolean useCache) {
+        imageCacheMap.entrySet().removeIf(entry -> entry.getValue().hasExpired());
+        if (!useCache)
+            return SwingFXUtils.toFXImage(image, null);
+
+        return imageCacheMap.computeIfAbsent(image, bufferedImage -> new TextureCache(SwingFXUtils.toFXImage(bufferedImage, null))).getImage();
+    }
+
+    private static class TextureCache {
+        private long lastUpdate;
+        private Image fxImage;
+
+        public TextureCache(Image fxImage) {
+            this.fxImage = fxImage;
+        }
+
+        /**
+         * Gets the image.
+         */
+        public Image getImage() {
+            this.lastUpdate = System.currentTimeMillis();
+            return fxImage;
+        }
+
+        /**
+         * Has this image expired?
+         * @return hasExpired
+         */
+        public boolean hasExpired() {
+            return (System.currentTimeMillis() - lastUpdate) > IMAGE_CACHE_EXPIRE;
+        }
     }
 }
