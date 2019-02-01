@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -28,6 +29,7 @@ public class GUIMain extends Application {
     public static Stage MAIN_STAGE;
     @Getter private static File workingDirectory = new File("./");
     public static FroggerEXEInfo EXE_CONFIG;
+    public static final Image NORMAL_ICON = GameFile.loadIcon("icon");
 
     public static void main(String[] args) {
         launch(args);
@@ -111,7 +113,7 @@ public class GUIMain extends Application {
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(800);
         primaryStage.setMinHeight(400);
-        primaryStage.getIcons().add(GameFile.loadIcon("icon"));
+        primaryStage.getIcons().add(NORMAL_ICON);
         primaryStage.show();
 
         // Load MWD.

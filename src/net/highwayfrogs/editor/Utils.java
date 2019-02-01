@@ -592,6 +592,7 @@ public class Utils {
         newStage.initModality(Modality.WINDOW_MODAL);
         newStage.setAlwaysOnTop(true);
         newStage.initOwner(GUIMain.MAIN_STAGE);
+        newStage.getIcons().add(GUIMain.NORMAL_ICON);
         newStage.showAndWait();
     }
 
