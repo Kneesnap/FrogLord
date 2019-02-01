@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.gui.editor;
 
 import javafx.application.Platform;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -101,7 +100,7 @@ public class ImagePaddingController implements Initializable {
         boolean scale = this.scaleCheckBox.isSelected();
         imageView.setFitWidth(scale ? GameImage.MAX_DIMENSION : imgWidth);
         imageView.setFitHeight(scale ? GameImage.MAX_DIMENSION : imgHeight);
-        imageView.setImage(SwingFXUtils.toFXImage(image, null));
+        imageView.setImage(Utils.toFXImage(image, true));
     }
 
     @FXML

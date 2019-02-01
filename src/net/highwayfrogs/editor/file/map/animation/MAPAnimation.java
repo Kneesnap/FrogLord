@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.map.animation;
 
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -173,8 +172,12 @@ public class MAPAnimation extends GameObject {
             final int tempIndex = i;
             GameImage image = images.get(i);
 
-            Image scaledImage = SwingFXUtils.toFXImage(Utils.resizeImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), 20, 20), null);
-            editor.setupNode(new ImageView(scaledImage)).setOnMouseClicked(evt -> vlo.promptImageSelection(newImage -> {
+            Image scaledImage = Utils.toFXImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), true);
+            ImageView view = editor.setupNode(new ImageView(scaledImage));
+            view.setFitWidth(20);
+            view.setFitHeight(20);
+
+            view.setOnMouseClicked(evt -> vlo.promptImageSelection(newImage -> {
                 int newIndex = remap.indexOf(newImage.getTextureId());
                 Utils.verify(newIndex >= 0, "Failed to find remap for texture id: %d!", newImage.getTextureId());
                 getTextures().set(tempIndex, (short) newIndex);

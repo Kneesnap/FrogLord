@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file;
 
-import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
@@ -73,7 +72,7 @@ public abstract class GameFile extends GameObject {
      */
     @SneakyThrows
     public static Image loadIcon(String iconName) {
-        return SwingFXUtils.toFXImage(ImageIO.read(Utils.getResource("icons/" + iconName + ".png")), null);
+        return Utils.toFXImage(ImageIO.read(Utils.getResource("icons/" + iconName + ".png")), false);
     }
 
     /**
@@ -85,7 +84,7 @@ public abstract class GameFile extends GameObject {
      */
     public static <T extends GameFile> Node loadEditor(EditorController<T> controller, String template, T editFile) {
         try {
-            FXMLLoader loader = new FXMLLoader(Utils.getResource("javafx/" + template + ".fxml"));
+            FXMLLoader loader = Utils.getFXMLLoader(template);
             loader.setController(controller);
             Node node = loader.load();
             controller.loadFile(editFile);

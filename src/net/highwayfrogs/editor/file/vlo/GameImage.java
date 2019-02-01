@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file.vlo;
 
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.image.WritableImage;
+import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -10,7 +9,6 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.BlackFilter;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.TransparencyFilter;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.awt.*;
@@ -43,6 +41,7 @@ public class GameImage extends GameObject {
     private byte[] imageBytes;
 
     private AtomicInteger suppliedTextureOffset;
+    private transient BufferedImage cachedImage;
 
     public static final int MAX_DIMENSION = 256;
     private static final int PC_BYTES_PER_PIXEL = 4;
@@ -281,8 +280,8 @@ public class GameImage extends GameObject {
         }
 
         if (getFullWidth() != imageWidth || getFullHeight() != imageHeight) {
-            setFullWidth(imageWidth);
-            setFullHeight(imageHeight);
+            this.fullWidth = imageWidth;
+            this.fullHeight = imageHeight;
             setIngameWidth((short) (imageWidth - 2));
             setIngameHeight((short) (imageHeight - 2));
         }
@@ -304,6 +303,15 @@ public class GameImage extends GameObject {
             this.imageBytes[i + 1] = this.imageBytes[i + 3];
             this.imageBytes[i + 3] = temp;
         }
+
+        invalidateCache();
+    }
+
+    /**
+     * Invalidate the cached image.
+     */
+    public void invalidateCache() {
+        this.cachedImage = null;
     }
 
     /**
@@ -311,6 +319,9 @@ public class GameImage extends GameObject {
      * @return bufferedImage
      */
     public BufferedImage toBufferedImage() {
+        if (this.cachedImage != null)
+            return this.cachedImage;
+
         int height = getFullHeight();
         int width = getFullWidth();
 
@@ -332,7 +343,7 @@ public class GameImage extends GameObject {
         int[] array = new int[buffer.remaining()];
         buffer.get(array);
         image.setRGB(0, 0, image.getWidth(), image.getHeight(), array, 0, image.getWidth());
-        return image;
+        return this.cachedImage = image;
     }
 
     /**
@@ -349,8 +360,8 @@ public class GameImage extends GameObject {
      * @param settings The settings to export this image with.
      * @return fxImage
      */
-    public WritableImage toFXImage(ImageFilterSettings settings) {
-        return SwingFXUtils.toFXImage(toBufferedImage(settings), null);
+    public Image toFXImage(ImageFilterSettings settings) {
+        return Utils.toFXImage(toBufferedImage(settings), true);
     }
 
     /**
@@ -358,18 +369,7 @@ public class GameImage extends GameObject {
      * @return newImage
      */
     public BufferedImage applyFilters(BufferedImage image, ImageFilterSettings setting) {
-        if (setting.isExport() && setting.isTrimEdges())
-            image = ImageWorkHorse.trimEdges(this, image);
-
-        if (setting.isAllowFlip() && !testFlag(FLAG_HIT_X))
-            image = ImageWorkHorse.flipVertically(image);
-
-        boolean transparencyGoal = setting.isAllowTransparency() && testFlag(FLAG_BLACK_IS_TRANSPARENT);
-        boolean transparencyState = getParent().isPsxMode();
-        if (transparencyGoal != transparencyState)
-            image = ImageWorkHorse.applyFilter(image, transparencyState ? new BlackFilter() : new TransparencyFilter());
-
-        return image;
+        return setting.applyFilters(this, image);
     }
 
     /**

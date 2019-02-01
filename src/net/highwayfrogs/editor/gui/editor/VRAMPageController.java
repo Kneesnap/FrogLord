@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.gui.editor;
 
 import javafx.application.Platform;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -94,7 +93,7 @@ public class VRAMPageController implements Initializable {
                 xField.setText(String.valueOf(newImage.getVramX()));
                 yField.setText(String.valueOf(newImage.getVramY()));
                 pField.setText(String.valueOf(newImage.getTexturePage()));
-                miniView.setImage(SwingFXUtils.toFXImage(newImage.toBufferedImage(SETTINGS), null));
+                miniView.setImage(Utils.toFXImage(newImage.toBufferedImage(SETTINGS), true));
             }
 
             this.selectedImage = newImage;
@@ -108,7 +107,7 @@ public class VRAMPageController implements Initializable {
         this.imageView.setPreserveRatio(true);
         if (this.imageView.getViewport() == null)
             this.imageView.setViewport(new Rectangle2D(0, 0, vramImage.getWidth(), vramImage.getHeight()));
-        this.imageView.setImage(SwingFXUtils.toFXImage(vramImage, null));
+        this.imageView.setImage(Utils.toFXImage(vramImage, false));
         this.imageView.setFitWidth(vramImage.getWidth());
         this.imageView.setFitHeight(vramImage.getHeight());
     }

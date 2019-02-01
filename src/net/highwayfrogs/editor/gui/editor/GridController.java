@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.gui.editor;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -103,7 +102,7 @@ public class GridController implements Initializable {
         graphics.clearRect(0, 0, gridCanvas.getWidth(), gridCanvas.getHeight());
 
         TextureMap texMap = getController().getMesh().getTextureMap();
-        Image fxTextureImage = SwingFXUtils.toFXImage(texMap.getImage(), null);
+        Image fxTextureImage = Utils.toFXImage(texMap.getImage(), true);
 
         graphics.setFill(Color.GRAY);
         for (int z = 0; z < getMap().getGridZCount(); z++) {
@@ -202,7 +201,7 @@ public class GridController implements Initializable {
         GridSquare square = stack.getGridSquares().get(layer);
         TextureEntry entry = square.getPolygon().getEntry(texMap);
 
-        selectedImage.setImage(SwingFXUtils.toFXImage(entry.getImage(texMap), null));
+        selectedImage.setImage(Utils.toFXImage(entry.getImage(texMap), false));
 
         int x = 1;
         int y = 0;
