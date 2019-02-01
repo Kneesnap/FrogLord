@@ -168,7 +168,7 @@ public class MapMesh extends TriangleMesh {
     public void updateVertices() {
         getPoints().clear();
         for (SVector vertex : map.getVertexes()) {
-            getPoints().addAll(Utils.unsignedShortToFloat(vertex.getX()), Utils.unsignedShortToFloat(vertex.getY()), Utils.unsignedShortToFloat(vertex.getZ()));
+            getPoints().addAll(Utils.fixedPointShortToFloatNBits(vertex.getX(), 4), Utils.fixedPointShortToFloatNBits(vertex.getY(), 4), Utils.fixedPointShortToFloatNBits(vertex.getZ(), 4));
         }
     }
 }
