@@ -167,41 +167,43 @@ public class Utils {
     }
 
     /**
-     * Convert an unsigned short (in fixed point representation) into a float.
+     * Convert an unsigned short into a float 0-1.
      * @param unsignedShort The short to convert.
      * @return floatValue
      */
     public static float unsignedShortToFloat(short unsignedShort) {
-        return ((float)unsignedShort / (float)(1 << 4));
+        // [AndyEder] - be careful if you use this function... it might not return the values you expect...
+        return (float) unsignedShort / (float) Short.MAX_VALUE;
     }
 
     /**
-     * Convert an unsigned integer (in fixed point representation) into a float.
+     * Convert an unsigned integer into a float 0-1.
      * @param unsignedInt The integer to convert.
      * @return floatValue
      */
     public static float unsignedIntToFloat(long unsignedInt) {
-        return ((float)unsignedInt / (float)(1 << 20));
+        // [AndyEder] - be careful if you use this function... it might not return the values you expect...
+        return (float) unsignedInt / (float) Integer.MAX_VALUE;
     }
 
     /**
-     * Convert an unsigned short value (fixed point, n fractional bits) into a float.
-     * @param unsignedShort The short to convert.
+     * Convert a short value (fixed point, n fractional bits) into a float.
+     * @param shortVal The short to convert.
      * @param n The number of fractional bits.
      * @return floatValue
      */
-    public static float unsignedShortToFloatNBits(short unsignedShort, long n) {
-        return ((float)unsignedShort / (float)(1 << n));
+    public static float fixedPointShortToFloatNBits(short shortVal, long n) {
+        return ((float)shortVal / (float)(1 << n));
     }
 
     /**
-     * Convert an unsigned int value (fixed point, n fractional bits) into a float.
-     * @param unsignedInt The integer to convert.
+     * Convert an int value (fixed point, n fractional bits) into a float.
+     * @param intVal The integer to convert.
      * @param n The number of fractional bits.
      * @return floatValue
      */
-    public static float unsignedIntFloatNBits(long unsignedInt, long n) {
-        return ((float)unsignedInt / (float)(1 << n));
+    public static float fixedPointIntToFloatNBits(long intVal, long n) {
+        return ((float)intVal / (float)(1 << n));
     }
 
     /**
