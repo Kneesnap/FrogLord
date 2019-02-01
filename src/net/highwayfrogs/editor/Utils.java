@@ -202,7 +202,8 @@ public class Utils {
      * @return byte
      */
     public static byte unsignedShortToByte(short unsignedShort) {
-        verify(unsignedShort >= 0 && unsignedShort <= 0xFF, "The provided short value is outside the range of an unsigned byte. [0,255]. Value: %d", unsignedShort);
+        if (unsignedShort < 0 || unsignedShort > 0xFF)
+            throw new RuntimeException("The provided short value is outside the range of an unsigned byte. [0,255]. Value: " + unsignedShort);
         return (byte) unsignedShort;
     }
 
@@ -224,7 +225,8 @@ public class Utils {
      * @return byte
      */
     public static short unsignedIntToShort(int unsignedInt) {
-        verify(unsignedInt >= 0 && unsignedInt <= 0xFFFF, "The provided short value is outside the range of an unsigned byte. [0,65535]. Value: %d", unsignedInt);
+        if (unsignedInt < 0 || unsignedInt > 0xFFFF)
+            throw new RuntimeException("The provided short value is outside the range of an unsigned byte. [0,65535]. Value: " + unsignedInt);
         return (short) unsignedInt;
     }
 
@@ -248,7 +250,8 @@ public class Utils {
      * @return int
      */
     public static int unsignedLongToInt(long unsignedLong) {
-        verify(unsignedLong >= 0 && unsignedLong <= 0xFFFFFFFFL, "The provided short value is outside the range of an unsigned byte. [0,0xFFFFFFFF]. Value: %d", unsignedLong);
+        if (unsignedLong < 0 || unsignedLong > 0xFFFFFFFFL)
+            throw new RuntimeException("The provided short value is outside the range of an unsigned byte. [0,0xFFFFFFFF]. Value: " + unsignedLong);
         return (int) unsignedLong;
     }
 

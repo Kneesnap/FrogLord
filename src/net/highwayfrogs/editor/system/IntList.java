@@ -1,7 +1,5 @@
 package net.highwayfrogs.editor.system;
 
-import net.highwayfrogs.editor.Utils;
-
 import java.util.Arrays;
 
 /**
@@ -56,7 +54,8 @@ public class IntList {
     }
 
     public int get(int index) {
-        Utils.verify(index >= 0 && this.size > index, "Out of range.");
+        if (index < 0 || index >= this.size) // Too high use to call Utils.verify.
+            throw new ArrayIndexOutOfBoundsException(index);
         return array[index];
     }
 

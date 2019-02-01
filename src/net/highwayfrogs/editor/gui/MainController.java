@@ -45,12 +45,11 @@ public class MainController implements Initializable {
 
     /**
      * Print a message to the console window.
-     * @param message    The message to print.
-     * @param formatting Any formatting to accompany the message.
+     * @param message The message to print.
      */
-    public void printMessage(String message, Object... formatting) {
+    public void printMessage(String message) {
         if (consoleText != null)
-            consoleText.appendText(String.format(message, formatting) + System.lineSeparator());
+            consoleText.appendText(message + System.lineSeparator());
     }
 
     /**
