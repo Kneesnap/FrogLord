@@ -167,21 +167,41 @@ public class Utils {
     }
 
     /**
-     * Convert an unsigned short into a float 0-1.
+     * Convert an unsigned short (in fixed point representation) into a float.
      * @param unsignedShort The short to convert.
      * @return floatValue
      */
     public static float unsignedShortToFloat(short unsignedShort) {
-        return (float) unsignedShort / (float) Short.MAX_VALUE;
+        return ((float)unsignedShort / (float)(1 << 4));
     }
 
     /**
-     * Convert an unsigned integer into a float 0-1.
+     * Convert an unsigned integer (in fixed point representation) into a float.
      * @param unsignedInt The integer to convert.
      * @return floatValue
      */
     public static float unsignedIntToFloat(long unsignedInt) {
-        return (float) unsignedInt / (float) Integer.MAX_VALUE;
+        return ((float)unsignedInt / (float)(1 << 20));
+    }
+
+    /**
+     * Convert an unsigned short value (fixed point, n fractional bits) into a float.
+     * @param unsignedShort The short to convert.
+     * @param n The number of fractional bits.
+     * @return floatValue
+     */
+    public static float unsignedShortToFloatNBits(short unsignedShort, long n) {
+        return ((float)unsignedShort / (float)(1 << n));
+    }
+
+    /**
+     * Convert an unsigned int value (fixed point, n fractional bits) into a float.
+     * @param unsignedInt The integer to convert.
+     * @param n The number of fractional bits.
+     * @return floatValue
+     */
+    public static float unsignedIntFloatNBits(long unsignedInt, long n) {
+        return ((float)unsignedInt / (float)(1 << n));
     }
 
     /**
