@@ -46,18 +46,15 @@ import java.util.function.Consumer;
 @Getter
 public class MapUIController implements Initializable {
     // Useful constants and settings
-    private static final int MAP_VIEW_SCALE = 10000;
-    @Getter private static IntegerProperty propertyMapViewScale = new SimpleIntegerProperty(MAP_VIEW_SCALE);
-
-    private static final double MAP_VIEW_FAR_CLIP = 15000.0;
+    private static final double MAP_VIEW_FAR_CLIP = 5000.0;
 
     private static final double ROTATION_SPEED = 0.35D;
     @Getter private static DoubleProperty propertyRotationSpeed = new SimpleDoubleProperty(ROTATION_SPEED);
 
-    private static final double SCROLL_SPEED = 4;
+    private static final double SCROLL_SPEED = 1.0;
     @Getter private static DoubleProperty propertyScrollSpeed = new SimpleDoubleProperty(SCROLL_SPEED);
 
-    private static final double TRANSLATE_SPEED = 10;
+    private static final double TRANSLATE_SPEED = 2.0;
     @Getter private static DoubleProperty propertyTranslateSpeed = new SimpleDoubleProperty(TRANSLATE_SPEED);
 
     private static final int VERTEX_SPEED = 3;
