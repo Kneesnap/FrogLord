@@ -41,7 +41,9 @@ public class DemoFile extends GameFile {
                 if (action.test(actionId))
                     actions.add(action);
 
-            Utils.verify(!actions.isEmpty(), "Unknown action for action id 0x%s.", Utils.toByteString(actionId));
+            if (actions.isEmpty())
+                throw new RuntimeException("Unknown action for action id " + Utils.toHexString(actionId) + ".");
+
             getFrames().add(actions);
             if (actions.contains(DemoAction.STOP))
                 break;

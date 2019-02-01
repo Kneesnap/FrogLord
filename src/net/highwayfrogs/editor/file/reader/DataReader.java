@@ -56,41 +56,6 @@ public class DataReader {
     }
 
     /**
-     * Find the bytes.
-     * @param query      The bytes to search for.
-     * @param placeAfter Should the cursor be placed after the bytes?
-     */
-    public void findBytes(byte[] query, boolean placeAfter) {
-        Utils.verify(query.length > 0, "Cannot search for empty query.");
-
-        while (hasMore()) {
-            if (readByte() != query[0])
-                continue;
-
-            jumpTemp(getIndex());
-
-            boolean pass = true;
-            for (int i = 1; i < query.length; i++) {
-                if (readByte() != query[i]) {
-                    pass = false;
-                    break;
-                }
-            }
-
-            jumpReturn();
-
-            if (pass) {
-                this.setIndex(this.getIndex() - 1);
-                if (placeAfter)
-                    this.readBytes(query.length);
-                return;
-            }
-        }
-
-        throw new RuntimeException("Failed to find the specified bytes.");
-    }
-
-    /**
      * Get the amount of readable bytes.
      * @return size
      */
@@ -182,10 +147,9 @@ public class DataReader {
      * @return shortValue
      */
     public short readShort() {
-        byte[] data = readBytes(Constants.SHORT_SIZE);
         short value = 0;
-        for (int i = 0; i < data.length; i++)
-            value += ((long) data[i] & 0xFFL) << (Constants.BITS_PER_BYTE * i);
+        for (int i = 0; i < Constants.SHORT_SIZE; i++)
+            value += ((long) readByte() & 0xFFL) << (Constants.BITS_PER_BYTE * i);
         return value;
     }
 
@@ -195,10 +159,9 @@ public class DataReader {
      * @return intValue
      */
     public int readInt(int bytes) {
-        byte[] data = readBytes(bytes);
         int value = 0;
-        for (int i = 0; i < data.length; i++)
-            value += ((long) data[i] & 0xFFL) << (Constants.BITS_PER_BYTE * i);
+        for (int i = 0; i < bytes; i++)
+            value += ((long) readByte() & 0xFFL) << (Constants.BITS_PER_BYTE * i);
         return value;
     }
 
