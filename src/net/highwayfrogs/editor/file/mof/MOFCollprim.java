@@ -37,8 +37,8 @@ public class MOFCollprim extends GameObject {
     public void load(DataReader reader) {
         this.type = reader.readUnsignedShortAsInt();
         this.flags = reader.readUnsignedShortAsInt();
-        reader.readInt(); // Run-time.
-        reader.readInt(); // Run-time.
+        reader.skipInt(); // Run-time.
+        reader.skipInt(); // Run-time.
         this.offset = SVector.readWithPadding(reader);
         this.radius2 = reader.readInt();
         this.xLen = reader.readUnsignedShortAsInt();

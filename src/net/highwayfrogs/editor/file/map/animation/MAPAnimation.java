@@ -53,13 +53,13 @@ public class MAPAnimation extends GameObject {
 
         // Texture information.
         int celCount = reader.readUnsignedShortAsInt();
-        reader.readShort(); // Run-time short.
+        reader.skipShort(); // Run-time short.
         int celListPointer = reader.readInt();
         this.texDuration = reader.readUnsignedShortAsInt(); // Frames before resetting.
-        reader.readShort(); // Run-time variable.
+        reader.skipShort(); // Run-time variable.
         this.type = MAPAnimationType.getType(reader.readUnsignedShortAsInt());
         int polygonCount = reader.readUnsignedShortAsInt();
-        reader.readInt(); // Texture pointer. Generated at run-time.
+        reader.skipInt(); // Texture pointer. Generated at run-time.
 
         if (getType() == MAPAnimationType.TEXTURE || getType() == MAPAnimationType.BOTH) {
             reader.jumpTemp(celListPointer);

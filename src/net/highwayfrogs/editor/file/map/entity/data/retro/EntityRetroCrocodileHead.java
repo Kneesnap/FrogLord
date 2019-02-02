@@ -19,7 +19,7 @@ public class EntityRetroCrocodileHead extends MatrixData {
     public void load(DataReader reader) {
         super.load(reader);
         this.type = CrocodileHeadState.values()[reader.readUnsignedShortAsInt()];
-        reader.readShort();
+        reader.skipShort();
     }
 
     @Override

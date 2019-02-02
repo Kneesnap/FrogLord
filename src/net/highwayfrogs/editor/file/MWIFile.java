@@ -49,8 +49,8 @@ public class MWIFile extends GameObject {
             entry.setFlags(reader.readInt());
             entry.setTypeId(reader.readInt());
             entry.setSectorOffset(reader.readInt());
-            reader.readInt(); // Should always be 0. This is used by the frogger.exe to locate where in RAM the file is located.
-            reader.readInt(); // Should always be 0. This is used by frogger.exe to locate where in RAM the file is depacked at.
+            reader.skipInt(); // Should always be 0. This is used by the frogger.exe to locate where in RAM the file is located.
+            reader.skipInt(); // Should always be 0. This is used by frogger.exe to locate where in RAM the file is depacked at.
             entry.setPackedSize(reader.readInt());
             entry.unpackedSize = reader.readInt(); // Set the raw value, not through the setter.
             getEntries().add(entry);

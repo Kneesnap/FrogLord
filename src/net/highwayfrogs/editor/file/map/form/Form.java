@@ -26,7 +26,7 @@ public class Form extends GameObject {
     @Override
     public void load(DataReader reader) {
         int dataCount = reader.readUnsignedShortAsInt();
-        reader.readShort(); // Max Y, Runtime variable.
+        reader.skipShort(); // Max Y, Runtime variable.
         this.xGridSquareCount = reader.readShort();
         this.zGridSquareCount = reader.readShort();
         this.xOffset = reader.readShort();

@@ -42,7 +42,7 @@ public class FormData extends GameObject {
 
         this.height = reader.readShort();
         int squarePointer = reader.readInt(); // Pointer to array of (xCount * zCount) flags. (Type = short)
-        reader.readInt(); // Pointer to an array of grid heights. This would have been used in the "SQUARE" height mode, however that does not appear to be used in the vanilla game.
+        reader.skipPointer(); // Pointer to an array of grid heights. This would have been used in the "SQUARE" height mode, however that does not appear to be used in the vanilla game.
 
         reader.jumpTemp(squarePointer); // Really we don't need to jump, as the data is at the current read index, but this is to keep it in spec with the engine.
         for (int i = 0; i < gridFlags.length; i++)

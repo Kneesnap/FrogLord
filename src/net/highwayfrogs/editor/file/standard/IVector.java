@@ -38,7 +38,7 @@ public class IVector extends GameObject {
      */
     public void loadWithPadding(DataReader reader) {
         this.load(reader);
-        reader.readInt();
+        reader.skipInt();
     }
 
     @Override

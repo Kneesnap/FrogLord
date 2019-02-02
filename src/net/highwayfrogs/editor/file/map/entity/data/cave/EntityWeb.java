@@ -19,7 +19,7 @@ public class EntityWeb extends MatrixData {
     public void load(DataReader reader) {
         super.load(reader);
         this.spiderId = reader.readShort();
-        reader.readShort();
+        reader.skipShort();
     }
 
     @Override

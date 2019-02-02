@@ -31,7 +31,7 @@ public class MOFAnimationModelSet extends GameObject {
         short modelCount = reader.readUnsignedByteAsShort();
         short celsetCount = reader.readUnsignedByteAsShort();
         short bboxCount = reader.readUnsignedByteAsShort();
-        reader.readByte(); // Padding.
+        reader.skipByte(); // Padding.
 
         int modelPointer = reader.readInt();
         int celsetPointer = reader.readInt(); // Right after struct.

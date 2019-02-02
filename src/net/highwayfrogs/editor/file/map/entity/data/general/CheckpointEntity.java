@@ -20,7 +20,7 @@ public class CheckpointEntity extends MatrixData {
     public void load(DataReader reader) {
         super.load(reader);
         this.id = reader.readUnsignedShortAsInt();
-        reader.readShort();
+        reader.skipShort();
     }
 
     @Override

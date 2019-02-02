@@ -47,10 +47,10 @@ public class MAPPolyTexture extends MAPPolygon {
         super.load(reader);
 
         this.flags = reader.readShort();
-        reader.readShort(); // Padding
+        reader.skipShort(); // Padding
 
         loadUV(0, reader);
-        reader.readShort(); // Runtime clut-id.
+        reader.skipShort(); // Runtime clut-id.
         loadUV(1, reader);
         this.textureId = reader.readShort();
 
@@ -58,7 +58,7 @@ public class MAPPolyTexture extends MAPPolygon {
             loadUV(i, reader);
 
         if (this.uvs.length == MAPPolygon.TRI_SIZE)
-            reader.readShort(); // Padding.
+            reader.skipShort(); // Padding.
 
         for (int i = 0; i < this.vectors.length; i++) {
             PSXColorVector vector = new PSXColorVector();

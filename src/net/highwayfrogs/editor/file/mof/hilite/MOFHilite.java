@@ -34,8 +34,8 @@ public class MOFHilite extends GameObject {
         this.type = HiliteType.values()[reader.readUnsignedByteAsShort()];
         this.flags = reader.readUnsignedByteAsShort();
         this.vertex = getVertices().get(reader.readUnsignedShortAsInt());
-        reader.readInt(); // Runtime.
-        reader.readInt(); // Runtime.
+        reader.skipInt(); // Runtime.
+        reader.skipInt(); // Runtime.
     }
 
     @Override

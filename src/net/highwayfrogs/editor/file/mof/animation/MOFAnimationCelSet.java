@@ -24,7 +24,7 @@ public class MOFAnimationCelSet extends GameObject {
         this.dataPointer = reader.getIndex();
 
         int count = reader.readUnsignedShortAsInt();
-        reader.readShort(); // Padding.
+        reader.skipShort(); // Padding.
 
         reader.setIndex(reader.readInt()); // Points to literally the exact index after reading.
         for (int i = 0; i < count; i++) {

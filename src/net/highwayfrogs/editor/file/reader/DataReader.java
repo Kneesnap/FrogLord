@@ -236,6 +236,34 @@ public class DataReader {
     }
 
     /**
+     * Skip the amount of bytes an pointer takes up.
+     */
+    public void skipPointer() {
+        skipBytes(Constants.POINTER_SIZE);
+    }
+
+    /**
+     * Skip the amount of bytes an integer takes up.
+     */
+    public void skipInt() {
+        skipBytes(Constants.INTEGER_SIZE);
+    }
+
+    /**
+     * Skip the amount of bytes a short takes up.
+     */
+    public void skipShort() {
+        skipBytes(Constants.SHORT_SIZE);
+    }
+
+    /**
+     * Skip the amount of bytes a single byte takes up.
+     */
+    public void skipByte() {
+        skipBytes(Constants.BYTE_SIZE);
+    }
+
+    /**
      * Create a sub-reader.
      * @param startOffset The offset to start reading from.
      * @param length      The length to read. -1 = Get remaining.

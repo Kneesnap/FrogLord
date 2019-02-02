@@ -19,7 +19,7 @@ public class EntityBeaver extends PathData {
     public void load(DataReader reader) {
         super.load(reader);
         this.delay = reader.readShort();
-        reader.readShort();
+        reader.skipShort();
     }
 
     @Override

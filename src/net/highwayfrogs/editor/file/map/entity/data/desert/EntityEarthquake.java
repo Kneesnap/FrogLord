@@ -23,7 +23,7 @@ public class EntityEarthquake extends EntityData {
     @Override
     public void load(DataReader reader) {
         this.timeFlag = reader.readShort();
-        reader.readShort();
+        reader.skipShort();
         for (int i = 0; i < pauseList.length; i++)
             pauseList[i] = reader.readUnsignedShortAsInt();
     }

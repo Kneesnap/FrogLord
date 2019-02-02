@@ -38,7 +38,7 @@ public class EntityFallingRock extends MatrixData {
 
         this.delay = reader.readUnsignedShortAsInt();
         this.bounceCount = reader.readUnsignedByteAsShort();
-        reader.readByte();
+        reader.skipByte();
         this.flags = reader.readInt();
         this.sound = reader.readInt();
     }
@@ -76,7 +76,7 @@ public class EntityFallingRock extends MatrixData {
         public void load(DataReader reader) {
             this.target = SVector.readWithPadding(reader);
             this.time = reader.readUnsignedShortAsInt();
-            reader.readShort();
+            reader.skipShort();
         }
 
         @Override

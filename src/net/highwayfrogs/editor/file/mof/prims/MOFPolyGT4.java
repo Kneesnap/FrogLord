@@ -15,7 +15,7 @@ public class MOFPolyGT4 extends MOFPolyTexture {
     @Override
     public void onLoad(DataReader reader) {
         super.onLoad(reader);
-        reader.readShort(); // Padding.
+        reader.skipShort(); // Padding.
     }
 
     @Override

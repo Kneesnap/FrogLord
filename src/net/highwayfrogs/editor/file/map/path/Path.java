@@ -28,7 +28,7 @@ public class Path extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        reader.readInt(); // Points to a -1 terminated entity index list of entities using this path. Seems to be invalid data in many cases. Since it appears to only ever be used for the retro beaver, we auto-generate it in that scenario.
+        reader.skipPointer(); // Points to a -1 terminated entity index list of entities using this path. Seems to be invalid data in many cases. Since it appears to only ever be used for the retro beaver, we auto-generate it in that scenario.
 
         // Read segments.
         int segmentCount = reader.readInt();

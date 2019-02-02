@@ -18,7 +18,7 @@ public class EntityThermal extends EntityData {
     @Override
     public void load(DataReader reader) {
         this.rotateTime = reader.readUnsignedShortAsInt();
-        reader.readShort();
+        reader.skipShort();
     }
 
     @Override

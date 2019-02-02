@@ -19,7 +19,7 @@ public class EntitySpider extends MatrixData {
     public void load(DataReader reader) {
         super.load(reader);
         speed = reader.readUnsignedShortAsInt();
-        reader.readShort();
+        reader.skipShort();
     }
 
     @Override

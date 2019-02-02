@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Completely lights up the cave.
@@ -16,14 +15,14 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 @Setter
 public class EntityFatFireFly extends MatrixData {
-    private FlyScoreType type = FlyScoreType.SUPER_LIGHT;
-    private SVector target = new SVector();
+    private FlyScoreType type = FlyScoreType.SUPER_LIGHT; // Unused. Change has no effect.
+    private SVector target = new SVector(); // Unused, change has no effect. At one point this was the
 
     @Override
     public void load(DataReader reader) {
         super.load(reader);
         this.type = FlyScoreType.values()[reader.readUnsignedShortAsInt()];
-        reader.readShort();
+        reader.skipShort();
         this.target = SVector.readWithPadding(reader);
     }
 
@@ -33,12 +32,5 @@ public class EntityFatFireFly extends MatrixData {
         writer.writeUnsignedShort(this.type.ordinal());
         writer.writeUnsignedShort(0);
         this.target.saveWithPadding(writer);
-    }
-
-    @Override
-    public void addData(GUIEditorGrid editor) {
-        super.addData(editor);
-        editor.addEnumSelector("Type", getType(), FlyScoreType.values(), false, this::setType);
-        editor.addSVector("Target", getTarget());
     }
 }

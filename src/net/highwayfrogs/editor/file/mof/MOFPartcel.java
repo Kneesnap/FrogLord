@@ -36,7 +36,7 @@ public class MOFPartcel extends GameObject {
         int verticePointer = reader.readInt();
         int normalPointer = reader.readInt();
         int bboxPointer = reader.readInt();
-        reader.readInt(); // Unused.
+        reader.skipInt(); // Unused.
 
         // Read Vertexes.
         reader.jumpTemp(verticePointer);

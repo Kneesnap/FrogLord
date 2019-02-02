@@ -21,7 +21,7 @@ public class MR_MAT34B extends TransformObject {
             for (int j = 0; j < this.matrix[i].length; j++)
                 this.matrix[i][j] = reader.readByte();
 
-        reader.readByte(); // Padding.
+        reader.skipByte(); // Padding.
         for (int i = 0; i < this.transform.length; i++)
             this.transform[i] = reader.readShort();
     }

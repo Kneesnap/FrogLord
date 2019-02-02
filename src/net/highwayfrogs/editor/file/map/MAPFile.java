@@ -143,9 +143,9 @@ public class MAPFile extends GameFile {
         getLoadPointerPolygonMap().clear();
 
         reader.verifyString(SIGNATURE);
-        reader.readInt(); // File length.
+        reader.skipInt(); // File length.
         reader.verifyString(VERSION);
-        reader.readString(COMMENT_BYTES); // Comment bytes.
+        reader.skipBytes(COMMENT_BYTES); // Comment bytes.
 
         int generalAddress = reader.readInt();
         int graphicalAddress = reader.readInt();
@@ -164,7 +164,7 @@ public class MAPFile extends GameFile {
         this.levelTimer = reader.readShort();
         reader.skipBytes((TOTAL_CHECKPOINT_TIMER_ENTRIES - 1) * Constants.SHORT_SIZE);
 
-        reader.readShort(); // Unused perspective variable.
+        reader.skipShort(); // Unused perspective variable.
 
         this.cameraSourceOffset = new SVector();
         this.cameraSourceOffset.loadWithPadding(reader);
@@ -203,7 +203,7 @@ public class MAPFile extends GameFile {
         reader.setIndex(formAddress);
         reader.verifyString(FORM_SIGNATURE);
         int formCount = reader.readUnsignedShortAsInt();
-        reader.readShort(); // Padding.
+        reader.skipShort(); // Padding.
 
         for (int i = 0; i < formCount; i++) {
             reader.jumpTemp(reader.readInt());
@@ -216,9 +216,9 @@ public class MAPFile extends GameFile {
         // Read entities
         reader.setIndex(entityAddress);
         reader.verifyString(ENTITY_SIGNATURE);
-        reader.readInt(); // Entity packet length.
+        reader.skipInt(); // Entity packet length.
         int entityCount = reader.readShort();
-        reader.readShort(); // Padding.
+        reader.skipShort(); // Padding.
 
         Entity lastEntity = null;
         for (int i = 0; i < entityCount; i++) {
@@ -277,7 +277,7 @@ public class MAPFile extends GameFile {
 
         for (MAPPrimitiveType type : PRIMITIVE_TYPES)
             polyCountMap.put(type, reader.readShort());
-        reader.readShort(); // Padding.
+        reader.skipShort(); // Padding.
         for (MAPPrimitiveType type : PRIMITIVE_TYPES)
             polyOffsetMap.put(type, reader.readInt());
 
@@ -310,7 +310,7 @@ public class MAPFile extends GameFile {
         reader.setIndex(vertexAddress);
         reader.verifyString(VERTEX_SIGNATURE);
         short vertexCount = reader.readShort();
-        reader.readShort(); // Padding.
+        reader.skipShort(); // Padding.
         for (int i = 0; i < vertexCount; i++)
             this.vertexes.add(SVector.readWithPadding(reader));
 

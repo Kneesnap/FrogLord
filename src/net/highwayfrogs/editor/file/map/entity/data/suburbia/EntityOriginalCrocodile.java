@@ -18,7 +18,7 @@ public class EntityOriginalCrocodile extends EntityData {
     @Override
     public void load(DataReader reader) {
         this.mouthOpenDelay = reader.readUnsignedShortAsInt();
-        reader.readShort();
+        reader.skipShort();
     }
 
     @Override

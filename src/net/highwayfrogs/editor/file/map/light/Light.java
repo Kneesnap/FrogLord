@@ -24,17 +24,17 @@ public class Light extends GameObject {
     @Override
     public void load(DataReader reader) {
         this.type = LightType.values()[reader.readUnsignedByteAsShort()];
-        reader.readUnsignedByteAsShort(); // Unused 'priority'.
-        reader.readUnsignedShortAsInt(); // Unused 'parentId'.
+        reader.skipByte(); // Unused 'priority'.
+        reader.skipShort(); // Unused 'parentId'.
         this.apiType = APILightType.getType(reader.readUnsignedByteAsShort());
         reader.skipBytes(3); // Padding
         this.color = reader.readInt();
         SVector.readWithPadding(reader); // Unused position.
         this.direction = SVector.readWithPadding(reader);
-        reader.readUnsignedShortAsInt(); // Unused 'attribute0'.
-        reader.readUnsignedShortAsInt(); // Unused 'attribute1'.
-        reader.readInt(); // Frame pointer. Only used at run-time.
-        reader.readInt(); // Object pointer. Only used at run-time.
+        reader.skipShort(); // Unused 'attribute0'.
+        reader.skipShort(); // Unused 'attribute1'.
+        reader.skipPointer(); // Frame pointer. Only used at run-time.
+        reader.skipPointer(); // Object pointer. Only used at run-time.
     }
 
     @Override

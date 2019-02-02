@@ -24,7 +24,7 @@ public class EntityRat extends MatrixData {
     public void load(DataReader reader) {
         super.load(reader);
         this.speed = reader.readShort();
-        reader.readShort();
+        reader.skipShort();
         this.startTarget = SVector.readWithPadding(reader);
         this.startRunTarget = SVector.readWithPadding(reader);
         this.endRunTarget = SVector.readWithPadding(reader);

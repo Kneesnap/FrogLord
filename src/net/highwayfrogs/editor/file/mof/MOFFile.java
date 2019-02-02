@@ -73,7 +73,7 @@ public class MOFFile extends GameFile {
             return;
         }
 
-        reader.readInt(); // File length, including header.
+        reader.skipInt(); // File length, including header.
         this.flags = reader.readInt();
 
         if (testFlag(FLAG_ANIMATION_FILE)) {

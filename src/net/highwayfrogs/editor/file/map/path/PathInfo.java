@@ -29,7 +29,7 @@ public class PathInfo extends GameObject {
         this.segmentDistance = reader.readUnsignedShortAsInt();
         this.motionType = reader.readUnsignedShortAsInt();
         this.speed = reader.readUnsignedShortAsInt();
-        reader.readShort(); // Padding.
+        reader.skipShort(); // Padding.
     }
 
     @Override

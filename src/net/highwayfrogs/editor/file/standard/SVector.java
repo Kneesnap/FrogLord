@@ -44,7 +44,7 @@ public class SVector extends GameObject {
      */
     public void loadWithPadding(DataReader reader) {
         this.load(reader);
-        reader.readShort();
+        reader.skipShort();
     }
 
     @Override

@@ -68,7 +68,7 @@ public class VABHeaderFile extends GameFile {
 
         //TODO: This may not be pointers. Check.
         reader.jumpTemp(toneAddress.get());
-        reader.readShort(); // Padding.
+        reader.skipShort(); // Padding.
 
         for (int i = 0; i < vagCount; i++)
             this.vagAddresses.add(reader.readShort() << 3);

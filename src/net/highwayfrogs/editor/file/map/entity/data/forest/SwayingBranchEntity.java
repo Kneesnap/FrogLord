@@ -23,7 +23,7 @@ public class SwayingBranchEntity extends MatrixData {
         this.swayAngle = reader.readUnsignedShortAsInt();
         this.swayDuration = reader.readUnsignedShortAsInt();
         this.onceOffDelay = reader.readUnsignedShortAsInt();
-        reader.readShort();
+        reader.skipShort();
     }
 
     @Override

@@ -53,7 +53,7 @@ public class WADFile extends GameFile {
 
             int fileType = reader.readInt();
             int size = reader.readInt();
-            reader.readInt(); // Padding.
+            reader.skipInt(); // Padding.
 
             CURRENT_FILE_NAME = getConfig().getResourceEntry(resourceId).getDisplayName();
 
@@ -115,6 +115,7 @@ public class WADFile extends GameFile {
     }
 
     @Override
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public void exportAlternateFormat(FileEntry entry) {
         getParentMWD().promptVLOSelection(getTheme(), vlo -> {
             File folder = new File(GUIMain.getWorkingDirectory(), "mof_" + (getTheme() != null ? getTheme() : "unknown") + File.separator);

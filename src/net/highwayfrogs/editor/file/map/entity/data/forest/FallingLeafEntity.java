@@ -23,7 +23,7 @@ public class FallingLeafEntity extends MatrixData {
         this.fallSpeed = reader.readUnsignedShortAsInt();
         this.swayDuration = reader.readUnsignedShortAsInt();
         this.swayAngle = reader.readUnsignedShortAsInt();
-        reader.readShort();
+        reader.skipShort();
     }
 
     @Override

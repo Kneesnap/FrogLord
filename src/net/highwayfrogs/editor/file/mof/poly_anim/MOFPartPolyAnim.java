@@ -35,7 +35,7 @@ public class MOFPartPolyAnim extends GameObject {
         Utils.verify(getMofPolygon().getType() == getPrimType(), "Expected a polygon type %s, but got a %s.", getPrimType(), getMofPolygon().getType());
         Utils.verify(getMofPolygon() != null, "Failed to load MOF Polygon. (%s, %d)", getPrimType(), primId);
 
-        reader.readInt(); // Runtime.
+        reader.skipPointer(); // Runtime.
         int animPointer = reader.readInt(); // Animation pointer.
         if (getParentPart().getLoadAnimEntryListMap().containsKey(animPointer)) {
             this.entryList = getParentPart().getLoadAnimEntryListMap().get(animPointer);

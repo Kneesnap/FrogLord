@@ -69,7 +69,7 @@ public class MOFPart extends GameObject {
         int partcelPointer = reader.readInt();
         int primitivePointer = reader.readInt();
         int hilitePointer = reader.readInt(); // May be null
-        reader.readInt(); // Run-time value.
+        reader.skipPointer(); // Run-time value.
 
         int collprimPointer = reader.readInt(); // May be null.
         int matrixPointer = reader.readInt(); // May be null.
