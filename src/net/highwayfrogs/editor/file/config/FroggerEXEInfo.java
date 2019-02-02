@@ -203,7 +203,6 @@ public class FroggerEXEInfo extends Config {
             level = new LevelInfo();
             level.load(getReader());
             getArcadeLevelInfo().add(level);
-            System.out.println(level.toString());
         }
 
         level = null;
@@ -211,7 +210,6 @@ public class FroggerEXEInfo extends Config {
             level = new LevelInfo();
             level.load(getReader());
             getArcadeLevelInfo().add(level);
-            System.out.println(level.toString());
         }
     }
 
@@ -271,7 +269,7 @@ public class FroggerEXEInfo extends Config {
         if (getArcadeLevelAddress() == 0)
             return; // No level select is present.
 
-        getWriter().setIndex(getArcadeLevelAddress());
+        exeWriter.setIndex(getArcadeLevelAddress());
         getArcadeLevelInfo().forEach(level -> level.save(exeWriter));
         getRaceLevelInfo().forEach(level -> level.save(exeWriter));
     }
