@@ -8,8 +8,6 @@ import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
-import java.util.Arrays;
-
 /**
  * Entity data which involves a matrix.
  * Created by Kneesnap on 1/20/2019.
@@ -38,16 +36,21 @@ public class MatrixData extends EntityData {
         for (int i = 0; i < matrix.getTransform().length; i++) {
             translation[i] = Utils.fixedPointIntToFloatNBits(matrix.getTransform()[i], 20);
         }
-        editor.addNormalLabel("Matrix Position");
-        editor.addVector3D(translation, 30.0);
+        editor.addNormalLabel("Rotation Matrix");
+        editor.addVector3D(translation, 30D, (index, newValue) -> {
+            matrix.getTransform()[index] = Utils.floatToFixedPointInt(newValue, 20);
+            //TODO: Update entity position in 3d space.
+        });
 
         // Transform information is in fixed point format, hence conversion to float representation.
         editor.addNormalLabel("Matrix Transformation");
         for (int i = 0; i < matrix.getMatrix().length; i++) {
-            for (int j = 0; j < matrix.getMatrix().length; j++) {
+            for (int j = 0; j < matrix.getMatrix().length; j++)
                 matrixRow[j] = Utils.fixedPointShortToFloatNBits(matrix.getMatrix()[i][j], 12);
-            }
-            editor.addVector3D(matrixRow, 25.0 + ((i == (matrix.getMatrix().length - 1)) ? (5.0) : (0.0)));
+
+            final int tempRow = i;
+            editor.addVector3D(matrixRow, 25D + ((i == (matrix.getMatrix().length - 1)) ? 5D : 0D),
+                    (index, newValue) -> matrix.getMatrix()[tempRow][index] = Utils.floatToFixedPointShort(newValue, 12));
         }
     }
 }

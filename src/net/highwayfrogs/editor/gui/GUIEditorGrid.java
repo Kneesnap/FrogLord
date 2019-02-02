@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -317,22 +318,27 @@ public class GUIEditorGrid {
         return view;
     }
 
-    public HBox addVector3D(float[] vec3D, double height)
-    {
+    public HBox addVector3D(float[] vec3D, double height, BiConsumer<Integer, Float> handler) {
         HBox container;
 
         // Check to ensure we are receiving a 3-component vector
         if (vec3D.length != 3) {
-            container = setupSecondNode(new HBox(new Label("(*Invalid vector length!)")), true);
-        }
-        else {
-            TextField[] textFields = new TextField[vec3D.length];
+            container = setupSecondNode(new HBox(new Label("*Invalid vector length*")), true);
+        } else {
+            HBox hBox = new HBox(1D);
+
             for (int i = 0; i < vec3D.length; i++) {
-                textFields[i] = new TextField(Float.toString(vec3D[i]));
-                textFields[i].setAlignment(Pos.CENTER_RIGHT);
+                final int tempIndex = i;
+                TextField field = new TextField(Float.toString(vec3D[i]));
+                field.setAlignment(Pos.CENTER_RIGHT);
+                field.textProperty().addListener((observable, oldValue, newValue) -> {
+                    if (Utils.isNumber(newValue) && handler != null)
+                        handler.accept(tempIndex, Float.parseFloat(newValue));
+                });
+                hBox.getChildren().add(field);
             }
 
-            container = setupSecondNode(new HBox(1.0, textFields[0], textFields[1], textFields[2]), true);
+            container = setupSecondNode(hBox, true);
         }
 
         addRow(height);

@@ -197,6 +197,16 @@ public class Utils {
     }
 
     /**
+     * Convert a float value into a short (fixed point, n fractional bits).
+     * @param floatVal The float to convert.
+     * @param n        The number of fractional bits.
+     * @return shortValue
+     */
+    public static short floatToFixedPointShort(float floatVal, int n) {
+        return (short) (floatVal * (float) (1 << n));
+    }
+
+    /**
      * Convert an int value (fixed point, n fractional bits) into a float.
      * @param intVal The integer to convert.
      * @param n The number of fractional bits.
@@ -204,6 +214,16 @@ public class Utils {
      */
     public static float fixedPointIntToFloatNBits(long intVal, long n) {
         return ((float)intVal / (float)(1 << n));
+    }
+
+    /**
+     * Convert a float value into a int (fixed point, n fractional bits).
+     * @param floatVal The float to convert.
+     * @param n        The number of fractional bits.
+     * @return intValue
+     */
+    public static int floatToFixedPointInt(float floatVal, int n) {
+        return (int) (floatVal * (float) (1 << n));
     }
 
     /**
@@ -463,6 +483,34 @@ public class Utils {
 
         int intTest = Integer.parseInt(str);
         return intTest >= 0 && intTest <= 0xFF;
+    }
+
+    /**
+     * Is the input string a valid integer or decimal number?
+     * @param input The input to test.
+     * @return isNumber
+     */
+    public static boolean isNumber(String input) {
+        boolean hasDecimal = false;
+        for (int i = 0; i < input.length(); i++) {
+            char test = input.charAt(i);
+            if (test == '-' && i == 0)
+                continue; // Allow negative indicator.
+
+            if (test == '.') {
+                if (!hasDecimal) {
+                    hasDecimal = true;
+                    continue;
+                } else {
+                    return false; // Multiple decimal = invalid number.
+                }
+            }
+
+            if (!Character.isDigit(test))
+                return false; // Character isn't a digit, so it can't be a number.
+        }
+
+        return true;
     }
 
     /**
