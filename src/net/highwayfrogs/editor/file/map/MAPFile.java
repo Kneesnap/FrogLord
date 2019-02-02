@@ -162,7 +162,7 @@ public class MAPFile extends GameFile {
         this.theme = MAPTheme.values()[reader.readShort()];
 
         this.levelTimer = reader.readShort();
-        reader.readBytes((TOTAL_CHECKPOINT_TIMER_ENTRIES - 1) * Constants.SHORT_SIZE);
+        reader.skipBytes((TOTAL_CHECKPOINT_TIMER_ENTRIES - 1) * Constants.SHORT_SIZE);
 
         reader.readShort(); // Unused perspective variable.
 
@@ -171,7 +171,7 @@ public class MAPFile extends GameFile {
 
         this.cameraTargetOffset = new SVector();
         this.cameraTargetOffset.loadWithPadding(reader);
-        reader.readBytes(4 * Constants.SHORT_SIZE); // Unused "LEVEL_HEADER" data.
+        reader.skipBytes(4 * Constants.SHORT_SIZE); // Unused "LEVEL_HEADER" data.
 
         reader.setIndex(pathAddress);
         reader.verifyString(PATH_SIGNATURE);

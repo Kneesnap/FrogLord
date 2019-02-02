@@ -224,6 +224,18 @@ public class DataReader {
     }
 
     /**
+     * Skips bytes from the source.
+     * @param amount The amount of bytes to skip.
+     */
+    public void skipBytes(int amount) {
+        try {
+            source.skip(amount);
+        } catch (Exception ex) {
+            throw new RuntimeException("Error while skipping " + amount + " bytes.", ex);
+        }
+    }
+
+    /**
      * Create a sub-reader.
      * @param startOffset The offset to start reading from.
      * @param length      The length to read. -1 = Get remaining.

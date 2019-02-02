@@ -44,7 +44,7 @@ public class MAPUVInfo extends GameObject {
         Utils.verify(foundPrim instanceof MAPPolygon, "Found prim was not a MAPPolygon.");
 
         this.polygon = (MAPPolygon) foundPrim;
-        reader.readBytes(TOTAL_UV_BLOCK_SIZE); // There are a bunch of uvs, but they're run-time only.
+        reader.skipBytes(TOTAL_UV_BLOCK_SIZE); // There are a bunch of uvs, but they're run-time only.
     }
 
     @Override

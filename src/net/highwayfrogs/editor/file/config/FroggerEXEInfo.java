@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.data.MusicTrack;
+import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
@@ -28,6 +29,7 @@ import java.util.Map;
 
 /**
  * Information about a specific frogger.exe file.
+ * TODO: Get texture pointers from exe.
  * Created by Kneesnap on 8/18/2018.
  */
 @Getter
@@ -38,12 +40,15 @@ public class FroggerEXEInfo extends Config {
     private List<MapBook> mapLibrary = new ArrayList<>();
     private Map<FileEntry, List<Short>> remapTable = new HashMap<>();
     private List<MusicTrack> musicTracks = new ArrayList<>();
+    private List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
+    private List<LevelInfo> raceLevelInfo = new ArrayList<>();
 
     private long ramPointerOffset;
     private int MWIOffset;
     private int MWILength;
     private int mapBookAddress;
     private int themeBookAddress;
+    private int arcadeLevelAddress;
     private int musicAddress;
     private boolean prototype;
     private boolean demo;
@@ -98,19 +103,21 @@ public class FroggerEXEInfo extends Config {
         readMapLibrary();
         readRemapData();
         readMusicData();
+        readLevelData();
         this.MWD = new MWDFile(getMWI());
     }
 
     private void readConfig() {
+        this.demo = getBoolean("demo");
+        this.prototype = getBoolean("prototype");
+        this.platform = getEnum("platform", TargetPlatform.class);
         this.MWIOffset = getInt("mwiOffset");
         this.MWILength = getInt("mwiLength");
         this.themeBookAddress = getInt("themeBook");
         this.mapBookAddress = getInt("mapBook");
         this.ramPointerOffset = getLong("ramOffset");
-        this.platform = getEnum("platform", TargetPlatform.class);
+        this.arcadeLevelAddress = getInt("arcadeLevelAddress", 0);
         this.musicAddress = getInt("musicAddress");
-        this.demo = getBoolean("demo");
-        this.prototype = getBoolean("prototype");
     }
 
     /**
@@ -187,6 +194,28 @@ public class FroggerEXEInfo extends Config {
             getMusicTracks().add(MusicTrack.getTrackById(getPlatform(), readByte));
     }
 
+    private void readLevelData() {
+        if (getArcadeLevelAddress() == 0)
+            return; // No level select is present.
+
+        getReader().setIndex(getArcadeLevelAddress());
+        LevelInfo level = null;
+        while (level == null || !level.isTerminator()) {
+            level = new LevelInfo();
+            level.load(getReader());
+            getArcadeLevelInfo().add(level);
+            System.out.println(level.toString());
+        }
+
+        level = null;
+        while (level == null || !level.isTerminator()) {
+            level = new LevelInfo();
+            level.load(getReader());
+            getArcadeLevelInfo().add(level);
+            System.out.println(level.toString());
+        }
+    }
+
     /**
      * Patch this exe when its time to be saved.
      */
@@ -197,6 +226,7 @@ public class FroggerEXEInfo extends Config {
         patchMapLibrary(exeWriter);
         patchRemapData(exeWriter);
         patchMusicData(exeWriter);
+        patchLevelData(exeWriter);
         exeWriter.closeReceiver();
     }
 
@@ -236,6 +266,15 @@ public class FroggerEXEInfo extends Config {
         exeWriter.setIndex(getMusicAddress());
         getMusicTracks().forEach(track -> exeWriter.writeByte(track.getTrack(getPlatform())));
         exeWriter.writeByte(MusicTrack.TERMINATOR);
+    }
+
+    private void patchLevelData(DataWriter exeWriter) {
+        if (getArcadeLevelAddress() == 0)
+            return; // No level select is present.
+
+        getWriter().setIndex(getArcadeLevelAddress());
+        getArcadeLevelInfo().forEach(level -> level.save(exeWriter));
+        getRaceLevelInfo().forEach(level -> level.save(exeWriter));
     }
 
     /**
@@ -325,5 +364,21 @@ public class FroggerEXEInfo extends Config {
     @SuppressWarnings("unchecked")
     public <T extends GameFile> T getGameFile(int resourceId) {
         return (T) getMWD().getEntryFileMap().get(getResourceEntry(resourceId));
+    }
+
+    /**
+     * Test if this is a PC release.
+     * @return isPCRelease
+     */
+    public boolean isPC() {
+        return getPlatform() == TargetPlatform.PC;
+    }
+
+    /**
+     * Test if this is a PSX release.
+     * @return isPSXRelease
+     */
+    public boolean isPSX() {
+        return getPlatform() == TargetPlatform.PSX;
     }
 }

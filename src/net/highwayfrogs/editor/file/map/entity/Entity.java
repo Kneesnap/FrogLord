@@ -63,7 +63,7 @@ public class Entity extends GameObject {
         this.uniqueId = reader.readUnsignedShortAsInt();
         this.formBook = FormBook.getFormBook(map.getTheme(), reader.readUnsignedShortAsInt());
         this.flags = reader.readUnsignedShortAsInt();
-        reader.readBytes(RUNTIME_POINTERS * Constants.POINTER_SIZE);
+        reader.skipBytes(RUNTIME_POINTERS * Constants.POINTER_SIZE);
 
         this.loadScriptDataPointer = reader.getIndex();
         if (formBook.getEntity().getScriptDataMaker() != null) {

@@ -27,7 +27,7 @@ public class Light extends GameObject {
         reader.readUnsignedByteAsShort(); // Unused 'priority'.
         reader.readUnsignedShortAsInt(); // Unused 'parentId'.
         this.apiType = APILightType.getType(reader.readUnsignedByteAsShort());
-        reader.readBytes(3); // Padding
+        reader.skipBytes(3); // Padding
         this.color = reader.readInt();
         SVector.readWithPadding(reader); // Unused position.
         this.direction = SVector.readWithPadding(reader);

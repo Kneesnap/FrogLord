@@ -29,7 +29,7 @@ public class VABBodyFile extends GameFile {
             setLoopStatus(false);
 
         while (reader.hasMore()) {
-            reader.readBytes(SAMPLE_PADDING); // Read padding.
+            reader.skipBytes(SAMPLE_PADDING); // Read padding.
 
             byte temp = reader.readByte();
             byte range = (byte) (temp * 0xF);

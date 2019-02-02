@@ -49,7 +49,7 @@ public class MAPAnimation extends GameObject {
         this.uChange = reader.readUnsignedByteAsShort();
         this.vChange = reader.readUnsignedByteAsShort();
         this.uvDuration = reader.readUnsignedShortAsInt();
-        reader.readBytes(4); // Four run-time bytes.
+        reader.skipBytes(4); // Four run-time bytes.
 
         // Texture information.
         int celCount = reader.readUnsignedShortAsInt();

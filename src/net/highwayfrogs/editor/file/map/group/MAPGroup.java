@@ -40,7 +40,7 @@ public class MAPGroup extends GameObject {
         for (MAPPrimitiveType type : MAPFile.PRIMITIVE_TYPES)
             loadPolygonCountMap.put(type, reader.readUnsignedByteAsShort());
 
-        reader.readBytes(3);
+        reader.skipBytes(3);
         for (MAPPrimitiveType type : MAPFile.PRIMITIVE_TYPES)
             loadPolygonPointerMap.put(type, reader.readInt());
 
