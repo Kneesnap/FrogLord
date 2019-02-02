@@ -29,7 +29,6 @@ import java.util.Map;
 
 /**
  * Information about a specific frogger.exe file.
- * TODO: Get texture pointers from exe.
  * Created by Kneesnap on 8/18/2018.
  */
 @Getter

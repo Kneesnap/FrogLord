@@ -376,7 +376,7 @@ public class MapUIController implements Initializable {
         // Populate Entity Data.
         entityEditor.addBoldLabel("Entity Data:");
         if (entity.getEntityData() != null)
-            entity.getEntityData().addData(this.entityEditor);
+            entity.getEntityData().addData(this, this.entityEditor);
 
         // Populate Script Data.
         entityEditor.addBoldLabel("Script Data:");

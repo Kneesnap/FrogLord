@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 /**
  * Entity data which involves a matrix.
@@ -29,6 +30,11 @@ public class MatrixData extends EntityData {
 
     @Override
     public void addData(GUIEditorGrid editor) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addData(MapUIController controller, GUIEditorGrid editor) {
         float[] translation = new float[3];
         float[] matrixRow = new float[3];
 
@@ -39,7 +45,7 @@ public class MatrixData extends EntityData {
         editor.addNormalLabel("Position");
         editor.addVector3D(translation, 30D, (index, newValue) -> {
             matrix.getTransform()[index] = Utils.floatToFixedPointInt(newValue, 20);
-            //TODO: Update entity position in 3d space.
+            controller.getController().resetEntities();
         });
 
         // Transform information is in fixed point format, hence conversion to float representation.
