@@ -89,14 +89,10 @@ public class VLOController extends EditorController<VLOArchive> {
     private void addFlag(String display, int flag) {
         CheckBox checkbox = new CheckBox(display);
 
-        checkbox.setOnAction(event -> {
-            short flagValue = this.selectedImage.getFlags();
-            if (this.selectedImage.testFlag(flag)) {
-                flagValue ^= flag;
-            } else {
-                flagValue |= flag;
-            }
-            this.selectedImage.setFlags(flagValue);
+        checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (this.selectedImage.setFlag(flag, newValue))
+                this.imageFilterSettings.invalidateRenderCache();
+
             this.updateDisplay();
         });
 

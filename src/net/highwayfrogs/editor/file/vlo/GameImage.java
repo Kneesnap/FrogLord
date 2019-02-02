@@ -250,6 +250,26 @@ public class GameImage extends GameObject {
     }
 
     /**
+     * Set a flag state for this image.
+     * @param flag     The flag to set.
+     * @param newState The new flag state.
+     * @return invalidateImage
+     */
+    public boolean setFlag(int flag, boolean newState) {
+        boolean oldState = testFlag(flag);
+        if (oldState == newState)
+            return false;
+
+        if (oldState) {
+            this.flags ^= flag;
+        } else {
+            this.flags |= flag;
+        }
+
+        return flag == FLAG_BLACK_IS_TRANSPARENT || flag == FLAG_HIT_X;
+    }
+
+    /**
      * Replace this texture with a new one.
      * @param image The new image to use.
      */
