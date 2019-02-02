@@ -23,8 +23,9 @@ Create FrogLord.jar: ``Build > Build Artifacts... > FrogLord > Build``
 ## Screenshots:
 ![Image Example](https://i.imgur.com/AcjSDkE.png)  
 
-## Special Thanks:  
- - Tim Closs (Frogger Programmer)
+## Special Thanks:
+ - Andy Eder (Frogger 2 Programmer, Significant FrogLord contributor)
  - Xiron (Highway Frogs Creator, Documented demo replay file format)
  - Aluigi (QuickBMS Author, Documented the MWD and MWI file formats)
  - Shakotay2 (XeNTax, Helped us figure out how 3D geometry was stored)
+ - Everyone involved with Frogger's creation who we've spoken with.
