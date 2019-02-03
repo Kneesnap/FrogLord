@@ -2,11 +2,14 @@ package net.highwayfrogs.editor.file.config.exe;
 
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
+import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
+import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * A general mapbook struct.
@@ -75,4 +78,18 @@ public abstract class MapBook extends ExeStruct {
      * @return isEntry
      */
     public abstract boolean isEntry(FileEntry test);
+
+    /**
+     * Check if this map book is dummied.
+     * @return isDummy
+     */
+    public abstract boolean isDummy();
+
+    /**
+     * Execute something depending on which MapBook type this is.
+     * @param pcHandler  The PC handler.
+     * @param psxHandler The psx handler.
+     * @return result
+     */
+    public abstract <T> T execute(Function<PCMapBook, T> pcHandler, Function<PSXMapBook, T> psxHandler);
 }

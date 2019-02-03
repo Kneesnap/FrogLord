@@ -52,7 +52,7 @@ public class GameImage extends GameObject {
     public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused.
     public static final int FLAG_HIT_X = Constants.BIT_FLAG_2; //Appears to decrease width by 1?
     public static final int FLAG_HIT_Y = Constants.BIT_FLAG_3; //Appears to decrease height by 1?
-    public static final int FLAG_REFERENCED_BY_NAME = Constants.BIT_FLAG_4; // Unsure.
+    public static final int FLAG_REFERENCED_BY_NAME = Constants.BIT_FLAG_4; // All images have this. It means it has an entry in bmp_pointers.
     public static final int FLAG_BLACK_IS_TRANSPARENT = Constants.BIT_FLAG_5; // Seems like it may not be used. Would be weird if that were the case.
     public static final int FLAG_2D_SPRITE = Constants.BIT_FLAG_15;
 

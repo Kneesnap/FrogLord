@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.standard;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
@@ -15,9 +16,12 @@ public class MRTexture extends GameObject {
     private int flags;
     private short width;
     private short height;
-    private ByteUV[] uvs = new ByteUV[4];
+    private ByteUV[] uvs = new ByteUV[UV_COUNT];
     private int clutId;
     private int texturePage;
+
+    private static final int UV_COUNT = 4;
+    public static final int BYTE_SIZE = (3 * Constants.SHORT_SIZE) + (2 * Constants.BYTE_SIZE) + (UV_COUNT * ByteUV.BYTE_SIZE);
 
     @Override
     public void load(DataReader reader) {

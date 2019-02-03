@@ -1,15 +1,20 @@
 package net.highwayfrogs.editor.file.config.exe.psx;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
+import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+
+import java.util.function.Function;
 
 /**
  * A PSX MapBook implementation.
  * Created by Kneesnap on 1/27/2019.
  */
+@Getter
 public class PSXMapBook extends MapBook {
     private int mapId;
     private long remapPointer;
@@ -51,9 +56,27 @@ public class PSXMapBook extends MapBook {
     }
 
     @Override
+    public boolean isDummy() {
+        return this.remapPointer == 0;
+    }
+
+    @Override
+    public <T> T execute(Function<PCMapBook, T> pcHandler, Function<PSXMapBook, T> psxHandler) {
+        return psxHandler.apply(this);
+    }
+
+    @Override
     public void handleCorrection(String[] args) {
         this.mapId = Integer.parseInt(args[0]);
         this.remapPointer = Long.decode(args[1]) + getConfig().getRamPointerOffset();
         this.wadId = Integer.parseInt(args[2]);
+    }
+
+    /**
+     * Get the map remap pointer where it will be in the executable.
+     * @return fileRemapPointer
+     */
+    public int getFileRemapPointer() {
+        return (int) (getRemapPointer() - getConfig().getRamPointerOffset());
     }
 }

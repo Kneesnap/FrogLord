@@ -4,8 +4,11 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
+import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+
+import java.util.function.Function;
 
 /**
  * PC MapBook implementation.
@@ -61,12 +64,38 @@ public class PCMapBook extends MapBook {
         this.saveRemap(writer, config, this.lowMapId, this.lowRemapPointer);
     }
 
+    /**
+     * Get the low map remap pointer where it will be in the executable.
+     * @return fileLowRemapPointer
+     */
+    public int getFileLowRemapPointer() {
+        return (int) (getLowRemapPointer() - getConfig().getRamPointerOffset());
+    }
+
+    /**
+     * Get the high map remap pointer where it will be in the executable.
+     * @return fileHighRemapPointer
+     */
+    public int getFileHighRemapPointer() {
+        return (int) (getHighRemapPointer() - getConfig().getRamPointerOffset());
+    }
+
     @Override
     public boolean isEntry(FileEntry test) {
         return this.lowMapId == test.getLoadedId()
                 || this.lowWadId == test.getLoadedId()
                 || this.highMapId == test.getLoadedId()
                 || this.highWadId == test.getLoadedId();
+    }
+
+    @Override
+    public <T> T execute(Function<PCMapBook, T> pcHandler, Function<PSXMapBook, T> psxHandler) {
+        return pcHandler.apply(this);
+    }
+
+    @Override
+    public boolean isDummy() {
+        return this.lowRemapPointer == 0 && this.highRemapPointer == 0;
     }
 
     @Override

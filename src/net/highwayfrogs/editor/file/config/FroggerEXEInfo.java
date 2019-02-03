@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
@@ -11,6 +12,7 @@ import net.highwayfrogs.editor.file.config.data.MusicTrack;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -41,6 +43,8 @@ public class FroggerEXEInfo extends Config {
     private List<MusicTrack> musicTracks = new ArrayList<>();
     private List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
     private List<LevelInfo> raceLevelInfo = new ArrayList<>();
+    private List<Long> bmpTexturePointers = new ArrayList<>();
+    private long textureStartAddress; // Start address for bmp_pointers array.
 
     private long ramPointerOffset;
     private int MWIOffset;
@@ -48,6 +52,7 @@ public class FroggerEXEInfo extends Config {
     private int mapBookAddress;
     private int themeBookAddress;
     private int arcadeLevelAddress;
+    private int bmpPointerAddress;
     private int musicAddress;
     private boolean prototype;
     private boolean demo;
@@ -103,6 +108,7 @@ public class FroggerEXEInfo extends Config {
         readRemapData();
         readMusicData();
         readLevelData();
+        readBmpPointerData();
         this.MWD = new MWDFile(getMWI());
     }
 
@@ -117,6 +123,7 @@ public class FroggerEXEInfo extends Config {
         this.ramPointerOffset = getLong("ramOffset");
         this.arcadeLevelAddress = getInt("arcadeLevelAddress", 0);
         this.musicAddress = getInt("musicAddress");
+        this.bmpPointerAddress = getInt("bmpPointerAddress", 0);
     }
 
     /**
@@ -213,6 +220,34 @@ public class FroggerEXEInfo extends Config {
         }
     }
 
+    private void readBmpPointerData() {
+        int firstRemap = Integer.MAX_VALUE;
+        for (MapBook book : getMapLibrary())
+            if (!book.isDummy())
+                firstRemap = Math.min(firstRemap, book.execute(pc -> Math.min(pc.getFileLowRemapPointer(), pc.getFileHighRemapPointer()), PSXMapBook::getFileRemapPointer));
+
+        if (getBmpPointerAddress() == 0) {
+            System.out.println("First Remap: " + Utils.toHexString(firstRemap));
+            return; // Not specified.
+        }
+
+        Utils.verify(firstRemap != Integer.MAX_VALUE, "Failed to find bmp_pointer's end.");
+
+        int nullEntries = getInt("extraBmpPointers", 0);
+        int stopReading = firstRemap - (Constants.POINTER_SIZE * nullEntries);
+
+        // Read all the pointers.
+        getReader().setIndex(getBmpPointerAddress());
+        int totalCount = (stopReading - getBmpPointerAddress()) / Constants.POINTER_SIZE;
+        for (int i = 0; i < totalCount; i++)
+            bmpTexturePointers.add(getReader().readUnsignedIntAsLong());
+
+        // Determine the base point for where bmp_pointers will be created in memory.
+        this.textureStartAddress = Long.MAX_VALUE;
+        for (long testPointer : bmpTexturePointers)
+            this.textureStartAddress = Math.min(this.textureStartAddress, testPointer);
+    }
+
     /**
      * Patch this exe when its time to be saved.
      */
@@ -224,6 +259,7 @@ public class FroggerEXEInfo extends Config {
         patchRemapData(exeWriter);
         patchMusicData(exeWriter);
         patchLevelData(exeWriter);
+        patchBmpPointerData(exeWriter);
         exeWriter.closeReceiver();
     }
 
@@ -272,6 +308,14 @@ public class FroggerEXEInfo extends Config {
         exeWriter.setIndex(getArcadeLevelAddress());
         getArcadeLevelInfo().forEach(level -> level.save(exeWriter));
         getRaceLevelInfo().forEach(level -> level.save(exeWriter));
+    }
+
+    private void patchBmpPointerData(DataWriter exeWriter) {
+        if (getBmpPointerAddress() == 0)
+            return; // Not specified.
+
+        exeWriter.setIndex(getBmpPointerAddress());
+        getBmpTexturePointers().forEach(exeWriter::writeUnsignedInt);
     }
 
     /**

@@ -756,6 +756,16 @@ public class Utils {
     }
 
     /**
+     * Turn a long into a hex string.
+     * 255 -> 0xFF
+     * @param value The value to convert.
+     * @return hexString
+     */
+    public static String toHexString(long value) {
+        return "0x" + Long.toHexString(value).toUpperCase();
+    }
+
+    /**
      * Get a Color object from an integer.
      * @param rgb The integer to get the color from.
      * @return color
