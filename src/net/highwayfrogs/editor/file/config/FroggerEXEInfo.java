@@ -459,7 +459,7 @@ public class FroggerEXEInfo extends Config {
 
         System.out.println("Maximum Texture ID: " + maxTexId);
 
-        String[] imageNames = new String[maxTexId];
+        String[] imageNames = new String[maxTexId + 1];
         for (int i = 0; i < imageNames.length; i++)
             imageNames[i] = "im_img" + i;
 
@@ -469,9 +469,12 @@ public class FroggerEXEInfo extends Config {
                 imageNames[Integer.parseInt(key)] = nameConfig.getString(key);
         }
 
+        vramHWriter.write("#ifndef __FROGVRAM_H" + Constants.NEWLINE);
+        vramHWriter.write("#define __FROGVRAM_H" + Constants.NEWLINE + Constants.NEWLINE);
+        vramHWriter.write("extern MR_TEXTURE* bmp_pointers[];" + Constants.NEWLINE + Constants.NEWLINE);
+
         vramCWriter.write("#include \"frogvram.h\"" + Constants.NEWLINE + Constants.NEWLINE);
         vramCWriter.write("MR_TEXTURE* bmp_pointers[] = {" + Constants.NEWLINE + "\t");
-        vramHWriter.write("extern MR_TEXTURE* bmp_pointers[];" + Constants.NEWLINE + Constants.NEWLINE);
         for (int i = 0; i < imageNames.length; i++)
             vramCWriter.write("&" + imageNames[i] + "," + (((i % 10) == 0 && i > 0) ? Constants.NEWLINE + "\t" : " "));
         vramCWriter.write(Constants.NEWLINE + "};" + Constants.NEWLINE + Constants.NEWLINE);
@@ -505,9 +508,14 @@ public class FroggerEXEInfo extends Config {
         vramHWriter.write(Constants.NEWLINE);
         vramCWriter.write("MR_USHORT txl_sky_land[] = {0, 0, 0, 0};" + Constants.NEWLINE);
         vramHWriter.write("extern MR_USHORT txl_sky_land[];" + Constants.NEWLINE);
+
+        vramHWriter.write("#endif" + Constants.NEWLINE);
     }
 
     private void saveFrogPSX(PrintWriter writer) {
+        writer.write("#ifndef __FROGPSX_H" + Constants.NEWLINE);
+        writer.write("#define __FROGPSX_H" + Constants.NEWLINE + Constants.NEWLINE);
+
         writer.write("#define RES_FROGPSX_DIRECTORY \"E:\\\\Frogger\\\\\"" + Constants.NEWLINE);
         writer.write("#define RES_NUMBER_OF_RESOURCES " + getMWI().getEntries().size() + Constants.NEWLINE + Constants.NEWLINE);
 
@@ -531,5 +539,8 @@ public class FroggerEXEInfo extends Config {
             writer.write("\t" + resName + "," + Constants.NEWLINE);
         }
         writer.write("};" + Constants.NEWLINE + Constants.NEWLINE);
+
+        // Must happen last.
+        writer.write("#endif" + Constants.NEWLINE);
     }
 }

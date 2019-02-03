@@ -76,6 +76,8 @@ public class Config {
             }
 
             // Add key-value pairs, if the line is not empty.
+            if (values.containsKey(name))
+                System.out.println("Config Overwriting Key: " + name);
             values.put(name, line.substring(line.indexOf(VALUE_SPLIT) + 1));
         }
 
