@@ -11,12 +11,9 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.ImagePattern;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.CullFace;
-import javafx.scene.shape.DrawMode;
-import javafx.scene.shape.MeshView;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -66,7 +63,9 @@ public class MAPController extends EditorController<MAPFile> {
     private MapUIController mapUIController;
 
     private PerspectiveCamera camera;
-    private List<Rectangle> entityIcons = new ArrayList<>();
+
+    private List<MeshView> entityIcons = new ArrayList<>();
+    private static PhongMaterial entityIconMaterial = new PhongMaterial();
 
     private Group root3D;
     private Rotate rotX;
@@ -76,7 +75,7 @@ public class MAPController extends EditorController<MAPFile> {
     private MeshData cursorData;
 
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
-    private static final Image SWAMPY = GameFile.loadIcon("swampy");
+    private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -139,9 +138,14 @@ public class MAPController extends EditorController<MAPFile> {
         // These cause errors if not reset.
         this.cursorData = null;
 
-        // Create and setup material properties for rendering the level.
+        // Create and setup material properties for rendering the level and entity icons.
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(Utils.toFXImage(texMap.getImage(), true));
+
+        entityIconMaterial.setDiffuseColor(Color.BLACK);
+        entityIconMaterial.setSpecularColor(Color.BLACK);
+        entityIconMaterial.setDiffuseMap(ENTITY_ICON_IMAGE);
+        entityIconMaterial.setSelfIlluminationMap(ENTITY_ICON_IMAGE);
 
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(mesh);
@@ -177,6 +181,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Setup additional scene elements.
         setupEntities();
+        MapUIController.getPropertyEntityIconSize().addListener((observable, old, newVal) -> resetEntities());
 
         // Create and set the scene.
         mapScene = new Scene(uiPane);
@@ -289,26 +294,34 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void setupEntities() {
-        ImagePattern pattern = new ImagePattern(SWAMPY);
-
         float[] pos = new float[3];
         for (Entity entity : getFile().getEntities()) {
             entity.getPosition(pos, getFile());
-            Rectangle rect = makeIcon(pattern, pos[0], pos[1], pos[2]);
-            rect.setOnMouseClicked(evt -> this.mapUIController.showEntityInfo(entity));
-            this.entityIcons.add(rect);
+            MeshView meshView = makeIcon(pos[0], pos[1], pos[2]);
+            meshView.setOnMouseClicked(evt -> this.mapUIController.showEntityInfo(entity));
+            this.entityIcons.add(meshView);
         }
     }
 
-    private Rectangle makeIcon(ImagePattern image, float x, float y, float z) {
-        Rectangle rect = new Rectangle(image.getImage().getWidth(), image.getImage().getHeight());
-        rect.setFill(image);
-        return setupNode(rect, x, y, z, rect.getWidth(), rect.getHeight());
+    private MeshView makeIcon(float x, float y, float z) {
+        float entityIconSize = MapUIController.getPropertyEntityIconSize().getValue();
+
+        TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
+        triMesh.getPoints().addAll(-entityIconSize * 0.5f, entityIconSize * 0.5f, 0, -entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, entityIconSize * 0.5f, 0);
+        triMesh.getTexCoords().addAll(0, 1, 0, 0, 1, 0, 1, 1);
+        triMesh.getFaces().addAll(0,0, 1,1, 2,2, 2,2, 3,3, 0,0);
+
+        MeshView triMeshView = new MeshView(triMesh);
+        triMeshView.setDrawMode(DrawMode.FILL);
+        triMeshView.setMaterial(entityIconMaterial);
+        triMeshView.setCullFace(CullFace.NONE);
+
+        return setupNode(triMeshView, x, y, z);
     }
 
-    private <T extends Node> T setupNode(T node, float x, float y, float z, double width, double height) {
-        node.setTranslateX(x - (width * 0.5));
-        node.setTranslateY(y - (height * 0.5));
+    private <T extends Node> T setupNode(T node, float x, float y, float z) {
+        node.setTranslateX(x);
+        node.setTranslateY(y);
         node.setTranslateZ(z);
 
         Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS); // Up, Down,
