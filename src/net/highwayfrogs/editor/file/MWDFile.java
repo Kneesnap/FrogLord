@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.config.TargetPlatform;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.ArraySource;
@@ -108,7 +107,7 @@ public class MWDFile extends GameObject {
         if (entry.getTypeId() == VLOArchive.TYPE_ID || entry.getDisplayName().startsWith("LS_ALL")) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
             file = new VLOArchive();
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) { // Disabled until fully supported.
-            boolean isPSX = getConfig().getPlatform() == TargetPlatform.PSX;
+            boolean isPSX = getConfig().isPSX();
             boolean isDemo = getConfig().isDemo();
 
             boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && isDemo && isPSX);

@@ -11,7 +11,6 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.config.TargetPlatform;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
@@ -377,7 +376,7 @@ public class MAPFile extends GameFile {
 
         System.out.println("Changing developer map remap.");
         removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity.
-        getConfig().changeRemap(getFileEntry(), getConfig().getPlatform() == TargetPlatform.PC ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
+        getConfig().changeRemap(getFileEntry(), getConfig().isPC() ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
     }
 
     @Override
