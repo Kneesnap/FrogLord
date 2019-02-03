@@ -490,6 +490,9 @@ public class FroggerEXEInfo extends Config {
             vramCWriter.write(MapBook.REMAP_TERMINATOR + "};" + Constants.NEWLINE);
         }
 
+        vramHWriter.write("extern MR_USHORT txl_for3[];" + Constants.NEWLINE); // Apparently this remap might be in an executable.
+        vramCWriter.write("MR_USHORT txl_for3[] = {};" + Constants.NEWLINE);
+
         vramCWriter.write(Constants.NEWLINE);
         vramHWriter.write(Constants.NEWLINE);
         for (String imageName : imageNames) {

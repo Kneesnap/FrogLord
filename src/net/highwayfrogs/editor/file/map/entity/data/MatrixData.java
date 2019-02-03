@@ -30,7 +30,7 @@ public class MatrixData extends EntityData {
 
     @Override
     public void addData(GUIEditorGrid editor) {
-        throw new UnsupportedOperationException();
+        // Still overwritten by children.
     }
 
     @Override
@@ -39,9 +39,9 @@ public class MatrixData extends EntityData {
         float[] matrixRow = new float[3];
 
         // Position information is in fixed point format, hence conversion to float representation.
-        for (int i = 0; i < matrix.getTransform().length; i++) {
+        for (int i = 0; i < matrix.getTransform().length; i++)
             translation[i] = Utils.fixedPointIntToFloatNBits(matrix.getTransform()[i], 20);
-        }
+
         editor.addNormalLabel("Position");
         editor.addVector3D(translation, 30D, (index, newValue) -> {
             matrix.getTransform()[index] = Utils.floatToFixedPointInt(newValue, 20);
@@ -58,5 +58,7 @@ public class MatrixData extends EntityData {
             editor.addVector3D(matrixRow, 25D + ((i == (matrix.getMatrix().length - 1)) ? 5D : 0D),
                     (index, newValue) -> matrix.getMatrix()[tempRow][index] = Utils.floatToFixedPointShort(newValue, 12));
         }
+
+        super.addData(controller, editor);
     }
 }
