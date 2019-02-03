@@ -17,7 +17,7 @@ import java.util.function.Function;
  */
 public abstract class MapBook extends ExeStruct {
 
-    private static final short TERMINATOR = (short) 0;
+    public static final short REMAP_TERMINATOR = (short) 0;
 
     /**
      * Reads remap data into a config.
@@ -48,7 +48,7 @@ public abstract class MapBook extends ExeStruct {
         List<Short> shortList = new ArrayList<>();
 
         short tempShort;
-        while ((tempShort = reader.readShort()) != TERMINATOR)
+        while ((tempShort = reader.readShort()) != REMAP_TERMINATOR)
             shortList.add(tempShort);
 
         config.getRemapTable().put(config.getResourceEntry(resourceId), shortList);
@@ -69,7 +69,7 @@ public abstract class MapBook extends ExeStruct {
 
         List<Short> entries = config.getRemapTable(config.getResourceEntry(resourceId));
         entries.forEach(writer::writeShort);
-        writer.writeShort(TERMINATOR);
+        writer.writeShort(REMAP_TERMINATOR);
     }
 
     /**

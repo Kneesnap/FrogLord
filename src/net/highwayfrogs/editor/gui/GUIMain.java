@@ -137,6 +137,8 @@ public class GUIMain extends Application {
                 controller.exportFile();
             } else if (event.getCode() == KeyCode.E) {
                 controller.getCurrentFile().exportAlternateFormat(controller.getFileEntry());
+            } else if (event.getCode() == KeyCode.X) {
+                EXE_CONFIG.exportCode(getWorkingDirectory());
             }
         });
     }

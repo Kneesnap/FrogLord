@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.file.config;
 
+import lombok.Cleanup;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
@@ -16,6 +18,8 @@ import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
@@ -23,11 +27,9 @@ import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Information about a specific frogger.exe file.
@@ -68,6 +70,7 @@ public class FroggerEXEInfo extends Config {
 
     private static final String CHILD_RESTORE_MAP_BOOK = "MapBookRestore";
     private static final String CHILD_RESTORE_THEME_BOOK = "ThemeBookRestore";
+    private static final String CHILD_IMAGE_NAMES = "ImageNames";
 
     public FroggerEXEInfo(File inputExe, InputStream inputStream) throws IOException {
         super(inputStream);
@@ -421,5 +424,109 @@ public class FroggerEXEInfo extends Config {
      */
     public boolean isPSX() {
         return getPlatform() == TargetPlatform.PSX;
+    }
+
+    /**
+     * Export code to a folder.
+     */
+    @SneakyThrows
+    public void exportCode(File folder) {
+        if (isPC()) {
+            System.out.println("Cannot generate headers for PC builds yet.");
+            return;
+        }
+
+        @Cleanup PrintWriter frogpsxHWriter = new PrintWriter(new File(folder, "frogpsx.h"));
+        saveFrogPSX(frogpsxHWriter);
+
+        @Cleanup PrintWriter vramHWriter = new PrintWriter(new File(folder, "frogvram.h"));
+        @Cleanup PrintWriter vramCWriter = new PrintWriter(new File(folder, "frogvram.c"));
+        saveFrogVRAM(vramHWriter, vramCWriter);
+
+        System.out.println("Generated source files.");
+    }
+
+    private void saveFrogVRAM(PrintWriter vramHWriter, PrintWriter vramCWriter) {
+        int maxTexId = 0;
+        for (GameFile file : getMWD().getFiles()) {
+            if (!(file instanceof VLOArchive))
+                continue;
+
+            VLOArchive vlo = (VLOArchive) file;
+            for (GameImage image : vlo.getImages())
+                maxTexId = Math.max(maxTexId, image.getTextureId());
+        }
+
+        System.out.println("Maximum Texture ID: " + maxTexId);
+
+        String[] imageNames = new String[maxTexId];
+        for (int i = 0; i < imageNames.length; i++)
+            imageNames[i] = "im_img" + i;
+
+        if (hasChild(CHILD_IMAGE_NAMES)) {
+            Config nameConfig = getChild(CHILD_IMAGE_NAMES);
+            for (String key : nameConfig.keySet())
+                imageNames[Integer.parseInt(key)] = nameConfig.getString(key);
+        }
+
+        vramCWriter.write("#include \"frogvram.h\"" + Constants.NEWLINE + Constants.NEWLINE);
+        vramCWriter.write("MR_TEXTURE* bmp_pointers[] = {" + Constants.NEWLINE + "\t");
+        vramHWriter.write("extern MR_TEXTURE* bmp_pointers[];" + Constants.NEWLINE + Constants.NEWLINE);
+        for (int i = 0; i < imageNames.length; i++)
+            vramCWriter.write("&" + imageNames[i] + "," + (((i % 10) == 0 && i > 0) ? Constants.NEWLINE + "\t" : " "));
+        vramCWriter.write(Constants.NEWLINE + "};" + Constants.NEWLINE + Constants.NEWLINE);
+
+        for (MapBook mapBook : getMapLibrary()) {
+            if (mapBook.isDummy())
+                continue;
+
+            FileEntry mapEntry = ((PSXMapBook) mapBook).getMapEntry();
+            String txlName = "txl_" + Utils.stripExtension(mapEntry.getDisplayName()).toLowerCase();
+
+            vramHWriter.write("extern MR_USHORT " + txlName + "[];" + Constants.NEWLINE);
+            vramCWriter.write("MR_USHORT " + txlName + "[] = {");
+            for (short remapVal : getRemapTable(mapEntry))
+                vramCWriter.write(remapVal + ", ");
+            vramCWriter.write(MapBook.REMAP_TERMINATOR + "};" + Constants.NEWLINE);
+        }
+
+        vramCWriter.write(Constants.NEWLINE);
+        vramHWriter.write(Constants.NEWLINE);
+        for (String imageName : imageNames) {
+            vramCWriter.write("MR_TEXTURE " + imageName + " = {0};" + Constants.NEWLINE);
+            vramHWriter.write("extern MR_TEXTURE " + imageName + ";" + Constants.NEWLINE);
+        }
+
+        // Unsure where this goes, or where to read it from.
+        vramCWriter.write(Constants.NEWLINE);
+        vramHWriter.write(Constants.NEWLINE);
+        vramCWriter.write("MR_USHORT txl_sky_land[] = {0, 0, 0, 0};" + Constants.NEWLINE);
+        vramHWriter.write("extern MR_USHORT txl_sky_land[];" + Constants.NEWLINE);
+    }
+
+    private void saveFrogPSX(PrintWriter writer) {
+        writer.write("#define RES_FROGPSX_DIRECTORY \"E:\\\\Frogger\\\\\"" + Constants.NEWLINE);
+        writer.write("#define RES_NUMBER_OF_RESOURCES " + getMWI().getEntries().size() + Constants.NEWLINE + Constants.NEWLINE);
+
+        writer.write("enum {\n" +
+                "\tFR_FTYPE_STD, // Standard?\n" +
+                "\tFR_FTYPE_VLO, // VLO Files\n" +
+                "\tFR_FTYPE_SPU, // Sound files \n" +
+                "\tFR_FTYPE_MOF,\n" +
+                "\tFR_FTYPE_MAPMOF,\n" +
+                "\tFR_FTYPE_MAPANIMMOF, // Unused\n" +
+                "\tFR_FTYPE_DEMODATA\n" +
+                "};\n\n");
+
+        HashSet<String> resourceNames = new HashSet<>();
+        writer.write("enum {" + Constants.NEWLINE);
+        for (FileEntry entry : getMWI().getEntries()) {
+            String resName = "RES_" + entry.getDisplayName().replace(".", "_");
+            while (!resourceNames.add(resName))
+                resName += "_DUPE";
+
+            writer.write("\t" + resName + "," + Constants.NEWLINE);
+        }
+        writer.write("};" + Constants.NEWLINE + Constants.NEWLINE);
     }
 }

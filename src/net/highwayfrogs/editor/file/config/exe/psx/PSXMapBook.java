@@ -79,4 +79,12 @@ public class PSXMapBook extends MapBook {
     public int getFileRemapPointer() {
         return (int) (getRemapPointer() - getConfig().getRamPointerOffset());
     }
+
+    /**
+     * Gets the map's file entry.
+     * @return mapFileEntry
+     */
+    public FileEntry getMapEntry() {
+        return getConfig().getResourceEntry(this.mapId);
+    }
 }
