@@ -66,6 +66,9 @@ public class MapUIController implements Initializable {
     private static final double SPEED_UP_MULTIPLIER = 4.0;
     @Getter private static DoubleProperty propertySpeedUpMultiplier = new SimpleDoubleProperty(SPEED_UP_MULTIPLIER);
 
+    private static float ENTITY_ICON_SIZE = 16.0f;
+    @Getter private static FloatProperty propertyEntityIconSize = new SimpleFloatProperty(ENTITY_ICON_SIZE);
+
     private MAPController controller;
 
     // Baseline UI components
@@ -96,6 +99,7 @@ public class MapUIController implements Initializable {
     @FXML private TextField textFieldMeshPosX;
     @FXML private TextField textFieldMeshPosY;
     @FXML private TextField textFieldMeshPosZ;
+    @FXML private TextField textFieldEntityIconSize;
 
     // General pane.
     @FXML private TitledPane generalPane;
@@ -448,6 +452,8 @@ public class MapUIController implements Initializable {
         textFieldMeshPosX.textProperty().bindBidirectional(meshView.translateXProperty(), NUM_TO_STRING_CONVERTER);
         textFieldMeshPosY.textProperty().bindBidirectional(meshView.translateYProperty(), NUM_TO_STRING_CONVERTER);
         textFieldMeshPosZ.textProperty().bindBidirectional(meshView.translateZProperty(), NUM_TO_STRING_CONVERTER);
+
+        textFieldEntityIconSize.textProperty().bindBidirectional(propertyEntityIconSize, NUM_TO_STRING_CONVERTER);
 
         // Must be called after MAPController is passed.
         showEntityInfo(null);
