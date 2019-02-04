@@ -15,6 +15,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -67,6 +68,9 @@ public class MAPController extends EditorController<MAPFile> {
     private List<MeshView> entityIcons = new ArrayList<>();
     private static PhongMaterial entityIconMaterial = new PhongMaterial();
 
+    private List<Box> boundingBoxes = new ArrayList<>();
+    private static PhongMaterial boundingBoxMaterial = new PhongMaterial();
+
     private Group root3D;
     private Rotate rotX;
     private Rotate rotY;
@@ -76,6 +80,7 @@ public class MAPController extends EditorController<MAPFile> {
 
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
+    private static final Image BOUNDING_BOX_IMAGE = GameFile.loadIcon("yellow");
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -138,7 +143,7 @@ public class MAPController extends EditorController<MAPFile> {
         // These cause errors if not reset.
         this.cursorData = null;
 
-        // Create and setup material properties for rendering the level and entity icons.
+        // Create and setup material properties for rendering the level, entity icons and bounding boxes.
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(Utils.toFXImage(texMap.getImage(), true));
 
@@ -146,6 +151,11 @@ public class MAPController extends EditorController<MAPFile> {
         entityIconMaterial.setSpecularColor(Color.BLACK);
         entityIconMaterial.setDiffuseMap(ENTITY_ICON_IMAGE);
         entityIconMaterial.setSelfIlluminationMap(ENTITY_ICON_IMAGE);
+
+        boundingBoxMaterial.setDiffuseColor(Color.BLACK);
+        boundingBoxMaterial.setSpecularColor(Color.BLACK);
+        boundingBoxMaterial.setDiffuseMap(BOUNDING_BOX_IMAGE);
+        boundingBoxMaterial.setSelfIlluminationMap(BOUNDING_BOX_IMAGE);
 
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(mesh);
@@ -341,6 +351,63 @@ public class MAPController extends EditorController<MAPFile> {
 
         root3D.getChildren().add(node);
         return node;
+    }
+
+    /**
+     * Adds an axis-aligned bounding box.
+     * @param minX The minimum x-coordinate.
+     * @param minY The minimum y-coordinate.
+     * @param minZ The minimum z-coordinate.
+     * @param maxX The maximum x-coordinate.
+     * @param maxY The maximum y-coordinate.
+     * @param maxZ The maximum z-coordinate.
+     */
+    private void addBoundingBoxFromMinMax(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        final double x0 = Math.min(minX, maxX);
+        final double x1 = Math.max(minX, maxX);
+        final double y0 = Math.min(minY, maxY);
+        final double y1 = Math.max(minY, maxY);
+        final double z0 = Math.min(minZ, maxZ);
+        final double z1 = Math.max(minZ, maxZ);
+
+        final double x = (x0 + x1) * 0.5;
+        final double y = (y0 + y1) * 0.5;
+        final double z = (z0 + z1) * 0.5;
+
+        final double w = (x1 - x0);
+        final double h = (y1 - y0);
+        final double d = (z1 - z0);
+
+        addBoundingBoxCenteredWithDimensions(x, y, z, w, h, d);
+    }
+
+    /**
+     * Adds an axis-aligned bounding box.
+     * @param x The x-coordinate defining the center of the box.
+     * @param y The y-coordinate defining the center of the box.
+     * @param z The z-coordinate defining the center of the box.
+     * @param width The width (along x-axis).
+     * @param height The height (along y-axis).
+     * @param depth The depth (along z-axis).
+     */
+    private void addBoundingBoxCenteredWithDimensions(double x, double y, double z, double width, double height, double depth) {
+        Box axisAlignedBoundingBox = new Box(width, height, depth);
+
+        axisAlignedBoundingBox.setMaterial(boundingBoxMaterial);
+        axisAlignedBoundingBox.setDrawMode(DrawMode.LINE);
+        axisAlignedBoundingBox.setCullFace(CullFace.BACK);
+        axisAlignedBoundingBox.getTransforms().addAll(rotX, rotY, rotZ, new Translate(x, y, z));
+
+        root3D.getChildren().add(axisAlignedBoundingBox);
+        this.boundingBoxes.add(axisAlignedBoundingBox);
+    }
+
+    /**
+     * Removes all bounding boxes.
+     */
+    private void removeBoundingBoxes() {
+        root3D.getChildren().removeAll(this.boundingBoxes);
+        this.boundingBoxes.clear();
     }
 
     private void movePolygonX(int amount) {
