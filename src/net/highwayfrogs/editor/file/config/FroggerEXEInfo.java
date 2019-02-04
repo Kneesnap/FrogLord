@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
 
 import java.io.File;
@@ -442,6 +443,11 @@ public class FroggerEXEInfo extends Config {
         @Cleanup PrintWriter vramHWriter = new PrintWriter(new File(folder, "frogvram.h"));
         @Cleanup PrintWriter vramCWriter = new PrintWriter(new File(folder, "frogvram.c"));
         saveFrogVRAM(vramHWriter, vramCWriter);
+
+        // Save MWI.
+        DataWriter writer = new DataWriter(new FileReceiver(new File(folder, "FROGPSX.MWI")));
+        getMWI().save(writer);
+        writer.closeReceiver();
 
         System.out.println("Generated source files.");
     }
