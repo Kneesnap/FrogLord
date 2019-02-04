@@ -103,6 +103,16 @@ public class Utils {
     }
 
     /**
+     * Create a new array with less elements than the supplied one. (Cut from the left side)
+     * @param array    The array to take elements from.
+     * @param cutCount The amount of elements to cut.
+     * @return newArray
+     */
+    public static <T> T[] cutElements(T[] array, int cutCount) {
+        return Arrays.copyOfRange(array, cutCount, array.length);
+    }
+
+    /**
      * Converts a number to a bit array.
      * Example Input:
      * value = 00101100

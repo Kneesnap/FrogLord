@@ -463,10 +463,16 @@ public class FroggerEXEInfo extends Config {
         for (int i = 0; i < imageNames.length; i++)
             imageNames[i] = "im_img" + i;
 
+        Map<String, String[]> dupeNames = new HashMap<>();
         if (hasChild(CHILD_IMAGE_NAMES)) {
             Config nameConfig = getChild(CHILD_IMAGE_NAMES);
-            for (String key : nameConfig.keySet())
-                imageNames[Integer.parseInt(key)] = nameConfig.getString(key);
+            for (String key : nameConfig.keySet()) {
+                String[] split = nameConfig.getString(key).split(",");
+
+                imageNames[Integer.parseInt(key)] = split[0];
+                if (split.length > 1)
+                    dupeNames.put(split[0], Utils.cutElements(split, 1));
+            }
         }
 
         vramHWriter.write("#ifndef __FROGVRAM_H" + Constants.NEWLINE);
@@ -500,6 +506,12 @@ public class FroggerEXEInfo extends Config {
         vramHWriter.write(Constants.NEWLINE);
         for (String imageName : imageNames) {
             vramCWriter.write("MR_TEXTURE " + imageName + " = {0};" + Constants.NEWLINE);
+
+            String[] copies = dupeNames.get(imageName);
+            if (copies != null) //TODO: This really needed?
+                for (String copyName : copies)
+                    vramCWriter.write("MR_TEXTURE* " + copyName + " = &" + imageName + ";" + Constants.NEWLINE);
+
             vramHWriter.write("extern MR_TEXTURE " + imageName + ";" + Constants.NEWLINE);
         }
 
