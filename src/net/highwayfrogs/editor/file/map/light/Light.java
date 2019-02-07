@@ -63,7 +63,15 @@ public class Light extends GameObject {
 
         int rgbColor = Utils.toRGB(Utils.fromBGR(getColor()));
         editor.addColorPicker("Color", rgbColor, newColor -> setColor(Utils.toBGR(Utils.fromRGB(newColor))));
-        editor.addSVector("Direction", getDirection());
+
+        // Light direction information is in fixed point format, hence conversion to float representation.
+        //  NOTE: Light direction only makes sense for PARALLEL (directional) lights
+        float[] lightDirection = new float[3];
+        lightDirection[0] = Utils.fixedPointShortToFloatNBits(getDirection().getX(), 12);
+        lightDirection[1] = Utils.fixedPointShortToFloatNBits(getDirection().getY(), 12);
+        lightDirection[2] = Utils.fixedPointShortToFloatNBits(getDirection().getZ(), 12);
+        editor.addNormalLabel("Direction");
+        editor.addVector3D(lightDirection, 25D, (index, newValue) -> {});
     }
 
     /**
