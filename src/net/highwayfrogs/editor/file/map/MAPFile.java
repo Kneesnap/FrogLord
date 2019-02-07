@@ -856,8 +856,20 @@ public class MAPFile extends GameFile {
         editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
         editor.addShortField("Base Point xTile", getBaseXTile(), this::setBaseXTile, null);
         editor.addShortField("Base Point zTile", getBaseZTile(), this::setBaseZTile, null);
-        editor.addSVector("Camera Source Offset", getCameraSourceOffset());
-        editor.addSVector("Camera Target Offset", getCameraTargetOffset());
+
+        float[] srcOffset = new float[3];
+        srcOffset[0] = Utils.fixedPointShortToFloatNBits(getCameraSourceOffset().getX(), 4);
+        srcOffset[1] = Utils.fixedPointShortToFloatNBits(getCameraSourceOffset().getY(), 4);
+        srcOffset[2] = Utils.fixedPointShortToFloatNBits(getCameraSourceOffset().getZ(), 4);
+        editor.addNormalLabel("Camera Source Offset");
+        editor.addVector3D(srcOffset, 25D, (index, newValue) -> {});
+
+        float[] tgtOffset = new float[3];
+        tgtOffset[0] = Utils.fixedPointShortToFloatNBits(getCameraTargetOffset().getX(), 4);
+        tgtOffset[1] = Utils.fixedPointShortToFloatNBits(getCameraTargetOffset().getY(), 4);
+        tgtOffset[2] = Utils.fixedPointShortToFloatNBits(getCameraTargetOffset().getZ(), 4);
+        editor.addNormalLabel("Camera Target Offset");
+        editor.addVector3D(tgtOffset, 25D, (index, newValue) -> {});
     }
 
     /**
