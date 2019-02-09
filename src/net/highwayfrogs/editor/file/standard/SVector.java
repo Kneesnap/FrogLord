@@ -138,6 +138,30 @@ public class SVector extends GameObject {
     }
 
     /**
+     * Load SVector data from text.
+     * @param text The text to read SVector data from.
+     * @return loadedSuccessfully
+     */
+    public boolean loadFromText(String text) {
+        text = text.replace(" ", "");
+        if (!text.contains(","))
+            return false;
+
+        String[] split = text.split(",");
+        if (split.length != 3)
+            return false;
+
+        for (String testStr : split)
+            if (!Utils.isSignedShort(testStr))
+                return false;
+
+        setX(Short.parseShort(split[0]));
+        setY(Short.parseShort(split[1]));
+        setZ(Short.parseShort(split[2]));
+        return true;
+    }
+
+    /**
      * Get this vector as a Wavefront-OBJ vertex command.
      * @return vertexCommandString
      */

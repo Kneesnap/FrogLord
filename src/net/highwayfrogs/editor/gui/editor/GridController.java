@@ -26,6 +26,7 @@ import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.map.zone.CameraZone;
 import net.highwayfrogs.editor.file.map.zone.Zone;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 
@@ -37,8 +38,6 @@ import java.util.function.Consumer;
 /**
  * Manages the grid editor gui.
  * TODO: Buttons need functionality.
- * TODO: Camera editing
- * TODO: Field editing.
  * TODO: Zone Finder and Region Editor.
  * Created by Kneesnap on 1/24/2019.
  */
@@ -111,6 +110,20 @@ public class GridController implements Initializable {
 
             setSelectedStack(stack);
         });
+
+        Utils.setHandleKeyPress(this.flagTextField, text -> {
+            if (!Utils.isInteger(text))
+                return false;
+            getSelectedZone().getCameraZone().setFlags(Integer.parseInt(text));
+            return true;
+        }, null);
+
+        Utils.setHandleKeyPress(this.directionTextField, text -> {
+            if (!Utils.isSignedShort(text))
+                return false;
+            getSelectedZone().getCameraZone().setDirection(Short.parseShort(text));
+            return true;
+        }, null);
 
         zoneSelector.setItems(FXCollections.observableArrayList(getMap().getZones()));
         zoneSelector.valueProperty().addListener(((observable, oldValue, newValue) -> setSelectedZone(newValue)));
@@ -302,13 +315,29 @@ public class GridController implements Initializable {
         addRegionButton.setDisable(!hasZone);
         flagTextField.setDisable(!hasZone);
         directionTextField.setDisable(!hasZone);
+        cameraPane.setDisable(!hasZone);
 
         if (hasZone) {
             CameraZone camZone = newZone.getCameraZone();
             flagTextField.setText(Integer.toString(camZone.getFlags()));
             directionTextField.setText(Short.toString(camZone.getDirection()));
-            //TODO: Camera.
+            setupVectorEditor(1, 1, camZone.getNorthSourceOffset());
+            setupVectorEditor(2, 1, camZone.getNorthTargetOffset());
+            setupVectorEditor(1, 2, camZone.getEastSourceOffset());
+            setupVectorEditor(2, 2, camZone.getEastTargetOffset());
+            setupVectorEditor(1, 3, camZone.getSouthSourceOffset());
+            setupVectorEditor(2, 3, camZone.getSouthTargetOffset());
+            setupVectorEditor(1, 4, camZone.getWestSourceOffset());
+            setupVectorEditor(2, 4, camZone.getWestTargetOffset());
         }
+    }
+
+    private void setupVectorEditor(int x, int y, SVector toEdit) {
+        TextField newField = new TextField(toEdit.toCoordinateString());
+        GridPane.setRowIndex(newField, y);
+        GridPane.setColumnIndex(newField, x);
+        cameraPane.getChildren().add(newField);
+        Utils.setHandleKeyPress(newField, toEdit::loadFromText, null);
     }
 
     /**

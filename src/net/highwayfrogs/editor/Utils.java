@@ -5,6 +5,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
@@ -926,6 +927,27 @@ public class Utils {
             for (int i = 0; i < createSize; i++)
                 newList.add(i);
             return newList;
+        });
+    }
+
+    /**
+     * Set TextField key-press handling.
+     * @param field  The TextField to apply to.
+     * @param setter Handles text.
+     * @param onPass Called if not null and the setter passed.
+     */
+    public static void setHandleKeyPress(TextField field, Function<String, Boolean> setter, Runnable onPass) {
+        field.setOnKeyPressed(evt -> {
+            KeyCode code = evt.getCode();
+            if (field.getStyle().isEmpty() && (code.isLetterKey() || code.isDigitKey() || code == KeyCode.BACK_SPACE)) {
+                field.setStyle("-fx-text-inner-color: darkgreen;");
+            } else if (code == KeyCode.ENTER) {
+                boolean pass = setter.apply(field.getText());
+                if (pass && onPass != null)
+                    onPass.run();
+
+                field.setStyle(pass ? null : "-fx-text-inner-color: red;");
+            }
         });
     }
 }
