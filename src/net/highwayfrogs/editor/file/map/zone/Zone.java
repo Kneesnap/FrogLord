@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,29 +28,24 @@ import java.util.List;
 @Getter
 @Setter
 public class Zone extends GameObject {
-    private ZoneType type;
-    private short xMin;
-    private short zMin;
-    private short xMax;
-    private short zMax;
+    private ZoneRegion mainRegion = new ZoneRegion(); // All child regions are inside this region.
     private List<ZoneRegion> regions = new ArrayList<>();
-    private CameraZone cameraZone;
+    private CameraZone cameraZone = new CameraZone();
+
+    private static final short ZONE_TYPE_CAMERA = (short) 0;
 
     @Override
     public void load(DataReader reader) {
-        this.type = ZoneType.values()[reader.readShort()];
+        short zoneTypeId = reader.readShort();
+        if (zoneTypeId != ZONE_TYPE_CAMERA)
+            throw new RuntimeException("Invalid ZoneType: " + zoneTypeId);
+
         short regionCount = reader.readShort();
-        this.xMin = reader.readShort();
-        this.zMin = reader.readShort();
-        this.xMax = reader.readShort();
-        this.zMax = reader.readShort();
+        this.mainRegion.load(reader);
         int regionOffset = reader.readInt();
 
         // Read Camera-Zone data.
-        if (type == ZoneType.CAMERA) {
-            this.cameraZone = new CameraZone();
-            this.cameraZone.load(reader);
-        }
+        this.cameraZone.load(reader);
 
         // Read region data.
         reader.jumpTemp(regionOffset);
@@ -62,25 +59,18 @@ public class Zone extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeShort((short) type.ordinal());
+        writer.writeShort(ZONE_TYPE_CAMERA);
         writer.writeShort((short) getRegionCount());
-        writer.writeShort(getXMin());
-        writer.writeShort(getZMin());
-        writer.writeShort(getXMax());
-        writer.writeShort(getZMax());
-
-        boolean writeCamera = (type == ZoneType.CAMERA);
+        this.mainRegion.save(writer);
 
         int regionOffset = writer.getIndex();
         regionOffset += Constants.INTEGER_SIZE; // After the offset bytes.
-        if (writeCamera)
-            regionOffset += CameraZone.BYTE_SIZE;
+        regionOffset += CameraZone.BYTE_SIZE; // Camera.
 
         writer.writeInt(regionOffset); // The location regions are stored at. This is still written even if there are no regions.
 
         // Save camera.
-        if (writeCamera)
-            this.cameraZone.save(writer);
+        this.cameraZone.save(writer);
 
         // Save regions.
         for (ZoneRegion region : getRegions())
@@ -93,5 +83,45 @@ public class Zone extends GameObject {
      */
     public int getRegionCount() {
         return getRegions().size();
+    }
+
+    /**
+     * Setup the zone editor.
+     * @param controller The controller controlling this.
+     * @param editor     The editor to create an interface under.
+     */
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+        getMainRegion().setupEditor(controller, editor);
+        editor.addLabel("Regions", String.valueOf(getRegionCount())); //TODO
+        getCameraZone().setupEditor(controller, editor);
+    }
+
+    /**
+     * Check if this zone contains a grid tile.
+     * @param gridX The grid x coordinate.
+     * @param gridZ The grid z coordinate.
+     * @return contains
+     */
+    public boolean contains(int gridX, int gridZ) {
+        return getRegion(gridX, gridZ) != null;
+    }
+
+    /**
+     * Gets the ZoneRegion for a grid tile.
+     * @param gridX The grid tile x coordinate.
+     * @param gridZ The grid tile z coordinate.
+     * @return region
+     */
+    public ZoneRegion getRegion(int gridX, int gridZ) {
+        if (!mainRegion.contains(gridX, gridZ))
+            return null; // Not present within the master zone.
+
+        if (getRegions().isEmpty())
+            return mainRegion;
+
+        for (ZoneRegion region : getRegions())
+            if (region.contains(gridX, gridZ))
+                return region;
+        return null; // Failed to find a region at this spot.
     }
 }

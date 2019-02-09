@@ -7,6 +7,8 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 /**
  * Holds data for a CameraZone.
@@ -56,5 +58,23 @@ public class CameraZone extends GameObject {
         this.southTargetOffset.saveWithPadding(writer);
         this.westSourceOffset.saveWithPadding(writer);
         this.westTargetOffset.saveWithPadding(writer);
+    }
+
+    /**
+     * Setup the camera zone editor.
+     * @param controller The controller controlling this.
+     * @param editor     The editor to create an interface under.
+     */
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+        editor.addIntegerField("Flags", getFlags(), this::setFlags, null);
+        editor.addShortField("Direction", getDirection(), this::setDirection, null);
+        editor.addSVector("North Source", getNorthSourceOffset());
+        editor.addSVector("North Target", getNorthTargetOffset());
+        editor.addSVector("East Source", getEastSourceOffset());
+        editor.addSVector("East Target", getEastTargetOffset());
+        editor.addSVector("South Source", getSouthSourceOffset());
+        editor.addSVector("South Target", getSouthTargetOffset());
+        editor.addSVector("West Source", getWestSourceOffset());
+        editor.addSVector("West Target", getWestTargetOffset());
     }
 }
