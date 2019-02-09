@@ -113,8 +113,8 @@ public class GridController implements Initializable {
                         zoneSelector.valueProperty().setValue(zone);
                         zoneSelector.getSelectionModel().select(zone);
 
-                        int index = zone.getRegions().indexOf(zone.getRegion(gridX, gridZ));
-                        if (index >= 0) {
+                        int index = zone.getRegions().indexOf(zone.getRegion(gridX, gridZ)) + 1;
+                        if (index >= 1) {
                             regionSelector.getSelectionModel().select(index);
                             regionSelector.setValue(index);
                         }
