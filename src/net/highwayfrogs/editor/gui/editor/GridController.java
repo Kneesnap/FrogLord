@@ -26,6 +26,7 @@ import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.map.zone.CameraZone;
 import net.highwayfrogs.editor.file.map.zone.Zone;
+import net.highwayfrogs.editor.file.map.zone.ZoneRegion;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
@@ -148,7 +149,7 @@ public class GridController implements Initializable {
 
         zoneSelector.setItems(FXCollections.observableArrayList(getMap().getZones()));
         zoneSelector.valueProperty().addListener(((observable, oldValue, newValue) -> setSelectedZone(newValue)));
-        zoneSelector.setConverter(new AbstractStringConverter<>(zone -> "Zone #" + (getMap().getZones().indexOf(zone) + 1)));
+        zoneSelector.setConverter(new AbstractStringConverter<>(zone -> "Camera Zone #" + (getMap().getZones().indexOf(zone) + 1)));
         regionSelector.setConverter(new AbstractStringConverter<>(value -> value == DEFAULT_REGION_ID ? "Main Region" : "Region #" + value));
         regionSelector.valueProperty().addListener((observable, oldValue, newValue) -> setSelectedRegion(getSelectedZone(), newValue == null ? 0 : newValue));
 
@@ -168,7 +169,7 @@ public class GridController implements Initializable {
         TextureMap texMap = getController().getMesh().getTextureMap();
         Image fxTextureImage = Utils.toFXImage(texMap.getImage(), true);
 
-        graphics.setFill(Color.GRAY);
+        ZoneRegion currentRegion = getCurrentRegion();
         for (int z = 0; z < getMap().getGridZCount(); z++) {
             for (int x = 0; x < getMap().getGridXCount(); x++) {
                 GridStack stack = getMap().getGridStack(x, z);
@@ -176,11 +177,15 @@ public class GridController implements Initializable {
                 double xPos = getTileWidth() * x;
                 double yPos = getTileHeight() * (getMap().getGridZCount() - z - 1);
 
-                if (stack.getGridSquares().size() > 0) {
+                if (currentRegion != null && currentRegion.contains(x, z)) {
+                    graphics.setFill(Color.MAGENTA);
+                    graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
+                } else if (stack.getGridSquares().size() > 0) {
                     GridSquare square = stack.getGridSquares().get(0);
                     TextureEntry entry = square.getPolygon().getEntry(texMap);
                     graphics.drawImage(fxTextureImage, entry.getX(texMap), entry.getY(texMap), entry.getWidth(texMap), entry.getHeight(texMap), xPos, yPos, getTileWidth(), getTileHeight());
                 } else {
+                    graphics.setFill(Color.GRAY);
                     graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
                 }
             }
@@ -374,7 +379,20 @@ public class GridController implements Initializable {
 
         boolean hasRegion = (id != DEFAULT_REGION_ID);
         removeRegionButton.setDisable(!hasRegion);
-        //TODO: Update Canvas render to include region.
+        updateCanvas();
+    }
+
+    /**
+     * Get the currently selected region.
+     * @return currentRegion
+     */
+    public ZoneRegion getCurrentRegion() {
+        if (getSelectedZone() == null)
+            return null;
+
+        return this.selectedRegion == DEFAULT_REGION_ID
+                ? getSelectedZone().getMainRegion()
+                : getSelectedZone().getRegions().get(this.selectedRegion - 1);
     }
 
     /**
