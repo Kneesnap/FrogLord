@@ -41,6 +41,7 @@ public class Utils {
     private static final File[] EMPTY_FILE_ARRAY = new File[0];
     private static final Map<BufferedImage, TextureCache> imageCacheMap = new HashMap<>();
     private static final long IMAGE_CACHE_EXPIRE = TimeUnit.MINUTES.toMillis(5);
+    private static final Map<Integer, List<Integer>> integerLists = new HashMap<>();
 
     /**
      * Convert a byte array to a number.
@@ -912,5 +913,19 @@ public class Utils {
         public boolean hasExpired() {
             return (System.currentTimeMillis() - lastUpdate) > IMAGE_CACHE_EXPIRE;
         }
+    }
+
+    /**
+     * Get an integer list with incrementing values.
+     * @param size The size of the list
+     * @return integerList
+     */
+    public static List<Integer> getIntegerList(int size) {
+        return integerLists.computeIfAbsent(size, createSize -> {
+            List<Integer> newList = new ArrayList<>(createSize);
+            for (int i = 0; i < createSize; i++)
+                newList.add(i);
+            return newList;
+        });
     }
 }

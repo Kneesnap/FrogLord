@@ -42,7 +42,6 @@ import java.util.List;
  * TODO: Edit Vertexes [Add, Remove] Prevent removing a vertice if it is used by anything.
  * TODO: Edit polygons [Add, Remove] This is tricky because it will effect data structures which link to the polygons.
  * TODO: Show Paths. (Can show an icon tracing the path in real-time)
- * TODO: Zones.
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter

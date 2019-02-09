@@ -24,17 +24,22 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.map.zone.CameraZone;
+import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 
 import java.net.URL;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
 /**
  * Manages the grid editor gui.
+ * TODO: Buttons need functionality.
+ * TODO: Camera editing
+ * TODO: Field editing.
+ * TODO: Zone Finder and Region Editor.
  * Created by Kneesnap on 1/24/2019.
  */
 @Getter
@@ -48,20 +53,36 @@ public class GridController implements Initializable {
     @FXML private Button removeLayerButton;
     @FXML private Button addLayerButton;
     @FXML private GridPane flagTable;
-
-    @FXML private AnchorPane stackPane;
     @FXML private Label stackIdLabel;
     @FXML private Label stackHeightLabel;
     @FXML private TextField stackHeightField;
+
+    @FXML private AnchorPane stackPane;
+    @FXML private ComboBox<Zone> zoneSelector;
+    @FXML private ComboBox<Integer> regionSelector;
+    @FXML private Button addZoneButton;
+    @FXML private Button removeZoneButton;
+    @FXML private Button addRegionButton;
+    @FXML private Button removeRegionButton;
+    @FXML private CheckBox zoneEditorCheckBox;
+    @FXML private CheckBox zoneFinderCheckBox;
+    @FXML private TextField flagTextField;
+    @FXML private TextField directionTextField;
+    @FXML private GridPane cameraPane;
 
     private Stage stage;
     private MapUIController controller;
     private MAPFile map;
 
+    private Zone selectedZone;
+    private int selectedRegion;
     private GridStack selectedStack;
     private int selectedLayer;
     private double tileWidth;
     private double tileHeight;
+
+    private static final int DEFAULT_REGION_ID = 0;
+    private static final int DEFAULT_ZONE_ID = 0;
 
     private GridController(Stage stage, MapUIController controller, MAPFile map) {
         this.stage = stage;
@@ -91,9 +112,17 @@ public class GridController implements Initializable {
             setSelectedStack(stack);
         });
 
+        zoneSelector.setItems(FXCollections.observableArrayList(getMap().getZones()));
+        zoneSelector.valueProperty().addListener(((observable, oldValue, newValue) -> setSelectedZone(newValue)));
+        zoneSelector.setConverter(new AbstractStringConverter<>(zone -> "Zone #" + (getMap().getZones().indexOf(zone) + 1)));
+        regionSelector.setConverter(new AbstractStringConverter<>(value -> value == DEFAULT_REGION_ID ? "Main Region" : "Region #" + value));
+        regionSelector.valueProperty().addListener((observable, oldValue, newValue) -> setSelectedRegion(getSelectedZone(), newValue == null ? 0 : newValue));
+
         graphics = gridCanvas.getGraphicsContext2D();
         updateCanvas();
         setSelectedStack(null);
+        setSelectedZone(null);
+        setSelectedRegion(null, DEFAULT_REGION_ID);
     }
 
     private void updateCanvas() {
@@ -230,10 +259,7 @@ public class GridController implements Initializable {
         this.selectedStack = stack;
 
         if (stack != null) {
-            List<Integer> layers = new LinkedList<>();
-            for (int i = 0; i < stack.getGridSquares().size(); i++)
-                layers.add(i);
-
+            List<Integer> layers = Utils.getIntegerList(stack.getGridSquares().size());
             layerSelector.setItems(FXCollections.observableArrayList(layers));
             if (layers.size() > 0)
                 layerSelector.getSelectionModel().select(0); // Automatically calls setSquare
@@ -250,11 +276,52 @@ public class GridController implements Initializable {
         addLayerButton.setVisible(stack != null);
         removeLayerButton.setVisible(squareCount > 0);
 
-        stackPane.setVisible(stack != null);
         if (stack != null) {
             stackIdLabel.setText("Stack ID: #" + getMap().getGridStacks().indexOf(stack) + " [X: " + getMap().getGridX(stack) + ",Z: " + getMap().getGridZ(stack) + "]");
             stackHeightField.setText(String.valueOf(stack.getAverageHeight()));
         }
+    }
+
+    /**
+     * Set the selected zone.
+     * @param newZone The new zone to select.
+     */
+    public void setSelectedZone(Zone newZone) {
+        this.selectedZone = newZone;
+
+        boolean hasZone = (newZone != null);
+        if (hasZone) {
+            List<Integer> regionIds = Utils.getIntegerList(newZone.getRegionCount() + 1);
+            regionSelector.setItems(FXCollections.observableArrayList(regionIds));
+            if (regionIds.size() > 0)
+                regionSelector.getSelectionModel().select(DEFAULT_REGION_ID); // Automatically calls setRegion
+        }
+
+        removeZoneButton.setDisable(!hasZone);
+        regionSelector.setDisable(!hasZone);
+        addRegionButton.setDisable(!hasZone);
+        flagTextField.setDisable(!hasZone);
+        directionTextField.setDisable(!hasZone);
+
+        if (hasZone) {
+            CameraZone camZone = newZone.getCameraZone();
+            flagTextField.setText(Integer.toString(camZone.getFlags()));
+            directionTextField.setText(Short.toString(camZone.getDirection()));
+            //TODO: Camera.
+        }
+    }
+
+    /**
+     * Set the selected region.
+     * @param zone The zone to select a region from.
+     * @param id   The id of the new region.
+     */
+    public void setSelectedRegion(Zone zone, int id) {
+        this.selectedRegion = id;
+
+        boolean hasRegion = (id != DEFAULT_REGION_ID);
+        removeRegionButton.setDisable(!hasRegion);
+        //TODO: Update Canvas render to include region.
     }
 
     /**
