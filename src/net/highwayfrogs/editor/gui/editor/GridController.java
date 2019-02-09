@@ -102,9 +102,11 @@ public class GridController implements Initializable {
         gridCanvas.setOnMousePressed(evt -> {
             int gridX = (int) (evt.getSceneX() / getTileWidth());
             int gridZ = (int) (evt.getSceneY() / getTileHeight());
+            GridStack stack = getMap().getGridStack(gridX, getMap().getGridZCount() - gridZ - 1);
 
             if (this.zoneFinderCheckBox.isSelected()) {
                 this.zoneFinderCheckBox.setSelected(false);
+                gridZ = getMap().getGridZ(stack);
 
                 for (Zone zone : getMap().getZones()) {
                     if (zone.contains(gridX, gridZ)) {
@@ -122,8 +124,6 @@ public class GridController implements Initializable {
 
                 return;
             }
-
-            GridStack stack = getMap().getGridStack(gridX, getMap().getGridZCount() - gridZ - 1);
 
             if (evt.isSecondaryButtonDown()) { // Remove.
                 stack.getGridSquares().clear();
