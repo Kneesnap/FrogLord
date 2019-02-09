@@ -4,7 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Write bits into a buffer.
@@ -15,7 +16,7 @@ import java.util.LinkedList;
  */
 @Getter
 public class BitWriter {
-    private LinkedList<Byte> bytes = new LinkedList<>();
+    private List<Byte> bytes = new ArrayList<>();
     private int currentBit = Constants.BITS_PER_BYTE;
     private byte currentByte;
     @Setter private boolean reverseBytes;

@@ -56,7 +56,7 @@ public class MatrixData extends EntityData {
 
             final int tempRow = i;
             editor.addVector3D(matrixRow, 25D + ((i == (matrix.getMatrix().length - 1)) ? 5D : 0D),
-                    (index, newValue) -> matrix.getMatrix()[tempRow][index] = Utils.floatToFixedPointShort(newValue, 12));
+                    (index, newValue) -> matrix.getMatrix()[tempRow][index] = Utils.floatToFixedPointShort412(newValue));
         }
 
         super.addData(controller, editor);

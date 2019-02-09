@@ -199,11 +199,20 @@ public class Utils {
     /**
      * Convert a short value (fixed point, n fractional bits) into a float.
      * @param shortVal The short to convert.
-     * @param n The number of fractional bits.
+     * @return floatValue
+     */
+    public static float fixedPointShortToFloat412(short shortVal) {
+        return fixedPointShortToFloatNBits(shortVal, 4);
+    }
+
+    /**
+     * Convert a short value (fixed point, n fractional bits) into a float.
+     * @param shortVal The short to convert.
+     * @param n        The number of fractional bits.
      * @return floatValue
      */
     public static float fixedPointShortToFloatNBits(short shortVal, long n) {
-        return ((float)shortVal / (float)(1 << n));
+        return ((float) shortVal / (float) (1 << n));
     }
 
     /**
@@ -214,6 +223,15 @@ public class Utils {
      */
     public static short floatToFixedPointShort(float floatVal, int n) {
         return (short) (floatVal * (float) (1 << n));
+    }
+
+    /**
+     * Convert a float value into a short (fixed point, n fractional bits).
+     * @param floatVal The float to convert.
+     * @return shortValue
+     */
+    public static short floatToFixedPointShort412(float floatVal) {
+        return floatToFixedPointShort(floatVal, 12);
     }
 
     /**

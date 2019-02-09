@@ -142,7 +142,7 @@ public class SVector extends GameObject {
      * @return vertexCommandString
      */
     public String toOBJString() {
-        return "v " + -Utils.fixedPointShortToFloatNBits(getX(), 4) + " " + -Utils.fixedPointShortToFloatNBits(getY(), 4) + " " + Utils.fixedPointShortToFloatNBits(getZ(), 4);
+        return "v " + -Utils.fixedPointShortToFloat412(getX()) + " " + -Utils.fixedPointShortToFloat412(getY()) + " " + Utils.fixedPointShortToFloat412(getZ());
     }
 
     /**
