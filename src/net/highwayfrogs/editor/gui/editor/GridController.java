@@ -38,7 +38,7 @@ import java.util.function.Consumer;
 /**
  * Manages the grid editor gui.
  * TODO: Buttons need functionality.
- * TODO: Zone Finder and Region Editor.
+ * TODO: Region Editor.
  * Created by Kneesnap on 1/24/2019.
  */
 @Getter
@@ -101,6 +101,27 @@ public class GridController implements Initializable {
         gridCanvas.setOnMousePressed(evt -> {
             int gridX = (int) (evt.getSceneX() / getTileWidth());
             int gridZ = (int) (evt.getSceneY() / getTileHeight());
+
+            if (this.zoneFinderCheckBox.isSelected()) {
+                this.zoneFinderCheckBox.setSelected(false);
+
+                for (Zone zone : getMap().getZones()) {
+                    if (zone.contains(gridX, gridZ)) {
+                        zoneSelector.valueProperty().setValue(zone);
+                        zoneSelector.getSelectionModel().select(zone);
+
+                        int index = zone.getRegions().indexOf(zone.getRegion(gridX, gridZ));
+                        if (index >= 0) {
+                            regionSelector.getSelectionModel().select(index);
+                            regionSelector.setValue(index);
+                        }
+                        return;
+                    }
+                }
+
+                return;
+            }
+
             GridStack stack = getMap().getGridStack(gridX, getMap().getGridZCount() - gridZ - 1);
 
             if (evt.isSecondaryButtonDown()) { // Remove.
