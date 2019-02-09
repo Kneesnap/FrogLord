@@ -121,7 +121,7 @@ public class GridController implements Initializable {
         Utils.setHandleKeyPress(this.directionTextField, text -> {
             if (!Utils.isSignedShort(text))
                 return false;
-            getSelectedZone().getCameraZone().setDirection(Short.parseShort(text));
+            getSelectedZone().getCameraZone().setForceDirection(Short.parseShort(text));
             return true;
         }, null);
 
@@ -279,15 +279,18 @@ public class GridController implements Initializable {
         }
 
         int squareCount = stack != null ? stack.getGridSquares().size() : 0;
-        flagTable.setVisible(squareCount > 0);
-        selectedImage.setVisible(squareCount > 0);
-        layerSelector.setVisible(squareCount > 1);
-        stackIdLabel.setVisible(stack != null);
-        stackHeightField.setVisible(stack != null);
-        stackHeightLabel.setVisible(stack != null);
-        choosePolygonButton.setVisible(squareCount > 0);
-        addLayerButton.setVisible(stack != null);
-        removeLayerButton.setVisible(squareCount > 0);
+        boolean disable = (squareCount == 0);
+        boolean noStack = (stack == null);
+
+        flagTable.setDisable(disable);
+        selectedImage.setDisable(disable);
+        layerSelector.setDisable(squareCount <= 1);
+        stackIdLabel.setDisable(noStack);
+        stackHeightField.setDisable(noStack);
+        stackHeightLabel.setDisable(noStack);
+        choosePolygonButton.setDisable(disable);
+        addLayerButton.setDisable(noStack);
+        removeLayerButton.setDisable(disable);
 
         if (stack != null) {
             stackIdLabel.setText("Stack ID: #" + getMap().getGridStacks().indexOf(stack) + " [X: " + getMap().getGridX(stack) + ",Z: " + getMap().getGridZ(stack) + "]");
@@ -320,7 +323,7 @@ public class GridController implements Initializable {
         if (hasZone) {
             CameraZone camZone = newZone.getCameraZone();
             flagTextField.setText(Integer.toString(camZone.getFlags()));
-            directionTextField.setText(Short.toString(camZone.getDirection()));
+            directionTextField.setText(Short.toString(camZone.getForceDirection()));
             setupVectorEditor(1, 1, camZone.getNorthSourceOffset());
             setupVectorEditor(2, 1, camZone.getNorthTargetOffset());
             setupVectorEditor(1, 2, camZone.getEastSourceOffset());

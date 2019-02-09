@@ -6,8 +6,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,17 +81,6 @@ public class Zone extends GameObject {
      */
     public int getRegionCount() {
         return getRegions().size();
-    }
-
-    /**
-     * Setup the zone editor.
-     * @param controller The controller controlling this.
-     * @param editor     The editor to create an interface under.
-     */
-    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
-        getMainRegion().setupEditor(controller, editor);
-        editor.addLabel("Regions", String.valueOf(getRegionCount())); //TODO
-        getCameraZone().setupEditor(controller, editor);
     }
 
     /**
