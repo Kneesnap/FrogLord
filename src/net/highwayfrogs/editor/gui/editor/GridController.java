@@ -105,7 +105,6 @@ public class GridController implements Initializable {
             GridStack stack = getMap().getGridStack(gridX, getMap().getGridZCount() - gridZ - 1);
 
             if (this.zoneFinderCheckBox.isSelected()) {
-                this.zoneFinderCheckBox.setSelected(false);
                 gridZ = getMap().getGridZ(stack);
 
                 for (Zone zone : getMap().getZones()) {
@@ -118,6 +117,8 @@ public class GridController implements Initializable {
                             regionSelector.getSelectionModel().select(index);
                             regionSelector.setValue(index);
                         }
+
+                        this.zoneFinderCheckBox.setSelected(false);
                         return;
                     }
                 }
