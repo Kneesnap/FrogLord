@@ -905,6 +905,30 @@ public class MAPFile extends GameFile {
     }
 
     /**
+     * Get the x coordinate of a grid stack.
+     * @param stack The grid stack to get the coordinate of.
+     * @return gridX
+     */
+    public int getGridX(GridStack stack) {
+        int stackIndex = getGridStacks().indexOf(stack);
+        if (stackIndex == -1)
+            throw new RuntimeException("This GridStack is not registered!");
+        return (stackIndex % getGridXCount());
+    }
+
+    /**
+     * Get the z coordinate of a grid stack.
+     * @param stack The grid stack to get the coordinate of.
+     * @return gridZ
+     */
+    public int getGridZ(GridStack stack) {
+        int stackIndex = getGridStacks().indexOf(stack);
+        if (stackIndex == -1)
+            throw new RuntimeException("This GridStack is not registered!");
+        return (stackIndex / getGridXCount());
+    }
+
+    /**
      * Gets the base point's world x coordinate.
      * @return worldX
      */

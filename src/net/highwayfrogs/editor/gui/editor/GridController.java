@@ -7,10 +7,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
@@ -47,10 +44,14 @@ public class GridController implements Initializable {
 
     @FXML private ImageView selectedImage;
     @FXML private ComboBox<Integer> layerSelector;
+    @FXML private Button choosePolygonButton;
+    @FXML private Button removeLayerButton;
+    @FXML private Button addLayerButton;
     @FXML private GridPane flagTable;
 
     @FXML private AnchorPane stackPane;
     @FXML private Label stackIdLabel;
+    @FXML private Label stackHeightLabel;
     @FXML private TextField stackHeightField;
 
     private Stage stage;
@@ -242,10 +243,16 @@ public class GridController implements Initializable {
         flagTable.setVisible(squareCount > 0);
         selectedImage.setVisible(squareCount > 0);
         layerSelector.setVisible(squareCount > 1);
+        stackIdLabel.setVisible(stack != null);
+        stackHeightField.setVisible(stack != null);
+        stackHeightLabel.setVisible(stack != null);
+        choosePolygonButton.setVisible(squareCount > 0);
+        addLayerButton.setVisible(stack != null);
+        removeLayerButton.setVisible(squareCount > 0);
 
         stackPane.setVisible(stack != null);
         if (stack != null) {
-            stackIdLabel.setText("Stack ID: #" + (getMap().getGridStacks().indexOf(stack)));
+            stackIdLabel.setText("Stack ID: #" + getMap().getGridStacks().indexOf(stack) + " [X: " + getMap().getGridX(stack) + ",Z: " + getMap().getGridZ(stack) + "]");
             stackHeightField.setText(String.valueOf(stack.getAverageHeight()));
         }
     }
