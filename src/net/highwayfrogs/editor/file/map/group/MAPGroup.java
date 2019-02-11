@@ -27,24 +27,30 @@ public class MAPGroup extends GameObject {
     private transient Map<MAPPrimitiveType, Short> loadPolygonCountMap = new HashMap<>();
     private transient Map<MAPPrimitiveType, Integer> loadPolygonPointerMap = new HashMap<>();
     private transient int savePointerLocation;
+    private transient boolean isQB;
 
     private static final int NULL_POINTERS = 6; // 1 unused. 5 runtime pointers.
+    private static final int QB_NULL_POINTERS = 8;
 
-    public MAPGroup() {
-        for (MAPPrimitiveType type : MAPFile.PRIMITIVE_TYPES)
+    public MAPGroup(boolean isQB) {
+        this.isQB = isQB;
+        for (MAPPrimitiveType type : MAPFile.getTypes(isQB))
             polygonMap.put(type, new LinkedList<>());
     }
 
     @Override
     public void load(DataReader reader) {
-        for (MAPPrimitiveType type : MAPFile.PRIMITIVE_TYPES)
+        List<MAPPrimitiveType> types = MAPFile.getTypes(isQB);
+        for (MAPPrimitiveType type : types)
             loadPolygonCountMap.put(type, reader.readUnsignedByteAsShort());
 
-        reader.skipBytes(3);
-        for (MAPPrimitiveType type : MAPFile.PRIMITIVE_TYPES)
+        if (!isQB)
+            reader.skipBytes(3);
+
+        for (MAPPrimitiveType type : types)
             loadPolygonPointerMap.put(type, reader.readInt());
 
-        reader.skipBytes(NULL_POINTERS * Constants.POINTER_SIZE);
+        reader.skipBytes((isQB ? QB_NULL_POINTERS : NULL_POINTERS) * Constants.POINTER_SIZE);
     }
 
     @Override
@@ -88,7 +94,7 @@ public class MAPGroup extends GameObject {
     public void setupPolygonData(MAPFile map, Map<MAPPrimitiveType, List<MAPPrimitive>> group) {
         Utils.verify(this.loadPolygonCountMap.size() > 0, "Cannot setup polygon data twice.");
 
-        for (MAPPrimitiveType type : MAPFile.PRIMITIVE_TYPES) {
+        for (MAPPrimitiveType type : MAPFile.getTypes(isQB)) {
             List<MAPPrimitive> from = group.get(type);
             int count = loadPolygonCountMap.get(type);
 

@@ -112,9 +112,8 @@ public class MWDFile extends GameObject {
 
             boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && ((isDemo && isPSX) || getConfig().isPrototype()));
             boolean isSkyLand = entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX);
-            boolean isQB = entry.getDisplayName().startsWith(Constants.DEV_QB_NAME);
 
-            if (isDemoJungle || isSkyLand || isQB) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
+            if (isDemoJungle || isSkyLand) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
                 file = new DummyFile(fileBytes.length);
             } else {
                 file = new MAPFile(this);

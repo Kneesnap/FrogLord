@@ -97,14 +97,6 @@ public class ZoneRegion extends GameObject {
             this.zMax = this.zMin;
             this.zMin = temp;
         }
-
-        /*
-        if (getZMax() == getZMin())
-            this.zMax++;
-
-        if (getXMax() == getXMin())
-            this.xMax++;
-            */
     }
 
     @Getter

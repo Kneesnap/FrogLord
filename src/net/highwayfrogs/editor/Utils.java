@@ -95,6 +95,16 @@ public class Utils {
 
     /**
      * Verify a condition is true, otherwise throw an exception.
+     * @param condition The condition to verify is true.
+     * @param error     The error message if false.
+     */
+    public static void verify(boolean condition, String error) {
+        if (!condition)
+            throw new RuntimeException(error);
+    }
+
+    /**
+     * Verify a condition is true, otherwise throw an exception.
      * @param condition  The condition to verify is true.
      * @param error      The error message if false.
      * @param formatting Formatting to apply to the error message.
