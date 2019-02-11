@@ -49,6 +49,7 @@ public class FroggerEXEInfo extends Config {
     private List<Long> bmpTexturePointers = new ArrayList<>();
     private long textureStartAddress; // Start address for bmp_pointers array.
 
+    private String name;
     private long ramPointerOffset;
     private int MWIOffset;
     private int MWILength;
@@ -117,6 +118,7 @@ public class FroggerEXEInfo extends Config {
     }
 
     private void readConfig() {
+        this.name = getString(FIELD_NAME);
         this.demo = getBoolean("demo");
         this.prototype = getBoolean("prototype");
         this.platform = getEnum("platform", TargetPlatform.class);
@@ -152,7 +154,7 @@ public class FroggerEXEInfo extends Config {
         reader.setIndex(getThemeBookAddress());
 
         for (int i = 0; i < themeLibrary.length; i++) {
-            ThemeBook book = getPlatform().getThemeBookMaker().get();
+            ThemeBook book = TargetPlatform.makeNewThemeBook(this);
             book.load(reader);
             themeLibrary[i] = book;
         }
@@ -175,7 +177,7 @@ public class FroggerEXEInfo extends Config {
 
         int themeAddress = getThemeBookAddress();
         while (themeAddress > reader.getIndex()) {
-            MapBook book = getPlatform().getMapBookMaker().get();
+            MapBook book = TargetPlatform.makeNewMapBook(this);
             book.load(reader);
             this.mapLibrary.add(book);
         }
@@ -201,7 +203,7 @@ public class FroggerEXEInfo extends Config {
 
         byte readByte;
         while ((readByte = getReader().readByte()) != MusicTrack.TERMINATOR)
-            getMusicTracks().add(MusicTrack.getTrackById(getPlatform(), readByte));
+            getMusicTracks().add(MusicTrack.getTrackById(this, readByte));
     }
 
     private void readLevelData() {
@@ -301,7 +303,7 @@ public class FroggerEXEInfo extends Config {
 
     private void patchMusicData(DataWriter exeWriter) {
         exeWriter.setIndex(getMusicAddress());
-        getMusicTracks().forEach(track -> exeWriter.writeByte(track.getTrack(getPlatform())));
+        getMusicTracks().forEach(track -> exeWriter.writeByte(track.getTrack(this)));
         exeWriter.writeByte(MusicTrack.TERMINATOR);
     }
 
@@ -380,7 +382,7 @@ public class FroggerEXEInfo extends Config {
      * @return themeBook
      */
     public ThemeBook getThemeBook(MAPTheme theme) {
-        return this.themeLibrary[theme.ordinal()];
+        return this.themeLibrary != null ? this.themeLibrary[theme.ordinal()] : null;
     }
 
     /**
@@ -389,7 +391,7 @@ public class FroggerEXEInfo extends Config {
      * @return mapBook
      */
     public MapBook getMapBook(MAPLevel level) {
-        return this.mapLibrary.get(level.ordinal());
+        return this.mapLibrary.size() > 0 ? this.mapLibrary.get(level.ordinal()) : null;
     }
 
     /**

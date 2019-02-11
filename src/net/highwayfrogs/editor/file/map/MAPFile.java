@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
@@ -358,7 +359,9 @@ public class MAPFile extends GameFile {
             mapAnimations.add(animation);
         }
 
-        this.vlo = getConfig().getThemeBook(getTheme()).getVLO(this);
+        ThemeBook themeBook = getConfig().getThemeBook(getTheme());
+        if (themeBook != null)
+            this.vlo = themeBook.getVLO(this);
     }
 
     @Override

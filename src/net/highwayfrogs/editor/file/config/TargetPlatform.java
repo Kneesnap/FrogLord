@@ -23,4 +23,22 @@ public enum TargetPlatform {
 
     private final Supplier<MapBook> mapBookMaker;
     private final Supplier<ThemeBook> themeBookMaker;
+
+    /**
+     * Create a new MapBook from a FroggerExeInfo.
+     * @param info The info to make the MapBook from.
+     * @return mapBook
+     */
+    public static MapBook makeNewMapBook(FroggerEXEInfo info) {
+        return info.isPrototype() ? PSX.getMapBookMaker().get() : info.getPlatform().getMapBookMaker().get();
+    }
+
+    /**
+     * Create a new ThemeBook from a FroggerExeInfo.
+     * @param info The info to make the ThemeBook from.
+     * @return mapBook
+     */
+    public static ThemeBook makeNewThemeBook(FroggerEXEInfo info) {
+        return info.isPrototype() ? PSX.getThemeBookMaker().get() : info.getPlatform().getThemeBookMaker().get();
+    }
 }
