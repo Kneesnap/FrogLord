@@ -1,11 +1,15 @@
 package net.highwayfrogs.editor.file.map.zone;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.system.TriFunction;
+
+import java.util.function.BiConsumer;
 
 /**
  * Represents a Zone Region.
@@ -46,5 +50,84 @@ public class ZoneRegion extends GameObject {
     public boolean contains(int gridX, int gridZ) {
         return gridX >= getXMin() && gridX <= getXMax()
                 && gridZ >= getZMin() && gridZ <= getZMax();
+    }
+
+    /**
+     * Test if a grid square is one of the region corners.
+     * @param gridX The grid x coordinate to test.
+     * @param gridZ The grid z coordinate to test.
+     * @return isCorner
+     */
+    public boolean isCorner(int gridX, int gridZ) {
+        return isMinCorner(gridX, gridZ) || isMaxCorner(gridX, gridZ);
+    }
+
+    /**
+     * Check if two coordinates form the min corner.
+     * @param gridX The grid x coordinate to test.
+     * @param gridZ The grid z coordinate to test.
+     * @return isMinCorner
+     */
+    public boolean isMinCorner(int gridX, int gridZ) {
+        return (gridX == getXMin() && gridZ == getZMin());
+    }
+
+    /**
+     * Check if two coordinates form the max corner.
+     * @param gridX The grid x coordinate to test.
+     * @param gridZ The grid z coordinate to test.
+     * @return isMaxCorner
+     */
+    public boolean isMaxCorner(int gridX, int gridZ) {
+        return (gridX == getXMax() && gridZ == getZMax());
+    }
+
+    /**
+     * Update the bounds of a region.
+     */
+    public void updateBounds() {
+        if (getXMin() > getXMax()) {
+            short temp = this.xMax;
+            this.xMax = this.xMin;
+            this.xMin = temp;
+        }
+
+        if (getZMin() > getZMax()) {
+            short temp = this.zMax;
+            this.zMax = this.zMin;
+            this.zMin = temp;
+        }
+
+        /*
+        if (getZMax() == getZMin())
+            this.zMax++;
+
+        if (getXMax() == getXMin())
+            this.xMax++;
+            */
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum RegionEditState {
+        CHANGING_MIN(ZoneRegion::isMinCorner, ZoneRegion::setXMin, ZoneRegion::setZMin),
+        CHANGING_MAX(ZoneRegion::isMaxCorner, ZoneRegion::setXMax, ZoneRegion::setZMax),
+        NONE_SELECTED((region, x, z) -> false, null, null);
+
+        private TriFunction<ZoneRegion, Integer, Integer, Boolean> tester;
+        private BiConsumer<ZoneRegion, Short> xSetter;
+        private BiConsumer<ZoneRegion, Short> zSetter;
+
+        /**
+         * Set the coordinates of the region.
+         * @param region The region to set.
+         * @param gridX  The grid x coordinate.
+         * @param gridZ  The grid z coordinate.
+         */
+        public void setCoordinates(ZoneRegion region, int gridX, int gridZ) {
+            xSetter.accept(region, (short) gridX);
+            zSetter.accept(region, (short) gridZ);
+            region.updateBounds();
+        }
     }
 }

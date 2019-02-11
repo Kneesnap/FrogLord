@@ -27,6 +27,7 @@ import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.map.zone.CameraZone;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.map.zone.ZoneRegion;
+import net.highwayfrogs.editor.file.map.zone.ZoneRegion.RegionEditState;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
@@ -39,7 +40,6 @@ import java.util.function.Consumer;
 /**
  * Manages the grid editor gui.
  * TODO: Buttons need functionality.
- * TODO: Region Editor.
  * Created by Kneesnap on 1/24/2019.
  */
 @Getter
@@ -74,6 +74,7 @@ public class GridController implements Initializable {
     private MapUIController controller;
     private MAPFile map;
 
+    private RegionEditState editState = RegionEditState.NONE_SELECTED;
     private Zone selectedZone;
     private int selectedRegion;
     private GridStack selectedStack;
@@ -103,6 +104,30 @@ public class GridController implements Initializable {
             int gridX = (int) (evt.getSceneX() / getTileWidth());
             int gridZ = (int) (evt.getSceneY() / getTileHeight());
             GridStack stack = getMap().getGridStack(gridX, getMap().getGridZCount() - gridZ - 1);
+
+            if (this.zoneEditorCheckBox.isSelected()) {
+                gridZ = getMap().getGridZ(stack);
+
+                if (editState == RegionEditState.NONE_SELECTED) {
+                    if (getCurrentRegion() == null)
+                        return;
+
+                    for (RegionEditState state : RegionEditState.values()) {
+                        if (state.getTester().apply(getCurrentRegion(), gridX, gridZ)) {
+                            editState = state;
+                            updateCanvas();
+                            break;
+                        }
+                    }
+
+                } else {
+                    editState.setCoordinates(getCurrentRegion(), gridX, gridZ);
+                    editState = RegionEditState.NONE_SELECTED;
+                    updateCanvas();
+                }
+
+                return;
+            }
 
             if (this.zoneFinderCheckBox.isSelected()) {
                 gridZ = getMap().getGridZ(stack);
@@ -153,6 +178,7 @@ public class GridController implements Initializable {
         zoneSelector.setConverter(new AbstractStringConverter<>(zone -> "Camera Zone #" + (getMap().getZones().indexOf(zone) + 1)));
         regionSelector.setConverter(new AbstractStringConverter<>(value -> value == DEFAULT_REGION_ID ? "Main Region" : "Region #" + value));
         regionSelector.valueProperty().addListener((observable, oldValue, newValue) -> setSelectedRegion(getSelectedZone(), newValue == null ? 0 : newValue));
+        zoneEditorCheckBox.selectedProperty().addListener(((observable, oldValue, newValue) -> updateCanvas()));
 
         graphics = gridCanvas.getGraphicsContext2D();
         updateCanvas();
@@ -180,6 +206,12 @@ public class GridController implements Initializable {
 
                 if (currentRegion != null && currentRegion.contains(x, z)) {
                     graphics.setFill(Color.MAGENTA);
+                    if (zoneEditorCheckBox.isSelected() && currentRegion.isCorner(x, z)) {
+                        graphics.setFill(Color.YELLOW);
+                        if (editState.getTester().apply(currentRegion, x, z))
+                            graphics.setFill(Color.RED);
+                    }
+
                     graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
                 } else if (stack.getGridSquares().size() > 0) {
                     GridSquare square = stack.getGridSquares().get(0);
