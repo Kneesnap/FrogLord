@@ -10,7 +10,6 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.mesh.MeshManager;
 
 import java.awt.*;
@@ -167,8 +166,7 @@ public class MapMesh extends TriangleMesh {
      */
     public void updateVertices() {
         getPoints().clear();
-        for (SVector vertex : map.getVertexes()) {
-            getPoints().addAll(Utils.fixedPointShortToFloatNBits(vertex.getX(), 4), Utils.fixedPointShortToFloatNBits(vertex.getY(), 4), Utils.fixedPointShortToFloatNBits(vertex.getZ(), 4));
-        }
+        for (SVector vertex : map.getVertexes())
+            getPoints().addAll(Utils.fixedPointShortToFloat412(vertex.getX()), Utils.fixedPointShortToFloat412(vertex.getY()), Utils.fixedPointShortToFloat412(vertex.getZ()));
     }
 }

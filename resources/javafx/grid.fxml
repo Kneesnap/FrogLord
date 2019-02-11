@@ -5,7 +5,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
-            minWidth="-Infinity" prefHeight="800.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea"
+            minWidth="-Infinity" prefHeight="825.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea"
             xmlns:fx="http://javafx.com/fxml/1">
     <children>
         <AnchorPane fx:id="editorPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
@@ -14,28 +14,29 @@
                 <Canvas fx:id="gridCanvas" height="600.0" width="600.0"/>
             </children>
         </AnchorPane>
-        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0"
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="225.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0"
                     AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" SplitPane.resizableWithParent="false">
             <children>
-                <HBox prefHeight="200.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                <HBox prefHeight="225.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
                       AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                     <children>
-                        <AnchorPane prefHeight="200.0" prefWidth="300.0">
+                        <AnchorPane prefHeight="225.0" prefWidth="300.0">
                             <children>
                                 <ComboBox fx:id="layerSelector" layoutX="79.0" layoutY="2.0" prefHeight="25.0"
-                                          prefWidth="112.0" AnchorPane.bottomAnchor="173.0" AnchorPane.leftAnchor="79.0"
-                                          AnchorPane.rightAnchor="109.0"/>
+                                          prefWidth="112.0" AnchorPane.leftAnchor="79.0" AnchorPane.topAnchor="2.0"/>
                                 <ImageView fx:id="selectedImage" fitHeight="60.0" fitWidth="60.0" layoutX="14.0"
                                            layoutY="14.0" pickOnBounds="true" preserveRatio="true"
-                                           AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="14.0"/>
-                                <Button layoutX="84.0" layoutY="32.0" mnemonicParsing="false" onAction="#choosePolygon"
-                                        prefHeight="25.0" prefWidth="112.0" text="Choose Polygon"
-                                        AnchorPane.rightAnchor="110.0" AnchorPane.topAnchor="32.0"/>
-                                <Button layoutX="195.0" layoutY="32.0" mnemonicParsing="false" onAction="#removeLayer"
-                                        text="Remove Layer" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="32.0"/>
-                                <GridPane fx:id="flagTable" layoutY="60.0" prefHeight="141.0" prefWidth="300.0"
-                                          AnchorPane.bottomAnchor="-1.0" AnchorPane.leftAnchor="0.0"
-                                          AnchorPane.rightAnchor="0.0">
+                                           AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0"/>
+                                <Button fx:id="choosePolygonButton" layoutX="78.0" layoutY="32.0"
+                                        mnemonicParsing="false" onAction="#choosePolygon" prefHeight="25.0"
+                                        prefWidth="112.0" text="Choose Polygon" AnchorPane.leftAnchor="79.0"
+                                        AnchorPane.topAnchor="32.0"/>
+                                <Button fx:id="removeLayerButton" layoutX="195.0" layoutY="32.0" mnemonicParsing="false"
+                                        onAction="#removeLayer" text="Remove Layer" AnchorPane.rightAnchor="14.0"
+                                        AnchorPane.topAnchor="32.0"/>
+                                <GridPane fx:id="flagTable" layoutY="60.0" prefHeight="140.0" prefWidth="300.0"
+                                          AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+                                          AnchorPane.topAnchor="60.0">
                                     <columnConstraints>
                                         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
                                         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
@@ -51,20 +52,75 @@
                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                                     </rowConstraints>
                                 </GridPane>
-                                <Button layoutX="194.0" layoutY="2.0" mnemonicParsing="false" onAction="#addLayer"
-                                        prefHeight="25.0" prefWidth="91.0" text="Add Layer"
+                                <Button fx:id="addLayerButton" layoutX="194.0" layoutY="2.0" mnemonicParsing="false"
+                                        onAction="#addLayer" prefHeight="25.0" prefWidth="91.0" text="Add Layer"
                                         AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="2.0"/>
+                                <Label fx:id="stackIdLabel" layoutX="5.0" layoutY="200.0" text="Label"
+                                       AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="5.0"/>
+                                <Label fx:id="stackHeightLabel" layoutX="184.0" layoutY="200.0" text="Height: "
+                                       AnchorPane.bottomAnchor="8.0" AnchorPane.rightAnchor="74.0"/>
+                                <TextField fx:id="stackHeightField" layoutX="226.0" layoutY="196.0"
+                                           onAction="#onUpdateHeight" prefHeight="25.0" prefWidth="60.0"
+                                           AnchorPane.bottomAnchor="4.0" AnchorPane.rightAnchor="14.0"/>
                             </children>
                         </AnchorPane>
-                        <AnchorPane fx:id="stackPane" prefHeight="200.0" prefWidth="300.0">
+                        <AnchorPane fx:id="stackPane" prefHeight="225.0" prefWidth="300.0">
                             <children>
-                                <Label fx:id="stackIdLabel" layoutX="14.0" layoutY="14.0" text="Label"
-                                       AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="14.0"/>
-                                <TextField fx:id="stackHeightField" layoutX="56.0" layoutY="31.0"
-                                           onAction="#onUpdateHeight" prefHeight="25.0" prefWidth="60.0"
-                                           AnchorPane.leftAnchor="56.0" AnchorPane.topAnchor="31.0"/>
-                                <Label layoutX="14.0" layoutY="35.0" text="Height: " AnchorPane.leftAnchor="14.0"
-                                       AnchorPane.topAnchor="35.0"/>
+                                <ComboBox fx:id="zoneSelector" layoutY="2.0" prefWidth="150.0"
+                                          AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0"/>
+                                <ComboBox fx:id="regionSelector" layoutX="150.0" layoutY="2.0" prefWidth="150.0"
+                                          AnchorPane.rightAnchor="1.0" AnchorPane.topAnchor="2.0"/>
+                                <CheckBox fx:id="zoneFinderCheckBox" layoutX="225.0" layoutY="203.0"
+                                          mnemonicParsing="false" text="Zone Finder" textAlignment="RIGHT"
+                                          AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="2.0"/>
+                                <Button fx:id="addZoneButton" layoutY="28.0" mnemonicParsing="false" text="Add Zone"
+                                        AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="28.0"/>
+                                <Button fx:id="removeZoneButton" layoutX="70.0" layoutY="28.0" mnemonicParsing="false"
+                                        text="Delete Zone" AnchorPane.leftAnchor="70.0" AnchorPane.topAnchor="28.0"/>
+                                <Button fx:id="addRegionButton" layoutX="152.0" layoutY="28.0" mnemonicParsing="false"
+                                        text="Add Rgn" AnchorPane.rightAnchor="87.0" AnchorPane.topAnchor="28.0"/>
+                                <Button fx:id="removeRegionButton" layoutX="216.0" layoutY="28.0"
+                                        mnemonicParsing="false" prefHeight="25.0" prefWidth="85.0" text="Remove Rgn"
+                                        AnchorPane.rightAnchor="1.0" AnchorPane.topAnchor="28.0"/>
+                                <CheckBox fx:id="zoneEditorCheckBox" layoutX="14.0" layoutY="203.0"
+                                          mnemonicParsing="false" text="Region Editor" AnchorPane.bottomAnchor="5.0"
+                                          AnchorPane.leftAnchor="2.0"/>
+                                <Label layoutX="2.0" layoutY="58.0" text="Flags: "/>
+                                <TextField fx:id="flagTextField" layoutX="35.0" layoutY="54.0" prefHeight="25.0"
+                                           prefWidth="69.0"/>
+                                <Label layoutX="155.0" layoutY="58.0" text="Direction: "/>
+                                <TextField fx:id="directionTextField" layoutX="232.0" layoutY="54.0" prefHeight="25.0"
+                                           prefWidth="91.0" AnchorPane.rightAnchor="1.0" AnchorPane.topAnchor="54.0"/>
+                                <GridPane fx:id="cameraPane" layoutX="2.0" layoutY="79.0" prefHeight="125.0"
+                                          prefWidth="300.0" AnchorPane.bottomAnchor="21.0">
+                                    <columnConstraints>
+                                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="95.0" minWidth="10.0"
+                                                           prefWidth="40.0"/>
+                                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="170.0" minWidth="10.0"
+                                                           prefWidth="130.0"/>
+                                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="134.0" minWidth="10.0"
+                                                           prefWidth="130.0"/>
+                                    </columnConstraints>
+                                    <rowConstraints>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                    </rowConstraints>
+                                    <children>
+                                        <Label alignment="CENTER" prefHeight="17.0" prefWidth="150.0" text="Source"
+                                               underline="true" GridPane.columnIndex="1"/>
+                                        <Label alignment="CENTER" prefHeight="17.0" prefWidth="150.0" text="Target"
+                                               underline="true" GridPane.columnIndex="2"/>
+                                        <Label text="North" GridPane.rowIndex="1"/>
+                                        <Label text="East" GridPane.rowIndex="2"/>
+                                        <Label text="South" GridPane.rowIndex="3"/>
+                                        <Label text="West" GridPane.rowIndex="4"/>
+                                        <Label alignment="CENTER" prefHeight="17.0" prefWidth="40.0" text="Facing"
+                                               underline="true"/>
+                                    </children>
+                                </GridPane>
                             </children>
                         </AnchorPane>
                     </children>

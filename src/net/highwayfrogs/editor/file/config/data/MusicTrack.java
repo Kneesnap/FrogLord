@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config.data;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.TargetPlatform;
 
 /**
@@ -9,89 +10,66 @@ import net.highwayfrogs.editor.file.config.TargetPlatform;
  */
 @Getter
 public enum MusicTrack {
-    CAVE1(2, 2),
-    CAVE2(3, 5),
-    DESERT1(4, 9),
-    DESERT2(5, 13),
-    FOREST1(6, 15),
-    FOREST2(7, 18), // Ruins Music.
-    VOLCANO1(8, 12),
-    VOLCANO2(9, 1),
-    JUNGLE1(10, 10),
-    JUNGLE2(11, 15), // Main Menu.
-    JUNGLE3(12, 8), // Honey Bee Hollow.
-    LEVEL_SELECT(13, 19),
-    ORIGINAL1(14, 7),
-    ORIGINAL2(15, 17),
-    SWAMP1(16, 4),
-    SWAMP2(17, 11),
-    SKY1(18, 0),
-    SKY2(19, 16),
-    SUBURBIA1(20, 6),
-    SUBURBIA2(21, 3);
+    CAVE1(2, 2, 2),
+    CAVE2(3, 5, 3),
+    DESERT1(4, 9, 4),
+    DESERT2(5, 13, 5),
+    FOREST1(6, 15, 6),
+    FOREST2(7, 18, 7), // Ruins Music.
+    VOLCANO1(8, 12, 24),
+    VOLCANO2(9, 1, 25),
+    JUNGLE1(10, 10, 10),
+    JUNGLE2(11, 15, 11), // Main Menu.
+    JUNGLE3(12, 8, 12), // Honey Bee Hollow.
+    LEVEL_SELECT(13, 19, 13),
+    ORIGINAL1(14, 7, 14),
+    ORIGINAL2(15, 17, 15),
+    SWAMP1(16, 4, 22),
+    SWAMP2(17, 11, 23),
+    SKY1(18, 0, 18),
+    SKY2(19, 16, 19),
+    SUBURBIA1(20, 6, 20),
+    SUBURBIA2(21, 3, 21);
 
     private final byte pcTrack;
     private final byte psxTrack;
+    private final byte prototypeTrack;
 
     public static final byte TERMINATOR = (byte) -1;
 
-    MusicTrack(int pcTrack, int psxTrack) {
+    MusicTrack(int pcTrack, int psxTrack, int prototypeTrack) {
         this.pcTrack = (byte) pcTrack;
         this.psxTrack = (byte) psxTrack;
+        this.prototypeTrack = (byte) prototypeTrack;
     }
 
     /**
      * Gets the track based on the platform.
-     * @param platform The platform this track is used on.
+     * @param info The config this track is used on.
      * @return trackId
      */
-    public byte getTrack(TargetPlatform platform) {
-        if (platform == TargetPlatform.PC) {
+    public byte getTrack(FroggerEXEInfo info) {
+        if (info.isPrototype()) {
+            return getPrototypeTrack();
+        } else if (info.getPlatform() == TargetPlatform.PC) {
             return getPcTrack();
-        } else if (platform == TargetPlatform.PSX) {
+        } else if (info.getPlatform() == TargetPlatform.PSX) {
             return getPsxTrack();
         }
 
-        throw new RuntimeException("Cannot get track for platform-type: " + platform + ".");
-    }
-
-    /**
-     * Get a MusicTrack by its PC ID.
-     * @param id The PC id to get.
-     * @return musicTrack
-     */
-    public static MusicTrack getTrackByPCId(byte id) {
-        for (MusicTrack test : values())
-            if (test.getPcTrack() == id)
-                return test;
-        throw new RuntimeException("Unknown PC Track: " + id);
-    }
-
-    /**
-     * Get a MusicTrack by its PSX ID.
-     * @param id The PSX id to get.
-     * @return musicTrack
-     */
-    public static MusicTrack getTrackByPSXId(byte id) {
-        for (MusicTrack test : values())
-            if (test.getPsxTrack() == id)
-                return test;
-        throw new RuntimeException("Unknown PSX Track: " + id);
+        throw new RuntimeException("Cannot get track id for platform-type: " + info.getName() + ".");
     }
 
     /**
      * Gets a music track by its id.
-     * @param platform The PSX id to get.
-     * @param id       The id to get.
+     * @param info The config to determine music ids from.
+     * @param id   The id to get.
      * @return track
      */
-    public static MusicTrack getTrackById(TargetPlatform platform, byte id) {
-        if (platform == TargetPlatform.PC) {
-            return getTrackByPCId(id);
-        } else if (platform == TargetPlatform.PSX) {
-            return getTrackByPSXId(id);
-        }
-
-        throw new RuntimeException("Cannot get track for platform-type: " + platform + ".");
+    public static MusicTrack getTrackById(FroggerEXEInfo info, byte id) {
+        for (MusicTrack test : values())
+            if (test.getTrack(info) == id)
+                return test;
+        throw new RuntimeException("Cannot get track id " + id + " from platform-type: " + info.getName() + ".");
     }
 }

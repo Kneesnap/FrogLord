@@ -5,6 +5,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
@@ -41,6 +42,7 @@ public class Utils {
     private static final File[] EMPTY_FILE_ARRAY = new File[0];
     private static final Map<BufferedImage, TextureCache> imageCacheMap = new HashMap<>();
     private static final long IMAGE_CACHE_EXPIRE = TimeUnit.MINUTES.toMillis(5);
+    private static final Map<Integer, List<Integer>> integerLists = new HashMap<>();
 
     /**
      * Convert a byte array to a number.
@@ -89,6 +91,16 @@ public class Utils {
         if (str.length() == 1)
             str = "0" + str;
         return str;
+    }
+
+    /**
+     * Verify a condition is true, otherwise throw an exception.
+     * @param condition The condition to verify is true.
+     * @param error     The error message if false.
+     */
+    public static void verify(boolean condition, String error) {
+        if (!condition)
+            throw new RuntimeException(error);
     }
 
     /**
@@ -199,11 +211,20 @@ public class Utils {
     /**
      * Convert a short value (fixed point, n fractional bits) into a float.
      * @param shortVal The short to convert.
-     * @param n The number of fractional bits.
+     * @return floatValue
+     */
+    public static float fixedPointShortToFloat412(short shortVal) {
+        return fixedPointShortToFloatNBits(shortVal, 4);
+    }
+
+    /**
+     * Convert a short value (fixed point, n fractional bits) into a float.
+     * @param shortVal The short to convert.
+     * @param n        The number of fractional bits.
      * @return floatValue
      */
     public static float fixedPointShortToFloatNBits(short shortVal, long n) {
-        return ((float)shortVal / (float)(1 << n));
+        return ((float) shortVal / (float) (1 << n));
     }
 
     /**
@@ -214,6 +235,15 @@ public class Utils {
      */
     public static short floatToFixedPointShort(float floatVal, int n) {
         return (short) (floatVal * (float) (1 << n));
+    }
+
+    /**
+     * Convert a float value into a short (fixed point, n fractional bits).
+     * @param floatVal The float to convert.
+     * @return shortValue
+     */
+    public static short floatToFixedPointShort412(float floatVal) {
+        return floatToFixedPointShort(floatVal, 12);
     }
 
     /**
@@ -894,5 +924,40 @@ public class Utils {
         public boolean hasExpired() {
             return (System.currentTimeMillis() - lastUpdate) > IMAGE_CACHE_EXPIRE;
         }
+    }
+
+    /**
+     * Get an integer list with incrementing values.
+     * @param size The size of the list
+     * @return integerList
+     */
+    public static List<Integer> getIntegerList(int size) {
+        return integerLists.computeIfAbsent(size, createSize -> {
+            List<Integer> newList = new ArrayList<>(createSize);
+            for (int i = 0; i < createSize; i++)
+                newList.add(i);
+            return newList;
+        });
+    }
+
+    /**
+     * Set TextField key-press handling.
+     * @param field  The TextField to apply to.
+     * @param setter Handles text.
+     * @param onPass Called if not null and the setter passed.
+     */
+    public static void setHandleKeyPress(TextField field, Function<String, Boolean> setter, Runnable onPass) {
+        field.setOnKeyPressed(evt -> {
+            KeyCode code = evt.getCode();
+            if (field.getStyle().isEmpty() && (code.isLetterKey() || code.isDigitKey() || code == KeyCode.BACK_SPACE)) {
+                field.setStyle("-fx-text-inner-color: darkgreen;");
+            } else if (code == KeyCode.ENTER) {
+                boolean pass = setter.apply(field.getText());
+                if (pass && onPass != null)
+                    onPass.run();
+
+                field.setStyle(pass ? null : "-fx-text-inner-color: red;");
+            }
+        });
     }
 }

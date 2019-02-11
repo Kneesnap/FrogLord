@@ -58,4 +58,14 @@ public class PSXThemeBook extends ThemeBook {
         this.multiplayerVloId = Integer.parseInt(args[3]);
         this.formLibraryPointer = Long.decode(args[4]) + getConfig().getRamPointerOffset();
     }
+
+    @Override
+    public String toString() {
+        return "WAD = " + getConfig().getResourceName(wadId)
+                + ", VLO = " + getConfig().getResourceName(vloId)
+                + ", mWAD = " + getConfig().getResourceName(multiplayerWadId)
+                + ", mVLO = " + getConfig().getResourceName(multiplayerVloId)
+                + ", Death Height: " + deathHeight;
+    }
+
 }

@@ -136,9 +136,9 @@ public class Entity extends GameObject {
         if (pathInfo != null) {
             Path path = map.getPaths().get(pathInfo.getPathId());
             SVector end = path.evaluatePosition(pathInfo);
-            position[0] = Utils.fixedPointShortToFloatNBits(end.getX(), 4);
-            position[1] = Utils.fixedPointShortToFloatNBits(end.getY(), 4);
-            position[2] = Utils.fixedPointShortToFloatNBits(end.getZ(), 4);
+            position[0] = Utils.fixedPointShortToFloat412(end.getX());
+            position[1] = Utils.fixedPointShortToFloat412(end.getY());
+            position[2] = Utils.fixedPointShortToFloat412(end.getZ());
             return position;
         }
 

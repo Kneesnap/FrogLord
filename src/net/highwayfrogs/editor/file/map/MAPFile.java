@@ -11,6 +11,8 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.data.MAPLevel;
+import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
@@ -114,6 +116,7 @@ public class MAPFile extends GameFile {
 
     public static final Image ICON = loadIcon("map");
     public static final List<MAPPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
+    public static final List<MAPPrimitiveType> POLYGON_TYPES = Arrays.asList(MAPPolygonType.values());
 
     public static final int VERTEX_COLOR_IMAGE_SIZE = 8;
     private static final ImageFilterSettings OBJ_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
@@ -124,7 +127,7 @@ public class MAPFile extends GameFile {
     }
 
     static {
-        PRIMITIVE_TYPES.addAll(Arrays.asList(MAPPolygonType.values()));
+        PRIMITIVE_TYPES.addAll(POLYGON_TYPES);
         PRIMITIVE_TYPES.add(MAPLineType.G2);
     }
 
@@ -138,6 +141,7 @@ public class MAPFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
+        boolean isQB = isQB();
         getLoadPolygonPointerMap().clear();
         getLoadPointerPolygonMap().clear();
 
@@ -240,7 +244,7 @@ public class MAPFile extends GameFile {
         int polygonAddress = reader.readInt();
         int vertexAddress = reader.readInt();
         int gridAddress = reader.readInt();
-        int animAddress = reader.readInt();
+        int animAddress = isQB ? 0 : reader.readInt(); // Animations don't exist yet in the QB format.
 
         reader.setIndex(lightAddress);
         reader.verifyString(LIGHT_SIGNATURE);
@@ -262,7 +266,7 @@ public class MAPFile extends GameFile {
 
         MAPGroup[] loadGroups = new MAPGroup[getGroupCount()];
         for (int i = 0; i < loadGroups.length; i++) {
-            MAPGroup group = new MAPGroup();
+            MAPGroup group = new MAPGroup(isQB);
             group.load(reader);
             loadGroups[i] = group;
         }
@@ -274,18 +278,24 @@ public class MAPFile extends GameFile {
         Map<MAPPrimitiveType, Short> polyCountMap = new HashMap<>();
         Map<MAPPrimitiveType, Integer> polyOffsetMap = new HashMap<>();
 
-        for (MAPPrimitiveType type : PRIMITIVE_TYPES)
+        List<MAPPrimitiveType> types = getTypes(isQB);
+        for (MAPPrimitiveType type : types)
             polyCountMap.put(type, reader.readShort());
-        reader.skipShort(); // Padding.
-        for (MAPPrimitiveType type : PRIMITIVE_TYPES)
+
+        if (!isQB)
+            reader.skipShort(); // Padding.
+
+        for (MAPPrimitiveType type : types)
             polyOffsetMap.put(type, reader.readInt());
 
         for (MAPPrimitiveType type : PRIMITIVE_TYPES) {
-            short polyCount = polyCountMap.get(type);
-            int polyOffset = polyOffsetMap.get(type);
-
             List<MAPPrimitive> primitives = new LinkedList<>();
             polygons.put(type, primitives);
+            if (!types.contains(type))
+                continue; // Not being read.
+
+            short polyCount = polyCountMap.get(type);
+            int polyOffset = polyOffsetMap.get(type);
 
             if (polyCount > 0) {
                 reader.jumpTemp(polyOffset);
@@ -346,19 +356,23 @@ public class MAPFile extends GameFile {
         getGridStacks().forEach(stack -> stack.loadSquares(this));
 
         // Read "ANIM".
-        reader.setIndex(animAddress);
-        reader.verifyString(ANIMATION_SIGNATURE);
-        int mapAnimCount = reader.readInt(); // 0c
-        int mapAnimAddress = reader.readInt(); // 0x2c144
-        reader.setIndex(mapAnimAddress); // This points to right after the header.
+        if (!isQB) {
+            reader.setIndex(animAddress);
+            reader.verifyString(ANIMATION_SIGNATURE);
+            int mapAnimCount = reader.readInt(); // 0c
+            int mapAnimAddress = reader.readInt(); // 0x2c144
+            reader.setIndex(mapAnimAddress); // This points to right after the header.
 
-        for (int i = 0; i < mapAnimCount; i++) {
-            MAPAnimation animation = new MAPAnimation(this);
-            animation.load(reader);
-            mapAnimations.add(animation);
+            for (int i = 0; i < mapAnimCount; i++) {
+                MAPAnimation animation = new MAPAnimation(this);
+                animation.load(reader);
+                mapAnimations.add(animation);
+            }
         }
 
-        this.vlo = getConfig().getThemeBook(getTheme()).getVLO(this);
+        ThemeBook themeBook = getConfig().getThemeBook(getTheme());
+        if (themeBook != null)
+            this.vlo = themeBook.getVLO(this);
     }
 
     @Override
@@ -659,7 +673,7 @@ public class MAPFile extends GameFile {
         if (getVlo() != null)
             getVlo().exportAllImages(selectedFolder, OBJ_EXPORT_FILTER); // Export VLO images.
 
-        exportToObj(selectedFolder, entry, vlo, getConfig().getRemapTable(getFileEntry()));
+        exportToObj(selectedFolder, entry, vlo, isQB() ? Collections.emptyList() : getConfig().getRemapTable(getFileEntry()));
     }
 
     @SneakyThrows
@@ -917,6 +931,30 @@ public class MAPFile extends GameFile {
     }
 
     /**
+     * Get the x coordinate of a grid stack.
+     * @param stack The grid stack to get the coordinate of.
+     * @return gridX
+     */
+    public int getGridX(GridStack stack) {
+        int stackIndex = getGridStacks().indexOf(stack);
+        if (stackIndex == -1)
+            throw new RuntimeException("This GridStack is not registered!");
+        return (stackIndex % getGridXCount());
+    }
+
+    /**
+     * Get the z coordinate of a grid stack.
+     * @param stack The grid stack to get the coordinate of.
+     * @return gridZ
+     */
+    public int getGridZ(GridStack stack) {
+        int stackIndex = getGridStacks().indexOf(stack);
+        if (stackIndex == -1)
+            throw new RuntimeException("This GridStack is not registered!");
+        return (stackIndex / getGridXCount());
+    }
+
+    /**
      * Gets the base point's world x coordinate.
      * @return worldX
      */
@@ -990,7 +1028,7 @@ public class MAPFile extends GameFile {
     public List<MAPGroup> calculateGroups() {
         List<MAPGroup> groups = new ArrayList<>(getGroupCount());
         for (int i = 0; i < getGroupCount(); i++)
-            groups.add(new MAPGroup());
+            groups.add(new MAPGroup(false));
 
         // Recalculate it.
         forEachPrimitive(prim -> {
@@ -1022,5 +1060,22 @@ public class MAPFile extends GameFile {
      */
     public boolean isLowPolyMode() {
         return getFileEntry().getDisplayName().contains("_WIN95");
+    }
+
+    /**
+     * Tests if this is the QB map.
+     * @return isQBMap
+     */
+    public boolean isQB() {
+        return getFileEntry().getDisplayName().startsWith(MAPLevel.QB.getInternalName());
+    }
+
+    /**
+     * Get the types to use based on if this is QB or not.
+     * @param isQB Is this the QB map?
+     * @return types
+     */
+    public static List<MAPPrimitiveType> getTypes(boolean isQB) {
+        return isQB ? POLYGON_TYPES : PRIMITIVE_TYPES;
     }
 }

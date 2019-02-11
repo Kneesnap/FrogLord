@@ -110,11 +110,10 @@ public class MWDFile extends GameObject {
             boolean isPSX = getConfig().isPSX();
             boolean isDemo = getConfig().isDemo();
 
-            boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && isDemo && isPSX);
+            boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && ((isDemo && isPSX) || getConfig().isPrototype()));
             boolean isSkyLand = entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX);
-            boolean isQB = entry.getDisplayName().startsWith(Constants.DEV_QB_NAME);
 
-            if (isDemoJungle || isSkyLand || isQB) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
+            if (isDemoJungle || isSkyLand) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
                 file = new DummyFile(fileBytes.length);
             } else {
                 file = new MAPFile(this);
@@ -125,7 +124,7 @@ public class MWDFile extends GameObject {
             file = new DemoFile();
         } else if (entry.getTypeId() == PALFile.TYPE_ID) {
             file = new PALFile();
-        } else if (entry.getTypeId() == VHFile.TYPE_ID && !testSignature(fileBytes, 0, VABHeaderFile.SIGNATURE)) { // PSX support is disabled until it is complete.
+        } else if (!getConfig().isPrototype() && entry.getTypeId() == VHFile.TYPE_ID && !testSignature(fileBytes, 0, VABHeaderFile.SIGNATURE)) { // PSX support is disabled until it is complete.
             if (lastVB != null) {
                 VHFile vhFile = new VHFile();
                 vhFile.setVB(lastVB);

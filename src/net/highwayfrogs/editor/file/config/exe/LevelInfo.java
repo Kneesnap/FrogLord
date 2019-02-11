@@ -65,7 +65,7 @@ public class LevelInfo extends ExeStruct {
 
     @Override
     public String toString() {
-        return "[" + getWorldId() + ":" + getLevel() + "] " + getTheme() + " (" + (getLocalLevelId() + 1) + "/" + getLevelsInWorld() + ") [" + getStackPosition() + "]";
+        return "[" + getLevel() + "/" + getWorldId() + "] " + getTheme() + " (" + (getLocalLevelId() + 1) + "/" + getLevelsInWorld() + ") [" + getStackPosition() + "]";
     }
 
     @Override
