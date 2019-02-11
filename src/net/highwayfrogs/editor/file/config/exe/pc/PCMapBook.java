@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
@@ -101,5 +102,13 @@ public class PCMapBook extends MapBook {
     @Override
     public void handleCorrection(String[] args) {
         throw new UnsupportedOperationException("This will be implemented if we find a version which requires it.");
+    }
+
+    @Override
+    public String toString() {
+        return "MAP[Hi: " + getConfig().getResourceName(highMapId) + ",Lo: " + getConfig().getResourceName(lowMapId)
+                + "] Remap[Hi: " + Utils.toHexString(getFileHighRemapPointer()) + ",Lo: " + Utils.toHexString(getFileLowRemapPointer())
+                + "] WAD[Hi: " + getConfig().getResourceName(highWadId) + ",Lo: " + getConfig().getResourceName(lowWadId)
+                + "] PAL: " + getConfig().getResourceName(paletteId);
     }
 }

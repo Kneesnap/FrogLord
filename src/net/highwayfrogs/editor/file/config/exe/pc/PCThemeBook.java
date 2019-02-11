@@ -73,4 +73,13 @@ public class PCThemeBook extends ThemeBook {
     public void handleCorrection(String[] args) {
         throw new UnsupportedOperationException("This will be implemented if we find a version which requires it.");
     }
+
+    @Override
+    public String toString() {
+        return "WAD[Hi: " + getConfig().getResourceName(highWadId) + ",Lo: " + getConfig().getResourceName(lowWadId)
+                + "] VLO[Hi: " + getConfig().getResourceName(highVloId) + ",Lo: " + getConfig().getResourceName(lowVloId)
+                + "] mWAD[Hi: " + getConfig().getResourceName(highMultiplayerWadId) + ",Lo: " + getConfig().getResourceName(lowMultiplayerWadId)
+                + "] mVLO[Hi: " + getConfig().getResourceName(highMultiplayerVloId) + ",Lo: " + getConfig().getResourceName(lowMultiplayerVloId)
+                + "] Death Height: " + deathHeight;
+    }
 }

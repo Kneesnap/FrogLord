@@ -157,6 +157,7 @@ public class FroggerEXEInfo extends Config {
             ThemeBook book = TargetPlatform.makeNewThemeBook(this);
             book.load(reader);
             themeLibrary[i] = book;
+            Constants.logExeInfo(book);
         }
 
         if (!hasChild(CHILD_RESTORE_THEME_BOOK))
@@ -180,6 +181,7 @@ public class FroggerEXEInfo extends Config {
             MapBook book = TargetPlatform.makeNewMapBook(this);
             book.load(reader);
             this.mapLibrary.add(book);
+            Constants.logExeInfo(book);
         }
 
         if (!hasChild(CHILD_RESTORE_MAP_BOOK))
@@ -216,6 +218,7 @@ public class FroggerEXEInfo extends Config {
             level = new LevelInfo();
             level.load(getReader());
             getArcadeLevelInfo().add(level);
+            Constants.logExeInfo(level);
         }
 
         level = null;
@@ -223,6 +226,7 @@ public class FroggerEXEInfo extends Config {
             level = new LevelInfo();
             level.load(getReader());
             getArcadeLevelInfo().add(level);
+            Constants.logExeInfo(level);
         }
     }
 
@@ -401,6 +405,15 @@ public class FroggerEXEInfo extends Config {
      */
     public FileEntry getResourceEntry(int resourceId) {
         return getMWI().getEntries().get(resourceId);
+    }
+
+    /**
+     * Get the FileEntry name for a given resource id.
+     * @param resourceId The resource id.
+     * @return fileEntryName
+     */
+    public String getResourceName(int resourceId) {
+        return getResourceEntry(resourceId).getDisplayName();
     }
 
     /**

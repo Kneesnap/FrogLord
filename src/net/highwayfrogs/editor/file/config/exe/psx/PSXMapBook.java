@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config.exe.psx;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
@@ -86,5 +87,12 @@ public class PSXMapBook extends MapBook {
      */
     public FileEntry getMapEntry() {
         return getConfig().getResourceEntry(this.mapId);
+    }
+
+    @Override
+    public String toString() {
+        return "MAP[" + getConfig().getResourceName(mapId)
+                + "] Remap[" + Utils.toHexString(getFileRemapPointer())
+                + "] WAD[" + getConfig().getResourceName(wadId) + "]";
     }
 }
