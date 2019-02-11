@@ -288,12 +288,14 @@ public class MAPFile extends GameFile {
         for (MAPPrimitiveType type : types)
             polyOffsetMap.put(type, reader.readInt());
 
-        for (MAPPrimitiveType type : types) {
-            short polyCount = polyCountMap.get(type);
-            int polyOffset = polyOffsetMap.get(type);
-
+        for (MAPPrimitiveType type : PRIMITIVE_TYPES) {
             List<MAPPrimitive> primitives = new LinkedList<>();
             polygons.put(type, primitives);
+            if (!types.contains(type))
+                continue; // Not being read.
+
+            short polyCount = polyCountMap.get(type);
+            int polyOffset = polyOffsetMap.get(type);
 
             if (polyCount > 0) {
                 reader.jumpTemp(polyOffset);
