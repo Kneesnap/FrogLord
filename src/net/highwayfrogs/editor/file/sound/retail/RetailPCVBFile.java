@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file.sound.retail;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.GameSound;
@@ -12,7 +11,6 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import javax.sound.sampled.AudioFileFormat.Type;
 import javax.sound.sampled.*;
-import javax.sound.sampled.AudioFormat.Encoding;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -84,14 +82,7 @@ public class RetailPCVBFile extends PCVBFile {
         public void replaceWithFile(File file) throws IOException, UnsupportedAudioFileException {
             AudioInputStream inputStream = AudioSystem.getAudioInputStream(file);
             getAudioData().clear();
-
-            AudioFormat format = inputStream.getFormat();
-            Utils.verify(!format.isBigEndian(), "Big Endian audio files are not accepted.");
-            Utils.verify(format.getEncoding() == Encoding.PCM_SIGNED, "Unsigned audio files are not supported. (%s)", format.getEncoding());
-            Utils.verify(format.getChannels() == getChannelCount(), "%d-channel audio is not supported!", format.getChannels());
-
-            setBitWidth(format.getSampleSizeInBits());
-            setSampleRate((int) format.getSampleRate());
+            this.importFormat(inputStream.getFormat());
 
             ArrayReceiver receiver = new ArrayReceiver();
             DataWriter writer = new DataWriter(receiver);

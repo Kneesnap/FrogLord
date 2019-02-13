@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioFormat.Encoding;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -69,6 +70,19 @@ public abstract class GameSound extends GameObject {
      */
     public AudioFormat getAudioFormat() {
         return new AudioFormat(getSampleRate(), getBitWidth(), getChannelCount(), true, false);
+    }
+
+    /**
+     * Import a new AudioFormat.
+     * @param newFormat The new AudioFormat to import.
+     */
+    public void importFormat(AudioFormat newFormat) {
+        Utils.verify(!newFormat.isBigEndian(), "Big Endian audio files are not accepted.");
+        Utils.verify(newFormat.getEncoding() == Encoding.PCM_SIGNED, "Unsigned audio files are not supported. (%s)", newFormat.getEncoding());
+        Utils.verify(newFormat.getChannels() == getChannelCount(), "%d-channel audio is not supported!", newFormat.getChannels());
+
+        setBitWidth(newFormat.getSampleSizeInBits());
+        setSampleRate((int) newFormat.getSampleRate());
     }
 
     /**

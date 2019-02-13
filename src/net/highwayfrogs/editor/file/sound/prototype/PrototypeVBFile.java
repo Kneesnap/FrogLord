@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.sound.prototype;
 
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.GameSound;
 import net.highwayfrogs.editor.file.sound.PCVBFile;
@@ -13,12 +14,14 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 
 /**
  * Represents prototype audio body data.
  * Created by Kneesnap on 2/13/2019.
  */
 public class PrototypeVBFile extends PCVBFile {
+    private static final byte[] RIFF_SIGNATURE = {0x52, 0x49, 0x46, 0x46};
 
     @Override
     public GameSound makeSound(AudioHeader entry, int id, int readLength) {
@@ -57,9 +60,18 @@ public class PrototypeVBFile extends PCVBFile {
         }
 
         @Override
+        @SneakyThrows
         public void replaceWithFile(File file) {
-            //TODO
+            byte[] newBytes = Files.readAllBytes(file.toPath());
 
+            // Basic header test.
+            byte[] header = new byte[RIFF_SIGNATURE.length];
+            System.arraycopy(newBytes, 0, header, 0, RIFF_SIGNATURE.length);
+            Utils.verify(Arrays.equals(RIFF_SIGNATURE, header), "INVALID RIFF SIGNATURE: %s!", new String(header));
+
+            //Import the file.
+            this.importFormat(AudioSystem.getAudioInputStream(file).getFormat());
+            this.wavBytes = newBytes;
             onImport();
         }
 
