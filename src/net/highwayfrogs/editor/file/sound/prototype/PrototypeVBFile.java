@@ -35,8 +35,8 @@ public class PrototypeVBFile extends PCVBFile {
 
         @Override
         public void load(DataReader reader) {
-            //TODO: Can we have a better reading system?
-            this.wavBytes = reader.readBytes(Math.min(reader.getRemaining(), getReadLength()));
+            if (reader.hasMore()) // The last entry is null in the prototype.
+                this.wavBytes = reader.readBytes(getReadLength());
         }
 
         @Override
