@@ -18,7 +18,9 @@ public class ScriptButterflyData extends EntityScriptData {
 
     @Override
     public void load(DataReader reader) {
-        this.type = FlyScoreType.values()[reader.readInt()];
+        int scoreType = reader.readInt();
+        if (scoreType >= 0 && scoreType < FlyScoreType.values().length) // JUN1.MAP has corrupted data here in certain mwds. This just makes it not crash from it.
+            this.type = FlyScoreType.values()[scoreType];
     }
 
     @Override
