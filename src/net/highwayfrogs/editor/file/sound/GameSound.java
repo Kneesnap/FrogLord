@@ -5,21 +5,17 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Represents a game sound.
@@ -31,8 +27,8 @@ public abstract class GameSound extends GameObject {
     private int vanillaTrackId;
     private int readLength;
 
-    private static final Map<String, List<String>> SOUND_NAME_MAP = new HashMap<>();
-    private static final List<String> SOUND_NAME_BY_TRACK_ID = new ArrayList<>();
+    public static final List<String> SOUND_NAME_BY_TRACK_ID = new ArrayList<>();
+    public static final String MAIN_KEY = "main";
 
     public GameSound(AudioHeader header, int vanillaTrackId, int readLength) {
         this.vanillaTrackId = vanillaTrackId;
@@ -148,32 +144,15 @@ public abstract class GameSound extends GameObject {
 
     }
 
-    static {
-        InputStreamReader isr = new InputStreamReader(Utils.getResourceStream("sounds.cfg"));
-        BufferedReader reader = new BufferedReader(isr);
-
-        List<String> lines = reader.lines().collect(Collectors.toList());
-
-        String tempBank = null;
-        List<String> tempNames = new ArrayList<>();
-
-        for (String line : lines) {
-            line = line.split("#")[0].trim(); // Remove comments.
-
-            if (line.isEmpty())
-                continue; // Ignore blank lines.
-
-            if (line.startsWith("[") && line.endsWith("]")) { // New section.
-                if (tempBank != null)
-                    SOUND_NAME_MAP.put(tempBank, tempNames);
-                tempBank = line.substring(1, line.length() - 1);
-                tempNames = new ArrayList<>();
-            } else {
-                SOUND_NAME_BY_TRACK_ID.add(line);
-                tempNames.add(line);
-            }
-        }
-
-        SOUND_NAME_MAP.put(tempBank, tempNames); // Add the final bank.
+    /**
+     * Load the sound config to use.
+     * @param configName The name of the config to use.
+     */
+    @SneakyThrows
+    public static void loadSounds(String configName) {
+        Config config = new Config(Utils.getResourceStream("sounds/" + configName + ".cfg"));
+        SOUND_NAME_BY_TRACK_ID.addAll(config.getText());
+        for (String childName : config.getOrderedChildren())
+            SOUND_NAME_BY_TRACK_ID.addAll(config.getChild(childName).getText());
     }
 }

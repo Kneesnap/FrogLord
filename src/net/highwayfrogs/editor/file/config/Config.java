@@ -19,7 +19,8 @@ import java.util.stream.Collectors;
 public class Config {
     private Map<String, String> values = new HashMap<>();
     private Map<String, Config> children = new HashMap<>();
-    @Getter private List<String> text = new ArrayList<>();
+    private List<String> text = new ArrayList<>();
+    private List<String> orderedChildren = new ArrayList<>();
 
     public static final String VALUE_SPLIT = "=";
     public static final String EMPTY_LINE = "``";
@@ -60,6 +61,7 @@ public class Config {
 
                 childLines.clear();
                 childName = line.substring(1, line.length() - 1);
+                getOrderedChildren().add(childName);
                 continue;
             }
 
@@ -111,6 +113,15 @@ public class Config {
     public String getString(String keyName) {
         Utils.verify(has(keyName), "Config does not have key '%s'.", keyName);
         return values.get(keyName);
+    }
+
+    /**
+     * Get a config value by its key pair.
+     * @param keyName The name of the key.
+     * @return value
+     */
+    public String getString(String keyName, String fallback) {
+        return has(keyName) ? getString(keyName) : fallback;
     }
 
     /**
