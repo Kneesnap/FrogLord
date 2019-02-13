@@ -1,8 +1,10 @@
 package net.highwayfrogs.editor.file.mof.prims;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
@@ -16,12 +18,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public abstract class MOFPolygon extends PSXGPUPrimitive {
-    private short vertices[];
-    private short en[]; // Not entirely sure what this is.
-    private short normals[];
+    private short[] vertices;
+    private short[] en; // Not entirely sure what this is.
+    private short[] normals;
     private short padding;
     private PSXColorVector color = new PSXColorVector();
     private MOFPrimType type;
+
+    @Setter private MOFPart tempParent;
 
     public static final int TRI_SIZE = 3;
     public static final int QUAD_SIZE = 4;
@@ -96,11 +100,14 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
      */
     public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter) {
         StringBuilder builder = new StringBuilder("f");
+        int base = getTempParent() != null ? getTempParent().getTempVertexStart() : 0;
         for (int i = this.vertices.length - 1; i >= 0; i--) {
-            builder.append(" ").append(this.vertices[i] + 1);
+            builder.append(" ").append(base + this.vertices[i] + 1);
             if (showTextures)
                 builder.append("/").append(textureCounter != null ? textureCounter.incrementAndGet() : 0);
         }
+
+        setTempParent(null);
         return builder.toString();
     }
 

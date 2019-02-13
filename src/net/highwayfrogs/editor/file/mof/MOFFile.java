@@ -177,16 +177,26 @@ public class MOFFile extends GameFile {
         }
 
         // Write Vertices.
-        for (MOFPart part : getParts())
-            for (MOFPartcel partcel : part.getPartcels())
+        int verticeStart = 0;
+        for (MOFPart part : getParts()) {
+            part.setTempVertexStart(verticeStart);
+
+            for (MOFPartcel partcel : part.getPartcels()) {
+                verticeStart += partcel.getVertices().size();
                 for (SVector vertex : partcel.getVertices())
                     objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
+            }
+        }
 
         objWriter.write(Constants.NEWLINE);
 
         // Write Faces.
         List<MOFPolygon> allPolygons = new ArrayList<>();
-        getParts().forEach(part -> part.getMofPolygons().values().forEach(allPolygons::addAll));
+        getParts().forEach(part -> part.getMofPolygons().values().forEach(polys -> {
+            allPolygons.addAll(polys);
+            for (MOFPolygon poly : polys)
+                poly.setTempParent(part);
+        }));
 
         // Register textures.
         if (exportTextures) {
