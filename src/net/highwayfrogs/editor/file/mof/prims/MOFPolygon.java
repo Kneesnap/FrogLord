@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file.mof.prims;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.mof.MOFPart;
@@ -24,8 +23,6 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
     private short padding;
     private PSXColorVector color = new PSXColorVector();
     private MOFPrimType type;
-
-    @Setter private MOFPart tempParent;
 
     public static final int TRI_SIZE = 3;
     public static final int QUAD_SIZE = 4;
@@ -99,15 +96,22 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
      * @return faceCommand
      */
     public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter) {
+        return toObjFaceCommand(showTextures, textureCounter, null);
+    }
+
+    /**
+     * Convert this into a wavefront object face command.
+     * @return faceCommand
+     */
+    public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter, MOFPart parentPart) {
         StringBuilder builder = new StringBuilder("f");
-        int base = getTempParent() != null ? getTempParent().getTempVertexStart() : 0;
+        int base = parentPart != null ? parentPart.getTempVertexStart() : 0;
         for (int i = this.vertices.length - 1; i >= 0; i--) {
             builder.append(" ").append(base + this.vertices[i] + 1);
             if (showTextures)
                 builder.append("/").append(textureCounter != null ? textureCounter.incrementAndGet() : 0);
         }
 
-        setTempParent(null);
         return builder.toString();
     }
 

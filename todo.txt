@@ -3,8 +3,7 @@ Editor Features:
  - VAB File (Separate from VB VH) https://www.zophar.net/fileuploads/2/10730sbtsy/psfrip.txt
 
  - MOF File
- Some way of viewing animations.
- Fix some mofs that have animation not exporting to .obj properly.
+ Some way of exporting animations.
 
  - GUI Editor:
   Demo Editor
