@@ -68,39 +68,43 @@ public class SVector extends GameObject {
      * Add another SVector to this one.
      * @param other The other SVector to add.
      */
-    public void add(SVector other) {
+    public SVector add(SVector other) {
         this.x += other.getX();
         this.y += other.getY();
         this.z += other.getZ();
+        return this;
     }
 
     /**
      * Subtract another SVector from this one.
      * @param other The other SVector to subtract.
      */
-    public void subtract(SVector other) {
+    public SVector subtract(SVector other) {
         this.x -= other.getX();
         this.y -= other.getY();
         this.z -= other.getZ();
+        return this;
     }
 
     /**
      * Multiply the values in this SVector.
      * @param multiplier The multiplier.
      */
-    public void multiply(double multiplier) {
+    public SVector multiply(double multiplier) {
         this.x *= multiplier;
         this.y *= multiplier;
         this.z *= multiplier;
+        return this;
     }
 
     /**
      * Set all values held to zero.
      */
-    public void zero() {
+    public SVector zero() {
         this.x = (short) 0;
         this.y = (short) 0;
         this.z = (short) 0;
+        return this;
     }
 
     /**
