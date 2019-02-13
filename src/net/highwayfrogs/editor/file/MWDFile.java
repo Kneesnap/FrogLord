@@ -10,9 +10,9 @@ import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.AbstractVBFile;
 import net.highwayfrogs.editor.file.sound.VABHeaderFile;
-import net.highwayfrogs.editor.file.sound.VBFile;
 import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.sound.prototype.PrototypeVBFile;
+import net.highwayfrogs.editor.file.sound.retail.RetailPCVBFile;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -132,7 +132,7 @@ public class MWDFile extends GameObject {
                 vhFile.setVB(lastVB);
                 file = vhFile;
             } else {
-                file = getConfig().isPrototype() ? new PrototypeVBFile() : new VBFile();
+                file = getConfig().isPrototype() ? new PrototypeVBFile() : new RetailPCVBFile();
             }
 
         } else {

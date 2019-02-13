@@ -1,9 +1,11 @@
-package net.highwayfrogs.editor.file.sound;
+package net.highwayfrogs.editor.file.sound.retail;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.sound.GameSound;
+import net.highwayfrogs.editor.file.sound.PCVBFile;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -22,7 +24,7 @@ import java.util.List;
  * Created by rdrpenguin04 on 8/22/2018.
  */
 @Getter
-public class VBFile extends PCVBFile {
+public class RetailPCVBFile extends PCVBFile {
 
     @Override
     public GameSound makeSound(AudioHeader entry, int id, int readLength) {
