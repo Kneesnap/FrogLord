@@ -12,12 +12,6 @@ Editor Features:
   Map Editor
   MOF Editor
 
-Build FrogPSX.H from MWD.
-
-Non tool-development-related plans:
- - Load the two developer maps.
- - Differences between PSX and PC version files?
-
 
 TCRF Documentation Plans:
  - Snail Racing
@@ -26,3 +20,4 @@ TCRF Documentation Plans:
  - Document debugging code.
  - Find unused textures
  - Analyze US PSX demo MWD vs retail PSX demo MWD.
+ - Document QB.MAP
