@@ -9,8 +9,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.file.sound.AbstractVBFile;
 import net.highwayfrogs.editor.file.sound.GameSound;
-import net.highwayfrogs.editor.file.sound.VBFile;
 
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent.Type;
@@ -23,7 +23,7 @@ import java.io.IOException;
  * Controls the VAB sound screen.
  * Created by Kneesnap on 9/18/2018.
  */
-public class VABController extends EditorController<VBFile> {
+public class VABController extends EditorController<AbstractVBFile> {
     @FXML private ListView<GameSound> soundList;
     @FXML private Button playButton;
     @FXML private Label label1;
@@ -36,7 +36,7 @@ public class VABController extends EditorController<VBFile> {
     private Clip currentClip;
 
     @Override
-    public void loadFile(VBFile vbFile) {
+    public void loadFile(AbstractVBFile vbFile) {
         super.loadFile(vbFile);
 
         sliderSampleRate.valueProperty().addListener((observable, oldValue, newValue) -> {
@@ -81,7 +81,7 @@ public class VABController extends EditorController<VBFile> {
 
         try {
             this.selectedSound.exportToFile(selectedFile);
-        } catch (LineUnavailableException | IOException ex) {
+        } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
             throw new RuntimeException("Failed to export sound as " + selectedFile.getName(), ex);
         }
     }
@@ -184,7 +184,7 @@ public class VABController extends EditorController<VBFile> {
     public void updateSound() {
         closeClip();
 
-        this.currentClip = makeClip(this.selectedSound);
+        this.currentClip = this.selectedSound.getClip();
         this.currentClip.addLineListener(e -> {
             if (e.getType() != Type.STOP)
                 return;
@@ -194,14 +194,6 @@ public class VABController extends EditorController<VBFile> {
                 toggleComponents(false);
             });
         });
-    }
-
-    private Clip makeClip(GameSound sound) {
-        try {
-            return sound.toStandardAudio();
-        } catch (LineUnavailableException ex) {
-            throw new RuntimeException("Failed to make AudioClip for sound.", ex);
-        }
     }
 
     private void toggleComponents(boolean newState) {

@@ -8,9 +8,11 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.sound.AbstractVBFile;
 import net.highwayfrogs.editor.file.sound.VABHeaderFile;
 import net.highwayfrogs.editor.file.sound.VBFile;
 import net.highwayfrogs.editor.file.sound.VHFile;
+import net.highwayfrogs.editor.file.sound.prototype.PrototypeVBFile;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -53,7 +55,7 @@ public class MWDFile extends GameObject {
     public void load(DataReader reader) {
         reader.verifyString(MARKER);
 
-        VBFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
+        AbstractVBFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
 
         for (FileEntry entry : wadIndexTable.getEntries()) {
             if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
@@ -75,7 +77,7 @@ public class MWDFile extends GameObject {
             }
 
             files.add(file);
-            lastVB = file instanceof VBFile ? (VBFile) file : null;
+            lastVB = file instanceof AbstractVBFile ? (AbstractVBFile) file : null;
         }
     }
 
@@ -86,7 +88,7 @@ public class MWDFile extends GameObject {
      * @return replacementFile
      */
     public <T extends GameFile> T replaceFile(byte[] fileBytes, FileEntry entry, GameFile oldFile) {
-        VBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
+        AbstractVBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
         T newFile = this.loadFile(fileBytes, entry, lastVB);
         newFile.load(new DataReader(new ArraySource(fileBytes)));
         return newFile;
@@ -100,7 +102,7 @@ public class MWDFile extends GameObject {
      * @return loadedFile
      */
     @SuppressWarnings("unchecked")
-    public <T extends GameFile> T loadFile(byte[] fileBytes, FileEntry entry, VBFile lastVB) {
+    public <T extends GameFile> T loadFile(byte[] fileBytes, FileEntry entry, AbstractVBFile lastVB) {
         // Turn the byte data into the appropriate game-file.
         GameFile file;
 
@@ -124,13 +126,13 @@ public class MWDFile extends GameObject {
             file = new DemoFile();
         } else if (entry.getTypeId() == PALFile.TYPE_ID) {
             file = new PALFile();
-        } else if (!getConfig().isPrototype() && entry.getTypeId() == VHFile.TYPE_ID && !testSignature(fileBytes, 0, VABHeaderFile.SIGNATURE)) { // PSX support is disabled until it is complete.
+        } else if (entry.getTypeId() == VHFile.TYPE_ID && !testSignature(fileBytes, 0, VABHeaderFile.SIGNATURE)) { // PSX support is disabled until it is complete.
             if (lastVB != null) {
                 VHFile vhFile = new VHFile();
                 vhFile.setVB(lastVB);
                 file = vhFile;
             } else {
-                file = new VBFile();
+                file = getConfig().isPrototype() ? new PrototypeVBFile() : new VBFile();
             }
 
         } else {

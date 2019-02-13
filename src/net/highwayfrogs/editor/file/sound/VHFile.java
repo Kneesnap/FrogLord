@@ -21,7 +21,7 @@ import java.util.List;
 @Getter
 public class VHFile extends GameFile {
     private List<AudioHeader> entries = new ArrayList<>();
-    @Setter private transient VBFile VB;
+    @Setter private transient AbstractVBFile VB;
 
     public static final int TYPE_ID = 2;
     public static final Image ICON = loadIcon("sound");
@@ -68,7 +68,7 @@ public class VHFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        Utils.verify(getVB() != null, "VB sound was null.");
+        Utils.verify(getVB() != null, "VB sound is null.");
         return getVB().makeEditor(); // Build the editor for the right file.
     }
 
@@ -78,11 +78,10 @@ public class VHFile extends GameFile {
         private int channels;
         private int dataStartOffset;
         private int dataSize;
-        private int unknown1;
-        private int unknown2;
         private int sampleRate;
         private int bitWidth;
 
+        private static final int UNKNOWN_VALUE = 1;
         private transient boolean audioPresent;
 
         @Override
@@ -90,8 +89,8 @@ public class VHFile extends GameFile {
             this.channels = reader.readInt();
             this.dataStartOffset = reader.readInt();
             this.dataSize = reader.readInt();
-            this.unknown1 = reader.readInt();
-            this.unknown2 = reader.readInt();
+            Utils.verify(reader.readInt() == UNKNOWN_VALUE, "Unkown Value #1 was not correct.");
+            Utils.verify(reader.readInt() == UNKNOWN_VALUE, "Unkown Value #2 was not correct.");
             this.sampleRate = reader.readInt();
             this.bitWidth = reader.readInt();
         }
@@ -101,8 +100,8 @@ public class VHFile extends GameFile {
             writer.writeInt(this.channels);
             writer.writeInt(this.dataStartOffset);
             writer.writeInt(this.dataSize);
-            writer.writeInt(this.unknown1);
-            writer.writeInt(this.unknown2);
+            writer.writeInt(UNKNOWN_VALUE);
+            writer.writeInt(UNKNOWN_VALUE);
             writer.writeInt(this.sampleRate);
             writer.writeInt(this.bitWidth);
         }
@@ -114,5 +113,12 @@ public class VHFile extends GameFile {
         public int getByteWidth() {
             return getBitWidth() / Constants.BITS_PER_BYTE;
         }
+
+        @Override
+        public String toString() {
+            return "[Channels: " + channels + ", Data: (" + Utils.toHexString(dataStartOffset) + "->" + Utils.toHexString(dataStartOffset + dataSize)
+                    + "), Sample Rate: " + sampleRate + ", Bit-Width: " + this.bitWidth + ", Has Audio: " + audioPresent + "]";
+        }
+
     }
 }
