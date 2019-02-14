@@ -178,14 +178,16 @@ public class MOFFile extends GameFile {
 
         // Write Vertices.
         int verticeStart = 0;
+
+        int partCount = 0;
         for (MOFPart part : getParts()) {
             part.setTempVertexStart(verticeStart);
+            objWriter.write("# Part " + (partCount++) + ":" + Constants.NEWLINE);
+            MOFPartcel partcel = part.getPartcels().get(0); // 0 is the animation frame.
+            verticeStart += partcel.getVertices().size();
 
-            for (MOFPartcel partcel : part.getPartcels()) {
-                verticeStart += partcel.getVertices().size();
-                for (SVector vertex : partcel.getVertices())
-                    objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
-            }
+            for (SVector vertex : partcel.getVertices())
+                objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
         }
 
         objWriter.write(Constants.NEWLINE);
