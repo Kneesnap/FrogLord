@@ -115,7 +115,8 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
 
         texCoord.addAndGet(texCount);
         TextureEntry entry = poly.getEntry(textureMap);
-        Utils.verify(entry != null, "Failed to get TextureEntry for polygon.");
+        if (entry == null)
+            throw new RuntimeException("Failed to get TextureEntry for " + poly.getClass().getSimpleName() + " polygon.");
 
         float uSize = (entry.getMaxU() - entry.getMinU());
         float vSize = (entry.getMaxV() - entry.getMinV());

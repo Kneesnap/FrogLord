@@ -67,7 +67,7 @@ public class WADFile extends GameFile {
                     //file = new VLOArchive();
                     file = new DummyFile(data.length);
                 } else if (fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID) {
-                    file = new MOFFile();
+                    file = new MOFFile(theme);
                 } else {
                     throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
                 }

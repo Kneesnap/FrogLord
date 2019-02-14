@@ -64,7 +64,10 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     public void setAction(int actionId) {
         if (actionId < 0)
             return;
-        //TODO: Upper bounds check?
+
+        for (MOFPart part : getMofFile().getParts()) // Don't go too high.
+            if (part.getFlipbook() != null && part.getFlipbook().getActions().size() <= actionId)
+                return;
 
         System.out.println("New Action: " + actionId);
         this.animationId = actionId;
