@@ -3,10 +3,13 @@ package net.highwayfrogs.editor.file.config.exe.psx;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+
+import java.util.function.Function;
 
 /**
  * PSX implementation of ThemeBook.
@@ -49,6 +52,11 @@ public class PSXThemeBook extends ThemeBook {
     @Override
     public boolean isValid() {
         return this.vloId != 0 || this.formLibraryPointer != 0 || this.wadId != 0;
+    }
+
+    @Override
+    public <T> T execute(Function<PCThemeBook, T> pcHandler, Function<PSXThemeBook, T> psxHandler) {
+        return psxHandler.apply(this);
     }
 
     @Override

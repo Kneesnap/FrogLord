@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.WADController;
 
 import java.io.File;
@@ -117,6 +118,7 @@ public class WADFile extends GameFile {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void exportAlternateFormat(FileEntry entry) {
         getMWD().promptVLOSelection(getTheme(), vlo -> {
+
             File folder = new File(GUIMain.getWorkingDirectory(), "mof_" + (getTheme() != null ? getTheme() : "unknown") + File.separator);
             if (!folder.exists())
                 folder.mkdirs();
@@ -129,7 +131,13 @@ public class WADFile extends GameFile {
                 if (file instanceof MOFFile) {
                     MOFFile mofFile = (MOFFile) file;
                     mofFile.setVloFile(vlo);
-                    mofFile.exportObject(wadEntry.getFileEntry(), folder, vlo, Utils.stripExtension(wadEntry.getFileEntry().getDisplayName()));
+
+                    if (true) { //TODO
+                        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), mofFile);
+                        return;
+                    } else {
+                        mofFile.exportObject(wadEntry.getFileEntry(), folder, vlo, Utils.stripExtension(wadEntry.getFileEntry().getDisplayName()));
+                    }
                 }
             }
         }, true);

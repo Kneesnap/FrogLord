@@ -311,7 +311,7 @@ public class MOFFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new MOFController(), "vlo", this);
+        return loadEditor(new MOFController(), "mof", this);
     }
 
     /**

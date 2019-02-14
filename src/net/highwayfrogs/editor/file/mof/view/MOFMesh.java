@@ -38,9 +38,36 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
 
     @Override
     public List<SVector> getVertices() {
-        if (this.verticeCache.isEmpty())
-            for (MOFPart part : getMofFile().getParts())
-                this.verticeCache.addAll(part.getCel(this.animationId, this.frameCount).getVertices());
+        this.verticeCache.clear();
+        for (MOFPart part : getMofFile().getParts())
+            this.verticeCache.addAll(part.getCel(this.animationId, this.frameCount).getVertices());
         return this.verticeCache;
+    }
+
+    /**
+     * Set the animation frame.
+     * @param newFrame The frame to use.
+     */
+    public void setFrame(int newFrame) {
+        if (newFrame < 0)
+            return;
+
+        System.out.println("New Frame: " + newFrame);
+        this.frameCount = newFrame;
+        updateData();
+    }
+
+    /**
+     * Set the animation id.
+     * @param actionId The frame to use.
+     */
+    public void setAction(int actionId) {
+        if (actionId < 0)
+            return;
+        //TODO: Upper bounds check?
+
+        System.out.println("New Action: " + actionId);
+        this.animationId = actionId;
+        setFrame(0);
     }
 }

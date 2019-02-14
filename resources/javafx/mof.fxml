@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<AnchorPane fx:id="rootPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
+            minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0"
+            AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
+            xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <HBox prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="140.0" HBox.hgrow="NEVER">
+                    <children>
+                        <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0"
+                              AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                            <children>
+                                <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="40.0"
+                                            VBox.vgrow="NEVER">
+                                    <children>
+                                        <Label prefHeight="40.0" prefWidth="139.0" text="MOF File"
+                                               AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0"
+                                               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                            <font>
+                                                <Font name="System Bold" size="14.0"/>
+                                            </font>
+                                            <graphic>
+                                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true"
+                                                           preserveRatio="true">
+                                                    <image>
+                                                        <Image url="@/icons/swampy.png"/>
+                                                    </image>
+                                                </ImageView>
+                                            </graphic>
+                                        </Label>
+                                    </children>
+                                </AnchorPane>
+                                <AnchorPane prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                    <children>
+                                        <Button fx:id="openEditorButton" layoutX="8.0" layoutY="14.0"
+                                                mnemonicParsing="false"
+                                                onAction="#onMofButtonClicked" text="Open Editor"
+                                                AnchorPane.leftAnchor="8.0"
+                                                AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="8.0"/>
+                                    </children>
+                                </AnchorPane>
+                            </children>
+                        </VBox>
+                    </children>
+                </AnchorPane>
+                <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0"
+                           HBox.hgrow="NEVER"/>
+            </children>
+        </HBox>
+    </children>
+</AnchorPane>

@@ -9,6 +9,7 @@ import javafx.scene.control.Accordion;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
@@ -48,8 +49,7 @@ public class MOFController extends EditorController<MOFFile> {
 
     @FXML
     private void onMofButtonClicked(ActionEvent event) {
-        TextureMap textureMap = TextureMap.newTextureMap(getFile());
-        setupMofViewer(GUIMain.MAIN_STAGE, textureMap);
+        setupMofViewer(GUIMain.MAIN_STAGE, TextureMap.newTextureMap(getFile()));
     }
 
     @SneakyThrows
@@ -82,12 +82,14 @@ public class MOFController extends EditorController<MOFFile> {
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group(this.camera, meshView);
         SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - uiController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
+        camera.setFarClip(MapUIController.MAP_VIEW_FAR_CLIP);
+        subScene3D.setFill(Color.GRAY);
+        subScene3D.setCamera(camera);
 
         // Setup the UI layout.
         BorderPane uiPane = new BorderPane();
         uiPane.setLeft(loadRoot);
         uiPane.setCenter(subScene3D);
-
 
         // Create and set the scene.
         mofScene = new Scene(uiPane);
@@ -106,9 +108,19 @@ public class MOFController extends EditorController<MOFFile> {
             // Toggle wireframe mode.
             if (event.getCode() == KeyCode.X)
                 meshView.setDrawMode(meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
+
+            if (event.getCode() == KeyCode.UP) {
+                getMofMesh().setAction(getMofMesh().getAnimationId() + 1);
+            } else if (event.getCode() == KeyCode.DOWN) {
+                getMofMesh().setAction(getMofMesh().getAnimationId() - 1);
+            } else if (event.getCode() == KeyCode.LEFT) {
+                getMofMesh().setFrame(getMofMesh().getFrameCount() - 1);
+            } else if (event.getCode() == KeyCode.RIGHT) {
+                getMofMesh().setFrame(getMofMesh().getFrameCount() + 1);
+            }
         });
 
-        mofScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * MapUIController.getSpeedModifier(evt, MapUIController.getPropertyScrollSpeed()))));
+        mofScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * .25)));
 
         mofScene.setOnMousePressed(e -> {
             mouseX = oldMouseX = e.getSceneX();
@@ -124,18 +136,16 @@ public class MOFController extends EditorController<MOFFile> {
             double mouseYDelta = (mouseY - oldMouseY);
 
             if (e.isPrimaryButtonDown()) {
-                rotX.setAngle(rotX.getAngle() + (mouseYDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyRotationSpeed()))); // Rotate the object.
-                rotY.setAngle(rotY.getAngle() - (mouseXDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyRotationSpeed())));
+                rotX.setAngle(rotX.getAngle() + (mouseYDelta * 0.25)); // Rotate the object.
+                rotY.setAngle(rotY.getAngle() - (mouseXDelta * 0.25));
             } else if (e.isMiddleButtonDown()) {
-                camera.setTranslateX(camera.getTranslateX() - (mouseXDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyTranslateSpeed()))); // Move the camera.
-                camera.setTranslateY(camera.getTranslateY() - (mouseYDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyTranslateSpeed())));
+                camera.setTranslateX(camera.getTranslateX() - (mouseXDelta * 0.25)); // Move the camera.
+                camera.setTranslateY(camera.getTranslateY() - (mouseYDelta * 0.25));
             }
         });
 
-        // Set the initial camera position to somewhere sensible :)
-        //  - Maybe calculate this based on some metric rather than supplying arbitrary values?
-        camera.setTranslateZ(-1000.0);
-        camera.setTranslateY(-100.0);
+        camera.setTranslateZ(-100.0);
+        camera.setTranslateY(-10.0);
     }
 
     public static final class MOFUIController implements Initializable {

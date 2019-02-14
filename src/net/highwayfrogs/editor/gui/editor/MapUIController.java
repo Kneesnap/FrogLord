@@ -46,7 +46,7 @@ import java.util.function.Consumer;
 @Getter
 public class MapUIController implements Initializable {
     // Useful constants and settings
-    private static final double MAP_VIEW_FAR_CLIP = 5000.0;
+    public static final double MAP_VIEW_FAR_CLIP = 5000.0;
 
     private static final double ROTATION_SPEED = 0.35D;
     @Getter private static DoubleProperty propertyRotationSpeed = new SimpleDoubleProperty(ROTATION_SPEED);
