@@ -261,8 +261,8 @@ public class Utils {
      * @param intVal The integer to convert.
      * @return floatValue
      */
-    public static float fixedPointIntToFloat2012(int intVal) {
-        return fixedPointIntToFloatNBits(intVal, 20);
+    public static float fixedPointIntToFloat8(int intVal) {
+        return fixedPointIntToFloatNBits(intVal, 24);
     }
 
     /**
