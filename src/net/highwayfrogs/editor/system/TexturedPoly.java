@@ -10,5 +10,7 @@ public interface TexturedPoly {
 
     public ByteUV[] getUvs();
 
-    public short getTextureId();
+    default void performSwap() {
+
+    }
 }

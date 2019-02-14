@@ -122,9 +122,13 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
         float vSize = (entry.getMaxV() - entry.getMinV());
 
         if (poly instanceof TexturedPoly) {
-            ByteUV[] uvs = ((TexturedPoly) poly).getUvs();
+            TexturedPoly texPoly = (TexturedPoly) poly;
+            ByteUV[] uvs = texPoly.getUvs();
+
+            texPoly.performSwap();
             for (ByteUV uv : uvs)
                 getTexCoords().addAll(entry.getMinU() + (uSize * uv.getFloatU()), entry.getMinV() + (vSize * uv.getFloatV()));
+            texPoly.performSwap();
         } else {
             entry.applyMesh(this, texCount);
         }

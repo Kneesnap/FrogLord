@@ -29,7 +29,6 @@ import java.util.ResourceBundle;
 
 /**
  * Controls the MOF editor GUI.
- * TODO: Some error when loading.
  * TODO: Some don't show up, like CAV_SPIDER.
  * Created by Kneesnap on 2/13/2019.
  */
