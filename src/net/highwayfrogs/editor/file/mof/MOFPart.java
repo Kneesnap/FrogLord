@@ -277,4 +277,24 @@ public class MOFPart extends GameObject {
         Utils.verify(partId >= 0, "MOFPart is not registered!");
         return partId;
     }
+
+    /**
+     * Gets the part-cel id.
+     * @param flipbookId The animation id.
+     * @param frame      The global frame count.
+     * @return celId
+     */
+    public int getCelId(int flipbookId, int frame) {
+        return getFlipbook() != null ? getFlipbook().getPartCelIndex(flipbookId, frame) : 0;
+    }
+
+    /**
+     * Gets the flipbook part-cel.
+     * @param flipbookId The animation id.
+     * @param frame      The global frame count.
+     * @return cel
+     */
+    public MOFPartcel getCel(int flipbookId, int frame) {
+        return getPartcels().get(getCelId(flipbookId, frame));
+    }
 }

@@ -10,6 +10,9 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.WADFile;
+import net.highwayfrogs.editor.file.map.MAPTheme;
+import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
@@ -21,12 +24,16 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.MainController;
+import net.highwayfrogs.editor.gui.editor.MOFController;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * Represents a MOF file.
@@ -44,6 +51,8 @@ public class MOFFile extends GameFile {
     private List<MOFPart> parts = new ArrayList<>();
     private int unknownValue;
     @Setter private boolean incompleteMOF; // Some mofs are changed at run-time to share information. This attempts to handle that.
+    @Setter private transient VLOArchive vloFile;
+    private MAPTheme theme;
 
     public static final int FLAG_OFFSETS_RESOLVED = Constants.BIT_FLAG_0; // Fairly sure this is applied by frogger.exe runtime, and not something that should be true in the MWD. (Verify though.)
     public static final int FLAG_SIZES_RESOLVED = Constants.BIT_FLAG_1; // Like before, this is likely frogger.exe run-time only. But, we should confirm that.
@@ -64,6 +73,10 @@ public class MOFFile extends GameFile {
 
     public static final ImageFilterSettings MOF_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
             .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
+
+    public MOFFile(MAPTheme theme) {
+        this.theme = theme;
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -177,15 +190,16 @@ public class MOFFile extends GameFile {
         }
 
         // Write Vertices.
+        int partCount = 0;
         int verticeStart = 0;
         for (MOFPart part : getParts()) {
             part.setTempVertexStart(verticeStart);
+            objWriter.write("# Part " + (partCount++) + ":" + Constants.NEWLINE);
+            MOFPartcel partcel = part.getPartcels().get(0); // 0 is the animation frame.
+            verticeStart += partcel.getVertices().size();
 
-            for (MOFPartcel partcel : part.getPartcels()) {
-                verticeStart += partcel.getVertices().size();
-                for (SVector vertex : partcel.getVertices())
-                    objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
-            }
+            for (SVector vertex : partcel.getVertices())
+                objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
         }
 
         objWriter.write(Constants.NEWLINE);
@@ -211,7 +225,6 @@ public class MOFFile extends GameFile {
                         objWriter.write(mofTex.getObjUVString(i) + Constants.NEWLINE);
                 }
             }
-
         }
 
         objWriter.write("# Faces" + Constants.NEWLINE);
@@ -235,13 +248,8 @@ public class MOFFile extends GameFile {
                 if (exportTextures) {
                     int newTextureId = texture.getImageId();
 
-                    GameImage image = textureMap.computeIfAbsent(newTextureId, key -> {
-                        for (GameImage testImage : vloTable.getImages())
-                            if (testImage.getTextureId() == texture.getImageId())
-                                return testImage;
-
-                        throw new RuntimeException("Failed to find: " + texture.getImageId());
-                    });
+                    GameImage image = textureMap.computeIfAbsent(newTextureId, key ->
+                            vloTable.getImageByTextureId(texture.getImageId()));
                     newTextureId = image.getTextureId();
 
                     if (newTextureId != textureId.get()) { // It's time to change the texture.
@@ -305,5 +313,47 @@ public class MOFFile extends GameFile {
     @Override
     public Node makeEditor() {
         return null;
+    }
+
+    @Override
+    public void handleWadEdit(WADFile parent) {
+        MOFFile toOpen = this.animation != null ? getAnimation().getStaticMOF() : this;
+
+        if (toOpen.getVloFile() != null) {
+            MainController.MAIN_WINDOW.openEditor(new MOFController(), toOpen);
+            return;
+        }
+
+        getMWD().promptVLOSelection(getTheme(), vlo -> {
+            toOpen.setVloFile(vlo);
+            MainController.MAIN_WINDOW.openEditor(new MOFController(), toOpen);
+        }, false);
+    }
+
+    /**
+     * Run some behavior on each mof polygon.
+     * @param handler The behavior to run.
+     */
+    public void forEachPolygon(Consumer<MOFPolygon> handler) {
+        getParts().forEach(part -> part.getMofPolygons().values().forEach(list -> list.forEach(handler)));
+    }
+
+    /**
+     * Create a map of textures which were generated
+     * @return texMap
+     */
+    public Map<VertexColor, BufferedImage> makeVertexColorTextures() {
+        Map<VertexColor, BufferedImage> texMap = new HashMap<>();
+
+        forEachPolygon(prim -> {
+            if (!(prim instanceof VertexColor))
+                return;
+
+            VertexColor vertexColor = (VertexColor) prim;
+            BufferedImage image = vertexColor.makeTexture();
+            texMap.put(vertexColor, image);
+        });
+
+        return texMap;
     }
 }

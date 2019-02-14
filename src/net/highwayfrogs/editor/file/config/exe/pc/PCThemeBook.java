@@ -1,11 +1,15 @@
 package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+
+import java.util.function.Function;
 
 /**
  * A PC ThemeBook implementation.
@@ -75,11 +79,28 @@ public class PCThemeBook extends ThemeBook {
     }
 
     @Override
+    public boolean isEntry(FileEntry test) {
+        return lowWadId == test.getLoadedId()
+                || lowVloId == test.getLoadedId()
+                || highWadId == test.getLoadedId()
+                || highVloId == test.getLoadedId()
+                || lowMultiplayerWadId == test.getLoadedId()
+                || lowMultiplayerVloId == test.getLoadedId()
+                || highMultiplayerWadId == test.getLoadedId()
+                || highMultiplayerVloId == test.getLoadedId();
+    }
+
+    @Override
     public String toString() {
         return "WAD[Hi: " + getConfig().getResourceName(highWadId) + ",Lo: " + getConfig().getResourceName(lowWadId)
                 + "] VLO[Hi: " + getConfig().getResourceName(highVloId) + ",Lo: " + getConfig().getResourceName(lowVloId)
                 + "] mWAD[Hi: " + getConfig().getResourceName(highMultiplayerWadId) + ",Lo: " + getConfig().getResourceName(lowMultiplayerWadId)
                 + "] mVLO[Hi: " + getConfig().getResourceName(highMultiplayerVloId) + ",Lo: " + getConfig().getResourceName(lowMultiplayerVloId)
                 + "] Death Height: " + deathHeight;
+    }
+
+    @Override
+    public <T> T execute(Function<PCThemeBook, T> pcHandler, Function<PSXThemeBook, T> psxHandler) {
+        return pcHandler.apply(this);
     }
 }

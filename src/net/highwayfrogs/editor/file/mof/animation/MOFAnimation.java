@@ -61,7 +61,8 @@ public class MOFAnimation extends GameObject {
         reader.jumpReturn();
 
         DataReader mofReader = reader.newReader(mofPointer, staticFilePointer - mofPointer);
-        this.staticMOF = new MOFFile();
+        this.staticMOF = new MOFFile(getMofParent().getTheme());
+        this.staticMOF.setVloFile(getMofParent().getVloFile());
         this.staticMOF.load(mofReader);
     }
 

@@ -49,6 +49,8 @@ public class FroggerEXEInfo extends Config {
     private List<LevelInfo> raceLevelInfo = new ArrayList<>();
     private List<Long> bmpTexturePointers = new ArrayList<>();
     private long textureStartAddress; // Start address for bmp_pointers array.
+    private short[] cosEntries = new short[ACOSTABLE_ENTRIES];
+    private short[] sinEntries = new short[ACOSTABLE_ENTRIES];
 
     private String name;
     private long ramPointerOffset;
@@ -58,6 +60,7 @@ public class FroggerEXEInfo extends Config {
     private int themeBookAddress;
     private int arcadeLevelAddress;
     private int bmpPointerAddress;
+    private int cosTableAddress;
     private int musicAddress;
     private boolean prototype;
     private boolean demo;
@@ -67,6 +70,8 @@ public class FroggerEXEInfo extends Config {
     private byte[] exeBytes;
     private File inputFile;
     private List<String> fallbackFileNames;
+
+    private static final int ACOSTABLE_ENTRIES = 4096;
 
     public static final String FIELD_NAME = "name";
     private static final String FIELD_FILE_NAMES = "Files";
@@ -110,6 +115,7 @@ public class FroggerEXEInfo extends Config {
         GameSound.loadSounds(getString("soundList", GameSound.MAIN_KEY)); // Load the sound config.
         readConfig();
         readMWI();
+        readCosTable();
         readThemeLibrary();
         readMapLibrary();
         readRemapData();
@@ -132,6 +138,7 @@ public class FroggerEXEInfo extends Config {
         this.arcadeLevelAddress = getInt("arcadeLevelAddress", 0);
         this.musicAddress = getInt("musicAddress");
         this.bmpPointerAddress = getInt("bmpPointerAddress", 0);
+        this.cosTableAddress = getInt("cosTableAddress");
     }
 
     /**
@@ -149,6 +156,16 @@ public class FroggerEXEInfo extends Config {
         this.MWI = mwiFile;
     }
 
+    private void readCosTable() {
+        DataReader reader = getReader();
+
+        reader.setIndex(getCosTableAddress());
+        for (int i = 0; i < ACOSTABLE_ENTRIES; i++) {
+            sinEntries[i] = reader.readShort();
+            cosEntries[i] = reader.readShort();
+        }
+    }
+
     private void readThemeLibrary() {
         themeLibrary = new ThemeBook[MAPTheme.values().length];
 
@@ -157,6 +174,7 @@ public class FroggerEXEInfo extends Config {
 
         for (int i = 0; i < themeLibrary.length; i++) {
             ThemeBook book = TargetPlatform.makeNewThemeBook(this);
+            book.setTheme(MAPTheme.values()[i]);
             book.load(reader);
             themeLibrary[i] = book;
             Constants.logExeInfo(book);
@@ -565,5 +583,23 @@ public class FroggerEXEInfo extends Config {
 
         // Must happen last.
         writer.write("#endif" + Constants.NEWLINE);
+    }
+
+    /**
+     * Perform rCos on an angle.
+     * @param angle The angle to perform rCos on.
+     * @return rCos
+     */
+    public int rcos(int angle) {
+        return this.cosEntries[angle & 0xFFF]; // & 0xFFF cuts off the decimal point.
+    }
+
+    /**
+     * Perform rSin on an angle.
+     * @param angle The angle to perform rSin on.
+     * @return rSin
+     */
+    public int rsin(int angle) {
+        return this.sinEntries[angle & 0xFFF]; // & 0xFFF cuts off the decimal point.
     }
 }

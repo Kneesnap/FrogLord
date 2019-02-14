@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.file.map.path.data;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathSegment;
@@ -50,15 +49,21 @@ public class ArcSegment extends PathSegment {
 
     @Override
     protected SVector calculatePosition(PathInfo info) {
-        short segmentDistance = (short) info.getSegmentDistance();
-        float distanceCovered = Utils.fixedPointShortToFloat412(segmentDistance);
+        int segmentDistance = info.getSegmentDistance();
 
+        int c = getRadius() * 0x6487;
+        int t = (segmentDistance << 12) / c;
+        int a = ((segmentDistance << 18) - (t * c)) / (getRadius() * 0x192);
+        int cos = getConfig().rcos(a);
+        int sin = getConfig().rsin(a);
+
+        //TODO: X and Z aren't accurate. It could be because there is no rotation matrix.
         SVector vector = new SVector(start).subtract(center);
         vector.multiply(segmentDistance / (double) getLength());
-        //TODO: X and Z aren't accurate.
-        vector.setY(Utils.floatToFixedPointShort412(-Utils.fixedPointIntToFloat2012(getPitch()) * (distanceCovered / (float) getLength())));
-        vector.add(center);
-        return vector;
+        vector.setX((short) ((cos * getRadius()) >> 12));
+        vector.setY((short) ((-getPitch() * segmentDistance) / getLength()));
+        vector.setZ((short) ((sin * getRadius()) >> 12));
+        return vector.add(center);
     }
 
     @Override

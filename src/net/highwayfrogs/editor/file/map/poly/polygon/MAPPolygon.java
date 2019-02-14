@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -88,11 +86,4 @@ public abstract class MAPPolygon extends MAPPrimitive {
     public int getOrderId() {
         return 0;
     }
-
-    /**
-     * Get the TextureEntry for this polygon.
-     * @param map The map to get this from.
-     * @return entry
-     */
-    public abstract TextureEntry getEntry(TextureMap map);
 }

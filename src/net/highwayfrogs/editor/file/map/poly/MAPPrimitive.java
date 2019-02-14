@@ -38,14 +38,6 @@ public abstract class MAPPrimitive extends PSXGPUPrimitive {
     }
 
     /**
-     * Get the number of vertices stored by this primitive.
-     * @return verticeCount
-     */
-    public int getVerticeCount() {
-        return vertices.length;
-    }
-
-    /**
      * Setup an editor for this prim.
      * @param controller The controller.
      * @param editor     The editor to create.

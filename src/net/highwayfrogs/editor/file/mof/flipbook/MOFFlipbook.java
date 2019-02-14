@@ -35,4 +35,15 @@ public class MOFFlipbook extends GameObject {
         writer.writeUnsignedShort(this.actions.size());
         this.actions.forEach(action -> action.save(writer));
     }
+
+    /**
+     * Get the PartCel index based on the number.
+     * @param animationId The frame number presumably.
+     * @param frameCount  "Cel number"
+     * @return celIndex
+     */
+    public int getPartCelIndex(int animationId, int frameCount) {
+        MOFFlipbookAction action = getActions().get(animationId);
+        return action.getPartcelIndex() + (frameCount % action.getPartcelCount());
+    }
 }

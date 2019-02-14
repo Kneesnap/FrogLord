@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
+import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -35,10 +36,19 @@ public class TextureMap {
      * Create a new texture map from an existing VLOArchive.
      * @return newTextureMap
      */
-    public static TextureMap newTextureMap(MAPFile mapFile) {
-        VLOArchive vloSource = mapFile.getVlo();
-        Map<VertexColor, BufferedImage> texMap = mapFile.makeVertexColorTextures();
+    public static TextureMap newTextureMap(MOFFile mofFile) {
+        return makeMap(mofFile.getVloFile(), null, mofFile.makeVertexColorTextures());
+    }
 
+    /**
+     * Create a new texture map from an existing VLOArchive.
+     * @return newTextureMap
+     */
+    public static TextureMap newTextureMap(MAPFile mapFile) {
+        return makeMap(mapFile.getVlo(), mapFile.getConfig().getRemapTable(mapFile.getFileEntry()), mapFile.makeVertexColorTextures());
+    }
+
+    private static TextureMap makeMap(VLOArchive vloSource, List<Short> remapTable, Map<VertexColor, BufferedImage> texMap) {
         int height = vloSource.getImages().stream().mapToInt(GameImage::getFullHeight).max().orElse(0); // Size of largest texture.
         int width = vloSource.getImages().stream().mapToInt(GameImage::getFullWidth).sum(); //Sum of all texture widths.
         width += (texMap.values().stream().mapToInt(BufferedImage::getWidth).sum() / (height / MAPFile.VERTEX_COLOR_IMAGE_SIZE)); // Add vertex colors.
@@ -74,7 +84,25 @@ public class TextureMap {
         }
 
         graphics.dispose();
-        return new TextureMap(vloSource, fullImage, entryMap, mapFile.getConfig().getRemapTable(mapFile.getFileEntry()));
+        return new TextureMap(vloSource, fullImage, entryMap, remapTable);
+    }
+
+    /**
+     * Gets the remap value for a texture.
+     * @param index The index to remap
+     * @return remap
+     */
+    public Short getRemap(short index) {
+        return this.remapList != null ? this.remapList.get(index) : index;
+    }
+
+    /**
+     * Get the entry for the tex id.
+     * @param index The index.
+     * @return entry
+     */
+    public TextureEntry getEntry(short index) {
+        return getEntryMap().get(getRemap(index));
     }
 
     @Getter
@@ -139,7 +167,7 @@ public class TextureMap {
          * @param mesh      The mesh to apply this entry to.
          * @param vertCount The amount of vertices to add.
          */
-        public void applyMesh(MapMesh mesh, int vertCount) {
+        public void applyMesh(FrogMesh mesh, int vertCount) {
             mesh.getTexCoords().addAll(getMinU(), getMinV());
             mesh.getTexCoords().addAll(getMinU(), getMaxV());
             mesh.getTexCoords().addAll(getMaxU(), getMinV());

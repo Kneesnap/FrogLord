@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
+import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -215,11 +216,22 @@ public class MWIFile extends GameObject {
          * Get the book which holds this FileEntry.
          * @return book
          */
-        public MapBook getBook() {
+        public MapBook getMapBook() {
             for (MapBook book : getConfig().getMapLibrary())
                 if (book.isEntry(this))
                     return book;
             throw new RuntimeException("Failed to find MapBook for FileEntry.");
+        }
+
+        /**
+         * Get the book which holds this FileEntry.
+         * @return book
+         */
+        public ThemeBook getThemeBook() {
+            for (ThemeBook book : getConfig().getThemeLibrary())
+                if (book.isEntry(this))
+                    return book;
+            return null;
         }
     }
 }

@@ -1,11 +1,15 @@
 package net.highwayfrogs.editor.file.config.exe.psx;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+
+import java.util.function.Function;
 
 /**
  * PSX implementation of ThemeBook.
@@ -51,12 +55,23 @@ public class PSXThemeBook extends ThemeBook {
     }
 
     @Override
+    public <T> T execute(Function<PCThemeBook, T> pcHandler, Function<PSXThemeBook, T> psxHandler) {
+        return psxHandler.apply(this);
+    }
+
+    @Override
     public void handleCorrection(String[] args) {
         this.wadId = Integer.parseInt(args[0]);
         this.vloId = Integer.parseInt(args[1]);
         this.multiplayerWadId = Integer.parseInt(args[2]);
         this.multiplayerVloId = Integer.parseInt(args[3]);
         this.formLibraryPointer = Long.decode(args[4]) + getConfig().getRamPointerOffset();
+    }
+
+    @Override
+    public boolean isEntry(FileEntry test) {
+        return wadId == test.getLoadedId() || multiplayerWadId == test.getLoadedId()
+                || vloId == test.getLoadedId() || multiplayerVloId == test.getLoadedId();
     }
 
     @Override

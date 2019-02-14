@@ -8,6 +8,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
@@ -30,21 +31,18 @@ import java.util.List;
 public class WADFile extends GameFile {
     private List<WADEntry> files = new ArrayList<>();
     private MAPTheme theme;
-    private MWDFile parentMWD;
 
     private static final Image ICON = loadIcon("packed");
     public static String CURRENT_FILE_NAME = null;
     public static final int TYPE_ID = -1;
     private static final int TERMINATOR = -1;
 
-    public WADFile(MWDFile file) {
-        this.parentMWD = file;
-    }
-
     @Override
     public void load(DataReader reader) {
-        this.theme = MAPTheme.getTheme(MWDFile.CURRENT_FILE_NAME);
-        MWIFile mwiTable = getParentMWD().getWadIndexTable();
+        ThemeBook themeBook = getFileEntry().getThemeBook();
+        this.theme = themeBook != null ? themeBook.getTheme() : MAPTheme.getTheme(getFileEntry().getDisplayName());
+
+        MWIFile mwiTable = getConfig().getMWI();
 
         while (true) {
             int resourceId = reader.readInt();
@@ -69,7 +67,7 @@ public class WADFile extends GameFile {
                     //file = new VLOArchive();
                     file = new DummyFile(data.length);
                 } else if (fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID) {
-                    file = new MOFFile();
+                    file = new MOFFile(theme);
                 } else {
                     throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
                 }
@@ -118,7 +116,8 @@ public class WADFile extends GameFile {
     @Override
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void exportAlternateFormat(FileEntry entry) {
-        getParentMWD().promptVLOSelection(getTheme(), vlo -> {
+        getMWD().promptVLOSelection(getTheme(), vlo -> {
+
             File folder = new File(GUIMain.getWorkingDirectory(), "mof_" + (getTheme() != null ? getTheme() : "unknown") + File.separator);
             if (!folder.exists())
                 folder.mkdirs();
@@ -126,12 +125,25 @@ public class WADFile extends GameFile {
             if (vlo != null)
                 vlo.exportAllImages(folder, MOFFile.MOF_EXPORT_FILTER);
 
+            setVLO(vlo);
             for (WADEntry wadEntry : getFiles()) {
                 GameFile file = wadEntry.getFile();
                 if (file instanceof MOFFile)
                     ((MOFFile) file).exportObject(wadEntry.getFileEntry(), folder, vlo, Utils.stripExtension(wadEntry.getFileEntry().getDisplayName()));
             }
         }, true);
+    }
+
+    /**
+     * Set the VLO file of all of the mofs inside this wad.
+     * @param vloArchive The new VLO archive.
+     */
+    public void setVLO(VLOArchive vloArchive) {
+        for (WADEntry wadEntry : getFiles()) {
+            GameFile file = wadEntry.getFile();
+            if (file instanceof MOFFile)
+                ((MOFFile) file).setVloFile(vloArchive);
+        }
     }
 
     @Override

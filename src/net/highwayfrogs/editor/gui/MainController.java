@@ -185,6 +185,22 @@ public class MainController implements Initializable {
         currentFilesList = activeList;
     }
 
+    /**
+     * Open an editor for a given file.
+     */
+    @SneakyThrows
+    public <T extends GameFile> void openEditor(EditorController<T> editor, T file) {
+        if (getCurrentController() != null)
+            getCurrentController().onClose(editorPane);
+        setCurrentController(editor);
+
+        editorPane.getChildren().clear(); // Remove any existing editor.
+        if (editor != null) { // null = No editor.
+            editor.loadFile(file);
+            editor.onInit(editorPane);
+        }
+    }
+
 
     @AllArgsConstructor
     private static class AttachmentListCell extends ListCell<GameFile> {

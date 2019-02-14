@@ -51,7 +51,7 @@ public class WADController extends EditorController<WADFile> {
 
         WADFile.CURRENT_FILE_NAME = selectedEntry.getFileEntry().getDisplayName();
         byte[] newBytes = Files.readAllBytes(selectedFile.toPath());
-        this.selectedEntry.setFile(getFile().getParentMWD().replaceFile(newBytes, selectedEntry.getFileEntry(), selectedEntry.getFile()));
+        this.selectedEntry.setFile(getFile().getMWD().replaceFile(newBytes, selectedEntry.getFileEntry(), selectedEntry.getFile()));
 
         updateEntry(); // Update the display.
         WADFile.CURRENT_FILE_NAME = null;
@@ -91,6 +91,11 @@ public class WADController extends EditorController<WADFile> {
             writer.closeReceiver();
         }
         WADFile.CURRENT_FILE_NAME = null;
+    }
+
+    @FXML
+    private void editSelectedFile(ActionEvent event) {
+        selectedEntry.getFile().handleWadEdit(getFile());
     }
 
     private static class AttachmentListCell extends ListCell<WADEntry> {

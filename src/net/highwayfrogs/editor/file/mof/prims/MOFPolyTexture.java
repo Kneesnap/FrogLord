@@ -3,12 +3,14 @@ package net.highwayfrogs.editor.file.mof.prims;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.system.TexturedPoly;
 
 
 /**
@@ -17,7 +19,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 @Setter
-public class MOFPolyTexture extends MOFPolygon {
+public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     private ByteUV[] uvs;
     private short clutId;
     private short textureId;
@@ -77,7 +79,6 @@ public class MOFPolyTexture extends MOFPolygon {
      */
     public String getObjUVString(int index) {
         return this.uvs[index].toObjTextureString();
-
     }
 
     @Override
@@ -87,6 +88,15 @@ public class MOFPolyTexture extends MOFPolygon {
 
     @Override
     public TextureEntry getEntry(TextureMap map) {
-        return map.getEntryMap().get(map.getRemapList().get(getTextureId()));
+        return map.getEntry(getImageId());
+    }
+
+    @Override
+    public void performSwap() {
+        if (getUvs().length == MAPPolygon.QUAD_SIZE) {
+            ByteUV temp = this.uvs[2];
+            this.uvs[2] = this.uvs[3];
+            this.uvs[3] = temp;
+        }
     }
 }
