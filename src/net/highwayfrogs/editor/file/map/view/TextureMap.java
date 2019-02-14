@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
+import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -30,6 +31,16 @@ public class TextureMap {
     @Setter private List<Short> remapList;
 
     private static final ImageFilterSettings DISPLAY_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setAllowTransparency(true);
+
+    /**
+     * Create a new texture map from an existing VLOArchive.
+     * @return newTextureMap
+     */
+    public static TextureMap newTextureMap(MOFFile mofFile) {
+        VLOArchive vloArchive = mofFile.getVloFile();
+
+        throw new UnsupportedOperationException("TODO!"); //TODO
+    }
 
     /**
      * Create a new texture map from an existing VLOArchive.
@@ -139,7 +150,7 @@ public class TextureMap {
          * @param mesh      The mesh to apply this entry to.
          * @param vertCount The amount of vertices to add.
          */
-        public void applyMesh(MapMesh mesh, int vertCount) {
+        public void applyMesh(FrogMesh mesh, int vertCount) {
             mesh.getTexCoords().addAll(getMinU(), getMinV());
             mesh.getTexCoords().addAll(getMinU(), getMaxV());
             mesh.getTexCoords().addAll(getMaxU(), getMinV());

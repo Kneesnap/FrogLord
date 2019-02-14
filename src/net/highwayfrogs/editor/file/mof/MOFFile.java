@@ -27,6 +27,7 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * Represents a MOF file.
@@ -44,6 +45,8 @@ public class MOFFile extends GameFile {
     private List<MOFPart> parts = new ArrayList<>();
     private int unknownValue;
     @Setter private boolean incompleteMOF; // Some mofs are changed at run-time to share information. This attempts to handle that.
+
+    private transient VLOArchive vloFile;
 
     public static final int FLAG_OFFSETS_RESOLVED = Constants.BIT_FLAG_0; // Fairly sure this is applied by frogger.exe runtime, and not something that should be true in the MWD. (Verify though.)
     public static final int FLAG_SIZES_RESOLVED = Constants.BIT_FLAG_1; // Like before, this is likely frogger.exe run-time only. But, we should confirm that.
@@ -64,6 +67,10 @@ public class MOFFile extends GameFile {
 
     public static final ImageFilterSettings MOF_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
             .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
+
+    public MOFFile(VLOArchive archive) {
+        this.vloFile = archive;
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -307,5 +314,13 @@ public class MOFFile extends GameFile {
     @Override
     public Node makeEditor() {
         return null;
+    }
+
+    /**
+     * Run some behavior on each mof polygon.
+     * @param handler The behavior to run.
+     */
+    public void forEachPolygon(Consumer<MOFPolygon> handler) {
+        getParts().forEach(part -> part.getMofPolygons().values().forEach(list -> list.forEach(handler)));
     }
 }

@@ -4,7 +4,7 @@ import javafx.collections.ObservableFloatArray;
 import javafx.collections.ObservableIntegerArray;
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
-import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.file.map.view.FrogMesh;
 
 import java.util.LinkedList;
 
@@ -14,10 +14,10 @@ import java.util.LinkedList;
  */
 @Getter
 public class MeshManager {
-    private MapMesh mesh;
+    private FrogMesh mesh;
     private LinkedList<MeshData> meshData = new LinkedList<>();
 
-    public MeshManager(MapMesh mesh) {
+    public MeshManager(FrogMesh mesh) {
         this.mesh = mesh;
     }
 
