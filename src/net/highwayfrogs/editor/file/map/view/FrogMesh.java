@@ -22,9 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 2/13/2019.
  */
 @Getter
-public abstract class FrogMesh extends TriangleMesh {
-    private Map<Integer, PSXGPUPrimitive> facePolyMap = new HashMap<>();
-    private Map<PSXGPUPrimitive, Integer> polyFaceMap = new HashMap<>();
+public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
+    private Map<Integer, T> facePolyMap = new HashMap<>();
+    private Map<T, Integer> polyFaceMap = new HashMap<>();
     private TextureMap textureMap;
     private MeshManager manager;
     private int faceCount;
@@ -41,7 +41,7 @@ public abstract class FrogMesh extends TriangleMesh {
      * @param prim  The primitive to add.
      * @param texId The texture id.
      */
-    public void addPolygon(PSXGPUPrimitive prim, AtomicInteger texId) {
+    public void addPolygon(T prim, AtomicInteger texId) {
         int vertCount = prim.getVerticeCount();
 
         if (vertCount == MAPPolygon.TRI_SIZE) {
@@ -58,7 +58,7 @@ public abstract class FrogMesh extends TriangleMesh {
      * Add a rectangle polygon.
      * @param poly The rectangle polygon.
      */
-    public void addRectangle(PSXGPUPrimitive poly, AtomicInteger texCoord) {
+    public void addRectangle(T poly, AtomicInteger texCoord) {
         Utils.verify(poly.getVerticeCount() == MAPPolygon.QUAD_SIZE, "This polygon has %d vertices!", poly.getVerticeCount());
 
         int[] verts = poly.getVertices();
@@ -87,7 +87,7 @@ public abstract class FrogMesh extends TriangleMesh {
      * Add a triangle polygon.
      * @param poly The triangle polygon.
      */
-    public void addTriangle(PSXGPUPrimitive poly, AtomicInteger texCoord) {
+    public void addTriangle(T poly, AtomicInteger texCoord) {
         Utils.verify(poly.getVerticeCount() == MAPPolygon.TRI_SIZE, "This polygon has %d vertices!", poly.getVerticeCount());
 
         int[] verts = poly.getVertices();
@@ -109,7 +109,7 @@ public abstract class FrogMesh extends TriangleMesh {
         getFaces().addAll(v1, texId, v2, texId + 1, v3, texId + 2);
     }
 
-    private int addTexCoords(PSXGPUPrimitive poly, AtomicInteger texCoord) {
+    private int addTexCoords(T poly, AtomicInteger texCoord) {
         int texId = texCoord.get();
         int texCount = poly.getVerticeCount();
 

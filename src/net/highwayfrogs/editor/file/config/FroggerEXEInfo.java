@@ -174,6 +174,7 @@ public class FroggerEXEInfo extends Config {
 
         for (int i = 0; i < themeLibrary.length; i++) {
             ThemeBook book = TargetPlatform.makeNewThemeBook(this);
+            book.setTheme(MAPTheme.values()[i]);
             book.load(reader);
             themeLibrary[i] = book;
             Constants.logExeInfo(book);

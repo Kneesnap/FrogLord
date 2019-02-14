@@ -75,7 +75,7 @@ public class MOFController extends EditorController<MOFFile> {
         this.camera = new PerspectiveCamera(true);
 
         // Load FXML for UI layout.
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/javafx/mof.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/javafx/mof-view.fxml"));
         Parent loadRoot = fxmlLoader.load();
         this.uiController = fxmlLoader.getController();
 

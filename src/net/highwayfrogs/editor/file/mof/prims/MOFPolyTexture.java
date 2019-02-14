@@ -87,6 +87,6 @@ public class MOFPolyTexture extends MOFPolygon {
 
     @Override
     public TextureEntry getEntry(TextureMap map) {
-        return map.getEntryMap().get(map.getRemapList().get(getTextureId()));
+        return map.getEntryMap().get(map.getRemap(getTextureId()));
     }
 }

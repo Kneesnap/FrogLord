@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -72,6 +73,18 @@ public class PCThemeBook extends ThemeBook {
     @Override
     public void handleCorrection(String[] args) {
         throw new UnsupportedOperationException("This will be implemented if we find a version which requires it.");
+    }
+
+    @Override
+    public boolean isEntry(FileEntry test) {
+        return lowWadId == test.getLoadedId()
+                || lowVloId == test.getLoadedId()
+                || highWadId == test.getLoadedId()
+                || highVloId == test.getLoadedId()
+                || lowMultiplayerWadId == test.getLoadedId()
+                || lowMultiplayerVloId == test.getLoadedId()
+                || highMultiplayerWadId == test.getLoadedId()
+                || highMultiplayerVloId == test.getLoadedId();
     }
 
     @Override

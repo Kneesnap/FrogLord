@@ -19,8 +19,6 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 
-import java.util.List;
-
 /**
  * Represents PSX polgons with a texture.
  * Created by Kneesnap on 8/25/2018.
@@ -125,26 +123,29 @@ public class MAPPolyTexture extends MAPPolygon {
 
     @Override
     public TextureEntry getEntry(TextureMap map) {
-        return map.getEntryMap().get(map.getRemapList().get(getTextureId()));
+        return map.getEntryMap().get(map.getRemap(getTextureId()));
     }
 
     @Override
     public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(controller, editor);
 
-        List<Short> remapList = controller.getMesh().getTextureMap().getRemapList();
+        TextureMap texMap = controller.getMesh().getTextureMap();
         VLOArchive suppliedVLO = controller.getMap().getVlo();
-        GameImage image = suppliedVLO.getImageByTextureId(remapList.get(getTextureId()));
+        GameImage image = suppliedVLO.getImageByTextureId(texMap.getRemap(getTextureId()));
 
         ImageView view = editor.addCenteredImage(image.toFXImage(SHOW_SETTINGS), 150);
         view.setOnMouseClicked(evt -> suppliedVLO.promptImageSelection(newImage -> {
-            int newValue = remapList.indexOf(newImage.getTextureId());
-            if (newValue == -1) {
+            short newValue = newImage.getTextureId();
+            if (texMap.getRemapList() != null)
+                newValue = (short) texMap.getRemapList().indexOf(newValue);
+
+            if (newValue == (short) -1) {
                 System.out.println("This image is not part of the remap! It can't be used!"); // Show this as a popup maybe.
                 return;
             }
 
-            this.textureId = (short) newValue;
+            this.textureId = newValue;
             view.setImage(newImage.toFXImage(SHOW_SETTINGS));
             controller.getController().refreshView();
         }, false));

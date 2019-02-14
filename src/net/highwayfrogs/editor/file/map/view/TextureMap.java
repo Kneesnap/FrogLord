@@ -37,9 +37,7 @@ public class TextureMap {
      * @return newTextureMap
      */
     public static TextureMap newTextureMap(MOFFile mofFile) {
-        VLOArchive vloArchive = mofFile.getVloFile();
-
-        throw new UnsupportedOperationException("TODO!"); //TODO
+        return makeMap(mofFile.getVloFile(), null, mofFile.makeVertexColorTextures());
     }
 
     /**
@@ -47,9 +45,10 @@ public class TextureMap {
      * @return newTextureMap
      */
     public static TextureMap newTextureMap(MAPFile mapFile) {
-        VLOArchive vloSource = mapFile.getVlo();
-        Map<VertexColor, BufferedImage> texMap = mapFile.makeVertexColorTextures();
+        return makeMap(mapFile.getVlo(), mapFile.getConfig().getRemapTable(mapFile.getFileEntry()), mapFile.makeVertexColorTextures());
+    }
 
+    private static TextureMap makeMap(VLOArchive vloSource, List<Short> remapTable, Map<VertexColor, BufferedImage> texMap) {
         int height = vloSource.getImages().stream().mapToInt(GameImage::getFullHeight).max().orElse(0); // Size of largest texture.
         int width = vloSource.getImages().stream().mapToInt(GameImage::getFullWidth).sum(); //Sum of all texture widths.
         width += (texMap.values().stream().mapToInt(BufferedImage::getWidth).sum() / (height / MAPFile.VERTEX_COLOR_IMAGE_SIZE)); // Add vertex colors.
@@ -85,7 +84,16 @@ public class TextureMap {
         }
 
         graphics.dispose();
-        return new TextureMap(vloSource, fullImage, entryMap, mapFile.getConfig().getRemapTable(mapFile.getFileEntry()));
+        return new TextureMap(vloSource, fullImage, entryMap, remapTable);
+    }
+
+    /**
+     * Gets the remap value for a texture.
+     * @param index The index to remap
+     * @return remap
+     */
+    public short getRemap(short index) {
+        return this.remapList != null ? this.remapList.get(index) : index;
     }
 
     @Getter

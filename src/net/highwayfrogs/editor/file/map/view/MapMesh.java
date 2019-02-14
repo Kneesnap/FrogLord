@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 11/25/2018.
  */
 @Getter
-public class MapMesh extends FrogMesh {
+public class MapMesh extends FrogMesh<MAPPolygon> {
     private MAPFile map;
 
     public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
@@ -34,7 +34,7 @@ public class MapMesh extends FrogMesh {
         AtomicInteger texId = new AtomicInteger();
         getMap().forEachPrimitive(prim -> {
             if (prim instanceof MAPPolygon)
-                addPolygon(prim, texId);
+                addPolygon((MAPPolygon) prim, texId);
         });
     }
 

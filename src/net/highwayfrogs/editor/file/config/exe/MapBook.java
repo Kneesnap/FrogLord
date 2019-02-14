@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.config.exe;
 
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
@@ -71,13 +70,6 @@ public abstract class MapBook extends ExeStruct {
         entries.forEach(writer::writeShort);
         writer.writeShort(REMAP_TERMINATOR);
     }
-
-    /**
-     * Test if a file entry is held by this struct.
-     * @param test The entry to test.
-     * @return isEntry
-     */
-    public abstract boolean isEntry(FileEntry test);
 
     /**
      * Check if this map book is dummied.

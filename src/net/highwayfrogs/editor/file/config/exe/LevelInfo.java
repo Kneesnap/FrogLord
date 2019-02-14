@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config.exe;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.data.WorldId;
 import net.highwayfrogs.editor.file.map.MAPTheme;
@@ -71,6 +72,11 @@ public class LevelInfo extends ExeStruct {
     @Override
     public void handleCorrection(String[] args) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isEntry(FileEntry test) {
+        return false;
     }
 
     /**

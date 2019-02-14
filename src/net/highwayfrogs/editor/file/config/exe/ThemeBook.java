@@ -1,13 +1,18 @@
 package net.highwayfrogs.editor.file.config.exe;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 
 /**
  * Represents a platform-independent ThemeBook.
  * Created by Kneesnap on 1/27/2019.
  */
+@Getter
 public abstract class ThemeBook extends ExeStruct {
+    @Setter private transient MAPTheme theme;
 
     /**
      * Get the VLO of this book.

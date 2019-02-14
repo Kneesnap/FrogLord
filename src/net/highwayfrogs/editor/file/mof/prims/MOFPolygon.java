@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.file.mof.prims;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
@@ -17,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public abstract class MOFPolygon extends PSXGPUPrimitive {
-    private short[] vertices;
+    private int[] vertices; // An integer array so it matches the type PSX
     private short[] en; // Not entirely sure what this is.
     private short[] normals;
     private short padding;
@@ -30,7 +28,7 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
 
     public MOFPolygon(MOFPrimType type, int verticeCount, int normalCount, int enCount) {
         this.type = type;
-        this.vertices = new short[verticeCount];
+        this.vertices = new int[verticeCount];
         this.normals = new short[normalCount];
         this.en = new short[enCount];
     }
@@ -55,8 +53,8 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
 
     @Override
     public final void save(DataWriter writer) {
-        for (short vertice : vertices)
-            writer.writeShort(vertice);
+        for (int vertice : vertices)
+            writer.writeShort((short) vertice);
 
         for (short aShort : en)
             writer.writeShort(aShort);
@@ -121,14 +119,5 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
      */
     public int getOrderId() {
         return 0;
-    }
-
-    /**
-     * Get the TextureEntry for this polygon.
-     * @param map The map to get this from.
-     * @return entry
-     */
-    public TextureEntry getEntry(TextureMap map) {
-        return null;
     }
 }

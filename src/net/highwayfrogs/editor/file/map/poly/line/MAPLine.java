@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.file.map.poly.line;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
+import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 
 /**
  * Represents a PSX line.
@@ -12,5 +14,10 @@ import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
 public class MAPLine extends MAPPrimitive {
     public MAPLine(MAPPrimitiveType type, int verticeCount) {
         super(type, verticeCount);
+    }
+
+    @Override
+    public TextureEntry getEntry(TextureMap map) {
+        return null;
     }
 }

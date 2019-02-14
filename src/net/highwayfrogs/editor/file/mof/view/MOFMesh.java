@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.map.view.FrogMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFPart;
+import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.standard.SVector;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 2/13/2019.
  */
 @Getter
-public class MOFMesh extends FrogMesh {
+public class MOFMesh extends FrogMesh<MOFPolygon> {
     private MOFFile mofFile;
     private int animationId;
     private int frameCount;

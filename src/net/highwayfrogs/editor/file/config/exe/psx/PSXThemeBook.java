@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config.exe.psx;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -57,6 +58,12 @@ public class PSXThemeBook extends ThemeBook {
         this.multiplayerWadId = Integer.parseInt(args[2]);
         this.multiplayerVloId = Integer.parseInt(args[3]);
         this.formLibraryPointer = Long.decode(args[4]) + getConfig().getRamPointerOffset();
+    }
+
+    @Override
+    public boolean isEntry(FileEntry test) {
+        return wadId == test.getLoadedId() || multiplayerWadId == test.getLoadedId()
+                || vloId == test.getLoadedId() || multiplayerVloId == test.getLoadedId();
     }
 
     @Override
