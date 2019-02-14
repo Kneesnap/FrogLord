@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.gui.editor;
 
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -47,8 +46,8 @@ public class MOFController extends EditorController<MOFFile> {
     private Rotate rotY;
     private Rotate rotZ;
 
-    @FXML
-    private void onMofButtonClicked(ActionEvent event) {
+    @Override
+    public void onInit(AnchorPane editorRoot) {
         setupMofViewer(GUIMain.MAIN_STAGE, TextureMap.newTextureMap(getFile()));
     }
 

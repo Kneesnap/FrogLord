@@ -42,6 +42,14 @@ public abstract class GameFile extends GameObject {
     }
 
     /**
+     * Handle when it's time to be edited.
+     * @param parent The wad parent.
+     */
+    public void handleWadEdit(WADFile parent) {
+
+    }
+
+    /**
      * Gets this file's MWI FileEntry.
      * @return fileEntry
      */

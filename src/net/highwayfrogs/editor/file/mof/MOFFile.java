@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
@@ -22,6 +23,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.MOFController;
 
 import java.awt.image.BufferedImage;
@@ -311,7 +313,20 @@ public class MOFFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new MOFController(), "mof", this);
+        return null;
+    }
+
+    @Override
+    public void handleWadEdit(WADFile parent) {
+        if (getVloFile() != null) {
+            MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
+            return;
+        }
+
+        getMWD().promptVLOSelection(null, vlo -> {
+            setVloFile(vlo);
+            MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
+        }, false);
     }
 
     /**

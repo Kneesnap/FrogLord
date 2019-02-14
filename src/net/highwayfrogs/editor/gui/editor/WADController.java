@@ -93,6 +93,11 @@ public class WADController extends EditorController<WADFile> {
         WADFile.CURRENT_FILE_NAME = null;
     }
 
+    @FXML
+    private void editSelectedFile(ActionEvent event) {
+        selectedEntry.getFile().handleWadEdit(getFile());
+    }
+
     private static class AttachmentListCell extends ListCell<WADEntry> {
         @Override
         public void updateItem(WADEntry entry, boolean empty) {

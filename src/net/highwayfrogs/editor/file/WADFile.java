@@ -17,7 +17,6 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.WADController;
 
 import java.io.File;
@@ -126,21 +125,25 @@ public class WADFile extends GameFile {
             if (vlo != null)
                 vlo.exportAllImages(folder, MOFFile.MOF_EXPORT_FILTER);
 
+            setVLO(vlo);
             for (WADEntry wadEntry : getFiles()) {
                 GameFile file = wadEntry.getFile();
-                if (file instanceof MOFFile) {
-                    MOFFile mofFile = (MOFFile) file;
-                    mofFile.setVloFile(vlo);
-
-                    if (true) { //TODO
-                        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), mofFile);
-                        return;
-                    } else {
-                        mofFile.exportObject(wadEntry.getFileEntry(), folder, vlo, Utils.stripExtension(wadEntry.getFileEntry().getDisplayName()));
-                    }
-                }
+                if (file instanceof MOFFile)
+                    ((MOFFile) file).exportObject(wadEntry.getFileEntry(), folder, vlo, Utils.stripExtension(wadEntry.getFileEntry().getDisplayName()));
             }
         }, true);
+    }
+
+    /**
+     * Set the VLO file of all of the mofs inside this wad.
+     * @param vloArchive The new VLO archive.
+     */
+    public void setVLO(VLOArchive vloArchive) {
+        for (WADEntry wadEntry : getFiles()) {
+            GameFile file = wadEntry.getFile();
+            if (file instanceof MOFFile)
+                ((MOFFile) file).setVloFile(vloArchive);
+        }
     }
 
     @Override
