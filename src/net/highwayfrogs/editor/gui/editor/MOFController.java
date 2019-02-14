@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.*;
 import javafx.scene.control.Accordion;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
@@ -28,7 +29,6 @@ import java.util.ResourceBundle;
 
 /**
  * Controls the MOF editor GUI.
- * TODO: Lighting issue.
  * TODO: Some mofs have wrong textures.
  * TODO: Some error when loading.
  * TODO: Some don't show up, like CAV_SPIDER.
@@ -61,7 +61,12 @@ public class MOFController extends EditorController<MOFFile> {
 
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseMap(Utils.toFXImage(texMap.getImage(), true));
+        material.setDiffuseColor(Color.BLACK);
+        material.setSpecularColor(Color.BLACK);
+
+        Image fxImage = Utils.toFXImage(texMap.getImage(), true);
+        material.setDiffuseMap(fxImage);
+        material.setSelfIlluminationMap(fxImage);
 
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(getMofMesh());
