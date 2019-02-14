@@ -347,17 +347,6 @@ public class Utils {
     }
 
     /**
-     * Reverse an array, and store it in a new array, which is returned.
-     * @param array The array to reverse.
-     * @return clonedArray
-     */
-    public static byte[] reverseCloneByteArray(byte[] array) {
-        byte[] output = Arrays.copyOf(array, array.length);
-        reverseByteArray(output);
-        return output;
-    }
-
-    /**
      * Reverse a byte array.
      * @param array The array to reverse
      */

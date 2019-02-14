@@ -19,13 +19,21 @@ public class ByteArrayWrapper {
     }
 
     /**
+     * Copy the contents of this wrapper to a byte array.
+     * @param copyArray The array to copy contents into.
+     * @return array
+     */
+    public byte[] toArray(byte[] copyArray, int destIndex) {
+        System.arraycopy(this.array, 0, copyArray, destIndex, Math.min(copyArray.length - destIndex, arraySize()));
+        return copyArray;
+    }
+
+    /**
      * Resize the underlying array.
      * @param newSize The underlying array's new size.
      */
     public void resize(int newSize) {
-        byte[] newArray = new byte[newSize];
-        System.arraycopy(this.array, 0, newArray, 0, arraySize());
-        this.array = newArray;
+        this.array = toArray(new byte[newSize], 0);
     }
 
     /**
