@@ -25,14 +25,16 @@ import java.nio.ByteBuffer;
  */
 public class PP20Packer {
     private static final byte[] COMPRESSION_SETTINGS = {0x07, 0x07, 0x07, 0x07}; // PP20 compression settings. Extreme: 0x09, 0x0A, 0x0C, 0x0D
+    private static final int MAX_COMPRESSION_INDEX = COMPRESSION_SETTINGS.length - 1; // PP20 compression settings. Extreme: 0x09, 0x0A, 0x0C, 0x0D
     private static int[] COMPRESSION_SETTING_MAX_OFFSETS;
     public static final int OPTIONAL_BITS_SMALL_OFFSET = 7;
     public static final int INPUT_BIT_LENGTH = 2;
     public static final int INPUT_CONTINUE_WRITING_BITS = 3;
     public static final int OFFSET_BIT_LENGTH = 3;
     public static final int OFFSET_CONTINUE_WRITING_BITS = 7;
-    public static final int READ_FROM_INPUT_BIT = Constants.BIT_FALSE;
+    public static final int HAS_RAW_DATA_BIT = Constants.BIT_FALSE;
     public static final int MINIMUM_DECODE_DATA_LENGTH = 2;
+    public static final int COMPRESSION_LEVEL_BITS = 2;
     public static final int OPTIONAL_BITS_SMALL_SIZE_MAX_OFFSET = Utils.power(2, OPTIONAL_BITS_SMALL_OFFSET);
     public static final String MARKER = "PP20";
     public static final byte[] MARKER_BYTES = MARKER.getBytes();
@@ -78,7 +80,7 @@ public class PP20Packer {
             int targetSize = target.size();
 
             if (COMPRESSION_SETTING_MAX_OFFSETS.length > targetSize) // We'd rather cache this variable, as it's rather expensive to calculate.
-                minIndex = Math.max(0, bufferEnd - COMPRESSION_SETTING_MAX_OFFSETS[targetSize]);
+                minIndex = Math.max(0, bufferEnd - COMPRESSION_SETTING_MAX_OFFSETS[targetSize]); //TODO: Mess around with this to get the speed + size right.
 
             if (minIndex > testIndex)
                 break; // We've gone too far.
@@ -132,42 +134,42 @@ public class PP20Packer {
             int bestIndex = findLongest(data, i, searchBuffer);
 
             if (bestIndex >= 0) { // Verify the compression index was found.
-                if (noMatchQueue.size() > 0) { // When a compressed one has been reached, write all the data in-between, if there is any.
+                boolean hasRawData = (noMatchQueue.size() > 0);
+
+                // Write Input Data.
+                writer.writeBit(Utils.getBit(!hasRawData)); // Marks if there is raw data present or not.
+                if (hasRawData) { // When a compressed one has been reached, write all the data in-between, if there is any.
                     writeRawData(writer, noMatchQueue);
                     noMatchQueue.clear();
-                } else {
-                    writer.writeBit(Utils.flipBit(READ_FROM_INPUT_BIT));
                 }
 
                 writeDataReference(writer, searchBuffer.size(), i - bestIndex - 1);
-
-                for (int byteId = 0; byteId < searchBuffer.size(); byteId++) {
-                    int hashCode = hashCode(searchBuffer.get(byteId));
-                    IntList list = DICTIONARY[hashCode];
-                    if (list == null)
-                        DICTIONARY[hashCode] = list = new IntList();
-
-                    list.add(i++);
-                }
+                for (int byteId = 0; byteId < searchBuffer.size(); byteId++) // Add to dictionary.
+                    addToDictionary(searchBuffer.get(byteId), i++);
 
                 i--;
             } else { // It's not large enough to be compressed.
                 byte temp = data[i];
                 noMatchQueue.add(temp);
-
-                // Add current byte to the search dictionary.
-                int hashCode = hashCode(temp);
-                IntList list = DICTIONARY[hashCode];
-                if (list == null)
-                    DICTIONARY[hashCode] = list = new IntList();
-
-                list.add(i);
+                addToDictionary(temp, i); // Add current byte to the search dictionary.
             }
         }
-        if (noMatchQueue.size() > 0) // Add whatever remains at the end, if there is any.
+
+        if (noMatchQueue.size() > 0) { // Add whatever remains at the end, if there is any.
+            writer.writeBit(HAS_RAW_DATA_BIT);
             writeRawData(writer, noMatchQueue);
+        }
 
         return writer.toByteArray(8, 4);
+    }
+
+    private static void addToDictionary(byte byteValue, int index) {
+        int hashCode = hashCode(byteValue);
+        IntList list = DICTIONARY[hashCode];
+        if (list == null)
+            DICTIONARY[hashCode] = list = new IntList();
+
+        list.add(index);
     }
 
     private static int hashCode(byte byteVal) {
@@ -175,23 +177,24 @@ public class PP20Packer {
     }
 
     private static int getMaximumOffset(int byteLength) {
-        int maxCompressionIndex = COMPRESSION_SETTINGS.length - 1;
-        int compressionLevel = Math.max(0, Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH));
-        return Utils.power(2, COMPRESSION_SETTINGS[compressionLevel]);
+        return Utils.power(2, COMPRESSION_SETTINGS[getCompressionLevel(byteLength)]);
+    }
+
+    private static int getCompressionLevel(int byteLength) {
+        return Math.max(0, Math.min(MAX_COMPRESSION_INDEX, byteLength - MINIMUM_DECODE_DATA_LENGTH));
     }
 
     private static void writeDataReference(BitWriter writer, int byteLength, int byteOffset) {
         // Calculate compression level.
-        int maxCompressionIndex = COMPRESSION_SETTINGS.length - 1;
-        int compressionLevel = Math.min(maxCompressionIndex, byteLength - MINIMUM_DECODE_DATA_LENGTH);
+        int compressionLevel = getCompressionLevel(byteLength);
 
-        boolean maxCompression = (compressionLevel == maxCompressionIndex);
+        boolean maxCompression = (compressionLevel == MAX_COMPRESSION_INDEX);
         boolean useSmallOffset = maxCompression && OPTIONAL_BITS_SMALL_SIZE_MAX_OFFSET > byteOffset;
         int offsetSize = useSmallOffset ? OPTIONAL_BITS_SMALL_OFFSET : COMPRESSION_SETTINGS[compressionLevel];
 
-        writer.writeBits(compressionLevel, 2);
+        writer.writeBits(compressionLevel, COMPRESSION_LEVEL_BITS);
         if (maxCompression)
-            writer.writeBit(useSmallOffset ? Constants.BIT_FALSE : Constants.BIT_TRUE);
+            writer.writeBit(Utils.getBit(!useSmallOffset));
 
         writer.writeBits(byteOffset, offsetSize);
 
@@ -210,8 +213,6 @@ public class PP20Packer {
     }
 
     private static void writeRawData(BitWriter writer, ByteArrayWrapper bytes) {
-        writer.writeBit(READ_FROM_INPUT_BIT); // Indicates this should readFromInput, not readFromAbove.
-
         int writeLength = bytes.size() - 1;
         int writtenNum;
 

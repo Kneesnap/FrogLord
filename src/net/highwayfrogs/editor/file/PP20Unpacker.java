@@ -58,7 +58,7 @@ public class PP20Unpacker {
     }
 
     private static int decodeSegment(BitReader in, byte[] out, int outPos, int[] offsetBitLengths) {
-        if (in.readBit() == PP20Packer.READ_FROM_INPUT_BIT)
+        if (in.readBit() == PP20Packer.HAS_RAW_DATA_BIT)
             outPos = copyFromInput(in, out, outPos);
         if (outPos > 0)
             outPos = copyFromDecoded(in, out, outPos, offsetBitLengths);
@@ -78,9 +78,9 @@ public class PP20Unpacker {
     }
 
     private static int copyFromDecoded(BitReader in, byte[] out, int bytePos, int[] offsetBitLengths) {
-        int compressionLevel = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
+        int compressionLevel = in.readBits(PP20Packer.COMPRESSION_LEVEL_BITS); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
         boolean extraLengthData = (compressionLevel == PP20Packer.INPUT_CONTINUE_WRITING_BITS);
-        int offBits = extraLengthData && in.readBit() == 0 ? PP20Packer.OPTIONAL_BITS_SMALL_OFFSET : offsetBitLengths[compressionLevel];
+        int offBits = extraLengthData && in.readBit() == Constants.BIT_FALSE ? PP20Packer.OPTIONAL_BITS_SMALL_OFFSET : offsetBitLengths[compressionLevel];
         int off = in.readBits(offBits);
 
         int copyLength = compressionLevel;

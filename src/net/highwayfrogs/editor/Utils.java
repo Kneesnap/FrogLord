@@ -165,6 +165,30 @@ public class Utils {
     }
 
     /**
+     * Get a bit value.
+     * @param value The bit to convert.
+     * @return bit
+     */
+    public static int getBit(boolean value) {
+        return value ? Constants.BIT_TRUE : Constants.BIT_FALSE;
+    }
+
+    /**
+     * Get a bit value.
+     * @param bit The bit to convert.
+     * @return value
+     */
+    public static boolean getBit(int bit) {
+        if (bit == Constants.BIT_TRUE)
+            return true;
+
+        if (bit == Constants.BIT_FALSE)
+            return false;
+
+        throw new RuntimeException("Invalid bit-value: " + bit);
+    }
+
+    /**
      * Turn a list of bytes into a byte array.
      * @param list The list of bytes.
      * @return byteArray
@@ -442,7 +466,7 @@ public class Utils {
      * @return unsignedInt
      */
     public static int getUnsignedByte(byte value) {
-        return value >= 0 ? value : (int) Byte.MAX_VALUE - value;
+        return value >= 0 ? value : Byte.MAX_VALUE - value;
     }
 
     /**
