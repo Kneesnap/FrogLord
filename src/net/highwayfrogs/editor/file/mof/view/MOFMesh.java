@@ -53,7 +53,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
      * @param newFrame The frame to use.
      */
     public void setFrame(int newFrame) {
-        if (newFrame < 0)
+        if (newFrame < 0 || getMofFile().getParts().stream().anyMatch(part -> part.getFlipbook() == null))
             return;
 
         System.out.println("New Frame: " + newFrame);
@@ -70,7 +70,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
             return;
 
         for (MOFPart part : getMofFile().getParts()) // Don't go too high.
-            if (part.getFlipbook() != null && part.getFlipbook().getActions().size() <= actionId)
+            if (part.getFlipbook() == null || part.getFlipbook().getActions().size() <= actionId)
                 return;
 
         System.out.println("New Action: " + actionId);
