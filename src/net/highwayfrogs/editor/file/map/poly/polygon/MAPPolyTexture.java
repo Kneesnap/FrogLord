@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.system.TexturedPoly;
 
 /**
  * Represents PSX polgons with a texture.
@@ -25,7 +26,7 @@ import net.highwayfrogs.editor.gui.editor.MapUIController;
  */
 @Getter
 @Setter
-public class MAPPolyTexture extends MAPPolygon {
+public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
     private short flags;
     private ByteUV[] uvs;
     private short textureId;
@@ -123,7 +124,7 @@ public class MAPPolyTexture extends MAPPolygon {
 
     @Override
     public TextureEntry getEntry(TextureMap map) {
-        return map.getEntryMap().get(map.getRemap(getTextureId()));
+        return map.getEntry(getTextureId());
     }
 
     @Override

@@ -92,8 +92,17 @@ public class TextureMap {
      * @param index The index to remap
      * @return remap
      */
-    public short getRemap(short index) {
+    public Short getRemap(short index) {
         return this.remapList != null ? this.remapList.get(index) : index;
+    }
+
+    /**
+     * Get the entry for the tex id.
+     * @param index The index.
+     * @return entry
+     */
+    public TextureEntry getEntry(short index) {
+        return getEntryMap().get(getRemap(index));
     }
 
     @Getter

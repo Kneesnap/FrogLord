@@ -4,13 +4,13 @@ import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
 import net.highwayfrogs.editor.gui.mesh.MeshManager;
+import net.highwayfrogs.editor.system.TexturedPoly;
 
 import java.util.HashMap;
 import java.util.List;
@@ -121,8 +121,8 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
         float uSize = (entry.getMaxU() - entry.getMinU());
         float vSize = (entry.getMaxV() - entry.getMinV());
 
-        if (poly instanceof MAPPolyTexture) {
-            ByteUV[] uvs = ((MAPPolyTexture) poly).getUvs();
+        if (poly instanceof TexturedPoly) {
+            ByteUV[] uvs = ((TexturedPoly) poly).getUvs();
             for (ByteUV uv : uvs)
                 getTexCoords().addAll(entry.getMinU() + (uSize * uv.getFloatU()), entry.getMinV() + (vSize * uv.getFloatV()));
         } else {

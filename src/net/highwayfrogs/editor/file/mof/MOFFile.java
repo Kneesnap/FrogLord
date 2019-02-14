@@ -190,9 +190,8 @@ public class MOFFile extends GameFile {
         }
 
         // Write Vertices.
-        int verticeStart = 0;
-
         int partCount = 0;
+        int verticeStart = 0;
         for (MOFPart part : getParts()) {
             part.setTempVertexStart(verticeStart);
             objWriter.write("# Part " + (partCount++) + ":" + Constants.NEWLINE);
@@ -226,7 +225,6 @@ public class MOFFile extends GameFile {
                         objWriter.write(mofTex.getObjUVString(i) + Constants.NEWLINE);
                 }
             }
-
         }
 
         objWriter.write("# Faces" + Constants.NEWLINE);
@@ -250,13 +248,8 @@ public class MOFFile extends GameFile {
                 if (exportTextures) {
                     int newTextureId = texture.getImageId();
 
-                    GameImage image = textureMap.computeIfAbsent(newTextureId, key -> {
-                        for (GameImage testImage : vloTable.getImages())
-                            if (testImage.getTextureId() == texture.getImageId())
-                                return testImage;
-
-                        throw new RuntimeException("Failed to find: " + texture.getImageId());
-                    });
+                    GameImage image = textureMap.computeIfAbsent(newTextureId, key ->
+                            vloTable.getImageByTextureId(texture.getImageId()));
                     newTextureId = image.getTextureId();
 
                     if (newTextureId != textureId.get()) { // It's time to change the texture.
