@@ -33,7 +33,11 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     @Override
     public void onUpdatePolygonData() {
         AtomicInteger texId = new AtomicInteger();
-        getMofFile().forEachPolygon(poly -> addPolygon(poly, texId));
+
+        for (MOFPart part : getMofFile().getParts()) {
+            part.getMofPolygons().values().forEach(list -> list.forEach(poly -> addPolygon(poly, texId)));
+            setVerticeStart(getVerticeStart() + part.getCel(this.animationId, this.frameCount).getVertices().size());
+        }
     }
 
     @Override

@@ -317,14 +317,16 @@ public class MOFFile extends GameFile {
 
     @Override
     public void handleWadEdit(WADFile parent) {
-        if (getVloFile() != null) {
-            MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
+        MOFFile toOpen = this.animation != null ? getAnimation().getStaticMOF() : this;
+
+        if (toOpen.getVloFile() != null) {
+            MainController.MAIN_WINDOW.openEditor(new MOFController(), toOpen);
             return;
         }
 
         getMWD().promptVLOSelection(getTheme(), vlo -> {
-            setVloFile(vlo);
-            MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
+            toOpen.setVloFile(vlo);
+            MainController.MAIN_WINDOW.openEditor(new MOFController(), toOpen);
         }, false);
     }
 

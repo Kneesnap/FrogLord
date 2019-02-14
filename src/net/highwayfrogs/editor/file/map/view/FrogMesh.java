@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.map.view;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
@@ -29,6 +30,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
     private MeshManager manager;
     private int faceCount;
     private int textureCount;
+    @Setter private int verticeStart;
 
     public FrogMesh(TextureMap map, VertexFormat format) {
         super(format);
@@ -69,8 +71,8 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
 
         // Add Face + Textures.
         int texId = addTexCoords(poly, texCoord);
-        getFaces().addAll(verts[0], texId, verts[3], texId + 2, verts[1], texId + 1);
-        getFaces().addAll(verts[1], texId + 1, verts[3], texId + 2, verts[2], texId + 3);
+        getFaces().addAll(verts[0] + getVerticeStart(), texId, verts[3] + getVerticeStart(), texId + 2, verts[1] + getVerticeStart(), texId + 1);
+        getFaces().addAll(verts[1] + getVerticeStart(), texId + 1, verts[3] + getVerticeStart(), texId + 2, verts[2] + getVerticeStart(), texId + 3);
     }
 
     /**
@@ -79,8 +81,8 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
     public void addRectangle(TextureEntry entry, int v1, int v2, int v3, int v4, int v5, int v6) {
         int texId = getTexCoords().size() / getTexCoordElementSize();
         entry.applyMesh(this, MAPPolygon.QUAD_SIZE);
-        getFaces().addAll(v1, texId, v2, texId + 1, v3, texId + 2);
-        getFaces().addAll(v4, texId + 1, v5, texId + 2, v6, texId + 3);
+        getFaces().addAll(v1 + getVerticeStart(), texId, v2 + getVerticeStart(), texId + 1, v3 + getVerticeStart(), texId + 2);
+        getFaces().addAll(v4 + getVerticeStart(), texId + 1, v5 + getVerticeStart(), texId + 2, v6 + getVerticeStart(), texId + 3);
     }
 
     /**
@@ -96,7 +98,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
         polyFaceMap.put(poly, face);
 
         int texId = addTexCoords(poly, texCoord);
-        getFaces().addAll(verts[2], texId + 2, verts[1], texId + 1, verts[0], texId);
+        getFaces().addAll(verts[2] + getVerticeStart(), texId + 2, verts[1] + getVerticeStart(), texId + 1, verts[0] + getVerticeStart(), texId);
     }
 
     /**
@@ -106,7 +108,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
     public void addTriangle(TextureEntry entry, int v1, int v2, int v3) {
         int texId = getTexCoords().size() / getTexCoordElementSize();
         entry.applyMesh(this, MAPPolygon.TRI_SIZE);
-        getFaces().addAll(v1, texId, v2, texId + 1, v3, texId + 2);
+        getFaces().addAll(v1 + getVerticeStart(), texId, v2 + getVerticeStart(), texId + 1, v3 + getVerticeStart(), texId + 2);
     }
 
     private int addTexCoords(T poly, AtomicInteger texCoord) {
@@ -150,6 +152,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
      * TODO: Keep everything added after polygon data.
      */
     public void updateData() {
+        this.verticeStart = 0;
         updateVertices();
         updatePolygonData();
         onUpdateData(); // Overwrite this.
