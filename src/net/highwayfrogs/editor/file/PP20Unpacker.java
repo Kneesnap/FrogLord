@@ -20,10 +20,7 @@ public class PP20Unpacker {
      * @return isCompressed
      */
     public static boolean isCompressed(byte[] a) {
-        for (int i = 0; i < PP20Packer.MARKER_BYTES.length; i++)
-            if (PP20Packer.MARKER_BYTES[i] != a[i])
-                return false;
-        return a.length > 11;
+        return a.length > 11 && Utils.testSignature(a, PP20Packer.MARKER_BYTES);
     }
 
     /**

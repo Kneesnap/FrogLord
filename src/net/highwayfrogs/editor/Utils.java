@@ -273,11 +273,11 @@ public class Utils {
     /**
      * Convert an int value (fixed point, n fractional bits) into a float.
      * @param intVal The integer to convert.
-     * @param n The number of fractional bits.
+     * @param n      The number of fractional bits.
      * @return floatValue
      */
     public static float fixedPointIntToFloatNBits(int intVal, long n) {
-        return ((float)intVal / (float)(1 << n));
+        return ((float) intVal / (float) (1 << n));
     }
 
     /**
@@ -981,5 +981,50 @@ public class Utils {
                 field.setStyle(pass ? null : "-fx-text-inner-color: red;");
             }
         });
+    }
+
+    /**
+     * Test if a string is present at a given index in a byte array.
+     * @param data The array to check.
+     * @param test The string to test against.
+     * @return hasSignature
+     */
+    public static boolean testSignature(byte[] data, String test) {
+        return testSignature(data, 0, test.getBytes());
+    }
+
+    /**
+     * Test if a string is present at a given index in a byte array.
+     * @param data       The array to check.
+     * @param startIndex The index into that array.
+     * @param test       The string to test against.
+     * @return hasSignature
+     */
+    public static boolean testSignature(byte[] data, int startIndex, String test) {
+        return testSignature(data, startIndex, test.getBytes());
+    }
+
+    /**
+     * Test if a file signature matches bytes.
+     * @param data The data to test.
+     * @param test The signature to test against.
+     * @return hasSignature
+     */
+    public static boolean testSignature(byte[] data, byte[] test) {
+        return testSignature(data, 0, test);
+    }
+
+    /**
+     * Test if a file signature matches bytes.
+     * @param data       The data to test.
+     * @param startIndex The index to start testing at.
+     * @param test       The signature to test against.
+     * @return hasSignature
+     */
+    public static boolean testSignature(byte[] data, int startIndex, byte[] test) {
+        for (int i = 0; i < test.length; i++)
+            if (data[i] != test[i])
+                return false;
+        return true;
     }
 }

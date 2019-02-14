@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
  */
 public class PP20Packer {
     private static final byte[] COMPRESSION_SETTINGS = {0x07, 0x07, 0x07, 0x07}; // PP20 compression settings. Extreme: 0x09, 0x0A, 0x0C, 0x0D
-    private static final int MAX_COMPRESSION_INDEX = COMPRESSION_SETTINGS.length - 1; // PP20 compression settings. Extreme: 0x09, 0x0A, 0x0C, 0x0D
+    private static final int MAX_COMPRESSION_INDEX = COMPRESSION_SETTINGS.length - 1;
     private static int[] COMPRESSION_SETTING_MAX_OFFSETS;
     public static final int OPTIONAL_BITS_SMALL_OFFSET = 7;
     public static final int INPUT_BIT_LENGTH = 2;
