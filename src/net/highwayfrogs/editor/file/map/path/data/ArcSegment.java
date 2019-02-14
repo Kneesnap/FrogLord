@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.map.path.data;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathSegment;
@@ -49,9 +50,13 @@ public class ArcSegment extends PathSegment {
 
     @Override
     protected SVector calculatePosition(PathInfo info) {
-        SVector vector = new SVector(start);
-        vector.subtract(center);
-        vector.multiply((double) info.getSegmentDistance() / (double) getLength());
+        short segmentDistance = (short) info.getSegmentDistance();
+        float distanceCovered = Utils.fixedPointShortToFloat412(segmentDistance);
+
+        SVector vector = new SVector(start).subtract(center);
+        vector.multiply(segmentDistance / (double) getLength());
+        //TODO: X and Z aren't accurate.
+        vector.setY(Utils.floatToFixedPointShort412(-Utils.fixedPointIntToFloat2012(getPitch()) * (distanceCovered / (float) getLength())));
         vector.add(center);
         return vector;
     }

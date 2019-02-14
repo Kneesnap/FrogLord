@@ -177,16 +177,27 @@ public class MOFFile extends GameFile {
         }
 
         // Write Vertices.
-        for (MOFPart part : getParts())
-            for (MOFPartcel partcel : part.getPartcels())
+        int verticeStart = 0;
+        for (MOFPart part : getParts()) {
+            part.setTempVertexStart(verticeStart);
+
+            for (MOFPartcel partcel : part.getPartcels()) {
+                verticeStart += partcel.getVertices().size();
                 for (SVector vertex : partcel.getVertices())
                     objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
+            }
+        }
 
         objWriter.write(Constants.NEWLINE);
 
         // Write Faces.
+        Map<MOFPolygon, MOFPart> ownerMap = new HashMap<>();
         List<MOFPolygon> allPolygons = new ArrayList<>();
-        getParts().forEach(part -> part.getMofPolygons().values().forEach(allPolygons::addAll));
+        getParts().forEach(part -> part.getMofPolygons().values().forEach(polys -> {
+            allPolygons.addAll(polys);
+            for (MOFPolygon poly : polys)
+                ownerMap.put(poly, part);
+        }));
 
         // Register textures.
         if (exportTextures) {
@@ -240,7 +251,7 @@ public class MOFFile extends GameFile {
                     }
                 }
 
-                objWriter.write(polygon.toObjFaceCommand(exportTextures, counter) + Constants.NEWLINE);
+                objWriter.write(polygon.toObjFaceCommand(exportTextures, counter, ownerMap.get(polygon)) + Constants.NEWLINE);
             }
         });
 
@@ -248,7 +259,7 @@ public class MOFFile extends GameFile {
         objWriter.append("# Faces without textures.").append(Constants.NEWLINE);
         for (Entry<PSXColorVector, List<MOFPolygon>> mapEntry : facesWithColors.entrySet()) {
             objWriter.write("usemtl color" + faceColors.indexOf(mapEntry.getKey()) + Constants.NEWLINE);
-            mapEntry.getValue().forEach(poly -> objWriter.write(poly.toObjFaceCommand(exportTextures, null) + Constants.NEWLINE));
+            mapEntry.getValue().forEach(poly -> objWriter.write(poly.toObjFaceCommand(exportTextures, null, ownerMap.get(poly)) + Constants.NEWLINE));
         }
 
 

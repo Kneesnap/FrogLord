@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
@@ -50,6 +51,7 @@ public class MOFPart extends GameObject {
     private transient int tempMatrixPointer;
     private transient int tempAnimatedTexturesPointer;
     private transient int tempFlipbookPointer;
+    @Setter private transient int tempVertexStart;
 
     private static final int FLAG_ANIMATED_POLYS = Constants.BIT_FLAG_0; // Does this contain some animated texture polys?
 

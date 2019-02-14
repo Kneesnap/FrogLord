@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.mof.prims;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
@@ -16,9 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public abstract class MOFPolygon extends PSXGPUPrimitive {
-    private short vertices[];
-    private short en[]; // Not entirely sure what this is.
-    private short normals[];
+    private short[] vertices;
+    private short[] en; // Not entirely sure what this is.
+    private short[] normals;
     private short padding;
     private PSXColorVector color = new PSXColorVector();
     private MOFPrimType type;
@@ -95,12 +96,22 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
      * @return faceCommand
      */
     public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter) {
+        return toObjFaceCommand(showTextures, textureCounter, null);
+    }
+
+    /**
+     * Convert this into a wavefront object face command.
+     * @return faceCommand
+     */
+    public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter, MOFPart parentPart) {
         StringBuilder builder = new StringBuilder("f");
+        int base = parentPart != null ? parentPart.getTempVertexStart() : 0;
         for (int i = this.vertices.length - 1; i >= 0; i--) {
-            builder.append(" ").append(this.vertices[i] + 1);
+            builder.append(" ").append(base + this.vertices[i] + 1);
             if (showTextures)
                 builder.append("/").append(textureCounter != null ? textureCounter.incrementAndGet() : 0);
         }
+
         return builder.toString();
     }
 

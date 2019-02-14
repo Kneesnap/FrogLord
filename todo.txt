@@ -3,20 +3,13 @@ Editor Features:
  - VAB File (Separate from VB VH) https://www.zophar.net/fileuploads/2/10730sbtsy/psfrip.txt
 
  - MOF File
- Some way of viewing animations.
- Fix some mofs that have animation not exporting to .obj properly.
+ Some way of exporting animations.
 
  - GUI Editor:
   Demo Editor
   PAL Editor
   Map Editor
   MOF Editor
-
-Build FrogPSX.H from MWD.
-
-Non tool-development-related plans:
- - Load the two developer maps.
- - Differences between PSX and PC version files?
 
 
 TCRF Documentation Plans:
@@ -26,3 +19,4 @@ TCRF Documentation Plans:
  - Document debugging code.
  - Find unused textures
  - Analyze US PSX demo MWD vs retail PSX demo MWD.
+ - Document QB.MAP

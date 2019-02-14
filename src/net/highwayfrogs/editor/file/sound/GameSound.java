@@ -1,92 +1,68 @@
 package net.highwayfrogs.editor.file.sound;
 
 import lombok.Getter;
+import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
-import net.highwayfrogs.editor.file.reader.ArraySource;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.ArrayReceiver;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.config.Config;
+import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 
-import javax.sound.sampled.AudioFileFormat.Type;
-import javax.sound.sampled.*;
+import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioFormat.Encoding;
-import java.io.*;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Represents a game sound.
  * Created by Kneesnap on 9/24/2018.
  */
 @Getter
-public abstract class GameSound {
+public abstract class GameSound extends GameObject {
+    private AudioHeader header;
     private int vanillaTrackId;
-    private List<Integer> audioData = new ArrayList<>();
+    private int readLength;
 
-    private static final Map<String, List<String>> SOUND_NAME_MAP = new HashMap<>();
-    private static final List<String> SOUND_NAME_BY_TRACK_ID = new ArrayList<>();
+    public static final List<String> SOUND_NAME_BY_TRACK_ID = new ArrayList<>();
+    public static final String MAIN_KEY = "main";
 
-    public GameSound(int vanillaTrackId) {
+    public GameSound(AudioHeader header, int vanillaTrackId, int readLength) {
         this.vanillaTrackId = vanillaTrackId;
+        this.header = header;
+        this.readLength = readLength;
+    }
+
+    /**
+     * Gets a playable audio-clip.
+     * @return clip
+     */
+    @SneakyThrows
+    public Clip getClip() {
+        return toStandardAudio();
     }
 
     /**
      * Export this audio entry as a standard audio clip.
      * @return audioClip
      */
-    public Clip toStandardAudio() throws LineUnavailableException {
-        byte[] byteData = toRawAudio();
-
-        Clip result = AudioSystem.getClip();
-        result.open(getAudioFormat(), byteData, 0, byteData.length);
-        return result;
-    }
+    public abstract Clip toStandardAudio() throws LineUnavailableException, IOException, UnsupportedAudioFileException;
 
     /**
      * Export this audio clip to a file.
      * @param saveTo The audio file to export.
      */
-    public void exportToFile(File saveTo) throws IOException, LineUnavailableException {
-        Clip clip = toStandardAudio();
-        AudioInputStream inputStream = new AudioInputStream(new ByteArrayInputStream(toRawAudio()), clip.getFormat(), clip.getFrameLength());
-        AudioSystem.write(inputStream, Type.WAVE, saveTo);
-    }
+    public abstract void exportToFile(File saveTo) throws IOException, LineUnavailableException, UnsupportedAudioFileException;
 
     /**
      * Import a sound file to override
      * @param file The file to replace this sound with.
      */
-    public void replaceWithFile(File file) throws IOException, UnsupportedAudioFileException {
-        AudioInputStream inputStream = AudioSystem.getAudioInputStream(file);
-        getAudioData().clear();
-
-        AudioFormat format = inputStream.getFormat();
-        Utils.verify(!format.isBigEndian(), "Big Endian audio files are not accepted.");
-        Utils.verify(format.getEncoding() == Encoding.PCM_SIGNED, "Unsigned audio files are not supported. (%s)", format.getEncoding());
-        Utils.verify(format.getChannels() == getChannelCount(), "%d-channel audio is not supported!", format.getChannels());
-
-        setBitWidth(format.getSampleSizeInBits());
-        setSampleRate((int) format.getSampleRate());
-
-        ArrayReceiver receiver = new ArrayReceiver();
-        DataWriter writer = new DataWriter(receiver);
-        int byteLength = getByteWidth();
-
-        byte[] buffer = new byte[byteLength];
-        while (inputStream.read(buffer) != -1)
-            writer.writeBytes(buffer);
-
-        byte[] data = receiver.toArray();
-        setDataSize(data.length);
-
-        DataReader reader = new DataReader(new ArraySource(data));
-        while (reader.hasMore())
-            this.audioData.add(reader.readInt(byteLength));
-    }
+    public abstract void replaceWithFile(File file) throws IOException, UnsupportedAudioFileException;
 
     /**
      * Gets the audio format used by this GameSound.
@@ -97,54 +73,57 @@ public abstract class GameSound {
     }
 
     /**
-     * Return the audioentry as a raw audio byte array.
-     * @return byteData
+     * Import a new AudioFormat.
+     * @param newFormat The new AudioFormat to import.
      */
-    public byte[] toRawAudio() {
-        ArrayReceiver receiver = new ArrayReceiver();
-        DataWriter writer = new DataWriter(receiver);
+    public void importFormat(AudioFormat newFormat) {
+        Utils.verify(!newFormat.isBigEndian(), "Big Endian audio files are not accepted.");
+        Utils.verify(newFormat.getEncoding() == Encoding.PCM_SIGNED, "Unsigned audio files are not supported. (%s)", newFormat.getEncoding());
+        Utils.verify(newFormat.getChannels() == getChannelCount(), "%d-channel audio is not supported!", newFormat.getChannels());
 
-        for (int i = 0; i < getAudioData().size(); i++)
-            writer.writeNumber(getAudioData().get(i), getByteWidth());
-        return receiver.toArray();
+        setBitWidth(newFormat.getSampleSizeInBits());
+        setSampleRate((int) newFormat.getSampleRate());
     }
 
     /**
      * Get the number of channels for this entry.
      * @return channelCount
      */
-    public abstract int getChannelCount();
-
-    /**
-     * Set the amount of channels.
-     * @param channelCount New channel count.
-     */
-    public abstract void setChannelCount(int channelCount);
+    public int getChannelCount() {
+        return header.getChannels();
+    }
 
     /**
      * Gets the sample rate of this sound.
      * @return sampleRate
      */
-    public abstract int getSampleRate();
+    public int getSampleRate() {
+        return header.getSampleRate();
+    }
 
     /**
      * Sets the sample rate for this sound.
      * @param newSampleRate The sample rate to set.
      */
-    public abstract void setSampleRate(int newSampleRate);
+    public void setSampleRate(int newSampleRate) {
+        header.setSampleRate(newSampleRate);
+    }
 
     /**
      * Gets the bit width for this sound.
      * @return bitWidth
      */
-    public abstract int getBitWidth();
-
+    public int getBitWidth() {
+        return header.getBitWidth();
+    }
 
     /**
      * Sets the bit width for this sound.
      * @param newBitWidth The bit width to set.
      */
-    public abstract void setBitWidth(int newBitWidth);
+    public void setBitWidth(int newBitWidth) {
+        header.setBitWidth(newBitWidth);
+    }
 
     /**
      * Gets the byte width for this sound.
@@ -158,7 +137,9 @@ public abstract class GameSound {
      * Sets the byte-size of this sound's audio data.
      * @param newSize The audio data's new size.
      */
-    public abstract void setDataSize(int newSize);
+    public void setDataSize(int newSize) {
+        header.setDataSize(newSize);
+    }
 
     /**
      * Get the name of this sound.
@@ -170,32 +151,22 @@ public abstract class GameSound {
                 : "???????";
     }
 
-    static {
-        InputStreamReader isr = new InputStreamReader(Utils.getResourceStream("sounds.cfg"));
-        BufferedReader reader = new BufferedReader(isr);
+    /**
+     * Called when a sound is imported over the existing one.
+     */
+    public void onImport() {
 
-        List<String> lines = reader.lines().collect(Collectors.toList());
+    }
 
-        String tempBank = null;
-        List<String> tempNames = new ArrayList<>();
-
-        for (String line : lines) {
-            line = line.split("#")[0].trim(); // Remove comments.
-
-            if (line.isEmpty())
-                continue; // Ignore blank lines.
-
-            if (line.startsWith("[") && line.endsWith("]")) { // New section.
-                if (tempBank != null)
-                    SOUND_NAME_MAP.put(tempBank, tempNames);
-                tempBank = line.substring(1, line.length() - 1);
-                tempNames = new ArrayList<>();
-            } else {
-                SOUND_NAME_BY_TRACK_ID.add(line);
-                tempNames.add(line);
-            }
-        }
-
-        SOUND_NAME_MAP.put(tempBank, tempNames); // Add the final bank.
+    /**
+     * Load the sound config to use.
+     * @param configName The name of the config to use.
+     */
+    @SneakyThrows
+    public static void loadSounds(String configName) {
+        Config config = new Config(Utils.getResourceStream("sounds/" + configName + ".cfg"));
+        SOUND_NAME_BY_TRACK_ID.addAll(config.getText());
+        for (String childName : config.getOrderedChildren())
+            SOUND_NAME_BY_TRACK_ID.addAll(config.getChild(childName).getText());
     }
 }

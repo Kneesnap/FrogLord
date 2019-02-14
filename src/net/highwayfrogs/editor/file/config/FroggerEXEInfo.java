@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.sound.GameSound;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
@@ -106,6 +107,7 @@ public class FroggerEXEInfo extends Config {
      * Read data from the EXE which needs reading.
      */
     public void setup() {
+        GameSound.loadSounds(getString("soundList", GameSound.MAIN_KEY)); // Load the sound config.
         readConfig();
         readMWI();
         readThemeLibrary();

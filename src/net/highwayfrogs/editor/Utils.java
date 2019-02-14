@@ -243,7 +243,7 @@ public class Utils {
      * @return shortValue
      */
     public static short floatToFixedPointShort412(float floatVal) {
-        return floatToFixedPointShort(floatVal, 12);
+        return floatToFixedPointShort(floatVal, 4);
     }
 
     /**
@@ -252,8 +252,17 @@ public class Utils {
      * @param n The number of fractional bits.
      * @return floatValue
      */
-    public static float fixedPointIntToFloatNBits(long intVal, long n) {
+    public static float fixedPointIntToFloatNBits(int intVal, long n) {
         return ((float)intVal / (float)(1 << n));
+    }
+
+    /**
+     * Convert an int value (fixed point, n fractional bits) into a float.
+     * @param intVal The integer to convert.
+     * @return floatValue
+     */
+    public static float fixedPointIntToFloat2012(int intVal) {
+        return fixedPointIntToFloatNBits(intVal, 20);
     }
 
     /**

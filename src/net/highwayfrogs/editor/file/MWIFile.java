@@ -184,8 +184,11 @@ public class MWIFile extends GameObject {
          * @return displayName
          */
         public String getDisplayName() {
-            if (hasFilePath())
-                return getFilePath().substring(getFilePath().lastIndexOf("\\") + 1);
+            if (hasFilePath()) {
+                String file = getFilePath().substring(getFilePath().lastIndexOf("\\") + 1); // Remove \ paths.
+                file = file.substring(file.lastIndexOf("/") + 1); // Remove / paths.
+                return file;
+            }
 
             if (getConfig().getFileNames().size() > this.loadedId)
                 return getConfig().getFileNames().get(this.loadedId);
