@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
+import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.AbstractVBFile;
@@ -88,9 +89,21 @@ public class MWDFile extends GameObject {
      * @param oldFile   The file to replace.
      * @return replacementFile
      */
+    @SuppressWarnings("unchecked")
     public <T extends GameFile> T replaceFile(byte[] fileBytes, FileEntry entry, GameFile oldFile) {
-        AbstractVBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
-        T newFile = this.loadFile(fileBytes, entry, lastVB);
+        T newFile;
+
+        if (oldFile instanceof MOFFile) {
+            newFile = (T) new MOFFile(((MOFFile) oldFile).getTheme());
+        } else {
+            AbstractVBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
+            newFile = this.loadFile(fileBytes, entry, lastVB);
+        }
+
+        entryMap.put(newFile, entry);
+        entryFileMap.put(entry, newFile);
+        CURRENT_FILE_NAME = entry.getDisplayName();
+
         newFile.load(new DataReader(new ArraySource(fileBytes)));
         return newFile;
     }
@@ -132,7 +145,6 @@ public class MWDFile extends GameObject {
             } else {
                 file = getConfig().isPrototype() ? new PrototypeVBFile() : new RetailPCVBFile();
             }
-
         } else {
             file = new DummyFile(fileBytes.length);
         }
