@@ -167,5 +167,25 @@ public class WADFile extends GameFile {
         public FileEntry getFileEntry() {
             return mwiFile.getEntries().get(resourceId);
         }
+
+        /**
+         * Check if this is a dummied MOF Entry.
+         * @return isDummyMOF
+         */
+        public boolean isDummy() {
+            return getFile() == null || ((getFile() instanceof MOFFile) && ((MOFFile) getFile()).isDummy());
+        }
+
+        /**
+         * Get the display name of this WADEntry.
+         * @return displayName
+         */
+        public String getDisplayName() {
+            if (isDummy())
+                return "Empty MOF Slot";
+
+            String displayName = getFileEntry().getDisplayName();
+            return displayName.equals(Constants.DUMMY_FILE_NAME) ? "Imported MOF File" : displayName;
+        }
     }
 }

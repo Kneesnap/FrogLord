@@ -23,7 +23,6 @@ import java.nio.file.Files;
  */
 public class WADController extends EditorController<WADFile> {
     @FXML private ListView<WADEntry> entryList;
-
     private WADEntry selectedEntry;
 
     @Override
@@ -32,7 +31,7 @@ public class WADController extends EditorController<WADFile> {
 
         ObservableList<WADEntry> wadEntries = FXCollections.observableArrayList(file.getFiles());
         entryList.setItems(wadEntries);
-        entryList.setCellFactory(param -> new AbstractAttachmentCell<>((wadEntry, index) -> wadEntry != null ? "[" + index + "] " + wadEntry.getFileEntry().getDisplayName() : null));
+        updateEntryText();
 
         entryList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             this.selectedEntry = newValue;
@@ -40,6 +39,11 @@ public class WADController extends EditorController<WADFile> {
         });
 
         entryList.getSelectionModel().select(0);
+    }
+
+    private void updateEntryText() {
+        entryList.setCellFactory(param ->
+                new AbstractAttachmentCell<>((wadEntry, index) -> wadEntry != null ? "[" + index + "] " + wadEntry.getDisplayName() : null));
     }
 
     @FXML
@@ -56,6 +60,7 @@ public class WADController extends EditorController<WADFile> {
         updateEntry(); // Update the display.
         WADFile.CURRENT_FILE_NAME = null;
         System.out.println("Imported WAD Entry.");
+        updateEntryText();
     }
 
     @FXML
