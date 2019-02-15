@@ -20,10 +20,7 @@ public class PP20Unpacker {
      * @return isCompressed
      */
     public static boolean isCompressed(byte[] a) {
-        for (int i = 0; i < PP20Packer.MARKER_BYTES.length; i++)
-            if (PP20Packer.MARKER_BYTES[i] != a[i])
-                return false;
-        return a.length > 11;
+        return a.length > 11 && Utils.testSignature(a, PP20Packer.MARKER_BYTES);
     }
 
     /**
@@ -58,7 +55,7 @@ public class PP20Unpacker {
     }
 
     private static int decodeSegment(BitReader in, byte[] out, int outPos, int[] offsetBitLengths) {
-        if (in.readBit() == PP20Packer.READ_FROM_INPUT_BIT)
+        if (in.readBit() == PP20Packer.HAS_RAW_DATA_BIT)
             outPos = copyFromInput(in, out, outPos);
         if (outPos > 0)
             outPos = copyFromDecoded(in, out, outPos, offsetBitLengths);
@@ -78,19 +75,19 @@ public class PP20Unpacker {
     }
 
     private static int copyFromDecoded(BitReader in, byte[] out, int bytePos, int[] offsetBitLengths) {
-        int compressionLevel = in.readBits(2); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
+        int compressionLevel = in.readBits(PP20Packer.COMPRESSION_LEVEL_BITS); // always at least 2 bytes (2 bytes ~ 0, 3 ~ 1, 4 ~ 2, 5+ ~ 3)
         boolean extraLengthData = (compressionLevel == PP20Packer.INPUT_CONTINUE_WRITING_BITS);
-        int offBits = extraLengthData && in.readBit() == 0 ? PP20Packer.OPTIONAL_BITS_SMALL_OFFSET : offsetBitLengths[compressionLevel];
+        int offBits = extraLengthData && in.readBit() == Constants.BIT_FALSE ? PP20Packer.OPTIONAL_BITS_SMALL_OFFSET : offsetBitLengths[compressionLevel];
         int off = in.readBits(offBits);
 
-        int copyLength = compressionLevel;
-        int lastLengthBits = 0;
-        if (extraLengthData) // The length might be extended further.
-            while ((lastLengthBits = in.readBits(PP20Packer.OFFSET_BIT_LENGTH)) == PP20Packer.OFFSET_CONTINUE_WRITING_BITS) // Keep adding until the three read bits are not '111', meaning the length has stopped.
-                copyLength += PP20Packer.OFFSET_CONTINUE_WRITING_BITS;
-
-        copyLength += PP20Packer.MINIMUM_DECODE_DATA_LENGTH;
-        copyLength += lastLengthBits;
+        int copyLength = compressionLevel + PP20Packer.MINIMUM_DECODE_DATA_LENGTH;
+        if (extraLengthData) { // The length might be extended further.
+            int lastLengthBits;
+            do { // Keep adding until the three read bits are not '111', meaning the length has stopped.
+                lastLengthBits = in.readBits(PP20Packer.OFFSET_BIT_LENGTH);
+                copyLength += lastLengthBits;
+            } while (lastLengthBits == PP20Packer.OFFSET_CONTINUE_WRITING_BITS);
+        }
 
         for (int i = 0; i < copyLength; i++, bytePos--)
             out[bytePos - 1] = out[bytePos + off];

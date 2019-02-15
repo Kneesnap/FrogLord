@@ -31,9 +31,8 @@ public class BitWriter {
             throw new RuntimeException("Invalid bit number " + bit + ".");
 
         // Add the bit to the current byte.
-        int bitShift = isReverseBits() ? this.currentBit : getCurrentReverseBitID();
-        int shiftedBit = bit << bitShift;
-        this.currentByte |= shiftedBit;
+        if (bit == Constants.BIT_TRUE)
+            this.currentByte |= (bit << getCurrentBitID());
 
         // If the current byte is complete, add it to the list of bytes.
         if (--this.currentBit == 0) {
@@ -43,8 +42,8 @@ public class BitWriter {
         }
     }
 
-    private int getCurrentReverseBitID() {
-        return Constants.BITS_PER_BYTE - this.currentBit;
+    private int getCurrentBitID() {
+        return isReverseBits() ? this.currentBit : Constants.BITS_PER_BYTE - this.currentBit;
     }
 
     /**
@@ -90,17 +89,22 @@ public class BitWriter {
      * @return byteArray
      */
     public byte[] toByteArray(int extraBytesBefore, int extraBytesAfter) {
-        while (this.currentBit != Constants.BITS_PER_BYTE)
-            writeBit(0); // Finish the current bit.
+        finishCurrentByte();
 
         // Write in backwards order, because PP20 does that.
-        int leftSize = this.bytes.size() + extraBytesBefore;
-        byte[] arr = new byte[leftSize + extraBytesAfter];
-
-        int i = isReverseBytes() ? leftSize - 1 : extraBytesBefore;
+        byte[] arr = new byte[extraBytesBefore + this.bytes.size() + extraBytesAfter];
+        int i = isReverseBytes() ? arr.length - 1 - extraBytesAfter : extraBytesBefore;
         for (Byte aByte : this.bytes)
             arr[isReverseBytes() ? i-- : i++] = aByte;
 
         return arr;
+    }
+
+    /**
+     * Finish the current byte being written.
+     */
+    private void finishCurrentByte() {
+        while (this.currentBit != Constants.BITS_PER_BYTE)
+            writeBit(0); // Finish the current byte.
     }
 }

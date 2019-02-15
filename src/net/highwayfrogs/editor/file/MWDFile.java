@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
@@ -123,7 +124,7 @@ public class MWDFile extends GameObject {
             file = new DemoFile();
         } else if (entry.getTypeId() == PALFile.TYPE_ID) {
             file = new PALFile();
-        } else if (entry.getTypeId() == VHFile.TYPE_ID && !testSignature(fileBytes, 0, VABHeaderFile.SIGNATURE)) { // PSX support is disabled until it is complete.
+        } else if (entry.getTypeId() == VHFile.TYPE_ID && !Utils.testSignature(fileBytes, VABHeaderFile.SIGNATURE)) { // PSX support is disabled until it is complete.
             if (lastVB != null) {
                 VHFile vhFile = new VHFile();
                 vhFile.setVB(lastVB);
@@ -140,13 +141,6 @@ public class MWDFile extends GameObject {
         entryFileMap.put(entry, file);
         CURRENT_FILE_NAME = entry.getDisplayName();
         return (T) file;
-    }
-
-    private static boolean testSignature(byte[] data, int startIndex, String test) {
-        byte[] testBytes = test.getBytes();
-        byte[] signatureBytes = new byte[testBytes.length];
-        System.arraycopy(data, startIndex, signatureBytes, 0, signatureBytes.length);
-        return Arrays.equals(testBytes, signatureBytes);
     }
 
     @Override

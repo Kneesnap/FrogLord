@@ -165,6 +165,30 @@ public class Utils {
     }
 
     /**
+     * Get a bit value.
+     * @param value The bit to convert.
+     * @return bit
+     */
+    public static int getBit(boolean value) {
+        return value ? Constants.BIT_TRUE : Constants.BIT_FALSE;
+    }
+
+    /**
+     * Get a bit value.
+     * @param bit The bit to convert.
+     * @return value
+     */
+    public static boolean getBit(int bit) {
+        if (bit == Constants.BIT_TRUE)
+            return true;
+
+        if (bit == Constants.BIT_FALSE)
+            return false;
+
+        throw new RuntimeException("Invalid bit-value: " + bit);
+    }
+
+    /**
      * Turn a list of bytes into a byte array.
      * @param list The list of bytes.
      * @return byteArray
@@ -249,11 +273,11 @@ public class Utils {
     /**
      * Convert an int value (fixed point, n fractional bits) into a float.
      * @param intVal The integer to convert.
-     * @param n The number of fractional bits.
+     * @param n      The number of fractional bits.
      * @return floatValue
      */
     public static float fixedPointIntToFloatNBits(int intVal, long n) {
-        return ((float)intVal / (float)(1 << n));
+        return ((float) intVal / (float) (1 << n));
     }
 
     /**
@@ -344,17 +368,6 @@ public class Utils {
         if (unsignedLong < 0 || unsignedLong > 0xFFFFFFFFL)
             throw new RuntimeException("The provided short value is outside the range of an unsigned byte. [0,0xFFFFFFFF]. Value: " + unsignedLong);
         return (int) unsignedLong;
-    }
-
-    /**
-     * Reverse an array, and store it in a new array, which is returned.
-     * @param array The array to reverse.
-     * @return clonedArray
-     */
-    public static byte[] reverseCloneByteArray(byte[] array) {
-        byte[] output = Arrays.copyOf(array, array.length);
-        reverseByteArray(output);
-        return output;
     }
 
     /**
@@ -453,7 +466,7 @@ public class Utils {
      * @return unsignedInt
      */
     public static int getUnsignedByte(byte value) {
-        return value >= 0 ? value : (int) Byte.MAX_VALUE - value;
+        return value >= 0 ? value : Byte.MAX_VALUE - value;
     }
 
     /**
@@ -968,5 +981,50 @@ public class Utils {
                 field.setStyle(pass ? null : "-fx-text-inner-color: red;");
             }
         });
+    }
+
+    /**
+     * Test if a string is present at a given index in a byte array.
+     * @param data The array to check.
+     * @param test The string to test against.
+     * @return hasSignature
+     */
+    public static boolean testSignature(byte[] data, String test) {
+        return testSignature(data, 0, test.getBytes());
+    }
+
+    /**
+     * Test if a string is present at a given index in a byte array.
+     * @param data       The array to check.
+     * @param startIndex The index into that array.
+     * @param test       The string to test against.
+     * @return hasSignature
+     */
+    public static boolean testSignature(byte[] data, int startIndex, String test) {
+        return testSignature(data, startIndex, test.getBytes());
+    }
+
+    /**
+     * Test if a file signature matches bytes.
+     * @param data The data to test.
+     * @param test The signature to test against.
+     * @return hasSignature
+     */
+    public static boolean testSignature(byte[] data, byte[] test) {
+        return testSignature(data, 0, test);
+    }
+
+    /**
+     * Test if a file signature matches bytes.
+     * @param data       The data to test.
+     * @param startIndex The index to start testing at.
+     * @param test       The signature to test against.
+     * @return hasSignature
+     */
+    public static boolean testSignature(byte[] data, int startIndex, byte[] test) {
+        for (int i = 0; i < test.length; i++)
+            if (data[i] != test[i])
+                return false;
+        return true;
     }
 }
