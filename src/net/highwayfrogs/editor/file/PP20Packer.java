@@ -14,13 +14,14 @@ import java.nio.ByteBuffer;
  * So, this was created from research and attempts to reverse the unpacker.
  * This packer is not thread-safe, but it wouldn't take much effort to make it thread-safe.
  *
- * PP20 is a Lz77 (sliding window compression) variant.
- * It resembles LzSS.
+ * PP20 is a LZSS variant.
  *
  * Useful Links:
  * - https://en.wikipedia.org/wiki/LZ77_and_LZ78
+ * - https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Szymanski
  * - https://eblong.com/zarf/blorb/mod-spec.txt
  * - https://books.google.com/books?id=ujnQogzx_2EC&printsec=frontcover (Specifically, the section about how LzSS improves upon Lz77)
+ * - https://www.programcreek.com/java-api-examples/index.php?source_dir=trie4j-master/trie4j/src/kitchensink/java/org/trie4j/lz/LZSS.java
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
