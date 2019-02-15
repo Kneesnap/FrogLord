@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.vlo;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 @Setter
 @SuppressWarnings("unused")
-public class GameImage extends GameObject {
+public class GameImage extends GameObject implements Cloneable {
     private VLOArchive parent;
     private short vramX;
     private short vramY;
@@ -444,5 +445,11 @@ public class GameImage extends GameObject {
     public boolean contains(double x, double y) {
         return x >= getVramX() && x <= (getVramX() + getFullWidth())
                 && y >= getVramY() && y <= (getVramY() + getFullHeight());
+    }
+
+    @Override
+    @SneakyThrows
+    public GameImage clone() {
+        return (GameImage) super.clone();
     }
 }
