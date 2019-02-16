@@ -1,9 +1,12 @@
 package net.highwayfrogs.editor.gui.editor;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.*;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Point3D;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
@@ -46,25 +49,12 @@ import java.util.function.Consumer;
 @Getter
 public class MapUIController implements Initializable {
     // Useful constants and settings
-    public static final double MAP_VIEW_FAR_CLIP = 5000.0;
-
-    private static final double ROTATION_SPEED = 0.35D;
-    @Getter private static DoubleProperty propertyRotationSpeed = new SimpleDoubleProperty(ROTATION_SPEED);
-
-    private static final double SCROLL_SPEED = 1.0;
-    @Getter private static DoubleProperty propertyScrollSpeed = new SimpleDoubleProperty(SCROLL_SPEED);
-
-    private static final double TRANSLATE_SPEED = 2.0;
-    @Getter private static DoubleProperty propertyTranslateSpeed = new SimpleDoubleProperty(TRANSLATE_SPEED);
+    public static final double MAP_VIEW_NEAR_CLIP = 0.1;
+    public static final double MAP_VIEW_FAR_CLIP = 2000.0;
+    public static final double MAP_VIEW_FOV = 60.0;
 
     private static final int VERTEX_SPEED = 3;
     @Getter private static IntegerProperty propertyVertexSpeed = new SimpleIntegerProperty(3);
-
-    private static final double SPEED_DOWN_MULTIPLIER = 0.25;
-    @Getter private static DoubleProperty propertySpeedDownMultiplier = new SimpleDoubleProperty(SPEED_DOWN_MULTIPLIER);
-
-    private static final double SPEED_UP_MULTIPLIER = 4.0;
-    @Getter private static DoubleProperty propertySpeedUpMultiplier = new SimpleDoubleProperty(SPEED_UP_MULTIPLIER);
 
     private static float ENTITY_ICON_SIZE = 16.0f;
     @Getter private static FloatProperty propertyEntityIconSize = new SimpleFloatProperty(ENTITY_ICON_SIZE);
@@ -81,24 +71,20 @@ public class MapUIController implements Initializable {
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
     @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
     @FXML private ColorPicker colorPickerLevelBackground;
-    @FXML private TextField textFieldSpeedRotation;
-    @FXML private Button btnResetSpeedRotation;
-    @FXML private TextField textFieldSpeedScroll;
-    @FXML private Button btnResetSpeedScroll;
-    @FXML private TextField textFieldSpeedTranslate;
-    @FXML private Button btnResetSpeedTranslate;
-    @FXML private TextField textFieldSpeedDownMultiplier;
-    @FXML private Button btnResetSpeedDownMultiplier;
-    @FXML private TextField textFieldSpeedUpMultiplier;
-    @FXML private Button btnResetSpeedUpMultiplier;
+    @FXML private TextField textFieldCamMoveSpeed;
+    @FXML private Button btnResetCamMoveSpeed;
+    @FXML private TextField textFieldCamMouseSpeed;
+    @FXML private Button btnResetCamMouseSpeed;
+    @FXML private TextField textFieldCamSpeedDownMultiplier;
+    @FXML private Button btnResetCamSpeedDownMultiplier;
+    @FXML private TextField textFieldCamSpeedUpMultiplier;
+    @FXML private Button btnResetCamSpeedUpMultiplier;
     @FXML private TextField textFieldCamNearClip;
     @FXML private TextField textFieldCamFarClip;
+    @FXML private TextField textFieldCamFoV;
     @FXML private TextField textFieldCamPosX;
     @FXML private TextField textFieldCamPosY;
     @FXML private TextField textFieldCamPosZ;
-    @FXML private TextField textFieldMeshPosX;
-    @FXML private TextField textFieldMeshPosY;
-    @FXML private TextField textFieldMeshPosZ;
     @FXML private TextField textFieldEntityIconSize;
 
     // General pane.
@@ -146,6 +132,8 @@ public class MapUIController implements Initializable {
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
+    //>>
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         accordionLeft.setExpandedPane(generalPane);
@@ -164,35 +152,6 @@ public class MapUIController implements Initializable {
      */
     public double uiRootPaneHeight() {
         return anchorPaneUIRoot.getPrefHeight();
-    }
-
-    /**
-     * Utility function affording the user different levels of speed control through multipliers.
-     */
-    public static double getSpeedModifier(GestureEvent event, Property<Number> property) {
-        return getSpeedModifier(event.isControlDown(), event.isAltDown(), property.getValue().doubleValue());
-    }
-
-    /**
-     * Utility function affording the user different levels of speed control through multipliers.
-     */
-    public static double getSpeedModifier(MouseEvent event, Property<Number> property) {
-        return getSpeedModifier(event.isControlDown(), event.isAltDown(), property.getValue().doubleValue());
-    }
-
-    /**
-     * Utility function affording the user different levels of speed control through multipliers.
-     */
-    public static double getSpeedModifier(Boolean isCtrlDown, Boolean isAltDown, double defaultValue) {
-        double multiplier = 1;
-
-        if (isCtrlDown) {
-            multiplier = propertySpeedDownMultiplier.get();
-        } else if (isAltDown) {
-            multiplier = propertySpeedUpMultiplier.get();
-        }
-
-        return defaultValue * multiplier;
     }
 
     /**
@@ -410,35 +369,46 @@ public class MapUIController implements Initializable {
      */
     public void setupBindings(MAPController controller, SubScene subScene3D, MeshView meshView) {
         this.controller = controller;
-        PerspectiveCamera camera = controller.getCamera();
 
+        MapCameraFPS cameraFPS = controller.getCameraFPS();
+        PerspectiveCamera camera = cameraFPS.getCamera();
+
+        camera.setNearClip(MAP_VIEW_NEAR_CLIP);
         camera.setFarClip(MAP_VIEW_FAR_CLIP);
-        subScene3D.setFill(Color.GRAY);
-        subScene3D.setCamera(camera);
+        camera.setFieldOfView(MAP_VIEW_FOV);
 
         // Set informational bindings and editor bindings
         colorPickerLevelBackground.setValue((Color) subScene3D.getFill());
         subScene3D.fillProperty().bind(colorPickerLevelBackground.valueProperty());
 
-        textFieldSpeedRotation.textProperty().bindBidirectional(propertyRotationSpeed, NUM_TO_STRING_CONVERTER);
-        textFieldSpeedScroll.textProperty().bindBidirectional(propertyScrollSpeed, NUM_TO_STRING_CONVERTER);
-        textFieldSpeedTranslate.textProperty().bindBidirectional(propertyTranslateSpeed, NUM_TO_STRING_CONVERTER);
-        textFieldSpeedDownMultiplier.textProperty().bindBidirectional(propertySpeedDownMultiplier, NUM_TO_STRING_CONVERTER);
-        textFieldSpeedUpMultiplier.textProperty().bindBidirectional(propertySpeedUpMultiplier, NUM_TO_STRING_CONVERTER);
+        textFieldCamMoveSpeed.textProperty().bindBidirectional(cameraFPS.getCamMoveSpeedProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamMouseSpeed.textProperty().bindBidirectional(cameraFPS.getCamMouseSpeedProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamSpeedDownMultiplier.textProperty().bindBidirectional(cameraFPS.getCamSpeedDownMultiplierProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamSpeedUpMultiplier.textProperty().bindBidirectional(cameraFPS.getCamSpeedUpMultiplierProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamMoveSpeed.setOnAction(evt -> subScene3D.requestFocus());
+        textFieldCamMouseSpeed.setOnAction(evt -> subScene3D.requestFocus());
+        textFieldCamSpeedDownMultiplier.setOnAction(evt -> subScene3D.requestFocus());
+        textFieldCamSpeedUpMultiplier.setOnAction(evt -> subScene3D.requestFocus());
 
-        btnResetSpeedRotation.setOnAction(e -> propertyRotationSpeed.set(ROTATION_SPEED));
-        btnResetSpeedScroll.setOnAction(e -> propertyScrollSpeed.set(SCROLL_SPEED));
-        btnResetSpeedTranslate.setOnAction(e -> propertyTranslateSpeed.set(TRANSLATE_SPEED));
-        btnResetSpeedDownMultiplier.setOnAction(e -> propertySpeedDownMultiplier.set(SPEED_DOWN_MULTIPLIER));
-        btnResetSpeedUpMultiplier.setOnAction(e -> propertySpeedUpMultiplier.set(SPEED_UP_MULTIPLIER));
+        btnResetCamMoveSpeed.setOnAction(e -> cameraFPS.resetDefaultCamMoveSpeed());
+        btnResetCamMouseSpeed.setOnAction(e -> cameraFPS.resetDefaultCamMouseSpeed());
+        btnResetCamSpeedDownMultiplier.setOnAction(e -> cameraFPS.resetDefaultCamSpeedDownMultiplier());
+        btnResetCamSpeedUpMultiplier.setOnAction(e -> cameraFPS.resetDefaultCamSpeedUpMultiplier());
 
         // Set camera bindings
         textFieldCamNearClip.textProperty().bindBidirectional(camera.nearClipProperty(), NUM_TO_STRING_CONVERTER);
         textFieldCamFarClip.textProperty().bindBidirectional(camera.farClipProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamFoV.textProperty().bindBidirectional(camera.fieldOfViewProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamNearClip.setOnAction(evt -> subScene3D.requestFocus());
+        textFieldCamFarClip.setOnAction(evt -> subScene3D.requestFocus());
+        textFieldCamFoV.setOnAction(evt -> subScene3D.requestFocus());
 
-        textFieldCamPosX.textProperty().bindBidirectional(camera.translateXProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamPosY.textProperty().bindBidirectional(camera.translateYProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamPosZ.textProperty().bindBidirectional(camera.translateZProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamPosX.textProperty().bindBidirectional(cameraFPS.getCamPosXProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamPosY.textProperty().bindBidirectional(cameraFPS.getCamPosYProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamPosZ.textProperty().bindBidirectional(cameraFPS.getCamPosZProperty(), NUM_TO_STRING_CONVERTER);
+        textFieldCamPosX.setOnAction(evt -> subScene3D.requestFocus());
+        textFieldCamPosY.setOnAction(evt -> subScene3D.requestFocus());
+        textFieldCamPosZ.setOnAction(evt -> subScene3D.requestFocus());
 
         // Set mesh view bindings
         checkBoxShowMesh.selectedProperty().bindBidirectional(meshView.visibleProperty());
@@ -449,11 +419,8 @@ public class MapUIController implements Initializable {
         comboBoxMeshCullFace.getItems().setAll(CullFace.values());
         comboBoxMeshCullFace.valueProperty().bindBidirectional(meshView.cullFaceProperty());
 
-        textFieldMeshPosX.textProperty().bindBidirectional(meshView.translateXProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldMeshPosY.textProperty().bindBidirectional(meshView.translateYProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldMeshPosZ.textProperty().bindBidirectional(meshView.translateZProperty(), NUM_TO_STRING_CONVERTER);
-
         textFieldEntityIconSize.textProperty().bindBidirectional(propertyEntityIconSize, NUM_TO_STRING_CONVERTER);
+        textFieldEntityIconSize.setOnAction(evt -> subScene3D.requestFocus());
 
         // Must be called after MAPController is passed.
         showEntityInfo(null);
