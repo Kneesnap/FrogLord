@@ -18,7 +18,7 @@ public class DummyFile extends GameFile {
     private int length;
     private ByteBuffer buffer;
 
-    private static final Image ICON = loadIcon("unknown");
+    public static final Image ICON = loadIcon("unknown");
 
     public DummyFile(int length) {
         this.length = length;

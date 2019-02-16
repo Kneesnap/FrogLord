@@ -231,13 +231,13 @@ public class MAPController extends EditorController<MAPFile> {
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
 
             if (isPolygonSelected()) {
-                if (event.getCode() == KeyCode.UP) {
+                if (event.getCode() == KeyCode.I) {
                     movePolygonY(MapUIController.getPropertyVertexSpeed().get());
-                } else if (event.getCode() == KeyCode.DOWN) {
+                } else if (event.getCode() == KeyCode.K) {
                     movePolygonY(-MapUIController.getPropertyVertexSpeed().get());
-                } else if (event.getCode() == KeyCode.LEFT) {
+                } else if (event.getCode() == KeyCode.J) {
                     movePolygonX(-MapUIController.getPropertyVertexSpeed().get());
-                } else if (event.getCode() == KeyCode.RIGHT) {
+                } else if (event.getCode() == KeyCode.L) {
                     movePolygonX(MapUIController.getPropertyVertexSpeed().get());
                 }
             }

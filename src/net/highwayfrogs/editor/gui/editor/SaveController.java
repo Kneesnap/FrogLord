@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.system.AbstractService;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -73,11 +74,20 @@ public class SaveController implements Initializable {
         private SaveController saveController;
 
         @Override
-        protected Void call() throws Exception {
+        protected Void call() {
             AtomicInteger currentFile = new AtomicInteger(0);
             AtomicBoolean alreadyScheduledUpdate = new AtomicBoolean();
 
-            DataWriter mwdWriter = new DataWriter(new FileReceiver(outputMWD));
+            DataWriter mwdWriter;
+            try {
+                mwdWriter = new DataWriter(new FileReceiver(outputMWD));
+            } catch (FileNotFoundException ex) { // Can happen when you don't have permission to write to this file, or the file is read-only, etc.
+                Platform.runLater(() -> {
+                    saveController.getStage().close();
+                    throw new RuntimeException("IOException!", ex);
+                });
+                return null;
+            }
 
             mwdToSave.setSaveCallback((entry, file) -> {
                 currentFile.incrementAndGet();

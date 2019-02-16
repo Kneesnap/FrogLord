@@ -4,7 +4,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
@@ -13,6 +12,7 @@ import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -23,7 +23,6 @@ import java.nio.file.Files;
  */
 public class WADController extends EditorController<WADFile> {
     @FXML private ListView<WADEntry> entryList;
-
     private WADEntry selectedEntry;
 
     @Override
@@ -32,7 +31,7 @@ public class WADController extends EditorController<WADFile> {
 
         ObservableList<WADEntry> wadEntries = FXCollections.observableArrayList(file.getFiles());
         entryList.setItems(wadEntries);
-        entryList.setCellFactory(param -> new AttachmentListCell());
+        updateEntryText();
 
         entryList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             this.selectedEntry = newValue;
@@ -40,6 +39,12 @@ public class WADController extends EditorController<WADFile> {
         });
 
         entryList.getSelectionModel().select(0);
+    }
+
+    private void updateEntryText() {
+        entryList.setCellFactory(null);
+        entryList.setCellFactory(param ->
+                new AbstractAttachmentCell<>((wadEntry, index) -> wadEntry != null ? "[" + index + "] " + wadEntry.getDisplayName() : null));
     }
 
     @FXML
@@ -56,6 +61,7 @@ public class WADController extends EditorController<WADFile> {
         updateEntry(); // Update the display.
         WADFile.CURRENT_FILE_NAME = null;
         System.out.println("Imported WAD Entry.");
+        updateEntryText();
     }
 
     @FXML
@@ -96,14 +102,6 @@ public class WADController extends EditorController<WADFile> {
     @FXML
     private void editSelectedFile(ActionEvent event) {
         selectedEntry.getFile().handleWadEdit(getFile());
-    }
-
-    private static class AttachmentListCell extends ListCell<WADEntry> {
-        @Override
-        public void updateItem(WADEntry entry, boolean empty) {
-            super.updateItem(entry, empty);
-            setText(empty ? null : entry.getFileEntry().getDisplayName());
-        }
     }
 
     private void updateEntry() {

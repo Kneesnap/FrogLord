@@ -204,7 +204,10 @@ public class GridController implements Initializable {
                 double xPos = getTileWidth() * x;
                 double yPos = getTileHeight() * (getMap().getGridZCount() - z - 1);
 
-                if (currentRegion != null && currentRegion.contains(x, z)) {
+                if (this.selectedStack != null && this.selectedStack == stack) {
+                    graphics.setFill(Color.AQUA);
+                    graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
+                } else if (currentRegion != null && currentRegion.contains(x, z)) {
                     graphics.setFill(Color.MAGENTA);
                     if (zoneEditorCheckBox.isSelected() && currentRegion.isCorner(x, z)) {
                         graphics.setFill(Color.YELLOW);
@@ -342,7 +345,7 @@ public class GridController implements Initializable {
         boolean noStack = (stack == null);
 
         flagTable.setDisable(disable);
-        selectedImage.setDisable(disable);
+        selectedImage.setVisible(!disable);
         layerSelector.setDisable(squareCount <= 1);
         stackIdLabel.setDisable(noStack);
         stackHeightField.setDisable(noStack);
@@ -355,6 +358,8 @@ public class GridController implements Initializable {
             stackIdLabel.setText("Stack ID: #" + getMap().getGridStacks().indexOf(stack) + " [X: " + getMap().getGridX(stack) + ",Z: " + getMap().getGridZ(stack) + "]");
             stackHeightField.setText(String.valueOf(stack.getAverageHeight()));
         }
+
+        updateCanvas();
     }
 
     /**

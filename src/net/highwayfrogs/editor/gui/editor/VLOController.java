@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -52,11 +53,14 @@ public class VLOController extends EditorController<VLOArchive> {
     public void loadFile(VLOArchive vlo) {
         super.loadFile(vlo);
 
-        ObservableList<GameImage> gameImages = FXCollections.observableArrayList(vlo.getImages());
-        imageList.setItems(gameImages);
-        imageList.setCellFactory(param -> new AttachmentListCell());
+        imageList.setItems(FXCollections.observableArrayList(vlo.getImages()));
+        imageList.setCellFactory(param -> new AbstractAttachmentCell<>((image, index) -> image == null ? null
+                : index + ": [" + image.getFullWidth() + ", " + image.getFullHeight() + "] (Tex ID: " + image.getTextureId() + ")"));
 
         imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null)
+                return;
+
             this.selectedImage = newValue;
             this.updateFlags();
             this.updateDisplay();
@@ -78,6 +82,24 @@ public class VLOController extends EditorController<VLOArchive> {
         addFlag("Black is Transparent", GameImage.FLAG_BLACK_IS_TRANSPARENT);
         addFlag("2D Sprite", GameImage.FLAG_2D_SPRITE);
         this.updateFlags();
+
+        Button cloneButton = new Button("Clone Image");
+        cloneButton.setOnAction(evt -> getFile().getMWD().promptVLOSelection(null, this::promptCloneVlo, false));
+        flagBox.getChildren().add(cloneButton);
+    }
+
+    private void promptCloneVlo(VLOArchive cloneFrom) {
+        cloneFrom.promptImageSelection(gameImage -> {
+            if (gameImage == null)
+                return;
+
+            int newView = getFile().getImages().size();
+            getFile().getImages().add(gameImage.clone());
+            imageList.setItems(FXCollections.observableArrayList(getFile().getImages()));
+            imageList.getSelectionModel().select(newView);
+            imageList.scrollTo(newView);
+            Platform.runLater(() -> promptCloneVlo(cloneFrom)); // If we don't delay this, the existing window won't shut.
+        }, true);
     }
 
     @Override
@@ -104,15 +126,6 @@ public class VLOController extends EditorController<VLOArchive> {
         if (this.selectedImage != null)
             for (Entry<Integer, CheckBox> entry : flagCheckBoxMap.entrySet())
                 entry.getValue().setSelected(this.selectedImage.testFlag(entry.getKey()));
-    }
-
-    private static class AttachmentListCell extends ListCell<GameImage> {
-        @Override
-        public void updateItem(GameImage image, boolean empty) {
-            super.updateItem(image, empty);
-            setText(empty ? null
-                    : getIndex() + ": [" + image.getFullWidth() + ", " + image.getFullHeight() + "] (Tex ID: " + image.getTextureId() + ")");
-        }
     }
 
     @FXML

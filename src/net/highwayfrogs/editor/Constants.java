@@ -46,6 +46,7 @@ public class Constants {
     public static final int BIT_FLAG_17 = 1 << 17;
 
     public static final Font SYSTEM_BOLD_FONT = new Font("System Bold", 12);
+    public static final String DUMMY_FILE_NAME = "NULL";
 
     public static final boolean ENABLE_WAD_FORMATS = true;
     public static final boolean LOG_EXE_INFO = false;
