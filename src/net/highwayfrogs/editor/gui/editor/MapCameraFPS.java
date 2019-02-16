@@ -84,10 +84,8 @@ public class MapCameraFPS extends Parent
     /**
      * Constructor for the MapCameraFPS.
      */
-    public MapCameraFPS(double moveSpeed)
+    public MapCameraFPS()
     {
-        camMoveSpeedProperty.set(moveSpeed);
-
         setupAndInitialise();
     }
 
