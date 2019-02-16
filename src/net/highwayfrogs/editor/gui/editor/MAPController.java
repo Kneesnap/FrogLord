@@ -54,6 +54,8 @@ public class MAPController extends EditorController<MAPFile> {
     private double oldMouseY;
     private double mouseX;
     private double mouseY;
+    private double mouseXDelta;
+    private double mouseYDelta;
 
     private Scene mapScene;
     private MapMesh mapMesh;
@@ -62,7 +64,8 @@ public class MAPController extends EditorController<MAPFile> {
     private boolean polygonSelected;
     private MapUIController mapUIController;
 
-    private PerspectiveCamera camera;
+    private static final double CAM_MOVE_SPEED = 100.0;
+    private MapCameraFPS cameraFPS = new MapCameraFPS(CAM_MOVE_SPEED);
 
     private List<MeshView> entityIcons = new ArrayList<>();
     private static PhongMaterial entityIconMaterial = new PhongMaterial();
@@ -165,10 +168,7 @@ public class MAPController extends EditorController<MAPFile> {
         meshView.getTransforms().addAll(rotX, rotY, rotZ);
 
         meshView.setMaterial(material);
-        meshView.setCullFace(CullFace.NONE);
-
-        // Setup a perspective camera through which the 3D view is realised.
-        this.camera = new PerspectiveCamera(true);
+        meshView.setCullFace(CullFace.BACK);
 
         // Load FXML for UI layout.
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/javafx/mapui.fxml"));
@@ -177,8 +177,10 @@ public class MAPController extends EditorController<MAPFile> {
         this.mapUIController = fxmlLoader.getController();
 
         // Create the 3D elements and use them within a subscene.
-        this.root3D = new Group(this.camera, meshView);
+        this.root3D = new Group(meshView);
         SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - mapUIController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
+        subScene3D.setFill(Color.GRAY);
+        subScene3D.setCamera(cameraFPS.getCamera());
 
         //  Setup mapui controller bindings, etc.
         mapUIController.setupBindings(this, subScene3D, meshView);
@@ -201,6 +203,9 @@ public class MAPController extends EditorController<MAPFile> {
         subScene3D.heightProperty().bind(mapScene.heightProperty());
 
         // Input (key) event processing.
+        cameraFPS.assignSceneControls(mapScene);
+        cameraFPS.startThreadProcessing();
+
         mapScene.setOnKeyPressed(event -> {
             if (getMapUIController() != null && getMapUIController().onKeyPress(event))
                 return; // Handled by the other controller.
@@ -212,6 +217,7 @@ public class MAPController extends EditorController<MAPFile> {
                     return;
                 }
 
+                cameraFPS.stopThreadProcessing();
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
             }
 
@@ -236,9 +242,9 @@ public class MAPController extends EditorController<MAPFile> {
             }
         });
 
-        mapScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * MapUIController.getSpeedModifier(evt, MapUIController.getPropertyScrollSpeed()))));
-
         mapScene.setOnMousePressed(e -> {
+            mapUIController.getAnchorPaneUIRoot().requestFocus();
+
             mouseX = oldMouseX = e.getSceneX();
             mouseY = oldMouseY = e.getSceneY();
 
@@ -256,15 +262,11 @@ public class MAPController extends EditorController<MAPFile> {
             oldMouseY = mouseY;
             mouseX = e.getSceneX();
             mouseY = e.getSceneY();
-            double mouseXDelta = (mouseX - oldMouseX);
-            double mouseYDelta = (mouseY - oldMouseY);
+            mouseXDelta = (mouseX - oldMouseX);
+            mouseYDelta = (mouseY - oldMouseY);
 
-            if (e.isPrimaryButtonDown()) {
-                rotX.setAngle(rotX.getAngle() + (mouseYDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyRotationSpeed()))); // Rotate the object.
-                rotY.setAngle(rotY.getAngle() - (mouseXDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyRotationSpeed())));
+            if (e.isPrimaryButtonDown()){
             } else if (e.isMiddleButtonDown()) {
-                camera.setTranslateX(camera.getTranslateX() - (mouseXDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyTranslateSpeed()))); // Move the camera.
-                camera.setTranslateY(camera.getTranslateY() - (mouseYDelta * MapUIController.getSpeedModifier(e, MapUIController.getPropertyTranslateSpeed())));
             }
         });
 
@@ -288,9 +290,10 @@ public class MAPController extends EditorController<MAPFile> {
         });
 
         // Set the initial camera position to somewhere sensible :)
-        //  - Maybe calculate this based on some metric rather than supplying arbitrary values?
-        camera.setTranslateZ(-1000.0);
-        camera.setTranslateY(-100.0);
+        // TODO: set initial camera position based on some level / map metric?
+        cameraFPS.setPos(0.0, -100.0, -400.0);
+
+        //addBoundingBoxCenteredWithDimensions(0, 0, 0, 50, 50, 50);
     }
 
     /**
