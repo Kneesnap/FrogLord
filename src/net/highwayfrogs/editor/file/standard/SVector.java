@@ -178,7 +178,7 @@ public class SVector extends GameObject {
      * @return coordinateString
      */
     public String toCoordinateString() {
-        return getX() + ", " + getY() + ", " + getZ();
+        return Utils.fixedPointShortToFloat412(getX()) + ", " + Utils.fixedPointShortToFloat412(getY()) + ", " + Utils.fixedPointShortToFloat412(getZ());
     }
 
     @Override
