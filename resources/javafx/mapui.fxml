@@ -8,6 +8,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -55,6 +56,33 @@
                                     <children>
                                         <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
+                                                <GridPane prefWidth="232.0">
+                                                    <columnConstraints>
+                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                    </columnConstraints>
+                                                    <rowConstraints>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                    </rowConstraints>
+                                                    <children>
+                                                        <Label text="Show Mesh:" />
+                                                        <Label text="Draw Mode:" GridPane.rowIndex="1" />
+                                                        <Label text="Face Culling:" GridPane.rowIndex="2" />
+                                                        <Label text="Background: " GridPane.rowIndex="3" />
+                                                        <CheckBox fx:id="checkBoxShowMesh" mnemonicParsing="false" nodeOrientation="RIGHT_TO_LEFT" selected="true" GridPane.columnIndex="1" />
+                                                        <ComboBox fx:id="comboBoxMeshDrawMode" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                                        <ComboBox fx:id="comboBoxMeshCullFace" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                                        <ColorPicker fx:id="colorPickerLevelBackground" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                                    </children>
+                                                </GridPane>
+                                    <Separator prefWidth="200.0">
+                                       <padding>
+                                          <Insets bottom="4.0" top="6.0" />
+                                       </padding>
+                                    </Separator>
                                                 <GridPane fx:id="geometryGridPane" prefWidth="250.0">
                                                     <columnConstraints>
                                                         <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0" minWidth="10.0" prefWidth="100.0" />
@@ -105,6 +133,24 @@
                                     <children>
                                         <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
+                                    <GridPane>
+                                      <columnConstraints>
+                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                      </columnConstraints>
+                                      <rowConstraints>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                      </rowConstraints>
+                                       <children>
+                                          <Label text="Entity Icon Size:" />
+                                          <TextField fx:id="textFieldEntityIconSize" alignment="CENTER_RIGHT" GridPane.columnIndex="1" />
+                                       </children>
+                                    </GridPane>
+                                    <Separator prefWidth="200.0">
+                                       <padding>
+                                          <Insets bottom="4.0" top="6.0" />
+                                       </padding>
+                                    </Separator>
                                                 <GridPane fx:id="entityGridPane" prefWidth="250.0">
                                                     <columnConstraints>
                                                         <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0" minWidth="10.0" prefWidth="100.0" />
@@ -205,31 +251,6 @@
                                     <children>
                                         <VBox spacing="8.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
-                                                <GridPane prefWidth="232.0">
-                                                    <columnConstraints>
-                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                                    </columnConstraints>
-                                                    <rowConstraints>
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                                    </rowConstraints>
-                                                    <children>
-                                                        <Label text="Show Mesh:" />
-                                                        <Label text="Draw Mode:" GridPane.rowIndex="1" />
-                                                        <Label text="Face Culling:" GridPane.rowIndex="2" />
-                                                        <Label text="Background: " GridPane.rowIndex="3" />
-                                                        <CheckBox fx:id="checkBoxShowMesh" mnemonicParsing="false" nodeOrientation="RIGHT_TO_LEFT" selected="true" GridPane.columnIndex="1" />
-                                                        <ComboBox fx:id="comboBoxMeshDrawMode" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                                        <ComboBox fx:id="comboBoxMeshCullFace" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                                        <ColorPicker fx:id="colorPickerLevelBackground" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                                          <Label text="Entity Icon Size:" GridPane.rowIndex="4" />
-                                          <TextField fx:id="textFieldEntityIconSize" alignment="CENTER_RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                                                    </children>
-                                                </GridPane>
                                                 <GridPane>
                                                     <columnConstraints>
                                                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="80.0" />
