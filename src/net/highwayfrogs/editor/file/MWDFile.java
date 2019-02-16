@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
+import net.highwayfrogs.editor.file.map.SkyLand;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -124,10 +125,11 @@ public class MWDFile extends GameObject {
             file = new VLOArchive();
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) {
             boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && getConfig().isDemo() && getConfig().isPSX());
-            boolean isSkyLand = entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX);
 
-            if (isDemoJungle || isSkyLand) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
+            if (isDemoJungle) {
                 file = new DummyFile(fileBytes.length);
+            } else if (entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX)) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
+                file = new SkyLand();
             } else {
                 file = new MAPFile(this);
             }
@@ -238,5 +240,16 @@ public class MWDFile extends GameObject {
                 }, allVLOs,
                 vlo -> vlo != null ? getEntryMap().get(vlo).getDisplayName() : "No Textures",
                 vlo -> SelectionMenu.makeIcon(vlo.getImages().get(0).toBufferedImage(VLO_ICON_SETTING)));
+    }
+
+    /**
+     * Gets this MWD's SkyLand file.
+     * @return skyLand
+     */
+    public SkyLand getSkyLand() {
+        for (GameFile file : getFiles())
+            if (file instanceof SkyLand)
+                return (SkyLand) file;
+        throw new RuntimeException("Sky Land is not present.");
     }
 }

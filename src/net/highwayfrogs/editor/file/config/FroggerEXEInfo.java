@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
+import net.highwayfrogs.editor.file.map.SkyLand;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.GameSound;
@@ -547,7 +548,15 @@ public class FroggerEXEInfo extends Config {
         // Unsure where this goes, or where to read it from.
         vramCWriter.write(Constants.NEWLINE);
         vramHWriter.write(Constants.NEWLINE);
-        vramCWriter.write("MR_USHORT txl_sky_land[] = {0, 0, 0, 0};" + Constants.NEWLINE);
+        vramCWriter.write("MR_USHORT txl_sky_land[] = {");
+
+        SkyLand skyLand = getMWD().getSkyLand();
+        for (int i = 0; i < skyLand.getMaxIndex(); i++) {
+            vramCWriter.write("1791");
+            vramCWriter.write(", ");
+        }
+
+        vramCWriter.write("};" + Constants.NEWLINE);
         vramHWriter.write("extern MR_USHORT txl_sky_land[];" + Constants.NEWLINE);
 
         vramHWriter.write("#endif" + Constants.NEWLINE);
