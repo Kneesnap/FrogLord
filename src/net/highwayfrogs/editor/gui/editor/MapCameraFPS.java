@@ -79,6 +79,12 @@ public class MapCameraFPS extends Parent
     @Getter private DoubleProperty camPosYProperty = new SimpleDoubleProperty();
     @Getter private DoubleProperty camPosZProperty = new SimpleDoubleProperty();
 
+    @Getter private DoubleProperty camYawProperty = new SimpleDoubleProperty();
+    @Getter private DoubleProperty camPitchProperty = new SimpleDoubleProperty();
+    @Getter private DoubleProperty camRollProperty = new SimpleDoubleProperty();
+
+    @Getter private BooleanProperty camYInvertProperty = new SimpleBooleanProperty();
+
     //>>
 
     /**
@@ -101,6 +107,10 @@ public class MapCameraFPS extends Parent
         affineXform.txProperty().bindBidirectional(camPosXProperty);
         affineXform.tyProperty().bindBidirectional(camPosYProperty);
         affineXform.tzProperty().bindBidirectional(camPosZProperty);
+
+        rotateYaw.angleProperty().bindBidirectional(camYawProperty);
+        rotatePitch.angleProperty().bindBidirectional(camPitchProperty);
+        rotateRoll.angleProperty().bindBidirectional(camRollProperty);
 
         // Add out affine transformation (we manually update this per frame to produce the desired camera behaviour)
         getTransforms().add(affineXform);
@@ -232,143 +242,11 @@ public class MapCameraFPS extends Parent
         {
             if (getScene() != null)
             {
-                getScene().addEventHandler(KeyEvent.ANY, evt ->
-                {
-                    if (evt.getEventType() == KeyEvent.KEY_PRESSED)
-                    {
-                        switch (evt.getCode())
-                        {
-                            // Modifiers
-                            case CONTROL:
-                                isControlDown = true;
-                                break;
-                            case ALT:
-                                isAltDown = true;
-                                break;
-
-                            // Forwards + backwards
-                            case W:
-                            case UP:
-                                camMoveForward = true;
-                                break;
-                            case S:
-                            case DOWN:
-                                camMoveBackward = true;
-                                break;
-
-                            // Strafe left + right
-                            case A:
-                            case LEFT:
-                                camStrafeLeft = true;
-                                break;
-                            case D:
-                            case RIGHT:
-                                camStrafeRight = true;
-                                break;
-
-                            // Up + down
-                            case Q:
-                            case PAGE_UP:
-                                camMoveUp = true;
-                                break;
-                            case E:
-                            case PAGE_DOWN:
-                                camMoveDown = true;
-                                break;
-                        }
-                    }
-                    else if (evt.getEventType() == KeyEvent.KEY_RELEASED)
-                    {
-                        switch (evt.getCode())
-                        {
-                            // Modifiers
-                            case CONTROL:
-                                isControlDown = false;
-                                break;
-                            case ALT:
-                                isAltDown = false;
-                                break;
-
-                            // Forwards + backwards
-                            case W:
-                            case UP:
-                                camMoveForward = false;
-                                break;
-                            case S:
-                            case DOWN:
-                                camMoveBackward = false;
-                                break;
-
-                            // Strafe left + right
-                            case A:
-                            case LEFT:
-                                camStrafeLeft = false;
-                                break;
-                            case D:
-                            case RIGHT:
-                                camStrafeRight = false;
-                                break;
-
-                            // Up + down
-                            case Q:
-                            case PAGE_UP:
-                                camMoveUp = false;
-                                break;
-                            case E:
-                            case PAGE_DOWN:
-                                camMoveDown = false;
-                                break;
-                        }
-                    }
-
-                    evt.consume();
-                });
+                getScene().addEventHandler(KeyEvent.ANY, this::processKeyEvents);
             }
         });
 
-        subScene.addEventHandler(MouseEvent.ANY, evt ->
-        {
-            if (evt.getEventType().equals(MouseEvent.MOUSE_PRESSED))
-            {
-                mouseX = mouseOldX = evt.getSceneX();
-                mouseY = mouseOldY = evt.getSceneY();
-            }
-            else if (evt.getEventType().equals(MouseEvent.MOUSE_DRAGGED))
-            {
-                mouseOldX = mouseX;
-                mouseOldY = mouseY;
-                mouseX = evt.getSceneX();
-                mouseY = evt.getSceneY();
-                mouseDeltaX = (mouseX - mouseOldX);
-                mouseDeltaY = (mouseY - mouseOldY);
-
-                if (evt.isPrimaryButtonDown())
-                {
-                    // Set translation component (direct from camera's transformation matrix)
-                    translate.setX(getPos().getX());
-                    translate.setY(getPos().getY());
-                    translate.setZ(getPos().getZ());
-
-                    // IMPORTANT: reset affine transform to identity each time!
-                    affineXform.setToIdentity();
-
-                    // Clamp
-                    rotateYaw.setAngle(MathUtils.clamp(((rotateYaw.getAngle() + (mouseDeltaX * getSpeedModifier(evt, camMouseSpeedProperty))) % 360 + 540) % 360 - 180, -360, 360));
-                    rotatePitch.setAngle(MathUtils.clamp(rotatePitch.getAngle() - (mouseDeltaY * getSpeedModifier(evt, camMouseSpeedProperty)), -75, 75));
-
-                    // Dynamically generate the affine transform from the concatenated translation and rotation components
-                    affineXform.prepend(translate.createConcatenation(rotateYaw.createConcatenation(rotatePitch)));
-                }
-                else if (evt.isSecondaryButtonDown())
-                {
-                    // Further processing needed here?
-                }
-                else if (evt.isMiddleButtonDown())
-                {
-                    // Further processing needed here?
-                }
-            }
-        });
+        subScene.addEventHandler(MouseEvent.ANY, this::processMouseEvents);
     }
 
     /**
@@ -377,141 +255,153 @@ public class MapCameraFPS extends Parent
      */
     public void assignSceneControls(Scene scene)
     {
-        scene.addEventHandler(KeyEvent.ANY, evt ->
+        scene.addEventHandler(KeyEvent.ANY, this::processKeyEvents);
+        scene.addEventHandler(MouseEvent.ANY, this::processMouseEvents);
+    }
+
+    /**
+     * Function to process key input events.
+     */
+    private void processKeyEvents(KeyEvent evt)
+    {
+        if (evt.getEventType() == KeyEvent.KEY_PRESSED)
         {
-            if (evt.getEventType() == KeyEvent.KEY_PRESSED)
+            switch (evt.getCode())
             {
-                switch (evt.getCode())
-                {
-                    // Modifiers
-                    case CONTROL:
-                        isControlDown = true;
-                        break;
-                    case ALT:
-                        isAltDown = true;
-                        break;
+                // Modifiers
+                case CONTROL:
+                    isControlDown = true;
+                    break;
+                case ALT:
+                    isAltDown = true;
+                    break;
 
-                    // Forwards + backwards
-                    case W:
-                    case UP:
-                        camMoveForward = true;
-                        break;
-                    case S:
-                    case DOWN:
-                        camMoveBackward = true;
-                        break;
+                // Forwards + backwards
+                case W:
+                case UP:
+                    camMoveForward = true;
+                    break;
+                case S:
+                case DOWN:
+                    camMoveBackward = true;
+                    break;
 
-                    // Strafe left + right
-                    case A:
-                    case LEFT:
-                        camStrafeLeft = true;
-                        break;
-                    case D:
-                    case RIGHT:
-                        camStrafeRight = true;
-                        break;
+                // Strafe left + right
+                case A:
+                case LEFT:
+                    camStrafeLeft = true;
+                    break;
+                case D:
+                case RIGHT:
+                    camStrafeRight = true;
+                    break;
 
-                    // Up + down
-                    case Q:
-                    case PAGE_UP:
-                        camMoveUp = true;
-                        break;
-                    case E:
-                    case PAGE_DOWN:
-                        camMoveDown = true;
-                        break;
-                }
+                // Up + down
+                case Q:
+                case PAGE_UP:
+                    camMoveUp = true;
+                    break;
+                case E:
+                case PAGE_DOWN:
+                    camMoveDown = true;
+                    break;
             }
-            else if (evt.getEventType() == KeyEvent.KEY_RELEASED)
-            {
-                switch (evt.getCode())
-                {
-                    // Modifiers
-                    case CONTROL:
-                        isControlDown = false;
-                        break;
-                    case ALT:
-                        isAltDown = false;
-                        break;
-
-                    // Forwards + backwards
-                    case W:
-                    case UP:
-                        camMoveForward = false;
-                        break;
-                    case S:
-                    case DOWN:
-                        camMoveBackward = false;
-                        break;
-
-                    // Strafe left + right
-                    case A:
-                    case LEFT:
-                        camStrafeLeft = false;
-                        break;
-                    case D:
-                    case RIGHT:
-                        camStrafeRight = false;
-                        break;
-
-                    // Up + down
-                    case Q:
-                    case PAGE_UP:
-                        camMoveUp = false;
-                        break;
-                    case E:
-                    case PAGE_DOWN:
-                        camMoveDown = false;
-                        break;
-                }
-            }
-
-            evt.consume();
-        });
-
-        scene.addEventHandler(MouseEvent.ANY, evt ->
+        }
+        else if (evt.getEventType() == KeyEvent.KEY_RELEASED)
         {
-            if (evt.getEventType().equals(MouseEvent.MOUSE_PRESSED))
+            switch (evt.getCode())
             {
-                mouseX = mouseOldX = evt.getSceneX();
-                mouseY = mouseOldY = evt.getSceneY();
+                // Modifiers
+                case CONTROL:
+                    isControlDown = false;
+                    break;
+                case ALT:
+                    isAltDown = false;
+                    break;
+
+                // Forwards + backwards
+                case W:
+                case UP:
+                    camMoveForward = false;
+                    break;
+                case S:
+                case DOWN:
+                    camMoveBackward = false;
+                    break;
+
+                // Strafe left + right
+                case A:
+                case LEFT:
+                    camStrafeLeft = false;
+                    break;
+                case D:
+                case RIGHT:
+                    camStrafeRight = false;
+                    break;
+
+                // Up + down
+                case Q:
+                case PAGE_UP:
+                    camMoveUp = false;
+                    break;
+                case E:
+                case PAGE_DOWN:
+                    camMoveDown = false;
+                    break;
             }
-            else if (evt.getEventType().equals(MouseEvent.MOUSE_DRAGGED))
+        }
+
+        evt.consume();
+    }
+
+    /**
+     * Function to process mouse input events.
+     */
+    private void processMouseEvents(MouseEvent evt)
+    {
+        if (evt.getEventType().equals(MouseEvent.MOUSE_PRESSED))
+        {
+            mouseX = mouseOldX = evt.getSceneX();
+            mouseY = mouseOldY = evt.getSceneY();
+        }
+        else if (evt.getEventType().equals(MouseEvent.MOUSE_DRAGGED))
+        {
+            mouseOldX = mouseX;
+            mouseOldY = mouseY;
+            mouseX = evt.getSceneX();
+            mouseY = evt.getSceneY();
+            mouseDeltaX = (mouseX - mouseOldX);
+            mouseDeltaY = (mouseY - mouseOldY);
+
+            if (evt.isPrimaryButtonDown())
             {
-                mouseOldX = mouseX;
-                mouseOldY = mouseY;
-                mouseX = evt.getSceneX();
-                mouseY = evt.getSceneY();
-                mouseDeltaX = (mouseX - mouseOldX);
-                mouseDeltaY = (mouseY - mouseOldY);
+                // Check mouse y-inversion state
+                double yInvert = (camYInvertProperty.get()) ? -1 : 1;
 
-                if (evt.isPrimaryButtonDown())
-                {
-                    // Set translation component (direct from camera's transformation matrix)
-                    translate.setX(getPos().getX());
-                    translate.setY(getPos().getY());
-                    translate.setZ(getPos().getZ());
+                // Set translation component (direct from camera's transformation matrix)
+                translate.setX(getPos().getX());
+                translate.setY(getPos().getY());
+                translate.setZ(getPos().getZ());
 
-                    // IMPORTANT: reset affine transform to identity each time!
-                    affineXform.setToIdentity();
+                // IMPORTANT: reset affine transform to identity each time!
+                affineXform.setToIdentity();
 
-                    // Calculate yaw, pitch angles
-                    rotateYaw.setAngle(MathUtils.clamp(((rotateYaw.getAngle() + (mouseDeltaX * getSpeedModifier(evt, camMouseSpeedProperty))) % 360 + 540) % 360 - 180, -360, 360));
-                    rotatePitch.setAngle(MathUtils.clamp(rotatePitch.getAngle() - (mouseDeltaY * getSpeedModifier(evt, camMouseSpeedProperty)), -75, 75));
+                // Calculate yaw, pitch angles
+                rotateYaw.setAngle(MathUtils.clamp(((rotateYaw.getAngle() + (mouseDeltaX * getSpeedModifier(evt, camMouseSpeedProperty))) % 360 + 540) % 360 - 180, -360, 360));
+                rotatePitch.setAngle(MathUtils.clamp(rotatePitch.getAngle() - (yInvert * mouseDeltaY * getSpeedModifier(evt, camMouseSpeedProperty)), -75, 75));
 
-                    // Dynamically generate the affine transform from the concatenated translation and rotation components
-                    affineXform.prepend(translate.createConcatenation(rotateYaw.createConcatenation(rotatePitch)));
-                }
-                else if (evt.isSecondaryButtonDown())
-                {
-                    // Further processing needed here?
-                }
-                else if (evt.isMiddleButtonDown())
-                {
-                    // Further processing needed here?
-                }
+                // Dynamically generate the affine transform from the concatenated translation and rotation components
+                affineXform.prepend(translate.createConcatenation(rotateYaw.createConcatenation(rotatePitch)));
             }
-        });
+            else if (evt.isSecondaryButtonDown())
+            {
+                // Further processing needed here?
+            }
+            else if (evt.isMiddleButtonDown())
+            {
+                // Further processing needed here?
+            }
+        }
     }
 
     /**
