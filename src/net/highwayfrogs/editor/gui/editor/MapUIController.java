@@ -372,7 +372,7 @@ public class MapUIController implements Initializable {
         this.controller = controller;
         this.subScene = subScene3D;
 
-        MapCameraFPS cameraFPS = controller.getCameraFPS();
+        CameraFPS cameraFPS = controller.getCameraFPS();
         PerspectiveCamera camera = cameraFPS.getCamera();
 
         camera.setNearClip(MAP_VIEW_NEAR_CLIP);
