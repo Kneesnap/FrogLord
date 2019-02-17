@@ -49,10 +49,10 @@ public class CameraFPS extends Parent
     private final double CAM_MOUSE_SPEED = 0.2;
     @Getter private DoubleProperty camMouseSpeedProperty = new SimpleDoubleProperty(CAM_MOUSE_SPEED);
 
-    private final double CAM_SPEED_DOWN_MULTIPLIER = 0.1;
+    private final double CAM_SPEED_DOWN_MULTIPLIER = 0.25;
     @Getter private DoubleProperty camSpeedDownMultiplierProperty = new SimpleDoubleProperty(CAM_SPEED_DOWN_MULTIPLIER);
 
-    private final double CAM_SPEED_UP_MULTIPLIER = 2.0;
+    private final double CAM_SPEED_UP_MULTIPLIER = 4.0;
     @Getter private DoubleProperty camSpeedUpMultiplierProperty = new SimpleDoubleProperty(CAM_SPEED_UP_MULTIPLIER);
 
     // Camera processing thread
@@ -387,8 +387,8 @@ public class CameraFPS extends Parent
                 affineXform.setToIdentity();
 
                 // Calculate yaw, pitch angles
-                rotateYaw.setAngle(MathUtils.clamp(((rotateYaw.getAngle() + (mouseDeltaX * getSpeedModifier(evt, camMouseSpeedProperty))) % 360 + 540) % 360 - 180, -360, 360));
-                rotatePitch.setAngle(MathUtils.clamp(rotatePitch.getAngle() - (yInvert * mouseDeltaY * getSpeedModifier(evt, camMouseSpeedProperty)), -75, 75));
+                rotateYaw.setAngle(MathUtils.clamp(((rotateYaw.getAngle() + (mouseDeltaX * camMouseSpeedProperty.get())) % 360 + 540) % 360 - 180, -360, 360));
+                rotatePitch.setAngle(MathUtils.clamp(rotatePitch.getAngle() - (yInvert * mouseDeltaY * camMouseSpeedProperty.get()), -75, 75));
 
                 // Dynamically generate the affine transform from the concatenated translation and rotation components
                 affineXform.prepend(translate.createConcatenation(rotateYaw.createConcatenation(rotatePitch)));
