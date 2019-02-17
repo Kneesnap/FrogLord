@@ -143,7 +143,7 @@
                                       </rowConstraints>
                                        <children>
                                           <Label text="Entity Icon Size:" />
-                                          <TextField fx:id="textFieldEntityIconSize" alignment="CENTER_RIGHT" GridPane.columnIndex="1" />
+                                          <TextField fx:id="textFieldEntityIconSize" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" GridPane.columnIndex="1" />
                                        </children>
                                     </GridPane>
                                     <Separator prefWidth="200.0">
@@ -260,6 +260,7 @@
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -270,6 +271,10 @@
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
 
                                                     </rowConstraints>
                                                     <children>
@@ -280,9 +285,10 @@
                                                         </Label>
                                                         <Label text="Move Speed:" GridPane.rowIndex="1" />
                                                         <Label text="Mouse Speed:" GridPane.rowIndex="2" />
+                                          <Label text="Y-Invert:" GridPane.rowIndex="3" />
                                                         <HBox alignment="CENTER" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                                             <children>
-                                                                <TextField fx:id="textFieldCamMoveSpeed" alignment="CENTER_RIGHT" />
+                                                                <TextField fx:id="textFieldCamMoveSpeed" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" />
                                                                 <Button fx:id="btnResetCamMoveSpeed" mnemonicParsing="false" text="R">
                                                                     <font>
                                                                         <Font size="8.0" />
@@ -292,7 +298,7 @@
                                                         </HBox>
                                                         <HBox alignment="CENTER" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
                                                             <children>
-                                                                <TextField fx:id="textFieldCamMouseSpeed" alignment="CENTER_RIGHT" />
+                                                                <TextField fx:id="textFieldCamMouseSpeed" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" />
                                                                 <Button fx:id="btnResetCamMouseSpeed" mnemonicParsing="false" text="R">
                                                                     <font>
                                                                         <Font size="8.0" />
@@ -300,11 +306,12 @@
                                                                 </Button>
                                                             </children>
                                                         </HBox>
-                                                        <Label text="CTRL xSpeed:" GridPane.rowIndex="3" />
-                                                        <Label text="ALT xSpeed:" GridPane.rowIndex="4" />
-                                                        <HBox alignment="CENTER" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                                          <CheckBox fx:id="checkBoxYInvert" mnemonicParsing="false" nodeOrientation="RIGHT_TO_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                                        <Label text="CTRL xSpeed:" GridPane.rowIndex="4" />
+                                                        <Label text="ALT xSpeed:" GridPane.rowIndex="5" />
+                                                        <HBox alignment="CENTER" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
                                                             <children>
-                                                                <TextField fx:id="textFieldCamSpeedDownMultiplier" alignment="CENTER_RIGHT" />
+                                                                <TextField fx:id="textFieldCamSpeedDownMultiplier" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" />
                                                                 <Button fx:id="btnResetCamSpeedDownMultiplier" mnemonicParsing="false" text="R">
                                                                     <font>
                                                                         <Font size="8.0" />
@@ -312,9 +319,9 @@
                                                                 </Button>
                                                             </children>
                                                         </HBox>
-                                                        <HBox alignment="CENTER" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
+                                                        <HBox alignment="CENTER" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="5">
                                                             <children>
-                                                                <TextField fx:id="textFieldCamSpeedUpMultiplier" alignment="CENTER_RIGHT" />
+                                                                <TextField fx:id="textFieldCamSpeedUpMultiplier" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" />
                                                                 <Button fx:id="btnResetCamSpeedUpMultiplier" mnemonicParsing="false" text="R">
                                                                     <font>
                                                                         <Font size="8.0" />
@@ -322,29 +329,40 @@
                                                                 </Button>
                                                             </children>
                                                         </HBox>
-                                                        <Label text="Camera Clip Planes and FoV:" GridPane.columnSpan="2" GridPane.rowIndex="5">
+                                                        <Label text="Camera Clip Planes and FoV:" GridPane.columnSpan="2" GridPane.rowIndex="6">
                                                             <font>
                                                                 <Font name="System Bold" size="12.0" />
                                                             </font>
                                                         </Label>
-                                                        <Label text="Near Clip:" GridPane.rowIndex="6" />
-                                                        <Label text="Far Clip:" GridPane.rowIndex="7" />
-                                                        <TextField fx:id="textFieldCamNearClip" alignment="CENTER_RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-                                                        <TextField fx:id="textFieldCamFarClip" alignment="CENTER_RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-                                          <Label text="FoV:" GridPane.rowIndex="8" />
-                                          <TextField fx:id="textFieldCamFoV" alignment="CENTER_RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+                                                        <Label text="Near Clip:" GridPane.rowIndex="7" />
+                                                        <Label text="Far Clip:" GridPane.rowIndex="8" />
+                                                        <TextField fx:id="textFieldCamNearClip" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                                                        <TextField fx:id="textFieldCamFarClip" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+                                          <Label text="FoV:" GridPane.rowIndex="9" />
+                                          <TextField fx:id="textFieldCamFoV" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" GridPane.columnIndex="1" GridPane.rowIndex="9" />
 
-                                                        <Label text="Camera Position:" GridPane.columnSpan="2" GridPane.rowIndex="9">
+                                                        <Label text="Camera Position:" GridPane.columnSpan="2" GridPane.rowIndex="10">
                                                             <font>
                                                                 <Font name="System Bold" size="12.0" />
                                                             </font>
                                                         </Label>
-                                                        <Label text="x:" GridPane.rowIndex="10" />
-                                                        <Label text="y:" GridPane.rowIndex="11" />
-                                                        <Label text="z:" GridPane.rowIndex="12" />
-                                                        <TextField fx:id="textFieldCamPosX" alignment="CENTER_RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="10" />
-                                                        <TextField fx:id="textFieldCamPosY" alignment="CENTER_RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="11" />
-                                                        <TextField fx:id="textFieldCamPosZ" alignment="CENTER_RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="12" />
+                                                        <Label text="X:" GridPane.rowIndex="11" />
+                                                        <Label text="Y:" GridPane.rowIndex="12" />
+                                                        <Label text="Z:" GridPane.rowIndex="13" />
+                                                        <TextField fx:id="textFieldCamPosX" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" GridPane.columnIndex="1" GridPane.rowIndex="11" />
+                                                        <TextField fx:id="textFieldCamPosY" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" GridPane.columnIndex="1" GridPane.rowIndex="12" />
+                                                        <TextField fx:id="textFieldCamPosZ" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" GridPane.columnIndex="1" GridPane.rowIndex="13" />
+                                          <Label text="Camera Rotation:" GridPane.columnSpan="2" GridPane.rowIndex="14">
+                                             <font>
+                                                <Font name="System Bold" size="12.0" />
+                                             </font>
+                                          </Label>
+                                          <Label text="Yaw:" GridPane.rowIndex="15" />
+                                          <Label text="Pitch:" GridPane.rowIndex="16" />
+                                          <Label text="Roll:" GridPane.rowIndex="17" />
+                                          <TextField fx:id="textFieldCamYaw" alignment="CENTER_RIGHT" editable="false" style="-fx-background-color: #ff00001f;" GridPane.columnIndex="1" GridPane.rowIndex="15" />
+                                          <TextField fx:id="textFieldCamPitch" alignment="CENTER_RIGHT" editable="false" style="-fx-background-color: #ff00001f;" GridPane.columnIndex="1" GridPane.rowIndex="16" />
+                                          <TextField fx:id="textFieldCamRoll" alignment="CENTER_RIGHT" editable="false" style="-fx-background-color: #ff00001f;" GridPane.columnIndex="1" GridPane.rowIndex="17" />
                                                     </children>
                                                 </GridPane>
                                             </children>
