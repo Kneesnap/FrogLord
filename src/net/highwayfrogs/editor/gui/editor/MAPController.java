@@ -63,7 +63,7 @@ public class MAPController extends EditorController<MAPFile> {
     private MAPPolygon polygonImmuneToTarget;
     private boolean polygonSelected;
 
-    private MapCameraFPS cameraFPS;
+    private CameraFPS cameraFPS;
     private MapUIController mapUIController;
 
     private List<MeshView> entityIcons = new ArrayList<>();
@@ -157,7 +157,7 @@ public class MAPController extends EditorController<MAPFile> {
         // These cause errors if not reset.
         this.cursorData = null;
 
-        this.cameraFPS = new MapCameraFPS();
+        this.cameraFPS = new CameraFPS();
 
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.
         PhongMaterial material = new PhongMaterial();
@@ -206,7 +206,7 @@ public class MAPController extends EditorController<MAPFile> {
         mapScene.widthProperty().addListener((observable, old, newVal) -> subScene3D.setWidth(newVal.doubleValue() - mapUIController.uiRootPaneWidth()));
         subScene3D.heightProperty().bind(mapScene.heightProperty());
 
-        // Input (key) event processing.
+        // Associate camera controls with the scene.
         cameraFPS.assignSceneControls(mapScene);
         cameraFPS.startThreadProcessing();
 
