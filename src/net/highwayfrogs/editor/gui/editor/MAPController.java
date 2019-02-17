@@ -67,10 +67,7 @@ public class MAPController extends EditorController<MAPFile> {
     private MapUIController mapUIController;
 
     private List<MeshView> entityIcons = new ArrayList<>();
-    private static PhongMaterial entityIconMaterial = new PhongMaterial();
-
     private List<Box> boundingBoxes = new ArrayList<>();
-    private static PhongMaterial boundingBoxMaterial = new PhongMaterial();
 
     private Group root3D;
     private Rotate rotX;
@@ -82,6 +79,22 @@ public class MAPController extends EditorController<MAPFile> {
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
     private static final Image BOUNDING_BOX_IMAGE = GameFile.loadIcon("yellow");
+
+    private static final PhongMaterial MATERIAL_ENTITY_ICON = new PhongMaterial();
+    static {
+        MATERIAL_ENTITY_ICON.setDiffuseColor(Color.BLACK);
+        MATERIAL_ENTITY_ICON.setSpecularColor(Color.BLACK);
+        MATERIAL_ENTITY_ICON.setDiffuseMap(ENTITY_ICON_IMAGE);
+        MATERIAL_ENTITY_ICON.setSelfIlluminationMap(ENTITY_ICON_IMAGE);
+    }
+
+    private static final PhongMaterial MATERIAL_BOUNDING_BOX = new PhongMaterial();
+    static {
+        MATERIAL_BOUNDING_BOX.setDiffuseColor(Color.BLACK);
+        MATERIAL_BOUNDING_BOX.setSpecularColor(Color.BLACK);
+        MATERIAL_BOUNDING_BOX.setDiffuseMap(BOUNDING_BOX_IMAGE);
+        MATERIAL_BOUNDING_BOX.setSelfIlluminationMap(BOUNDING_BOX_IMAGE);
+    }
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -149,16 +162,6 @@ public class MAPController extends EditorController<MAPFile> {
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(Utils.toFXImage(texMap.getImage(), true));
-
-        entityIconMaterial.setDiffuseColor(Color.BLACK);
-        entityIconMaterial.setSpecularColor(Color.BLACK);
-        entityIconMaterial.setDiffuseMap(ENTITY_ICON_IMAGE);
-        entityIconMaterial.setSelfIlluminationMap(ENTITY_ICON_IMAGE);
-
-        boundingBoxMaterial.setDiffuseColor(Color.BLACK);
-        boundingBoxMaterial.setSpecularColor(Color.BLACK);
-        boundingBoxMaterial.setDiffuseMap(BOUNDING_BOX_IMAGE);
-        boundingBoxMaterial.setSelfIlluminationMap(BOUNDING_BOX_IMAGE);
 
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(mesh);
@@ -293,8 +296,6 @@ public class MAPController extends EditorController<MAPFile> {
         // Set the initial camera position to somewhere sensible :)
         // TODO: set initial camera position based on some level / map metric?
         cameraFPS.setPos(0.0, -100.0, -400.0);
-
-        //addBoundingBoxCenteredWithDimensions(0, 0, 0, 50, 50, 50);
     }
 
     /**
@@ -326,7 +327,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         MeshView triMeshView = new MeshView(triMesh);
         triMeshView.setDrawMode(DrawMode.FILL);
-        triMeshView.setMaterial(entityIconMaterial);
+        triMeshView.setMaterial(MATERIAL_ENTITY_ICON);
         triMeshView.setCullFace(CullFace.NONE);
 
         return setupNode(triMeshView, x, y, z);
@@ -396,7 +397,7 @@ public class MAPController extends EditorController<MAPFile> {
     private void addBoundingBoxCenteredWithDimensions(double x, double y, double z, double width, double height, double depth) {
         Box axisAlignedBoundingBox = new Box(width, height, depth);
 
-        axisAlignedBoundingBox.setMaterial(boundingBoxMaterial);
+        axisAlignedBoundingBox.setMaterial(MATERIAL_BOUNDING_BOX);
         axisAlignedBoundingBox.setDrawMode(DrawMode.LINE);
         axisAlignedBoundingBox.setCullFace(CullFace.BACK);
         axisAlignedBoundingBox.getTransforms().addAll(rotX, rotY, rotZ, new Translate(x, y, z));
