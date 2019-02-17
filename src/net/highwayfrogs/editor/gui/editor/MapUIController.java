@@ -56,6 +56,7 @@ public class MapUIController implements Initializable {
     @Getter private static FloatProperty propertyEntityIconSize = new SimpleFloatProperty(ENTITY_ICON_SIZE);
 
     private MAPController controller;
+    private SubScene subScene;
 
     // Baseline UI components
     @FXML private AnchorPane anchorPaneUIRoot;
@@ -71,6 +72,7 @@ public class MapUIController implements Initializable {
     @FXML private Button btnResetCamMoveSpeed;
     @FXML private TextField textFieldCamMouseSpeed;
     @FXML private Button btnResetCamMouseSpeed;
+    @FXML private CheckBox checkBoxYInvert;
     @FXML private TextField textFieldCamSpeedDownMultiplier;
     @FXML private Button btnResetCamSpeedDownMultiplier;
     @FXML private TextField textFieldCamSpeedUpMultiplier;
@@ -81,6 +83,9 @@ public class MapUIController implements Initializable {
     @FXML private TextField textFieldCamPosX;
     @FXML private TextField textFieldCamPosY;
     @FXML private TextField textFieldCamPosZ;
+    @FXML private TextField textFieldCamYaw;
+    @FXML private TextField textFieldCamPitch;
+    @FXML private TextField textFieldCamRoll;
     @FXML private TextField textFieldEntityIconSize;
 
     // General pane.
@@ -365,6 +370,7 @@ public class MapUIController implements Initializable {
      */
     public void setupBindings(MAPController controller, SubScene subScene3D, MeshView meshView) {
         this.controller = controller;
+        this.subScene = subScene3D;
 
         MapCameraFPS cameraFPS = controller.getCameraFPS();
         PerspectiveCamera camera = cameraFPS.getCamera();
@@ -374,17 +380,14 @@ public class MapUIController implements Initializable {
         camera.setFieldOfView(MAP_VIEW_FOV);
 
         // Set informational bindings and editor bindings
-        colorPickerLevelBackground.setValue((Color) subScene3D.getFill());
-        subScene3D.fillProperty().bind(colorPickerLevelBackground.valueProperty());
+        colorPickerLevelBackground.setValue((Color) this.subScene.getFill());
+        this.subScene.fillProperty().bind(colorPickerLevelBackground.valueProperty());
 
         textFieldCamMoveSpeed.textProperty().bindBidirectional(cameraFPS.getCamMoveSpeedProperty(), NUM_TO_STRING_CONVERTER);
         textFieldCamMouseSpeed.textProperty().bindBidirectional(cameraFPS.getCamMouseSpeedProperty(), NUM_TO_STRING_CONVERTER);
         textFieldCamSpeedDownMultiplier.textProperty().bindBidirectional(cameraFPS.getCamSpeedDownMultiplierProperty(), NUM_TO_STRING_CONVERTER);
         textFieldCamSpeedUpMultiplier.textProperty().bindBidirectional(cameraFPS.getCamSpeedUpMultiplierProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamMoveSpeed.setOnAction(evt -> subScene3D.requestFocus());
-        textFieldCamMouseSpeed.setOnAction(evt -> subScene3D.requestFocus());
-        textFieldCamSpeedDownMultiplier.setOnAction(evt -> subScene3D.requestFocus());
-        textFieldCamSpeedUpMultiplier.setOnAction(evt -> subScene3D.requestFocus());
+        checkBoxYInvert.selectedProperty().bindBidirectional(cameraFPS.getCamYInvertProperty());
 
         btnResetCamMoveSpeed.setOnAction(e -> cameraFPS.resetDefaultCamMoveSpeed());
         btnResetCamMouseSpeed.setOnAction(e -> cameraFPS.resetDefaultCamMouseSpeed());
@@ -395,16 +398,14 @@ public class MapUIController implements Initializable {
         textFieldCamNearClip.textProperty().bindBidirectional(camera.nearClipProperty(), NUM_TO_STRING_CONVERTER);
         textFieldCamFarClip.textProperty().bindBidirectional(camera.farClipProperty(), NUM_TO_STRING_CONVERTER);
         textFieldCamFoV.textProperty().bindBidirectional(camera.fieldOfViewProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamNearClip.setOnAction(evt -> subScene3D.requestFocus());
-        textFieldCamFarClip.setOnAction(evt -> subScene3D.requestFocus());
-        textFieldCamFoV.setOnAction(evt -> subScene3D.requestFocus());
 
         textFieldCamPosX.textProperty().bindBidirectional(cameraFPS.getCamPosXProperty(), NUM_TO_STRING_CONVERTER);
         textFieldCamPosY.textProperty().bindBidirectional(cameraFPS.getCamPosYProperty(), NUM_TO_STRING_CONVERTER);
         textFieldCamPosZ.textProperty().bindBidirectional(cameraFPS.getCamPosZProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamPosX.setOnAction(evt -> subScene3D.requestFocus());
-        textFieldCamPosY.setOnAction(evt -> subScene3D.requestFocus());
-        textFieldCamPosZ.setOnAction(evt -> subScene3D.requestFocus());
+
+        textFieldCamYaw.textProperty().bind(cameraFPS.getCamYawProperty().asString("%.6f"));
+        textFieldCamPitch.textProperty().bind(cameraFPS.getCamPitchProperty().asString("%.6f"));
+        textFieldCamRoll.textProperty().bind(cameraFPS.getCamRollProperty().asString("%.6f"));
 
         // Set mesh view bindings
         checkBoxShowMesh.selectedProperty().bindBidirectional(meshView.visibleProperty());
@@ -416,7 +417,6 @@ public class MapUIController implements Initializable {
         comboBoxMeshCullFace.valueProperty().bindBidirectional(meshView.cullFaceProperty());
 
         textFieldEntityIconSize.textProperty().bindBidirectional(propertyEntityIconSize, NUM_TO_STRING_CONVERTER);
-        textFieldEntityIconSize.setOnAction(evt -> subScene3D.requestFocus());
 
         // Must be called after MAPController is passed.
         showEntityInfo(null);
@@ -426,6 +426,15 @@ public class MapUIController implements Initializable {
         setupGeometryEditor();
         setupPathEditor();
         setupFormEditor();
+    }
+
+    /**
+     * Set UI control focus to the subscene component (clearing the focus from the previously selected component).
+     * (This is typically set as the target function for the 'onAction' event handler).
+     */
+    @FXML
+    public void onActionClearFocus() {
+        this.subScene.requestFocus();
     }
 
     /**
