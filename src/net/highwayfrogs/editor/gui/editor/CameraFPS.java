@@ -24,7 +24,7 @@ import net.highwayfrogs.editor.MathUtils;
 //  - Finish writing this camera component!
 //  - Implement roll (is it really needed...?)
 
-public class MapCameraFPS extends Parent
+public class CameraFPS extends Parent
 {
     // Constants / variables used for frame delta calculations
     private final double NANOSEC_IN_SECONDS = 1.0 / 1000000000.0;
@@ -88,9 +88,9 @@ public class MapCameraFPS extends Parent
     //>>
 
     /**
-     * Constructor for the MapCameraFPS.
+     * Constructor for the CameraFPS.
      */
-    public MapCameraFPS()
+    public CameraFPS()
     {
         setupAndInitialise();
     }
