@@ -55,7 +55,7 @@ import java.util.function.Consumer;
 @Getter
 public class MAPFile extends GameFile {
     @Setter private short startXTile;
-    @Setter private short startYTile;
+    @Setter private short startZTile;
     @Setter private StartRotation startRotation;
     private MAPTheme theme; // This controls loads of things. It's dubious we'd be able to change this safely.
     @Setter private short levelTimer;
@@ -160,7 +160,7 @@ public class MAPFile extends GameFile {
         reader.setIndex(generalAddress);
         reader.verifyString(GENERAL_SIGNATURE);
         this.startXTile = reader.readShort();
-        this.startYTile = reader.readShort();
+        this.startZTile = reader.readShort();
         this.startRotation = StartRotation.values()[reader.readShort()];
         this.theme = MAPTheme.values()[reader.readShort()];
 
@@ -420,7 +420,7 @@ public class MAPFile extends GameFile {
 
         writer.writeStringBytes(GENERAL_SIGNATURE);
         writer.writeShort(this.startXTile);
-        writer.writeShort(this.startYTile);
+        writer.writeShort(this.startZTile);
         writer.writeShort((short) this.startRotation.ordinal());
         writer.writeShort((short) getTheme().ordinal());
         for (int i = 0; i < TOTAL_CHECKPOINT_TIMER_ENTRIES; i++)
@@ -863,27 +863,15 @@ public class MAPFile extends GameFile {
     public void setupEditor(GUIEditorGrid editor) {
         editor.addLabel("Theme", getTheme().name()); // Should look into whether or not this is ok to edit.
         editor.addShortField("Start xTile", getStartXTile(), this::setStartXTile, null);
-        editor.addShortField("Start yTile", getStartYTile(), this::setStartYTile, null);
+        editor.addShortField("Start zTile", getStartZTile(), this::setStartZTile, null);
         editor.addEnumSelector("Start Rotation", getStartRotation(), StartRotation.values(), false, this::setStartRotation)
                 .setConverter(new AbstractStringConverter<>(StartRotation::getArrow));
 
         editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
         editor.addShortField("Base Point xTile", getBaseXTile(), this::setBaseXTile, null);
         editor.addShortField("Base Point zTile", getBaseZTile(), this::setBaseZTile, null);
-
-        float[] srcOffset = new float[3];
-        srcOffset[0] = Utils.fixedPointShortToFloatNBits(getCameraSourceOffset().getX(), 4);
-        srcOffset[1] = Utils.fixedPointShortToFloatNBits(getCameraSourceOffset().getY(), 4);
-        srcOffset[2] = Utils.fixedPointShortToFloatNBits(getCameraSourceOffset().getZ(), 4);
-        editor.addNormalLabel("Camera Source Offset");
-        editor.addVector3D(srcOffset, 25D, (index, newValue) -> {});
-
-        float[] tgtOffset = new float[3];
-        tgtOffset[0] = Utils.fixedPointShortToFloatNBits(getCameraTargetOffset().getX(), 4);
-        tgtOffset[1] = Utils.fixedPointShortToFloatNBits(getCameraTargetOffset().getY(), 4);
-        tgtOffset[2] = Utils.fixedPointShortToFloatNBits(getCameraTargetOffset().getZ(), 4);
-        editor.addNormalLabel("Camera Target Offset");
-        editor.addVector3D(tgtOffset, 25D, (index, newValue) -> {});
+        editor.addFloatSVector("Camera Source Offset", getCameraSourceOffset());
+        editor.addFloatSVector("Camera Target Offset", getCameraTargetOffset());
     }
 
     /**
@@ -918,6 +906,24 @@ public class MAPFile extends GameFile {
      */
     public int getGridZ(int worldZ) {
         return (worldZ - getBaseGridZ()) >> 8;
+    }
+
+    /**
+     * Turn a grid x value into a world x value.
+     * @param gridX The grid x value to convert.
+     * @return worldX
+     */
+    public int getWorldX(int gridX, boolean useMiddle) {
+        return getBaseGridX() + (gridX << 8) + (useMiddle ? 0x80 : 0);
+    }
+
+    /**
+     * Turn a grid z value into a world z value.
+     * @param gridZ The grid z value to convert.
+     * @return worldZ
+     */
+    public int getWorldZ(int gridZ, boolean useMiddle) {
+        return getBaseGridZ() + (gridZ << 8) + (useMiddle ? 0x80 : 0);
     }
 
     /**

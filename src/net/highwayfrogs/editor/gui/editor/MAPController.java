@@ -50,13 +50,6 @@ public class MAPController extends EditorController<MAPFile> {
     @FXML private TableColumn<Object, Object> tableColumnMAPFileDataName;
     @FXML private TableColumn<Object, Object> tableColumnMAPFileDataValue;
 
-    private double oldMouseX;
-    private double oldMouseY;
-    private double mouseX;
-    private double mouseY;
-    private double mouseXDelta;
-    private double mouseYDelta;
-
     private Scene mapScene;
     private MapMesh mapMesh;
     private MAPPolygon selectedPolygon;
@@ -112,9 +105,9 @@ public class MAPController extends EditorController<MAPFile> {
 
         // General properties
         addTableEntry("MAP Theme: ", map.getTheme().toString());
-        addTableEntry("Start Position", "(" + map.getStartXTile() + ", " + map.getStartYTile() + ") Rotation: " + map.getStartRotation());
-        addTableEntry("Camera Source", "(" + map.getCameraSourceOffset().toCoordinateString() + ")");
-        addTableEntry("Camera Target", "(" + map.getCameraTargetOffset().toCoordinateString() + ")");
+        addTableEntry("Start Position", "(" + map.getStartXTile() + ", " + map.getStartZTile() + ") Rotation: " + map.getStartRotation());
+        addTableEntry("Camera Source", "(" + map.getCameraSourceOffset().toFloatString() + ")");
+        addTableEntry("Camera Target", "(" + map.getCameraTargetOffset().toFloatString() + ")");
         addTableEntry("Base Point", "[" + map.getBaseXTile() + ", " + map.getBaseZTile() + "]");
 
         // Entity properties
@@ -248,10 +241,6 @@ public class MAPController extends EditorController<MAPFile> {
 
         mapScene.setOnMousePressed(e -> {
             mapUIController.getAnchorPaneUIRoot().requestFocus();
-
-            mouseX = oldMouseX = e.getSceneX();
-            mouseY = oldMouseY = e.getSceneY();
-
             if (!isPolygonSelected())
                 hideCursorPolygon();
         });
@@ -259,19 +248,6 @@ public class MAPController extends EditorController<MAPFile> {
         mapScene.setOnMouseReleased(evt -> {
             hideCursorPolygon();
             renderCursor(getSelectedPolygon());
-        });
-
-        mapScene.setOnMouseDragged(e -> {
-            oldMouseX = mouseX;
-            oldMouseY = mouseY;
-            mouseX = e.getSceneX();
-            mouseY = e.getSceneY();
-            mouseXDelta = (mouseX - oldMouseX);
-            mouseYDelta = (mouseY - oldMouseY);
-
-            if (e.isPrimaryButtonDown()){
-            } else if (e.isMiddleButtonDown()) {
-            }
         });
 
         mapScene.setOnMouseMoved(evt -> {
@@ -293,9 +269,12 @@ public class MAPController extends EditorController<MAPFile> {
             }
         });
 
-        // Set the initial camera position to somewhere sensible :)
-        // TODO: set initial camera position based on some level / map metric?
-        cameraFPS.setPos(0.0, -100.0, -400.0);
+        // Set the initial camera position based on start position and in-game camera offset.
+        SVector startPos = getFile().getCameraSourceOffset();
+        float gridX = Utils.fixedPointIntToFloatNBits(getFile().getWorldX(getFile().getStartXTile(), true), 4);
+        float baseY = -Utils.fixedPointIntToFloatNBits(getFile().getGridStack(getFile().getStartXTile(), getFile().getStartZTile()).getHeight(), 4);
+        float gridZ = Utils.fixedPointIntToFloatNBits(getFile().getWorldZ(getFile().getStartZTile(), true), 4);
+        cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
     }
 
     /**

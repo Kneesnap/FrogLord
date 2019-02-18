@@ -142,11 +142,35 @@ public class SVector extends GameObject {
     }
 
     /**
+     * Gets the float X value.
+     * @return floatX
+     */
+    public float getFloatX() {
+        return Utils.fixedPointShortToFloat4Bit(getX());
+    }
+
+    /**
+     * Gets the float Y value.
+     * @return floatY
+     */
+    public float getFloatY() {
+        return Utils.fixedPointShortToFloat4Bit(getY());
+    }
+
+    /**
+     * Gets the float Z value.
+     * @return floatZ
+     */
+    public float getFloatZ() {
+        return Utils.fixedPointShortToFloat4Bit(getZ());
+    }
+
+    /**
      * Load SVector data from text.
      * @param text The text to read SVector data from.
      * @return loadedSuccessfully
      */
-    public boolean loadFromText(String text) {
+    public boolean loadFromRegularText(String text) {
         text = text.replace(" ", "");
         if (!text.contains(","))
             return false;
@@ -166,23 +190,55 @@ public class SVector extends GameObject {
     }
 
     /**
+     * Load SVector data from float text.
+     * @param text The text to read SVector data from.
+     * @return loadedSuccessfully
+     */
+    public boolean loadFromFloatText(String text) {
+        text = text.replace(" ", "");
+        if (!text.contains(","))
+            return false;
+
+        String[] split = text.split(",");
+        if (split.length != 3)
+            return false;
+
+        for (String testStr : split)
+            if (!Utils.isNumber(testStr))
+                return false;
+
+        setX(Utils.floatToFixedPointShort4Bit(Float.parseFloat(split[0])));
+        setY(Utils.floatToFixedPointShort4Bit(Float.parseFloat(split[1])));
+        setZ(Utils.floatToFixedPointShort4Bit(Float.parseFloat(split[2])));
+        return true;
+    }
+
+    /**
      * Get this vector as a Wavefront-OBJ vertex command.
      * @return vertexCommandString
      */
     public String toOBJString() {
-        return "v " + -Utils.fixedPointShortToFloat412(getX()) + " " + -Utils.fixedPointShortToFloat412(getY()) + " " + Utils.fixedPointShortToFloat412(getZ());
+        return "v " + -getFloatX() + " " + -getFloatY() + " " + getFloatZ();
     }
 
     /**
-     * Get a coordinate string of this vector.
+     * Get a decimal coordinate string for this float vector.
      * @return coordinateString
      */
-    public String toCoordinateString() {
-        return Utils.fixedPointShortToFloat412(getX()) + ", " + Utils.fixedPointShortToFloat412(getY()) + ", " + Utils.fixedPointShortToFloat412(getZ());
+    public String toFloatString() {
+        return getFloatX() + ", " + getFloatY() + ", " + getFloatZ();
+    }
+
+    /**
+     * Gets the string of a regular short vector.
+     * @return shortString
+     */
+    public String toRegularString() {
+        return getX() + ", " + getY() + ", " + getZ();
     }
 
     @Override
     public String toString() {
-        return "SVector<" + toCoordinateString() + ">";
+        return "SVector<" + toFloatString() + ">";
     }
 }

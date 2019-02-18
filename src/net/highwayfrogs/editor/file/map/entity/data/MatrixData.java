@@ -40,11 +40,11 @@ public class MatrixData extends EntityData {
 
         // Position information is in fixed point format, hence conversion to float representation.
         for (int i = 0; i < matrix.getTransform().length; i++)
-            translation[i] = Utils.fixedPointIntToFloatNBits(matrix.getTransform()[i], 20);
+            translation[i] = Utils.fixedPointIntToFloat20Bit(matrix.getTransform()[i]);
 
         editor.addNormalLabel("Position");
         editor.addVector3D(translation, 30D, (index, newValue) -> {
-            matrix.getTransform()[index] = Utils.floatToFixedPointInt(newValue, 20);
+            matrix.getTransform()[index] = Utils.floatToFixedPointInt20Bit(newValue);
             controller.getController().resetEntities();
         });
 
@@ -52,11 +52,11 @@ public class MatrixData extends EntityData {
         editor.addNormalLabel("Rotation Matrix");
         for (int i = 0; i < matrix.getMatrix().length; i++) {
             for (int j = 0; j < matrix.getMatrix().length; j++)
-                matrixRow[j] = Utils.fixedPointShortToFloatNBits(matrix.getMatrix()[i][j], 12);
+                matrixRow[j] = Utils.fixedPointShortToFloat12Bit(matrix.getMatrix()[i][j]);
 
             final int tempRow = i;
             editor.addVector3D(matrixRow, 25D + ((i == (matrix.getMatrix().length - 1)) ? 5D : 0D),
-                    (index, newValue) -> matrix.getMatrix()[tempRow][index] = Utils.floatToFixedPointShort412(newValue));
+                    (index, newValue) -> matrix.getMatrix()[tempRow][index] = Utils.floatToFixedPointShort12Bit(newValue));
         }
 
         super.addData(controller, editor);

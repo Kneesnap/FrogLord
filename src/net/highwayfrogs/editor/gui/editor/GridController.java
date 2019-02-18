@@ -400,11 +400,11 @@ public class GridController implements Initializable {
     }
 
     private void setupVectorEditor(int x, int y, SVector toEdit) {
-        TextField newField = new TextField(toEdit.toCoordinateString());
+        TextField newField = new TextField(toEdit.toFloatString());
         GridPane.setRowIndex(newField, y);
         GridPane.setColumnIndex(newField, x);
         cameraPane.getChildren().add(newField);
-        Utils.setHandleKeyPress(newField, toEdit::loadFromText, null);
+        Utils.setHandleKeyPress(newField, toEdit::loadFromFloatText, null);
     }
 
     /**

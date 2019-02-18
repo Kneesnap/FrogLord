@@ -237,8 +237,17 @@ public class Utils {
      * @param shortVal The short to convert.
      * @return floatValue
      */
-    public static float fixedPointShortToFloat412(short shortVal) {
+    public static float fixedPointShortToFloat4Bit(short shortVal) {
         return fixedPointShortToFloatNBits(shortVal, 4);
+    }
+
+    /**
+     * Convert a short value (fixed point, n fractional bits) into a float.
+     * @param shortVal The short to convert.
+     * @return floatValue
+     */
+    public static float fixedPointShortToFloat12Bit(short shortVal) {
+        return fixedPointShortToFloatNBits(shortVal, 12);
     }
 
     /**
@@ -266,8 +275,17 @@ public class Utils {
      * @param floatVal The float to convert.
      * @return shortValue
      */
-    public static short floatToFixedPointShort412(float floatVal) {
+    public static short floatToFixedPointShort4Bit(float floatVal) {
         return floatToFixedPointShort(floatVal, 4);
+    }
+
+    /**
+     * Convert a float value into a short (fixed point, n fractional bits).
+     * @param floatVal The float to convert.
+     * @return shortValue
+     */
+    public static short floatToFixedPointShort12Bit(float floatVal) {
+        return floatToFixedPointShort(floatVal, 12);
     }
 
     /**
@@ -281,12 +299,12 @@ public class Utils {
     }
 
     /**
-     * Convert an int value (fixed point, n fractional bits) into a float.
+     * Convert an int value (fixed point, 20 fractional bits) into a float.
      * @param intVal The integer to convert.
      * @return floatValue
      */
-    public static float fixedPointIntToFloat8(int intVal) {
-        return fixedPointIntToFloatNBits(intVal, 24);
+    public static float fixedPointIntToFloat20Bit(int intVal) {
+        return fixedPointIntToFloatNBits(intVal, 20);
     }
 
     /**
@@ -297,6 +315,15 @@ public class Utils {
      */
     public static int floatToFixedPointInt(float floatVal, int n) {
         return (int) (floatVal * (float) (1 << n));
+    }
+
+    /**
+     * Convert a float value into a int (fixed point, 20 fractional bits).
+     * @param floatVal The float to convert.
+     * @return intValue
+     */
+    public static int floatToFixedPointInt20Bit(float floatVal) {
+        return floatToFixedPointInt(floatVal, 20);
     }
 
     /**

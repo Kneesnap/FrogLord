@@ -126,9 +126,9 @@ public class Entity extends GameObject {
         PSXMatrix matrix = getMatrixInfo();
         if (matrix != null) {
             int[] pos = matrix.getTransform();
-            position[0] = Utils.fixedPointIntToFloatNBits(pos[0], 20);
-            position[1] = Utils.fixedPointIntToFloatNBits(pos[1], 20);
-            position[2] = Utils.fixedPointIntToFloatNBits(pos[2], 20);
+            position[0] = Utils.fixedPointIntToFloat20Bit(pos[0]);
+            position[1] = Utils.fixedPointIntToFloat20Bit(pos[1]);
+            position[2] = Utils.fixedPointIntToFloat20Bit(pos[2]);
             return position;
         }
 
@@ -136,9 +136,9 @@ public class Entity extends GameObject {
         if (pathInfo != null) {
             Path path = map.getPaths().get(pathInfo.getPathId());
             SVector end = path.evaluatePosition(pathInfo);
-            position[0] = Utils.fixedPointShortToFloat412(end.getX());
-            position[1] = Utils.fixedPointShortToFloat412(end.getY());
-            position[2] = Utils.fixedPointShortToFloat412(end.getZ());
+            position[0] = end.getFloatX();
+            position[1] = end.getFloatY();
+            position[2] = end.getFloatZ();
             return position;
         }
 

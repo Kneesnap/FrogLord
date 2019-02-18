@@ -69,9 +69,9 @@ public class ArcSegment extends PathSegment {
     @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor);
-        editor.addSVector("Start", getStart());
-        editor.addSVector("Center", getCenter());
-        editor.addSVector("Normal", getNormal());
+        editor.addFloatSVector("Start", getStart(), () -> controller.getController().resetEntities());
+        editor.addFloatSVector("Center", getCenter(), () -> controller.getController().resetEntities());
+        editor.addFloatSVector("Normal", getNormal());
         editor.addIntegerField("Radius", getRadius(), this::setRadius, null);
         editor.addIntegerField("Pitch", getPitch(), this::setPitch, null);
     }

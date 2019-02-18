@@ -144,7 +144,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
     public void updateVertices() {
         getPoints().clear();
         for (SVector vertex : getVertices())
-            getPoints().addAll(Utils.fixedPointShortToFloat412(vertex.getX()), Utils.fixedPointShortToFloat412(vertex.getY()), Utils.fixedPointShortToFloat412(vertex.getZ()));
+            getPoints().addAll(vertex.getFloatX(), vertex.getFloatY(), vertex.getFloatZ());
     }
 
     /**

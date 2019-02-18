@@ -220,27 +220,41 @@ public class GUIEditorGrid {
     }
 
     /**
-     * Add a SVector for editing.
+     * Add a float SVector for editing.
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addSVector(String text, SVector vector) {
-        addSVector(text, vector, null);
+    public void addFloatSVector(String text, SVector vector) {
+        addFloatSVector(text, vector, null);
     }
 
     /**
-     * Add a SVector for editing.
+     * Add a float SVector for editing.
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
-     * @param update The handler for if the SVector is updated.
      */
-    public void addSVector(String text, SVector vector, Runnable update) {
-        addTextField(text, vector.toCoordinateString(), newText -> {
-            if (!vector.loadFromText(newText))
+    public void addFloatSVector(String text, SVector vector, Runnable update) {
+        addTextField(text, vector.toFloatString(), newText -> {
+            if (!vector.loadFromFloatText(newText))
                 return false;
 
             if (update != null)
                 update.run();
+            onChange();
+            return true;
+        });
+    }
+
+    /**
+     * Add a regular SVector for editing.
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     */
+    public void addRegularSVector(String text, SVector vector) {
+        addTextField(text, vector.toRegularString(), newText -> {
+            if (!vector.loadFromRegularText(newText))
+                return false;
+
             onChange();
             return true;
         });

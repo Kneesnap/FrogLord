@@ -52,7 +52,7 @@ public class LineSegment extends PathSegment {
     @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor);
-        editor.addSVector("Start", getStart());
-        editor.addSVector("End", getEnd());
+        editor.addFloatSVector("Start", getStart(), () -> controller.getController().resetEntities());
+        editor.addFloatSVector("End", getEnd(), () -> controller.getController().resetEntities());
     }
 }
