@@ -119,6 +119,18 @@ public class PSXMatrix extends GameObject {
         return matrix;
     }
 
+    /**
+     * Equivalent to ApplyRotMatrix.
+     * @param rotationMatrix The matrix to get rotation data from.
+     * @param input          The coordinate input.
+     * @param outputMatrix   Where to write the output.
+     * @return rotMatrix
+     */
+    public static IVector MRApplyRotMatrix(PSXMatrix rotationMatrix, SVector input, IVector outputMatrix) {
+        //TODO
+        return outputMatrix;
+    }
+
 
     /**
      * Equivalent to MulMatrix0. (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0441.html?sidebar=outlines)
