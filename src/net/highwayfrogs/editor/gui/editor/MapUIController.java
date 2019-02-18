@@ -1,7 +1,10 @@
 package net.highwayfrogs.editor.gui.editor;
 
 import javafx.application.Platform;
-import javafx.beans.property.*;
+import javafx.beans.property.FloatProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleFloatProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.PerspectiveCamera;
@@ -126,6 +129,7 @@ public class MapUIController implements Initializable {
     @FXML private TitledPane pathPane;
     @FXML private GridPane pathGridPane;
     private GUIEditorGrid pathEditor;
+    private Path selectedPath;
 
     // Non-GUI.
     private Consumer<MAPPolygon> onSelect;
@@ -224,23 +228,32 @@ public class MapUIController implements Initializable {
         if (this.pathEditor == null)
             this.pathEditor = new GUIEditorGrid(this.pathGridPane);
 
+        if (this.selectedPath == null && !getMap().getPaths().isEmpty())
+            this.selectedPath = getMap().getPaths().get(0);
+
         this.pathEditor.clearEditor();
 
-        for (int i = 0; i < getMap().getPaths().size(); i++) {
-            final int tempIndex = i;
-
-            this.pathEditor.addBoldLabel("Path #" + (i + 1) + ":"); //TODO: It'd be nice to separate this into collapsible title panes.
-            getMap().getPaths().get(i).setupEditor(this, this.pathEditor);
-            this.pathEditor.addButton("Remove Path #" + (i + 1), () -> {
-                getMap().getPaths().remove(tempIndex);
-                setupPathEditor();
-            });
-        }
-
-        this.pathEditor.addButton("Add Path", () -> {
-            getMap().getPaths().add(new Path());
+        ComboBox<Path> box = this.pathEditor.addSelectionBox("Path", getSelectedPath(), getMap().getPaths(), newPath -> {
+            this.selectedPath = newPath;
             setupPathEditor();
         });
+        box.setConverter(new AbstractStringConverter<>(path -> "Path #" + getMap().getPaths().indexOf(path)));
+
+        this.pathEditor.addButton("Add Path", () -> {
+            getMap().getPaths().add(this.selectedPath = new Path());
+            setupPathEditor();
+        });
+
+        if (this.selectedPath != null) {
+            this.pathEditor.addButton("Remove Path", () -> {
+                getMap().removePath(this.selectedPath);
+                this.selectedPath = null;
+                setupPathEditor();
+            });
+
+            this.pathEditor.addBoldLabel("Path Data");
+            this.selectedPath.setupEditor(this, this.pathEditor);
+        }
     }
 
     /**

@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
+import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
 import net.highwayfrogs.editor.file.map.poly.line.MAPLineType;
@@ -137,6 +138,29 @@ public class MAPFile extends GameFile {
      */
     public void removeEntity(Entity entity) {
         getEntities().remove(entity);
+    }
+
+    /**
+     * Remove a path from this map.
+     * @param path The path to remove.
+     */
+    public void removePath(Path path) {
+        int pathIndex = getPaths().indexOf(path);
+        Utils.verify(pathIndex >= 0, "Path was not registered!");
+        getPaths().remove(path);
+
+        // Unlink paths for entities.
+        for (Entity entity : getEntities()) {
+            PathInfo info = entity.getPathInfo();
+            if (info == null)
+                continue;
+
+            if (info.getPathId() > pathIndex) {
+                info.setPathId(info.getPathId() - 1);
+            } else if (info.getPathId() == pathIndex) {
+                info.setPathId(-1);
+            }
+        }
     }
 
     @Override
