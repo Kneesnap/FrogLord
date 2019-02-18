@@ -81,7 +81,7 @@ public class PP20Packer {
             int targetSize = target.size();
 
             if (COMPRESSION_SETTING_MAX_OFFSETS.length > targetSize) // We'd rather cache this variable, as it's rather expensive to calculate.
-                minIndex = Math.max(0, bufferEnd - COMPRESSION_SETTING_MAX_OFFSETS[targetSize]); //TODO: Mess around with this to get the speed + size right.
+                minIndex = Math.max(0, bufferEnd - COMPRESSION_SETTING_MAX_OFFSETS[targetSize]);
 
             if (minIndex > testIndex)
                 break; // We've gone too far.
