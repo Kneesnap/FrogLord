@@ -71,23 +71,9 @@ public class MAPController extends EditorController<MAPFile> {
 
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
-    private static final Image BOUNDING_BOX_IMAGE = GameFile.loadIcon("yellow");
 
-    private static final PhongMaterial MATERIAL_ENTITY_ICON = new PhongMaterial();
-    static {
-        MATERIAL_ENTITY_ICON.setDiffuseColor(Color.BLACK);
-        MATERIAL_ENTITY_ICON.setSpecularColor(Color.BLACK);
-        MATERIAL_ENTITY_ICON.setDiffuseMap(ENTITY_ICON_IMAGE);
-        MATERIAL_ENTITY_ICON.setSelfIlluminationMap(ENTITY_ICON_IMAGE);
-    }
-
-    private static final PhongMaterial MATERIAL_BOUNDING_BOX = new PhongMaterial();
-    static {
-        MATERIAL_BOUNDING_BOX.setDiffuseColor(Color.BLACK);
-        MATERIAL_BOUNDING_BOX.setSpecularColor(Color.BLACK);
-        MATERIAL_BOUNDING_BOX.setDiffuseMap(BOUNDING_BOX_IMAGE);
-        MATERIAL_BOUNDING_BOX.setSelfIlluminationMap(BOUNDING_BOX_IMAGE);
-    }
+    private static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
+    private static final PhongMaterial MATERIAL_BOUNDING_BOX = Utils.makeSpecialMaterial(Color.YELLOW);
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -226,16 +212,14 @@ public class MAPController extends EditorController<MAPFile> {
             if (event.isControlDown() && event.getCode() == KeyCode.ENTER)
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
 
-            if (isPolygonSelected()) {
-                if (event.getCode() == KeyCode.I) {
-                    movePolygonY(MapUIController.getPropertyVertexSpeed().get());
-                } else if (event.getCode() == KeyCode.K) {
-                    movePolygonY(-MapUIController.getPropertyVertexSpeed().get());
-                } else if (event.getCode() == KeyCode.J) {
-                    movePolygonX(-MapUIController.getPropertyVertexSpeed().get());
-                } else if (event.getCode() == KeyCode.L) {
-                    movePolygonX(MapUIController.getPropertyVertexSpeed().get());
-                }
+            if (event.getCode() == KeyCode.I) {
+                movePolygonY(MapUIController.getPropertyVertexSpeed().get());
+            } else if (event.getCode() == KeyCode.K) {
+                movePolygonY(-MapUIController.getPropertyVertexSpeed().get());
+            } else if (event.getCode() == KeyCode.J) {
+                movePolygonX(-MapUIController.getPropertyVertexSpeed().get());
+            } else if (event.getCode() == KeyCode.L) {
+                movePolygonX(MapUIController.getPropertyVertexSpeed().get());
             }
         });
 
@@ -302,7 +286,7 @@ public class MAPController extends EditorController<MAPFile> {
         TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
         triMesh.getPoints().addAll(-entityIconSize * 0.5f, entityIconSize * 0.5f, 0, -entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, entityIconSize * 0.5f, 0);
         triMesh.getTexCoords().addAll(0, 1, 0, 0, 1, 0, 1, 1);
-        triMesh.getFaces().addAll(0,0, 1,1, 2,2, 2,2, 3,3, 0,0);
+        triMesh.getFaces().addAll(0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 0, 0);
 
         MeshView triMeshView = new MeshView(triMesh);
         triMeshView.setDrawMode(DrawMode.FILL);
@@ -366,12 +350,12 @@ public class MAPController extends EditorController<MAPFile> {
 
     /**
      * Adds an axis-aligned bounding box.
-     * @param x The x-coordinate defining the center of the box.
-     * @param y The y-coordinate defining the center of the box.
-     * @param z The z-coordinate defining the center of the box.
-     * @param width The width (along x-axis).
+     * @param x      The x-coordinate defining the center of the box.
+     * @param y      The y-coordinate defining the center of the box.
+     * @param z      The z-coordinate defining the center of the box.
+     * @param width  The width (along x-axis).
      * @param height The height (along y-axis).
-     * @param depth The depth (along z-axis).
+     * @param depth  The depth (along z-axis).
      */
     private void addBoundingBoxCenteredWithDimensions(double x, double y, double z, double width, double height, double depth) {
         Box axisAlignedBoundingBox = new Box(width, height, depth);
@@ -394,30 +378,36 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void movePolygonX(int amount) {
-        for (int vertice : getSelectedPolygon().getVertices()) {
-            SVector vertex = getFile().getVertexes().get(vertice);
-            vertex.setX((short) (vertex.getX() + amount));
-        }
+        if (getSelectedPolygon() != null) {
+            for (int vertice : getSelectedPolygon().getVertices()) {
+                SVector vertex = getFile().getVertexes().get(vertice);
+                vertex.setX((short) (vertex.getX() + amount));
+            }
 
-        refreshView();
+            refreshView();
+        }
     }
 
     private void movePolygonY(int amount) {
-        for (int vertice : getSelectedPolygon().getVertices()) {
-            SVector vertex = getFile().getVertexes().get(vertice);
-            vertex.setY((short) (vertex.getY() - amount));
-        }
+        if (getSelectedPolygon() != null) {
+            for (int vertice : getSelectedPolygon().getVertices()) {
+                SVector vertex = getFile().getVertexes().get(vertice);
+                vertex.setY((short) (vertex.getY() - amount));
+            }
 
-        refreshView();
+            refreshView();
+        }
     }
 
     private void movePolygonZ(int amount) {
-        for (int vertice : getSelectedPolygon().getVertices()) {
-            SVector vertex = getFile().getVertexes().get(vertice);
-            vertex.setZ((short) (vertex.getZ() + amount));
-        }
+        if (getSelectedPolygon() != null) {
+            for (int vertice : getSelectedPolygon().getVertices()) {
+                SVector vertex = getFile().getVertexes().get(vertice);
+                vertex.setZ((short) (vertex.getZ() + amount));
+            }
 
-        refreshView();
+            refreshView();
+        }
     }
 
     /**

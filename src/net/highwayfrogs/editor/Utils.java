@@ -9,6 +9,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
 import javafx.stage.*;
 import javafx.stage.Window;
 import javafx.stage.FileChooser.ExtensionFilter;
@@ -41,6 +42,7 @@ public class Utils {
     private static final CRC32 crc32 = new CRC32();
     private static final File[] EMPTY_FILE_ARRAY = new File[0];
     private static final Map<BufferedImage, TextureCache> imageCacheMap = new HashMap<>();
+    private static final Map<Color, Image> colorImageCacheMap = new HashMap<>();
     private static final long IMAGE_CACHE_EXPIRE = TimeUnit.MINUTES.toMillis(5);
     private static final Map<Integer, List<Integer>> integerLists = new HashMap<>();
 
@@ -1053,5 +1055,35 @@ public class Utils {
             if (data[i] != test[i])
                 return false;
         return true;
+    }
+
+    /**
+     * Creates a PhongMaterial with a texture unaffected by lighting.
+     * @param texture The texture to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial makeSpecialMaterial(Image texture) {
+        PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(Color.BLACK);
+        material.setSpecularColor(Color.BLACK);
+        material.setDiffuseMap(texture);
+        material.setSelfIlluminationMap(texture);
+        return material;
+    }
+
+    /**
+     * Creates a PhongMaterial with a color unaffected by lighting.
+     * @param color The color to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial makeSpecialMaterial(Color color) {
+        return makeSpecialMaterial(colorImageCacheMap.computeIfAbsent(color, key -> {
+            BufferedImage colorImage = new BufferedImage(5, 5, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D graphics = colorImage.createGraphics();
+            graphics.setColor(new java.awt.Color(toRGB(key)));
+            graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
+            graphics.dispose();
+            return toFXImage(colorImage, true);
+        }));
     }
 }
