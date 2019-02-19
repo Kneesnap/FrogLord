@@ -17,14 +17,14 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 public class CameraZone extends GameObject {
     private int flags;
     private short forceDirection; // Force camera rotation to this direction. -1 is none.
-    private SVector northSourceOffset;
-    private SVector northTargetOffset;
-    private SVector eastSourceOffset;
-    private SVector eastTargetOffset;
-    private SVector southSourceOffset;
-    private SVector southTargetOffset;
-    private SVector westSourceOffset;
-    private SVector westTargetOffset;
+    private SVector northSourceOffset = new SVector();
+    private SVector northTargetOffset = new SVector();
+    private SVector eastSourceOffset = new SVector();
+    private SVector eastTargetOffset = new SVector();
+    private SVector southSourceOffset = new SVector();
+    private SVector southTargetOffset = new SVector();
+    private SVector westSourceOffset = new SVector();
+    private SVector westTargetOffset = new SVector();
 
     public static final int FLAG_OUTRO = Constants.BIT_FLAG_1;
     public static final int FLAG_SEMIFORCED = Constants.BIT_FLAG_2;
@@ -37,14 +37,14 @@ public class CameraZone extends GameObject {
     public void load(DataReader reader) {
         this.flags = reader.readUnsignedShortAsInt();
         this.forceDirection = reader.readShort();
-        this.northSourceOffset = SVector.readWithPadding(reader);
-        this.northTargetOffset = SVector.readWithPadding(reader);
-        this.eastSourceOffset = SVector.readWithPadding(reader);
-        this.eastTargetOffset = SVector.readWithPadding(reader);
-        this.southSourceOffset = SVector.readWithPadding(reader);
-        this.southTargetOffset = SVector.readWithPadding(reader);
-        this.westSourceOffset = SVector.readWithPadding(reader);
-        this.westTargetOffset = SVector.readWithPadding(reader);
+        this.northSourceOffset.loadWithPadding(reader);
+        this.northTargetOffset.loadWithPadding(reader);
+        this.eastSourceOffset.loadWithPadding(reader);
+        this.eastTargetOffset.loadWithPadding(reader);
+        this.southSourceOffset.loadWithPadding(reader);
+        this.southTargetOffset.loadWithPadding(reader);
+        this.westSourceOffset.loadWithPadding(reader);
+        this.westTargetOffset.loadWithPadding(reader);
     }
 
     @Override

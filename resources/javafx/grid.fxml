@@ -73,15 +73,18 @@
                                 <CheckBox fx:id="zoneFinderCheckBox" layoutX="225.0" layoutY="203.0"
                                           mnemonicParsing="false" text="Zone Finder" textAlignment="RIGHT"
                                           AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="2.0"/>
-                                <Button fx:id="addZoneButton" layoutY="28.0" mnemonicParsing="false" text="Add Zone"
-                                        AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="28.0"/>
+                                <Button fx:id="addZoneButton" layoutY="28.0" mnemonicParsing="false" onAction="#addZone"
+                                        text="Add Zone" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="28.0"/>
                                 <Button fx:id="removeZoneButton" layoutX="70.0" layoutY="28.0" mnemonicParsing="false"
-                                        text="Delete Zone" AnchorPane.leftAnchor="70.0" AnchorPane.topAnchor="28.0"/>
+                                        onAction="#deleteZone" text="Delete Zone" AnchorPane.leftAnchor="70.0"
+                                        AnchorPane.topAnchor="28.0"/>
                                 <Button fx:id="addRegionButton" layoutX="152.0" layoutY="28.0" mnemonicParsing="false"
-                                        text="Add Rgn" AnchorPane.rightAnchor="87.0" AnchorPane.topAnchor="28.0"/>
+                                        onAction="#addRegion" text="Add Rgn" AnchorPane.rightAnchor="87.0"
+                                        AnchorPane.topAnchor="28.0"/>
                                 <Button fx:id="removeRegionButton" layoutX="216.0" layoutY="28.0"
-                                        mnemonicParsing="false" prefHeight="25.0" prefWidth="85.0" text="Remove Rgn"
-                                        AnchorPane.rightAnchor="1.0" AnchorPane.topAnchor="28.0"/>
+                                        mnemonicParsing="false" onAction="#deleteRegion" prefHeight="25.0"
+                                        prefWidth="85.0" text="Remove Rgn" AnchorPane.rightAnchor="1.0"
+                                        AnchorPane.topAnchor="28.0"/>
                                 <CheckBox fx:id="zoneEditorCheckBox" layoutX="14.0" layoutY="203.0"
                                           mnemonicParsing="false" text="Region Editor" AnchorPane.bottomAnchor="5.0"
                                           AnchorPane.leftAnchor="2.0"/>

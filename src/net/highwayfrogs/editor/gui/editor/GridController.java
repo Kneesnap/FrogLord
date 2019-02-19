@@ -33,13 +33,13 @@ import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
 /**
  * Manages the grid editor gui.
- * TODO: Buttons need functionality.
  * Created by Kneesnap on 1/24/2019.
  */
 @Getter
@@ -294,6 +294,41 @@ public class GridController implements Initializable {
             this.selectedStack.setAverageHeight(Short.parseShort(text));
     }
 
+    @FXML
+    private void addZone(ActionEvent evt) {
+        Zone zone = new Zone();
+        getMap().getZones().add(zone);
+        this.zoneSelector.setItems(FXCollections.observableArrayList(getMap().getZones()));
+        this.zoneSelector.getSelectionModel().select(zone);
+    }
+
+    @FXML
+    private void deleteZone(ActionEvent evt) {
+        getMap().getZones().remove(this.selectedZone);
+        this.selectedZone = null;
+        this.zoneSelector.setItems(FXCollections.observableArrayList(getMap().getZones()));
+        this.zoneSelector.getSelectionModel().select(null);
+    }
+
+    @FXML
+    private void addRegion(ActionEvent evt) {
+        ZoneRegion newRegion = new ZoneRegion();
+        this.selectedZone.getRegions().add(newRegion);
+        int newId = this.regionSelector.getItems().size();
+        this.regionSelector.getItems().add(newId);
+        this.regionSelector.getSelectionModel().select(newId);
+    }
+
+    @FXML
+    private void deleteRegion(ActionEvent evt) {
+        getSelectedZone().getRegions().remove(this.selectedRegion - 1);
+        this.regionSelector.getItems().remove(this.selectedRegion);
+        for (int i = this.selectedRegion + 1; i < this.regionSelector.getItems().size(); i++)
+            this.regionSelector.getItems().set(i, this.regionSelector.getItems().get(i) - 1);
+
+        this.regionSelector.getSelectionModel().select(--this.selectedRegion);
+    }
+
     /**
      * Select a square.
      * @param stack The stack the square belongs to.
@@ -371,7 +406,7 @@ public class GridController implements Initializable {
 
         boolean hasZone = (newZone != null);
         if (hasZone) {
-            List<Integer> regionIds = Utils.getIntegerList(newZone.getRegionCount() + 1);
+            List<Integer> regionIds = new ArrayList<>(Utils.getIntegerList(newZone.getRegionCount() + 1));
             regionSelector.setItems(FXCollections.observableArrayList(regionIds));
             if (regionIds.size() > 0)
                 regionSelector.getSelectionModel().select(DEFAULT_REGION_ID); // Automatically calls setRegion
