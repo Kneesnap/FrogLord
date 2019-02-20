@@ -290,6 +290,7 @@ public class MOFPart extends GameObject {
 
     /**
      * Gets the flipbook part-cel.
+     * TODO: On models like GEN_GOLD_FROG, this can't show all the animations.
      * @param flipbookId The animation id.
      * @param frame      The global frame count.
      * @return cel

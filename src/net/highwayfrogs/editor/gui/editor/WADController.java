@@ -44,7 +44,7 @@ public class WADController extends EditorController<WADFile> {
     private void updateEntryText() {
         entryList.setCellFactory(null);
         entryList.setCellFactory(param ->
-                new AbstractAttachmentCell<>((wadEntry, index) -> wadEntry != null ? "[" + index + "] " + wadEntry.getDisplayName() : null));
+                new AbstractAttachmentCell<>((wadEntry, index) -> wadEntry != null ? "[" + index + "/" + selectedEntry.getFileEntry().getLoadedId() + "] " + wadEntry.getDisplayName() : null));
     }
 
     @FXML

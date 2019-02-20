@@ -194,7 +194,7 @@ public class MainController implements Initializable {
             getCurrentController().onClose(editorPane);
         setCurrentController(editor);
 
-        editorPane.getChildren().clear(); // Remove any existing editor.
+        //editorPane.getChildren().clear(); // Remove any existing editor.
         if (editor != null) { // null = No editor.
             editor.loadFile(file);
             editor.onInit(editorPane);

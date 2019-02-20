@@ -15,8 +15,7 @@ Editor Features:
 TCRF Documentation Plans:
  - Snail Racing
  - Beta elements visible in media. (Level screenshots, German Trailer, Credits video, Video linked on the forums of some guy playing Frogger.)
- - Kao's Prototype. (Debug features, analyze MWD)
+ - Kao's Prototype. (Debug features, analyze MWD vs demo, map differences)
  - Document debugging code.
- - Find unused textures
  - Analyze US PSX demo MWD vs retail PSX demo MWD.
  - Document QB.MAP
