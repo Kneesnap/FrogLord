@@ -35,6 +35,7 @@ import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.NameValuePair;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -357,7 +358,7 @@ public class MAPController extends EditorController<MAPFile> {
      * @param height The height (along y-axis).
      * @param depth  The depth (along z-axis).
      */
-    private void addBoundingBoxCenteredWithDimensions(double x, double y, double z, double width, double height, double depth) {
+    private Box addBoundingBoxCenteredWithDimensions(double x, double y, double z, double width, double height, double depth) {
         Box axisAlignedBoundingBox = new Box(width, height, depth);
 
         axisAlignedBoundingBox.setMaterial(MATERIAL_BOUNDING_BOX);
@@ -366,15 +367,15 @@ public class MAPController extends EditorController<MAPFile> {
         axisAlignedBoundingBox.getTransforms().addAll(rotX, rotY, rotZ, new Translate(x, y, z));
 
         root3D.getChildren().add(axisAlignedBoundingBox);
-        this.boundingBoxes.add(axisAlignedBoundingBox);
+        return axisAlignedBoundingBox;
     }
 
     /**
-     * Removes all bounding boxes.
+     * Removes a collection of nodes from the 3d scene.
      */
-    private void removeBoundingBoxes() {
-        root3D.getChildren().removeAll(this.boundingBoxes);
-        this.boundingBoxes.clear();
+    private void clearNodes(Collection<Node> nodes) {
+        root3D.getChildren().removeAll(nodes);
+        nodes.clear();
     }
 
     private void movePolygonX(int amount) {
