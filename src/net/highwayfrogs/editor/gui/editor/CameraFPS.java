@@ -55,6 +55,11 @@ public class CameraFPS extends Parent
     private final double CAM_SPEED_UP_MULTIPLIER = 4.0;
     @Getter private DoubleProperty camSpeedUpMultiplierProperty = new SimpleDoubleProperty(CAM_SPEED_UP_MULTIPLIER);
 
+    private final double CAM_MIN_YAW_ANGLE_DEGREES = -360.0;
+    private final double CAM_MAX_YAW_ANGLE_DEGREES = 360.0;
+    private final double CAM_MIN_PITCH_ANGLE_DEGREES = -85.0;
+    private final double CAM_MAX_PITCH_ANGLE_DEGREES = 85.0;
+
     // Camera processing thread
     AnimationTimer camUpdateThread;
 
@@ -162,7 +167,7 @@ public class CameraFPS extends Parent
 
     /**
      * Entry point into the [per frame] main camera processing functionality.
-     * @param timestamp the system time stamp in nanoseconds.
+     * @param timestamp The system time stamp in nanoseconds.
      */
     private void updateCamera(long timestamp)
     {
@@ -234,7 +239,7 @@ public class CameraFPS extends Parent
 
     /**
      * Assign (setup) the control event handlers on the supplied subscene object.
-     * @param subScene the subscene to receive and process the keyboard and mouse events, etc.
+     * @param subScene  The subscene to receive and process the keyboard and mouse events, etc.
      */
     public void assignSubSceneControls(SubScene subScene)
     {
@@ -251,7 +256,7 @@ public class CameraFPS extends Parent
 
     /**
      * Assign (setup) the control event handlers on the supplied scene object.
-     * @param scene the subscene to receive and process the keyboard and mouse events, etc.
+     * @param scene The subscene to receive and process the keyboard and mouse events, etc.
      */
     public void assignSceneControls(Scene scene)
     {
@@ -387,8 +392,8 @@ public class CameraFPS extends Parent
                 affineXform.setToIdentity();
 
                 // Calculate yaw, pitch angles
-                rotateYaw.setAngle(MathUtils.clamp(((rotateYaw.getAngle() + (mouseDeltaX * camMouseSpeedProperty.get())) % 360 + 540) % 360 - 180, -360, 360));
-                rotatePitch.setAngle(MathUtils.clamp(rotatePitch.getAngle() - (yInvert * mouseDeltaY * camMouseSpeedProperty.get()), -75, 75));
+                rotateYaw.setAngle(MathUtils.clamp(((rotateYaw.getAngle() + (mouseDeltaX * camMouseSpeedProperty.get())) % 360 + 540) % 360 - 180, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
+                rotatePitch.setAngle(MathUtils.clamp(rotatePitch.getAngle() - (yInvert * mouseDeltaY * camMouseSpeedProperty.get()), CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
 
                 // Dynamically generate the affine transform from the concatenated translation and rotation components
                 affineXform.prepend(translate.createConcatenation(rotateYaw.createConcatenation(rotatePitch)));
@@ -472,7 +477,7 @@ public class CameraFPS extends Parent
 
     /**
      * Moves the camera a specified distance along its look vector.
-     * @param moveDirection the direction to move along the camera's look vector.
+     * @param moveDirection The direction to move along the camera's look vector.
      */
     public void moveCameraAlongLookVector(double moveDirection)
     {
@@ -484,6 +489,41 @@ public class CameraFPS extends Parent
         {
             moveCameraBackward();
         }
+    }
+
+    /**
+     * Rotates the camera to look at a specified position in 3D world space.
+     * @param xTarget   The x-position to look at.
+     * @param yTarget   The y-position to look at.
+     * @param zTarget   The z-position to look at.
+     */
+    public void setCameraLookAt(double xTarget, double yTarget, double zTarget)
+    {
+        setCameraLookAt(new Point3D(xTarget, yTarget, zTarget));
+    }
+
+    /**
+     * Rotates the camera to look at a specified position in 3D world space.
+     * @param target    The position to look at.
+     */
+    public void setCameraLookAt(Point3D target)
+    {
+        // Calculate the camera's reference frame in terms of look, right and up vectors
+        Point3D zVec = target.subtract(getPos()).normalize();
+        Point3D xVec = new Point3D(0, 1, 0).normalize().crossProduct(zVec).normalize();
+        Point3D yVec = zVec.crossProduct(xVec).normalize();
+
+        // Update the affine transformation to point the camera towards the target point
+        affineXform.setToTransform(xVec.getX(), yVec.getX(), zVec.getX(), getPos().getX(),
+                xVec.getY(), yVec.getY(), zVec.getY(), getPos().getY(),
+                xVec.getZ(), yVec.getZ(), zVec.getZ(), getPos().getZ());
+
+        // Extract camera orientation angles from the affine transformation into the camera's internal yaw, pitch, roll (not currently used).
+        double yaw = Math.toDegrees(Math.atan2(-affineXform.getMzx(), affineXform.getMzz()));
+        double pitch = Math.toDegrees(Math.asin(affineXform.getMzy()));
+
+        rotateYaw.setAngle(MathUtils.clamp(yaw, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
+        rotatePitch.setAngle(MathUtils.clamp(pitch, CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
     }
 
     /**
@@ -500,9 +540,9 @@ public class CameraFPS extends Parent
 
     /**
      * Set the camera's position by directly manipulating the affine transform translation component.
-     * @param xPos the desired x-coordinate.
-     * @param yPos the desired y-coordinate.
-     * @param zPos the desired z-coordinate.
+     * @param xPos  The desired x-coordinate.
+     * @param yPos  The desired y-coordinate.
+     * @param zPos  The desired z-coordinate.
      */
     public void setPos(double xPos, double yPos, double zPos)
     {
@@ -513,7 +553,7 @@ public class CameraFPS extends Parent
 
     /**
      * Set the camera's position by directly manipulating the affine transform translation component.
-     * @param newPos the desired position.
+     * @param newPos    The desired position.
      */
     public void setPos(Point3D newPos)
     {
@@ -522,38 +562,32 @@ public class CameraFPS extends Parent
 
     /**
      * Set the camera's yaw rotation by directly manipulating the rotation components.
-     * @param angle the desired yaw.
+     * @param angle The desired yaw.
      */
     public void setYaw(double angle)
     {
-        rotateYaw.setAngle(angle);
-
-        // IMPORTANT! Update the affine transformation
-        affineXform.prepend(translate.createConcatenation(rotateYaw.createConcatenation(rotatePitch)));
+        rotateYaw.setAngle(MathUtils.clamp(angle, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
+        // TODO: figure out how to update affine transform here without performing forced update
     }
 
     /**
      * Set the camera's pitch rotation by directly manipulating the rotation components.
-     * @param angle the desired pitch.
+     * @param angle The desired pitch.
      */
     public void setPitch(double angle)
     {
-        rotatePitch.setAngle(angle);
-
-        // IMPORTANT! Update the affine transformation
-        affineXform.prepend(translate.createConcatenation(rotateYaw.createConcatenation(rotatePitch)));
+        rotatePitch.setAngle(MathUtils.clamp(angle, CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
+        // TODO: figure out how to update affine transform here without performing forced update
     }
 
     /**
      * Set the camera's roll rotation by directly manipulating the rotation components.
-     * @param angle the desired roll.
+     * @param angle The desired roll.
      */
     public void setRoll(double angle)
     {
         rotateRoll.setAngle(angle);
-
-        // IMPORTANT! Update the affine transformation
-        affineXform.prepend(translate.createConcatenation(rotateYaw.createConcatenation(rotatePitch)));
+        // TODO: figure out how to update affine transform here without performing forced update
     }
 
     /**
