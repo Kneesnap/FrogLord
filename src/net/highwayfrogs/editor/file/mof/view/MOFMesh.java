@@ -75,7 +75,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
      * @param newFrame The frame to use.
      */
     public void setFrame(int newFrame) {
-        if (newFrame < 0 || getMofFile().getParts().stream().anyMatch(part -> part.getFlipbook() == null))
+        if (newFrame < 0)
             return;
 
         System.out.println("New Frame: " + newFrame);

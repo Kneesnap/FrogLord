@@ -296,6 +296,6 @@ public class MOFPart extends GameObject {
      * @return cel
      */
     public MOFPartcel getCel(int flipbookId, int frame) {
-        return getPartcels().get(getCelId(flipbookId, frame));
+        return getPartcels().get(Math.min(getPartcels().size() - 1, getCelId(flipbookId, frame)));
     }
 }
