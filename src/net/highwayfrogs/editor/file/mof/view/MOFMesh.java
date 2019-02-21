@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.map.view.FrogMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFPart;
+import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
@@ -14,6 +15,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -30,6 +32,9 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     public MOFMesh(MOFFile mofFile, TextureMap map) {
         super(map, VertexFormat.POINT_TEXCOORD);
         this.mofFile = mofFile;
+
+        int animCount = mofFile.getParts().stream().map(MOFPart::getFlipbook).filter(Objects::nonNull).map(MOFFlipbook::getActions).mapToInt(List::size).max().orElse(0);
+        System.out.println("Animation Count: " + animCount + ", Texture Animation: " + mofFile.getParts().stream().anyMatch(part -> !part.getPartPolyAnims().isEmpty()));
         updateData();
     }
 
