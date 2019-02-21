@@ -112,7 +112,7 @@ public class FroggerEXEInfo extends Config {
      * Read data from the EXE which needs reading.
      */
     public void setup() {
-        GameSound.loadSounds(getString("soundList", GameSound.MAIN_KEY)); // Load the sound config.
+        GameSound.loadSoundNames(getString("soundList", GameSound.MAIN_KEY)); // Load the sound config.
         readConfig();
         readMWI();
         readCosTable();

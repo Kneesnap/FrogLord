@@ -27,7 +27,6 @@ public class VABController extends EditorController<AbstractVBFile> {
     @FXML private ListView<GameSound> soundList;
     @FXML private Button playButton;
     @FXML private Label label1;
-    @FXML private Label label2;
     @FXML private TextField sampleRateField;
     @FXML private CheckBox repeatCheckBox;
     @FXML private Slider sliderSampleRate;
@@ -165,7 +164,6 @@ public class VABController extends EditorController<AbstractVBFile> {
      */
     public void updateSoundInfo() {
         label1.setText("Vanilla Track ID: " + selectedSound.getVanillaTrackId());
-        label2.setText("Channels: " + selectedSound.getChannelCount());
         this.sampleRateField.setText(String.valueOf(selectedSound.getSampleRate()));
         this.sliderSampleRate.setValue(selectedSound.getSampleRate());
     }

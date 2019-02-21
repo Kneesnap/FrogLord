@@ -522,15 +522,18 @@ public class Utils {
      * @param file The file to get the hash of.
      * @return crc32Hash
      */
-    public static long getCRC32(File file) {
+    public static long getCRC32(File file) throws IOException {
+        return getCRC32(Files.readAllBytes(file.toPath()));
+    }
+
+    /**
+     * Get the CRC32 hash of a byte array.
+     * @param bytes The bytes to get the hash of.
+     * @return crc32Hash
+     */
+    public static long getCRC32(byte[] bytes) {
         crc32.reset();
-
-        try {
-            crc32.update(Files.readAllBytes(file.toPath()));
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
+        crc32.update(bytes);
         return crc32.getValue();
     }
 

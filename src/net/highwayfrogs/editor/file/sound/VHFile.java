@@ -25,6 +25,7 @@ public class VHFile extends GameFile {
 
     public static final int TYPE_ID = 2;
     public static final Image ICON = loadIcon("sound");
+    public static final int CHANNEL_COUNT = 1;
 
     @Override
     public void load(DataReader reader) {
@@ -33,16 +34,6 @@ public class VHFile extends GameFile {
             AudioHeader entry = new AudioHeader();
             entry.load(reader);
             getEntries().add(entry);
-        }
-
-        AudioHeader lastEntry = getEntries().get(0);
-        for (int i = 1; i < getEntries().size(); i++) {
-            AudioHeader entry = getEntries().get(i);
-
-            boolean isPresent = entry.getDataStartOffset() > lastEntry.getDataStartOffset();
-            entry.setAudioPresent(isPresent);
-            lastEntry.setAudioPresent(isPresent);
-            lastEntry = entry;
         }
 
         getVB().load(this); // Load the linked body file.
@@ -75,29 +66,29 @@ public class VHFile extends GameFile {
     @Setter
     @Getter
     public static class AudioHeader extends GameObject {
-        private int channels;
+        private boolean audioPresent;
         private int dataStartOffset;
         private int dataSize;
         private int sampleRate;
         private int bitWidth;
 
+        private static final int HAS_AUDIO = 1;
         private static final int UNKNOWN_VALUE = 1;
-        private transient boolean audioPresent;
 
         @Override
         public void load(DataReader reader) {
-            this.channels = reader.readInt();
+            this.audioPresent = (reader.readInt() == HAS_AUDIO);
             this.dataStartOffset = reader.readInt();
             this.dataSize = reader.readInt();
-            Utils.verify(reader.readInt() == UNKNOWN_VALUE, "Unkown Value #1 was not correct.");
-            Utils.verify(reader.readInt() == UNKNOWN_VALUE, "Unkown Value #2 was not correct.");
+            Utils.verify(reader.readInt() == UNKNOWN_VALUE, "Unknown Value #1 was not correct.");
+            Utils.verify(reader.readInt() == UNKNOWN_VALUE, "Unknown Value #2 was not correct.");
             this.sampleRate = reader.readInt();
             this.bitWidth = reader.readInt();
         }
 
         @Override
         public void save(DataWriter writer) {
-            writer.writeInt(this.channels);
+            writer.writeInt(this.audioPresent ? HAS_AUDIO : 0);
             writer.writeInt(this.dataStartOffset);
             writer.writeInt(this.dataSize);
             writer.writeInt(UNKNOWN_VALUE);
@@ -116,7 +107,7 @@ public class VHFile extends GameFile {
 
         @Override
         public String toString() {
-            return "[Channels: " + channels + ", Data: (" + Utils.toHexString(dataStartOffset) + "->" + Utils.toHexString(dataStartOffset + dataSize)
+            return "[Data: (" + Utils.toHexString(dataStartOffset) + "->" + Utils.toHexString(dataStartOffset + dataSize)
                     + "), Sample Rate: " + sampleRate + ", Bit-Width: " + this.bitWidth + ", Has Audio: " + audioPresent + "]";
         }
 

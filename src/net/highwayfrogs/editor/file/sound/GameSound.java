@@ -69,7 +69,7 @@ public abstract class GameSound extends GameObject {
      * @return audioFormat
      */
     public AudioFormat getAudioFormat() {
-        return new AudioFormat(getSampleRate(), getBitWidth(), getChannelCount(), true, false);
+        return new AudioFormat(getSampleRate(), getBitWidth(), VHFile.CHANNEL_COUNT, true, false);
     }
 
     /**
@@ -79,18 +79,10 @@ public abstract class GameSound extends GameObject {
     public void importFormat(AudioFormat newFormat) {
         Utils.verify(!newFormat.isBigEndian(), "Big Endian audio files are not accepted.");
         Utils.verify(newFormat.getEncoding() == Encoding.PCM_SIGNED, "Unsigned audio files are not supported. (%s)", newFormat.getEncoding());
-        Utils.verify(newFormat.getChannels() == getChannelCount(), "%d-channel audio is not supported!", newFormat.getChannels());
+        Utils.verify(newFormat.getChannels() == VHFile.CHANNEL_COUNT, "%d-channel audio is not supported!", newFormat.getChannels());
 
         setBitWidth(newFormat.getSampleSizeInBits());
         setSampleRate((int) newFormat.getSampleRate());
-    }
-
-    /**
-     * Get the number of channels for this entry.
-     * @return channelCount
-     */
-    public int getChannelCount() {
-        return header.getChannels();
     }
 
     /**
@@ -163,7 +155,7 @@ public abstract class GameSound extends GameObject {
      * @param configName The name of the config to use.
      */
     @SneakyThrows
-    public static void loadSounds(String configName) {
+    public static void loadSoundNames(String configName) {
         Config config = new Config(Utils.getResourceStream("sounds/" + configName + ".cfg"));
         SOUND_NAME_BY_TRACK_ID.addAll(config.getText());
         for (String childName : config.getOrderedChildren())
