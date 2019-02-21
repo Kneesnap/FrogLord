@@ -29,7 +29,6 @@ import java.util.ResourceBundle;
 
 /**
  * Controls the MOF editor GUI.
- * TODO: Handle MOFPartPolyAnim animation.
  * Created by Kneesnap on 2/13/2019.
  */
 @Getter

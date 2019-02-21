@@ -6,6 +6,9 @@ import net.highwayfrogs.editor.file.map.view.FrogMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFPart;
+import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
+import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
+import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.standard.SVector;
 
@@ -37,6 +40,25 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
         for (MOFPart part : getMofFile().getParts()) {
             part.getMofPolygons().values().forEach(list -> list.forEach(poly -> addPolygon(poly, texId)));
             setVerticeStart(getVerticeStart() + part.getCel(this.animationId, this.frameCount).getVertices().size());
+
+            for (MOFPartPolyAnim partPolyAnim : part.getPartPolyAnims()) {
+                MOFPolygon mofPolygon = partPolyAnim.getMofPolygon();
+                if (!(mofPolygon instanceof MOFPolyTexture))
+                    throw new RuntimeException("PartPolyAnim polygon was not a textured polygon! Type: " + partPolyAnim.getPrimType());
+
+                MOFPolyTexture polyTex = (MOFPolyTexture) mofPolygon;
+
+                int texFrame = (this.frameCount % partPolyAnim.getTotalFrames());
+                List<MOFPartPolyAnimEntry> entries = partPolyAnim.getEntryList().getEntries();
+                for (MOFPartPolyAnimEntry entry : entries) {
+                    if (entry.getDuration() > texFrame) {
+                        polyTex.setViewImageId((short) entry.getImageId());
+                        break;
+                    } else {
+                        texFrame -= entry.getDuration();
+                    }
+                }
+            }
         }
     }
 

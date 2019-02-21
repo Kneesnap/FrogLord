@@ -27,6 +27,8 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     private PSXColorVector color;
     private boolean flippedUVs;
 
+    private transient short viewImageId = -1; // The image id while this MOF is being viewed.
+
     public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_0; // setSemiTrans(true)
     public static final int FLAG_ENVIRONMENT_IMAGE = Constants.BIT_FLAG_1; // Show the solid environment bitmap. (For instance, how water appears as a solid body, or sludge in the sewer levels.)
     public static final int FLAG_MAX_ORDER_TABLE = Constants.BIT_FLAG_2; // Puts at the back of the order table. Either the very lowest rendering priority, or the very highest.
@@ -83,12 +85,12 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
 
     @Override
     public int getOrderId() {
-        return getTextureId();
+        return getImageId();
     }
 
     @Override
     public TextureEntry getEntry(TextureMap map) {
-        return map.getEntry(getImageId());
+        return map.getEntry(this.viewImageId == -1 ? getImageId() : this.viewImageId);
     }
 
     @Override

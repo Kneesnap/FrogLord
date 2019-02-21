@@ -64,4 +64,15 @@ public class MOFPartPolyAnim extends GameObject {
         writer.writeAddressAt(this.tempAnimAddress, this.entryList.getTempSavePointer());
         this.tempAnimAddress = 0;
     }
+
+    /**
+     * Gets the frame count of this animation.
+     * @return totalFrames
+     */
+    public int getTotalFrames() {
+        int frame = 0;
+        for (MOFPartPolyAnimEntry entry : getEntryList().getEntries())
+            frame += entry.getDuration();
+        return frame;
+    }
 }
