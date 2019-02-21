@@ -208,8 +208,7 @@ public class MWIFile extends GameObject {
 
         @Override
         public String toString() {
-            return "{" + getFilePath() + " Type: " + getTypeId() + ", Flags: " + getFlags() + ", Unpacked Size: "
-                    + getUnpackedSize() + ", " + (isCompressed() ? "" : "Not ") + "Compressed}";
+            return getDisplayName() + "-{" + getFilePath() + " Type: " + getTypeId() + ", Flags: " + getFlags() + "}";
         }
 
         /**

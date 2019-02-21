@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -38,4 +39,41 @@ public abstract class ThemeBook extends ExeStruct {
      * @return result
      */
     public abstract <T> T execute(Function<PCThemeBook, T> pcHandler, Function<PSXThemeBook, T> psxHandler);
+
+    /**
+     * Execute something depending on which MapBook type this is.
+     * @param pcHandler  The PC handler.
+     * @param psxHandler The psx handler.
+     */
+    public void execute(Consumer<PCThemeBook> pcHandler, Consumer<PSXThemeBook> psxHandler) {
+        execute(pc -> {
+            pcHandler.accept(pc);
+            return null;
+        }, psx -> {
+            psxHandler.accept(psx);
+            return null;
+        });
+    }
+
+    /**
+     * Perform some logic on all vlos.
+     * @param handler The logic to perform.
+     */
+    public void forEachVLO(Consumer<VLOArchive> handler) {
+        execute(pc -> {
+            if (pc.getHighVloId() != 0)
+                handler.accept(getConfig().getGameFile(pc.getHighVloId()));
+            if (pc.getLowVloId() != 0)
+                handler.accept(getConfig().getGameFile(pc.getLowVloId()));
+            if (pc.getHighMultiplayerVloId() != 0)
+                handler.accept(getConfig().getGameFile(pc.getHighMultiplayerVloId()));
+            if (pc.getLowMultiplayerVloId() != 0)
+                handler.accept(getConfig().getGameFile(pc.getLowMultiplayerVloId()));
+        }, psx -> {
+            if (psx.getVloId() != 0)
+                handler.accept(getConfig().getGameFile(psx.getVloId()));
+            if (psx.getMultiplayerVloId() != 0)
+                handler.accept(getConfig().getGameFile(psx.getMultiplayerVloId()));
+        });
+    }
 }

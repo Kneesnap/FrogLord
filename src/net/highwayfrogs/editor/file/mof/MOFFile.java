@@ -317,7 +317,7 @@ public class MOFFile extends GameFile {
 
     @Override
     public void handleWadEdit(WADFile parent) {
-        MOFFile toOpen = this.animation != null ? getAnimation().getStaticMOF() : this;
+        MOFFile toOpen = getStaticMOF();
 
         if (toOpen.getVloFile() != null) {
             MainController.MAIN_WINDOW.openEditor(new MOFController(), toOpen);
@@ -328,6 +328,14 @@ public class MOFFile extends GameFile {
             toOpen.setVloFile(vlo);
             MainController.MAIN_WINDOW.openEditor(new MOFController(), toOpen);
         }, false);
+    }
+
+    /**
+     * Gets the static MOF file. This MOF may just be a wrapper around MOFAnimation.
+     * @return staticMOF
+     */
+    public MOFFile getStaticMOF() {
+        return this.animation != null ? getAnimation().getStaticMOF() : this;
     }
 
     /**

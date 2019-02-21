@@ -22,7 +22,7 @@ public class PCMapBook extends MapBook {
     private int highRemapPointer;
     private int lowRemapPointer;
     private boolean useCaveLights;
-    private int environmentTexturePointer;
+    private long environmentTexturePointer;
     private int highWadId;
     private int lowWadId;
     private int paletteId;
@@ -34,7 +34,7 @@ public class PCMapBook extends MapBook {
         this.highRemapPointer = reader.readInt();
         this.lowRemapPointer = reader.readInt();
         this.useCaveLights = (reader.readInt() == 1);
-        this.environmentTexturePointer = reader.readInt();
+        this.environmentTexturePointer = reader.readUnsignedIntAsLong();
         this.highWadId = reader.readInt();
         this.lowWadId = reader.readInt();
         this.paletteId = reader.readInt();
@@ -47,7 +47,7 @@ public class PCMapBook extends MapBook {
         writer.writeInt(this.highRemapPointer);
         writer.writeInt(this.lowRemapPointer);
         writer.writeInt(this.useCaveLights ? 1 : 0);
-        writer.writeInt(this.environmentTexturePointer);
+        writer.writeUnsignedInt(this.environmentTexturePointer);
         writer.writeInt(this.highWadId);
         writer.writeInt(this.lowWadId);
         writer.writeInt(this.paletteId);
@@ -109,6 +109,7 @@ public class PCMapBook extends MapBook {
         return "MAP[Hi: " + getConfig().getResourceName(highMapId) + ",Lo: " + getConfig().getResourceName(lowMapId)
                 + "] Remap[Hi: " + Utils.toHexString(getFileHighRemapPointer()) + ",Lo: " + Utils.toHexString(getFileLowRemapPointer())
                 + "] WAD[Hi: " + getConfig().getResourceName(highWadId) + ",Lo: " + getConfig().getResourceName(lowWadId)
-                + "] PAL: " + getConfig().getResourceName(paletteId);
+                + "] PAL: " + getConfig().getResourceName(paletteId)
+                + " ENV: " + getConfig().getTextureIdFromPointer(this.environmentTexturePointer);
     }
 }

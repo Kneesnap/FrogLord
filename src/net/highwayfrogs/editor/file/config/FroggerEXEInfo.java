@@ -49,7 +49,6 @@ public class FroggerEXEInfo extends Config {
     private List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
     private List<LevelInfo> raceLevelInfo = new ArrayList<>();
     private List<Long> bmpTexturePointers = new ArrayList<>();
-    private long textureStartAddress; // Start address for bmp_pointers array.
     private short[] cosEntries = new short[ACOSTABLE_ENTRIES];
     private short[] sinEntries = new short[ACOSTABLE_ENTRIES];
 
@@ -272,11 +271,6 @@ public class FroggerEXEInfo extends Config {
         int totalCount = (stopReading - getBmpPointerAddress()) / Constants.POINTER_SIZE;
         for (int i = 0; i < totalCount; i++)
             bmpTexturePointers.add(getReader().readUnsignedIntAsLong());
-
-        // Determine the base point for where bmp_pointers will be created in memory.
-        this.textureStartAddress = Long.MAX_VALUE;
-        for (long testPointer : bmpTexturePointers)
-            this.textureStartAddress = Math.min(this.textureStartAddress, testPointer);
     }
 
     /**
@@ -461,6 +455,15 @@ public class FroggerEXEInfo extends Config {
      */
     public boolean isPSX() {
         return getPlatform() == TargetPlatform.PSX;
+    }
+
+    /**
+     * Gets a texture id by its pointer.
+     * @param pointer The pointer of the texture.
+     * @return textureId
+     */
+    public int getTextureIdFromPointer(long pointer) {
+        return getBmpTexturePointers().indexOf(pointer);
     }
 
     /**

@@ -20,7 +20,7 @@ public class PSXMapBook extends MapBook {
     private int mapId;
     private long remapPointer;
     private boolean useCaveLights;
-    private int environmentTexturePointer;
+    private long environmentTexturePointer;
     private int wadId;
 
     @Override
@@ -28,7 +28,7 @@ public class PSXMapBook extends MapBook {
         this.mapId = reader.readInt();
         this.remapPointer = reader.readUnsignedIntAsLong();
         this.useCaveLights = (reader.readInt() == 1);
-        this.environmentTexturePointer = reader.readInt();
+        this.environmentTexturePointer = reader.readUnsignedIntAsLong();
         this.wadId = reader.readInt();
     }
 
@@ -37,7 +37,7 @@ public class PSXMapBook extends MapBook {
         writer.writeInt(this.mapId);
         writer.writeUnsignedInt(this.remapPointer);
         writer.writeInt(this.useCaveLights ? 1 : 0);
-        writer.writeInt(this.environmentTexturePointer);
+        writer.writeUnsignedInt(this.environmentTexturePointer);
         writer.writeInt(this.wadId);
     }
 
@@ -93,6 +93,7 @@ public class PSXMapBook extends MapBook {
     public String toString() {
         return "MAP[" + getConfig().getResourceName(mapId)
                 + "] Remap[" + Utils.toHexString(getFileRemapPointer())
-                + "] WAD[" + getConfig().getResourceName(wadId) + "]";
+                + "] WAD[" + getConfig().getResourceName(wadId)
+                + "] ENV[" + getConfig().getTextureIdFromPointer(this.environmentTexturePointer) + "]";
     }
 }

@@ -4,7 +4,6 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
@@ -75,7 +74,10 @@ public class WADFile extends GameFile {
 
             try {
                 file.load(new DataReader(new ArraySource(data)));
-                files.add(new WADEntry(resourceId, fileType, compressed, file, mwiTable));
+
+                WADEntry newEntry = new WADEntry(resourceId, fileType, compressed, null, mwiTable);
+                newEntry.setFile(file);
+                files.add(newEntry);
             } catch (Exception ex) {
                 throw new RuntimeException("Failed to load " + CURRENT_FILE_NAME + ".", ex);
             }
@@ -157,7 +159,7 @@ public class WADFile extends GameFile {
         private int resourceId;
         private int fileType;
         private boolean compressed;
-        @Setter private GameFile file;
+        private GameFile file;
         private MWIFile mwiFile;
 
         /**
@@ -186,6 +188,16 @@ public class WADFile extends GameFile {
 
             String displayName = getFileEntry().getDisplayName();
             return displayName.equals(Constants.DUMMY_FILE_NAME) ? "Imported MOF File" : displayName;
+        }
+
+        /**
+         * Set the file linked to this wad entry.
+         * @param newFile The new file
+         */
+        public void setFile(GameFile newFile) {
+            this.file = newFile;
+            newFile.getMWD().getEntryMap().put(newFile, getFileEntry());
+            newFile.getMWD().getEntryFileMap().put(getFileEntry(), newFile);
         }
     }
 }

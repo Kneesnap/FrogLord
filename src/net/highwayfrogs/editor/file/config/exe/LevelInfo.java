@@ -20,12 +20,12 @@ public class LevelInfo extends ExeStruct {
     private int theme;
     private int localLevelId; // 0 -> 4 (Level 1 -> 5)
     private int levelsInWorld; // Number of levels in the world. (Used to calculate size.)
-    private int worldImageSelectablePointer;
-    private int worldImageVisitedPointer;
-    private int worldImageNotTriedPointer;
-    private int levelTexturePointer;
-    private int levelNameTexturePointer;
-    private int levelNameTextureInGamePointer;
+    private long worldImageSelectablePointer;
+    private long worldImageVisitedPointer;
+    private long worldImageNotTriedPointer;
+    private long levelTexturePointer;
+    private long levelNameTexturePointer;
+    private long levelNameTextureInGamePointer;
 
     private static final int RUNTIME_DATA_SIZE = 44;
     private static final int TERMINATOR_LEVEL_ID = -1;
@@ -38,12 +38,12 @@ public class LevelInfo extends ExeStruct {
         this.theme = reader.readInt();
         this.localLevelId = reader.readInt();
         this.levelsInWorld = reader.readInt();
-        this.worldImageSelectablePointer = reader.readInt();
-        this.worldImageVisitedPointer = reader.readInt();
-        this.worldImageNotTriedPointer = reader.readInt();
-        this.levelTexturePointer = reader.readInt();
-        this.levelNameTexturePointer = reader.readInt();
-        this.levelNameTextureInGamePointer = reader.readInt();
+        this.worldImageSelectablePointer = reader.readUnsignedIntAsLong();
+        this.worldImageVisitedPointer = reader.readUnsignedIntAsLong();
+        this.worldImageNotTriedPointer = reader.readUnsignedIntAsLong();
+        this.levelTexturePointer = reader.readUnsignedIntAsLong();
+        this.levelNameTexturePointer = reader.readUnsignedIntAsLong();
+        this.levelNameTextureInGamePointer = reader.readUnsignedIntAsLong();
         reader.skipBytes(RUNTIME_DATA_SIZE);
     }
 
@@ -55,12 +55,12 @@ public class LevelInfo extends ExeStruct {
         writer.writeInt(this.theme);
         writer.writeInt(this.localLevelId);
         writer.writeInt(this.levelsInWorld);
-        writer.writeInt(this.worldImageSelectablePointer);
-        writer.writeInt(this.worldImageVisitedPointer);
-        writer.writeInt(this.worldImageNotTriedPointer);
-        writer.writeInt(this.levelTexturePointer);
-        writer.writeInt(this.levelNameTexturePointer);
-        writer.writeInt(this.levelNameTextureInGamePointer);
+        writer.writeUnsignedInt(this.worldImageSelectablePointer);
+        writer.writeUnsignedInt(this.worldImageVisitedPointer);
+        writer.writeUnsignedInt(this.worldImageNotTriedPointer);
+        writer.writeUnsignedInt(this.levelTexturePointer);
+        writer.writeUnsignedInt(this.levelNameTexturePointer);
+        writer.writeUnsignedInt(this.levelNameTextureInGamePointer);
         writer.writeNull(RUNTIME_DATA_SIZE);
     }
 

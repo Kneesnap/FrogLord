@@ -252,4 +252,25 @@ public class MWDFile extends GameObject {
                 return (SkyLand) file;
         throw new RuntimeException("Sky Land is not present.");
     }
+
+    /**
+     * Iterate over each file of a given type.
+     * @param fileClass The type to iterate over.
+     * @param handler   The behavior to apply.
+     */
+    public <T extends GameFile> void forEachFile(Class<T> fileClass, Consumer<T> handler) {
+        for (GameFile file : getFiles())
+            if (fileClass.isInstance(file))
+                handler.accept(fileClass.cast(file));
+    }
+
+    /**
+     * Get a list of all files of a given type.
+     * @param fileClass The type to get the list of.
+     */
+    public <T extends GameFile> List<T> getFiles(Class<T> fileClass) {
+        List<T> files = new ArrayList<>();
+        forEachFile(fileClass, files::add);
+        return files;
+    }
 }
