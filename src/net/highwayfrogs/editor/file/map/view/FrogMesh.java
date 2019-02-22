@@ -7,7 +7,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
 import net.highwayfrogs.editor.gui.mesh.MeshManager;
@@ -143,7 +143,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
      */
     public void updateVertices() {
         getPoints().clear();
-        for (SVector vertex : getVertices())
+        for (Vector vertex : getVertices())
             getPoints().addAll(vertex.getFloatX(), vertex.getFloatY(), vertex.getFloatZ());
     }
 
@@ -187,5 +187,5 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
      * Gets a list of vertices.
      * @return vertices
      */
-    public abstract List<SVector> getVertices();
+    public abstract List<? extends Vector> getVertices();
 }

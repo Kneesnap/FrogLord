@@ -8,12 +8,15 @@ import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.MOFPartcel;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
+import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject.TransformData;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +32,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     private MOFFile mofFile;
     private int animationId;
     private int frameCount;
-    private List<SVector> verticeCache = new ArrayList<>();
+    private List<Vector> verticeCache = new ArrayList<>();
 
     public MOFMesh(MOFFile mofFile, TextureMap map) {
         super(map, VertexFormat.POINT_TEXCOORD);
@@ -73,7 +76,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     }
 
     @Override
-    public List<SVector> getVertices() {
+    public List<Vector> getVertices() {
         this.verticeCache.clear();
         for (MOFPart part : getMofFile().getParts()) {
             MOFPartcel partcel = part.getCel(this.animationId, this.frameCount);
@@ -82,8 +85,14 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
 
             if (getMofFile().getAnimation() != null) {
                 TransformObject transform = getMofFile().getAnimation().getTransform(part, this.animationId, this.frameCount);
-                for (SVector vertex : partcel.getVertices())
-                    this.verticeCache.add(transform.calculatePartTransform().getTempSVector().add(vertex));
+
+                IVector tempVector = new IVector();
+                for (SVector vertex : partcel.getVertices()) {
+                    TransformData result = transform.calculatePartTransform();
+                    SVector vec = result.getTempSVector();
+                    //vec.svecEqualsVec(PSXMatrix.MRApplyMatrix(result.getTempMatrix(), vec, tempVector));
+                    this.verticeCache.add(vec.add(vertex));
+                }
             } else {
                 this.verticeCache.addAll(partcel.getVertices());
             }

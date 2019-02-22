@@ -301,6 +301,15 @@ public class Utils {
     }
 
     /**
+     * Convert an int value (fixed point, 12 fractional bits) into a float.
+     * @param intVal The integer to convert.
+     * @return floatValue
+     */
+    public static float fixedPointIntToFloat12Bit(int intVal) {
+        return fixedPointIntToFloatNBits(intVal, 12);
+    }
+
+    /**
      * Convert an int value (fixed point, 20 fractional bits) into a float.
      * @param intVal The integer to convert.
      * @return floatValue

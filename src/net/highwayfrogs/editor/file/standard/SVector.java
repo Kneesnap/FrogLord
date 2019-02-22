@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SVector extends GameObject {
+public class SVector extends GameObject implements Vector {
     private short x;
     private short y;
     private short z;
@@ -65,6 +65,16 @@ public class SVector extends GameObject {
     }
 
     /**
+     * Equivalent to MR_SVEC_EQUALS_VEC
+     * @param vec The array to read info from.
+     */
+    public void svecEqualsVec(IVector vec) {
+        this.x = (short) vec.getX();
+        this.y = (short) vec.getY();
+        this.z = (short) vec.getZ();
+    }
+
+    /**
      * Add another SVector to this one.
      * @param other The other SVector to add.
      */
@@ -94,16 +104,6 @@ public class SVector extends GameObject {
         this.x *= multiplier;
         this.y *= multiplier;
         this.z *= multiplier;
-        return this;
-    }
-
-    /**
-     * Set all values held to zero.
-     */
-    public SVector zero() {
-        this.x = (short) 0;
-        this.y = (short) 0;
-        this.z = (short) 0;
         return this;
     }
 
@@ -213,32 +213,13 @@ public class SVector extends GameObject {
         return true;
     }
 
-    /**
-     * Get this vector as a Wavefront-OBJ vertex command.
-     * @return vertexCommandString
-     */
-    public String toOBJString() {
-        return "v " + -getFloatX() + " " + -getFloatY() + " " + getFloatZ();
-    }
-
-    /**
-     * Get a decimal coordinate string for this float vector.
-     * @return coordinateString
-     */
-    public String toFloatString() {
-        return getFloatX() + ", " + getFloatY() + ", " + getFloatZ();
-    }
-
-    /**
-     * Gets the string of a regular short vector.
-     * @return shortString
-     */
+    @Override
     public String toRegularString() {
         return getX() + ", " + getY() + ", " + getZ();
     }
 
     @Override
     public String toString() {
-        return "SVector<" + toFloatString() + ">";
+        return toString0();
     }
 }

@@ -149,9 +149,11 @@ public class PSXMatrix extends GameObject {
      * @param vector The short vector to multiply the matrix by.
      * @param output The output to write to.
      */
-    public static void MRApplyMatrix(PSXMatrix matrix, SVector vector, IVector output) {
-        //TODO
-        throw new UnsupportedOperationException("ApplyMatrix is not implemented yet.");
+    public static IVector MRApplyMatrix(PSXMatrix matrix, SVector vector, IVector output) {
+        output.setX(((matrix.matrix[0][0] * vector.getX()) + (matrix.matrix[0][1] * vector.getY()) + (matrix.matrix[0][2] * vector.getZ())) >> 12);
+        output.setY(((matrix.matrix[1][0] * vector.getX()) + (matrix.matrix[1][1] * vector.getY()) + (matrix.matrix[1][2] * vector.getZ())) >> 12);
+        output.setZ(((matrix.matrix[2][0] * vector.getX()) + (matrix.matrix[2][1] * vector.getY()) + (matrix.matrix[2][2] * vector.getZ())) >> 12);
+        return output;
     }
 
     /**

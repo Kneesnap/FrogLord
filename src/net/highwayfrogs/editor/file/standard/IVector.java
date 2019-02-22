@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -17,7 +18,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class IVector extends GameObject {
+public class IVector extends GameObject implements Vector {
     private int x;
     private int y;
     private int z;
@@ -68,12 +69,37 @@ public class IVector extends GameObject {
     }
 
     /**
-     * Set all values held to zero.
+     * Gets the float X value.
+     * @return floatX
      */
-    public void zero() {
-        this.x = 0;
-        this.y = 0;
-        this.z = 0;
+    public float getFloatX() {
+        return Utils.fixedPointIntToFloatNBits(getX(), 4);
+    }
+
+    /**
+     * Gets the float Y value.
+     * @return floatY
+     */
+    public float getFloatY() {
+        return Utils.fixedPointIntToFloatNBits(getY(), 4);
+    }
+
+    /**
+     * Gets the float Z value.
+     * @return floatZ
+     */
+    public float getFloatZ() {
+        return Utils.fixedPointIntToFloatNBits(getZ(), 4);
+    }
+
+    @Override
+    public String toRegularString() {
+        return getX() + ", " + getY() + ", " + getZ();
+    }
+
+    @Override
+    public String toString() {
+        return toString0();
     }
 
     /**
