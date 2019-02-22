@@ -54,6 +54,7 @@ public class MOFFile extends GameFile {
     @Setter private transient VLOArchive vloFile;
     private MAPTheme theme;
 
+    @Setter private transient FileEntry overrideFileEntry;
     public static final int FLAG_OFFSETS_RESOLVED = Constants.BIT_FLAG_0; // Fairly sure this is applied by frogger.exe runtime, and not something that should be true in the MWD. (Verify though.)
     public static final int FLAG_SIZES_RESOLVED = Constants.BIT_FLAG_1; // Like before, this is likely frogger.exe run-time only. But, we should confirm that.
     public static final int FLAG_TEXTURES_RESOLVED = Constants.BIT_FLAG_2; // Again.
@@ -363,5 +364,10 @@ public class MOFFile extends GameFile {
         });
 
         return texMap;
+    }
+
+    @Override
+    public FileEntry getFileEntry() {
+        return this.overrideFileEntry != null ? this.overrideFileEntry : super.getFileEntry();
     }
 }
