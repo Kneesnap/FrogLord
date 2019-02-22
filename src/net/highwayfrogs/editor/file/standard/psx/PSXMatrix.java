@@ -102,15 +102,15 @@ public class PSXMatrix extends GameObject {
      */
     public static PSXMatrix makeMatrixFromMat34B(MR_MAT34B mat) {
         PSXMatrix matrix = new PSXMatrix();
-        matrix.matrix[0][0] = (short) (mat.getMatrix()[0][0] << 5);
-        matrix.matrix[0][1] = (short) (mat.getMatrix()[0][1] << 5);
-        matrix.matrix[0][2] = (short) (mat.getMatrix()[0][2] << 5);
-        matrix.matrix[1][0] = (short) (mat.getMatrix()[1][0] << 5);
-        matrix.matrix[1][1] = (short) (mat.getMatrix()[1][1] << 5);
-        matrix.matrix[1][2] = (short) (mat.getMatrix()[1][2] << 5);
-        matrix.matrix[2][0] = (short) (mat.getMatrix()[2][0] << 5);
-        matrix.matrix[2][1] = (short) (mat.getMatrix()[2][1] << 5);
-        matrix.matrix[2][2] = (short) (mat.getMatrix()[2][2] << 5);
+        matrix.matrix[0][0] = (short) (((short) mat.getMatrix()[0][0]) << 5);
+        matrix.matrix[0][1] = (short) (((short) mat.getMatrix()[0][1]) << 5);
+        matrix.matrix[0][2] = (short) (((short) mat.getMatrix()[0][2]) << 5);
+        matrix.matrix[1][0] = (short) (((short) mat.getMatrix()[1][0]) << 5);
+        matrix.matrix[1][1] = (short) (((short) mat.getMatrix()[1][1]) << 5);
+        matrix.matrix[1][2] = (short) (((short) mat.getMatrix()[1][2]) << 5);
+        matrix.matrix[2][0] = (short) (((short) mat.getMatrix()[2][0]) << 5);
+        matrix.matrix[2][1] = (short) (((short) mat.getMatrix()[2][1]) << 5);
+        matrix.matrix[2][2] = (short) (((short) mat.getMatrix()[2][2]) << 5);
 
         // Copy translation
         matrix.transform[0] = mat.getTransform()[0];
