@@ -18,7 +18,7 @@ import java.util.List;
  */
 @Getter
 public class MOFAnimationCels extends GameObject {
-    private int partCount; // In the future maybe this can be calculated.
+    private int partCount; // In the future maybe this can be calculated. This is the number of parts this animation keeps data for.
     private int flags;
     private List<Integer> celNumbers = new ArrayList<>(); // celNumbers[virtualId] -> actualCel
     private List<Short> indices = new ArrayList<>(); // Transform Ids. [(actualCel * partCount) + part] part is ?.
@@ -87,11 +87,11 @@ public class MOFAnimationCels extends GameObject {
 
     /**
      * Gets the transform ID for an animation stage.
-     * @param virtualId The stage id.
-     * @param part      The mof part to get the animation for.
+     * @param frame The frame of this animation.
+     * @param part  The mof part to get the transform for.
      * @return transformId
      */
-    public int getTransformID(int virtualId, MOFPart part) {
-        return (celNumbers.get(virtualId) * partCount) + part.getPartID();
+    public int getTransformID(int frame, MOFPart part) {
+        return (celNumbers.get(frame) * partCount) + part.getPartID();
     }
 }

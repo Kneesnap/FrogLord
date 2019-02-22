@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Getter
 public class MOFAnimationCelSet extends GameObject {
-    private List<MOFAnimationCels> cels = new ArrayList<>();
+    private List<MOFAnimationCels> cels = new ArrayList<>(); // Each entry is an animation.
     private transient int dataPointer;
 
     @Override

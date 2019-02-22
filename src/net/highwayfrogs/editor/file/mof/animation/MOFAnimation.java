@@ -114,12 +114,22 @@ public class MOFAnimation extends GameObject {
 
     /**
      * Get an animation transform.
-     * @param part      The MOFPart to apply to.
-     * @param cel       The cel who is changing.
-     * @param virtualId The id.
+     * @param part     The MOFPart to apply to.
+     * @param actionId The animation to get the transform for.
+     * @param frame    The frame id to get the transform for.
      * @return transform
      */
-    public TransformObject getTransform(MOFPart part, MOFAnimationCels cel, int virtualId) {
-        return getCommonData().getTransforms().get(cel.getTransformID(virtualId, part));
+    public TransformObject getTransform(MOFPart part, int actionId, int frame) {
+        return getCommonData().getTransforms().get(getAnimationById(actionId).getTransformID(frame, part));
+    }
+
+    /**
+     * Gets the MOFAnimation cel by its action id.
+     * @param actionId The given action.
+     * @return cel
+     */
+    public MOFAnimationCels getAnimationById(int actionId) {
+        MOFAnimationCelSet celSet = getModelSet().getCelSet();
+        return celSet.getCels().get(actionId % celSet.getCels().size());
     }
 }

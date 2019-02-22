@@ -7,9 +7,6 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Represents the MR_ANIM_MODEL_SET struct.
  * Created by Kneesnap on 8/25/2018.
@@ -18,9 +15,10 @@ import java.util.List;
 public class MOFAnimationModelSet extends GameObject {
     private int type;
     private MOFAnimationModel model;
-    private List<MOFAnimationCelSet> celSets = new ArrayList<>();
+    private MOFAnimationCelSet celSet;
     // BBOX Set is always empty, so we don't keep it.
 
+    public static final int CEL_SET_COUNT = 1;
     public static final int FLAG_HIERARCHICAL = Constants.BIT_FLAG_0;
     private static final int FORCED_MODEL_COUNT = 1;
 
@@ -39,14 +37,12 @@ public class MOFAnimationModelSet extends GameObject {
 
         Utils.verify(bboxCount == 0, "The ModelSet has a non-zero BBOX count. (%d, %d)", bboxCount, bboxPointer);
         Utils.verify(modelCount == FORCED_MODEL_COUNT, "FrogLord does not currently support MOFs with more than one model! (%d)", modelCount);
+        Utils.verify(celsetCount == CEL_SET_COUNT, "FrogLord does not support MOFs with more than one cel-set! (%d)", celsetCount);
 
         // Read Celset.
         reader.jumpTemp(celsetPointer);
-        for (int i = 0; i < celsetCount; i++) {
-            MOFAnimationCelSet celSet = new MOFAnimationCelSet();
-            celSet.load(reader);
-            celSets.add(celSet);
-        }
+        this.celSet = new MOFAnimationCelSet();
+        this.celSet.load(reader);
         reader.jumpReturn();
 
         // Read Models. (After Celset so it can reference cel sets loaded previously.)
@@ -61,7 +57,7 @@ public class MOFAnimationModelSet extends GameObject {
         writer.writeInt(this.type);
 
         writer.writeUnsignedByte((short) FORCED_MODEL_COUNT);
-        writer.writeUnsignedByte((short) celSets.size());
+        writer.writeUnsignedByte((short) CEL_SET_COUNT);
         writer.writeNull(2); // BBOX Count + 1 byte of padding.
 
         int modelSetPointer = writer.writeNullPointer();
@@ -74,7 +70,7 @@ public class MOFAnimationModelSet extends GameObject {
 
         // Write Celset.
         writer.writeAddressTo(celSetPointer);
-        getCelSets().forEach(celSet -> celSet.save(writer));
+        this.celSet.save(writer);
 
         // Writes Cel Set Pointers. MUST BE CALLED AFTER
         this.model.writeCelPointer(writer);

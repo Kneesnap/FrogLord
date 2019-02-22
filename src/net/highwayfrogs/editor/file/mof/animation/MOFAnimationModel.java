@@ -8,8 +8,6 @@ import net.highwayfrogs.editor.file.mof.MOFBBox;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
-import java.util.List;
-
 /**
  * Represents a MOF animation model. Struct "MR_ANIM_MODEL"
  * Created by Kneesnap on 8/25/2018.
@@ -91,11 +89,11 @@ public class MOFAnimationModel extends GameObject {
     }
 
     /**
-     * Get the celsets used.
+     * Get the celset this model owns.
      * @return celSets
      */
-    public List<MOFAnimationCelSet> getCelSets() {
-        return getParent().getCelSets();
+    public MOFAnimationCelSet getCelSet() {
+        return getParent().getCelSet();
     }
 
     /**
@@ -103,6 +101,6 @@ public class MOFAnimationModel extends GameObject {
      * @return celsetPointer
      */
     public int getCelSetPointer() {
-        return getCelSets().get(0).getDataPointer();
+        return getCelSet().getDataPointer();
     }
 }
