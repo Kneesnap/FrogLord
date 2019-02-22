@@ -260,6 +260,8 @@ public class MAPController extends EditorController<MAPFile> {
         float baseY = -Utils.fixedPointIntToFloatNBits(getFile().getGridStack(getFile().getStartXTile(), getFile().getStartZTile()).getHeight(), 4);
         float gridZ = Utils.fixedPointIntToFloatNBits(getFile().getWorldZ(getFile().getStartZTile(), true), 4);
         cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
+        // Set the camera to look at the start position, too.
+        cameraFPS.setCameraLookAt(gridX, baseY, gridZ);
     }
 
     /**
