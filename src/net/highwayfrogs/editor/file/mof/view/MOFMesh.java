@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.file.map.view.FrogMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFPart;
+import net.highwayfrogs.editor.file.mof.MOFPartcel;
+import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
@@ -70,8 +72,17 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     @Override
     public List<SVector> getVertices() {
         this.verticeCache.clear();
-        for (MOFPart part : getMofFile().getParts())
-            this.verticeCache.addAll(part.getCel(this.animationId, this.frameCount).getVertices());
+        for (MOFPart part : getMofFile().getParts()) {
+            MOFPartcel partcel = part.getCel(this.animationId, this.frameCount);
+
+            if (getMofFile().getAnimation() != null) {
+                TransformObject transform = getMofFile().getAnimation().getTransform(part, this.animationId, this.frameCount);
+                for (SVector vertex : partcel.getVertices())
+                    this.verticeCache.add(transform.calculatePartTransform().getTempSVector().add(vertex));
+            } else {
+                this.verticeCache.addAll(partcel.getVertices());
+            }
+        }
         return this.verticeCache;
     }
 
@@ -97,8 +108,11 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
             return;
 
         for (MOFPart part : getMofFile().getParts()) // Don't go too high.
-            if (part.getFlipbook() == null || part.getFlipbook().getActions().size() <= actionId)
+            if (part.getFlipbook() != null && part.getFlipbook().getActions().size() <= actionId)
                 return;
+
+        if (getMofFile().getAnimation() != null && getMofFile().getAnimation().getModelSet().getCelSet().getCels().size() <= actionId)
+            return;
 
         System.out.println("New Action: " + actionId);
         this.animationId = actionId;

@@ -25,7 +25,7 @@ public abstract class TransformObject extends GameObject {
      */
     public abstract PSXMatrix createMatrix();
 
-    private TransformData calculatePartTransform() {
+    public TransformData calculatePartTransform() {
         PSXMatrix importedPartTransform = null; //TODO: Not null. This may not matter, if 0 0 0 is origin.
         PSXMatrix importedModelTransform = null; //TODO: Not null. This may not matter, if 0 0 0 is origin.
 
@@ -78,7 +78,7 @@ public abstract class TransformObject extends GameObject {
 
     @Getter
     @AllArgsConstructor
-    private static final class TransformData {
+    public static final class TransformData {
         private PSXMatrix tempMatrix;
         private SVector tempSVector;
     }

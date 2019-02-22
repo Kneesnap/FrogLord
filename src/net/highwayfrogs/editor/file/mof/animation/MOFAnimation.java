@@ -62,6 +62,7 @@ public class MOFAnimation extends GameObject {
 
         DataReader mofReader = reader.newReader(mofPointer, staticFilePointer - mofPointer);
         this.staticMOF = new MOFFile(getMofParent().getTheme());
+        this.staticMOF.setAnimation(this);
         this.staticMOF.setVloFile(getMofParent().getVloFile());
         this.staticMOF.load(mofReader);
     }
@@ -129,7 +130,6 @@ public class MOFAnimation extends GameObject {
      * @return cel
      */
     public MOFAnimationCels getAnimationById(int actionId) {
-        MOFAnimationCelSet celSet = getModelSet().getCelSet();
-        return celSet.getCels().get(actionId % celSet.getCels().size());
+        return getModelSet().getCelSet().getCels().get(actionId);
     }
 }

@@ -41,9 +41,6 @@ public class MOFAnimationCels extends GameObject {
 
         int totalIndiceCount = virtualCelCount * partCount;
         reader.jumpTemp(celNumberPointer);
-        if (celCount % 2 > 0)
-            celCount++;
-
         for (int i = 0; i < celCount; i++)
             celNumbers.add(reader.readUnsignedShortAsInt());
         reader.jumpReturn();
@@ -81,6 +78,9 @@ public class MOFAnimationCels extends GameObject {
         for (short aShort : this.indices)
             writer.writeShort(aShort);
 
+        if (this.indices.size() % 2 > 0)
+            writer.writeShort((short) 0); // Writes padding.
+
         this.tempIndicePointer = 0;
         this.tempCelNumberPointer = 0;
     }
@@ -92,6 +92,7 @@ public class MOFAnimationCels extends GameObject {
      * @return transformId
      */
     public int getTransformID(int frame, MOFPart part) {
-        return (celNumbers.get(frame) * partCount) + part.getPartID();
+        int actualCel = celNumbers.get(frame % celNumbers.size());
+        return indices.get((actualCel * partCount) + part.getPartID());
     }
 }

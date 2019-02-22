@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 @Getter
 public class MOFFile extends GameFile {
     private boolean dummy; // Is this dummied data?
-    private MOFAnimation animation; // Animation data. For some reason they thought it'd be a good idea to make MOF have two different data structures.
+    @Setter private MOFAnimation animation; // Animation data. For some reason they thought it'd be a good idea to make MOF have two different data structures.
     private byte[] signature;
     private byte[] bytes;
     private int flags;
