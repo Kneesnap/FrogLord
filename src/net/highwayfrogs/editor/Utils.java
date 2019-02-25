@@ -1073,7 +1073,7 @@ public class Utils {
      */
     public static boolean testSignature(byte[] data, int startIndex, byte[] test) {
         for (int i = 0; i < test.length; i++)
-            if (data[i] != test[i])
+            if (data[startIndex + i] != test[i])
                 return false;
         return true;
     }

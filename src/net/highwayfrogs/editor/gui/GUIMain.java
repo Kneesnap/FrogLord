@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.gui.editor.SaveController;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -70,37 +71,49 @@ public class GUIMain extends Application {
     }
 
     private void resolveEXE(File exeFile, Runnable onConfigLoad) throws IOException {
-        long crcHash = Utils.getCRC32(exeFile);
-
         Config execRegistry = new Config(Utils.getResourceStream("executables.cfg"));
-        Map<String, String> configDisplayName = new HashMap<>();
+        byte[] fileBytes = Files.readAllBytes(exeFile.toPath());
 
+        long crcHash = Utils.getCRC32(exeFile);
+        Map<String, String> configDisplayName = new HashMap<>();
         for (String configName : execRegistry.keySet()) {
             String[] hashes = execRegistry.getString(configName).split(",");
-            String resourcePath = "exes/" + configName + ".cfg";
 
+            // Executables modified by FrogLord will have a small marker at the end saying which config to use. This works on both playstation and windows executable formats.
+            byte[] configNameBytes = configName.getBytes();
+            if (Utils.testSignature(fileBytes, fileBytes.length - configNameBytes.length, configNameBytes)) {
+                makeExeConfig(exeFile, configName, true);
+                onConfigLoad.run();
+                return;
+            }
+
+            // Use hashes to detect unmodified executables.
             for (String testHash : hashes) {
                 if (Long.parseLong(testHash) == crcHash) {
-                    makeExeConfig(exeFile, resourcePath);
+                    makeExeConfig(exeFile, configName, false);
                     onConfigLoad.run();
                     return;
                 }
             }
 
-            Config loadedConfig = new Config(Utils.getResourceStream(resourcePath));
-            configDisplayName.put(resourcePath, loadedConfig.getString(FroggerEXEInfo.FIELD_NAME));
+            Config loadedConfig = new Config(Utils.getResourceStream(getExeConfigPath(configName)));
+            configDisplayName.put(configName, loadedConfig.getString(FroggerEXEInfo.FIELD_NAME));
         }
 
         System.out.println("Executable CRC32: " + crcHash); // There was no configuration found, so display the CRC32, in-case we want to make a configuration.
         SelectionMenu.promptSelection("Select a configuration.", resourcePath -> {
-            makeExeConfig(exeFile, resourcePath.getKey());
+            makeExeConfig(exeFile, resourcePath.getKey(), false);
             onConfigLoad.run();
         }, configDisplayName.entrySet(), Entry::getValue, entry -> null);
     }
 
     @SneakyThrows
-    private void makeExeConfig(File inputExe, String resourcePath) {
-        EXE_CONFIG = new FroggerEXEInfo(inputExe, Utils.getResourceStream(resourcePath));
+    private void makeExeConfig(File inputExe, String configName, boolean hasConfigIdentifier) {
+        EXE_CONFIG = new FroggerEXEInfo(inputExe, Utils.getResourceStream(getExeConfigPath(configName)), configName, hasConfigIdentifier);
+    }
+
+    private static String getExeConfigPath(String configName) {
+        return "exes/" + configName + ".cfg";
     }
 
     @SneakyThrows

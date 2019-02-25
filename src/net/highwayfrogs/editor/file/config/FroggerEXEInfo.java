@@ -50,6 +50,8 @@ public class FroggerEXEInfo extends Config {
     private List<Long> bmpTexturePointers = new ArrayList<>();
     private short[] cosEntries = new short[ACOSTABLE_ENTRIES];
     private short[] sinEntries = new short[ACOSTABLE_ENTRIES];
+    private String internalName;
+    private boolean hasConfigIdentifier;
 
     private String name;
     private long ramPointerOffset;
@@ -84,9 +86,11 @@ public class FroggerEXEInfo extends Config {
     private static final String DEFAULT_SOUND_KEY = "main";
     private static final String DEFAULT_ANIMATION_KEY = "main-pc";
 
-    public FroggerEXEInfo(File inputExe, InputStream inputStream) throws IOException {
+    public FroggerEXEInfo(File inputExe, InputStream inputStream, String internalName, boolean hasConfigIdentifier) throws IOException {
         super(inputStream);
         this.inputFile = inputExe;
+        this.internalName = internalName;
+        this.hasConfigIdentifier = hasConfigIdentifier;
     }
 
     /**
@@ -401,10 +405,28 @@ public class FroggerEXEInfo extends Config {
     public void saveExecutable(File outputFile) {
         try {
             Utils.deleteFile(outputFile);
+            applyConfigIdentifier();
             Files.write(outputFile.toPath(), this.exeBytes);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    /**
+     * Write the config identifier to the end of the executable, so it will automatically know which config to use when this is loaded.
+     */
+    private void applyConfigIdentifier() {
+        if (this.hasConfigIdentifier)
+            return; // Don't apply twice.
+
+        this.hasConfigIdentifier = true;
+        this.reader = null; // Destroy cached reader.
+
+        byte[] appendBytes = getInternalName().getBytes();
+        byte[] newExeBytes = new byte[exeBytes.length + appendBytes.length];
+        System.arraycopy(this.exeBytes, 0, newExeBytes, 0, this.exeBytes.length);
+        System.arraycopy(appendBytes, 0, newExeBytes, this.exeBytes.length, appendBytes.length);
+        this.exeBytes = newExeBytes;
     }
 
     /**

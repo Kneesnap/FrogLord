@@ -4,18 +4,15 @@ Editor Features:
 
  - MOF File
  Some way of exporting animations.
+ Some way of importing 3D Models.
 
  - GUI Editor:
   Demo Editor
   PAL Editor
   Map Editor
-  MOF Editor
-
- - See if we can export an EXE with an extra bit of data which identifies which exe config to use.
 
 TCRF Documentation Plans:
  - Snail Racing
  - Beta elements visible in media. (Level screenshots, German Trailer, Credits video, Video linked on the forums of some guy playing Frogger.)
- - Kao's Prototype. (Debug features, map differences)
+ - Debug features and map differences in the prototype.
  - Document debugging code.
- - Analyze US PSX demo MWD vs retail PSX MWD. [Maps, MOFs]
