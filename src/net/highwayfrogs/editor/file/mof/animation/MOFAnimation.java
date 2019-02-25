@@ -2,8 +2,9 @@ package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Utils;
-import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.mof.MOFBase;
 import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformType;
@@ -17,22 +18,20 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public class MOFAnimation extends GameObject {
+public class MOFAnimation extends MOFBase {
     private MOFAnimationModelSet modelSet;
     private MOFFile staticMOF;
     private MOFAnimCommonData commonData;
 
-    private transient MOFFile mofParent;
-
     public static final byte FILE_START_FRAME_AT_ZERO = (byte) 0x31; // '1'
     private static final int STATIC_MOF_COUNT = 1;
 
-    public MOFAnimation(MOFFile file) {
-        this.mofParent = file;
+    public MOFAnimation(MOFHolder holder) {
+        super(holder);
     }
 
     @Override
-    public void load(DataReader reader) {
+    public void onLoad(DataReader reader) {
         Utils.verify(shouldStartAtFrameZero(), "Animations which do not start at frame-zero are not currently supported.");
 
         int modelSetCount = reader.readUnsignedShortAsInt();
@@ -61,15 +60,12 @@ public class MOFAnimation extends GameObject {
         reader.jumpReturn();
 
         DataReader mofReader = reader.newReader(mofPointer, staticFilePointer - mofPointer);
-        this.staticMOF = new MOFFile(getMofParent().getTheme());
-        this.staticMOF.setOverrideFileEntry(getMofParent().getFileEntry());
-        this.staticMOF.setAnimation(this);
-        this.staticMOF.setVloFile(getMofParent().getVloFile());
+        this.staticMOF = new MOFFile(getHolder());
         this.staticMOF.load(mofReader);
     }
 
     @Override
-    public void save(DataWriter writer) {
+    public void onSave(DataWriter writer) {
         writer.writeUnsignedShort(1); // Model Set Count.
         writer.writeUnsignedShort(STATIC_MOF_COUNT);
 
@@ -103,7 +99,7 @@ public class MOFAnimation extends GameObject {
      * @return startAtFrameZero
      */
     public boolean shouldStartAtFrameZero() {
-        return mofParent.getSignature()[0] == FILE_START_FRAME_AT_ZERO;
+        return getSignature()[0] == FILE_START_FRAME_AT_ZERO;
     }
 
     /**
@@ -111,7 +107,7 @@ public class MOFAnimation extends GameObject {
      * @return transformType.
      */
     public TransformType getTransformType() {
-        return TransformType.getType(mofParent.getSignature()[1]);
+        return TransformType.getType(getSignature()[1]);
     }
 
     /**

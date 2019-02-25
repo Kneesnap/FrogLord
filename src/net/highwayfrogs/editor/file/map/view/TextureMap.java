@@ -37,7 +37,7 @@ public class TextureMap {
      * @return newTextureMap
      */
     public static TextureMap newTextureMap(MOFFile mofFile) {
-        return makeMap(mofFile.getVloFile(), null, mofFile.makeVertexColorTextures());
+        return makeMap(mofFile.getHolder().getVloFile(), null, mofFile.makeVertexColorTextures());
     }
 
     /**

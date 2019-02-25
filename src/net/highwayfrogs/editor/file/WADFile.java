@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -65,8 +66,8 @@ public class WADFile extends GameFile {
                 if (fileType == VLOArchive.WAD_TYPE || fileType == 1) { // Disabled until these files are supported.
                     //file = new VLOArchive();
                     file = new DummyFile(data.length);
-                } else if (fileType == MOFFile.MOF_ID || fileType == MOFFile.MAP_MOF_ID) {
-                    file = new MOFFile(theme);
+                } else if (fileType == MOFHolder.MOF_ID || fileType == MOFHolder.MAP_MOF_ID) {
+                    file = new MOFHolder(theme);
                 } else {
                     throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
                 }
@@ -130,8 +131,8 @@ public class WADFile extends GameFile {
             setVLO(vlo);
             for (WADEntry wadEntry : getFiles()) {
                 GameFile file = wadEntry.getFile();
-                if (file instanceof MOFFile)
-                    ((MOFFile) file).exportObject(wadEntry.getFileEntry(), folder, vlo, Utils.stripExtension(wadEntry.getFileEntry().getDisplayName()));
+                if (file instanceof MOFHolder)
+                    ((MOFHolder) file).exportObject(folder, vlo, Utils.stripExtension(wadEntry.getFileEntry().getDisplayName()));
             }
         }, true);
     }
@@ -143,8 +144,8 @@ public class WADFile extends GameFile {
     public void setVLO(VLOArchive vloArchive) {
         for (WADEntry wadEntry : getFiles()) {
             GameFile file = wadEntry.getFile();
-            if (file instanceof MOFFile)
-                ((MOFFile) file).setVloFile(vloArchive);
+            if (file instanceof MOFHolder)
+                ((MOFHolder) file).setVloFile(vloArchive);
         }
     }
 
@@ -175,7 +176,7 @@ public class WADFile extends GameFile {
          * @return isDummyMOF
          */
         public boolean isDummy() {
-            return getFile() == null || ((getFile() instanceof MOFFile) && ((MOFFile) getFile()).isDummy());
+            return getFile() == null || ((getFile() instanceof MOFHolder) && ((MOFHolder) getFile()).isDummy());
         }
 
         /**

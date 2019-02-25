@@ -4,7 +4,7 @@ import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.FrogMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.MOFPartcel;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
@@ -27,16 +27,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public class MOFMesh extends FrogMesh<MOFPolygon> {
-    private MOFFile mofFile;
+    private MOFHolder mofHolder;
     private int animationId;
     private int frameCount;
     private List<Vector> verticeCache = new ArrayList<>();
 
-    public MOFMesh(MOFFile mofFile, TextureMap map) {
+    public MOFMesh(MOFHolder holder, TextureMap map) {
         super(map, VertexFormat.POINT_TEXCOORD);
-        this.mofFile = mofFile;
-
-        System.out.println("Animation Count: " + mofFile.getMaxAnimation() + ", Texture Animation: " + mofFile.getParts().stream().anyMatch(part -> !part.getPartPolyAnims().isEmpty()));
+        this.mofHolder = holder;
         updateData();
     }
 
@@ -44,7 +42,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     public void onUpdatePolygonData() {
         AtomicInteger texId = new AtomicInteger();
 
-        for (MOFPart part : getMofFile().getParts()) {
+        for (MOFPart part : getMofHolder().asStaticFile().getParts()) {
             if (shouldSkip(part))
                 continue;
 
@@ -75,13 +73,13 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     @Override
     public List<Vector> getVertices() {
         this.verticeCache.clear();
-        for (MOFPart part : getMofFile().getParts()) {
+        for (MOFPart part : getMofHolder().asStaticFile().getParts()) {
             MOFPartcel partcel = part.getCel(this.animationId, this.frameCount);
             if (shouldSkip(part))
                 continue;
 
-            if (getMofFile().isXAR()) {
-                TransformObject transform = getMofFile().getAnimation().getTransform(part, this.animationId, this.frameCount);
+            if (getMofHolder().isAnimatedMOF()) {
+                TransformObject transform = getMofHolder().getAnimatedFile().getTransform(part, this.animationId, this.frameCount);
                 for (SVector vertex : partcel.getVertices())
                     this.verticeCache.add(PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(), vertex, new IVector()));
             } else {
@@ -112,11 +110,11 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
         if (actionId < 0)
             return;
 
-        for (MOFPart part : getMofFile().getParts()) // Don't go too high.
+        for (MOFPart part : getMofHolder().asStaticFile().getParts()) // Don't go too high.
             if (part.getFlipbook() != null && part.getFlipbook().getActions().size() <= actionId)
                 return;
 
-        if (actionId >= getMofFile().getMaxAnimation())
+        if (actionId >= getMofHolder().getMaxAnimation())
             return;
 
         System.out.println("New Action: " + actionId);
@@ -125,7 +123,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     }
 
     private boolean shouldSkip(MOFPart part) { // Skip the croak for now. In the future we should make something non-hardcoded.
-        return getMofFile().getFileEntry().getDisplayName().contains("GEN_FROG") && part.getPartID() == 15;
+        return getMofHolder().getFileEntry().getDisplayName().contains("GEN_FROG") && part.getPartID() == 15;
     }
 
     /**
@@ -133,6 +131,6 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
      * @return animationName
      */
     public String getAnimationName() {
-        return getMofFile() != null ? getMofFile().getName(this.animationId) : "No Selected MOF";
+        return getMofHolder() != null ? getMofHolder().getName(this.animationId) : "No Selected MOF";
     }
 }

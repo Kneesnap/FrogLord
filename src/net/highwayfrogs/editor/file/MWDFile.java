@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.SkyLand;
-import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.AbstractVBFile;
@@ -94,8 +94,8 @@ public class MWDFile extends GameObject {
     public <T extends GameFile> T replaceFile(byte[] fileBytes, FileEntry entry, GameFile oldFile) {
         T newFile;
 
-        if (oldFile instanceof MOFFile) {
-            newFile = (T) new MOFFile(((MOFFile) oldFile).getTheme());
+        if (oldFile instanceof MOFHolder) {
+            newFile = (T) new MOFHolder(((MOFHolder) oldFile).getTheme());
         } else {
             AbstractVBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
             newFile = this.loadFile(fileBytes, entry, lastVB);

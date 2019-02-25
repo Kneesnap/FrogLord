@@ -22,7 +22,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.gui.GUIMain;
 
@@ -34,7 +34,7 @@ import java.util.ResourceBundle;
  * Created by Kneesnap on 2/13/2019.
  */
 @Getter
-public class MOFController extends EditorController<MOFFile> {
+public class MOFController extends EditorController<MOFHolder> {
     private double oldMouseX;
     private double oldMouseY;
     private double mouseX;
@@ -51,7 +51,7 @@ public class MOFController extends EditorController<MOFFile> {
 
     @Override
     public void onInit(AnchorPane editorRoot) {
-        setupMofViewer(GUIMain.MAIN_STAGE, TextureMap.newTextureMap(getFile()));
+        setupMofViewer(GUIMain.MAIN_STAGE, TextureMap.newTextureMap(getFile().asStaticFile()));
     }
 
     @SneakyThrows

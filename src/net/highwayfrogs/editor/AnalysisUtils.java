@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
@@ -38,11 +39,11 @@ public class AnalysisUtils {
         FroggerEXEInfo config = mwd.getConfig();
 
         List<MAPFile> mapFiles = mwd.getFiles(MAPFile.class);
-        List<MOFFile> mofFiles = new ArrayList<>();
+        List<MOFHolder> mofFiles = new ArrayList<>();
 
         mwd.forEachFile(WADFile.class, wad -> wad.getFiles().forEach(entry -> {
-            if (entry.getFile() instanceof MOFFile)
-                mofFiles.add((MOFFile) entry.getFile());
+            if (entry.getFile() instanceof MOFHolder)
+                mofFiles.add((MOFHolder) entry.getFile());
         }));
 
         Set<Short> textureIds = new HashSet<>();
@@ -55,8 +56,8 @@ public class AnalysisUtils {
         }
 
         // Populate MOF Ids.
-        mofFiles.forEach(mof -> {
-            mof = mof.getStaticMOF();
+        mofFiles.forEach(holder -> {
+            MOFFile mof = holder.asStaticFile();
 
             // Populate MOF animation.
             for (MOFPart part : mof.getParts())

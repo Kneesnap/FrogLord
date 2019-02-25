@@ -1,21 +1,11 @@
 package net.highwayfrogs.editor.file.mof;
 
-import javafx.scene.Node;
-import javafx.scene.image.Image;
 import lombok.Cleanup;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
-import net.highwayfrogs.editor.file.GameFile;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.config.NameBank;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
-import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
-import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -26,8 +16,6 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.MainController;
-import net.highwayfrogs.editor.gui.editor.MOFController;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -43,101 +31,29 @@ import java.util.function.Consumer;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public class MOFFile extends GameFile {
-    private boolean dummy; // Is this dummied data?
-    @Setter private MOFAnimation animation; // Animation data. For some reason they thought it'd be a good idea to make MOF have two different data structures.
-    private byte[] signature;
+public class MOFFile extends MOFBase {
     private byte[] bytes;
-    private int flags;
-    private int extra;
     private List<MOFPart> parts = new ArrayList<>();
     private int unknownValue;
-    private boolean staticMOF;
-    @Setter private boolean incompleteMOF; // Some mofs are changed at run-time to share information. This attempts to handle that.
-    @Setter private transient VLOArchive vloFile;
-    private MAPTheme theme;
 
-    @Setter private transient FileEntry overrideFileEntry;
-    public static final int FLAG_OFFSETS_RESOLVED = Constants.BIT_FLAG_0; // Fairly sure this is applied by frogger.exe runtime, and not something that should be true in the MWD. (Verify though.)
-    public static final int FLAG_SIZES_RESOLVED = Constants.BIT_FLAG_1; // Like before, this is likely frogger.exe run-time only. But, we should confirm that.
-    public static final int FLAG_TEXTURES_RESOLVED = Constants.BIT_FLAG_2; // Again.
-    public static final int FLAG_ANIMATION_FILE = Constants.BIT_FLAG_3; // This is an animation MOF file.
-    public static final int FLAG_ANIMATED_POLY_FILE = Constants.BIT_FLAG_4; // MOF contains some animated textured polys. What's the difference between this and the normal animation MOF?
-    public static final int FLAG_FLIPBOOK_FILE = Constants.BIT_FLAG_5; // Static flipbook file. (What does this mean?)
-
-    public static final int FLAG_ANIM_TRANSFORMS_INDEXED = Constants.BIT_FLAG_16; // Appears like the only thing this is used for is making sure it's present. Otherwise, the game will crash.
-    public static final int FLAG_ANIM_INDEXED_TRANSFORMS_IN_PARTS = Constants.BIT_FLAG_17; // I believe this should always be false.
-
-    public static final int MOF_ID = 3;
-    public static final int MAP_MOF_ID = 4;
-
-    private static final Image ICON = loadIcon("swampy");
-    private static final byte[] DUMMY_DATA = "DUMY".getBytes();
     private static final int COMPLETE_TEST = 0x40;
-
     public static final ImageFilterSettings MOF_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
             .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
 
-    public MOFFile(MAPTheme theme) {
-        this.theme = theme;
+    public MOFFile(MOFHolder holder) {
+        super(holder);
     }
 
     @Override
-    public void load(DataReader reader) {
-        this.signature = reader.readBytes(4);
-        if (Arrays.equals(DUMMY_DATA, getSignature())) {
-            this.dummy = true;
-            return;
-        }
-
-        reader.skipInt(); // File length, including header.
-        this.flags = reader.readInt();
-
-        if (testFlag(FLAG_ANIMATION_FILE)) {
-            resolveAnimatedMOF(reader);
-        } else {
-            resolveStaticMOF(reader);
-        }
-    }
-
-    @Override
-    public void save(DataWriter writer) {
-        if (dummy) {
-            writer.writeBytes(DUMMY_DATA);
-            return;
-        }
-
-        if (this.bytes != null && isIncompleteMOF()) {
-            writer.writeBytes(bytes);
-            return;
-        }
-
-        writer.writeBytes(getSignature());
-        int fileSizePointer = writer.writeNullPointer(); // Optional, but might as well.
-        writer.writeInt(this.flags);
-
-        if (isAnimatedMOF()) { // If this is an animation, save the animation.
-            animation.save(writer);
-            return;
-        }
-
-        writer.writeInt(this.extra);
-        getParts().forEach(part -> part.save(writer));
-        writer.writeInt(this.unknownValue);
-        getParts().forEach(part -> part.saveExtra(writer));
-        writer.writeAddressTo(fileSizePointer);
-    }
-
-    private void resolveStaticMOF(DataReader reader) {
-        this.staticMOF = true;
-        this.extra = reader.readInt();
-        int partCount = this.extra;
+    public void onLoad(DataReader reader) {
+        int partCount = reader.readInt();
 
         reader.jumpTemp(COMPLETE_TEST);
-        this.incompleteMOF = (reader.readInt() == 0);
+        boolean isIncomplete = (reader.readInt() == 0);
         reader.jumpReturn();
 
-        if (isIncompleteMOF()) { // Just copy the MOF directly.
+        if (isIncomplete) { // Just copy the MOF directly.
+            getHolder().setIncomplete(true);
             reader.setIndex(0);
             this.bytes = reader.readBytes(reader.getRemaining());
             return;
@@ -152,9 +68,12 @@ public class MOFFile extends GameFile {
         this.unknownValue = reader.readInt();
     }
 
-    private void resolveAnimatedMOF(DataReader reader) {
-        this.animation = new MOFAnimation(this);
-        this.animation.load(reader);
+    @Override
+    public void onSave(DataWriter writer) {
+        writer.writeInt(getParts().size());
+        getParts().forEach(part -> part.save(writer));
+        writer.writeInt(this.unknownValue);
+        getParts().forEach(part -> part.saveExtra(writer));
     }
 
     /**
@@ -162,31 +81,15 @@ public class MOFFile extends GameFile {
      * Not the cleanest thing in the world, but it doesn't need to be.
      */
     @SneakyThrows
-    public void exportObject(FileEntry entry, File folder, VLOArchive vloTable, String cleanName) {
-        if (isDummy()) {
-            System.out.println("Cannot export dummy MOF.");
-            return;
-        }
-
-        if (isIncompleteMOF()) {
-            System.out.println("Cannot export incomplete MOF.");
-            return;
-        }
-
-        if (testFlag(FLAG_ANIMATION_FILE)) {
-            this.animation.getStaticMOF().exportObject(entry, folder, vloTable, cleanName);
-            return;
-        }
-
+    public void exportObject(File folder, VLOArchive vloTable, String cleanName) {
         boolean exportTextures = vloTable != null;
-
 
         String mtlName = cleanName + ".mtl";
         @Cleanup PrintWriter objWriter = new PrintWriter(new File(folder, cleanName + ".obj"));
 
         objWriter.write("# FrogLord MOF Export" + Constants.NEWLINE);
         objWriter.write("# Exported: " + Calendar.getInstance().getTime().toString() + Constants.NEWLINE);
-        objWriter.write("# MOF Name: " + entry.getDisplayName() + Constants.NEWLINE);
+        objWriter.write("# MOF Name: " + getFileEntry().getDisplayName() + Constants.NEWLINE);
         objWriter.write(Constants.NEWLINE);
 
         if (exportTextures) {
@@ -302,71 +205,6 @@ public class MOFFile extends GameFile {
     }
 
     /**
-     * Test if a flag is present.
-     * @param flag The flag to test.
-     * @return flagPresent
-     */
-    public boolean testFlag(int flag) {
-        return (this.flags & flag) == flag;
-    }
-
-    @Override
-    public Image getIcon() {
-        return ICON;
-    }
-
-    @Override
-    public Node makeEditor() {
-        return null;
-    }
-
-    @Override
-    public void handleWadEdit(WADFile parent) {
-        MOFFile toOpen = getStaticMOF();
-
-        if (toOpen.getVloFile() != null) {
-            MainController.MAIN_WINDOW.openEditor(new MOFController(), toOpen);
-            return;
-        }
-
-        getMWD().promptVLOSelection(getTheme(), vlo -> {
-            toOpen.setVloFile(vlo);
-            MainController.MAIN_WINDOW.openEditor(new MOFController(), toOpen);
-        }, false);
-    }
-
-    /**
-     * Gets the static MOF file. This MOF may just be a wrapper around MOFAnimation.
-     * @return staticMOF
-     */
-    public MOFFile getStaticMOF() {
-        return isXAR() ? getAnimation().getStaticMOF() : this;
-    }
-
-    /**
-     * Checks if this MOFFile is static.
-     */
-    public boolean isStaticMOF() {
-        return this.staticMOF;
-    }
-
-    /**
-     * Test if this is an animted MOF.
-     * @return animatedMof
-     */
-    public boolean isAnimatedMOF() {
-        return !isStaticMOF() && isXAR();
-    }
-
-    /**
-     * Test if this has a linked animation.
-     * @return isXAR
-     */
-    public boolean isXAR() {
-        return getAnimation() != null;
-    }
-
-    /**
      * Run some behavior on each mof polygon.
      * @param handler The behavior to run.
      */
@@ -391,38 +229,5 @@ public class MOFFile extends GameFile {
         });
 
         return texMap;
-    }
-
-    @Override
-    public FileEntry getFileEntry() {
-        return this.overrideFileEntry != null ? this.overrideFileEntry : super.getFileEntry();
-    }
-
-    /**
-     * Gets the name of a particular animation ID, if there is one.
-     * @param animationId The animation ID to get.
-     * @return name
-     */
-    public String getName(int animationId) {
-        String bankName = Utils.stripWin95(Utils.stripExtension(getFileEntry().getDisplayName()));
-        NameBank childBank = getConfig().getAnimationBank().getChildBank(bankName);
-        return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getMaxAnimation());
-    }
-
-    /**
-     * Get the maximum animation action id.
-     * @return maxAnimation
-     */
-    public int getMaxAnimation() {
-        if (isXAR())
-            return getAnimation().getAnimationCount();
-
-        // Flipbook.
-        return getParts().stream()
-                .map(MOFPart::getFlipbook)
-                .filter(Objects::nonNull)
-                .map(MOFFlipbook::getActions)
-                .mapToInt(List::size)
-                .max().orElse(0);
     }
 }
