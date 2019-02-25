@@ -5,6 +5,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.*;
 import javafx.scene.control.Accordion;
+import javafx.scene.control.Label;
+import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
@@ -116,12 +118,16 @@ public class MOFController extends EditorController<MOFFile> {
 
             if (event.getCode() == KeyCode.UP) {
                 getMofMesh().setAction(getMofMesh().getAnimationId() + 1);
+                uiController.updateTempUI(mofMesh);
             } else if (event.getCode() == KeyCode.DOWN) {
                 getMofMesh().setAction(getMofMesh().getAnimationId() - 1);
+                uiController.updateTempUI(mofMesh);
             } else if (event.getCode() == KeyCode.LEFT) {
                 getMofMesh().setFrame(getMofMesh().getFrameCount() - 1);
+                uiController.updateTempUI(mofMesh);
             } else if (event.getCode() == KeyCode.RIGHT) {
                 getMofMesh().setFrame(getMofMesh().getFrameCount() + 1);
+                uiController.updateTempUI(mofMesh);
             }
         });
 
@@ -130,6 +136,8 @@ public class MOFController extends EditorController<MOFFile> {
         mofScene.setOnMousePressed(e -> {
             mouseX = oldMouseX = e.getSceneX();
             mouseY = oldMouseY = e.getSceneY();
+
+            uiController.anchorPaneUIRoot.requestFocus();
         });
 
         mofScene.setOnMouseDragged(e -> {
@@ -151,6 +159,8 @@ public class MOFController extends EditorController<MOFFile> {
 
         camera.setTranslateZ(-100.0);
         camera.setTranslateY(-10.0);
+
+        uiController.updateTempUI(mofMesh);
     }
 
     public static final class MOFUIController implements Initializable {
@@ -158,9 +168,11 @@ public class MOFController extends EditorController<MOFFile> {
         @FXML private AnchorPane anchorPaneUIRoot;
         @FXML private Accordion accordionLeft;
 
+        @FXML private TitledPane paneAnim;
+        @FXML private Label labelAnimID;
+
         @Override
         public void initialize(URL location, ResourceBundle resources) {
-
         }
 
         /**
@@ -168,6 +180,16 @@ public class MOFController extends EditorController<MOFFile> {
          */
         public double uiRootPaneWidth() {
             return anchorPaneUIRoot.getPrefWidth();
+        }
+
+        /**
+         * A very quick and dirty (and temporary!) UI. Will be replaced...
+         */
+        public void updateTempUI(MOFMesh mofMesh)
+        {
+            paneAnim.setExpanded(true);
+            labelAnimID.setText("Animation ID: " + mofMesh.getAnimationId());
+            anchorPaneUIRoot.requestFocus();
         }
     }
 }
