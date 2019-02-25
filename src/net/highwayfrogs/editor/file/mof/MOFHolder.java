@@ -82,13 +82,6 @@ public class MOFHolder extends GameFile {
             return;
         }
 
-        // Save incomplete mofs.
-        byte[] copyBytes = asStaticFile().getBytes();
-        if (copyBytes != null && isIncomplete()) {
-            writer.writeBytes(copyBytes);
-            return;
-        }
-
         // Save normal mofs.
         if (isAnimatedMOF()) { // If this is an animation, save the animation.
             getAnimatedFile().save(writer);

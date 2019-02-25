@@ -38,7 +38,7 @@ public abstract class MOFBase extends GameObject {
     }
 
     @Override
-    public final void save(DataWriter writer) {
+    public void save(DataWriter writer) {
         writer.writeBytes(getSignature());
         writer.writeNullPointer(); // File size. Maybe in the future we'll set the value to be proper.
         writer.writeInt(this.flags);
