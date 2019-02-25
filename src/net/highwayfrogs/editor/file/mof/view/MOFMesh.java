@@ -80,7 +80,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
             if (shouldSkip(part))
                 continue;
 
-            if (getMofFile().getAnimation() != null) {
+            if (getMofFile().isXAR()) {
                 TransformObject transform = getMofFile().getAnimation().getTransform(part, this.animationId, this.frameCount);
                 for (SVector vertex : partcel.getVertices())
                     this.verticeCache.add(PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(), vertex, new IVector()));

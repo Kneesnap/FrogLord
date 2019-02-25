@@ -52,6 +52,7 @@ public class MOFFile extends GameFile {
     private int extra;
     private List<MOFPart> parts = new ArrayList<>();
     private int unknownValue;
+    private boolean staticMOF;
     @Setter private boolean incompleteMOF; // Some mofs are changed at run-time to share information. This attempts to handle that.
     @Setter private transient VLOArchive vloFile;
     private MAPTheme theme;
@@ -115,7 +116,7 @@ public class MOFFile extends GameFile {
         int fileSizePointer = writer.writeNullPointer(); // Optional, but might as well.
         writer.writeInt(this.flags);
 
-        if (animation != null) { // If this is an animation, save the animation.
+        if (isAnimatedMOF()) { // If this is an animation, save the animation.
             animation.save(writer);
             return;
         }
@@ -128,6 +129,7 @@ public class MOFFile extends GameFile {
     }
 
     private void resolveStaticMOF(DataReader reader) {
+        this.staticMOF = true;
         this.extra = reader.readInt();
         int partCount = this.extra;
 
@@ -338,7 +340,30 @@ public class MOFFile extends GameFile {
      * @return staticMOF
      */
     public MOFFile getStaticMOF() {
-        return this.animation != null ? getAnimation().getStaticMOF() : this;
+        return isXAR() ? getAnimation().getStaticMOF() : this;
+    }
+
+    /**
+     * Checks if this MOFFile is static.
+     */
+    public boolean isStaticMOF() {
+        return this.staticMOF;
+    }
+
+    /**
+     * Test if this is an animted MOF.
+     * @return animatedMof
+     */
+    public boolean isAnimatedMOF() {
+        return !isStaticMOF() && isXAR();
+    }
+
+    /**
+     * Test if this has a linked animation.
+     * @return isXAR
+     */
+    public boolean isXAR() {
+        return getAnimation() != null;
     }
 
     /**
@@ -389,7 +414,7 @@ public class MOFFile extends GameFile {
      * @return maxAnimation
      */
     public int getMaxAnimation() {
-        if (getAnimation() != null)
+        if (isXAR())
             return getAnimation().getAnimationCount();
 
         // Flipbook.
