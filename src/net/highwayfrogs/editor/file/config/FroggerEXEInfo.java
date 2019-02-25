@@ -19,7 +19,6 @@ import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.SkyLand;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.sound.GameSound;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
@@ -65,6 +64,8 @@ public class FroggerEXEInfo extends Config {
     private boolean prototype;
     private boolean demo;
     private TargetPlatform platform;
+    private NameBank soundBank;
+    private NameBank animationBank;
 
     private DataReader reader;
     private byte[] exeBytes;
@@ -79,6 +80,9 @@ public class FroggerEXEInfo extends Config {
     private static final String CHILD_RESTORE_MAP_BOOK = "MapBookRestore";
     private static final String CHILD_RESTORE_THEME_BOOK = "ThemeBookRestore";
     private static final String CHILD_IMAGE_NAMES = "ImageNames";
+
+    private static final String DEFAULT_SOUND_KEY = "main";
+    private static final String DEFAULT_ANIMATION_KEY = "main-pc";
 
     public FroggerEXEInfo(File inputExe, InputStream inputStream) throws IOException {
         super(inputStream);
@@ -112,7 +116,7 @@ public class FroggerEXEInfo extends Config {
      * Read data from the EXE which needs reading.
      */
     public void setup() {
-        GameSound.loadSoundNames(getString("soundList", GameSound.MAIN_KEY)); // Load the sound config.
+        loadBanks();
         readConfig();
         readMWI();
         readCosTable();
@@ -139,6 +143,14 @@ public class FroggerEXEInfo extends Config {
         this.musicAddress = getInt("musicAddress");
         this.bmpPointerAddress = getInt("bmpPointerAddress", 0);
         this.cosTableAddress = getInt("cosTableAddress");
+    }
+
+    private void loadBanks() {
+        String soundBankName = getString("soundList", DEFAULT_SOUND_KEY); // Load the sound config.
+        this.soundBank = NameBank.readBank("sounds", soundBankName, (bank, index) -> "Unknown Sound [" + index + "]");
+
+        String animBankName = getString("animList", DEFAULT_ANIMATION_KEY);
+        this.animationBank = NameBank.readBank("anims", animBankName, (bank, index) -> bank.size() <= 1 ? "Default Animation" : "Unknown Animation #" + index);
     }
 
     /**

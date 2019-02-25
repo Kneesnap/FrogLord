@@ -11,9 +11,11 @@ import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
+import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
+import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -369,5 +371,33 @@ public class MOFFile extends GameFile {
     @Override
     public FileEntry getFileEntry() {
         return this.overrideFileEntry != null ? this.overrideFileEntry : super.getFileEntry();
+    }
+
+    /**
+     * Gets the name of a particular animation ID, if there is one.
+     * @param animationId The animation ID to get.
+     * @return name
+     */
+    public String getName(int animationId) {
+        String bankName = Utils.stripWin95(Utils.stripExtension(getFileEntry().getDisplayName()));
+        NameBank childBank = getConfig().getAnimationBank().getChildBank(bankName);
+        return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getMaxAnimation());
+    }
+
+    /**
+     * Get the maximum animation action id.
+     * @return maxAnimation
+     */
+    public int getMaxAnimation() {
+        if (getAnimation() != null)
+            return getAnimation().getAnimationCount();
+
+        // Flipbook.
+        return getParts().stream()
+                .map(MOFPart::getFlipbook)
+                .filter(Objects::nonNull)
+                .map(MOFFlipbook::getActions)
+                .mapToInt(List::size)
+                .max().orElse(0);
     }
 }

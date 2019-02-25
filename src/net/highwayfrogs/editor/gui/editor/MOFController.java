@@ -185,10 +185,9 @@ public class MOFController extends EditorController<MOFFile> {
         /**
          * A very quick and dirty (and temporary!) UI. Will be replaced...
          */
-        public void updateTempUI(MOFMesh mofMesh)
-        {
+        public void updateTempUI(MOFMesh mofMesh) {
             paneAnim.setExpanded(true);
-            labelAnimID.setText("Animation ID: " + mofMesh.getAnimationId());
+            labelAnimID.setText("Animation: " + mofMesh.getAnimationName());
             anchorPaneUIRoot.requestFocus();
         }
     }

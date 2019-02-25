@@ -517,6 +517,15 @@ public class Utils {
     }
 
     /**
+     * Strip win95 from the name of a file.
+     * @param name The name to strip win95 from.
+     * @return strippedName
+     */
+    public static String stripWin95(String name) {
+        return name.contains("_WIN95") ? name.replace("_WIN95", "") : name;
+    }
+
+    /**
      * Deletes a file.
      * @param file The file to delete.
      */

@@ -5,7 +5,6 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 
 import javax.sound.sampled.AudioFormat;
@@ -15,8 +14,6 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Represents a game sound.
@@ -27,9 +24,6 @@ public abstract class GameSound extends GameObject {
     private AudioHeader header;
     private int vanillaTrackId;
     private int readLength;
-
-    public static final List<String> SOUND_NAME_BY_TRACK_ID = new ArrayList<>();
-    public static final String MAIN_KEY = "main";
 
     public GameSound(AudioHeader header, int vanillaTrackId, int readLength) {
         this.vanillaTrackId = vanillaTrackId;
@@ -138,9 +132,7 @@ public abstract class GameSound extends GameObject {
      * @return soundName
      */
     public String getSoundName() {
-        return getVanillaTrackId() >= 0 && getVanillaTrackId() < SOUND_NAME_BY_TRACK_ID.size()
-                ? SOUND_NAME_BY_TRACK_ID.get(getVanillaTrackId())
-                : "???????";
+        return getConfig().getSoundBank().getName(getVanillaTrackId());
     }
 
     /**
@@ -148,17 +140,5 @@ public abstract class GameSound extends GameObject {
      */
     public void onImport() {
 
-    }
-
-    /**
-     * Load the sound config to use.
-     * @param configName The name of the config to use.
-     */
-    @SneakyThrows
-    public static void loadSoundNames(String configName) {
-        Config config = new Config(Utils.getResourceStream("sounds/" + configName + ".cfg"));
-        SOUND_NAME_BY_TRACK_ID.addAll(config.getText());
-        for (String childName : config.getOrderedChildren())
-            SOUND_NAME_BY_TRACK_ID.addAll(config.getChild(childName).getText());
     }
 }

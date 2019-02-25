@@ -133,4 +133,12 @@ public class MOFAnimation extends GameObject {
     public MOFAnimationCels getAnimationById(int actionId) {
         return getModelSet().getCelSet().getCels().get(actionId);
     }
+
+    /**
+     * Gets the amount of actions this MOFAnimation has.
+     * @return actionCount
+     */
+    public int getAnimationCount() {
+        return getModelSet().getCelSet().getCels().size();
+    }
 }

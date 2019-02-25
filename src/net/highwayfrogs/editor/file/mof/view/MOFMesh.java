@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.MOFPartcel;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
-import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
@@ -20,7 +19,6 @@ import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -38,8 +36,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
         super(map, VertexFormat.POINT_TEXCOORD);
         this.mofFile = mofFile;
 
-        int animCount = mofFile.getParts().stream().map(MOFPart::getFlipbook).filter(Objects::nonNull).map(MOFFlipbook::getActions).mapToInt(List::size).max().orElse(0);
-        System.out.println("Animation Count: " + animCount + ", Texture Animation: " + mofFile.getParts().stream().anyMatch(part -> !part.getPartPolyAnims().isEmpty()));
+        System.out.println("Animation Count: " + mofFile.getMaxAnimation() + ", Texture Animation: " + mofFile.getParts().stream().anyMatch(part -> !part.getPartPolyAnims().isEmpty()));
         updateData();
     }
 
@@ -119,7 +116,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
             if (part.getFlipbook() != null && part.getFlipbook().getActions().size() <= actionId)
                 return;
 
-        if (getMofFile().getAnimation() != null && getMofFile().getAnimation().getModelSet().getCelSet().getCels().size() <= actionId)
+        if (actionId >= getMofFile().getMaxAnimation())
             return;
 
         System.out.println("New Action: " + actionId);
@@ -129,5 +126,13 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
 
     private boolean shouldSkip(MOFPart part) { // Skip the croak for now. In the future we should make something non-hardcoded.
         return getMofFile().getFileEntry().getDisplayName().contains("GEN_FROG") && part.getPartID() == 15;
+    }
+
+    /**
+     * Gets the name of the selected animation.
+     * @return animationName
+     */
+    public String getAnimationName() {
+        return getMofFile() != null ? getMofFile().getName(this.animationId) : "No Selected MOF";
     }
 }
