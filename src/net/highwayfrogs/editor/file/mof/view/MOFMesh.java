@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,12 +87,13 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
             if (getMofFile().getAnimation() != null) {
                 TransformObject transform = getMofFile().getAnimation().getTransform(part, this.animationId, this.frameCount);
 
-                IVector tempVector = new IVector();
                 for (SVector vertex : partcel.getVertices()) {
                     TransformData result = transform.calculatePartTransform();
-                    SVector vec = result.getTempSVector();
-                    //vec.svecEqualsVec(PSXMatrix.MRApplyMatrix(result.getTempMatrix(), vec, tempVector));
-                    this.verticeCache.add(vec.add(vertex));
+                    PSXMatrix mtx = result.getTempMatrix();
+
+                    IVector newPos = new IVector();
+                    PSXMatrix.MRApplyMatrix(mtx, vertex, newPos);
+                    this.verticeCache.add(newPos);
                 }
             } else {
                 this.verticeCache.addAll(partcel.getVertices());
