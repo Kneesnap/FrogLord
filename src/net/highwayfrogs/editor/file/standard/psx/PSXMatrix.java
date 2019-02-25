@@ -136,40 +136,28 @@ public class PSXMatrix extends GameObject {
 
     /**
      * Equivalent to MulMatrix0. (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0441.html?sidebar=outlines)
-     * @param m0 An input matrix.
-     * @param m1 Another input matrix.
-     * @param m2 Output matrix.
+     * @param input1 An input matrix.
+     * @param input2 Another input matrix.
+     * @param output Output matrix.
      */
-    public static void MRMulMatrixABC(PSXMatrix m0, PSXMatrix m1, PSXMatrix m2) {
+    public static void MRMulMatrixABC(PSXMatrix input1, PSXMatrix input2, PSXMatrix output) {
         PSXMatrix tmpMtx = new PSXMatrix();
-        tmpMtx.setTransform(m2.getTransform());
-
-        int i, j, k;
+        tmpMtx.setTransform(output.getTransform());
 
         // Clear matrix (IMPORTANT!)
-        for (i=0; i<DIMENSION; i++)
-        {
-            for (j=0; j<DIMENSION; j++)
-            {
+        for (int i = 0; i < DIMENSION; i++)
+            for (int j = 0; j < DIMENSION; j++)
                 tmpMtx.matrix[i][j] = 0;
-            }
-        }
 
         // Perform multiplication
-        for (i=0; i<DIMENSION; i++)
-        {
-            for (j=0; j<DIMENSION; j++)
-            {
-                for (k=0; k<DIMENSION; k++)
-                {
-                    tmpMtx.matrix[i][j] += ((m1.matrix[k][j] * m0.matrix[i][k]) >> 12);
-                }
-            }
-        }
+        for (int i = 0; i < DIMENSION; i++)
+            for (int j = 0; j < DIMENSION; j++)
+                for (int k = 0; k < DIMENSION; k++)
+                    tmpMtx.matrix[i][j] += ((input2.matrix[k][j] * input1.matrix[i][k]) >> 12);
 
         // Copy values across to output matrix
-        m2.setTransform(tmpMtx.getTransform());
-        m2.setMatrix(tmpMtx.getMatrix());
+        output.setTransform(tmpMtx.getTransform());
+        output.setMatrix(tmpMtx.getMatrix());
     }
 
     /**

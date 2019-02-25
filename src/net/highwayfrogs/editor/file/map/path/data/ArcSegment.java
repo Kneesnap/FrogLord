@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.file.map.path.PathSegment;
 import net.highwayfrogs.editor.file.map.path.PathType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
@@ -64,7 +63,7 @@ public class ArcSegment extends PathSegment {
         vector.setX((short) ((cos * getRadius()) >> 12));
         vector.setY((short) ((-getPitch() * segmentDistance) / getLength()));
         vector.setZ((short) ((sin * getRadius()) >> 12));
-        PSXMatrix.MRApplyRotMatrix(null, vector, null);
+        // PSXMatrix.MRApplyRotMatrix(null, vector, null); TODO: Fix this.
         return vector.add(center);
     }
 

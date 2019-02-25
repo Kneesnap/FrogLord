@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.MOFPartcel;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
-import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject.TransformData;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
@@ -86,15 +85,8 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
 
             if (getMofFile().getAnimation() != null) {
                 TransformObject transform = getMofFile().getAnimation().getTransform(part, this.animationId, this.frameCount);
-
-                for (SVector vertex : partcel.getVertices()) {
-                    TransformData result = transform.calculatePartTransform();
-                    PSXMatrix mtx = result.getTempMatrix();
-
-                    IVector newPos = new IVector();
-                    PSXMatrix.MRApplyMatrix(mtx, vertex, newPos);
-                    this.verticeCache.add(newPos);
-                }
+                for (SVector vertex : partcel.getVertices())
+                    this.verticeCache.add(PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(), vertex, new IVector()));
             } else {
                 this.verticeCache.addAll(partcel.getVertices());
             }
