@@ -123,12 +123,14 @@ public class PSXMatrix extends GameObject {
      * Equivalent to ApplyRotMatrix.
      * @param rotationMatrix The matrix to get rotation data from.
      * @param input          The coordinate input.
-     * @param outputMatrix   Where to write the output.
+     * @param output         Where to write the output.
      * @return rotMatrix
      */
-    public static IVector MRApplyRotMatrix(PSXMatrix rotationMatrix, SVector input, IVector outputMatrix) {
-        //TODO
-        return outputMatrix;
+    public static IVector MRApplyRotMatrix(PSXMatrix rotationMatrix, SVector input, IVector output) {
+        output.setX(((rotationMatrix.matrix[0][0] * input.getX()) + (rotationMatrix.matrix[0][1] * input.getY()) + (rotationMatrix.matrix[0][2] * input.getZ())) >> 12);
+        output.setY(((rotationMatrix.matrix[1][0] * input.getX()) + (rotationMatrix.matrix[1][1] * input.getY()) + (rotationMatrix.matrix[1][2] * input.getZ())) >> 12);
+        output.setZ(((rotationMatrix.matrix[2][0] * input.getX()) + (rotationMatrix.matrix[2][1] * input.getY()) + (rotationMatrix.matrix[2][2] * input.getZ())) >> 12);
+        return output;
     }
 
 
@@ -139,8 +141,35 @@ public class PSXMatrix extends GameObject {
      * @param m2 Output matrix.
      */
     public static void MRMulMatrixABC(PSXMatrix m0, PSXMatrix m1, PSXMatrix m2) {
-        //TODO
-        throw new UnsupportedOperationException("MulMatrix0 is not implemented yet.");
+        PSXMatrix tmpMtx = new PSXMatrix();
+        tmpMtx.setTransform(m2.getTransform());
+
+        int i, j, k;
+
+        // Clear matrix (IMPORTANT!)
+        for (i=0; i<DIMENSION; i++)
+        {
+            for (j=0; j<DIMENSION; j++)
+            {
+                tmpMtx.matrix[i][j] = 0;
+            }
+        }
+
+        // Perform multiplication
+        for (i=0; i<DIMENSION; i++)
+        {
+            for (j=0; j<DIMENSION; j++)
+            {
+                for (k=0; k<DIMENSION; k++)
+                {
+                    tmpMtx.matrix[i][j] += ((m1.matrix[k][j] * m0.matrix[i][k]) >> 12);
+                }
+            }
+        }
+
+        // Copy values across to output matrix
+        m2.setTransform(tmpMtx.getTransform());
+        m2.setMatrix(tmpMtx.getMatrix());
     }
 
     /**
@@ -150,9 +179,9 @@ public class PSXMatrix extends GameObject {
      * @param output The output to write to.
      */
     public static IVector MRApplyMatrix(PSXMatrix matrix, SVector vector, IVector output) {
-        output.setX(((matrix.matrix[0][0] * vector.getX()) + (matrix.matrix[0][1] * vector.getY()) + (matrix.matrix[0][2] * vector.getZ())) >> 12);
-        output.setY(((matrix.matrix[1][0] * vector.getX()) + (matrix.matrix[1][1] * vector.getY()) + (matrix.matrix[1][2] * vector.getZ())) >> 12);
-        output.setZ(((matrix.matrix[2][0] * vector.getX()) + (matrix.matrix[2][1] * vector.getY()) + (matrix.matrix[2][2] * vector.getZ())) >> 12);
+        output.setX((((matrix.matrix[0][0] * vector.getX()) + (matrix.matrix[0][1] * vector.getY()) + (matrix.matrix[0][2] * vector.getZ())) >> 12) + matrix.transform[0]);
+        output.setY((((matrix.matrix[1][0] * vector.getX()) + (matrix.matrix[1][1] * vector.getY()) + (matrix.matrix[1][2] * vector.getZ())) >> 12) + matrix.transform[1]);
+        output.setZ((((matrix.matrix[2][0] * vector.getX()) + (matrix.matrix[2][1] * vector.getY()) + (matrix.matrix[2][2] * vector.getZ())) >> 12) + matrix.transform[2]);
         return output;
     }
 
