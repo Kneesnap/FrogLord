@@ -11,6 +11,7 @@ Editor Features:
   Map Editor
   MOF Editor
 
+ - See if we can export an EXE with an extra bit of data which identifies which exe config to use.
 
 TCRF Documentation Plans:
  - Snail Racing
