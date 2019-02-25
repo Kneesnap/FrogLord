@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
@@ -52,7 +52,7 @@ public abstract class PathSegment extends GameObject {
      * @param info The info to calculate with.
      * @return finishPosition
      */
-    protected abstract SVector calculatePosition(PathInfo info);
+    protected abstract Vector calculatePosition(PathInfo info);
 
     /**
      * Setup a path editor.

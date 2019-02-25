@@ -256,9 +256,9 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Set the initial camera position based on start position and in-game camera offset.
         SVector startPos = getFile().getCameraSourceOffset();
-        float gridX = Utils.fixedPointIntToFloatNBits(getFile().getWorldX(getFile().getStartXTile(), true), 4);
-        float baseY = -Utils.fixedPointIntToFloatNBits(getFile().getGridStack(getFile().getStartXTile(), getFile().getStartZTile()).getHeight(), 4);
-        float gridZ = Utils.fixedPointIntToFloatNBits(getFile().getWorldZ(getFile().getStartZTile(), true), 4);
+        float gridX = Utils.fixedPointIntToFloat4Bit(getFile().getWorldX(getFile().getStartXTile(), true));
+        float baseY = -Utils.fixedPointIntToFloat4Bit(getFile().getGridStack(getFile().getStartXTile(), getFile().getStartZTile()).getHeight());
+        float gridZ = Utils.fixedPointIntToFloat4Bit(getFile().getWorldZ(getFile().getStartZTile(), true));
         cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
         // Set the camera to look at the start position, too.
         cameraFPS.setCameraLookAt(gridX, baseY, gridZ);

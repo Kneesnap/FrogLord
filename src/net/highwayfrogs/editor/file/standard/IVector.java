@@ -62,10 +62,22 @@ public class IVector extends GameObject implements Vector {
      * Equivalent to MR_ADD_VEC(b)
      * @param other The vector to add.
      */
-    public void add(IVector other) {
+    public IVector add(IVector other) {
         this.x += other.x;
         this.y += other.y;
         this.z += other.z;
+        return this;
+    }
+
+    /**
+     * Adds the values in another vector to this one.
+     * @param other The vector to add.
+     */
+    public IVector add(SVector other) {
+        this.x += other.getX();
+        this.y += other.getY();
+        this.z += other.getZ();
+        return this;
     }
 
     /**
@@ -73,7 +85,7 @@ public class IVector extends GameObject implements Vector {
      * @return floatX
      */
     public float getFloatX() {
-        return Utils.fixedPointIntToFloatNBits(getX(), 4);
+        return Utils.fixedPointIntToFloat4Bit(getX());
     }
 
     /**
@@ -81,7 +93,7 @@ public class IVector extends GameObject implements Vector {
      * @return floatY
      */
     public float getFloatY() {
-        return Utils.fixedPointIntToFloatNBits(getY(), 4);
+        return Utils.fixedPointIntToFloat4Bit(getY());
     }
 
     /**
@@ -89,7 +101,7 @@ public class IVector extends GameObject implements Vector {
      * @return floatZ
      */
     public float getFloatZ() {
-        return Utils.fixedPointIntToFloatNBits(getZ(), 4);
+        return Utils.fixedPointIntToFloat4Bit(getZ());
     }
 
     @Override

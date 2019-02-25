@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
@@ -110,7 +110,7 @@ public class Path extends GameObject {
      * @param pathInfo Information about this path.
      * @return finishedPosition
      */
-    public SVector evaluatePosition(PathInfo pathInfo) {
+    public Vector evaluatePosition(PathInfo pathInfo) {
         return getSegments().get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
     }
 

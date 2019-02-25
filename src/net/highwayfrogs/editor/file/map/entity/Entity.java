@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -135,7 +135,7 @@ public class Entity extends GameObject {
         PathInfo pathInfo = getPathInfo();
         if (pathInfo != null) {
             Path path = map.getPaths().get(pathInfo.getPathId());
-            SVector end = path.evaluatePosition(pathInfo);
+            Vector end = path.evaluatePosition(pathInfo);
             position[0] = end.getFloatX();
             position[1] = end.getFloatY();
             position[2] = end.getFloatZ();

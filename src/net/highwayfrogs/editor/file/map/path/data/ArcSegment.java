@@ -58,6 +58,7 @@ public class ArcSegment extends PathSegment {
         int sin = getConfig().rsin(a);
 
         //TODO: X and Z aren't accurate. It could be because there is no rotation matrix.
+        // - Methods needed to make this accurate: MRNormaliseVEC, MROuterProduct12.
         SVector vector = new SVector(start).subtract(center);
         vector.multiply(segmentDistance / (double) getLength());
         vector.setX((short) ((cos * getRadius()) >> 12));
