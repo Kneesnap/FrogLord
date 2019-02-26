@@ -34,7 +34,8 @@ public class PP20Unpacker {
         int skip = data[data.length - 1] & 0xFF; // Last byte contains the amount of bits to trash.
         byte[] out = new byte[getDecodedDataSize(data)];
         int outPos = out.length;
-        BitReader in = new BitReader(data, data.length - 5);
+        BitReader in = new BitReader(data, 4);
+        in.setReverseBytes(true);
         in.readBits(skip); // skipped bits
 
         while (outPos > 0)

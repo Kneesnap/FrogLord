@@ -31,15 +31,14 @@ public class BitReader {
         int readBitPos = isReverseBits() ? (MAX_BIT - this.bitPos) : this.bitPos;
         int readBytePos = isReverseBytes() ? (this.data.length - 1 - this.bytePos) : this.bytePos;
 
-        final int bit = (this.data[readBytePos] >> readBitPos) & 1; // Get the bit at the next position.
-
         if (bitPos == MAX_BIT) { // Reached the end of the bit.
             this.bitPos = 0;
-            this.bytePos--;
+            this.bytePos++;
         } else {
             this.bitPos++;
         }
-        return bit;
+
+        return (this.data[readBytePos] >> readBitPos) & Constants.BIT_TRUE; // Get the bit at the next position.
     }
 
     /**
@@ -52,5 +51,13 @@ public class BitReader {
         for (int i = 0; i < amount; i++)
             num = num << 1 | readBit(); // Shift the existing read bits left, and add the next available bit. If you read four bits, it will read it like an integer.
         return num;
+    }
+
+    /**
+     * Test if there is any remaining data left to read.
+     * @return hasRemaining
+     */
+    public boolean hasRemaining() {
+        return this.data.length > this.bytePos;
     }
 }
