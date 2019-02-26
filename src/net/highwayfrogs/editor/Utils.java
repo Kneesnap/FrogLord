@@ -52,10 +52,28 @@ public class Utils {
      * @return intValue
      */
     public static int readNumberFromBytes(byte[] data) {
+        return readNumberFromBytes(data, data.length, 0);
+    }
+
+    /**
+     * Convert a byte array to a number.
+     * @param data The data to turn into a number.
+     * @return intValue
+     */
+    public static int readNumberFromBytes(byte[] data, int readSize, int startIndex) {
         int value = 0;
-        for (int i = 0; i < data.length; i++)
-            value += ((long) data[i] & 0xFFL) << (Constants.BITS_PER_BYTE * i);
+        for (int i = 0; i < readSize; i++)
+            value += ((long) data[startIndex + i] & 0xFFL) << (Constants.BITS_PER_BYTE * i);
         return value;
+    }
+
+    /**
+     * Convert a byte array to a number.
+     * @param data The data to turn into a number.
+     * @return intValue
+     */
+    public static int readIntFromBytes(byte[] data, int startIndex) {
+        return readNumberFromBytes(data, Constants.INTEGER_SIZE, startIndex);
     }
 
     /**

@@ -29,6 +29,14 @@ public class ByteArrayWrapper {
     }
 
     /**
+     * Copy the contents of this wrapper to a byte array.
+     * @return array
+     */
+    public byte[] toNewArray() {
+        return toArray(new byte[size()], 0);
+    }
+
+    /**
      * Resize the underlying array.
      * @param newSize The underlying array's new size.
      */
