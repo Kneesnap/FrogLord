@@ -217,7 +217,7 @@ public class GridController implements Initializable {
 
                     graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
                 } else if (stack.getGridSquares().size() > 0) {
-                    GridSquare square = stack.getGridSquares().get(0);
+                    GridSquare square = stack.getGridSquares().get(stack.getGridSquares().size() - 1);
                     TextureEntry entry = square.getPolygon().getEntry(texMap);
                     graphics.drawImage(fxTextureImage, entry.getX(texMap), entry.getY(texMap), entry.getWidth(texMap), entry.getHeight(texMap), xPos, yPos, getTileWidth(), getTileHeight());
                 } else {
