@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
+import net.highwayfrogs.editor.file.packers.FLA2Unpacker;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.gui.editor.SaveController;
@@ -38,6 +39,15 @@ public class GUIMain extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        File tempFolder = new File("C:\\Users\\Drew\\Desktop\\Java\\FrogLord\\debug\\");
+        File inputFile = new File(tempFolder, "test.fla");
+        File outputFile = new File(tempFolder, "test.dec");
+
+        byte[] bytes = Files.readAllBytes(inputFile.toPath());
+        Utils.deleteFile(outputFile);
+        Files.write(outputFile.toPath(), FLA2Unpacker.unpackData(bytes));
+        System.out.println("Done!");
+
         MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();
 

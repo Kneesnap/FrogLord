@@ -9,6 +9,8 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.SkyLand;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
+import net.highwayfrogs.editor.file.packers.PP20Packer;
+import net.highwayfrogs.editor.file.packers.PP20Unpacker;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.AbstractVBFile;

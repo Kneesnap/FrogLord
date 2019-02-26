@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file;
+package net.highwayfrogs.editor.file.packers;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.Utils;
