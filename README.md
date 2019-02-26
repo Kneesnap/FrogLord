@@ -1,5 +1,7 @@
 # FrogLord
-FrogLord is a modding suite for Frogger (1997). Its purpose is to allow fans to change any and all game files.  
+
+## What is FrogLord?
+FrogLord is a modding suite for Frogger (1997). It allows fans to create new levels, import 3D models, view unused content, and allow changing all game files.
 To use this tool, you must have a copy of the game.  
 
 ## Usage:
@@ -26,6 +28,6 @@ Create FrogLord.jar: ``Build > Build Artifacts... > FrogLord > Build``
 ## Special Thanks:
  - Andy Eder (Frogger 2 Programmer, Significant FrogLord contributor)
  - Xiron (Highway Frogs Creator, Documented demo replay file format)
- - Aluigi (QuickBMS Author, Documented the MWD and MWI file formats)
+ - Aluigi (QuickBMS Author, Wrote a BMS script which we analyzed to understand the MWD and MWI file formats)
  - Shakotay2 (XeNTax, Helped us figure out how 3D geometry was stored)
  - Everyone involved with Frogger's creation who we've spoken with.
