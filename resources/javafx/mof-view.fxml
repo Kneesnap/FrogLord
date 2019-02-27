@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TitledPane?>
-<?import javafx.scene.layout.AnchorPane?>
-
-<AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.highwayfrogs.editor.gui.editor.MOFController$MOFUIController">
+<?import javafx.scene.layout.*?>
+<AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0"
+            xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="net.highwayfrogs.editor.gui.editor.MOFController$MOFUIController">
     <Accordion fx:id="accordionLeft" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <panes>
          <TitledPane fx:id="paneAnim" animated="false" text="Animation Data">
            <content>
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                   <children>
-                     <Label fx:id="labelAnimID" text="Animation ID:" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                      <Label layoutX="48.0" layoutY="49.0" text="Animation:" AnchorPane.leftAnchor="0.0"
+                             AnchorPane.topAnchor="0.0"/>
+                      <ComboBox fx:id="animationSelector" layoutX="83.0" layoutY="6.0" prefWidth="150.0"
+                                AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
                   </children>
                </AnchorPane>
            </content>

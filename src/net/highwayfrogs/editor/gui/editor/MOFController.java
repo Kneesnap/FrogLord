@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.*;
 import javafx.scene.control.Accordion;
-import javafx.scene.control.Label;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
@@ -25,8 +26,11 @@ import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.system.AbstractStringConverter;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -116,18 +120,12 @@ public class MOFController extends EditorController<MOFHolder> {
             if (event.getCode() == KeyCode.X)
                 meshView.setDrawMode(meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
 
-            if (event.getCode() == KeyCode.UP) {
-                getMofMesh().setAction(getMofMesh().getAnimationId() + 1);
-                uiController.updateTempUI(mofMesh);
-            } else if (event.getCode() == KeyCode.DOWN) {
-                getMofMesh().setAction(getMofMesh().getAnimationId() - 1);
-                uiController.updateTempUI(mofMesh);
-            } else if (event.getCode() == KeyCode.LEFT) {
+            if (event.getCode() == KeyCode.LEFT) {
                 getMofMesh().setFrame(getMofMesh().getFrameCount() - 1);
-                uiController.updateTempUI(mofMesh);
+                uiController.updateTempUI();
             } else if (event.getCode() == KeyCode.RIGHT) {
                 getMofMesh().setFrame(getMofMesh().getFrameCount() + 1);
-                uiController.updateTempUI(mofMesh);
+                uiController.updateTempUI();
             }
         });
 
@@ -160,16 +158,20 @@ public class MOFController extends EditorController<MOFHolder> {
         camera.setTranslateZ(-100.0);
         camera.setTranslateY(-10.0);
 
-        uiController.updateTempUI(mofMesh);
+        uiController.setHolder(this);
     }
 
+    @Getter
     public static final class MOFUIController implements Initializable {
+        private MOFHolder holder;
+        private MOFController controller;
+
         // Baseline UI components
         @FXML private AnchorPane anchorPaneUIRoot;
         @FXML private Accordion accordionLeft;
 
         @FXML private TitledPane paneAnim;
-        @FXML private Label labelAnimID;
+        @FXML private ComboBox<Integer> animationSelector;
 
         @Override
         public void initialize(URL location, ResourceBundle resources) {
@@ -183,11 +185,30 @@ public class MOFController extends EditorController<MOFHolder> {
         }
 
         /**
+         * Sets the MOF Holder this controls.
+         */
+        public void setHolder(MOFController controller) {
+            this.controller = controller;
+            this.holder = controller.getFile();
+
+            List<Integer> numbers = new ArrayList<>(Utils.getIntegerList(holder.getMaxAnimation()));
+            numbers.add(0, -1);
+            animationSelector.setItems(FXCollections.observableArrayList(numbers));
+            animationSelector.setConverter(new AbstractStringConverter<>(id -> id == -1 ? "No Animation" : holder.getName(id)));
+            animationSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
+                if (newValue != null)
+                    controller.getMofMesh().setAction(newValue);
+            }));
+            animationSelector.getSelectionModel().select(0); // Automatically selects no animation.
+
+            updateTempUI();
+        }
+
+        /**
          * A very quick and dirty (and temporary!) UI. Will be replaced...
          */
-        public void updateTempUI(MOFMesh mofMesh) {
+        public void updateTempUI() {
             paneAnim.setExpanded(true);
-            labelAnimID.setText("Animation: " + mofMesh.getAnimationName());
             anchorPaneUIRoot.requestFocus();
         }
     }
