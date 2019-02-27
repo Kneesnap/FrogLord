@@ -69,6 +69,7 @@ public class MOFController extends EditorController<MOFHolder> {
     @SneakyThrows
     private void setupMofViewer(Stage stageToOverride, TextureMap texMap) {
         this.mofMesh = new MOFMesh(getFile(), texMap);
+        this.uiController = new MOFUIController(this);
 
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.
         PhongMaterial material = new PhongMaterial();
@@ -95,8 +96,8 @@ public class MOFController extends EditorController<MOFHolder> {
 
         // Load FXML for UI layout.
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/javafx/mof-view.fxml"));
+        fxmlLoader.setController(this.uiController);
         Parent loadRoot = fxmlLoader.load();
-        this.uiController = fxmlLoader.getController();
 
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group(this.camera, meshView);
@@ -167,8 +168,6 @@ public class MOFController extends EditorController<MOFHolder> {
 
         camera.setTranslateZ(-100.0);
         camera.setTranslateY(-10.0);
-
-        uiController.setHolder(this);
     }
 
     /**
@@ -208,6 +207,7 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private AnchorPane anchorPaneUIRoot;
         @FXML private Accordion accordionLeft;
 
+        @FXML private Label modelName;
         @FXML private Button playButton;
         @FXML private CheckBox repeatCheckbox;
         @FXML private TextField fpsField;
@@ -215,11 +215,12 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private TitledPane paneAnim;
         @FXML private ComboBox<Integer> animationSelector;
 
+        public MOFUIController(MOFController controller) {
+            this.controller = controller;
+        }
+
         @Override
         public void initialize(URL location, ResourceBundle resources) {
-            paneAnim.setExpanded(true);
-            updateTempUI();
-
             playButton.setOnAction(evt -> {
                 boolean newState = !getController().isAnimationPlaying();
                 playButton.setText(newState ? "Stop" : "Play");
@@ -245,6 +246,8 @@ public class MOFController extends EditorController<MOFHolder> {
                 getController().setFramesPerSecond(newFps);
                 return true;
             }, null);
+
+            setHolder(getController()); // Setup current MOF.
         }
 
         /**
@@ -272,14 +275,17 @@ public class MOFController extends EditorController<MOFHolder> {
             animationSelector.getSelectionModel().select(0); // Automatically selects no animation.
 
             updateTempUI();
+            modelName.setText(getHolder().getFileEntry().getDisplayName());
         }
 
         /**
          * A very quick and dirty (and temporary!) UI. Will be replaced...
          */
         public void updateTempUI() {
-            paneAnim.setExpanded(true);
             anchorPaneUIRoot.requestFocus();
+            paneAnim.setExpanded(true);
+            accordionLeft.setExpandedPane(paneAnim);
+            paneAnim.requestFocus();
             if (getController() != null)
                 fpsField.setText(String.valueOf(getController().getFramesPerSecond()));
         }
