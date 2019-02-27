@@ -22,7 +22,6 @@ import java.util.Map;
 
 /**
  * Represents the MR_PART struct.
- * TODO: Some mofs like SWP_SQUIRT seem to not show up at all.
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter

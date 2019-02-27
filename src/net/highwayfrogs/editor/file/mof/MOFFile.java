@@ -36,7 +36,8 @@ public class MOFFile extends MOFBase {
     private List<MOFPart> parts = new ArrayList<>();
     private int unknownValue;
 
-    private static final int COMPLETE_TEST = 0x40;
+    private static final int INCOMPLETE_TEST_ADDRESS = 0x1C;
+    private static final int INCOMPLETE_TEST_VALUE = 0x40;
     public static final ImageFilterSettings MOF_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
             .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
 
@@ -48,8 +49,8 @@ public class MOFFile extends MOFBase {
     public void onLoad(DataReader reader) {
         int partCount = reader.readInt();
 
-        reader.jumpTemp(COMPLETE_TEST);
-        boolean isIncomplete = (reader.readInt() == 0);
+        reader.jumpTemp(INCOMPLETE_TEST_ADDRESS);
+        boolean isIncomplete = (reader.readInt() == INCOMPLETE_TEST_VALUE);
         reader.jumpReturn();
 
         if (isIncomplete) { // Just copy the MOF directly.
