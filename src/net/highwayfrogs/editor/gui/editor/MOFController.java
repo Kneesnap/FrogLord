@@ -237,14 +237,19 @@ public class MOFController extends EditorController<MOFHolder> {
             List<Integer> numbers = new ArrayList<>(Utils.getIntegerList(holder.getMaxAnimation()));
             numbers.add(0, -1);
             animationSelector.setItems(FXCollections.observableArrayList(numbers));
-            animationSelector.setConverter(new AbstractStringConverter<>(id -> id == -1 ? "No Animation" : holder.getName(id)));
-            animationSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
-                if (newValue != null) {
-                    controller.getMofMesh().setAction(newValue);
-                    updateFrameText();
-                }
+            animationSelector.setConverter(new AbstractStringConverter<>(id -> {
+                if (id == -1)
+                    return getHolder().asStaticFile().hasTextureAnimation() ? "Texture Animation" : "No Animation";
+
+                return holder.getName(id);
             }));
+            animationSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
+                if (newValue != null)
+                    setAnimation(newValue);
+            }));
+
             animationSelector.getSelectionModel().select(0); // Automatically selects no animation.
+            playButton.setDisable(!getHolder().asStaticFile().hasTextureAnimation()); // Disable playing non-existing animation.
 
             updateTempUI();
             modelName.setText(getHolder().getFileEntry().getDisplayName());
@@ -260,6 +265,16 @@ public class MOFController extends EditorController<MOFHolder> {
         private void lastFrame(ActionEvent evt) {
             getController().getMofMesh().previousFrame();
             updateFrameText();
+        }
+
+        /**
+         * Sets the new animation id to use.
+         * @param newAnimation The new animation to use.
+         */
+        public void setAnimation(int newAnimation) {
+            controller.getMofMesh().setAction(newAnimation);
+            updateFrameText();
+            playButton.setDisable(newAnimation == -1 && !getHolder().asStaticFile().hasTextureAnimation());
         }
 
         /**

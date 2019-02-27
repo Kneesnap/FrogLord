@@ -241,4 +241,15 @@ public class MOFFile extends MOFBase {
 
         return texMap;
     }
+
+    /**
+     * Check if this file has any texture animations.
+     * @return hasTextureAnimation
+     */
+    public boolean hasTextureAnimation() {
+        for (MOFPart part : getParts())
+            if (!part.getPartPolyAnims().isEmpty())
+                return true;
+        return false;
+    }
 }
