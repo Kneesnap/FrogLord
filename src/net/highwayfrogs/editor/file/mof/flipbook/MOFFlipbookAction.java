@@ -25,4 +25,12 @@ public class MOFFlipbookAction extends GameObject {
         writer.writeUnsignedShort(this.partcelCount);
         writer.writeUnsignedShort(this.partcelIndex);
     }
+
+    /**
+     * Gets the number of frames this animation will last for.
+     * @return frameCount
+     */
+    public int getFrameCount() {
+        return this.partcelCount;
+    }
 }

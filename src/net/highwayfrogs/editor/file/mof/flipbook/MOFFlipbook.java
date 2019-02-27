@@ -43,7 +43,16 @@ public class MOFFlipbook extends GameObject {
      * @return celIndex
      */
     public int getPartCelIndex(int animationId, int frameCount) {
-        MOFFlipbookAction action = getActions().get(animationId);
-        return action.getPartcelIndex() + (frameCount % action.getPartcelCount());
+        MOFFlipbookAction action = getAction(animationId);
+        return action.getPartcelIndex() + (frameCount % action.getFrameCount());
+    }
+
+    /**
+     * Gets an action by its id.
+     * @param action The action id to get.
+     * @return flipbookAction
+     */
+    public MOFFlipbookAction getAction(int action) {
+        return getActions().get(action);
     }
 }

@@ -239,8 +239,10 @@ public class MOFController extends EditorController<MOFHolder> {
             animationSelector.setItems(FXCollections.observableArrayList(numbers));
             animationSelector.setConverter(new AbstractStringConverter<>(id -> id == -1 ? "No Animation" : holder.getName(id)));
             animationSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
-                if (newValue != null)
+                if (newValue != null) {
                     controller.getMofMesh().setAction(newValue);
+                    updateFrameText();
+                }
             }));
             animationSelector.getSelectionModel().select(0); // Automatically selects no animation.
 

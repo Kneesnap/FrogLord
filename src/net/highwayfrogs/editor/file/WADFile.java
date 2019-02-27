@@ -187,7 +187,7 @@ public class WADFile extends GameFile {
          */
         public String getDisplayName() {
             if (isDummy())
-                return "Empty MOF Slot";
+                return "Empty";
 
             String displayName = getFileEntry().getDisplayName();
             return displayName.equals(Constants.DUMMY_FILE_NAME) ? "Imported MOF File" : displayName;

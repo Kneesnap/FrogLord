@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
+import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -144,7 +145,7 @@ public class MOFHolder extends GameFile {
     }
 
     /**
-     * Get the maximum animation frame id.
+     * Get the animation's frame count.
      * @return maxFrame
      */
     public int getMaxFrame(int animationId) {
@@ -152,12 +153,24 @@ public class MOFHolder extends GameFile {
             return getAnimatedFile().getAnimationById(animationId).getFrameCount();
 
         // Flipbook.
-        return getStaticFile().getParts().stream()
-                .map(MOFPart::getFlipbook)
-                .filter(Objects::nonNull)
-                .map(MOFFlipbook::getActions)
-                .mapToInt(list -> list.stream().mapToInt(MOFFlipbookAction::getPartcelCount).sum())
-                .max().orElse(0);
+        int maxFrame = 0;
+        for (MOFPart part : getStaticFile().getParts()) {
+            MOFFlipbook flipbook = part.getFlipbook();
+
+            if (flipbook != null) {
+                MOFFlipbookAction action = flipbook.getAction(animationId);
+                if (action.getFrameCount() > maxFrame)
+                    maxFrame = action.getFrameCount();
+            }
+
+            for (MOFPartPolyAnim anim : part.getPartPolyAnims()) {
+                int frameCount = anim.getTotalFrames();
+                if (frameCount > maxFrame)
+                    maxFrame = frameCount;
+            }
+        }
+
+        return maxFrame;
     }
 
     /**
