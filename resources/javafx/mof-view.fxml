@@ -25,6 +25,14 @@
                                  AnchorPane.topAnchor="70.0"/>
                       <Label fx:id="modelName" layoutX="48.0" layoutY="10.0" text="&lt;Model Name&gt;"
                              AnchorPane.leftAnchor="40.0" AnchorPane.topAnchor="0.0"/>
+                      <Button fx:id="btnLast" layoutX="10.0" layoutY="64.0" mnemonicParsing="false"
+                              onAction="#lastFrame" text="&lt;-" AnchorPane.leftAnchor="0.0"
+                              AnchorPane.topAnchor="55.0"/>
+                      <Button fx:id="btnNext" layoutX="120.0" layoutY="67.0" mnemonicParsing="false"
+                              onAction="#nextFrame" prefHeight="25.0" prefWidth="30.0" text="-&gt;"
+                              AnchorPane.topAnchor="55.0"/>
+                      <Label fx:id="frameLabel" alignment="CENTER" layoutX="40.0" layoutY="71.0" prefHeight="17.0"
+                             prefWidth="80.0" text="Frame ?" AnchorPane.topAnchor="60.0"/>
                   </children>
                </AnchorPane>
            </content>

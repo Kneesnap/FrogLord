@@ -102,6 +102,27 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     }
 
     /**
+     * Advance to the next frame.
+     */
+    public void nextFrame() {
+        setFrame(this.frameCount + 1);
+    }
+
+    /**
+     * Advance to the next frame.
+     */
+    public void previousFrame() {
+        setFrame(this.frameCount - 1);
+    }
+
+    /**
+     * Resets the current frame to the starting frame.
+     */
+    public void resetFrame() {
+        setFrame(0);
+    }
+
+    /**
      * Set the animation id.
      * @param actionId The frame to use.
      */
@@ -117,7 +138,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
             return;
 
         this.animationId = actionId;
-        setFrame(0);
+        resetFrame();
     }
 
     private boolean shouldSkip(MOFPart part) { // Skip the croak for now. In the future we should make something non-hardcoded.

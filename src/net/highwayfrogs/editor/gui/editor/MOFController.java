@@ -23,7 +23,6 @@ import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
@@ -34,6 +33,7 @@ import net.highwayfrogs.editor.system.AbstractStringConverter;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -56,10 +56,6 @@ public class MOFController extends EditorController<MOFHolder> {
     private Rotate rotX;
     private Rotate rotY;
     private Rotate rotZ;
-
-    @Setter private int framesPerSecond = 20;
-    private boolean animationPlaying;
-    private Timeline animationTimeline;
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -128,16 +124,6 @@ public class MOFController extends EditorController<MOFHolder> {
             // Toggle wireframe mode.
             if (event.getCode() == KeyCode.X)
                 meshView.setDrawMode(meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
-
-            if (!isAnimationPlaying()) {
-                if (event.getCode() == KeyCode.LEFT) {
-                    getMofMesh().setFrame(getMofMesh().getFrameCount() - 1);
-                    uiController.updateTempUI();
-                } else if (event.getCode() == KeyCode.RIGHT) {
-                    getMofMesh().setFrame(getMofMesh().getFrameCount() + 1);
-                    uiController.updateTempUI();
-                }
-            }
         });
 
         mofScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * .25)));
@@ -170,34 +156,6 @@ public class MOFController extends EditorController<MOFHolder> {
         camera.setTranslateY(-10.0);
     }
 
-    /**
-     * Start playing the MOF animation.
-     */
-    public void startPlaying(boolean repeat, EventHandler<ActionEvent> onFinish) {
-        stopPlaying();
-        if (!repeat) // Reset at frame zero when playing a non-paused mof.
-            getMofMesh().setFrame(0);
-
-        this.animationPlaying = true;
-        this.animationTimeline = new Timeline(new KeyFrame(Duration.millis(1000D / getFramesPerSecond()), evt ->
-                getMofMesh().setFrame(getMofMesh().getFrameCount() + 1)));
-        this.animationTimeline.setCycleCount(repeat ? Timeline.INDEFINITE : getMofMesh().getMofHolder().getMaxFrame(getMofMesh().getAction()) - 1);
-        this.animationTimeline.play();
-        this.animationTimeline.setOnFinished(onFinish);
-    }
-
-    /**
-     * Stop playing the MOF animation.
-     */
-    public void stopPlaying() {
-        if (!isAnimationPlaying())
-            return;
-
-        this.animationPlaying = false;
-        this.animationTimeline.stop();
-        this.animationTimeline = null;
-    }
-
     @Getter
     public static final class MOFUIController implements Initializable {
         private MOFHolder holder;
@@ -212,8 +170,19 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private CheckBox repeatCheckbox;
         @FXML private TextField fpsField;
 
+        @FXML private Label frameLabel;
+        @FXML private Button btnLast;
+        @FXML private Button btnNext;
+
         @FXML private TitledPane paneAnim;
         @FXML private ComboBox<Integer> animationSelector;
+
+        private List<Node> toggleNodes = new ArrayList<>();
+
+        // Animation data.
+        private int framesPerSecond = 20;
+        private boolean animationPlaying;
+        private Timeline animationTimeline;
 
         public MOFUIController(MOFController controller) {
             this.controller = controller;
@@ -221,17 +190,18 @@ public class MOFController extends EditorController<MOFHolder> {
 
         @Override
         public void initialize(URL location, ResourceBundle resources) {
+            toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, btnNext, btnLast));
+
             playButton.setOnAction(evt -> {
-                boolean newState = !getController().isAnimationPlaying();
+                boolean newState = !isAnimationPlaying();
                 playButton.setText(newState ? "Stop" : "Play");
-                repeatCheckbox.setDisable(newState);
-                animationSelector.setDisable(newState);
-                fpsField.setDisable(newState);
+                for (Node node : getToggleNodes())
+                    node.setDisable(newState); // Set the toggle state of nodes.
 
                 if (newState) {
-                    getController().startPlaying(this.repeatCheckbox.isSelected(), playButton.getOnAction());
+                    startPlaying(playButton.getOnAction());
                 } else {
-                    getController().stopPlaying();
+                    stopPlaying();
                 }
             });
 
@@ -243,7 +213,7 @@ public class MOFController extends EditorController<MOFHolder> {
                 if (newFps < 0)
                     return false;
 
-                getController().setFramesPerSecond(newFps);
+                this.framesPerSecond = newFps;
                 return true;
             }, null);
 
@@ -278,6 +248,18 @@ public class MOFController extends EditorController<MOFHolder> {
             modelName.setText(getHolder().getFileEntry().getDisplayName());
         }
 
+        @FXML
+        private void nextFrame(ActionEvent evt) {
+            getController().getMofMesh().nextFrame();
+            updateFrameText();
+        }
+
+        @FXML
+        private void lastFrame(ActionEvent evt) {
+            getController().getMofMesh().previousFrame();
+            updateFrameText();
+        }
+
         /**
          * A very quick and dirty (and temporary!) UI. Will be replaced...
          */
@@ -286,8 +268,52 @@ public class MOFController extends EditorController<MOFHolder> {
             paneAnim.setExpanded(true);
             accordionLeft.setExpandedPane(paneAnim);
             paneAnim.requestFocus();
-            if (getController() != null)
-                fpsField.setText(String.valueOf(getController().getFramesPerSecond()));
+            fpsField.setText(String.valueOf(getFramesPerSecond()));
+            updateFrameText();
+        }
+
+        private void updateFrameText() {
+            frameLabel.setText("Frame " + getController().getMofMesh().getFrameCount());
+        }
+
+        /**
+         * Start playing the MOF animation.
+         */
+        public void startPlaying(EventHandler<ActionEvent> onFinish) {
+            stopPlaying();
+
+            boolean repeat = repeatCheckbox.isSelected();
+            if (!repeat) // Reset at frame zero when playing a non-paused mof.
+                getMofMesh().resetFrame();
+
+            this.animationPlaying = true;
+            this.animationTimeline = new Timeline(new KeyFrame(Duration.millis(1000D / getFramesPerSecond()), evt -> {
+                getMofMesh().nextFrame();
+                updateFrameText();
+            }));
+            this.animationTimeline.setCycleCount(repeat ? Timeline.INDEFINITE : getMofMesh().getMofHolder().getMaxFrame(getMofMesh().getAction()) - 1);
+            this.animationTimeline.play();
+            this.animationTimeline.setOnFinished(onFinish);
+        }
+
+        /**
+         * Stop playing the MOF animation.
+         */
+        public void stopPlaying() {
+            if (!isAnimationPlaying())
+                return;
+
+            this.animationPlaying = false;
+            this.animationTimeline.stop();
+            this.animationTimeline = null;
+        }
+
+        /**
+         * Gets the MofMesh being viewed.
+         * @return mofMesh
+         */
+        public MOFMesh getMofMesh() {
+            return getController().getMofMesh();
         }
     }
 }
