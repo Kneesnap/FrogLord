@@ -22,6 +22,7 @@ import java.util.Map;
 
 /**
  * Represents the MR_PART struct.
+ * TODO: Some mofs like SWP_SQUIRT seem to not show up at all.
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
@@ -287,7 +288,6 @@ public class MOFPart extends GameObject {
 
     /**
      * Gets the flipbook part-cel.
-     * TODO: On models like GEN_GOLD_FROG, this can't show all the animations.
      * @param flipbookId The animation id.
      * @param frame      The global frame count.
      * @return cel

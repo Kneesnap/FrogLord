@@ -97,7 +97,6 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
         if (newFrame < 0)
             return;
 
-        System.out.println("New Frame: " + newFrame);
         this.frameCount = newFrame;
         updateData();
     }
@@ -117,7 +116,6 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
         if (actionId >= getMofHolder().getMaxAnimation())
             return;
 
-        System.out.println("New Action: " + actionId);
         this.animationId = actionId;
         setFrame(0);
     }

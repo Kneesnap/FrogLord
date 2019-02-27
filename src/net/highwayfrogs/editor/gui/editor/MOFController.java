@@ -1,13 +1,15 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.*;
-import javafx.scene.control.Accordion;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TitledPane;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
@@ -19,7 +21,9 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Utils;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
@@ -52,6 +56,10 @@ public class MOFController extends EditorController<MOFHolder> {
     private Rotate rotX;
     private Rotate rotY;
     private Rotate rotZ;
+
+    @Setter private int framesPerSecond = 20;
+    private boolean animationPlaying;
+    private Timeline animationTimeline;
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -120,12 +128,14 @@ public class MOFController extends EditorController<MOFHolder> {
             if (event.getCode() == KeyCode.X)
                 meshView.setDrawMode(meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
 
-            if (event.getCode() == KeyCode.LEFT) {
-                getMofMesh().setFrame(getMofMesh().getFrameCount() - 1);
-                uiController.updateTempUI();
-            } else if (event.getCode() == KeyCode.RIGHT) {
-                getMofMesh().setFrame(getMofMesh().getFrameCount() + 1);
-                uiController.updateTempUI();
+            if (!isAnimationPlaying()) {
+                if (event.getCode() == KeyCode.LEFT) {
+                    getMofMesh().setFrame(getMofMesh().getFrameCount() - 1);
+                    uiController.updateTempUI();
+                } else if (event.getCode() == KeyCode.RIGHT) {
+                    getMofMesh().setFrame(getMofMesh().getFrameCount() + 1);
+                    uiController.updateTempUI();
+                }
             }
         });
 
@@ -161,6 +171,34 @@ public class MOFController extends EditorController<MOFHolder> {
         uiController.setHolder(this);
     }
 
+    /**
+     * Start playing the MOF animation.
+     */
+    public void startPlaying(boolean repeat, EventHandler<ActionEvent> onFinish) {
+        stopPlaying();
+        if (!repeat) // Reset at frame zero when playing a non-paused mof.
+            getMofMesh().setFrame(0);
+
+        this.animationPlaying = true;
+        this.animationTimeline = new Timeline(new KeyFrame(Duration.millis(1000D / getFramesPerSecond()), evt ->
+                getMofMesh().setFrame(getMofMesh().getFrameCount() + 1)));
+        this.animationTimeline.setCycleCount(repeat ? Timeline.INDEFINITE : getMofMesh().getMofHolder().getMaxFrame(getMofMesh().getAction()) - 1);
+        this.animationTimeline.play();
+        this.animationTimeline.setOnFinished(onFinish);
+    }
+
+    /**
+     * Stop playing the MOF animation.
+     */
+    public void stopPlaying() {
+        if (!isAnimationPlaying())
+            return;
+
+        this.animationPlaying = false;
+        this.animationTimeline.stop();
+        this.animationTimeline = null;
+    }
+
     @Getter
     public static final class MOFUIController implements Initializable {
         private MOFHolder holder;
@@ -170,11 +208,43 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private AnchorPane anchorPaneUIRoot;
         @FXML private Accordion accordionLeft;
 
+        @FXML private Button playButton;
+        @FXML private CheckBox repeatCheckbox;
+        @FXML private TextField fpsField;
+
         @FXML private TitledPane paneAnim;
         @FXML private ComboBox<Integer> animationSelector;
 
         @Override
         public void initialize(URL location, ResourceBundle resources) {
+            paneAnim.setExpanded(true);
+            updateTempUI();
+
+            playButton.setOnAction(evt -> {
+                boolean newState = !getController().isAnimationPlaying();
+                playButton.setText(newState ? "Stop" : "Play");
+                repeatCheckbox.setDisable(newState);
+                animationSelector.setDisable(newState);
+                fpsField.setDisable(newState);
+
+                if (newState) {
+                    getController().startPlaying(this.repeatCheckbox.isSelected(), playButton.getOnAction());
+                } else {
+                    getController().stopPlaying();
+                }
+            });
+
+            Utils.setHandleKeyPress(fpsField, newString -> {
+                if (!Utils.isInteger(newString))
+                    return false;
+
+                int newFps = Integer.parseInt(newString);
+                if (newFps < 0)
+                    return false;
+
+                getController().setFramesPerSecond(newFps);
+                return true;
+            }, null);
         }
 
         /**
@@ -210,6 +280,8 @@ public class MOFController extends EditorController<MOFHolder> {
         public void updateTempUI() {
             paneAnim.setExpanded(true);
             anchorPaneUIRoot.requestFocus();
+            if (getController() != null)
+                fpsField.setText(String.valueOf(getController().getFramesPerSecond()));
         }
     }
 }

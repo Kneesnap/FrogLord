@@ -95,4 +95,12 @@ public class MOFAnimationCels extends GameObject {
         int actualCel = celNumbers.get(frame % celNumbers.size());
         return indices.get((actualCel * partCount) + part.getPartID());
     }
+
+    /**
+     * Get the total number of frames in this cel.
+     * @return frameCount
+     */
+    public int getFrameCount() {
+        return celNumbers.size();
+    }
 }

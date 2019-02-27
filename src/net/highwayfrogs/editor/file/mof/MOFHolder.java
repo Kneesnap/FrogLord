@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
+import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -139,6 +140,23 @@ public class MOFHolder extends GameFile {
                 .filter(Objects::nonNull)
                 .map(MOFFlipbook::getActions)
                 .mapToInt(List::size)
+                .max().orElse(0);
+    }
+
+    /**
+     * Get the maximum animation frame id.
+     * @return maxFrame
+     */
+    public int getMaxFrame(int animationId) {
+        if (isAnimatedMOF())
+            return getAnimatedFile().getAnimationById(animationId).getFrameCount();
+
+        // Flipbook.
+        return getStaticFile().getParts().stream()
+                .map(MOFPart::getFlipbook)
+                .filter(Objects::nonNull)
+                .map(MOFFlipbook::getActions)
+                .mapToInt(list -> list.stream().mapToInt(MOFFlipbookAction::getPartcelCount).sum())
                 .max().orElse(0);
     }
 

@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Accordion?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0"
             xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1"
@@ -18,6 +15,14 @@
                              AnchorPane.topAnchor="0.0"/>
                       <ComboBox fx:id="animationSelector" layoutX="83.0" layoutY="6.0" prefWidth="150.0"
                                 AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
+                      <Button fx:id="playButton" layoutX="13.0" layoutY="62.0" mnemonicParsing="false" text="Play"
+                              AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="50.0"/>
+                      <CheckBox fx:id="repeatCheckbox" layoutX="10.0" layoutY="85.0" mnemonicParsing="false"
+                                selected="true" text="Repeat" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="80.0"/>
+                      <Label layoutX="10.0" layoutY="112.0" text="FPS: " AnchorPane.leftAnchor="0.0"
+                             AnchorPane.topAnchor="100.0"/>
+                      <TextField fx:id="fpsField" layoutX="39.0" layoutY="106.0" prefHeight="25.0" prefWidth="70.0"
+                                 AnchorPane.leftAnchor="30.0"/>
                   </children>
                </AnchorPane>
            </content>
