@@ -56,7 +56,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
 
                 MOFPolyTexture polyTex = (MOFPolyTexture) mofPolygon;
 
-                int texFrame = (getFrame() % partPolyAnim.getTotalFrames());
+                int texFrame = (this.frameCount % partPolyAnim.getTotalFrames()); // Don't use getFrame() here, it prevents texture animation from showing if the flipbook or XAR animation isn't showing.
                 List<MOFPartPolyAnimEntry> entries = partPolyAnim.getEntryList().getEntries();
                 for (MOFPartPolyAnimEntry entry : entries) {
                     if (entry.getDuration() > texFrame) {
