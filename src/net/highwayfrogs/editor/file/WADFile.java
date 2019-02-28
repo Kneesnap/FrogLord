@@ -46,6 +46,7 @@ public class WADFile extends GameFile {
 
         MWIFile mwiTable = getConfig().getMWI();
 
+        MOFHolder lastCompleteMOF = null;
         while (true) {
             int resourceId = reader.readInt();
             if (resourceId == TERMINATOR)
@@ -69,7 +70,7 @@ public class WADFile extends GameFile {
                     //file = new VLOArchive();
                     file = new DummyFile(data.length);
                 } else if (fileType == MOFHolder.MOF_ID || fileType == MOFHolder.MAP_MOF_ID) {
-                    file = new MOFHolder(theme);
+                    file = new MOFHolder(theme, lastCompleteMOF);
                 } else {
                     throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
                 }
@@ -81,6 +82,12 @@ public class WADFile extends GameFile {
                 files.add(newEntry);
 
                 file.load(new DataReader(new ArraySource(data)));
+
+                if (file instanceof MOFHolder) {
+                    MOFHolder newHolder = (MOFHolder) file;
+                    if (!newHolder.isIncomplete())
+                        lastCompleteMOF = newHolder;
+                }
             } catch (Exception ex) {
                 throw new RuntimeException("Failed to load " + CURRENT_FILE_NAME + ".", ex);
             }

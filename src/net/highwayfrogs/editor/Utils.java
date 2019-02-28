@@ -544,6 +544,15 @@ public class Utils {
     }
 
     /**
+     * Strip the extension and windows 95 from a file name.
+     * @param name The file name.
+     * @return stripped
+     */
+    public static String stripExtensionWin95(String name) {
+        return stripWin95(stripExtension(name));
+    }
+
+    /**
      * Deletes a file.
      * @param file The file to delete.
      */

@@ -71,6 +71,20 @@ public class NameBank {
     }
 
     /**
+     * Link a bank to another bank.
+     * @param oldName The source bank.
+     * @param newName The destination bank.
+     */
+    public void linkChildBank(String oldName, String newName) {
+        if (subBanks.containsKey(newName))
+            return; // Already linked.
+
+        NameBank linkBank = getChildBank(oldName);
+        if (linkBank != null)
+            subBanks.put(newName, linkBank);
+    }
+
+    /**
      * Return the amount of elements this bank contains.
      * @return size
      */

@@ -55,14 +55,21 @@ public class MOFFile extends MOFBase {
 
         if (isIncomplete) { // Just copy the MOF directly.
             getHolder().setIncomplete(true);
-            reader.setIndex(0);
+            reader.jumpTemp(0);
             this.bytes = reader.readBytes(reader.getRemaining());
-            return;
+            reader.jumpReturn();
+
+            String oldName = Utils.stripExtensionWin95(getHolder().getCompleteMOF().getFileEntry().getDisplayName());
+            String newName = Utils.stripExtensionWin95(getFileEntry().getDisplayName());
+            getConfig().getAnimationBank().linkChildBank(oldName, newName); // Link animation names.
         }
 
         for (int i = 0; i < partCount; i++) {
             MOFPart part = new MOFPart(this);
             part.load(reader);
+            if (isIncomplete)
+                getHolder().getCompleteMOF().getStaticFile().getParts().get(i).copyToIncompletePart(part);
+
             parts.add(part);
         }
 

@@ -97,7 +97,8 @@ public class MWDFile extends GameObject {
         T newFile;
 
         if (oldFile instanceof MOFHolder) {
-            newFile = (T) new MOFHolder(((MOFHolder) oldFile).getTheme());
+            MOFHolder oldHolder = (MOFHolder) oldFile;
+            newFile = (T) new MOFHolder(oldHolder.getTheme(), oldHolder.getCompleteMOF());
         } else {
             AbstractVBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
             newFile = this.loadFile(fileBytes, entry, lastVB);

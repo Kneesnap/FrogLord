@@ -41,6 +41,7 @@ public class MOFHolder extends GameFile {
 
     private transient MAPTheme theme;
     @Setter private transient VLOArchive vloFile;
+    private MOFHolder completeMOF; // This is the last MOF which was not incomplete.
 
     public static final int MOF_ID = 3;
     public static final int MAP_MOF_ID = 4;
@@ -50,8 +51,9 @@ public class MOFHolder extends GameFile {
     private static final Image ICON = loadIcon("swampy");
     public static final byte[] DUMMY_DATA = "DUMY".getBytes();
 
-    public MOFHolder(MAPTheme theme) {
+    public MOFHolder(MAPTheme theme, MOFHolder lastCompleteMOF) {
         this.theme = theme;
+        this.completeMOF = lastCompleteMOF;
     }
 
     @Override
@@ -96,12 +98,16 @@ public class MOFHolder extends GameFile {
         this.staticMOF = true;
         this.staticFile = new MOFFile(this);
         this.staticFile.load(reader);
+        if (!isIncomplete()) // We're not incomplete, we don't need to hold onto this value.
+            this.completeMOF = null;
     }
 
     private void resolveAnimatedMOF(DataReader reader) {
         this.animatedMOF = true;
         this.animatedFile = new MOFAnimation(this);
         this.animatedFile.load(reader);
+        if (!isIncomplete()) // We're not incomplete, we don't need to hold onto this value.
+            this.completeMOF = null;
     }
 
     @Override

@@ -75,8 +75,10 @@ public class MOFPart extends GameObject {
         int animatedTexturesPointer = reader.readInt(); // (Point to integer which is count.) Followed by: MR_PART_POLY_ANIM
         int flipbookPointer = reader.readInt(); // MR_PART_FLIPBOOK (MR_PART_FLIPBOOK_ACTION may follow?)
 
+        boolean incompleteMOF = getParent().getHolder().isIncomplete();
+
         // Read Partcels.
-        if (partcelCount > 0) {
+        if (partcelCount > 0 && !incompleteMOF) {
             reader.jumpTemp(partcelPointer);
             for (int i = 0; i < partcelCount; i++) {
                 MOFPartcel partcel = new MOFPartcel(this, verticeCount, normalCount);
@@ -87,7 +89,7 @@ public class MOFPart extends GameObject {
         }
 
         // Read matrix.
-        if (matrixPointer > 0) {
+        if (matrixPointer > 0 && !incompleteMOF) {
             reader.jumpTemp(matrixPointer);
             this.matrix = new PSXMatrix();
             this.matrix.load(reader);
@@ -95,7 +97,7 @@ public class MOFPart extends GameObject {
         }
 
         // Read collprim.
-        if (collprimPointer > 0) {
+        if (collprimPointer > 0 && !incompleteMOF) {
             reader.jumpTemp(collprimPointer);
             this.collprim = new MOFCollprim();
             this.collprim.load(reader);
@@ -125,15 +127,17 @@ public class MOFPart extends GameObject {
         reader.jumpReturn();
 
         // Read Hilites
-        reader.jumpTemp(hilitePointer);
-        for (int i = 0; i < hiliteCount; i++) {
-            MOFHilite hilite = new MOFHilite(this);
-            hilite.load(reader);
-            hilites.add(hilite);
+        if (!incompleteMOF) {
+            reader.jumpTemp(hilitePointer);
+            for (int i = 0; i < hiliteCount; i++) {
+                MOFHilite hilite = new MOFHilite(this);
+                hilite.load(reader);
+                hilites.add(hilite);
+            }
+            reader.jumpReturn();
         }
-        reader.jumpReturn();
 
-        if (animatedTexturesPointer > 0) {
+        if (animatedTexturesPointer > 0 && !incompleteMOF) {
             loadAnimEntryListMap.clear();
             reader.jumpTemp(animatedTexturesPointer);
             int count = reader.readInt();
@@ -145,7 +149,7 @@ public class MOFPart extends GameObject {
             reader.jumpReturn();
         }
 
-        if (flipbookPointer > 0) {
+        if (flipbookPointer > 0 && !incompleteMOF) {
             reader.jumpTemp(flipbookPointer);
             this.flipbook = new MOFFlipbook();
             this.flipbook.load(reader);
@@ -293,5 +297,21 @@ public class MOFPart extends GameObject {
      */
     public MOFPartcel getCel(int flipbookId, int frame) {
         return getPartcels().get(Math.min(getPartcels().size() - 1, getCelId(flipbookId, frame)));
+    }
+
+    /**
+     * Copy data in this mof to the incomplete mof.
+     * @param incompletePart incompleteMof
+     */
+    public void copyToIncompletePart(MOFPart incompletePart) {
+        incompletePart.partcels = this.partcels;
+        incompletePart.hilites = this.hilites;
+        incompletePart.collprim = this.collprim;
+        incompletePart.matrix = this.matrix;
+        incompletePart.flipbook = this.flipbook;
+        incompletePart.verticeCount = this.verticeCount;
+        incompletePart.normalCount = this.normalCount;
+        if (getParent().hasTextureAnimation())
+            throw new RuntimeException("Texture animation cannot be copied to an incomplete MOF right now!"); // It is believed this wouldn't work in the retail game either.
     }
 }
