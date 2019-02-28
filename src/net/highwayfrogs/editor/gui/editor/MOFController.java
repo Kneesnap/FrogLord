@@ -178,6 +178,7 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private ComboBox<Integer> animationSelector;
 
         private List<Node> toggleNodes = new ArrayList<>();
+        private List<Node> playNodes = new ArrayList<>();
 
         // Animation data.
         private int framesPerSecond = 20;
@@ -191,6 +192,7 @@ public class MOFController extends EditorController<MOFHolder> {
         @Override
         public void initialize(URL location, ResourceBundle resources) {
             toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, btnNext, btnLast));
+            playNodes.addAll(Arrays.asList(playButton, btnLast, frameLabel, btnNext));
 
             playButton.setOnAction(evt -> {
                 boolean newState = !isAnimationPlaying();
@@ -249,7 +251,10 @@ public class MOFController extends EditorController<MOFHolder> {
             }));
 
             animationSelector.getSelectionModel().select(0); // Automatically selects no animation.
-            playButton.setDisable(!getHolder().asStaticFile().hasTextureAnimation()); // Disable playing non-existing animation.
+
+            boolean disableState = !getHolder().asStaticFile().hasTextureAnimation();
+            for (Node node : playNodes)
+                node.setDisable(disableState); // Disable playing non-existing animation.
 
             updateTempUI();
             modelName.setText(getHolder().getFileEntry().getDisplayName());
@@ -274,7 +279,11 @@ public class MOFController extends EditorController<MOFHolder> {
         public void setAnimation(int newAnimation) {
             controller.getMofMesh().setAction(newAnimation);
             updateFrameText();
-            playButton.setDisable(newAnimation == -1 && !getHolder().asStaticFile().hasTextureAnimation());
+
+            // Toggle UI controls for playing.
+            boolean disableState = newAnimation == -1 && !getHolder().asStaticFile().hasTextureAnimation();
+            for (Node node : playNodes)
+                node.setDisable(disableState); // Disable playing non-existing animation.
         }
 
         /**
