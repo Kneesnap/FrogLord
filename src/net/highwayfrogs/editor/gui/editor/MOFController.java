@@ -118,8 +118,10 @@ public class MOFController extends EditorController<MOFHolder> {
         // Input (key) event processing.
         mofScene.setOnKeyPressed(event -> {
             // Exit the viewer.
-            if (event.getCode() == KeyCode.ESCAPE)
+            if (event.getCode() == KeyCode.ESCAPE) {
+                getUiController().stopPlaying();
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
+            }
 
             // Toggle wireframe mode.
             if (event.getCode() == KeyCode.X)
