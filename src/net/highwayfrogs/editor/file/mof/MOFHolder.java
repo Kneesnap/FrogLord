@@ -210,11 +210,6 @@ public class MOFHolder extends GameFile {
             return;
         }
 
-        if (isIncomplete()) {
-            System.out.println("Cannot export incomplete MOF.");
-            return;
-        }
-
         setVloFile(vlo);
         FileUtils3D.exportMofToObj(asStaticFile(), folder, vlo);
     }
