@@ -5,7 +5,6 @@ import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
@@ -141,7 +140,7 @@ public class WADFile extends GameFile {
             for (WADEntry wadEntry : getFiles()) {
                 GameFile file = wadEntry.getFile();
                 if (file instanceof MOFHolder)
-                    ((MOFHolder) file).exportObject(folder, vlo, Utils.stripExtension(wadEntry.getFileEntry().getDisplayName()));
+                    ((MOFHolder) file).exportObject(folder, vlo);
             }
         }, true);
     }

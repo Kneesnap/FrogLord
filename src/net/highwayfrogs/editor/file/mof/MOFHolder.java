@@ -5,7 +5,6 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.NameBank;
@@ -19,6 +18,8 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.MOFController;
+import net.highwayfrogs.editor.utils.FileUtils3D;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.util.Arrays;
@@ -200,11 +201,10 @@ public class MOFHolder extends GameFile {
 
     /**
      * Export this model to .obj
-     * @param folder    The folder to export to.
-     * @param vlo       The graphics pack to export.
-     * @param cleanName The clean file name.
+     * @param folder The folder to export to.
+     * @param vlo    The graphics pack to export.
      */
-    public void exportObject(File folder, VLOArchive vlo, String cleanName) {
+    public void exportObject(File folder, VLOArchive vlo) {
         if (isDummy()) {
             System.out.println("Cannot export dummy MOF.");
             return;
@@ -216,6 +216,6 @@ public class MOFHolder extends GameFile {
         }
 
         setVloFile(vlo);
-        asStaticFile().exportObject(folder, vlo, cleanName);
+        FileUtils3D.exportMofToObj(asStaticFile(), folder, vlo);
     }
 }
