@@ -15,12 +15,16 @@ import java.util.List;
 @Getter
 public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
     private List<T> dataBlockBodies = new ArrayList<>();
-    private OffsetType offsetType;
     private int invalidBodies;
+
+    private transient OffsetType offsetType;
+    private transient MisfitModel3DObject parent;
+
     private static final short FLAGS = 0x00;
 
-    public MMDataBlockHeader(OffsetType type) {
+    public MMDataBlockHeader(OffsetType type, MisfitModel3DObject parent) {
         this.offsetType = type;
+        this.parent = parent;
     }
 
     @Override
@@ -33,7 +37,7 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
             for (int i = 0; i < elementCount; i++) {
                 int elementSize = reader.readInt(); // Keep this.
                 int readGoal = (reader.getIndex() + elementSize);
-                MMDataBlockBody body = getOffsetType().makeNew();
+                MMDataBlockBody body = getOffsetType().makeNew(getParent());
                 body.load(reader);
                 if (reader.getIndex() != readGoal) {
                     System.out.println("[A/" + this.dataBlockBodies.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementSize + ", " + elementCount + ")");
@@ -46,7 +50,7 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
             int elementSize = reader.readInt(); // Keep this.
             for (int i = 0; i < elementCount; i++) {
                 int readGoal = (reader.getIndex() + elementSize);
-                MMDataBlockBody body = getOffsetType().makeNew();
+                MMDataBlockBody body = getOffsetType().makeNew(getParent());
                 body.load(reader);
                 if (reader.getIndex() != readGoal) {
                     System.out.println("[B/" + this.dataBlockBodies.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementCount + ")");

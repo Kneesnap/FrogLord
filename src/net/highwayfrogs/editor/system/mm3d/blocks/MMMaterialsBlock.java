@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 
 /**
  * Created by Kneesnap on 2/28/2019.
@@ -18,6 +19,10 @@ public class MMMaterialsBlock extends MMDataBlockBody {
     private float[] specular = new float[4];
     private float[] emissive = new float[4];
     private float shininess;
+
+    public MMMaterialsBlock(MisfitModel3DObject parent) {
+        super(parent);
+    }
 
     @Override
     public void load(DataReader reader) {

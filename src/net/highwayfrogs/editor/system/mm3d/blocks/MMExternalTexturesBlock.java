@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 
 /**
  * Contains information about external textures.
@@ -15,6 +16,10 @@ public class MMExternalTexturesBlock extends MMDataBlockBody {
     private String path; // File path to texture relative to model (directory separator is backslash)
 
     private static final String SEPARATOR = "\\";
+
+    public MMExternalTexturesBlock(MisfitModel3DObject parent) {
+        super(parent);
+    }
 
     @Override
     public void load(DataReader reader) {

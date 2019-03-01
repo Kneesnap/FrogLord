@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 
 /**
  * Holds ascii metadata.
@@ -13,6 +14,10 @@ import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 public class MMMetaDataBlock extends MMDataBlockBody {
     private String key;
     private String value;
+
+    public MMMetaDataBlock(MisfitModel3DObject parent) {
+        super(parent);
+    }
 
     @Override
     public void load(DataReader reader) {

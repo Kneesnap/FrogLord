@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 
 /**
  * Represents a vertice.
@@ -20,6 +21,10 @@ public class MMVerticeBlock extends MMDataBlockBody {
     public static final int FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
     public static final int FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
     public static final int FLAG_FREE_VERTEX = Constants.BIT_FLAG_2; // Set if vertex does not have to be connected to a face (don't auto-delete when face is deleted)
+
+    public MMVerticeBlock(MisfitModel3DObject parent) {
+        super(parent);
+    }
 
     @Override
     public void load(DataReader reader) {

@@ -5,7 +5,6 @@ import lombok.Getter;
 import net.highwayfrogs.editor.system.mm3d.blocks.*;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * A registry of different offset types.
@@ -39,7 +38,7 @@ public enum OffsetType {
     TEXTURE_COORDINATES(0x8121, MMTextureCoordinatesBlock::new, MisfitModel3DObject::getTextureCoordinates);
 
     private final int typeCode;
-    private final Supplier<? extends MMDataBlockBody> maker;
+    private final Function<MisfitModel3DObject, ? extends MMDataBlockBody> maker;
     private final Function<MisfitModel3DObject, MMDataBlockHeader<?>> finder;
 
     /**
@@ -62,10 +61,10 @@ public enum OffsetType {
      * Make a new data body instance.
      * @return new
      */
-    public MMDataBlockBody makeNew() {
+    public MMDataBlockBody makeNew(MisfitModel3DObject object) {
         if (maker == null)
             throw new RuntimeException(name() + " is not a supported data block type yet.");
-        return maker.get();
+        return maker.apply(object);
     }
 
     /**

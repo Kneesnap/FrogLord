@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.system.mm3d.blocks;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 
 /**
  * Holds texture coordinate information.
@@ -13,6 +14,10 @@ public class MMTextureCoordinatesBlock extends MMDataBlockBody {
     private long triangle; // Triangle for this texture coordinate set.
     private float[] xCoordinates = new float[3]; // Indexed by v1, v2, v3.
     private float[] yCoordinates = new float[3]; // Indexed by v1, v2, v3.
+
+    public MMTextureCoordinatesBlock(MisfitModel3DObject parent) {
+        super(parent);
+    }
 
     @Override
     public void load(DataReader reader) {

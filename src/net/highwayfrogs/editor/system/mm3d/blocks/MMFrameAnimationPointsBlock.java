@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,10 @@ public class MMFrameAnimationPointsBlock extends MMDataBlockBody {
     private long animIndex; // Index of frame animation.
     private long frameCount; // Number of frames that follow.
     private List<FrameAnimationPoint> points = new ArrayList<>();
+
+    public MMFrameAnimationPointsBlock(MisfitModel3DObject parent) {
+        super(parent);
+    }
 
     @Override
     public void load(DataReader reader) {

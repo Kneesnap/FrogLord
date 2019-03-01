@@ -20,24 +20,24 @@ import java.util.Map;
  * Represents a mm3d file.
  * Format Version: 1.6
  * Specification: http://www.misfitcode.com/misfitmodel3d/olh_mm3dformat.html
- * Created by Kneesnap on 2/28/2019. TODO: Bodies should have access to the parent model.
+ * Created by Kneesnap on 2/28/2019.
  */
 @Getter
 public class MisfitModel3DObject extends GameObject {
     private short modelFlags;
     private List<MMDataBlockHeader<?>> segments = new ArrayList<>();
-    private MMDataBlockHeader<MMExternalTexturesBlock> externalTextures = new MMDataBlockHeader<>(OffsetType.EXTERNAL_TEXTURES);
-    private MMDataBlockHeader<MMExternalTexturesBlock> frameAnimationPoints = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATION_POINTS);
-    private MMDataBlockHeader<MMExternalTexturesBlock> frameAnimations = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATIONS);
-    private MMDataBlockHeader<MMExternalTexturesBlock> materials = new MMDataBlockHeader<>(OffsetType.MATERIALS);
-    private MMDataBlockHeader<MMExternalTexturesBlock> metadata = new MMDataBlockHeader<>(OffsetType.META_DATA);
-    private MMDataBlockHeader<MMExternalTexturesBlock> smoothnessAngles = new MMDataBlockHeader<>(OffsetType.SMOOTHNESS_ANGLES);
-    private MMDataBlockHeader<MMExternalTexturesBlock> textureCoordinates = new MMDataBlockHeader<>(OffsetType.TEXTURE_COORDINATES);
-    private MMDataBlockHeader<MMExternalTexturesBlock> textureProjectionTriangles = new MMDataBlockHeader<>(OffsetType.TEXTURE_PROJECTIONS_TRIANGLES);
-    private MMDataBlockHeader<MMExternalTexturesBlock> triangles = new MMDataBlockHeader<>(OffsetType.TRIANGLES);
-    private MMDataBlockHeader<MMExternalTexturesBlock> groups = new MMDataBlockHeader<>(OffsetType.GROUPS);
-    private MMDataBlockHeader<MMExternalTexturesBlock> normals = new MMDataBlockHeader<>(OffsetType.TRIANGLE_NORMALS);
-    private MMDataBlockHeader<MMExternalTexturesBlock> vertices = new MMDataBlockHeader<>(OffsetType.VERTICES);
+    private MMDataBlockHeader<MMExternalTexturesBlock> externalTextures = new MMDataBlockHeader<>(OffsetType.EXTERNAL_TEXTURES, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> frameAnimationPoints = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATION_POINTS, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> frameAnimations = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATIONS, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> materials = new MMDataBlockHeader<>(OffsetType.MATERIALS, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> metadata = new MMDataBlockHeader<>(OffsetType.META_DATA, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> smoothnessAngles = new MMDataBlockHeader<>(OffsetType.SMOOTHNESS_ANGLES, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> textureCoordinates = new MMDataBlockHeader<>(OffsetType.TEXTURE_COORDINATES, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> textureProjectionTriangles = new MMDataBlockHeader<>(OffsetType.TEXTURE_PROJECTIONS_TRIANGLES, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> triangles = new MMDataBlockHeader<>(OffsetType.TRIANGLES, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> groups = new MMDataBlockHeader<>(OffsetType.GROUPS, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> normals = new MMDataBlockHeader<>(OffsetType.TRIANGLE_NORMALS, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> vertices = new MMDataBlockHeader<>(OffsetType.VERTICES, this);
 
     private static final String SIGNATURE = "MISFIT3D";
     private static final short MAJOR_VERSION = 0x01;

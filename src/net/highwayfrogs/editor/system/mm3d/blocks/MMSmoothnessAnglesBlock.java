@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 
 /**
  * Holds smoothness angles.
@@ -13,6 +14,10 @@ import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 public class MMSmoothnessAnglesBlock extends MMDataBlockBody {
     private long groupIndex; // Index into group array.
     private short angle; // Maximum angle (in degrees) to use in smoothing normals. (0 - 180)
+
+    public MMSmoothnessAnglesBlock(MisfitModel3DObject parent) {
+        super(parent);
+    }
 
     @Override
     public void load(DataReader reader) {

@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.system.mm3d;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -8,7 +10,10 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * A general data block body type.
  * Created by Kneesnap on 2/28/2019.
  */
+@Getter
+@AllArgsConstructor
 public abstract class MMDataBlockBody extends GameObject {
+    private MisfitModel3DObject parent;
 
     /**
      * Reads a float array from a reader.
