@@ -13,8 +13,8 @@ import java.util.List;
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
-public class MMDataBlockHeader extends GameObject {
-    private List<MMDataBlockBody> dataBlockBodies = new ArrayList<>();
+public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
+    private List<T> dataBlockBodies = new ArrayList<>();
     private OffsetType offsetType;
     private int invalidBodies;
     private static final short FLAGS = 0x00;
@@ -24,6 +24,7 @@ public class MMDataBlockHeader extends GameObject {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void load(DataReader reader) {
         reader.skipShort();
         long elementCount = reader.readUnsignedIntAsLong();
@@ -39,7 +40,7 @@ public class MMDataBlockHeader extends GameObject {
                     this.invalidBodies++;
                     continue;
                 }
-                this.dataBlockBodies.add(body);
+                this.dataBlockBodies.add((T) body);
             }
         } else if (getOffsetType().isTypeB()) {
             int elementSize = reader.readInt(); // Keep this.
@@ -52,7 +53,7 @@ public class MMDataBlockHeader extends GameObject {
                     this.invalidBodies++;
                     continue;
                 }
-                this.dataBlockBodies.add(body);
+                this.dataBlockBodies.add((T) body);
             }
         }
     }
