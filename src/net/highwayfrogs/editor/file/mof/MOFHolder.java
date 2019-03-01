@@ -215,6 +215,7 @@ public class MOFHolder extends GameFile {
             return;
         }
 
+        setVloFile(vlo);
         asStaticFile().exportObject(folder, vlo, cleanName);
     }
 }

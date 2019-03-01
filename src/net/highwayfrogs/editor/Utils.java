@@ -39,6 +39,7 @@ import java.util.zip.CRC32;
 @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "unused"})
 public class Utils {
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
+    private static final ByteBuffer FLOAT_BUFFER = ByteBuffer.allocate(Constants.FLOAT_SIZE).order(ByteOrder.LITTLE_ENDIAN);
     private static final CRC32 crc32 = new CRC32();
     private static final File[] EMPTY_FILE_ARRAY = new File[0];
     private static final Map<BufferedImage, TextureCache> imageCacheMap = new HashMap<>();
@@ -74,6 +75,26 @@ public class Utils {
      */
     public static int readIntFromBytes(byte[] data, int startIndex) {
         return readNumberFromBytes(data, Constants.INTEGER_SIZE, startIndex);
+    }
+
+    /**
+     * Read a float from a byte array.
+     * @param data The data to read the float from.
+     * @return floatValue
+     */
+    public static float readFloatFromBytes(byte[] data) {
+        return ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+    }
+
+    /**
+     * Turn a float into a byte array, and return it.
+     * @param value The float to convert.
+     * @return byteArray
+     */
+    public static byte[] writeFloatToBytes(float value) {
+        FLOAT_BUFFER.clear();
+        FLOAT_BUFFER.putFloat(value);
+        return FLOAT_BUFFER.array();
     }
 
     /**

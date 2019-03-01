@@ -133,6 +133,15 @@ public class DataReader {
     }
 
     /**
+     * Read the next bytes as a float32.
+     * Reads four bytes.
+     * @return floatValue
+     */
+    public float readFloat() {
+        return Utils.readFloatFromBytes(readBytes(Constants.FLOAT_SIZE));
+    }
+
+    /**
      * Read the next bytes as an integer.
      * Reads four bytes.
      * @return intValue

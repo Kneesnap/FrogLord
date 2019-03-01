@@ -152,6 +152,15 @@ public class DataWriter {
     }
 
     /**
+     * Write a float value to the receiver.
+     * @param value The integer to write.
+     */
+    public void writeFloat(float value) {
+        INT_BUFFER.clear();
+        writeBytes(INT_BUFFER.order(getEndian()).putFloat(value).array());
+    }
+
+    /**
      * Write an integer to the receiver.
      * @param value The integer to write.
      */
