@@ -31,7 +31,7 @@ public class MMFrameAnimationPointsBlock extends MMDataBlockBody {
         this.animIndex = reader.readUnsignedIntAsLong();
         this.frameCount = reader.readUnsignedIntAsLong();
 
-        long totalPoints = frameCount; //TODO: Supposedly this is multiplied by POINT_COUNT?
+        long totalPoints = frameCount * getParent().getPoints().size();
         for (long i = 0; i < totalPoints; i++) {
             FrameAnimationPoint point = new FrameAnimationPoint();
             point.load(reader);

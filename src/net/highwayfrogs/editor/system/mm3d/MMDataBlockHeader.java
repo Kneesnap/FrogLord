@@ -81,4 +81,12 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
             writer.writeAddressAt(writeSizeTo, (writer.getIndex() - structStart) / this.dataBlockBodies.size());
         }
     }
+
+    /**
+     * Get the amount of blocks this is holding on to.
+     * @return size
+     */
+    public int size() {
+        return getDataBlockBodies().size();
+    }
 }

@@ -35,7 +35,7 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
 
         int totalFrameCount = reader.readInt(); // The sum of every animation's frame count.
         for (int i = 0; i < totalFrameCount; i++) {
-            MMAnimationFrame frame = new MMAnimationFrame(0); //TODO: Pass vertex count.
+            MMAnimationFrame frame = new MMAnimationFrame(getParent().getVertices().size());
             frame.load(reader);
             this.frames.add(frame);
         }

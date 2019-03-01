@@ -38,6 +38,7 @@ public class MisfitModel3DObject extends GameObject {
     private MMDataBlockHeader<MMExternalTexturesBlock> groups = new MMDataBlockHeader<>(OffsetType.GROUPS, this);
     private MMDataBlockHeader<MMExternalTexturesBlock> normals = new MMDataBlockHeader<>(OffsetType.TRIANGLE_NORMALS, this);
     private MMDataBlockHeader<MMExternalTexturesBlock> vertices = new MMDataBlockHeader<>(OffsetType.VERTICES, this);
+    private MMDataBlockHeader<MMExternalTexturesBlock> points = new MMDataBlockHeader<>(OffsetType.POINTS, this);
 
     private static final String SIGNATURE = "MISFIT3D";
     private static final short MAJOR_VERSION = 0x01;

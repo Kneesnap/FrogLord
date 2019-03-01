@@ -31,7 +31,7 @@ public enum OffsetType {
     TRIANGLE_NORMALS(0x8026, MMTriangleNormalsBlock::new, MisfitModel3DObject::getNormals),
     JOINTS(0x8041, null, null),
     JOINT_VERTICES(0x8046, null, null),
-    POINTS(0x8061, null, null), //TODO
+    POINTS(0x8061, MMPointsBlock::new, MisfitModel3DObject::getPoints),
     SMOOTHNESS_ANGLES(0x8106, MMSmoothnessAnglesBlock::new, MisfitModel3DObject::getSmoothnessAngles),
     WEIGHTED_INFLUENCES(0x8146, null, null),
     TEXTURE_PROJECTIONS(0x8168, null, null), // (Sphere / cylinder map)

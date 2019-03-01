@@ -221,6 +221,16 @@ public class DataReader {
 
     /**
      * Read bytes from the source, respecting endian.
+     * @return readBytes
+     */
+    public byte[] readBytes(byte[] destination) {
+        for (int i = 0; i < destination.length; i++)
+            destination[i] = readByte();
+        return destination;
+    }
+
+    /**
+     * Read bytes from the source, respecting endian.
      * @param amount The amount of bytes to read.
      * @return readBytes
      */
