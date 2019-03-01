@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.gui.editor.SaveController;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +39,8 @@ public class GUIMain extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        MisfitModel3DObject.performTest();
+
         MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();
 

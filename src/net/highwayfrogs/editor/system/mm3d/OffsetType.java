@@ -13,17 +13,17 @@ import java.util.function.Supplier;
 @Getter
 @AllArgsConstructor
 public enum OffsetType {
-    META_DATA(0x1001, null),
+    META_DATA(0x1001, MMMetaDataBlock::new),
     GROUPS(0x0101, MMTriangleGroupsBlock::new),
-    EMBEDDED_TEXTURES(0x141, null),
+    EMBEDDED_TEXTURES(0x141, null), // Not implemented in the actual mm3d yet.
     EXTERNAL_TEXTURES(0x0142, MMExternalTexturesBlock::new),
     MATERIALS(0x0161, MMMaterialsBlock::new),
-    TEXTURE_PROJECTIONS_TRIANGLES(0x16C, null),
+    TEXTURE_PROJECTIONS_TRIANGLES(0x16C, MMTextureProjectionTrianglesBlock::new),
     CANVAS_BACKGROUND_IMAGES(0x0191, null),
     SKELETAL_ANIMATIONS(0x0301, null),
-    FRAME_ANIMATIONS(0x321, null),
-    FRAME_ANIMATION_POINTS(0x326, null),
-    FRAME_RELATIVE_ANIMATIONS(0x341, null),
+    FRAME_ANIMATIONS(0x321, MMFrameAnimationsBlock::new),
+    FRAME_ANIMATION_POINTS(0x326, MMFrameAnimationPointsBlock::new),
+    FRAME_RELATIVE_ANIMATIONS(0x341, null), // Not implemented in the actual mm3d yet.
     END_OF_FILE(0x3FFF, null),
 
     VERTICES(0x8001, MMVerticeBlock::new),

@@ -19,7 +19,7 @@ import java.util.Map;
  * Represents a mm3d file.
  * Format Version: 1.6
  * Specification: http://www.misfitcode.com/misfitmodel3d/olh_mm3dformat.html
- * Created by Kneesnap on 2/28/2019.
+ * Created by Kneesnap on 2/28/2019. TODO: Allow accessing headers via fields. Upon saving, determine which should and shouldn't be saved.
  */
 @Getter
 public class MisfitModel3DObject extends GameObject {
