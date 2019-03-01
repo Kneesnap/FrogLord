@@ -28,7 +28,6 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void load(DataReader reader) {
         reader.skipShort();
         long elementCount = reader.readUnsignedIntAsLong();
@@ -37,27 +36,25 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
             for (int i = 0; i < elementCount; i++) {
                 int elementSize = reader.readInt(); // Keep this.
                 int readGoal = (reader.getIndex() + elementSize);
-                MMDataBlockBody body = getOffsetType().makeNew(getParent());
+                T body = addNewElement();
                 body.load(reader);
                 if (reader.getIndex() != readGoal) {
                     System.out.println("[A/" + this.dataBlockBodies.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementSize + ", " + elementCount + ")");
+                    getDataBlockBodies().remove(body); // It's invalid.
                     this.invalidBodies++;
-                    continue;
                 }
-                this.dataBlockBodies.add((T) body);
             }
         } else if (getOffsetType().isTypeB()) {
             int elementSize = reader.readInt(); // Keep this.
             for (int i = 0; i < elementCount; i++) {
                 int readGoal = (reader.getIndex() + elementSize);
-                MMDataBlockBody body = getOffsetType().makeNew(getParent());
+                T body = addNewElement();
                 body.load(reader);
                 if (reader.getIndex() != readGoal) {
                     System.out.println("[B/" + this.dataBlockBodies.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementCount + ")");
+                    getDataBlockBodies().remove(body); // It's invalid.
                     this.invalidBodies++;
-                    continue;
                 }
-                this.dataBlockBodies.add((T) body);
             }
         }
     }
@@ -88,5 +85,16 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
      */
     public int size() {
         return getDataBlockBodies().size();
+    }
+
+    /**
+     * Add a new element to this header.
+     * @return newElement
+     */
+    @SuppressWarnings("unchecked")
+    public T addNewElement() {
+        T newElement = (T) getOffsetType().makeNew(getParent());
+        getDataBlockBodies().add(newElement);
+        return newElement;
     }
 }
