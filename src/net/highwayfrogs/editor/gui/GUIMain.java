@@ -10,7 +10,7 @@ import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.config.Config;

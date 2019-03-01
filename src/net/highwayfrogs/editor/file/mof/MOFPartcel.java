@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;

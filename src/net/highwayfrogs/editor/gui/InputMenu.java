@@ -8,7 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
 import java.util.ResourceBundle;

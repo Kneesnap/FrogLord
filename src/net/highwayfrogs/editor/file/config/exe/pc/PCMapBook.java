@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;

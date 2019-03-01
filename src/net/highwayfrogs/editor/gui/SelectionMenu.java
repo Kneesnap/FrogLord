@@ -13,7 +13,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import lombok.AllArgsConstructor;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
 import java.net.URL;

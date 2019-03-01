@@ -5,7 +5,7 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.EditorController;

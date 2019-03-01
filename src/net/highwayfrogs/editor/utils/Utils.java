@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor;
+package net.highwayfrogs.editor.utils;
 
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
@@ -14,6 +14,7 @@ import javafx.stage.*;
 import javafx.stage.Window;
 import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.awt.*;

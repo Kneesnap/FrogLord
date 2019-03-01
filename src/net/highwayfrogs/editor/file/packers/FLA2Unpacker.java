@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.packers;
 
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.system.ByteArrayWrapper;
 
 /**

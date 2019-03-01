@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;

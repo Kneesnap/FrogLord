@@ -4,7 +4,7 @@ import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.standard.Vector;

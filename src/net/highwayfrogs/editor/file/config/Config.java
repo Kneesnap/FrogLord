@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.config;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;

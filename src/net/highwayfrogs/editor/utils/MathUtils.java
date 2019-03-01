@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor;
+package net.highwayfrogs.editor.utils;
 
 /**
  * Math related utility functions.

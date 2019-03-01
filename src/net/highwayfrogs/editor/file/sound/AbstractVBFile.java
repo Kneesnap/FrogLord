@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file.sound;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.gui.editor.VABController;

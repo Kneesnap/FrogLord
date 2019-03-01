@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.file.writer;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor;
+package net.highwayfrogs.editor.utils;
 
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.WADFile;

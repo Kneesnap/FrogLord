@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.sound.prototype;
 
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.GameSound;
 import net.highwayfrogs.editor.file.sound.PCVBFile;

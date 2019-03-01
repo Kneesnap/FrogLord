@@ -13,7 +13,7 @@ import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 import javafx.util.Callback;
 import lombok.Getter;
-import net.highwayfrogs.editor.MathUtils;
+import net.highwayfrogs.editor.utils.MathUtils;
 
 /**
  * Specialized camera class to allow FPS-like movement within the map editor.

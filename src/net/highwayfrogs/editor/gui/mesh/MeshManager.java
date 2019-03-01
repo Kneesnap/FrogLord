@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.gui.mesh;
 import javafx.collections.ObservableFloatArray;
 import javafx.collections.ObservableIntegerArray;
 import lombok.Getter;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.map.view.FrogMesh;
 
 import java.util.LinkedList;

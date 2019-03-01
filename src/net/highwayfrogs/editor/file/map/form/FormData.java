@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file.map.form;
 import javafx.scene.control.CheckBox;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.grid.GridSquareFlag;
 import net.highwayfrogs.editor.file.reader.DataReader;

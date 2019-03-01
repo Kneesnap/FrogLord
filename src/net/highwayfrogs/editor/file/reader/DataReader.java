@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.reader;
 
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

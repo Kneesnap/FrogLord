@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.mof.MOFBase;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;

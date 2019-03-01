@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.config;
 
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
 import java.util.function.BiFunction;

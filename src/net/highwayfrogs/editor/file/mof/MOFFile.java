@@ -4,7 +4,7 @@ import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;

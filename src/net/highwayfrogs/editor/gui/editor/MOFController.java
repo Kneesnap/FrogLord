@@ -24,7 +24,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;

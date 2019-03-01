@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file.writer;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

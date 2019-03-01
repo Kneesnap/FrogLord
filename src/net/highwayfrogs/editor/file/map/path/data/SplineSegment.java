@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
-import net.highwayfrogs.editor.Utils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathSegment;
