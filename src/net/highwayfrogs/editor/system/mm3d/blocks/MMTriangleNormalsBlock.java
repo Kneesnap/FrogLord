@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 
 /**
+ * Holds the normals for each face of the model.
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter

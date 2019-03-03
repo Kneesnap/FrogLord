@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyGouraud;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.MOFPartcel;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
@@ -18,6 +19,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -288,5 +290,24 @@ public class FileUtils3D {
         }
 
         System.out.println("Export complete.");
+    }
+
+    /**
+     * Convert a MOF to a MisfitModel3D.
+     * TODO: Support vertices + faces.
+     * TODO: Support textures. (and uvs)
+     * TODO: Support normals.
+     * TODO: Support texture animations.
+     * TODO: Support lighting.
+     * TODO: Support bounding box.
+     * TODO: Support flipbook animation.
+     * TODO: Other missing things like collprim and matrix.
+     * @param holder The mof to convert.
+     * @return misfit3d
+     */
+    public static MisfitModel3DObject convertMofToMisfitModel(MOFHolder holder) {
+        MisfitModel3DObject model = new MisfitModel3DObject();
+
+        return model;
     }
 }

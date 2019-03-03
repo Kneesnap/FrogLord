@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.system.mm3d;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMExternalTexturesBlock;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -122,7 +122,7 @@ public class MisfitModel3DObject extends GameObject {
     }
 
     public static void performTest() throws IOException {
-        File birdInput = new File("debug\\BIRD_REAL.mm3d");
+        File birdInput = new File("debug\\BIRD_MODIFIED.mm3d");
         File birdOutput = new File("debug\\BIRD_FAKE.mm3d");
 
         DataReader reader = new DataReader(new FileSource(birdInput));

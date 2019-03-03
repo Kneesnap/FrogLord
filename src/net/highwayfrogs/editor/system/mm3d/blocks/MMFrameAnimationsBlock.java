@@ -12,8 +12,8 @@ import java.util.List;
 
 /**
  * The frame animations section describes the frame animations in the model.
- * It includes all frames of all frame animations.
- * This mostly consists of animation data and vertex positions for each animation frame (each frame is vertex positions for every vertex in the model).
+ * One object is a single animation.
+ * It contains data for each frame.
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
@@ -41,12 +41,20 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
         }
     }
 
+    /**
+     * Return the amount of frames in this animation.
+     * @return frameCount
+     */
+    public int getFrameCount() {
+        return this.frames.size();
+    }
+
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedShort(this.flags);
         writer.writeTerminatorString(this.name);
         writer.writeFloat(this.framesPerSecond);
-        writer.writeInt(this.frames.size());
+        writer.writeInt(getFrameCount());
         this.frames.forEach(frame -> frame.save(writer));
     }
 

@@ -17,7 +17,7 @@ import java.util.List;
 @Getter
 public class MMFrameAnimationPointsBlock extends MMDataBlockBody {
     private int flags;
-    private long animIndex; // Index of frame animation.
+    private long animIndex; // Index of frame animation this applies to.
     private long frameCount; // Number of frames that follow.
     private List<FrameAnimationPoint> points = new ArrayList<>();
 

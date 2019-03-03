@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Equivalent to MOF_PART, I think.
+ * A group of triangles. Used to determine material.
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter

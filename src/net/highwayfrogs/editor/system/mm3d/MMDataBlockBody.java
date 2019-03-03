@@ -16,6 +16,15 @@ public abstract class MMDataBlockBody extends GameObject {
     private MisfitModel3DObject parent;
 
     /**
+     * Gets the index of this block body data.
+     * @return blockIndex
+     */
+    @SuppressWarnings("SuspiciousMethodCalls")
+    public int getBlockIndex() {
+        return getParent().getSegments().indexOf(this);
+    }
+
+    /**
      * Reads a float array from a reader.
      */
     public static void readFloatArray(DataReader reader, float[] readTo) {
