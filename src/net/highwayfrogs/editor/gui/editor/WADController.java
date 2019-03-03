@@ -6,13 +6,13 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -44,7 +44,7 @@ public class WADController extends EditorController<WADFile> {
     private void updateEntryText() {
         entryList.setCellFactory(null);
         entryList.setCellFactory(param ->
-                new AbstractAttachmentCell<>((wadEntry, index) -> wadEntry != null ? "[" + index + "/" + selectedEntry.getFileEntry().getLoadedId() + "] " + wadEntry.getDisplayName() : null));
+                new AbstractAttachmentCell<>((wadEntry, index) -> wadEntry != null ? "[" + index + "/" + wadEntry.getFileEntry().getLoadedId() + "] " + wadEntry.getDisplayName() : null));
     }
 
     @FXML
