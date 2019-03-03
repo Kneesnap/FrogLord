@@ -2,7 +2,11 @@
 
 ## What is FrogLord?
 FrogLord is a modding suite for Frogger (1997). It allows fans to create new levels, import 3D models, view unused content, and allow changing all game files.
-To use this tool, you must have a copy of the game.  
+To use this tool, you must have a copy of the game.
+
+## Screenshots:
+![MAP Viewer](https://i.imgur.com/R67Jhao.png)
+![MOF Viewer](https://i.imgur.com/dZJwhUm.png)
 
 ## Usage:
 Download: [here](https://github.com/Kneesnap/FrogLord/releases)  
@@ -20,10 +24,7 @@ Using the IntelliJ IDE, setting up FrogLord is very simple.
 3. Install the Lombok IntelliJ Plugin using the steps found [here](https://projectlombok.org/setup/intellij).
 
 Run FrogLord: ``Run > Run 'FrogLord GUI'``  
-Create FrogLord.jar: ``Build > Build Artifacts... > FrogLord > Build``  
-
-## Screenshots:
-![Image Example](https://i.imgur.com/AcjSDkE.png)  
+Create FrogLord.jar: ``Build > Build Artifacts... > FrogLord > Build``
 
 ## Special Thanks:
  - Andy Eder (Frogger 2 Programmer, Significant FrogLord contributor)

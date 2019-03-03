@@ -10,7 +10,6 @@ import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.config.Config;
@@ -18,7 +17,7 @@ import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.gui.editor.SaveController;
-import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +38,7 @@ public class GUIMain extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        MisfitModel3DObject.performTest();
+        //MisfitModel3DObject.performTest();
 
         MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();
