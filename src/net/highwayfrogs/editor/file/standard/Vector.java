@@ -11,12 +11,24 @@ public interface Vector {
 
     public float getFloatZ();
 
+    default float getExportFloatX() {
+        return -getFloatX();
+    }
+
+    default float getExportFloatY() {
+        return -getFloatY();
+    }
+
+    default float getExportFloatZ() {
+        return getFloatZ();
+    }
+
     /**
      * Get this vector as a Wavefront-OBJ vertex command.
      * @return vertexCommandString
      */
     default String toOBJString() {
-        return "v " + -getFloatX() + " " + -getFloatY() + " " + getFloatZ();
+        return "v " + getExportFloatX() + " " + getExportFloatY() + " " + getExportFloatZ();
     }
 
     /**

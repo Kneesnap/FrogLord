@@ -30,4 +30,20 @@ public abstract class PSXGPUPrimitive extends GameObject {
      * @return entry
      */
     public abstract TextureEntry getEntry(TextureMap map);
+
+    /**
+     * Test if this face has 4 vertices.
+     * @return isQuadFace
+     */
+    public boolean isQuadFace() {
+        return getVerticeCount() == 4;
+    }
+
+    /**
+     * Test if this face has 3 vertices.
+     * @return triFace
+     */
+    public boolean isTriFace() {
+        return getVerticeCount() == 3;
+    }
 }

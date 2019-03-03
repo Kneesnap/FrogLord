@@ -20,6 +20,8 @@ import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMTriangleNormalsBlock;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMVerticeBlock;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -65,7 +67,7 @@ public class FileUtils3D {
         for (MOFPart part : staticMof.getParts()) {
             part.setTempVertexStart(verticeStart);
             objWriter.write("# Part " + (partCount++) + ":" + Constants.NEWLINE);
-            MOFPartcel partcel = part.getPartcels().get(0); // 0 is the animation frame.
+            MOFPartcel partcel = part.getStaticPartcel(); // 0 is the animation frame.
             verticeStart += partcel.getVertices().size();
 
             for (SVector vertex : partcel.getVertices())
@@ -294,7 +296,7 @@ public class FileUtils3D {
 
     /**
      * Convert a MOF to a MisfitModel3D.
-     * TODO: Support vertices + faces.
+     * TODO: Faces
      * TODO: Support textures. (and uvs)
      * TODO: Support normals.
      * TODO: Support texture animations.
@@ -307,6 +309,41 @@ public class FileUtils3D {
      */
     public static MisfitModel3DObject convertMofToMisfitModel(MOFHolder holder) {
         MisfitModel3DObject model = new MisfitModel3DObject();
+        MOFFile staticMof = holder.asStaticFile();
+        VLOArchive vloTable = holder.getVloFile();
+        Utils.verify(vloTable != null, "Unknown VLO Table for %s!", holder.getFileEntry().getDisplayName());
+
+        // Add Vertices.
+        for (MOFPart part : staticMof.getParts()) {
+            MOFPartcel partcel = part.getStaticPartcel();
+            for (SVector vertex : partcel.getVertices()) {
+                MMVerticeBlock mmVertice = model.getVertices().addNewElement();
+                mmVertice.setFlags(MMVerticeBlock.FLAG_FREE_VERTEX);
+                mmVertice.setX(vertex.getExportFloatX());
+                mmVertice.setY(vertex.getExportFloatY());
+                mmVertice.setZ(vertex.getExportFloatZ());
+            }
+        }
+
+        // Add Faces.
+        staticMof.forEachPolygon(model.getTriangleFaces()::addMofPolygon);
+
+        // Add normals.
+        for (int i = 0; i < model.getTriangleFaces().size(); i++) {
+            MMTriangleNormalsBlock normal = model.getNormals().addNewElement();
+            normal.setIndex(i);
+        }
+
+        /* UVs
+        for (MOFPolygon poly : allPolygons) {
+            if (poly instanceof MOFPolyTexture) {
+                MOFPolyTexture mofTex = (MOFPolyTexture) poly;
+                for (int i = mofTex.getUvs().length - 1; i >= 0; i--)
+                    objWriter.write(mofTex.getObjUVString(i) + Constants.NEWLINE);
+            }
+        }
+        */
+
 
         return model;
     }

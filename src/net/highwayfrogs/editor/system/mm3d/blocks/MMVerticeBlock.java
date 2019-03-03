@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.system.mm3d.blocks;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -12,6 +13,7 @@ import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
+@Setter
 public class MMVerticeBlock extends MMDataBlockBody {
     private int flags;
     private float x;

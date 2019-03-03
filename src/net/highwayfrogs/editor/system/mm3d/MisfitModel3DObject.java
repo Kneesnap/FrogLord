@@ -6,7 +6,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
-import net.highwayfrogs.editor.system.mm3d.blocks.MMExternalTexturesBlock;
+import net.highwayfrogs.editor.system.mm3d.blocks.*;
+import net.highwayfrogs.editor.system.mm3d.holders.MMTriangleFaceHolder;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -27,18 +28,18 @@ public class MisfitModel3DObject extends GameObject {
     private short modelFlags;
     private List<MMDataBlockHeader<?>> segments = new ArrayList<>();
     private MMDataBlockHeader<MMExternalTexturesBlock> externalTextures = new MMDataBlockHeader<>(OffsetType.EXTERNAL_TEXTURES, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> frameAnimationPoints = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATION_POINTS, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> frameAnimations = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATIONS, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> materials = new MMDataBlockHeader<>(OffsetType.MATERIALS, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> metadata = new MMDataBlockHeader<>(OffsetType.META_DATA, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> smoothnessAngles = new MMDataBlockHeader<>(OffsetType.SMOOTHNESS_ANGLES, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> textureCoordinates = new MMDataBlockHeader<>(OffsetType.TEXTURE_COORDINATES, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> textureProjectionTriangles = new MMDataBlockHeader<>(OffsetType.TEXTURE_PROJECTIONS_TRIANGLES, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> triangles = new MMDataBlockHeader<>(OffsetType.TRIANGLES, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> groups = new MMDataBlockHeader<>(OffsetType.GROUPS, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> normals = new MMDataBlockHeader<>(OffsetType.TRIANGLE_NORMALS, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> vertices = new MMDataBlockHeader<>(OffsetType.VERTICES, this);
-    private MMDataBlockHeader<MMExternalTexturesBlock> points = new MMDataBlockHeader<>(OffsetType.POINTS, this);
+    private MMDataBlockHeader<MMFrameAnimationPointsBlock> frameAnimationPoints = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATION_POINTS, this);
+    private MMDataBlockHeader<MMFrameAnimationsBlock> frameAnimations = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATIONS, this);
+    private MMDataBlockHeader<MMMaterialsBlock> materials = new MMDataBlockHeader<>(OffsetType.MATERIALS, this);
+    private MMDataBlockHeader<MMMetaDataBlock> metadata = new MMDataBlockHeader<>(OffsetType.META_DATA, this);
+    private MMDataBlockHeader<MMSmoothnessAnglesBlock> smoothnessAngles = new MMDataBlockHeader<>(OffsetType.SMOOTHNESS_ANGLES, this);
+    private MMDataBlockHeader<MMTextureCoordinatesBlock> textureCoordinates = new MMDataBlockHeader<>(OffsetType.TEXTURE_COORDINATES, this);
+    private MMDataBlockHeader<MMTextureProjectionTrianglesBlock> textureProjectionTriangles = new MMDataBlockHeader<>(OffsetType.TEXTURE_PROJECTIONS_TRIANGLES, this);
+    private MMTriangleFaceHolder triangleFaces = new MMTriangleFaceHolder(this);
+    private MMDataBlockHeader<MMTriangleGroupsBlock> groups = new MMDataBlockHeader<>(OffsetType.GROUPS, this);
+    private MMDataBlockHeader<MMTriangleNormalsBlock> normals = new MMDataBlockHeader<>(OffsetType.TRIANGLE_NORMALS, this);
+    private MMDataBlockHeader<MMVerticeBlock> vertices = new MMDataBlockHeader<>(OffsetType.VERTICES, this);
+    private MMDataBlockHeader<MMPointsBlock> points = new MMDataBlockHeader<>(OffsetType.POINTS, this);
 
     private static final String SIGNATURE = "MISFIT3D";
     private static final short MAJOR_VERSION = 0x01;
@@ -66,6 +67,8 @@ public class MisfitModel3DObject extends GameObject {
 
             if (type == OffsetType.END_OF_FILE)
                 break; // Reached end.
+
+            System.out.println("Reading: " + type.ordinal() + ", " + type.getTypeCode() + ", " + type.name());
 
             reader.jumpTemp(offsetAddress);
             MMDataBlockHeader<?> header = type.findHeader(this);

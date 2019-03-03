@@ -27,7 +27,7 @@ public enum OffsetType {
     END_OF_FILE(0x3FFF, null, null),
 
     VERTICES(0x8001, MMVerticeBlock::new, MisfitModel3DObject::getVertices),
-    TRIANGLES(0x8021, MMTriangleBlock::new, MisfitModel3DObject::getTriangles),
+    TRIANGLES(0x8021, MMTriangleFaceBlock::new, MisfitModel3DObject::getTriangleFaces),
     TRIANGLE_NORMALS(0x8026, MMTriangleNormalsBlock::new, MisfitModel3DObject::getNormals),
     JOINTS(0x8041, null, null),
     JOINT_VERTICES(0x8046, null, null),

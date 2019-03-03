@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.system.mm3d.blocks;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
@@ -11,6 +12,7 @@ import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
+@Setter
 public class MMTriangleNormalsBlock extends MMDataBlockBody {
     private long index; // Triangle index (0 based)
     private float[] v1Normals = new float[3];

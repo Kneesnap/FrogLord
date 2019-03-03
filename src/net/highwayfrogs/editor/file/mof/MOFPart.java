@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -267,6 +267,14 @@ public class MOFPart extends GameObject {
         }
 
         throw new IllegalArgumentException("This MOFPolygon is not registered, and therefore does not have an id!");
+    }
+
+    /**
+     * Gets a static partcel, the one which will not be affected by flipbook animations.
+     * @return mofPartcel
+     */
+    public MOFPartcel getStaticPartcel() {
+        return getPartcels().get(0);
     }
 
     /**

@@ -21,7 +21,7 @@ public abstract class MMDataBlockBody extends GameObject {
      */
     @SuppressWarnings("SuspiciousMethodCalls")
     public int getBlockIndex() {
-        return getParent().getSegments().indexOf(this);
+        return getParent().getSegments().indexOf(this); //TODO: Getting from wrong list.
     }
 
     /**
@@ -38,5 +38,21 @@ public abstract class MMDataBlockBody extends GameObject {
     public static void writeFloatArray(DataWriter writer, float[] toWrite) {
         for (float value : toWrite)
             writer.writeFloat(value);
+    }
+
+    /**
+     * Reads a long array from a reader.
+     */
+    public static void readUnsignedIntArray(DataReader reader, long[] readTo) {
+        for (int i = 0; i < readTo.length; i++)
+            readTo[i] = reader.readUnsignedIntAsLong();
+    }
+
+    /**
+     * Writes a long array to a writer.
+     */
+    public static void writeUnsignedIntArray(DataWriter writer, long[] toWrite) {
+        for (long value : toWrite)
+            writer.writeUnsignedInt(value);
     }
 }

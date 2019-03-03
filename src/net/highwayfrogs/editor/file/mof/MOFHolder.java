@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile;
@@ -16,8 +17,10 @@ import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.MOFController;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -204,6 +207,7 @@ public class MOFHolder extends GameFile {
      * @param folder The folder to export to.
      * @param vlo    The graphics pack to export.
      */
+    @SneakyThrows
     public void exportObject(File folder, VLOArchive vlo) {
         if (isDummy()) {
             System.out.println("Cannot export dummy MOF.");
@@ -212,5 +216,14 @@ public class MOFHolder extends GameFile {
 
         setVloFile(vlo);
         FileUtils3D.exportMofToObj(asStaticFile(), folder, vlo);
+
+        // Export mm3d too.
+        File saveTo = new File(folder, Utils.stripExtension(getFileEntry().getDisplayName()) + ".mm3d");
+        Utils.deleteFile(saveTo);
+
+        MisfitModel3DObject model = FileUtils3D.convertMofToMisfitModel(this);
+        DataWriter writer = new DataWriter(new FileReceiver(saveTo));
+        model.save(writer);
+        writer.closeReceiver();
     }
 }

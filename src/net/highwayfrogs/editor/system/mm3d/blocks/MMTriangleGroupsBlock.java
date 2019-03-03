@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.system.mm3d.blocks;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -15,9 +16,10 @@ import java.util.List;
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
+@Setter
 public class MMTriangleGroupsBlock extends MMDataBlockBody {
     private int flags;
-    private String name;
+    private String name = "";
     private List<Long> triangleIndices = new ArrayList<>();
     private short smoothness;
     private long material; // Index into material list, 0xFFFFFFFF = None.

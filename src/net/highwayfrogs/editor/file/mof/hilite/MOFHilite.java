@@ -2,12 +2,12 @@ package net.highwayfrogs.editor.file.mof.hilite;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
 
@@ -52,6 +52,6 @@ public class MOFHilite extends GameObject {
     }
 
     private List<SVector> getVertices() {
-        return getParent().getPartcels().get(0).getVertices();
+        return getParent().getStaticPartcel().getVertices();
     }
 }
