@@ -7,6 +7,5 @@ Editor Features:
  Some way of importing 3D Models.
 
  - GUI Editor:
-  Demo Editor
   PAL Editor
   Map Editor

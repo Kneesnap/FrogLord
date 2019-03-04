@@ -4,10 +4,11 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.editor.DemoController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +18,10 @@ import java.util.List;
  * Created by Kneesnap on 8/14/2018.
  */
 @Getter
+@Setter
 public class DemoFile extends GameFile {
-    private List<List<DemoAction>> frames = new ArrayList<>();
+    private DemoFrame[] frames = new DemoFrame[MAX_DEMO_FRAMES];
+    private int frameCount;
     private int startX;
     private int startZ;
 
@@ -29,41 +32,20 @@ public class DemoFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
-        int frameCount = reader.readInt();
+        this.frameCount = reader.readInt();
         this.startX = reader.readInt();
         this.startZ = reader.readInt();
-
-        for (int i = 0; i < frameCount; i++) {
-            byte actionId = reader.readByte();
-
-            List<DemoAction> actions = new ArrayList<>();
-            for (DemoAction action : DemoAction.values())
-                if (action.test(actionId))
-                    actions.add(action);
-
-            if (actions.isEmpty())
-                throw new RuntimeException("Unknown action for action id " + Utils.toHexString(actionId) + ".");
-
-            getFrames().add(actions);
-            if (actions.contains(DemoAction.STOP))
-                break;
-        }
+        for (int i = 0; i < MAX_DEMO_FRAMES; i++)
+            this.frames[i] = new DemoFrame(reader.readByte());
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeInt(getFrames().size());
-        writer.writeInt(getStartX());
-        writer.writeInt(getStartZ());
-
-        for (List<DemoAction> actions : getFrames()) {
-            byte result = 0;
-            for (DemoAction action : actions)
-                result |= action.getId();
-            writer.writeByte(result);
-        }
-
-        writer.writeTo(FILE_SIZE); // Jump to end of file.
+        writer.writeInt(this.frameCount);
+        writer.writeInt(this.startX);
+        writer.writeInt(this.startZ);
+        for (DemoFrame frame : this.frames)
+            writer.writeByte(frame.toByte());
     }
 
     @Override
@@ -73,31 +55,152 @@ public class DemoFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return null;
+        return loadEditor(new DemoController(), "demo", this);
+    }
+
+    @AllArgsConstructor
+    public static final class DemoFrame {
+        private byte frameByte;
+
+        /**
+         * Set the action state.
+         * @param action   The action to set.
+         * @param newState The state of the action.
+         */
+        public void setActionState(DemoAction action, boolean newState) {
+            boolean oldState = getActionState(action);
+            if (newState == oldState)
+                return; // States match.
+
+            if (oldState) {
+                this.frameByte ^= action.getId();
+            } else {
+                this.frameByte |= action.getId();
+            }
+        }
+
+        /**
+         * Sets the base action.
+         * @param action The base action to use.
+         */
+        public void setBaseAction(DemoAction action) {
+            DemoAction oldAction = getBaseAction();
+            if (oldAction != null) {
+                if (oldAction.isBitWise()) {
+                    setActionState(oldAction, false);
+                } else {
+                    this.frameByte -= oldAction.getId();
+                }
+            }
+
+            this.frameByte += action.getId();
+        }
+
+        /**
+         * Gets the base action.
+         */
+        public DemoAction getBaseAction() {
+            for (DemoAction testAction : DemoAction.getNonAdditives())
+                if (getActionState(testAction))
+                    return testAction;
+            return null;
+        }
+
+        /**
+         * Gets the action state.
+         * @param action The action to test.
+         * @return isStateTrue.
+         */
+        public boolean getActionState(DemoAction action) {
+            return action.test(this.frameByte);
+        }
+
+        /**
+         * Get this action as a byte.
+         * @return byte
+         */
+        public byte toByte() {
+            return this.frameByte;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            for (DemoAction testAction : DemoAction.values())
+                if ((testAction != DemoAction.UP || !getActionState(DemoAction.SKIP)) && getActionState(testAction))
+                    sb.append((sb.length() > 0 ? ", " : "")).append(testAction.name());
+            return sb.toString();
+        }
     }
 
     @Getter
     @AllArgsConstructor
     public enum DemoAction {
+        SKIP("Do Nothing", Constants.BIT_FLAG_7, false),
         UP("Move Up", 0x00, false),
         RIGHT("Move Right", 0x01, false),
         DOWN("Move Down", 0x02, false),
         LEFT("Move Left", 0x03, false),
-        SUPER_HOP("Super Hop", 0x08, true),
-        TONGUE("Tongue", 0x10, true),
-        ROTATE_COUNTER_CLOCKWISE("Rotate Camera Counter-Clockwise", 0x20, true),
-        ROTATE_CLOCKWISE("Rotate Camera Clockwise", 0x40, true),
-        SKIP("Do Nothing", 0x80, true),
-        STOP("End Demo", 0xA0, false);
+        SUPER_HOP("Super Hop", Constants.BIT_FLAG_3, true),
+        TONGUE("Tongue", Constants.BIT_FLAG_4, true),
+        ROTATE_COUNTER_CLOCKWISE("Rotate Counter-Clockwise", Constants.BIT_FLAG_5, true),
+        ROTATE_CLOCKWISE("Rotate Clockwise", Constants.BIT_FLAG_6, true);
 
         private String info;
         private int id;
         private boolean additive;
+        private static DemoAction[] cachedAdditives;
+        private static DemoAction[] cachedNonAdditives;
 
+        /**
+         * Test if a byte passes this action.
+         * @param actionId The action to test.
+         * @return testPass
+         */
         public boolean test(byte actionId) {
-            return isAdditive()
+            return isBitWise()
                     ? (actionId & getId()) == getId()
-                    : actionId == getId();
+                    : (actionId & 0b11) == getId();
+        }
+
+        /**
+         * Are operations performed with this value bit-wise?
+         * @return isBitWise
+         */
+        public boolean isBitWise() {
+            return isAdditive() || this == SKIP;
+        }
+
+        /**
+         * Get additive actions.
+         * @return additives
+         */
+        public static DemoAction[] getAdditives() {
+            if (cachedAdditives == null) {
+                List<DemoAction> actions = new ArrayList<>();
+                for (DemoAction action : values())
+                    if (action.isAdditive())
+                        actions.add(action);
+                cachedAdditives = actions.toArray(new DemoAction[0]);
+            }
+
+            return cachedAdditives;
+        }
+
+        /**
+         * Get non additive actions.
+         * @return additives
+         */
+        public static DemoAction[] getNonAdditives() {
+            if (cachedNonAdditives == null) {
+                List<DemoAction> actions = new ArrayList<>();
+                for (DemoAction action : values())
+                    if (!action.isAdditive())
+                        actions.add(action);
+                cachedNonAdditives = actions.toArray(new DemoAction[0]);
+            }
+
+            return cachedNonAdditives;
         }
     }
 }
