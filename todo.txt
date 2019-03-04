@@ -10,9 +10,3 @@ Editor Features:
   Demo Editor
   PAL Editor
   Map Editor
-
-TCRF Documentation Plans:
- - Snail Racing
- - Beta elements visible in media. (Level screenshots, German Trailer, Credits video, Video linked on the forums of some guy playing Frogger.)
- - Debug features and map differences in the prototype.
- - Document debugging code.
