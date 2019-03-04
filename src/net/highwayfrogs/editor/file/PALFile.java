@@ -2,13 +2,16 @@ package net.highwayfrogs.editor.file;
 
 import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.editor.PaletteController;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,12 +44,15 @@ public class PALFile extends GameFile {
         short colorCount = reader.readShort();
 
         for (int i = 0; i < colorCount; i++) {
-            int red = reader.readUnsignedByte();
-            int green = reader.readUnsignedByte();
-            int blue = reader.readUnsignedByte();
+            byte red = reader.readByte();
+            byte green = reader.readByte();
+            byte blue = reader.readByte();
+
             int flag = reader.readUnsignedByte();
-            Utils.verify(flag == FLAG, "Unknown flag value.");
-            getColors().add(new Color(red, green, blue));
+            if (flag != FLAG)
+                throw new RuntimeException("Unknown flag value: " + flag);
+
+            getColors().add(Utils.fromRGB(Utils.toRGB(red, green, blue)));
         }
     }
 
@@ -65,9 +71,10 @@ public class PALFile extends GameFile {
         writer.writeShort((short) getColors().size());
 
         for (Color color : colors) {
-            writer.writeByte((byte) color.getRed());
-            writer.writeByte((byte) color.getGreen());
-            writer.writeByte((byte) color.getBlue());
+            int intColor = Utils.toRGB(color);
+            writer.writeByte(Utils.getRed(intColor));
+            writer.writeByte(Utils.getGreen(intColor));
+            writer.writeByte(Utils.getBlue(intColor));
             writer.writeByte(FLAG);
         }
 
@@ -81,6 +88,31 @@ public class PALFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return null;
+        return loadEditor(new PaletteController(), "pal", this);
+    }
+
+    /**
+     * Makes a full palette image.
+     * @return image
+     */
+    public Image makeImage(int imageSize) {
+        double sqrt = Math.sqrt(this.colors.size());
+        Utils.verify(sqrt == (int) sqrt, "Color count is not a perfect square! [%d]", this.colors.size());
+        int colorsPerLine = (int) sqrt;
+        int colorSize = (int) sqrt;
+
+        BufferedImage image = new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = image.createGraphics();
+
+        for (int x = 0; x < colorsPerLine; x++) {
+            for (int y = 0; y < colorsPerLine; y++) {
+                graphics.setColor(Utils.toAWTColor(getColors().get((y * colorsPerLine) + x)));
+                graphics.fillRect(x * colorSize, y * colorSize, colorSize, colorSize);
+            }
+        }
+
+        graphics.dispose();
+
+        return Utils.toFXImage(image, false);
     }
 }

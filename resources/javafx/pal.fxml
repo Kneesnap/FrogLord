@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ColorPicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
+            minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0"
+            AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
+            xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <HBox prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="240.0" HBox.hgrow="NEVER">
+                    <children>
+                        <VBox prefHeight="303.0" prefWidth="206.0" AnchorPane.bottomAnchor="0.0"
+                              AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                            <children>
+                                <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="40.0"
+                                            prefWidth="130.0" VBox.vgrow="NEVER">
+                                    <children>
+                                        <Label layoutX="52.0" layoutY="12.0" prefHeight="40.0" prefWidth="240.0"
+                                               text="Palette File" AnchorPane.bottomAnchor="0.0"
+                                               AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="0.0"
+                                               AnchorPane.topAnchor="0.0">
+                                            <font>
+                                                <Font name="System Bold" size="14.0"/>
+                                            </font>
+                                            <graphic>
+                                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true"
+                                                           preserveRatio="true">
+                                                    <image>
+                                                        <Image url="@/icons/palette.png"/>
+                                                    </image>
+                                                </ImageView>
+                                            </graphic>
+                                        </Label>
+                                        <ColorPicker fx:id="colorPicker" layoutX="109.0" layoutY="8.0"
+                                                     AnchorPane.leftAnchor="109.0" AnchorPane.topAnchor="8.0"/>
+                                    </children>
+                                </AnchorPane>
+                                <AnchorPane prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                    <children>
+                                        <ListView fx:id="colorList" layoutX="8.0" prefHeight="305.0" prefWidth="200.0"
+                                                  AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0"
+                                                  AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="0.0"/>
+                                    </children>
+                                </AnchorPane>
+                            </children>
+                        </VBox>
+                    </children>
+                </AnchorPane>
+                <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0"
+                           HBox.hgrow="NEVER"/>
+                <AnchorPane style="-fx-border-color: #ffffff; -fx-border-width: 0px 0px 0px 1px;" HBox.hgrow="ALWAYS">
+                    <children>
+                        <ImageView fx:id="paletteImageView" fitHeight="256.0" fitWidth="256.0" layoutX="52.0"
+                                   layoutY="25.0" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="52.0"
+                                   AnchorPane.topAnchor="25.0"/>
+                    </children>
+                </AnchorPane>
+            </children>
+        </HBox>
+    </children>
+</AnchorPane>

@@ -45,6 +45,7 @@ public class Utils {
     private static final File[] EMPTY_FILE_ARRAY = new File[0];
     private static final Map<BufferedImage, TextureCache> imageCacheMap = new HashMap<>();
     private static final Map<Color, Image> colorImageCacheMap = new HashMap<>();
+    private static final Map<Color, java.awt.Color> awtColorCacheMap = new HashMap<>();
     private static final long IMAGE_CACHE_EXPIRE = TimeUnit.MINUTES.toMillis(5);
     private static final Map<Integer, List<Integer>> integerLists = new HashMap<>();
 
@@ -927,6 +928,33 @@ public class Utils {
     }
 
     /**
+     * Get the red value from an int value.
+     * @param rgb The int value to get the color from.
+     * @return colorByte
+     */
+    public static byte getRed(int rgb) {
+        return (byte) ((rgb >> 16) & 0xFF);
+    }
+
+    /**
+     * Get the green value from an int value.
+     * @param rgb The int value to get the color from.
+     * @return colorByte
+     */
+    public static byte getGreen(int rgb) {
+        return (byte) ((rgb >> 8) & 0xFF);
+    }
+
+    /**
+     * Get the blue value from an int value.
+     * @param rgb The int value to get the color from.
+     * @return colorByte
+     */
+    public static byte getBlue(int rgb) {
+        return (byte) (rgb & 0xFF);
+    }
+
+    /**
      * Get a Color object from an integer.
      * @param rgb The integer to get the color from.
      * @return color
@@ -1147,13 +1175,31 @@ public class Utils {
      * @return phongMaterial
      */
     public static PhongMaterial makeSpecialMaterial(Color color) {
-        return makeSpecialMaterial(colorImageCacheMap.computeIfAbsent(color, key -> {
-            BufferedImage colorImage = new BufferedImage(5, 5, BufferedImage.TYPE_INT_ARGB);
+        return makeSpecialMaterial(makeColorImage(color));
+    }
+
+    /**
+     * Creates an image of a solid color.
+     * @param color The color to make the image of.
+     * @return colorImage
+     */
+    public static Image makeColorImage(Color color) {
+        return colorImageCacheMap.computeIfAbsent(color, key -> {
+            BufferedImage colorImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
             Graphics2D graphics = colorImage.createGraphics();
-            graphics.setColor(new java.awt.Color(toRGB(key)));
+            graphics.setColor(toAWTColor(key));
             graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
             graphics.dispose();
             return toFXImage(colorImage, true);
-        }));
+        });
+    }
+
+    /**
+     * Convert a JavaFX color to an AWT color.
+     * @param fxColor The fx color to convert.
+     * @return awtColor
+     */
+    public static java.awt.Color toAWTColor(Color fxColor) {
+        return awtColorCacheMap.computeIfAbsent(fxColor, key -> new java.awt.Color(toRGB(key)));
     }
 }
