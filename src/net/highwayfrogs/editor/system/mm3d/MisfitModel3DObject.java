@@ -124,6 +124,18 @@ public class MisfitModel3DObject extends GameObject {
         writer.writeAddressTo(eofHeaderAddress);
     }
 
+    /**
+     * Gets a metadata value by its key. (Case sensitive)
+     * @param metaKey The metadata key to get the value of.
+     * @return metadataValue
+     */
+    public String getMetadata(String metaKey) {
+        for (MMMetaDataBlock dataBlock : getMetadata().getDataBlockBodies())
+            if (dataBlock.getKey().equals(metaKey))
+                return dataBlock.getValue();
+        return null;
+    }
+
     public static void performTest() throws IOException {
         File birdInput = new File("debug\\BIRD_MODIFIED.mm3d");
         File birdOutput = new File("debug\\BIRD_FAKE.mm3d");

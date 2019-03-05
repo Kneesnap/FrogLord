@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
@@ -24,11 +23,13 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -242,7 +243,7 @@ public class MWDFile extends GameObject {
                     handler.accept(vlo);
                 }, allVLOs,
                 vlo -> vlo != null ? getEntryMap().get(vlo).getDisplayName() : "No Textures",
-                vlo -> SelectionMenu.makeIcon(vlo.getImages().get(0).toBufferedImage(VLO_ICON_SETTING)));
+                vlo -> vlo.getImages().get(0).toFXImage(VLO_ICON_SETTING));
     }
 
     /**
@@ -265,6 +266,23 @@ public class MWDFile extends GameObject {
         for (GameFile file : getFiles())
             if (fileClass.isInstance(file))
                 handler.accept(fileClass.cast(file));
+    }
+
+    /**
+     * Iterate over each file of a given type.
+     * @param fileClass The type to iterate over.
+     * @param handler   The behavior to apply.
+     */
+    public <T extends GameFile, R> R resolveForEachFile(Class<T> fileClass, Function<T, R> handler) {
+        for (GameFile file : getFiles()) {
+            if (fileClass.isInstance(file)) {
+                R result = handler.apply(fileClass.cast(file));
+                if (result != null)
+                    return result; // If there's a result.
+            }
+        }
+
+        return null; // Nothing found.
     }
 
     /**

@@ -5,12 +5,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.BlackFilter;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -383,6 +383,14 @@ public class GameImage extends GameObject implements Cloneable {
      */
     public Image toFXImage(ImageFilterSettings settings) {
         return Utils.toFXImage(toBufferedImage(settings), true);
+    }
+
+    /**
+     * Export this game image as a JavaFX image.
+     * @return fxImage
+     */
+    public Image toFXImage() {
+        return Utils.toFXImage(toBufferedImage(), true);
     }
 
     /**

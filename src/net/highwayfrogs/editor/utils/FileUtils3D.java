@@ -4,7 +4,9 @@ import lombok.Cleanup;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyFlat;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyGouraud;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
@@ -19,6 +21,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMTriangleNormalsBlock;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMVerticeBlock;
@@ -28,12 +31,14 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * Contains static 3d file utilities.
  * Created by Kneesnap on 2/28/2019.
  */
 public class FileUtils3D {
+    private static final String META_KEY_MOF_THEME = "frogMofTheme";
 
     /**
      * Export a MOF file to Wavefront OBJ.
@@ -346,5 +351,30 @@ public class FileUtils3D {
 
 
         return model;
+    }
+
+    /**
+     * Load a MOF from a model.
+     * @param model The model to load from.
+     */
+    public static void importMofFromModel(FroggerEXEInfo config, MisfitModel3DObject model, Consumer<MOFHolder> handler) {
+        String themeValue = model.getMetadata(META_KEY_MOF_THEME);
+        if (themeValue != null) {
+            handler.accept(importMofFromModel(model, MAPTheme.valueOf(themeValue)));
+            return;
+        }
+
+        SelectionMenu.promptThemeSelection(config, theme -> handler.accept(importMofFromModel(model, theme)), true);
+    }
+
+    /**
+     * Load a MOF from a model.
+     * @param model The model to load from.
+     * @return importedMof
+     */
+    public static MOFHolder importMofFromModel(MisfitModel3DObject model, MAPTheme mofTheme) {
+        MOFHolder holder = new MOFHolder(mofTheme, null);
+        //TODO: Import data.
+        return holder;
     }
 }

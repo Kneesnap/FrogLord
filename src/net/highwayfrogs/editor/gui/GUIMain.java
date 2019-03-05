@@ -106,7 +106,7 @@ public class GUIMain extends Application {
         SelectionMenu.promptSelection("Select a configuration.", resourcePath -> {
             makeExeConfig(exeFile, resourcePath.getKey(), false);
             onConfigLoad.run();
-        }, configDisplayName.entrySet(), Entry::getValue, entry -> null);
+        }, configDisplayName.entrySet(), Entry::getValue, null);
     }
 
     @SneakyThrows

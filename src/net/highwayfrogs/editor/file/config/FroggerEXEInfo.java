@@ -4,7 +4,6 @@ import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
@@ -25,6 +24,7 @@ import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -498,6 +498,21 @@ public class FroggerEXEInfo extends Config {
      */
     public int getTextureIdFromPointer(long pointer) {
         return getBmpTexturePointers().indexOf(pointer);
+    }
+
+    /**
+     * Attempts to find an image by its pointer.
+     * @param pointer The pointer get get the image for.
+     * @return matchingImage - May be null.
+     */
+    public GameImage getImageFromPointer(long pointer) {
+        int textureId = getTextureIdFromPointer(pointer);
+        return getMWD().resolveForEachFile(VLOArchive.class, vloFile -> {
+            for (GameImage image : vloFile.getImages())
+                if (image.getTextureId() == textureId)
+                    return image;
+            return null;
+        });
     }
 
     /**

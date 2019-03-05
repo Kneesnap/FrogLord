@@ -6,7 +6,6 @@ import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -16,6 +15,7 @@ import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.editor.VLOController;
 import net.highwayfrogs.editor.gui.editor.VRAMPageController;
+import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -195,6 +195,6 @@ public class VLOArchive extends GameFile {
 
         SelectionMenu.promptSelection("Select an image.", handler, allImages,
                 image -> image != null ? "#" + getImages().indexOf(image) + " (" + image.getTextureId() + ")" : "No Image",
-                image -> SelectionMenu.makeIcon(image.toBufferedImage(ICON_EXPORT)));
+                image -> image.toFXImage(ICON_EXPORT));
     }
 }
