@@ -733,7 +733,7 @@ public class MAPFile extends GameFile {
             return;
         int realSize = (endPointer - lastEntity.getLoadScriptDataPointer());
         if (realSize != lastEntity.getLoadReadLength())
-            System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormEntry().getFormName());
+            System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormEntry().getFormName() + ", " + lastEntity.getFormEntry().getEntityName());
     }
 
     /**
