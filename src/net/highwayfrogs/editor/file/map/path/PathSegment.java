@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * A single part of the path. When saved, this is broken up by <type,offset> -> segment data
@@ -69,6 +70,9 @@ public abstract class PathSegment extends GameObject {
             controller.setupPathEditor();
         });
 
-        editor.addIntegerField("Length", getLength(), this::setLength, null);
+        //editor.addIntegerField("Length", getLength(), this::setLength, null);
+
+        // [AndyEder] Converting the fixed point getLength() value to floating point representation
+        editor.addFloatField("Length", Utils.fixedPointIntToFloat4Bit(getLength()));
     }
 }
