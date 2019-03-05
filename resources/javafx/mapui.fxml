@@ -226,6 +226,24 @@
                                     <children>
                                         <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
+                                    <GridPane prefWidth="232.0">
+                                       <columnConstraints>
+                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                       </columnConstraints>
+                                       <rowConstraints>
+                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                       </rowConstraints>
+                                       <children>
+                                          <Label text="Show All Paths:" />
+                                          <CheckBox fx:id="checkBoxShowAllPaths" mnemonicParsing="false" nodeOrientation="RIGHT_TO_LEFT" GridPane.columnIndex="1" />
+                                       </children>
+                                    </GridPane>
+                                    <Separator prefWidth="200.0">
+                                       <padding>
+                                          <Insets bottom="4.0" top="6.0" />
+                                       </padding>
+                                    </Separator>
                                                 <GridPane fx:id="pathGridPane" prefWidth="250.0">
                                                     <columnConstraints>
                                                         <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0" minWidth="10.0" prefWidth="100.0" />
