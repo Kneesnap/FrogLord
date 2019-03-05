@@ -68,6 +68,7 @@ public class MapUIController implements Initializable {
     // Control Settings Pane.
     @FXML private TitledPane titledPaneInformation;
     @FXML private CheckBox checkBoxShowMesh;
+    @FXML private CheckBox checkBoxShowAllPaths;
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
     @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
     @FXML private ColorPicker colorPickerLevelBackground;
