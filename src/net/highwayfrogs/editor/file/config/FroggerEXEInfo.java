@@ -37,7 +37,6 @@ import java.util.function.BiFunction;
 
 /**
  * Information about a specific frogger.exe file.
- * TODO: US DEMO MWD needs special form config.
  * Created by Kneesnap on 8/18/2018.
  */
 @Getter
