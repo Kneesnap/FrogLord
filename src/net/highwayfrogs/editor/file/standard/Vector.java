@@ -6,10 +6,12 @@ package net.highwayfrogs.editor.file.standard;
  */
 public interface Vector {
     public float getFloatX();
-
     public float getFloatY();
-
     public float getFloatZ();
+
+    public float getFloatNormalX();
+    public float getFloatNormalY();
+    public float getFloatNormalZ();
 
     default float getExportFloatX() {
         return -getFloatX();
@@ -37,6 +39,14 @@ public interface Vector {
      */
     default String toFloatString() {
         return getFloatX() + ", " + getFloatY() + ", " + getFloatZ();
+    }
+
+    /**
+     * Get a decimal coordinate string (representing a normal) for this float vector.
+     * @return coordinateString
+     */
+    default String toFloatNormalString() {
+        return getFloatNormalX() + ", " + getFloatNormalY() + ", " + getFloatNormalZ();
     }
 
     public String toRegularString();
