@@ -59,6 +59,49 @@ public class IVector extends GameObject implements Vector {
     }
 
     /**
+     * Equivalent to MR_VEC_EQUALS_SVEC
+     * @param vec The array to read info from.
+     */
+    public void vecEqualsSvec(short[] vec) {
+        this.x = (int) vec[0];
+        this.y = (int) vec[1];
+        this.z = (int) vec[2];
+    }
+
+    /**
+     * Equivalent to MR_VEC_EQUALS_SVEC
+     * @param vec The array to read info from.
+     */
+    public void vecEqualsSvec(SVector vec) {
+        this.x = (int) vec.getX();
+        this.y = (int) vec.getY();
+        this.z = (int) vec.getZ();
+    }
+
+    /**
+     * Equivalent to MRNormaliseVec
+     */
+    public void normalise() {
+        double[] tmpVec = new double[3];
+        tmpVec[0] = this.x;
+        tmpVec[1] = this.y;
+        tmpVec[2] = this.z;
+
+        double res = Math.sqrt((tmpVec[0] * tmpVec[0]) + (tmpVec[1] * tmpVec[1]) + (tmpVec[2] * tmpVec[2]));
+        tmpVec[0] /= res;
+        tmpVec[1] /= res;
+        tmpVec[2] /= res;
+
+        tmpVec[0] *= (4096);   // 4096 => (1 << 12)
+        tmpVec[1] *= (4096);
+        tmpVec[2] *= (4096);
+
+        this.x = (int)tmpVec[0];
+        this.y = (int)tmpVec[1];
+        this.z = (int)tmpVec[2];
+    }
+
+    /**
      * Equivalent to MR_ADD_VEC(b)
      * @param other The vector to add.
      */
@@ -103,6 +146,31 @@ public class IVector extends GameObject implements Vector {
     public float getFloatZ() {
         return Utils.fixedPointIntToFloat4Bit(getZ());
     }
+
+    /**
+     * Gets the float X value (specifically for handling normal component values).
+     * @return floatX
+     */
+    public float getFloatNormalX() {
+        return Utils.fixedPointIntToFloat20Bit(getX());
+    }
+
+    /**
+     * Gets the float Y value (specifically for handling normal component values).
+     * @return floatY
+     */
+    public float getFloatNormalY() {
+        return Utils.fixedPointIntToFloat20Bit(getY());
+    }
+
+    /**
+     * Gets the float Z value (specifically for handling normal component values).
+     * @return floatZ
+     */
+    public float getFloatNormalZ() {
+        return Utils.fixedPointIntToFloat20Bit(getZ());
+    }
+
 
     @Override
     public String toRegularString() {
