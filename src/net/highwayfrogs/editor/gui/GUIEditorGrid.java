@@ -128,6 +128,16 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Add a float field.
+     * @param label  The name.
+     * @param number The initial number.
+     * @return textField
+     */
+    public TextField addFloatField(String label, float number) {
+        return addTextField(label, String.valueOf(number));
+    }
+
+    /**
      * Add a short field.
      * @param label  The name.
      * @param number The initial number.
@@ -243,6 +253,15 @@ public class GUIEditorGrid {
             onChange();
             return true;
         });
+    }
+
+    /**
+     * Add a float SVector (representing a normal) for editing.
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     */
+    public void addFloatNormalSVector(String text, SVector vector) {
+        addTextField(text, vector.toFloatNormalString());
     }
 
     /**
