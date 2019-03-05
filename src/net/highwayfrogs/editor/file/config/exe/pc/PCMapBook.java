@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Function;
 
@@ -97,11 +97,6 @@ public class PCMapBook extends MapBook {
     @Override
     public boolean isDummy() {
         return this.lowRemapPointer == 0 && this.highRemapPointer == 0;
-    }
-
-    @Override
-    public void handleCorrection(String[] args) {
-        throw new UnsupportedOperationException("This will be implemented if we find a version which requires it.");
     }
 
     @Override

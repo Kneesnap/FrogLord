@@ -2,16 +2,15 @@ package net.highwayfrogs.editor.file.map.path;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
-import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -116,7 +115,7 @@ public class Path extends GameObject {
 
     private boolean shouldSave(List<Entity> pathEntities) {
         for (Entity testEntity : pathEntities)
-            if (testEntity.getFormBook() == FormBook.ORG_BEAVER)
+            if ("ORG_BEAVER".equals(testEntity.getFormEntry().getFormName()))
                 return true; // This is the only case where this is ever used.
         return false;
     }

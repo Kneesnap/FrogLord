@@ -25,13 +25,13 @@ public class PCThemeBook extends ThemeBook {
     private int lowMultiplayerVloId;
     private int highMultiplayerWadId;
     private int highMultiplayerVloId;
-    private int formLibraryPointer;
+    private long formLibraryPointer;
     private int deathHeight; // Frog drowns under this height.
 
     @Override
     public void load(DataReader reader) {
         this.highWadId = reader.readInt();
-        this.formLibraryPointer = reader.readInt();
+        this.formLibraryPointer = reader.readUnsignedIntAsLong();
         this.highVloId = reader.readInt();
         this.deathHeight = reader.readInt();
         this.highMultiplayerWadId = reader.readInt();
@@ -44,8 +44,9 @@ public class PCThemeBook extends ThemeBook {
 
     @Override
     public void save(DataWriter writer) {
+        super.save(writer);
         writer.writeInt(this.highWadId);
-        writer.writeInt(this.formLibraryPointer);
+        writer.writeUnsignedInt(this.formLibraryPointer);
         writer.writeInt(this.highVloId);
         writer.writeInt(this.deathHeight);
         writer.writeInt(this.highMultiplayerWadId);
@@ -71,11 +72,6 @@ public class PCThemeBook extends ThemeBook {
     @Override
     public boolean isValid() {
         return this.highVloId != 0 || this.lowVloId != 0 || this.formLibraryPointer != 0;
-    }
-
-    @Override
-    public void handleCorrection(String[] args) {
-        throw new UnsupportedOperationException("This will be implemented if we find a version which requires it.");
     }
 
     @Override

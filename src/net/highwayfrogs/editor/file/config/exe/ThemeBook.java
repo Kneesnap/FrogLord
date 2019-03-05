@@ -2,12 +2,18 @@ package net.highwayfrogs.editor.file.config.exe;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
+import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
+import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.file.writer.DataWriter;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -18,6 +24,31 @@ import java.util.function.Function;
 @Getter
 public abstract class ThemeBook extends ExeStruct {
     @Setter private transient MAPTheme theme;
+    private List<FormEntry> formBook = new ArrayList<>();
+
+    public void loadFormLibrary(FroggerEXEInfo config, int toRead) {
+        DataReader reader = config.getReader();
+        int globalFormId = config.getFullFormBook().size();
+        reader.jumpTemp((int) (getFormLibraryPointer() - config.getRamPointerOffset()));
+
+        int localFormId = 0;
+        for (int i = 0; i < toRead; i++) {
+            FormEntry formEntry = new FormEntry(config, getTheme(), localFormId++, globalFormId++);
+            formEntry.load(reader);
+            this.formBook.add(formEntry);
+        }
+        reader.jumpReturn();
+
+        config.getFullFormBook().addAll(this.formBook);
+    }
+
+    /**
+     * Get the pointer to the form library.
+     * @return formLibraryPointer
+     */
+    public long getFormLibraryPointer() {
+        return execute(PCThemeBook::getFormLibraryPointer, PSXThemeBook::getFormLibraryPointer);
+    }
 
     /**
      * Get the VLO of this book.
@@ -75,5 +106,12 @@ public abstract class ThemeBook extends ExeStruct {
             if (psx.getMultiplayerVloId() != 0)
                 handler.accept(getConfig().getGameFile(psx.getMultiplayerVloId()));
         });
+    }
+
+    @Override
+    public void save(DataWriter writer) {
+        writer.jumpTemp((int) (getFormLibraryPointer() - getConfig().getRamPointerOffset()));
+        getFormBook().forEach(entry -> entry.save(writer));
+        writer.jumpReturn();
     }
 }

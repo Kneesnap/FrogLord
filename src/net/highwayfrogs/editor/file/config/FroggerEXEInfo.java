@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.file.config.data.MusicTrack;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.SkyLand;
@@ -32,6 +33,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  * Information about a specific frogger.exe file.
@@ -68,6 +70,9 @@ public class FroggerEXEInfo extends Config {
     private TargetPlatform platform;
     private NameBank soundBank;
     private NameBank animationBank;
+    private NameBank formBank;
+    private NameBank entityBank;
+    private List<FormEntry> fullFormBook = new ArrayList<>();
 
     private DataReader reader;
     private byte[] exeBytes;
@@ -82,9 +87,6 @@ public class FroggerEXEInfo extends Config {
     private static final String CHILD_RESTORE_MAP_BOOK = "MapBookRestore";
     private static final String CHILD_RESTORE_THEME_BOOK = "ThemeBookRestore";
     private static final String CHILD_IMAGE_NAMES = "ImageNames";
-
-    private static final String DEFAULT_SOUND_KEY = "main";
-    private static final String DEFAULT_ANIMATION_KEY = "main-pc";
 
     public FroggerEXEInfo(File inputExe, InputStream inputStream, String internalName, boolean hasConfigIdentifier) throws IOException {
         super(inputStream);
@@ -150,11 +152,19 @@ public class FroggerEXEInfo extends Config {
     }
 
     private void loadBanks() {
-        String soundBankName = getString("soundList", DEFAULT_SOUND_KEY); // Load the sound config.
-        this.soundBank = NameBank.readBank("sounds", soundBankName, (bank, index) -> "Unknown Sound [" + index + "]");
+        this.soundBank = loadBank("soundList", "main", "sounds", "Sound");
+        this.animationBank = loadBank("animList", "main-pc", "anims", (bank, index) -> bank.size() <= 1 ? "Default Animation" : "Animation " + index);
+        this.formBank = loadBank("formList", "main", "forms", "Form");
+        this.entityBank = loadBank("entityList", "main", "entities", "Entity");
+    }
 
-        String animBankName = getString("animList", DEFAULT_ANIMATION_KEY);
-        this.animationBank = NameBank.readBank("anims", animBankName, (bank, index) -> bank.size() <= 1 ? "Default Animation" : "Unknown Animation #" + index);
+    private NameBank loadBank(String configKey, String defaultBank, String bankName, String unknownName) {
+        return loadBank(configKey, defaultBank, bankName, (bank, index) -> "Unknown " + unknownName + " [" + index + "]");
+    }
+
+    private NameBank loadBank(String configKey, String defaultBank, String bankName, BiFunction<NameBank, Integer, String> nameHandler) {
+        String animBankName = getString(configKey, defaultBank);
+        return NameBank.readBank(bankName, animBankName, nameHandler);
     }
 
     /**
@@ -196,8 +206,10 @@ public class FroggerEXEInfo extends Config {
             Constants.logExeInfo(book);
         }
 
-        if (!hasChild(CHILD_RESTORE_THEME_BOOK))
+        if (!hasChild(CHILD_RESTORE_THEME_BOOK)) {
+            readFormLibrary();
             return;
+        }
 
         Config themeBookRestore = getChild(CHILD_RESTORE_THEME_BOOK);
 
@@ -206,6 +218,28 @@ public class FroggerEXEInfo extends Config {
             Utils.verify(theme != null, "Unknown theme: '%s'", key);
             getThemeBook(theme).handleCorrection(themeBookRestore.getString(key));
         }
+
+        readFormLibrary();
+    }
+
+    private void readFormLibrary() {
+        MAPTheme lastTheme = MAPTheme.values()[0];
+        for (int i = 1; i < MAPTheme.values().length; i++) {
+            MAPTheme currentTheme = MAPTheme.values()[i];
+
+            ThemeBook lastBook = getThemeBook(lastTheme);
+            ThemeBook currentBook = getThemeBook(currentTheme);
+            if (currentBook.getFormLibraryPointer() == 0)
+                continue;
+
+            lastBook.loadFormLibrary(this, (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / FormEntry.BYTE_SIZE);
+            lastTheme = currentTheme;
+        }
+
+        // Load the last theme, which we use the number of names for to determine size.
+        ThemeBook lastBook = getThemeBook(lastTheme);
+        int nameCount = getFormBank().getChildBank(lastTheme.name()).size();
+        lastBook.loadFormLibrary(this, nameCount);
     }
 
     private void readMapLibrary() {
@@ -662,5 +696,17 @@ public class FroggerEXEInfo extends Config {
      */
     public int rsin(int angle) {
         return this.sinEntries[angle & 0xFFF]; // & 0xFFF cuts off the decimal point.
+    }
+
+    /**
+     * Get the form book for the given formBookId and MapTheme.
+     * @param mapTheme   The map theme the form belongs to.
+     * @param formBookId The form id in question. Normally passed to ENTITY_GET_FORM_BOOK as en_form_book_id.
+     * @return formBook
+     */
+    public FormEntry getMapFormEntry(MAPTheme mapTheme, int formBookId) {
+        if ((formBookId & FormEntry.FLAG_GENERAL) == FormEntry.FLAG_GENERAL)
+            mapTheme = MAPTheme.GENERAL;
+        return getThemeBook(mapTheme).getFormBook().get(formBookId & (FormEntry.FLAG_GENERAL - 1));
     }
 }

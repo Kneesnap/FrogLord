@@ -36,6 +36,7 @@ public class PSXThemeBook extends ThemeBook {
 
     @Override
     public void save(DataWriter writer) {
+        super.save(writer);
         writer.writeInt(this.wadId);
         writer.writeUnsignedInt(this.formLibraryPointer);
         writer.writeInt(this.vloId);

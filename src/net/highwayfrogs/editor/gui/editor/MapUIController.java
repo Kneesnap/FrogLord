@@ -21,13 +21,13 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.MAPEditorGUI;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
-import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
@@ -35,9 +35,11 @@ import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
@@ -335,15 +337,18 @@ public class MapUIController implements Initializable {
         entityEditor.clearEditor();
         if (entity == null) {
             entityEditor.addBoldLabel("There is no entity selected.");
-            entityEditor.addButton("New Entity", () -> addNewEntity(FormBook.values()[0]));
+            entityEditor.addButton("New Entity", () -> addNewEntity(getMap().getConfig().getThemeLibrary()[0].getFormBook().get(0)));
             return;
         }
 
         entityEditor.addBoldLabel("General Information:");
-        entityEditor.addLabel("Entity Type", entity.getFormBook().getEntity().name());
+        entityEditor.addLabel("Entity Type", entity.getFormEntry().getEntityName());
 
-        entityEditor.addEnumSelector("Form Type", entity.getFormBook(), FormBook.values(), false, newBook -> {
-            entity.setFormBook(newBook);
+        List<String> names = getMap().getConfig().getFormBank().getNames();
+        entityEditor.addSelectionBox("Form Type", entity.getFormEntry().getFormName(), names, newEntry -> {
+            int globalFormIndex = names.indexOf(newEntry);
+            Utils.verify(globalFormIndex >= 0, "Invalid Global Form Index for: \"%s\"", newEntry);
+            entity.setFormBook(getMap().getConfig().getFullFormBook().get(globalFormIndex));
             showEntityInfo(entity); // Update entity type.
         });
 
@@ -367,13 +372,13 @@ public class MapUIController implements Initializable {
             showEntityInfo(null); // Don't show the entity we just deleted.
         });
 
-        entityEditor.addButton("New Entity", () -> addNewEntity(entity.getFormBook()));
+        entityEditor.addButton("New Entity", () -> addNewEntity(entity.getFormEntry()));
 
         entityPane.setExpanded(true);
     }
 
-    private void addNewEntity(FormBook book) {
-        Entity newEntity = new Entity(getMap(), book);
+    private void addNewEntity(FormEntry entry) {
+        Entity newEntity = new Entity(getMap(), entry);
         getMap().getEntities().add(newEntity);
         showEntityInfo(newEntity);
         getController().resetEntities();

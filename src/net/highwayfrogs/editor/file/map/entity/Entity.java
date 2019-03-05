@@ -3,20 +3,20 @@ package net.highwayfrogs.editor.file.map.entity;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.data.EntityData;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
-import net.highwayfrogs.editor.file.map.form.FormBook;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Objects;
 
@@ -29,7 +29,7 @@ import java.util.Objects;
 public class Entity extends GameObject {
     private int formGridId;
     private int uniqueId;
-    private FormBook formBook;
+    private FormEntry formEntry;
     private int flags;
     private EntityData entityData;
     private EntityScriptData scriptData;
@@ -52,29 +52,28 @@ public class Entity extends GameObject {
         this.map = parentMap;
     }
 
-    public Entity(MAPFile file, FormBook formBook) {
+    public Entity(MAPFile file, FormEntry formEntry) {
         this(file);
-        setFormBook(formBook);
+        setFormBook(formEntry);
     }
 
     @Override
     public void load(DataReader reader) {
         this.formGridId = reader.readUnsignedShortAsInt();
         this.uniqueId = reader.readUnsignedShortAsInt();
-        this.formBook = FormBook.getFormBook(map.getTheme(), reader.readUnsignedShortAsInt());
+        this.formEntry = getConfig().getMapFormEntry(map.getTheme(), reader.readUnsignedShortAsInt());
         this.flags = reader.readUnsignedShortAsInt();
         reader.skipBytes(RUNTIME_POINTERS * Constants.POINTER_SIZE);
 
         this.loadScriptDataPointer = reader.getIndex();
-        if (formBook.getEntity().getScriptDataMaker() != null) {
-            this.entityData = formBook.getEntity().getScriptDataMaker().get();
-            this.entityData.load(reader);
-        }
 
-        if (formBook.getScriptDataMaker() != null) {
-            this.scriptData = formBook.getScriptDataMaker().get();
-            this.scriptData.load(reader);
-        }
+        this.entityData = EntityData.makeData(getConfig(), getFormEntry());
+        if (this.entityData != null)
+            this.entityData.load(reader);
+
+        this.scriptData = EntityScriptData.makeData(getConfig(), getFormEntry());
+        if (this.scriptData != null)
+            scriptData.load(reader);
 
         this.loadReadLength = reader.getIndex() - this.loadScriptDataPointer;
     }
@@ -83,7 +82,7 @@ public class Entity extends GameObject {
     public void save(DataWriter writer) {
         writer.writeUnsignedShort(this.formGridId);
         writer.writeUnsignedShort(this.uniqueId);
-        writer.writeUnsignedShort(getFormBook().getRawId());
+        writer.writeUnsignedShort(this.formEntry.getMapFormId());
         writer.writeUnsignedShort(this.flags);
         writer.writeNull(RUNTIME_POINTERS * Constants.POINTER_SIZE);
         if (this.entityData != null)
@@ -147,31 +146,28 @@ public class Entity extends GameObject {
 
     /**
      * Set this entity's form book.
-     * @param newBook This entities new form book.
+     * @param newEntry This entities new form book.
      */
-    public void setFormBook(FormBook newBook) {
-        if (this.formBook == null || !Objects.equals(newBook.getScriptDataMaker(), this.formBook.getScriptDataMaker())) {
-            this.scriptData = null;
-            if (newBook.getScriptDataMaker() != null)
-                this.scriptData = newBook.getScriptDataMaker().get();
-        }
+    public void setFormBook(FormEntry newEntry) {
+        Class<?> oldScriptClass = EntityScriptData.getScriptDataClass(getConfig(), this.formEntry);
+        Class<?> newScriptClass = EntityScriptData.getScriptDataClass(getConfig(), newEntry);
+        if (this.formEntry == null || !Objects.equals(newScriptClass, oldScriptClass))
+            this.scriptData = EntityScriptData.makeData(getConfig(), newEntry);
 
-        if (this.formBook == null || !Objects.equals(newBook.getEntity().getScriptDataMaker(), this.formBook.getEntity().getScriptDataMaker())) {
+        Class<?> oldEntityDataClass = EntityData.getEntityClass(getConfig(), this.formEntry);
+        Class<?> newEntityDataClass = EntityData.getEntityClass(getConfig(), newEntry);
+        if (this.formEntry == null || !Objects.equals(newEntityDataClass, oldEntityDataClass)) {
             PSXMatrix oldMatrix = getMatrixInfo(); // Call before setting entityData to null.
             PathInfo oldPath = getPathInfo();
-            this.entityData = null;
+            this.entityData = EntityData.makeData(getConfig(), newEntry);
 
-            if (newBook.getEntity().getScriptDataMaker() != null) {
-                this.entityData = newBook.getEntity().getScriptDataMaker().get();
+            if (this.entityData instanceof MatrixData && oldMatrix != null)
+                ((MatrixData) this.entityData).setMatrix(oldMatrix);
 
-                if (this.entityData instanceof MatrixData && oldMatrix != null)
-                    ((MatrixData) this.entityData).setMatrix(oldMatrix);
-
-                if (this.entityData instanceof PathData && oldPath != null)
-                    ((PathData) this.entityData).setPathInfo(oldPath);
-            }
+            if (this.entityData instanceof PathData && oldPath != null)
+                ((PathData) this.entityData).setPathInfo(oldPath);
         }
 
-        this.formBook = newBook;
+        this.formEntry = newEntry;
     }
 }

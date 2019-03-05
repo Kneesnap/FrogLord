@@ -26,6 +26,7 @@ import static net.highwayfrogs.editor.file.map.form.FormBookFlags.*;
 
 /**
  * A registry of all forms.
+ * TODO: Delete after commit.
  * Created by Kneesnap on 8/24/2018.
  */
 @Getter
@@ -82,7 +83,7 @@ public enum FormBook {
     DES_SNAKE(MAPTheme.DESERT, 4, EntityBook.DES_SNAKE, null),
     DES_TUMBLEWEED(MAPTheme.DESERT, 5, EntityBook.DES_TUMBLE_WEED, null),
     DES_FALLING_ROCK(MAPTheme.DESERT, 6, EntityBook.DES_FALLING_ROCK, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
-    DES_EARTHQUAKE(MAPTheme.DESERT, 0, EntityBook.DES_EARTHQUAKE, null),
+    DES_EARTHQUAKE(MAPTheme.DESERT, 0, EntityBook.DES_EARTH_QUAKE, null),
     DES_HOLE1(MAPTheme.DESERT, 7, EntityBook.STATIC, null),
     DES_HOLE2(MAPTheme.DESERT, 8, EntityBook.STATIC, null),
     DES_CRACK(MAPTheme.DESERT, 9, EntityBook.DES_CRACK, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
@@ -117,15 +118,15 @@ public enum FormBook {
     FOR_WOODPECKER(MAPTheme.FOREST, 0, EntityBook.STATIC, null),
     FOR_JAY(MAPTheme.FOREST, 1, EntityBook.MOVING, null),
     FOR_FALLINGLEAVES(MAPTheme.FOREST, 2, EntityBook.STATIC, null),
-    FOR_SWAYINGBRANCH(MAPTheme.FOREST, 3, EntityBook.SWAYING_BRANCH, FLAG_NO_ROTATION_SNAPPING | FLAG_NO_ENTITY_ANGLE, null),
-    FOR_SQUIRREL(MAPTheme.FOREST, 4, EntityBook.SQUIRREL, null),
+    FOR_SWAYINGBRANCH(MAPTheme.FOREST, 3, EntityBook.FOR_SWAYING_BRANCH, FLAG_NO_ROTATION_SNAPPING | FLAG_NO_ENTITY_ANGLE, null),
+    FOR_SQUIRREL(MAPTheme.FOREST, 4, EntityBook.FOR_SQUIRREL, null),
     FOR_OWL(MAPTheme.FOREST, 5, EntityBook.MOVING, null),
     FOR_SWARM(MAPTheme.FOREST, 6, EntityBook.STATIC, null),
     FOR_HIVE(MAPTheme.FOREST, 7, EntityBook.FOR_HIVE, null),
     FOR_STAT_BRACHTFUNGI(MAPTheme.FOREST, 8, EntityBook.STATIC, null),
     FOR_STAT_TREESTUMP(MAPTheme.FOREST, 9, EntityBook.STATIC, null),
     FOR_STAT_BIGTREE(MAPTheme.FOREST, 10, EntityBook.STATIC, null),
-    FOR_BREAKINGBRANCH(MAPTheme.FOREST, 11, EntityBook.BREAKING_BRANCH, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
+    FOR_BREAKINGBRANCH(MAPTheme.FOREST, 11, EntityBook.FOR_BREAKING_BRANCH, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
     FOR_STAT_SAFEBRANCH(MAPTheme.FOREST, 12, EntityBook.STATIC, null),
     FOR_STAT_TREESTUMP2(MAPTheme.FOREST, 13, EntityBook.STATIC, null),
     FOR_STAT_TREESTUMP3(MAPTheme.FOREST, 14, EntityBook.STATIC, null),
@@ -139,12 +140,12 @@ public enum FormBook {
     FOR_STAT_FALLENTREE(MAPTheme.FOREST, 22, EntityBook.STATIC, null),
     FOR_STAT_SMALLTREE2(MAPTheme.FOREST, 23, EntityBook.STATIC, null),
     FOR_STAT_SMALLTREE3(MAPTheme.FOREST, 24, EntityBook.STATIC, null),
-    FOR_STAT_SWAYINGBRANCH(MAPTheme.FOREST, 25, EntityBook.SWAYING_BRANCH, null),
+    FOR_STAT_SWAYINGBRANCH(MAPTheme.FOREST, 25, EntityBook.FOR_SWAYING_BRANCH, null),
     FOR_STAT_TREETOP(MAPTheme.FOREST, 26, EntityBook.STATIC, null),
     FOR_STAT_BRACHTFUNGI2(MAPTheme.FOREST, 27, EntityBook.STATIC, null),
     FOR_STAT_BRACHTFUNGI3(MAPTheme.FOREST, 28, EntityBook.STATIC, null),
     FOR_STAT_BRACHTFUNGI4(MAPTheme.FOREST, 29, EntityBook.STATIC, null),
-    FOR_HEDGEHOG(MAPTheme.FOREST, 30, EntityBook.HEDGEHOG, null),
+    FOR_HEDGEHOG(MAPTheme.FOREST, 30, EntityBook.FOR_HEDGEHOG, null),
     FOR_SWAN(MAPTheme.FOREST, 31, EntityBook.MOVING, null),
     FOR_STAT_ORCHID(MAPTheme.FOREST, 32, EntityBook.STATIC, null),
     FOR_STAT_DAISY(MAPTheme.FOREST, 33, EntityBook.STATIC, null),
@@ -290,8 +291,8 @@ public enum FormBook {
     SWP_PRESS(MAPTheme.SWAMP, 35, EntityBook.SWP_PRESS, FLAG_DONT_RESET_ON_CHECKPOINT | FLAG_DONT_RESET_ON_DEATH, null),
     SWP_BIRD1(MAPTheme.SWAMP, 36, EntityBook.MOVING, null),
     SWP_WATER_NOISE(MAPTheme.SWAMP, 0, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new),
-    SWP_WEIR_NOISE(MAPTheme.SWAMP, 37, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new), // These last two labels may not be accurate.
-    SWP_RECYCLE_BIN_NOISE(MAPTheme.SWAMP, 38, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new),
+    SWP_WEIR_NOISE(MAPTheme.SWAMP, 0, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new), // These last two labels may not be accurate.
+    SWP_RECYCLE_BIN_NOISE(MAPTheme.SWAMP, 0, EntityBook.STATIC, FLAG_NO_MODEL, ScriptNoiseData::new),
 
     SKY_JET1(MAPTheme.SKY, 0, EntityBook.MOVING, null),
     SKY_JET3(MAPTheme.SKY, 1, EntityBook.MOVING, null),

@@ -12,7 +12,9 @@ public abstract class ExeStruct extends GameObject {
      * Handle a manual correction.
      * @param args The arguments supplied.
      */
-    public abstract void handleCorrection(String[] args);
+    public void handleCorrection(String[] args) {
+        throw new UnsupportedOperationException("This struct does not currently support manual correction! (" + getClass().getSimpleName() + ")");
+    }
 
     /**
      * Handle a manual correction.

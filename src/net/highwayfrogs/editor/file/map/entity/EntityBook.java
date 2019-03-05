@@ -40,7 +40,7 @@ public enum EntityBook {
     MOVING(FLAG_PATH_RUNNER, PathData::new), // Creates a MOF which moves.
     CHECKPOINT(FLAG_STATIC, CheckpointEntity::new), // Baby Frogs, Multiplayer Flags.
     DES_FALLING_ROCK(FLAG_IMMORTAL, EntityFallingRock::new),
-    DES_EARTHQUAKE(FLAG_IMMORTAL, null), // Cut entity.
+    DES_EARTH_QUAKE(FLAG_IMMORTAL, null), // Cut entity.
     DES_THERMAL(FLAG_PATH_RUNNER, EntityThermal::new), // Cut entity.
     DYNAMIC(FLAG_IMMORTAL, MatrixData::new), // A MOF which moves around the world but is not path-based.
     CAV_FROGGER_LIGHT(FLAG_IMMORTAL, EntityFrogLight::new),
@@ -64,11 +64,11 @@ public enum EntityBook {
     SUB_DOG(FLAG_PATH_RUNNER, EntityDog::new),
     DES_CRACK(FLAG_IMMORTAL, EntityCrack::new),
     CAV_RACE_SNAIL(FLAG_PATH_RUNNER, EntityRaceSnail::new), // Unused. Appears to be fully present in game files, may work if spawned in-game.
-    FALLING_LEAF(FLAG_PATH_RUNNER, FallingLeafEntity::new), // What is this?
-    SWAYING_BRANCH(FLAG_IMMORTAL, SwayingBranchEntity::new),
-    BREAKING_BRANCH(FLAG_IMMORTAL, BreakingBranchEntity::new),
-    SQUIRREL(FLAG_PATH_RUNNER | FLAG_IMMORTAL, EntitySquirrel::new),
-    HEDGEHOG(FLAG_PATH_RUNNER, EntityHedgehog::new),
+    FOR_FALLING_LEAF(FLAG_PATH_RUNNER, FallingLeafEntity::new), // What is this?
+    FOR_SWAYING_BRANCH(FLAG_IMMORTAL, SwayingBranchEntity::new),
+    FOR_BREAKING_BRANCH(FLAG_IMMORTAL, BreakingBranchEntity::new),
+    FOR_SQUIRREL(FLAG_PATH_RUNNER | FLAG_IMMORTAL, EntitySquirrel::new),
+    FOR_HEDGEHOG(FLAG_PATH_RUNNER, EntityHedgehog::new),
     MOVING_PLATFORM(FLAG_PATH_RUNNER | FLAG_IMMORTAL, PathData::new), // I think
     MOVING_TONGUEABLE(FLAG_PATH_RUNNER | FLAG_TONGUEABLE, PathData::new), // I think
     FIREFLY(FLAG_PATH_RUNNER | FLAG_TONGUEABLE | FLAG_XZ_PARALLEL_TO_CAMERA, PathData::new), // This is a special-case in the code or something.

@@ -70,11 +70,6 @@ public class LevelInfo extends ExeStruct {
     }
 
     @Override
-    public void handleCorrection(String[] args) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public boolean isEntry(FileEntry test) {
         return false;
     }

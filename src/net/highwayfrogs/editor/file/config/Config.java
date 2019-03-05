@@ -111,7 +111,8 @@ public class Config {
      * @return value
      */
     public String getString(String keyName) {
-        Utils.verify(has(keyName), "Config does not have key '%s'.", keyName);
+        if (!has(keyName))
+            throw new RuntimeException("Config does not have key '" + keyName + "'.");
         return values.get(keyName);
     }
 

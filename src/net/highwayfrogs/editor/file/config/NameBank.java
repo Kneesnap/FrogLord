@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.config;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -11,14 +12,16 @@ import java.util.function.BiFunction;
  * Created by Kneesnap on 2/24/2019.
  */
 public class NameBank {
-    private List<String> names = new ArrayList<>();
+    @Getter private Config config;
+    @Getter private List<String> names = new ArrayList<>();
     private Map<String, NameBank> subBanks = new HashMap<>();
     private BiFunction<NameBank, Integer, String> unknownMaker;
     private int spoofSize;
 
-    private static final NameBank EMPTY_BANK = new NameBank(new ArrayList<>(), null);
+    private static final NameBank EMPTY_BANK = new NameBank(null, new ArrayList<>(), null);
 
-    private NameBank(Collection<String> loadValues, BiFunction<NameBank, Integer, String> unknownMaker) {
+    private NameBank(Config config, Collection<String> loadValues, BiFunction<NameBank, Integer, String> unknownMaker) {
+        this.config = config;
         this.unknownMaker = unknownMaker;
         this.names.addAll(loadValues);
     }
@@ -106,11 +109,12 @@ public class NameBank {
     @SneakyThrows
     public static NameBank readBank(String folder, String configName, BiFunction<NameBank, Integer, String> unknownMaker) {
         Config config = new Config(Utils.getResourceStream("banks/" + folder + "/" + configName + ".cfg"));
-        NameBank bank = new NameBank(config.getText(), unknownMaker);
+        NameBank bank = new NameBank(config, config.getText(), unknownMaker);
 
         for (String childName : config.getOrderedChildren()) {
-            List<String> childData = config.getChild(childName).getText();
-            bank.subBanks.put(childName, new NameBank(childData, unknownMaker));
+            Config childConfig = config.getChild(childName);
+            List<String> childData = childConfig.getText();
+            bank.subBanks.put(childName, new NameBank(childConfig, childData, unknownMaker));
             bank.names.addAll(childData);
         }
 
