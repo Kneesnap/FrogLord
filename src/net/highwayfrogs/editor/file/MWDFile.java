@@ -128,11 +128,7 @@ public class MWDFile extends GameObject {
         if (entry.getTypeId() == VLOArchive.TYPE_ID || entry.getDisplayName().startsWith("LS_ALL")) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
             file = new VLOArchive();
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) {
-            boolean isDemoJungle = (entry.getDisplayName().startsWith("JUN1") && getConfig().isDemo() && getConfig().isPSX());
-
-            if (isDemoJungle) {
-                file = new DummyFile(fileBytes.length);
-            } else if (entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX)) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
+            if (entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX)) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
                 file = new SkyLand();
             } else {
                 file = new MAPFile(this);
