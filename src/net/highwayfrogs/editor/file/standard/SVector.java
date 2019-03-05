@@ -166,6 +166,30 @@ public class SVector extends GameObject implements Vector {
     }
 
     /**
+     * Gets the float X value (specifically for handling normal component values).
+     * @return floatX
+     */
+    public float getFloatNormalX() {
+        return Utils.fixedPointShortToFloat12Bit(getX());
+    }
+
+    /**
+     * Gets the float Y value (specifically for handling normal component values).
+     * @return floatY
+     */
+    public float getFloatNormalY() {
+        return Utils.fixedPointShortToFloat12Bit(getY());
+    }
+
+    /**
+     * Gets the float Z value (specifically for handling normal component values).
+     * @return floatZ
+     */
+    public float getFloatNormalZ() {
+        return Utils.fixedPointShortToFloat12Bit(getZ());
+    }
+
+    /**
      * Load SVector data from text.
      * @param text The text to read SVector data from.
      * @return loadedSuccessfully
