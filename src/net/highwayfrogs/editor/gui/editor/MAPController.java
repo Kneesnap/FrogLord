@@ -15,7 +15,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -35,7 +34,6 @@ import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.NameValuePair;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -57,6 +55,7 @@ public class MAPController extends EditorController<MAPFile> {
     private MAPPolygon polygonImmuneToTarget;
     private boolean polygonSelected;
 
+    private RenderManager renderManager = new RenderManager();
     private CameraFPS cameraFPS;
     private MapUIController mapUIController;
 
@@ -74,7 +73,9 @@ public class MAPController extends EditorController<MAPFile> {
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
 
     private static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
-    private static final PhongMaterial MATERIAL_BOUNDING_BOX = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
+    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_LIGHT_GREEN = Utils.makeSpecialMaterial(Color.LIGHTGREEN);
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -137,6 +138,7 @@ public class MAPController extends EditorController<MAPFile> {
         // These cause errors if not reset.
         this.cursorData = null;
 
+        // Setup the primary camera
         this.cameraFPS = new CameraFPS();
 
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.
@@ -165,6 +167,9 @@ public class MAPController extends EditorController<MAPFile> {
         SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - mapUIController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
         subScene3D.setFill(Color.GRAY);
         subScene3D.setCamera(cameraFPS.getCamera());
+
+        // Ensure that the render manager has access to the root node
+        this.renderManager.setRenderRoot(this.root3D);
 
         //  Setup mapui controller bindings, etc.
         mapUIController.setupBindings(this, subScene3D, meshView);
@@ -201,7 +206,10 @@ public class MAPController extends EditorController<MAPFile> {
                     return;
                 }
 
+                // Stop camera processing and clear up the render manager
                 cameraFPS.stopThreadProcessing();
+                renderManager.removeAllDisplayLists();
+
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
             }
 
@@ -262,6 +270,27 @@ public class MAPController extends EditorController<MAPFile> {
         cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
         // Set the camera to look at the start position, too.
         cameraFPS.setCameraLookAt(gridX, baseY, gridZ);
+
+        // TODO: Tidy this up at some point, but use an action on a UI control for now [AndyEder]
+        mapUIController.getCheckBoxShowAllPaths().setOnAction(evt -> {
+            final String DISPLAY_LIST_PATHS = "displayListPaths";
+
+            if (mapUIController.getCheckBoxShowAllPaths().isSelected()) {
+                if (!this.renderManager.displayListExists(DISPLAY_LIST_PATHS)) {
+                    // Add a new display list for the paths
+                    this.renderManager.addDisplayList(DISPLAY_LIST_PATHS);
+                }
+
+                // Add paths via the render manager
+                this.renderManager.addPaths(DISPLAY_LIST_PATHS, getFile().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
+                this.renderManager.showDisplayListStats();
+            }
+            else {
+                // Clear the paths display list
+                this.renderManager.clearDisplayList(DISPLAY_LIST_PATHS);
+                this.renderManager.showDisplayListStats();
+            }
+        });
     }
 
     /**
@@ -321,63 +350,6 @@ public class MAPController extends EditorController<MAPFile> {
 
         root3D.getChildren().add(node);
         return node;
-    }
-
-    /**
-     * Adds an axis-aligned bounding box.
-     * @param minX The minimum x-coordinate.
-     * @param minY The minimum y-coordinate.
-     * @param minZ The minimum z-coordinate.
-     * @param maxX The maximum x-coordinate.
-     * @param maxY The maximum y-coordinate.
-     * @param maxZ The maximum z-coordinate.
-     */
-    private void addBoundingBoxFromMinMax(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        final double x0 = Math.min(minX, maxX);
-        final double x1 = Math.max(minX, maxX);
-        final double y0 = Math.min(minY, maxY);
-        final double y1 = Math.max(minY, maxY);
-        final double z0 = Math.min(minZ, maxZ);
-        final double z1 = Math.max(minZ, maxZ);
-
-        final double x = (x0 + x1) * 0.5;
-        final double y = (y0 + y1) * 0.5;
-        final double z = (z0 + z1) * 0.5;
-
-        final double w = (x1 - x0);
-        final double h = (y1 - y0);
-        final double d = (z1 - z0);
-
-        addBoundingBoxCenteredWithDimensions(x, y, z, w, h, d);
-    }
-
-    /**
-     * Adds an axis-aligned bounding box.
-     * @param x      The x-coordinate defining the center of the box.
-     * @param y      The y-coordinate defining the center of the box.
-     * @param z      The z-coordinate defining the center of the box.
-     * @param width  The width (along x-axis).
-     * @param height The height (along y-axis).
-     * @param depth  The depth (along z-axis).
-     */
-    private Box addBoundingBoxCenteredWithDimensions(double x, double y, double z, double width, double height, double depth) {
-        Box axisAlignedBoundingBox = new Box(width, height, depth);
-
-        axisAlignedBoundingBox.setMaterial(MATERIAL_BOUNDING_BOX);
-        axisAlignedBoundingBox.setDrawMode(DrawMode.LINE);
-        axisAlignedBoundingBox.setCullFace(CullFace.BACK);
-        axisAlignedBoundingBox.getTransforms().addAll(rotX, rotY, rotZ, new Translate(x, y, z));
-
-        root3D.getChildren().add(axisAlignedBoundingBox);
-        return axisAlignedBoundingBox;
-    }
-
-    /**
-     * Removes a collection of nodes from the 3d scene.
-     */
-    private void clearNodes(Collection<Node> nodes) {
-        root3D.getChildren().removeAll(nodes);
-        nodes.clear();
     }
 
     private void movePolygonX(int amount) {
