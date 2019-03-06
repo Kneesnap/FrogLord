@@ -18,6 +18,7 @@ import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -60,7 +61,7 @@ public class MAPController extends EditorController<MAPFile> {
     private MapUIController mapUIController;
 
     private List<MeshView> entityIcons = new ArrayList<>();
-    private List<Box> boundingBoxes = new ArrayList<>();
+    private List<Node> appliedLevelLights = new ArrayList<>();
 
     private Group root3D;
     private Rotate rotX;
@@ -291,6 +292,8 @@ public class MAPController extends EditorController<MAPFile> {
                 this.renderManager.showDisplayListStats();
             }
         });
+
+        mapUIController.getBtnApplyLevelLights().setOnAction(evt -> this.applyLevelLighting());
     }
 
     /**
@@ -461,5 +464,53 @@ public class MAPController extends EditorController<MAPFile> {
         hideCursorPolygon();
         mapMesh.updateData();
         renderCursor(getSelectedPolygon());
+    }
+
+    /**
+     * Applies the current lighting setup to the level.
+     */
+    public void applyLevelLighting() {
+        // Clear any existing lighting information
+        if (!this.appliedLevelLights.isEmpty()) {
+            System.out.println("[ LIGHTING ] Clearing " + this.appliedLevelLights.size() + " lights.");
+            this.root3D.getChildren().removeAll(this.appliedLevelLights);
+            this.appliedLevelLights.clear();
+        }
+
+        // Iterate through each light and apply the the root scene graph node
+        System.out.println("[ LIGHTING ] Adding " + getFile().getLights().size() + " lights:");
+        for(Light light : getFile().getLights()) {
+            switch (light.getApiType()) {
+                case AMBIENT:
+                    AmbientLight ambLight = new AmbientLight();
+                    ambLight.setColor(Utils.fromBGR(light.getColor()));
+                    this.appliedLevelLights.add(ambLight);
+                    this.root3D.getChildren().add(ambLight);
+                    break;
+
+                case PARALLEL:
+                    // IMPORTANT! JavaFX does NOT support parallel (directional) lights [AndyEder]
+                    PointLight parallelLight = new PointLight();
+                    parallelLight.setColor(Utils.fromBGR(light.getColor()));
+                    // Use direction as a vector to set a position to simulate a parallel light as best as we can
+                    parallelLight.setTranslateX(-light.getDirection().getFloatNormalX() * 1024);
+                    parallelLight.setTranslateY(-light.getDirection().getFloatNormalY() * 1024);
+                    parallelLight.setTranslateZ(-light.getDirection().getFloatNormalZ() * 1024);
+                    this.appliedLevelLights.add(parallelLight);
+                    this.root3D.getChildren().add(parallelLight);
+                    break;
+
+                case POINT:
+                    PointLight pointLight = new PointLight();
+                    pointLight.setColor(Utils.fromBGR(light.getColor()));
+                    // Assuming direction is position? Are POINT lights ever used? [AndyEder]
+                    pointLight.setTranslateX(light.getDirection().getFloatX());
+                    pointLight.setTranslateY(light.getDirection().getFloatY());
+                    pointLight.setTranslateZ(light.getDirection().getFloatZ());
+                    this.appliedLevelLights.add(pointLight);
+                    this.root3D.getChildren().add(pointLight);
+                    break;
+            }
+        }
     }
 }
