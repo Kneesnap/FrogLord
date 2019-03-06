@@ -193,7 +193,7 @@
                         </ScrollPane>
                     </content>
                 </TitledPane>
-                <TitledPane fx:id="lightPane" animated="false" text="Entity Lights">
+                <TitledPane fx:id="lightPane" animated="false" text="Lights">
                     <content>
                         <ScrollPane fitToWidth="true">
                             <content>
@@ -201,6 +201,28 @@
                                     <children>
                                         <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
+                                    <GridPane>
+                                       <columnConstraints>
+                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                       </columnConstraints>
+                                       <rowConstraints>
+                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                       </rowConstraints>
+                                       <children>
+                                          <Label text="Level Lights:">
+                                             <font>
+                                                <Font name="System Bold" size="12.0" />
+                                             </font>
+                                          </Label>
+                                          <Button fx:id="btnApplyLevelLights" alignment="CENTER" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Apply" textAlignment="CENTER" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" />
+                                       </children>
+                                    </GridPane>
+                                    <Separator prefWidth="200.0">
+                                       <padding>
+                                          <Insets bottom="4.0" top="6.0" />
+                                       </padding>
+                                    </Separator>
                                                 <GridPane fx:id="lightGridPane" prefWidth="250.0">
                                                     <columnConstraints>
                                                         <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0" minWidth="10.0" prefWidth="100.0" />
