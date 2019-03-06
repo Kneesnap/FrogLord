@@ -21,6 +21,12 @@ public class Light extends GameObject {
     private int color; // BbGgRr
     private SVector direction = new SVector();
 
+    public Light() {}
+
+    public Light(APILightType apiLightType) {
+        this.apiType = apiLightType;
+    }
+
     @Override
     public void load(DataReader reader) {
         this.type = LightType.values()[reader.readUnsignedByteAsShort()];
@@ -59,19 +65,47 @@ public class Light extends GameObject {
      */
     public void makeEditor(GUIEditorGrid editor) {
         // Don't need to edit the lightType, as static is the only one that does anything.
-        editor.addEnumSelector("API Type", getApiType(), APILightType.values(), false, this::setApiType);
-
         int rgbColor = Utils.toRGB(Utils.fromBGR(getColor()));
-        editor.addColorPicker("Color", rgbColor, newColor -> setColor(Utils.toBGR(Utils.fromRGB(newColor))));
+        editor.addColorPicker("Color:", 25, rgbColor, newColor -> setColor(Utils.toBGR(Utils.fromRGB(newColor))));
 
-        // Light direction information is in fixed point format, hence conversion to float representation.
-        //  NOTE: Light direction only makes sense for PARALLEL (directional) lights
-        float[] lightDirection = new float[3];
-        lightDirection[0] = getDirection().getFloatNormalX();
-        lightDirection[1] = getDirection().getFloatNormalY();
-        lightDirection[2] = getDirection().getFloatNormalZ();
-        editor.addNormalLabel("Direction");
-        editor.addVector3D(lightDirection, 25D, (index, newValue) -> {});
+        // The light api type determines which fields are relevant for this specific light
+        switch (getApiType()) {
+            case AMBIENT:
+                // An ambient light only has a color, hence no additional components needed
+                break;
+
+            case POINT:
+                // A point light has color and position, hence add position component
+                float[] lightPosition = new float[3];
+                lightPosition[0] = getDirection().getFloatX();
+                lightPosition[1] = getDirection().getFloatY();
+                lightPosition[2] = getDirection().getFloatZ();
+                editor.addNormalLabel("Position:", 25);
+                editor.addVector3D(lightPosition, 25, (index, newValue) -> {
+                    switch(index) {
+                        case 0: getDirection().setX(Utils.floatToFixedPointShort4Bit(newValue)); break;
+                        case 1: getDirection().setY(Utils.floatToFixedPointShort4Bit(newValue)); break;
+                        case 2: getDirection().setZ(Utils.floatToFixedPointShort4Bit(newValue)); break;
+                    }
+                });
+                break;
+
+            case PARALLEL:
+                // A parallel (directional) light has a color and direction, hence add direction component
+                float[] lightDirection = new float[3];
+                lightDirection[0] = getDirection().getFloatNormalX();
+                lightDirection[1] = getDirection().getFloatNormalY();
+                lightDirection[2] = getDirection().getFloatNormalZ();
+                editor.addNormalLabel("Direction:", 25);
+                editor.addVector3D(lightDirection, 25, (index, newValue) -> {
+                    switch(index) {
+                        case 0: getDirection().setX(Utils.floatToFixedPointShort12Bit(newValue)); break;
+                        case 1: getDirection().setY(Utils.floatToFixedPointShort12Bit(newValue)); break;
+                        case 2: getDirection().setZ(Utils.floatToFixedPointShort12Bit(newValue)); break;
+                    }
+                });
+                break;
+        }
     }
 
     /**
