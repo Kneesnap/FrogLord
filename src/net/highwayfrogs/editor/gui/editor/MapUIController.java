@@ -28,6 +28,7 @@ import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
+import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
@@ -93,6 +94,7 @@ public class MapUIController implements Initializable {
     @FXML private TextField textFieldCamPitch;
     @FXML private TextField textFieldCamRoll;
     @FXML private TextField textFieldEntityIconSize;
+    @FXML private Button btnApplyLevelLights;
 
     // General pane.
     @FXML private TitledPane generalPane;
@@ -171,19 +173,33 @@ public class MapUIController implements Initializable {
 
         lightEditor.clearEditor();
         for (int i = 0; i < getController().getFile().getLights().size(); i++) {
-            lightEditor.addBoldLabel("Light #" + (i + 1) + ":");
-            getController().getFile().getLights().get(i).makeEditor(lightEditor);
-
             final int tempIndex = i;
-            lightEditor.addButton("Remove Light #" + (i + 1), () -> {
+            lightEditor.addBoldLabelButton("Light #" + (i + 1) + ":", "Remove", 25, () -> {
                 getController().getFile().getLights().remove(tempIndex);
                 setupLights(); // Reload this.
             });
+
+            lightEditor.addLabel("ApiType:", getController().getFile().getLights().get(i).getApiType().name(), 25);
+            getController().getFile().getLights().get(i).makeEditor(lightEditor);
+
+            lightEditor.addSeparator(25);
         }
 
-        lightEditor.addButton("Add Light", () -> {
-            getController().getFile().getLights().add(new Light());
-            setupLights(); // Reload lights.
+        lightEditor.addBoldLabel("Add Light by APIType:", 30);
+
+        lightEditor.addLabelButton(APILightType.AMBIENT.name(), "Add", 25, () -> {
+            getController().getFile().getLights().add(new Light(APILightType.AMBIENT));
+            setupLights();
+        });
+
+        lightEditor.addLabelButton(APILightType.PARALLEL.name(), "Add", 25, () -> {
+            getController().getFile().getLights().add(new Light(APILightType.PARALLEL));
+            setupLights();
+        });
+
+        lightEditor.addLabelButton(APILightType.POINT.name(), "Add", 25, () -> {
+            getController().getFile().getLights().add(new Light(APILightType.POINT));
+            setupLights();
         });
     }
 
