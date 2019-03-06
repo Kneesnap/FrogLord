@@ -69,12 +69,12 @@ public class MOFController extends EditorController<MOFHolder> {
 
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(Color.BLACK);
+        material.setDiffuseColor(Color.WHITE);
         material.setSpecularColor(Color.BLACK);
 
         Image fxImage = Utils.toFXImage(texMap.getImage(), true);
         material.setDiffuseMap(fxImage);
-        material.setSelfIlluminationMap(fxImage);
+        material.setSpecularPower(0);
 
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(getMofMesh());
@@ -156,6 +156,26 @@ public class MOFController extends EditorController<MOFHolder> {
 
         camera.setTranslateZ(-100.0);
         camera.setTranslateY(-10.0);
+
+        // Add better lighting
+        AmbientLight ambLight = new AmbientLight();
+        ambLight.setColor(Color.color(0.2, 0.2, 0.2));
+        this.root3D.getChildren().add(ambLight);
+
+        PointLight pointLight1 = new PointLight();
+        pointLight1.setColor(Color.color(0.9, 0.9, 0.9));
+        pointLight1.setTranslateX(-100.0);
+        pointLight1.setTranslateY(-100.0);
+        pointLight1.setTranslateZ(-100.0);
+        this.root3D.getChildren().add(pointLight1);
+
+        PointLight pointLight2 = new PointLight();
+        pointLight2.setColor(Color.color(0.8, 0.8, 1.0));
+        pointLight2.setTranslateX(100.0);
+        pointLight2.setTranslateY(-100.0);
+        pointLight2.setTranslateZ(-100.0);
+        this.root3D.getChildren().add(pointLight2);
+
     }
 
     @Getter
