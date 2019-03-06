@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.gui;
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -50,9 +51,18 @@ public class GUIEditorGrid {
      * @param label The label to add.
      */
     public void addBoldLabel(String label) {
+        addBoldLabel(label, 20);
+    }
+
+    /**
+     * Add a label.
+     * @param label     The label to add.
+     * @param height    The desired row height.
+     */
+    public void addBoldLabel(String label, double height) {
         Label labelText = setupSecondNode(new Label(label), true);
         labelText.setFont(Constants.SYSTEM_BOLD_FONT);
-        addRow(20);
+        addRow(height);
     }
 
     /**
@@ -60,9 +70,40 @@ public class GUIEditorGrid {
      * @param text The text to add.
      */
     public Label addNormalLabel(String text) {
+        return addNormalLabel(text, 15);
+    }
+
+    /**
+     * Adds a label
+     * @param text      The text to add.
+     * @param height    The desired row height.
+     */
+    public Label addNormalLabel(String text, double height) {
         Label label = setupSecondNode(new Label(text), true);
-        addRow(15);
+        addRow(height);
         return label;
+    }
+
+    /**
+     * Add a label.
+     * @param boldLabel     The bold label to add.
+     * @param normalLabel   The normal label to add.
+     */
+    public void addBoldNormalLabel(String boldLabel, String normalLabel) {
+        addBoldNormalLabel(boldLabel, normalLabel, 20);
+    }
+
+    /**
+     * Add a label.
+     * @param boldLabel     The bold label to add.
+     * @param normalLabel   The normal label to add.
+     * @param height    The desired row height.
+     */
+    public void addBoldNormalLabel(String boldLabel, String normalLabel, double height) {
+        Label bold = addLabel(boldLabel);
+        bold.setFont(Constants.SYSTEM_BOLD_FONT);
+        setupSecondNode(new Label(normalLabel), false);
+        addRow(height);
     }
 
     private Label addLabel(String text) {
@@ -75,9 +116,19 @@ public class GUIEditorGrid {
      * @param value The value of the label.
      */
     public Label addLabel(String label, String value) {
+        return addLabel(label, value, 15);
+    }
+
+    /**
+     * Add a label.
+     * @param label     The label to add.
+     * @param value     The value of the label.
+     * @param height    The desired row height.
+     */
+    public Label addLabel(String label, String value, double height) {
         addLabel(label);
         Label valueText = setupSecondNode(new Label(value), false);
-        addRow(15);
+        addRow(height);
         return valueText;
     }
 
@@ -287,6 +338,17 @@ public class GUIEditorGrid {
      * @return colorPicker
      */
     public ColorPicker addColorPicker(String text, int color, Consumer<Integer> handler) {
+        return addColorPicker(text, 25, color, handler);
+    }
+
+    /**
+     * Allow selecting a color.
+     * @param text    The description of the color.
+     * @param color   The starting color.
+     * @param handler What to do when a color is selected
+     * @return colorPicker
+     */
+    public ColorPicker addColorPicker(String text, double height, int color, Consumer<Integer> handler) {
         addLabel(text);
         ColorPicker picker = setupSecondNode(new ColorPicker(Utils.fromRGB(color)), false);
         picker.valueProperty().addListener((observable, oldValue, newValue) -> {
@@ -294,7 +356,7 @@ public class GUIEditorGrid {
             onChange();
         });
 
-        addRow(25);
+        addRow(height);
         return picker;
     }
 
@@ -307,6 +369,35 @@ public class GUIEditorGrid {
         Button button = setupSecondNode(new Button(text), true);
         button.setOnAction(evt -> onPress.run());
         addRow(25);
+        return button;
+    }
+
+    /**
+     * Add a label and button.
+     * @param labelText     The text on the label.
+     * @param buttonText    The text on the button.
+     * @param onPress What to do when the button is pressed.
+     */
+    public Button addLabelButton(String labelText, String buttonText, double height, Runnable onPress) {
+        addLabel(labelText);
+        Button button = setupSecondNode(new Button(buttonText), false);
+        button.setOnAction(evt -> onPress.run());
+        addRow(height);
+        return button;
+    }
+
+    /**
+     * Add a bold label and button.
+     * @param labelText     The text on the label.
+     * @param buttonText    The text on the button.
+     * @param onPress What to do when the button is pressed.
+     */
+    public Button addBoldLabelButton(String labelText, String buttonText, double height, Runnable onPress) {
+        Label bold = addLabel(labelText);
+        bold.setFont(Constants.SYSTEM_BOLD_FONT);
+        Button button = setupSecondNode(new Button(buttonText), false);
+        button.setOnAction(evt -> onPress.run());
+        addRow(height);
         return button;
     }
 
@@ -388,6 +479,14 @@ public class GUIEditorGrid {
         RowConstraints newRow = new RowConstraints(height + 1);
         gridPane.getRowConstraints().add(newRow);
         this.rowIndex++;
+    }
+
+    /**
+     * Add a horizontal separator.
+     */
+    public void addSeparator(double height) {
+        Separator sep = setupSecondNode(new Separator(Orientation.HORIZONTAL), true);
+        addRow(height);
     }
 
     /**
