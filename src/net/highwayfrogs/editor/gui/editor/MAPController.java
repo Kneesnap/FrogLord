@@ -78,6 +78,8 @@ public class MAPController extends EditorController<MAPFile> {
     private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
     private static final PhongMaterial MATERIAL_LIGHT_GREEN = Utils.makeSpecialMaterial(Color.LIGHTGREEN);
 
+    private static final String DISPLAY_LIST_PATHS = "displayListPaths";
+
     @Override
     public void onInit(AnchorPane editorRoot) {
         super.onInit(editorRoot);
@@ -273,27 +275,40 @@ public class MAPController extends EditorController<MAPFile> {
         cameraFPS.setCameraLookAt(gridX, baseY, gridZ);
 
         // TODO: Tidy this up at some point, but use an action on a UI control for now [AndyEder]
-        mapUIController.getCheckBoxShowAllPaths().setOnAction(evt -> {
-            final String DISPLAY_LIST_PATHS = "displayListPaths";
-
-            if (mapUIController.getCheckBoxShowAllPaths().isSelected()) {
-                if (!this.renderManager.displayListExists(DISPLAY_LIST_PATHS)) {
-                    // Add a new display list for the paths
-                    this.renderManager.addDisplayList(DISPLAY_LIST_PATHS);
-                }
-
-                // Add paths via the render manager
-                this.renderManager.addPaths(DISPLAY_LIST_PATHS, getFile().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
-                this.renderManager.showDisplayListStats();
-            }
-            else {
-                // Clear the paths display list
-                this.renderManager.clearDisplayList(DISPLAY_LIST_PATHS);
-                this.renderManager.showDisplayListStats();
-            }
-        });
-
+        mapUIController.getCheckBoxShowAllPaths().setOnAction(evt -> this.togglePathDisplay());
         mapUIController.getBtnApplyLevelLights().setOnAction(evt -> this.applyLevelLighting());
+    }
+
+    /**
+     * Toggle display of paths.
+     */
+    private void togglePathDisplay() {
+        if (mapUIController.getCheckBoxShowAllPaths().isSelected()) {
+            if (!this.renderManager.displayListExists(DISPLAY_LIST_PATHS)) {
+                // Add a new display list for the paths
+                this.renderManager.addDisplayList(DISPLAY_LIST_PATHS);
+            }
+
+            // Add paths via the render manager
+            this.renderManager.addPaths(DISPLAY_LIST_PATHS, getFile().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
+        }
+        else {
+            // Clear the paths display list
+            this.renderManager.clearDisplayList(DISPLAY_LIST_PATHS);
+        }
+    }
+
+    /**
+     * Rebuild paths display list (as something has potentially changed).
+     */
+    public void rebuildPathDisplay() {
+        if (mapUIController.getCheckBoxShowAllPaths().isSelected()) {
+            if (this.renderManager.displayListExists(DISPLAY_LIST_PATHS)) {
+                // Clear display list, then rebuild
+                this.renderManager.clearDisplayList(DISPLAY_LIST_PATHS);
+                this.renderManager.addPaths(DISPLAY_LIST_PATHS, getFile().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
+            }
+        }
     }
 
     /**
@@ -386,6 +401,35 @@ public class MAPController extends EditorController<MAPFile> {
 
             refreshView();
         }
+    }
+
+    /**
+     * Calculate geometric center point of selected polygon.
+     * @return Center of selected polygon, else null.
+     */
+    public SVector getCenterOfSelectedPolygon()
+    {
+        if (getSelectedPolygon() != null) {
+            int[] vertexIndices = getSelectedPolygon().getVertices();
+
+            float x = 0.0f;
+            float y = 0.0f;
+            float z = 0.0f;
+
+            for (int index : vertexIndices) {
+                x += mapMesh.getVertices().get(index).getFloatX();
+                y += mapMesh.getVertices().get(index).getFloatY();
+                z += mapMesh.getVertices().get(index).getFloatZ();
+            }
+
+            x /= vertexIndices.length;
+            y /= vertexIndices.length;
+            z /= vertexIndices.length;
+
+            return new SVector(Utils.floatToFixedPointShort4Bit(x), Utils.floatToFixedPointShort4Bit(y), Utils.floatToFixedPointShort4Bit(z));
+        }
+
+        return null;
     }
 
     /**
