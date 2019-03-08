@@ -252,24 +252,26 @@ public class MapUIController implements Initializable {
 
         this.pathEditor.clearEditor();
 
-        ComboBox<Path> box = this.pathEditor.addSelectionBox("Path", getSelectedPath(), getMap().getPaths(), newPath -> {
+        ComboBox<Path> box = this.pathEditor.addSelectionBox("Path:", getSelectedPath(), getMap().getPaths(), newPath -> {
             this.selectedPath = newPath;
             setupPathEditor();
         });
         box.setConverter(new AbstractStringConverter<>(path -> "Path #" + getMap().getPaths().indexOf(path)));
 
-        this.pathEditor.addButton("Add Path", () -> {
+        this.pathEditor.addLabelButton("", "Add Path", 25.0, () -> {
             getMap().getPaths().add(this.selectedPath = new Path());
             setupPathEditor();
         });
 
         if (this.selectedPath != null) {
-            this.pathEditor.addButton("Remove Path", () -> {
+            this.pathEditor.addLabelButton("", "Remove Path", 25.0, () -> {
                 getMap().removePath(this.selectedPath);
                 this.selectedPath = null;
+                getController().rebuildPathDisplay();
                 setupPathEditor();
             });
 
+            this.pathEditor.addSeparator(25.0);
             this.pathEditor.addBoldLabel("Path Data");
             this.selectedPath.setupEditor(this, this.pathEditor);
         }
