@@ -69,16 +69,30 @@ public class Path extends GameObject {
         for (int i = 0; i < getSegments().size(); i++) {
             final int tempIndex = i;
 
-            editor.addBoldLabel("Segment #" + (i + 1) + ":");
-            getSegments().get(i).setupEditor(this, controller, editor);
-            editor.addButton("Remove Segment #" + (i + 1), () -> {
+            editor.addBoldLabelButton("Segment #" + (i + 1) + ":", "Remove", 25, () -> {
                 getSegments().remove(tempIndex);
+                controller.getController().rebuildPathDisplay();
                 controller.setupPathEditor();
             });
+
+            getSegments().get(i).setupEditor(this, controller, editor);
+            editor.addSeparator(25.0);
         }
 
-        editor.addButton("Add Segment", () -> {
-            getSegments().add(PathType.values()[0].getMaker().get());
+        editor.addBoldLabel("Add Segment by Type:", 30);
+
+        editor.addLabelButton(PathType.LINE.name(), "Add", 25, () -> {
+            getSegments().add(PathType.LINE.getMaker().get());
+            controller.setupPathEditor();
+        });
+
+        editor.addLabelButton(PathType.ARC.name(), "Add", 25, () -> {
+            getSegments().add(PathType.ARC.getMaker().get());
+            controller.setupPathEditor();
+        });
+
+        editor.addLabelButton(PathType.SPLINE.name(), "Add", 25, () -> {
+            getSegments().add(PathType.SPLINE.getMaker().get());
             controller.setupPathEditor();
         });
     }
