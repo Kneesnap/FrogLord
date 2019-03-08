@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents PATH_LINE.
@@ -52,7 +53,34 @@ public class LineSegment extends PathSegment {
     @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor);
-        editor.addFloatSVector("Start", getStart(), () -> controller.getController().resetEntities());
-        editor.addFloatSVector("End", getEnd(), () -> controller.getController().resetEntities());
+
+        editor.addFloatSVector("Start:", getStart(), () -> this.refreshAssociatedComponents(controller));
+        editor.addFloatSVector("End:", getEnd(), () -> this.refreshAssociatedComponents(controller));
+    }
+
+    /**
+     * Refresh associated components.
+     */
+    private void refreshAssociatedComponents(MapUIController controller) {
+        // Recalculate line segment length
+        this.recalculateLength();
+
+        // Update / refresh associated components
+        controller.setupPathEditor();
+        controller.getController().rebuildPathDisplay();
+        controller.getController().resetEntities();
+    }
+
+    /**
+     * Recalculates the length of the line segment.
+     */
+    public void recalculateLength() {
+        float deltaX = end.getFloatX() - start.getFloatX();
+        float deltaY = end.getFloatY() - start.getFloatY();
+        float deltaZ = end.getFloatZ() - start.getFloatZ();
+
+        float length = (float)Math.sqrt((deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ));
+
+        setLength(Utils.floatToFixedPointInt(length, 4));
     }
 }
