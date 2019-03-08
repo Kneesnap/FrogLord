@@ -132,8 +132,8 @@ public class SplineSegment extends PathSegment {
     @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor);
-        editor.addLabel("Spline", Utils.matrixToString(this.splineMatrix));
-        editor.addLabel("Smooth T", Arrays.toString(this.smoothT));
-        editor.addLabel("Smooth C", Utils.matrixToString(this.smoothC));
+        editor.addLabel("Spline:", Utils.matrixToString(this.splineMatrix), 25.0);
+        editor.addLabel("Smooth T:", Arrays.toString(this.smoothT),25.0);
+        editor.addLabel("Smooth C:", Utils.matrixToString(this.smoothC),25.0);
     }
 }
