@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map.path;
 
+import javafx.scene.control.TextField;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
@@ -62,17 +63,10 @@ public abstract class PathSegment extends GameObject {
      * @param editor     The editor to setup.
      */
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
-        editor.addEnumSelector("Type", getType(), PathType.values(), false, newType -> {
-            if (getType() == newType)
-                return;
+        editor.addLabel("Type:", getType().name(), 25);
 
-            path.getSegments().set(path.getSegments().indexOf(this), newType.getMaker().get());
-            controller.setupPathEditor();
-        });
-
-        //editor.addIntegerField("Length", getLength(), this::setLength, null);
-
-        // [AndyEder] Converting the fixed point getLength() value to floating point representation
-        editor.addFloatField("Length", Utils.fixedPointIntToFloat4Bit(getLength()));
+        // [AndyEder] The length field should be a calculated read-only field
+        TextField textFieldLength = editor.addFloatField("Length:", Utils.fixedPointIntToFloat4Bit(getLength()));
+        textFieldLength.setDisable(true);
     }
 }
