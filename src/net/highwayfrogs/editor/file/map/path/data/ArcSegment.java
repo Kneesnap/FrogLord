@@ -178,19 +178,11 @@ public class ArcSegment extends PathSegment {
     @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor);
-        editor.addFloatSVector("Start", getStart(), () -> controller.getController().resetEntities());
-        editor.addFloatSVector("Center", getCenter(), () -> controller.getController().resetEntities());
+        editor.addFloatSVector("Start:", getStart(), () -> controller.getController().resetEntities());
+        editor.addFloatSVector("Center:", getCenter(), () -> controller.getController().resetEntities());
 
-        //editor.addFloatSVector("Normal", getNormal());
-        //editor.addIntegerField("Radius", getRadius(), this::setRadius, null);
-        //editor.addIntegerField("Pitch", getPitch(), this::setPitch, null);
-
-        // [AndyEder] Converting the fixed point getNormal() value to floating point representation
-        editor.addFloatNormalSVector("Normal", getNormal());
-        // [AndyEder] Converting the fixed point getRadius() value to floating point representation
-        editor.addFloatField("Radius", Utils.fixedPointIntToFloat4Bit(getRadius()));
-        // [AndyEder] Converting the fixed point getPitch() value to floating point representation
-        editor.addFloatField("Pitch", Utils.fixedPointIntToFloat4Bit(getPitch()));
-
+        editor.addFloatNormalSVector("Normal:", getNormal());
+        editor.addFloatField("Radius:", Utils.fixedPointIntToFloat4Bit(getRadius()));
+        editor.addFloatField("Pitch:", Utils.fixedPointIntToFloat4Bit(getPitch()));
     }
 }
