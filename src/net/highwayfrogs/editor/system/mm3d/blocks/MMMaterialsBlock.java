@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 /**
  * Defines a material.
@@ -24,7 +25,7 @@ public class MMMaterialsBlock extends MMDataBlockBody {
     private float shininess;
 
     public MMMaterialsBlock(MisfitModel3DObject parent) {
-        super(parent);
+        super(OffsetType.MATERIALS, parent);
 
         // Setup default values.
         this.ambient[0] = .2F;

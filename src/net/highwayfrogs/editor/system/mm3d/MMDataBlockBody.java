@@ -13,15 +13,15 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 @AllArgsConstructor
 public abstract class MMDataBlockBody extends GameObject {
+    private OffsetType bodyType;
     private MisfitModel3DObject parent;
 
     /**
      * Gets the index of this block body data.
      * @return blockIndex
      */
-    @SuppressWarnings("SuspiciousMethodCalls")
     public int getBlockIndex() {
-        return getParent().getSegments().indexOf(this); //TODO: Getting from wrong list.
+        return getBodyType().getFinder().apply(getParent()).getDataBlockBodies().indexOf(this);
     }
 
     /**

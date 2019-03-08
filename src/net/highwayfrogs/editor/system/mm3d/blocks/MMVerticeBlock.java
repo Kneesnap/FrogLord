@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 /**
  * Represents a vertice.
@@ -25,7 +26,7 @@ public class MMVerticeBlock extends MMDataBlockBody {
     public static final int FLAG_FREE_VERTEX = Constants.BIT_FLAG_2; // Set if vertex does not have to be connected to a face (don't auto-delete when face is deleted)
 
     public MMVerticeBlock(MisfitModel3DObject parent) {
-        super(parent);
+        super(OffsetType.VERTICES, parent);
     }
 
     @Override

@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 /**
  * Holds ascii metadata.
@@ -16,7 +17,7 @@ public class MMMetaDataBlock extends MMDataBlockBody {
     private String value;
 
     public MMMetaDataBlock(MisfitModel3DObject parent) {
-        super(parent);
+        super(OffsetType.META_DATA, parent);
     }
 
     @Override

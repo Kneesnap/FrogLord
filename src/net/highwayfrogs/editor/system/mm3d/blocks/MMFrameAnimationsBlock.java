@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
     private List<MMAnimationFrame> frames = new ArrayList<>();
 
     public MMFrameAnimationsBlock(MisfitModel3DObject parent) {
-        super(parent);
+        super(OffsetType.FRAME_ANIMATIONS, parent);
     }
 
     @Override

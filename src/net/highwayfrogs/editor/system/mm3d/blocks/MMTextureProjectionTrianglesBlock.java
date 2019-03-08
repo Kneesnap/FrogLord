@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ public class MMTextureProjectionTrianglesBlock extends MMDataBlockBody {
     private List<Long> triangleIndices = new ArrayList<>(); // List of triangle indices that are assigned to projection
 
     public MMTextureProjectionTrianglesBlock(MisfitModel3DObject parent) {
-        super(parent);
+        super(OffsetType.TEXTURE_PROJECTIONS_TRIANGLES, parent);
     }
 
     @Override

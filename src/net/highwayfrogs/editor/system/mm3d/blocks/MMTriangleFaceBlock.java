@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 /**
  * Describes triangular model vertices. Starts at zero.
@@ -22,7 +23,7 @@ public class MMTriangleFaceBlock extends MMDataBlockBody {
     public static final int FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
 
     public MMTriangleFaceBlock(MisfitModel3DObject parent) {
-        super(parent);
+        super(OffsetType.TRIANGLES, parent);
     }
 
     @Override

@@ -4,6 +4,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 /**
  * Holds texture coordinate information.
@@ -16,7 +17,7 @@ public class MMTextureCoordinatesBlock extends MMDataBlockBody {
     private float[] yCoordinates = new float[3]; // Indexed by v1, v2, v3.
 
     public MMTextureCoordinatesBlock(MisfitModel3DObject parent) {
-        super(parent);
+        super(OffsetType.TEXTURE_COORDINATES, parent);
     }
 
     @Override

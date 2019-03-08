@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 /**
  * Contains information about external textures.
@@ -18,7 +19,7 @@ public class MMExternalTexturesBlock extends MMDataBlockBody {
     private static final String SEPARATOR = "\\";
 
     public MMExternalTexturesBlock(MisfitModel3DObject parent) {
-        super(parent);
+        super(OffsetType.EXTERNAL_TEXTURES, parent);
     }
 
     @Override

@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 /**
  * Holds the normals for each face of the model.
@@ -20,7 +21,7 @@ public class MMTriangleNormalsBlock extends MMDataBlockBody {
     private float[] v3Normals = new float[3];
 
     public MMTriangleNormalsBlock(MisfitModel3DObject parent) {
-        super(parent);
+        super(OffsetType.TRIANGLE_NORMALS, parent);
     }
 
     @Override
