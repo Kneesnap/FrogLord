@@ -1,10 +1,24 @@
 Editor Features:
 
+MOF File:
+ Export mofs to mm3d.
+ Import mofs from mm3d.
+
+GUI Editor:
+ - Finish Map Editor
+
+User interface improvements, including:
+ - Telling someone if they are trying to save in a folder we don't have permission to save to.
+ - Keybinds should be changed to be part of a menu, like on the main screen we can have a ButtonBar with things like export, export alternate, etc.
+ - Make things easier to use.
+
+Fix PSX VLO saving.
+Improve VLO VRAM editor, add PSX support. [What if you can arrange by page?]
+Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, and 1.8.0_181, but not 1.8.0_161 or 1.8.0_201? The broken ones appear to use less RAM, and have spikes when viewing the map.
+A formbook + entlib editor.
+Eventually have some method which can allocate space into an executable at a given space so we could for instance add a new level into the level selector. This would need to modify pointers.
+
+Eventually:
+ - MWD patch format. (Similar to xdelta or ips)
  - VAB File (Separate from VB VH) https://www.zophar.net/fileuploads/2/10730sbtsy/psfrip.txt
-
- - MOF File
- Some way of exporting animations.
- Some way of importing 3D Models.
-
- - GUI Editor:
-  Map Editor
+ - Separate FrogLord into a general purpose file format tool, which uses the FrogLord plugin (which supports Frogger games) to support the file formats. This will require generalizing things, and considering how to make a UI system which will work for different types of file systems, including single archive with all files, nested archives, single binary file with all data in it, etc.

@@ -18,11 +18,10 @@ import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.map.light.Light;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
@@ -33,6 +32,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +41,7 @@ import java.util.List;
  * Sets up the map editor.
  * TODO: Edit Vertexes [Add, Remove] Prevent removing a vertice if it is used by anything.
  * TODO: Edit polygons [Add, Remove] This is tricky because it will effect data structures which link to the polygons.
- * TODO: Show Paths. (Can show an icon tracing the path in real-time)
+ * TODO: Create a path editor.
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter
