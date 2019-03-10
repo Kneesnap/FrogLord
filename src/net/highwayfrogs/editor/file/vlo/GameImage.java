@@ -212,14 +212,7 @@ public class GameImage extends GameObject implements Cloneable {
     }
 
     private void readPSXPixel(int clutIndex, ClutEntry clut, ByteBuffer buffer) {
-        PSXClutColor color = clut.getColors().get(clutIndex);
-
-        byte[] arr = new byte[4]; //RGBA
-        arr[0] = Utils.unsignedShortToByte(color.getUnsignedScaledRed());
-        arr[1] = Utils.unsignedShortToByte(color.getUnsignedScaledGreen());
-        arr[2] = Utils.unsignedShortToByte(color.getUnsignedScaledBlue());
-        arr[3] = (byte) (0xFF - color.getAlpha(false));
-        buffer.putInt(Utils.readNumberFromBytes(arr));
+        buffer.putInt(clut.getColors().get(clutIndex).toRGBA());
     }
 
     private ClutEntry getClut() {

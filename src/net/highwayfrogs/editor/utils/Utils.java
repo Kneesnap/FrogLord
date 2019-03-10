@@ -928,6 +928,15 @@ public class Utils {
     }
 
     /**
+     * Get the alpha value from an int value.
+     * @param rgb The int value to get the color from.
+     * @return colorByte
+     */
+    public static byte getAlpha(int rgb) {
+        return (byte) ((rgb >> 24) & 0xFF);
+    }
+
+    /**
      * Get the red value from an int value.
      * @param rgb The int value to get the color from.
      * @return colorByte

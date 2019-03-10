@@ -3,10 +3,10 @@ package net.highwayfrogs.editor.file.standard.psx;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents the CLUT format described on http://www.psxdev.net/forum/viewtopic.php?t=109.
@@ -72,71 +72,16 @@ public class PSXClutColor extends GameObject {
     }
 
     /**
-     * Set the byte value scaled from 0 - 255.
-     * @param redByte The value to use.
+     * Gets this color as an RGBA integer.
+     * @return intValue
      */
-    public void setScaledRed(short redByte) {
-        this.red = Utils.unsignedShortToByte((short) (redByte >> TO_FULL_BYTE));
-    }
-
-    /**
-     * Set the byte value scaled from 0 - 255.
-     * @param greenByte The value to use.
-     */
-    public void setScaledGreen(short greenByte) {
-        this.green = Utils.unsignedShortToByte((short) (greenByte >> TO_FULL_BYTE));
-    }
-
-    /**
-     * Set the byte value scaled from 0 - 255.
-     * @param blueByte The value to use.
-     */
-    public void setScaledBlue(short blueByte) {
-        this.blue = Utils.unsignedShortToByte((short) (blueByte >> TO_FULL_BYTE));
-    }
-
-    /**
-     * Get the red byte value on a scale from 0 - 255.
-     * @return redValue
-     */
-    public short getUnsignedScaledRed() {
-        return (short) (Utils.byteToUnsignedShort(getRed()) << TO_FULL_BYTE);
-    }
-
-    /**
-     * Get the green byte value on a scale from 0 - 255.
-     * @return greenValue
-     */
-    public short getUnsignedScaledGreen() {
-        return (short) (Utils.byteToUnsignedShort(getGreen()) << TO_FULL_BYTE);
-    }
-
-    /**
-     * Get the blue byte value on a scale from 0 - 255.
-     * @return blueValue
-     */
-    public short getUnsignedScaledBlue() {
-        return (short) (Utils.byteToUnsignedShort(getBlue()) << TO_FULL_BYTE);
-    }
-
-    /**
-     * Get this color's alpha value on a scale from 0 (Transparent) to 0xFF (Solid)
-     * @param semiTransparentMode Whether or not this color is rendered with semi-transparent blending on the PSX. (This is image-specific, not color-specific.)
-     * @return alphaColor
-     */
-    public byte getAlpha(boolean semiTransparentMode) {
-        if (!isStp())
-            return isBlack() ? (byte) 0x00 : (byte) 0xFF;
-
-        return semiTransparentMode ? (byte) 127 : (byte) 0xFF;
-    }
-
-    /**
-     * Is this image devoid of all RGB colors, and equal to RGB {0, 0, 0}?
-     * @return isBlack
-     */
-    public boolean isBlack() {
-        return (getRed() == 0) && (getGreen() == 0) && (getBlue() == 0);
+    public int toRGBA() {
+        byte[] arr = new byte[4]; //RGBA
+        arr[0] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(getRed()) << TO_FULL_BYTE));
+        arr[1] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(getGreen()) << TO_FULL_BYTE));
+        arr[2] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(getBlue()) << TO_FULL_BYTE));
+        arr[3] = (byte) (isStp() ? 0xFF : 0x00);
+        return Utils.readNumberFromBytes(arr);
     }
 
     /**
@@ -149,16 +94,10 @@ public class PSXClutColor extends GameObject {
      */
     public static PSXClutColor fromRGBA(byte red, byte green, byte blue, byte alpha) {
         PSXClutColor color = new PSXClutColor();
-
-        color.setScaledRed(Utils.byteToUnsignedShort(red));
-        color.setScaledGreen(Utils.byteToUnsignedShort(green));
-        color.setScaledBlue(Utils.byteToUnsignedShort(blue));
-
-        short alphaShort = Utils.byteToUnsignedShort(alpha);
-        color.setStp(alphaShort == 0xFF
-                ? color.isBlack() // STP-Bit is true if alpha is 0xFF and the color is black.
-                : alphaShort != 0); // If alpha is not zero, the stp bit is false. Otherwise, it's in semi-transparent mode, and the stp bit is true.
-
+        color.red = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(red) >> TO_FULL_BYTE));
+        color.green = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(green) >> TO_FULL_BYTE));
+        color.blue = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(blue) >> TO_FULL_BYTE));
+        color.setStp(alpha != Constants.NULL_BYTE);
         return color;
     }
 
