@@ -80,7 +80,7 @@ public class PSXClutColor extends GameObject {
         arr[0] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(getRed()) << TO_FULL_BYTE));
         arr[1] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(getGreen()) << TO_FULL_BYTE));
         arr[2] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(getBlue()) << TO_FULL_BYTE));
-        arr[3] = (byte) (isStp() ? 0xFF : 0x00);
+        arr[3] = (byte) (isStp() ? 0x01 : 0x00);
         return Utils.readNumberFromBytes(arr);
     }
 

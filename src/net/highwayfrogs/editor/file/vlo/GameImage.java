@@ -18,6 +18,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * A singular game image. MR_TXSETUP struct.
@@ -166,27 +167,27 @@ public class GameImage extends GameObject implements Cloneable {
         clut.getColors().clear(); // Generate a new clut.
 
         int maxColors = getClut().calculateColorCount();
+
+
         for (int i = 0; i < getImageBytes().length; i += (PC_BYTES_PER_PIXEL * PSX_PIXELS_PER_BYTE)) {
-            // RGBA -> ClutColor
             PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
             PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PC_BYTES_PER_PIXEL);
 
-            int color1Index = clut.getColors().indexOf(color1);
-            if (color1Index == -1) {
-                color1Index = clut.getColors().size();
+            if (!clut.getColors().contains(color1))
                 clut.getColors().add(color1);
-            }
 
-            int color2Index = clut.getColors().indexOf(color2);
-            if (color2Index == -1) {
-                color2Index = clut.getColors().size();
+            if (!clut.getColors().contains(color2))
                 clut.getColors().add(color2);
-            }
+        }
 
-            if (clut.getColors().size() > maxColors)
-                throw new RuntimeException("Tried to save a PSX image with too many colors. [Max: " + maxColors + "]");
+        if (clut.getColors().size() > maxColors)
+            throw new RuntimeException("Tried to save a PSX image with too many colors. [Max: " + maxColors + ", Colors: " + clut.getColors().size() + "]");
 
-            writer.writeByte((byte) (color2Index | (color1Index << PSX_INDEX_BIT_SIZE)));
+        clut.getColors().sort(Comparator.comparingInt(PSXClutColor::toRGBA));
+        for (int i = 0; i < getImageBytes().length; i += (PC_BYTES_PER_PIXEL * PSX_PIXELS_PER_BYTE)) {
+            PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
+            PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PC_BYTES_PER_PIXEL);
+            writer.writeByte((byte) (clut.getColors().indexOf(color1) | (clut.getColors().indexOf(color2) << PSX_INDEX_BIT_SIZE)));
         }
 
         // For any unfilled part of the clut, fill it with black.
