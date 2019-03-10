@@ -90,17 +90,18 @@ public class VLOArchive extends GameFile {
         int imageCount = getImages().size();
         writer.writeStringBytes(isPsxMode() ? PSX_SIGNATURE : PC_SIGNATURE);
         writer.writeInt(imageCount);
-        writer.writeInt(writer.getIndex() + ((isPsxMode() ? 3 : 1) * Constants.INTEGER_SIZE)); // Offset to the VLO table info.
+        int imageHeaderPointer = writer.writeNullPointer();
 
-        int clutFirstSetupIndex = -1;
+        int clutHeaderPointer = -1;
         if (isPsxMode()) {
             writer.writeInt(this.clutEntries.size());
-            clutFirstSetupIndex = writer.writeNullPointer(); // This will be written later.
+            clutHeaderPointer = writer.writeNullPointer(); // This will be written later.
         }
 
+        writer.writeAddressTo(imageHeaderPointer);
         this.images.forEach(image -> image.save(writer));
         if (isPsxMode()) { // Add room for clut setup data.
-            writer.writeAddressTo(clutFirstSetupIndex);
+            writer.writeAddressTo(clutHeaderPointer);
             this.clutEntries.forEach(entry -> entry.save(writer));
         }
 
