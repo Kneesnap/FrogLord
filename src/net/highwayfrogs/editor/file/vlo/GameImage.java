@@ -18,7 +18,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A singular game image. MR_TXSETUP struct.
@@ -41,13 +40,14 @@ public class GameImage extends GameObject implements Cloneable {
     private byte ingameHeight;
     private byte[] imageBytes;
 
-    private AtomicInteger suppliedTextureOffset;
+    private transient int tempSaveImageDataPointer;
     private transient BufferedImage cachedImage;
 
     public static final int MAX_DIMENSION = 256;
     private static final int PC_BYTES_PER_PIXEL = 4;
-    private static final int PSX_PIXELS_PER_PC = 2;
+    private static final int PSX_PIXELS_PER_BYTE = 2;
     private static final int PSX_WIDTH_MODIFIER = 4;
+    private static final int PSX_INDEX_BIT_SIZE = (Constants.BITS_PER_BYTE / PSX_PIXELS_PER_BYTE);
 
     public static final int FLAG_TRANSLUCENT = Constants.BIT_FLAG_0;
     public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused.
@@ -64,12 +64,11 @@ public class GameImage extends GameObject implements Cloneable {
     @Override
     public void load(DataReader reader) {
         this.vramX = reader.readShort();
-        if (getParent().isPsxMode())
-            this.vramX *= PSX_WIDTH_MODIFIER;
-
         this.vramY = reader.readShort();
         this.fullWidth = reader.readShort();
         this.fullHeight = reader.readShort();
+        if (getParent().isPsxMode())
+            this.vramX *= PSX_WIDTH_MODIFIER;
 
         int offset = reader.readInt();
         this.textureId = reader.readShort();
@@ -98,10 +97,10 @@ public class GameImage extends GameObject implements Cloneable {
             ByteBuffer buffer = ByteBuffer.allocate(PC_BYTES_PER_PIXEL * pixelCount);
             ClutEntry clut = getClut();
 
-            for (int i = 0; i < pixelCount / PSX_PIXELS_PER_PC; i++) { // We read two pixels per iteration.
+            for (int i = 0; i < pixelCount / PSX_PIXELS_PER_BYTE; i++) { // We read two pixels per iteration.
                 short value = reader.readUnsignedByteAsShort();
                 int low = value & 0x0F;
-                int high = value >> 4;
+                int high = value >> PSX_INDEX_BIT_SIZE;
 
                 readPSXPixel(low, clut, buffer);
                 readPSXPixel(high, clut, buffer);
@@ -113,9 +112,87 @@ public class GameImage extends GameObject implements Cloneable {
         }
 
         reader.jumpReturn();
-
         Utils.verify(getParent().isPsxMode() || (readU == getU() && readV == getV()), "Image UV does not match the calculated one! [%d,%d] [%d, %d]", readU, readV, getU(), getV()); // Psx mode has this disabled because there are lots of problems with saving PSX VLOs right now.
+    }
 
+    @Override
+    public void save(DataWriter writer) {
+        short vramX = this.vramX;
+        if (getParent().isPsxMode())
+            vramX /= PSX_WIDTH_MODIFIER;
+        writer.writeShort(vramX);
+        writer.writeShort(this.vramY);
+
+        short width = this.fullWidth;
+        if (getParent().isPsxMode())
+            width /= PSX_WIDTH_MODIFIER;
+        writer.writeShort(width);
+
+        writer.writeShort(this.fullHeight);
+        this.tempSaveImageDataPointer = writer.writeNullPointer();
+        writer.writeShort(this.textureId);
+        writer.writeShort(this.texturePage);
+
+        if (getParent().isPsxMode()) {
+            writer.writeShort(this.clutId);
+            writer.writeShort(this.flags);
+        } else {
+            writer.writeShort(this.flags);
+            writer.writeShort(this.clutId);
+        }
+
+        writer.writeUnsignedByte(getU());
+        writer.writeUnsignedByte(getV());
+        writer.writeByte(this.ingameWidth);
+        writer.writeByte(this.ingameHeight);
+    }
+
+    /**
+     * Save extra data.
+     * @param writer The writer to save data to.
+     */
+    public void saveExtra(DataWriter writer) {
+        writer.writeAddressTo(this.tempSaveImageDataPointer);
+        writeImageBytes(writer);
+    }
+
+    private void writeImageBytes(DataWriter writer) {
+        if (!getParent().isPsxMode()) {
+            writer.writeBytes(getImageBytes()); // The image bytes as they are loaded are already as they should be when saved.
+            return;
+        }
+
+        ClutEntry clut = getClut();
+        clut.getColors().clear(); // Generate a new clut.
+
+        int maxColors = getClut().calculateColorCount();
+        for (int i = 0; i < getImageBytes().length; i += (PC_BYTES_PER_PIXEL * PSX_PIXELS_PER_BYTE)) {
+            // RGBA -> ClutColor
+            PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
+            PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PC_BYTES_PER_PIXEL);
+
+            int color1Index = clut.getColors().indexOf(color1);
+            if (color1Index == -1) {
+                color1Index = clut.getColors().size();
+                clut.getColors().add(color1);
+            }
+
+            int color2Index = clut.getColors().indexOf(color2);
+            if (color2Index == -1) {
+                color2Index = clut.getColors().size();
+                clut.getColors().add(color2);
+            }
+
+            if (clut.getColors().size() > maxColors)
+                throw new RuntimeException("Tried to save a PSX image with too many colors. [Max: " + maxColors + "]");
+
+            writer.writeByte((byte) (color2Index | (color1Index << PSX_INDEX_BIT_SIZE)));
+        }
+
+        // For any unfilled part of the clut, fill it with black.
+        PSXClutColor unused = new PSXClutColor();
+        while (maxColors > clut.getColors().size())
+            clut.getColors().add(unused);
     }
 
     /**
@@ -159,95 +236,6 @@ public class GameImage extends GameObject implements Cloneable {
 
         Utils.verify(clut != null, "Failed to find clut for coordinates [%d,%d].", clutX, clutY);
         return clut;
-    }
-
-    @Override
-    public void save(DataWriter writer) {
-        Utils.verify(this.suppliedTextureOffset != null, "Image data offset was not specified.");
-
-        short vramX = this.vramX;
-        if (getParent().isPsxMode())
-            vramX /= PSX_WIDTH_MODIFIER;
-        writer.writeShort(vramX);
-        writer.writeShort(this.vramY);
-
-        short width = this.fullWidth;
-        if (getParent().isPsxMode())
-            width /= PSX_WIDTH_MODIFIER;
-        writer.writeShort(width);
-
-        writer.writeShort(this.fullHeight);
-        writer.writeInt(this.suppliedTextureOffset.get());
-        writer.writeShort(this.textureId);
-        writer.writeShort(this.texturePage);
-
-        if (getParent().isPsxMode()) {
-            writer.writeShort(this.clutId);
-            writer.writeShort(this.flags);
-        } else {
-            writer.writeShort(this.flags);
-            writer.writeShort(this.clutId);
-        }
-
-        writer.writeUnsignedByte(getU());
-        writer.writeUnsignedByte(getV());
-        writer.writeByte(this.ingameWidth);
-        writer.writeByte(this.ingameHeight);
-
-        writer.jumpTemp(this.suppliedTextureOffset.get());
-        writer.writeBytes(getSavedImageBytes());
-        this.suppliedTextureOffset.set(writer.getIndex());
-        writer.jumpReturn();
-    }
-
-    public void save(DataWriter writer, AtomicInteger textureOffset) {
-        this.suppliedTextureOffset = textureOffset;
-        save(writer);
-        this.suppliedTextureOffset = null;
-    }
-
-    /**
-     * Get the byte[] which will be saved to the VLO file.
-     * @return vloImageByteArray
-     */
-    public byte[] getSavedImageBytes() {
-        if (!getParent().isPsxMode())
-            return getImageBytes(); // The image bytes as they are loaded are already as they should be when saved.
-
-        ClutEntry clut = getClut();
-        clut.getColors().clear(); // Generate a new clut.
-
-        ByteBuffer buffer = ByteBuffer.allocate((getImageBytes().length / PC_BYTES_PER_PIXEL) * PSX_PIXELS_PER_PC);
-        int maxColors = getClut().getClutRect().getWidth() * clut.getClutRect().getHeight();
-
-        for (int i = 0; i < getImageBytes().length; i += PC_BYTES_PER_PIXEL * PSX_PIXELS_PER_PC) {
-
-            // RGBA -> ClutColor
-            PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
-            PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PC_BYTES_PER_PIXEL);
-
-            int color1Index = clut.getColors().indexOf(color1);
-            if (color1Index == -1) {
-                color1Index = clut.getColors().size();
-                clut.getColors().add(color1);
-            }
-
-            int color2Index = clut.getColors().indexOf(color2);
-            if (color2Index == -1) {
-                color2Index = clut.getColors().size();
-                clut.getColors().add(color2);
-            }
-
-            Utils.verify(maxColors >= clut.getColors().size(), "Tried to import a PSX image with too many colors.");
-            buffer.putInt(color2Index | (color1Index << 4));
-        }
-
-        // For any unfilled part of the clut, fill it with black.
-        PSXClutColor unused = new PSXClutColor();
-        while (maxColors > clut.getColors().size())
-            clut.getColors().add(unused);
-
-        return buffer.array();
     }
 
     /**

@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
@@ -43,6 +42,7 @@ public class VLOArchive extends GameFile {
 
     private static final int IMAGE_INFO_BYTES = 24;
     private static final int HEADER_SIZE = SIGNATURE_LENGTH + (2 * Constants.INTEGER_SIZE);
+    private static final int PSX_HEADER_SIZE = HEADER_SIZE + (2 * Constants.INTEGER_SIZE);
     public static final int TYPE_ID = 1;
     public static final int WAD_TYPE = 0;
     public static final Image ICON = loadIcon("image");
@@ -95,27 +95,18 @@ public class VLOArchive extends GameFile {
         int clutFirstSetupIndex = -1;
         if (isPsxMode()) {
             writer.writeInt(this.clutEntries.size());
-            clutFirstSetupIndex = writer.getIndex();
-            writer.writeNull(Constants.INTEGER_SIZE); // This will be written later.
+            clutFirstSetupIndex = writer.writeNullPointer(); // This will be written later.
         }
 
-
-        AtomicInteger imageBytesOffset = new AtomicInteger((IMAGE_INFO_BYTES * imageCount) + HEADER_SIZE);
-        if (isPsxMode()) // Add room for clut setup data.
-            imageBytesOffset.addAndGet(getClutEntries().stream().mapToInt(ClutEntry::getByteSize).sum());
-
-        for (GameImage image : getImages())
-            image.save(writer, imageBytesOffset);
-
-        // Save CLUT data. CLUT should be saved after images are saved, because changed images will generate a new CLUT.
-        if (isPsxMode()) {
-            writer.jumpTemp(clutFirstSetupIndex);
-            writer.writeInt(imageBytesOffset.get());
-            writer.jumpReturn();
-
-            for (ClutEntry entry : clutEntries)
-                entry.save(writer, imageBytesOffset);
+        this.images.forEach(image -> image.save(writer));
+        if (isPsxMode()) { // Add room for clut setup data.
+            writer.writeAddressTo(clutFirstSetupIndex);
+            this.clutEntries.forEach(entry -> entry.save(writer));
         }
+
+        this.images.forEach(image -> image.saveExtra(writer));
+        if (isPsxMode())
+            this.clutEntries.forEach(entry -> entry.saveExtra(writer));
     }
 
     /**
