@@ -68,8 +68,10 @@ public class GameImage extends GameObject implements Cloneable {
         this.vramY = reader.readShort();
         this.fullWidth = reader.readShort();
         this.fullHeight = reader.readShort();
-        if (getParent().isPsxMode())
+        if (getParent().isPsxMode()) {
             this.vramX *= PSX_WIDTH_MODIFIER;
+            this.fullWidth *= PSX_WIDTH_MODIFIER;
+        }
 
         int offset = reader.readInt();
         this.textureId = reader.readShort();
@@ -92,9 +94,6 @@ public class GameImage extends GameObject implements Cloneable {
 
         int pixelCount = getFullWidth() * getFullHeight();
         if (getParent().isPsxMode()) {
-            this.fullWidth *= PSX_WIDTH_MODIFIER;
-            pixelCount *= PSX_WIDTH_MODIFIER;
-
             ByteBuffer buffer = ByteBuffer.allocate(PC_BYTES_PER_PIXEL * pixelCount);
             ClutEntry clut = getClut();
 
@@ -167,8 +166,6 @@ public class GameImage extends GameObject implements Cloneable {
         clut.getColors().clear(); // Generate a new clut.
 
         int maxColors = getClut().calculateColorCount();
-
-
         for (int i = 0; i < getImageBytes().length; i += (PC_BYTES_PER_PIXEL * PSX_PIXELS_PER_BYTE)) {
             PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
             PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PC_BYTES_PER_PIXEL);
