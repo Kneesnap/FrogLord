@@ -73,6 +73,7 @@ public class FroggerEXEInfo extends Config {
     private NameBank formBank;
     private NameBank entityBank;
     private List<FormEntry> fullFormBook = new ArrayList<>();
+    private int ramSize;
 
     private DataReader reader;
     private byte[] exeBytes;
@@ -149,6 +150,7 @@ public class FroggerEXEInfo extends Config {
         this.musicAddress = getInt("musicAddress");
         this.bmpPointerAddress = getInt("bmpPointerAddress", 0);
         this.cosTableAddress = getInt("cosTableAddress");
+        this.ramSize = getInt("ramSize", 0x00200000);
     }
 
     private void loadBanks() {

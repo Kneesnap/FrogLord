@@ -12,7 +12,6 @@ User interface improvements, including:
  - Keybinds should be changed to be part of a menu, like on the main screen we can have a ButtonBar with things like export, export alternate, etc.
  - Make things easier to use.
 
-Fix PSX VLO saving.
 Improve VLO VRAM editor, add PSX support. [What if you can arrange by page?]
 Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, and 1.8.0_181, but not 1.8.0_161 or 1.8.0_201? The broken ones appear to use less RAM, and have spikes when viewing the map.
 A formbook + entlib editor.
