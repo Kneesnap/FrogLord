@@ -16,7 +16,6 @@ Improve VLO VRAM editor, add PSX support. [What if you can arrange by page?]
 Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, and 1.8.0_181, but not 1.8.0_161 or 1.8.0_201? The broken ones appear to use less RAM, and have spikes when viewing the map.
 A formbook + entlib editor.
 Eventually have some method which can allocate space into an executable at a given space so we could for instance add a new level into the level selector. This would need to modify pointers.
-Prototype Guide
 
 Eventually:
  - MWD patch format. (Similar to xdelta or ips)
