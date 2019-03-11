@@ -108,6 +108,6 @@ public class PSXClutColor extends GameObject {
      * @return clutColor
      */
     public static PSXClutColor fromRGBA(byte[] array, int index) {
-        return fromRGBA(array[index], array[index + 1], array[index + 2], array[index + 3]);
+        return fromRGBA(array[index + 3], array[index + 2], array[index + 1], array[index]);
     }
 }
