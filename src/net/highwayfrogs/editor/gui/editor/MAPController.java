@@ -341,15 +341,15 @@ public class MAPController extends EditorController<MAPFile> {
         FormEntry form = entity.getFormEntry();
 
         if (!form.testFlag(FormEntry.FLAG_NO_MODEL)) {
+            boolean isGeneralTheme = form.getTheme() == MAPTheme.GENERAL;
             ThemeBook themeBook = getFile().getConfig().getThemeBook(form.getTheme());
-            WADFile wadFile = form.getTheme() == MAPTheme.GENERAL ? themeBook.getWAD(getFile())
-                    : getFile().getFileEntry().getMapBook().getWad(getFile());
+            WADFile wadFile = isGeneralTheme ? themeBook.getWAD(getFile()) : getFile().getFileEntry().getMapBook().getWad(getFile());
 
             int wadIndex = form.getWadIndex();
-            if (wadFile.getFiles().size() > wadIndex) {
+            if ((!getFile().getConfig().isPSX() || !isGeneralTheme) && wadFile.getFiles().size() > wadIndex) { // PSX version currently can't load general mofs. TODO: Fix that.
                 WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
 
-                if (!wadEntry.isDummy()) {
+                if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
                     MOFHolder holder = (MOFHolder) wadEntry.getFile();
                     holder.setVloFile(themeBook.getVLO(getFile()));
                     MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
