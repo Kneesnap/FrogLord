@@ -84,7 +84,6 @@ public class MisfitModel3DObject extends GameObject {
         writer.writeUnsignedByte(MAJOR_VERSION);
         writer.writeUnsignedByte(MINOR_VERSION);
         writer.writeUnsignedByte(this.modelFlags);
-        writer.writeUnsignedByte((short) (this.segments.size() + 1)); // Add 1 to account for EOF.
 
         // Determine which segments we're gonna save.
         for (OffsetType type : OffsetType.values()) {
@@ -102,6 +101,9 @@ public class MisfitModel3DObject extends GameObject {
                     getSegments().add(header);
             }
         }
+
+        // Write the count after calculating which segments are being written.
+        writer.writeUnsignedByte((short) (this.segments.size() + 1)); // Add 1 to account for EOF.
 
         // Write headers.
         Map<MMDataBlockHeader, Integer> headerAddressMap = new HashMap<>();
