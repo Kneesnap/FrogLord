@@ -114,4 +114,13 @@ public class FormEntry extends GameObject {
             id |= FLAG_GENERAL;
         return id;
     }
+
+    /**
+     * Test if a flag is present.
+     * @param flag The flag to test.
+     * @return hasFlag
+     */
+    public boolean testFlag(int flag) {
+        return (this.flags & flag) == flag;
+    }
 }

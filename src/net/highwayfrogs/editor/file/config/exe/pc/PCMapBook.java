@@ -2,9 +2,11 @@ package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -92,6 +94,17 @@ public class PCMapBook extends MapBook {
     @Override
     public <T> T execute(Function<PCMapBook, T> pcHandler, Function<PSXMapBook, T> psxHandler) {
         return pcHandler.apply(this);
+    }
+
+    @Override
+    public WADFile getWad(MAPFile map) {
+        if (this.lowMapId == map.getFileEntry().getLoadedId())
+            return getConfig().getGameFile(this.lowWadId);
+
+        if (this.highMapId == map.getFileEntry().getLoadedId())
+            return getConfig().getGameFile(this.highWadId);
+
+        return null;
     }
 
     @Override

@@ -1,8 +1,10 @@
 package net.highwayfrogs.editor.file.config.exe;
 
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -84,4 +86,11 @@ public abstract class MapBook extends ExeStruct {
      * @return result
      */
     public abstract <T> T execute(Function<PCMapBook, T> pcHandler, Function<PSXMapBook, T> psxHandler);
+
+    /**
+     * Gets the wad file for a given map.
+     * @param map The map to get the wad file for.
+     * @return wadFile
+     */
+    public abstract WADFile getWad(MAPFile map);
 }

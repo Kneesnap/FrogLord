@@ -24,12 +24,11 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.utils.Utils;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -59,12 +58,12 @@ public class MOFController extends EditorController<MOFHolder> {
 
     @Override
     public void onInit(AnchorPane editorRoot) {
-        setupMofViewer(GUIMain.MAIN_STAGE, TextureMap.newTextureMap(getFile().asStaticFile()));
+        setupMofViewer(GUIMain.MAIN_STAGE);
     }
 
     @SneakyThrows
-    private void setupMofViewer(Stage stageToOverride, TextureMap texMap) {
-        this.mofMesh = new MOFMesh(getFile(), texMap);
+    private void setupMofViewer(Stage stageToOverride) {
+        this.mofMesh = getFile().getMofMesh();
         this.uiController = new MOFUIController(this);
 
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.
@@ -72,7 +71,7 @@ public class MOFController extends EditorController<MOFHolder> {
         material.setDiffuseColor(Color.WHITE);
         material.setSpecularColor(Color.BLACK);
 
-        Image fxImage = Utils.toFXImage(texMap.getImage(), true);
+        Image fxImage = Utils.toFXImage(getFile().getTextureMap().getImage(), true);
         material.setDiffuseMap(fxImage);
         material.setSpecularPower(0);
 

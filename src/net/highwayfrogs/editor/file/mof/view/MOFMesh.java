@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file.mof.view;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.FrogMesh;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.MOFPartcel;
@@ -32,8 +31,8 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     private int frameCount;
     private List<Vector> verticeCache = new ArrayList<>();
 
-    public MOFMesh(MOFHolder holder, TextureMap map) {
-        super(map, VertexFormat.POINT_TEXCOORD);
+    public MOFMesh(MOFHolder holder) {
+        super(holder.getTextureMap(), VertexFormat.POINT_TEXCOORD);
         this.mofHolder = holder;
         updateData();
     }

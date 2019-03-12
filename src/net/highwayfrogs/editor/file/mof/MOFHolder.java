@@ -10,10 +10,12 @@ import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.map.MAPTheme;
+import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
+import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -46,6 +48,8 @@ public class MOFHolder extends GameFile {
     private transient MAPTheme theme;
     @Setter private transient VLOArchive vloFile;
     private MOFHolder completeMOF; // This is the last MOF which was not incomplete.
+    private transient TextureMap textureMap;
+    private transient MOFMesh mofMesh;
 
     public static final int MOF_ID = 3;
     public static final int MAP_MOF_ID = 4;
@@ -225,5 +229,25 @@ public class MOFHolder extends GameFile {
         DataWriter writer = new DataWriter(new FileReceiver(saveTo));
         model.save(writer);
         writer.closeReceiver();
+    }
+
+    /**
+     * Gets this MOF's TextureMap.
+     * @return textureMap
+     */
+    public TextureMap getTextureMap() {
+        if (this.textureMap == null)
+            this.textureMap = TextureMap.newTextureMap(this);
+        return this.textureMap;
+    }
+
+    /**
+     * Get this MOF's mesh.
+     * @return mofMesh
+     */
+    public MOFMesh getMofMesh() {
+        if (this.mofMesh == null)
+            this.mofMesh = new MOFMesh(this);
+        return this.mofMesh;
     }
 }

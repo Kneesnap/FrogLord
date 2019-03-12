@@ -19,6 +19,9 @@ import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.WADFile;
+import net.highwayfrogs.editor.file.WADFile.WADEntry;
+import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.light.Light;
@@ -26,6 +29,7 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -324,14 +328,31 @@ public class MAPController extends EditorController<MAPFile> {
         float[] pos = new float[3];
         for (Entity entity : getFile().getEntities()) {
             entity.getPosition(pos, getFile());
-            MeshView meshView = makeIcon(pos[0], pos[1], pos[2]);
+            MeshView meshView = makeEntityIcon(entity, pos[0], pos[1], pos[2]);
             meshView.setOnMouseClicked(evt -> this.mapUIController.showEntityInfo(entity));
             this.entityIcons.add(meshView);
         }
     }
 
-    private MeshView makeIcon(float x, float y, float z) {
+    private MeshView makeEntityIcon(Entity entity, float x, float y, float z) {
         float entityIconSize = MapUIController.getPropertyEntityIconSize().getValue();
+
+        FormEntry form = entity.getFormEntry();
+
+        int wadIndex = form.getId();
+        if (!form.testFlag(FormEntry.FLAG_NO_MODEL)) {
+            WADFile wadFile = getFile().getFileEntry().getMapBook().getWad(getFile());
+
+            if (wadFile.getFiles().size() > wadIndex) {
+                WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
+
+                MOFHolder holder = (MOFHolder) wadEntry.getFile();
+                holder.setVloFile(getFile().getVlo());
+                MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
+                view.setMaterial(holder.getTextureMap().getPhongMaterial());
+                return view;
+            }
+        }
 
         TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
         triMesh.getPoints().addAll(-entityIconSize * 0.5f, entityIconSize * 0.5f, 0, -entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, entityIconSize * 0.5f, 0);

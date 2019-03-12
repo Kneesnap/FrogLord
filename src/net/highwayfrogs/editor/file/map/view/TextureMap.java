@@ -1,15 +1,17 @@
 package net.highwayfrogs.editor.file.map.view;
 
+import javafx.scene.paint.PhongMaterial;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
-import net.highwayfrogs.editor.file.mof.MOFFile;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -29,15 +31,16 @@ public class TextureMap {
     private BufferedImage image;
     private Map<Short, TextureEntry> entryMap;
     @Setter private List<Short> remapList;
+    private PhongMaterial phongMaterial;
 
     private static final ImageFilterSettings DISPLAY_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setAllowTransparency(true);
 
     /**
-     * Create a new texture map from an existing VLOArchive.
+     * Create a new texture map from an existing MOF.
      * @return newTextureMap
      */
-    public static TextureMap newTextureMap(MOFFile mofFile) {
-        return makeMap(mofFile.getHolder().getVloFile(), null, mofFile.makeVertexColorTextures());
+    public static TextureMap newTextureMap(MOFHolder mofHolder) {
+        return makeMap(mofHolder.getVloFile(), null, mofHolder.asStaticFile().makeVertexColorTextures());
     }
 
     /**
@@ -84,7 +87,7 @@ public class TextureMap {
         }
 
         graphics.dispose();
-        return new TextureMap(vloSource, fullImage, entryMap, remapTable);
+        return new TextureMap(vloSource, fullImage, entryMap, remapTable, null);
     }
 
     /**
@@ -187,5 +190,23 @@ public class TextureMap {
             entry.setMaxV((float) (startY + showHeight) / totalHeight);
             return entry;
         }
+    }
+
+    /**
+     * Gets the 3D PhongMaterial.
+     * @return phongMaterial
+     */
+    public PhongMaterial getPhongMaterial() {
+        if (this.phongMaterial == null)
+            this.phongMaterial = makeMaterial();
+        return this.phongMaterial;
+    }
+
+    /**
+     * Makes the material for this map.
+     * @return material
+     */
+    protected PhongMaterial makeMaterial() {
+        return Utils.makeSpecialMaterial(Utils.toFXImage(getImage(), true));
     }
 }
