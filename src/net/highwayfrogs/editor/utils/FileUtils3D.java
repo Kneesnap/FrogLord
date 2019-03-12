@@ -82,13 +82,8 @@ public class FileUtils3D {
         objWriter.write(Constants.NEWLINE);
 
         // Write Faces.
-        Map<MOFPolygon, MOFPart> ownerMap = new HashMap<>();
         List<MOFPolygon> allPolygons = new ArrayList<>();
-        staticMof.getParts().forEach(part -> part.getMofPolygons().values().forEach(polys -> {
-            allPolygons.addAll(polys);
-            for (MOFPolygon poly : polys)
-                ownerMap.put(poly, part);
-        }));
+        staticMof.getParts().forEach(part -> part.getMofPolygons().values().forEach(allPolygons::addAll));
 
         // Register textures.
         if (exportTextures) {
@@ -136,7 +131,7 @@ public class FileUtils3D {
                     }
                 }
 
-                objWriter.write(polygon.toObjFaceCommand(exportTextures, counter, ownerMap.get(polygon)) + Constants.NEWLINE);
+                objWriter.write(polygon.toObjFaceCommand(exportTextures, counter) + Constants.NEWLINE);
             }
         });
 
@@ -144,7 +139,7 @@ public class FileUtils3D {
         objWriter.append("# Faces without textures.").append(Constants.NEWLINE);
         for (Entry<PSXColorVector, List<MOFPolygon>> mapEntry : facesWithColors.entrySet()) {
             objWriter.write("usemtl color" + faceColors.indexOf(mapEntry.getKey()) + Constants.NEWLINE);
-            mapEntry.getValue().forEach(poly -> objWriter.write(poly.toObjFaceCommand(exportTextures, null, ownerMap.get(poly)) + Constants.NEWLINE));
+            mapEntry.getValue().forEach(poly -> objWriter.write(poly.toObjFaceCommand(exportTextures, null) + Constants.NEWLINE));
         }
 
 

@@ -116,7 +116,7 @@ public class MOFPart extends GameObject {
 
             List<MOFPolygon> prims = mofPolygons.computeIfAbsent(mofPrimType, type -> new ArrayList<>());
             for (int i = 0; i < primCount; i++) {
-                MOFPolygon newPoly = mofPrimType.getMaker().get();
+                MOFPolygon newPoly = mofPrimType.makeNew(this);
                 newPoly.load(reader);
                 prims.add(newPoly);
                 orderedByLoadPolygons.add(newPoly);

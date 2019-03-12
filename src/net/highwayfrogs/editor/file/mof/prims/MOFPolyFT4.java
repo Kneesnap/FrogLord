@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.mof.prims;
 
+import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -7,8 +8,8 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 1/1/2019.
  */
 public class MOFPolyFT4 extends MOFPolyTexture {
-    public MOFPolyFT4() {
-        super(MOFPrimType.FT4, 4, 1);
+    public MOFPolyFT4(MOFPart parent) {
+        super(parent, MOFPrimType.FT4, 4, 1);
     }
 
     @Override

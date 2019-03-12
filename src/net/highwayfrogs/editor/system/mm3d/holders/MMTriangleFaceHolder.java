@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.system.mm3d.blocks.MMTriangleFaceBlock;
 
 /**
  * Holds face data.
+ * TODO: HANDLE XAR VERTEX STARTS
  * Created by Kneesnap on 3/2/2019.
  */
 public class MMTriangleFaceHolder extends MMDataBlockHeader<MMTriangleFaceBlock> {

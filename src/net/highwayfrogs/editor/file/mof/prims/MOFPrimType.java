@@ -1,15 +1,14 @@
 package net.highwayfrogs.editor.file.mof.prims;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import net.highwayfrogs.editor.file.mof.MOFPart;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * A registry of MOF Prim types.
  * Created by Kneesnap on 1/1/2019.
  */
-@Getter
 @AllArgsConstructor
 public enum MOFPrimType {
     F3(MOFPolyF3::new),
@@ -29,5 +28,14 @@ public enum MOFPrimType {
     GE3(MOFPolyGE3::new),
     GE4(MOFPolyGE4::new);
 
-    private final Supplier<MOFPolygon> maker;
+    private final Function<MOFPart, MOFPolygon> maker;
+
+    /**
+     * Create a new MOFPrimitive.
+     * @param part The part which will own this primitive.
+     * @return mofPrimitive
+     */
+    public MOFPolygon makeNew(MOFPart part) {
+        return maker.apply(part);
+    }
 }

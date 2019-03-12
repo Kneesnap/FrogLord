@@ -21,8 +21,10 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
     private short padding;
     private PSXColorVector color = new PSXColorVector();
     private MOFPrimType type;
+    private transient MOFPart parentPart;
 
-    public MOFPolygon(MOFPrimType type, int verticeCount, int normalCount, int enCount) {
+    public MOFPolygon(MOFPart parent, MOFPrimType type, int verticeCount, int normalCount, int enCount) {
+        this.parentPart = parent;
         this.type = type;
         this.vertices = new int[verticeCount];
         this.normals = new short[normalCount];
@@ -90,16 +92,8 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
      * @return faceCommand
      */
     public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter) {
-        return toObjFaceCommand(showTextures, textureCounter, null);
-    }
-
-    /**
-     * Convert this into a wavefront object face command.
-     * @return faceCommand
-     */
-    public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter, MOFPart parentPart) {
         StringBuilder builder = new StringBuilder("f");
-        int base = parentPart != null ? parentPart.getTempVertexStart() : 0;
+        int base = getParentPart() != null ? getParentPart().getTempVertexStart() : 0;
         for (int i = this.vertices.length - 1; i >= 0; i--) {
             builder.append(" ").append(base + this.vertices[i] + 1);
             if (showTextures)

@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
@@ -37,8 +38,8 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     public static final int FLAG_ANIMATED_UV = Constants.BIT_FLAG_3; // Poly has an associated map animation using UV animation.
     public static final int FLAG_ANIMATED_TEXTURE = Constants.BIT_FLAG_4; // Poly has an associated map animation using cel list animation.
 
-    public MOFPolyTexture(MOFPrimType type, int verticeCount, int normalCount) {
-        super(type, verticeCount, normalCount, 0);
+    public MOFPolyTexture(MOFPart parent, MOFPrimType type, int verticeCount, int normalCount) {
+        super(parent, type, verticeCount, normalCount, 0);
         this.uvs = new ByteUV[verticeCount];
     }
 
