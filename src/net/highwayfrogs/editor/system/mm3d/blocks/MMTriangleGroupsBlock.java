@@ -23,8 +23,9 @@ public class MMTriangleGroupsBlock extends MMDataBlockBody {
     private String name = "";
     private List<Long> triangleIndices = new ArrayList<>();
     private short smoothness;
-    private long material; // Index into material list, 0xFFFFFFFF = None.
+    private long material = EMPTY_MATERIAL; // Index into material list.
 
+    public static final long EMPTY_MATERIAL = 0xFFFFFFFF;
     public static final int FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
     public static final int FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
 

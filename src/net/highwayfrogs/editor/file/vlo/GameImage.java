@@ -439,4 +439,11 @@ public class GameImage extends GameObject implements Cloneable {
     public GameImage clone() {
         return (GameImage) super.clone();
     }
+
+    /**
+     * Gets the local VLO image id.
+     */
+    public int getLocalImageID() {
+        return getParent().getImages().indexOf(this);
+    }
 }

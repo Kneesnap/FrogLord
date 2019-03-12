@@ -23,6 +23,8 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMMaterialsBlock;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMTriangleGroupsBlock;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMTriangleNormalsBlock;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMVerticeBlock;
 
@@ -118,11 +120,8 @@ public class FileUtils3D {
                 MOFPolyTexture texture = (MOFPolyTexture) polygon;
 
                 if (exportTextures) {
-                    int newTextureId = texture.getImageId();
-
-                    GameImage image = textureMap.computeIfAbsent(newTextureId, key ->
-                            vloTable.getImageByTextureId(texture.getImageId()));
-                    newTextureId = image.getTextureId();
+                    GameImage image = textureMap.computeIfAbsent((int) texture.getImageId(), vloTable::getImageByTextureId);
+                    int newTextureId = image.getTextureId();
 
                     if (newTextureId != textureId.get()) { // It's time to change the texture.
                         textureId.set(newTextureId);
@@ -151,7 +150,7 @@ public class FileUtils3D {
                 mtlWriter.write("newmtl tex" + image.getTextureId() + Constants.NEWLINE);
                 mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE); // Diffuse color.
                 // "d 0.75" = Partially transparent, if we want to support this later.
-                mtlWriter.write("map_Kd " + vloTable.getImages().indexOf(image) + ".png" + Constants.NEWLINE);
+                mtlWriter.write("map_Kd " + image.getLocalImageID() + ".png" + Constants.NEWLINE);
                 mtlWriter.write(Constants.NEWLINE);
             }
 
@@ -277,7 +276,7 @@ public class FileUtils3D {
                 mtlWriter.write("newmtl tex" + image.getTextureId() + Constants.NEWLINE);
                 mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE); // Diffuse color.
                 // "d 0.75" = Partially transparent, if we want to support this later.
-                mtlWriter.write("map_Kd " + vloArchive.getImages().indexOf(image) + ".png" + Constants.NEWLINE);
+                mtlWriter.write("map_Kd " + image.getLocalImageID() + ".png" + Constants.NEWLINE);
                 mtlWriter.write(Constants.NEWLINE);
             }
 
@@ -296,7 +295,6 @@ public class FileUtils3D {
 
     /**
      * Convert a MOF to a MisfitModel3D.
-     * TODO: Support textures. (and uvs)
      * TODO: Support texture animations.
      * TODO: Support flipbook animation.
      * TODO: Support lighting.
@@ -327,8 +325,39 @@ public class FileUtils3D {
             }
         }
 
-        // Add Faces.
-        staticMof.forEachPolygon(model.getTriangleFaces()::addMofPolygon);
+        // Add material list.
+        for (int local = 0; local < vloTable.getImages().size(); local++) {
+            model.getExternalTextures().addTexture(local + ".png"); // Add external texture.
+
+            // Add material.
+            MMMaterialsBlock material = model.getMaterials().addNewElement();
+            material.setFlags(MMMaterialsBlock.FLAG_EXTERNAL_TEXTURE);
+            material.setTexture(local);
+            material.setName("mat" + vloTable.getImages().get(local).getTextureId());
+        }
+
+        // Add Faces and Textures.
+        Map<Short, MMTriangleGroupsBlock> materialGroups = new HashMap<>();
+        staticMof.forEachPolygon(poly -> {
+            long startPolyId = model.getTriangleFaces().size();
+            model.getTriangleFaces().addMofPolygon(poly);
+
+            if (poly instanceof MOFPolyTexture) {
+                MOFPolyTexture polyTex = (MOFPolyTexture) poly;
+
+                List<Long> triangleIndices = materialGroups.computeIfAbsent(polyTex.getImageId(), key -> {
+                    MMTriangleGroupsBlock group = model.getGroups().addNewElement();
+                    GameImage image = vloTable.getImageByTextureId(key);
+                    group.setName("group" + image.getTextureId());
+                    group.setMaterial(image.getLocalImageID());
+                    return group;
+                }).getTriangleIndices();
+
+                triangleIndices.add(startPolyId++);
+                if (poly.isQuadFace())
+                    triangleIndices.add(startPolyId);
+            }
+        });
 
         // Add normals.
         for (int i = 0; i < model.getTriangleFaces().size(); i++) {
@@ -337,7 +366,9 @@ public class FileUtils3D {
             //TODO: Add normal data.
         }
 
-        /* UVs
+        // Add UVs.
+
+        /* TODO: UVs
         for (MOFPolygon poly : allPolygons) {
             if (poly instanceof MOFPolyTexture) {
                 MOFPolyTexture mofTex = (MOFPolyTexture) poly;

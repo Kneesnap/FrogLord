@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.system.mm3d.blocks;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
@@ -12,11 +13,12 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
+@Setter
 public class MMExternalTexturesBlock extends MMDataBlockBody {
     private int flags;
     private String path; // File path to texture relative to model (directory separator is backslash)
 
-    private static final String SEPARATOR = "\\";
+    public static final String SEPARATOR = "\\";
 
     public MMExternalTexturesBlock(MisfitModel3DObject parent) {
         super(OffsetType.EXTERNAL_TEXTURES, parent);

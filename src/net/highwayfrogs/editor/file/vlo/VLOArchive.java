@@ -186,7 +186,7 @@ public class VLOArchive extends GameFile {
             allImages.add(0, null);
 
         SelectionMenu.promptSelection("Select an image.", handler, allImages,
-                image -> image != null ? "#" + getImages().indexOf(image) + " (" + image.getTextureId() + ")" : "No Image",
+                image -> image != null ? "#" + image.getLocalImageID() + " (" + image.getTextureId() + ")" : "No Image",
                 image -> image.toFXImage(ICON_EXPORT));
     }
 }

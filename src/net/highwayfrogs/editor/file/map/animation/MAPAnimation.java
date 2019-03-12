@@ -6,7 +6,6 @@ import javafx.scene.image.ImageView;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -15,6 +14,7 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -184,7 +184,7 @@ public class MAPAnimation extends GameObject {
                 controller.setupAnimationEditor();
             }, false));
 
-            editor.setupSecondNode(new Button("Remove #" + vlo.getImages().indexOf(image) + " (" + image.getTextureId() + ")"), false).setOnAction(evt -> {
+            editor.setupSecondNode(new Button("Remove #" + image.getLocalImageID() + " (" + image.getTextureId() + ")"), false).setOnAction(evt -> {
                 getTextures().remove(tempIndex);
                 controller.setupAnimationEditor();
             });

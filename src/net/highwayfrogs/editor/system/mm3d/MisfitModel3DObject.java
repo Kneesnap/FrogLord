@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.system.mm3d.blocks.*;
+import net.highwayfrogs.editor.system.mm3d.holders.MMExternalTextureHolder;
 import net.highwayfrogs.editor.system.mm3d.holders.MMTriangleFaceHolder;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -27,7 +28,7 @@ import java.util.Map;
 public class MisfitModel3DObject extends GameObject {
     private short modelFlags;
     private List<MMDataBlockHeader<?>> segments = new ArrayList<>();
-    private MMDataBlockHeader<MMExternalTexturesBlock> externalTextures = new MMDataBlockHeader<>(OffsetType.EXTERNAL_TEXTURES, this);
+    private MMExternalTextureHolder externalTextures = new MMExternalTextureHolder(this);
     private MMDataBlockHeader<MMFrameAnimationPointsBlock> frameAnimationPoints = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATION_POINTS, this);
     private MMDataBlockHeader<MMFrameAnimationsBlock> frameAnimations = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATIONS, this);
     private MMDataBlockHeader<MMMaterialsBlock> materials = new MMDataBlockHeader<>(OffsetType.MATERIALS, this);

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.system.mm3d.blocks;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
@@ -23,6 +24,11 @@ public class MMMaterialsBlock extends MMDataBlockBody {
     private float[] specular = new float[4];
     private float[] emissive = new float[4];
     private float shininess;
+
+    public static final int FLAG_EXTERNAL_TEXTURE = Constants.BIT_FLAG_0;
+    public static final int FLAG_NO_TEXTURE = Constants.BIT_FLAG_15;
+    public static final int FLAG_CLAMP_S = Constants.BIT_FLAG_4; // Clamp S texture coordinates. (Do not repeat)
+    public static final int FLAG_CLAMP_T = Constants.BIT_FLAG_5; // Clamp T texture coordinates. (Do not repeat)
 
     public MMMaterialsBlock(MisfitModel3DObject parent) {
         super(OffsetType.MATERIALS, parent);
