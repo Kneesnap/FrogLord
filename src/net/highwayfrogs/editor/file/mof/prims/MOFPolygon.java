@@ -93,9 +93,8 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
      */
     public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter) {
         StringBuilder builder = new StringBuilder("f");
-        int base = getParentPart() != null ? getParentPart().getTempVertexStart() : 0;
         for (int i = this.vertices.length - 1; i >= 0; i--) {
-            builder.append(" ").append(base + this.vertices[i] + 1);
+            builder.append(" ").append(getVertexStart() + this.vertices[i] + 1);
             if (showTextures)
                 builder.append("/").append(textureCounter != null ? textureCounter.incrementAndGet() : 0);
         }
@@ -109,5 +108,13 @@ public abstract class MOFPolygon extends PSXGPUPrimitive {
      */
     public int getOrderId() {
         return 0;
+    }
+
+    /**
+     * Get the base vertex for this polygon.
+     * @return vertexStart
+     */
+    public int getVertexStart() {
+        return getParentPart() != null ? getParentPart().getTempVertexStart() : 0;
     }
 }

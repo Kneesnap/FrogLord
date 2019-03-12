@@ -314,8 +314,12 @@ public class FileUtils3D {
         Utils.verify(vloTable != null, "Unknown VLO Table for %s!", holder.getFileEntry().getDisplayName());
 
         // Add Vertices.
+        int verticeStart = 0;
         for (MOFPart part : staticMof.getParts()) {
+            part.setTempVertexStart(verticeStart);
             MOFPartcel partcel = part.getStaticPartcel();
+            verticeStart += partcel.getVertices().size();
+
             for (SVector vertex : partcel.getVertices()) {
                 MMVerticeBlock mmVertice = model.getVertices().addNewElement();
                 mmVertice.setFlags(MMVerticeBlock.FLAG_FREE_VERTEX);

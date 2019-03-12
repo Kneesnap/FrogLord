@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.system.mm3d.blocks.MMTriangleFaceBlock;
 
 /**
  * Holds face data.
- * TODO: HANDLE XAR VERTEX STARTS
  * Created by Kneesnap on 3/2/2019.
  */
 public class MMTriangleFaceHolder extends MMDataBlockHeader<MMTriangleFaceBlock> {
@@ -22,9 +21,9 @@ public class MMTriangleFaceHolder extends MMDataBlockHeader<MMTriangleFaceBlock>
      */
     public void addMofPolygon(MOFPolygon mofPolygon) {
         if (mofPolygon.isQuadFace()) {
-            addRectangle(mofPolygon.getVertices());
+            addRectangle(mofPolygon.getVertexStart(), mofPolygon.getVertices());
         } else if (mofPolygon.isTriFace()) {
-            addTriangle(mofPolygon.getVertices());
+            addTriangle(mofPolygon.getVertexStart(), mofPolygon.getVertices());
         } else {
             throw new RuntimeException("Failed to add MOF Face.");
         }
@@ -34,8 +33,8 @@ public class MMTriangleFaceHolder extends MMDataBlockHeader<MMTriangleFaceBlock>
      * Add a triangle face to this.
      * @param vertices Vertices to add.
      */
-    public void addTriangle(int[] vertices) {
-        addTriangle(vertices[0], vertices[1], vertices[2]);
+    public void addTriangle(int baseVertex, int[] vertices) {
+        addTriangle(baseVertex, vertices[0], vertices[1], vertices[2]);
     }
 
     /**
@@ -44,19 +43,19 @@ public class MMTriangleFaceHolder extends MMDataBlockHeader<MMTriangleFaceBlock>
      * @param v2 One of the vertices to add.
      * @param v3 One of the vertices to add.
      */
-    public void addTriangle(int v1, int v2, int v3) {
+    public void addTriangle(int baseVertex, int v1, int v2, int v3) {
         MMTriangleFaceBlock vertex = addNewElement();
-        vertex.getVertices()[0] = v3;
-        vertex.getVertices()[1] = v2;
-        vertex.getVertices()[2] = v1;
+        vertex.getVertices()[0] = v3 + baseVertex;
+        vertex.getVertices()[1] = v2 + baseVertex;
+        vertex.getVertices()[2] = v1 + baseVertex;
     }
 
     /**
      * Add a rectangle face to this.
      * @param vertices The vertices to add.
      */
-    public void addRectangle(int[] vertices) {
-        addRectangle(vertices[0], vertices[1], vertices[2], vertices[3]);
+    public void addRectangle(int baseVertex, int[] vertices) {
+        addRectangle(baseVertex, vertices[0], vertices[1], vertices[2], vertices[3]);
     }
 
     /**
@@ -65,15 +64,15 @@ public class MMTriangleFaceHolder extends MMDataBlockHeader<MMTriangleFaceBlock>
      * @param v2 One of the vertices to add.
      * @param v3 One of the vertices to add.
      */
-    public void addRectangle(int v1, int v2, int v3, int v4) {
+    public void addRectangle(int baseVertex, int v1, int v2, int v3, int v4) {
         MMTriangleFaceBlock vertex = addNewElement();
-        vertex.getVertices()[0] = v1;
-        vertex.getVertices()[1] = v4;
-        vertex.getVertices()[2] = v2;
+        vertex.getVertices()[0] = v1 + baseVertex;
+        vertex.getVertices()[1] = v4 + baseVertex;
+        vertex.getVertices()[2] = v2 + baseVertex;
 
         vertex = addNewElement();
-        vertex.getVertices()[0] = v2;
-        vertex.getVertices()[1] = v4;
-        vertex.getVertices()[2] = v3;
+        vertex.getVertices()[0] = v2 + baseVertex;
+        vertex.getVertices()[1] = v4 + baseVertex;
+        vertex.getVertices()[2] = v3 + baseVertex;
     }
 }
