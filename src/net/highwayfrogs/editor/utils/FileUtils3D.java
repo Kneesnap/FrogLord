@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.utils;
 
+import lombok.AllArgsConstructor;
 import lombok.Cleanup;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
@@ -327,7 +329,7 @@ public class FileUtils3D {
         }
 
         // Add Faces and Textures.
-        Map<Short, MMTriangleGroupsBlock> materialGroups = new HashMap<>();
+        Map<Short, MOFTextureData> dataMap = new HashMap<>();
         staticMof.forEachPolygon(poly -> {
             long startPolyId = model.getTriangleFaces().size();
             model.getTriangleFaces().addMofPolygon(poly);
@@ -335,7 +337,7 @@ public class FileUtils3D {
             if (poly instanceof MOFPolyTexture) {
                 MOFPolyTexture polyTex = (MOFPolyTexture) poly;
 
-                List<Long> triangleIndices = materialGroups.computeIfAbsent(polyTex.getImageId(), key -> {
+                MOFTextureData data = dataMap.computeIfAbsent(polyTex.getImageId(), key -> {
                     GameImage image = vloTable.getImageByTextureId(key);
                     int localId = image.getLocalImageID();
                     int texId = image.getTextureId();
@@ -353,9 +355,12 @@ public class FileUtils3D {
                     MMTriangleGroupsBlock group = model.getGroups().addNewElement();
                     group.setName("group" + texId);
                     group.setMaterial(materialId);
-                    return group;
-                }).getTriangleIndices();
+                    return new MOFTextureData(image, externalTextureId, group, material);
+                });
 
+                List<Long> triangleIndices = data.getGroup().getTriangleIndices();
+
+                //TODO: UVs too.
                 triangleIndices.add(startPolyId++);
                 if (poly.isQuadFace())
                     triangleIndices.add(startPolyId);
@@ -383,6 +388,15 @@ public class FileUtils3D {
 
 
         return model;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static final class MOFTextureData {
+        private GameImage image;
+        private int externalTextureIndex;
+        private MMTriangleGroupsBlock group;
+        private MMMaterialsBlock material;
     }
 
     /**
