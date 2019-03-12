@@ -296,13 +296,11 @@ public class FileUtils3D {
 
     /**
      * Convert a MOF to a MisfitModel3D.
-     * TODO: Faces
      * TODO: Support textures. (and uvs)
-     * TODO: Support normals.
      * TODO: Support texture animations.
+     * TODO: Support flipbook animation.
      * TODO: Support lighting.
      * TODO: Support bounding box.
-     * TODO: Support flipbook animation.
      * TODO: Other missing things like collprim and matrix.
      * @param holder The mof to convert.
      * @return misfit3d
@@ -336,6 +334,7 @@ public class FileUtils3D {
         for (int i = 0; i < model.getTriangleFaces().size(); i++) {
             MMTriangleNormalsBlock normal = model.getNormals().addNewElement();
             normal.setIndex(i);
+            //TODO: Add normal data.
         }
 
         /* UVs
