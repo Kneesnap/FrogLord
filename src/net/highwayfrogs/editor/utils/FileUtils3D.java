@@ -300,6 +300,7 @@ public class FileUtils3D {
      * TODO: Support lighting.
      * TODO: Support bounding box.
      * TODO: Other missing things like collprim and matrix.
+     * TODO: Allow alternative materials which handle vertex coloring. [BOTH TEXTURED AND NON-TEXTURED!!]
      * @param holder The mof to convert.
      * @return misfit3d
      */
@@ -325,17 +326,6 @@ public class FileUtils3D {
             }
         }
 
-        // Add material list.
-        for (int local = 0; local < vloTable.getImages().size(); local++) {
-            model.getExternalTextures().addTexture(local + ".png"); // Add external texture.
-
-            // Add material.
-            MMMaterialsBlock material = model.getMaterials().addNewElement();
-            material.setFlags(MMMaterialsBlock.FLAG_EXTERNAL_TEXTURE);
-            material.setTexture(local);
-            material.setName("mat" + vloTable.getImages().get(local).getTextureId());
-        }
-
         // Add Faces and Textures.
         Map<Short, MMTriangleGroupsBlock> materialGroups = new HashMap<>();
         staticMof.forEachPolygon(poly -> {
@@ -346,10 +336,23 @@ public class FileUtils3D {
                 MOFPolyTexture polyTex = (MOFPolyTexture) poly;
 
                 List<Long> triangleIndices = materialGroups.computeIfAbsent(polyTex.getImageId(), key -> {
-                    MMTriangleGroupsBlock group = model.getGroups().addNewElement();
                     GameImage image = vloTable.getImageByTextureId(key);
-                    group.setName("group" + image.getTextureId());
-                    group.setMaterial(image.getLocalImageID());
+                    int localId = image.getLocalImageID();
+                    int texId = image.getTextureId();
+
+                    // Create material.
+                    int externalTextureId = model.getExternalTextures().size();
+                    model.getExternalTextures().addTexture(localId + ".png"); // Add external texture.
+
+                    int materialId = model.getMaterials().size();
+                    MMMaterialsBlock material = model.getMaterials().addNewElement();
+                    material.setTexture(externalTextureId);
+                    material.setName("mat" + texId);
+
+                    // Create new group.
+                    MMTriangleGroupsBlock group = model.getGroups().addNewElement();
+                    group.setName("group" + texId);
+                    group.setMaterial(materialId);
                     return group;
                 }).getTriangleIndices();
 

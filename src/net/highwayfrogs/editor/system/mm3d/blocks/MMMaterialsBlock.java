@@ -25,8 +25,7 @@ public class MMMaterialsBlock extends MMDataBlockBody {
     private float[] emissive = new float[4];
     private float shininess;
 
-    public static final int FLAG_EXTERNAL_TEXTURE = Constants.BIT_FLAG_0;
-    public static final int FLAG_NO_TEXTURE = Constants.BIT_FLAG_15;
+    public static final int FLAG_NO_TEXTURE = 0b00001111;
     public static final int FLAG_CLAMP_S = Constants.BIT_FLAG_4; // Clamp S texture coordinates. (Do not repeat)
     public static final int FLAG_CLAMP_T = Constants.BIT_FLAG_5; // Clamp T texture coordinates. (Do not repeat)
 
