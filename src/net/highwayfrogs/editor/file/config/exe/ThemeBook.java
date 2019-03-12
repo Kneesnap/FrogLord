@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.config.exe;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
@@ -56,6 +57,13 @@ public abstract class ThemeBook extends ExeStruct {
      * @return vloArchive
      */
     public abstract VLOArchive getVLO(MAPFile file);
+
+    /**
+     * Get the wad of this book.
+     * @param file The map file to get the vlo from.
+     * @return vloArchive
+     */
+    public abstract WADFile getWAD(MAPFile file);
 
     /**
      * Tests if this is a valid theme.

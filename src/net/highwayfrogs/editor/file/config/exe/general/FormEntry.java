@@ -116,6 +116,17 @@ public class FormEntry extends GameObject {
     }
 
     /**
+     * Get the index into the wad.
+     * @return wadFile
+     */
+    public int getWadIndex() {
+        int wadIndex = getId();
+        if (getTheme() == MAPTheme.GENERAL)
+            wadIndex -= getTheme().getFormOffset();
+        return wadIndex;
+    }
+
+    /**
      * Test if a flag is present.
      * @param flag The flag to test.
      * @return hasFlag

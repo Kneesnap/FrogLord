@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.config.exe.psx;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -48,6 +49,11 @@ public class PSXThemeBook extends ThemeBook {
     @Override
     public VLOArchive getVLO(MAPFile map) {
         return isValid() ? getConfig().getGameFile(map.isMultiplayer() ? getMultiplayerVloId() : getVloId()) : null;
+    }
+
+    @Override
+    public WADFile getWAD(MAPFile map) {
+        return isValid() ? getConfig().getGameFile(map.isMultiplayer() ? getMultiplayerWadId() : getWadId()) : null;
     }
 
     @Override

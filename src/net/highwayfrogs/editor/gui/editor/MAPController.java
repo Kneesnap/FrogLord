@@ -21,8 +21,10 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
+import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
@@ -338,16 +340,18 @@ public class MAPController extends EditorController<MAPFile> {
 
         FormEntry form = entity.getFormEntry();
 
-        int wadIndex = form.getId();
         if (!form.testFlag(FormEntry.FLAG_NO_MODEL)) {
-            WADFile wadFile = getFile().getFileEntry().getMapBook().getWad(getFile());
+            ThemeBook themeBook = getFile().getConfig().getThemeBook(form.getTheme());
+            WADFile wadFile = form.getTheme() == MAPTheme.GENERAL ? themeBook.getWAD(getFile())
+                    : getFile().getFileEntry().getMapBook().getWad(getFile());
 
+            int wadIndex = form.getWadIndex();
             if (wadFile.getFiles().size() > wadIndex) {
                 WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
-                MOFHolder holder = (MOFHolder) wadEntry.getFile();
 
                 if (!wadEntry.isDummy()) {
-                    holder.setVloFile(getFile().getVlo());
+                    MOFHolder holder = (MOFHolder) wadEntry.getFile();
+                    holder.setVloFile(themeBook.getVLO(getFile()));
                     MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
                     view.setMaterial(holder.getTextureMap().getPhongMaterial());
                     return view;

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -66,6 +67,18 @@ public class PCThemeBook extends ThemeBook {
             return getConfig().getGameFile(map.isLowPolyMode() ? getLowMultiplayerVloId() : getHighMultiplayerVloId());
         } else {
             return getConfig().getGameFile(map.isLowPolyMode() ? getLowVloId() : getHighVloId());
+        }
+    }
+
+    @Override
+    public WADFile getWAD(MAPFile map) {
+        if (!isValid())
+            return null;
+
+        if (map.isMultiplayer()) {
+            return getConfig().getGameFile(map.isLowPolyMode() ? getLowMultiplayerWadId() : getHighMultiplayerWadId());
+        } else {
+            return getConfig().getGameFile(map.isLowPolyMode() ? getLowWadId() : getHighWadId());
         }
     }
 
