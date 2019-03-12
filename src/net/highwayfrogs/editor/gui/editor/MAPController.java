@@ -295,8 +295,7 @@ public class MAPController extends EditorController<MAPFile> {
 
             // Add paths via the render manager
             this.renderManager.addPaths(DISPLAY_LIST_PATHS, getFile().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
-        }
-        else {
+        } else {
             // Clear the paths display list
             this.renderManager.clearDisplayList(DISPLAY_LIST_PATHS);
         }
@@ -345,12 +344,14 @@ public class MAPController extends EditorController<MAPFile> {
 
             if (wadFile.getFiles().size() > wadIndex) {
                 WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
-
                 MOFHolder holder = (MOFHolder) wadEntry.getFile();
-                holder.setVloFile(getFile().getVlo());
-                MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
-                view.setMaterial(holder.getTextureMap().getPhongMaterial());
-                return view;
+
+                if (!wadEntry.isDummy()) {
+                    holder.setVloFile(getFile().getVlo());
+                    MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
+                    view.setMaterial(holder.getTextureMap().getPhongMaterial());
+                    return view;
+                }
             }
         }
 
@@ -544,7 +545,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Iterate through each light and apply the the root scene graph node
         System.out.println("[ LIGHTING ] Adding " + getFile().getLights().size() + " lights:");
-        for(Light light : getFile().getLights()) {
+        for (Light light : getFile().getLights()) {
             switch (light.getApiType()) {
                 case AMBIENT:
                     AmbientLight ambLight = new AmbientLight();

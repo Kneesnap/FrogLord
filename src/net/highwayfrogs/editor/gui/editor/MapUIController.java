@@ -367,8 +367,8 @@ public class MapUIController implements Initializable {
             int globalFormIndex = names.indexOf(newEntry);
             Utils.verify(globalFormIndex >= 0, "Invalid Global Form Index for: \"%s\"", newEntry);
             entity.setFormBook(getMap().getConfig().getFullFormBook().get(globalFormIndex));
-            getController().resetEntities();
             showEntityInfo(entity); // Update entity type.
+            getController().resetEntities();
         });
 
         entityEditor.addIntegerField("Entity ID", entity.getUniqueId(), entity::setUniqueId, null);
