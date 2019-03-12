@@ -331,7 +331,7 @@ public class FileUtils3D {
         // Add Faces and Textures.
         Map<Short, MOFTextureData> dataMap = new HashMap<>();
         staticMof.forEachPolygon(poly -> {
-            long startPolyId = model.getTriangleFaces().size();
+            long faceIndex = model.getTriangleFaces().size();
             model.getTriangleFaces().addMofPolygon(poly);
 
             if (poly instanceof MOFPolyTexture) {
@@ -358,12 +358,13 @@ public class FileUtils3D {
                     return new MOFTextureData(image, externalTextureId, group, material);
                 });
 
-                List<Long> triangleIndices = data.getGroup().getTriangleIndices();
+                model.getTextureCoordinates().addMofPolygon(faceIndex, polyTex); // Add UVs.
 
-                //TODO: UVs too.
-                triangleIndices.add(startPolyId++);
+                // Link faces to texture group.
+                List<Long> triangleIndices = data.getGroup().getTriangleIndices();
+                triangleIndices.add(faceIndex);
                 if (poly.isQuadFace())
-                    triangleIndices.add(startPolyId);
+                    triangleIndices.add(faceIndex + 1);
             }
         });
 
@@ -373,19 +374,6 @@ public class FileUtils3D {
             normal.setIndex(i);
             //TODO: Add normal data.
         }
-
-        // Add UVs.
-
-        /* TODO: UVs
-        for (MOFPolygon poly : allPolygons) {
-            if (poly instanceof MOFPolyTexture) {
-                MOFPolyTexture mofTex = (MOFPolyTexture) poly;
-                for (int i = mofTex.getUvs().length - 1; i >= 0; i--)
-                    objWriter.write(mofTex.getObjUVString(i) + Constants.NEWLINE);
-            }
-        }
-        */
-
 
         return model;
     }

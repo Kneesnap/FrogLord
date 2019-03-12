@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.system.mm3d.blocks;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
@@ -10,11 +12,15 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
  * Holds texture coordinate information.
  * Created by Kneesnap on 2/28/2019.
  */
+@Getter
+@Setter
 public class MMTextureCoordinatesBlock extends MMDataBlockBody {
     private int flags;
     private long triangle; // Triangle for this texture coordinate set.
-    private float[] xCoordinates = new float[3]; // Indexed by v1, v2, v3.
-    private float[] yCoordinates = new float[3]; // Indexed by v1, v2, v3.
+    private float[] xCoordinates = new float[COORDINATES_COUNT]; // Indexed by v1, v2, v3.
+    private float[] yCoordinates = new float[COORDINATES_COUNT]; // Indexed by v1, v2, v3.
+
+    public static final int COORDINATES_COUNT = 3;
 
     public MMTextureCoordinatesBlock(MisfitModel3DObject parent) {
         super(OffsetType.TEXTURE_COORDINATES, parent);

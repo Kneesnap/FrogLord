@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.system.mm3d.blocks.*;
 import net.highwayfrogs.editor.system.mm3d.holders.MMExternalTextureHolder;
+import net.highwayfrogs.editor.system.mm3d.holders.MMTextureCoordinateHolder;
 import net.highwayfrogs.editor.system.mm3d.holders.MMTriangleFaceHolder;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -34,7 +35,7 @@ public class MisfitModel3DObject extends GameObject {
     private MMDataBlockHeader<MMMaterialsBlock> materials = new MMDataBlockHeader<>(OffsetType.MATERIALS, this);
     private MMDataBlockHeader<MMMetaDataBlock> metadata = new MMDataBlockHeader<>(OffsetType.META_DATA, this);
     private MMDataBlockHeader<MMSmoothnessAnglesBlock> smoothnessAngles = new MMDataBlockHeader<>(OffsetType.SMOOTHNESS_ANGLES, this);
-    private MMDataBlockHeader<MMTextureCoordinatesBlock> textureCoordinates = new MMDataBlockHeader<>(OffsetType.TEXTURE_COORDINATES, this);
+    private MMTextureCoordinateHolder textureCoordinates = new MMTextureCoordinateHolder(this);
     private MMDataBlockHeader<MMTextureProjectionTrianglesBlock> textureProjectionTriangles = new MMDataBlockHeader<>(OffsetType.TEXTURE_PROJECTIONS_TRIANGLES, this);
     private MMTriangleFaceHolder triangleFaces = new MMTriangleFaceHolder(this);
     private MMDataBlockHeader<MMTriangleGroupsBlock> groups = new MMDataBlockHeader<>(OffsetType.GROUPS, this);
