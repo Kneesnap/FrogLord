@@ -302,7 +302,6 @@ public class FileUtils3D {
      * TODO: Support lighting.
      * TODO: Support bounding box.
      * TODO: Other missing things like collprim and matrix.
-     * TODO: Allow alternative materials which handle vertex coloring. [BOTH TEXTURED AND NON-TEXTURED!!]
      * @param holder The mof to convert.
      * @return misfit3d
      */
@@ -330,6 +329,7 @@ public class FileUtils3D {
 
         // Add Faces and Textures.
         Map<Short, MOFTextureData> dataMap = new HashMap<>();
+        Map<PSXColorVector, MOFTextureData> colorMap = new HashMap<>();
         staticMof.forEachPolygon(poly -> {
             long faceIndex = model.getTriangleFaces().size();
             model.getTriangleFaces().addMofPolygon(poly);
@@ -365,6 +365,29 @@ public class FileUtils3D {
                 triangleIndices.add(faceIndex);
                 if (poly.isQuadFace())
                     triangleIndices.add(faceIndex + 1);
+            } else {
+                MOFTextureData colorData = colorMap.computeIfAbsent(poly.getColor(), colorKey -> {
+                    // Create material.
+                    int materialId = model.getMaterials().size();
+                    MMMaterialsBlock material = model.getMaterials().addNewElement();
+                    material.setFlags(MMMaterialsBlock.FLAG_NO_TEXTURE);
+                    material.setName("colorMaterial" + materialId);
+                    material.getDiffuse()[0] = Utils.unsignedByteToFloat(colorKey.getRed());
+                    material.getDiffuse()[1] = Utils.unsignedByteToFloat(colorKey.getGreen());
+                    material.getDiffuse()[2] = Utils.unsignedByteToFloat(colorKey.getBlue());
+
+                    // Create new group.
+                    MMTriangleGroupsBlock group = model.getGroups().addNewElement();
+                    group.setName("colorGroup" + colorKey.toRGB());
+                    group.setMaterial(materialId);
+                    return new MOFTextureData(null, MMTriangleGroupsBlock.EMPTY_MATERIAL, group, material);
+                });
+
+                // Link faces to texture group.
+                List<Long> triangleIndices = colorData.getGroup().getTriangleIndices();
+                triangleIndices.add(faceIndex);
+                if (poly.isQuadFace())
+                    triangleIndices.add(faceIndex + 1);
             }
         });
 
@@ -382,7 +405,7 @@ public class FileUtils3D {
     @AllArgsConstructor
     private static final class MOFTextureData {
         private GameImage image;
-        private int externalTextureIndex;
+        private long externalTextureIndex;
         private MMTriangleGroupsBlock group;
         private MMMaterialsBlock material;
     }
