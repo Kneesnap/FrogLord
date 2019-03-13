@@ -37,6 +37,12 @@ public class MMMaterialsBlock extends MMDataBlockBody {
         this.ambient[1] = .2F;
         this.ambient[2] = .2F;
         this.ambient[3] = 1F;
+
+        this.diffuse[0] = 1F;
+        this.diffuse[1] = 1F;
+        this.diffuse[2] = 1F;
+        this.diffuse[3] = 1F;
+
         this.specular[this.specular.length - 1] = 1F;
     }
 
