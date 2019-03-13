@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
@@ -97,7 +97,7 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
         private float y;
         private float z;
 
-        public MMFloatVertex(SVector vec) {
+        public MMFloatVertex(Vector vec) {
             this(vec.getFloatX(), vec.getFloatY(), vec.getFloatZ());
         }
 

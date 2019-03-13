@@ -17,11 +17,16 @@ import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.MOFPartcel;
+import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
+import net.highwayfrogs.editor.file.mof.animation.MOFAnimationCels;
+import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.SelectionMenu;
@@ -298,7 +303,6 @@ public class FileUtils3D {
     /**
      * Convert a MOF to a MisfitModel3D.
      * TODO: Support texture animations. (If possible.)
-     * TODO: Support XAR animations.
      * TODO: Support lighting.
      * TODO: Support bounding box.
      * TODO: Other missing things like collprim and matrix.
@@ -349,6 +353,35 @@ public class FileUtils3D {
 
                     MMAnimationFrame animFrame = animation.getFrames().get(frame);
                     partcel.getVertices().forEach(vertice -> animFrame.getVertexPositions().add(new MMFloatVertex(vertice)));
+                }
+            }
+        }
+
+        // Add XAR animations.
+        if (holder.isAnimatedMOF()) { // Maybe in the future we can use frame animation points, instead of using the final vertice location.
+            MOFAnimation animatedMof = holder.getAnimatedFile();
+
+            for (MOFPart part : staticMof.getParts()) {
+                for (int action = 0; action < holder.getMaxAnimation(); action++) {
+                    MMFrameAnimationsBlock animation = model.getFrameAnimations().getBody(action);
+                    if (animation == null) {
+                        animation = model.getFrameAnimations().addNewElement();
+                        animation.setFramesPerSecond(20);
+                        animation.setName(holder.getName(action));
+                    }
+
+                    MOFAnimationCels celAnimation = animatedMof.getAnimationById(action);
+                    for (int frame = 0; frame < celAnimation.getFrameCount(); frame++) {
+                        MOFPartcel partcel = part.getCel(action, frame);
+
+                        if (frame >= animation.getFrames().size())
+                            animation.getFrames().add(new MMAnimationFrame());
+
+                        MMAnimationFrame animFrame = animation.getFrames().get(frame);
+                        TransformObject transform = animatedMof.getTransform(part, action, frame);
+                        partcel.getVertices().forEach(vertex ->
+                                animFrame.getVertexPositions().add(new MMFloatVertex(PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(), vertex, new IVector()))));
+                    }
                 }
             }
         }
