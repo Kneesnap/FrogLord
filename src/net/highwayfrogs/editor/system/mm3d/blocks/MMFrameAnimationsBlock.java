@@ -1,8 +1,12 @@
 package net.highwayfrogs.editor.system.mm3d.blocks;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
@@ -18,6 +22,7 @@ import java.util.List;
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
+@Setter
 public class MMFrameAnimationsBlock extends MMDataBlockBody {
     private int flags;
     private String name;
@@ -60,6 +65,7 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
     }
 
     @Getter
+    @NoArgsConstructor
     public static final class MMAnimationFrame extends GameObject {
         private List<MMFloatVertex> vertexPositions = new ArrayList<>();
         private transient int loadVertexCount;
@@ -84,10 +90,16 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
     }
 
     @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static final class MMFloatVertex extends GameObject {
         private float x;
         private float y;
         private float z;
+
+        public MMFloatVertex(SVector vec) {
+            this(vec.getFloatX(), vec.getFloatY(), vec.getFloatZ());
+        }
 
         @Override
         public void load(DataReader reader) {

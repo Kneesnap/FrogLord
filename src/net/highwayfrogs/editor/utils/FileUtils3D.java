@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.MOFPartcel;
+import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -25,10 +26,9 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
-import net.highwayfrogs.editor.system.mm3d.blocks.MMMaterialsBlock;
-import net.highwayfrogs.editor.system.mm3d.blocks.MMTriangleGroupsBlock;
-import net.highwayfrogs.editor.system.mm3d.blocks.MMTriangleNormalsBlock;
-import net.highwayfrogs.editor.system.mm3d.blocks.MMVerticeBlock;
+import net.highwayfrogs.editor.system.mm3d.blocks.*;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMFrameAnimationsBlock.MMAnimationFrame;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMFrameAnimationsBlock.MMFloatVertex;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -297,8 +297,8 @@ public class FileUtils3D {
 
     /**
      * Convert a MOF to a MisfitModel3D.
-     * TODO: Support texture animations.
-     * TODO: Support flipbook animation.
+     * TODO: Support texture animations. (If possible.)
+     * TODO: Support XAR animations.
      * TODO: Support lighting.
      * TODO: Support bounding box.
      * TODO: Other missing things like collprim and matrix.
@@ -324,6 +324,32 @@ public class FileUtils3D {
                 mmVertice.setX(vertex.getExportFloatX());
                 mmVertice.setY(vertex.getExportFloatY());
                 mmVertice.setZ(vertex.getExportFloatZ());
+            }
+        }
+
+        // Add Flipbook animations.
+        for (MOFPart part : staticMof.getParts()) {
+            if (part.getFlipbook() == null)
+                continue;
+
+            for (int action = 0; action < part.getFlipbook().getActions().size(); action++) {
+                MMFrameAnimationsBlock animation = model.getFrameAnimations().getBody(action);
+                if (animation == null) {
+                    animation = model.getFrameAnimations().addNewElement();
+                    animation.setFramesPerSecond(20);
+                    animation.setName(holder.getName(action));
+                }
+
+                MOFFlipbookAction flipbookAction = part.getFlipbook().getAction(action);
+                for (int frame = 0; frame < flipbookAction.getFrameCount(); frame++) {
+                    MOFPartcel partcel = part.getCel(action, frame);
+
+                    if (frame >= animation.getFrames().size())
+                        animation.getFrames().add(new MMAnimationFrame());
+
+                    MMAnimationFrame animFrame = animation.getFrames().get(frame);
+                    partcel.getVertices().forEach(vertice -> animFrame.getVertexPositions().add(new MMFloatVertex(vertice)));
+                }
             }
         }
 

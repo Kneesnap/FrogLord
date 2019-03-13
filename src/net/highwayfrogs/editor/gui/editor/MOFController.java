@@ -260,12 +260,7 @@ public class MOFController extends EditorController<MOFHolder> {
             List<Integer> numbers = new ArrayList<>(Utils.getIntegerList(holder.getMaxAnimation()));
             numbers.add(0, -1);
             animationSelector.setItems(FXCollections.observableArrayList(numbers));
-            animationSelector.setConverter(new AbstractStringConverter<>(id -> {
-                if (id == -1)
-                    return getHolder().asStaticFile().hasTextureAnimation() ? "Texture Animation" : "No Animation";
-
-                return holder.getName(id);
-            }));
+            animationSelector.setConverter(new AbstractStringConverter<>(holder::getName));
             animationSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
                 if (newValue != null)
                     setAnimation(newValue);

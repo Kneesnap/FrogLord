@@ -201,6 +201,9 @@ public class MOFHolder extends GameFile {
      * @return name
      */
     public String getName(int animationId) {
+        if (animationId == -1)
+            return asStaticFile().hasTextureAnimation() ? "Texture Animation" : "No Animation";
+
         String bankName = Utils.stripWin95(Utils.stripExtension(getFileEntry().getDisplayName()));
         NameBank childBank = getConfig().getAnimationBank().getChildBank(bankName);
         return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getMaxAnimation());

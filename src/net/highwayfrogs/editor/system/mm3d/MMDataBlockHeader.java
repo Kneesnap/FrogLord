@@ -97,4 +97,13 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
         getDataBlockBodies().add(newElement);
         return newElement;
     }
+
+    /**
+     * Gets the body at the given index.
+     * @param index The index to get the body for.
+     * @return body or null
+     */
+    public T getBody(int index) {
+        return index >= 0 && size() > index ? getDataBlockBodies().get(index) : null;
+    }
 }
