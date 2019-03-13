@@ -22,7 +22,7 @@ public class MMTriangleGroupsBlock extends MMDataBlockBody {
     private int flags;
     private String name = "";
     private List<Long> triangleIndices = new ArrayList<>();
-    private short smoothness;
+    private short smoothness = 0xFF;
     private long material = EMPTY_MATERIAL; // Index into material list.
 
     public static final long EMPTY_MATERIAL = 0xFFFFFFFF;
