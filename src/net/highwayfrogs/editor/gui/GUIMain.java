@@ -6,7 +6,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -16,7 +15,6 @@ import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
-import net.highwayfrogs.editor.gui.editor.SaveController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -132,30 +130,12 @@ public class GUIMain extends Application {
         primaryStage.show();
 
         // Load MWD.
-        EXE_CONFIG.setup();
-        MWDFile mwd = EXE_CONFIG.getMWD();
+        FroggerEXEInfo loadConfig = EXE_CONFIG;
+        loadConfig.setup();
+        loadConfig.setFolder(mwdFile.getParentFile());
+        MWDFile mwd = loadConfig.getMWD();
         mwd.load(new DataReader(new FileSource(mwdFile)));
-
-        // Setup GUI.
-        MainController controller = MainController.MAIN_WINDOW;
-        controller.loadMWD(mwd);
-
-        scene.setOnKeyPressed(event -> {
-            if (!event.isControlDown())
-                return;
-
-            if (event.getCode() == KeyCode.S) {
-                SaveController.saveFiles(EXE_CONFIG, mwd, mwdFile.getParentFile());
-            } else if (event.getCode() == KeyCode.I) {
-                controller.importFile();
-            } else if (event.getCode() == KeyCode.O) {
-                controller.exportFile();
-            } else if (event.getCode() == KeyCode.E) {
-                controller.getCurrentFile().exportAlternateFormat(controller.getFileEntry());
-            } else if (event.getCode() == KeyCode.X) {
-                EXE_CONFIG.exportCode(getWorkingDirectory());
-            }
-        });
+        MainController.MAIN_WINDOW.loadMWD(mwd); // Setup GUI.
     }
 
     /**

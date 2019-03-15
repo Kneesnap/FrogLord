@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
@@ -20,6 +21,7 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.editor.EditorController;
+import net.highwayfrogs.editor.gui.editor.SaveController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -124,6 +126,31 @@ public class MainController implements Initializable {
      */
     public FileEntry getFileEntry() {
         return mwdFile.getEntryMap().get(getCurrentFile());
+    }
+
+    @FXML
+    private void actionSaveMWD(ActionEvent evt) {
+        SaveController.saveFiles(GUIMain.EXE_CONFIG, getMwdFile());
+    }
+
+    @FXML
+    private void actionImportFile(ActionEvent evt) {
+        importFile();
+    }
+
+    @FXML
+    private void actionOutputFile(ActionEvent evt) {
+        exportFile();
+    }
+
+    @FXML
+    private void actionExportAlternateFile(ActionEvent evt) {
+        getCurrentFile().exportAlternateFormat(getFileEntry());
+    }
+
+    @FXML
+    private void actionMakeHeaders(ActionEvent evt) {
+        GUIMain.EXE_CONFIG.exportCode(GUIMain.getWorkingDirectory());
     }
 
     /**

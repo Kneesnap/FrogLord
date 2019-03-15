@@ -1,7 +1,6 @@
 Editor Features:
 
 MOF File:
- Export mofs to mm3d.
  Import mofs from mm3d.
 
 GUI Editor:
@@ -9,7 +8,6 @@ GUI Editor:
 
 User interface improvements, including:
  - Telling someone if they are trying to save in a folder we don't have permission to save to.
- - Keybinds should be changed to be part of a menu, like on the main screen we can have a ButtonBar with things like export, export alternate, etc.
  - Grid editor should allow selecting multiple squares (maybe hold control to select more than 1?), and allow mass grid flag editing.
  - Make things easier to use.
 

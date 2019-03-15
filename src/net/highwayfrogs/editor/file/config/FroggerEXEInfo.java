@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.config;
 
 import lombok.Cleanup;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
@@ -78,6 +79,7 @@ public class FroggerEXEInfo extends Config {
     private byte[] exeBytes;
     private File inputFile;
     private List<String> fallbackFileNames;
+    @Setter private transient File folder;
 
     private static final int ACOSTABLE_ENTRIES = 4096;
 

@@ -10,12 +10,12 @@ import javafx.scene.control.ProgressBar;
 import javafx.stage.Stage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.system.AbstractService;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -58,11 +58,10 @@ public class SaveController implements Initializable {
      * Start saving a MWD.
      * @param froggerEXE The executable config.
      * @param loadedMWD  The MWD to save.
-     * @param folder     The folder to save files in.
      */
-    public static void saveFiles(FroggerEXEInfo froggerEXE, MWDFile loadedMWD, File folder) {
+    public static void saveFiles(FroggerEXEInfo froggerEXE, MWDFile loadedMWD) {
         Utils.loadFXMLTemplate("save", "Saving MWD", SaveController::new,
-                (stage, controller) -> controller.startSaving(loadedMWD, froggerEXE, folder));
+                (stage, controller) -> controller.startSaving(loadedMWD, froggerEXE, froggerEXE.getFolder()));
     }
 
     @AllArgsConstructor
