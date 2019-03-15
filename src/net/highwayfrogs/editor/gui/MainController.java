@@ -12,7 +12,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.*;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -21,6 +20,7 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.editor.EditorController;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.net.URL;
@@ -31,6 +31,8 @@ import java.util.ResourceBundle;
 
 @Getter
 public class MainController implements Initializable {
+    @FXML private AnchorPane rootAnchor;
+    @FXML private MenuBar menuBar;
     @FXML private SplitPane mainSplitPane;
     @FXML private Accordion accordionMain;
     @FXML private AnchorPane editorPane;
@@ -225,5 +227,6 @@ public class MainController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         MAIN_WINDOW = this;
         System.out.println("Hello from FrogLord.");
+        menuBar.prefWidthProperty().bind(rootAnchor.widthProperty());
     }
 }
