@@ -3,13 +3,9 @@ package net.highwayfrogs.editor.file.config;
 import lombok.Getter;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Represents a Frogger config file.
@@ -28,14 +24,8 @@ public class Config {
     public static final String CHILD_OPEN_TAG = "[";
     public static final String CHILD_CLOSE_TAG = "]";
 
-    public Config(InputStream stream) throws IOException {
-        InputStreamReader reader = new InputStreamReader(stream);
-        BufferedReader bufferedReader = new BufferedReader(reader);
-        List<String> lines = bufferedReader.lines().collect(Collectors.toList());
-        reader.close();
-        bufferedReader.close();
-
-        this.load(lines);
+    public Config(InputStream stream) {
+        this(Utils.readLinesFromStream(stream));
     }
 
     public Config(List<String> lines) {

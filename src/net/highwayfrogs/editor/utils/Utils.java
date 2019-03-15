@@ -13,15 +13,14 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.stage.*;
 import javafx.stage.Window;
 import javafx.stage.FileChooser.ExtensionFilter;
+import lombok.Cleanup;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -31,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 /**
@@ -477,6 +477,52 @@ public class Utils {
      */
     public static InputStream getResourceStream(String resourceName) {
         return Utils.class.getClassLoader().getResourceAsStream(resourceName);
+    }
+
+    /**
+     * Read lines of text from an InputStream
+     * @param stream The stream to read from.
+     * @return lines
+     */
+    @SneakyThrows
+    public static List<String> readLinesFromStream(InputStream stream) {
+        @Cleanup InputStreamReader reader = new InputStreamReader(stream);
+        @Cleanup BufferedReader bufferedReader = new BufferedReader(reader);
+        return bufferedReader.lines().collect(Collectors.toList());
+    }
+
+    /**
+     * Read bytes from an InputStream
+     * Stolen from sun.nio.ch
+     * @param stream The stream to read from.
+     * @return lines
+     */
+    @SneakyThrows
+    public static byte[] readBytesFromStream(InputStream stream) {
+        byte[] output = new byte[0];
+        int var1 = Integer.MAX_VALUE;
+
+        int var6;
+        for (int var4 = 0; var4 < var1; var4 += var6) {
+            int var5;
+            if (var4 >= output.length) {
+                var5 = Math.min(var1 - var4, output.length + 1024);
+                if (output.length < var4 + var5) {
+                    output = Arrays.copyOf(output, var4 + var5);
+                }
+            } else {
+                var5 = output.length - var4;
+            }
+
+            var6 = stream.read(output, var4, var5);
+            if (var6 < 0) {
+                if (output.length != var4)
+                    output = Arrays.copyOf(output, var4);
+                break;
+            }
+        }
+
+        return output;
     }
 
     /**

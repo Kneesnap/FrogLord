@@ -63,7 +63,6 @@ public class FroggerEXEInfo extends Config {
     private int themeBookAddress;
     private int arcadeLevelAddress;
     private int bmpPointerAddress;
-    private int cosTableAddress;
     private int musicAddress;
     private boolean prototype;
     private boolean demo;
@@ -149,7 +148,6 @@ public class FroggerEXEInfo extends Config {
         this.arcadeLevelAddress = getInt("arcadeLevelAddress", 0);
         this.musicAddress = getInt("musicAddress");
         this.bmpPointerAddress = getInt("bmpPointerAddress", 0);
-        this.cosTableAddress = getInt("cosTableAddress");
         this.ramSize = getInt("ramSize", 0x00200000);
     }
 
@@ -185,9 +183,7 @@ public class FroggerEXEInfo extends Config {
     }
 
     private void readCosTable() {
-        DataReader reader = getReader();
-
-        reader.setIndex(getCosTableAddress());
+        DataReader reader = new DataReader(new ArraySource(Utils.readBytesFromStream(Utils.getResourceStream("ACOSTABLE"))));
         for (int i = 0; i < ACOSTABLE_ENTRIES; i++) {
             sinEntries[i] = reader.readShort();
             cosEntries[i] = reader.readShort();

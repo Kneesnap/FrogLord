@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file.config;
 
 import lombok.Getter;
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
@@ -106,7 +105,6 @@ public class NameBank {
      * @param unknownMaker What to return when an id wasn't found. Null is allowed.
      * @return newBank
      */
-    @SneakyThrows
     public static NameBank readBank(String folder, String configName, BiFunction<NameBank, Integer, String> unknownMaker) {
         Config config = new Config(Utils.getResourceStream("banks/" + folder + "/" + configName + ".cfg"));
         NameBank bank = new NameBank(config, config.getText(), unknownMaker);
