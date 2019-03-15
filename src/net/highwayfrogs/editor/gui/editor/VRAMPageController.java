@@ -11,13 +11,14 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.system.Tuple3;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -94,11 +95,42 @@ public class VRAMPageController implements Initializable {
                 yField.setText(String.valueOf(newImage.getVramY()));
                 pField.setText(String.valueOf(newImage.getTexturePage()));
                 miniView.setImage(Utils.toFXImage(newImage.toBufferedImage(SETTINGS), true));
+                imageView.requestFocus(); // Allow arrow keys to be listened for, instead of moving cursor.
             }
 
             this.selectedImage = newImage;
             updateDisplay();
         });
+
+        imageView.setOnKeyPressed(evt -> {
+            if (evt.getCode() == KeyCode.UP) {
+                moveImage(0, -1);
+            } else if (evt.getCode() == KeyCode.DOWN) {
+                moveImage(0, 1);
+            } else if (evt.getCode() == KeyCode.LEFT) {
+                moveImage(-1, 0);
+            } else if (evt.getCode() == KeyCode.RIGHT) {
+                moveImage(1, 0);
+                evt.consume(); // Don't select text boxes.
+            }
+        });
+    }
+
+    private void moveImage(int x, int y) {
+        if (this.selectedImage == null)
+            return;
+
+        if (x != 0) {
+            this.selectedImage.setVramX((short) Math.min(getWidth() - this.selectedImage.getFullWidth(), Math.max(0, this.selectedImage.getVramX() + x)));
+            xField.setText(String.valueOf(this.selectedImage.getVramX()));
+        }
+
+        if (y != 0) {
+            this.selectedImage.setVramY((short) Math.max(0, this.selectedImage.getVramY() + y));
+            yField.setText(String.valueOf(this.selectedImage.getVramY()));
+        }
+
+        updateImage();
     }
 
     private void updateImage() {
@@ -221,5 +253,9 @@ public class VRAMPageController implements Initializable {
      */
     public static void openEditor(VLOController controller) {
         Utils.loadFXMLTemplate("vram-editor", "VRAM Editor", newStage -> new VRAMPageController(newStage, controller));
+    }
+
+    private int getWidth() {
+        return vloArchive.isPsxMode() ? 4096 : 256;
     }
 }
