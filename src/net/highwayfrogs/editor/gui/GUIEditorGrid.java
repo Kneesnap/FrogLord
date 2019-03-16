@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.gui;
 
-import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
 import javafx.geometry.Orientation;
@@ -13,8 +12,8 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.RowConstraints;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -223,7 +222,6 @@ public class GUIEditorGrid {
      * @param setter  The setter
      * @return comboBox
      */
-    @SuppressWarnings("unchecked")
     public <T> ComboBox<T> addSelectionBox(String label, T current, List<T> values, Consumer<T> setter) {
         addLabel(label);
         ComboBox<T> box = setupSecondNode(new ComboBox<>(FXCollections.observableArrayList(values)), false);
@@ -233,7 +231,7 @@ public class GUIEditorGrid {
         AtomicBoolean firstOpen = new AtomicBoolean(true);
         box.addEventFilter(ComboBox.ON_SHOWN, event -> { // Show the selected value when the dropdown is opened.
             if (firstOpen.getAndSet(false))
-                ((ComboBoxListViewSkin<T>) box.getSkin()).getListView().scrollTo(box.getValue());
+                Utils.comboBoxScrollToValue(box);
         });
 
         box.valueProperty().addListener((listener, oldVal, newVal) -> {

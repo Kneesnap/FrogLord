@@ -1,10 +1,12 @@
 package net.highwayfrogs.editor.utils;
 
+import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
@@ -1143,6 +1145,16 @@ public class Utils {
                 newList.add(i);
             return newList;
         });
+    }
+
+    /**
+     * Make a combo box scroll to the value it has selected.
+     * @param comboBox The box to scroll.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> void comboBoxScrollToValue(ComboBox<T> comboBox) {
+        if (comboBox.getSkin() != null)
+            ((ComboBoxListViewSkin<T>) comboBox.getSkin()).getListView().scrollTo(comboBox.getValue());
     }
 
     /**

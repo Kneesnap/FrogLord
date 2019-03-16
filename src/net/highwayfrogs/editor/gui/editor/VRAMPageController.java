@@ -120,6 +120,7 @@ public class VRAMPageController implements Initializable {
         if (this.selectedImage == null)
             return;
 
+        saveOriginalPosition();
         if (x != 0) {
             this.selectedImage.setVramX((short) Math.min(getWidth() - this.selectedImage.getFullWidth(), Math.max(0, this.selectedImage.getVramX() + x)));
             xField.setText(String.valueOf(this.selectedImage.getVramX()));
@@ -208,13 +209,16 @@ public class VRAMPageController implements Initializable {
             return;
         }
 
-        if (!originalState.containsKey(this.selectedImage)) // Save original state, in case everything is cancelled.
-            originalState.put(this.selectedImage, new Tuple3<>(this.selectedImage.getVramX(), this.selectedImage.getVramY(), this.selectedImage.getTexturePage()));
-
+        saveOriginalPosition();
         this.selectedImage.setTexturePage(newPage);
         this.selectedImage.setVramX(newX);
         this.selectedImage.setVramY(newY);
         updateImage();
+    }
+
+    private void saveOriginalPosition() {
+        if (!originalState.containsKey(this.selectedImage)) // Save original state, in case everything is cancelled.
+            originalState.put(this.selectedImage, new Tuple3<>(this.selectedImage.getVramX(), this.selectedImage.getVramY(), this.selectedImage.getTexturePage()));
     }
 
     private static Point2D getImageCoords(ImageView view, double x, double y) {

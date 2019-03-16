@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.editor.EditorController;
 import net.highwayfrogs.editor.gui.editor.SaveController;
+import net.highwayfrogs.editor.gui.extra.FormEntryController;
 import net.highwayfrogs.editor.gui.extra.LevelInfoController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -161,7 +162,7 @@ public class MainController implements Initializable {
 
     @FXML
     private void editFormBook(ActionEvent evt) {
-        //TODO
+        FormEntryController.openEditor(GUIMain.EXE_CONFIG);
     }
 
     /**

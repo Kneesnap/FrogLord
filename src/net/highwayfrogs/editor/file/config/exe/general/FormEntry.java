@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config.exe.general;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.config.Config;
@@ -14,20 +15,21 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 3/4/2019.
  */
 @Getter
+@Setter
 public class FormEntry extends GameObject {
     private int entityType; // Index into global entity book.
     private int id; // Index into theme wad.
     private int scriptId;
     private int flags;
     private long collisionReactFunction; // Form collision callback.
-    private int radiusSquared; // Squared radius of bounding box.
+    private int radiusSquared; // Squared radius of bounding box. Only set by GEN_BONUS_FLY_GRE when not running.
     private FormDeathType deathType;
     private long bonusCallbackFunction; // Eaten.
 
-    private transient MAPTheme theme;
-    private transient FroggerEXEInfo config;
-    private transient int globalFormId;
-    private transient int localFormId;
+    private transient final MAPTheme theme;
+    private transient final FroggerEXEInfo config;
+    private transient final int globalFormId;
+    private transient final int localFormId;
 
     public static final int FLAG_GENERAL = 0x8000;
     public static final int BYTE_SIZE = (8 * Constants.INTEGER_SIZE);
