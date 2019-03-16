@@ -63,9 +63,9 @@ public class IVector extends GameObject implements Vector {
      * @param vec The array to read info from.
      */
     public void vecEqualsSvec(short[] vec) {
-        this.x = (int) vec[0];
-        this.y = (int) vec[1];
-        this.z = (int) vec[2];
+        this.x = vec[0];
+        this.y = vec[1];
+        this.z = vec[2];
     }
 
     /**
@@ -73,13 +73,13 @@ public class IVector extends GameObject implements Vector {
      * @param vec The array to read info from.
      */
     public void vecEqualsSvec(SVector vec) {
-        this.x = (int) vec.getX();
-        this.y = (int) vec.getY();
-        this.z = (int) vec.getZ();
+        this.x = vec.getX();
+        this.y = vec.getY();
+        this.z = vec.getZ();
     }
 
     /**
-     * Equivalent to MRNormaliseVec
+     * Equivalent to MRNormaliseVec ?? I think [AndyEder]
      */
     public void normalise() {
         double[] tmpVec = new double[3];
@@ -99,6 +99,15 @@ public class IVector extends GameObject implements Vector {
         this.x = (int)tmpVec[0];
         this.y = (int)tmpVec[1];
         this.z = (int)tmpVec[2];
+    }
+
+    /**
+     * Equivalent to MROuterProduct12 ?? I think [AndyEder]
+     */
+    public void outerProduct12(IVector vec0, IVector vec1) {
+        this.x = (((vec0.getY() * vec1.getZ()) - (vec0.getZ() * vec1.getY())) >> 12);
+        this.y = (((vec0.getZ() * vec1.getX()) - (vec0.getX() * vec1.getZ())) >> 12);
+        this.z = (((vec0.getX() * vec1.getY()) - (vec0.getY() * vec1.getX())) >> 12);
     }
 
     /**
