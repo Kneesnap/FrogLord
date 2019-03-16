@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.file.config;
 
 import lombok.Cleanup;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
@@ -51,6 +50,7 @@ public class FroggerEXEInfo extends Config {
     private List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
     private List<LevelInfo> raceLevelInfo = new ArrayList<>();
     private List<Long> bmpTexturePointers = new ArrayList<>();
+    private List<FormEntry> fullFormBook = new ArrayList<>();
     private short[] cosEntries = new short[ACOSTABLE_ENTRIES];
     private short[] sinEntries = new short[ACOSTABLE_ENTRIES];
     private String internalName;
@@ -72,14 +72,13 @@ public class FroggerEXEInfo extends Config {
     private NameBank animationBank;
     private NameBank formBank;
     private NameBank entityBank;
-    private List<FormEntry> fullFormBook = new ArrayList<>();
     private int ramSize;
 
     private DataReader reader;
     private byte[] exeBytes;
+    private File folder;
     private File inputFile;
     private List<String> fallbackFileNames;
-    @Setter private transient File folder;
 
     private static final int ACOSTABLE_ENTRIES = 4096;
 
@@ -90,9 +89,10 @@ public class FroggerEXEInfo extends Config {
     private static final String CHILD_RESTORE_THEME_BOOK = "ThemeBookRestore";
     private static final String CHILD_IMAGE_NAMES = "ImageNames";
 
-    public FroggerEXEInfo(File inputExe, InputStream inputStream, String internalName, boolean hasConfigIdentifier) throws IOException {
+    public FroggerEXEInfo(File inputExe, InputStream inputStream, String internalName, boolean hasConfigIdentifier) {
         super(inputStream);
         this.inputFile = inputExe;
+        this.folder = inputExe.getParentFile();
         this.internalName = internalName;
         this.hasConfigIdentifier = hasConfigIdentifier;
     }
@@ -708,5 +708,31 @@ public class FroggerEXEInfo extends Config {
         if ((formBookId & FormEntry.FLAG_GENERAL) == FormEntry.FLAG_GENERAL)
             mapTheme = MAPTheme.GENERAL;
         return getThemeBook(mapTheme).getFormBook().get(formBookId & (FormEntry.FLAG_GENERAL - 1));
+    }
+
+    /**
+     * Get the music track for the particular level.
+     * @param level The level to get the track for.
+     * @return music.
+     */
+    public MusicTrack getMusic(MAPLevel level) {
+        return this.musicTracks.size() > level.ordinal() ? this.musicTracks.get(level.ordinal()) : null;
+    }
+
+    /**
+     * Gets the LevelInfo for a given MapLevel. Returns null if not found.
+     * @param level The level to get the info for.
+     * @return levelInfo
+     */
+    public LevelInfo getLevel(MAPLevel level) {
+        for (LevelInfo info : getArcadeLevelInfo())
+            if (info.getLevel() == level)
+                return info;
+
+        for (LevelInfo info : getRaceLevelInfo())
+            if (info.getLevel() == level)
+                return info;
+
+        return null;
     }
 }

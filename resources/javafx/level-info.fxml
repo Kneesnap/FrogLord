@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
+            minWidth="-Infinity" prefHeight="305.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0"
+            AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
+            xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <Label layoutX="7.0" layoutY="6.0" text="Level: " AnchorPane.leftAnchor="7.0" AnchorPane.topAnchor="6.0"/>
+        <ComboBox fx:id="levelSelector" layoutX="40.0" layoutY="2.0" prefHeight="25.0" prefWidth="125.0"
+                  AnchorPane.leftAnchor="40.0" AnchorPane.topAnchor="2.0"/>
+        <ComboBox fx:id="themeSelector" layoutX="64.0" layoutY="71.0" prefHeight="25.0" prefWidth="125.0"
+                  AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="46.0"/>
+        <ComboBox fx:id="worldSelector" layoutX="64.0" layoutY="71.0" prefHeight="25.0" prefWidth="125.0"
+                  AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="71.0"/>
+        <Label layoutX="10.0" layoutY="42.0" text="Zone Stack Position: " AnchorPane.leftAnchor="7.0"
+               AnchorPane.topAnchor="125.0"/>
+        <TextField fx:id="stackPosField" alignment="CENTER_RIGHT" layoutX="120.0" layoutY="46.0" prefHeight="25.0"
+                   prefWidth="69.0" AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="121.0"/>
+        <Label layoutX="10.0" layoutY="75.0" text="Theme: " AnchorPane.leftAnchor="7.0" AnchorPane.topAnchor="50.0"/>
+        <TextField fx:id="localLevelField" alignment="CENTER_RIGHT" layoutX="120.0" layoutY="96.0" prefHeight="25.0"
+                   prefWidth="69.0" AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="96.0"/>
+        <TextField fx:id="worldLevelField" alignment="CENTER_RIGHT" layoutX="120.0" layoutY="121.0" prefHeight="25.0"
+                   prefWidth="69.0" AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="146.0"/>
+        <Label layoutX="14.0" layoutY="100.0" text="Level Stack Position: " AnchorPane.leftAnchor="7.0"
+               AnchorPane.topAnchor="100.0"/>
+        <Label layoutX="10.0" layoutY="125.0" text="Zone Level Count: " AnchorPane.leftAnchor="7.0"
+               AnchorPane.topAnchor="150.0"/>
+        <Label layoutX="10.0" layoutY="144.0" text="Music: " AnchorPane.leftAnchor="7.0" AnchorPane.topAnchor="175.0"/>
+        <ComboBox fx:id="musicSelector" layoutX="64.0" layoutY="146.0" prefHeight="25.0" prefWidth="125.0"
+                  AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="171.0"/>
+        <Button layoutX="78.0" layoutY="266.0" mnemonicParsing="false" onAction="#onDone" text="Done"
+                AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="78.0" AnchorPane.rightAnchor="77.0"/>
+        <Label layoutX="12.0" layoutY="71.0" text="World: " AnchorPane.leftAnchor="7.0" AnchorPane.topAnchor="75.0"/>
+    </children>
+</AnchorPane>

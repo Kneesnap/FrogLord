@@ -48,6 +48,8 @@
                                                     shortcut="UP"/>
                             </accelerator>
                         </MenuItem>
+                        <MenuItem mnemonicParsing="false" onAction="#editLevelInfo" text="Edit Level Info"/>
+                        <MenuItem mnemonicParsing="false" onAction="#editFormBook" text="Edit Form Library"/>
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">

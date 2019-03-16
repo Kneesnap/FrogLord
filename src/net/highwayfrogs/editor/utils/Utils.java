@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
@@ -1163,6 +1164,22 @@ public class Utils {
                 field.setStyle(pass ? null : "-fx-text-inner-color: red;");
             }
         });
+    }
+
+    /**
+     * Set TextField key-press handling.
+     * @param field  The TextField to apply to.
+     * @param tester Handles text.
+     * @param onPass Called if not null and the setter passed.
+     */
+    public static void setHandleTestKeyPress(TextField field, Function<String, Boolean> tester, Consumer<String> onPass) {
+        setHandleKeyPress(field, value -> {
+            if (!tester.apply(value))
+                return false;
+
+            onPass.accept(value);
+            return true;
+        }, null);
     }
 
     /**

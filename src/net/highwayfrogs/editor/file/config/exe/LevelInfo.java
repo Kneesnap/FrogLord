@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config.exe;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.data.WorldId;
@@ -13,9 +14,10 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 2/1/2019.
  */
 @Getter
+@Setter
 public class LevelInfo extends ExeStruct {
     private int level;
-    private WorldId worldId;
+    private WorldId world;
     private int stackPosition; // 0 = Top of level stack.
     private int theme;
     private int localLevelId; // 0 -> 4 (Level 1 -> 5)
@@ -33,7 +35,7 @@ public class LevelInfo extends ExeStruct {
     @Override
     public void load(DataReader reader) {
         this.level = reader.readInt();
-        this.worldId = WorldId.values()[reader.readInt()];
+        this.world = WorldId.values()[reader.readInt()];
         this.stackPosition = reader.readInt();
         this.theme = reader.readInt();
         this.localLevelId = reader.readInt();
@@ -50,7 +52,7 @@ public class LevelInfo extends ExeStruct {
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(this.level);
-        writer.writeInt(this.worldId.ordinal());
+        writer.writeInt(this.world.ordinal());
         writer.writeInt(this.stackPosition);
         writer.writeInt(this.theme);
         writer.writeInt(this.localLevelId);
@@ -66,7 +68,7 @@ public class LevelInfo extends ExeStruct {
 
     @Override
     public String toString() {
-        return "[" + getLevel() + "/" + getWorldId() + "] " + getTheme() + " (" + (getLocalLevelId() + 1) + "/" + getLevelsInWorld() + ") [" + getStackPosition() + "]";
+        return "[" + getLevel() + "/" + getWorld() + "] " + getTheme() + " (" + (getLocalLevelId() + 1) + "/" + getLevelsInWorld() + ") [" + getStackPosition() + "]";
     }
 
     @Override
@@ -88,6 +90,14 @@ public class LevelInfo extends ExeStruct {
      */
     public MAPTheme getTheme() {
         return isTerminator() ? null : MAPTheme.values()[this.theme];
+    }
+
+    /**
+     * Set the theme of this level.
+     * @param theme The new theme.
+     */
+    public void setTheme(MAPTheme theme) {
+        this.theme = theme != null ? theme.ordinal() : -1;
     }
 
     /**

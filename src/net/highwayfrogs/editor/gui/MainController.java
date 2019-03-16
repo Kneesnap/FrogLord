@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.editor.EditorController;
 import net.highwayfrogs.editor.gui.editor.SaveController;
+import net.highwayfrogs.editor.gui.extra.LevelInfoController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -151,6 +152,16 @@ public class MainController implements Initializable {
     @FXML
     private void actionMakeHeaders(ActionEvent evt) {
         GUIMain.EXE_CONFIG.exportCode(GUIMain.getWorkingDirectory());
+    }
+
+    @FXML
+    private void editLevelInfo(ActionEvent evt) {
+        LevelInfoController.openEditor(GUIMain.EXE_CONFIG);
+    }
+
+    @FXML
+    private void editFormBook(ActionEvent evt) {
+        //TODO
     }
 
     /**

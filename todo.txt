@@ -9,7 +9,7 @@ GUI Editor:
 User interface improvements, including:
  - Telling someone if they are trying to save in a folder we don't have permission to save to.
  - Grid editor should allow selecting multiple squares (maybe hold control to select more than 1?), and allow mass grid flag editing.
- - Make things easier to use.
+ - Make editors easier to use.
 
 Improve VLO VRAM editor, add PSX support. [What if you can arrange by page?]
 Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, and 1.8.0_181, but not 1.8.0_161 or 1.8.0_201? The broken ones appear to use less RAM, and have spikes when viewing the map.

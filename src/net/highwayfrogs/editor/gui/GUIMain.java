@@ -107,7 +107,6 @@ public class GUIMain extends Application {
         }, configDisplayName.entrySet(), Entry::getValue, null);
     }
 
-    @SneakyThrows
     private void makeExeConfig(File inputExe, String configName, boolean hasConfigIdentifier) {
         EXE_CONFIG = new FroggerEXEInfo(inputExe, Utils.getResourceStream(getExeConfigPath(configName)), configName, hasConfigIdentifier);
     }
@@ -132,7 +131,6 @@ public class GUIMain extends Application {
         // Load MWD.
         FroggerEXEInfo loadConfig = EXE_CONFIG;
         loadConfig.setup();
-        loadConfig.setFolder(mwdFile.getParentFile());
         MWDFile mwd = loadConfig.getMWD();
         mwd.load(new DataReader(new FileSource(mwdFile)));
         MainController.MAIN_WINDOW.loadMWD(mwd); // Setup GUI.
