@@ -1254,6 +1254,20 @@ public class Utils {
     }
 
     /**
+     * Creates a PhongMaterial with a texture affected by lighting, and using only diffuse components.
+     * @param texture The texture to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial makeDiffuseMaterial(Image texture) {
+        PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(Color.WHITE);
+        material.setSpecularColor(Color.BLACK);
+        material.setSpecularPower(0.0);
+        material.setDiffuseMap(texture);
+        return material;
+    }
+
+    /**
      * Creates a PhongMaterial with a color unaffected by lighting.
      * @param color The color to create.
      * @return phongMaterial
