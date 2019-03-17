@@ -353,7 +353,7 @@ public class MAPController extends EditorController<MAPFile> {
                     MOFHolder holder = (MOFHolder) wadEntry.getFile();
                     holder.setVloFile(themeBook.getVLO(getFile()));
                     MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
-                    view.setMaterial(holder.getTextureMap().getPhongMaterial());
+                    view.setMaterial(holder.getTextureMap().getDiffuseMaterial());
                     return view;
                 }
             }
