@@ -77,14 +77,9 @@ public class ArcSegment extends PathSegment {
         final int t = (segmentDistance << 12) / c;
         final int a = ((segmentDistance << 18) - (t * c)) / (radius * 0x192);
 
-        final int y = (-pitch * segmentDistance) / getLength();
-
-        final int cos = getConfig().rcos(a);
-        final int sin = getConfig().rsin(a);
-
-        svec.setX((short)((cos * radius) >> 12));
-        svec.setY((short)y);
-        svec.setZ((short)((sin * radius) >> 12));
+        svec.setX((short) ((getConfig().rcos(a) * radius) >> 12));
+        svec.setY((short) ((-pitch * segmentDistance) / getLength()));
+        svec.setZ((short) ((getConfig().rsin(a) * radius) >> 12));
 
         PSXMatrix.MRApplyRotMatrix(matrix, svec, vec);
         vec.add(center);

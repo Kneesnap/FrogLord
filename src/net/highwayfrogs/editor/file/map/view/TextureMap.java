@@ -218,6 +218,8 @@ public class TextureMap {
      * @return material
      */
     protected PhongMaterial makeMaterial(boolean diffuseOnly) {
-        return (diffuseOnly) ? Utils.makeDiffuseMaterial(Utils.toFXImage(getImage(), true)) : Utils.makeSpecialMaterial(Utils.toFXImage(getImage(), true));
+        return diffuseOnly
+                ? Utils.makeDiffuseMaterial(Utils.toFXImage(getImage(), true))
+                : Utils.makeSpecialMaterial(Utils.toFXImage(getImage(), true));
     }
 }

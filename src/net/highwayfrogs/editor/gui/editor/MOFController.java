@@ -10,12 +10,10 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.*;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
@@ -66,15 +64,6 @@ public class MOFController extends EditorController<MOFHolder> {
         this.mofMesh = getFile().getMofMesh();
         this.uiController = new MOFUIController(this);
 
-        // Create and setup material properties for rendering the level, entity icons and bounding boxes.
-        PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(Color.WHITE);
-        material.setSpecularColor(Color.BLACK);
-
-        Image fxImage = Utils.toFXImage(getFile().getTextureMap().getImage(), true);
-        material.setDiffuseMap(fxImage);
-        material.setSpecularPower(0);
-
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(getMofMesh());
 
@@ -83,7 +72,7 @@ public class MOFController extends EditorController<MOFHolder> {
         this.rotZ = new Rotate(0, Rotate.Z_AXIS);
         meshView.getTransforms().addAll(rotX, rotY, rotZ);
 
-        meshView.setMaterial(material);
+        meshView.setMaterial(getFile().getTextureMap().getDiffuseMaterial());
         meshView.setCullFace(CullFace.NONE);
 
         // Setup a perspective camera through which the 3D view is realised.
