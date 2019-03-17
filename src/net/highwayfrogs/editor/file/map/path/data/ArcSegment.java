@@ -1,7 +1,5 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
-import javafx.geometry.Point3D;
-import javafx.scene.transform.Affine;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.path.Path;

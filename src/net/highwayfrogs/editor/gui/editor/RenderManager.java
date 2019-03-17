@@ -13,7 +13,6 @@ import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathSegment;
 import net.highwayfrogs.editor.file.map.path.PathType;
-import net.highwayfrogs.editor.file.map.path.data.ArcSegment;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.utils.Utils;
 
