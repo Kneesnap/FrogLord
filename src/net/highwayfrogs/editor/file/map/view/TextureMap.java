@@ -193,20 +193,31 @@ public class TextureMap {
     }
 
     /**
+     * Gets the 3D PhongMaterial (diffuse components only, affected by lighting).
+     * @return phongMaterial
+     */
+    public PhongMaterial getDiffuseMaterial() {
+        if (this.phongMaterial == null)
+            this.phongMaterial = makeMaterial(true);
+        return this.phongMaterial;
+    }
+
+    /**
      * Gets the 3D PhongMaterial.
      * @return phongMaterial
      */
     public PhongMaterial getPhongMaterial() {
         if (this.phongMaterial == null)
-            this.phongMaterial = makeMaterial();
+            this.phongMaterial = makeMaterial(false);
         return this.phongMaterial;
     }
 
     /**
      * Makes the material for this map.
+     * @param diffuseOnly   Whether or not to make material with diffuse components only.
      * @return material
      */
-    protected PhongMaterial makeMaterial() {
-        return Utils.makeSpecialMaterial(Utils.toFXImage(getImage(), true));
+    protected PhongMaterial makeMaterial(boolean diffuseOnly) {
+        return (diffuseOnly) ? Utils.makeDiffuseMaterial(Utils.toFXImage(getImage(), true)) : Utils.makeSpecialMaterial(Utils.toFXImage(getImage(), true));
     }
 }
