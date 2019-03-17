@@ -32,7 +32,6 @@ public class AnalysisUtils {
      * Prints unused textures found in a MWD File.
      * There are some VLOs which frogger can't determine if a texture is used or not, so it will not scan them.
      * Skipped: SKY_LAND textures, FIXE, OPT, LS, GEN, GENM, START, particle textures.
-     * TODO: Eventually, this should exclude SKY_LAND textures.
      * @param mwd The MWD file to scan.
      */
     public static void findUnusedTextures(MWDFile mwd) {

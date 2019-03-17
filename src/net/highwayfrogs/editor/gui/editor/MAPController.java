@@ -45,9 +45,13 @@ import java.util.List;
 
 /**
  * Sets up the map editor.
- * TODO: Edit Vertexes [Add, Remove] Prevent removing a vertice if it is used by anything.
- * TODO: Edit polygons [Add, Remove] This is tricky because it will effect data structures which link to the polygons.
+ * TODO: Create interface for adding faces.
+ * TODO: Face remove mode. (Handle usages like grid). Check all vertices, removing each unused vertice.
+ * TODO: Entities should face proper orientation.
  * TODO: Create a path editor.
+ * TODO: Eventually use proper texture shading?
+ * TODO: Maybe some-day use proper texture coloring?
+ * TODO: Maybe apply proper MOF lighting?
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter

@@ -306,6 +306,7 @@ public class FileUtils3D {
      * TODO: Support lighting.
      * TODO: Support bounding box.
      * TODO: Other missing things like collprim and matrix.
+     * TODO: Fix animations being upside-down.
      * @param holder The mof to convert.
      * @return misfit3d
      */
