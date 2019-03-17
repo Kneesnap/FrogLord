@@ -381,12 +381,15 @@ public class RenderManager
     {
         if (displayListCache.containsKey(listID))
         {
-            double x0, y0, z0;
-            double x1, y1, z1;
+            // We will use pathInfo to 'step' along the paths and to build the geometry
+            PathInfo pathInfo = new PathInfo();
 
-            // Track indices (ID's) of paths and segments so that we can feed them in via the PathInfo object when evaluating path positions
+            // Track indices (ID's) of paths and segments so that we can feed them in via the PathInfo object
             int pathIndex = 0;
             int segmentIndex;
+
+            double x0, y0, z0;
+            double x1, y1, z1;
 
             for (Path path : pathList)
             {
@@ -394,8 +397,6 @@ public class RenderManager
 
                 for (PathSegment segment : path.getSegments())
                 {
-                    PathInfo pathInfo = new PathInfo();
-
                     pathInfo.setPathId(pathIndex);
                     pathInfo.setSegmentId(segmentIndex);
 
@@ -419,42 +420,6 @@ public class RenderManager
                     }
                     else if (segment.getType() == PathType.ARC)
                     {
-                        // TODO: Replace this with the ArcSegment evaluation / calculation  function once I've figured out the math [AndyEder]
-                        final ArcSegment arcSeg = (ArcSegment)segment;
-                        final Point3D axisOfRotation = new Point3D(Utils.fixedPointShortToFloat12Bit(arcSeg.getNormal().getX()), Utils.fixedPointShortToFloat12Bit(arcSeg.getNormal().getY()), Utils.fixedPointShortToFloat12Bit(arcSeg.getNormal().getZ())).normalize();
-
-                        final double arcLength = Utils.fixedPointIntToFloat4Bit(arcSeg.getLength());
-                        final double arcRadius = Utils.fixedPointIntToFloat4Bit(arcSeg.getRadius());
-                        final double centralAngle = Math.toDegrees(arcLength / arcRadius);
-                        final short numSteps = (short)(centralAngle * 0.1);
-                        final double angleStep = centralAngle / numSteps;
-
-                        x0 = arcSeg.getStart().getFloatX();
-                        y0 = arcSeg.getStart().getFloatY();
-                        z0 = arcSeg.getStart().getFloatZ();
-
-                        for (short i=0; i<numSteps; ++i)
-                        {
-                            final Rotate rotateCentroid = new Rotate((i + 1) * angleStep, axisOfRotation);
-                            rotateCentroid.setPivotX(arcSeg.getCenter().getFloatX());
-                            rotateCentroid.setPivotY(arcSeg.getCenter().getFloatY());
-                            rotateCentroid.setPivotZ(arcSeg.getCenter().getFloatZ());
-
-                            final Point3D end = rotateCentroid.transform(arcSeg.getStart().getFloatX(), arcSeg.getStart().getFloatY(), arcSeg.getStart().getFloatZ());
-                            x1 = end.getX();
-                            y1 = end.getY();
-                            z1 = end.getZ();
-
-                            this.addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, materialArc, false, false);
-
-                            x0 = x1;
-                            y0 = y1;
-                            z0 = z1;
-                        }
-
-                        /*
-                        // TODO: get this working using the ArcSegment evaluation / calculation function [AndyEder]
-                        // !! PLEASE DO NOT DELETE !!
                         final int stepSize = Math.min(32, segment.getLength());
                         final int numSteps = 1 + (segment.getLength() / stepSize);
 
@@ -476,10 +441,9 @@ public class RenderManager
 
                             if (!((x0 == x1) && (y0 == y1) && (z0 == z1)))
                             {
-                                this.renderManager.addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, MATERIAL_BOUNDING_BOX, false, false);
+                                this.addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, materialArc, false, false);
                             }
                         }
-                        */
                     }
                     else if (segment.getType() == PathType.SPLINE)
                     {
