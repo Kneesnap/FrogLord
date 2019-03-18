@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -29,6 +30,7 @@ import java.util.ResourceBundle;
 @Getter
 public class LevelInfoController implements Initializable {
     @FXML private ComboBox<MAPLevel> levelSelector;
+    @FXML private ComboBox<MAPLevel> mapFileSelector;
     @FXML private ComboBox<MAPTheme> themeSelector;
     @FXML private ComboBox<WorldId> worldSelector;
     @FXML private ComboBox<MusicTrack> musicSelector;
@@ -48,14 +50,22 @@ public class LevelInfoController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        this.disableFields = Arrays.asList(themeSelector, worldSelector, musicSelector, stackPosField, localLevelField, worldLevelField);
-        levelSelector.setItems(FXCollections.observableArrayList(MAPLevel.values()));
+        this.disableFields = Arrays.asList(themeSelector, worldSelector, musicSelector, stackPosField, localLevelField, worldLevelField, mapFileSelector);
+
+        List<MAPLevel> levelInfo = new ArrayList<>();
+        for (LevelInfo info : getConfig().getAllLevelInfo())
+            if (info.getLevel() != null)
+                levelInfo.add(info.getLevel());
+
+        levelSelector.setItems(FXCollections.observableArrayList(levelInfo));
+        mapFileSelector.setItems(FXCollections.observableArrayList(MAPLevel.values()));
         themeSelector.setItems(FXCollections.observableArrayList(MAPTheme.values()));
         worldSelector.setItems(FXCollections.observableArrayList(WorldId.values()));
         musicSelector.setItems(FXCollections.observableArrayList(MusicTrack.values()));
 
         // Handlers:
         levelSelector.valueProperty().addListener((listener, oldVal, newVal) -> setLevel(newVal));
+        mapFileSelector.valueProperty().addListener((listener, oldVal, newVal) -> getSelectedLevel().setLevel(newVal.ordinal()));
         worldSelector.valueProperty().addListener((observable, oldValue, newValue) -> getSelectedLevel().setWorld(newValue));
         themeSelector.valueProperty().addListener((observable, oldValue, newValue) -> getSelectedLevel().setTheme(newValue));
         musicSelector.valueProperty().addListener((observable, oldValue, newValue) -> getConfig().getMusicTracks().set(getSelectedLevel().getLevel().ordinal(), newValue));
@@ -80,6 +90,7 @@ public class LevelInfoController implements Initializable {
         localLevelField.setText(String.valueOf(getSelectedLevel().getLocalLevelId()));
         worldLevelField.setText(String.valueOf(getSelectedLevel().getLevelsInWorld()));
 
+        mapFileSelector.getSelectionModel().select(getSelectedLevel().getLevel());
         themeSelector.getSelectionModel().select(getSelectedLevel().getTheme());
         worldSelector.getSelectionModel().select(getSelectedLevel().getWorld());
 

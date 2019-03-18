@@ -49,7 +49,7 @@ import java.util.List;
  * TODO: Face remove mode. (Handle usages like grid). Check all vertices, removing each unused vertice.
  * TODO: Entities should face proper orientation.
  * TODO: Create a path editor.
- * TODO: Eventually use proper texture shading?
+ * TODO: Eventually use gouraud texture shading?
  * TODO: Maybe some-day use proper texture coloring?
  * TODO: Maybe apply proper MOF lighting?
  * Created by Kneesnap on 11/22/2018.
@@ -356,7 +356,7 @@ public class MAPController extends EditorController<MAPFile> {
                 if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
                     MOFHolder holder = (MOFHolder) wadEntry.getFile();
                     holder.setVloFile(themeBook.getVLO(getFile()));
-                    MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
+                    MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y + .5F, z);
                     view.setMaterial(holder.getTextureMap().getDiffuseMaterial());
                     return view;
                 }

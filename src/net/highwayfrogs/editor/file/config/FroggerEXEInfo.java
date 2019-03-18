@@ -49,6 +49,7 @@ public class FroggerEXEInfo extends Config {
     private List<MusicTrack> musicTracks = new ArrayList<>();
     private List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
     private List<LevelInfo> raceLevelInfo = new ArrayList<>();
+    private List<LevelInfo> allLevelInfo = new ArrayList<>();
     private List<Long> bmpTexturePointers = new ArrayList<>();
     private List<FormEntry> fullFormBook = new ArrayList<>();
     private short[] cosEntries = new short[ACOSTABLE_ENTRIES];
@@ -295,9 +296,12 @@ public class FroggerEXEInfo extends Config {
         while (level == null || !level.isTerminator()) {
             level = new LevelInfo();
             level.load(getReader());
-            getArcadeLevelInfo().add(level);
+            getRaceLevelInfo().add(level);
             Constants.logExeInfo(level);
         }
+
+        getAllLevelInfo().addAll(getArcadeLevelInfo());
+        getAllLevelInfo().addAll(getRaceLevelInfo());
     }
 
     private void readBmpPointerData() {
@@ -725,14 +729,9 @@ public class FroggerEXEInfo extends Config {
      * @return levelInfo
      */
     public LevelInfo getLevel(MAPLevel level) {
-        for (LevelInfo info : getArcadeLevelInfo())
+        for (LevelInfo info : getAllLevelInfo())
             if (info.getLevel() == level)
                 return info;
-
-        for (LevelInfo info : getRaceLevelInfo())
-            if (info.getLevel() == level)
-                return info;
-
         return null;
     }
 }
