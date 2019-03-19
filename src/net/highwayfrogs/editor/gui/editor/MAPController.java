@@ -35,6 +35,7 @@ import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.NameValuePair;
@@ -350,13 +351,17 @@ public class MAPController extends EditorController<MAPFile> {
             WADFile wadFile = isGeneralTheme ? themeBook.getWAD(getFile()) : getFile().getFileEntry().getMapBook().getWad(getFile());
 
             int wadIndex = form.getWadIndex();
-            if ((!getFile().getConfig().isPSX() || !isGeneralTheme) && wadFile.getFiles().size() > wadIndex) { // PSX version currently can't load general mofs. TODO: Fix that.
+            if (wadFile.getFiles().size() > wadIndex) {
                 WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
 
                 if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
                     MOFHolder holder = (MOFHolder) wadEntry.getFile();
-                    holder.setVloFile(themeBook.getVLO(getFile()));
-                    MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y + .5F, z);
+                    VLOArchive vloFile = themeBook.getVLO(getFile());
+                    if (vloFile.getFileEntry().getLoadedId() == 100 && getFile().getConfig().isPSX())
+                        vloFile = getFile().getConfig().getGameFile(0); //TODO: Hardcoded.
+
+                    holder.setVloFile(vloFile);
+                    MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
                     view.setMaterial(holder.getTextureMap().getDiffuseMaterial());
                     return view;
                 }

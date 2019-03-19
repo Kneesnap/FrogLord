@@ -65,9 +65,8 @@ public class WADFile extends GameFile {
 
             GameFile file = new DummyFile(data.length);
             if (Constants.ENABLE_WAD_FORMATS) {
-                if (fileType == VLOArchive.WAD_TYPE || fileType == 1) { // Disabled until these files are supported.
-                    //file = new VLOArchive();
-                    file = new DummyFile(data.length);
+                if (fileType == VLOArchive.WAD_TYPE || fileType == 1) {
+                    file = new VLOArchive();
                 } else if (fileType == MOFHolder.MOF_ID || fileType == MOFHolder.MAP_MOF_ID) {
                     file = new MOFHolder(theme, lastCompleteMOF);
                 } else {
