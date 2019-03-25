@@ -213,13 +213,13 @@ public class MWIFile extends GameObject {
 
         /**
          * Get the book which holds this FileEntry.
-         * @return book
+         * @return book, Can be null if not found.
          */
         public MapBook getMapBook() {
             for (MapBook book : getConfig().getMapLibrary())
                 if (book.isEntry(this))
                     return book;
-            throw new RuntimeException("Failed to find MapBook for FileEntry.");
+            return null;
         }
 
         /**

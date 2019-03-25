@@ -21,6 +21,7 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
+import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -337,10 +338,18 @@ public class MAPController extends EditorController<MAPFile> {
         if (!form.testFlag(FormEntry.FLAG_NO_MODEL)) {
             boolean isGeneralTheme = form.getTheme() == MAPTheme.GENERAL;
             ThemeBook themeBook = getFile().getConfig().getThemeBook(form.getTheme());
-            WADFile wadFile = isGeneralTheme ? themeBook.getWAD(getFile()) : getFile().getFileEntry().getMapBook().getWad(getFile());
+
+            WADFile wadFile = null;
+            if (isGeneralTheme) {
+                wadFile = themeBook.getWAD(getFile());
+            } else {
+                MapBook mapBook = getFile().getFileEntry().getMapBook();
+                if (mapBook != null)
+                    wadFile = mapBook.getWad(getFile());
+            }
 
             int wadIndex = form.getWadIndex();
-            if ((!getFile().getConfig().isPSX() || !isGeneralTheme) && wadFile.getFiles().size() > wadIndex) { // PSX version currently can't load general mofs. TODO: Fix that.
+            if (wadFile != null && (!getFile().getConfig().isPSX() || !isGeneralTheme) && wadFile.getFiles().size() > wadIndex) { // PSX version currently can't load general mofs. TODO: Fix that.
                 WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
 
                 if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
