@@ -224,13 +224,13 @@ public class MAPController extends EditorController<MAPFile> {
             if (event.isControlDown() && event.getCode() == KeyCode.ENTER)
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
 
-            if (event.getCode() == KeyCode.I) {
+            if (event.getCode() == KeyCode.UP) {
                 movePolygonY(MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.K) {
+            } else if (event.getCode() == KeyCode.DOWN) {
                 movePolygonY(-MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.J) {
+            } else if (event.getCode() == KeyCode.LEFT) {
                 movePolygonX(-MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.L) {
+            } else if (event.getCode() == KeyCode.RIGHT) {
                 movePolygonX(MapUIController.getPropertyVertexSpeed().get());
             }
         });
@@ -517,7 +517,7 @@ public class MAPController extends EditorController<MAPFile> {
     /**
      * Applies the current lighting setup to the level.
      */
-    public void applyLevelLighting() { //TODO: Apply to MOFs too.
+    public void applyLevelLighting() {
         // Clear any existing lighting information
         if (!this.appliedLevelLights.isEmpty()) {
             System.out.println("[ LIGHTING ] Clearing " + this.appliedLevelLights.size() + " lights.");

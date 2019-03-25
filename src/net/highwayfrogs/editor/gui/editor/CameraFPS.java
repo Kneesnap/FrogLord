@@ -283,21 +283,17 @@ public class CameraFPS extends Parent
 
                 // Forwards + backwards
                 case W:
-                case UP:
                     camMoveForward = true;
                     break;
                 case S:
-                case DOWN:
                     camMoveBackward = true;
                     break;
 
                 // Strafe left + right
                 case A:
-                case LEFT:
                     camStrafeLeft = true;
                     break;
                 case D:
-                case RIGHT:
                     camStrafeRight = true;
                     break;
 
@@ -397,14 +393,6 @@ public class CameraFPS extends Parent
 
                 // Dynamically generate the affine transform from the concatenated translation and rotation components
                 affineXform.prepend(translate.createConcatenation(rotateYaw.createConcatenation(rotatePitch)));
-            }
-            else if (evt.isSecondaryButtonDown())
-            {
-                // Further processing needed here?
-            }
-            else if (evt.isMiddleButtonDown())
-            {
-                // Further processing needed here?
             }
         }
     }
