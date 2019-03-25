@@ -1,38 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0"
-            xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
     <Accordion fx:id="accordionLeft" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <panes>
          <TitledPane fx:id="paneAnim" animated="false" text="Animation Data">
            <content>
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                   <children>
-                      <Label layoutX="48.0" layoutY="49.0" text="Model: " AnchorPane.leftAnchor="0.0"
-                             AnchorPane.topAnchor="0.0"/>
-                      <ComboBox fx:id="animationSelector" layoutX="83.0" layoutY="6.0" prefWidth="150.0"
-                                AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="88.4" AnchorPane.topAnchor="25.0"/>
-                      <Button fx:id="playButton" layoutX="196.0" layoutY="35.0" mnemonicParsing="false" text="Play"
-                              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0"/>
-                      <CheckBox fx:id="repeatCheckbox" layoutX="10.0" layoutY="85.0" mnemonicParsing="false"
-                                selected="true" text="Repeat" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="50.0"/>
-                      <Label layoutX="100" layoutY="122" text="FPS: " AnchorPane.rightAnchor="30.0"
-                             AnchorPane.topAnchor="73.0"/>
-                      <TextField fx:id="fpsField" alignment="CENTER_RIGHT" layoutX="174.0" layoutY="90.0"
-                                 prefHeight="25.0" prefWidth="30.0" text="??" AnchorPane.rightAnchor="0.0"
-                                 AnchorPane.topAnchor="70.0"/>
-                      <Label fx:id="modelName" layoutX="48.0" layoutY="10.0" text="&lt;Model Name&gt;"
-                             AnchorPane.leftAnchor="40.0" AnchorPane.topAnchor="0.0"/>
-                      <Button fx:id="btnLast" layoutX="10.0" layoutY="64.0" mnemonicParsing="false"
-                              onAction="#lastFrame" text="&lt;-" AnchorPane.leftAnchor="0.0"
-                              AnchorPane.topAnchor="55.0"/>
-                      <Button fx:id="btnNext" layoutX="120.0" layoutY="67.0" mnemonicParsing="false"
-                              onAction="#nextFrame" prefHeight="25.0" prefWidth="30.0" text="-&gt;"
-                              AnchorPane.topAnchor="55.0"/>
-                      <Label fx:id="frameLabel" alignment="CENTER" layoutX="40.0" layoutY="71.0" prefHeight="17.0"
-                             prefWidth="80.0" text="Frame ?" AnchorPane.topAnchor="60.0"/>
+                      <Label layoutX="48.0" layoutY="49.0" text="Model: " AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                      <ComboBox fx:id="animationSelector" layoutX="83.0" layoutY="6.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="88.4" AnchorPane.topAnchor="25.0" />
+                      <Button fx:id="playButton" layoutX="196.0" layoutY="35.0" mnemonicParsing="false" text="Play" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0" />
+                      <CheckBox fx:id="repeatCheckbox" layoutX="10.0" layoutY="85.0" mnemonicParsing="false" selected="true" text="Repeat" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="50.0" />
+                      <Label layoutX="100" layoutY="122" text="FPS: " AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="73.0" />
+                      <TextField fx:id="fpsField" alignment="CENTER_RIGHT" layoutX="174.0" layoutY="90.0" prefHeight="25.0" prefWidth="30.0" text="??" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="70.0" />
+                      <Label fx:id="modelName" layoutX="48.0" layoutY="10.0" text="&lt;Model Name&gt;" AnchorPane.leftAnchor="40.0" AnchorPane.topAnchor="0.0" />
+                      <Button fx:id="btnLast" layoutX="10.0" layoutY="64.0" mnemonicParsing="false" onAction="#lastFrame" text="&lt;-" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="55.0" />
+                      <Button fx:id="btnNext" layoutX="120.0" layoutY="67.0" mnemonicParsing="false" onAction="#nextFrame" prefHeight="25.0" prefWidth="30.0" text="-&gt;" AnchorPane.topAnchor="55.0" />
+                      <Label fx:id="frameLabel" alignment="CENTER" layoutX="40.0" layoutY="71.0" prefHeight="17.0" prefWidth="80.0" text="Frame ?" AnchorPane.topAnchor="60.0" />
+                     <CheckBox fx:id="brightModeCheckbox" layoutX="4.0" layoutY="96.0" mnemonicParsing="false" text="Bright Mode" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="85.0" />
+                     <CheckBox fx:id="viewHilitesCheckbox" layoutX="3.0" layoutY="113.0" mnemonicParsing="false" text="Show Hilites" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="100.0" />
                   </children>
                </AnchorPane>
            </content>

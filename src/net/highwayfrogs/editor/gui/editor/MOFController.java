@@ -36,6 +36,7 @@ import java.util.ResourceBundle;
 
 /**
  * Controls the MOF editor GUI.
+ * TODO: Add Hilite highlighter.
  * Created by Kneesnap on 2/13/2019.
  */
 @Getter
@@ -53,6 +54,9 @@ public class MOFController extends EditorController<MOFHolder> {
     private Rotate rotX;
     private Rotate rotY;
     private Rotate rotZ;
+    private RenderManager renderManager = new RenderManager();
+
+    private static final String LIGHTING_LIST = "extraLighting";
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -89,6 +93,7 @@ public class MOFController extends EditorController<MOFHolder> {
         camera.setFarClip(MapUIController.MAP_VIEW_FAR_CLIP);
         subScene3D.setFill(Color.GRAY);
         subScene3D.setCamera(camera);
+        getRenderManager().setRenderRoot(this.root3D);
 
         // Setup the UI layout.
         BorderPane uiPane = new BorderPane();
@@ -108,6 +113,7 @@ public class MOFController extends EditorController<MOFHolder> {
             // Exit the viewer.
             if (event.getCode() == KeyCode.ESCAPE) {
                 getUiController().stopPlaying();
+                getRenderManager().removeAllDisplayLists();
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
             }
 
@@ -144,26 +150,37 @@ public class MOFController extends EditorController<MOFHolder> {
 
         camera.setTranslateZ(-100.0);
         camera.setTranslateY(-10.0);
+        updateLighting(false);
+    }
 
-        // Add better lighting
+    /**
+     * Updates lighting settings for the model.
+     * @param useBrightMode Should we apply the fancy lighting?
+     */
+    public void updateLighting(boolean useBrightMode) {
+        getRenderManager().addMissingDisplayList(LIGHTING_LIST);
+        getRenderManager().clearDisplayList(LIGHTING_LIST);
+
         AmbientLight ambLight = new AmbientLight();
-        ambLight.setColor(Color.color(0.2, 0.2, 0.2));
-        this.root3D.getChildren().add(ambLight);
+        float colorValue = useBrightMode ? .2F : 1;
+        ambLight.setColor(Color.color(colorValue, colorValue, colorValue));
+        getRenderManager().addNode(LIGHTING_LIST, ambLight);
 
-        PointLight pointLight1 = new PointLight();
-        pointLight1.setColor(Color.color(0.9, 0.9, 0.9));
-        pointLight1.setTranslateX(-100.0);
-        pointLight1.setTranslateY(-100.0);
-        pointLight1.setTranslateZ(-100.0);
-        this.root3D.getChildren().add(pointLight1);
+        if (useBrightMode) {
+            PointLight pointLight1 = new PointLight();
+            pointLight1.setColor(Color.color(0.9, 0.9, 0.9));
+            pointLight1.setTranslateX(-100.0);
+            pointLight1.setTranslateY(-100.0);
+            pointLight1.setTranslateZ(-100.0);
+            getRenderManager().addNode(LIGHTING_LIST, pointLight1);
 
-        PointLight pointLight2 = new PointLight();
-        pointLight2.setColor(Color.color(0.8, 0.8, 1.0));
-        pointLight2.setTranslateX(100.0);
-        pointLight2.setTranslateY(-100.0);
-        pointLight2.setTranslateZ(-100.0);
-        this.root3D.getChildren().add(pointLight2);
-
+            PointLight pointLight2 = new PointLight();
+            pointLight2.setColor(Color.color(0.8, 0.8, 1.0));
+            pointLight2.setTranslateX(100.0);
+            pointLight2.setTranslateY(-100.0);
+            pointLight2.setTranslateZ(-100.0);
+            getRenderManager().addNode(LIGHTING_LIST, pointLight2);
+        }
     }
 
     @Getter
@@ -186,6 +203,8 @@ public class MOFController extends EditorController<MOFHolder> {
 
         @FXML private TitledPane paneAnim;
         @FXML private ComboBox<Integer> animationSelector;
+        @FXML private CheckBox brightModeCheckbox;
+        @FXML private CheckBox viewHilitesCheckbox;
 
         private List<Node> toggleNodes = new ArrayList<>();
         private List<Node> playNodes = new ArrayList<>();
@@ -201,6 +220,8 @@ public class MOFController extends EditorController<MOFHolder> {
 
         @Override
         public void initialize(URL location, ResourceBundle resources) {
+            this.brightModeCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateLighting(newValue)));
+
             toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, btnNext, btnLast));
             playNodes.addAll(Arrays.asList(playButton, btnLast, frameLabel, btnNext));
 

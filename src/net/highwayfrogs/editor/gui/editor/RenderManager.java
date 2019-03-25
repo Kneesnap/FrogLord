@@ -64,6 +64,15 @@ public class RenderManager
     }
 
     /**
+     * If a display list is missing, add it.
+     * @param listID The list id to attempt adding.
+     */
+    public void addMissingDisplayList(String listID) {
+        if (!displayListCache.containsKey(listID))
+            addDisplayList(listID);
+    }
+
+    /**
      * Adds a new display list with the specified ID.
      * @param listID    The ID (key) for the display list.
      */
@@ -172,18 +181,14 @@ public class RenderManager
     /**
      * Adds a bounding box to the specified display list.
      * @param listID    The ID of the display list.
-     * @param bbox      The bounding box to add.
+     * @param node      The node to add.
      */
-    public void addBoundingBox(String listID, Box bbox)
-    {
-        if (displayListCache.containsKey(listID))
-        {
-            displayListCache.get(listID).add(bbox);
-            this.root.getChildren().add(bbox);
-        }
-        else
-        {
-            throw new RuntimeException("RenderManager::addBoundingBox() - " + listID + " does not exist!");
+    public void addNode(String listID, Node node) {
+        if (displayListCache.containsKey(listID)) {
+            displayListCache.get(listID).add(node);
+            this.root.getChildren().add(node);
+        } else {
+            throw new RuntimeException("RenderManager::addNode() - " + listID + " does not exist!");
         }
     }
 

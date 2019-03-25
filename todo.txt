@@ -12,7 +12,7 @@ User interface improvements, including:
  - Make editors easier to use.
 
 Improve VLO VRAM editor, add PSX support. [Click on an image -> next place you click it will clamp to the earliest available spot, and calculate T Page] Or, maybe just put it where they clicked under some scenarios. For instance, making a new t-page would be annoying if it clamped to the last one. Would be nice if we could find some pattern to making good
-Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, and 1.8.0_181, but not 1.8.0_161 or 1.8.0_201? The broken ones appear to use less RAM, and have spikes when viewing the map.
+Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, 1.8.0_172, and 1.8.0_181, but not 1.8.0_161, or 1.8.0_201? The broken ones appear to use less RAM, and have spikes when viewing the map.
 Eventually have some method which can allocate space into an executable at a given space so we could for instance add a new level into the level selector. This would need to modify pointers.
 
 Eventually:

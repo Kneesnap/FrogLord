@@ -36,6 +36,9 @@ public class MOFHilite extends GameObject {
         this.vertex = getVertices().get(reader.readUnsignedShortAsInt());
         reader.skipInt(); // Runtime.
         reader.skipInt(); // Runtime.
+
+        Utils.verify((this.flags & FLAG_VERTEX) == FLAG_VERTEX, "MOFHilite was not a vertex hilite!");
+        Utils.verify((this.flags & FLAG_PRIM) != FLAG_PRIM, "MOFHilite was not a prim hilite!");
     }
 
     @Override
