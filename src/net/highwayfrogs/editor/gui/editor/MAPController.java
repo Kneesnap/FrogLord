@@ -74,10 +74,6 @@ public class MAPController extends EditorController<MAPFile> {
     private List<Node> appliedLevelLights = new ArrayList<>();
 
     private Group root3D;
-    private Rotate rotX;
-    private Rotate rotY;
-    private Rotate rotZ;
-
     private MeshData cursorData;
 
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
@@ -160,12 +156,6 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(mesh);
-
-        this.rotX = new Rotate(0, Rotate.X_AXIS);
-        this.rotY = new Rotate(0, Rotate.Y_AXIS);
-        this.rotZ = new Rotate(0, Rotate.Z_AXIS);
-        meshView.getTransforms().addAll(rotX, rotY, rotZ);
-
         meshView.setMaterial(material);
         meshView.setCullFace(CullFace.BACK);
 
@@ -380,22 +370,6 @@ public class MAPController extends EditorController<MAPFile> {
         node.setTranslateX(x);
         node.setTranslateY(y);
         node.setTranslateZ(z);
-
-        Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS); // Up, Down,
-        Rotate lightRotateY = new Rotate(0, Rotate.Y_AXIS); // Left, Right
-        Rotate lightRotateZ = new Rotate(0, Rotate.Z_AXIS); // In, Out
-        lightRotateX.angleProperty().bind(rotX.angleProperty());
-        lightRotateY.angleProperty().bind(rotY.angleProperty());
-        lightRotateZ.angleProperty().bind(rotZ.angleProperty());
-
-        lightRotateX.setPivotY(-node.getTranslateY());
-        lightRotateX.setPivotZ(-node.getTranslateZ()); // Depth <Closest, Furthest>
-        lightRotateY.setPivotX(-node.getTranslateX()); // <Left, Right>
-        lightRotateY.setPivotZ(-node.getTranslateZ()); // Depth <Closest, Furthest>
-        lightRotateZ.setPivotX(-node.getTranslateX()); // <Left, Right>
-        lightRotateZ.setPivotY(-node.getTranslateY()); // <Up, Down>
-        node.getTransforms().addAll(lightRotateX, lightRotateY, lightRotateZ);
-
         root3D.getChildren().add(node);
         return node;
     }
@@ -543,7 +517,7 @@ public class MAPController extends EditorController<MAPFile> {
     /**
      * Applies the current lighting setup to the level.
      */
-    public void applyLevelLighting() {
+    public void applyLevelLighting() { //TODO: Apply to MOFs too.
         // Clear any existing lighting information
         if (!this.appliedLevelLights.isEmpty()) {
             System.out.println("[ LIGHTING ] Clearing " + this.appliedLevelLights.size() + " lights.");
