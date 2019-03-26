@@ -41,7 +41,7 @@ public class MOFPart extends GameObject {
     private transient MOFFile parent;
     private transient Map<Integer, MOFPartPolyAnimEntryList> loadAnimEntryListMap = new HashMap<>();
     private transient Map<List<SVector>, Integer> saveNormalMap = new HashMap<>();
-    private transient Map<MOFBBox, Integer> saveBoxMap = new HashMap<>();
+    @Setter private transient int saveBboxPointer;
     private transient List<MOFPolygon> orderedByLoadPolygons = new ArrayList<>();
     private transient int tempPartcelPointer;
     private transient int tempPrimitivePointer;
@@ -181,10 +181,10 @@ public class MOFPart extends GameObject {
      * @param writer Save extra data to a writer.
      */
     public void saveExtra(DataWriter writer) {
+        this.saveBboxPointer = 0;
 
         // Write Partcels.
         if (getPartcels().size() > 0) {
-            getSaveBoxMap().clear();
             getSaveNormalMap().clear();
             getPartcels().forEach(partcel -> partcel.save(writer));
             getPartcels().forEach(partcel -> partcel.saveNormalData(writer));
@@ -321,5 +321,44 @@ public class MOFPart extends GameObject {
         incompletePart.normalCount = this.normalCount;
         if (getParent().hasTextureAnimation())
             throw new RuntimeException("Texture animation cannot be copied to an incomplete MOF right now!"); // It is believed this wouldn't work in the retail game either.
+    }
+
+    /**
+     * Generate a bounding box for this partcel.
+     * This is slightly inaccurate, but only by a little, there was likely some information lost when the original models were converted to MOF.
+     * @return boundingBox
+     */
+    public MOFBBox makeBoundingBox() {
+        if (getPartcels().isEmpty())
+            return new MOFBBox();
+
+        float minX = Float.MAX_VALUE;
+        float minY = Float.MAX_VALUE;
+        float minZ = Float.MAX_VALUE;
+        float maxX = Float.MIN_VALUE;
+        float maxY = Float.MIN_VALUE;
+        float maxZ = Float.MIN_VALUE;
+
+        for (MOFPartcel partcel : getPartcels()) {
+            for (SVector vertex : partcel.getVertices()) {
+                minX = Math.min(minX, vertex.getFloatX());
+                minY = Math.min(minY, vertex.getFloatY());
+                minZ = Math.min(minZ, vertex.getFloatZ());
+                maxX = Math.max(maxX, vertex.getFloatX());
+                maxY = Math.max(maxY, vertex.getFloatY());
+                maxZ = Math.max(maxZ, vertex.getFloatZ());
+            }
+        }
+
+        MOFBBox box = new MOFBBox();
+        box.getVertices()[0].setValues(minX, minY, minZ, 4);
+        box.getVertices()[1].setValues(minX, minY, maxZ, 4);
+        box.getVertices()[2].setValues(minX, maxY, minZ, 4);
+        box.getVertices()[3].setValues(minX, maxY, maxZ, 4);
+        box.getVertices()[4].setValues(maxX, minY, minZ, 4);
+        box.getVertices()[5].setValues(maxX, minY, maxZ, 4);
+        box.getVertices()[6].setValues(maxX, maxY, minZ, 4);
+        box.getVertices()[7].setValues(maxX, maxY, maxZ, 4);
+        return box;
     }
 }

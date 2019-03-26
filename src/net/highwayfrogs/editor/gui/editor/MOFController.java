@@ -15,6 +15,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
@@ -25,6 +26,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.file.mof.MOFBBox;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
@@ -63,8 +65,10 @@ public class MOFController extends EditorController<MOFHolder> {
 
     private static final String LIGHTING_LIST = "extraLighting";
     private static final String HILITE_LIST = "hiliteBoxes";
+    private static final String BBOX_LIST = "boundingBoxes";
 
     private static final PhongMaterial HILITE_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial BBOX_MATERIAL = Utils.makeSpecialMaterial(Color.RED);
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -192,6 +196,19 @@ public class MOFController extends EditorController<MOFHolder> {
     }
 
     /**
+     * Adds a MOFBBox to the view.
+     * @param listId The render list id.
+     * @param box    The box to add.
+     */
+    public Box addMOFBoundingBox(String listId, MOFBBox box, PhongMaterial material) {
+        SVector min = box.getVertices()[0];
+        SVector max = box.getVertices()[7];
+        Box boxNode = getRenderManager().addBoundingBoxFromMinMax(listId, min.getFloatX(), min.getFloatY(), min.getFloatZ(), max.getFloatX(), max.getFloatY(), max.getFloatZ(), material, true);
+        applyRotation(boxNode);
+        return boxNode;
+    }
+
+    /**
      * Update hilite boxes.
      * @param showBoxes Should show hilite boxes.
      */
@@ -207,6 +224,23 @@ public class MOFController extends EditorController<MOFHolder> {
                 applyRotation(getRenderManager().addBoundingBoxCenteredWithDimensions(HILITE_LIST, vertex.getFloatX(), vertex.getFloatY(), vertex.getFloatZ(), 1, 1, 1, HILITE_MATERIAL, true));
             }
         }
+    }
+
+    /**
+     * Update bounding boxes.
+     * @param showBoxes Should show hilite boxes.
+     */
+    public void updateBoundingBoxes(boolean showBoxes) {
+        getRenderManager().addMissingDisplayList(BBOX_LIST);
+        getRenderManager().clearDisplayList(BBOX_LIST);
+        if (!showBoxes)
+            return;
+
+        for (MOFPart part : getFile().asStaticFile().getParts())
+            addMOFBoundingBox(BBOX_LIST, part.makeBoundingBox(), BBOX_MATERIAL);
+
+        if (getFile().isAnimatedMOF())
+            addMOFBoundingBox(BBOX_LIST, getFile().getAnimatedFile().makeBoundingBox(), BBOX_MATERIAL);
     }
 
     public void applyRotation(Node node) {
@@ -262,6 +296,7 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private ComboBox<Integer> animationSelector;
         @FXML private CheckBox brightModeCheckbox;
         @FXML private CheckBox viewHilitesCheckbox;
+        @FXML private CheckBox viewBoundingBoxesCheckbox;
 
         private List<Node> toggleNodes = new ArrayList<>();
         private List<Node> playNodes = new ArrayList<>();
@@ -279,6 +314,7 @@ public class MOFController extends EditorController<MOFHolder> {
         public void initialize(URL location, ResourceBundle resources) {
             this.brightModeCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateLighting(newValue)));
             this.viewHilitesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateHiliteBoxes(newValue)));
+            this.viewBoundingBoxesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateBoundingBoxes(newValue)));
 
             toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, btnNext, btnLast));
             playNodes.addAll(Arrays.asList(playButton, btnLast, frameLabel, btnNext));

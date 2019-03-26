@@ -28,6 +28,7 @@
                       <Label fx:id="frameLabel" alignment="CENTER" layoutX="40.0" layoutY="71.0" prefHeight="17.0" prefWidth="80.0" text="Frame ?" AnchorPane.topAnchor="60.0" />
                      <CheckBox fx:id="brightModeCheckbox" layoutX="4.0" layoutY="96.0" mnemonicParsing="false" text="Bright Mode" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="85.0" />
                      <CheckBox fx:id="viewHilitesCheckbox" layoutX="3.0" layoutY="113.0" mnemonicParsing="false" text="Show Hilites" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="100.0" />
+                     <CheckBox fx:id="viewBoundingBoxesCheckbox" layoutX="13.0" layoutY="127.0" mnemonicParsing="false" text="Show Bounding Boxes" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="115.0" />
                   </children>
                </AnchorPane>
            </content>

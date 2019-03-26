@@ -55,6 +55,30 @@ public class SVector extends GameObject implements Vector {
     }
 
     /**
+     * Set the values of this vector.
+     * @param x The x value to set.
+     * @param y The y value to set.
+     * @param z The z value to set.
+     */
+    public void setValues(short x, short y, short z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    /**
+     * Set the values of this vector.
+     * @param x The x value to set.
+     * @param y The y value to set.
+     * @param z The z value to set.
+     */
+    public void setValues(float x, float y, float z, int bits) {
+        this.x = Utils.floatToFixedPointShort(x, bits);
+        this.y = Utils.floatToFixedPointShort(y, bits);
+        this.z = Utils.floatToFixedPointShort(z, bits);
+    }
+
+    /**
      * Equivalent to MR_SVEC_EQUALS_VEC
      * @param vec The array to read info from.
      */

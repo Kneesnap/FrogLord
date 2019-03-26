@@ -18,9 +18,14 @@ public class MOFAnimationModelSet extends GameObject {
     private MOFAnimationCelSet celSet;
     // BBOX Set is always empty, so we don't keep it.
 
+    private transient MOFAnimation parent;
     public static final int CEL_SET_COUNT = 1;
     public static final int FLAG_HIERARCHICAL = Constants.BIT_FLAG_0;
     private static final int FORCED_MODEL_COUNT = 1;
+
+    public MOFAnimationModelSet(MOFAnimation parent) {
+        this.parent = parent;
+    }
 
     @Override
     public void load(DataReader reader) {

@@ -17,7 +17,6 @@ public class MOFAnimationModel extends GameObject {
     private int flags;
     private int partCount;
     private int staticModelId;
-    private MOFBBox boundingBox;
     // Bounding Box Set is unused.
     // Constraint is unused.
 
@@ -52,8 +51,7 @@ public class MOFAnimationModel extends GameObject {
         Utils.verify(celsetPointer == getCelSetPointer(), "Invalid CelSet Pointer! (%d, %d)", celsetPointer, getCelSetPointer());
 
         reader.setIndex(bboxPointer);
-        this.boundingBox = new MOFBBox();
-        this.boundingBox.load(reader);
+        new MOFBBox().load(reader); // Unused.
     }
 
     @Override
@@ -72,7 +70,7 @@ public class MOFAnimationModel extends GameObject {
 
         // Write BBOX
         writer.writeAddressTo(calculatedBboxPointer);
-        this.boundingBox.save(writer);
+        getParent().getParent().makeBoundingBox().save(writer);
     }
 
     /**

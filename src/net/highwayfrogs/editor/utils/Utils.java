@@ -303,7 +303,7 @@ public class Utils {
      * @return floatValue
      */
     public static float fixedPointShortToFloatNBits(short shortVal, long n) {
-        return ((float) shortVal / (float) (1 << n));
+        return ((float) shortVal / (1 << n));
     }
 
     /**
@@ -313,7 +313,7 @@ public class Utils {
      * @return shortValue
      */
     public static short floatToFixedPointShort(float floatVal, int n) {
-        return (short) (floatVal * (float) (1 << n));
+        return (short) (floatVal * (1 << n));
     }
 
     /**
