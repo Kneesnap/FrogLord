@@ -47,7 +47,6 @@ import java.util.List;
 /**
  * Sets up the map editor.
  * TODO: Create interface for adding faces.
- * TODO: Face remove mode. (Handle usages like grid). Check all vertices, removing each unused vertice.
  * TODO: Entities should face proper orientation.
  * TODO: Create a path editor.
  * TODO: Eventually use gouraud texture shading?
@@ -260,8 +259,15 @@ public class MAPController extends EditorController<MAPFile> {
                     this.polygonImmuneToTarget = getSelectedPolygon();
                     removeCursorPolygon();
                 } else if (mapUIController == null || !mapUIController.handleClick(evt, clickedPoly)) {
-                    setCursorPolygon(clickedPoly);
-                    this.polygonSelected = true;
+                    if (getMapUIController() != null && getMapUIController().getCheckBoxFaceRemoveMode().isSelected()) {
+                        getFile().removeFace(getSelectedPolygon());
+                        removeCursorPolygon();
+                        refreshView();
+                        getMapUIController().setupAnimationEditor();
+                    } else {
+                        setCursorPolygon(clickedPoly);
+                        this.polygonSelected = true;
+                    }
                 }
             }
         });
@@ -486,7 +492,8 @@ public class MAPController extends EditorController<MAPFile> {
         if (cursorPoly == null)
             return;
 
-        renderOverPolygon(cursorPoly, MapMesh.CURSOR_COLOR);
+        boolean showRemoveColor = !isPolygonSelected() && getMapUIController().getCheckBoxFaceRemoveMode().isSelected();
+        renderOverPolygon(cursorPoly, showRemoveColor ? MapMesh.REMOVE_FACE_COLOR : MapMesh.CURSOR_COLOR);
         cursorData = mapMesh.getManager().addMesh();
     }
 

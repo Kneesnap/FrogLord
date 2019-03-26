@@ -19,7 +19,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.highwayfrogs.editor.gui.editor.MapUIController">
+<AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.highwayfrogs.editor.gui.editor.MapUIController">
     <children>
         <Accordion fx:id="accordionLeft" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <panes>
@@ -66,6 +66,7 @@
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                                     </rowConstraints>
                                                     <children>
                                                         <Label text="Show Mesh:" />
@@ -76,6 +77,8 @@
                                                         <ComboBox fx:id="comboBoxMeshDrawMode" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                                                         <ComboBox fx:id="comboBoxMeshCullFace" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                                                         <ColorPicker fx:id="colorPickerLevelBackground" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                          <Label text="Face Remover Mode: " GridPane.rowIndex="4" />
+                                          <CheckBox fx:id="checkBoxFaceRemoveMode" mnemonicParsing="false" nodeOrientation="RIGHT_TO_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                                                     </children>
                                                 </GridPane>
                                     <Separator prefWidth="200.0">

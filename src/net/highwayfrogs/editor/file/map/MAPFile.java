@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
 import net.highwayfrogs.editor.file.map.poly.line.MAPLineType;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygonType;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
@@ -156,6 +157,22 @@ public class MAPFile extends GameFile {
                 info.setPathId(-1);
             }
         }
+    }
+
+    /**
+     * Removes a face from this MAPFile.
+     * @param selectedFace The face to remove.
+     */
+    public void removeFace(MAPPolygon selectedFace) {
+        getPolygons().get(selectedFace.getType()).remove(selectedFace);
+
+        // Remove MapUV animations.
+        for (MAPAnimation animation : getMapAnimations())
+            animation.getMapUVs().removeIf(uv -> uv.getPolygon() == selectedFace);
+
+        // Remove Grid data.
+        for (GridStack stack : getGridStacks())
+            stack.getGridSquares().removeIf(square -> square.getPolygon() == selectedFace);
     }
 
     @Override
@@ -715,6 +732,7 @@ public class MAPFile extends GameFile {
         texMap.put(MapMesh.ANIMATION_COLOR, MapMesh.ANIMATION_COLOR.makeTexture());
         texMap.put(MapMesh.INVISIBLE_COLOR, MapMesh.INVISIBLE_COLOR.makeTexture());
         texMap.put(MapMesh.GRID_COLOR, MapMesh.GRID_COLOR.makeTexture());
+        texMap.put(MapMesh.REMOVE_FACE_COLOR, MapMesh.REMOVE_FACE_COLOR.makeTexture());
         return texMap;
     }
 
