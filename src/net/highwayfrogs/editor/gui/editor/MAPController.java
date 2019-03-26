@@ -50,8 +50,7 @@ import java.util.List;
  * TODO: Entities should face proper orientation.
  * TODO: Create a path editor.
  * TODO: Eventually use gouraud texture shading?
- * TODO: Maybe some-day use proper texture coloring?
- * TODO: Maybe apply proper MOF lighting?
+ * TODO: Maybe some-day use proper poly texture coloring?
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter
@@ -278,8 +277,7 @@ public class MAPController extends EditorController<MAPFile> {
         float baseY = -Utils.fixedPointIntToFloat4Bit(getFile().getGridStack(getFile().getStartXTile(), getFile().getStartZTile()).getHeight());
         float gridZ = Utils.fixedPointIntToFloat4Bit(getFile().getWorldZ(getFile().getStartZTile(), true));
         cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
-        // Set the camera to look at the start position, too.
-        cameraFPS.setCameraLookAt(gridX, baseY, gridZ);
+        cameraFPS.setCameraLookAt(gridX, baseY, gridZ); // Set the camera to look at the start position, too.
 
         // TODO: Tidy this up at some point, but use an action on a UI control for now [AndyEder]
         mapUIController.getCheckBoxShowAllPaths().setOnAction(evt -> this.togglePathDisplay());

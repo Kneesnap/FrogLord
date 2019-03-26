@@ -17,8 +17,8 @@ import java.util.List;
  */
 @Getter
 public class MOFHilite extends GameObject {
-    private HiliteType type;
-    private short flags; // Seems to always be 1, but the code supports more.
+    private HiliteType type = HiliteType.values()[0];
+    private short flags = FLAG_VERTEX; // Seems to always be 1, but the code supports more.
     private SVector vertex;
     private transient MOFPart parent;
 
