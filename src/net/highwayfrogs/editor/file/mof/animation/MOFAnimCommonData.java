@@ -18,14 +18,13 @@ import java.util.List;
  */
 @Getter
 public class MOFAnimCommonData extends GameObject {
-    private MOFAnimation parent;
-    private int flags;
     private List<TransformObject> transforms = new ArrayList<>();
+    private transient MOFAnimation parent;
 
     public static final int FLAG_TRANSFORM_PRESENT = Constants.BIT_FLAG_0;
-    public static final int FLAG_ROTATION_PRESENT = Constants.BIT_FLAG_1;
-    public static final int FLAG_TRANSLATION_PRESENT = Constants.BIT_FLAG_2;
     public static final int FLAG_BBOX_PRESENT = Constants.BIT_FLAG_3;
+
+    private static final int DEFAULT_FLAGS = FLAG_TRANSFORM_PRESENT | FLAG_BBOX_PRESENT;
 
     public MOFAnimCommonData(MOFAnimation parent) {
         this.parent = parent;
@@ -33,7 +32,9 @@ public class MOFAnimCommonData extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readInt();
+        int flags = reader.readInt();
+        Utils.verify(flags == DEFAULT_FLAGS, "Cannot handle AnimCommonData flags: (%s)", Utils.toHexString(flags));
+
         short transformCount = reader.readShort();
         short rotationCount = reader.readShort();
         short translationCount = reader.readShort();
@@ -62,7 +63,7 @@ public class MOFAnimCommonData extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeInt(this.flags);
+        writer.writeInt(DEFAULT_FLAGS);
         writer.writeShort((short) getTransforms().size());
         writer.writeShort((short) 0);
         writer.writeShort((short) 0);
