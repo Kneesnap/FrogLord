@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.SkyLand;
@@ -260,6 +261,30 @@ public class MWDFile extends GameObject {
         for (GameFile file : getFiles())
             if (fileClass.isInstance(file))
                 handler.accept(fileClass.cast(file));
+    }
+
+    /**
+     * Get each file of a given class type, including those found in wads.
+     * @param fileClass The type to iterate over.
+     */
+    public <T extends GameFile> List<T> getAllFiles(Class<T> fileClass) {
+        List<T> results = new ArrayList<>();
+
+        for (GameFile file : getFiles()) {
+            if (fileClass.isInstance(file))
+                results.add(fileClass.cast(file));
+
+            if (fileClass.isInstance(WADFile.class)) {
+                WADFile wadFile = (WADFile) file;
+                for (WADEntry entry : wadFile.getFiles()) {
+                    GameFile testFile = entry.getFile();
+                    if (fileClass.isInstance(testFile))
+                        results.add(fileClass.cast(testFile));
+                }
+            }
+        }
+
+        return results;
     }
 
     /**

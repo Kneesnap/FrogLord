@@ -17,6 +17,8 @@ import net.highwayfrogs.editor.file.*;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.sound.VHFile;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
@@ -29,9 +31,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.io.File;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 
 @Getter
 public class MainController implements Initializable {
@@ -163,6 +163,19 @@ public class MainController implements Initializable {
     @FXML
     private void editFormBook(ActionEvent evt) {
         FormEntryController.openEditor(GUIMain.EXE_CONFIG);
+    }
+
+    @FXML
+    private void actionExportBulkTextures(ActionEvent evt) {
+        File targetFolder = Utils.promptChooseDirectory("Choose the directory to save all textures to.", true);
+
+        ImageFilterSettings exportSettings = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(false).setAllowFlip(true).setAllowTransparency(true);
+        List<VLOArchive> allVlos = getMwdFile().getAllFiles(VLOArchive.class);
+        for (VLOArchive saveVLO : allVlos) {
+            File vloFolder = new File(targetFolder, Utils.stripExtension(saveVLO.getFileEntry().getDisplayName()));
+            Utils.makeDirectory(vloFolder);
+            saveVLO.exportAllImages(vloFolder, exportSettings);
+        }
     }
 
     /**

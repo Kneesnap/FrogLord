@@ -842,6 +842,16 @@ public class Utils {
     }
 
     /**
+     * Create the directory.
+     * @param directory The directory to create.
+     */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static void makeDirectory(File directory) {
+        if (!directory.exists())
+            directory.mkdirs();
+    }
+
+    /**
      * Load a FXML template as a new window.
      * WARNING: This method is blocking.
      * @param template   The name of the template to load. Should not be user-controllable, as there is no path sanitization.
