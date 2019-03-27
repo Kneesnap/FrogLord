@@ -46,10 +46,7 @@ public class LineSegment extends PathSegment {
         result.setX((short) (start.getX() + ((deltaX * info.getSegmentDistance()) / getLength())));
         result.setY((short) (start.getY() + ((deltaY * info.getSegmentDistance()) / getLength())));
         result.setZ((short) (start.getZ() + ((deltaZ * info.getSegmentDistance()) / getLength())));
-
-        IVector vec = new IVector(deltaX, deltaY, deltaZ);
-        vec.normalise();
-        return new PathResult(result, vec);
+        return new PathResult(result, new IVector(deltaX, deltaY, deltaZ).normalise());
     }
 
     @Override
