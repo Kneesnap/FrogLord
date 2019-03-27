@@ -128,6 +128,9 @@ public class Entity extends GameObject {
             position[0] = Utils.fixedPointIntToFloat20Bit(pos[0]);
             position[1] = Utils.fixedPointIntToFloat20Bit(pos[1]);
             position[2] = Utils.fixedPointIntToFloat20Bit(pos[2]);
+            position[3] = matrix.getPitchXAngle();
+            position[4] = matrix.getYawYAngle();
+            position[5] = matrix.getRollZAngle();
             return position;
         }
 
@@ -138,6 +141,9 @@ public class Entity extends GameObject {
             position[0] = end.getFloatX();
             position[1] = end.getFloatY();
             position[2] = end.getFloatZ();
+            position[3] = 0;
+            position[4] = 0;
+            position[5] = 0;
             return position;
         }
 

@@ -325,16 +325,16 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void setupEntities() {
-        float[] pos = new float[3];
+        float[] pos = new float[6];
         for (Entity entity : getFile().getEntities()) {
             entity.getPosition(pos, getFile());
-            MeshView meshView = makeEntityIcon(entity, pos[0], pos[1], pos[2]);
+            MeshView meshView = makeEntityIcon(entity, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
             meshView.setOnMouseClicked(evt -> this.mapUIController.showEntityInfo(entity));
             this.entityIcons.add(meshView);
         }
     }
 
-    private MeshView makeEntityIcon(Entity entity, float x, float y, float z) {
+    private MeshView makeEntityIcon(Entity entity, float x, float y, float z, float xAngle, float yAngle, float zAngle) {
         float entityIconSize = MapUIController.getPropertyEntityIconSize().getValue();
 
         FormEntry form = entity.getFormEntry();
@@ -359,8 +359,11 @@ public class MAPController extends EditorController<MAPFile> {
                 if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
                     MOFHolder holder = (MOFHolder) wadEntry.getFile();
                     holder.setVloFile(themeBook.getVLO(getFile()));
-                    MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y + .5F, z);
+                    MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
                     view.setMaterial(holder.getTextureMap().getDiffuseMaterial());
+                    view.getTransforms().add(new Rotate(Math.toDegrees(xAngle), Rotate.X_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(yAngle), Rotate.Y_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(zAngle), Rotate.Z_AXIS));
                     return view;
                 }
             }

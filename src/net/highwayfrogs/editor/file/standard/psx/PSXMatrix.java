@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents a MR_MAT struct, which is based on the PSX "MATRIX" struct in libgte.h.
@@ -53,6 +54,37 @@ public class PSXMatrix extends GameObject {
             writer.writeInt(aTransfer);
 
         writer.writeShort(this.padding);
+    }
+
+    /**
+     * Gets the pitch (x Angle) from this matrix.
+     * @return pitch
+     */
+    public float getPitchXAngle() {
+        float r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
+        float r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
+        return (float) Math.atan2(r32, r33);
+    }
+
+    /**
+     * Gets the yaw (y Angle) from this matrix.
+     * @return yaw
+     */
+    public float getYawYAngle() {
+        float r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
+        float r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
+        float r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
+        return (float) Math.atan2(-r31, Math.sqrt((r32 * r32) + (r33 * r33)));
+    }
+
+    /**
+     * Gets the roll (z Angle) from this matrix.
+     * @return roll
+     */
+    public float getRollZAngle() {
+        float r11 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
+        float r21 = Utils.fixedPointShortToFloat12Bit(getMatrix()[1][0]);
+        return (float) Math.atan2(r21, r11);
     }
 
     /**
