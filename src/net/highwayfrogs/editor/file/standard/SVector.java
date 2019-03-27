@@ -31,6 +31,10 @@ public class SVector extends GameObject implements Vector {
         this(clone.getX(), clone.getY(), clone.getZ());
     }
 
+    public SVector(IVector clone) {
+        this((short) clone.getX(), (short) clone.getY(), (short) clone.getZ());
+    }
+
     @Override
     public void load(DataReader reader) {
         this.x = reader.readShort();

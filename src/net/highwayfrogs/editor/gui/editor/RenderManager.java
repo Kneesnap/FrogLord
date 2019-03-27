@@ -407,10 +407,10 @@ public class RenderManager
                     if (segment.getType() == PathType.LINE)
                     {
                         pathInfo.setSegmentDistance(0);
-                        Vector vec0 = path.evaluatePosition(pathInfo).toVector();
+                        Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
 
                         pathInfo.setSegmentDistance(segment.getLength());
-                        Vector vec1 = path.evaluatePosition(pathInfo).toVector();
+                        Vector vec1 = path.evaluatePosition(pathInfo).getPosition();
 
                         x0 = vec0.getFloatX();
                         y0 = vec0.getFloatY();
@@ -430,10 +430,10 @@ public class RenderManager
                         for (int step=0; step<numSteps; ++step)
                         {
                             pathInfo.setSegmentDistance(step * stepSize);
-                            Vector vec0 = path.evaluatePosition(pathInfo).toVector();
+                            Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
 
                             pathInfo.setSegmentDistance(Math.min((step + 1) * stepSize, segment.getLength()));
-                            Vector vec1 = path.evaluatePosition(pathInfo).toVector();
+                            Vector vec1 = path.evaluatePosition(pathInfo).getPosition();
 
                             x0 = vec0.getFloatX();
                             y0 = vec0.getFloatY();
@@ -457,10 +457,10 @@ public class RenderManager
                         for (int step=0; step<numSteps; ++step)
                         {
                             pathInfo.setSegmentDistance(step * stepSize);
-                            Vector vec0 = path.evaluatePosition(pathInfo).toVector();
+                            Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
 
                             pathInfo.setSegmentDistance(Math.min((step + 1) * stepSize, segment.getLength()));
-                            Vector vec1 = path.evaluatePosition(pathInfo).toVector();
+                            Vector vec1 = path.evaluatePosition(pathInfo).getPosition();
 
                             x0 = vec0.getFloatX();
                             y0 = vec0.getFloatY();

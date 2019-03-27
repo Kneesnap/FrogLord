@@ -1,11 +1,9 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.path.Path;
-import net.highwayfrogs.editor.file.map.path.PathInfo;
-import net.highwayfrogs.editor.file.map.path.PathSegment;
-import net.highwayfrogs.editor.file.map.path.PathType;
+import net.highwayfrogs.editor.file.map.path.*;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -39,16 +37,19 @@ public class LineSegment extends PathSegment {
     }
 
     @Override
-    protected PSXMatrix calculatePosition(PathInfo info) {
+    protected PathResult calculatePosition(PathInfo info) {
         int deltaX = end.getX() - start.getX();
         int deltaY = end.getY() - start.getY();
         int deltaZ = end.getZ() - start.getZ();
 
-        PSXMatrix matrix = new PSXMatrix();
-        matrix.getTransform()[0] = start.getX() + ((deltaX * info.getSegmentDistance()) / getLength());
-        matrix.getTransform()[1] = start.getY() + ((deltaY * info.getSegmentDistance()) / getLength());
-        matrix.getTransform()[2] = start.getZ() + ((deltaZ * info.getSegmentDistance()) / getLength());
-        return matrix;
+        SVector result = new SVector();
+        result.setX((short) (start.getX() + ((deltaX * info.getSegmentDistance()) / getLength())));
+        result.setY((short) (start.getY() + ((deltaY * info.getSegmentDistance()) / getLength())));
+        result.setZ((short) (start.getZ() + ((deltaZ * info.getSegmentDistance()) / getLength())));
+
+        IVector vec = new IVector(deltaX, deltaY, deltaZ);
+        vec.normalise();
+        return new PathResult(result, vec);
     }
 
     @Override

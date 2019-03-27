@@ -2,10 +2,7 @@ package net.highwayfrogs.editor.file.map.path.data;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.map.path.Path;
-import net.highwayfrogs.editor.file.map.path.PathInfo;
-import net.highwayfrogs.editor.file.map.path.PathSegment;
-import net.highwayfrogs.editor.file.map.path.PathType;
+import net.highwayfrogs.editor.file.map.path.*;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -51,7 +48,7 @@ public class ArcSegment extends PathSegment {
     }
 
     @Override
-    protected PSXMatrix calculatePosition(PathInfo info) {
+    protected PathResult calculatePosition(PathInfo info) {
         int segmentDistance = info.getSegmentDistance();
 
         IVector vec = new IVector(start.getX() - center.getX(), start.getY() - center.getY(), start.getZ() - center.getZ());
@@ -84,10 +81,9 @@ public class ArcSegment extends PathSegment {
         svec.setZ((short) ((sin * radius) >> 12));
 
         PSXMatrix.MRApplyRotMatrix(matrix, svec, vec);
-        matrix.getTransform()[0] = vec.getX() + center.getX();
-        matrix.getTransform()[1] = vec.getY() + center.getY();
-        matrix.getTransform()[2] = vec.getZ() + center.getZ();
-        return matrix;
+        vec.add(center);
+        svec.setValues((short) sin, (short) 0, (short) -cos);
+        return new PathResult(new SVector(vec), PSXMatrix.MRApplyRotMatrix(matrix, svec, new IVector()));
     }
 
     @Override

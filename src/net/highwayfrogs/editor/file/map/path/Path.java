@@ -123,7 +123,7 @@ public class Path extends GameObject {
      * @param pathInfo Information about this path.
      * @return finishedPosition
      */
-    public PSXMatrix evaluatePosition(PathInfo pathInfo) {
+    public PathResult evaluatePosition(PathInfo pathInfo) {
         return getSegments().get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
     }
 

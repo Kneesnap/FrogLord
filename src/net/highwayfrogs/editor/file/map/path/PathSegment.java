@@ -55,7 +55,7 @@ public abstract class PathSegment extends GameObject {
      * @param info The info to calculate with.
      * @return finishPosition
      */
-    protected abstract PSXMatrix calculatePosition(PathInfo info);
+    protected abstract PathResult calculatePosition(PathInfo info);
 
     /**
      * Setup a path editor.

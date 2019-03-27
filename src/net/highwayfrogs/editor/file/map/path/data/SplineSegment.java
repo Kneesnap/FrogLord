@@ -1,11 +1,10 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
+import net.highwayfrogs.editor.file.map.path.*;
+import net.highwayfrogs.editor.file.standard.IVector;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.utils.Utils;
-import net.highwayfrogs.editor.file.map.path.Path;
-import net.highwayfrogs.editor.file.map.path.PathInfo;
-import net.highwayfrogs.editor.file.map.path.PathSegment;
-import net.highwayfrogs.editor.file.map.path.PathType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -65,7 +64,7 @@ public class SplineSegment extends PathSegment {
     }
 
     @Override
-    protected PSXMatrix calculatePosition(PathInfo info) {
+    protected PathResult calculatePosition(PathInfo info) {
         return calculateSplinePoint(info.getSegmentDistance());
     }
 
@@ -104,29 +103,29 @@ public class SplineSegment extends PathSegment {
     }
 
     // I hate this.
-    private PSXMatrix calculateSplinePoint(int distance) {
+    private PathResult calculateSplinePoint(int distance) {
         int t = getSplineParamFromLength(distance);
         int t2 = (t * t) >> SPLINE_T2_SHIFT;
         int t3 = (t2 * t) >> SPLINE_PARAM_SHIFT;
 
-        PSXMatrix matrix = new PSXMatrix();
+        SVector pos = new SVector();
 
-        matrix.getTransform()[0] = (((t3 * splineMatrix[0][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
+        pos.setX((short) (((t3 * splineMatrix[0][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t2 * splineMatrix[1][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t * splineMatrix[2][0]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
-                ((splineMatrix[3][0]) << SPLINE_WORLD_SHIFT));
+                ((splineMatrix[3][0]) << SPLINE_WORLD_SHIFT)));
 
-        matrix.getTransform()[1] = (((t3 * splineMatrix[0][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
+        pos.setY((short) (((t3 * splineMatrix[0][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t2 * splineMatrix[1][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t * splineMatrix[2][1]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
-                ((splineMatrix[3][1]) << SPLINE_WORLD_SHIFT));
+                ((splineMatrix[3][1]) << SPLINE_WORLD_SHIFT)));
 
-        matrix.getTransform()[2] = (((t3 * splineMatrix[0][2]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
+        pos.setZ((short) (((t3 * splineMatrix[0][2]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t2 * splineMatrix[1][2]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t * splineMatrix[2][2]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
-                ((splineMatrix[3][2]) << SPLINE_WORLD_SHIFT));
+                ((splineMatrix[3][2]) << SPLINE_WORLD_SHIFT)));
 
-        return matrix;
+        return new PathResult(pos, new IVector());
     }
 
     @Override
