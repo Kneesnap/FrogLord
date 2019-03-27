@@ -13,6 +13,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.RowConstraints;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -413,6 +414,32 @@ public class GUIEditorGrid {
         setupSecondNode(view, true);
         addRow(dimensions + 5);
         return view;
+    }
+
+    /**
+     * Add a PSXMatrix to the editor grid.
+     * @param matrix           The rotation matrix to add data for.
+     * @param onPositionUpdate Behavior to apply when the position is updated.
+     */
+    public void addMatrix(PSXMatrix matrix, Runnable onPositionUpdate) {
+        float[] translation = new float[3];
+
+        // Position information is in fixed point format, hence conversion to float representation.
+        for (int i = 0; i < matrix.getTransform().length; i++)
+            translation[i] = Utils.fixedPointIntToFloat20Bit(matrix.getTransform()[i]);
+
+        addNormalLabel("Position:");
+        addVector3D(translation, 30D, (index, newValue) -> {
+            matrix.getTransform()[index] = Utils.floatToFixedPointInt20Bit(newValue);
+            if (onPositionUpdate != null)
+                onPositionUpdate.run();
+        });
+
+        // Transform information is in fixed point format, hence conversion to float representation.
+        addNormalLabel("Rotation:");
+        addFloatField("Pitch (xAngle)", matrix.getPitchXAngle()); //TODO: Allow setting.
+        addFloatField("Yaw (yAngle)", matrix.getYawYAngle());
+        addFloatField("Roll (zAngle)", matrix.getRollZAngle());
     }
 
     public HBox addVector3D(float[] vec3D, double height, BiConsumer<Integer, Float> handler) {
