@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.Vector;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -137,13 +137,14 @@ public class Entity extends GameObject {
         PathInfo pathInfo = getPathInfo();
         if (pathInfo != null) {
             Path path = map.getPaths().get(pathInfo.getPathId());
-            Vector end = path.evaluatePosition(pathInfo);
-            position[0] = end.getFloatX();
-            position[1] = end.getFloatY();
-            position[2] = end.getFloatZ();
-            position[3] = 0;
-            position[4] = 0;
-            position[5] = 0;
+            PSXMatrix end = path.evaluatePosition(pathInfo);
+            SVector endVec = end.toVector();
+            position[0] = endVec.getFloatX();
+            position[1] = endVec.getFloatY();
+            position[2] = endVec.getFloatZ();
+            position[3] = end.getPitchXAngle();
+            position[4] = end.getYawYAngle();
+            position[5] = end.getRollZAngle();
             return position;
         }
 

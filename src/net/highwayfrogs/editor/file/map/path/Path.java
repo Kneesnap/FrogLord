@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.Vector;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
@@ -123,7 +123,7 @@ public class Path extends GameObject {
      * @param pathInfo Information about this path.
      * @return finishedPosition
      */
-    public Vector evaluatePosition(PathInfo pathInfo) {
+    public PSXMatrix evaluatePosition(PathInfo pathInfo) {
         return getSegments().get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
     }
 

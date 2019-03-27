@@ -51,7 +51,7 @@ public class ArcSegment extends PathSegment {
     }
 
     @Override
-    protected SVector calculatePosition(PathInfo info) {
+    protected PSXMatrix calculatePosition(PathInfo info) {
         int segmentDistance = info.getSegmentDistance();
 
         IVector vec = new IVector(start.getX() - center.getX(), start.getY() - center.getY(), start.getZ() - center.getZ());
@@ -77,14 +77,17 @@ public class ArcSegment extends PathSegment {
         final int t = (segmentDistance << 12) / c;
         final int a = ((segmentDistance << 18) - (t * c)) / (radius * 0x192);
 
-        svec.setX((short) ((getConfig().rcos(a) * radius) >> 12));
+        int cos = getConfig().rcos(a);
+        int sin = getConfig().rsin(a);
+        svec.setX((short) ((cos * radius) >> 12));
         svec.setY((short) ((-pitch * segmentDistance) / getLength()));
-        svec.setZ((short) ((getConfig().rsin(a) * radius) >> 12));
+        svec.setZ((short) ((sin * radius) >> 12));
 
         PSXMatrix.MRApplyRotMatrix(matrix, svec, vec);
-        vec.add(center);
-
-        return new SVector((short)vec.getX(), (short)vec.getY(), (short)vec.getZ());
+        matrix.getTransform()[0] = vec.getX() + center.getX();
+        matrix.getTransform()[1] = vec.getY() + center.getY();
+        matrix.getTransform()[2] = vec.getZ() + center.getZ();
+        return matrix;
     }
 
     @Override

@@ -57,6 +57,14 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
+     * Get the transform as an SVector.
+     * @return transformVector
+     */
+    public SVector toVector() {
+        return new SVector((short) getTransform()[0], (short) getTransform()[1], (short) getTransform()[2]);
+    }
+
+    /**
      * Gets the pitch (x Angle) from this matrix.
      * @return pitch
      */
