@@ -125,6 +125,9 @@ public class FormEntry extends GameObject {
         int wadIndex = getId();
         if (getTheme() == MAPTheme.GENERAL)
             wadIndex -= getTheme().getFormOffset();
+        if (getTheme() == MAPTheme.GENERAL && (getConfig().isPSX() || getConfig().isPrototype()))
+            wadIndex++;
+
         return wadIndex;
     }
 

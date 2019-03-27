@@ -355,7 +355,7 @@ public class MAPController extends EditorController<MAPFile> {
             }
 
             int wadIndex = form.getWadIndex();
-            if (wadFile != null && (!getFile().getConfig().isPSX() || !isGeneralTheme) && wadFile.getFiles().size() > wadIndex) { // PSX version currently can't load general mofs. TODO: Fix that.
+            if (wadFile != null && (!getFile().getConfig().isPSX() || !isGeneralTheme) && wadFile.getFiles().size() > wadIndex) { //TODO: PSX version can't do general mofs.
                 WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
 
                 if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
