@@ -48,7 +48,6 @@ import java.util.List;
  * Sets up the map editor.
  * TODO: Create interface for adding faces.
  * TODO: Create a path editor.
- * TODO: Eventually use gouraud texture shading?
  * TODO: Maybe some-day use proper poly texture coloring?
  * Created by Kneesnap on 11/22/2018.
  */
