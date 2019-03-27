@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.data.MusicTrack;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
+import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
@@ -54,6 +55,7 @@ public class FroggerEXEInfo extends Config {
     private List<FormEntry> fullFormBook = new ArrayList<>();
     private short[] cosEntries = new short[ACOSTABLE_ENTRIES];
     private short[] sinEntries = new short[ACOSTABLE_ENTRIES];
+    private List<PickupData> pickupData;
     private String internalName;
     private boolean hasConfigIdentifier;
 
@@ -66,6 +68,7 @@ public class FroggerEXEInfo extends Config {
     private int arcadeLevelAddress;
     private int bmpPointerAddress;
     private int musicAddress;
+    private int pickupDataAddress;
     private boolean prototype;
     private boolean demo;
     private TargetPlatform platform;
@@ -129,6 +132,7 @@ public class FroggerEXEInfo extends Config {
         readConfig();
         readMWI();
         readCosTable();
+        readPickupData();
         readThemeLibrary();
         readMapLibrary();
         readRemapData();
@@ -151,6 +155,7 @@ public class FroggerEXEInfo extends Config {
         this.arcadeLevelAddress = getInt("arcadeLevelAddress", 0);
         this.musicAddress = getInt("musicAddress");
         this.bmpPointerAddress = getInt("bmpPointerAddress", 0);
+        this.pickupDataAddress = getInt("pickupData", 0);
         this.ramSize = getInt("ramSize", 0x00200000);
     }
 
@@ -168,6 +173,23 @@ public class FroggerEXEInfo extends Config {
     private NameBank loadBank(String configKey, String defaultBank, String bankName, BiFunction<NameBank, Integer, String> nameHandler) {
         String animBankName = getString(configKey, defaultBank);
         return NameBank.readBank(bankName, animBankName, nameHandler);
+    }
+
+    private void readPickupData() {
+        if (getPickupDataAddress() == 0)
+            return;
+
+        this.pickupData = new ArrayList<>();
+        getReader().setIndex(getPickupDataAddress());
+
+        long tempPointer;
+        while ((tempPointer = getReader().readUnsignedIntAsLong()) != 0) {
+            getReader().jumpTemp((int) (tempPointer - getRamPointerOffset()));
+            PickupData pickupData = new PickupData();
+            pickupData.load(getReader());
+            getPickupData().add(pickupData);
+            getReader().jumpReturn();
+        }
     }
 
     /**

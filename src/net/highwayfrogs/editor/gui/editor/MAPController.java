@@ -21,12 +21,17 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
+import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFly;
+import net.highwayfrogs.editor.file.map.entity.data.general.BonusFlyEntity;
+import net.highwayfrogs.editor.file.map.entity.script.ScriptButterflyData;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
@@ -367,6 +372,24 @@ public class MAPController extends EditorController<MAPFile> {
             }
         }
 
+        PhongMaterial material = MATERIAL_ENTITY_ICON;
+
+        FroggerEXEInfo config = getFile().getConfig();
+
+        // Attempt to apply fly texture.
+        if (config.getPickupData() != null) {
+            FlyScoreType flyType = null;
+            if (entity.getEntityData() instanceof BonusFlyEntity)
+                flyType = ((BonusFlyEntity) entity.getEntityData()).getType();
+            if (entity.getScriptData() instanceof ScriptButterflyData)
+                flyType = ((ScriptButterflyData) entity.getScriptData()).getType();
+            if (entity.getEntityData() instanceof EntityFatFireFly)
+                flyType = ((EntityFatFireFly) entity.getEntityData()).getType();
+
+            if (flyType != null)
+                material = Utils.makeSpecialMaterial(config.getImageFromPointer(config.getPickupData().get(flyType.ordinal()).getImagePointers().get(0)).toFXImage());
+        }
+
         TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
         triMesh.getPoints().addAll(-entityIconSize * 0.5f, entityIconSize * 0.5f, 0, -entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, entityIconSize * 0.5f, 0);
         triMesh.getTexCoords().addAll(0, 1, 0, 0, 1, 0, 1, 1);
@@ -374,7 +397,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         MeshView triMeshView = new MeshView(triMesh);
         triMeshView.setDrawMode(DrawMode.FILL);
-        triMeshView.setMaterial(MATERIAL_ENTITY_ICON);
+        triMeshView.setMaterial(material);
         triMeshView.setCullFace(CullFace.NONE);
 
         return setupNode(triMeshView, x, y, z);

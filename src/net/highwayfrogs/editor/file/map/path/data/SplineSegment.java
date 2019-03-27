@@ -1,14 +1,13 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
 import net.highwayfrogs.editor.file.map.path.*;
+import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.utils.Utils;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Arrays;
 
