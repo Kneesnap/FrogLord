@@ -2,11 +2,11 @@ package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,23 +18,27 @@ import java.util.List;
  */
 @Getter
 public class MOFAnimationCels extends GameObject {
-    private int partCount; // In the future maybe this can be calculated. This is the number of parts this animation keeps data for.
-    private int flags;
     private List<Integer> celNumbers = new ArrayList<>(); // celNumbers[virtualId] -> actualCel
     private List<Short> indices = new ArrayList<>(); // Transform Ids. [(actualCel * partCount) + part] part is ?.
 
+    private transient MOFAnimation parent;
     private transient int tempCelNumberPointer;
     private transient int tempIndicePointer;
 
     public static final int FLAG_VIRTUAL_STANDARD = Constants.BIT_FLAG_0;
-    public static final int FLAG_VIRTUAL_INTERPOLATION = Constants.BIT_FLAG_1; // Virtual cel indices are read as prev, next, interp value.
+
+    public MOFAnimationCels(MOFAnimation parent) {
+        this.parent = parent;
+    }
 
     @Override
     public void load(DataReader reader) {
         int celCount = reader.readUnsignedShortAsInt();
-        this.partCount = reader.readUnsignedShortAsInt();
+        int partCount = reader.readUnsignedShortAsInt();
         int virtualCelCount = reader.readUnsignedShortAsInt();
-        this.flags = reader.readUnsignedShortAsInt();
+
+        int flags = reader.readUnsignedShortAsInt();
+        Utils.verify(flags == FLAG_VIRTUAL_STANDARD, "Model cel-set had unsupported flags! (%d)", Utils.toHexString(flags)); // We don't support this mode as of now.
 
         int celNumberPointer = reader.readInt();
         int indicePointer = reader.readInt();
@@ -49,16 +53,15 @@ public class MOFAnimationCels extends GameObject {
         for (int i = 0; i < totalIndiceCount; i++)
             indices.add(reader.readShort());
         reader.jumpReturn();
-
-        Utils.verify((getFlags() & FLAG_VIRTUAL_INTERPOLATION) == 0, "Model cel-set had interpolation enabled!"); // We don't support this mode as of now.
     }
 
     @Override
     public void save(DataWriter writer) {
+        int partCount = getParent().getStaticMOF().getParts().size();
         writer.writeUnsignedShort(this.celNumbers.size()); // This may need to have 1 subtracted if 1 is added while loading.
-        writer.writeUnsignedShort(this.partCount);
-        writer.writeUnsignedShort(this.indices.size() / getPartCount());
-        writer.writeUnsignedShort(this.flags);
+        writer.writeUnsignedShort(partCount);
+        writer.writeUnsignedShort(this.indices.size() / partCount);
+        writer.writeUnsignedShort(FLAG_VIRTUAL_STANDARD);
         this.tempCelNumberPointer = writer.writeNullPointer();
         this.tempIndicePointer = writer.writeNullPointer();
     }
@@ -93,6 +96,7 @@ public class MOFAnimationCels extends GameObject {
      */
     public int getTransformID(int frame, MOFPart part) {
         int actualCel = celNumbers.get(frame % celNumbers.size());
+        int partCount = getParent().getStaticMOF().getParts().size();
         return indices.get((actualCel * partCount) + part.getPartID());
     }
 

@@ -15,23 +15,22 @@ public class MOFBBox extends GameObject {
     private SVector[] vertices;
     private static final int COUNT = 8;
 
+    public MOFBBox() {
+        this.vertices = new SVector[COUNT];
+        for (int i = 0; i < this.vertices.length; i++)
+            this.vertices[i] = new SVector();
+    }
+
     @Override
     public void load(DataReader reader) {
-        this.vertices = new SVector[COUNT];
-        for (int i = 0; i < COUNT; i++)
-            this.vertices[i] = SVector.readWithPadding(reader);
+        for (SVector vector : this.vertices)
+            vector.loadWithPadding(reader);
     }
 
     @Override
     public void save(DataWriter writer) {
-        for (SVector vector : vertices)
+        for (SVector vector : this.vertices)
             vector.saveWithPadding(writer);
-    }
-
-    @Override
-    public int hashCode() {
-        return vertices[0].hashCode() + vertices[2].hashCode()
-                + vertices[4].hashCode() + vertices[6].hashCode();
     }
 
     @Override
@@ -40,10 +39,9 @@ public class MOFBBox extends GameObject {
             return false;
 
         MOFBBox otherBox = (MOFBBox) other;
-        for (int i = 0; i < vertices.length; i++)
-            if (!otherBox.getVertices()[i].equals(getVertices()[i]))
+        for (int i = 0; i < getVertices().length; i++)
+            if (!getVertices()[i].equals(otherBox.getVertices()[i]))
                 return false;
-
         return true;
     }
 }

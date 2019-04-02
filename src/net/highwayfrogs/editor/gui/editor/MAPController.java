@@ -21,11 +21,17 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
+import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
+import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFly;
+import net.highwayfrogs.editor.file.map.entity.data.general.BonusFlyEntity;
+import net.highwayfrogs.editor.file.map.entity.script.ScriptButterflyData;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
@@ -35,7 +41,6 @@ import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.NameValuePair;
@@ -47,12 +52,7 @@ import java.util.List;
 /**
  * Sets up the map editor.
  * TODO: Create interface for adding faces.
- * TODO: Face remove mode. (Handle usages like grid). Check all vertices, removing each unused vertice.
- * TODO: Entities should face proper orientation.
  * TODO: Create a path editor.
- * TODO: Eventually use gouraud texture shading?
- * TODO: Maybe some-day use proper texture coloring?
- * TODO: Maybe apply proper MOF lighting?
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter
@@ -75,10 +75,6 @@ public class MAPController extends EditorController<MAPFile> {
     private List<Node> appliedLevelLights = new ArrayList<>();
 
     private Group root3D;
-    private Rotate rotX;
-    private Rotate rotY;
-    private Rotate rotZ;
-
     private MeshData cursorData;
 
     private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
@@ -161,12 +157,6 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(mesh);
-
-        this.rotX = new Rotate(0, Rotate.X_AXIS);
-        this.rotY = new Rotate(0, Rotate.Y_AXIS);
-        this.rotZ = new Rotate(0, Rotate.Z_AXIS);
-        meshView.getTransforms().addAll(rotX, rotY, rotZ);
-
         meshView.setMaterial(material);
         meshView.setCullFace(CullFace.BACK);
 
@@ -235,13 +225,13 @@ public class MAPController extends EditorController<MAPFile> {
             if (event.isControlDown() && event.getCode() == KeyCode.ENTER)
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
 
-            if (event.getCode() == KeyCode.I) {
+            if (event.getCode() == KeyCode.UP) {
                 movePolygonY(MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.K) {
+            } else if (event.getCode() == KeyCode.DOWN) {
                 movePolygonY(-MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.J) {
+            } else if (event.getCode() == KeyCode.LEFT) {
                 movePolygonX(-MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.L) {
+            } else if (event.getCode() == KeyCode.RIGHT) {
                 movePolygonX(MapUIController.getPropertyVertexSpeed().get());
             }
         });
@@ -270,8 +260,15 @@ public class MAPController extends EditorController<MAPFile> {
                     this.polygonImmuneToTarget = getSelectedPolygon();
                     removeCursorPolygon();
                 } else if (mapUIController == null || !mapUIController.handleClick(evt, clickedPoly)) {
-                    setCursorPolygon(clickedPoly);
-                    this.polygonSelected = true;
+                    if (getMapUIController() != null && getMapUIController().getCheckBoxFaceRemoveMode().isSelected()) {
+                        getFile().removeFace(getSelectedPolygon());
+                        removeCursorPolygon();
+                        refreshView();
+                        getMapUIController().setupAnimationEditor();
+                    } else {
+                        setCursorPolygon(clickedPoly);
+                        this.polygonSelected = true;
+                    }
                 }
             }
         });
@@ -282,8 +279,7 @@ public class MAPController extends EditorController<MAPFile> {
         float baseY = -Utils.fixedPointIntToFloat4Bit(getFile().getGridStack(getFile().getStartXTile(), getFile().getStartZTile()).getHeight());
         float gridZ = Utils.fixedPointIntToFloat4Bit(getFile().getWorldZ(getFile().getStartZTile(), true));
         cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
-        // Set the camera to look at the start position, too.
-        cameraFPS.setCameraLookAt(gridX, baseY, gridZ);
+        cameraFPS.setCameraLookAt(gridX, baseY, gridZ); // Set the camera to look at the start position, too.
 
         // TODO: Tidy this up at some point, but use an action on a UI control for now [AndyEder]
         mapUIController.getCheckBoxShowAllPaths().setOnAction(evt -> this.togglePathDisplay());
@@ -331,16 +327,16 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     private void setupEntities() {
-        float[] pos = new float[3];
+        float[] pos = new float[6];
         for (Entity entity : getFile().getEntities()) {
             entity.getPosition(pos, getFile());
-            MeshView meshView = makeEntityIcon(entity, pos[0], pos[1], pos[2]);
+            MeshView meshView = makeEntityIcon(entity, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
             meshView.setOnMouseClicked(evt -> this.mapUIController.showEntityInfo(entity));
             this.entityIcons.add(meshView);
         }
     }
 
-    private MeshView makeEntityIcon(Entity entity, float x, float y, float z) {
+    private MeshView makeEntityIcon(Entity entity, float x, float y, float z, float xAngle, float yAngle, float zAngle) {
         float entityIconSize = MapUIController.getPropertyEntityIconSize().getValue();
 
         FormEntry form = entity.getFormEntry();
@@ -348,24 +344,49 @@ public class MAPController extends EditorController<MAPFile> {
         if (!form.testFlag(FormEntry.FLAG_NO_MODEL)) {
             boolean isGeneralTheme = form.getTheme() == MAPTheme.GENERAL;
             ThemeBook themeBook = getFile().getConfig().getThemeBook(form.getTheme());
-            WADFile wadFile = isGeneralTheme ? themeBook.getWAD(getFile()) : getFile().getFileEntry().getMapBook().getWad(getFile());
+
+            WADFile wadFile = null;
+            if (isGeneralTheme) {
+                wadFile = themeBook.getWAD(getFile());
+            } else {
+                MapBook mapBook = getFile().getFileEntry().getMapBook();
+                if (mapBook != null)
+                    wadFile = mapBook.getWad(getFile());
+            }
 
             int wadIndex = form.getWadIndex();
-            if (wadFile.getFiles().size() > wadIndex) {
+            if (wadFile != null && wadFile.getFiles().size() > wadIndex) {
                 WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
 
                 if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
                     MOFHolder holder = (MOFHolder) wadEntry.getFile();
-                    VLOArchive vloFile = themeBook.getVLO(getFile());
-                    if (vloFile.getFileEntry().getLoadedId() == 100 && getFile().getConfig().isPSX())
-                        vloFile = getFile().getConfig().getGameFile(0); //TODO: Hardcoded.
-
-                    holder.setVloFile(vloFile);
+                    holder.setVloFile(themeBook.getVLO(getFile()));
                     MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
                     view.setMaterial(holder.getTextureMap().getDiffuseMaterial());
+                    view.getTransforms().add(new Rotate(Math.toDegrees(xAngle), Rotate.X_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(yAngle), Rotate.Y_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(zAngle), Rotate.Z_AXIS));
                     return view;
                 }
             }
+        }
+
+        PhongMaterial material = MATERIAL_ENTITY_ICON;
+
+        FroggerEXEInfo config = getFile().getConfig();
+
+        // Attempt to apply fly texture.
+        if (config.getPickupData() != null) {
+            FlyScoreType flyType = null;
+            if (entity.getEntityData() instanceof BonusFlyEntity)
+                flyType = ((BonusFlyEntity) entity.getEntityData()).getType();
+            if (entity.getScriptData() instanceof ScriptButterflyData)
+                flyType = ((ScriptButterflyData) entity.getScriptData()).getType();
+            if (entity.getEntityData() instanceof EntityFatFireFly)
+                flyType = ((EntityFatFireFly) entity.getEntityData()).getType();
+
+            if (flyType != null)
+                material = Utils.makeSpecialMaterial(config.getImageFromPointer(config.getPickupData().get(flyType.ordinal()).getImagePointers().get(0)).toFXImage());
         }
 
         TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
@@ -375,7 +396,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         MeshView triMeshView = new MeshView(triMesh);
         triMeshView.setDrawMode(DrawMode.FILL);
-        triMeshView.setMaterial(MATERIAL_ENTITY_ICON);
+        triMeshView.setMaterial(material);
         triMeshView.setCullFace(CullFace.NONE);
 
         return setupNode(triMeshView, x, y, z);
@@ -385,22 +406,6 @@ public class MAPController extends EditorController<MAPFile> {
         node.setTranslateX(x);
         node.setTranslateY(y);
         node.setTranslateZ(z);
-
-        Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS); // Up, Down,
-        Rotate lightRotateY = new Rotate(0, Rotate.Y_AXIS); // Left, Right
-        Rotate lightRotateZ = new Rotate(0, Rotate.Z_AXIS); // In, Out
-        lightRotateX.angleProperty().bind(rotX.angleProperty());
-        lightRotateY.angleProperty().bind(rotY.angleProperty());
-        lightRotateZ.angleProperty().bind(rotZ.angleProperty());
-
-        lightRotateX.setPivotY(-node.getTranslateY());
-        lightRotateX.setPivotZ(-node.getTranslateZ()); // Depth <Closest, Furthest>
-        lightRotateY.setPivotX(-node.getTranslateX()); // <Left, Right>
-        lightRotateY.setPivotZ(-node.getTranslateZ()); // Depth <Closest, Furthest>
-        lightRotateZ.setPivotX(-node.getTranslateX()); // <Left, Right>
-        lightRotateZ.setPivotY(-node.getTranslateY()); // <Up, Down>
-        node.getTransforms().addAll(lightRotateX, lightRotateY, lightRotateZ);
-
         root3D.getChildren().add(node);
         return node;
     }
@@ -508,7 +513,8 @@ public class MAPController extends EditorController<MAPFile> {
         if (cursorPoly == null)
             return;
 
-        renderOverPolygon(cursorPoly, MapMesh.CURSOR_COLOR);
+        boolean showRemoveColor = !isPolygonSelected() && getMapUIController().getCheckBoxFaceRemoveMode().isSelected();
+        renderOverPolygon(cursorPoly, showRemoveColor ? MapMesh.REMOVE_FACE_COLOR : MapMesh.CURSOR_COLOR);
         cursorData = mapMesh.getManager().addMesh();
     }
 

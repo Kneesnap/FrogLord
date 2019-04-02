@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,6 @@ import java.util.List;
 public class MOFPartcel extends GameObject {
     @Getter private List<SVector> vertices = new ArrayList<>();
     @Getter private List<SVector> normals = new ArrayList<>();
-    @Getter private MOFBBox bbox;
 
     private transient MOFPart parent;
     private transient int vertexCount;
@@ -50,11 +49,7 @@ public class MOFPartcel extends GameObject {
             normals.add(SVector.readWithPadding(reader));
         reader.jumpReturn();
 
-        // Read BBOX.
-        reader.jumpTemp(bboxPointer);
-        this.bbox = new MOFBBox();
-        this.bbox.load(reader);
-        reader.jumpReturn();
+        // Would read bbox here, but it's unused.
     }
 
     @Override
@@ -96,12 +91,12 @@ public class MOFPartcel extends GameObject {
     public void saveBboxData(DataWriter writer) {
         Utils.verify(this.tempBboxPointer > 0, "Invalid BBOX Pointer.");
 
-        if (parent.getSaveBoxMap().containsKey(getBbox())) {
-            writer.writeAddressAt(this.tempBboxPointer, parent.getSaveBoxMap().get(getBbox()));
-        } else {
-            parent.getSaveBoxMap().put(getBbox(), writer.getIndex());
+        if (parent.getSaveBboxPointer() == 0) {
+            parent.setSaveBboxPointer(writer.getIndex());
             writer.writeAddressTo(this.tempBboxPointer);
-            this.bbox.save(writer);
+            parent.makeBoundingBox().save(writer);
+        } else {
+            writer.writeAddressAt(this.tempBboxPointer, parent.getSaveBboxPointer());
         }
 
         this.tempBboxPointer = 0;

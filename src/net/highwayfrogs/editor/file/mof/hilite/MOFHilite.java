@@ -17,8 +17,8 @@ import java.util.List;
  */
 @Getter
 public class MOFHilite extends GameObject {
-    private HiliteType type;
-    private short flags; // Seems to always be 1, but the code supports more.
+    private HiliteType type = HiliteType.values()[0];
+    private short flags = FLAG_VERTEX; // Seems to always be 1, but the code supports more.
     private SVector vertex;
     private transient MOFPart parent;
 
@@ -36,6 +36,9 @@ public class MOFHilite extends GameObject {
         this.vertex = getVertices().get(reader.readUnsignedShortAsInt());
         reader.skipInt(); // Runtime.
         reader.skipInt(); // Runtime.
+
+        Utils.verify((this.flags & FLAG_VERTEX) == FLAG_VERTEX, "MOFHilite was not a vertex hilite!");
+        Utils.verify((this.flags & FLAG_PRIM) != FLAG_PRIM, "MOFHilite was not a prim hilite!");
     }
 
     @Override

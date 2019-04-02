@@ -18,6 +18,11 @@ import java.util.List;
 public class MOFAnimationCelSet extends GameObject {
     private List<MOFAnimationCels> cels = new ArrayList<>(); // Each entry is an animation.
     private transient int dataPointer;
+    private transient MOFAnimation parent;
+
+    public MOFAnimationCelSet(MOFAnimation animation) {
+        this.parent = animation;
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -28,7 +33,7 @@ public class MOFAnimationCelSet extends GameObject {
 
         reader.setIndex(reader.readInt()); // Points to literally the exact index after reading.
         for (int i = 0; i < count; i++) {
-            MOFAnimationCels cel = new MOFAnimationCels();
+            MOFAnimationCels cel = new MOFAnimationCels(getParent());
             cel.load(reader);
             cels.add(cel);
         }

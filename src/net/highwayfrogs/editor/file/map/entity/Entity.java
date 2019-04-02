@@ -12,7 +12,9 @@ import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
+import net.highwayfrogs.editor.file.map.path.PathResult;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -39,6 +41,7 @@ public class Entity extends GameObject {
     private transient MAPFile map;
 
     private static final int RUNTIME_POINTERS = 4;
+    private static final IVector GAME_Y_AXIS_POS = new IVector(0, 0x1000, 0);
 
     public static final int FLAG_HIDDEN = Constants.BIT_FLAG_0; // Don't create a live entity while this is set.
     public static final int FLAG_NO_DISPLAY = Constants.BIT_FLAG_1; // Don't display any mesh.
@@ -128,16 +131,43 @@ public class Entity extends GameObject {
             position[0] = Utils.fixedPointIntToFloat20Bit(pos[0]);
             position[1] = Utils.fixedPointIntToFloat20Bit(pos[1]);
             position[2] = Utils.fixedPointIntToFloat20Bit(pos[2]);
+            position[3] = matrix.getPitchXAngle();
+            position[4] = matrix.getYawYAngle();
+            position[5] = matrix.getRollZAngle();
             return position;
         }
 
         PathInfo pathInfo = getPathInfo();
         if (pathInfo != null) {
             Path path = map.getPaths().get(pathInfo.getPathId());
-            Vector end = path.evaluatePosition(pathInfo);
-            position[0] = end.getFloatX();
-            position[1] = end.getFloatY();
-            position[2] = end.getFloatZ();
+            PathResult result = path.evaluatePosition(pathInfo);
+
+            IVector vec_x = new IVector();
+            IVector vec_z = result.getRotation();
+            vec_x.outerProduct12(GAME_Y_AXIS_POS, vec_z);
+            vec_x.normalise();
+
+            IVector vec_y = new IVector();
+            vec_y.outerProduct12(vec_z, vec_x);
+
+            matrix = new PSXMatrix();
+            matrix.getMatrix()[0][0] = (short) vec_x.getX();
+            matrix.getMatrix()[1][0] = (short) vec_x.getY();
+            matrix.getMatrix()[2][0] = (short) vec_x.getZ();
+            matrix.getMatrix()[0][1] = (short) vec_y.getX();
+            matrix.getMatrix()[1][1] = (short) vec_y.getY();
+            matrix.getMatrix()[2][1] = (short) vec_y.getZ();
+            matrix.getMatrix()[0][2] = (short) vec_z.getX();
+            matrix.getMatrix()[1][2] = (short) vec_z.getY();
+            matrix.getMatrix()[2][2] = (short) vec_z.getZ();
+
+            Vector endVec = result.getPosition();
+            position[0] = endVec.getFloatX();
+            position[1] = endVec.getFloatY();
+            position[2] = endVec.getFloatZ();
+            position[3] = matrix.getPitchXAngle();
+            position[4] = matrix.getYawYAngle();
+            position[5] = matrix.getRollZAngle();
             return position;
         }
 

@@ -14,16 +14,24 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Transform;
+import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.file.mof.MOFBBox;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
+import net.highwayfrogs.editor.file.mof.MOFPart;
+import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -53,6 +61,14 @@ public class MOFController extends EditorController<MOFHolder> {
     private Rotate rotX;
     private Rotate rotY;
     private Rotate rotZ;
+    private RenderManager renderManager = new RenderManager();
+
+    private static final String LIGHTING_LIST = "extraLighting";
+    private static final String HILITE_LIST = "hiliteBoxes";
+    private static final String BBOX_LIST = "boundingBoxes";
+
+    private static final PhongMaterial HILITE_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial BBOX_MATERIAL = Utils.makeSpecialMaterial(Color.RED);
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -89,6 +105,7 @@ public class MOFController extends EditorController<MOFHolder> {
         camera.setFarClip(MapUIController.MAP_VIEW_FAR_CLIP);
         subScene3D.setFill(Color.GRAY);
         subScene3D.setCamera(camera);
+        getRenderManager().setRenderRoot(this.root3D);
 
         // Setup the UI layout.
         BorderPane uiPane = new BorderPane();
@@ -108,6 +125,7 @@ public class MOFController extends EditorController<MOFHolder> {
             // Exit the viewer.
             if (event.getCode() == KeyCode.ESCAPE) {
                 getUiController().stopPlaying();
+                getRenderManager().removeAllDisplayLists();
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
             }
 
@@ -144,26 +162,116 @@ public class MOFController extends EditorController<MOFHolder> {
 
         camera.setTranslateZ(-100.0);
         camera.setTranslateY(-10.0);
+        updateLighting(false);
+    }
 
-        // Add better lighting
+    /**
+     * Updates lighting settings for the model.
+     * @param useBrightMode Should we apply the fancy lighting?
+     */
+    public void updateLighting(boolean useBrightMode) {
+        getRenderManager().addMissingDisplayList(LIGHTING_LIST);
+        getRenderManager().clearDisplayList(LIGHTING_LIST);
+
         AmbientLight ambLight = new AmbientLight();
-        ambLight.setColor(Color.color(0.2, 0.2, 0.2));
-        this.root3D.getChildren().add(ambLight);
+        float colorValue = useBrightMode ? .2F : 1;
+        ambLight.setColor(Color.color(colorValue, colorValue, colorValue));
+        getRenderManager().addNode(LIGHTING_LIST, ambLight);
 
-        PointLight pointLight1 = new PointLight();
-        pointLight1.setColor(Color.color(0.9, 0.9, 0.9));
-        pointLight1.setTranslateX(-100.0);
-        pointLight1.setTranslateY(-100.0);
-        pointLight1.setTranslateZ(-100.0);
-        this.root3D.getChildren().add(pointLight1);
+        if (useBrightMode) {
+            PointLight pointLight1 = new PointLight();
+            pointLight1.setColor(Color.color(0.9, 0.9, 0.9));
+            pointLight1.setTranslateX(-100.0);
+            pointLight1.setTranslateY(-100.0);
+            pointLight1.setTranslateZ(-100.0);
+            getRenderManager().addNode(LIGHTING_LIST, pointLight1);
 
-        PointLight pointLight2 = new PointLight();
-        pointLight2.setColor(Color.color(0.8, 0.8, 1.0));
-        pointLight2.setTranslateX(100.0);
-        pointLight2.setTranslateY(-100.0);
-        pointLight2.setTranslateZ(-100.0);
-        this.root3D.getChildren().add(pointLight2);
+            PointLight pointLight2 = new PointLight();
+            pointLight2.setColor(Color.color(0.8, 0.8, 1.0));
+            pointLight2.setTranslateX(100.0);
+            pointLight2.setTranslateY(-100.0);
+            pointLight2.setTranslateZ(-100.0);
+            getRenderManager().addNode(LIGHTING_LIST, pointLight2);
+        }
+    }
 
+    /**
+     * Adds a MOFBBox to the view.
+     * @param listId The render list id.
+     * @param box    The box to add.
+     */
+    public Box addMOFBoundingBox(String listId, MOFBBox box, PhongMaterial material) {
+        SVector min = box.getVertices()[0];
+        SVector max = box.getVertices()[7];
+        Box boxNode = getRenderManager().addBoundingBoxFromMinMax(listId, min.getFloatX(), min.getFloatY(), min.getFloatZ(), max.getFloatX(), max.getFloatY(), max.getFloatZ(), material, true);
+        applyRotation(boxNode);
+        return boxNode;
+    }
+
+    /**
+     * Update hilite boxes.
+     * @param showBoxes Should show hilite boxes.
+     */
+    public void updateHiliteBoxes(boolean showBoxes) {
+        getRenderManager().addMissingDisplayList(HILITE_LIST);
+        getRenderManager().clearDisplayList(HILITE_LIST);
+        if (!showBoxes)
+            return;
+
+        for (MOFPart part : getFile().asStaticFile().getParts()) {
+            for (MOFHilite hilite : part.getHilites()) {
+                SVector vertex = hilite.getVertex();
+                applyRotation(getRenderManager().addBoundingBoxCenteredWithDimensions(HILITE_LIST, vertex.getFloatX(), vertex.getFloatY(), vertex.getFloatZ(), 1, 1, 1, HILITE_MATERIAL, true));
+            }
+        }
+    }
+
+    /**
+     * Update bounding boxes.
+     * @param showBoxes Should show hilite boxes.
+     */
+    public void updateBoundingBoxes(boolean showBoxes) {
+        getRenderManager().addMissingDisplayList(BBOX_LIST);
+        getRenderManager().clearDisplayList(BBOX_LIST);
+        if (!showBoxes)
+            return;
+
+        for (MOFPart part : getFile().asStaticFile().getParts())
+            addMOFBoundingBox(BBOX_LIST, part.makeBoundingBox(), BBOX_MATERIAL);
+
+        if (getFile().isAnimatedMOF())
+            addMOFBoundingBox(BBOX_LIST, getFile().getAnimatedFile().makeBoundingBox(), BBOX_MATERIAL);
+    }
+
+    public void applyRotation(Node node) {
+        Rotate lightRotateX = new Rotate(0, Rotate.X_AXIS); // Up, Down,
+        Rotate lightRotateY = new Rotate(0, Rotate.Y_AXIS); // Left, Right
+        Rotate lightRotateZ = new Rotate(0, Rotate.Z_AXIS); // In, Out
+        lightRotateX.angleProperty().bind(rotX.angleProperty());
+        lightRotateY.angleProperty().bind(rotY.angleProperty());
+        lightRotateZ.angleProperty().bind(rotZ.angleProperty());
+
+        double translateX = node.getTranslateX();
+        double translateY = node.getTranslateY();
+        double translateZ = node.getTranslateZ();
+
+        for (Transform transform : node.getTransforms()) {
+            if (!(transform instanceof Translate))
+                continue;
+
+            Translate translate = (Translate) transform;
+            translateX += translate.getX();
+            translateY += translate.getY();
+            translateZ += translate.getZ();
+        }
+
+        lightRotateX.setPivotY(-translateY);
+        lightRotateX.setPivotZ(-translateZ); // Depth <Closest, Furthest>
+        lightRotateY.setPivotX(-translateX); // <Left, Right>
+        lightRotateY.setPivotZ(-translateZ); // Depth <Closest, Furthest>
+        lightRotateZ.setPivotX(-translateX); // <Left, Right>
+        lightRotateZ.setPivotY(-translateY); // <Up, Down>
+        node.getTransforms().addAll(lightRotateX, lightRotateY, lightRotateZ);
     }
 
     @Getter
@@ -186,6 +294,9 @@ public class MOFController extends EditorController<MOFHolder> {
 
         @FXML private TitledPane paneAnim;
         @FXML private ComboBox<Integer> animationSelector;
+        @FXML private CheckBox brightModeCheckbox;
+        @FXML private CheckBox viewHilitesCheckbox;
+        @FXML private CheckBox viewBoundingBoxesCheckbox;
 
         private List<Node> toggleNodes = new ArrayList<>();
         private List<Node> playNodes = new ArrayList<>();
@@ -201,6 +312,10 @@ public class MOFController extends EditorController<MOFHolder> {
 
         @Override
         public void initialize(URL location, ResourceBundle resources) {
+            this.brightModeCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateLighting(newValue)));
+            this.viewHilitesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateHiliteBoxes(newValue)));
+            this.viewBoundingBoxesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateBoundingBoxes(newValue)));
+
             toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, btnNext, btnLast));
             playNodes.addAll(Arrays.asList(playButton, btnLast, frameLabel, btnNext));
 

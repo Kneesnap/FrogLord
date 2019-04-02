@@ -1,30 +1,35 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents the MR_ANIM_MODEL_SET struct.
  * Created by Kneesnap on 8/25/2018.
  */
-@Getter
 public class MOFAnimationModelSet extends GameObject {
-    private int type;
     private MOFAnimationModel model;
-    private MOFAnimationCelSet celSet;
+    @Getter private MOFAnimationCelSet celSet;
+    @Getter private transient MOFAnimation parent;
     // BBOX Set is always empty, so we don't keep it.
 
     public static final int CEL_SET_COUNT = 1;
-    public static final int FLAG_HIERARCHICAL = Constants.BIT_FLAG_0;
     private static final int FORCED_MODEL_COUNT = 1;
+    private static final int DEFAULT_TYPE = 0;
+
+    public MOFAnimationModelSet(MOFAnimation parent) {
+        this.parent = parent;
+        this.model = new MOFAnimationModel(this);
+        this.celSet = new MOFAnimationCelSet(parent);
+    }
 
     @Override
     public void load(DataReader reader) {
-        this.type = reader.readInt();
+        int type = reader.readInt();
+        Utils.verify(type == DEFAULT_TYPE, "Unknown Model-Set Type: %d!", type);
 
         short modelCount = reader.readUnsignedByteAsShort();
         short celsetCount = reader.readUnsignedByteAsShort();
@@ -41,20 +46,18 @@ public class MOFAnimationModelSet extends GameObject {
 
         // Read Celset.
         reader.jumpTemp(celsetPointer);
-        this.celSet = new MOFAnimationCelSet();
         this.celSet.load(reader);
         reader.jumpReturn();
 
         // Read Models. (After Celset so it can reference cel sets loaded previously.)
         reader.jumpTemp(modelPointer);
-        this.model = new MOFAnimationModel(this);
         this.model.load(reader);
         reader.jumpReturn();
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeInt(this.type);
+        writer.writeInt(DEFAULT_TYPE);
 
         writer.writeUnsignedByte((short) FORCED_MODEL_COUNT);
         writer.writeUnsignedByte((short) CEL_SET_COUNT);

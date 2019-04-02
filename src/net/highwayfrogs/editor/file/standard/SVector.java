@@ -5,10 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Vector comprised of shorts.
@@ -29,6 +29,10 @@ public class SVector extends GameObject implements Vector {
 
     public SVector(SVector clone) {
         this(clone.getX(), clone.getY(), clone.getZ());
+    }
+
+    public SVector(IVector clone) {
+        this((short) clone.getX(), (short) clone.getY(), (short) clone.getZ());
     }
 
     @Override
@@ -52,6 +56,30 @@ public class SVector extends GameObject implements Vector {
         writer.writeShort(getX());
         writer.writeShort(getY());
         writer.writeShort(getZ());
+    }
+
+    /**
+     * Set the values of this vector.
+     * @param x The x value to set.
+     * @param y The y value to set.
+     * @param z The z value to set.
+     */
+    public void setValues(short x, short y, short z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    /**
+     * Set the values of this vector.
+     * @param x The x value to set.
+     * @param y The y value to set.
+     * @param z The z value to set.
+     */
+    public void setValues(float x, float y, float z, int bits) {
+        this.x = Utils.floatToFixedPointShort(x, bits);
+        this.y = Utils.floatToFixedPointShort(y, bits);
+        this.z = Utils.floatToFixedPointShort(z, bits);
     }
 
     /**

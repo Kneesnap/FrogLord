@@ -18,10 +18,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MapMesh extends FrogMesh<MAPPolygon> {
     private MAPFile map;
 
-    public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
+    public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.ORANGE, Color.BLACK);
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(Color.YELLOW, Color.BLACK);
     public static final CursorVertexColor INVISIBLE_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
     public static final CursorVertexColor GRID_COLOR = new CursorVertexColor(Color.BLUE, Color.BLACK);
+    public static final CursorVertexColor REMOVE_FACE_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
 
     public MapMesh(MAPFile file, TextureMap texMap) {
         super(texMap, VertexFormat.POINT_TEXCOORD);

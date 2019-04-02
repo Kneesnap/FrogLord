@@ -1,15 +1,13 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
-import net.highwayfrogs.editor.utils.Utils;
-import net.highwayfrogs.editor.file.map.path.Path;
-import net.highwayfrogs.editor.file.map.path.PathInfo;
-import net.highwayfrogs.editor.file.map.path.PathSegment;
-import net.highwayfrogs.editor.file.map.path.PathType;
+import net.highwayfrogs.editor.file.map.path.*;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Arrays;
 
@@ -65,8 +63,8 @@ public class SplineSegment extends PathSegment {
     }
 
     @Override
-    protected SVector calculatePosition(PathInfo info) {
-        return calculateSplinePoint(info.getSegmentDistance());
+    protected PathResult calculatePosition(PathInfo info) {
+        return new PathResult(calculateSplinePoint(info.getSegmentDistance()), calculateSplineTangent(info.getSegmentDistance()));
     }
 
     // What follows is insanely nasty, but it is what the game engine does, so we have no choice...
@@ -109,31 +107,52 @@ public class SplineSegment extends PathSegment {
         int t2 = (t * t) >> SPLINE_T2_SHIFT;
         int t3 = (t2 * t) >> SPLINE_PARAM_SHIFT;
 
-        SVector splinePoint = new SVector();
+        SVector pos = new SVector();
 
-        splinePoint.setX((short) (((t3 * splineMatrix[0][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
+        pos.setX((short) (((t3 * splineMatrix[0][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t2 * splineMatrix[1][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t * splineMatrix[2][0]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
                 ((splineMatrix[3][0]) << SPLINE_WORLD_SHIFT)));
 
-        splinePoint.setY((short) (((t3 * splineMatrix[0][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
+        pos.setY((short) (((t3 * splineMatrix[0][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t2 * splineMatrix[1][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t * splineMatrix[2][1]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
                 ((splineMatrix[3][1]) << SPLINE_WORLD_SHIFT)));
 
-        splinePoint.setZ((short) (((t3 * splineMatrix[0][2]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
+        pos.setZ((short) (((t3 * splineMatrix[0][2]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t2 * splineMatrix[1][2]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t * splineMatrix[2][2]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
                 ((splineMatrix[3][2]) << SPLINE_WORLD_SHIFT)));
 
-        return splinePoint;
+        return pos;
+    }
+
+    private IVector calculateSplineTangent(int distance) {
+        int t = getSplineParamFromLength(distance);
+        int t2 = (3 * t * t) >> SPLINE_T2_SHIFT;
+
+        int x = ((t2 * splineMatrix[0][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
+                ((t * splineMatrix[1][0]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT - 1)) +
+                (splineMatrix[2][0] << SPLINE_WORLD_SHIFT);
+        int y = ((t2 * splineMatrix[0][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
+                ((t * splineMatrix[1][1]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT - 1)) +
+                (splineMatrix[2][1] << SPLINE_WORLD_SHIFT);
+        int z = ((t2 * splineMatrix[0][2]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
+                ((t * splineMatrix[1][2]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT - 1)) +
+                (splineMatrix[2][2] << SPLINE_WORLD_SHIFT);
+
+        x >>= 4;
+        y >>= 4;
+        z >>= 4;
+
+        return new IVector(x, y, z).normalise();
     }
 
     @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor);
         editor.addLabel("Spline:", Utils.matrixToString(this.splineMatrix), 25.0);
-        editor.addLabel("Smooth T:", Arrays.toString(this.smoothT),25.0);
-        editor.addLabel("Smooth C:", Utils.matrixToString(this.smoothC),25.0);
+        editor.addLabel("Smooth T:", Arrays.toString(this.smoothT), 25.0);
+        editor.addLabel("Smooth C:", Utils.matrixToString(this.smoothC), 25.0);
     }
 }

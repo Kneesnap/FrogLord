@@ -303,7 +303,7 @@ public class Utils {
      * @return floatValue
      */
     public static float fixedPointShortToFloatNBits(short shortVal, long n) {
-        return ((float) shortVal / (float) (1 << n));
+        return ((float) shortVal / (1 << n));
     }
 
     /**
@@ -313,7 +313,7 @@ public class Utils {
      * @return shortValue
      */
     public static short floatToFixedPointShort(float floatVal, int n) {
-        return (short) (floatVal * (float) (1 << n));
+        return (short) (floatVal * (1 << n));
     }
 
     /**
@@ -839,6 +839,16 @@ public class Utils {
         verify(directory.isDirectory(), "This is not a directory!");
         File[] files = directory.listFiles();
         return files != null ? files : EMPTY_FILE_ARRAY;
+    }
+
+    /**
+     * Create the directory.
+     * @param directory The directory to create.
+     */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static void makeDirectory(File directory) {
+        if (!directory.exists())
+            directory.mkdirs();
     }
 
     /**

@@ -5,10 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Vector comprised of integers.
@@ -81,7 +81,7 @@ public class IVector extends GameObject implements Vector {
     /**
      * Equivalent to MRNormaliseVec ?? I think [AndyEder]
      */
-    public void normalise() {
+    public IVector normalise() {
         double[] tmpVec = new double[3];
         tmpVec[0] = this.x;
         tmpVec[1] = this.y;
@@ -99,6 +99,7 @@ public class IVector extends GameObject implements Vector {
         this.x = (int)tmpVec[0];
         this.y = (int)tmpVec[1];
         this.z = (int)tmpVec[2];
+        return this;
     }
 
     /**

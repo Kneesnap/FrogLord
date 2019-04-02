@@ -63,7 +63,7 @@ public class WADFile extends GameFile {
             if (compressed)
                 data = PP20Unpacker.unpackData(data);
 
-            GameFile file = new DummyFile(data.length);
+            GameFile file;
             if (Constants.ENABLE_WAD_FORMATS) {
                 if (fileType == VLOArchive.WAD_TYPE || fileType == 1) {
                     file = new VLOArchive();

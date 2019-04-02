@@ -1,11 +1,9 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.path.Path;
-import net.highwayfrogs.editor.file.map.path.PathInfo;
-import net.highwayfrogs.editor.file.map.path.PathSegment;
-import net.highwayfrogs.editor.file.map.path.PathType;
+import net.highwayfrogs.editor.file.map.path.*;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -38,16 +36,16 @@ public class LineSegment extends PathSegment {
     }
 
     @Override
-    protected SVector calculatePosition(PathInfo info) {
+    protected PathResult calculatePosition(PathInfo info) {
         int deltaX = end.getX() - start.getX();
         int deltaY = end.getY() - start.getY();
         int deltaZ = end.getZ() - start.getZ();
 
-        SVector pathRunnerPosition = new SVector();
-        pathRunnerPosition.setX((short) (start.getX() + ((deltaX * info.getSegmentDistance()) / getLength())));
-        pathRunnerPosition.setY((short) (start.getY() + ((deltaY * info.getSegmentDistance()) / getLength())));
-        pathRunnerPosition.setZ((short) (start.getZ() + ((deltaZ * info.getSegmentDistance()) / getLength())));
-        return pathRunnerPosition;
+        SVector result = new SVector();
+        result.setX((short) (start.getX() + ((deltaX * info.getSegmentDistance()) / getLength())));
+        result.setY((short) (start.getY() + ((deltaY * info.getSegmentDistance()) / getLength())));
+        result.setZ((short) (start.getZ() + ((deltaZ * info.getSegmentDistance()) / getLength())));
+        return new PathResult(result, new IVector(deltaX, deltaY, deltaZ).normalise());
     }
 
     @Override

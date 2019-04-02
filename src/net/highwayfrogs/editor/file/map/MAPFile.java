@@ -22,10 +22,12 @@ import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
 import net.highwayfrogs.editor.file.map.poly.line.MAPLineType;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygonType;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.map.zone.Zone;
+import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -155,6 +157,62 @@ public class MAPFile extends GameFile {
             } else if (info.getPathId() == pathIndex) {
                 info.setPathId(-1);
             }
+        }
+    }
+
+    /**
+     * Removes a face from this MAPFile.
+     * @param selectedFace The face to remove.
+     */
+    public void removeFace(MAPPolygon selectedFace) {
+        getPolygons().get(selectedFace.getType()).remove(selectedFace);
+
+        // Remove MapUV animations.
+        for (MAPAnimation animation : getMapAnimations())
+            animation.getMapUVs().removeIf(uv -> uv.getPolygon() == selectedFace);
+
+        // Remove Grid data.
+        for (GridStack stack : getGridStacks())
+            stack.getGridSquares().removeIf(square -> square.getPolygon() == selectedFace);
+
+        // Remove unused vertices.
+        for (int i = 0; i < selectedFace.getVerticeCount(); i++) {
+            int vertex = selectedFace.getVertices()[i];
+            if (!isVerticeUsed(vertex))
+                removeVertice(vertex);
+        }
+    }
+
+    /**
+     * Test if a vertice is used.
+     * @param vertice The vertice to test.
+     * @return isUsed
+     */
+    public boolean isVerticeUsed(int vertice) {
+        for (List<MAPPrimitive> prim : getPolygons().values()) {
+            if (!(prim instanceof MOFPolygon))
+                continue;
+            MOFPolygon poly = (MOFPolygon) prim;
+            for (int testVertex : poly.getVertices())
+                if (testVertex == vertice)
+                    return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Remove a vertice.
+     * @param vertice The vertice to remove.
+     */
+    public void removeVertice(int vertice) {
+        for (List<MAPPrimitive> prim : getPolygons().values()) {
+            if (!(prim instanceof MOFPolygon))
+                continue;
+            MOFPolygon poly = (MOFPolygon) prim;
+            for (int i = 0; i < poly.getVertices().length; i++)
+                if (poly.getVertices()[i] > vertice)
+                    poly.getVertices()[i]--;
         }
     }
 
@@ -715,6 +773,7 @@ public class MAPFile extends GameFile {
         texMap.put(MapMesh.ANIMATION_COLOR, MapMesh.ANIMATION_COLOR.makeTexture());
         texMap.put(MapMesh.INVISIBLE_COLOR, MapMesh.INVISIBLE_COLOR.makeTexture());
         texMap.put(MapMesh.GRID_COLOR, MapMesh.GRID_COLOR.makeTexture());
+        texMap.put(MapMesh.REMOVE_FACE_COLOR, MapMesh.REMOVE_FACE_COLOR.makeTexture());
         return texMap;
     }
 
