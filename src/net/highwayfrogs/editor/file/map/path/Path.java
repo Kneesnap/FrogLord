@@ -126,15 +126,6 @@ public class Path extends GameObject {
         return getSegments().get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
     }
 
-    /**
-     * Gets the position of an entity on this path.
-     * @param pathInfo Information about this path.
-     * @return finishedPosition
-     */
-    public float evaluateY(PathInfo pathInfo) {
-        return getSegments().get(pathInfo.getSegmentId()).calculateY();
-    }
-
     private boolean shouldSave(List<Entity> pathEntities) {
         for (Entity testEntity : pathEntities)
             if ("ORG_BEAVER".equals(testEntity.getFormEntry().getFormName()))

@@ -67,18 +67,6 @@ public class SplineSegment extends PathSegment {
         return new PathResult(calculateSplinePoint(info.getSegmentDistance()), calculateSplineTangent(info.getSegmentDistance()));
     }
 
-    @Override
-    protected float calculateY() {
-        int t = getSplineParamFromLength(0);
-        int t2 = (t * t) >> SPLINE_T2_SHIFT;
-        int t3 = (t2 * t) >> SPLINE_PARAM_SHIFT;
-
-        return Utils.fixedPointShortToFloat4Bit((short) (((t3 * splineMatrix[0][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-                ((t2 * splineMatrix[1][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-                ((t * splineMatrix[2][1]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
-                ((splineMatrix[3][1]) << SPLINE_WORLD_SHIFT)));
-    }
-
     // What follows is insanely nasty, but it is what the game engine does, so we have no choice...
     private int getSplineParamFromLength(int length) {
         length <<= 5;

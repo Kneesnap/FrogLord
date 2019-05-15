@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathResult;
+import net.highwayfrogs.editor.file.map.path.data.LineSegment;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.Vector;
@@ -168,10 +169,11 @@ public class Entity extends GameObject {
             position[3] = matrix.getPitchXAngle();
             position[4] = matrix.getYawYAngle();
             position[5] = matrix.getRollZAngle();
-            if (endVec.getFloatY() > path.evaluateY(pathInfo)) { // Flip rotation, so it faces the direction the path is going.
-                position[3] *= -1;
-                position[4] *= -1;
-                position[5] *= -1;
+
+            if (path.getSegments().get(pathInfo.getSegmentId()) instanceof LineSegment) {
+                position[3] = -position[3];
+                position[4] = -position[4];
+                position[5] = -position[5];
             }
 
             return position;

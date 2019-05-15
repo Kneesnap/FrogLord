@@ -71,7 +71,8 @@ public class PSXMatrix extends GameObject {
     public float getPitchXAngle() {
         float r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
         float r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
-        return (float) Math.atan2(r32, r33);
+        float value = (float) Math.atan2(r32, r33);
+        return shouldFlipValues() ? -value : value;
     }
 
     /**
@@ -82,7 +83,8 @@ public class PSXMatrix extends GameObject {
         float r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
         float r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
         float r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
-        return (float) Math.atan2(-r31, Math.sqrt((r32 * r32) + (r33 * r33)));
+        float value = (float) Math.atan2(-r31, Math.sqrt((r32 * r32) + (r33 * r33)));
+        return shouldFlipValues() ? -value : value;
     }
 
     /**
@@ -92,7 +94,14 @@ public class PSXMatrix extends GameObject {
     public float getRollZAngle() {
         float r11 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
         float r21 = Utils.fixedPointShortToFloat12Bit(getMatrix()[1][0]);
-        return (float) Math.atan2(r21, r11);
+        float value = (float) Math.atan2(r21, r11);
+        return shouldFlipValues() ? -value : value;
+    }
+
+    private boolean shouldFlipValues() {
+        float r11 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
+        float r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
+        return r11 == 0 || r31 == 0;
     }
 
     /**
