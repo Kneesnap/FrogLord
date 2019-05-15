@@ -56,6 +56,12 @@ public abstract class PathSegment extends GameObject {
     protected abstract PathResult calculatePosition(PathInfo info);
 
     /**
+     * Calculate the y position at distance = 0.
+     * @return yPos
+     */
+    protected abstract float calculateY();
+
+    /**
      * Setup a path editor.
      * @param path       The path which owns this segment.
      * @param controller The UI controller.

@@ -28,7 +28,7 @@ public class PSXMatrix extends GameObject {
     private short padding; // This is not in the struct. It is present in all tested versions, so it may be added automatically by the compiler.
 
     private static final int DIMENSION = 3;
-    public static final int BYTE_SIZE = (DIMENSION * DIMENSION * Constants.SHORT_SIZE) + (DIMENSION * Constants.INTEGER_SIZE);
+    public static final int BYTE_SIZE = (DIMENSION * DIMENSION * Constants.SHORT_SIZE) + (DIMENSION * Constants.INTEGER_SIZE) + Constants.SHORT_SIZE;
 
     @Override
     public void load(DataReader reader) {

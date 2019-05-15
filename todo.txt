@@ -21,3 +21,7 @@ Eventually:
  - MWD patch format. (Similar to xdelta or ips)
  - VAB File (Separate from VB VH) https://www.zophar.net/fileuploads/2/10730sbtsy/psfrip.txt
  - Separate FrogLord into a general purpose file format tool, which uses the FrogLord plugin (which supports Frogger games) to support the file formats. This will require generalizing things, and considering how to make a UI system which will work for different types of file systems, including single archive with all files, nested archives, single binary file with all data in it, etc.
+
+ Compile Frogger.
+ Middle click an entity to allow dragging it around, if it's not on a path. If it's on a path, allow arrow keys to move forward or backward along the path.
+ Allow playing map animations.

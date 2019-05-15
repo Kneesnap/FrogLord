@@ -168,6 +168,12 @@ public class Entity extends GameObject {
             position[3] = matrix.getPitchXAngle();
             position[4] = matrix.getYawYAngle();
             position[5] = matrix.getRollZAngle();
+            if (endVec.getFloatY() > path.evaluateY(pathInfo)) { // Flip rotation, so it faces the direction the path is going.
+                position[3] *= -1;
+                position[4] *= -1;
+                position[5] *= -1;
+            }
+
             return position;
         }
 

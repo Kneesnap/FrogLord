@@ -49,6 +49,11 @@ public class LineSegment extends PathSegment {
     }
 
     @Override
+    protected float calculateY() {
+        return start.getFloatY();
+    }
+
+    @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor);
 
