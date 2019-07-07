@@ -25,3 +25,4 @@ Eventually:
  Compile Frogger.
  Middle click an entity to allow dragging it around, if it's not on a path. If it's on a path, allow arrow keys to move forward or backward along the path.
  Allow playing map animations.
+ Finish TCRF documentation, prototype, debug features.

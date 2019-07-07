@@ -65,6 +65,16 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
+     * Updates this rotation matrix.
+     * @param pitchX The pitch.
+     * @param yawY   The yaw.
+     * @param rollZ  The roll.
+     */
+    public void updateMatrix(float pitchX, float yawY, float rollZ) {
+        //TODO
+    }
+
+    /**
      * Gets the pitch (x Angle) from this matrix.
      * @return pitch
      */

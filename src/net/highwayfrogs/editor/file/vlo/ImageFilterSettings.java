@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file.vlo;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.BlackFilter;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.TransparencyFilter;
 
 import java.awt.image.BufferedImage;
@@ -102,9 +101,8 @@ public class ImageFilterSettings {
             image = ImageWorkHorse.flipVertically(image);
 
         boolean transparencyGoal = isAllowTransparency() && gameImage.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT);
-        boolean transparencyState = gameImage.getParent().isPsxMode();
-        if (transparencyGoal != transparencyState)
-            image = ImageWorkHorse.applyFilter(image, transparencyState ? new BlackFilter() : new TransparencyFilter());
+        if (transparencyGoal)
+            image = ImageWorkHorse.applyFilter(image, new TransparencyFilter());
 
         this.renderCache.put(firstImage, image);
         return image;
