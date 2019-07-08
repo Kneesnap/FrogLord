@@ -3,13 +3,13 @@ package net.highwayfrogs.editor.file.map.form;
 import javafx.scene.control.CheckBox;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.grid.GridSquareFlag;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,8 +83,8 @@ public class FormData extends GameObject {
         Map<GridSquareFlag, CheckBox> flagToggles = new HashMap<>();
 
         editor.addSelectionBox("Tile (Top Left)", selectedIndex.get(), flagIndexList, newIndex -> {
-            int x = (newIndex % form.getZGridSquareCount());
-            int z = (newIndex / form.getZGridSquareCount());
+            int x = (newIndex / form.getZGridSquareCount());
+            int z = (newIndex % form.getZGridSquareCount());
             newIndex = (x * form.getZGridSquareCount()) + z;
 
             selectedIndex.set(newIndex);
@@ -93,8 +93,8 @@ public class FormData extends GameObject {
                 entry.getValue().setSelected((this.gridFlags[newIndex] & entry.getKey().getFlag()) == entry.getKey().getFlag());
             changingState.set(false);
         }).setConverter(new AbstractStringConverter<>(index -> {
-            int x = (index % form.getZGridSquareCount());
-            int z = (index / form.getZGridSquareCount());
+            int x = (index / form.getZGridSquareCount());
+            int z = (index % form.getZGridSquareCount());
             return "Tile " + index + " (X: " + x + ", Z: " + z + ")";
         }));
 
