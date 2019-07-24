@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.file.packers;
 
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.writer.BitWriter;
 import net.highwayfrogs.editor.system.ByteArrayWrapper;
 import net.highwayfrogs.editor.system.IntList;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.nio.ByteBuffer;
 
@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
-    private static final byte[] COMPRESSION_SETTINGS = {0x07, 0x07, 0x07, 0x07}; // PP20 compression settings. Extreme: 0x09, 0x0A, 0x0C, 0x0D
+    private static final byte[] COMPRESSION_SETTINGS = {0x09, 0x0A, 0x0C, 0x0D}; // PP20 compression settings. Extreme: 0x09, 0x0A, 0x0C, 0x0D
     private static final int MAX_COMPRESSION_INDEX = COMPRESSION_SETTINGS.length - 1;
     private static int[] COMPRESSION_SETTING_MAX_OFFSETS;
     public static final int OPTIONAL_BITS_SMALL_OFFSET = 7;
@@ -60,6 +60,7 @@ public class PP20Packer {
 
         INT_BUFFER.clear();
         System.arraycopy(INT_BUFFER.putInt(data.length).array(), 1, compressedData, compressedData.length - 4, Constants.INTEGER_SIZE - 1);
+        compressedData[compressedData.length - 1] = 0x1F; // Bits to skip.
         Utils.reverseByteArray(data); // Makes sure the input array's contents have no net change when this method finishes.
         return compressedData;
     }
@@ -74,14 +75,10 @@ public class PP20Packer {
             return -1;
 
         int bestIndex = -1;
-        int minIndex = 0;
-
         for (int resultId = possibleResults.size() - 1; resultId >= 0; resultId--) {
             int testIndex = possibleResults.get(resultId);
             int targetSize = target.size();
-
-            if (COMPRESSION_SETTING_MAX_OFFSETS.length > targetSize) // We'd rather cache this variable, as it's rather expensive to calculate.
-                minIndex = Math.max(0, bufferEnd - COMPRESSION_SETTING_MAX_OFFSETS[targetSize]);
+            int minIndex = Math.max(0, bufferEnd - COMPRESSION_SETTING_MAX_OFFSETS[Math.min(COMPRESSION_SETTING_MAX_OFFSETS.length - 1, targetSize - 1)]);
 
             if (minIndex > testIndex)
                 break; // We've gone too far.
@@ -126,6 +123,7 @@ public class PP20Packer {
                 list.clear();
 
         BitWriter writer = new BitWriter();
+        writer.writeFalseBits(0x1F); // Add 0x1F bits of padding. TODO: This is just for testing atm.
         writer.setReverseBytes(true);
 
         noMatchQueue.clearExpand(data.length);
