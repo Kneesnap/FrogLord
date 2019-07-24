@@ -21,3 +21,10 @@ Eventually:
  - MWD patch format. (Similar to xdelta or ips)
  - VAB File (Separate from VB VH) https://www.zophar.net/fileuploads/2/10730sbtsy/psfrip.txt
  - Separate FrogLord into a general purpose file format tool, which uses the FrogLord plugin (which supports Frogger games) to support the file formats. This will require generalizing things, and considering how to make a UI system which will work for different types of file systems, including single archive with all files, nested archives, single binary file with all data in it, etc.
+
+ Issues:
+  - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.
+  - PP20 compressor is not very efficient. Could we make an algorithm that is as good as the original one?
+  - Entities don't always face the correct direction on a path.
+  - Entities need some kind of height offset in the map viewer.
+  - PSX Sound (VAB) files are not supported. This might be OK, PSound can extract them, and we could probably find a tool that converts a wav into a similar format. The format is unfortunately rather complex. Given the focus of modding is the PC version, this solution is good enough.
