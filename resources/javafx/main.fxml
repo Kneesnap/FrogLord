@@ -19,13 +19,13 @@
                                                     shortcut="UP"/>
                             </accelerator>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#actionImportFile" text="Import File">
+                        <MenuItem mnemonicParsing="false" onAction="#actionImportFile" text="Import Frogger File">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="I" control="DOWN" meta="UP" shift="UP"
                                                     shortcut="UP"/>
                             </accelerator>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#actionOutputFile" text="Output Frogger File">
+                        <MenuItem mnemonicParsing="false" onAction="#actionExportFile" text="Export Frogger File">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="O" control="DOWN" meta="UP" shift="UP"
                                                     shortcut="UP"/>

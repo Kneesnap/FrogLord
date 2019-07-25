@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<AnchorPane fx:id="rootPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
+            minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0"
+            AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
+            xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <VBox layoutX="14.0" layoutY="10.0" prefHeight="115.0" prefWidth="600.0" AnchorPane.leftAnchor="14.0"
+              AnchorPane.topAnchor="10.0">
+            <children>
+                <Label prefHeight="30.0" prefWidth="236.0" text="Playstation Audio File" AnchorPane.bottomAnchor="0.0"
+                       AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <font>
+                        <Font name="System Bold" size="14.0"/>
+                    </font>
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@/icons/sound.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Label>
+                <Label text="Unfortunately, Playstation sounds are complicated, and are not supported by FrogLord."/>
+                <Label text="Export this file and use a program called 'PSound' to get the sounds from the data."/>
+            </children>
+        </VBox>
+        <Button onAction="#actionExport" layoutX="14.0" layoutY="266.0" mnemonicParsing="false" text="Export File"
+                AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0"/>
+        <Button onAction="#actionImport" layoutX="86.0" layoutY="266.0" mnemonicParsing="false" text="Import File"
+                AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="90.0"/>
+    </children>
+</AnchorPane>

@@ -11,20 +11,16 @@ User interface improvements, including:
  - Grid editor should allow selecting multiple squares (maybe hold control to select more than 1?), and allow mass grid flag editing.
  - Make editors easier to use.
 
-Improve VLO VRAM editor, add PSX support. [Click on an image -> next place you click it will clamp to the earliest available spot, and calculate T Page] Or, maybe just put it where they clicked under some scenarios. For instance, making a new t-page would be annoying if it clamped to the last one. Would be nice if we could find some pattern to making good
 Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, 1.8.0_172, and 1.8.0_181, but not 1.8.0_161, or 1.8.0_201? The broken ones appear to use less RAM, and have spikes when viewing the map.
 Eventually have some method which can allocate space into an executable at a given space so we could for instance add a new level into the level selector. This would need to modify pointers.
 
 Eventually:
  - Stop hardcoding things we can avoid, from file names to ids. For instance, replace the automatic ISLAND.MAP remap with an option that lets you select a remap to apply. Could be supplied, could be user-made. Would also allow things like exporting the remap from the demo, and applying the remap to the PC release.
  - On major release, profile loading files, saving files, using map editors. There are occasional viewer spikes after adding 3d models to the view, and in the MOF view, when looking at animations, every so often one frame will be extra long due to a GC.
- - MWD patch format. (Similar to xdelta or ips)
- - VAB File (Separate from VB VH) https://www.zophar.net/fileuploads/2/10730sbtsy/psfrip.txt
- - Separate FrogLord into a general purpose file format tool, which uses the FrogLord plugin (which supports Frogger games) to support the file formats. This will require generalizing things, and considering how to make a UI system which will work for different types of file systems, including single archive with all files, nested archives, single binary file with all data in it, etc.
 
  Issues:
   - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.
   - PP20 compressor is not very efficient. Could we make an algorithm that is as good as the original one?
   - Entities don't always face the correct direction on a path.
   - Entities need some kind of height offset in the map viewer.
-  - PSX Sound (VAB) files are not supported. This might be OK, PSound can extract them, and we could probably find a tool that converts a wav into a similar format. The format is unfortunately rather complex. Given the focus of modding is the PC version, this solution is good enough.
+  - PSX VLO Save support.

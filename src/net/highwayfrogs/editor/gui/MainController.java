@@ -144,7 +144,7 @@ public class MainController implements Initializable {
     }
 
     @FXML
-    private void actionOutputFile(ActionEvent evt) {
+    private void actionExportFile(ActionEvent evt) {
         exportFile();
     }
 

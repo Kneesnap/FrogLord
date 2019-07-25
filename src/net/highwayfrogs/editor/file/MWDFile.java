@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.file.packers.PP20Unpacker;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.AbstractVBFile;
+import net.highwayfrogs.editor.file.sound.PSXSoundDummy;
 import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.sound.prototype.PrototypeVBFile;
 import net.highwayfrogs.editor.file.sound.retail.RetailPCVBFile;
@@ -138,8 +139,10 @@ public class MWDFile extends GameObject {
             file = new DemoFile();
         } else if (entry.getTypeId() == PALFile.TYPE_ID) {
             file = new PALFile();
-        } else if (entry.getTypeId() == VHFile.TYPE_ID && !getConfig().isPSX()) { // PSX support is disabled until it is complete.
-            if (lastVB != null) {
+        } else if (entry.getTypeId() == VHFile.TYPE_ID) { // PSX support is disabled until it is complete.
+            if (getConfig().isPSX()) {
+                file = new PSXSoundDummy(fileBytes.length);
+            } else if (lastVB != null) {
                 VHFile vhFile = new VHFile();
                 vhFile.setVB(lastVB);
                 file = vhFile;
