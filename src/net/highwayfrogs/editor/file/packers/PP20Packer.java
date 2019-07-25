@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
-    private static final byte[] COMPRESSION_SETTINGS = {0x09, 0x0A, 0x0C, 0x0D}; // PP20 compression settings. Extreme: 0x09, 0x0A, 0x0C, 0x0D
+    private static final byte[] COMPRESSION_SETTINGS = {0x07, 0x07, 0x07, 0x07}; // PP20 compression settings. Extreme: 0x09, 0x0A, 0x0C, 0x0D
     private static final int MAX_COMPRESSION_INDEX = COMPRESSION_SETTINGS.length - 1;
     private static int[] COMPRESSION_SETTING_MAX_OFFSETS;
     public static final int OPTIONAL_BITS_SMALL_OFFSET = 7;
@@ -60,7 +60,6 @@ public class PP20Packer {
 
         INT_BUFFER.clear();
         System.arraycopy(INT_BUFFER.putInt(data.length).array(), 1, compressedData, compressedData.length - 4, Constants.INTEGER_SIZE - 1);
-        compressedData[compressedData.length - 1] = 0x1F; // Bits to skip.
         Utils.reverseByteArray(data); // Makes sure the input array's contents have no net change when this method finishes.
         return compressedData;
     }
@@ -123,7 +122,6 @@ public class PP20Packer {
                 list.clear();
 
         BitWriter writer = new BitWriter();
-        writer.writeFalseBits(0x1F); // Add 0x1F bits of padding. TODO: This is just for testing atm.
         writer.setReverseBytes(true);
 
         noMatchQueue.clearExpand(data.length);
