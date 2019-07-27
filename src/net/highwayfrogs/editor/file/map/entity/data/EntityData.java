@@ -1,9 +1,12 @@
 package net.highwayfrogs.editor.file.map.entity.data;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
+import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFly;
 import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFrogLight;
 import net.highwayfrogs.editor.file.map.entity.data.cave.EntityRaceSnail;
@@ -37,7 +40,9 @@ import java.util.Map;
  * Represents game-data.
  * Created by Kneesnap on 1/20/2019.
  */
+@Getter
 public abstract class EntityData extends GameObject {
+    @Setter private Entity parentEntity;
     private static final Map<String, Tuple2<Class<? extends EntityData>, Constructor<? extends EntityData>>> CACHE_MAP = new HashMap<>();
     private static final List<Class<? extends EntityData>> REGISTERED_ENTITY_TYPES = Arrays.asList(EntityRopeBridge.class,
             BreakingBranchEntity.class, EntityBabyFrog.class, EntityCrusher.class, EntityFallingRock.class, BeeHiveEntity.class,
@@ -70,7 +75,7 @@ public abstract class EntityData extends GameObject {
      * @return entityData
      */
     @SneakyThrows
-    public static EntityData makeData(FroggerEXEInfo config, FormEntry form) {
+    public static EntityData makeData(FroggerEXEInfo config, FormEntry form, Entity entityOwner) {
         if (form == null)
             return null;
 
@@ -80,7 +85,9 @@ public abstract class EntityData extends GameObject {
 
         if (!CACHE_MAP.containsKey(dataClassName))
             throw new RuntimeException("Failed to find entity class for the type: " + form.getEntityName() + ", " + dataClassName);
-        return CACHE_MAP.get(dataClassName).getB().newInstance();
+        EntityData newData = CACHE_MAP.get(dataClassName).getB().newInstance();
+        newData.setParentEntity(entityOwner);
+        return newData;
     }
 
     /**

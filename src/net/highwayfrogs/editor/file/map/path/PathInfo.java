@@ -17,7 +17,7 @@ public class PathInfo extends GameObject {
     private int pathId;
     private int segmentId;
     private int segmentDistance;
-    private int motionType = MOTION_TYPE_REPEAT;
+    private boolean repeat;
     private int speed;
 
     public static final int MOTION_TYPE_REPEAT = Constants.BIT_FLAG_3;
@@ -27,7 +27,12 @@ public class PathInfo extends GameObject {
         this.pathId = reader.readUnsignedShortAsInt();
         this.segmentId = reader.readUnsignedShortAsInt();
         this.segmentDistance = reader.readUnsignedShortAsInt();
-        this.motionType = reader.readUnsignedShortAsInt();
+
+        int motionType = reader.readUnsignedShortAsInt();
+        if (motionType != MOTION_TYPE_REPEAT && motionType != 0)
+            throw new RuntimeException("PathInfo had MotionType: " + motionType + ", which was not understood.");
+        this.repeat = (motionType == MOTION_TYPE_REPEAT);
+
         this.speed = reader.readUnsignedShortAsInt();
         reader.skipShort(); // Padding.
     }
@@ -37,7 +42,7 @@ public class PathInfo extends GameObject {
         writer.writeUnsignedShort(this.pathId);
         writer.writeUnsignedShort(this.segmentId);
         writer.writeUnsignedShort(this.segmentDistance);
-        writer.writeUnsignedShort(this.motionType);
+        writer.writeUnsignedShort(this.repeat ? MOTION_TYPE_REPEAT : 0);
         writer.writeUnsignedShort(this.speed);
         writer.writeUnsignedShort(0);
     }

@@ -31,7 +31,8 @@ public class PathData extends EntityData {
         editor.addIntegerField("Path ID", getPathInfo().getPathId(), getPathInfo()::setPathId, null);
         editor.addIntegerField("Segment", getPathInfo().getSegmentId(), getPathInfo()::setSegmentId, null);
         editor.addIntegerField("Speed", getPathInfo().getSpeed(), getPathInfo()::setSpeed, null);
-        editor.addIntegerField("Segment Distance", getPathInfo().getSegmentDistance(), getPathInfo()::setSegmentDistance, null);
-        editor.addIntegerField("Motion Type", getPathInfo().getMotionType(), getPathInfo()::setMotionType, null);
+        editor.addIntegerSlider("Distance", getPathInfo().getSegmentDistance(), getPathInfo()::setSegmentDistance, 0,
+                getParentEntity().getMap().getPaths().get(getPathInfo().getPathId()).getSegments().get(getPathInfo().getSegmentId()).getLength());
+        editor.addCheckBox("Repeat", getPathInfo().isRepeat(), getPathInfo()::setRepeat);
     }
 }

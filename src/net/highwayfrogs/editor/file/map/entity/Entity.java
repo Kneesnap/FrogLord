@@ -70,7 +70,7 @@ public class Entity extends GameObject {
 
         this.loadScriptDataPointer = reader.getIndex();
 
-        this.entityData = EntityData.makeData(getConfig(), getFormEntry());
+        this.entityData = EntityData.makeData(getConfig(), getFormEntry(), this);
         if (this.entityData != null)
             this.entityData.load(reader);
 
@@ -189,7 +189,7 @@ public class Entity extends GameObject {
         if (this.formEntry == null || !Objects.equals(newEntityDataClass, oldEntityDataClass)) {
             PSXMatrix oldMatrix = getMatrixInfo(); // Call before setting entityData to null.
             PathInfo oldPath = getPathInfo();
-            this.entityData = EntityData.makeData(getConfig(), newEntry);
+            this.entityData = EntityData.makeData(getConfig(), newEntry, this);
 
             if (this.entityData instanceof MatrixData && oldMatrix != null)
                 ((MatrixData) this.entityData).setMatrix(oldMatrix);

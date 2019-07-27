@@ -56,8 +56,8 @@ public class GUIEditorGrid {
 
     /**
      * Add a label.
-     * @param label     The label to add.
-     * @param height    The desired row height.
+     * @param label  The label to add.
+     * @param height The desired row height.
      */
     public void addBoldLabel(String label, double height) {
         Label labelText = setupSecondNode(new Label(label), true);
@@ -75,8 +75,8 @@ public class GUIEditorGrid {
 
     /**
      * Adds a label
-     * @param text      The text to add.
-     * @param height    The desired row height.
+     * @param text   The text to add.
+     * @param height The desired row height.
      */
     public Label addNormalLabel(String text, double height) {
         Label label = setupSecondNode(new Label(text), true);
@@ -86,8 +86,8 @@ public class GUIEditorGrid {
 
     /**
      * Add a label.
-     * @param boldLabel     The bold label to add.
-     * @param normalLabel   The normal label to add.
+     * @param boldLabel   The bold label to add.
+     * @param normalLabel The normal label to add.
      */
     public void addBoldNormalLabel(String boldLabel, String normalLabel) {
         addBoldNormalLabel(boldLabel, normalLabel, 20);
@@ -95,9 +95,9 @@ public class GUIEditorGrid {
 
     /**
      * Add a label.
-     * @param boldLabel     The bold label to add.
-     * @param normalLabel   The normal label to add.
-     * @param height    The desired row height.
+     * @param boldLabel   The bold label to add.
+     * @param normalLabel The normal label to add.
+     * @param height      The desired row height.
      */
     public void addBoldNormalLabel(String boldLabel, String normalLabel, double height) {
         Label bold = addLabel(boldLabel);
@@ -121,9 +121,9 @@ public class GUIEditorGrid {
 
     /**
      * Add a label.
-     * @param label     The label to add.
-     * @param value     The value of the label.
-     * @param height    The desired row height.
+     * @param label  The label to add.
+     * @param value  The value of the label.
+     * @param height The desired row height.
      */
     public Label addLabel(String label, String value, double height) {
         addLabel(label);
@@ -395,9 +395,9 @@ public class GUIEditorGrid {
 
     /**
      * Add a label and button.
-     * @param labelText     The text on the label.
-     * @param buttonText    The text on the button.
-     * @param onPress What to do when the button is pressed.
+     * @param labelText  The text on the label.
+     * @param buttonText The text on the button.
+     * @param onPress    What to do when the button is pressed.
      */
     public Button addLabelButton(String labelText, String buttonText, double height, Runnable onPress) {
         addLabel(labelText);
@@ -409,9 +409,9 @@ public class GUIEditorGrid {
 
     /**
      * Add a bold label and button.
-     * @param labelText     The text on the label.
-     * @param buttonText    The text on the button.
-     * @param onPress What to do when the button is pressed.
+     * @param labelText  The text on the label.
+     * @param buttonText The text on the button.
+     * @param onPress    What to do when the button is pressed.
      */
     public Button addBoldLabelButton(String labelText, String buttonText, double height, Runnable onPress) {
         Label bold = addLabel(labelText);
@@ -542,5 +542,33 @@ public class GUIEditorGrid {
      */
     protected void onChange() {
 
+    }
+
+
+    /**
+     * Add a slider to set the value.
+     * @param sliderName   The name of the slider.
+     * @param currentValue The current slider value.
+     * @param setter       What to do with the slider value on update.
+     * @param minValue     The minimum slider value.
+     * @param maxValue     The maximum slider value.
+     * @return slider
+     */
+    public Slider addIntegerSlider(String sliderName, int currentValue, Consumer<Integer> setter, int minValue, int maxValue) {
+        addLabel(sliderName);
+        Slider slider = setupSecondNode(new Slider(minValue, maxValue, currentValue), false);
+        slider.setDisable(setter == null);
+        slider.valueProperty().addListener(((observable, oldValue, newValue) -> {
+            if (setter != null)
+                setter.accept(newValue.intValue());
+            onChange();
+        }));
+        slider.setMajorTickUnit(maxValue / 4);
+        slider.setShowTickLabels(true);
+        slider.setShowTickMarks(true);
+        slider.setMinorTickCount(0);
+        slider.setBlockIncrement(1);
+        addRow(40);
+        return slider;
     }
 }
