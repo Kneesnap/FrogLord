@@ -7,7 +7,6 @@ GUI Editor:
  - Finish Map Editor
 
 User interface improvements, including:
- - Telling someone if they are trying to save in a folder we don't have permission to save to.
  - Grid editor should allow selecting multiple squares (maybe hold control to select more than 1?), and allow mass grid flag editing.
  - Make editors easier to use.
 
