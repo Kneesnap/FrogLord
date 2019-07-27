@@ -4,10 +4,12 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
+import net.highwayfrogs.editor.file.map.path.PathInfo.PathMotionType;
 import net.highwayfrogs.editor.file.map.path.PathSegment;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Base entity data which holds path data.
@@ -37,7 +39,6 @@ public class PathData extends EntityData {
         }, null);
 
         editor.addIntegerField("Speed", getPathInfo().getSpeed(), getPathInfo()::setSpeed, null);
-        editor.addCheckBox("Repeat", getPathInfo().isRepeat(), getPathInfo()::setRepeat);
 
         Path path = getParentEntity().getMap().getPaths().get(getPathInfo().getPathId());
         int startValue = getPathInfo().getSegmentDistance();
@@ -56,5 +57,9 @@ public class PathData extends EntityData {
                 }
             }
         }, 0, path.getTotalLength());
+
+        // Motion Data:
+        for (PathMotionType type : PathMotionType.values())
+            editor.addCheckBox(Utils.capitalize(type.name()), getPathInfo().testFlag(type), newState -> getPathInfo().setFlag(type, newState));
     }
 }
