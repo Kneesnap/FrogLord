@@ -3,22 +3,26 @@ Editor Features:
 MOF File:
  Import mofs from mm3d.
 
-GUI Editor:
- - Finish Map Editor
-
-User interface improvements, including:
- - Grid editor should allow selecting multiple squares (maybe hold control to select more than 1?), and allow mass grid flag editing.
- - Make editors easier to use.
-
 Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, 1.8.0_172, and 1.8.0_181, but not 1.8.0_161, or 1.8.0_201? The broken ones appear to use less RAM, and have spikes when viewing the map.
+See if anything can be done about using the swamp VLO as a texture for 3D things. It seems some laptop computers do not like this and display everything as black with a message in the console.
 Eventually have some method which can allocate space into an executable at a given space so we could for instance add a new level into the level selector. This would need to modify pointers.
 
 Eventually:
  - Stop hardcoding things we can avoid, from file names to ids. For instance, replace the automatic ISLAND.MAP remap with an option that lets you select a remap to apply. Could be supplied, could be user-made. Would also allow things like exporting the remap from the demo, and applying the remap to the PC release.
  - On major release, profile loading files, saving files, using map editors. There are occasional viewer spikes after adding 3d models to the view, and in the MOF view, when looking at animations, every so often one frame will be extra long due to a GC.
 
- Issues:
-  - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.
-  - PP20 compressor is not very efficient. Could we make an algorithm that is as good as the original one?
-  - Entities need some kind of height offset in the map viewer.
-  - PSX VLO Save support.
+Issues:
+ - PP20 compressor is not very efficient. Could we make an algorithm that is as good as the original one? Disassemble the original packer.
+ - Entities need some kind of height offset in the map viewer. Figure out how the game figures out this height thing.
+ - Full PSX VLO Support. (Missing support certain types of images, stuff like gold frog textures are wonky, and bugs should have textures in the viewer)
+ - Support entity data fully on things like PS1 demo, prototype, etc.
+ - Alt tabbing can break the keypress handler in editors, for instance it can keep moving if you were holding W, or it always applies the alt speed boost.
+
+UI Plans:
+ - In general make editors easier to use. Go through all the parts of each UI to find places for improvement.
+ - Test hilite viewer?
+ - WAD Entry list should have information displayed about the entry you have selected to the right. We should bring allow editing the VLO by pressing "Edit".
+ - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.
+ - The grid viewer should support selecting multiple tiles and allow mass grid flag editing. It should also be able to fit on smaller screens.
+ - Finish map editor. (Add ability to add polygons, polish UI.)
+ - Map interface screen has extra information it doesn't really need. What if we replaced this with buttons that did stuff, like maybe allow editing remap, or fixing ISLAND.MAP.
