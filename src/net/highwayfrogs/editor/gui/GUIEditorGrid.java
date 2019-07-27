@@ -189,6 +189,28 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Add a double field.
+     * @param label  The name.
+     * @param number The initial number.
+     * @return textField
+     */
+    public TextField addDoubleField(String label, double number, Consumer<Double> setter, Function<Double, Boolean> test) {
+        TextField field = addTextField(label, String.valueOf(number), str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            double doubleValue = Double.parseDouble(str);
+            boolean testPass = test == null || test.apply(doubleValue);
+            if (testPass)
+                setter.accept(doubleValue);
+
+            return testPass;
+        });
+        field.setDisable(setter == null);
+        return field;
+    }
+
+    /**
      * Add a short field.
      * @param label  The name.
      * @param number The initial number.
@@ -437,9 +459,10 @@ public class GUIEditorGrid {
 
         // Transform information is in fixed point format, hence conversion to float representation.
         addNormalLabel("Rotation:");
-        addFloatField("Pitch (xAngle)", matrix.getPitchXAngle()); //TODO: Allow setting.
-        addFloatField("Yaw (yAngle)", matrix.getYawYAngle());
-        addFloatField("Roll (zAngle)", matrix.getRollZAngle());
+        //TODO: Sliders here would make more sense, between -pi and pi.
+        addDoubleField("Yaw", (float) matrix.getYawAngle(), yaw -> matrix.updateMatrix(yaw, matrix.getPitchAngle(), matrix.getRollAngle()), null);
+        addDoubleField("Pitch", (float) matrix.getPitchAngle(), pitch -> matrix.updateMatrix(matrix.getYawAngle(), pitch, matrix.getRollAngle()), null);
+        addDoubleField("Roll", (float) matrix.getRollAngle(), roll -> matrix.updateMatrix(matrix.getYawAngle(), matrix.getPitchAngle(), roll), null);
     }
 
     public HBox addVector3D(float[] vec3D, double height, BiConsumer<Integer, Float> handler) {

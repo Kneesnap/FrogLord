@@ -21,6 +21,5 @@ Eventually:
  Issues:
   - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.
   - PP20 compressor is not very efficient. Could we make an algorithm that is as good as the original one?
-  - Entities don't always face the correct direction on a path.
   - Entities need some kind of height offset in the map viewer.
   - PSX VLO Save support.

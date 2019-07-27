@@ -65,34 +65,75 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
-     * Gets the pitch (x Angle) from this matrix.
-     * @return pitch
-     */
-    public float getPitchXAngle() {
-        float r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
-        float r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
-        return (float) Math.atan2(r32, r33);
-    }
-
-    /**
-     * Gets the yaw (y Angle) from this matrix.
+     * Gets the yaw from this matrix.
      * @return yaw
      */
-    public float getYawYAngle() {
+    public double getYawAngle() {
         float r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
-        float r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
-        float r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
-        return (float) Math.atan2(-r31, Math.sqrt((r32 * r32) + (r33 * r33)));
+
+        if (r31 == 1 || r31 == -1) { // Gymbal lock at pitch = -90 or 90
+            return 0F;
+        } else {
+            float r11 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
+            float r21 = Utils.fixedPointShortToFloat12Bit(getMatrix()[1][0]);
+            return Math.atan2(r21, r11);
+        }
     }
 
     /**
-     * Gets the roll (z Angle) from this matrix.
+     * Gets the pitch from this matrix.
+     * @return pitch
+     */
+    public double getPitchAngle() {
+        float r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
+        return -Math.asin(r31);
+    }
+
+    /**
+     * Gets the roll from this matrix.
      * @return roll
      */
-    public float getRollZAngle() {
-        float r11 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
-        float r21 = Utils.fixedPointShortToFloat12Bit(getMatrix()[1][0]);
-        return (float) Math.atan2(r21, r11);
+    public double getRollAngle() {
+        float r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
+
+        float r12 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][1]);
+        float r13 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][2]);
+        if (r31 == 1) { // Gymbal lock at pitch = -90
+            return Math.atan2(-r12, -r13);
+        } else if (r31 == -1) { // Lock at pitch = 90
+            return Math.atan2(r12, r13);
+        } else {
+            float r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
+            float r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
+            return Math.atan2(r32, r33);
+        }
+    }
+
+    /**
+     * Update the matrix.
+     * Useful: http://danceswithcode.net/engineeringnotes/rotations_in_3d/rotations_in_3d_part2.html
+     * @param yaw   The new pitch.
+     * @param pitch The new yaw.
+     * @param roll  The new roll.
+     */
+    public void updateMatrix(double yaw, double pitch, double roll) {
+        double su = Math.sin(roll);
+        double cu = Math.cos(roll);
+        double sv = Math.sin(pitch);
+        double cv = Math.cos(pitch);
+        double sw = Math.sin(yaw);
+        double cw = Math.cos(yaw);
+
+        // Update rotation matrix.
+        this.matrix[0][0] = Utils.floatToFixedPointShort12Bit((float) (cv * cw)); // r11
+        this.matrix[0][1] = Utils.floatToFixedPointShort12Bit((float) (su * sv * cw - cu * sw)); // r12
+        this.matrix[0][2] = Utils.floatToFixedPointShort12Bit((float) (su * sw + cu * sv * cw)); // r13
+        this.matrix[1][0] = Utils.floatToFixedPointShort12Bit((float) (cv * sw)); // r21
+        this.matrix[1][1] = Utils.floatToFixedPointShort12Bit((float) (cu * cw + su * sv * sw)); // r22
+        this.matrix[1][2] = Utils.floatToFixedPointShort12Bit((float) (cu * sv * sw - su * cw)); // r23
+        this.matrix[2][0] = Utils.floatToFixedPointShort12Bit((float) -sv); // r31
+        this.matrix[2][1] = Utils.floatToFixedPointShort12Bit((float) (su * cv)); // r32
+        this.matrix[2][2] = Utils.floatToFixedPointShort12Bit((float) (cu * cv)); // r33
     }
 
     /**
@@ -211,19 +252,5 @@ public class PSXMatrix extends GameObject {
         output.setY((((matrix.matrix[1][0] * vector.getX()) + (matrix.matrix[1][1] * vector.getY()) + (matrix.matrix[1][2] * vector.getZ())) >> 12) + matrix.transform[1]);
         output.setZ((((matrix.matrix[2][0] * vector.getX()) + (matrix.matrix[2][1] * vector.getY()) + (matrix.matrix[2][2] * vector.getZ())) >> 12) + matrix.transform[2]);
         return output;
-    }
-
-    /**
-     * Equivalent to ApplyMatrix. matrix.svec = vec (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0392.html?sidebar=outlines)
-     * @param matrix The matrix to multiply.
-     * @param vector The short vector to multiply the matrix by.
-     * @param output The output to write to.
-     */
-    public static void MRApplyMatrix(PSXMatrix matrix, SVector vector, int[] output) {
-        IVector outputVector = new IVector();
-        MRApplyMatrix(matrix, vector, outputVector);
-        output[0] = outputVector.getX();
-        output[1] = outputVector.getY();
-        output[2] = outputVector.getZ();
     }
 }

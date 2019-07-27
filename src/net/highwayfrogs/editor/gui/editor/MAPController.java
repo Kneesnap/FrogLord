@@ -336,7 +336,7 @@ public class MAPController extends EditorController<MAPFile> {
         }
     }
 
-    private MeshView makeEntityIcon(Entity entity, float x, float y, float z, float xAngle, float yAngle, float zAngle) {
+    private MeshView makeEntityIcon(Entity entity, float x, float y, float z, float yaw, float pitch, float roll) {
         float entityIconSize = MapUIController.getPropertyEntityIconSize().getValue();
 
         FormEntry form = entity.getFormEntry();
@@ -363,9 +363,9 @@ public class MAPController extends EditorController<MAPFile> {
                     holder.setVloFile(themeBook.getVLO(getFile()));
                     MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
                     view.setMaterial(holder.getTextureMap().getDiffuseMaterial());
-                    view.getTransforms().add(new Rotate(Math.toDegrees(xAngle), Rotate.X_AXIS));
-                    view.getTransforms().add(new Rotate(Math.toDegrees(yAngle), Rotate.Y_AXIS));
-                    view.getTransforms().add(new Rotate(Math.toDegrees(zAngle), Rotate.Z_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.X_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.Y_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.Z_AXIS));
                     return view;
                 }
             }
