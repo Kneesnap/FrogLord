@@ -277,7 +277,7 @@ public class MWDFile extends GameObject {
             if (fileClass.isInstance(file))
                 results.add(fileClass.cast(file));
 
-            if (fileClass.isInstance(WADFile.class)) {
+            if (file instanceof WADFile) {
                 WADFile wadFile = (WADFile) file;
                 for (WADEntry entry : wadFile.getFiles()) {
                     GameFile testFile = entry.getFile();
