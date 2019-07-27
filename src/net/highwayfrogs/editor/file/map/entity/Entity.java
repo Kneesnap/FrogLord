@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -42,14 +43,6 @@ public class Entity extends GameObject {
 
     private static final int RUNTIME_POINTERS = 4;
     private static final IVector GAME_Y_AXIS_POS = new IVector(0, 0x1000, 0);
-
-    public static final int FLAG_HIDDEN = Constants.BIT_FLAG_0; // Don't create a live entity while this is set.
-    public static final int FLAG_NO_DISPLAY = Constants.BIT_FLAG_1; // Don't display any mesh.
-    public static final int FLAG_NO_MOVEMENT = Constants.BIT_FLAG_2; // Don't allow entity movement.
-    public static final int FLAG_NO_COLLISION = Constants.BIT_FLAG_3; // Collision does not apply to this entity.
-    public static final int FLAG_ALIGN_TO_WORLD = Constants.BIT_FLAG_4; // Entity matrix always aligned to world axes.
-    public static final int FLAG_PROJECT_ON_LAND = Constants.BIT_FLAG_5; // Entity position is projected onto the landscape.
-    public static final int FLAG_LOCAL_ALIGN = Constants.BIT_FLAG_6; // Entity matrix is calculated locally (Using Y part of entity matrix.)
 
     public Entity(MAPFile parentMap) {
         this.map = parentMap;
@@ -99,8 +92,25 @@ public class Entity extends GameObject {
      * @param flag The flag to test.
      * @return hasFlag
      */
-    public boolean testFlag(int flag) {
-        return (this.flags & flag) == flag;
+    public boolean testFlag(EntityFlag flag) {
+        return (this.flags & flag.getFlag()) == flag.getFlag();
+    }
+
+    /**
+     * Set the flag state.
+     * @param flag     The flag type.
+     * @param newState The new state of the flag.
+     */
+    public void setFlag(EntityFlag flag, boolean newState) {
+        boolean oldState = testFlag(flag);
+        if (oldState == newState)
+            return; // Prevents the ^ operation from breaking the value.
+
+        if (newState) {
+            this.flags |= flag.getFlag();
+        } else {
+            this.flags ^= flag.getFlag();
+        }
     }
 
     /**
@@ -199,5 +209,19 @@ public class Entity extends GameObject {
         }
 
         this.formEntry = newEntry;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum EntityFlag {
+        HIDDEN(Constants.BIT_FLAG_0), // Don't create a live entity while this is set.
+        NO_DISPLAY(Constants.BIT_FLAG_1), // Don't display any mesh.
+        NO_MOVEMENT(Constants.BIT_FLAG_2), // Don't allow entity movement.
+        NO_COLLISION(Constants.BIT_FLAG_3), // Collision does not apply to this entity.
+        ALIGN_TO_WORLD(Constants.BIT_FLAG_4), // Entity matrix always aligned to world axes.
+        PROJECT_ON_LAND(Constants.BIT_FLAG_5), // Entity position is projected onto the landscape.
+        LOCAL_ALIGN(Constants.BIT_FLAG_6); // Entity matrix is calculated locally (Using Y part of entity matrix.)
+
+        private final int flag;
     }
 }

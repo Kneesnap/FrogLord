@@ -27,6 +27,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.entity.Entity.EntityFlag;
 import net.highwayfrogs.editor.file.map.form.Form;
 import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.map.light.Light;
@@ -374,7 +375,9 @@ public class MapUIController implements Initializable {
 
         entityEditor.addIntegerField("Entity ID", entity.getUniqueId(), entity::setUniqueId, null);
         entityEditor.addIntegerField("Form ID", entity.getFormGridId(), entity::setFormGridId, null);
-        entityEditor.addIntegerField("Flags", entity.getFlags(), entity::setFlags, null);
+        entityEditor.addBoldLabel("Flags:");
+        for (EntityFlag flag : EntityFlag.values())
+            entityEditor.addCheckBox(Utils.capitalize(flag.name()), entity.testFlag(flag), newState -> entity.setFlag(flag, newState));
 
         // Populate Entity Data.
         entityEditor.addBoldLabel("Entity Data:");
