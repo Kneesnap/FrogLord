@@ -362,7 +362,7 @@ public class MAPController extends EditorController<MAPFile> {
                     MOFHolder holder = (MOFHolder) wadEntry.getFile();
                     holder.setVloFile(themeBook.getVLO(getFile()));
                     MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
-                    view.setMaterial(holder.getTextureMap().getDiffuseMaterial());
+                    view.setMaterial(holder.getTextureMap().getPhongMaterial());
                     view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.X_AXIS));
                     view.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.Y_AXIS));
                     view.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.Z_AXIS));

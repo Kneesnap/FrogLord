@@ -203,7 +203,7 @@ public class TextureMap {
     }
 
     /**
-     * Gets the 3D PhongMaterial.
+     * Gets the 3D PhongMaterial. (Unaffected by lighting.)
      * @return phongMaterial
      */
     public PhongMaterial getPhongMaterial() {
