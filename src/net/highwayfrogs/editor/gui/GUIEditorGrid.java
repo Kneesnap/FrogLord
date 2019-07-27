@@ -11,6 +11,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.RowConstraints;
+import javafx.util.StringConverter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
@@ -32,6 +33,28 @@ import java.util.function.Function;
 public class GUIEditorGrid {
     private GridPane gridPane;
     private int rowIndex;
+
+    private static final StringConverter<Double> SLIDER_DEGREE_CONVERTER = new StringConverter<Double>() {
+        @Override
+        public String toString(Double num) {
+            double piHalf = Math.PI / 2;
+            double piQuarter = Math.PI / 4;
+            if (num < -piHalf - piQuarter)
+                return "-180";
+            if (num < -piQuarter)
+                return "-90";
+            if (num < piHalf)
+                return "0";
+            if (num < piQuarter + piHalf)
+                return "90";
+            return "180";
+        }
+
+        @Override
+        public Double fromString(String string) {
+            return Math.toRadians(Double.parseDouble(string) * 2);
+        }
+    };
 
     public GUIEditorGrid(GridPane pane) {
         this.gridPane = pane;
@@ -459,10 +482,14 @@ public class GUIEditorGrid {
 
         // Transform information is in fixed point format, hence conversion to float representation.
         addNormalLabel("Rotation:");
-        //TODO: Sliders here would make more sense, between -pi and pi.
-        addDoubleField("Yaw", (float) matrix.getYawAngle(), yaw -> matrix.updateMatrix(yaw, matrix.getPitchAngle(), matrix.getRollAngle()), null);
-        addDoubleField("Pitch", (float) matrix.getPitchAngle(), pitch -> matrix.updateMatrix(matrix.getYawAngle(), pitch, matrix.getRollAngle()), null);
-        addDoubleField("Roll", (float) matrix.getRollAngle(), roll -> matrix.updateMatrix(matrix.getYawAngle(), matrix.getPitchAngle(), roll), null);
+
+        Slider yawUI = addDoubleSlider("Yaw", matrix.getYawAngle(), yaw -> matrix.updateMatrix(yaw, matrix.getPitchAngle(), matrix.getRollAngle()), -Math.PI, Math.PI);
+        Slider pitchUI = addDoubleSlider("Pitch", matrix.getPitchAngle(), pitch -> matrix.updateMatrix(matrix.getYawAngle(), pitch, matrix.getRollAngle()), -Math.PI, Math.PI);
+        Slider rollUI = addDoubleSlider("Roll", matrix.getRollAngle(), roll -> matrix.updateMatrix(matrix.getYawAngle(), matrix.getPitchAngle(), roll), -Math.PI, Math.PI);
+
+        yawUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
+        pitchUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
+        rollUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
     }
 
     public HBox addVector3D(float[] vec3D, double height, BiConsumer<Integer, Float> handler) {
@@ -563,7 +590,34 @@ public class GUIEditorGrid {
                 setter.accept(newValue.intValue());
             onChange();
         }));
-        slider.setMajorTickUnit(maxValue / 4);
+        slider.setMajorTickUnit((maxValue - minValue) / 4);
+        slider.setShowTickLabels(true);
+        slider.setShowTickMarks(true);
+        slider.setMinorTickCount(0);
+        slider.setBlockIncrement(1);
+        addRow(40);
+        return slider;
+    }
+
+    /**
+     * Add a slider to set the value.
+     * @param sliderName   The name of the slider.
+     * @param currentValue The current slider value.
+     * @param setter       What to do with the slider value on update.
+     * @param minValue     The minimum slider value.
+     * @param maxValue     The maximum slider value.
+     * @return slider
+     */
+    public Slider addDoubleSlider(String sliderName, double currentValue, Consumer<Double> setter, double minValue, double maxValue) {
+        addLabel(sliderName);
+        Slider slider = setupSecondNode(new Slider(minValue, maxValue, currentValue), false);
+        slider.setDisable(setter == null);
+        slider.valueProperty().addListener(((observable, oldValue, newValue) -> {
+            if (setter != null)
+                setter.accept(newValue.doubleValue());
+            onChange();
+        }));
+        slider.setMajorTickUnit((maxValue - minValue) / 4);
         slider.setShowTickLabels(true);
         slider.setShowTickMarks(true);
         slider.setMinorTickCount(0);
