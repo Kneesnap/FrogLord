@@ -126,6 +126,17 @@ public class Path extends GameObject {
         return getSegments().get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
     }
 
+    /**
+     * Gets the length of all the segments combined.
+     * @return totalLength
+     */
+    public int getTotalLength() {
+        int totalLength = 0;
+        for (int i = 0; i < getSegments().size(); i++)
+            totalLength += getSegments().get(i).getLength();
+        return totalLength;
+    }
+
     private boolean shouldSave(List<Entity> pathEntities) {
         for (Entity testEntity : pathEntities)
             if ("ORG_BEAVER".equals(testEntity.getFormEntry().getFormName()))
