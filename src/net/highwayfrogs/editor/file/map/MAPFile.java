@@ -453,24 +453,6 @@ public class MAPFile extends GameFile {
     }
 
     @Override
-    public void onImport(GameFile oldFile, String oldFileName, String importedFileName) {
-        super.onImport(oldFile, oldFileName, importedFileName);
-        tryFixIsland(importedFileName);
-    }
-
-    /**
-     * This method fixes this MAP (If it is ISLAND.MAP) so it will load properly.
-     */
-    public void tryFixIsland(String newName) {
-        if (!Constants.DEV_ISLAND_NAME.equals(newName))
-            return;
-
-        System.out.println("Changing developer map remap.");
-        removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity.
-        getConfig().changeRemap(getFileEntry(), getConfig().isPC() ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
-    }
-
-    @Override
     public void save(DataWriter writer) {
         getSavePointerPolygonMap().clear();
         getSavePolygonPointerMap().clear();
@@ -1013,6 +995,14 @@ public class MAPFile extends GameFile {
      */
     public boolean isQB() {
         return getFileEntry().getDisplayName().startsWith(MAPLevel.QB.getInternalName());
+    }
+
+    /**
+     * This method fixes this MAP (If it is ISLAND.MAP) so it will load properly.
+     */
+    public void fixAsIslandMap() {
+        removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity.
+        getConfig().changeRemap(getFileEntry(), getConfig().isPC() ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
     }
 
     /**

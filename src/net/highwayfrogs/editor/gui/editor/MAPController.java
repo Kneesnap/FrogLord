@@ -4,12 +4,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
@@ -43,7 +39,6 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
-import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -57,10 +52,6 @@ import java.util.List;
  */
 @Getter
 public class MAPController extends EditorController<MAPFile> {
-    @FXML private TableView<NameValuePair> tableMAPFileData;
-    @FXML private TableColumn<Object, Object> tableColumnMAPFileDataName;
-    @FXML private TableColumn<Object, Object> tableColumnMAPFileDataValue;
-
     private Scene mapScene;
     private MapMesh mapMesh;
     private MAPPolygon selectedPolygon;
@@ -87,58 +78,15 @@ public class MAPController extends EditorController<MAPFile> {
 
     private static final String DISPLAY_LIST_PATHS = "displayListPaths";
 
-    @Override
-    public void onInit(AnchorPane editorRoot) {
-        super.onInit(editorRoot);
-        updateLabels();
-    }
-
-    private void updateLabels() {
-        MAPFile map = getFile();
-
-        // Setup and initialise the table view
-        tableMAPFileData.getItems().clear();
-        tableColumnMAPFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        tableColumnMAPFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-
-        // General properties
-        addTableEntry("MAP Theme: ", map.getTheme().toString());
-        addTableEntry("Start Position", "(" + map.getStartXTile() + ", " + map.getStartZTile() + ") Rotation: " + map.getStartRotation());
-        addTableEntry("Camera Source", "(" + map.getCameraSourceOffset().toFloatString() + ")");
-        addTableEntry("Camera Target", "(" + map.getCameraTargetOffset().toFloatString() + ")");
-        addTableEntry("Base Point", "[" + map.getBaseXTile() + ", " + map.getBaseZTile() + "]");
-
-        // Entity properties
-        addTableEntry("Path Count", Integer.toString(map.getPaths().size()));
-        addTableEntry("Form Count", Integer.toString(map.getForms().size()));
-        addTableEntry("Entity Count", Integer.toString(map.getEntities().size()));
-
-        // Environment properties
-        addTableEntry("Zone Count", Integer.toString(map.getZones().size()));
-        addTableEntry("Light Count", Integer.toString(map.getLights().size()));
-        addTableEntry("Vertex Count", Integer.toString(map.getVertexes().size()));
-        addTableEntry("Polygon Count", Integer.toString(map.getPolygons().values().stream().mapToInt(List::size).sum()));
-        addTableEntry("Animation Count", Integer.toString(map.getMapAnimations().size()));
-
-        // Grid properties
-        addTableEntry("Grid Stacks", Integer.toString(map.getGridStacks().size()));
-        addTableEntry("Grid Size Count", "[" + map.getGridXCount() + ", " + map.getGridZCount() + "]");
-        addTableEntry("Grid Size Length", "[" + map.getGridXSize() + ", " + map.getGridZSize() + "]");
-
-        // Group properties
-        addTableEntry("Group Count", Integer.toString(map.getGroupCount()));
-        addTableEntry("Group Size Count", "[" + map.getGroupXCount() + ", " + map.getGroupZCount() + "]");
-        addTableEntry("Group Size Length", "[" + map.getGroupXSize() + ", " + map.getGroupZSize() + "]");
-    }
-
-    private void addTableEntry(String name, String value) {
-        tableMAPFileData.getItems().add(new NameValuePair(name, value));
-    }
-
     @FXML
     private void onMapButtonClicked(ActionEvent event) {
         TextureMap textureMap = TextureMap.newTextureMap(getFile());
         setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), textureMap), textureMap);
+    }
+
+    @FXML
+    private void onFixIslandClicked(ActionEvent event) {
+        getFile().fixAsIslandMap();
     }
 
     @SneakyThrows
