@@ -42,10 +42,13 @@ public class EntityOutroEntity extends MatrixData {
     @Override
     public void addData(GUIEditorGrid editor) {
         super.addData(editor);
-        for (int i = 0; i < getTargets().length; i++)
-            editor.addLabel("Target #" + (i + 1), getTargets()[i].getTime() + " -> " + getTargets()[i].getTarget());
+        for (int i = 0; i < getTargets().length; i++) {
+            editor.addNormalLabel("Target #" + (i + 1) + ":");
+            getTargets()[i].setupEditor(editor);
+        }
     }
 
+    @Setter
     @Getter // Represents JUN_OUTRO_TARGETS
     public static final class OutroTarget extends GameObject {
         private SVector target = new SVector(); // Target position.
@@ -61,6 +64,11 @@ public class EntityOutroEntity extends MatrixData {
         public void save(DataWriter writer) {
             this.target.saveWithPadding(writer);
             writer.writeInt(this.time);
+        }
+
+        public void setupEditor(GUIEditorGrid grid) {
+            grid.addFloatSVector("Target", getTarget());
+            grid.addIntegerField("Time", getTime(), this::setTime, null);
         }
     }
 }

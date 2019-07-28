@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class GUIMain extends Application {
+    public static GUIMain INSTANCE;
     public static Stage MAIN_STAGE;
     @Getter private static File workingDirectory = new File("./");
     public static FroggerEXEInfo EXE_CONFIG;
@@ -38,6 +39,7 @@ public class GUIMain extends Application {
     public void start(Stage primaryStage) throws Exception {
         //MisfitModel3DObject.performTest();
 
+        INSTANCE = this;
         MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();
 
@@ -54,21 +56,9 @@ public class GUIMain extends Application {
             }
         }
 
-        // If this isn't a debug setup, prompt the user to select the files to load.
-        File mwdFile = Utils.promptFileOpen("Please select a Frogger MWAD", "Medievil WAD", "MWD");
-        if (mwdFile == null) {
-            Platform.exit(); // No file given, shutdown.
-            return;
-        }
-
-        File exeFile = Utils.promptFileOpenExtensions("Please select a Frogger executable", "Frogger Executable", "EXE", "dat", "04", "06", "99");
-        if (exeFile == null) {
-            Platform.exit(); // No file given, shutdown.
-            return;
-        }
-
-        resolveEXE(exeFile, () -> openGUI(primaryStage, mwdFile));
+        openFroggerFiles();
     }
+
 
     private void resolveEXE(File exeFile, Runnable onConfigLoad) throws IOException {
         Config execRegistry = new Config(Utils.getResourceStream("executables.cfg"));
@@ -143,5 +133,29 @@ public class GUIMain extends Application {
     public static void setWorkingDirectory(File directory) {
         if (directory != null && directory.isDirectory())
             workingDirectory = directory;
+    }
+
+    /**
+     * Opens the frogger files and sets up the UI.
+     */
+    public void openFroggerFiles() throws IOException {
+        boolean isLoadingAgain = (EXE_CONFIG != null); // Is this loading a second time? Ie is there already a loaded game?
+
+        // If this isn't a debug setup, prompt the user to select the files to load.
+        File mwdFile = Utils.promptFileOpen("Please select a Frogger MWAD", "Medievil WAD", "MWD");
+        if (mwdFile == null) {
+            if (!isLoadingAgain)
+                Platform.exit(); // No file given. Shutdown if there is nothing loaded already. Otherwise, keep the last data active.
+            return;
+        }
+
+        File exeFile = Utils.promptFileOpenExtensions("Please select a Frogger executable", "Frogger Executable", "EXE", "dat", "04", "06", "99");
+        if (exeFile == null) {
+            if (!isLoadingAgain)
+                Platform.exit(); // No file given. Shutdown if there is nothing loaded already. Otherwise, keep the last data active.
+            return;
+        }
+
+        resolveEXE(exeFile, () -> openGUI(MAIN_STAGE, mwdFile));
     }
 }

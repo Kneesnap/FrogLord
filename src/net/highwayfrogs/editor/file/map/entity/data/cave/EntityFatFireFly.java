@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Setter
 public class EntityFatFireFly extends MatrixData {
     private FlyScoreType type = FlyScoreType.SUPER_LIGHT; // Unused. Change has no effect.
-    private SVector target = new SVector(); // Unused, change has no effect. At one point this was the
+    private SVector target = new SVector(); // Unused, change has no effect. At one point this was the position to move the camera to upon eating.
 
     @Override
     public void load(DataReader reader) {

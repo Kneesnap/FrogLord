@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.file.packers;
 
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.writer.BitWriter;
 import net.highwayfrogs.editor.system.ByteArrayWrapper;
 import net.highwayfrogs.editor.system.IntList;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.nio.ByteBuffer;
 
@@ -74,14 +74,10 @@ public class PP20Packer {
             return -1;
 
         int bestIndex = -1;
-        int minIndex = 0;
-
         for (int resultId = possibleResults.size() - 1; resultId >= 0; resultId--) {
             int testIndex = possibleResults.get(resultId);
             int targetSize = target.size();
-
-            if (COMPRESSION_SETTING_MAX_OFFSETS.length > targetSize) // We'd rather cache this variable, as it's rather expensive to calculate.
-                minIndex = Math.max(0, bufferEnd - COMPRESSION_SETTING_MAX_OFFSETS[targetSize]);
+            int minIndex = Math.max(0, bufferEnd - COMPRESSION_SETTING_MAX_OFFSETS[Math.min(COMPRESSION_SETTING_MAX_OFFSETS.length - 1, targetSize - 1)]);
 
             if (minIndex > testIndex)
                 break; // We've gone too far.

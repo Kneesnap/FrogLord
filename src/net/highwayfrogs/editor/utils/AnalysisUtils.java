@@ -37,7 +37,7 @@ public class AnalysisUtils {
     public static void findUnusedTextures(MWDFile mwd) {
         FroggerEXEInfo config = mwd.getConfig();
 
-        List<MAPFile> mapFiles = mwd.getFiles(MAPFile.class);
+        List<MAPFile> mapFiles = mwd.getAllFiles(MAPFile.class);
         List<MOFHolder> mofFiles = new ArrayList<>();
 
         mwd.forEachFile(WADFile.class, wad -> wad.getFiles().forEach(entry -> {

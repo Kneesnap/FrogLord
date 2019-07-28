@@ -1,15 +1,15 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
@@ -19,6 +19,7 @@ import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
@@ -39,11 +40,12 @@ import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
-import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -57,10 +59,9 @@ import java.util.List;
  */
 @Getter
 public class MAPController extends EditorController<MAPFile> {
-    @FXML private TableView<NameValuePair> tableMAPFileData;
-    @FXML private TableColumn<Object, Object> tableColumnMAPFileDataName;
-    @FXML private TableColumn<Object, Object> tableColumnMAPFileDataValue;
-
+    @FXML private ListView<Short> remapList;
+    @FXML private ImageView remapImage;
+    @FXML private Button changeTextureButton;
     private Scene mapScene;
     private MapMesh mapMesh;
     private MAPPolygon selectedPolygon;
@@ -72,7 +73,6 @@ public class MAPController extends EditorController<MAPFile> {
     private MapUIController mapUIController;
 
     private List<MeshView> entityIcons = new ArrayList<>();
-    private List<Node> appliedLevelLights = new ArrayList<>();
 
     private Group root3D;
     private MeshData cursorData;
@@ -86,59 +86,65 @@ public class MAPController extends EditorController<MAPFile> {
     private static final PhongMaterial MATERIAL_LIGHT_GREEN = Utils.makeSpecialMaterial(Color.LIGHTGREEN);
 
     private static final String DISPLAY_LIST_PATHS = "displayListPaths";
+    private static final String LIGHT_LIST = "lightList";
 
     @Override
-    public void onInit(AnchorPane editorRoot) {
-        super.onInit(editorRoot);
-        updateLabels();
+    public void loadFile(MAPFile mapFile) {
+        super.loadFile(mapFile);
+
+        List<Short> remapTable = mapFile.getConfig().getRemapTable(mapFile.getFileEntry());
+        if (remapTable == null) {
+            changeTextureButton.setDisable(true);
+            remapList.setDisable(true);
+            return; // Empty.
+        }
+
+        this.remapList.setItems(FXCollections.observableArrayList(remapTable));
+        this.remapList.setCellFactory(param -> new AttachmentListCell<>(num -> "#" + num, num -> {
+            GameImage temp = getFile().getVlo() != null ? getFile().getVlo().getImageByTextureId(num, false) : null;
+            if (temp == null)
+                temp = getFile().getMWD().getImageByTextureId(num);
+
+            return temp != null ? temp.toFXImage(MWDFile.VLO_ICON_SETTING) : null;
+        }));
+
+        this.remapList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null)
+                return;
+
+            GameImage temp = getFile().getVlo() != null ? getFile().getVlo().getImageByTextureId(newValue, false) : null;
+            if (temp == null)
+                temp = getFile().getMWD().getImageByTextureId(newValue);
+            if (temp != null)
+                this.remapImage.setImage(temp.toFXImage(MWDFile.VLO_ICON_SETTING));
+        });
+        this.remapList.getSelectionModel().selectFirst();
     }
 
-    private void updateLabels() {
-        MAPFile map = getFile();
+    @FXML
+    private void onChangeTexture(ActionEvent event) {
+        if (getFile().getVlo() == null) {
+            System.out.println("Cannot edit remaps for a map which has no associated VLO!");
+            return;
+        }
 
-        // Setup and initialise the table view
-        tableMAPFileData.getItems().clear();
-        tableColumnMAPFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        tableColumnMAPFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-
-        // General properties
-        addTableEntry("MAP Theme: ", map.getTheme().toString());
-        addTableEntry("Start Position", "(" + map.getStartXTile() + ", " + map.getStartZTile() + ") Rotation: " + map.getStartRotation());
-        addTableEntry("Camera Source", "(" + map.getCameraSourceOffset().toFloatString() + ")");
-        addTableEntry("Camera Target", "(" + map.getCameraTargetOffset().toFloatString() + ")");
-        addTableEntry("Base Point", "[" + map.getBaseXTile() + ", " + map.getBaseZTile() + "]");
-
-        // Entity properties
-        addTableEntry("Path Count", Integer.toString(map.getPaths().size()));
-        addTableEntry("Form Count", Integer.toString(map.getForms().size()));
-        addTableEntry("Entity Count", Integer.toString(map.getEntities().size()));
-
-        // Environment properties
-        addTableEntry("Zone Count", Integer.toString(map.getZones().size()));
-        addTableEntry("Light Count", Integer.toString(map.getLights().size()));
-        addTableEntry("Vertex Count", Integer.toString(map.getVertexes().size()));
-        addTableEntry("Polygon Count", Integer.toString(map.getPolygons().values().stream().mapToInt(List::size).sum()));
-        addTableEntry("Animation Count", Integer.toString(map.getMapAnimations().size()));
-
-        // Grid properties
-        addTableEntry("Grid Stacks", Integer.toString(map.getGridStacks().size()));
-        addTableEntry("Grid Size Count", "[" + map.getGridXCount() + ", " + map.getGridZCount() + "]");
-        addTableEntry("Grid Size Length", "[" + map.getGridXSize() + ", " + map.getGridZSize() + "]");
-
-        // Group properties
-        addTableEntry("Group Count", Integer.toString(map.getGroupCount()));
-        addTableEntry("Group Size Count", "[" + map.getGroupXCount() + ", " + map.getGroupZCount() + "]");
-        addTableEntry("Group Size Length", "[" + map.getGroupXSize() + ", " + map.getGroupZSize() + "]");
-    }
-
-    private void addTableEntry(String name, String value) {
-        tableMAPFileData.getItems().add(new NameValuePair(name, value));
+        getFile().getVlo().promptImageSelection(newImage -> {
+            int index = this.remapList.getSelectionModel().getSelectedIndex();
+            getFile().getConfig().getRemapTable(getFile().getFileEntry()).set(index, newImage.getTextureId());
+            this.remapList.setItems(FXCollections.observableArrayList(getFile().getConfig().getRemapTable(getFile().getFileEntry()))); // Refresh remap.
+            this.remapList.getSelectionModel().select(index);
+        }, false);
     }
 
     @FXML
     private void onMapButtonClicked(ActionEvent event) {
         TextureMap textureMap = TextureMap.newTextureMap(getFile());
         setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), textureMap), textureMap);
+    }
+
+    @FXML
+    private void onFixIslandClicked(ActionEvent event) {
+        getFile().fixAsIslandMap();
     }
 
     @SneakyThrows
@@ -283,7 +289,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         // TODO: Tidy this up at some point, but use an action on a UI control for now [AndyEder]
         mapUIController.getCheckBoxShowAllPaths().setOnAction(evt -> this.togglePathDisplay());
-        mapUIController.getBtnApplyLevelLights().setOnAction(evt -> this.applyLevelLighting());
+        mapUIController.getApplyLightsCheckBox().setOnAction(evt -> this.updateLighting());
     }
 
     /**
@@ -336,7 +342,7 @@ public class MAPController extends EditorController<MAPFile> {
         }
     }
 
-    private MeshView makeEntityIcon(Entity entity, float x, float y, float z, float xAngle, float yAngle, float zAngle) {
+    private MeshView makeEntityIcon(Entity entity, float x, float y, float z, float yaw, float pitch, float roll) {
         float entityIconSize = MapUIController.getPropertyEntityIconSize().getValue();
 
         FormEntry form = entity.getFormEntry();
@@ -362,10 +368,10 @@ public class MAPController extends EditorController<MAPFile> {
                     MOFHolder holder = (MOFHolder) wadEntry.getFile();
                     holder.setVloFile(themeBook.getVLO(getFile()));
                     MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
-                    view.setMaterial(holder.getTextureMap().getDiffuseMaterial());
-                    view.getTransforms().add(new Rotate(Math.toDegrees(xAngle), Rotate.X_AXIS));
-                    view.getTransforms().add(new Rotate(Math.toDegrees(yAngle), Rotate.Y_AXIS));
-                    view.getTransforms().add(new Rotate(Math.toDegrees(zAngle), Rotate.Z_AXIS));
+                    view.setMaterial(holder.getTextureMap().getPhongMaterial());
+                    view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.X_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.Y_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.Z_AXIS));
                     return view;
                 }
             }
@@ -554,23 +560,22 @@ public class MAPController extends EditorController<MAPFile> {
     /**
      * Applies the current lighting setup to the level.
      */
-    public void applyLevelLighting() {
-        // Clear any existing lighting information
-        if (!this.appliedLevelLights.isEmpty()) {
-            System.out.println("[ LIGHTING ] Clearing " + this.appliedLevelLights.size() + " lights.");
-            this.root3D.getChildren().removeAll(this.appliedLevelLights);
-            this.appliedLevelLights.clear();
-        }
+    public void updateLighting() {
+        if (getRenderManager().displayListExists(LIGHT_LIST))
+            getRenderManager().clearDisplayList(LIGHT_LIST);
+
+        if (!getMapUIController().getApplyLightsCheckBox().isSelected())
+            return; // Don't lights if they're disabled.
+
+        getRenderManager().addMissingDisplayList(LIGHT_LIST);
 
         // Iterate through each light and apply the the root scene graph node
-        System.out.println("[ LIGHTING ] Adding " + getFile().getLights().size() + " lights:");
         for (Light light : getFile().getLights()) {
             switch (light.getApiType()) {
                 case AMBIENT:
                     AmbientLight ambLight = new AmbientLight();
                     ambLight.setColor(Utils.fromBGR(light.getColor()));
-                    this.appliedLevelLights.add(ambLight);
-                    this.root3D.getChildren().add(ambLight);
+                    getRenderManager().addNode(LIGHT_LIST, ambLight);
                     break;
 
                 case PARALLEL:
@@ -581,8 +586,7 @@ public class MAPController extends EditorController<MAPFile> {
                     parallelLight.setTranslateX(-light.getDirection().getFloatNormalX() * 1024);
                     parallelLight.setTranslateY(-light.getDirection().getFloatNormalY() * 1024);
                     parallelLight.setTranslateZ(-light.getDirection().getFloatNormalZ() * 1024);
-                    this.appliedLevelLights.add(parallelLight);
-                    this.root3D.getChildren().add(parallelLight);
+                    getRenderManager().addNode(LIGHT_LIST, parallelLight);
                     break;
 
                 case POINT:
@@ -592,8 +596,7 @@ public class MAPController extends EditorController<MAPFile> {
                     pointLight.setTranslateX(light.getDirection().getFloatX());
                     pointLight.setTranslateY(light.getDirection().getFloatY());
                     pointLight.setTranslateZ(light.getDirection().getFloatZ());
-                    this.appliedLevelLights.add(pointLight);
-                    this.root3D.getChildren().add(pointLight);
+                    getRenderManager().addNode(LIGHT_LIST, pointLight);
                     break;
             }
         }

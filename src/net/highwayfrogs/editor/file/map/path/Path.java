@@ -78,22 +78,10 @@ public class Path extends GameObject {
             editor.addSeparator(25.0);
         }
 
-        editor.addBoldLabel("Add Segment by Type:", 30);
-
-        editor.addLabelButton(PathType.LINE.name(), "Add", 25, () -> {
-            getSegments().add(PathType.LINE.getMaker().get());
+        editor.addButtonWithEnumSelection("Add Segment", pathType -> {
+            getSegments().add(pathType.getMaker().get());
             controller.setupPathEditor();
-        });
-
-        editor.addLabelButton(PathType.ARC.name(), "Add", 25, () -> {
-            getSegments().add(PathType.ARC.getMaker().get());
-            controller.setupPathEditor();
-        });
-
-        editor.addLabelButton(PathType.SPLINE.name(), "Add", 25, () -> {
-            getSegments().add(PathType.SPLINE.getMaker().get());
-            controller.setupPathEditor();
-        });
+        }, PathType.values(), PathType.SPLINE);
     }
 
     /**
@@ -124,6 +112,17 @@ public class Path extends GameObject {
      */
     public PathResult evaluatePosition(PathInfo pathInfo) {
         return getSegments().get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
+    }
+
+    /**
+     * Gets the length of all the segments combined.
+     * @return totalLength
+     */
+    public int getTotalLength() {
+        int totalLength = 0;
+        for (int i = 0; i < getSegments().size(); i++)
+            totalLength += getSegments().get(i).getLength();
+        return totalLength;
     }
 
     private boolean shouldSave(List<Entity> pathEntities) {

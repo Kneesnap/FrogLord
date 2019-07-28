@@ -203,12 +203,13 @@
                                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                        </rowConstraints>
                                        <children>
-                                          <Label text="Level Lights:">
+                                           <Label text="Apply Lights:">
                                              <font>
                                                 <Font name="System Bold" size="12.0" />
                                              </font>
                                           </Label>
-                                          <Button fx:id="btnApplyLevelLights" alignment="CENTER" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Apply" textAlignment="CENTER" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" />
+                                           <CheckBox fx:id="applyLightsCheckBox" mnemonicParsing="false" selected="true"
+                                                     GridPane.columnIndex="1"/>
                                        </children>
                                     </GridPane>
                                     <Separator prefWidth="200.0">

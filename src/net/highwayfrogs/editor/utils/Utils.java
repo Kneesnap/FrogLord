@@ -6,6 +6,9 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -1309,5 +1312,16 @@ public class Utils {
      */
     public static java.awt.Color toAWTColor(Color fxColor) {
         return awtColorCacheMap.computeIfAbsent(fxColor, key -> new java.awt.Color(toRGB(key)));
+    }
+
+    /**
+     * Make a popup show up from an exception.
+     * @param message The message to display.
+     * @param ex      The exception which caused the error.
+     */
+    public static void makeErrorPopUp(String message, Exception ex, boolean printException) {
+        if (printException)
+            ex.printStackTrace();
+        new Alert(AlertType.ERROR, (message != null && message.length() > 0 ? message + "\n" : "") + "Error: " + ex.getMessage(), ButtonType.OK).showAndWait();
     }
 }

@@ -11,6 +11,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.RowConstraints;
+import javafx.util.StringConverter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
@@ -32,6 +33,28 @@ import java.util.function.Function;
 public class GUIEditorGrid {
     private GridPane gridPane;
     private int rowIndex;
+
+    private static final StringConverter<Double> SLIDER_DEGREE_CONVERTER = new StringConverter<Double>() {
+        @Override
+        public String toString(Double num) {
+            double piHalf = Math.PI / 2;
+            double piQuarter = Math.PI / 4;
+            if (num < -piHalf - piQuarter)
+                return "-180";
+            if (num < -piQuarter)
+                return "-90";
+            if (num < piHalf)
+                return "0";
+            if (num < piQuarter + piHalf)
+                return "90";
+            return "180";
+        }
+
+        @Override
+        public Double fromString(String string) {
+            return Math.toRadians(Double.parseDouble(string) * 2);
+        }
+    };
 
     public GUIEditorGrid(GridPane pane) {
         this.gridPane = pane;
@@ -56,8 +79,8 @@ public class GUIEditorGrid {
 
     /**
      * Add a label.
-     * @param label     The label to add.
-     * @param height    The desired row height.
+     * @param label  The label to add.
+     * @param height The desired row height.
      */
     public void addBoldLabel(String label, double height) {
         Label labelText = setupSecondNode(new Label(label), true);
@@ -75,8 +98,8 @@ public class GUIEditorGrid {
 
     /**
      * Adds a label
-     * @param text      The text to add.
-     * @param height    The desired row height.
+     * @param text   The text to add.
+     * @param height The desired row height.
      */
     public Label addNormalLabel(String text, double height) {
         Label label = setupSecondNode(new Label(text), true);
@@ -86,8 +109,8 @@ public class GUIEditorGrid {
 
     /**
      * Add a label.
-     * @param boldLabel     The bold label to add.
-     * @param normalLabel   The normal label to add.
+     * @param boldLabel   The bold label to add.
+     * @param normalLabel The normal label to add.
      */
     public void addBoldNormalLabel(String boldLabel, String normalLabel) {
         addBoldNormalLabel(boldLabel, normalLabel, 20);
@@ -95,9 +118,9 @@ public class GUIEditorGrid {
 
     /**
      * Add a label.
-     * @param boldLabel     The bold label to add.
-     * @param normalLabel   The normal label to add.
-     * @param height    The desired row height.
+     * @param boldLabel   The bold label to add.
+     * @param normalLabel The normal label to add.
+     * @param height      The desired row height.
      */
     public void addBoldNormalLabel(String boldLabel, String normalLabel, double height) {
         Label bold = addLabel(boldLabel);
@@ -121,9 +144,9 @@ public class GUIEditorGrid {
 
     /**
      * Add a label.
-     * @param label     The label to add.
-     * @param value     The value of the label.
-     * @param height    The desired row height.
+     * @param label  The label to add.
+     * @param value  The value of the label.
+     * @param height The desired row height.
      */
     public Label addLabel(String label, String value, double height) {
         addLabel(label);
@@ -186,6 +209,28 @@ public class GUIEditorGrid {
      */
     public TextField addFloatField(String label, float number) {
         return addTextField(label, String.valueOf(number));
+    }
+
+    /**
+     * Add a double field.
+     * @param label  The name.
+     * @param number The initial number.
+     * @return textField
+     */
+    public TextField addDoubleField(String label, double number, Consumer<Double> setter, Function<Double, Boolean> test) {
+        TextField field = addTextField(label, String.valueOf(number), str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            double doubleValue = Double.parseDouble(str);
+            boolean testPass = test == null || test.apply(doubleValue);
+            if (testPass)
+                setter.accept(doubleValue);
+
+            return testPass;
+        });
+        field.setDisable(setter == null);
+        return field;
     }
 
     /**
@@ -372,10 +417,39 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Adds a button with an enum selector.
+     * @param buttonText   The text to show on the button.
+     * @param onClick      The handler for when you click on the button.
+     * @param values       The enum values.
+     * @param currentValue The current enum value.
+     */
+    public <E extends Enum<E>> void addButtonWithEnumSelection(String buttonText, Consumer<E> onClick, E[] values, E currentValue) {
+        // Setup button.
+        Button button = setupNode(new Button(buttonText));
+
+        // Setup selection.
+        ComboBox<E> box = setupSecondNode(new ComboBox<>(FXCollections.observableArrayList(values)), false);
+        box.valueProperty().setValue(currentValue); // Set the selected value.
+        box.getSelectionModel().select(currentValue); // Automatically scroll to selected value.
+
+        AtomicBoolean firstOpen = new AtomicBoolean(true);
+        box.addEventFilter(ComboBox.ON_SHOWN, event -> { // Show the selected value when the dropdown is opened.
+            if (firstOpen.getAndSet(false))
+                Utils.comboBoxScrollToValue(box);
+        });
+
+        button.setOnAction(evt -> {
+            onClick.accept(box.getValue());
+            onChange();
+        });
+        addRow(25);
+    }
+
+    /**
      * Add a label and button.
-     * @param labelText     The text on the label.
-     * @param buttonText    The text on the button.
-     * @param onPress What to do when the button is pressed.
+     * @param labelText  The text on the label.
+     * @param buttonText The text on the button.
+     * @param onPress    What to do when the button is pressed.
      */
     public Button addLabelButton(String labelText, String buttonText, double height, Runnable onPress) {
         addLabel(labelText);
@@ -387,9 +461,9 @@ public class GUIEditorGrid {
 
     /**
      * Add a bold label and button.
-     * @param labelText     The text on the label.
-     * @param buttonText    The text on the button.
-     * @param onPress What to do when the button is pressed.
+     * @param labelText  The text on the label.
+     * @param buttonText The text on the button.
+     * @param onPress    What to do when the button is pressed.
      */
     public Button addBoldLabelButton(String labelText, String buttonText, double height, Runnable onPress) {
         Label bold = addLabel(labelText);
@@ -437,9 +511,14 @@ public class GUIEditorGrid {
 
         // Transform information is in fixed point format, hence conversion to float representation.
         addNormalLabel("Rotation:");
-        addFloatField("Pitch (xAngle)", matrix.getPitchXAngle()); //TODO: Allow setting.
-        addFloatField("Yaw (yAngle)", matrix.getYawYAngle());
-        addFloatField("Roll (zAngle)", matrix.getRollZAngle());
+
+        Slider yawUI = addDoubleSlider("Yaw", matrix.getYawAngle(), yaw -> matrix.updateMatrix(yaw, matrix.getPitchAngle(), matrix.getRollAngle()), -Math.PI, Math.PI);
+        Slider pitchUI = addDoubleSlider("Pitch", matrix.getPitchAngle(), pitch -> matrix.updateMatrix(matrix.getYawAngle(), pitch, matrix.getRollAngle()), -Math.PI, Math.PI);
+        Slider rollUI = addDoubleSlider("Roll", matrix.getRollAngle(), roll -> matrix.updateMatrix(matrix.getYawAngle(), matrix.getPitchAngle(), roll), -Math.PI, Math.PI);
+
+        yawUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
+        pitchUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
+        rollUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
     }
 
     public HBox addVector3D(float[] vec3D, double height, BiConsumer<Integer, Float> handler) {
@@ -519,5 +598,60 @@ public class GUIEditorGrid {
      */
     protected void onChange() {
 
+    }
+
+
+    /**
+     * Add a slider to set the value.
+     * @param sliderName   The name of the slider.
+     * @param currentValue The current slider value.
+     * @param setter       What to do with the slider value on update.
+     * @param minValue     The minimum slider value.
+     * @param maxValue     The maximum slider value.
+     * @return slider
+     */
+    public Slider addIntegerSlider(String sliderName, int currentValue, Consumer<Integer> setter, int minValue, int maxValue) {
+        addLabel(sliderName);
+        Slider slider = setupSecondNode(new Slider(minValue, maxValue, currentValue), false);
+        slider.setDisable(setter == null);
+        slider.valueProperty().addListener(((observable, oldValue, newValue) -> {
+            if (setter != null)
+                setter.accept(newValue.intValue());
+            onChange();
+        }));
+        slider.setMajorTickUnit((double) (maxValue - minValue) / 4D);
+        slider.setShowTickLabels(true);
+        slider.setShowTickMarks(true);
+        slider.setMinorTickCount(0);
+        slider.setBlockIncrement(1);
+        addRow(40);
+        return slider;
+    }
+
+    /**
+     * Add a slider to set the value.
+     * @param sliderName   The name of the slider.
+     * @param currentValue The current slider value.
+     * @param setter       What to do with the slider value on update.
+     * @param minValue     The minimum slider value.
+     * @param maxValue     The maximum slider value.
+     * @return slider
+     */
+    public Slider addDoubleSlider(String sliderName, double currentValue, Consumer<Double> setter, double minValue, double maxValue) {
+        addLabel(sliderName);
+        Slider slider = setupSecondNode(new Slider(minValue, maxValue, currentValue), false);
+        slider.setDisable(setter == null);
+        slider.valueProperty().addListener(((observable, oldValue, newValue) -> {
+            if (setter != null)
+                setter.accept(newValue.doubleValue());
+            onChange();
+        }));
+        slider.setMajorTickUnit((maxValue - minValue) / 4);
+        slider.setShowTickLabels(true);
+        slider.setShowTickMarks(true);
+        slider.setMinorTickCount(0);
+        slider.setBlockIncrement(1);
+        addRow(40);
+        return slider;
     }
 }

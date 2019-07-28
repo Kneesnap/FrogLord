@@ -13,12 +13,14 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
+import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -41,8 +43,10 @@ public class VLOController extends EditorController<VLOArchive> {
     @FXML private Label ingameDimensionLabel;
     @FXML private Label idLabel;
     @FXML private VBox flagBox;
+    @FXML private Button backButton;
 
     @Getter private GameImage selectedImage;
+    private WADFile parentWad;
     private double defaultEditorMaxHeight;
     private Map<Integer, CheckBox> flagCheckBoxMap = new HashMap<>();
     private ImageFilterSettings imageFilterSettings = new ImageFilterSettings(ImageState.EXPORT);
@@ -198,6 +202,12 @@ public class VLOController extends EditorController<VLOArchive> {
         VRAMPageController.openEditor(this);
     }
 
+    @FXML
+    private void returnToWad(ActionEvent event) {
+        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), this.parentWad);
+        ((WADController) MainController.getCurrentController()).selectFile(getFile()); // Highlight this file again.
+    }
+
     /**
      * Update the info displayed for the image.
      */
@@ -205,6 +215,15 @@ public class VLOController extends EditorController<VLOArchive> {
         dimensionLabel.setText("Archive Dimensions: [Width: " + this.selectedImage.getFullWidth() + ", Height: " + this.selectedImage.getFullHeight() + "]");
         ingameDimensionLabel.setText("In-Game Dimensions: [Width: " + this.selectedImage.getIngameWidth() + ", Height: " + this.selectedImage.getIngameHeight() + "]");
         idLabel.setText("Texture ID: " + this.selectedImage.getTextureId() + ", Flags: " + this.selectedImage.getFlags() + " Page: " + this.selectedImage.getTexturePage());
+    }
+
+    /**
+     * Allows using the back button feature and returning to a holder wad.
+     * @param wadFile the wad to return to if back is pressed.
+     */
+    public void setParentWad(WADFile wadFile) {
+        this.parentWad = wadFile;
+        backButton.setVisible(true);
     }
 
     /**

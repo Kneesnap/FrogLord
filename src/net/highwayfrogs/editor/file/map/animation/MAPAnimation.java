@@ -1,12 +1,18 @@
 package net.highwayfrogs.editor.file.map.animation;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.scene.control.Button;
+import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.util.Duration;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -18,6 +24,7 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Represents the MAP_ANIM struct.
@@ -148,25 +155,59 @@ public class MAPAnimation extends GameObject {
         if (isUV) {
             editor.addShortField("u Frame Change", getUChange(), this::setUChange, null);
             editor.addShortField("v Frame Change", getVChange(), this::setVChange, null);
-            editor.addIntegerField("Frame Count", getUvDuration(), this::setUvDuration, null);
+            editor.addIntegerField("Total Frames", getUvDuration(), this::setUvDuration, null);
         }
 
-        if (isTexture)
-            editor.addIntegerField("Frame Count", getTexDuration(), this::setTexDuration, null);
+        TextField speedField = isTexture ? editor.addIntegerField("Speed", getTexDuration(), newVal -> {
+            setTexDuration(newVal);
+            controller.setupAnimationEditor();
+        }, null) : null;
 
-        editor.addButton(this.equals(controller.getEditAnimation()) ? "Exit Edit Mode" : "Enable Edit Mode", () -> {
+        editor.addCheckBox("Map Tool", this.equals(controller.getEditAnimation()), newState -> {
             controller.editAnimation(this);
             controller.setupAnimationEditor();
         });
 
         if (!isTexture)
-            return;
+            return; // I'd love to have a UV viewer, but... it isn't linked to specific textures so we could only describe the motion of the texture. Unless, the user could choose the texture, or it went with the texture used in the most places.
 
+        // Setup.
         VLOArchive vlo = getParentMap().getVlo();
         List<Short> remap = getConfig().getRemapTable(getParentMap().getFileEntry());
         List<GameImage> images = new ArrayList<>(getTextures().size());
         getTextures().forEach(toRemap -> images.add(vlo.getImageByTextureId(remap.get(toRemap))));
 
+        // Setup viewer.
+        if (getTextures().size() > 0) {
+            editor.addBoldLabel("Preview:");
+            AtomicBoolean isAnimating = new AtomicBoolean(false);
+            ImageView animView = editor.addCenteredImage(images.get(0).toFXImage(MWDFile.VLO_ICON_SETTING), 150);
+            Slider frameSlider = editor.addIntegerSlider("Texture", 0, newFrame ->
+                    animView.setImage(images.get(newFrame).toFXImage(MWDFile.VLO_ICON_SETTING)), 0, getTextures().size() - 1);
+
+            Timeline animationTimeline = new Timeline(new KeyFrame(Duration.millis(getTexDuration() * 1000D / getMWD().getFPS()), evt -> {
+                int i = (int) frameSlider.getValue() + 1;
+                if (i == images.size())
+                    i = 0;
+                frameSlider.setValue(i);
+            }));
+            animationTimeline.setCycleCount(Timeline.INDEFINITE);
+
+            animView.setOnMouseClicked(evt -> {
+                isAnimating.set(!isAnimating.get());
+                boolean playNow = isAnimating.get();
+                if (playNow) {
+                    animationTimeline.play();
+                } else {
+                    animationTimeline.pause();
+                }
+
+                frameSlider.setDisable(playNow);
+                speedField.setDisable(playNow);
+            });
+        }
+
+        // Setup editor.
         editor.addBoldLabel("Textures:");
         for (int i = 0; i < images.size(); i++) {
             final int tempIndex = i;

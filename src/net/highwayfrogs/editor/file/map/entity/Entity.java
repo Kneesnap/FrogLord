@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -13,7 +14,6 @@ import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathResult;
-import net.highwayfrogs.editor.file.map.path.data.LineSegment;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.Vector;
@@ -44,14 +44,6 @@ public class Entity extends GameObject {
     private static final int RUNTIME_POINTERS = 4;
     private static final IVector GAME_Y_AXIS_POS = new IVector(0, 0x1000, 0);
 
-    public static final int FLAG_HIDDEN = Constants.BIT_FLAG_0; // Don't create a live entity while this is set.
-    public static final int FLAG_NO_DISPLAY = Constants.BIT_FLAG_1; // Don't display any mesh.
-    public static final int FLAG_NO_MOVEMENT = Constants.BIT_FLAG_2; // Don't allow entity movement.
-    public static final int FLAG_NO_COLLISION = Constants.BIT_FLAG_3; // Collision does not apply to this entity.
-    public static final int FLAG_ALIGN_TO_WORLD = Constants.BIT_FLAG_4; // Entity matrix always aligned to world axes.
-    public static final int FLAG_PROJECT_ON_LAND = Constants.BIT_FLAG_5; // Entity position is projected onto the landscape.
-    public static final int FLAG_LOCAL_ALIGN = Constants.BIT_FLAG_6; // Entity matrix is calculated locally (Using Y part of entity matrix.)
-
     public Entity(MAPFile parentMap) {
         this.map = parentMap;
     }
@@ -71,7 +63,7 @@ public class Entity extends GameObject {
 
         this.loadScriptDataPointer = reader.getIndex();
 
-        this.entityData = EntityData.makeData(getConfig(), getFormEntry());
+        this.entityData = EntityData.makeData(getConfig(), getFormEntry(), this);
         if (this.entityData != null)
             this.entityData.load(reader);
 
@@ -100,8 +92,25 @@ public class Entity extends GameObject {
      * @param flag The flag to test.
      * @return hasFlag
      */
-    public boolean testFlag(int flag) {
-        return (this.flags & flag) == flag;
+    public boolean testFlag(EntityFlag flag) {
+        return (this.flags & flag.getFlag()) == flag.getFlag();
+    }
+
+    /**
+     * Set the flag state.
+     * @param flag     The flag type.
+     * @param newState The new state of the flag.
+     */
+    public void setFlag(EntityFlag flag, boolean newState) {
+        boolean oldState = testFlag(flag);
+        if (oldState == newState)
+            return; // Prevents the ^ operation from breaking the value.
+
+        if (newState) {
+            this.flags |= flag.getFlag();
+        } else {
+            this.flags ^= flag.getFlag();
+        }
     }
 
     /**
@@ -132,9 +141,9 @@ public class Entity extends GameObject {
             position[0] = Utils.fixedPointIntToFloat20Bit(pos[0]);
             position[1] = Utils.fixedPointIntToFloat20Bit(pos[1]);
             position[2] = Utils.fixedPointIntToFloat20Bit(pos[2]);
-            position[3] = matrix.getPitchXAngle();
-            position[4] = matrix.getYawYAngle();
-            position[5] = matrix.getRollZAngle();
+            position[3] = (float) matrix.getYawAngle();
+            position[4] = (float) matrix.getPitchAngle();
+            position[5] = (float) matrix.getRollAngle();
             return position;
         }
 
@@ -166,16 +175,9 @@ public class Entity extends GameObject {
             position[0] = endVec.getFloatX();
             position[1] = endVec.getFloatY();
             position[2] = endVec.getFloatZ();
-            position[3] = matrix.getPitchXAngle();
-            position[4] = matrix.getYawYAngle();
-            position[5] = matrix.getRollZAngle();
-
-            if (path.getSegments().get(pathInfo.getSegmentId()) instanceof LineSegment) {
-                position[3] = -position[3];
-                position[4] = -position[4];
-                position[5] = -position[5];
-            }
-
+            position[3] = (float) matrix.getYawAngle();
+            position[4] = (float) matrix.getPitchAngle();
+            position[5] = (float) matrix.getRollAngle();
             return position;
         }
 
@@ -197,7 +199,7 @@ public class Entity extends GameObject {
         if (this.formEntry == null || !Objects.equals(newEntityDataClass, oldEntityDataClass)) {
             PSXMatrix oldMatrix = getMatrixInfo(); // Call before setting entityData to null.
             PathInfo oldPath = getPathInfo();
-            this.entityData = EntityData.makeData(getConfig(), newEntry);
+            this.entityData = EntityData.makeData(getConfig(), newEntry, this);
 
             if (this.entityData instanceof MatrixData && oldMatrix != null)
                 ((MatrixData) this.entityData).setMatrix(oldMatrix);
@@ -207,5 +209,19 @@ public class Entity extends GameObject {
         }
 
         this.formEntry = newEntry;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum EntityFlag {
+        HIDDEN(Constants.BIT_FLAG_0), // Don't create a live entity while this is set.
+        NO_DISPLAY(Constants.BIT_FLAG_1), // Don't display any mesh.
+        NO_MOVEMENT(Constants.BIT_FLAG_2), // Don't allow entity movement.
+        NO_COLLISION(Constants.BIT_FLAG_3), // Collision does not apply to this entity.
+        ALIGN_TO_WORLD(Constants.BIT_FLAG_4), // Entity matrix always aligned to world axes.
+        PROJECT_ON_LAND(Constants.BIT_FLAG_5), // Entity position is projected onto the landscape.
+        LOCAL_ALIGN(Constants.BIT_FLAG_6); // Entity matrix is calculated locally (Using Y part of entity matrix.)
+
+        private final int flag;
     }
 }

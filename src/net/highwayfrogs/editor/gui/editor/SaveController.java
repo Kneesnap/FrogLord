@@ -83,7 +83,7 @@ public class SaveController implements Initializable {
             } catch (FileNotFoundException ex) { // Can happen when you don't have permission to write to this file, or the file is read-only, etc.
                 Platform.runLater(() -> {
                     saveController.getStage().close();
-                    throw new RuntimeException("IOException!", ex);
+                    Utils.makeErrorPopUp("Failed to save file.\nDo you have permission to save in this folder?", ex, false);
                 });
                 return null;
             }

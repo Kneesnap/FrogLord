@@ -361,6 +361,14 @@ public class MOFController extends EditorController<MOFHolder> {
             this.controller = controller;
             this.holder = controller.getFile();
 
+            // Handle the hilite setting.
+            int totalHilites = 0;
+            for (MOFPart part : getHolder().asStaticFile().getParts())
+                totalHilites += part.getHilites().size();
+            this.viewHilitesCheckbox.setText(this.viewHilitesCheckbox.getText() + " [" + totalHilites + "]");
+            this.viewHilitesCheckbox.setDisable(totalHilites == 0);
+
+            // Setup animation control.
             List<Integer> numbers = new ArrayList<>(Utils.getIntegerList(holder.getMaxAnimation()));
             numbers.add(0, -1);
             animationSelector.setItems(FXCollections.observableArrayList(numbers));

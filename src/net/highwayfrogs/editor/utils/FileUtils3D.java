@@ -302,11 +302,12 @@ public class FileUtils3D {
 
     /**
      * Convert a MOF to a MisfitModel3D.
-     * TODO: Support texture animations. (If possible.)
-     * TODO: Support lighting.
-     * TODO: Support bounding box.
-     * TODO: Other missing things like collprim and matrix.
-     * TODO: Fix animations being upside-down.
+     * TODO: mm3d features
+     *  - Support texture animations. (If possible.)
+     *  - Support lighting.
+     *  - Support bounding box.
+     *  - Other missing things like collprim and matrix.
+     *  - Fix animations being upside-down.
      * @param holder The mof to convert.
      * @return misfit3d
      */

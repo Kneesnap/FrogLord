@@ -21,12 +21,14 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.MAPEditorGUI;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
+import net.highwayfrogs.editor.file.map.entity.Entity.EntityFlag;
 import net.highwayfrogs.editor.file.map.form.Form;
 import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.map.light.Light;
@@ -34,6 +36,7 @@ import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -95,7 +98,7 @@ public class MapUIController implements Initializable {
     @FXML private TextField textFieldCamPitch;
     @FXML private TextField textFieldCamRoll;
     @FXML private TextField textFieldEntityIconSize;
-    @FXML private Button btnApplyLevelLights;
+    @FXML private CheckBox applyLightsCheckBox;
 
     // General pane.
     @FXML private TitledPane generalPane;
@@ -114,6 +117,7 @@ public class MapUIController implements Initializable {
     private GUIEditorGrid animationEditor;
     private MAPAnimation editAnimation;
     private MeshData animationMarker;
+    private MAPAnimation selectedAnimation;
 
     // Entity pane
     @FXML private TitledPane entityPane;
@@ -169,6 +173,7 @@ public class MapUIController implements Initializable {
      * Sets up the lighting editor.
      */
     public void setupLights() {
+        getController().updateLighting();
         if (lightEditor == null)
             lightEditor = new GUIEditorGrid(lightGridPane);
 
@@ -181,27 +186,15 @@ public class MapUIController implements Initializable {
             });
 
             lightEditor.addLabel("ApiType:", getController().getFile().getLights().get(i).getApiType().name(), 25);
-            getController().getFile().getLights().get(i).makeEditor(lightEditor);
+            getController().getFile().getLights().get(i).makeEditor(lightEditor, this);
 
             lightEditor.addSeparator(25);
         }
 
-        lightEditor.addBoldLabel("Add Light by APIType:", 30);
-
-        lightEditor.addLabelButton(APILightType.AMBIENT.name(), "Add", 25, () -> {
-            getController().getFile().getLights().add(new Light(APILightType.AMBIENT));
+        lightEditor.addButtonWithEnumSelection("Add Light", apiType -> {
+            getController().getFile().getLights().add(new Light(apiType));
             setupLights();
-        });
-
-        lightEditor.addLabelButton(APILightType.PARALLEL.name(), "Add", 25, () -> {
-            getController().getFile().getLights().add(new Light(APILightType.PARALLEL));
-            setupLights();
-        });
-
-        lightEditor.addLabelButton(APILightType.POINT.name(), "Add", 25, () -> {
-            getController().getFile().getLights().add(new Light(APILightType.POINT));
-            setupLights();
-        });
+        }, APILightType.values(), APILightType.AMBIENT);
     }
 
     /**
@@ -224,19 +217,28 @@ public class MapUIController implements Initializable {
 
         animationEditor.clearEditor();
 
-        for (int i = 0; i < getMap().getMapAnimations().size(); i++) {
-            animationEditor.addBoldLabel("Animation #" + (i + 1));
-            getMap().getMapAnimations().get(i).setupEditor(this, animationEditor);
+        ComboBox<MAPAnimation> box = this.animationEditor.addSelectionBox("Animation:", getSelectedAnimation(), getMap().getMapAnimations(), newAnim -> {
+            this.selectedAnimation = newAnim;
+            setupAnimationEditor();
+        });
+        box.setConverter(new AbstractStringConverter<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim)));
+        box.setCellFactory(param -> new AttachmentListCell<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim), anim ->
+                anim.getTextures().size() > 0 ? getMap().getVlo().getImageByTextureId(getMap().getConfig().getRemapTable(getMap().getFileEntry()).get(anim.getTextures().get(0))).toFXImage(MWDFile.VLO_ICON_SETTING) : null));
 
-            final int tempIndex = i;
-            animationEditor.addButton("Delete Animation #" + (i + 1), () -> {
-                getMap().getMapAnimations().remove(tempIndex);
-                setupAnimationEditor();
+        if (this.selectedAnimation != null) {
+            this.animationEditor.addBoldLabelButton("Animation #" + getMap().getMapAnimations().indexOf(this.selectedAnimation) + ":", "Remove", 25, () -> {
+                getMap().getMapAnimations().remove(this.selectedAnimation);
+                this.selectedAnimation = null;
+                setupAnimationEditor(); // Reload this.
             });
+
+            this.selectedAnimation.setupEditor(this, this.animationEditor);
+
         }
 
-        animationEditor.addButton("Add Animation", () -> {
-            getMap().getMapAnimations().add(new MAPAnimation(getMap()));
+        this.animationEditor.addSeparator(25);
+        this.animationEditor.addButton("Add Animation", () -> {
+            getMap().getMapAnimations().add(this.selectedAnimation = new MAPAnimation(getMap()));
             setupAnimationEditor();
         });
     }
@@ -374,7 +376,9 @@ public class MapUIController implements Initializable {
 
         entityEditor.addIntegerField("Entity ID", entity.getUniqueId(), entity::setUniqueId, null);
         entityEditor.addIntegerField("Form ID", entity.getFormGridId(), entity::setFormGridId, null);
-        entityEditor.addIntegerField("Flags", entity.getFlags(), entity::setFlags, null);
+        entityEditor.addBoldLabel("Flags:");
+        for (EntityFlag flag : EntityFlag.values())
+            entityEditor.addCheckBox(Utils.capitalize(flag.name()), entity.testFlag(flag), newState -> entity.setFlag(flag, newState));
 
         // Populate Entity Data.
         entityEditor.addBoldLabel("Entity Data:");

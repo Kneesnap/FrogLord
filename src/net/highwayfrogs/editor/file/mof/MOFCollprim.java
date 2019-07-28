@@ -62,4 +62,10 @@ public class MOFCollprim extends GameObject {
         writer.writeUnsignedShort(this.user);
         writer.writeInt(this.hasMatrix);
     }
+
+    @Override
+    public String toString() {
+        return "<MOFCollprim Type=" + this.type + " Flags=" + this.flags + " Offset=[" + this.offset.toFloatString()
+                + "] Len=[" + this.xLen + "," + this.yLen + "," + this.zLen + "] Radius2=" + this.radius2 + ">";
+    }
 }

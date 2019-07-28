@@ -63,11 +63,14 @@ public class EntityFallingRock extends MatrixData {
         editor.addShortField("Bounces", getBounceCount(), this::setBounceCount, null);
         editor.addIntegerField("Flags", getFlags(), this::setFlags, null);
         editor.addIntegerField("Sound", getSound(), this::setSound, null);
-        for (int i = 0; i < getTargets().length; i++)
-            editor.addLabel("Target #" + (i + 1), getTargets()[i].getTime() + " -> " + getTargets()[i].getTarget());
+        for (int i = 0; i < getTargets().length; i++) {
+            editor.addNormalLabel("Target #" + (i + 1) + ":");
+            getTargets()[i].setupEditor(editor);
+        }
     }
 
     @Getter
+    @Setter
     public static final class FallingRockTarget extends GameObject {
         private SVector target = new SVector(); // Target Position.
         private int time; // Time to reach target.
@@ -84,6 +87,11 @@ public class EntityFallingRock extends MatrixData {
             this.target.saveWithPadding(writer);
             writer.writeUnsignedShort(this.time);
             writer.writeUnsignedShort(0);
+        }
+
+        public void setupEditor(GUIEditorGrid grid) {
+            grid.addFloatSVector("Target", getTarget());
+            grid.addIntegerField("Time", getTime(), this::setTime, null);
         }
     }
 }

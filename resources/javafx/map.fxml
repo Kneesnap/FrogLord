@@ -8,7 +8,7 @@
 <AnchorPane fx:id="rootPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
             minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0"
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
-            xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+            xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
     <children>
       <HBox prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -34,9 +34,13 @@
                         </AnchorPane>
                         <AnchorPane prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
                            <children>
-                              <Button fx:id="openEditorButton" layoutX="8.0" layoutY="14.0" mnemonicParsing="false"
-                                      onAction="#onMapButtonClicked" text="Open Editor" AnchorPane.leftAnchor="8.0"
-                                      AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="8.0"/>
+                               <Button fx:id="openEditorButton" layoutX="8.0" layoutY="14.0" mnemonicParsing="false"
+                                       onAction="#onMapButtonClicked" text="Open Editor" AnchorPane.leftAnchor="8.0"
+                                       AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="8.0"/>
+                               <Button fx:id="fixIslandButton" layoutX="8.0" layoutY="226.0" mnemonicParsing="false"
+                                       onAction="#onFixIslandClicked" text="Fix Island Map"
+                                       AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="8.0"
+                                       AnchorPane.rightAnchor="8.0"/>
                            </children>
                         </AnchorPane>
                      </children>
@@ -45,32 +49,18 @@
             </AnchorPane>
             <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" HBox.hgrow="NEVER" />
             <AnchorPane style="-fx-border-color: #ffffff; -fx-border-width: 0px 0px 0px 1px;" HBox.hgrow="ALWAYS">
-               <children>
-                  <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                     <children>
-                        <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="40.0" VBox.vgrow="NEVER">
-                           <children>
-                              <Label prefHeight="40.0" prefWidth="459.0" text="Map Properties"
-                                     AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0"
-                                     AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="0.0"/>
-                           </children>
-                        </AnchorPane>
-                        <AnchorPane prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
-                           <children>
-                              <TableView fx:id="tableMAPFileData" prefHeight="180.0" prefWidth="180.0" AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="8.0">
-                                <columns>
-                                  <TableColumn fx:id="tableColumnMAPFileDataName" editable="false" prefWidth="75.0" text="Name" />
-                                  <TableColumn fx:id="tableColumnMAPFileDataValue" editable="false" prefWidth="75.0" text="Value" />
-                                </columns>
-                                 <columnResizePolicy>
-                                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                                 </columnResizePolicy>
-                              </TableView>
-                           </children>
-                        </AnchorPane>
-                     </children>
-                  </VBox>
-               </children>
+                <children>
+                    <ListView fx:id="remapList" prefHeight="305.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0"
+                              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
+                    <Label layoutX="14.0" layoutY="14.0" text="Remap Editor" AnchorPane.leftAnchor="14.0"
+                           AnchorPane.topAnchor="14.0"/>
+                    <ImageView fx:id="remapImage" fitHeight="128.0" fitWidth="128.0" layoutX="14.0" layoutY="141.0"
+                               pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="14.0"
+                               AnchorPane.leftAnchor="14.0"/>
+                    <Button fx:id="changeTextureButton" layoutX="154.0" layoutY="10.0" mnemonicParsing="false"
+                            onAction="#onChangeTexture" text="Change Texture" AnchorPane.rightAnchor="214.0"
+                            AnchorPane.topAnchor="10.0"/>
+                </children>
             </AnchorPane>
          </children>
       </HBox>
