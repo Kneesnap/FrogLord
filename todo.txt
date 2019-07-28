@@ -28,7 +28,6 @@ UI Plans:
 Map Editor:
  - Add polygons.
  - The grid viewer should support selecting multiple tiles and allow mass grid flag editing. It should also be able to fit on smaller screens.
- - Animation editor. Maybe select from a list of animations? You could watch the animation, edit it, and apply it. Everything you can now but organized better. Support UV editing too.
  - TODO: Go over entity data editors, make sure they're all functional, and choose a proper editor for them.
  - Adding entities: Have a selector that lets you pick the entity type you want to make, instead of cloning the current one. The camera should focus in on the new entity at the very least, if we can't let the user decide where to place it. We could disable the create entity button if there is no tile selected (tile must be under a path if it's a path entity)
  - Form Resizing? General resizing of fixed size things?

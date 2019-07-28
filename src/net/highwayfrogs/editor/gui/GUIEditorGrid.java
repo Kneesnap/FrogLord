@@ -619,7 +619,7 @@ public class GUIEditorGrid {
                 setter.accept(newValue.intValue());
             onChange();
         }));
-        slider.setMajorTickUnit((maxValue - minValue) / 4);
+        slider.setMajorTickUnit((double) (maxValue - minValue) / 4D);
         slider.setShowTickLabels(true);
         slider.setShowTickMarks(true);
         slider.setMinorTickCount(0);

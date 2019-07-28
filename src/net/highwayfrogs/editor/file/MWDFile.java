@@ -341,4 +341,12 @@ public class MWDFile extends GameObject {
                     return testImage;
         return null;
     }
+
+    /**
+     * Gets the FPS this game will run at.
+     * @return fps
+     */
+    public int getFPS() {
+        return getConfig().isPSX() ? 30 : 25;
+    }
 }
