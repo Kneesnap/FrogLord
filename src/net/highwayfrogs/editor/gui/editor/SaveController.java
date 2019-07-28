@@ -5,9 +5,6 @@ import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.stage.Stage;
@@ -86,7 +83,7 @@ public class SaveController implements Initializable {
             } catch (FileNotFoundException ex) { // Can happen when you don't have permission to write to this file, or the file is read-only, etc.
                 Platform.runLater(() -> {
                     saveController.getStage().close();
-                    new Alert(AlertType.WARNING, "Failed to save file.\nDo you have permission to save in this folder?\nError: " + ex.getMessage(), ButtonType.OK).showAndWait();
+                    Utils.makeErrorPopUp("Failed to save file.\nDo you have permission to save in this folder?", ex, false);
                 });
                 return null;
             }

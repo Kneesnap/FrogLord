@@ -25,4 +25,3 @@ UI Plans:
  - The grid viewer should support selecting multiple tiles and allow mass grid flag editing. It should also be able to fit on smaller screens.
  - Finish map editor. (Add ability to add polygons, polish UI.)
  - Map interface screen has extra information it doesn't really need. What if we replaced this with buttons that did stuff, like maybe allow editing remap, or fixing ISLAND.MAP.
- - Would be nice to allow opening a new MWD and forgetting about the current one instead of having to make restart FrogLord.

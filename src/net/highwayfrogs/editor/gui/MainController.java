@@ -29,6 +29,7 @@ import net.highwayfrogs.editor.gui.extra.LevelInfoController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -131,6 +132,15 @@ public class MainController implements Initializable {
      */
     public FileEntry getFileEntry() {
         return mwdFile.getEntryMap().get(getCurrentFile());
+    }
+
+    @FXML
+    private void actionLoadMWD(ActionEvent evt) {
+        try {
+            GUIMain.INSTANCE.openFroggerFiles();
+        } catch (IOException ex) {
+            Utils.makeErrorPopUp("Failed to load Frogger data.", ex, true);
+        }
     }
 
     @FXML
