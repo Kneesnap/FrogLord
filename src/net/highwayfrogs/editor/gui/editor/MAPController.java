@@ -118,6 +118,7 @@ public class MAPController extends EditorController<MAPFile> {
             if (temp != null)
                 this.remapImage.setImage(temp.toFXImage(MWDFile.VLO_ICON_SETTING));
         });
+        this.remapList.getSelectionModel().selectFirst();
     }
 
     @FXML
