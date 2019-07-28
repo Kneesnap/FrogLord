@@ -2,12 +2,12 @@ package net.highwayfrogs.editor.file.map.light;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Holds lighting data, or the "LIGHT" struct in mapdisp.H
@@ -75,33 +75,18 @@ public class Light extends GameObject {
                 break;
 
             case POINT:
+            case PARALLEL:
                 // A point light has color and position, hence add position component
                 float[] lightPosition = new float[3];
                 lightPosition[0] = getDirection().getFloatX();
                 lightPosition[1] = getDirection().getFloatY();
                 lightPosition[2] = getDirection().getFloatZ();
-                editor.addNormalLabel("Position:", 25);
+                editor.addNormalLabel(getApiType() == APILightType.POINT ? "Position:" : "Direction:", 25);
                 editor.addVector3D(lightPosition, 25, (index, newValue) -> {
                     switch(index) {
                         case 0: getDirection().setX(Utils.floatToFixedPointShort4Bit(newValue)); break;
                         case 1: getDirection().setY(Utils.floatToFixedPointShort4Bit(newValue)); break;
                         case 2: getDirection().setZ(Utils.floatToFixedPointShort4Bit(newValue)); break;
-                    }
-                });
-                break;
-
-            case PARALLEL:
-                // A parallel (directional) light has a color and direction, hence add direction component
-                float[] lightDirection = new float[3];
-                lightDirection[0] = getDirection().getFloatNormalX();
-                lightDirection[1] = getDirection().getFloatNormalY();
-                lightDirection[2] = getDirection().getFloatNormalZ();
-                editor.addNormalLabel("Direction:", 25);
-                editor.addVector3D(lightDirection, 25, (index, newValue) -> {
-                    switch(index) {
-                        case 0: getDirection().setX(Utils.floatToFixedPointShort12Bit(newValue)); break;
-                        case 1: getDirection().setY(Utils.floatToFixedPointShort12Bit(newValue)); break;
-                        case 2: getDirection().setZ(Utils.floatToFixedPointShort12Bit(newValue)); break;
                     }
                 });
                 break;
