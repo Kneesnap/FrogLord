@@ -24,4 +24,3 @@ UI Plans:
  - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.
  - The grid viewer should support selecting multiple tiles and allow mass grid flag editing. It should also be able to fit on smaller screens.
  - Finish map editor. (Add ability to add polygons, polish UI.)
- - Map interface allow editing remap.

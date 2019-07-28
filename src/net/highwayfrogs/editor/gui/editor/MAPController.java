@@ -1,10 +1,14 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
@@ -15,6 +19,7 @@ import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
@@ -35,9 +40,11 @@ import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -52,6 +59,9 @@ import java.util.List;
  */
 @Getter
 public class MAPController extends EditorController<MAPFile> {
+    @FXML private ListView<Short> remapList;
+    @FXML private ImageView remapImage;
+    @FXML private Button changeTextureButton;
     private Scene mapScene;
     private MapMesh mapMesh;
     private MAPPolygon selectedPolygon;
@@ -77,6 +87,53 @@ public class MAPController extends EditorController<MAPFile> {
     private static final PhongMaterial MATERIAL_LIGHT_GREEN = Utils.makeSpecialMaterial(Color.LIGHTGREEN);
 
     private static final String DISPLAY_LIST_PATHS = "displayListPaths";
+
+    @Override
+    public void loadFile(MAPFile mapFile) {
+        super.loadFile(mapFile);
+
+        List<Short> remapTable = mapFile.getConfig().getRemapTable(mapFile.getFileEntry());
+        if (remapTable == null) {
+            changeTextureButton.setDisable(true);
+            remapList.setDisable(true);
+            return; // Empty.
+        }
+
+        this.remapList.setItems(FXCollections.observableArrayList(remapTable));
+        this.remapList.setCellFactory(param -> new AttachmentListCell<>(num -> "#" + num, num -> {
+            GameImage temp = getFile().getVlo() != null ? getFile().getVlo().getImageByTextureId(num, false) : null;
+            if (temp == null)
+                temp = getFile().getMWD().getImageByTextureId(num);
+
+            return temp != null ? temp.toFXImage(MWDFile.VLO_ICON_SETTING) : null;
+        }));
+
+        this.remapList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null)
+                return;
+
+            GameImage temp = getFile().getVlo() != null ? getFile().getVlo().getImageByTextureId(newValue, false) : null;
+            if (temp == null)
+                temp = getFile().getMWD().getImageByTextureId(newValue);
+            if (temp != null)
+                this.remapImage.setImage(temp.toFXImage(MWDFile.VLO_ICON_SETTING));
+        });
+    }
+
+    @FXML
+    private void onChangeTexture(ActionEvent event) {
+        if (getFile().getVlo() == null) {
+            System.out.println("Cannot edit remaps for a map which has no associated VLO!");
+            return;
+        }
+
+        getFile().getVlo().promptImageSelection(newImage -> {
+            int index = this.remapList.getSelectionModel().getSelectedIndex();
+            getFile().getConfig().getRemapTable(getFile().getFileEntry()).set(index, newImage.getTextureId());
+            this.remapList.setItems(FXCollections.observableArrayList(getFile().getConfig().getRemapTable(getFile().getFileEntry()))); // Refresh remap.
+            this.remapList.getSelectionModel().select(index);
+        }, false);
+    }
 
     @FXML
     private void onMapButtonClicked(ActionEvent event) {

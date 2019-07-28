@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.file.sound.PSXSoundDummy;
 import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.sound.prototype.PrototypeVBFile;
 import net.highwayfrogs.editor.file.sound.retail.RetailPCVBFile;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -51,7 +52,7 @@ public class MWDFile extends GameObject {
     private static final String MARKER = "DAWM";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEEE, d MMMM yyyy");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
-    private static final ImageFilterSettings VLO_ICON_SETTING = new ImageFilterSettings(ImageState.EXPORT);
+    public static final ImageFilterSettings VLO_ICON_SETTING = new ImageFilterSettings(ImageState.EXPORT).setAllowFlip(true);
 
     public MWDFile(MWIFile table) {
         this.wadIndexTable = table;
@@ -256,17 +257,6 @@ public class MWDFile extends GameObject {
     }
 
     /**
-     * Iterate over each file of a given type.
-     * @param fileClass The type to iterate over.
-     * @param handler   The behavior to apply.
-     */
-    public <T extends GameFile> void forEachFile(Class<T> fileClass, Consumer<T> handler) {
-        for (GameFile file : getFiles())
-            if (fileClass.isInstance(file))
-                handler.accept(fileClass.cast(file));
-    }
-
-    /**
      * Get each file of a given class type, including those found in wads.
      * @param fileClass The type to iterate over.
      */
@@ -295,6 +285,27 @@ public class MWDFile extends GameObject {
      * @param fileClass The type to iterate over.
      * @param handler   The behavior to apply.
      */
+    public <T extends GameFile> void forEachFile(Class<T> fileClass, Consumer<T> handler) {
+        for (GameFile file : getFiles()) {
+            if (fileClass.isInstance(file))
+                handler.accept(fileClass.cast(file));
+
+            if (file instanceof WADFile) {
+                WADFile wadFile = (WADFile) file;
+                for (WADEntry entry : wadFile.getFiles()) {
+                    GameFile testFile = entry.getFile();
+                    if (fileClass.isInstance(testFile))
+                        handler.accept(fileClass.cast(testFile));
+                }
+            }
+        }
+    }
+
+    /**
+     * Iterate over each file of a given type.
+     * @param fileClass The type to iterate over.
+     * @param handler   The behavior to apply.
+     */
     public <T extends GameFile, R> R resolveForEachFile(Class<T> fileClass, Function<T, R> handler) {
         for (GameFile file : getFiles()) {
             if (fileClass.isInstance(file)) {
@@ -302,18 +313,32 @@ public class MWDFile extends GameObject {
                 if (result != null)
                     return result; // If there's a result.
             }
+
+            if (file instanceof WADFile) {
+                WADFile wadFile = (WADFile) file;
+                for (WADEntry wadEntry : wadFile.getFiles()) {
+                    if (!fileClass.isInstance(wadEntry.getFile()))
+                        continue;
+                    R result = handler.apply(fileClass.cast(wadEntry.getFile()));
+                    if (result != null)
+                        return result;
+                }
+            }
         }
 
         return null; // Nothing found.
     }
 
     /**
-     * Get a list of all files of a given type.
-     * @param fileClass The type to get the list of.
+     * Gets an image by the given texture ID.
+     * @param textureId The texture ID to get.
+     * @return gameImage
      */
-    public <T extends GameFile> List<T> getFiles(Class<T> fileClass) {
-        List<T> files = new ArrayList<>();
-        forEachFile(fileClass, files::add);
-        return files;
+    public GameImage getImageByTextureId(int textureId) {
+        for (VLOArchive vlo : getAllFiles(VLOArchive.class))
+            for (GameImage testImage : vlo.getImages())
+                if (testImage.getTextureId() == textureId)
+                    return testImage;
+        return null;
     }
 }

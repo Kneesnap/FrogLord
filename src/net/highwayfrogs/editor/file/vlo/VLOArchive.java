@@ -185,11 +185,22 @@ public class VLOArchive extends GameFile {
      * @return gameImage
      */
     public GameImage getImageByTextureId(int textureId) {
+        return getImageByTextureId(textureId, true);
+    }
+
+    /**
+     * Gets an image by the given texture ID.
+     * @param textureId The texture ID to get.
+     * @return gameImage
+     */
+    public GameImage getImageByTextureId(int textureId, boolean errorIfFail) {
         for (GameImage testImage : getImages())
             if (testImage.getTextureId() == textureId)
                 return testImage;
 
-        throw new RuntimeException("Could not find a texture with the id: " + textureId + ".");
+        if (errorIfFail)
+            throw new RuntimeException("Could not find a texture with the id: " + textureId + ".");
+        return null;
     }
 
     /**

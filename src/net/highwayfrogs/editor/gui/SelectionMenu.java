@@ -114,7 +114,7 @@ public class SelectionMenu {
     }
 
     @AllArgsConstructor
-    private static class AttachmentListCell<T> extends ListCell<T> {
+    public static class AttachmentListCell<T> extends ListCell<T> {
         private Function<T, String> nameFunction;
         private Function<T, Image> imageFunction;
 
