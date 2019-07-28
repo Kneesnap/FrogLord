@@ -73,7 +73,6 @@ public class MAPController extends EditorController<MAPFile> {
     private MapUIController mapUIController;
 
     private List<MeshView> entityIcons = new ArrayList<>();
-    private List<Node> appliedLevelLights = new ArrayList<>();
 
     private Group root3D;
     private MeshData cursorData;
@@ -87,6 +86,7 @@ public class MAPController extends EditorController<MAPFile> {
     private static final PhongMaterial MATERIAL_LIGHT_GREEN = Utils.makeSpecialMaterial(Color.LIGHTGREEN);
 
     private static final String DISPLAY_LIST_PATHS = "displayListPaths";
+    private static final String LIGHT_LIST = "lightList";
 
     @Override
     public void loadFile(MAPFile mapFile) {
@@ -289,7 +289,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         // TODO: Tidy this up at some point, but use an action on a UI control for now [AndyEder]
         mapUIController.getCheckBoxShowAllPaths().setOnAction(evt -> this.togglePathDisplay());
-        mapUIController.getBtnApplyLevelLights().setOnAction(evt -> this.applyLevelLighting());
+        mapUIController.getApplyLightsCheckBox().setOnAction(evt -> this.updateLighting());
     }
 
     /**
@@ -560,23 +560,22 @@ public class MAPController extends EditorController<MAPFile> {
     /**
      * Applies the current lighting setup to the level.
      */
-    public void applyLevelLighting() {
-        // Clear any existing lighting information
-        if (!this.appliedLevelLights.isEmpty()) {
-            System.out.println("[ LIGHTING ] Clearing " + this.appliedLevelLights.size() + " lights.");
-            this.root3D.getChildren().removeAll(this.appliedLevelLights);
-            this.appliedLevelLights.clear();
-        }
+    public void updateLighting() {
+        if (getRenderManager().displayListExists(LIGHT_LIST))
+            getRenderManager().clearDisplayList(LIGHT_LIST);
+
+        if (!getMapUIController().getApplyLightsCheckBox().isSelected())
+            return; // Don't lights if they're disabled.
+
+        getRenderManager().addMissingDisplayList(LIGHT_LIST);
 
         // Iterate through each light and apply the the root scene graph node
-        System.out.println("[ LIGHTING ] Adding " + getFile().getLights().size() + " lights:");
         for (Light light : getFile().getLights()) {
             switch (light.getApiType()) {
                 case AMBIENT:
                     AmbientLight ambLight = new AmbientLight();
                     ambLight.setColor(Utils.fromBGR(light.getColor()));
-                    this.appliedLevelLights.add(ambLight);
-                    this.root3D.getChildren().add(ambLight);
+                    getRenderManager().addNode(LIGHT_LIST, ambLight);
                     break;
 
                 case PARALLEL:
@@ -587,8 +586,7 @@ public class MAPController extends EditorController<MAPFile> {
                     parallelLight.setTranslateX(-light.getDirection().getFloatNormalX() * 1024);
                     parallelLight.setTranslateY(-light.getDirection().getFloatNormalY() * 1024);
                     parallelLight.setTranslateZ(-light.getDirection().getFloatNormalZ() * 1024);
-                    this.appliedLevelLights.add(parallelLight);
-                    this.root3D.getChildren().add(parallelLight);
+                    getRenderManager().addNode(LIGHT_LIST, parallelLight);
                     break;
 
                 case POINT:
@@ -598,8 +596,7 @@ public class MAPController extends EditorController<MAPFile> {
                     pointLight.setTranslateX(light.getDirection().getFloatX());
                     pointLight.setTranslateY(light.getDirection().getFloatY());
                     pointLight.setTranslateZ(light.getDirection().getFloatZ());
-                    this.appliedLevelLights.add(pointLight);
-                    this.root3D.getChildren().add(pointLight);
+                    getRenderManager().addNode(LIGHT_LIST, pointLight);
                     break;
             }
         }

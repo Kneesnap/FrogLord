@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -63,7 +64,7 @@ public class Light extends GameObject {
      * Makes a lighting editor.
      * @param editor Lighting editor.
      */
-    public void makeEditor(GUIEditorGrid editor) {
+    public void makeEditor(GUIEditorGrid editor, MapUIController uiController) {
         // Don't need to edit the lightType, as static is the only one that does anything.
         int rgbColor = Utils.toRGB(Utils.fromBGR(getColor()));
         editor.addColorPicker("Color:", 25, rgbColor, newColor -> setColor(Utils.toBGR(Utils.fromRGB(newColor))));
@@ -88,6 +89,8 @@ public class Light extends GameObject {
                         case 1: getDirection().setY(Utils.floatToFixedPointShort4Bit(newValue)); break;
                         case 2: getDirection().setZ(Utils.floatToFixedPointShort4Bit(newValue)); break;
                     }
+
+                    uiController.getController().updateLighting();
                 });
                 break;
         }

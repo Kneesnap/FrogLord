@@ -96,7 +96,7 @@ public class MapUIController implements Initializable {
     @FXML private TextField textFieldCamPitch;
     @FXML private TextField textFieldCamRoll;
     @FXML private TextField textFieldEntityIconSize;
-    @FXML private Button btnApplyLevelLights;
+    @FXML private CheckBox applyLightsCheckBox;
 
     // General pane.
     @FXML private TitledPane generalPane;
@@ -170,6 +170,7 @@ public class MapUIController implements Initializable {
      * Sets up the lighting editor.
      */
     public void setupLights() {
+        getController().updateLighting();
         if (lightEditor == null)
             lightEditor = new GUIEditorGrid(lightGridPane);
 
@@ -182,7 +183,7 @@ public class MapUIController implements Initializable {
             });
 
             lightEditor.addLabel("ApiType:", getController().getFile().getLights().get(i).getApiType().name(), 25);
-            getController().getFile().getLights().get(i).makeEditor(lightEditor);
+            getController().getFile().getLights().get(i).makeEditor(lightEditor, this);
 
             lightEditor.addSeparator(25);
         }
