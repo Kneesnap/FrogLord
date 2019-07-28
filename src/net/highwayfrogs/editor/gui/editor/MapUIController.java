@@ -187,22 +187,10 @@ public class MapUIController implements Initializable {
             lightEditor.addSeparator(25);
         }
 
-        lightEditor.addBoldLabel("Add Light by APIType:", 30);
-
-        lightEditor.addLabelButton(APILightType.AMBIENT.name(), "Add", 25, () -> {
-            getController().getFile().getLights().add(new Light(APILightType.AMBIENT));
+        lightEditor.addButtonWithEnumSelection("Add Light", apiType -> {
+            getController().getFile().getLights().add(new Light(apiType));
             setupLights();
-        });
-
-        lightEditor.addLabelButton(APILightType.PARALLEL.name(), "Add", 25, () -> {
-            getController().getFile().getLights().add(new Light(APILightType.PARALLEL));
-            setupLights();
-        });
-
-        lightEditor.addLabelButton(APILightType.POINT.name(), "Add", 25, () -> {
-            getController().getFile().getLights().add(new Light(APILightType.POINT));
-            setupLights();
-        });
+        }, APILightType.values(), APILightType.AMBIENT);
     }
 
     /**

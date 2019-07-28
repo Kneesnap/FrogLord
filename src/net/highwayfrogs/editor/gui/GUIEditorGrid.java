@@ -417,6 +417,35 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Adds a button with an enum selector.
+     * @param buttonText   The text to show on the button.
+     * @param onClick      The handler for when you click on the button.
+     * @param values       The enum values.
+     * @param currentValue The current enum value.
+     */
+    public <E extends Enum<E>> void addButtonWithEnumSelection(String buttonText, Consumer<E> onClick, E[] values, E currentValue) {
+        // Setup button.
+        Button button = setupNode(new Button(buttonText));
+
+        // Setup selection.
+        ComboBox<E> box = setupSecondNode(new ComboBox<>(FXCollections.observableArrayList(values)), false);
+        box.valueProperty().setValue(currentValue); // Set the selected value.
+        box.getSelectionModel().select(currentValue); // Automatically scroll to selected value.
+
+        AtomicBoolean firstOpen = new AtomicBoolean(true);
+        box.addEventFilter(ComboBox.ON_SHOWN, event -> { // Show the selected value when the dropdown is opened.
+            if (firstOpen.getAndSet(false))
+                Utils.comboBoxScrollToValue(box);
+        });
+
+        button.setOnAction(evt -> {
+            onClick.accept(box.getValue());
+            onChange();
+        });
+        addRow(25);
+    }
+
+    /**
      * Add a label and button.
      * @param labelText  The text on the label.
      * @param buttonText The text on the button.
