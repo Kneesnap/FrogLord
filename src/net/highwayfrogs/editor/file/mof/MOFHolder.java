@@ -8,6 +8,7 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile;
+import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
@@ -22,11 +23,13 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.MOFController;
+import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -126,6 +129,25 @@ public class MOFHolder extends GameFile {
     @Override
     public Node makeEditor() {
         return null;
+    }
+
+    @Override
+    public List<Tuple2<String, String>> showWadProperties(WADFile wadFile, WADEntry wadEntry) {
+        List<Tuple2<String, String>> list = new ArrayList<>();
+        list.add(new Tuple2<>("Type", isDummy() ? "Dummy" : (isIncomplete() ? "Incomplete" : (isAnimatedMOF() ? "Animated" : "Static"))));
+
+        if (!isDummy()) {
+            MOFFile staticMof = asStaticFile();
+            list.add(new Tuple2<>("Parts", String.valueOf(staticMof.getParts().size())));
+            list.add(new Tuple2<>("Texture Animation", String.valueOf(staticMof.hasTextureAnimation())));
+
+            int hiliteCount = 0;
+            for (MOFPart part : staticMof.getParts())
+                hiliteCount += part.getHilites().size();
+            list.add(new Tuple2<>("Hilites", String.valueOf(hiliteCount)));
+        }
+
+        return list;
     }
 
     @Override

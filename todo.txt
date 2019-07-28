@@ -21,7 +21,6 @@ Issues / Features:
 
 UI Plans:
  - In general make editors easier to use. Go through all the parts of each UI to find places for improvement.
- - WAD Entry list should have information displayed about the entry you have selected to the right. We should bring allow editing the VLO by pressing "Edit".
  - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.
  - The grid viewer should support selecting multiple tiles and allow mass grid flag editing. It should also be able to fit on smaller screens.
  - Finish map editor. (Add ability to add polygons, polish UI.)

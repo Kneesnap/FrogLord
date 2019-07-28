@@ -1,27 +1,36 @@
 package net.highwayfrogs.editor.gui.editor;
 
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
+import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.List;
 
 /**
  * A temporary WAD Controller. This is temporary.
  * Created by Kneesnap on 9/30/2018.
  */
 public class WADController extends EditorController<WADFile> {
+    @FXML private TableView<NameValuePair> tableFileData;
+    @FXML private TableColumn<Object, Object> tableColumnFileDataName;
+    @FXML private TableColumn<Object, Object> tableColumnFileDataValue;
     @FXML private ListView<WADEntry> entryList;
     private WADEntry selectedEntry;
 
@@ -29,8 +38,7 @@ public class WADController extends EditorController<WADFile> {
     public void loadFile(WADFile file) {
         super.loadFile(file);
 
-        ObservableList<WADEntry> wadEntries = FXCollections.observableArrayList(file.getFiles());
-        entryList.setItems(wadEntries);
+        entryList.setItems(FXCollections.observableArrayList(file.getFiles()));
         updateEntryText();
 
         entryList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -45,6 +53,23 @@ public class WADController extends EditorController<WADFile> {
         entryList.setCellFactory(null);
         entryList.setCellFactory(param ->
                 new AbstractAttachmentCell<>((wadEntry, index) -> wadEntry != null ? "[" + index + "/" + wadEntry.getFileEntry().getLoadedId() + "] " + wadEntry.getDisplayName() : null));
+    }
+
+    /**
+     * Select the currently highlighted file in the entry list.
+     * Silently fails if the file is not found.
+     * @param file the file to select.
+     */
+    public void selectFile(GameFile file) {
+        int entryIndex = -1;
+        for (int i = 0; i < getFile().getFiles().size(); i++)
+            if (file == getFile().getFiles().get(i).getFile())
+                entryIndex = i;
+
+        if (entryIndex != -1) {
+            this.entryList.getSelectionModel().select(entryIndex);
+            this.entryList.scrollTo(entryIndex);
+        }
     }
 
     @FXML
@@ -105,6 +130,23 @@ public class WADController extends EditorController<WADFile> {
     }
 
     private void updateEntry() {
+        updateProperties();
+    }
 
+    private void updateProperties() {
+        // Setup and initialise the table view
+        boolean hasEntry = (this.selectedEntry != null);
+        this.tableFileData.setVisible(hasEntry);
+        if (!hasEntry)
+            return;
+
+        tableFileData.getItems().clear();
+        tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
+
+        List<Tuple2<String, String>> properties = this.selectedEntry.getFile().showWadProperties(getFile(), this.selectedEntry);
+        if (properties != null && properties.size() > 0)
+            for (Tuple2<String, String> pair : properties)
+                tableFileData.getItems().add(new NameValuePair(pair.getA(), pair.getB()));
     }
 }

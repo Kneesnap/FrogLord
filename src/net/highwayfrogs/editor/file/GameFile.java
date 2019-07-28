@@ -5,13 +5,16 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.EditorController;
+import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Represents a game file.
@@ -47,6 +50,17 @@ public abstract class GameFile extends GameObject {
      */
     public void handleWadEdit(WADFile parent) {
 
+    }
+
+
+    /**
+     * Gets a list of properties to show if this file is displayed in a WAD.
+     * @param parent The WADFile which owns this file.
+     * @param entry  The entry which owns this file.
+     * @return wadProperties, can be null.
+     */
+    public List<Tuple2<String, String>> showWadProperties(WADFile parent, WADEntry entry) {
+        return null;
     }
 
     /**

@@ -8,13 +8,17 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.WADFile;
+import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.editor.VLOController;
 import net.highwayfrogs.editor.gui.editor.VRAMPageController;
+import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -149,6 +153,20 @@ public class VLOArchive extends GameFile {
         BufferedImage image = VRAMPageController.makeVRAMImage(this);
         ImageIO.write(image, "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(fileEntry.getDisplayName()) + ".png"));
         System.out.println("Exported VRAM Image.");
+    }
+
+    @Override
+    public void handleWadEdit(WADFile parent) {
+        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), this);
+        ((VLOController) MainController.getCurrentController()).setParentWad(parent);
+    }
+
+    @Override
+    public List<Tuple2<String, String>> showWadProperties(WADFile wadFile, WADEntry wadEntry) {
+        List<Tuple2<String, String>> list = new ArrayList<>();
+        list.add(new Tuple2<>("Images", String.valueOf(getImages().size())));
+        list.add(new Tuple2<>("PS1 VLO", String.valueOf(isPsxMode())));
+        return list;
     }
 
     /**
