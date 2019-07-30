@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptBalloonData;
 import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptHeliumBalloon;
 import net.highwayfrogs.editor.file.map.entity.script.swamp.ScriptBobbingWasteData;
 import net.highwayfrogs.editor.file.map.entity.script.swamp.ScriptNuclearBarrelData;
+import net.highwayfrogs.editor.file.map.entity.script.swamp.ScriptSpecialWaterNoiseData;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptHawkData;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptHelicopterData;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptMechanismData;
@@ -29,7 +30,7 @@ public abstract class EntityScriptData extends GameObject {
     private static final Map<String, Tuple2<Class<? extends EntityScriptData>, Constructor<? extends EntityScriptData>>> CACHE_MAP = new HashMap<>();
     private static final List<Class<? extends EntityScriptData>> REGISTERED_SCRIPT_TYPES = Arrays.asList(ScriptBobbingWasteData.class, ScriptPlatform2Data.class,
             ScriptNoiseData.class, ScriptButterflyData.class, ScriptNuclearBarrelData.class, ScriptHelicopterData.class,
-            ScriptHawkData.class, ScriptMechanismData.class, ScriptHeliumBalloon.class, ScriptBalloonData.class);
+            ScriptHawkData.class, ScriptMechanismData.class, ScriptHeliumBalloon.class, ScriptBalloonData.class, ScriptSpecialWaterNoiseData.class);
 
 
     /**

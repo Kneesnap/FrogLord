@@ -11,7 +11,6 @@ Issues / Features:
  - PP20 compressor is not very efficient. Could we make an algorithm that is as good as the original one? Disassemble the original packer.
  - Entities need some kind of height offset in the map viewer. Figure out how the game figures out this height thing.
  - Full PSX VLO Support. (Missing support for certain types of images like the level select)
- - Support entity data fully on things like PS1 demo, prototype, retail.
  - Alt tabbing can break the keypress handler in editors, for instance it can keep moving if you were holding W, or it always applies the alt speed boost.
 
 UI Plans:

@@ -16,20 +16,17 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 @Setter
 public class EntityOutroEntity extends MatrixData {
-    private OutroTarget[] targets = new OutroTarget[TARGET_COUNT];
-
-    private static final int TARGET_COUNT = 11;
-
-    public EntityOutroEntity() {
-        for (int i = 0; i < targets.length; i++)
-            targets[i] = new OutroTarget();
-    }
+    private OutroTarget[] targets;
 
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        for (OutroTarget target : this.targets)
-            target.load(reader);
+        this.targets = new OutroTarget[getConfig().isRetail() ? 11 : 10];
+        for (int i = 0; i < this.targets.length; i++) {
+            OutroTarget newTarget = new OutroTarget();
+            newTarget.load(reader);
+            this.targets[i] = newTarget;
+        }
     }
 
     @Override

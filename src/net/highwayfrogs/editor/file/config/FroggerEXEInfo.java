@@ -756,4 +756,12 @@ public class FroggerEXEInfo extends Config {
                 return info;
         return null;
     }
+
+    /**
+     * Test if this is a retail version of the game.
+     * @return isRetail
+     */
+    public boolean isRetail() {
+        return !isDemo() && !isPrototype();
+    }
 }
