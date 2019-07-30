@@ -391,8 +391,10 @@ public class MAPController extends EditorController<MAPFile> {
             if (entity.getEntityData() instanceof EntityFatFireFly)
                 flyType = ((EntityFatFireFly) entity.getEntityData()).getType();
 
-            if (flyType != null)
+            if (flyType != null) {
                 material = Utils.makeSpecialMaterial(config.getImageFromPointer(config.getPickupData().get(flyType.ordinal()).getImagePointers().get(0)).toFXImage());
+                entityIconSize /= 2;
+            }
         }
 
         TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);

@@ -15,6 +15,7 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.*;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -45,6 +46,8 @@ public class MainController implements Initializable {
     @FXML private Accordion accordionMain;
     @FXML private AnchorPane editorPane;
     @FXML private TextArea consoleText;
+    @FXML private MenuItem levelInfoEditor;
+    @FXML private MenuItem formLibEditor;
     private MWDFile mwdFile;
     private ListView<GameFile> currentFilesList;
 
@@ -91,6 +94,11 @@ public class MainController implements Initializable {
         addFileList(WADFile.TYPE_ID, "WAD", gameFileRegistry);
         addFileList(PALFile.TYPE_ID, "PAL", gameFileRegistry);
         addFileList(VHFile.TYPE_ID, "VB/VH", gameFileRegistry);
+
+        // Setup!
+        FroggerEXEInfo config = mwdFile.getConfig();
+        levelInfoEditor.setDisable(config.getArcadeLevelAddress() == 0);
+        formLibEditor.setDisable(config.getFullFormBook().isEmpty());
     }
 
     private void addFileList(int type, String name, Map<Integer, ObservableList<GameFile>> fileMap) {

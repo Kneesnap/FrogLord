@@ -150,11 +150,11 @@ public class FroggerEXEInfo extends Config {
         this.MWILength = getInt("mwiLength");
         this.themeBookAddress = getInt("themeBook");
         this.mapBookAddress = getInt("mapBook");
-        this.ramPointerOffset = getLong("ramOffset");
+        this.ramPointerOffset = getLong("ramOffset"); // If I have an offset in a file, adding this number will give its pointer.
         this.arcadeLevelAddress = getInt("arcadeLevelAddress", 0);
-        this.musicAddress = getInt("musicAddress");
-        this.bmpPointerAddress = getInt("bmpPointerAddress", 0);
-        this.pickupDataAddress = getInt("pickupData", 0);
+        this.musicAddress = getInt("musicAddress"); // Music is generally always the same data, so you can find it with a search.
+        this.bmpPointerAddress = getInt("bmpPointerAddress", 0); // Gives output to assist in finding.
+        this.pickupDataAddress = getInt("pickupData", 0); // Pointer to Pickup_data[] in ent_gen. If this is not set, bugs will not have textures in the viewer. On PSX, search for 63 63 63 00 then after this entries image pointers, there's Pickup_data.
     }
 
     private void loadBanks() {
@@ -180,8 +180,8 @@ public class FroggerEXEInfo extends Config {
         this.pickupData = new ArrayList<>();
         getReader().setIndex(getPickupDataAddress());
 
-        long tempPointer;
-        while ((tempPointer = getReader().readUnsignedIntAsLong()) != 0) {
+        long tempPointer; // NOTE: This might just be a fixed-size array which matches the amount of fly types.
+        while ((tempPointer = getReader().readUnsignedIntAsLong()) != 0 && tempPointer != 1) {
             getReader().jumpTemp((int) (tempPointer - getRamPointerOffset()));
             PickupData pickupData = new PickupData();
             pickupData.load(getReader());
@@ -331,7 +331,7 @@ public class FroggerEXEInfo extends Config {
                 firstRemap = Math.min(firstRemap, book.execute(pc -> Math.min(pc.getFileLowRemapPointer(), pc.getFileHighRemapPointer()), PSXMapBook::getFileRemapPointer));
 
         if (getBmpPointerAddress() == 0) {
-            System.out.println("First Remap: " + Utils.toHexString(firstRemap));
+            System.out.println("First Remap: " + Utils.toHexString(firstRemap)); // Put this into a hex editor, then you can scroll up to find the first image.
             return; // Not specified.
         }
 
@@ -555,6 +555,8 @@ public class FroggerEXEInfo extends Config {
      * @return textureId
      */
     public int getTextureIdFromPointer(long pointer) {
+        if (getBmpPointerAddress() == 0)
+            throw new RuntimeException("Cannot get texture-id from pointer without bmpPointerAddress being set!");
         return getBmpTexturePointers().indexOf(pointer);
     }
 
