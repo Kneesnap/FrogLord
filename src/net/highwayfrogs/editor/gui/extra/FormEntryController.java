@@ -5,14 +5,17 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.general.FormDeathType;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
+import net.highwayfrogs.editor.file.config.exe.general.FormEntry.FormLibFlag;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -32,7 +35,7 @@ public class FormEntryController implements Initializable {
     @FXML private ComboBox<FormDeathType> deathSelector;
     @FXML private TextField wadIndexField;
     @FXML private TextField scriptIdField;
-    @FXML private TextField flagField;
+    @FXML private GridPane flagGrid;
     @FXML private Label themeLabel;
     @FXML private Label localLabel;
     @FXML private Label globalLabel;
@@ -41,6 +44,7 @@ public class FormEntryController implements Initializable {
     private FormEntry selectedEntry;
 
     private List<Node> disableNodes;
+    private CheckBox[] flagToggleMap = new CheckBox[FormLibFlag.values().length];
 
     private FormEntryController(Stage stage, FroggerEXEInfo config) {
         this.stage = stage;
@@ -49,7 +53,7 @@ public class FormEntryController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        this.disableNodes = Arrays.asList(entitySelector, deathSelector, wadIndexField, scriptIdField, flagField, themeLabel, localLabel, globalLabel);
+        this.disableNodes = Arrays.asList(entitySelector, deathSelector, wadIndexField, scriptIdField, flagGrid, themeLabel, localLabel, globalLabel);
 
         formSelector.setItems(FXCollections.observableArrayList(getConfig().getFullFormBook()));
         formSelector.setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
@@ -63,7 +67,19 @@ public class FormEntryController implements Initializable {
         deathSelector.valueProperty().addListener((observable, oldValue, newValue) -> getSelectedEntry().setDeathType(newValue));
         Utils.setHandleTestKeyPress(wadIndexField, Utils::isInteger, newValue -> getSelectedEntry().setId(Integer.parseInt(newValue)));
         Utils.setHandleTestKeyPress(scriptIdField, Utils::isInteger, newValue -> getSelectedEntry().setScriptId(Integer.parseInt(newValue)));
-        Utils.setHandleTestKeyPress(flagField, Utils::isInteger, newValue -> getSelectedEntry().setFlags(Integer.parseInt(newValue)));
+
+        for (int i = 0; i < FormLibFlag.values().length; i++) {
+            FormLibFlag lib = FormLibFlag.values()[i];
+            int row = (i / 2);
+            int column = (i % 2);
+
+            CheckBox newToggle = new CheckBox(lib.getDisplayName());
+            GridPane.setRowIndex(newToggle, row);
+            GridPane.setColumnIndex(newToggle, column);
+            flagGrid.getChildren().add(newToggle);
+            newToggle.selectedProperty().addListener((observable, oldVal, newVal) -> getSelectedEntry().setFlag(lib, newVal));
+            flagToggleMap[i] = newToggle;
+        }
 
         formSelector.getSelectionModel().select(0);
     }
@@ -81,10 +97,13 @@ public class FormEntryController implements Initializable {
         deathSelector.getSelectionModel().select(newEntry.getDeathType());
         wadIndexField.setText(String.valueOf(newEntry.getId()));
         scriptIdField.setText(String.valueOf(newEntry.getScriptId()));
-        flagField.setText(String.valueOf(newEntry.getFlags()));
+
         themeLabel.setText("Theme: " + newEntry.getTheme());
         localLabel.setText("Local ID: " + newEntry.getLocalFormId());
         globalLabel.setText("Global ID: " + newEntry.getGlobalFormId());
+
+        for (FormLibFlag flag : FormLibFlag.values())
+            flagToggleMap[flag.ordinal()].setSelected(newEntry.testFlag(flag));
     }
 
     @FXML

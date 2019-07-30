@@ -26,6 +26,7 @@ import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
+import net.highwayfrogs.editor.file.config.exe.general.FormEntry.FormLibFlag;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.entity.Entity;
@@ -348,7 +349,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         FormEntry form = entity.getFormEntry();
 
-        if (!form.testFlag(FormEntry.FLAG_NO_MODEL)) {
+        if (!form.testFlag(FormLibFlag.NO_MODEL)) {
             boolean isGeneralTheme = form.getTheme() == MAPTheme.GENERAL;
             ThemeBook themeBook = getFile().getConfig().getThemeBook(form.getTheme());
 

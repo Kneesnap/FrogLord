@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.config.exe.general;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -33,17 +34,6 @@ public class FormEntry extends GameObject {
 
     public static final int FLAG_GENERAL = 0x8000;
     public static final int BYTE_SIZE = (8 * Constants.INTEGER_SIZE);
-
-    public static final int FLAG_NO_MODEL = Constants.BIT_FLAG_0; // Is a sprite, not subject to collprim collision.
-    public static final int FLAG_NO_ROTATION_SNAPPING = Constants.BIT_FLAG_1; // Frog rotation is not snapped when landing on this form. (Ie: Lily pads.)
-    public static final int FLAG_NO_ENTITY_ANGLE = Constants.BIT_FLAG_2; // No entity angle is calculated. (IE: Lily pads.)
-    public static final int FLAG_DONT_RESET_ON_CHECKPOINT = Constants.BIT_FLAG_3; // Don't reset when a checkpoint is collected.
-    public static final int FLAG_DONT_RESET_ON_DEATH = Constants.BIT_FLAG_4; // Don't reset if the frog dies.
-    public static final int FLAG_THICK = Constants.BIT_FLAG_5; // Form applies beyond bottom of model to a value.
-    public static final int FLAG_DONT_CENTER_X = Constants.BIT_FLAG_6; // Don't center along entity X axis, unless at end of form.
-    public static final int FLAG_DONT_CENTER_Z = Constants.BIT_FLAG_7; // Don't center Z axis, unless at end of form. Used in places such as logs.
-    public static final int FLAG_DONT_FADE_COLOR = Constants.BIT_FLAG_8; // Turns off color scaling for sprites. (Mainly for cave)
-    public static final int FLAG_UNIT_FORM = Constants.BIT_FLAG_9; // Force form depth to 256 units.
 
     public FormEntry(FroggerEXEInfo config, MAPTheme theme, int formId, int globalFormId) {
         this.config = config;
@@ -137,7 +127,42 @@ public class FormEntry extends GameObject {
      * @param flag The flag to test.
      * @return hasFlag
      */
-    public boolean testFlag(int flag) {
-        return (this.flags & flag) == flag;
+    public boolean testFlag(FormLibFlag flag) {
+        return (this.flags & flag.getFlag()) == flag.getFlag();
+    }
+
+    /**
+     * Set the flag state.
+     * @param flag     The flag type.
+     * @param newState The new state of the flag.
+     */
+    public void setFlag(FormLibFlag flag, boolean newState) {
+        boolean oldState = testFlag(flag);
+        if (oldState == newState)
+            return; // Prevents the ^ operation from breaking the value.
+
+        if (newState) {
+            this.flags |= flag.getFlag();
+        } else {
+            this.flags ^= flag.getFlag();
+        }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum FormLibFlag {
+        NO_MODEL(Constants.BIT_FLAG_0, "No Model"), // Is a sprite, not subject to collprim collision.
+        NO_ROTATION_SNAPPING(Constants.BIT_FLAG_1, "No Snapping"), // Frog rotation is not snapped when landing on this form. (Ie: Lily pads.)
+        NO_ENTITY_ANGLE(Constants.BIT_FLAG_2, "No Angle"), // No entity angle is calculated. (IE: Lily pads.)
+        DONT_RESET_ON_CHECKPOINT(Constants.BIT_FLAG_3, "No Chkpt Reset"), // Don't reset when a checkpoint is collected.
+        DONT_RESET_ON_DEATH(Constants.BIT_FLAG_4, "No Death Reset"), // Don't reset if the frog dies.
+        THICK(Constants.BIT_FLAG_5, "Thick"), // Form applies beyond bottom of model to a value.
+        DONT_CENTER_X(Constants.BIT_FLAG_6, "No Center X"), // Don't center along entity X axis, unless at end of form.
+        DONT_CENTER_Z(Constants.BIT_FLAG_7, "No Center Z"), // Don't center Z axis, unless at end of form. Used in places such as logs.
+        DONT_FADE_COLOR(Constants.BIT_FLAG_8, "No Color Fade"), // Turns off color scaling for sprites. (Mainly for cave)
+        UNIT_FORM(Constants.BIT_FLAG_9, "Unit Form"); // Force form depth to 256 units.
+
+        private final int flag;
+        private final String displayName;
     }
 }

@@ -7,22 +7,15 @@ Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, 
 See if anything can be done about using the swamp VLO as a texture for 3D things. It seems some laptop computers do not like this and display everything as black with a message in the console.
 Eventually have some method which can allocate space into an executable at a given space so we could for instance add a new level into the level selector. This would need to modify pointers.
 
-Eventually:
- - Stop hardcoding things we can avoid, from file names to ids. For instance, replace the automatic ISLAND.MAP remap with an option that lets you select a remap to apply. Could be supplied, could be user-made. Would also allow things like exporting the remap from the demo, and applying the remap to the PC release.
- - On major release, profile loading files, saving files, using map editors. There are occasional viewer spikes after adding 3d models to the view, and in the MOF view, when looking at animations, every so often one frame will be extra long due to a GC.
-
 Issues / Features:
  - PP20 compressor is not very efficient. Could we make an algorithm that is as good as the original one? Disassemble the original packer.
  - Entities need some kind of height offset in the map viewer. Figure out how the game figures out this height thing.
  - Full PSX VLO Support. (Missing support for certain types of images like the level select)
- - Support entity data fully on things like PS1 demo, prototype, etc.
+ - Support entity data fully on things like PS1 demo, prototype, retail.
  - Alt tabbing can break the keypress handler in editors, for instance it can keep moving if you were holding W, or it always applies the alt speed boost.
- - A scripting system would be really nice, probably JS, along with a place to type in code. It would make on the fly debugging and testing much easier.
- - How about something which lets you view a Frogger script?
 
 UI Plans:
  - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.
- - Formbook editor should have flags be checkmarks, not just a flat number.
 
 Map Editor:
  - Add polygons.
@@ -31,3 +24,6 @@ Map Editor:
  - Form Resizing? General resizing of fixed size things?
  - Path editor shows selected path, which updates as you update the path information.
  - Path editor needs to be fully editable. Add spline data and verify other types are editable.
+
+Maybe:
+ - Frogger script viewer. (Needs registry of commands and the pointer to the script table.

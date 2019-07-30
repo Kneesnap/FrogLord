@@ -3,12 +3,12 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
-            minWidth="-Infinity" prefHeight="206.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0"
+            minWidth="-Infinity" prefHeight="260.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0"
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
             xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
     <children>
-        <Label fx:id="themeLabel" layoutX="7.0" layoutY="197.0" text="Theme: " AnchorPane.leftAnchor="7.0"
-               AnchorPane.topAnchor="171.0"/>
+        <Label fx:id="themeLabel" layoutX="7.0" layoutY="197.0" text="Theme: " AnchorPane.bottomAnchor="20.0"
+               AnchorPane.leftAnchor="7.0"/>
         <ComboBox fx:id="formSelector" layoutX="40.0" layoutY="2.0" prefHeight="25.0" prefWidth="160.0"
                   AnchorPane.leftAnchor="40.0" AnchorPane.topAnchor="2.0"/>
         <ComboBox fx:id="entitySelector" layoutX="64.0" layoutY="71.0" prefHeight="25.0" prefWidth="125.0"
@@ -22,19 +22,30 @@
         <Label layoutX="10.0" layoutY="75.0" text="Entity: " AnchorPane.leftAnchor="7.0" AnchorPane.topAnchor="50.0"/>
         <TextField fx:id="wadIndexField" alignment="CENTER_RIGHT" layoutX="120.0" layoutY="96.0" prefHeight="25.0"
                    prefWidth="111.0" AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="96.0"/>
-        <TextField fx:id="flagField" alignment="CENTER_RIGHT" layoutX="120.0" layoutY="121.0" prefHeight="25.0"
-                   prefWidth="111.0" AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="146.0"/>
         <Label layoutX="14.0" layoutY="100.0" text="WAD Index: " AnchorPane.leftAnchor="7.0"
                AnchorPane.topAnchor="100.0"/>
-        <Label layoutX="10.0" layoutY="125.0" text="Flags: " AnchorPane.leftAnchor="7.0" AnchorPane.topAnchor="150.0"/>
         <Button layoutX="141.0" layoutY="261.0" mnemonicParsing="false" onAction="#onDone" text="Done"
-                AnchorPane.bottomAnchor="11.0" AnchorPane.rightAnchor="11.0"/>
+                AnchorPane.bottomAnchor="3.0" AnchorPane.rightAnchor="3.0"/>
         <Label layoutX="12.0" layoutY="71.0" text="Death Type: " AnchorPane.leftAnchor="7.0"
                AnchorPane.topAnchor="75.0"/>
         <Label layoutX="10.0" layoutY="6.0" text="Form: " AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="6.0"/>
-        <Label fx:id="globalLabel" layoutX="18.0" layoutY="214.0" text="Global ID: " AnchorPane.leftAnchor="7.0"
-               AnchorPane.topAnchor="186.0"/>
-        <Label fx:id="localLabel" layoutX="80.0" layoutY="212.0" text="Local ID: " AnchorPane.leftAnchor="85.0"
-               AnchorPane.topAnchor="186.0"/>
+        <Label fx:id="globalLabel" layoutX="18.0" layoutY="214.0" text="Global ID: " AnchorPane.bottomAnchor="3.0"
+               AnchorPane.leftAnchor="7.0"/>
+        <Label fx:id="localLabel" layoutX="80.0" layoutY="212.0" text="Local ID: " AnchorPane.bottomAnchor="3.0"
+               AnchorPane.leftAnchor="85.0"/>
+        <GridPane fx:id="flagGrid" layoutY="146.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+                  AnchorPane.topAnchor="146.0">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
+                <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
+                <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
+                <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
+                <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
+            </rowConstraints>
+        </GridPane>
     </children>
 </AnchorPane>

@@ -29,6 +29,8 @@ public class Constants {
     public static final String DEV_ISLAND_NAME = "ISLAND.MAP";
     public static final String SKY_LAND_PREFIX = "SKY_LAND";
 
+    public static final String VERSION = "v0.5.0";
+
     public static final int BIT_FLAG_0 = 1;
     public static final int BIT_FLAG_1 = 1 << 1;
     public static final int BIT_FLAG_2 = 1 << 2;

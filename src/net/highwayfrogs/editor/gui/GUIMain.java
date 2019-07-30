@@ -9,6 +9,7 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.config.Config;
@@ -111,7 +112,7 @@ public class GUIMain extends Application {
         Parent root = FXMLLoader.load(Utils.getResource("javafx/main.fxml"));
         Scene scene = new Scene(root);
 
-        primaryStage.setTitle("FrogLord");
+        primaryStage.setTitle("FrogLord " + Constants.VERSION);
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(800);
         primaryStage.setMinHeight(400);
