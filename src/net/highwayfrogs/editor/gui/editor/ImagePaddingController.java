@@ -1,18 +1,17 @@
 package net.highwayfrogs.editor.gui.editor;
 
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
+import javafx.scene.control.ColorPicker;
+import javafx.scene.control.Slider;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -25,70 +24,49 @@ import java.util.ResourceBundle;
  */
 public class ImagePaddingController implements Initializable {
     @FXML private ImageView imageView;
-    @FXML private Label fullLabel;
-    @FXML private Label gameLabel;
-    @FXML private CheckBox scaleCheckBox;
+    @FXML private Slider widthSlider;
+    @FXML private Slider heightSlider;
+    @FXML private ColorPicker bgColor;
 
     private VLOController controller;
     private Stage stage;
     private GameImage image;
-    private short width;
-    private short height;
-    private int colorIndex;
 
-    private static final ImageFilterSettings SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
-    private static final Color[] COLORS = {
-            Color.BLACK,
-            Color.MAGENTA,
-            Color.YELLOW,
-            Color.GREEN,
-    };
+    private static final ImageFilterSettings SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setAllowFlip(true);
 
     public ImagePaddingController(Stage stage, VLOController controller) {
         this.stage = stage;
         this.controller = controller;
         this.image = controller.getSelectedImage();
-        this.width = image.getIngameWidth();
-        this.height = image.getIngameHeight();
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        updateDisplay();
+        this.widthSlider.setMax(this.image.getFullWidth());
+        this.widthSlider.setValue(this.image.getIngameWidth());
+        this.heightSlider.setMax(this.image.getFullHeight());
+        this.heightSlider.setValue(this.image.getIngameHeight());
+        this.bgColor.setValue(Color.BLACK);
 
-        Platform.runLater(() -> stage.getScene().setOnKeyPressed(evt -> {
-            if (evt.getCode() == KeyCode.UP) {
-                moveVertical(-1);
-                evt.consume();
-            } else if (evt.getCode() == KeyCode.DOWN) {
-                moveVertical(1);
-                evt.consume();
-            } else if (evt.getCode() == KeyCode.LEFT) {
-                moveHorizontal(-1);
-                evt.consume();
-            } else if (evt.getCode() == KeyCode.RIGHT) {
-                moveHorizontal(1);
-                evt.consume();
-            } else if (evt.getCode() == KeyCode.ESCAPE) {
-                this.stage.close();
-            }
-        }));
+        updateDisplay();
+        Utils.closeOnEscapeKey(stage, null);
+
+        this.bgColor.valueProperty().addListener((observable, oldValue, newValue) -> updateDisplay());
+        this.widthSlider.valueProperty().addListener(((observable, oldValue, newValue) -> updateDisplay()));
+        this.heightSlider.valueProperty().addListener((observable, oldValue, newValue) -> updateDisplay());
     }
 
     private void updateDisplay() {
-        fullLabel.setText("Full: [" + image.getFullWidth() + ", " + image.getFullHeight() + "]");
-        gameLabel.setText("Game: [" + this.width + ", " + this.height + "]");
-
+        SETTINGS.invalidateRenderCache();
         BufferedImage image = this.image.toBufferedImage(SETTINGS);
-
         Graphics2D graphics = image.createGraphics();
         graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .5F));
-        graphics.setPaint(COLORS[this.colorIndex]);
+        graphics.setPaint(Utils.toAWTColor(this.bgColor.getValue()));
 
         int imgWidth = image.getWidth();
         int imgHeight = image.getHeight();
-        int xClip = (imgWidth - this.width) / 2;
-        int yClip = (imgHeight - this.height) / 2;
+        int xClip = (imgWidth - (int) this.widthSlider.getValue()) / 2;
+        int yClip = (imgHeight - (int) this.heightSlider.getValue()) / 2;
         int secondY = image.getHeight() - yClip;
 
         graphics.fillRect(0, 0, imgWidth, yClip);
@@ -97,10 +75,7 @@ public class ImagePaddingController implements Initializable {
         graphics.fillRect(imgWidth - xClip, yClip, xClip, secondY - yClip);
         graphics.dispose();
 
-        boolean scale = this.scaleCheckBox.isSelected();
-        imageView.setFitWidth(scale ? GameImage.MAX_DIMENSION : imgWidth);
-        imageView.setFitHeight(scale ? GameImage.MAX_DIMENSION : imgHeight);
-        imageView.setImage(Utils.toFXImage(image, true));
+        imageView.setImage(Utils.toFXImage(image, false));
     }
 
     @FXML
@@ -110,60 +85,10 @@ public class ImagePaddingController implements Initializable {
 
     @FXML
     private void confirmChanges(ActionEvent evt) {
-        this.image.setIngameWidth(this.width);
-        this.image.setIngameHeight(this.height);
+        this.image.setIngameWidth((short) this.widthSlider.getValue());
+        this.image.setIngameHeight((short) this.heightSlider.getValue());
         this.controller.updateDisplay();
         this.stage.close();
-    }
-
-    @FXML
-    private void onScaleUpdate(ActionEvent evt) {
-        updateDisplay();
-    }
-
-    @FXML
-    private void changeColor(ActionEvent evt) {
-        this.colorIndex++;
-        if (this.colorIndex == COLORS.length)
-            this.colorIndex = 0;
-
-        updateDisplay();
-    }
-
-    @FXML
-    public void onUpArrow(ActionEvent evt) {
-        moveVertical(1);
-    }
-
-    @FXML
-    public void onDownArrow(ActionEvent evt) {
-        moveVertical(-1);
-    }
-
-    @FXML
-    public void onLeftArrow(ActionEvent evt) {
-        moveHorizontal(-1);
-    }
-
-    @FXML
-    public void onRightArrow(ActionEvent evt) {
-        moveHorizontal(1);
-    }
-
-    private void moveVertical(int amount) {
-        short newVal = (short) (this.height + amount);
-        if (newVal >= 0 && image.getFullHeight() >= newVal) {
-            this.height = newVal;
-            updateDisplay();
-        }
-    }
-
-    private void moveHorizontal(int amount) {
-        short newVal = (short) (this.width + amount);
-        if (newVal >= 0 && image.getFullWidth() >= newVal) {
-            this.width = newVal;
-            updateDisplay();
-        }
     }
 
     /**

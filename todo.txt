@@ -18,11 +18,11 @@ Issues / Features:
  - Support entity data fully on things like PS1 demo, prototype, etc.
  - Alt tabbing can break the keypress handler in editors, for instance it can keep moving if you were holding W, or it always applies the alt speed boost.
  - A scripting system would be really nice, probably JS, along with a place to type in code. It would make on the fly debugging and testing much easier.
+ - How about something which lets you view a Frogger script?
 
 UI Plans:
  - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.
  - Formbook editor should have flags be checkmarks, not just a flat number.
- - Image padding editor should be more clean and use sliders.
  - MOF animation viewer could use a slider too, which resets upon reaching the end.
 
 Map Editor:

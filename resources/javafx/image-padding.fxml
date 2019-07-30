@@ -4,25 +4,22 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
-            minWidth="-Infinity" prefHeight="305.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0"
+            minWidth="-Infinity" prefHeight="325.0" prefWidth="300.0" AnchorPane.bottomAnchor="0.0"
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
-            xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+            xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
     <children>
         <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" layoutX="-330.0" layoutY="14.0"
-                   pickOnBounds="true" preserveRatio="true" x="344.0" AnchorPane.leftAnchor="14.0"
+                   pickOnBounds="true" preserveRatio="true" x="344.0" AnchorPane.rightAnchor="14.0"
                    AnchorPane.topAnchor="14.0"/>
-        <Button layoutX="351.0" layoutY="200.0" mnemonicParsing="false" onAction="#onDownArrow" text="--"/>
-        <Button layoutX="348.0" layoutY="170.0" mnemonicParsing="false" onAction="#onUpArrow" text="++"/>
-        <Button layoutX="299.0" layoutY="195.0" mnemonicParsing="false" onAction="#onRightArrow" text="++"/>
-        <Button layoutX="270.0" layoutY="195.0" mnemonicParsing="false" onAction="#onLeftArrow" text="--"/>
-        <Button layoutX="272.0" layoutY="258.0" mnemonicParsing="false" onAction="#confirmChanges" text="Confirm"
-                AnchorPane.bottomAnchor="22.0" AnchorPane.rightAnchor="69.0"/>
-        <Button layoutX="348.0" layoutY="258.0" mnemonicParsing="false" onAction="#cancelChanges" text="Cancel"
-                AnchorPane.bottomAnchor="22.0" AnchorPane.rightAnchor="10.0"/>
-        <Label fx:id="fullLabel" layoutX="274.0" layoutY="14.0" text="Full: &lt;&gt;"/>
-        <Label fx:id="gameLabel" layoutX="274.0" layoutY="31.0" text="Game: &lt;&gt;"/>
-        <CheckBox fx:id="scaleCheckBox" layoutX="340.0" layoutY="113.0" mnemonicParsing="false"
-                  onAction="#onScaleUpdate" selected="true" text="Scale"/>
-        <Button layoutX="315.0" layoutY="130.0" mnemonicParsing="false" onAction="#changeColor" text="Next Color"/>
+        <Button layoutX="149.0" layoutY="271.0" mnemonicParsing="false" onAction="#confirmChanges" text="Confirm"
+                AnchorPane.bottomAnchor="6.0" AnchorPane.rightAnchor="66.0"/>
+        <Button layoutX="201.0" layoutY="271.0" mnemonicParsing="false" onAction="#cancelChanges" text="Cancel"
+                AnchorPane.bottomAnchor="6.0" AnchorPane.rightAnchor="14.0"/>
+        <Slider fx:id="widthSlider" blockIncrement="1.0" majorTickUnit="10.0" minorTickCount="0" prefWidth="256"
+                AnchorPane.bottomAnchor="35.0" AnchorPane.rightAnchor="14.0"/>
+        <Slider fx:id="heightSlider" blockIncrement="1.0" orientation="VERTICAL" prefHeight="256"
+                AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="14.0"/>
+        <ColorPicker fx:id="bgColor" editable="true" promptText="Select the overlay color."
+                     AnchorPane.bottomAnchor="6.0" AnchorPane.leftAnchor="14.0"/>
     </children>
 </AnchorPane>
