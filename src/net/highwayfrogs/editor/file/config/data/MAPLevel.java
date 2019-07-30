@@ -85,7 +85,7 @@ public enum MAPLevel {
      */
     public static MAPLevel getByName(String levelName) {
         for (MAPLevel testLevel : values())
-            if (levelName.toUpperCase().startsWith(levelName))
+            if (levelName.toUpperCase().startsWith(testLevel.getInternalName()))
                 return testLevel;
         return null;
     }

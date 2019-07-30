@@ -76,7 +76,6 @@ public class FroggerEXEInfo extends Config {
     private NameBank animationBank;
     private NameBank formBank;
     private NameBank entityBank;
-    private int ramSize;
 
     private DataReader reader;
     private byte[] exeBytes;
@@ -156,7 +155,6 @@ public class FroggerEXEInfo extends Config {
         this.musicAddress = getInt("musicAddress");
         this.bmpPointerAddress = getInt("bmpPointerAddress", 0);
         this.pickupDataAddress = getInt("pickupData", 0);
-        this.ramSize = getInt("ramSize", 0x00200000);
     }
 
     private void loadBanks() {
