@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.SkyLand;
+import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -55,7 +56,7 @@ public class FroggerEXEInfo extends Config {
     private List<FormEntry> fullFormBook = new ArrayList<>();
     private short[] cosEntries = new short[ACOSTABLE_ENTRIES];
     private short[] sinEntries = new short[ACOSTABLE_ENTRIES];
-    private List<PickupData> pickupData;
+    private PickupData[] pickupData;
     private String internalName;
     private boolean hasConfigIdentifier;
 
@@ -91,6 +92,7 @@ public class FroggerEXEInfo extends Config {
     private static final String CHILD_RESTORE_MAP_BOOK = "MapBookRestore";
     private static final String CHILD_RESTORE_THEME_BOOK = "ThemeBookRestore";
     private static final String CHILD_IMAGE_NAMES = "ImageNames";
+    private static final String CHILD_MOF_FORCE_VLO = "ForceVLO";
 
     public FroggerEXEInfo(File inputExe, InputStream inputStream, String internalName, boolean hasConfigIdentifier) {
         super(inputStream);
@@ -177,15 +179,15 @@ public class FroggerEXEInfo extends Config {
         if (getPickupDataAddress() == 0)
             return;
 
-        this.pickupData = new ArrayList<>();
+        this.pickupData = new PickupData[FlyScoreType.values().length];
         getReader().setIndex(getPickupDataAddress());
 
-        long tempPointer; // NOTE: This might just be a fixed-size array which matches the amount of fly types.
-        while ((tempPointer = getReader().readUnsignedIntAsLong()) != 0 && tempPointer != 1) {
+        for (int i = 0; i < this.pickupData.length; i++) {
+            long tempPointer = getReader().readUnsignedIntAsLong();
             getReader().jumpTemp((int) (tempPointer - getRamPointerOffset()));
             PickupData pickupData = new PickupData();
             pickupData.load(getReader());
-            getPickupData().add(pickupData);
+            this.pickupData[i] = pickupData;
             getReader().jumpReturn();
         }
     }
@@ -566,13 +568,7 @@ public class FroggerEXEInfo extends Config {
      * @return matchingImage - May be null.
      */
     public GameImage getImageFromPointer(long pointer) {
-        int textureId = getTextureIdFromPointer(pointer);
-        return getMWD().resolveForEachFile(VLOArchive.class, vloFile -> {
-            for (GameImage image : vloFile.getImages())
-                if (image.getTextureId() == textureId)
-                    return image;
-            return null;
-        });
+        return getMWD().getImageByTextureId(getTextureIdFromPointer(pointer));
     }
 
     /**
@@ -763,5 +759,22 @@ public class FroggerEXEInfo extends Config {
      */
     public boolean isRetail() {
         return !isDemo() && !isPrototype();
+    }
+
+    /**
+     * Get the forced VLO file for a given string.
+     * @param name The name to get the vlo for.
+     * @return forcedVLO
+     */
+    public VLOArchive getForcedVLO(String name) {
+        if (!hasChild(CHILD_MOF_FORCE_VLO))
+            return null;
+
+        Config childConfig = getChild(CHILD_MOF_FORCE_VLO);
+        if (!childConfig.has(name))
+            return null;
+
+        String vloName = childConfig.getString(name);
+        return getMWD().resolveForEachFile(VLOArchive.class, vlo -> vlo.getFileEntry().getDisplayName().startsWith(vloName) ? vlo : null);
     }
 }

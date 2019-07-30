@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
+import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry.FormLibFlag;
@@ -368,7 +369,14 @@ public class MAPController extends EditorController<MAPFile> {
 
                 if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
                     MOFHolder holder = (MOFHolder) wadEntry.getFile();
-                    holder.setVloFile((getFile().getConfig().isPSX() && (wadEntry.getDisplayName().contains("CHECKPOINT") || wadEntry.getDisplayName().contains("GEN_GOLD_FROG"))) ? getFile().getMWD().getAllFiles(VLOArchive.class).get(0) : themeBook.getVLO(getFile())); // There's a special-case to use general VLO for these guys.
+
+                    // Setup VLO.
+                    VLOArchive vlo = getFile().getConfig().getForcedVLO(wadEntry.getDisplayName());
+                    if (vlo == null)
+                        vlo = themeBook.getVLO(getFile());
+                    holder.setVloFile(vlo);
+
+                    // Setup MeshView.
                     MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
                     view.setMaterial(holder.getTextureMap().getPhongMaterial());
                     view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.X_AXIS));
@@ -394,8 +402,12 @@ public class MAPController extends EditorController<MAPFile> {
                 flyType = ((EntityFatFireFly) entity.getEntityData()).getType();
 
             if (flyType != null) {
-                material = Utils.makeSpecialMaterial(config.getImageFromPointer(config.getPickupData().get(flyType.ordinal()).getImagePointers().get(0)).toFXImage());
-                entityIconSize /= 2;
+                PickupData pickupData = config.getPickupData()[flyType.ordinal()];
+                GameImage flyImage = config.getImageFromPointer(pickupData.getImagePointers().get(0));
+                if (flyImage != null) { // This can be null in the EU PS1 demo. (It may not have properly been setup when compiled.)
+                    material = Utils.makeSpecialMaterial(flyImage.toFXImage());
+                    entityIconSize /= 2;
+                }
             }
         }
 
@@ -457,8 +469,7 @@ public class MAPController extends EditorController<MAPFile> {
      * Calculate geometric center point of selected polygon.
      * @return Center of selected polygon, else null.
      */
-    public SVector getCenterOfSelectedPolygon()
-    {
+    public SVector getCenterOfSelectedPolygon() {
         if (getSelectedPolygon() != null) {
             int[] vertexIndices = getSelectedPolygon().getVertices();
 
