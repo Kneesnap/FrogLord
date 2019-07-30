@@ -43,6 +43,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
@@ -366,7 +367,7 @@ public class MAPController extends EditorController<MAPFile> {
 
                 if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
                     MOFHolder holder = (MOFHolder) wadEntry.getFile();
-                    holder.setVloFile(themeBook.getVLO(getFile()));
+                    holder.setVloFile((getFile().getConfig().isPSX() && (wadEntry.getDisplayName().contains("CHECKPOINT") || wadEntry.getDisplayName().contains("GEN_GOLD_FROG"))) ? getFile().getMWD().getAllFiles(VLOArchive.class).get(0) : themeBook.getVLO(getFile())); // There's a special-case to use general VLO for these guys.
                     MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
                     view.setMaterial(holder.getTextureMap().getPhongMaterial());
                     view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.X_AXIS));
