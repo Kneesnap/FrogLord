@@ -15,7 +15,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridSquareFlag;
@@ -25,12 +24,14 @@ import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
 import net.highwayfrogs.editor.file.map.zone.CameraZone;
+import net.highwayfrogs.editor.file.map.zone.CameraZone.CameraZoneFlag;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.map.zone.ZoneRegion;
 import net.highwayfrogs.editor.file.map.zone.ZoneRegion.RegionEditState;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -66,9 +67,9 @@ public class GridController implements Initializable {
     @FXML private Button removeRegionButton;
     @FXML private CheckBox zoneEditorCheckBox;
     @FXML private CheckBox zoneFinderCheckBox;
-    @FXML private TextField flagTextField;
     @FXML private TextField directionTextField;
     @FXML private GridPane cameraPane;
+    @FXML private GridPane flagGrid;
 
     private Stage stage;
     private MapUIController controller;
@@ -81,6 +82,7 @@ public class GridController implements Initializable {
     private int selectedLayer;
     private double tileWidth;
     private double tileHeight;
+    private CheckBox[] zoneFlagMap = new CheckBox[CameraZoneFlag.values().length];
 
     private static final int DEFAULT_REGION_ID = 0;
     private static final int DEFAULT_ZONE_ID = 0;
@@ -159,12 +161,19 @@ public class GridController implements Initializable {
             setSelectedStack(stack);
         });
 
-        Utils.setHandleKeyPress(this.flagTextField, text -> {
-            if (!Utils.isInteger(text))
-                return false;
-            getSelectedZone().getCameraZone().setFlags(Integer.parseInt(text));
-            return true;
-        }, null);
+        for (int i = 0; i < CameraZoneFlag.values().length; i++) {
+            CameraZoneFlag flag = CameraZoneFlag.values()[i];
+            int row = (i / 2);
+            int column = (i % 2);
+
+            CheckBox newBox = new CheckBox(flag.getDisplayName());
+            GridPane.setRowIndex(newBox, row);
+            GridPane.setColumnIndex(newBox, column);
+            flagGrid.getChildren().add(newBox);
+            zoneFlagMap[i] = newBox;
+
+            newBox.selectedProperty().addListener(((observable, oldValue, newValue) -> getSelectedZone().getCameraZone().setFlag(flag, newValue)));
+        }
 
         Utils.setHandleKeyPress(this.directionTextField, text -> {
             if (!Utils.isSignedShort(text))
@@ -415,13 +424,15 @@ public class GridController implements Initializable {
         removeZoneButton.setDisable(!hasZone);
         regionSelector.setDisable(!hasZone);
         addRegionButton.setDisable(!hasZone);
-        flagTextField.setDisable(!hasZone);
+        flagGrid.setDisable(!hasZone);
         directionTextField.setDisable(!hasZone);
         cameraPane.setDisable(!hasZone);
 
         if (hasZone) {
             CameraZone camZone = newZone.getCameraZone();
-            flagTextField.setText(Integer.toString(camZone.getFlags()));
+            for (CameraZoneFlag zoneFlag : CameraZoneFlag.values())
+                zoneFlagMap[zoneFlag.ordinal()].setSelected(camZone.testFlag(zoneFlag));
+
             directionTextField.setText(Short.toString(camZone.getForceDirection()));
             setupVectorEditor(1, 1, camZone.getNorthSourceOffset());
             setupVectorEditor(2, 1, camZone.getNorthTargetOffset());
