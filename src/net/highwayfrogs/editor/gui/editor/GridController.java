@@ -70,6 +70,7 @@ public class GridController implements Initializable {
     @FXML private TextField directionTextField;
     @FXML private GridPane cameraPane;
     @FXML private GridPane flagGrid;
+    @FXML private Button hideZoneButton;
 
     private Stage stage;
     private MapUIController controller;
@@ -188,6 +189,11 @@ public class GridController implements Initializable {
         regionSelector.setConverter(new AbstractStringConverter<>(value -> value == DEFAULT_REGION_ID ? "Main Region" : "Region #" + value));
         regionSelector.valueProperty().addListener((observable, oldValue, newValue) -> setSelectedRegion(getSelectedZone(), newValue == null ? 0 : newValue));
         zoneEditorCheckBox.selectedProperty().addListener(((observable, oldValue, newValue) -> updateCanvas()));
+        hideZoneButton.setOnAction(evt -> {
+            zoneSelector.valueProperty().setValue(null);
+            zoneSelector.getSelectionModel().select(null);
+            updateCanvas();
+        });
 
         graphics = gridCanvas.getGraphicsContext2D();
         updateCanvas();
@@ -427,6 +433,8 @@ public class GridController implements Initializable {
         flagGrid.setDisable(!hasZone);
         directionTextField.setDisable(!hasZone);
         cameraPane.setDisable(!hasZone);
+        hideZoneButton.setDisable(!hasZone);
+        zoneEditorCheckBox.setDisable(!hasZone);
 
         if (hasZone) {
             CameraZone camZone = newZone.getCameraZone();

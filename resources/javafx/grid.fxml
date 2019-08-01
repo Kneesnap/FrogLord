@@ -115,6 +115,8 @@
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                     </rowConstraints>
                 </GridPane>
+                <Button fx:id="hideZoneButton" layoutX="330.0" layoutY="216.0" mnemonicParsing="false" text="Hide Zone"
+                        AnchorPane.bottomAnchor="9.0" AnchorPane.rightAnchor="11.0"/>
             </children>
         </AnchorPane>
     </children>

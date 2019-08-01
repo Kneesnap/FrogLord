@@ -96,18 +96,20 @@ public class MAPFile extends GameFile {
     private static final String VERSION = "2.00";
     private static final String COMMENT = "Maybe this time it'll all work fine...";
     private static final int COMMENT_BYTES = 64;
-    private static final String GENERAL_SIGNATURE = "GENE";
-    private static final String PATH_SIGNATURE = "PATH";
-    private static final String ZONE_SIGNATURE = "ZONE";
-    private static final String FORM_SIGNATURE = "FORM";
-    private static final String ENTITY_SIGNATURE = "EMTP";
-    private static final String GRAPHICAL_SIGNATURE = "GRAP";
-    private static final String LIGHT_SIGNATURE = "LITE";
-    private static final String GROUP_SIGNATURE = "GROU";
-    private static final String POLYGON_SIGNATURE = "POLY"; // Supported.
-    private static final String VERTEX_SIGNATURE = "VRTX"; // Supported.
-    private static final String GRID_SIGNATURE = "GRID";
-    private static final String ANIMATION_SIGNATURE = "ANIM";
+    private static final String GENERAL_SIGNATURE = "GENE"; // General Header
+    private static final String PATH_SIGNATURE = "PATH"; // Path Table Packet
+    private static final String ZONE_SIGNATURE = "ZONE"; // Zone Table Packet
+    private static final String FORM_SIGNATURE = "FORM"; // Form Instance Table Packet. Forms are wrappers for MOFS in the world. Their primary function is to define behavior for models used in-game and to have multiple reactions on different parts of a model. Original Tool: Formy.
+    private static final String ENTITY_SIGNATURE = "EMTP"; // Entity Markers Table Packet
+    private static final String GRAPHICAL_SIGNATURE = "GRAP"; // Graphic Map Header. (Formerly "GRMP")
+    private static final String LIGHT_SIGNATURE = "LITE"; // Lights Chunk
+    private static final String GROUP_SIGNATURE = "GROU"; // Group Header
+    private static final String POLYGON_SIGNATURE = "POLY"; // Formerly "QUAD" (Quad Chunk)
+    private static final String VERTEX_SIGNATURE = "VRTX"; // Vertex Chunk
+    private static final String GRID_SIGNATURE = "GRID"; // Grid Chunk
+    private static final String ANIMATION_SIGNATURE = "ANIM"; // Anim Chunk
+    // Removed chunks:
+    // "STND" - Standard Chunk, Contained general information like camera data, heights, etc, which seems to have been completely eliminated.
 
     public static final short MAP_ANIMATION_TEXTURE_LIST_TERMINATOR = (short) 0xFFFF;
     private static final int TOTAL_CHECKPOINT_TIMER_ENTRIES = 5;
