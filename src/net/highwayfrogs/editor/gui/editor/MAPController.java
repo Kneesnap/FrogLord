@@ -56,8 +56,6 @@ import java.util.List;
 
 /**
  * Sets up the map editor.
- * TODO: Create interface for adding faces.
- * TODO: Create a path editor.
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter

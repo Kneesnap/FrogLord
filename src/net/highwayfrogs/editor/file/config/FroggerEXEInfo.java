@@ -660,7 +660,7 @@ public class FroggerEXEInfo extends Config {
 
         SkyLand skyLand = getMWD().getSkyLand();
         for (int i = 0; i < skyLand.getMaxIndex(); i++) {
-            vramCWriter.write("1791");
+            vramCWriter.write("1791"); // TODO: Use real sky_land data.
             vramCWriter.write(", ");
         }
 
