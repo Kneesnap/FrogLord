@@ -288,9 +288,9 @@ public class MapUIController implements Initializable {
             this.geometryEditor = new GUIEditorGrid(geometryGridPane);
 
         this.geometryEditor.clearEditor();
-        this.geometryEditor.addBoldLabel("Collision Grid:");
-        this.geometryEditor.addButton("Edit Grid", () -> GridController.openGridEditor(this));
-        this.geometryEditor.addCheckBox("Toggle Polygon Visibility", this.looseMeshData != null, this::updateVisibility);
+        this.geometryEditor.addButton("Edit Collision Grid", () -> GridController.openGridEditor(this));
+        this.geometryEditor.addCheckBox("Highlight Invisible Polygons", this.looseMeshData != null, this::updateVisibility);
+        this.geometryEditor.addSeparator(25);
 
         MAPPolygon showPolygon = getController().getSelectedPolygon();
         if (showPolygon != null) {
