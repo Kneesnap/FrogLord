@@ -60,6 +60,8 @@
                                   text="Edit Level Info"/>
                         <MenuItem fx:id="formLibEditor" mnemonicParsing="false" onAction="#editFormBook"
                                   text="Edit Form Library"/>
+                        <MenuItem fx:id="scriptEditor" mnemonicParsing="false" onAction="#editScript"
+                                  text="Edit Scripts"/>
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">

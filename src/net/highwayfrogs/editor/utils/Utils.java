@@ -1322,6 +1322,34 @@ public class Utils {
     public static void makeErrorPopUp(String message, Exception ex, boolean printException) {
         if (printException)
             ex.printStackTrace();
-        new Alert(AlertType.ERROR, (message != null && message.length() > 0 ? message + "\n" : "") + "Error: " + ex.getMessage(), ButtonType.OK).showAndWait();
+        new Alert(AlertType.ERROR, (message != null && message.length() > 0 ? message + Constants.NEWLINE : "") + "Error: " + ex.getMessage(), ButtonType.OK).showAndWait();
+    }
+
+    /**
+     * Removes duplicate spaces from a given string.
+     * @param toRemove The string to remove spaces from.
+     * @return cleanStr
+     */
+    public static String removeDuplicateSpaces(String toRemove) {
+        return replaceDouble(toRemove, ' ').replaceAll(" $", ""); // Removes trailing space.
+    }
+
+    /**
+     * Replace instances of duplicate characters with one of that character.
+     * @param str       The string to modify.
+     * @param character The character to replace.
+     * @return cleanString
+     */
+    public static String replaceDouble(String str, char character) {
+        StringBuilder output = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            char temp = str.charAt(i);
+            output.append(temp);
+            if (temp == character) // Skip the double characters.
+                while (str.length() > i + 1 && str.charAt(i + 1) == character)
+                    i++;
+        }
+
+        return output.toString();
     }
 }

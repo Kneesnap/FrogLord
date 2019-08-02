@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
+import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.SkyLand;
 import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
@@ -54,11 +55,13 @@ public class FroggerEXEInfo extends Config {
     private List<LevelInfo> allLevelInfo = new ArrayList<>();
     private List<Long> bmpTexturePointers = new ArrayList<>();
     private List<FormEntry> fullFormBook = new ArrayList<>();
+    private List<FroggerScript> scripts = new ArrayList<>();
     private short[] cosEntries = new short[ACOSTABLE_ENTRIES];
     private short[] sinEntries = new short[ACOSTABLE_ENTRIES];
     private PickupData[] pickupData;
     private String internalName;
     private boolean hasConfigIdentifier;
+
 
     private String name;
     private long ramPointerOffset;
@@ -70,6 +73,7 @@ public class FroggerEXEInfo extends Config {
     private int bmpPointerAddress;
     private int musicAddress;
     private int pickupDataAddress;
+    private int scriptArrayAddress;
     private boolean prototype;
     private boolean demo;
     private TargetPlatform platform;
@@ -77,6 +81,7 @@ public class FroggerEXEInfo extends Config {
     private NameBank animationBank;
     private NameBank formBank;
     private NameBank entityBank;
+    private NameBank scriptBank; // Name of scripts.
 
     private DataReader reader;
     private byte[] exeBytes;
@@ -136,6 +141,7 @@ public class FroggerEXEInfo extends Config {
         readPickupData();
         readThemeLibrary();
         readMapLibrary();
+        readScripts();
         readRemapData();
         readMusicData();
         readLevelData();
@@ -157,6 +163,7 @@ public class FroggerEXEInfo extends Config {
         this.musicAddress = getInt("musicAddress"); // Music is generally always the same data, so you can find it with a search.
         this.bmpPointerAddress = getInt("bmpPointerAddress", 0); // Gives output to assist in finding.
         this.pickupDataAddress = getInt("pickupData", 0); // Pointer to Pickup_data[] in ent_gen. If this is not set, bugs will not have textures in the viewer. On PSX, search for 63 63 63 00 then after this entries image pointers, there's Pickup_data.
+        this.scriptArrayAddress = getInt("scripts", 0); // Get this by searching for "07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1e 00 00 00 03 00 00 00 01 00 00 00 07 00 00 00". Search for the pointer that points to this (Don't forget to include ramOffset)
     }
 
     private void loadBanks() {
@@ -164,6 +171,7 @@ public class FroggerEXEInfo extends Config {
         this.animationBank = loadBank("animList", "main-pc", "anims", (bank, index) -> bank.size() <= 1 ? "Default Animation" : "Animation " + index);
         this.formBank = loadBank("formList", "main", "forms", "Form");
         this.entityBank = loadBank("entityList", "main", "entities", "Entity");
+        this.scriptBank = loadBank("scriptList", "main", "scripts", "Script");
     }
 
     private NameBank loadBank(String configKey, String defaultBank, String bankName, String unknownName) {
@@ -286,6 +294,26 @@ public class FroggerEXEInfo extends Config {
             Utils.verify(level != null, "Unknown level: '%s'", key);
             Utils.verify(level.isExists(), "Cannot modify %s, its level doesn't exist.", key);
             getMapBook(level).handleCorrection(mapBookRestore.getString(key));
+        }
+    }
+
+    private void readScripts() {
+        if (getScriptArrayAddress() == 0)
+            return; // Wasn't specified.
+
+        getReader().setIndex(getScriptArrayAddress());
+        for (int i = 0; i < getScriptBank().size(); i++) {
+            long address = reader.readUnsignedIntAsLong();
+            if (address == 0) { // Default / null.
+                getScripts().add(FroggerScript.EMPTY_SCRIPT);
+                continue;
+            }
+
+            getReader().jumpTemp((int) (address - getRamPointerOffset()));
+            FroggerScript newScript = new FroggerScript();
+            getScripts().add(newScript); // Adds before loading so getName() can be accessed.
+            newScript.load(getReader());
+            getReader().jumpReturn();
         }
     }
 

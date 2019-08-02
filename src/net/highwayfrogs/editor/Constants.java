@@ -26,7 +26,6 @@ public class Constants {
 
     public static final int BITS_PER_BYTE = 8;
 
-    public static final String DEV_ISLAND_NAME = "ISLAND.MAP";
     public static final String SKY_LAND_PREFIX = "SKY_LAND";
 
     public static final String VERSION = "v0.5.0";

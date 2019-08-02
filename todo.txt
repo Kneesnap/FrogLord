@@ -22,6 +22,4 @@ Map Editor:
  - Form Resizing? General resizing of fixed size things?
  - Path editor shows selected path, which updates as you update the path information.
  - Path editor needs to be fully editable. Add spline data and verify other types are editable.
-
-Maybe:
- - Frogger script viewer. (Needs registry of commands and the pointer to the script table.
+ - Grid Editor: Allow selecting a polygon in the world to find a grid square for.

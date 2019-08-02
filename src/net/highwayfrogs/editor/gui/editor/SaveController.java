@@ -10,6 +10,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.stage.Stage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -83,7 +84,7 @@ public class SaveController implements Initializable {
             } catch (FileNotFoundException ex) { // Can happen when you don't have permission to write to this file, or the file is read-only, etc.
                 Platform.runLater(() -> {
                     saveController.getStage().close();
-                    Utils.makeErrorPopUp("Failed to save file.\nDo you have permission to save in this folder?", ex, false);
+                    Utils.makeErrorPopUp("Failed to save file." + Constants.NEWLINE + "Do you have permission to save in this folder?", ex, false);
                 });
                 return null;
             }

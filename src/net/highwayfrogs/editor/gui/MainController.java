@@ -25,6 +25,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.editor.EditorController;
 import net.highwayfrogs.editor.gui.editor.SaveController;
+import net.highwayfrogs.editor.gui.editor.ScriptEditorController;
 import net.highwayfrogs.editor.gui.extra.FormEntryController;
 import net.highwayfrogs.editor.gui.extra.LevelInfoController;
 import net.highwayfrogs.editor.utils.Utils;
@@ -48,6 +49,7 @@ public class MainController implements Initializable {
     @FXML private TextArea consoleText;
     @FXML private MenuItem levelInfoEditor;
     @FXML private MenuItem formLibEditor;
+    @FXML private MenuItem scriptEditor;
     private MWDFile mwdFile;
     private ListView<GameFile> currentFilesList;
 
@@ -99,6 +101,7 @@ public class MainController implements Initializable {
         FroggerEXEInfo config = mwdFile.getConfig();
         levelInfoEditor.setDisable(config.getArcadeLevelAddress() == 0);
         formLibEditor.setDisable(config.getFullFormBook().isEmpty());
+        scriptEditor.setDisable(config.getScripts().isEmpty());
     }
 
     private void addFileList(int type, String name, Map<Integer, ObservableList<GameFile>> fileMap) {
@@ -184,6 +187,11 @@ public class MainController implements Initializable {
     @FXML
     private void editFormBook(ActionEvent evt) {
         FormEntryController.openEditor(GUIMain.EXE_CONFIG);
+    }
+
+    @FXML
+    private void editScript(ActionEvent evt) {
+        ScriptEditorController.openEditor();
     }
 
     @FXML
