@@ -13,9 +13,9 @@ import java.util.List;
  * A frogger script.
  * Created by Kneesnap on 8/1/2019.
  */
-@Getter
 public class FroggerScript extends GameObject {
-    private List<ScriptCommand> commands = new ArrayList<>();
+    @Getter private List<ScriptCommand> commands = new ArrayList<>();
+    private int maxSize;
     public static final FroggerScript EMPTY_SCRIPT = new FroggerScript();
 
     @Override
@@ -26,6 +26,8 @@ public class FroggerScript extends GameObject {
             lastCommand.load(reader);
             getCommands().add(lastCommand);
         }
+
+        this.maxSize = getSize();
     }
 
     @Override
@@ -49,5 +51,24 @@ public class FroggerScript extends GameObject {
     public String getName() {
         int index = getConfig().getScripts().indexOf(this);
         return index != -1 ? getConfig().getScriptBank().getName(index) : "Unnamed Script";
+    }
+
+    /**
+     * Gets the total amount of integers this script takes up.
+     * @return size
+     */
+    public int getSize() {
+        int totalSize = 0;
+        for (int i = 0; i < getCommands().size(); i++)
+            totalSize += getCommands().get(i).getCommandType().getSize();
+        return totalSize;
+    }
+
+    /**
+     * Test if the size of this script is larger than the max allowed size.
+     * @return isTooLarge
+     */
+    public boolean isTooLarge() {
+        return getSize() > this.maxSize;
     }
 }

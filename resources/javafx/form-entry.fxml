@@ -15,10 +15,10 @@
                   AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="46.0"/>
         <ComboBox fx:id="deathSelector" layoutX="64.0" layoutY="71.0" prefHeight="25.0" prefWidth="111.0"
                   AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="71.0"/>
-        <Label layoutX="10.0" layoutY="42.0" text="Script ID: " AnchorPane.leftAnchor="7.0"
+        <Label fx:id="scriptIdLabel" layoutX="10.0" layoutY="42.0" text="Script: " AnchorPane.leftAnchor="7.0"
                AnchorPane.topAnchor="125.0"/>
         <TextField fx:id="scriptIdField" alignment="CENTER_RIGHT" layoutX="120.0" layoutY="46.0" prefHeight="25.0"
-                   prefWidth="111.0" AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="121.0"/>
+                   prefWidth="111.0" visible="false" AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="121.0"/>
         <Label layoutX="10.0" layoutY="75.0" text="Entity: " AnchorPane.leftAnchor="7.0" AnchorPane.topAnchor="50.0"/>
         <TextField fx:id="wadIndexField" alignment="CENTER_RIGHT" layoutX="120.0" layoutY="96.0" prefHeight="25.0"
                    prefWidth="111.0" AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="96.0"/>
@@ -47,5 +47,9 @@
                 <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES"/>
             </rowConstraints>
         </GridPane>
+        <Button fx:id="editButton" layoutX="149.0" layoutY="121.0" mnemonicParsing="false" text="Edit"
+                AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="121.0"/>
+        <ComboBox fx:id="scriptSelector" layoutX="45.0" layoutY="121.0" prefHeight="25.0" prefWidth="118.0"
+                  AnchorPane.leftAnchor="45.0" AnchorPane.topAnchor="121.0"/>
     </children>
 </AnchorPane>

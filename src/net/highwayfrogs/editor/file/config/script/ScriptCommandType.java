@@ -1,66 +1,74 @@
 package net.highwayfrogs.editor.file.config.script;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.config.script.format.BankFormatter;
+import net.highwayfrogs.editor.file.config.script.format.EnumFormatter;
+import net.highwayfrogs.editor.file.config.script.format.ScriptFormatter;
 
 /**
  * A registry of script command types.
  * Created by Kneesnap on 8/1/2019.
  */
 @Getter
-@AllArgsConstructor
 public enum ScriptCommandType {
-    WAIT_UNTIL_TIMER(3),
-    WAIT_UNTIL_ACTION_FINISHED(1),
-    WAIT_UNTIL_PATH_END(1),
-    SET_ACTION(2),
-    PLAY_SOUND(2),
-    RESTART(1),
-    END(1),
-    SET_TIMER(3),
-    DEVIATE(6),
-    WAIT_DEVIATED(1),
-    PLAY_RNDSOUND(3),
-    SETLOOP(1),
-    ENDLOOP(1),
-    SCRIPT_IF(5),
-    BREAKLOOP_IF_TIMER(3),
-    PAUSE_ENTITY_ON_PATH(1),
-    UNPAUSE_ENTITY_ON_PATH(1),
-    ROTATE(5),
-    WAIT_UNTIL_ROTATED(1),
-    HOME_IN_ON_FROG(4),
-    RETURN_GOSUB_IF(2),
-    EJECT_FROG(4),
-    CHOOSE_RND_CHECKPOINT(1),
-    APPEAR_ENTITY(1),
-    DISAPPEAR_ENTITY(1),
-    START_SCRIPT(2),
-    AWARD_FROG_POINTS(2),
-    AWARD_FROG_LIVES(2),
-    AWARD_FROG_TIME(2),
-    STOP_ROTATE(1),
-    STOP_DEVIATE(1),
-    PREPARE_REGISTERS(3),
-    CLEAR_DEVIATE(1),
-    RETURN_DEVIATE(4),
-    REGISTER_CALLBACK(5),
-    SET_ENTITY_TYPE(2),
-    PLAY_SOUND_DISTANCE(6),
-    PLAY_MOVING_SOUND(5),
-    STOP(1),
-    MUTATE_MESH_COLOR(1),
-    NO_COLL_CHECKPOINT(1),
-    COLL_CHECKPOINT(1),
-    KILL_SAFE_FROG(3),
-    CHANGE_ENTITY_ANIM(2),
-    CREATE_3D_SPRITE(2),
-    PITCH_BEND_MOVING_SOUND(7),
-    POP(1),
-    NO_COLLISION(1),
-    COLLISION(1);
+    WAIT_UNTIL_TIMER(EnumFormatter.FORMAT_REGISTER_TOGGLE, null),
+    WAIT_UNTIL_ACTION_FINISHED(),
+    WAIT_UNTIL_PATH_END(),
+    SET_ACTION((ScriptFormatter) null),
+    PLAY_SOUND(BankFormatter.SOUND_INSTANCE),
+    RESTART(),
+    END(),
+    SET_TIMER(EnumFormatter.FORMAT_REGISTER_TOGGLE, null),
+    DEVIATE(EnumFormatter.FORMAT_REGISTER_TOGGLE, EnumFormatter.FORMAT_DIRECTION, null, null, null),
+    WAIT_DEVIATED(),
+    PLAY_RNDSOUND(BankFormatter.SOUND_INSTANCE, null), // sound, chance
+    SETLOOP(),
+    ENDLOOP(),
+    SCRIPT_IF(EnumFormatter.FORMAT_SCRIPT_OPTION, EnumFormatter.FORMAT_CONDITIONS, BankFormatter.SCRIPT_INSTANCE, null),
+    BREAKLOOP_IF_TIMER(EnumFormatter.FORMAT_REGISTER_TOGGLE, null),
+    PAUSE_ENTITY_ON_PATH(),
+    UNPAUSE_ENTITY_ON_PATH(),
+    ROTATE(EnumFormatter.FORMAT_DIRECTION, null, null, null),
+    WAIT_UNTIL_ROTATED(),
+    HOME_IN_ON_FROG(EnumFormatter.FORMAT_REGISTER_TOGGLE, EnumFormatter.FORMAT_REGISTER_IDS, EnumFormatter.FORMAT_REGISTER_IDS),
+    RETURN_GOSUB_IF(EnumFormatter.FORMAT_CONDITIONS),
+    EJECT_FROG(EnumFormatter.FORMAT_REGISTER_TOGGLE, null, null),
+    CHOOSE_RND_CHECKPOINT(),
+    APPEAR_ENTITY(),
+    DISAPPEAR_ENTITY(),
+    START_SCRIPT(BankFormatter.SCRIPT_INSTANCE),
+    AWARD_FROG_POINTS((ScriptFormatter) null),
+    AWARD_FROG_LIVES((ScriptFormatter) null),
+    AWARD_FROG_TIME((ScriptFormatter) null),
+    STOP_ROTATE(),
+    STOP_DEVIATE(),
+    PREPARE_REGISTERS(null, null),
+    CLEAR_DEVIATE(),
+    RETURN_DEVIATE(EnumFormatter.FORMAT_REGISTER_TOGGLE, EnumFormatter.FORMAT_DIRECTION, EnumFormatter.FORMAT_REGISTER_IDS),
+    REGISTER_CALLBACK(EnumFormatter.FORMAT_CALLBACK_IDS, BankFormatter.SCRIPT_INSTANCE, EnumFormatter.FORMAT_CONDITIONS, EnumFormatter.FORMAT_CALLBACK),
+    SET_ENTITY_TYPE(EnumFormatter.FORMAT_ENTITY_TYPE),
+    PLAY_SOUND_DISTANCE(EnumFormatter.FORMAT_REGISTER_TOGGLE, null, BankFormatter.SOUND_INSTANCE, EnumFormatter.FORMAT_DIRECTION, null),
+    PLAY_MOVING_SOUND(BankFormatter.SOUND_INSTANCE, EnumFormatter.FORMAT_REGISTER_TOGGLE, null, null),
+    STOP(),
+    MUTATE_MESH_COLOR(),
+    NO_COLL_CHECKPOINT(),
+    COLL_CHECKPOINT(),
+    KILL_SAFE_FROG(null, BankFormatter.SOUND_INSTANCE),
+    CHANGE_ENTITY_ANIM((ScriptFormatter) null),
+    CREATE_3D_SPRITE((ScriptFormatter) null),
+    PITCH_BEND_MOVING_SOUND(EnumFormatter.FORMAT_REGISTER_TOGGLE, null, null, null, null, null),
+    POP(),
+    NO_COLLISION(),
+    COLLISION();
 
-    private final int size;
+    private final ScriptFormatter[] formatters;
+
+    ScriptCommandType(ScriptFormatter... formatters) {
+        this.formatters = formatters;
+        for (int i = 0; i < this.formatters.length; i++)
+            if (this.formatters[i] == null)
+                this.formatters[i] = ScriptFormatter.INSTANCE; // Default.
+    }
 
     /**
      * Does this command end a script?
@@ -71,11 +79,19 @@ public enum ScriptCommandType {
     }
 
     /**
+     * Gets the total number of integers this command will use.
+     * @return size
+     */
+    public int getSize() {
+        return this.formatters.length + 1;
+    }
+
+    /**
      * Gets the amount of arguments this command takes.
      * @return argCount
      */
     public int getArgumentCount() {
-        return getSize() - 1;
+        return this.formatters.length;
     }
 
     /**

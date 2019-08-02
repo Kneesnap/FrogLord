@@ -4,11 +4,15 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
@@ -17,6 +21,7 @@ import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.config.script.ScriptCommand;
 import net.highwayfrogs.editor.file.config.script.ScriptCommandType;
+import net.highwayfrogs.editor.file.config.script.format.ScriptFormatter;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -33,16 +38,22 @@ public class ScriptEditorController implements Initializable {
     @FXML private VBox commandEditors;
     @FXML private TextFlow codeArea;
     @FXML private Button doneButton;
-    @FXML private Label warningLabel; //TODO: Warn about the possibility of it being too large.
+    @FXML private Label warningLabel;
     @FXML private Button printUsagesButton;
 
     private Stage stage;
+    private FroggerScript openScript;
 
-    private static final String STYLE_TEST1 = "-fx-fill: #4F8A10;-fx-font-weight:bold;-fx-font-family: Consolas;";
-    private static final String STYLE_TEST2 = "-fx-fill: RED;-fx-font-weight:normal;-fx-font-family: Consolas;";
+    private static final Font DISPLAY_FONT = Font.font("Consolas");
+    private static final String COMMAND_TYPE_STYLE = "-fx-fill: #4F8A10;-fx-font-weight:bold;";
 
     public ScriptEditorController(Stage stage) {
         this.stage = stage;
+    }
+
+    public ScriptEditorController(Stage stage, FroggerScript openScript) {
+        this(stage);
+        this.openScript = openScript;
     }
 
     @Override
@@ -51,10 +62,17 @@ public class ScriptEditorController implements Initializable {
         scriptSelector.setConverter(new AbstractStringConverter<>(FroggerScript::getName));
         scriptSelector.setItems(FXCollections.observableArrayList(GUIMain.EXE_CONFIG.getScripts()));
         scriptSelector.valueProperty().addListener(((observable, oldValue, newValue) -> updateCodeDisplay()));
-        scriptSelector.getSelectionModel().selectFirst();
+        if (this.openScript != null) {
+            scriptSelector.setValue(this.openScript);
+            scriptSelector.getSelectionModel().select(this.openScript);
+            this.openScript = null;
+        } else {
+            scriptSelector.getSelectionModel().selectFirst();
+        }
 
         // Setup Buttons.
         doneButton.setOnAction(evt -> stage.close());
+        printUsagesButton.setDisable(GUIMain.EXE_CONFIG.getFullFormBook().isEmpty()); // Disable searching if the form table isn't loaded.
         printUsagesButton.setOnAction(evt -> {
             FroggerScript script = this.scriptSelector.getValue();
             int id = GUIMain.EXE_CONFIG.getScripts().indexOf(script);
@@ -74,9 +92,12 @@ public class ScriptEditorController implements Initializable {
     public void updateCodeDisplay() {
         commandEditors.getChildren().clear();
         codeArea.getChildren().clear();
+        this.warningLabel.setVisible(false);
         FroggerScript currentScript = this.scriptSelector.getValue();
         if (currentScript == null)
             return;
+
+        this.warningLabel.setVisible(currentScript.isTooLarge());
 
         // Update editors.
         for (ScriptCommand command : currentScript.getCommands()) {
@@ -92,14 +113,19 @@ public class ScriptEditorController implements Initializable {
             for (int i = 0; i < command.getCommandType().getSize(); i++) {
                 Node node;
 
-                if (i == 0) { //TODO: On update.
+                if (i == 0) {
                     ComboBox<ScriptCommandType> typeChoiceBox = new ComboBox<>();
                     typeChoiceBox.setItems(FXCollections.observableArrayList(ScriptCommandType.values()));
                     typeChoiceBox.getSelectionModel().select(command.getCommandType());
                     typeChoiceBox.setValue(command.getCommandType());
                     node = typeChoiceBox;
+
+                    typeChoiceBox.valueProperty().addListener(((observable, oldValue, newValue) -> {
+                        command.setCommandType(newValue);
+                        updateCodeDisplay();
+                    }));
                 } else {
-                    node = new TextField(String.valueOf(command.getArguments()[i - 1]));
+                    node = command.getCommandType().getFormatters()[i - 1].makeEditor(this, command, i - 1);
                 }
 
                 pane.addColumn(i, node);
@@ -111,13 +137,16 @@ public class ScriptEditorController implements Initializable {
         // Update text view.
         for (ScriptCommand command : currentScript.getCommands()) {
             Text commandTypeText = new Text(command.getCommandType().name());
-            commandTypeText.setStyle(STYLE_TEST1);
+            commandTypeText.setStyle(COMMAND_TYPE_STYLE);
+            commandTypeText.setFont(DISPLAY_FONT);
             codeArea.getChildren().add(commandTypeText);
 
-            for (int argument : command.getArguments()) { //TODO: Use constants and apply color.
+            for (int i = 0; i < command.getArguments().length; i++) {
                 codeArea.getChildren().add(new Text(" "));
-                Text toAdd = new Text(String.valueOf(argument));
-                toAdd.setStyle(STYLE_TEST2);
+                ScriptFormatter formatter = command.getCommandType().getFormatters()[i];
+                Text toAdd = new Text(formatter.numberToString(command.getArguments()[i]));
+                toAdd.setStyle(formatter.getTextStyle());
+                toAdd.setFont(DISPLAY_FONT);
                 codeArea.getChildren().add(toAdd);
             }
 
@@ -130,5 +159,12 @@ public class ScriptEditorController implements Initializable {
      */
     public static void openEditor() {
         Utils.loadFXMLTemplate("script", "Script Editor", ScriptEditorController::new);
+    }
+
+    /**
+     * Opens the Script Editor and view a given script.
+     */
+    public static void openEditor(FroggerScript script) {
+        Utils.loadFXMLTemplate("script", "Script Editor", stage -> new ScriptEditorController(stage, script));
     }
 }

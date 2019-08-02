@@ -303,7 +303,7 @@ public class FroggerEXEInfo extends Config {
 
         getReader().setIndex(getScriptArrayAddress());
         for (int i = 0; i < getScriptBank().size(); i++) {
-            long address = reader.readUnsignedIntAsLong();
+            long address = getReader().readUnsignedIntAsLong();
             if (address == 0) { // Default / null.
                 getScripts().add(FroggerScript.EMPTY_SCRIPT);
                 continue;
@@ -386,6 +386,7 @@ public class FroggerEXEInfo extends Config {
         patchThemeLibrary(exeWriter);
         patchMapLibrary(exeWriter);
         patchRemapData(exeWriter);
+        patchScripts(exeWriter);
         patchMusicData(exeWriter);
         patchLevelData(exeWriter);
         patchBmpPointerData(exeWriter);
@@ -422,6 +423,25 @@ public class FroggerEXEInfo extends Config {
 
     private void patchRemapData(DataWriter exeWriter) {
         getMapLibrary().forEach(book -> book.saveRemapData(exeWriter, this));
+    }
+
+    private void patchScripts(DataWriter exeWriter) {
+        if (getScriptArrayAddress() == 0)
+            return; // Wasn't specified.
+
+        getReader().setIndex(getScriptArrayAddress());
+        for (int i = 0; i < getScripts().size(); i++) {
+            long address = getReader().readUnsignedIntAsLong();
+            if (address == 0) // Default / null.
+                continue;
+
+            FroggerScript script = getScripts().get(i);
+            if (script.isTooLarge())
+                System.out.println("WARNING: Saving " + script.getName() + ", which is larger than what is considered safe!");
+
+            exeWriter.setIndex((int) (address - getRamPointerOffset()));
+            script.save(exeWriter);
+        }
     }
 
     private void patchMusicData(DataWriter exeWriter) {

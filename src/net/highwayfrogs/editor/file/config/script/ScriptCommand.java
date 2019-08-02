@@ -35,8 +35,17 @@ public class ScriptCommand extends GameObject {
         StringBuilder builder = new StringBuilder();
         builder.append(getCommandType().name());
         for (int i = 0; i < this.arguments.length; i++)
-            builder.append(" ").append(this.arguments[i]); //TODO: Allow formatters to apply constants.
+            builder.append(" ").append(this.commandType.getFormatters()[i].numberToString(this.arguments[i]));
         return builder.toString();
+    }
+
+    /**
+     * Changes the ScriptCommandType.
+     * @param newType The new ScriptCommandType to use.
+     */
+    public void setCommandType(ScriptCommandType newType) {
+        this.commandType = newType;
+        this.arguments = new int[newType.getArgumentCount()];
     }
 
     /**
@@ -58,7 +67,7 @@ public class ScriptCommand extends GameObject {
 
         int[] arguments = new int[commandType.getArgumentCount()];
         for (int i = 0; i < arguments.length; i++)
-            arguments[i] = Integer.parseInt(split[i + 1]); //TODO: Use formatters to parse real thing.
+            arguments[i] = commandType.getFormatters()[i].stringToNumber(split[i + 1]);
 
         ScriptCommand newCommand = new ScriptCommand();
         newCommand.commandType = commandType;
