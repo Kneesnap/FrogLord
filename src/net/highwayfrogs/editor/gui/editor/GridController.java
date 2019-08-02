@@ -67,6 +67,7 @@ public class GridController implements Initializable {
     @FXML private Button removeRegionButton;
     @FXML private CheckBox zoneEditorCheckBox;
     @FXML private CheckBox zoneFinderCheckBox;
+    @FXML private Label directionLabel;
     @FXML private TextField directionTextField;
     @FXML private GridPane cameraPane;
     @FXML private GridPane flagGrid;
@@ -281,6 +282,23 @@ public class GridController implements Initializable {
     }
 
     @FXML
+    private void selectPolygon(ActionEvent evt) {
+        selectSquare(poly -> {
+            for (GridStack stack : getMap().getGridStacks()) {
+                for (GridSquare square : stack.getGridSquares()) {
+                    if (square.getPolygon() == poly) {
+                        setSelectedStack(stack);
+                        setSelectedSquare(stack, stack.getGridSquares().indexOf(square));
+                        return;
+                    }
+                }
+            }
+
+            setSelectedStack(null);
+        });
+    }
+
+    @FXML
     private void addLayer(ActionEvent evt) {
         if (getSelectedStack() == null)
             return;
@@ -435,6 +453,7 @@ public class GridController implements Initializable {
         cameraPane.setDisable(!hasZone);
         hideZoneButton.setDisable(!hasZone);
         zoneEditorCheckBox.setDisable(!hasZone);
+        directionLabel.setDisable(!hasZone);
 
         if (hasZone) {
             CameraZone camZone = newZone.getCameraZone();
