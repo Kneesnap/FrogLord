@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
+import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
@@ -763,7 +764,21 @@ public class MAPFile extends GameFile {
 
     @Override
     public Image getIcon() {
-        return ICON;
+        MAPLevel level = MAPLevel.getByName(getFileEntry().getDisplayName());
+
+        if (level != null) {
+            getConfig().getLevelImageMap().computeIfAbsent(level, key -> {
+                if (getConfig().getLevelInfoMap().isEmpty())
+                    return null;
+
+                LevelInfo info = getConfig().getLevelInfoMap().get(key);
+                if (info != null)
+                    return Utils.toFXImage(Utils.resizeImage(getConfig().getImageFromPointer(info.getLevelTexturePointer()).toBufferedImage(), 35, 35), false);
+                return null;
+            });
+        }
+
+        return getConfig().getLevelImageMap().getOrDefault(level, ICON);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.config;
 
+import javafx.scene.image.Image;
 import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -53,6 +54,7 @@ public class FroggerEXEInfo extends Config {
     private List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
     private List<LevelInfo> raceLevelInfo = new ArrayList<>();
     private List<LevelInfo> allLevelInfo = new ArrayList<>();
+    private Map<MAPLevel, LevelInfo> levelInfoMap = new HashMap<>();
     private List<Long> bmpTexturePointers = new ArrayList<>();
     private List<FormEntry> fullFormBook = new ArrayList<>();
     private List<FroggerScript> scripts = new ArrayList<>();
@@ -61,6 +63,7 @@ public class FroggerEXEInfo extends Config {
     private PickupData[] pickupData;
     private String internalName;
     private boolean hasConfigIdentifier;
+    private Map<MAPLevel, Image> levelImageMap = new HashMap<>();
 
 
     private String name;
@@ -352,6 +355,9 @@ public class FroggerEXEInfo extends Config {
 
         getAllLevelInfo().addAll(getArcadeLevelInfo());
         getAllLevelInfo().addAll(getRaceLevelInfo());
+
+        for (LevelInfo info : getAllLevelInfo())
+            levelInfoMap.put(info.getLevel(), info);
     }
 
     private void readBmpPointerData() {

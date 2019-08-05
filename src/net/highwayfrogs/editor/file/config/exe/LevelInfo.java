@@ -25,7 +25,7 @@ public class LevelInfo extends ExeStruct {
     private long worldImageSelectablePointer;
     private long worldImageVisitedPointer;
     private long worldImageNotTriedPointer;
-    private long levelTexturePointer;
+    private long levelTexturePointer; // The screenshot of the level.
     private long levelNameTexturePointer;
     private long levelNameTextureInGamePointer;
 
