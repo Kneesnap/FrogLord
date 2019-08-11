@@ -8,7 +8,7 @@
 <AnchorPane fx:id="rootPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
             minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0"
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
-            xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+            xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
     <children>
       <HBox prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -40,6 +40,10 @@
                                <Button fx:id="fixIslandButton" layoutX="8.0" layoutY="226.0" mnemonicParsing="false"
                                        onAction="#onFixIslandClicked" text="Fix Island Map"
                                        AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="8.0"
+                                       AnchorPane.rightAnchor="8.0"/>
+                               <Button layoutX="14.0" layoutY="201.0" mnemonicParsing="false" onAction="#makeNewMap"
+                                       prefHeight="25.0" prefWidth="124.0" text="Clear Map"
+                                       AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="8.0"
                                        AnchorPane.rightAnchor="8.0"/>
                            </children>
                         </AnchorPane>

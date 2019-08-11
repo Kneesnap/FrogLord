@@ -68,6 +68,7 @@ public class MAPController extends EditorController<MAPFile> {
     private MAPPolygon selectedPolygon;
     private MAPPolygon polygonImmuneToTarget;
     private boolean polygonSelected;
+    private boolean showGroupBounds;
 
     private RenderManager renderManager = new RenderManager();
     private CameraFPS cameraFPS;
@@ -146,6 +147,11 @@ public class MAPController extends EditorController<MAPFile> {
     @FXML
     private void onFixIslandClicked(ActionEvent event) {
         getFile().fixAsIslandMap();
+    }
+
+    @FXML
+    private void makeNewMap(ActionEvent event) {
+        getFile().randomizeMap();
     }
 
     @SneakyThrows
@@ -568,6 +574,31 @@ public class MAPController extends EditorController<MAPFile> {
         hideCursorPolygon();
         mapMesh.updateData();
         renderCursor(getSelectedPolygon());
+    }
+
+    /**
+     * Sets whether or not to show group bounds.
+     * @param newState The new show state.
+     */
+    public void setShowGroupBounds(boolean newState) {
+        this.showGroupBounds = newState;
+        updateGroupView();
+    }
+
+    /**
+     * Update the group display.
+     */
+    public void updateGroupView() {
+        getRenderManager().addMissingDisplayList("groupOutline");
+        getRenderManager().clearDisplayList("groupOutline");
+
+        if (!isShowGroupBounds())
+            return;
+
+        SVector basePoint = getFile().makeBasePoint();
+        float maxX = Utils.fixedPointShortToFloat4Bit((short) (basePoint.getX() + (getFile().getGroupXSize()) * getFile().getGroupXCount()));
+        float maxZ = Utils.fixedPointShortToFloat4Bit((short) (basePoint.getZ() + (getFile().getGroupZSize()) * getFile().getGroupZCount()));
+        getRenderManager().addBoundingBoxFromMinMax("groupOutline", basePoint.getFloatX(), 0, basePoint.getFloatZ(), maxX, 0, maxZ, Utils.makeSpecialMaterial(Color.YELLOW), true);
     }
 
     /**

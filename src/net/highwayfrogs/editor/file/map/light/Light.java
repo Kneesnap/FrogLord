@@ -67,7 +67,10 @@ public class Light extends GameObject {
     public void makeEditor(GUIEditorGrid editor, MapUIController uiController) {
         // Don't need to edit the lightType, as static is the only one that does anything.
         int rgbColor = Utils.toRGB(Utils.fromBGR(getColor()));
-        editor.addColorPicker("Color:", 25, rgbColor, newColor -> setColor(Utils.toBGR(Utils.fromRGB(newColor))));
+        editor.addColorPicker("Color:", 25, rgbColor, newColor -> {
+            setColor(Utils.toBGR(Utils.fromRGB(newColor)));
+            uiController.getController().updateLighting();
+        });
 
         // The light api type determines which fields are relevant for this specific light
         switch (getApiType()) {

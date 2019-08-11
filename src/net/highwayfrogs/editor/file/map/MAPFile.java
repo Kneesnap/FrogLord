@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
+import net.highwayfrogs.editor.file.map.grid.GridSquareFlag;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.group.MAPGroup;
 import net.highwayfrogs.editor.file.map.light.Light;
@@ -23,6 +24,7 @@ import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
 import net.highwayfrogs.editor.file.map.poly.line.MAPLineType;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyF4;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygonType;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
@@ -70,16 +72,15 @@ public class MAPFile extends GameFile {
     private List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
-
-    private short groupXCount;
-    private short groupZCount;
-    private short groupXSize; // Seems to always be 256. Appears to be related to the X size of one group.
-    private short groupZSize; // Seems to always be 256. Appears to be related to the Z size of one group.
+    @Setter private short groupXCount;
+    @Setter private short groupZCount;
+    private short groupXSize = (short) 256; // Seems to always be 256. Appears to be related to the X size of one group.
+    private short groupZSize = (short) 256; // Seems to always be 256. Appears to be related to the Z size of one group.
 
     private short gridXCount;
     private short gridZCount;
-    private short gridXSize; // Seems to always be 768.
-    private short gridZSize; // Seems to always be 768.
+    private short gridXSize = (short) 768; // Seems to always be 768.
+    private short gridZSize = (short) 768; // Seems to always be 768.
 
     private transient VLOArchive vlo;
     private transient MWDFile parentMWD;
@@ -369,7 +370,7 @@ public class MAPFile extends GameFile {
             polyOffsetMap.put(type, reader.readInt());
 
         for (MAPPrimitiveType type : PRIMITIVE_TYPES) {
-            List<MAPPrimitive> primitives = new LinkedList<>();
+            List<MAPPrimitive> primitives = new ArrayList<>();
             polygons.put(type, primitives);
             if (!types.contains(type))
                 continue; // Not being read.
@@ -625,8 +626,8 @@ public class MAPFile extends GameFile {
         writer.writeStringBytes(GROUP_SIGNATURE);
 
         makeBasePoint().saveWithPadding(writer);
-        writer.writeShort(this.groupXCount);
-        writer.writeShort(this.groupZCount);
+        writer.writeShort(getGroupXCount());
+        writer.writeShort(getGroupZCount());
         writer.writeShort(this.groupXSize);
         writer.writeShort(this.groupZSize);
         saveGroups.forEach(group -> group.save(writer));
@@ -798,7 +799,7 @@ public class MAPFile extends GameFile {
      * Setup a GUI editor for this file.
      * @param editor The editor to setup under.
      */
-    public void setupEditor(GUIEditorGrid editor) {
+    public void setupEditor(MAPController controller, GUIEditorGrid editor) {
         editor.addLabel("Theme", getTheme().name()); // Should look into whether or not this is ok to edit.
         editor.addShortField("Start xTile", getStartXTile(), this::setStartXTile, null);
         editor.addShortField("Start zTile", getStartZTile(), this::setStartZTile, null);
@@ -806,10 +807,31 @@ public class MAPFile extends GameFile {
                 .setConverter(new AbstractStringConverter<>(StartRotation::getArrow));
 
         editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
-        editor.addShortField("Base Point xTile", getBaseXTile(), this::setBaseXTile, null);
-        editor.addShortField("Base Point zTile", getBaseZTile(), this::setBaseZTile, null);
         editor.addFloatSVector("Camera Source Offset", getCameraSourceOffset());
         editor.addFloatSVector("Camera Target Offset", getCameraTargetOffset());
+        editor.addSeparator(25);
+
+        // Group:
+        editor.addBoldLabel("Group:");
+        editor.addShortField("Base Point xTile", getBaseXTile(), newVal -> {
+            setBaseXTile(newVal);
+            controller.updateGroupView();
+        }, null);
+        editor.addShortField("Base Point zTile", getBaseZTile(), newVal -> {
+            setBaseZTile(newVal);
+            controller.updateGroupView();
+        }, null);
+        editor.addShortField("Group X Count", getGroupXCount(), newVal -> {
+            setGroupXCount(newVal);
+            controller.updateGroupView();
+        }, null);
+        editor.addShortField("Group Z Count", getGroupZCount(), newVal -> {
+            setGroupZCount(newVal);
+            controller.updateGroupView();
+        }, null);
+        editor.addCheckBox("Show Group Bounds", controller.isShowGroupBounds(), controller::setShowGroupBounds);
+
+        //TODO: Add a warning to here and the other view if the group seems like it's probably bad.
     }
 
     /**
@@ -963,7 +985,8 @@ public class MAPFile extends GameFile {
      * @param handler Behavior to execute.
      */
     public void forEachPrimitive(Consumer<MAPPrimitive> handler) {
-        getPolygons().values().forEach(list -> list.forEach(handler));
+        for (List<MAPPrimitive> list : getPolygons().values())
+            list.forEach(handler);
     }
 
     /**
@@ -1020,6 +1043,90 @@ public class MAPFile extends GameFile {
     public void fixAsIslandMap() {
         removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity.
         getConfig().changeRemap(getFileEntry(), getConfig().isPC() ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
+    }
+
+    /**
+     * Procedurally generate a test map.
+     * TODO: This map does not boot.
+     * TODO: If you had the editor open with the map before this is called, stuff breaks, fix that.
+     */
+    public void randomizeMap() {
+        final int size = 5;
+        int halfSize = size / 2;
+
+        this.startRotation = StartRotation.NORTH;
+        this.levelTimer = 99;
+        //this.cameraSourceOffset.loadFromFloatText("0.1875, -141.3125, -21.9375"); //TODO: This needs better calculation.
+        //this.cameraTargetOffset.loadFromFloatText("0.1875, 0.0, 21.9375");
+
+        this.paths.clear();
+        this.zones.clear();
+        this.forms.clear();
+        this.entities.clear();
+        this.lights.clear();
+        this.vertexes.clear();
+        this.gridStacks.clear();
+        this.mapAnimations.clear();
+        this.gridXCount = size + 2; // Add two, so we can have a border surrounding the map.
+        this.gridZCount = size + 2;
+        this.startXTile = (short) halfSize;
+        this.startZTile = (short) 0;
+
+        polygons.values().forEach(List::clear); // Clear the list of polygons.
+        List<MAPPrimitive> list = polygons.get(MAPPolygonType.F4);
+
+        // Create stacks.
+        Random random = new Random();
+        for (int z = 0; z < getGridZCount(); z++) {
+            for (int x = 0; x < getGridXCount(); x++) {
+                GridStack newStack = new GridStack();
+                getGridStacks().add(newStack);
+                if (x == 0 || x == getGridXCount() - 1 || z == 0 || z == getGridZCount() - 1)
+                    continue; // No squares around edges.
+
+                x -= halfSize;
+                z -= halfSize;
+                SVector topLeft = new SVector(x * 10F, 0, (z + 1) * 10F);
+                SVector topRight = new SVector((x + 1) * 10F, 0, (z + 1) * 10F);
+                SVector botLeft = new SVector(x * 10F, 0, z * 10F);
+                SVector botRight = new SVector((x + 1) * 10F, 0, z * 10F);
+                x += halfSize;
+                z += halfSize;
+
+                int leftIndex = this.vertexes.size();
+                this.vertexes.add(topLeft);
+                this.vertexes.add(topRight);
+                this.vertexes.add(botLeft);
+                this.vertexes.add(botRight);
+                MAPPolyF4 polyF4 = new MAPPolyF4();
+                polyF4.setAllowDisplay(true);
+                polyF4.getColor().setCd((byte) 0xFF);
+                polyF4.getColor().setRed((byte) (random.nextInt(511) - 256));
+                polyF4.getColor().setGreen((byte) (random.nextInt(511) - 256));
+                polyF4.getColor().setBlue((byte) (random.nextInt(511) - 256));
+                polyF4.getVertices()[0] = leftIndex;
+                polyF4.getVertices()[1] = leftIndex + 1;
+                polyF4.getVertices()[2] = leftIndex + 3; // Swapped with the next one to make work.
+                polyF4.getVertices()[3] = leftIndex + 2;
+
+                list.add(polyF4);
+
+                GridSquare newSquare = new GridSquare(polyF4, this);
+                newSquare.setFlag(GridSquareFlag.CAN_HOP, true);
+                newSquare.setFlag(GridSquareFlag.COLLISION, true);
+                newStack.getGridSquares().add(newSquare);
+            }
+        }
+
+        // Setup Group:
+        setBaseXTile((short) -halfSize);
+        setBaseZTile((short) -halfSize);
+
+        short groupCount = (short) (Math.ceil((double) size / (double) (getGroupXSize() / getGridXSize())));
+        setGroupXCount(groupCount);
+        setGroupZCount(groupCount);
+
+        System.out.println("Scrambled " + getFileEntry().getDisplayName());
     }
 
     /**

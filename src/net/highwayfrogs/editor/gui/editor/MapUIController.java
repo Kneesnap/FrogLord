@@ -205,7 +205,7 @@ public class MapUIController implements Initializable {
             generalEditor = new GUIEditorGrid(generalGridPane);
 
         generalEditor.clearEditor();
-        getController().getFile().setupEditor(generalEditor);
+        getController().getFile().setupEditor(getController(), generalEditor);
     }
 
     /**
@@ -306,17 +306,19 @@ public class MapUIController implements Initializable {
         if (this.formEditor == null)
             this.formEditor = new GUIEditorGrid(formGridPane);
 
-        if (this.selectedForm == null)
+        if (this.selectedForm == null && !getMap().getForms().isEmpty())
             this.selectedForm = getMap().getForms().get(0);
 
         this.formEditor.clearEditor();
 
-        ComboBox<Form> box = this.formEditor.addSelectionBox("Form", getSelectedForm(), getMap().getForms(), newForm -> {
-            this.selectedForm = newForm;
-            setupFormEditor();
-        });
+        if (this.selectedForm != null) {
+            ComboBox<Form> box = this.formEditor.addSelectionBox("Form", getSelectedForm(), getMap().getForms(), newForm -> {
+                this.selectedForm = newForm;
+                setupFormEditor();
+            });
 
-        box.setConverter(new AbstractStringConverter<>(form -> "Form #" + getMap().getForms().indexOf(form)));
+            box.setConverter(new AbstractStringConverter<>(form -> "Form #" + getMap().getForms().indexOf(form)));
+        }
 
         this.formEditor.addBoldLabel("Management:");
         this.formEditor.addButton("Add Form", () -> {
@@ -325,14 +327,15 @@ public class MapUIController implements Initializable {
             setupFormEditor();
         });
 
-        this.formEditor.addButton("Remove Form", () -> {
-            getMap().getForms().remove(getSelectedForm());
-            this.selectedForm = null;
-            setupFormEditor();
-        });
+        if (this.selectedForm != null) {
+            this.formEditor.addButton("Remove Form", () -> {
+                getMap().getForms().remove(getSelectedForm());
+                this.selectedForm = null;
+                setupFormEditor();
+            });
 
-        if (getSelectedForm() != null)
             getSelectedForm().setupEditor(this, this.formEditor);
+        }
     }
 
     private void updateVisibility(boolean drawState) {

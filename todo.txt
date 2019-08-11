@@ -22,3 +22,7 @@ Map Editor:
  - Form Resizing? General resizing of fixed size things?
  - Path editor shows selected path, which updates as you update the path information.
  - Path editor needs to be fully editable. Add spline data and verify other types are editable.
+ - Grid extender.
+ - Better form editor, needs a grid display of the form, and probably should handle when the selected form is null better.
+ - Better color textures on 4 color polygons. (Use gradients)
+ - Show map image + name in map info ui.
