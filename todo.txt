@@ -25,4 +25,3 @@ Map Editor:
  - Grid extender.
  - Better form editor, needs a grid display of the form, and probably should handle when the selected form is null better.
  - Better color textures on 4 color polygons. (Use gradients)
- - Show map image + name in map info ui.

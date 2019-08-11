@@ -1047,7 +1047,7 @@ public class MAPFile extends GameFile {
 
     /**
      * Procedurally generate a test map.
-     * TODO: This map does not boot. (Start by removing things until it breaks.)
+     * TODO: This map does not boot. (Everything up to clearing polygons has been tested to work)
      * TODO: If you had the editor open with the map before this is called, stuff breaks, fix that.
      */
     public void randomizeMap() {

@@ -23,6 +23,8 @@ import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
+import net.highwayfrogs.editor.file.config.data.MAPLevel;
+import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
@@ -61,6 +63,8 @@ import java.util.List;
 @Getter
 public class MAPController extends EditorController<MAPFile> {
     @FXML private ListView<Short> remapList;
+    @FXML private ImageView previewImage;
+    @FXML private ImageView nameImage;
     @FXML private ImageView remapImage;
     @FXML private Button changeTextureButton;
     private Scene mapScene;
@@ -101,6 +105,20 @@ public class MAPController extends EditorController<MAPFile> {
             return; // Empty.
         }
 
+        // Display Level Name & Image.
+        previewImage.setImage(null);
+        nameImage.setImage(null);
+
+        MAPLevel level = MAPLevel.getByName(mapFile.getFileEntry().getDisplayName());
+        if (level != null && !mapFile.getConfig().getLevelInfoMap().isEmpty()) {
+            LevelInfo info = mapFile.getConfig().getLevelInfoMap().get(level);
+            if (info != null) {
+                previewImage.setImage(mapFile.getConfig().getImageFromPointer(info.getLevelTexturePointer()).toFXImage());
+                nameImage.setImage(mapFile.getConfig().getImageFromPointer(info.getLevelNameTexturePointer()).toFXImage());
+            }
+        }
+
+        // Setup Remap Editor.
         this.remapList.setItems(FXCollections.observableArrayList(remapTable));
         this.remapList.setCellFactory(param -> new AttachmentListCell<>(num -> "#" + num, num -> {
             GameImage temp = getFile().getVlo() != null ? getFile().getVlo().getImageByTextureId(num, false) : null;
