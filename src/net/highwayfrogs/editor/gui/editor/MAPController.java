@@ -198,6 +198,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         // Setup additional scene elements.
         setupEntities();
+        updateGroupView();
         MapUIController.getPropertyEntityIconSize().addListener((observable, old, newVal) -> resetEntities());
 
         // Create and set the scene.
