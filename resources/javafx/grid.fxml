@@ -42,16 +42,18 @@
                 <Button fx:id="addLayerButton" layoutX="211.0" layoutY="2.0" mnemonicParsing="false"
                         onAction="#addLayer" prefHeight="25.0" prefWidth="91.0" text="Add Layer"
                         AnchorPane.rightAnchor="105.0" AnchorPane.topAnchor="2.0"/>
-                <Label fx:id="stackIdLabel" layoutX="5.0" layoutY="200.0" text="Label" AnchorPane.bottomAnchor="8.0"
-                       AnchorPane.leftAnchor="5.0"/>
+                <Label fx:id="stackIdLabel" layoutX="5.0" layoutY="200.0" text="Stack ID: #??? [X: ???, Z: ???]"
+                       AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="5.0"/>
                 <Label fx:id="stackHeightLabel" layoutX="184.0" layoutY="200.0" text="Height: "
-                       AnchorPane.bottomAnchor="8.0" AnchorPane.rightAnchor="74.0"/>
+                       AnchorPane.bottomAnchor="8.0" AnchorPane.rightAnchor="184.0"/>
                 <TextField fx:id="stackHeightField" layoutX="226.0" layoutY="196.0" onAction="#onUpdateHeight"
                            prefHeight="25.0" prefWidth="60.0" AnchorPane.bottomAnchor="4.0"
-                           AnchorPane.rightAnchor="14.0"/>
+                           AnchorPane.rightAnchor="124.0"/>
                 <Button layoutX="211.0" layoutY="27.0" mnemonicParsing="false" onAction="#selectPolygon"
                         prefHeight="25.0" prefWidth="180.0" text="Select Stack From 3D Viewer"
                         AnchorPane.leftAnchor="211.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="27.0"/>
+                <Button layoutX="341.0" layoutY="196.0" mnemonicParsing="false" onAction="#onResizeGrid"
+                        text="Resize Grid" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="196.0"/>
             </children>
         </AnchorPane>
         <AnchorPane fx:id="stackPane" prefHeight="250.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0"

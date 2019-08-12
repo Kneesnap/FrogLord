@@ -362,6 +362,11 @@ public class GridController implements Initializable {
         this.regionSelector.getSelectionModel().select(--this.selectedRegion);
     }
 
+    @FXML
+    private void onResizeGrid(ActionEvent evt) {
+        GridResizeController.open(this);
+    }
+
     /**
      * Select a square.
      * @param stack The stack the square belongs to.
@@ -504,6 +509,23 @@ public class GridController implements Initializable {
         return this.selectedRegion == DEFAULT_REGION_ID
                 ? getSelectedZone().getMainRegion()
                 : getSelectedZone().getRegions().get(this.selectedRegion - 1);
+    }
+
+    /**
+     * Resizes the grid and updates the UI.
+     * @param newX The new x grid size.
+     * @param newZ The new z grid size.
+     */
+    public void handleResize(int newX, int newZ) {
+        getMap().resizeGrid(newX, newZ);
+
+        // Update the selected stack.
+        GridStack newStack = getMap().getGridStacks().contains(selectedStack) ? selectedStack : null;
+        setSelectedStack(newStack);
+        if (newStack != null)
+            setSelectedSquare(newStack, this.selectedLayer);
+
+        updateCanvas();
     }
 
     /**

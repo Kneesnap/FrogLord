@@ -1046,6 +1046,31 @@ public class MAPFile extends GameFile {
     }
 
     /**
+     * Resizes the grid to a new size.
+     * @param xSize The new x size of the grid.
+     * @param zSize The new y size of the grid.
+     */
+    public void resizeGrid(int xSize, int zSize) {
+        int newCount = (xSize * zSize);
+        List<GridStack> newStackList = new ArrayList<>(newCount);
+        for (int i = 0; i < newCount; i++)
+            newStackList.add(null);
+
+        for (int z = 0; z < zSize; z++) {
+            for (int x = 0; x < xSize; x++) {
+                int newIndex = (z * xSize) + x;
+                boolean isNewStack = (x >= getGridXCount() || z >= getGridZCount());
+                newStackList.set(newIndex, isNewStack ? new GridStack() : getGridStack(x, z));
+            }
+        }
+
+        // Apply the new grid.
+        this.gridXCount = (short) xSize;
+        this.gridZCount = (short) zSize;
+        this.gridStacks = newStackList;
+    }
+
+    /**
      * Procedurally generate a test map.
      * TODO: This map does not boot. (Everything up to clearing polygons has been tested to work)
      * TODO: If you had the editor open with the map before this is called, stuff breaks, fix that.

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="125.0"
+            prefWidth="150.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <Button layoutX="14.0" layoutY="77.0" mnemonicParsing="false" onAction="#onAccept" prefHeight="25.0"
+                prefWidth="60.0" text="Ok" AnchorPane.bottomAnchor="7.0" AnchorPane.leftAnchor="7.0"/>
+        <Button layoutX="76.0" layoutY="77.0" mnemonicParsing="false" onAction="#onCancel" prefHeight="25.0"
+                prefWidth="60.0" text="Cancel" AnchorPane.bottomAnchor="7.0" AnchorPane.rightAnchor="7.0"/>
+        <TextField layoutX="83.0" layoutY="14.0" prefHeight="25.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0"
+                   AnchorPane.topAnchor="27.0" fx:id="xInput"/>
+        <TextField fx:id="zInput" layoutX="83.0" layoutY="46.0" prefHeight="25.0" prefWidth="60.0"
+                   AnchorPane.rightAnchor="7.0" AnchorPane.topAnchor="53.0"/>
+        <Label layoutX="14.0" layoutY="18.0" text="X (⇄) Size:" AnchorPane.leftAnchor="7.0"
+               AnchorPane.topAnchor="31.0"/>
+        <Label layoutX="7.0" layoutY="50.0" text="Z (⇅) Size: " AnchorPane.leftAnchor="7.0"
+               AnchorPane.topAnchor="57.0"/>
+        <Label layoutX="7.0" layoutY="6.0" text="Set the grid dimensions."/>
+    </children>
+</AnchorPane>

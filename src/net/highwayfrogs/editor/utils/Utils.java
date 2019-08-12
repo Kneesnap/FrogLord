@@ -1326,6 +1326,14 @@ public class Utils {
     }
 
     /**
+     * Make a popup show up.
+     * @param message The message to display.
+     */
+    public static void makePopUp(String message, AlertType type) {
+        new Alert(type, message, ButtonType.OK).showAndWait();
+    }
+
+    /**
      * Removes duplicate spaces from a given string.
      * @param toRemove The string to remove spaces from.
      * @return cleanStr
