@@ -11,12 +11,10 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -74,38 +72,22 @@ public class FormData extends GameObject {
         if (getGridFlags().length == 0)
             return;
 
-        List<Integer> flagIndexList = new ArrayList<>();
-        for (int i = 0; i < getGridFlags().length; i++)
-            flagIndexList.add(i);
+        List<Integer> flagIndexList = Utils.getIntegerList(getGridFlags().length);
 
-        AtomicBoolean changingState = new AtomicBoolean();
         AtomicInteger selectedIndex = new AtomicInteger();
         Map<GridSquareFlag, CheckBox> flagToggles = new HashMap<>();
 
-        editor.addSelectionBox("Tile (Top Left)", selectedIndex.get(), flagIndexList, newIndex -> {
-            int x = (newIndex / form.getZGridSquareCount());
-            int z = (newIndex % form.getZGridSquareCount());
-            newIndex = (x * form.getZGridSquareCount()) + z;
-
+        editor.addSelectionBox("Tile (Bottom Left)", selectedIndex.get(), flagIndexList, newIndex -> {
             selectedIndex.set(newIndex);
-            changingState.set(true);
             for (Entry<GridSquareFlag, CheckBox> entry : flagToggles.entrySet()) // Update checkboxes.
                 entry.getValue().setSelected((this.gridFlags[newIndex] & entry.getKey().getFlag()) == entry.getKey().getFlag());
-            changingState.set(false);
-        }).setConverter(new AbstractStringConverter<>(index -> {
-            int x = (index / form.getZGridSquareCount());
-            int z = (index % form.getZGridSquareCount());
-            return "Tile " + index + " (X: " + x + ", Z: " + z + ")";
-        }));
+        }).setConverter(new AbstractStringConverter<>(index -> "Tile " + index + " (X: " + form.getXFromIndex(index) + ", Z: " + form.getZFromIndex(index) + ")"));
 
         boolean right = false;
         for (GridSquareFlag flag : GridSquareFlag.values()) {
             CheckBox box = new CheckBox(Utils.capitalize(flag.name()));
             box.setSelected((getGridFlags()[selectedIndex.get()] & flag.getFlag()) == flag.getFlag());
             box.selectedProperty().addListener((listener, oldVal, newState) -> {
-                if (changingState.get())
-                    return;
-
                 boolean oldState = (this.gridFlags[selectedIndex.get()] & flag.getFlag()) == flag.getFlag();
                 if (oldState == newState)
                     return; // Prevents the ^ operation from breaking the value.
