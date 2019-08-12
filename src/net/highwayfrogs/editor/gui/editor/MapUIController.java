@@ -5,6 +5,7 @@ import javafx.beans.property.FloatProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.PerspectiveCamera;
@@ -33,6 +34,7 @@ import net.highwayfrogs.editor.file.map.form.Form;
 import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
+import net.highwayfrogs.editor.file.map.path.PathDisplaySetting;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -74,7 +76,7 @@ public class MapUIController implements Initializable {
     // Control Settings Pane.
     @FXML private TitledPane titledPaneInformation;
     @FXML private CheckBox checkBoxShowMesh;
-    @FXML private CheckBox checkBoxShowAllPaths;
+    @FXML private ChoiceBox<PathDisplaySetting> pathDisplayOption;
     @FXML private CheckBox checkBoxFaceRemoveMode;
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
     @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
@@ -153,6 +155,8 @@ public class MapUIController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         accordionLeft.setExpandedPane(generalPane);
         entityEditor = new MAPEditorGUI(entityGridPane, this);
+        pathDisplayOption.setItems(FXCollections.observableArrayList(PathDisplaySetting.values()));
+        pathDisplayOption.getSelectionModel().selectFirst();
     }
 
     /**
@@ -253,6 +257,9 @@ public class MapUIController implements Initializable {
         if (this.selectedPath == null && !getMap().getPaths().isEmpty())
             this.selectedPath = getMap().getPaths().get(0);
 
+        if (getPathDisplayOption().getValue() == PathDisplaySetting.SELECTED)
+            getController().updatePathDisplay();
+
         this.pathEditor.clearEditor();
 
         ComboBox<Path> box = this.pathEditor.addSelectionBox("Path:", getSelectedPath(), getMap().getPaths(), newPath -> {
@@ -270,7 +277,7 @@ public class MapUIController implements Initializable {
             this.pathEditor.addLabelButton("", "Remove Path", 25.0, () -> {
                 getMap().removePath(this.selectedPath);
                 this.selectedPath = null;
-                getController().rebuildPathDisplay();
+                getController().updatePathDisplay();
                 setupPathEditor();
             });
 

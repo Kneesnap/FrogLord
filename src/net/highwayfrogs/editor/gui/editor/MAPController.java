@@ -38,6 +38,7 @@ import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFly;
 import net.highwayfrogs.editor.file.map.entity.data.general.BonusFlyEntity;
 import net.highwayfrogs.editor.file.map.entity.script.ScriptButterflyData;
 import net.highwayfrogs.editor.file.map.light.Light;
+import net.highwayfrogs.editor.file.map.path.PathDisplaySetting;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
@@ -54,6 +55,7 @@ import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -314,38 +316,22 @@ public class MAPController extends EditorController<MAPFile> {
         cameraFPS.setCameraLookAt(gridX, baseY, gridZ); // Set the camera to look at the start position, too.
 
         // TODO: Tidy this up at some point, but use an action on a UI control for now [AndyEder]
-        mapUIController.getCheckBoxShowAllPaths().setOnAction(evt -> this.togglePathDisplay());
+        mapUIController.getPathDisplayOption().setOnAction(evt -> this.updatePathDisplay());
         mapUIController.getApplyLightsCheckBox().setOnAction(evt -> this.updateLighting());
     }
 
     /**
      * Toggle display of paths.
      */
-    private void togglePathDisplay() {
-        if (mapUIController.getCheckBoxShowAllPaths().isSelected()) {
-            if (!this.renderManager.displayListExists(DISPLAY_LIST_PATHS)) {
-                // Add a new display list for the paths
-                this.renderManager.addDisplayList(DISPLAY_LIST_PATHS);
-            }
+    public void updatePathDisplay() {
+        this.renderManager.addMissingDisplayList(DISPLAY_LIST_PATHS);
+        this.renderManager.clearDisplayList(DISPLAY_LIST_PATHS);
 
-            // Add paths via the render manager
+        if (mapUIController.getPathDisplayOption().getValue() == PathDisplaySetting.ALL) {
             this.renderManager.addPaths(DISPLAY_LIST_PATHS, getFile().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
-        } else {
-            // Clear the paths display list
-            this.renderManager.clearDisplayList(DISPLAY_LIST_PATHS);
-        }
-    }
-
-    /**
-     * Rebuild paths display list (as something has potentially changed).
-     */
-    public void rebuildPathDisplay() {
-        if (mapUIController.getCheckBoxShowAllPaths().isSelected()) {
-            if (this.renderManager.displayListExists(DISPLAY_LIST_PATHS)) {
-                // Clear display list, then rebuild
-                this.renderManager.clearDisplayList(DISPLAY_LIST_PATHS);
-                this.renderManager.addPaths(DISPLAY_LIST_PATHS, getFile().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
-            }
+        } else if (mapUIController.getPathDisplayOption().getValue() == PathDisplaySetting.SELECTED) {
+            if (getMapUIController().getSelectedPath() != null)
+                this.renderManager.addPaths(DISPLAY_LIST_PATHS, Collections.singletonList(getMapUIController().getSelectedPath()), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
         }
     }
 

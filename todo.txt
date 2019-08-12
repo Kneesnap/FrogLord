@@ -16,8 +16,8 @@ Map Editor:
  - Add polygons.
  - Better polygon editor.
  - Adding entities: Have a selector that lets you pick the entity type you want to make, instead of cloning the current one. The camera should focus in on the new entity at the very least, if we can't let the user decide where to place it. We could disable the create entity button if there is no tile selected (tile must be under a path if it's a path entity)
- - Path editor shows selected path, which updates as you update the path information.
  - Path editor needs to be fully editable. Add spline data and verify other types are editable.
+ - For SVector x y z positions, add an option to move the position around relatively. Right now we use a textbox.
 
 Future:
  - Support Gouraud shading on things like MAPPolyG4.

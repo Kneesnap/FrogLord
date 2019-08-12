@@ -381,10 +381,8 @@ public class RenderManager
      * @param materialArc       The material to use for rendering arc segments.
      * @param materialSpline    The material to use for rendering spline segments.
      */
-    public void addPaths(String listID, List<Path> pathList, PhongMaterial materialLine, PhongMaterial materialArc, PhongMaterial materialSpline)
-    {
-        if (displayListCache.containsKey(listID))
-        {
+    public void addPaths(String listID, List<Path> pathList, PhongMaterial materialLine, PhongMaterial materialArc, PhongMaterial materialSpline) {
+        if (displayListCache.containsKey(listID)) {
             // We will use pathInfo to 'step' along the paths and to build the geometry
             PathInfo pathInfo = new PathInfo();
 
@@ -395,17 +393,14 @@ public class RenderManager
             double x0, y0, z0;
             double x1, y1, z1;
 
-            for (Path path : pathList)
-            {
+            for (Path path : pathList) {
                 segmentIndex = 0;
 
-                for (PathSegment segment : path.getSegments())
-                {
+                for (PathSegment segment : path.getSegments()) {
                     pathInfo.setPathId(pathIndex);
                     pathInfo.setSegmentId(segmentIndex);
 
-                    if (segment.getType() == PathType.LINE)
-                    {
+                    if (segment.getType() == PathType.LINE) {
                         pathInfo.setSegmentDistance(0);
                         Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
 
@@ -421,14 +416,11 @@ public class RenderManager
                         z1 = vec1.getFloatZ();
 
                         this.addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, materialLine, true, true);
-                    }
-                    else if (segment.getType() == PathType.ARC)
-                    {
+                    } else if (segment.getType() == PathType.ARC) {
                         final int stepSize = Math.min(32, segment.getLength());
                         final int numSteps = 1 + (segment.getLength() / stepSize);
 
-                        for (int step=0; step<numSteps; ++step)
-                        {
+                        for (int step = 0; step < numSteps; ++step) {
                             pathInfo.setSegmentDistance(step * stepSize);
                             Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
 
@@ -443,19 +435,15 @@ public class RenderManager
                             y1 = vec1.getFloatY();
                             z1 = vec1.getFloatZ();
 
-                            if (!((x0 == x1) && (y0 == y1) && (z0 == z1)))
-                            {
+                            if (!((x0 == x1) && (y0 == y1) && (z0 == z1))) {
                                 this.addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, materialArc, false, false);
                             }
                         }
-                    }
-                    else if (segment.getType() == PathType.SPLINE)
-                    {
+                    } else if (segment.getType() == PathType.SPLINE) {
                         final int stepSize = Math.min(32, segment.getLength());
                         final int numSteps = 1 + (segment.getLength() / stepSize);
 
-                        for (int step=0; step<numSteps; ++step)
-                        {
+                        for (int step = 0; step < numSteps; ++step) {
                             pathInfo.setSegmentDistance(step * stepSize);
                             Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
 
@@ -470,8 +458,7 @@ public class RenderManager
                             y1 = vec1.getFloatY();
                             z1 = vec1.getFloatZ();
 
-                            if (!((x0 == x1) && (y0 == y1) && (z0 == z1)))
-                            {
+                            if (!((x0 == x1) && (y0 == y1) && (z0 == z1))) {
                                 this.addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, materialSpline, false, false);
                             }
                         }
@@ -482,9 +469,7 @@ public class RenderManager
 
                 ++pathIndex;
             }
-        }
-        else
-        {
+        } else {
             throw new RuntimeException("RenderManager::addPaths() - " + listID + " does not exist!");
         }
     }

@@ -70,7 +70,7 @@ public class Path extends GameObject {
 
             editor.addBoldLabelButton("Segment #" + (i + 1) + ":", "Remove", 25, () -> {
                 getSegments().remove(tempIndex);
-                controller.getController().rebuildPathDisplay();
+                controller.getController().updatePathDisplay();
                 controller.setupPathEditor();
             });
 

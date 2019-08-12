@@ -65,7 +65,7 @@ public class LineSegment extends PathSegment {
 
         // Update / refresh associated components
         controller.setupPathEditor();
-        controller.getController().rebuildPathDisplay();
+        controller.getController().updatePathDisplay();
         controller.getController().resetEntities();
     }
 
