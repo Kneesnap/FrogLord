@@ -491,6 +491,21 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Adds a centered image.
+     * @param image The image to add.
+     * @return imageView
+     */
+    public ImageView addCenteredImage(Image image) {
+        ImageView view = new ImageView(image);
+        GridPane.setHalignment(view, HPos.CENTER);
+        view.setFitWidth(image.getWidth());
+        view.setFitHeight(image.getHeight());
+        setupSecondNode(view, true);
+        addRow(image.getHeight() + 5);
+        return view;
+    }
+
+    /**
      * Add a PSXMatrix to the editor grid.
      * @param matrix           The rotation matrix to add data for.
      * @param onPositionUpdate Behavior to apply when the position is updated.

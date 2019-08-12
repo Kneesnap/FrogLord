@@ -1,13 +1,18 @@
 package net.highwayfrogs.editor.file.map.form;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.map.grid.GridSquareFlag;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 /**
  * Reads the "FORM" struct.
@@ -22,6 +27,8 @@ public class Form extends GameObject {
     private short xOffset; // Offset to bottom left or grid from entity origin.
     private short zOffset; // Offset to bottom left or grid from entity origin.
     private FormData data; // Null is allowed.
+
+    public static final int GRID_PIXELS = 20;
 
     @Override
     public void load(DataReader reader) {
@@ -176,6 +183,64 @@ public class Form extends GameObject {
      */
     public int getZFromIndex(int index) {
         return (index / getXGridSquareCount());
+    }
+
+    /**
+     * Make a display for this form.
+     * @param selectedIndex The selected index.
+     * @return image
+     */
+    public Image makeDataImage(int selectedIndex) {
+        if (!hasData())
+            throw new RuntimeException("Tried to create FormData image without FormData.");
+
+        BufferedImage newImage = new BufferedImage(getXGridSquareCount() * GRID_PIXELS, getZGridSquareCount() * GRID_PIXELS, BufferedImage.TYPE_INT_ARGB);
+        Graphics graphics = newImage.getGraphics();
+
+        // Fill background.
+        graphics.setColor(Color.GRAY);
+        graphics.fillRect(0, 0, newImage.getWidth(), newImage.getHeight());
+
+        for (int x = 0; x < getXGridSquareCount(); x++) {
+            for (int z = 0; z < getZGridSquareCount(); z++) {
+                int index = getIndex(x, z, getXGridSquareCount());
+
+                int startX = (x * GRID_PIXELS);
+                int startY = ((getZGridSquareCount() - 1 - z) * GRID_PIXELS);
+                int width = GRID_PIXELS;
+                int height = GRID_PIXELS;
+
+                // Draw black outline.
+                graphics.setColor(Color.BLACK);
+                graphics.drawRect(startX++, startY++, width, height);
+                width -= 2;
+                height -= 2;
+
+                // Draw remaining parts.
+                if (index == selectedIndex) { // Filling in the square not only makes it clear what you have selected, but means we don't need to update the image every time we change a flag.
+                    graphics.setColor(Color.GREEN);
+                    graphics.fillRect(startX, startY, width, height);
+                } else {
+                    // Draw flag values. (Makes it easier to identify which squares have similar flags.)
+                    int flags = getData().getGridFlags()[index];
+                    for (int i = 0; i < GridSquareFlag.values().length; i++) {
+                        GridSquareFlag flag = GridSquareFlag.values()[i];
+                        if (width < 0 || height < 0)
+                            break; // Can't display any more.
+                        if ((flags & flag.getFlag()) != flag.getFlag())
+                            continue; // Flag didn't match.
+
+                        graphics.setColor(flag.getUiColor());
+                        graphics.drawRect(startX++, startY++, width, height);
+                        width -= 2;
+                        height -= 2;
+                    }
+                }
+            }
+        }
+
+        graphics.dispose();
+        return Utils.toFXImage(newImage, false);
     }
 
     /**

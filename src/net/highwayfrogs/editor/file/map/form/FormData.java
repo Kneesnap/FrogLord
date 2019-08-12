@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.file.map.form;
 
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.image.ImageView;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
@@ -67,21 +69,36 @@ public class FormData extends GameObject {
      * @param editor The editor to setup under.
      */
     public void setupEditor(Form form, GUIEditorGrid editor) {
+        AtomicInteger selectedIndex = new AtomicInteger();
+
         editor.addBoldLabel("Form Data:");
+        ImageView view = getGridFlags().length > 0 ? editor.addCenteredImage(form.makeDataImage(selectedIndex.get())) : null;
+
         editor.addShortField("Height", getHeight(), this::setHeight, null);
         if (getGridFlags().length == 0)
             return;
 
         List<Integer> flagIndexList = Utils.getIntegerList(getGridFlags().length);
-
-        AtomicInteger selectedIndex = new AtomicInteger();
         Map<GridSquareFlag, CheckBox> flagToggles = new HashMap<>();
 
-        editor.addSelectionBox("Tile (Bottom Left)", selectedIndex.get(), flagIndexList, newIndex -> {
+        assert view != null; // Fixes IDE error checking.
+
+        ComboBox<Integer> tileId = editor.addSelectionBox("Tile (Bttm Left)", selectedIndex.get(), flagIndexList, newIndex -> {
             selectedIndex.set(newIndex);
             for (Entry<GridSquareFlag, CheckBox> entry : flagToggles.entrySet()) // Update checkboxes.
                 entry.getValue().setSelected((this.gridFlags[newIndex] & entry.getKey().getFlag()) == entry.getKey().getFlag());
-        }).setConverter(new AbstractStringConverter<>(index -> "Tile " + index + " (X: " + form.getXFromIndex(index) + ", Z: " + form.getZFromIndex(index) + ")"));
+            view.setImage(form.makeDataImage(newIndex));
+        });
+        tileId.setConverter(new AbstractStringConverter<>(index -> "Tile " + index + " (X: " + form.getXFromIndex(index) + ", Z: " + form.getZFromIndex(index) + ")"));
+
+        // Handles clicking in the form view.
+        view.setOnMouseClicked(evt -> {
+            int formGridX = (int) (evt.getX() / Form.GRID_PIXELS);
+            int formGridZ = form.getZGridSquareCount() - 1 - (int) (evt.getY() / Form.GRID_PIXELS);
+            int newIndex = Form.getIndex(formGridX, formGridZ, form.getXGridSquareCount());
+            tileId.getSelectionModel().select(newIndex);
+            tileId.setValue(newIndex);
+        });
 
         boolean right = false;
         for (GridSquareFlag flag : GridSquareFlag.values()) {

@@ -19,7 +19,6 @@ Map Editor:
  - Path editor shows selected path, which updates as you update the path information.
  - Path editor needs to be fully editable. Add spline data and verify other types are editable.
  - Grid extender.
- - Better form editor, needs a grid display of the form.
 
 Future:
  - Support Gouraud shading on things like MAPPolyG4.
