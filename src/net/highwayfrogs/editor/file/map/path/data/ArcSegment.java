@@ -22,7 +22,7 @@ public class ArcSegment extends PathSegment {
     private SVector start = new SVector();
     private SVector center = new SVector();
     private SVector normal = new SVector();
-    private int radius;
+    private int radius; //TODO: This should be automatically calculated. Pythagorean algorithm gets really really close to an accurate answer, but not exactly.
     private int pitch; // Delta Y in helix frame. (Can be opposite direction of normal)
 
     public ArcSegment() {

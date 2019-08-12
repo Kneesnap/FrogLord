@@ -257,9 +257,7 @@ public class MapUIController implements Initializable {
         if (this.selectedPath == null && !getMap().getPaths().isEmpty())
             this.selectedPath = getMap().getPaths().get(0);
 
-        if (getPathDisplayOption().getValue() == PathDisplaySetting.SELECTED)
-            getController().updatePathDisplay();
-
+        getController().updatePathDisplay();
         this.pathEditor.clearEditor();
 
         ComboBox<Path> box = this.pathEditor.addSelectionBox("Path:", getSelectedPath(), getMap().getPaths(), newPath -> {
