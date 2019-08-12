@@ -1,7 +1,4 @@
-Editor Features:
 
-MOF File:
- Import mofs from mm3d.
 
 Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, 1.8.0_172, and 1.8.0_181, but not 1.8.0_161, or 1.8.0_201? The broken ones appear to use less RAM, and have spikes when viewing the map.
 See if anything can be done about using the swamp VLO as a texture for 3D things. It seems some laptop computers do not like this and display everything as black with a message in the console.
@@ -24,4 +21,8 @@ Map Editor:
  - Path editor needs to be fully editable. Add spline data and verify other types are editable.
  - Grid extender.
  - Better form editor, needs a grid display of the form, and probably should handle when the selected form is null better.
- - Better color textures on 4 color polygons. (Use gradients)
+
+Future:
+ - Support Gouraud shading on things like MAPPolyG4.
+ - Import mofs from MM3D.
+ - MOF Editor.

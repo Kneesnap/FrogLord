@@ -46,11 +46,11 @@
                                        AnchorPane.rightAnchor="8.0"/>
                                <ImageView fx:id="previewImage" fitHeight="124.0" fitWidth="124.0" layoutX="8.0"
                                           layoutY="33.0" pickOnBounds="true" preserveRatio="true"
-                                          AnchorPane.leftAnchor="8.0" AnchorPane.topAnchor="34.0"/>
+                                          AnchorPane.leftAnchor="8.0" AnchorPane.topAnchor="60.0"/>
                                <ImageView fx:id="nameImage" fitHeight="25.0" fitWidth="124.0" layoutX="8.0"
                                           layoutY="164.0" pickOnBounds="true" preserveRatio="true"
                                           AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="8.0"
-                                          AnchorPane.topAnchor="157.0"/>
+                                          AnchorPane.topAnchor="34.0"/>
                            </children>
                         </AnchorPane>
                      </children>
