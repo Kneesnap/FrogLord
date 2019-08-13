@@ -376,6 +376,15 @@ public class Utils {
     }
 
     /**
+     * Convert a float value into a int (fixed point, 4 fractional bits).
+     * @param floatVal The float to convert.
+     * @return intValue
+     */
+    public static int floatToFixedPointInt4Bit(float floatVal) {
+        return floatToFixedPointInt(floatVal, 4);
+    }
+
+    /**
      * Convert a float value into a int (fixed point, 20 fractional bits).
      * @param floatVal The float to convert.
      * @return intValue

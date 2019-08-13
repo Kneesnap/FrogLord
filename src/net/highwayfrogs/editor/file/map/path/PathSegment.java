@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.map.path;
 
-import javafx.scene.control.TextField;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
@@ -18,9 +17,11 @@ import net.highwayfrogs.editor.utils.Utils;
 public abstract class PathSegment extends GameObject {
     private PathType type;
     @Setter private int length;
+    private boolean allowLengthEdit;
 
-    public PathSegment(PathType type) {
+    public PathSegment(PathType type, boolean allowLengthEdit) {
         this.type = type;
+        this.allowLengthEdit = allowLengthEdit;
     }
 
     @Override
@@ -56,6 +57,11 @@ public abstract class PathSegment extends GameObject {
     protected abstract PathResult calculatePosition(PathInfo info);
 
     /**
+     * Recalculates the length of this segment.
+     */
+    public abstract void recalculateLength();
+
+    /**
      * Setup a path editor.
      * @param path       The path which owns this segment.
      * @param controller The UI controller.
@@ -63,9 +69,16 @@ public abstract class PathSegment extends GameObject {
      */
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         editor.addLabel("Type:", getType().name(), 25);
+        editor.addFloatField("Length:", Utils.fixedPointIntToFloat4Bit(getLength()), isAllowLengthEdit() ? newVal -> setLength(Utils.floatToFixedPointShort4Bit(newVal)) : null, null); // Read-Only.
+    }
 
-        // [AndyEder] The length field should be a calculated read-only field
-        TextField textFieldLength = editor.addFloatField("Length:", Utils.fixedPointIntToFloat4Bit(getLength()));
-        textFieldLength.setDisable(true);
+    /**
+     * Updates the viewer UI when this segment is updated.
+     * @param controller The controller
+     */
+    public void onUpdate(MapUIController controller) {
+        recalculateLength();
+        controller.getController().updatePathDisplay();
+        controller.getController().resetEntities();
     }
 }

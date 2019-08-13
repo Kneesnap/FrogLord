@@ -251,6 +251,15 @@ public class SVector extends GameObject implements Vector {
      * @return loadedSuccessfully
      */
     public boolean loadFromFloatText(String text) {
+        return loadFromFloatText(text, 4);
+    }
+
+    /**
+     * Load SVector data from float text.
+     * @param text The text to read SVector data from.
+     * @return loadedSuccessfully
+     */
+    public boolean loadFromFloatText(String text, int bits) {
         text = text.replace(" ", "");
         if (!text.contains(","))
             return false;
@@ -263,9 +272,9 @@ public class SVector extends GameObject implements Vector {
             if (!Utils.isNumber(testStr))
                 return false;
 
-        setX(Utils.floatToFixedPointShort4Bit(Float.parseFloat(split[0])));
-        setY(Utils.floatToFixedPointShort4Bit(Float.parseFloat(split[1])));
-        setZ(Utils.floatToFixedPointShort4Bit(Float.parseFloat(split[2])));
+        setX(Utils.floatToFixedPointShort(Float.parseFloat(split[0]), bits));
+        setY(Utils.floatToFixedPointShort(Float.parseFloat(split[1]), bits));
+        setZ(Utils.floatToFixedPointShort(Float.parseFloat(split[2]), bits));
         return true;
     }
 

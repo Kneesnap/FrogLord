@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Creates an editor grid.
@@ -212,20 +213,20 @@ public class GUIEditorGrid {
     }
 
     /**
-     * Add a double field.
+     * Add a float field.
      * @param label  The name.
      * @param number The initial number.
      * @return textField
      */
-    public TextField addDoubleField(String label, double number, Consumer<Double> setter, Function<Double, Boolean> test) {
+    public TextField addFloatField(String label, float number, Consumer<Float> setter, Predicate<Float> test) {
         TextField field = addTextField(label, String.valueOf(number), str -> {
             if (!Utils.isNumber(str))
                 return false;
 
-            double doubleValue = Double.parseDouble(str);
-            boolean testPass = test == null || test.apply(doubleValue);
+            float floatValue = Float.parseFloat(str);
+            boolean testPass = test == null || test.test(floatValue);
             if (testPass)
-                setter.accept(doubleValue);
+                setter.accept(floatValue);
 
             return testPass;
         });
@@ -351,24 +352,18 @@ public class GUIEditorGrid {
     }
 
     /**
-     * Add a float SVector (representing a normal) for editing.
-     * @param text   The name of the SVector.
-     * @param vector The SVector itself.
-     */
-    public void addFloatNormalSVector(String text, SVector vector) {
-        addTextField(text, vector.toFloatNormalString());
-    }
-
-    /**
      * Add a regular SVector for editing.
      * @param text   The name of the SVector.
+     * @param bits   The amount of bits to use.
      * @param vector The SVector itself.
      */
-    public void addRegularSVector(String text, SVector vector) {
-        addTextField(text, vector.toRegularString(), newText -> {
-            if (!vector.loadFromRegularText(newText))
+    public void addSVector(String text, int bits, SVector vector, Runnable runnable) {
+        addTextField(text, Utils.fixedPointShortToFloatNBits(vector.getX(), bits) + ", " + Utils.fixedPointShortToFloatNBits(vector.getY(), bits) + ", " + Utils.fixedPointShortToFloatNBits(vector.getZ(), bits), newText -> {
+            if (!vector.loadFromFloatText(newText, bits))
                 return false;
 
+            if (runnable != null)
+                runnable.run();
             onChange();
             return true;
         });

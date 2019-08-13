@@ -70,8 +70,24 @@ public class Path extends GameObject {
 
             editor.addBoldLabelButton("Segment #" + (i + 1) + ":", "Remove", 25, () -> {
                 getSegments().remove(tempIndex);
-                controller.getController().updatePathDisplay();
+
+                // Fix entities attached to segments after this.
+                MAPFile map = controller.getMap();
+                for (Entity entity : map.getEntities()) {
+                    if (entity.getPathInfo() == null)
+                        continue;
+
+                    PathInfo info = entity.getPathInfo();
+                    if (info.getSegmentId() > tempIndex) {
+                        info.setSegmentId(info.getSegmentId() - 1);
+                    } else if (info.getSegmentId() == tempIndex) {
+                        info.setSegmentId(0);
+                        info.setSegmentDistance(0);
+                    }
+                }
+
                 controller.setupPathEditor();
+                controller.getController().resetEntities();
             });
 
             getSegments().get(i).setupEditor(this, controller, editor);

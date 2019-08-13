@@ -28,7 +28,7 @@ public class SplineSegment extends PathSegment {
     private static final int SPLINE_T2_SHIFT = 3;
 
     public SplineSegment() {
-        super(PathType.SPLINE);
+        super(PathType.SPLINE, false);
     }
 
     @Override
@@ -149,8 +149,13 @@ public class SplineSegment extends PathSegment {
     }
 
     @Override
+    public void recalculateLength() {
+        //TODO: Implement.
+    }
+
+    @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
-        super.setupEditor(path, controller, editor);
+        super.setupEditor(path, controller, editor); //TODO: Allow editing, after figuring out this data.
         editor.addLabel("Spline:", Utils.matrixToString(this.splineMatrix), 25.0);
         editor.addLabel("Smooth T:", Arrays.toString(this.smoothT), 25.0);
         editor.addLabel("Smooth C:", Utils.matrixToString(this.smoothC), 25.0);

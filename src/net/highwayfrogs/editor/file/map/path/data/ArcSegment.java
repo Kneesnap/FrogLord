@@ -22,11 +22,10 @@ public class ArcSegment extends PathSegment {
     private SVector start = new SVector();
     private SVector center = new SVector();
     private SVector normal = new SVector();
-    private int radius; //TODO: This should be automatically calculated. Pythagorean algorithm gets really really close to an accurate answer, but not exactly.
     private int pitch; // Delta Y in helix frame. (Can be opposite direction of normal)
 
     public ArcSegment() {
-        super(PathType.ARC);
+        super(PathType.ARC, false);
     }
 
     @Override
@@ -34,8 +33,12 @@ public class ArcSegment extends PathSegment {
         this.start.loadWithPadding(reader);
         this.center.loadWithPadding(reader);
         this.normal.loadWithPadding(reader);
-        this.radius = reader.readInt();
+        int readRadius = reader.readInt();
         this.pitch = reader.readInt();
+
+        float diff = Math.abs(Utils.fixedPointIntToFloat4Bit(readRadius - getRadius()));
+        if (diff >= 3)
+            throw new RuntimeException("getRadius() was too inaccurate in ArcSegment. (" + diff + ")");
     }
 
     @Override
@@ -43,7 +46,7 @@ public class ArcSegment extends PathSegment {
         this.start.saveWithPadding(writer);
         this.center.saveWithPadding(writer);
         this.normal.saveWithPadding(writer);
-        writer.writeInt(this.radius);
+        writer.writeInt(getRadius());
         writer.writeInt(this.pitch);
     }
 
@@ -60,16 +63,17 @@ public class ArcSegment extends PathSegment {
         vec3.outerProduct12(vec, vec2); // Equivalent to MROuterProduct12 ?? <- Check this! [AndyEder]
 
         PSXMatrix matrix = new PSXMatrix();
-        matrix.getMatrix()[0][0] = (short)vec.getX();
-        matrix.getMatrix()[1][0] = (short)vec.getY();
-        matrix.getMatrix()[2][0] = (short)vec.getZ();
-        matrix.getMatrix()[0][1] = (short)-vec2.getX();
-        matrix.getMatrix()[1][1] = (short)-vec2.getY();
-        matrix.getMatrix()[2][1] = (short)-vec2.getZ();
-        matrix.getMatrix()[0][2] = (short)-vec3.getX();
-        matrix.getMatrix()[1][2] = (short)-vec3.getY();
-        matrix.getMatrix()[2][2] = (short)-vec3.getZ();
+        matrix.getMatrix()[0][0] = (short) vec.getX();
+        matrix.getMatrix()[1][0] = (short) vec.getY();
+        matrix.getMatrix()[2][0] = (short) vec.getZ();
+        matrix.getMatrix()[0][1] = (short) -vec2.getX();
+        matrix.getMatrix()[1][1] = (short) -vec2.getY();
+        matrix.getMatrix()[2][1] = (short) -vec2.getZ();
+        matrix.getMatrix()[0][2] = (short) -vec3.getX();
+        matrix.getMatrix()[1][2] = (short) -vec3.getY();
+        matrix.getMatrix()[2][2] = (short) -vec3.getZ();
 
+        int radius = getRadius();
         final int c = radius * 0x6487;
         final int t = (segmentDistance << 12) / c;
         final int a = ((segmentDistance << 18) - (t * c)) / (radius * 0x192);
@@ -82,18 +86,43 @@ public class ArcSegment extends PathSegment {
 
         PSXMatrix.MRApplyRotMatrix(matrix, svec, vec);
         vec.add(center);
-        svec.setValues((short) sin, (short) 0, (short) -cos);
+        svec.setValues((short) -sin, (short) 0, (short) cos);
         return new PathResult(new SVector(vec), PSXMatrix.MRApplyRotMatrix(matrix, svec, new IVector()));
+    }
+
+    @Override
+    public void recalculateLength() {
+        setLength(Utils.floatToFixedPointInt4Bit(Utils.fixedPointIntToFloat4Bit(getRadius()) * (float) (Math.PI / 2)));
+    }
+
+    @Override
+    public void onUpdate(MapUIController controller) {
+        super.onUpdate(controller);
+        controller.setupPathEditor();
     }
 
     @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor);
-        editor.addFloatSVector("Start:", getStart(), () -> controller.getController().resetEntities());
-        editor.addFloatSVector("Center:", getCenter(), () -> controller.getController().resetEntities());
+        editor.addFloatSVector("Start:", getStart(), () -> onUpdate(controller));
+        editor.addFloatSVector("Center:", getCenter(), () -> onUpdate(controller));
 
-        editor.addFloatNormalSVector("Normal:", getNormal());
-        editor.addFloatField("Radius:", Utils.fixedPointIntToFloat4Bit(getRadius()));
-        editor.addFloatField("Pitch:", Utils.fixedPointIntToFloat4Bit(getPitch()));
+        editor.addSVector("Normal:", 12, getNormal(), () -> onUpdate(controller));
+
+        editor.addFloatField("Pitch:", Utils.fixedPointIntToFloat4Bit(getPitch()), newValue -> {
+            this.pitch = Utils.floatToFixedPointInt4Bit(newValue);
+            onUpdate(controller);
+        }, null);
+    }
+
+    /**
+     * Gets the radius for this segment.
+     * NOTE: This isn't full accurate, but it's close enough for now.
+     * @return radius
+     */
+    public int getRadius() {
+        double xDiff = (start.getFloatX() - center.getFloatX());
+        double zDiff = (start.getFloatZ() - center.getFloatZ());
+        return Utils.floatToFixedPointInt4Bit((float) Math.sqrt((xDiff * xDiff) + (zDiff * zDiff)));
     }
 }
