@@ -88,9 +88,15 @@ public class Light extends GameObject {
                 editor.addNormalLabel(getApiType() == APILightType.POINT ? "Position:" : "Direction:", 25);
                 editor.addVector3D(lightPosition, 25, (index, newValue) -> {
                     switch(index) {
-                        case 0: getDirection().setX(Utils.floatToFixedPointShort4Bit(newValue)); break;
-                        case 1: getDirection().setY(Utils.floatToFixedPointShort4Bit(newValue)); break;
-                        case 2: getDirection().setZ(Utils.floatToFixedPointShort4Bit(newValue)); break;
+                        case 0:
+                            getDirection().setFloatX(newValue);
+                            break;
+                        case 1:
+                            getDirection().setFloatY(newValue);
+                            break;
+                        case 2:
+                            getDirection().setFloatZ(newValue);
+                            break;
                     }
 
                     uiController.getController().updateLighting();

@@ -350,7 +350,6 @@ public class GUIEditorGrid {
      */
     public void addFloatSVector(String text, SVector vector, Runnable update, MAPController controller) {
         //TODO: Support origin offset, for things like camera.
-        //TODO: Clean up SVector, its float dealings, and basically just try to keep things nice.
 
         if (controller != null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
@@ -391,21 +390,21 @@ public class GUIEditorGrid {
             if (!Utils.isNumber(str))
                 return false;
 
-            vector.setX(Utils.floatToFixedPointShort4Bit(Float.parseFloat(str)));
+            vector.setFloatX(Float.parseFloat(str));
             return true;
         }, onPass);
         Utils.setHandleKeyPress(yField, str -> {
             if (!Utils.isNumber(str))
                 return false;
 
-            vector.setY(Utils.floatToFixedPointShort4Bit(Float.parseFloat(str)));
+            vector.setFloatY(Float.parseFloat(str));
             return true;
         }, onPass);
         Utils.setHandleKeyPress(zField, str -> {
             if (!Utils.isNumber(str))
                 return false;
 
-            vector.setZ(Utils.floatToFixedPointShort4Bit(Float.parseFloat(str)));
+            vector.setFloatZ(Float.parseFloat(str));
             return true;
         }, onPass);
 
@@ -431,8 +430,8 @@ public class GUIEditorGrid {
             double xDiff = -(lastDrag.getX() - evt.getX()) / 10;
             double zDiff = (lastDrag.getY() - evt.getY()) / 10;
 
-            vector.setX(Utils.floatToFixedPointShort4Bit((float) (vector.getFloatX() + xDiff)));
-            vector.setZ(Utils.floatToFixedPointShort4Bit((float) (vector.getFloatZ() + zDiff)));
+            vector.setFloatX((float) (vector.getFloatX() + xDiff));
+            vector.setFloatZ((float) (vector.getFloatZ() + zDiff));
             xField.setText(String.valueOf(vector.getFloatX()));
             zField.setText(String.valueOf(vector.getFloatZ()));
 
@@ -441,7 +440,7 @@ public class GUIEditorGrid {
             lastDrag.setX(evt.getX());
             lastDrag.setY(evt.getY());
         });
-        xzView.setOnMouseReleased(xzView.getOnMouseDragged());
+        xzView.setOnMouseReleased(evt -> xzLastDrag[0] = null);
 
 
         // Y Move.
@@ -458,14 +457,14 @@ public class GUIEditorGrid {
             }
 
             double yDiff = -(lastDrag.getY() - evt.getY()) / 10;
-            vector.setY(Utils.floatToFixedPointShort4Bit((float) (vector.getFloatY() + yDiff)));
+            vector.setFloatY((float) (vector.getFloatY() + yDiff));
             yField.setText(String.valueOf(vector.getFloatY()));
             onPass.run();
 
             lastDrag.setX(evt.getX());
             lastDrag.setY(evt.getY());
         });
-        yView.setOnMouseReleased(yView.getOnMouseDragged());
+        yView.setOnMouseReleased(evt -> yLastDrag[0] = null);
 
         vecPane.setHgap(10);
         GridPane.setColumnSpan(vecPane, 2); // Make it take up the full space in the grid it will be added to.

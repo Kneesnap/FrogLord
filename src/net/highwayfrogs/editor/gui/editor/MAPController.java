@@ -463,7 +463,7 @@ public class MAPController extends EditorController<MAPFile> {
             y /= vertexIndices.length;
             z /= vertexIndices.length;
 
-            return new SVector(Utils.floatToFixedPointShort4Bit(x), Utils.floatToFixedPointShort4Bit(y), Utils.floatToFixedPointShort4Bit(z));
+            return new SVector(x, y, z);
         }
 
         return null;
@@ -611,9 +611,9 @@ public class MAPController extends EditorController<MAPFile> {
                     PointLight parallelLight = new PointLight();
                     parallelLight.setColor(Utils.fromBGR(light.getColor()));
                     // Use direction as a vector to set a position to simulate a parallel light as best as we can
-                    parallelLight.setTranslateX(-light.getDirection().getFloatNormalX() * 1024);
-                    parallelLight.setTranslateY(-light.getDirection().getFloatNormalY() * 1024);
-                    parallelLight.setTranslateZ(-light.getDirection().getFloatNormalZ() * 1024);
+                    parallelLight.setTranslateX(-light.getDirection().getFloatX(12) * 1024);
+                    parallelLight.setTranslateY(-light.getDirection().getFloatY(12) * 1024);
+                    parallelLight.setTranslateZ(-light.getDirection().getFloatZ(12) * 1024);
                     getRenderManager().addNode(LIGHT_LIST, parallelLight);
                     break;
 

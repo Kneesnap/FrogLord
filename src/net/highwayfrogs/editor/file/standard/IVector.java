@@ -133,63 +133,39 @@ public class IVector extends GameObject implements Vector {
         return this;
     }
 
-    /**
-     * Gets the float X value.
-     * @return floatX
-     */
-    public float getFloatX() {
-        return Utils.fixedPointIntToFloat4Bit(getX());
-    }
-
-    /**
-     * Gets the float Y value.
-     * @return floatY
-     */
-    public float getFloatY() {
-        return Utils.fixedPointIntToFloat4Bit(getY());
-    }
-
-    /**
-     * Gets the float Z value.
-     * @return floatZ
-     */
-    public float getFloatZ() {
-        return Utils.fixedPointIntToFloat4Bit(getZ());
-    }
-
-    /**
-     * Gets the float X value (specifically for handling normal component values).
-     * @return floatX
-     */
-    public float getFloatNormalX() {
-        return Utils.fixedPointIntToFloat20Bit(getX());
-    }
-
-    /**
-     * Gets the float Y value (specifically for handling normal component values).
-     * @return floatY
-     */
-    public float getFloatNormalY() {
-        return Utils.fixedPointIntToFloat20Bit(getY());
-    }
-
-    /**
-     * Gets the float Z value (specifically for handling normal component values).
-     * @return floatZ
-     */
-    public float getFloatNormalZ() {
-        return Utils.fixedPointIntToFloat20Bit(getZ());
-    }
-
-
-    @Override
-    public String toRegularString() {
-        return getX() + ", " + getY() + ", " + getZ();
-    }
-
     @Override
     public String toString() {
         return toString0();
+    }
+
+    @Override
+    public float getFloatX(int bits) {
+        return Utils.fixedPointIntToFloatNBits(getX(), bits);
+    }
+
+    @Override
+    public float getFloatY(int bits) {
+        return Utils.fixedPointIntToFloatNBits(getY(), bits);
+    }
+
+    @Override
+    public float getFloatZ(int bits) {
+        return Utils.fixedPointIntToFloatNBits(getZ(), bits);
+    }
+
+    @Override
+    public void setFloatX(float xVal, int bits) {
+        this.x = Utils.floatToFixedPointInt(xVal, bits);
+    }
+
+    @Override
+    public void setFloatY(float yVal, int bits) {
+        this.y = Utils.floatToFixedPointInt(yVal, bits);
+    }
+
+    @Override
+    public void setFloatZ(float zVal, int bits) {
+        this.z = Utils.floatToFixedPointInt(zVal, bits);
     }
 
     /**
