@@ -1,13 +1,9 @@
-
-
 Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, 1.8.0_172, and 1.8.0_181, but not 1.8.0_161, or 1.8.0_201? The broken ones appear to use less RAM, and have spikes when viewing the map.
 See if anything can be done about using the swamp VLO as a texture for 3D things. It seems some laptop computers do not like this and display everything as black with a message in the console.
-Eventually have some method which can allocate space into an executable at a given space so we could for instance add a new level into the level selector. This would need to modify pointers.
 
-Issues / Features:
- - PP20 compressor is not very efficient. Could we make an algorithm that is as good as the original one? Disassemble the original packer.
- - Entities need some kind of height offset in the map viewer. Figure out how the game figures out this height thing.
+Features:
  - Full PSX VLO Support. (Missing support for certain types of images like the level select)
+ - Is the entity position math correct? Is it really 20 bits?
 
 UI Plans:
  - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.
@@ -17,9 +13,13 @@ Map Editor:
  - Better polygon editor.
  - Adding entities: Have a selector that lets you pick the entity type you want to make, instead of cloning the current one. The camera should focus in on the new entity at the very least, if we can't let the user decide where to place it. We could disable the create entity button if there is no tile selected (tile must be under a path if it's a path entity)
  - For SVector x y z positions, add an option to move the position around relatively. Right now we use a textbox.
+ - Make the map clearer work. Figure out the conditions for crashing so it can warn if it believes the map will crash.
 
 Future:
- - Spline Editor [Andy Eder?]
- - Support Gouraud shading on things like MAPPolyG4.
+ - Spline Editor [@Andy, I don't know what all of this data is, and I don't understand the math behind this. Even if you could just give me some documentation that lets me understand each piece of data, this would be useful.]
+ - Support Gouraud shading on things like MAPPolyG4. [Andy Eder?] (We could finally show accurate textures in the map view.) I believe this can be achieved by making a GouraudMaterial class which works similar to PhongMaterial, but with Gouraud shading.
  - Import mofs from MM3D.
  - MOF Editor.
+ - Reverse official PP20 packer library, or see if Nico is willing to send the code for it.
+ - Perfect path position calculation. It's fairly close right now. Go over the code for all of the paths to make sure it's accurate, and then go over how it gets used to make sure it gets used properly.
+ - If possible, an automatic space allocator. Something that would let us, let's say... add bytes into the level struct to let us add a new level! It would need to account for pointers, and it would probably be a PC-only feature.
