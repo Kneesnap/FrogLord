@@ -44,19 +44,6 @@ public class GUIMain extends Application {
         MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();
 
-        // Debug = automatically load files for convenience.
-        File folder = new File("debug");
-        if (folder.exists() && folder.isDirectory()) {
-            workingDirectory = folder;
-            File exeFile = new File(folder, "VANILLA.EXE");
-            File mwdFile = new File(folder, "VANILLA.MWD");
-
-            if (exeFile.exists() && mwdFile.exists()) {
-                resolveEXE(exeFile, () -> openGUI(primaryStage, mwdFile));
-                return;
-            }
-        }
-
         openFroggerFiles();
     }
 
