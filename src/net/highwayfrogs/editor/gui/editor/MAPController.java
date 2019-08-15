@@ -75,6 +75,7 @@ public class MAPController extends EditorController<MAPFile> {
     private MAPPolygon polygonImmuneToTarget;
     private boolean polygonSelected;
     private boolean showGroupBounds;
+    private SVector showPosition;
 
     private RenderManager renderManager = new RenderManager();
     private CameraFPS cameraFPS;
@@ -95,6 +96,10 @@ public class MAPController extends EditorController<MAPFile> {
 
     private static final String DISPLAY_LIST_PATHS = "displayListPaths";
     private static final String LIGHT_LIST = "lightList";
+    private static final String GENERIC_POS_LIST = "genericPositionList";
+
+    private static final double GENERIC_POS_SIZE = 3;
+    private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
 
     @Override
     public void loadFile(MAPFile mapFile) {
@@ -184,6 +189,11 @@ public class MAPController extends EditorController<MAPFile> {
         // Setup the primary camera
         this.cameraFPS = new CameraFPS();
 
+        if (this.showPosition != null)
+            this.showPosition = null;
+        if (getRenderManager().getDisplayListCache().containsKey(GENERIC_POS_LIST))
+            getRenderManager().clearDisplayList(GENERIC_POS_LIST);
+
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(Utils.toFXImage(texMap.getImage(), true));
@@ -258,16 +268,6 @@ public class MAPController extends EditorController<MAPFile> {
             // Toggle fullscreen mode.
             if (event.isControlDown() && event.getCode() == KeyCode.ENTER)
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
-
-            if (event.getCode() == KeyCode.UP) {
-                movePolygonY(MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.DOWN) {
-                movePolygonY(-MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.LEFT) {
-                movePolygonX(-MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.RIGHT) {
-                movePolygonX(MapUIController.getPropertyVertexSpeed().get());
-            }
         });
 
         mapScene.setOnMousePressed(e -> {
@@ -441,39 +441,6 @@ public class MAPController extends EditorController<MAPFile> {
         return node;
     }
 
-    private void movePolygonX(int amount) {
-        if (getSelectedPolygon() != null) {
-            for (int vertice : getSelectedPolygon().getVertices()) {
-                SVector vertex = getFile().getVertexes().get(vertice);
-                vertex.setX((short) (vertex.getX() + amount));
-            }
-
-            refreshView();
-        }
-    }
-
-    private void movePolygonY(int amount) {
-        if (getSelectedPolygon() != null) {
-            for (int vertice : getSelectedPolygon().getVertices()) {
-                SVector vertex = getFile().getVertexes().get(vertice);
-                vertex.setY((short) (vertex.getY() - amount));
-            }
-
-            refreshView();
-        }
-    }
-
-    private void movePolygonZ(int amount) {
-        if (getSelectedPolygon() != null) {
-            for (int vertice : getSelectedPolygon().getVertices()) {
-                SVector vertex = getFile().getVertexes().get(vertice);
-                vertex.setZ((short) (vertex.getZ() + amount));
-            }
-
-            refreshView();
-        }
-    }
-
     /**
      * Calculate geometric center point of selected polygon.
      * @return Center of selected polygon, else null.
@@ -500,6 +467,18 @@ public class MAPController extends EditorController<MAPFile> {
         }
 
         return null;
+    }
+
+    /**
+     * Updates the marker to display at the given position.
+     * If null is supplied, it'll get removed.
+     */
+    public void updateMarker(SVector vec) {
+        getRenderManager().addMissingDisplayList(GENERIC_POS_LIST);
+        getRenderManager().clearDisplayList(GENERIC_POS_LIST);
+        this.showPosition = vec;
+        if (vec != null)
+            getRenderManager().addBoundingBoxFromMinMax(GENERIC_POS_LIST, vec.getFloatX() - GENERIC_POS_SIZE, vec.getFloatY() - GENERIC_POS_SIZE, vec.getFloatZ() - GENERIC_POS_SIZE, vec.getFloatX() + GENERIC_POS_SIZE, vec.getFloatY() + GENERIC_POS_SIZE, vec.getFloatZ() + GENERIC_POS_SIZE, GENERIC_POS_MATERIAL, true);
     }
 
     /**

@@ -11,15 +11,22 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.RowConstraints;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
+import net.highwayfrogs.editor.gui.editor.MAPController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -35,6 +42,8 @@ public class GUIEditorGrid {
     private GridPane gridPane;
     private int rowIndex;
 
+    private static final Image GRAY_IMAGE_XZ = Utils.makeColorImageNoCache(Color.GRAY, 60, 60);
+    private static final Image GRAY_IMAGE_Y = Utils.makeColorImageNoCache(Color.GRAY, 15, 60);
     private static final StringConverter<Double> SLIDER_DEGREE_CONVERTER = new StringConverter<Double>() {
         @Override
         public String toString(Double num) {
@@ -330,8 +339,8 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatSVector(String text, SVector vector) {
-        addFloatSVector(text, vector, null);
+    public void addFloatSVector(String text, SVector vector, MAPController controller) {
+        addFloatSVector(text, vector, null, controller);
     }
 
     /**
@@ -339,16 +348,137 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatSVector(String text, SVector vector, Runnable update) {
-        addTextField(text, vector.toFloatString(), newText -> {
-            if (!vector.loadFromFloatText(newText))
-                return false;
+    public void addFloatSVector(String text, SVector vector, Runnable update, MAPController controller) {
+        //TODO: Support origin offset, for things like camera.
+        //TODO: Clean up SVector, its float dealings, and basically just try to keep things nice.
+
+        if (controller != null) {
+            addBoldLabelButton(text + ":", "Toggle Display", 25,
+                    () -> controller.updateMarker(controller.getShowPosition() == null || !Objects.equals(vector, controller.getShowPosition()) ? vector : null));
+        } else {
+            addBoldLabel(text + ":");
+        }
+
+        Runnable onPass = () -> {
+            if (controller != null)
+                controller.updateMarker(vector);
 
             if (update != null)
                 update.run();
             onChange();
+        };
+
+        GridPane vecPane = new GridPane();
+        vecPane.addRow(0);
+
+        // Label:
+        VBox labelBox = new VBox();
+        labelBox.getChildren().add(new Label("X:"));
+        labelBox.getChildren().add(new Label("Y:"));
+        labelBox.getChildren().add(new Label("Z:"));
+        labelBox.setSpacing(10);
+        vecPane.addColumn(0, labelBox);
+
+        // XYZ:
+        VBox posBox = new VBox();
+        TextField xField = new TextField(String.valueOf(vector.getFloatX()));
+        TextField yField = new TextField(String.valueOf(vector.getFloatY()));
+        TextField zField = new TextField(String.valueOf(vector.getFloatZ()));
+        xField.setPrefWidth(60);
+        yField.setPrefWidth(60);
+        zField.setPrefWidth(60);
+        Utils.setHandleKeyPress(xField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            vector.setX(Utils.floatToFixedPointShort4Bit(Float.parseFloat(str)));
             return true;
+        }, onPass);
+        Utils.setHandleKeyPress(yField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            vector.setY(Utils.floatToFixedPointShort4Bit(Float.parseFloat(str)));
+            return true;
+        }, onPass);
+        Utils.setHandleKeyPress(zField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            vector.setZ(Utils.floatToFixedPointShort4Bit(Float.parseFloat(str)));
+            return true;
+        }, onPass);
+
+        posBox.getChildren().add(xField);
+        posBox.getChildren().add(yField);
+        posBox.getChildren().add(zField);
+        posBox.setSpacing(2);
+        vecPane.addColumn(1, posBox);
+
+        // XZ Move.
+        ImageView xzView = new ImageView(GRAY_IMAGE_XZ);
+        vecPane.addColumn(2, xzView);
+
+        DragPos[] xzLastDrag = new DragPos[1];
+        xzView.setOnMouseClicked(evt -> xzLastDrag[0] = new DragPos(evt.getX(), evt.getY()));
+        xzView.setOnMouseDragged(evt -> {
+            DragPos lastDrag = xzLastDrag[0];
+            if (lastDrag == null) { // Set it up if it's not present.
+                xzLastDrag[0] = new DragPos(evt.getX(), evt.getY());
+                return;
+            }
+
+            double xDiff = -(lastDrag.getX() - evt.getX()) / 10;
+            double zDiff = (lastDrag.getY() - evt.getY()) / 10;
+
+            vector.setX(Utils.floatToFixedPointShort4Bit((float) (vector.getFloatX() + xDiff)));
+            vector.setZ(Utils.floatToFixedPointShort4Bit((float) (vector.getFloatZ() + zDiff)));
+            xField.setText(String.valueOf(vector.getFloatX()));
+            zField.setText(String.valueOf(vector.getFloatZ()));
+
+            onPass.run();
+
+            lastDrag.setX(evt.getX());
+            lastDrag.setY(evt.getY());
         });
+        xzView.setOnMouseReleased(xzView.getOnMouseDragged());
+
+
+        // Y Move.
+        ImageView yView = new ImageView(GRAY_IMAGE_Y);
+        vecPane.addColumn(3, yView);
+
+        DragPos[] yLastDrag = new DragPos[1];
+        yView.setOnMouseClicked(evt -> yLastDrag[0] = new DragPos(evt.getX(), evt.getY()));
+        yView.setOnMouseDragged(evt -> {
+            DragPos lastDrag = yLastDrag[0];
+            if (lastDrag == null) { // Set it up if it's not present.
+                yLastDrag[0] = new DragPos(evt.getX(), evt.getY());
+                return;
+            }
+
+            double yDiff = -(lastDrag.getY() - evt.getY()) / 10;
+            vector.setY(Utils.floatToFixedPointShort4Bit((float) (vector.getFloatY() + yDiff)));
+            yField.setText(String.valueOf(vector.getFloatY()));
+            onPass.run();
+
+            lastDrag.setX(evt.getX());
+            lastDrag.setY(evt.getY());
+        });
+        yView.setOnMouseReleased(yView.getOnMouseDragged());
+
+        vecPane.setHgap(10);
+        GridPane.setColumnSpan(vecPane, 2); // Make it take up the full space in the grid it will be added to.
+        setupNode(vecPane); // Setup this in the new area.
+        addRow(75);
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    private static class DragPos {
+        private double x;
+        private double y;
     }
 
     /**

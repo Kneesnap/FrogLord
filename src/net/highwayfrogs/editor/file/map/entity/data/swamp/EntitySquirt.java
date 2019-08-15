@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 /**
  * Created by Kneesnap on 11/26/2018.
@@ -39,6 +40,11 @@ public class EntitySquirt extends MatrixData {
         super.addData(editor);
         editor.addShortField("Time Delay", getTimeDelay(), this::setTimeDelay, null);
         editor.addShortField("Drop Time", getDropTime(), this::setDropTime, null);
-        editor.addFloatSVector("Target", getTarget());
+    }
+
+    @Override
+    public void addData(MapUIController controller, GUIEditorGrid editor) {
+        super.addData(controller, editor);
+        editor.addFloatSVector("Target", getTarget(), controller.getController());
     }
 }

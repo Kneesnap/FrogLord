@@ -1315,6 +1315,20 @@ public class Utils {
     }
 
     /**
+     * Creates an image of a solid color.
+     * @param color The color to make the image of.
+     * @return colorImage
+     */
+    public static Image makeColorImageNoCache(Color color, int width, int height) {
+        BufferedImage colorImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = colorImage.createGraphics();
+        graphics.setColor(toAWTColor(color));
+        graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
+        graphics.dispose();
+        return toFXImage(colorImage, false);
+    }
+
+    /**
      * Convert a JavaFX color to an AWT color.
      * @param fxColor The fx color to convert.
      * @return awtColor

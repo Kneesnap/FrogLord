@@ -807,8 +807,8 @@ public class MAPFile extends GameFile {
                 .setConverter(new AbstractStringConverter<>(StartRotation::getArrow));
 
         editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
-        editor.addFloatSVector("Camera Source Offset", getCameraSourceOffset());
-        editor.addFloatSVector("Camera Target Offset", getCameraTargetOffset());
+        editor.addFloatSVector("Camera Source", getCameraSourceOffset(), controller);
+        editor.addFloatSVector("Camera Target", getCameraTargetOffset(), controller);
         editor.addSeparator(25);
 
         // Group:
