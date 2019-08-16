@@ -65,6 +65,8 @@ public class Light extends GameObject {
      * @param editor Lighting editor.
      */
     public void makeEditor(GUIEditorGrid editor, MapUIController uiController) {
+        editor.addEnumSelector("Type", getType(), LightType.values(), false, this::setType);
+
         // Don't need to edit the lightType, as static is the only one that does anything.
         int rgbColor = Utils.toRGB(Utils.fromBGR(getColor()));
         editor.addColorPicker("Color:", 25, rgbColor, newColor -> {
@@ -72,37 +74,9 @@ public class Light extends GameObject {
             uiController.getController().updateLighting();
         });
 
-        // The light api type determines which fields are relevant for this specific light
-        switch (getApiType()) {
-            case AMBIENT:
-                // An ambient light only has a color, hence no additional components needed
-                break;
-
-            case POINT:
-            case PARALLEL:
-                // A point light has color and position, hence add position component
-                float[] lightPosition = new float[3];
-                lightPosition[0] = getDirection().getFloatX();
-                lightPosition[1] = getDirection().getFloatY();
-                lightPosition[2] = getDirection().getFloatZ();
-                editor.addNormalLabel(getApiType() == APILightType.POINT ? "Position:" : "Direction:", 25);
-                editor.addVector3D(lightPosition, 25, (index, newValue) -> {
-                    switch(index) {
-                        case 0:
-                            getDirection().setFloatX(newValue);
-                            break;
-                        case 1:
-                            getDirection().setFloatY(newValue);
-                            break;
-                        case 2:
-                            getDirection().setFloatZ(newValue);
-                            break;
-                    }
-
-                    uiController.getController().updateLighting();
-                });
-                break;
-        }
+        if (getApiType() == APILightType.POINT || getApiType() == APILightType.PARALLEL)
+            editor.addFloatVector(getApiType() == APILightType.POINT ? "Position:" : "Direction:", this.direction,
+                    () -> uiController.getController().updateLighting(), uiController.getController());
     }
 
     /**

@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -14,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public abstract class MAPPolygon extends MAPPrimitive {
     private short padding;
-    private transient boolean flippedVertices;
+    @Setter private transient boolean flippedVertices;
 
     public static final int TRI_SIZE = 3;
     public static final int QUAD_SIZE = 4;
