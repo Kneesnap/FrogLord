@@ -364,18 +364,25 @@ public class GUIEditorGrid {
      * @param vector The SVector itself.
      */
     public void addFloatVector(String text, Vector vector, Runnable update, MAPController controller, int bits) {
-        //TODO: Support origin offset, for things like camera.
+        addFloatVector(text, vector, update, controller, bits, null);
+    }
 
+    /**
+     * Add a float SVector for editing.
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     */
+    public void addFloatVector(String text, Vector vector, Runnable update, MAPController controller, int bits, Vector origin) {
         if (controller != null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
-                    () -> controller.updateMarker(controller.getShowPosition() == null || !Objects.equals(vector, controller.getShowPosition()) ? vector : null, bits));
+                    () -> controller.updateMarker(controller.getShowPosition() == null || !Objects.equals(vector, controller.getShowPosition()) ? vector : null, bits, origin));
         } else {
             addBoldLabel(text + ":");
         }
 
         Runnable onPass = () -> {
             if (controller != null)
-                controller.updateMarker(vector, bits);
+                controller.updateMarker(vector, bits, origin);
 
             if (update != null)
                 update.run();

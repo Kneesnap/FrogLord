@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.map.path;
 
+import javafx.scene.control.TextField;
 import lombok.Getter;
-import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -16,8 +16,9 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 public abstract class PathSegment extends GameObject {
     private PathType type;
-    @Setter private int length;
+    private int length;
     private boolean allowLengthEdit;
+    private transient TextField lengthField;
 
     public PathSegment(PathType type, boolean allowLengthEdit) {
         this.type = type;
@@ -69,7 +70,7 @@ public abstract class PathSegment extends GameObject {
      */
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         editor.addLabel("Type:", getType().name(), 25);
-        editor.addFloatField("Length:", Utils.fixedPointIntToFloat4Bit(getLength()), isAllowLengthEdit() ? newVal -> setLength(Utils.floatToFixedPointShort4Bit(newVal)) : null, null); // Read-Only.
+        this.lengthField = editor.addFloatField("Length:", Utils.fixedPointIntToFloat4Bit(getLength()), isAllowLengthEdit() ? newVal -> setLength(Utils.floatToFixedPointShort4Bit(newVal)) : null, null); // Read-Only.
     }
 
     /**
@@ -80,5 +81,15 @@ public abstract class PathSegment extends GameObject {
         recalculateLength();
         controller.getController().updatePathDisplay();
         controller.getController().resetEntities();
+    }
+
+    /**
+     * Sets the length of this segment.
+     * @param newLength The segment length
+     */
+    public void setLength(int newLength) {
+        this.length = newLength;
+        if (this.lengthField != null)
+            this.lengthField.setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(newLength)));
     }
 }

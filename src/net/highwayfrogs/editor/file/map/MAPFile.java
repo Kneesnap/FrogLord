@@ -32,6 +32,7 @@ import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -807,8 +808,11 @@ public class MAPFile extends GameFile {
                 .setConverter(new AbstractStringConverter<>(StartRotation::getArrow));
 
         editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
-        editor.addFloatSVector("Camera Source", getCameraSourceOffset(), controller);
-        editor.addFloatSVector("Camera Target", getCameraTargetOffset(), controller);
+
+
+        IVector gridOrigin = new IVector(getWorldX(getStartXTile(), true), -getGridStack(getStartXTile(), getStartZTile()).getHeight(), getWorldZ(getStartZTile(), true));
+        editor.addFloatVector("Camera Source", getCameraSourceOffset(), null, controller, gridOrigin.defaultBits(), gridOrigin);
+        editor.addFloatVector("Camera Target", getCameraTargetOffset(), null, controller, gridOrigin.defaultBits(), gridOrigin);
         editor.addSeparator(25);
 
         // Group:

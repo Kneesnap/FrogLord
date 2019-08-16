@@ -474,12 +474,22 @@ public class MAPController extends EditorController<MAPFile> {
      * Updates the marker to display at the given position.
      * If null is supplied, it'll get removed.
      */
-    public void updateMarker(Vector vec, int bits) {
+    public void updateMarker(Vector vec, int bits, Vector origin) {
         getRenderManager().addMissingDisplayList(GENERIC_POS_LIST);
         getRenderManager().clearDisplayList(GENERIC_POS_LIST);
         this.showPosition = vec;
-        if (vec != null)
-            getRenderManager().addBoundingBoxFromMinMax(GENERIC_POS_LIST, vec.getFloatX(bits) - GENERIC_POS_SIZE, vec.getFloatY(bits) - GENERIC_POS_SIZE, vec.getFloatZ(bits) - GENERIC_POS_SIZE, vec.getFloatX(bits) + GENERIC_POS_SIZE, vec.getFloatY(bits) + GENERIC_POS_SIZE, vec.getFloatZ(bits) + GENERIC_POS_SIZE, GENERIC_POS_MATERIAL, true);
+        if (vec != null) {
+            float baseX = vec.getFloatX(bits);
+            float baseY = vec.getFloatY(bits);
+            float baseZ = vec.getFloatZ(bits);
+            if (origin != null) {
+                baseX += origin.getFloatX();
+                baseY += origin.getFloatY();
+                baseZ += origin.getFloatZ();
+            }
+
+            getRenderManager().addBoundingBoxFromMinMax(GENERIC_POS_LIST, baseX - GENERIC_POS_SIZE, baseY - GENERIC_POS_SIZE, baseZ - GENERIC_POS_SIZE, baseX + GENERIC_POS_SIZE, baseY + GENERIC_POS_SIZE, baseZ + GENERIC_POS_SIZE, GENERIC_POS_MATERIAL, true);
+        }
     }
 
     /**
