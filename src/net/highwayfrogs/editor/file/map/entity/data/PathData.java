@@ -2,13 +2,13 @@ package net.highwayfrogs.editor.file.map.entity.data;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.map.path.Path;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathInfo.PathMotionType;
-import net.highwayfrogs.editor.file.map.path.PathSegment;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -32,34 +32,30 @@ public class PathData extends EntityData {
 
     @Override
     public void addData(GUIEditorGrid editor) {
-        editor.addIntegerField("Path ID", getPathInfo().getPathId(), pathId -> {
-            getPathInfo().setSegmentDistance(0); // Start them at the start of the path when switching paths.
-            getPathInfo().setSegmentId(0); // Start them at the start of the path when switching paths.
-            getPathInfo().setPathId(pathId);
-        }, null);
-
+        MAPFile map = getParentEntity().getMap();
         editor.addIntegerField("Speed", getPathInfo().getSpeed(), getPathInfo()::setSpeed, null);
-
-        Path path = getParentEntity().getMap().getPaths().get(getPathInfo().getPathId());
-        int startValue = getPathInfo().getSegmentDistance();
-        for (int i = 0; i < getPathInfo().getSegmentId(); i++)
-            startValue += path.getSegments().get(i).getLength();
-
-        editor.addIntegerSlider("Distance", startValue, distance -> {
-            for (int i = 0; i < path.getSegments().size(); i++) {
-                PathSegment segment = path.getSegments().get(i);
-                if (distance >= segment.getLength()) {
-                    distance -= segment.getLength();
-                } else { // Found it!
-                    getPathInfo().setSegmentId(i);
-                    getPathInfo().setSegmentDistance(distance);
-                    break;
-                }
-            }
-        }, 0, path.getTotalLength());
+        editor.addIntegerSlider("Distance", getPathInfo().getTotalPathDistance(map),
+                distance -> getPathInfo().setTotalPathDistance(getParentEntity().getMap(), distance), 0, getPathInfo().getPath(map).getTotalLength());
 
         // Motion Data:
         for (PathMotionType type : PathMotionType.values())
             editor.addCheckBox(Utils.capitalize(type.name()), getPathInfo().testFlag(type), newState -> getPathInfo().setFlag(type, newState));
+    }
+
+    @Override
+    public void addData(MapUIController controller, GUIEditorGrid editor) {
+        MAPFile map = getParentEntity().getMap();
+        int pathId = getPathInfo().getPathId();
+        if (pathId < 0 || pathId >= map.getPaths().size()) { // Invalid path! Show this as a text box.
+            editor.addIntegerField("Path ID", pathId, getPathInfo()::setPathId, null);
+        } else { // Otherwise, show it as a selection box!
+            editor.addBoldLabelButton("Path #" + pathId, "Select Path", 25, () ->
+                    controller.getPathManager().promptPath((path, segment) -> {
+                        getPathInfo().setPath(controller.getMap(), path, segment);
+                        controller.getController().resetEntities();
+                    }, null));
+        }
+
+        super.addData(controller, editor); // Path ID comes before the rest.
     }
 }

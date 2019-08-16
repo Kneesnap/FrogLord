@@ -1383,4 +1383,18 @@ public class Utils {
 
         return output.toString();
     }
+
+    /**
+     * Tests if an array contains a value. Creates no objects.
+     * @param array The array to search.
+     * @param find  The value to look for. Can be null.
+     * @return contains
+     */
+    @SuppressWarnings({"ForLoopReplaceableByForEach"})
+    public static <T> boolean contains(T[] array, T find) {
+        for (int i = 0; i < array.length; i++)
+            if (Objects.equals(find, array[i]))
+                return true;
+        return false;
+    }
 }

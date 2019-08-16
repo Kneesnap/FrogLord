@@ -64,4 +64,9 @@ public class LineSegment extends PathSegment {
         float length = (float)Math.sqrt((deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ));
         setLength(Utils.floatToFixedPointInt(length, 4));
     }
+
+    @Override
+    public SVector getStartPosition() {
+        return getStart();
+    }
 }

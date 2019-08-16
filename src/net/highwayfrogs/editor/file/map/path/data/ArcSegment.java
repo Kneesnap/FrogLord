@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.map.path.data;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.map.path.*;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
@@ -38,7 +39,7 @@ public class ArcSegment extends PathSegment {
 
         float diff = Math.abs(Utils.fixedPointIntToFloat4Bit(readRadius - getRadius()));
         if (diff >= 3)
-            throw new RuntimeException("getRadius() was too inaccurate in ArcSegment. (" + diff + ")");
+            System.out.println(MWDFile.CURRENT_FILE_NAME + "'s getRadius() calculation was too inaccurate in ArcSegment! (" + diff + ").");
     }
 
     @Override
@@ -93,6 +94,11 @@ public class ArcSegment extends PathSegment {
     @Override
     public void recalculateLength() {
         setLength(Utils.floatToFixedPointInt4Bit(Utils.fixedPointIntToFloat4Bit(getRadius()) * (float) (Math.PI / 2)));
+    }
+
+    @Override
+    public SVector getStartPosition() {
+        return getStart();
     }
 
     @Override

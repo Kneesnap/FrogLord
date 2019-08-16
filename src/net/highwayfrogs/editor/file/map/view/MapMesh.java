@@ -23,6 +23,7 @@ public class MapMesh extends FrogMesh<MAPPolygon> {
     public static final CursorVertexColor INVISIBLE_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
     public static final CursorVertexColor GRID_COLOR = new CursorVertexColor(Color.BLUE, Color.BLACK);
     public static final CursorVertexColor REMOVE_FACE_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
+    public static final CursorVertexColor GENERAL_SELECTION = new CursorVertexColor(Color.CYAN, Color.BLACK);
 
     public MapMesh(MAPFile file, TextureMap texMap) {
         super(texMap, VertexFormat.POINT_TEXCOORD);

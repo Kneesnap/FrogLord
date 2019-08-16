@@ -38,7 +38,6 @@ import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFly;
 import net.highwayfrogs.editor.file.map.entity.data.general.BonusFlyEntity;
 import net.highwayfrogs.editor.file.map.entity.script.ScriptButterflyData;
 import net.highwayfrogs.editor.file.map.light.Light;
-import net.highwayfrogs.editor.file.map.path.PathDisplaySetting;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
@@ -56,7 +55,6 @@ import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -91,11 +89,7 @@ public class MAPController extends EditorController<MAPFile> {
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
 
     private static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
-    private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
-    private static final PhongMaterial MATERIAL_LIGHT_GREEN = Utils.makeSpecialMaterial(Color.LIGHTGREEN);
 
-    private static final String DISPLAY_LIST_PATHS = "displayListPaths";
     private static final String LIGHT_LIST = "lightList";
     private static final String GENERIC_POS_LIST = "genericPositionList";
 
@@ -250,7 +244,7 @@ public class MAPController extends EditorController<MAPFile> {
 
             // Exit the viewer.
             if (event.getCode() == KeyCode.ESCAPE) {
-                if (isPolygonSelected()) {
+                if (isPolygonSelected()) { // If there's a polygon selected, deselect it.
                     removeCursorPolygon();
                     return;
                 }
@@ -317,23 +311,8 @@ public class MAPController extends EditorController<MAPFile> {
         cameraFPS.setCameraLookAt(gridX, baseY, gridZ); // Set the camera to look at the start position, too.
 
         // TODO: Tidy this up at some point, but use an action on a UI control for now [AndyEder]
-        mapUIController.getPathDisplayOption().setOnAction(evt -> this.updatePathDisplay());
+        mapUIController.getPathDisplayOption().valueProperty().addListener(((observable, oldValue, newValue) -> getMapUIController().getPathManager().setDisplaySetting(newValue)));
         mapUIController.getApplyLightsCheckBox().setOnAction(evt -> this.updateLighting());
-    }
-
-    /**
-     * Toggle display of paths.
-     */
-    public void updatePathDisplay() {
-        this.renderManager.addMissingDisplayList(DISPLAY_LIST_PATHS);
-        this.renderManager.clearDisplayList(DISPLAY_LIST_PATHS);
-
-        if (mapUIController.getPathDisplayOption().getValue() == PathDisplaySetting.ALL) {
-            this.renderManager.addPaths(DISPLAY_LIST_PATHS, getFile().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
-        } else if (mapUIController.getPathDisplayOption().getValue() == PathDisplaySetting.SELECTED) {
-            if (getMapUIController().getSelectedPath() != null)
-                this.renderManager.addPaths(DISPLAY_LIST_PATHS, Collections.singletonList(getMapUIController().getSelectedPath()), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
-        }
     }
 
     /**
@@ -443,31 +422,31 @@ public class MAPController extends EditorController<MAPFile> {
     }
 
     /**
-     * Calculate geometric center point of selected polygon.
-     * @return Center of selected polygon, else null.
+     * Calculate geometric center point of a polygon.
+     * @return Center of a polygon, else null.
      */
-    public SVector getCenterOfSelectedPolygon() {
-        if (getSelectedPolygon() != null) {
-            int[] vertexIndices = getSelectedPolygon().getVertices();
+    public SVector getCenterOfPolygon(MAPPolygon poly) {
+        if (poly == null)
+            return null;
 
-            float x = 0.0f;
-            float y = 0.0f;
-            float z = 0.0f;
+        int[] vertexIndices = getSelectedPolygon().getVertices();
 
-            for (int index : vertexIndices) {
-                x += mapMesh.getVertices().get(index).getFloatX();
-                y += mapMesh.getVertices().get(index).getFloatY();
-                z += mapMesh.getVertices().get(index).getFloatZ();
-            }
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
 
-            x /= vertexIndices.length;
-            y /= vertexIndices.length;
-            z /= vertexIndices.length;
-
-            return new SVector(x, y, z);
+        for (int index : vertexIndices) {
+            x += mapMesh.getVertices().get(index).getFloatX();
+            y += mapMesh.getVertices().get(index).getFloatY();
+            z += mapMesh.getVertices().get(index).getFloatZ();
         }
 
-        return null;
+        x /= vertexIndices.length;
+        y /= vertexIndices.length;
+        z /= vertexIndices.length;
+
+        return new SVector(x, y, z);
+
     }
 
     /**

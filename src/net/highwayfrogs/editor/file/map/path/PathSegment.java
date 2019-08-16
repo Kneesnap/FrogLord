@@ -4,6 +4,7 @@ import javafx.scene.control.TextField;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
@@ -63,6 +64,12 @@ public abstract class PathSegment extends GameObject {
     public abstract void recalculateLength();
 
     /**
+     * Gets the start position of this segment.
+     * @return startPosition
+     */
+    public abstract SVector getStartPosition();
+
+    /**
      * Setup a path editor.
      * @param path       The path which owns this segment.
      * @param controller The UI controller.
@@ -79,7 +86,7 @@ public abstract class PathSegment extends GameObject {
      */
     public void onUpdate(MapUIController controller) {
         recalculateLength();
-        controller.getController().updatePathDisplay();
+        controller.getPathManager().updatePathDisplay();
         controller.getController().resetEntities();
     }
 

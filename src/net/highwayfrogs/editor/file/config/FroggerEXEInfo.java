@@ -64,6 +64,7 @@ public class FroggerEXEInfo extends Config {
     private String internalName;
     private boolean hasConfigIdentifier;
     private Map<MAPLevel, Image> levelImageMap = new HashMap<>();
+    private Map<MAPTheme, FormEntry[]> allowedForms = new HashMap<>();
 
 
     private String name;
@@ -830,5 +831,19 @@ public class FroggerEXEInfo extends Config {
 
         String vloName = childConfig.getString(name);
         return getMWD().resolveForEachFile(VLOArchive.class, vlo -> vlo.getFileEntry().getDisplayName().startsWith(vloName) ? vlo : null);
+    }
+
+    /**
+     * Gets allowed forms for a given theme.
+     * @param theme The theme to get forms for.
+     * @return allowedForms
+     */
+    public FormEntry[] getAllowedForms(MAPTheme theme) {
+        return allowedForms.computeIfAbsent(theme, safeTheme -> {
+            List<FormEntry> formType = new ArrayList<>(getThemeLibrary()[MAPTheme.GENERAL.ordinal()].getFormBook());
+            if (safeTheme != null && safeTheme != MAPTheme.GENERAL)
+                formType.addAll(getThemeLibrary()[safeTheme.ordinal()].getFormBook());
+            return formType.toArray(new FormEntry[0]);
+        });
     }
 }

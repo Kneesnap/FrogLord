@@ -313,7 +313,7 @@ public class GUIEditorGrid {
      * @param setter  The setter
      * @return comboBox
      */
-    public <E extends Enum<E>> ComboBox<E> addEnumSelector(String label, E current, E[] values, boolean allowNull, Consumer<E> setter) {
+    public <E> ComboBox<E> addEnumSelector(String label, E current, E[] values, boolean allowNull, Consumer<E> setter) {
         List<E> enumList = new ArrayList<>(Arrays.asList(values));
         if (allowNull)
             enumList.add(0, null);
@@ -568,7 +568,7 @@ public class GUIEditorGrid {
      * @param values       The enum values.
      * @param currentValue The current enum value.
      */
-    public <E extends Enum<E>> void addButtonWithEnumSelection(String buttonText, Consumer<E> onClick, E[] values, E currentValue) {
+    public <E> ComboBox<E> addButtonWithEnumSelection(String buttonText, Consumer<E> onClick, E[] values, E currentValue) {
         // Setup button.
         Button button = setupNode(new Button(buttonText));
 
@@ -588,6 +588,8 @@ public class GUIEditorGrid {
             onChange();
         });
         addRow(25);
+
+        return box;
     }
 
     /**

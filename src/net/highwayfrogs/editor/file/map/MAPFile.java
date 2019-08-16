@@ -160,7 +160,7 @@ public class MAPFile extends GameFile {
                 continue;
 
             if (info.getPathId() > pathIndex) {
-                info.setPathId(info.getPathId() - 1);
+                info.setPathId(info.getPathId() - 1, false);
             } else if (info.getPathId() == pathIndex) {
                 info.setPathId(-1);
             }
@@ -763,6 +763,7 @@ public class MAPFile extends GameFile {
         texMap.put(MapMesh.INVISIBLE_COLOR, MapMesh.INVISIBLE_COLOR.makeTexture());
         texMap.put(MapMesh.GRID_COLOR, MapMesh.GRID_COLOR.makeTexture());
         texMap.put(MapMesh.REMOVE_FACE_COLOR, MapMesh.REMOVE_FACE_COLOR.makeTexture());
+        texMap.put(MapMesh.GENERAL_SELECTION, MapMesh.GENERAL_SELECTION.makeTexture());
         return texMap;
     }
 
