@@ -3,7 +3,6 @@ See if anything can be done about using the swamp VLO as a texture for 3D things
 
 Features:
  - Full PSX VLO Support. (Missing support for certain types of images like the level select)
- - Is the entity position math correct? Is it really 20 bits?
 
 UI Plans:
  - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.

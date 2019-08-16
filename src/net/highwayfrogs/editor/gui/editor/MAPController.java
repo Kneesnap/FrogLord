@@ -45,6 +45,7 @@ import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -75,7 +76,7 @@ public class MAPController extends EditorController<MAPFile> {
     private MAPPolygon polygonImmuneToTarget;
     private boolean polygonSelected;
     private boolean showGroupBounds;
-    private SVector showPosition;
+    private Vector showPosition;
 
     private RenderManager renderManager = new RenderManager();
     private CameraFPS cameraFPS;
@@ -473,12 +474,12 @@ public class MAPController extends EditorController<MAPFile> {
      * Updates the marker to display at the given position.
      * If null is supplied, it'll get removed.
      */
-    public void updateMarker(SVector vec) {
+    public void updateMarker(Vector vec, int bits) {
         getRenderManager().addMissingDisplayList(GENERIC_POS_LIST);
         getRenderManager().clearDisplayList(GENERIC_POS_LIST);
         this.showPosition = vec;
         if (vec != null)
-            getRenderManager().addBoundingBoxFromMinMax(GENERIC_POS_LIST, vec.getFloatX() - GENERIC_POS_SIZE, vec.getFloatY() - GENERIC_POS_SIZE, vec.getFloatZ() - GENERIC_POS_SIZE, vec.getFloatX() + GENERIC_POS_SIZE, vec.getFloatY() + GENERIC_POS_SIZE, vec.getFloatZ() + GENERIC_POS_SIZE, GENERIC_POS_MATERIAL, true);
+            getRenderManager().addBoundingBoxFromMinMax(GENERIC_POS_LIST, vec.getFloatX(bits) - GENERIC_POS_SIZE, vec.getFloatY(bits) - GENERIC_POS_SIZE, vec.getFloatZ(bits) - GENERIC_POS_SIZE, vec.getFloatX(bits) + GENERIC_POS_SIZE, vec.getFloatY(bits) + GENERIC_POS_SIZE, vec.getFloatZ(bits) + GENERIC_POS_SIZE, GENERIC_POS_MATERIAL, true);
     }
 
     /**

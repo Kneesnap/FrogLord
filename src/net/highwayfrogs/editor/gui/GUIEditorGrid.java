@@ -18,7 +18,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 import net.highwayfrogs.editor.utils.Utils;
@@ -53,8 +55,12 @@ public class GUIEditorGrid {
                 return "-180";
             if (num < -piQuarter)
                 return "-90";
-            if (num < piHalf)
+            if (num < -piQuarter / 2)
+                return "-45";
+            if (num < piQuarter)
                 return "0";
+            if (num < piHalf)
+                return "45";
             if (num < piQuarter + piHalf)
                 return "90";
             return "180";
@@ -340,7 +346,16 @@ public class GUIEditorGrid {
      * @param vector The SVector itself.
      */
     public void addFloatSVector(String text, SVector vector, MAPController controller) {
-        addFloatSVector(text, vector, null, controller);
+        addFloatVector(text, vector, null, controller, vector.defaultBits());
+    }
+
+    /**
+     * Add a float Vector for editing.
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     */
+    public void addFloatVector(String text, Vector vector, Runnable update, MAPController controller) {
+        addFloatVector(text, vector, update, controller, vector.defaultBits());
     }
 
     /**
@@ -348,19 +363,19 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatSVector(String text, SVector vector, Runnable update, MAPController controller) {
+    public void addFloatVector(String text, Vector vector, Runnable update, MAPController controller, int bits) {
         //TODO: Support origin offset, for things like camera.
 
         if (controller != null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
-                    () -> controller.updateMarker(controller.getShowPosition() == null || !Objects.equals(vector, controller.getShowPosition()) ? vector : null));
+                    () -> controller.updateMarker(controller.getShowPosition() == null || !Objects.equals(vector, controller.getShowPosition()) ? vector : null, bits));
         } else {
             addBoldLabel(text + ":");
         }
 
         Runnable onPass = () -> {
             if (controller != null)
-                controller.updateMarker(vector);
+                controller.updateMarker(vector, bits);
 
             if (update != null)
                 update.run();
@@ -380,9 +395,9 @@ public class GUIEditorGrid {
 
         // XYZ:
         VBox posBox = new VBox();
-        TextField xField = new TextField(String.valueOf(vector.getFloatX()));
-        TextField yField = new TextField(String.valueOf(vector.getFloatY()));
-        TextField zField = new TextField(String.valueOf(vector.getFloatZ()));
+        TextField xField = new TextField(String.valueOf(vector.getFloatX(bits)));
+        TextField yField = new TextField(String.valueOf(vector.getFloatY(bits)));
+        TextField zField = new TextField(String.valueOf(vector.getFloatZ(bits)));
         xField.setPrefWidth(60);
         yField.setPrefWidth(60);
         zField.setPrefWidth(60);
@@ -390,21 +405,21 @@ public class GUIEditorGrid {
             if (!Utils.isNumber(str))
                 return false;
 
-            vector.setFloatX(Float.parseFloat(str));
+            vector.setFloatX(Float.parseFloat(str), bits);
             return true;
         }, onPass);
         Utils.setHandleKeyPress(yField, str -> {
             if (!Utils.isNumber(str))
                 return false;
 
-            vector.setFloatY(Float.parseFloat(str));
+            vector.setFloatY(Float.parseFloat(str), bits);
             return true;
         }, onPass);
         Utils.setHandleKeyPress(zField, str -> {
             if (!Utils.isNumber(str))
                 return false;
 
-            vector.setFloatZ(Float.parseFloat(str));
+            vector.setFloatZ(Float.parseFloat(str), bits);
             return true;
         }, onPass);
 
@@ -430,10 +445,10 @@ public class GUIEditorGrid {
             double xDiff = -(lastDrag.getX() - evt.getX()) / 10;
             double zDiff = (lastDrag.getY() - evt.getY()) / 10;
 
-            vector.setFloatX((float) (vector.getFloatX() + xDiff));
-            vector.setFloatZ((float) (vector.getFloatZ() + zDiff));
-            xField.setText(String.valueOf(vector.getFloatX()));
-            zField.setText(String.valueOf(vector.getFloatZ()));
+            vector.setFloatX((float) (vector.getFloatX(bits) + xDiff), bits);
+            vector.setFloatZ((float) (vector.getFloatZ(bits) + zDiff), bits);
+            xField.setText(String.valueOf(vector.getFloatX(bits)));
+            zField.setText(String.valueOf(vector.getFloatZ(bits)));
 
             onPass.run();
 
@@ -441,7 +456,6 @@ public class GUIEditorGrid {
             lastDrag.setY(evt.getY());
         });
         xzView.setOnMouseReleased(evt -> xzLastDrag[0] = null);
-
 
         // Y Move.
         ImageView yView = new ImageView(GRAY_IMAGE_Y);
@@ -457,8 +471,8 @@ public class GUIEditorGrid {
             }
 
             double yDiff = -(lastDrag.getY() - evt.getY()) / 10;
-            vector.setFloatY((float) (vector.getFloatY() + yDiff));
-            yField.setText(String.valueOf(vector.getFloatY()));
+            vector.setFloatY((float) (vector.getFloatY(bits) + yDiff), bits);
+            yField.setText(String.valueOf(vector.getFloatY(bits)));
             onPass.run();
 
             lastDrag.setX(evt.getX());
@@ -634,25 +648,22 @@ public class GUIEditorGrid {
      * @param matrix           The rotation matrix to add data for.
      * @param onPositionUpdate Behavior to apply when the position is updated.
      */
-    public void addMatrix(PSXMatrix matrix, Runnable onPositionUpdate) {
-        float[] translation = new float[3];
+    public void addMatrix(PSXMatrix matrix, MAPController controller, Runnable onPositionUpdate) {
+        IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
 
-        // Position information is in fixed point format, hence conversion to float representation.
-        for (int i = 0; i < matrix.getTransform().length; i++)
-            translation[i] = Utils.fixedPointIntToFloat20Bit(matrix.getTransform()[i]);
-
-        addNormalLabel("Position:");
-        addVector3D(translation, 30D, (index, newValue) -> {
-            matrix.getTransform()[index] = Utils.floatToFixedPointInt20Bit(newValue);
+        addFloatVector("Position", vec, () -> {
+            matrix.getTransform()[0] = vec.getX(); // Update matrix.
+            matrix.getTransform()[1] = vec.getY();
+            matrix.getTransform()[2] = vec.getZ();
             if (onPositionUpdate != null)
-                onPositionUpdate.run();
-        });
+                onPositionUpdate.run(); // Run position hook.
+        }, controller, 20);
 
         // Transform information is in fixed point format, hence conversion to float representation.
         addNormalLabel("Rotation:");
 
         Slider yawUI = addDoubleSlider("Yaw", matrix.getYawAngle(), yaw -> matrix.updateMatrix(yaw, matrix.getPitchAngle(), matrix.getRollAngle()), -Math.PI, Math.PI);
-        Slider pitchUI = addDoubleSlider("Pitch", matrix.getPitchAngle(), pitch -> matrix.updateMatrix(matrix.getYawAngle(), pitch, matrix.getRollAngle()), -Math.PI, Math.PI);
+        Slider pitchUI = addDoubleSlider("Pitch", matrix.getPitchAngle(), pitch -> matrix.updateMatrix(matrix.getYawAngle(), pitch, matrix.getRollAngle()), -Math.PI / 2, Math.PI / 2); // Cuts off at 90 degrees to prevent gymbal lock.
         Slider rollUI = addDoubleSlider("Roll", matrix.getRollAngle(), roll -> matrix.updateMatrix(matrix.getYawAngle(), matrix.getPitchAngle(), roll), -Math.PI, Math.PI);
 
         yawUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
@@ -738,7 +749,6 @@ public class GUIEditorGrid {
     protected void onChange() {
 
     }
-
 
     /**
      * Add a slider to set the value.
