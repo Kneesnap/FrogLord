@@ -1,25 +1,33 @@
 package net.highwayfrogs.editor.gui.editor.map.manager;
 
+import javafx.event.EventHandler;
+import javafx.geometry.Point3D;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.Cylinder;
+import javafx.scene.shape.DrawMode;
+import javafx.scene.shape.Sphere;
+import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Translate;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathSegment;
 import net.highwayfrogs.editor.file.map.path.PathType;
-import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.TriConsumer;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 /**
  * Manages paths in the 3D view.
@@ -30,13 +38,15 @@ public class PathManager extends MapManager {
     private PathDisplaySetting displaySetting = PathDisplaySetting.NONE;
     private Path selectedPath;
     private GUIEditorGrid pathEditor;
-    private BiConsumer<Path, PathSegment> promptHandler;
+    private TriConsumer<Path, PathSegment, Integer> promptHandler; // Path, Segment, Segment Distance.
 
     private static final String DISPLAY_LIST_PATHS = "displayListPaths";
     private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
     private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
     private static final PhongMaterial MATERIAL_LIGHT_GREEN = Utils.makeSpecialMaterial(Color.LIGHTGREEN);
     private static final PhongMaterial MATERIAL_BLUE = Utils.makeSpecialMaterial(Color.BLUE);
+    private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.GREEN);
+    private static final PhongMaterial MATERIAL_PURPLE = Utils.makeSpecialMaterial(Color.PURPLE);
     private static final float MARKER_SIZE = 2;
 
     public PathManager(MapUIController controller) {
@@ -57,7 +67,7 @@ public class PathManager extends MapManager {
      * @param handler  The handler to accept a prompt with.
      * @param onCancel A callback to run upon cancelling.
      */
-    public void promptPath(BiConsumer<Path, PathSegment> handler, Runnable onCancel) {
+    public void promptPath(TriConsumer<Path, PathSegment, Integer> handler, Runnable onCancel) {
         this.promptHandler = handler;
         activatePrompt(onCancel);
         updatePathDisplay();
@@ -66,11 +76,11 @@ public class PathManager extends MapManager {
     /**
      * Accept the data for the prompt.
      * @param path    The path to accept.
-     * @param segment The segment to accept.
+     * @param segment The segment to add to.
      */
-    public void acceptPrompt(Path path, PathSegment segment) {
+    public void acceptPrompt(Path path, PathSegment segment, int segDistance) {
         if (this.promptHandler != null)
-            this.promptHandler.accept(path, segment);
+            this.promptHandler.accept(path, segment, segDistance);
         onPromptFinish();
     }
 
@@ -88,13 +98,8 @@ public class PathManager extends MapManager {
         getRenderManager().addMissingDisplayList(DISPLAY_LIST_PATHS);
         getRenderManager().clearDisplayList(DISPLAY_LIST_PATHS);
 
-        if (isPromptActive()) { //TODO: Better selection?
-            addPaths(DISPLAY_LIST_PATHS, getController().getMap().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
-
-            // Add path markers.
-            for (Path path : getMap().getPaths())
-                for (PathSegment segment : path.getSegments())
-                    addPathMarker(path, segment, segment.getStartPosition());
+        if (isPromptActive()) {
+            addPaths(DISPLAY_LIST_PATHS, getController().getMap().getPaths(), MATERIAL_BLUE, MATERIAL_GREEN, MATERIAL_PURPLE);
         } else if (this.displaySetting == PathDisplaySetting.ALL) {
             addPaths(DISPLAY_LIST_PATHS, getController().getMap().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
         } else if (this.displaySetting == PathDisplaySetting.SELECTED) {
@@ -103,13 +108,61 @@ public class PathManager extends MapManager {
         }
     }
 
-    private void addPathMarker(Path path, PathSegment segment, SVector vector) {
-        float baseX = vector.getFloatX();
-        float baseY = vector.getFloatY();
-        float baseZ = vector.getFloatZ();
-        getRenderManager().addBoundingBoxFromMinMax(DISPLAY_LIST_PATHS, baseX - MARKER_SIZE, baseY - MARKER_SIZE, baseZ - MARKER_SIZE,
-                baseX + MARKER_SIZE, baseY + MARKER_SIZE, baseZ + MARKER_SIZE, MATERIAL_BLUE, false)
-                .setOnMouseClicked(evt -> acceptPrompt(path, segment));
+    private void handleClick(Path path, PathSegment segment, int segDistance) {
+        if (isPromptActive()) {
+            acceptPrompt(path, segment, segDistance);
+            return;
+        }
+
+        // Select clicked path.
+        this.selectedPath = path;
+        setupEditor(); // Show this path as the selected path.
+    }
+
+    /**
+     * Adds a cylindrical representation of a 3D line.
+     * @param listID    The display list ID.
+     * @param x0        The x-coordinate defining the start of the line segment.
+     * @param y0        The y-coordinate defining the start of the line segment.
+     * @param z0        The z-coordinate defining the start of the line segment.
+     * @param x1        The x-coordinate defining the end of the line segment.
+     * @param y1        The y-coordinate defining the end of the line segment.
+     * @param z1        The z-coordinate defining the end of the line segment.
+     * @param radius    The radius of the cylinder (effectively the 'width' of the line).
+     * @param material  The material used to render the line segment.
+     * @param showStart Whether or not to display a sphere at the start of the line segment.
+     * @return The newly created/added cylinder (cylinder primitive only!)
+     */
+    public Cylinder addPathLineSegment(String listID, double x0, double y0, double z0, double x1, double y1, double z1, double radius, PhongMaterial material, boolean showStart, Path path, PathSegment segment, int segDistance) {
+        EventHandler<MouseEvent> mouseEventEventHandler = evt -> handleClick(path, segment, segDistance);
+        final Point3D yAxis = new Point3D(0.0, 1.0, 0.0);
+        final Point3D p0 = new Point3D(x0, y0, z0);
+        final Point3D p1 = new Point3D(x1, y1, z1);
+        final Point3D diff = p1.subtract(p0);
+        final double length = diff.magnitude();
+
+        final Point3D mid = p1.midpoint(p0);
+        final Translate moveToMidpoint = new Translate(mid.getX(), mid.getY(), mid.getZ());
+
+        final Point3D axisOfRotation = diff.crossProduct(yAxis);
+        final double angle = Math.acos(diff.normalize().dotProduct(yAxis));
+        final Rotate rotateAroundCenter = new Rotate(-Math.toDegrees(angle), axisOfRotation);
+
+        Cylinder line = new Cylinder(radius, length, 3);
+        line.setMaterial(material);
+        line.setDrawMode(DrawMode.FILL);
+        line.setCullFace(CullFace.BACK);
+        line.setMouseTransparent(false);
+        line.setOnMouseClicked(mouseEventEventHandler);
+        line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
+        getRenderManager().addNode(listID, line);
+
+        if (showStart) {
+            Sphere sphStart = getRenderManager().addSphere(listID, x0, y0, z0, radius * 5.0, material, false);
+            sphStart.setOnMouseClicked(mouseEventEventHandler);
+        }
+
+        return line;
     }
 
     /**
@@ -122,90 +175,36 @@ public class PathManager extends MapManager {
      */
     public void addPaths(String listID, List<Path> pathList, PhongMaterial materialLine, PhongMaterial materialArc, PhongMaterial materialSpline) {
         getRenderManager().addMissingDisplayList(listID);
+        PathInfo pathInfo = new PathInfo(); // We will use pathInfo to 'step' along the paths and to build the geometry
 
-        // We will use pathInfo to 'step' along the paths and to build the geometry
-        PathInfo pathInfo = new PathInfo();
+        for (int pathIndex = 0; pathIndex < pathList.size(); pathIndex++) {
+            Path path = pathList.get(pathIndex);
 
-        // Track indices (ID's) of paths and segments so that we can feed them in via the PathInfo object
-        int pathIndex = 0;
-        int segmentIndex;
-
-        double x0, y0, z0;
-        double x1, y1, z1;
-
-        for (Path path : pathList) {
-            segmentIndex = 0;
-
-            for (PathSegment segment : path.getSegments()) {
+            for (int segmentIndex = 0; segmentIndex < path.getSegments().size(); segmentIndex++) {
+                PathSegment segment = path.getSegments().get(segmentIndex);
                 pathInfo.setPathId(pathIndex);
                 pathInfo.setSegmentId(segmentIndex);
 
-                if (segment.getType() == PathType.LINE) {
-                    pathInfo.setSegmentDistance(0);
-                    Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
+                PhongMaterial material = materialSpline;
+                if (segment.getType() == PathType.LINE)
+                    material = materialLine;
+                if (segment.getType() == PathType.ARC)
+                    material = materialArc;
 
-                    pathInfo.setSegmentDistance(segment.getLength());
-                    Vector vec1 = path.evaluatePosition(pathInfo).getPosition();
+                final int stepSize = Math.min(32, segment.getLength());
+                final int numSteps = 1 + (segment.getLength() / stepSize);
 
-                    x0 = vec0.getFloatX();
-                    y0 = vec0.getFloatY();
-                    z0 = vec0.getFloatZ();
+                for (int step = 0; step < numSteps; ++step) {
+                    pathInfo.setSegmentDistance(step * stepSize);
+                    Vector v0 = path.evaluatePosition(pathInfo).getPosition();
 
-                    x1 = vec1.getFloatX();
-                    y1 = vec1.getFloatY();
-                    z1 = vec1.getFloatZ();
-
-                    getRenderManager().addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, materialLine, true, true);
-                } else if (segment.getType() == PathType.ARC) {
-                    final int stepSize = Math.min(32, segment.getLength());
-                    final int numSteps = 1 + (segment.getLength() / stepSize);
-
-                    for (int step = 0; step < numSteps; ++step) {
-                        pathInfo.setSegmentDistance(step * stepSize);
-                        Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
-
-                        pathInfo.setSegmentDistance(Math.min((step + 1) * stepSize, segment.getLength()));
-                        Vector vec1 = path.evaluatePosition(pathInfo).getPosition();
-
-                        x0 = vec0.getFloatX();
-                        y0 = vec0.getFloatY();
-                        z0 = vec0.getFloatZ();
-
-                        x1 = vec1.getFloatX();
-                        y1 = vec1.getFloatY();
-                        z1 = vec1.getFloatZ();
-
-                        if (!((x0 == x1) && (y0 == y1) && (z0 == z1)))
-                            getRenderManager().addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, materialArc, false, false);
-                    }
-                } else if (segment.getType() == PathType.SPLINE) {
-                    final int stepSize = Math.min(32, segment.getLength());
-                    final int numSteps = 1 + (segment.getLength() / stepSize);
-
-                    for (int step = 0; step < numSteps; ++step) {
-                        pathInfo.setSegmentDistance(step * stepSize);
-                        Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
-
-                        pathInfo.setSegmentDistance(Math.min((step + 1) * stepSize, segment.getLength()));
-                        Vector vec1 = path.evaluatePosition(pathInfo).getPosition();
-
-                        x0 = vec0.getFloatX();
-                        y0 = vec0.getFloatY();
-                        z0 = vec0.getFloatZ();
-
-                        x1 = vec1.getFloatX();
-                        y1 = vec1.getFloatY();
-                        z1 = vec1.getFloatZ();
-
-                        if (!((x0 == x1) && (y0 == y1) && (z0 == z1)))
-                            getRenderManager().addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, materialSpline, false, false);
-                    }
+                    pathInfo.setSegmentDistance(Math.min((step + 1) * stepSize, segment.getLength()));
+                    Vector v1 = path.evaluatePosition(pathInfo).getPosition();
+                    if (!v0.equals(v1))
+                        addPathLineSegment(listID, v0.getFloatX(), v0.getFloatY(), v0.getFloatZ(), v1.getFloatX(), v1.getFloatY(), v1.getFloatZ(), 0.20,
+                                material, step == 0, path, segment, (step * stepSize) + (stepSize / 2));
                 }
-
-                ++segmentIndex;
             }
-
-            ++pathIndex;
         }
     }
 

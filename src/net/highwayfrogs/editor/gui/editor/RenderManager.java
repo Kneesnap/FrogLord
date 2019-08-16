@@ -1,15 +1,14 @@
 package net.highwayfrogs.editor.gui.editor;
 
-import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.*;
-import javafx.scene.transform.Rotate;
+import javafx.scene.shape.Box;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.DrawMode;
+import javafx.scene.shape.Sphere;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -278,64 +277,6 @@ public class RenderManager
     }
 
     /**
-     * Adds a cylindrical representation of a 3D line.
-     * @param listID    The display list ID.
-     * @param x0        The x-coordinate defining the start of the line segment.
-     * @param y0        The y-coordinate defining the start of the line segment.
-     * @param z0        The z-coordinate defining the start of the line segment.
-     * @param x1        The x-coordinate defining the end of the line segment.
-     * @param y1        The y-coordinate defining the end of the line segment.
-     * @param z1        The z-coordinate defining the end of the line segment.
-     * @param radius    The radius of the cylinder (effectively the 'width' of the line).
-     * @param material  The material used to render the line segment.
-     * @param showStart Whether or not to display a sphere at the start of the line segment.
-     * @param showEnd   Whether or not to display a sphere at the end of the line segment.
-     * @return          The newly created/added cylinder (cylinder primitive only!)
-     */
-    public Cylinder addLineSegment(String listID, double x0, double y0, double z0, double x1, double y1, double z1, double radius, PhongMaterial material, boolean showStart, boolean showEnd)
-    {
-        if (displayListCache.containsKey(listID))
-        {
-            final Point3D yAxis = new Point3D(0.0, 1.0, 0.0);
-            final Point3D p0 = new Point3D(x0, y0, z0);
-            final Point3D p1 = new Point3D(x1, y1, z1);
-            final Point3D diff = p1.subtract(p0);
-            final double length = diff.magnitude();
-
-            final Point3D mid = p1.midpoint(p0);
-            final Translate moveToMidpoint = new Translate(mid.getX(), mid.getY(), mid.getZ());
-
-            final Point3D axisOfRotation = diff.crossProduct(yAxis);
-            final double angle = Math.acos(diff.normalize().dotProduct(yAxis));
-            final Rotate rotateAroundCenter = new Rotate(-Math.toDegrees(angle), axisOfRotation);
-
-            Cylinder line = new Cylinder(radius, length, 3);
-            line.setMaterial(material);
-            line.setDrawMode(DrawMode.FILL);
-            line.setCullFace(CullFace.BACK);
-            line.setMouseTransparent(true);
-            line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
-            displayListCache.get(listID).add(line);
-            this.root.getChildren().add(line);
-
-            if (showStart)
-            {
-                Sphere sphStart = addSphere(listID, x0, y0, z0, radius * 5.0, Utils.makeSpecialMaterial(Color.GREEN), false);
-            }
-            if (showEnd)
-            {
-                Sphere sphEnd = addSphere(listID, x1, y1, z1, radius * 5.0, Utils.makeSpecialMaterial(Color.RED), false);
-            }
-
-            return line;
-        }
-        else
-        {
-            throw new RuntimeException("RenderManager::addLine() - " + listID + " does not exist!");
-        }
-    }
-
-    /**
      * Adds a sphere.
      * @param listID        The display list ID.
      * @param x0            The x-coordinate defining the center of the sphere.
@@ -354,7 +295,7 @@ public class RenderManager
             sph0.setMaterial(material);
             sph0.setDrawMode(useWireframe ? DrawMode.LINE : DrawMode.FILL);
             sph0.setCullFace(CullFace.BACK);
-            sph0.setMouseTransparent(true);
+            sph0.setMouseTransparent(useWireframe);
             sph0.getTransforms().addAll(new Translate(x0, y0, z0));
 
             displayListCache.get(listID).add(sph0);

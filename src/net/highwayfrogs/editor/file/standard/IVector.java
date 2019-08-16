@@ -178,4 +178,13 @@ public class IVector extends GameObject implements Vector {
         vector.loadWithPadding(reader);
         return vector;
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof IVector))
+            return false;
+
+        IVector otherV = (IVector) other;
+        return otherV.getX() == getX() && otherV.getY() == getY() && otherV.getZ() == getZ();
+    }
 }

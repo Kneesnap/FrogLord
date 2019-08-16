@@ -437,8 +437,9 @@ public class MapUIController implements Initializable {
             }
 
             // User selects the path.
-            getPathManager().promptPath((path, segment) -> {
+            getPathManager().promptPath((path, segment, segDistance) -> {
                 newEntity.getPathInfo().setPath(getMap(), path, segment);
+                newEntity.getPathInfo().setSegmentDistance(segDistance);
                 addEntityToMap(newEntity);
             }, null);
             return;

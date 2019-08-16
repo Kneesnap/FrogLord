@@ -50,8 +50,9 @@ public class PathData extends EntityData {
             editor.addIntegerField("Path ID", pathId, getPathInfo()::setPathId, null);
         } else { // Otherwise, show it as a selection box!
             editor.addBoldLabelButton("Path #" + pathId, "Select Path", 25, () ->
-                    controller.getPathManager().promptPath((path, segment) -> {
+                    controller.getPathManager().promptPath((path, segment, segDistance) -> {
                         getPathInfo().setPath(controller.getMap(), path, segment);
+                        getPathInfo().setSegmentDistance(segDistance);
                         controller.getController().resetEntities();
                     }, null));
         }
