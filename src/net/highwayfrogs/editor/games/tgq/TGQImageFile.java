@@ -17,20 +17,21 @@ import java.util.Scanner;
  * Frogger - The Great Quest
  * File: .img
  * Contents: A single image.
+ * The slowness comes from file reading. It may be faster once we're reading from the main game archive.
  * Created by Kneesnap on 8/17/2019.
  */
 @Getter
 public class TGQImageFile extends GameObject {
     private BufferedImage image;
-    private short unknown1;
-    private short unknown2;
-    private int unknown3;
-    private int unknown4;
-    private short unknown5;
-    private short unknown6;
-    private int unknown7; // May always be zero.
-    private int unknown8; // May always be zero.
-    private int unknown9; // May always be zero.
+    private short unknown1; // Usually is 32, but sometimes has some wild number like 16416.
+    private short unknown2 = 4; // Values seen: 0, 1, 2, 4. Could this be a bit flag field? Could it be a TYPE? (Like, maybe map texture vs character map vs menu item, etc)
+    private int unknown3 = 32; // Seems to always be 32. (Bit Depth?)
+    private int unknown4 = 1; // Seems to always be 1.
+    private short unknown5; // ?
+    private short unknown6; // ?
+    private int unknown7 = 0; // May always be zero. NOTE: It appears under certain circumstances this is not the case!
+    private int unknown8 = 0; // May always be zero.
+    private int unknown9 = 0; // May always be zero.
 
     private static final String SIGNATURE = "IMGd";
 
@@ -105,7 +106,7 @@ public class TGQImageFile extends GameObject {
                 long read = System.currentTimeMillis();
                 image.exportToFile(new File(saveDirectory, file.getName() + ".png"));
                 long save = System.currentTimeMillis();
-                System.out.println("Exported " + file.getName() + ", [Load: " + (read - start) + "ms] [Save: " + (save - read) + " ms]");
+                System.out.println("Exported " + file.getName() + ", [Load: " + (read - start) + "ms] [Save: " + (save - read) + " ms] " + image.getUnknown1() + ", " + image.getUnknown2() + ", " + image.getUnknown3() + ", " + image.getUnknown4() + ", " + image.getUnknown5() + ", " + image.getUnknown6() + ", " + image.getUnknown7() + ", " + image.getUnknown8() + ", " + image.getUnknown9());
             } catch (IOException ex) {
                 System.out.println("Failed to save " + file.getName() + "!");
                 ex.printStackTrace();
