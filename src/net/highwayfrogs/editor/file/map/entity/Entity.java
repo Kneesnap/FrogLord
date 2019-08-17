@@ -30,7 +30,7 @@ import java.util.Objects;
 @Getter
 @Setter
 public class Entity extends GameObject {
-    private int formGridId;
+    private int formGridId = -1; // Default (CHANGE THIS!)
     private int uniqueId = -1; // Default (CHANGE THIS!)
     private FormEntry formEntry;
     private int flags;

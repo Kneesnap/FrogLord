@@ -46,13 +46,13 @@ import net.highwayfrogs.editor.gui.editor.map.manager.MapManager;
 import net.highwayfrogs.editor.gui.editor.map.manager.PathManager;
 import net.highwayfrogs.editor.gui.editor.map.manager.PathManager.PathDisplaySetting;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
+import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
@@ -60,10 +60,10 @@ import java.util.function.Consumer;
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
  * TODO:
- *  - Cleanup the whole map UI code. Use managers, and have an actual system designed.
- *  - Cache things, for instance, if we have an entity manager, and we just want to update the position of entities, just update the positions of entities instead of clearing the list fully and starting over.
- *  - Try creating a system which is better in terms of memory usage, for the 2D editor too.
- *  - Make sure everything is rebuilt when you exit the viewer then come back, in case of changes.
+ *  Cleanup the whole map UI code. Use managers, and have an actual system designed.
+ *  Cache things, for instance, if we have an entity manager, and we just want to update the position of entities, just update the positions of entities instead of clearing the list fully and starting over.
+ *  Try creating a system which is better in terms of memory usage, for the 2D editor too.
+ *  Make sure everything is rebuilt when you exit the viewer then come back, in case of changes.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter
@@ -376,7 +376,15 @@ public class MapUIController implements Initializable {
         }).setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
 
         entityEditor.addIntegerField("Entity ID", entity.getUniqueId(), entity::setUniqueId, null);
-        entityEditor.addIntegerField("Form ID", entity.getFormGridId(), entity::setFormGridId, null);
+
+        if (entity.getFormGridId() >= 0 && getMap().getForms().size() > entity.getFormGridId()) {
+            entityEditor.addSelectionBox("Form", getMap().getForms().get(entity.getFormGridId()), getMap().getForms(),
+                    newForm -> entity.setFormGridId(getMap().getForms().indexOf(newForm)))
+                    .setConverter(new AbstractIndexStringConverter<>(getMap().getForms(), (index, form) -> "Form #" + index + " (" + form.getXGridSquareCount() + "," + form.getZGridSquareCount() + ")"));
+        } else { // This form is invalid, so show this as a text box.
+            entityEditor.addIntegerField("Form ID", entity.getFormGridId(), entity::setFormGridId, null);
+        }
+
         entityEditor.addBoldLabel("Flags:");
         for (EntityFlag flag : EntityFlag.values())
             entityEditor.addCheckBox(Utils.capitalize(flag.name()), entity.testFlag(flag), newState -> entity.setFlag(flag, newState));
@@ -440,6 +448,7 @@ public class MapUIController implements Initializable {
             getPathManager().promptPath((path, segment, segDistance) -> {
                 newEntity.getPathInfo().setPath(getMap(), path, segment);
                 newEntity.getPathInfo().setSegmentDistance(segDistance);
+                newEntity.getPathInfo().setSpeed(10); // Default speed.
                 addEntityToMap(newEntity);
             }, null);
             return;
@@ -450,17 +459,30 @@ public class MapUIController implements Initializable {
 
     private void addEntityToMap(Entity entity) {
         if (entity.getUniqueId() == -1) { // Default entity id, update it to something new.
-            HashSet<Integer> entityIds = new HashSet<>();
+            boolean isPath = entity.getMatrixInfo() != null;
+
+            // Use the largest entity id + 1.
             for (Entity tempEntity : getMap().getEntities())
-                entityIds.add(tempEntity.getUniqueId());
-
-            int tryId = 0;
-            while (entityIds.contains(tryId))
-                tryId++;
-
-            entity.setUniqueId(tryId); // Sets the entity id.
+                if (tempEntity.getUniqueId() >= entity.getUniqueId() && (isPath == (tempEntity.getMatrixInfo() != null)))
+                    entity.setUniqueId(tempEntity.getUniqueId() + 1);
         }
 
+        if (entity.getFormGridId() == -1) { // Default form id, make it something.
+            int[] formCounts = new int[getMap().getForms().size()];
+            for (Entity testEntity : getMap().getEntities())
+                if (testEntity.getFormEntry() == entity.getFormEntry())
+                    formCounts[testEntity.getFormGridId()]++;
+
+            int maxCount = -1;
+            for (int i = 0; i < formCounts.length; i++) {
+                if (formCounts[i] > maxCount) {
+                    maxCount = formCounts[i];
+                    entity.setFormGridId(i);
+                }
+            }
+        }
+
+        //TODO: New matrix entities don't show up in-game, but path entities work fine.
         getMap().getEntities().add(entity);
         showEntityInfo(entity);
         getController().resetEntities();

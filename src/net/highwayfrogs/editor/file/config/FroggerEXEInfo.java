@@ -517,14 +517,10 @@ public class FroggerEXEInfo extends Config {
     /**
      * Save the Frogger executable.
      */
-    public void saveExecutable(File outputFile) {
-        try {
-            Utils.deleteFile(outputFile);
-            applyConfigIdentifier();
-            Files.write(outputFile.toPath(), this.exeBytes);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+    public void saveExecutable(File outputFile) throws IOException {
+        Utils.deleteFile(outputFile);
+        applyConfigIdentifier();
+        Files.write(outputFile.toPath(), this.exeBytes);
     }
 
     /**
