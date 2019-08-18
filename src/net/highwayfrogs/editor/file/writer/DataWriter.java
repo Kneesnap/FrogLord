@@ -50,9 +50,24 @@ public class DataWriter {
      * @param address The address to end at.
      */
     public void writeTo(int address) {
+        writeTo(address, Constants.NULL_BYTE);
+    }
+
+    /**
+     * Write null bytes to a given address.
+     * @param address The address to end at.
+     */
+    public void writeTo(int address, byte writeByte) {
         int bytes = address - getIndex();
-        Utils.verify(bytes >= 0, "Cannot write backwards.");
-        writeNull(bytes);
+        if (bytes < 0)
+            throw new RuntimeException("writeTo cannot write backwards! (" + bytes + ")");
+
+        byte[] byteArray = new byte[bytes];
+        if (writeByte != Constants.NULL_BYTE)
+            for (int i = 0; i < byteArray.length; i++)
+                byteArray[i] = writeByte;
+
+        writeBytes(byteArray);
     }
 
     /**

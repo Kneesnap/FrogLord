@@ -212,6 +212,32 @@ public class DataReader {
     }
 
     /**
+     * Read a string of a fixed size that has a terminator byte if it's smaller than that size.
+     * @param length The fixed string size.
+     * @return readString
+     */
+    public String readTerminatedStringOfLength(int length) {
+        return readTerminatedStringOfLength(length, Constants.NULL_BYTE);
+    }
+
+    /**
+     * Read a string of a fixed size that has a terminator byte if it's smaller than that size.
+     * @param length     The fixed string size.
+     * @param terminator The terminator byte.
+     * @return readString
+     */
+    public String readTerminatedStringOfLength(int length, byte terminator) {
+        jumpTemp(getIndex());
+        String result = readString(terminator);
+        jumpReturn();
+        skipBytes(length);
+
+        if (result.length() > length)
+            result = result.substring(0, length);
+        return result;
+    }
+
+    /**
      * Read a string which is terminated by a null byte.
      * @return strValue
      */

@@ -1255,6 +1255,9 @@ public class Utils {
      * @return hasSignature
      */
     public static boolean testSignature(byte[] data, int startIndex, byte[] test) {
+        if (test.length > data.length)
+            return false;
+
         for (int i = 0; i < test.length; i++)
             if (data[startIndex + i] != test[i])
                 return false;
@@ -1396,5 +1399,33 @@ public class Utils {
             if (Objects.equals(find, array[i]))
                 return true;
         return false;
+    }
+
+    /**
+     * Tests if a string is alphanumeric or not.
+     * @param testString The string to test.
+     * @return isAlphanumeric
+     */
+    public static boolean isAlphanumeric(String testString) {
+        for (int i = 0; i < testString.length(); i++)
+            if (!Character.isLetterOrDigit(testString.charAt(i)))
+                return false;
+        return true;
+    }
+
+    /**
+     * Tests if a string is alphanumeric or not.
+     * @param testString The string to test.
+     * @return isAlphanumeric
+     */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static boolean isValidFileName(String testString) {
+        File f = new File(testString);
+        try {
+            f.getCanonicalPath();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
 }

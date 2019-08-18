@@ -1,17 +1,13 @@
 package net.highwayfrogs.editor.games.tgq;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Scanner;
 
 /**
  * Frogger - The Great Quest
@@ -21,7 +17,7 @@ import java.util.Scanner;
  * Created by Kneesnap on 8/17/2019.
  */
 @Getter
-public class TGQImageFile extends GameObject {
+public class TGQImageFile extends TGQFile {
     private BufferedImage image;
     private short unknown1; // Usually is 32, but sometimes has some wild number like 16416.
     private short unknown2 = 4; // Values seen: 0, 1, 2, 4. Could this be a bit flag field? Could it be a TYPE? (Like, maybe map texture vs character map vs menu item, etc)
@@ -33,7 +29,11 @@ public class TGQImageFile extends GameObject {
     private int unknown8 = 0; // May always be zero.
     private int unknown9 = 0; // May always be zero.
 
-    private static final String SIGNATURE = "IMGd";
+    public static final String SIGNATURE = "IMGd";
+
+    public TGQImageFile(TGQBinFile mainArchive) {
+        super(mainArchive);
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -54,7 +54,7 @@ public class TGQImageFile extends GameObject {
         this.image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)
-                this.image.setRGB(x, height - y - 1, reader.readInt());
+                this.image.setRGB(x, height - y - 1, reader.hasMore() ? reader.readInt() : 0);
     }
 
     @Override
@@ -78,59 +78,16 @@ public class TGQImageFile extends GameObject {
                 this.image.setRGB(x, y, this.image.getRGB(x, this.image.getHeight() - y - 1));
     }
 
+    @Override
+    public String getExtension() {
+        return "img";
+    }
+
     /**
      * Exports this image to a file, as a png.
      * @param saveTo The file to save the image to.
      */
-    public void exportToFile(File saveTo) throws IOException {
+    public void saveImageToFile(File saveTo) throws IOException {
         ImageIO.write(this.image, "png", saveTo);
-    }
-
-    /**
-     * Converts all images in a directory.
-     * @param directory The directory of images.
-     */
-    public static void convertAllImages(File directory) {
-        File saveDirectory = new File(directory, "images/");
-        Utils.makeDirectory(saveDirectory);
-
-        for (File file : Utils.listFiles(directory)) {
-            if (!file.getName().endsWith(".img"))
-                continue;
-
-            try {
-                long start = System.currentTimeMillis();
-                DataReader reader = new DataReader(new FileSource(file));
-                TGQImageFile image = new TGQImageFile();
-                image.load(reader);
-                long read = System.currentTimeMillis();
-                image.exportToFile(new File(saveDirectory, file.getName() + ".png"));
-                long save = System.currentTimeMillis();
-                System.out.println("Exported " + file.getName() + ", [Load: " + (read - start) + "ms] [Save: " + (save - read) + " ms] " + image.getUnknown1() + ", " + image.getUnknown2() + ", " + image.getUnknown3() + ", " + image.getUnknown4() + ", " + image.getUnknown5() + ", " + image.getUnknown6() + ", " + image.getUnknown7() + ", " + image.getUnknown8() + ", " + image.getUnknown9());
-            } catch (IOException ex) {
-                System.out.println("Failed to save " + file.getName() + "!");
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.print("Please enter the directory to scan: ");
-        File directory = new File(scanner.nextLine());
-
-        if (!directory.exists()) {
-            System.out.println("This directory does not exist!");
-            return;
-        }
-
-        if (!directory.isDirectory()) {
-            System.out.println("This is not a directory!");
-            return;
-        }
-
-        convertAllImages(directory);
-        System.out.println("Done.");
     }
 }
