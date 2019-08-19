@@ -3,7 +3,6 @@ See if anything can be done about using the swamp VLO as a texture for 3D things
 
 Features:
  - Full PSX VLO Support. (Missing support for certain types of images like the level select)
- - Is the entity position math correct? Is it really 20 bits?
 
 UI Plans:
  - VRAM Editor kinda stinks. It would be nice to try and create a system to generate this automatically, or maybe show boundaries of other texture banks.
@@ -11,9 +10,7 @@ UI Plans:
 Map Editor:
  - Add polygons.
  - Better polygon editor.
- - Adding entities: Have a selector that lets you pick the entity type you want to make, instead of cloning the current one. The camera should focus in on the new entity at the very least, if we can't let the user decide where to place it. We could disable the create entity button if there is no tile selected (tile must be under a path if it's a path entity)
- - For SVector x y z positions, add an option to move the position around relatively. Right now we use a textbox.
- - Make the map clearer work. Figure out the conditions for crashing so it can warn if it believes the map will crash.
+ - Fix adding new matrix entities. (They don't show up in-game)
 
 Future:
  - Spline Editor [@Andy, I don't know what all of this data is, and I don't understand the math behind this. Even if you could just give me some documentation that lets me understand each piece of data, this would be useful.]

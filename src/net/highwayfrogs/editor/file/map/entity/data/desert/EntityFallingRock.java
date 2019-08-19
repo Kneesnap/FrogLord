@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 /**
  * Created by Kneesnap on 11/26/2018.
@@ -63,9 +64,15 @@ public class EntityFallingRock extends MatrixData {
         editor.addShortField("Bounces", getBounceCount(), this::setBounceCount, null);
         editor.addIntegerField("Flags", getFlags(), this::setFlags, null);
         editor.addIntegerField("Sound", getSound(), this::setSound, null);
+
+    }
+
+    @Override
+    public void addData(MapUIController controller, GUIEditorGrid editor) {
+        super.addData(controller, editor);
         for (int i = 0; i < getTargets().length; i++) {
             editor.addNormalLabel("Target #" + (i + 1) + ":");
-            getTargets()[i].setupEditor(editor);
+            getTargets()[i].setupEditor(editor, controller);
         }
     }
 
@@ -89,8 +96,8 @@ public class EntityFallingRock extends MatrixData {
             writer.writeUnsignedShort(0);
         }
 
-        public void setupEditor(GUIEditorGrid grid) {
-            grid.addFloatSVector("Target", getTarget());
+        public void setupEditor(GUIEditorGrid grid, MapUIController controller) {
+            grid.addFloatSVector("Target", getTarget(), controller.getController());
             grid.addIntegerField("Time", getTime(), this::setTime, null);
         }
     }

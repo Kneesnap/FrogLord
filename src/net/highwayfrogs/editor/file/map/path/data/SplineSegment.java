@@ -155,6 +155,11 @@ public class SplineSegment extends PathSegment {
     }
 
     @Override
+    public SVector getStartPosition() {
+        return calculateSplinePoint(0);
+    }
+
+    @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor); //TODO: Allow editing, after figuring out this data.
         editor.addLabel("Spline:", Utils.matrixToString(this.splineMatrix), 25.0);

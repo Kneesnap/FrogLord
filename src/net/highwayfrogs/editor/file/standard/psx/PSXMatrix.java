@@ -117,6 +117,9 @@ public class PSXMatrix extends GameObject {
      * @param roll  The new roll.
      */
     public void updateMatrix(double yaw, double pitch, double roll) {
+        if (Math.abs(pitch) >= Math.PI / 2)
+            return; // LOCK! ABORT!
+
         double su = Math.sin(roll);
         double cu = Math.cos(roll);
         double sv = Math.sin(pitch);

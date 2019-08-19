@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 /**
  * Created by Kneesnap on 11/26/2018.
@@ -46,9 +47,14 @@ public class EntityRat extends MatrixData {
     public void addData(GUIEditorGrid editor) {
         super.addData(editor);
         editor.addShortField("Speed", getSpeed(), this::setSpeed, null);
-        editor.addFloatSVector("Start Target", getStartTarget());
-        editor.addFloatSVector("Start Run Target", getStartRunTarget());
-        editor.addFloatSVector("End Run Target", getEndRunTarget());
-        editor.addFloatSVector("End Target", getEndTarget());
+    }
+
+    @Override
+    public void addData(MapUIController controller, GUIEditorGrid editor) {
+        super.addData(controller, editor);
+        editor.addFloatSVector("Start Target", getStartTarget(), controller.getController());
+        editor.addFloatSVector("Start Run Target", getStartRunTarget(), controller.getController());
+        editor.addFloatSVector("End Run Target", getEndRunTarget(), controller.getController());
+        editor.addFloatSVector("End Target", getEndTarget(), controller.getController());
     }
 }

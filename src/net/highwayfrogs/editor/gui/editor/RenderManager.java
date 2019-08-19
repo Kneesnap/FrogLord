@@ -1,20 +1,14 @@
 package net.highwayfrogs.editor.gui.editor;
 
-import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.*;
-import javafx.scene.transform.Rotate;
+import javafx.scene.shape.Box;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.DrawMode;
+import javafx.scene.shape.Sphere;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.path.Path;
-import net.highwayfrogs.editor.file.map.path.PathInfo;
-import net.highwayfrogs.editor.file.map.path.PathSegment;
-import net.highwayfrogs.editor.file.map.path.PathType;
-import net.highwayfrogs.editor.file.standard.Vector;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -269,7 +263,7 @@ public class RenderManager
             axisAlignedBoundingBox.setDrawMode(useWireframe ? DrawMode.LINE : DrawMode.FILL);
             axisAlignedBoundingBox.setCullFace(CullFace.BACK);
             axisAlignedBoundingBox.getTransforms().addAll(new Translate(x, y, z));
-            axisAlignedBoundingBox.setMouseTransparent(true);
+            axisAlignedBoundingBox.setMouseTransparent(useWireframe);
 
             displayListCache.get(listID).add(axisAlignedBoundingBox);
             this.root.getChildren().add(axisAlignedBoundingBox);
@@ -279,64 +273,6 @@ public class RenderManager
         else
         {
             throw new RuntimeException("RenderManager::addBoundingBoxCenteredWithDimensions() - " + listID + " does not exist!");
-        }
-    }
-
-    /**
-     * Adds a cylindrical representation of a 3D line.
-     * @param listID    The display list ID.
-     * @param x0        The x-coordinate defining the start of the line segment.
-     * @param y0        The y-coordinate defining the start of the line segment.
-     * @param z0        The z-coordinate defining the start of the line segment.
-     * @param x1        The x-coordinate defining the end of the line segment.
-     * @param y1        The y-coordinate defining the end of the line segment.
-     * @param z1        The z-coordinate defining the end of the line segment.
-     * @param radius    The radius of the cylinder (effectively the 'width' of the line).
-     * @param material  The material used to render the line segment.
-     * @param showStart Whether or not to display a sphere at the start of the line segment.
-     * @param showEnd   Whether or not to display a sphere at the end of the line segment.
-     * @return          The newly created/added cylinder (cylinder primitive only!)
-     */
-    public Cylinder addLineSegment(String listID, double x0, double y0, double z0, double x1, double y1, double z1, double radius, PhongMaterial material, boolean showStart, boolean showEnd)
-    {
-        if (displayListCache.containsKey(listID))
-        {
-            final Point3D yAxis = new Point3D(0.0, 1.0, 0.0);
-            final Point3D p0 = new Point3D(x0, y0, z0);
-            final Point3D p1 = new Point3D(x1, y1, z1);
-            final Point3D diff = p1.subtract(p0);
-            final double length = diff.magnitude();
-
-            final Point3D mid = p1.midpoint(p0);
-            final Translate moveToMidpoint = new Translate(mid.getX(), mid.getY(), mid.getZ());
-
-            final Point3D axisOfRotation = diff.crossProduct(yAxis);
-            final double angle = Math.acos(diff.normalize().dotProduct(yAxis));
-            final Rotate rotateAroundCenter = new Rotate(-Math.toDegrees(angle), axisOfRotation);
-
-            Cylinder line = new Cylinder(radius, length, 3);
-            line.setMaterial(material);
-            line.setDrawMode(DrawMode.FILL);
-            line.setCullFace(CullFace.BACK);
-            line.setMouseTransparent(true);
-            line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
-            displayListCache.get(listID).add(line);
-            this.root.getChildren().add(line);
-
-            if (showStart)
-            {
-                Sphere sphStart = addSphere(listID, x0, y0, z0, radius * 5.0, Utils.makeSpecialMaterial(Color.GREEN), false);
-            }
-            if (showEnd)
-            {
-                Sphere sphEnd = addSphere(listID, x1, y1, z1, radius * 5.0, Utils.makeSpecialMaterial(Color.RED), false);
-            }
-
-            return line;
-        }
-        else
-        {
-            throw new RuntimeException("RenderManager::addLine() - " + listID + " does not exist!");
         }
     }
 
@@ -359,7 +295,7 @@ public class RenderManager
             sph0.setMaterial(material);
             sph0.setDrawMode(useWireframe ? DrawMode.LINE : DrawMode.FILL);
             sph0.setCullFace(CullFace.BACK);
-            sph0.setMouseTransparent(true);
+            sph0.setMouseTransparent(useWireframe);
             sph0.getTransforms().addAll(new Translate(x0, y0, z0));
 
             displayListCache.get(listID).add(sph0);
@@ -370,107 +306,6 @@ public class RenderManager
         else
         {
             throw new RuntimeException("RenderManager::addSphere() - " + listID + " does not exist!");
-        }
-    }
-
-    /**
-     * Adds a list of paths to the specified display list (collection of line, arc and spline segments).
-     * @param listID            The display list ID.
-     * @param pathList          The paths to realise.
-     * @param materialLine      The material to use for rendering line segments.
-     * @param materialArc       The material to use for rendering arc segments.
-     * @param materialSpline    The material to use for rendering spline segments.
-     */
-    public void addPaths(String listID, List<Path> pathList, PhongMaterial materialLine, PhongMaterial materialArc, PhongMaterial materialSpline) {
-        if (displayListCache.containsKey(listID)) {
-            // We will use pathInfo to 'step' along the paths and to build the geometry
-            PathInfo pathInfo = new PathInfo();
-
-            // Track indices (ID's) of paths and segments so that we can feed them in via the PathInfo object
-            int pathIndex = 0;
-            int segmentIndex;
-
-            double x0, y0, z0;
-            double x1, y1, z1;
-
-            for (Path path : pathList) {
-                segmentIndex = 0;
-
-                for (PathSegment segment : path.getSegments()) {
-                    pathInfo.setPathId(pathIndex);
-                    pathInfo.setSegmentId(segmentIndex);
-
-                    if (segment.getType() == PathType.LINE) {
-                        pathInfo.setSegmentDistance(0);
-                        Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
-
-                        pathInfo.setSegmentDistance(segment.getLength());
-                        Vector vec1 = path.evaluatePosition(pathInfo).getPosition();
-
-                        x0 = vec0.getFloatX();
-                        y0 = vec0.getFloatY();
-                        z0 = vec0.getFloatZ();
-
-                        x1 = vec1.getFloatX();
-                        y1 = vec1.getFloatY();
-                        z1 = vec1.getFloatZ();
-
-                        this.addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, materialLine, true, true);
-                    } else if (segment.getType() == PathType.ARC) {
-                        final int stepSize = Math.min(32, segment.getLength());
-                        final int numSteps = 1 + (segment.getLength() / stepSize);
-
-                        for (int step = 0; step < numSteps; ++step) {
-                            pathInfo.setSegmentDistance(step * stepSize);
-                            Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
-
-                            pathInfo.setSegmentDistance(Math.min((step + 1) * stepSize, segment.getLength()));
-                            Vector vec1 = path.evaluatePosition(pathInfo).getPosition();
-
-                            x0 = vec0.getFloatX();
-                            y0 = vec0.getFloatY();
-                            z0 = vec0.getFloatZ();
-
-                            x1 = vec1.getFloatX();
-                            y1 = vec1.getFloatY();
-                            z1 = vec1.getFloatZ();
-
-                            if (!((x0 == x1) && (y0 == y1) && (z0 == z1))) {
-                                this.addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, materialArc, false, false);
-                            }
-                        }
-                    } else if (segment.getType() == PathType.SPLINE) {
-                        final int stepSize = Math.min(32, segment.getLength());
-                        final int numSteps = 1 + (segment.getLength() / stepSize);
-
-                        for (int step = 0; step < numSteps; ++step) {
-                            pathInfo.setSegmentDistance(step * stepSize);
-                            Vector vec0 = path.evaluatePosition(pathInfo).getPosition();
-
-                            pathInfo.setSegmentDistance(Math.min((step + 1) * stepSize, segment.getLength()));
-                            Vector vec1 = path.evaluatePosition(pathInfo).getPosition();
-
-                            x0 = vec0.getFloatX();
-                            y0 = vec0.getFloatY();
-                            z0 = vec0.getFloatZ();
-
-                            x1 = vec1.getFloatX();
-                            y1 = vec1.getFloatY();
-                            z1 = vec1.getFloatZ();
-
-                            if (!((x0 == x1) && (y0 == y1) && (z0 == z1))) {
-                                this.addLineSegment(listID, x0, y0, z0, x1, y1, z1, 0.20, materialSpline, false, false);
-                            }
-                        }
-                    }
-
-                    ++segmentIndex;
-                }
-
-                ++pathIndex;
-            }
-        } else {
-            throw new RuntimeException("RenderManager::addPaths() - " + listID + " does not exist!");
         }
     }
 

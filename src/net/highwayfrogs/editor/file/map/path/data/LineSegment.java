@@ -51,8 +51,8 @@ public class LineSegment extends PathSegment {
     @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor);
-        editor.addFloatSVector("Start:", getStart(), () -> onUpdate(controller));
-        editor.addFloatSVector("End:", getEnd(), () -> onUpdate(controller));
+        editor.addFloatVector("Start:", getStart(), () -> onUpdate(controller), controller.getController());
+        editor.addFloatVector("End:", getEnd(), () -> onUpdate(controller), controller.getController());
     }
 
     @Override
@@ -63,5 +63,10 @@ public class LineSegment extends PathSegment {
 
         float length = (float)Math.sqrt((deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ));
         setLength(Utils.floatToFixedPointInt(length, 4));
+    }
+
+    @Override
+    public SVector getStartPosition() {
+        return getStart();
     }
 }

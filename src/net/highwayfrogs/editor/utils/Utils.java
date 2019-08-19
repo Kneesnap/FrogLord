@@ -1255,6 +1255,9 @@ public class Utils {
      * @return hasSignature
      */
     public static boolean testSignature(byte[] data, int startIndex, byte[] test) {
+        if (test.length > data.length)
+            return false;
+
         for (int i = 0; i < test.length; i++)
             if (data[startIndex + i] != test[i])
                 return false;
@@ -1315,6 +1318,20 @@ public class Utils {
     }
 
     /**
+     * Creates an image of a solid color.
+     * @param color The color to make the image of.
+     * @return colorImage
+     */
+    public static Image makeColorImageNoCache(Color color, int width, int height) {
+        BufferedImage colorImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = colorImage.createGraphics();
+        graphics.setColor(toAWTColor(color));
+        graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
+        graphics.dispose();
+        return toFXImage(colorImage, false);
+    }
+
+    /**
      * Convert a JavaFX color to an AWT color.
      * @param fxColor The fx color to convert.
      * @return awtColor
@@ -1368,5 +1385,47 @@ public class Utils {
         }
 
         return output.toString();
+    }
+
+    /**
+     * Tests if an array contains a value. Creates no objects.
+     * @param array The array to search.
+     * @param find  The value to look for. Can be null.
+     * @return contains
+     */
+    @SuppressWarnings({"ForLoopReplaceableByForEach"})
+    public static <T> boolean contains(T[] array, T find) {
+        for (int i = 0; i < array.length; i++)
+            if (Objects.equals(find, array[i]))
+                return true;
+        return false;
+    }
+
+    /**
+     * Tests if a string is alphanumeric or not.
+     * @param testString The string to test.
+     * @return isAlphanumeric
+     */
+    public static boolean isAlphanumeric(String testString) {
+        for (int i = 0; i < testString.length(); i++)
+            if (!Character.isLetterOrDigit(testString.charAt(i)))
+                return false;
+        return true;
+    }
+
+    /**
+     * Tests if a string is alphanumeric or not.
+     * @param testString The string to test.
+     * @return isAlphanumeric
+     */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static boolean isValidFileName(String testString) {
+        File f = new File(testString);
+        try {
+            f.getCanonicalPath();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
 }

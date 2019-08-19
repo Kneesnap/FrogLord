@@ -38,13 +38,13 @@ import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFly;
 import net.highwayfrogs.editor.file.map.entity.data.general.BonusFlyEntity;
 import net.highwayfrogs.editor.file.map.entity.script.ScriptButterflyData;
 import net.highwayfrogs.editor.file.map.light.Light;
-import net.highwayfrogs.editor.file.map.path.PathDisplaySetting;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -55,7 +55,6 @@ import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -75,6 +74,7 @@ public class MAPController extends EditorController<MAPFile> {
     private MAPPolygon polygonImmuneToTarget;
     private boolean polygonSelected;
     private boolean showGroupBounds;
+    private Vector showPosition;
 
     private RenderManager renderManager = new RenderManager();
     private CameraFPS cameraFPS;
@@ -89,12 +89,12 @@ public class MAPController extends EditorController<MAPFile> {
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
 
     private static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
-    private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
-    private static final PhongMaterial MATERIAL_LIGHT_GREEN = Utils.makeSpecialMaterial(Color.LIGHTGREEN);
 
-    private static final String DISPLAY_LIST_PATHS = "displayListPaths";
     private static final String LIGHT_LIST = "lightList";
+    private static final String GENERIC_POS_LIST = "genericPositionList";
+
+    private static final double GENERIC_POS_SIZE = 3;
+    private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
 
     @Override
     public void loadFile(MAPFile mapFile) {
@@ -184,6 +184,11 @@ public class MAPController extends EditorController<MAPFile> {
         // Setup the primary camera
         this.cameraFPS = new CameraFPS();
 
+        if (this.showPosition != null)
+            this.showPosition = null;
+        if (getRenderManager().getDisplayListCache().containsKey(GENERIC_POS_LIST))
+            getRenderManager().clearDisplayList(GENERIC_POS_LIST);
+
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(Utils.toFXImage(texMap.getImage(), true));
@@ -239,7 +244,7 @@ public class MAPController extends EditorController<MAPFile> {
 
             // Exit the viewer.
             if (event.getCode() == KeyCode.ESCAPE) {
-                if (isPolygonSelected()) {
+                if (isPolygonSelected()) { // If there's a polygon selected, deselect it.
                     removeCursorPolygon();
                     return;
                 }
@@ -258,16 +263,6 @@ public class MAPController extends EditorController<MAPFile> {
             // Toggle fullscreen mode.
             if (event.isControlDown() && event.getCode() == KeyCode.ENTER)
                 stageToOverride.setFullScreen(!stageToOverride.isFullScreen());
-
-            if (event.getCode() == KeyCode.UP) {
-                movePolygonY(MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.DOWN) {
-                movePolygonY(-MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.LEFT) {
-                movePolygonX(-MapUIController.getPropertyVertexSpeed().get());
-            } else if (event.getCode() == KeyCode.RIGHT) {
-                movePolygonX(MapUIController.getPropertyVertexSpeed().get());
-            }
         });
 
         mapScene.setOnMousePressed(e -> {
@@ -316,23 +311,8 @@ public class MAPController extends EditorController<MAPFile> {
         cameraFPS.setCameraLookAt(gridX, baseY, gridZ); // Set the camera to look at the start position, too.
 
         // TODO: Tidy this up at some point, but use an action on a UI control for now [AndyEder]
-        mapUIController.getPathDisplayOption().setOnAction(evt -> this.updatePathDisplay());
+        mapUIController.getPathDisplayOption().valueProperty().addListener(((observable, oldValue, newValue) -> getMapUIController().getPathManager().setDisplaySetting(newValue)));
         mapUIController.getApplyLightsCheckBox().setOnAction(evt -> this.updateLighting());
-    }
-
-    /**
-     * Toggle display of paths.
-     */
-    public void updatePathDisplay() {
-        this.renderManager.addMissingDisplayList(DISPLAY_LIST_PATHS);
-        this.renderManager.clearDisplayList(DISPLAY_LIST_PATHS);
-
-        if (mapUIController.getPathDisplayOption().getValue() == PathDisplaySetting.ALL) {
-            this.renderManager.addPaths(DISPLAY_LIST_PATHS, getFile().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
-        } else if (mapUIController.getPathDisplayOption().getValue() == PathDisplaySetting.SELECTED) {
-            if (getMapUIController().getSelectedPath() != null)
-                this.renderManager.addPaths(DISPLAY_LIST_PATHS, Collections.singletonList(getMapUIController().getSelectedPath()), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
-        }
     }
 
     /**
@@ -441,65 +421,54 @@ public class MAPController extends EditorController<MAPFile> {
         return node;
     }
 
-    private void movePolygonX(int amount) {
-        if (getSelectedPolygon() != null) {
-            for (int vertice : getSelectedPolygon().getVertices()) {
-                SVector vertex = getFile().getVertexes().get(vertice);
-                vertex.setX((short) (vertex.getX() + amount));
-            }
+    /**
+     * Calculate geometric center point of a polygon.
+     * @return Center of a polygon, else null.
+     */
+    public SVector getCenterOfPolygon(MAPPolygon poly) {
+        if (poly == null)
+            return null;
 
-            refreshView();
+        int[] vertexIndices = getSelectedPolygon().getVertices();
+
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+
+        for (int index : vertexIndices) {
+            x += mapMesh.getVertices().get(index).getFloatX();
+            y += mapMesh.getVertices().get(index).getFloatY();
+            z += mapMesh.getVertices().get(index).getFloatZ();
         }
-    }
 
-    private void movePolygonY(int amount) {
-        if (getSelectedPolygon() != null) {
-            for (int vertice : getSelectedPolygon().getVertices()) {
-                SVector vertex = getFile().getVertexes().get(vertice);
-                vertex.setY((short) (vertex.getY() - amount));
-            }
+        x /= vertexIndices.length;
+        y /= vertexIndices.length;
+        z /= vertexIndices.length;
 
-            refreshView();
-        }
-    }
+        return new SVector(x, y, z);
 
-    private void movePolygonZ(int amount) {
-        if (getSelectedPolygon() != null) {
-            for (int vertice : getSelectedPolygon().getVertices()) {
-                SVector vertex = getFile().getVertexes().get(vertice);
-                vertex.setZ((short) (vertex.getZ() + amount));
-            }
-
-            refreshView();
-        }
     }
 
     /**
-     * Calculate geometric center point of selected polygon.
-     * @return Center of selected polygon, else null.
+     * Updates the marker to display at the given position.
+     * If null is supplied, it'll get removed.
      */
-    public SVector getCenterOfSelectedPolygon() {
-        if (getSelectedPolygon() != null) {
-            int[] vertexIndices = getSelectedPolygon().getVertices();
-
-            float x = 0.0f;
-            float y = 0.0f;
-            float z = 0.0f;
-
-            for (int index : vertexIndices) {
-                x += mapMesh.getVertices().get(index).getFloatX();
-                y += mapMesh.getVertices().get(index).getFloatY();
-                z += mapMesh.getVertices().get(index).getFloatZ();
+    public void updateMarker(Vector vec, int bits, Vector origin) {
+        getRenderManager().addMissingDisplayList(GENERIC_POS_LIST);
+        getRenderManager().clearDisplayList(GENERIC_POS_LIST);
+        this.showPosition = vec;
+        if (vec != null) {
+            float baseX = vec.getFloatX(bits);
+            float baseY = vec.getFloatY(bits);
+            float baseZ = vec.getFloatZ(bits);
+            if (origin != null) {
+                baseX += origin.getFloatX();
+                baseY += origin.getFloatY();
+                baseZ += origin.getFloatZ();
             }
 
-            x /= vertexIndices.length;
-            y /= vertexIndices.length;
-            z /= vertexIndices.length;
-
-            return new SVector(Utils.floatToFixedPointShort4Bit(x), Utils.floatToFixedPointShort4Bit(y), Utils.floatToFixedPointShort4Bit(z));
+            getRenderManager().addBoundingBoxFromMinMax(GENERIC_POS_LIST, baseX - GENERIC_POS_SIZE, baseY - GENERIC_POS_SIZE, baseZ - GENERIC_POS_SIZE, baseX + GENERIC_POS_SIZE, baseY + GENERIC_POS_SIZE, baseZ + GENERIC_POS_SIZE, GENERIC_POS_MATERIAL, true);
         }
-
-        return null;
     }
 
     /**
@@ -632,9 +601,9 @@ public class MAPController extends EditorController<MAPFile> {
                     PointLight parallelLight = new PointLight();
                     parallelLight.setColor(Utils.fromBGR(light.getColor()));
                     // Use direction as a vector to set a position to simulate a parallel light as best as we can
-                    parallelLight.setTranslateX(-light.getDirection().getFloatNormalX() * 1024);
-                    parallelLight.setTranslateY(-light.getDirection().getFloatNormalY() * 1024);
-                    parallelLight.setTranslateZ(-light.getDirection().getFloatNormalZ() * 1024);
+                    parallelLight.setTranslateX(-light.getDirection().getFloatX(12) * 1024);
+                    parallelLight.setTranslateY(-light.getDirection().getFloatY(12) * 1024);
+                    parallelLight.setTranslateZ(-light.getDirection().getFloatZ(12) * 1024);
                     getRenderManager().addNode(LIGHT_LIST, parallelLight);
                     break;
 

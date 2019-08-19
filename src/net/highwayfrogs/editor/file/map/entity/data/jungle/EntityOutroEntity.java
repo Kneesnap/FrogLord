@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 /**
  * Represents JUN_OUTRO_ENTITY
@@ -37,11 +38,11 @@ public class EntityOutroEntity extends MatrixData {
     }
 
     @Override
-    public void addData(GUIEditorGrid editor) {
-        super.addData(editor);
+    public void addData(MapUIController controller, GUIEditorGrid editor) {
+        super.addData(controller, editor);
         for (int i = 0; i < getTargets().length; i++) {
             editor.addNormalLabel("Target #" + (i + 1) + ":");
-            getTargets()[i].setupEditor(editor);
+            getTargets()[i].setupEditor(editor, controller);
         }
     }
 
@@ -63,8 +64,8 @@ public class EntityOutroEntity extends MatrixData {
             writer.writeInt(this.time);
         }
 
-        public void setupEditor(GUIEditorGrid grid) {
-            grid.addFloatSVector("Target", getTarget());
+        public void setupEditor(GUIEditorGrid grid, MapUIController controller) {
+            grid.addFloatSVector("Target", getTarget(), controller.getController());
             grid.addIntegerField("Time", getTime(), this::setTime, null);
         }
     }

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.map;
 
 import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -18,6 +19,7 @@ import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridSquareFlag;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.group.MAPGroup;
+import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
@@ -32,6 +34,7 @@ import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -157,7 +160,7 @@ public class MAPFile extends GameFile {
                 continue;
 
             if (info.getPathId() > pathIndex) {
-                info.setPathId(info.getPathId() - 1);
+                info.setPathId(info.getPathId() - 1, false);
             } else if (info.getPathId() == pathIndex) {
                 info.setPathId(-1);
             }
@@ -760,6 +763,7 @@ public class MAPFile extends GameFile {
         texMap.put(MapMesh.INVISIBLE_COLOR, MapMesh.INVISIBLE_COLOR.makeTexture());
         texMap.put(MapMesh.GRID_COLOR, MapMesh.GRID_COLOR.makeTexture());
         texMap.put(MapMesh.REMOVE_FACE_COLOR, MapMesh.REMOVE_FACE_COLOR.makeTexture());
+        texMap.put(MapMesh.GENERAL_SELECTION, MapMesh.GENERAL_SELECTION.makeTexture());
         return texMap;
     }
 
@@ -807,8 +811,11 @@ public class MAPFile extends GameFile {
                 .setConverter(new AbstractStringConverter<>(StartRotation::getArrow));
 
         editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
-        editor.addFloatSVector("Camera Source Offset", getCameraSourceOffset());
-        editor.addFloatSVector("Camera Target Offset", getCameraTargetOffset());
+
+
+        IVector gridOrigin = new IVector(getWorldX(getStartXTile(), true), -getGridStack(getStartXTile(), getStartZTile()).getHeight(), getWorldZ(getStartZTile(), true));
+        editor.addFloatVector("Camera Source", getCameraSourceOffset(), null, controller, gridOrigin.defaultBits(), gridOrigin);
+        editor.addFloatVector("Camera Target", getCameraTargetOffset(), null, controller, gridOrigin.defaultBits(), gridOrigin);
         editor.addSeparator(25);
 
         // Group:
@@ -830,8 +837,6 @@ public class MAPFile extends GameFile {
             controller.updateGroupView();
         }, null);
         editor.addCheckBox("Show Group Bounds", controller.isShowGroupBounds(), controller::setShowGroupBounds);
-
-        //TODO: Add a warning to here and the other view if the group seems like it's probably bad.
     }
 
     /**
@@ -1072,17 +1077,17 @@ public class MAPFile extends GameFile {
 
     /**
      * Procedurally generate a test map.
-     * TODO: This map does not boot. (Everything up to clearing polygons has been tested to work)
-     * TODO: If you had the editor open with the map before this is called, stuff breaks, fix that.
+     * TODO: Fix collision grid.
      */
     public void randomizeMap() {
         final int size = 5;
         int halfSize = size / 2;
+        final float SQUARE_SIZE = 20;
 
         this.startRotation = StartRotation.NORTH;
         this.levelTimer = 99;
-        //this.cameraSourceOffset.loadFromFloatText("0.1875, -141.3125, -21.9375"); //TODO: This needs better calculation.
-        //this.cameraTargetOffset.loadFromFloatText("0.1875, 0.0, 21.9375");
+        this.cameraSourceOffset.loadFromFloatText("0, -50, -3");
+        this.cameraTargetOffset.loadFromFloatText("0.0, 0.0, 0.0");
 
         this.paths.clear();
         this.zones.clear();
@@ -1094,8 +1099,8 @@ public class MAPFile extends GameFile {
         this.mapAnimations.clear();
         this.gridXCount = size + 2; // Add two, so we can have a border surrounding the map.
         this.gridZCount = size + 2;
-        this.startXTile = (short) halfSize;
-        this.startZTile = (short) 0;
+        this.startXTile = (short) (halfSize + 1);
+        this.startZTile = (short) 1;
 
         polygons.values().forEach(List::clear); // Clear the list of polygons.
         List<MAPPrimitive> list = polygons.get(MAPPolygonType.F4);
@@ -1111,10 +1116,10 @@ public class MAPFile extends GameFile {
 
                 x -= halfSize;
                 z -= halfSize;
-                SVector topLeft = new SVector(x * 10F, 0, (z + 1) * 10F);
-                SVector topRight = new SVector((x + 1) * 10F, 0, (z + 1) * 10F);
-                SVector botLeft = new SVector(x * 10F, 0, z * 10F);
-                SVector botRight = new SVector((x + 1) * 10F, 0, z * 10F);
+                SVector topLeft = new SVector(x * SQUARE_SIZE, 0, (z + 1) * SQUARE_SIZE);
+                SVector topRight = new SVector((x + 1) * SQUARE_SIZE, 0, (z + 1) * SQUARE_SIZE);
+                SVector botLeft = new SVector(x * SQUARE_SIZE, 0, z * SQUARE_SIZE);
+                SVector botRight = new SVector((x + 1) * SQUARE_SIZE, 0, z * SQUARE_SIZE);
                 x += halfSize;
                 z += halfSize;
 
@@ -1133,6 +1138,7 @@ public class MAPFile extends GameFile {
                 polyF4.getVertices()[1] = leftIndex + 1;
                 polyF4.getVertices()[2] = leftIndex + 3; // Swapped with the next one to make work.
                 polyF4.getVertices()[3] = leftIndex + 2;
+                polyF4.setFlippedVertices(true);
 
                 list.add(polyF4);
 
@@ -1142,6 +1148,16 @@ public class MAPFile extends GameFile {
                 newStack.getGridSquares().add(newSquare);
             }
         }
+
+        // Add Lights (Makes sure models get colored in):
+        Light light1 = new Light(APILightType.PARALLEL);
+        light1.setColor(Utils.toBGR(Color.WHITE));
+        light1.setDirection(new SVector(-140.375F, 208.375F, 48.125F));
+        getLights().add(light1);
+
+        Light light2 = new Light(APILightType.AMBIENT);
+        light2.setColor(Utils.toBGR(Utils.fromRGB(0x494949)));
+        getLights().add(light2);
 
         // Setup Group:
         setBaseXTile((short) -halfSize);

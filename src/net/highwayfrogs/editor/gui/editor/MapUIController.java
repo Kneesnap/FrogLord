@@ -11,6 +11,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -31,26 +32,38 @@ import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.entity.Entity.EntityFlag;
 import net.highwayfrogs.editor.file.map.form.Form;
+import net.highwayfrogs.editor.file.map.grid.GridSquare;
+import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.map.light.Light;
-import net.highwayfrogs.editor.file.map.path.Path;
-import net.highwayfrogs.editor.file.map.path.PathDisplaySetting;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
+import net.highwayfrogs.editor.gui.editor.map.manager.MapManager;
+import net.highwayfrogs.editor.gui.editor.map.manager.PathManager;
+import net.highwayfrogs.editor.gui.editor.map.manager.PathManager.PathDisplaySetting;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
+import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
+ * TODO:
+ *  Cleanup the whole map UI code. Use managers, and have an actual system designed.
+ *  Cache things, for instance, if we have an entity manager, and we just want to update the position of entities, just update the positions of entities instead of clearing the list fully and starting over.
+ *  Try creating a system which is better in terms of memory usage, for the 2D editor too.
+ *  Make sure everything is rebuilt when you exit the viewer then come back, in case of changes.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter
@@ -140,12 +153,13 @@ public class MapUIController implements Initializable {
     // Path pane.
     @FXML private TitledPane pathPane;
     @FXML private GridPane pathGridPane;
-    private GUIEditorGrid pathEditor;
-    private Path selectedPath;
 
     // Non-GUI.
     private Consumer<MAPPolygon> onSelect;
     private Runnable cancelSelection;
+
+    private List<MapManager> managers = new ArrayList<>();
+    private PathManager pathManager;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
@@ -157,6 +171,10 @@ public class MapUIController implements Initializable {
         entityEditor = new MAPEditorGUI(entityGridPane, this);
         pathDisplayOption.setItems(FXCollections.observableArrayList(PathDisplaySetting.values()));
         pathDisplayOption.getSelectionModel().selectFirst();
+
+        // Setup managers.
+        this.managers.clear();
+        this.managers.add(this.pathManager = new PathManager(this));
     }
 
     /**
@@ -251,38 +269,7 @@ public class MapUIController implements Initializable {
      * Setup the path editor.
      */
     public void setupPathEditor() {
-        if (this.pathEditor == null)
-            this.pathEditor = new GUIEditorGrid(this.pathGridPane);
-
-        if (this.selectedPath == null && !getMap().getPaths().isEmpty())
-            this.selectedPath = getMap().getPaths().get(0);
-
-        getController().updatePathDisplay();
-        this.pathEditor.clearEditor();
-
-        ComboBox<Path> box = this.pathEditor.addSelectionBox("Path:", getSelectedPath(), getMap().getPaths(), newPath -> {
-            this.selectedPath = newPath;
-            setupPathEditor();
-        });
-        box.setConverter(new AbstractStringConverter<>(path -> "Path #" + getMap().getPaths().indexOf(path)));
-
-        this.pathEditor.addLabelButton("", "Add Path", 25.0, () -> {
-            getMap().getPaths().add(this.selectedPath = new Path());
-            setupPathEditor();
-        });
-
-        if (this.selectedPath != null) {
-            this.pathEditor.addLabelButton("", "Remove Path", 25.0, () -> {
-                getMap().removePath(this.selectedPath);
-                this.selectedPath = null;
-                getController().updatePathDisplay();
-                setupPathEditor();
-            });
-
-            this.pathEditor.addSeparator(25.0);
-            this.pathEditor.addBoldLabel("Path Data");
-            this.selectedPath.setupEditor(this, this.pathEditor);
-        }
+        getPathManager().setupEditor();
     }
 
     /**
@@ -363,56 +350,141 @@ public class MapUIController implements Initializable {
      * @param entity The entity to show information for.
      */
     public void showEntityInfo(Entity entity) {
+        FormEntry[] entries = getMap().getConfig().getAllowedForms(getMap().getTheme());
+        if (entity != null && !Utils.contains(entries, entity.getFormEntry())) // This wasn't found in this
+            entries = getMap().getConfig().getFullFormBook().toArray(new FormEntry[0]);
+
+        // Setup Editor:
         entityEditor.clearEditor();
         if (entity == null) {
             entityEditor.addBoldLabel("There is no entity selected.");
-            entityEditor.addButton("New Entity", () -> addNewEntity(getMap().getConfig().getThemeLibrary()[0].getFormBook().get(0)));
+            entityEditor.addButtonWithEnumSelection("Add Entity", this::addNewEntity, entries, entries[0])
+                    .setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
             return;
         }
+
+        this.entityEditor.addButtonWithEnumSelection("Add Entity", this::addNewEntity, entries, entity.getFormEntry())
+                .setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
 
         entityEditor.addBoldLabel("General Information:");
         entityEditor.addLabel("Entity Type", entity.getFormEntry().getEntityName());
 
-        List<String> names = getMap().getConfig().getFormBank().getNames();
-        entityEditor.addSelectionBox("Form Type", entity.getFormEntry().getFormName(), names, newEntry -> {
-            int globalFormIndex = names.indexOf(newEntry);
-            Utils.verify(globalFormIndex >= 0, "Invalid Global Form Index for: \"%s\"", newEntry);
-            entity.setFormBook(getMap().getConfig().getFullFormBook().get(globalFormIndex));
-            showEntityInfo(entity); // Update entity type.
+        entityEditor.addEnumSelector("Form Type", entity.getFormEntry(), entries, false, newEntry -> {
+            entity.setFormEntry(newEntry);
+            showEntityInfo(entity);
             getController().resetEntities();
-        });
+        }).setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
 
         entityEditor.addIntegerField("Entity ID", entity.getUniqueId(), entity::setUniqueId, null);
-        entityEditor.addIntegerField("Form ID", entity.getFormGridId(), entity::setFormGridId, null);
+
+        if (entity.getFormGridId() >= 0 && getMap().getForms().size() > entity.getFormGridId()) {
+            entityEditor.addSelectionBox("Form", getMap().getForms().get(entity.getFormGridId()), getMap().getForms(),
+                    newForm -> entity.setFormGridId(getMap().getForms().indexOf(newForm)))
+                    .setConverter(new AbstractIndexStringConverter<>(getMap().getForms(), (index, form) -> "Form #" + index + " (" + form.getXGridSquareCount() + "," + form.getZGridSquareCount() + ")"));
+        } else { // This form is invalid, so show this as a text box.
+            entityEditor.addIntegerField("Form ID", entity.getFormGridId(), entity::setFormGridId, null);
+        }
+
         entityEditor.addBoldLabel("Flags:");
         for (EntityFlag flag : EntityFlag.values())
             entityEditor.addCheckBox(Utils.capitalize(flag.name()), entity.testFlag(flag), newState -> entity.setFlag(flag, newState));
 
         // Populate Entity Data.
-        entityEditor.addBoldLabel("Entity Data:");
-        if (entity.getEntityData() != null)
+        if (entity.getEntityData() != null) {
+            this.entityEditor.addSeparator(25);
+            entityEditor.addBoldLabel("Entity Data:");
             entity.getEntityData().addData(this, this.entityEditor);
+        }
 
         // Populate Script Data.
-        entityEditor.addBoldLabel("Script Data:");
-        if (entity.getScriptData() != null)
+        if (entity.getScriptData() != null) {
+            this.entityEditor.addSeparator(25);
+            this.entityEditor.addBoldLabel("Script Data:");
             entity.getScriptData().addData(this.entityEditor);
+        }
 
-        entityEditor.addButton("Remove Entity", () -> {
+        this.entityEditor.addSeparator(25);
+        this.entityEditor.addButton("Remove Entity", () -> {
             getMap().getEntities().remove(entity);
             getController().resetEntities();
             showEntityInfo(null); // Don't show the entity we just deleted.
         });
-
-        entityEditor.addButton("New Entity", () -> addNewEntity(entity.getFormEntry()));
 
         entityPane.setExpanded(true);
     }
 
     private void addNewEntity(FormEntry entry) {
         Entity newEntity = new Entity(getMap(), entry);
-        getMap().getEntities().add(newEntity);
-        showEntityInfo(newEntity);
+
+        if (newEntity.getMatrixInfo() != null) { // Lets you select a polygon to place the new entity on.
+            for (GridStack stack : getMap().getGridStacks())
+                for (GridSquare square : stack.getGridSquares())
+                    getController().renderOverPolygon(square.getPolygon(), MapMesh.GENERAL_SELECTION);
+            MeshData data = getMesh().getManager().addMesh();
+
+            selectPolygon(poly -> {
+                getMesh().getManager().removeMesh(data);
+
+                // Set entity position to the clicked polygon.
+                PSXMatrix matrix = newEntity.getMatrixInfo();
+                SVector pos = getController().getCenterOfPolygon(poly);
+                matrix.getTransform()[0] = Utils.floatToFixedPointInt20Bit(pos.getFloatX());
+                matrix.getTransform()[1] = Utils.floatToFixedPointInt20Bit(pos.getFloatY());
+                matrix.getTransform()[2] = Utils.floatToFixedPointInt20Bit(pos.getFloatZ());
+
+                // Add entity.
+                addEntityToMap(newEntity);
+            }, () -> getMesh().getManager().removeMesh(data));
+            return;
+        }
+
+        if (newEntity.getPathInfo() != null) {
+            if (getMap().getPaths().isEmpty()) {
+                Utils.makePopUp("Path entities cannot be added if there are no paths present! Add a path.", AlertType.WARNING);
+                return;
+            }
+
+            // User selects the path.
+            getPathManager().promptPath((path, segment, segDistance) -> {
+                newEntity.getPathInfo().setPath(getMap(), path, segment);
+                newEntity.getPathInfo().setSegmentDistance(segDistance);
+                newEntity.getPathInfo().setSpeed(10); // Default speed.
+                addEntityToMap(newEntity);
+            }, null);
+            return;
+        }
+
+        addEntityToMap(newEntity);
+    }
+
+    private void addEntityToMap(Entity entity) {
+        if (entity.getUniqueId() == -1) { // Default entity id, update it to something new.
+            boolean isPath = entity.getMatrixInfo() != null;
+
+            // Use the largest entity id + 1.
+            for (Entity tempEntity : getMap().getEntities())
+                if (tempEntity.getUniqueId() >= entity.getUniqueId() && (isPath == (tempEntity.getMatrixInfo() != null)))
+                    entity.setUniqueId(tempEntity.getUniqueId() + 1);
+        }
+
+        if (entity.getFormGridId() == -1) { // Default form id, make it something.
+            int[] formCounts = new int[getMap().getForms().size()];
+            for (Entity testEntity : getMap().getEntities())
+                if (testEntity.getFormEntry() == entity.getFormEntry())
+                    formCounts[testEntity.getFormGridId()]++;
+
+            int maxCount = -1;
+            for (int i = 0; i < formCounts.length; i++) {
+                if (formCounts[i] > maxCount) {
+                    maxCount = formCounts[i];
+                    entity.setFormGridId(i);
+                }
+            }
+        }
+
+        //TODO: New matrix entities don't show up in-game, but path entities work fine.
+        getMap().getEntities().add(entity);
+        showEntityInfo(entity);
         getController().resetEntities();
     }
 
@@ -510,14 +582,23 @@ public class MapUIController implements Initializable {
      * @return wasHandled
      */
     public boolean onKeyPress(KeyEvent event) {
-        if (event.getCode() == KeyCode.ESCAPE && !getController().isPolygonSelected() && onSelect != null) {
-            onSelect = null;
-            if (cancelSelection != null) {
-                cancelSelection.run();
-                cancelSelection = null;
+        if (event.getCode() == KeyCode.ESCAPE) {
+            for (MapManager manager : getManagers()) { // Cancel active prompts.
+                if (manager.isPromptActive()) {
+                    manager.cancelPrompt();
+                    return true;
+                }
             }
 
-            return true;
+            if (!getController().isPolygonSelected() && onSelect != null) { // Handle cancelling polygon selection.
+                onSelect = null;
+                if (cancelSelection != null) {
+                    cancelSelection.run();
+                    cancelSelection = null;
+                }
+
+                return true;
+            }
         }
 
         return false;

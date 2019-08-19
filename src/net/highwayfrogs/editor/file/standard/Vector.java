@@ -5,13 +5,45 @@ package net.highwayfrogs.editor.file.standard;
  * Created by Kneesnap on 2/21/2019.
  */
 public interface Vector {
-    public float getFloatX();
-    public float getFloatY();
-    public float getFloatZ();
+    default float getFloatX() {
+        return getFloatX(defaultBits());
+    }
 
-    public float getFloatNormalX();
-    public float getFloatNormalY();
-    public float getFloatNormalZ();
+    default float getFloatY() {
+        return getFloatY(defaultBits());
+    }
+
+    default float getFloatZ() {
+        return getFloatZ(defaultBits());
+    }
+
+    public float getFloatX(int bits);
+
+    public float getFloatY(int bits);
+
+    public float getFloatZ(int bits);
+
+    default void setFloatX(float xVal) {
+        setFloatX(xVal, defaultBits());
+    }
+
+    default void setFloatY(float yVal) {
+        setFloatY(yVal, defaultBits());
+    }
+
+    default void setFloatZ(float zVal) {
+        setFloatZ(zVal, defaultBits());
+    }
+
+    public void setFloatX(float xVal, int bits);
+
+    public void setFloatY(float yVal, int bits);
+
+    public void setFloatZ(float zVal, int bits);
+
+    default int defaultBits() {
+        return 4;
+    }
 
     default float getExportFloatX() {
         return -getFloatX();
@@ -40,16 +72,6 @@ public interface Vector {
     default String toFloatString() {
         return getFloatX() + ", " + getFloatY() + ", " + getFloatZ();
     }
-
-    /**
-     * Get a decimal coordinate string (representing a normal) for this float vector.
-     * @return coordinateString
-     */
-    default String toFloatNormalString() {
-        return getFloatNormalX() + ", " + getFloatNormalY() + ", " + getFloatNormalZ();
-    }
-
-    public String toRegularString();
 
     default String toString0() {
         return getClass().getSimpleName() + "<" + toFloatString() + ">";

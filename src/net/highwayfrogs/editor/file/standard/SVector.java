@@ -36,7 +36,9 @@ public class SVector extends GameObject implements Vector {
     }
 
     public SVector(float x, float y, float z) {
-        this(Utils.floatToFixedPointShort4Bit(x), Utils.floatToFixedPointShort4Bit(y), Utils.floatToFixedPointShort4Bit(z));
+        setFloatX(x);
+        setFloatY(y);
+        setFloatZ(z);
     }
 
     @Override
@@ -118,28 +120,6 @@ public class SVector extends GameObject implements Vector {
     }
 
     /**
-     * Subtract another SVector from this one.
-     * @param other The other SVector to subtract.
-     */
-    public SVector subtract(SVector other) {
-        this.x -= other.getX();
-        this.y -= other.getY();
-        this.z -= other.getZ();
-        return this;
-    }
-
-    /**
-     * Multiply the values in this SVector.
-     * @param multiplier The multiplier.
-     */
-    public SVector multiply(double multiplier) {
-        this.x *= multiplier;
-        this.y *= multiplier;
-        this.z *= multiplier;
-        return this;
-    }
-
-    /**
      * Write an SVector with an extra 2 bytes of padding.
      * @param writer The writer to write data to.
      */
@@ -173,76 +153,34 @@ public class SVector extends GameObject implements Vector {
         return otherV.getX() == getX() && otherV.getY() == getY() && otherV.getZ() == getZ();
     }
 
-    /**
-     * Gets the float X value.
-     * @return floatX
-     */
-    public float getFloatX() {
-        return Utils.fixedPointShortToFloat4Bit(getX());
+    @Override
+    public float getFloatX(int bits) {
+        return Utils.fixedPointShortToFloatNBits(getX(), bits);
     }
 
-    /**
-     * Gets the float Y value.
-     * @return floatY
-     */
-    public float getFloatY() {
-        return Utils.fixedPointShortToFloat4Bit(getY());
+    @Override
+    public float getFloatY(int bits) {
+        return Utils.fixedPointShortToFloatNBits(getY(), bits);
     }
 
-    /**
-     * Gets the float Z value.
-     * @return floatZ
-     */
-    public float getFloatZ() {
-        return Utils.fixedPointShortToFloat4Bit(getZ());
+    @Override
+    public float getFloatZ(int bits) {
+        return Utils.fixedPointShortToFloatNBits(getZ(), bits);
     }
 
-    /**
-     * Gets the float X value (specifically for handling normal component values).
-     * @return floatX
-     */
-    public float getFloatNormalX() {
-        return Utils.fixedPointShortToFloat12Bit(getX());
+    @Override
+    public void setFloatX(float xVal, int bits) {
+        this.x = Utils.floatToFixedPointShort(xVal, bits);
     }
 
-    /**
-     * Gets the float Y value (specifically for handling normal component values).
-     * @return floatY
-     */
-    public float getFloatNormalY() {
-        return Utils.fixedPointShortToFloat12Bit(getY());
+    @Override
+    public void setFloatY(float yVal, int bits) {
+        this.y = Utils.floatToFixedPointShort(yVal, bits);
     }
 
-    /**
-     * Gets the float Z value (specifically for handling normal component values).
-     * @return floatZ
-     */
-    public float getFloatNormalZ() {
-        return Utils.fixedPointShortToFloat12Bit(getZ());
-    }
-
-    /**
-     * Load SVector data from text.
-     * @param text The text to read SVector data from.
-     * @return loadedSuccessfully
-     */
-    public boolean loadFromRegularText(String text) {
-        text = text.replace(" ", "");
-        if (!text.contains(","))
-            return false;
-
-        String[] split = text.split(",");
-        if (split.length != 3)
-            return false;
-
-        for (String testStr : split)
-            if (!Utils.isSignedShort(testStr))
-                return false;
-
-        setX(Short.parseShort(split[0]));
-        setY(Short.parseShort(split[1]));
-        setZ(Short.parseShort(split[2]));
-        return true;
+    @Override
+    public void setFloatZ(float zVal, int bits) {
+        this.z = Utils.floatToFixedPointShort(zVal, bits);
     }
 
     /**
@@ -272,15 +210,10 @@ public class SVector extends GameObject implements Vector {
             if (!Utils.isNumber(testStr))
                 return false;
 
-        setX(Utils.floatToFixedPointShort(Float.parseFloat(split[0]), bits));
-        setY(Utils.floatToFixedPointShort(Float.parseFloat(split[1]), bits));
-        setZ(Utils.floatToFixedPointShort(Float.parseFloat(split[2]), bits));
+        setFloatX(Float.parseFloat(split[0]), bits);
+        setFloatY(Float.parseFloat(split[1]), bits);
+        setFloatZ(Float.parseFloat(split[2]), bits);
         return true;
-    }
-
-    @Override
-    public String toRegularString() {
-        return getX() + ", " + getY() + ", " + getZ();
     }
 
     @Override
