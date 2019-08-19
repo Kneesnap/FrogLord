@@ -14,6 +14,7 @@ import java.util.Arrays;
 /**
  * Holds Spline segment data.
  * Not entirely sure how we'll edit much of this data.
+ * This could be using polynomial curves to form a shape. https://en.wikipedia.org/wiki/Spline_(mathematics)
  * Created by Kneesnap on 9/16/2018.
  */
 public class SplineSegment extends PathSegment {
