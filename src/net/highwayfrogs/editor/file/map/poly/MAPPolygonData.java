@@ -26,6 +26,11 @@ public class MAPPolygonData {
     private short flags;
     private ByteUV[] uvs;
 
+    private static final String[] SINGLE_COLOR_NAME = {"Color"};
+    private static final String[] TRI_COLOR_NAMES = {"1?", "2?", "3?"}; //TODO
+    private static final String[] QUAD_COLOR_NAMES = {"Top Left", "Bottom Left", "Top Right", "Bottom Right"};
+    private static final String[][] COLOR_BANK = {SINGLE_COLOR_NAME, null, TRI_COLOR_NAMES, QUAD_COLOR_NAMES};
+
     /**
      * Gets the amount of vertices this polygon uses.
      * @return verticeCount
@@ -142,18 +147,23 @@ public class MAPPolygonData {
      * Setup an editor for this data.
      */
     public void setupEditor(GUIEditorGrid editor) {
-        //TODO: Finish.
-        //TODO: Make sure it's fully compatible between the types.
-
-
-        //TODO: Allow editing colors. Try to name each entry. [1 - Color] [3/4 - Which Corner]
+        //TODO: Toggles. [careful here to make sure it stays compatible!]
 
         if (isTextured()) {
             //TODO: textureId, flags, uvs, image preview.
         }
 
-        // TODO: Color tools.
-        // TODO: Vertice tools.
+        // Color Editor.
+        if (this.colors != null) {
+            editor.addBoldLabel("Colors:");
+            String[] nameArray = COLOR_BANK[this.colors.length - 1];
+            for (int i = 0; i < this.colors.length; i++)
+                editor.addColorPicker(nameArray[i], this.colors[i].toRGB(), this.colors[i]::fromRGB);
+            //TODO: Update preview when color is updated.
+        }
+
+        // TODO: Vertice tools. [Show vertices, change them. Add new ones]
+        editor.addLabel("Vertices", Arrays.toString(this.vertices));
     }
 
     private static ByteUV[] cloneUVs(ByteUV[] toClone) {
