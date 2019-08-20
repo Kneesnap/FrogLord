@@ -37,7 +37,7 @@ public abstract class MAPPolygon extends MAPPrimitive {
 
         swapIfNeeded();
         if (getVerticeCount() == REQUIRES_VERTEX_PADDING)
-            this.padding = reader.readShort(); // Padding? This value seems to sometimes match the last vertices element, and sometimes it doesn't. I don't believe this value is used.
+            this.padding = reader.readShort(); // Padding? This value seems to sometimes match the last vertices element, and sometimes it doesn't. I don't believe this value is used. Most likely it is whatever value was there when malloc was run, but we preserve it just in case it's important.
     }
 
     @Override

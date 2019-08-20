@@ -1129,7 +1129,6 @@ public class MAPFile extends GameFile {
                 this.vertexes.add(botLeft);
                 this.vertexes.add(botRight);
                 MAPPolyF4 polyF4 = new MAPPolyF4();
-                polyF4.setAllowDisplay(true);
                 polyF4.getColor().setCd((byte) 0xFF);
                 polyF4.getColor().setRed((byte) (random.nextInt(511) - 256));
                 polyF4.getColor().setGreen((byte) (random.nextInt(511) - 256));

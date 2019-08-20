@@ -20,9 +20,10 @@ import java.awt.image.BufferedImage;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
+@Setter
 public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
     private PSXColorVector[] colors;
-    @Setter private transient TextureEntry textureEntry;
+    private transient TextureEntry textureEntry;
 
     private static final int FULL_SIZE = MAPFile.VERTEX_COLOR_IMAGE_SIZE;
     private static final int SMALL_SIZE = FULL_SIZE / 2;
@@ -38,7 +39,7 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
     //0-2
     //| |
     //1-3
-    private static final int[][][] TRIANGLE_POSITON = {
+    private static final int[][][] TRIANGLE_POSITION = {
             {{0, FULL_SIZE, 0}, {FULL_SIZE, 0, 0}},
             {{0, FULL_SIZE, 0}, {0, FULL_SIZE, FULL_SIZE}},
             {{0, FULL_SIZE, FULL_SIZE}, {0, FULL_SIZE, 0}},
@@ -87,7 +88,7 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
         for (int i = 0; i < colors.length; i++) {
             graphics.setPaint(colors[i].toColor());
 
-            int[][] points = TRIANGLE_POSITON[i];
+            int[][] points = TRIANGLE_POSITION[i];
             graphics.fillPolygon(points[0], points[1], TRIANGLE_SIZE);
         }
     }

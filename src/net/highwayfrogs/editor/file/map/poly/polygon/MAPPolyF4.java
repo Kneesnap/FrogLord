@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
 /**
- * Shaded flat rectange.
+ * Shaded flat rectangle.
  * Created by Kneesnap on 8/25/2018.
  */
 public class MAPPolyF4 extends MAPPolyFlat {

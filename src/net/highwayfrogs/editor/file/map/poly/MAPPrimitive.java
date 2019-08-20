@@ -16,7 +16,7 @@ import java.util.Arrays;
  */
 @Getter
 public abstract class MAPPrimitive extends PSXGPUPrimitive {
-    private int[] vertices;
+    @Setter private int[] vertices;
     private MAPPrimitiveType type;
     @Setter private boolean allowDisplay; // Whether or not this prim can be included in a MAP_GROUP.
 

@@ -5,11 +5,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Holds texture UV information.
@@ -52,6 +52,14 @@ public class ByteUV extends GameObject {
     public void save(DataWriter writer) {
         writer.writeUnsignedByte(this.u);
         writer.writeUnsignedByte(this.v);
+    }
+
+    /**
+     * Creates a new ByteUV object which has the same properties as this one.
+     */
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    public ByteUV clone() {
+        return new ByteUV(this.u, this.v);
     }
 
     /**

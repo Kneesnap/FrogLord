@@ -5,10 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 
@@ -83,5 +83,13 @@ public class PSXColorVector extends GameObject {
         this.red = Utils.unsignedShortToByte((short) ((rgbValue >> 16) & 0xFF));
         this.green = Utils.unsignedShortToByte((short) ((rgbValue >> 8) & 0xFF));
         this.blue = Utils.unsignedShortToByte((short) (rgbValue & 0xFF));
+    }
+
+    /**
+     * Creates a copy of this object.
+     */
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    public PSXColorVector clone() {
+        return new PSXColorVector(this.red, this.green, this.blue, this.cd);
     }
 }

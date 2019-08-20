@@ -19,9 +19,10 @@ import java.awt.image.BufferedImage;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
+@Setter
 public class MAPPolyFlat extends MAPPolygon implements VertexColor {
     private PSXColorVector color = new PSXColorVector();
-    @Setter private transient TextureEntry textureEntry;
+    private transient TextureEntry textureEntry;
 
     public MAPPolyFlat(MAPPolygonType type, int verticeCount) {
         super(type, verticeCount);
