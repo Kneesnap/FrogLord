@@ -22,14 +22,12 @@ import javafx.scene.shape.MeshView;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.form.Form;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.map.manager.*;
 import net.highwayfrogs.editor.gui.editor.map.manager.PathManager.PathDisplaySetting;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
-import net.highwayfrogs.editor.system.AbstractStringConverter;
 
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -122,8 +120,6 @@ public class MapUIController implements Initializable {
     // Form pane.
     @FXML private TitledPane formPane;
     @FXML private GridPane formGridPane;
-    private GUIEditorGrid formEditor;
-    private Form selectedForm;
 
     // Path pane.
     @FXML private TitledPane pathPane;
@@ -139,6 +135,7 @@ public class MapUIController implements Initializable {
     private LightManager lightManager;
     private EntityManager entityManager;
     private AnimationManager animationManager;
+    private FormManager formManager;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
@@ -154,6 +151,7 @@ public class MapUIController implements Initializable {
         this.managers.add(this.lightManager = new LightManager(this));
         this.managers.add(this.entityManager = new EntityManager(this));
         this.managers.add(this.animationManager = new AnimationManager(this));
+        this.managers.add(this.formManager = new FormManager(this));
     }
 
     /**
@@ -197,45 +195,6 @@ public class MapUIController implements Initializable {
         if (showPolygon != null) {
             this.geometryEditor.addBoldLabel("Selected Polygon:");
             showPolygon.setupEditor(this, this.geometryEditor);
-        }
-    }
-
-    /**
-     * Setup the map form editor.
-     */
-    public void setupFormEditor() {
-        if (this.formEditor == null)
-            this.formEditor = new GUIEditorGrid(formGridPane);
-
-        if (this.selectedForm == null && !getMap().getForms().isEmpty())
-            this.selectedForm = getMap().getForms().get(0);
-
-        this.formEditor.clearEditor();
-
-        if (this.selectedForm != null) {
-            ComboBox<Form> box = this.formEditor.addSelectionBox("Form", getSelectedForm(), getMap().getForms(), newForm -> {
-                this.selectedForm = newForm;
-                setupFormEditor();
-            });
-
-            box.setConverter(new AbstractStringConverter<>(form -> "Form #" + getMap().getForms().indexOf(form)));
-        }
-
-        this.formEditor.addBoldLabel("Management:");
-        this.formEditor.addButton("Add Form", () -> {
-            this.selectedForm = new Form();
-            getMap().getForms().add(this.selectedForm);
-            setupFormEditor();
-        });
-
-        if (this.selectedForm != null) {
-            this.formEditor.addButton("Remove Form", () -> {
-                getMap().getForms().remove(getSelectedForm());
-                this.selectedForm = null;
-                setupFormEditor();
-            });
-
-            getSelectedForm().setupEditor(this, this.formEditor);
         }
     }
 
@@ -312,7 +271,6 @@ public class MapUIController implements Initializable {
         getManagers().forEach(MapManager::setupEditor); // Setup all of the managers editors.
         setupGeneralEditor();
         setupGeometryEditor();
-        setupFormEditor();
     }
 
     /**

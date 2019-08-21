@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.file.map.grid.GridSquareFlag;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.FormManager;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -83,18 +83,18 @@ public class Form extends GameObject {
      * Setup a form editor.
      * @param editor The editor to setup under.
      */
-    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+    public void setupEditor(FormManager manager, GUIEditorGrid editor) {
         editor.addBoldLabel("Form:");
 
         // Grid Counts:
         editor.addShortField("X Grid Count", getXGridSquareCount(), newX -> {
             setXGridSquareCount(newX);
-            controller.setupFormEditor();
+            manager.setupEditor();
         }, null);
 
         editor.addShortField("Z Grid Count", getZGridSquareCount(), newZ -> {
             setZGridSquareCount(newZ);
-            controller.setupFormEditor();
+            manager.setupEditor();
         }, null);
 
         // Allow changing offsets.
@@ -106,7 +106,7 @@ public class Form extends GameObject {
             getData().setupEditor(this, editor);
             editor.addButton("Remove Form Data", () -> {
                 setData(null);
-                controller.setupFormEditor();
+                manager.setupEditor();
             });
         } else {
             editor.addButton("Add Form Data", () -> {
@@ -116,7 +116,7 @@ public class Form extends GameObject {
                 }
 
                 setData(new FormData(this));
-                controller.setupFormEditor();
+                manager.setupEditor();
             });
         }
     }
