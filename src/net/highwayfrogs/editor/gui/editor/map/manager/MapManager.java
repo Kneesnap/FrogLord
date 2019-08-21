@@ -1,7 +1,9 @@
 package net.highwayfrogs.editor.gui.editor.map.manager;
 
+import javafx.scene.input.MouseEvent;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
@@ -26,6 +28,16 @@ public class MapManager {
      */
     public void onSetup() {
 
+    }
+
+    /**
+     * Handles a map click.
+     * @param event          The MouseEvent.
+     * @param clickedPolygon The polygon clicked on.
+     * @return consumeClick (Whether or not the click should be consumed and not handled by anything else)
+     */
+    public boolean handleClick(MouseEvent event, MAPPolygon clickedPolygon) {
+        return false;
     }
 
     /**

@@ -21,19 +21,12 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
-import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.form.Form;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
-import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
-import net.highwayfrogs.editor.gui.editor.map.manager.LightManager;
-import net.highwayfrogs.editor.gui.editor.map.manager.MapManager;
-import net.highwayfrogs.editor.gui.editor.map.manager.PathManager;
+import net.highwayfrogs.editor.gui.editor.map.manager.*;
 import net.highwayfrogs.editor.gui.editor.map.manager.PathManager.PathDisplaySetting;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
@@ -117,10 +110,6 @@ public class MapUIController implements Initializable {
     // Animation pane.
     @FXML private TitledPane animationPane;
     @FXML private GridPane animationGridPane;
-    private GUIEditorGrid animationEditor;
-    private MAPAnimation editAnimation;
-    private MeshData animationMarker;
-    private MAPAnimation selectedAnimation;
 
     // Entity pane
     @FXML private TitledPane entityPane;
@@ -149,6 +138,7 @@ public class MapUIController implements Initializable {
     private PathManager pathManager;
     private LightManager lightManager;
     private EntityManager entityManager;
+    private AnimationManager animationManager;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
@@ -163,6 +153,7 @@ public class MapUIController implements Initializable {
         this.managers.add(this.pathManager = new PathManager(this));
         this.managers.add(this.lightManager = new LightManager(this));
         this.managers.add(this.entityManager = new EntityManager(this));
+        this.managers.add(this.animationManager = new AnimationManager(this));
     }
 
     /**
@@ -188,41 +179,6 @@ public class MapUIController implements Initializable {
 
         generalEditor.clearEditor();
         getController().getFile().setupEditor(getController(), generalEditor);
-    }
-
-    /**
-     * Setup the animation editor.
-     */
-    public void setupAnimationEditor() {
-        if (animationEditor == null)
-            animationEditor = new GUIEditorGrid(animationGridPane);
-
-        animationEditor.clearEditor();
-
-        ComboBox<MAPAnimation> box = this.animationEditor.addSelectionBox("Animation:", getSelectedAnimation(), getMap().getMapAnimations(), newAnim -> {
-            this.selectedAnimation = newAnim;
-            setupAnimationEditor();
-        });
-        box.setConverter(new AbstractStringConverter<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim)));
-        box.setCellFactory(param -> new AttachmentListCell<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim), anim ->
-                anim.getTextures().size() > 0 ? getMap().getVlo().getImageByTextureId(getMap().getConfig().getRemapTable(getMap().getFileEntry()).get(anim.getTextures().get(0))).toFXImage(MWDFile.VLO_ICON_SETTING) : null));
-
-        if (this.selectedAnimation != null) {
-            this.animationEditor.addBoldLabelButton("Animation #" + getMap().getMapAnimations().indexOf(this.selectedAnimation) + ":", "Remove", 25, () -> {
-                getMap().getMapAnimations().remove(this.selectedAnimation);
-                this.selectedAnimation = null;
-                setupAnimationEditor(); // Reload this.
-            });
-
-            this.selectedAnimation.setupEditor(this, this.animationEditor);
-
-        }
-
-        this.animationEditor.addSeparator(25);
-        this.animationEditor.addButton("Add Animation", () -> {
-            getMap().getMapAnimations().add(this.selectedAnimation = new MAPAnimation(getMap()));
-            setupAnimationEditor();
-        });
     }
 
     /**
@@ -355,7 +311,6 @@ public class MapUIController implements Initializable {
         getManagers().forEach(MapManager::onSetup); // Setup all of the managers.
         getManagers().forEach(MapManager::setupEditor); // Setup all of the managers editors.
         setupGeneralEditor();
-        setupAnimationEditor();
         setupGeometryEditor();
         setupFormEditor();
     }
@@ -434,64 +389,14 @@ public class MapUIController implements Initializable {
             return true;
         }
 
-        if (isAnimationMode()) {
-            boolean removed = this.editAnimation.getMapUVs().removeIf(uvInfo -> uvInfo.getPolygon().equals(clickedPolygon));
-            if (!removed)
-                this.editAnimation.getMapUVs().add(new MAPUVInfo(getMap(), clickedPolygon));
+        // Send to managers.
+        for (MapManager manager : getManagers())
+            if (manager.handleClick(event, clickedPolygon))
+                return true;
 
-            updateAnimation();
-            return true;
-        }
-
+        // Nothing has handled it yet.
         Platform.runLater(this::setupGeometryEditor);
         return false;
-    }
-
-    /**
-     * Start editing an animation.
-     * @param animation The animation to edit.
-     */
-    public void editAnimation(MAPAnimation animation) {
-        boolean match = animation.equals(this.editAnimation);
-        cancelAnimationEdit();
-        if (match)
-            return;
-
-        this.editAnimation = animation;
-        animation.getMapUVs().forEach(uvInfo -> uvInfo.writeOver(getController(), MapMesh.ANIMATION_COLOR));
-        this.animationMarker = getMesh().getManager().addMesh();
-    }
-
-    /**
-     * Test if animation edit mode is active.
-     * @return animationMode
-     */
-    public boolean isAnimationMode() {
-        return this.editAnimation != null && this.animationMarker != null;
-    }
-
-    /**
-     * Update animation data.
-     */
-    public void updateAnimation() {
-        if (!isAnimationMode())
-            return;
-
-        getMesh().getManager().removeMesh(this.animationMarker);
-        this.editAnimation.getMapUVs().forEach(uvInfo -> uvInfo.writeOver(getController(), MapMesh.ANIMATION_COLOR));
-        this.animationMarker = getMesh().getManager().addMesh();
-    }
-
-    /**
-     * Stop the current animation edit.
-     */
-    public void cancelAnimationEdit() {
-        if (!isAnimationMode())
-            return;
-
-        getMesh().getManager().removeMesh(getAnimationMarker());
-        this.animationMarker = null;
-        this.editAnimation = null;
     }
 
     /**

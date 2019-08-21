@@ -19,7 +19,7 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.AnimationManager;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -142,14 +142,14 @@ public class MAPAnimation extends GameObject {
      * Setup an animation editor.
      * @param editor The editor to setup under.
      */
-    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+    public void setupEditor(AnimationManager manager, GUIEditorGrid editor) {
         boolean isBoth = getType() == MAPAnimationType.BOTH;
         boolean isTexture = getType() == MAPAnimationType.TEXTURE || isBoth;
         boolean isUV = getType() == MAPAnimationType.UV || isBoth;
 
         editor.addEnumSelector("Type", getType(), MAPAnimationType.values(), false, newValue -> {
             setType(newValue);
-            controller.setupAnimationEditor(); // Change what's visible.
+            manager.setupEditor(); // Change what's visible.
         });
 
         if (isUV) {
@@ -160,12 +160,12 @@ public class MAPAnimation extends GameObject {
 
         TextField speedField = isTexture ? editor.addIntegerField("Speed", getTexDuration(), newVal -> {
             setTexDuration(newVal);
-            controller.setupAnimationEditor();
+            manager.setupEditor();
         }, null) : null;
 
-        editor.addCheckBox("Map Tool", this.equals(controller.getEditAnimation()), newState -> {
-            controller.editAnimation(this);
-            controller.setupAnimationEditor();
+        editor.addCheckBox("Map Tool", this.equals(manager.getEditAnimation()), newState -> {
+            manager.editAnimation(this);
+            manager.setupEditor();
         });
 
         if (!isTexture)
@@ -222,12 +222,12 @@ public class MAPAnimation extends GameObject {
                 int newIndex = remap.indexOf(newImage.getTextureId());
                 Utils.verify(newIndex >= 0, "Failed to find remap for texture id: %d!", newImage.getTextureId());
                 getTextures().set(tempIndex, (short) newIndex);
-                controller.setupAnimationEditor();
+                manager.setupEditor();
             }, false));
 
             editor.setupSecondNode(new Button("Remove #" + image.getLocalImageID() + " (" + image.getTextureId() + ")"), false).setOnAction(evt -> {
                 getTextures().remove(tempIndex);
-                controller.setupAnimationEditor();
+                manager.setupEditor();
             });
 
             editor.addRow(25);
@@ -235,7 +235,7 @@ public class MAPAnimation extends GameObject {
 
         editor.addButton("Add Texture", () -> {
             getTextures().add(getTextures().isEmpty() ? 0 : getTextures().get(getTextures().size() - 1));
-            controller.setupAnimationEditor();
+            manager.setupEditor();
         });
     }
 }

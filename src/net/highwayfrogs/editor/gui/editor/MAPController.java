@@ -262,7 +262,7 @@ public class MAPController extends EditorController<MAPFile> {
                         getFile().removeFace(getSelectedPolygon());
                         removeCursorPolygon();
                         refreshView();
-                        getMapUIController().setupAnimationEditor();
+                        getMapUIController().getAnimationManager().setupEditor();
                     } else {
                         setCursorPolygon(clickedPoly);
                         this.polygonSelected = true;

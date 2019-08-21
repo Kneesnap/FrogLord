@@ -63,7 +63,7 @@ public class EntityManager extends MapManager {
 
     @Override
     public void setupEditor() {
-        showEntityInfo(null); //TODO: Figure out if this is actually how we want to handle it.
+        showEntityInfo(null);
     }
 
     /**
