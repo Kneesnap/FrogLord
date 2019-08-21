@@ -86,8 +86,8 @@ public class Path extends GameObject {
                     }
                 }
 
-                controller.setupPathEditor();
-                controller.getController().resetEntities();
+                controller.getPathManager().setupEditor();
+                controller.getEntityManager().updateEntities();
             });
 
             getSegments().get(i).setupEditor(this, controller, editor);
@@ -96,7 +96,7 @@ public class Path extends GameObject {
 
         editor.addButtonWithEnumSelection("Add Segment", pathType -> {
             getSegments().add(pathType.getMaker().get());
-            controller.setupPathEditor();
+            controller.getPathManager().setupEditor();
         }, PathType.values(), PathType.SPLINE);
     }
 

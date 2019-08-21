@@ -3,7 +3,9 @@ package net.highwayfrogs.editor.file.map.poly.polygon;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
+import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -86,5 +88,33 @@ public abstract class MAPPolygon extends MAPPrimitive {
      */
     public int getOrderId() {
         return 0;
+    }
+
+    /**
+     * Calculate geometric center point of a polygon.
+     * @return Center of a polygon, else null.
+     */
+    public static SVector getCenterOfPolygon(MapMesh mesh, MAPPolygon poly) {
+        if (poly == null)
+            return null;
+
+        int[] vertexIndices = poly.getVertices();
+
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+
+        for (int index : vertexIndices) {
+            x += mesh.getVertices().get(index).getFloatX();
+            y += mesh.getVertices().get(index).getFloatY();
+            z += mesh.getVertices().get(index).getFloatZ();
+        }
+
+        x /= vertexIndices.length;
+        y /= vertexIndices.length;
+        z /= vertexIndices.length;
+
+        return new SVector(x, y, z);
+
     }
 }

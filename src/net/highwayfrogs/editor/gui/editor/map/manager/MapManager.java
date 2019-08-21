@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui.editor.map.manager;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
 
@@ -18,6 +19,13 @@ public class MapManager {
 
     public MapManager(MapUIController controller) {
         this.controller = controller;
+    }
+
+    /**
+     * Called when the manager is created.
+     */
+    public void onSetup() {
+
     }
 
     /**
@@ -76,6 +84,14 @@ public class MapManager {
      */
     public MAPFile getMap() {
         return getController().getMap();
+    }
+
+    /**
+     * Gets the MapMesh this manages.
+     * @return mapMesh
+     */
+    public MapMesh getMesh() {
+        return getController().getMesh();
     }
 
     /**

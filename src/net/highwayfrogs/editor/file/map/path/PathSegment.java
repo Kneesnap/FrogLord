@@ -87,7 +87,7 @@ public abstract class PathSegment extends GameObject {
     public void onUpdate(MapUIController controller) {
         recalculateLength();
         controller.getPathManager().updatePathDisplay();
-        controller.getController().resetEntities();
+        controller.getEntityManager().updateEntities();
     }
 
     /**

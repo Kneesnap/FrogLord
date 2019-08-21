@@ -27,7 +27,7 @@ import net.highwayfrogs.editor.file.map.entity.data.suburbia.EntityTurtle;
 import net.highwayfrogs.editor.file.map.entity.data.swamp.*;
 import net.highwayfrogs.editor.file.map.entity.data.volcano.EntityColorTrigger;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 import net.highwayfrogs.editor.system.Tuple2;
 
 import java.lang.reflect.Constructor;
@@ -61,10 +61,10 @@ public abstract class EntityData extends GameObject {
 
     /**
      * Add entity data to the editor.
-     * @param controller The controller to apply to.
-     * @param editor     The editor to apply to.
+     * @param manager The entity manager.
+     * @param editor  The editor to apply to.
      */
-    public void addData(MapUIController controller, GUIEditorGrid editor) {
+    public void addData(EntityManager manager, GUIEditorGrid editor) {
         this.addData(editor);
     }
 

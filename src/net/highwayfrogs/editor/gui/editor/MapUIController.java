@@ -5,13 +5,11 @@ import javafx.beans.property.FloatProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -24,31 +22,21 @@ import javafx.scene.shape.MeshView;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.MWDFile;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
-import net.highwayfrogs.editor.file.map.MAPEditorGUI;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
-import net.highwayfrogs.editor.file.map.entity.Entity;
-import net.highwayfrogs.editor.file.map.entity.Entity.EntityFlag;
 import net.highwayfrogs.editor.file.map.form.Form;
-import net.highwayfrogs.editor.file.map.grid.GridSquare;
-import net.highwayfrogs.editor.file.map.grid.GridStack;
-import net.highwayfrogs.editor.file.map.light.APILightType;
-import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
+import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
+import net.highwayfrogs.editor.gui.editor.map.manager.LightManager;
 import net.highwayfrogs.editor.gui.editor.map.manager.MapManager;
 import net.highwayfrogs.editor.gui.editor.map.manager.PathManager;
 import net.highwayfrogs.editor.gui.editor.map.manager.PathManager.PathDisplaySetting;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
-import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -137,12 +125,10 @@ public class MapUIController implements Initializable {
     // Entity pane
     @FXML private TitledPane entityPane;
     @FXML private GridPane entityGridPane;
-    private MAPEditorGUI entityEditor;
 
     // Light Pane.
     @FXML private TitledPane lightPane;
     @FXML private GridPane lightGridPane;
-    private GUIEditorGrid lightEditor;
 
     // Form pane.
     @FXML private TitledPane formPane;
@@ -158,8 +144,11 @@ public class MapUIController implements Initializable {
     private Consumer<MAPPolygon> onSelect;
     private Runnable cancelSelection;
 
+    // Managers:
     private List<MapManager> managers = new ArrayList<>();
     private PathManager pathManager;
+    private LightManager lightManager;
+    private EntityManager entityManager;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
@@ -168,13 +157,12 @@ public class MapUIController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         accordionLeft.setExpandedPane(generalPane);
-        entityEditor = new MAPEditorGUI(entityGridPane, this);
-        pathDisplayOption.setItems(FXCollections.observableArrayList(PathDisplaySetting.values()));
-        pathDisplayOption.getSelectionModel().selectFirst();
 
         // Setup managers.
         this.managers.clear();
         this.managers.add(this.pathManager = new PathManager(this));
+        this.managers.add(this.lightManager = new LightManager(this));
+        this.managers.add(this.entityManager = new EntityManager(this));
     }
 
     /**
@@ -189,34 +177,6 @@ public class MapUIController implements Initializable {
      */
     public double uiRootPaneHeight() {
         return anchorPaneUIRoot.getPrefHeight();
-    }
-
-    /**
-     * Sets up the lighting editor.
-     */
-    public void setupLights() {
-        getController().updateLighting();
-        if (lightEditor == null)
-            lightEditor = new GUIEditorGrid(lightGridPane);
-
-        lightEditor.clearEditor();
-        for (int i = 0; i < getController().getFile().getLights().size(); i++) {
-            final int tempIndex = i;
-            lightEditor.addBoldLabelButton("Light #" + (i + 1) + ":", "Remove", 25, () -> {
-                getController().getFile().getLights().remove(tempIndex);
-                setupLights(); // Reload this.
-            });
-
-            lightEditor.addLabel("ApiType:", getController().getFile().getLights().get(i).getApiType().name(), 25);
-            getController().getFile().getLights().get(i).makeEditor(lightEditor, this);
-
-            lightEditor.addSeparator(25);
-        }
-
-        lightEditor.addButtonWithEnumSelection("Add Light", apiType -> {
-            getController().getFile().getLights().add(new Light(apiType));
-            setupLights();
-        }, APILightType.values(), APILightType.AMBIENT);
     }
 
     /**
@@ -263,13 +223,6 @@ public class MapUIController implements Initializable {
             getMap().getMapAnimations().add(this.selectedAnimation = new MAPAnimation(getMap()));
             setupAnimationEditor();
         });
-    }
-
-    /**
-     * Setup the path editor.
-     */
-    public void setupPathEditor() {
-        getPathManager().setupEditor();
     }
 
     /**
@@ -346,149 +299,6 @@ public class MapUIController implements Initializable {
     }
 
     /**
-     * Show entity information.
-     * @param entity The entity to show information for.
-     */
-    public void showEntityInfo(Entity entity) {
-        FormEntry[] entries = getMap().getConfig().getAllowedForms(getMap().getTheme());
-        if (entity != null && !Utils.contains(entries, entity.getFormEntry())) // This wasn't found in this
-            entries = getMap().getConfig().getFullFormBook().toArray(new FormEntry[0]);
-
-        // Setup Editor:
-        entityEditor.clearEditor();
-        if (entity == null) {
-            entityEditor.addBoldLabel("There is no entity selected.");
-            entityEditor.addButtonWithEnumSelection("Add Entity", this::addNewEntity, entries, entries[0])
-                    .setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
-            return;
-        }
-
-        this.entityEditor.addButtonWithEnumSelection("Add Entity", this::addNewEntity, entries, entity.getFormEntry())
-                .setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
-
-        entityEditor.addBoldLabel("General Information:");
-        entityEditor.addLabel("Entity Type", entity.getFormEntry().getEntityName());
-
-        entityEditor.addEnumSelector("Form Type", entity.getFormEntry(), entries, false, newEntry -> {
-            entity.setFormEntry(newEntry);
-            showEntityInfo(entity);
-            getController().resetEntities();
-        }).setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
-
-        entityEditor.addIntegerField("Entity ID", entity.getUniqueId(), entity::setUniqueId, null);
-
-        if (entity.getFormGridId() >= 0 && getMap().getForms().size() > entity.getFormGridId()) {
-            entityEditor.addSelectionBox("Form", getMap().getForms().get(entity.getFormGridId()), getMap().getForms(),
-                    newForm -> entity.setFormGridId(getMap().getForms().indexOf(newForm)))
-                    .setConverter(new AbstractIndexStringConverter<>(getMap().getForms(), (index, form) -> "Form #" + index + " (" + form.getXGridSquareCount() + "," + form.getZGridSquareCount() + ")"));
-        } else { // This form is invalid, so show this as a text box.
-            entityEditor.addIntegerField("Form ID", entity.getFormGridId(), entity::setFormGridId, null);
-        }
-
-        entityEditor.addBoldLabel("Flags:");
-        for (EntityFlag flag : EntityFlag.values())
-            entityEditor.addCheckBox(Utils.capitalize(flag.name()), entity.testFlag(flag), newState -> entity.setFlag(flag, newState));
-
-        // Populate Entity Data.
-        if (entity.getEntityData() != null) {
-            this.entityEditor.addSeparator(25);
-            entityEditor.addBoldLabel("Entity Data:");
-            entity.getEntityData().addData(this, this.entityEditor);
-        }
-
-        // Populate Script Data.
-        if (entity.getScriptData() != null) {
-            this.entityEditor.addSeparator(25);
-            this.entityEditor.addBoldLabel("Script Data:");
-            entity.getScriptData().addData(this.entityEditor);
-        }
-
-        this.entityEditor.addSeparator(25);
-        this.entityEditor.addButton("Remove Entity", () -> {
-            getMap().getEntities().remove(entity);
-            getController().resetEntities();
-            showEntityInfo(null); // Don't show the entity we just deleted.
-        });
-
-        entityPane.setExpanded(true);
-    }
-
-    private void addNewEntity(FormEntry entry) {
-        Entity newEntity = new Entity(getMap(), entry);
-
-        if (newEntity.getMatrixInfo() != null) { // Lets you select a polygon to place the new entity on.
-            for (GridStack stack : getMap().getGridStacks())
-                for (GridSquare square : stack.getGridSquares())
-                    getController().renderOverPolygon(square.getPolygon(), MapMesh.GENERAL_SELECTION);
-            MeshData data = getMesh().getManager().addMesh();
-
-            selectPolygon(poly -> {
-                getMesh().getManager().removeMesh(data);
-
-                // Set entity position to the clicked polygon.
-                PSXMatrix matrix = newEntity.getMatrixInfo();
-                SVector pos = getController().getCenterOfPolygon(poly);
-                matrix.getTransform()[0] = Utils.floatToFixedPointInt20Bit(pos.getFloatX());
-                matrix.getTransform()[1] = Utils.floatToFixedPointInt20Bit(pos.getFloatY());
-                matrix.getTransform()[2] = Utils.floatToFixedPointInt20Bit(pos.getFloatZ());
-
-                // Add entity.
-                addEntityToMap(newEntity);
-            }, () -> getMesh().getManager().removeMesh(data));
-            return;
-        }
-
-        if (newEntity.getPathInfo() != null) {
-            if (getMap().getPaths().isEmpty()) {
-                Utils.makePopUp("Path entities cannot be added if there are no paths present! Add a path.", AlertType.WARNING);
-                return;
-            }
-
-            // User selects the path.
-            getPathManager().promptPath((path, segment, segDistance) -> {
-                newEntity.getPathInfo().setPath(getMap(), path, segment);
-                newEntity.getPathInfo().setSegmentDistance(segDistance);
-                newEntity.getPathInfo().setSpeed(10); // Default speed.
-                addEntityToMap(newEntity);
-            }, null);
-            return;
-        }
-
-        addEntityToMap(newEntity);
-    }
-
-    private void addEntityToMap(Entity entity) {
-        if (entity.getUniqueId() == -1) { // Default entity id, update it to something new.
-            boolean isPath = entity.getMatrixInfo() != null;
-
-            // Use the largest entity id + 1.
-            for (Entity tempEntity : getMap().getEntities())
-                if (tempEntity.getUniqueId() >= entity.getUniqueId() && (isPath == (tempEntity.getMatrixInfo() != null)))
-                    entity.setUniqueId(tempEntity.getUniqueId() + 1);
-        }
-
-        if (entity.getFormGridId() == -1) { // Default form id, make it something.
-            int[] formCounts = new int[getMap().getForms().size()];
-            for (Entity testEntity : getMap().getEntities())
-                if (testEntity.getFormEntry() == entity.getFormEntry())
-                    formCounts[testEntity.getFormGridId()]++;
-
-            int maxCount = -1;
-            for (int i = 0; i < formCounts.length; i++) {
-                if (formCounts[i] > maxCount) {
-                    maxCount = formCounts[i];
-                    entity.setFormGridId(i);
-                }
-            }
-        }
-
-        //TODO: New matrix entities don't show up in-game, but path entities work fine.
-        getMap().getEntities().add(entity);
-        showEntityInfo(entity);
-        getController().resetEntities();
-    }
-
-    /**
      * Primary function (entry point) for setting up data / control bindings, etc. (May be broken out and tidied up later in development).
      */
     public void setupBindings(MAPController controller, SubScene subScene3D, MeshView meshView) {
@@ -542,12 +352,11 @@ public class MapUIController implements Initializable {
         textFieldEntityIconSize.textProperty().bindBidirectional(propertyEntityIconSize, NUM_TO_STRING_CONVERTER);
 
         // Must be called after MAPController is passed.
-        showEntityInfo(null);
-        setupLights();
+        getManagers().forEach(MapManager::onSetup); // Setup all of the managers.
+        getManagers().forEach(MapManager::setupEditor); // Setup all of the managers editors.
         setupGeneralEditor();
         setupAnimationEditor();
         setupGeometryEditor();
-        setupPathEditor();
         setupFormEditor();
     }
 

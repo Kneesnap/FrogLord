@@ -7,54 +7,33 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.*;
-import javafx.scene.transform.Rotate;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.DrawMode;
+import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
-import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
-import net.highwayfrogs.editor.file.config.exe.MapBook;
-import net.highwayfrogs.editor.file.config.exe.PickupData;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry.FormLibFlag;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.MAPTheme;
-import net.highwayfrogs.editor.file.map.entity.Entity;
-import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
-import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFly;
-import net.highwayfrogs.editor.file.map.entity.data.general.BonusFlyEntity;
-import net.highwayfrogs.editor.file.map.entity.script.ScriptButterflyData;
-import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -80,17 +59,9 @@ public class MAPController extends EditorController<MAPFile> {
     private CameraFPS cameraFPS;
     private MapUIController mapUIController;
 
-    private List<MeshView> entityIcons = new ArrayList<>();
-
     private Group root3D;
     private MeshData cursorData;
 
-    private static final ImageFilterSettings IMAGE_SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
-    private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
-
-    private static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
-
-    private static final String LIGHT_LIST = "lightList";
     private static final String GENERIC_POS_LIST = "genericPositionList";
 
     private static final double GENERIC_POS_SIZE = 3;
@@ -222,9 +193,7 @@ public class MAPController extends EditorController<MAPFile> {
         uiPane.setCenter(subScene3D);
 
         // Setup additional scene elements.
-        setupEntities();
         updateGroupView();
-        MapUIController.getPropertyEntityIconSize().addListener((observable, old, newVal) -> resetEntities());
 
         // Create and set the scene.
         mapScene = new Scene(uiPane);
@@ -309,144 +278,6 @@ public class MAPController extends EditorController<MAPFile> {
         float gridZ = Utils.fixedPointIntToFloat4Bit(getFile().getWorldZ(getFile().getStartZTile(), true));
         cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
         cameraFPS.setCameraLookAt(gridX, baseY, gridZ); // Set the camera to look at the start position, too.
-
-        // TODO: Tidy this up at some point, but use an action on a UI control for now [AndyEder]
-        mapUIController.getPathDisplayOption().valueProperty().addListener(((observable, oldValue, newValue) -> getMapUIController().getPathManager().setDisplaySetting(newValue)));
-        mapUIController.getApplyLightsCheckBox().setOnAction(evt -> this.updateLighting());
-    }
-
-    /**
-     * Reset entities as something has changed.
-     */
-    public void resetEntities() {
-        root3D.getChildren().removeAll(this.entityIcons);
-        this.entityIcons.clear();
-        setupEntities();
-    }
-
-    private void setupEntities() {
-        float[] pos = new float[6];
-        for (Entity entity : getFile().getEntities()) {
-            entity.getPosition(pos, getFile());
-            MeshView meshView = makeEntityIcon(entity, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
-            meshView.setOnMouseClicked(evt -> this.mapUIController.showEntityInfo(entity));
-            this.entityIcons.add(meshView);
-        }
-    }
-
-    private MeshView makeEntityIcon(Entity entity, float x, float y, float z, float yaw, float pitch, float roll) {
-        float entityIconSize = MapUIController.getPropertyEntityIconSize().getValue();
-
-        FormEntry form = entity.getFormEntry();
-
-        if (!form.testFlag(FormLibFlag.NO_MODEL)) {
-            boolean isGeneralTheme = form.getTheme() == MAPTheme.GENERAL;
-            ThemeBook themeBook = getFile().getConfig().getThemeBook(form.getTheme());
-
-            WADFile wadFile = null;
-            if (isGeneralTheme) {
-                wadFile = themeBook.getWAD(getFile());
-            } else {
-                MapBook mapBook = getFile().getFileEntry().getMapBook();
-                if (mapBook != null)
-                    wadFile = mapBook.getWad(getFile());
-            }
-
-            int wadIndex = form.getWadIndex();
-            if (wadFile != null && wadFile.getFiles().size() > wadIndex) {
-                WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
-
-                if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
-                    MOFHolder holder = (MOFHolder) wadEntry.getFile();
-
-                    // Setup VLO.
-                    VLOArchive vlo = getFile().getConfig().getForcedVLO(wadEntry.getDisplayName());
-                    if (vlo == null)
-                        vlo = themeBook.getVLO(getFile());
-                    holder.setVloFile(vlo);
-
-                    // Setup MeshView.
-                    MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
-                    view.setMaterial(holder.getTextureMap().getPhongMaterial());
-                    view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.X_AXIS));
-                    view.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.Y_AXIS));
-                    view.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.Z_AXIS));
-                    return view;
-                }
-            }
-        }
-
-        PhongMaterial material = MATERIAL_ENTITY_ICON;
-
-        FroggerEXEInfo config = getFile().getConfig();
-
-        // Attempt to apply fly texture.
-        if (config.getPickupData() != null) {
-            FlyScoreType flyType = null;
-            if (entity.getEntityData() instanceof BonusFlyEntity)
-                flyType = ((BonusFlyEntity) entity.getEntityData()).getType();
-            if (entity.getScriptData() instanceof ScriptButterflyData)
-                flyType = ((ScriptButterflyData) entity.getScriptData()).getType();
-            if (entity.getEntityData() instanceof EntityFatFireFly)
-                flyType = ((EntityFatFireFly) entity.getEntityData()).getType();
-
-            if (flyType != null) {
-                PickupData pickupData = config.getPickupData()[flyType.ordinal()];
-                GameImage flyImage = config.getImageFromPointer(pickupData.getImagePointers().get(0));
-                if (flyImage != null) { // This can be null in the EU PS1 demo. (It may not have properly been setup when compiled.)
-                    material = Utils.makeSpecialMaterial(flyImage.toFXImage());
-                    entityIconSize /= 2;
-                }
-            }
-        }
-
-        TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
-        triMesh.getPoints().addAll(-entityIconSize * 0.5f, entityIconSize * 0.5f, 0, -entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, entityIconSize * 0.5f, 0);
-        triMesh.getTexCoords().addAll(0, 1, 0, 0, 1, 0, 1, 1);
-        triMesh.getFaces().addAll(0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 0, 0);
-
-        MeshView triMeshView = new MeshView(triMesh);
-        triMeshView.setDrawMode(DrawMode.FILL);
-        triMeshView.setMaterial(material);
-        triMeshView.setCullFace(CullFace.NONE);
-
-        return setupNode(triMeshView, x, y, z);
-    }
-
-    private <T extends Node> T setupNode(T node, float x, float y, float z) {
-        node.setTranslateX(x);
-        node.setTranslateY(y);
-        node.setTranslateZ(z);
-        root3D.getChildren().add(node);
-        return node;
-    }
-
-    /**
-     * Calculate geometric center point of a polygon.
-     * @return Center of a polygon, else null.
-     */
-    public SVector getCenterOfPolygon(MAPPolygon poly) {
-        if (poly == null)
-            return null;
-
-        int[] vertexIndices = getSelectedPolygon().getVertices();
-
-        float x = 0.0f;
-        float y = 0.0f;
-        float z = 0.0f;
-
-        for (int index : vertexIndices) {
-            x += mapMesh.getVertices().get(index).getFloatX();
-            y += mapMesh.getVertices().get(index).getFloatY();
-            z += mapMesh.getVertices().get(index).getFloatZ();
-        }
-
-        x /= vertexIndices.length;
-        y /= vertexIndices.length;
-        z /= vertexIndices.length;
-
-        return new SVector(x, y, z);
-
     }
 
     /**
@@ -573,50 +404,5 @@ public class MAPController extends EditorController<MAPFile> {
         float maxX = Utils.fixedPointShortToFloat4Bit((short) (basePoint.getX() + (getFile().getGroupXSize()) * getFile().getGroupXCount()));
         float maxZ = Utils.fixedPointShortToFloat4Bit((short) (basePoint.getZ() + (getFile().getGroupZSize()) * getFile().getGroupZCount()));
         getRenderManager().addBoundingBoxFromMinMax("groupOutline", basePoint.getFloatX(), 0, basePoint.getFloatZ(), maxX, 0, maxZ, Utils.makeSpecialMaterial(Color.YELLOW), true);
-    }
-
-    /**
-     * Applies the current lighting setup to the level.
-     */
-    public void updateLighting() {
-        if (getRenderManager().displayListExists(LIGHT_LIST))
-            getRenderManager().clearDisplayList(LIGHT_LIST);
-
-        if (!getMapUIController().getApplyLightsCheckBox().isSelected())
-            return; // Don't lights if they're disabled.
-
-        getRenderManager().addMissingDisplayList(LIGHT_LIST);
-
-        // Iterate through each light and apply the the root scene graph node
-        for (Light light : getFile().getLights()) {
-            switch (light.getApiType()) {
-                case AMBIENT:
-                    AmbientLight ambLight = new AmbientLight();
-                    ambLight.setColor(Utils.fromBGR(light.getColor()));
-                    getRenderManager().addNode(LIGHT_LIST, ambLight);
-                    break;
-
-                case PARALLEL:
-                    // IMPORTANT! JavaFX does NOT support parallel (directional) lights [AndyEder]
-                    PointLight parallelLight = new PointLight();
-                    parallelLight.setColor(Utils.fromBGR(light.getColor()));
-                    // Use direction as a vector to set a position to simulate a parallel light as best as we can
-                    parallelLight.setTranslateX(-light.getDirection().getFloatX(12) * 1024);
-                    parallelLight.setTranslateY(-light.getDirection().getFloatY(12) * 1024);
-                    parallelLight.setTranslateZ(-light.getDirection().getFloatZ(12) * 1024);
-                    getRenderManager().addNode(LIGHT_LIST, parallelLight);
-                    break;
-
-                case POINT:
-                    PointLight pointLight = new PointLight();
-                    pointLight.setColor(Utils.fromBGR(light.getColor()));
-                    // Assuming direction is position? Are POINT lights ever used? [AndyEder]
-                    pointLight.setTranslateX(light.getDirection().getFloatX());
-                    pointLight.setTranslateY(light.getDirection().getFloatY());
-                    pointLight.setTranslateZ(light.getDirection().getFloatZ());
-                    getRenderManager().addNode(LIGHT_LIST, pointLight);
-                    break;
-            }
-        }
     }
 }

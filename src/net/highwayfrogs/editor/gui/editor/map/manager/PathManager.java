@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui.editor.map.manager;
 
+import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.geometry.Point3D;
 import javafx.scene.control.Alert.AlertType;
@@ -51,6 +52,14 @@ public class PathManager extends MapManager {
 
     public PathManager(MapUIController controller) {
         super(controller);
+    }
+
+    @Override
+    public void onSetup() {
+        super.onSetup();
+        getController().getPathDisplayOption().setItems(FXCollections.observableArrayList(PathDisplaySetting.values()));
+        getController().getPathDisplayOption().getSelectionModel().selectFirst();
+        getController().getPathDisplayOption().valueProperty().addListener(((observable, oldValue, newValue) -> setDisplaySetting(newValue)));
     }
 
     /**

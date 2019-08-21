@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 
 /**
  * Entity data which involves a matrix.
@@ -33,8 +33,8 @@ public class MatrixData extends EntityData {
     }
 
     @Override
-    public void addData(MapUIController controller, GUIEditorGrid editor) {
-        editor.addMatrix(matrix, controller.getController(), controller.getController()::resetEntities);
-        super.addData(controller, editor);
+    public void addData(EntityManager manager, GUIEditorGrid editor) {
+        editor.addMatrix(matrix, manager.getController().getController(), manager::updateEntities);
+        super.addData(manager, editor);
     }
 }

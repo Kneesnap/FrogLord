@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.LightManager;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -64,19 +64,19 @@ public class Light extends GameObject {
      * Makes a lighting editor.
      * @param editor Lighting editor.
      */
-    public void makeEditor(GUIEditorGrid editor, MapUIController uiController) {
+    public void makeEditor(GUIEditorGrid editor, LightManager lightManager) {
         editor.addEnumSelector("Type", getType(), LightType.values(), false, this::setType);
 
         // Don't need to edit the lightType, as static is the only one that does anything.
         int rgbColor = Utils.toRGB(Utils.fromBGR(getColor()));
         editor.addColorPicker("Color:", 25, rgbColor, newColor -> {
             setColor(Utils.toBGR(Utils.fromRGB(newColor)));
-            uiController.getController().updateLighting();
+            lightManager.updateMapLighting();
         });
 
         if (getApiType() == APILightType.POINT || getApiType() == APILightType.PARALLEL)
             editor.addFloatVector(getApiType() == APILightType.POINT ? "Position:" : "Direction:", this.direction,
-                    () -> uiController.getController().updateLighting(), uiController.getController());
+                    lightManager::updateMapLighting, lightManager.getController().getController());
     }
 
     /**

@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 
 /**
  * Represents JUN_OUTRO_ENTITY
@@ -38,11 +39,11 @@ public class EntityOutroEntity extends MatrixData {
     }
 
     @Override
-    public void addData(MapUIController controller, GUIEditorGrid editor) {
-        super.addData(controller, editor);
+    public void addData(EntityManager manager, GUIEditorGrid editor) {
+        super.addData(manager, editor);
         for (int i = 0; i < getTargets().length; i++) {
             editor.addNormalLabel("Target #" + (i + 1) + ":");
-            getTargets()[i].setupEditor(editor, controller);
+            getTargets()[i].setupEditor(editor, manager.getController());
         }
     }
 

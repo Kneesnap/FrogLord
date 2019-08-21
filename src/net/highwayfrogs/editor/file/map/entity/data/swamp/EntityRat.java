@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 
 /**
  * Created by Kneesnap on 11/26/2018.
@@ -50,8 +51,9 @@ public class EntityRat extends MatrixData {
     }
 
     @Override
-    public void addData(MapUIController controller, GUIEditorGrid editor) {
-        super.addData(controller, editor);
+    public void addData(EntityManager manager, GUIEditorGrid editor) {
+        super.addData(manager, editor);
+        MapUIController controller = manager.getController();
         editor.addFloatSVector("Start Target", getStartTarget(), controller.getController());
         editor.addFloatSVector("Start Run Target", getStartRunTarget(), controller.getController());
         editor.addFloatSVector("End Run Target", getEndRunTarget(), controller.getController());

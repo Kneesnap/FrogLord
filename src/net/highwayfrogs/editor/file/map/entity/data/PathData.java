@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.file.map.path.PathInfo.PathMotionType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -43,20 +43,20 @@ public class PathData extends EntityData {
     }
 
     @Override
-    public void addData(MapUIController controller, GUIEditorGrid editor) {
+    public void addData(EntityManager manager, GUIEditorGrid editor) {
         MAPFile map = getParentEntity().getMap();
         int pathId = getPathInfo().getPathId();
         if (pathId < 0 || pathId >= map.getPaths().size()) { // Invalid path! Show this as a text box.
             editor.addIntegerField("Path ID", pathId, getPathInfo()::setPathId, null);
         } else { // Otherwise, show it as a selection box!
             editor.addBoldLabelButton("Path #" + pathId, "Select Path", 25, () ->
-                    controller.getPathManager().promptPath((path, segment, segDistance) -> {
-                        getPathInfo().setPath(controller.getMap(), path, segment);
+                    manager.getController().getPathManager().promptPath((path, segment, segDistance) -> {
+                        getPathInfo().setPath(manager.getMap(), path, segment);
                         getPathInfo().setSegmentDistance(segDistance);
-                        controller.getController().resetEntities();
+                        manager.updateEntities();
                     }, null));
         }
 
-        super.addData(controller, editor); // Path ID comes before the rest.
+        super.addData(manager, editor); // Path ID comes before the rest.
     }
 }

@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 
 /**
  * Created by Kneesnap on 11/26/2018.
@@ -43,8 +43,8 @@ public class EntitySquirt extends MatrixData {
     }
 
     @Override
-    public void addData(MapUIController controller, GUIEditorGrid editor) {
-        super.addData(controller, editor);
-        editor.addFloatSVector("Target", getTarget(), controller.getController());
+    public void addData(EntityManager manager, GUIEditorGrid editor) {
+        super.addData(manager, editor);
+        editor.addFloatSVector("Target", getTarget(), manager.getController().getController());
     }
 }
