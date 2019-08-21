@@ -51,8 +51,8 @@ public class LineSegment extends PathSegment {
     @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor);
-        editor.addFloatVector("Start:", getStart(), () -> onUpdate(controller), controller.getController());
-        editor.addFloatVector("End:", getEnd(), () -> onUpdate(controller), controller.getController());
+        editor.addFloatVector("Start:", getStart(), () -> onUpdate(controller), controller);
+        editor.addFloatVector("End:", getEnd(), () -> onUpdate(controller), controller);
     }
 
     @Override

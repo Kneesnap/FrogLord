@@ -1,48 +1,46 @@
 package net.highwayfrogs.editor.gui.editor;
 
-import javafx.application.Platform;
 import javafx.beans.property.FloatProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.PerspectiveCamera;
-import javafx.scene.SubScene;
+import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
+import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
+import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.gui.editor.map.manager.*;
 import net.highwayfrogs.editor.gui.editor.map.manager.PathManager.PathDisplaySetting;
-import net.highwayfrogs.editor.gui.mesh.MeshData;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.function.Consumer;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
  * TODO:
- *  Cleanup the whole map UI code. Use managers, and have an actual system designed.
- *  Cache things, for instance, if we have an entity manager, and we just want to update the position of entities, just update the positions of entities instead of clearing the list fully and starting over.
- *  Try creating a system which is better in terms of memory usage, for the 2D editor too.
- *  Make sure everything is rebuilt when you exit the viewer then come back, in case of changes.
+ * Cache things, for instance, if we have an entity manager, and we just want to update the position of entities, just update the positions of entities instead of clearing the list fully and starting over.
+ * Try creating a system which is better in terms of memory usage, for the 2D editor too.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter
@@ -97,13 +95,10 @@ public class MapUIController implements Initializable {
     // General pane.
     @FXML private TitledPane generalPane;
     @FXML private GridPane generalGridPane;
-    private GUIEditorGrid generalEditor;
 
     // Geometry pane.
     @FXML private TitledPane geometryPane;
     @FXML private GridPane geometryGridPane;
-    private GUIEditorGrid geometryEditor;
-    private MeshData looseMeshData;
 
     // Animation pane.
     @FXML private TitledPane animationPane;
@@ -125,10 +120,6 @@ public class MapUIController implements Initializable {
     @FXML private TitledPane pathPane;
     @FXML private GridPane pathGridPane;
 
-    // Non-GUI.
-    private Consumer<MAPPolygon> onSelect;
-    private Runnable cancelSelection;
-
     // Managers:
     private List<MapManager> managers = new ArrayList<>();
     private PathManager pathManager;
@@ -136,10 +127,20 @@ public class MapUIController implements Initializable {
     private EntityManager entityManager;
     private AnimationManager animationManager;
     private FormManager formManager;
+    private GeometryManager geometryManager; // Should be second to last, so when a successful click goes through it will update itself.
+    private GeneralManager generalManager; // Should be last, so things like cancelling polygon selection happen last.
+
+    // Map Data:
+    private CameraFPS cameraFPS = new CameraFPS();
+    private MapMesh mapMesh;
+    private RenderManager renderManager = new RenderManager();
+    private Group root3D;
+    private Scene mapScene;
+    private MeshView meshView;
+    private Scene defaultScene;
+    private Stage overwrittenStage;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
-
-    //>>
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -152,6 +153,64 @@ public class MapUIController implements Initializable {
         this.managers.add(this.entityManager = new EntityManager(this));
         this.managers.add(this.animationManager = new AnimationManager(this));
         this.managers.add(this.formManager = new FormManager(this));
+        this.managers.add(this.geometryManager = new GeometryManager(this));
+        this.managers.add(this.generalManager = new GeneralManager(this));
+    }
+
+    public void setupController(MAPController controller, Stage stageToOverride, MapMesh mesh, MeshView meshView, Parent loadRoot) {
+        this.overwrittenStage = stageToOverride;
+        this.mapMesh = mesh;
+        this.controller = controller;
+        this.meshView = meshView;
+
+        // Create the 3D elements and use them within a subscene.
+        this.root3D = new Group(meshView);
+        SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
+        subScene3D.setFill(Color.GRAY);
+        subScene3D.setCamera(cameraFPS.getCamera());
+
+        // Ensure that the render manager has access to the root node
+        this.renderManager.setRenderRoot(this.root3D);
+
+        // Setup the UI layout.
+        BorderPane uiPane = new BorderPane();
+        uiPane.setLeft(loadRoot);
+        uiPane.setCenter(subScene3D);
+
+        // Create and set the scene.
+        mapScene = new Scene(uiPane);
+        this.defaultScene = Utils.setSceneKeepPosition(stageToOverride, mapScene);
+
+        // Handle scaling of SubScene on stage resizing.
+        mapScene.widthProperty().addListener((observable, old, newVal) -> subScene3D.setWidth(newVal.doubleValue() - uiRootPaneWidth()));
+        subScene3D.heightProperty().bind(mapScene.heightProperty());
+
+        // Associate camera controls with the scene.
+        cameraFPS.assignSceneControls(mapScene);
+        cameraFPS.startThreadProcessing();
+
+        mapScene.setOnKeyPressed(event -> {
+            if (onKeyPress(event))
+                return; // Handled by the other controller.
+
+            // Exit the viewer.
+            if (event.getCode() == KeyCode.ESCAPE) {
+                // Stop camera processing and clear up the render manager
+                cameraFPS.stopThreadProcessing();
+                renderManager.removeAllDisplayLists();
+                Utils.setSceneKeepPosition(this.overwrittenStage, this.defaultScene);
+            }
+        });
+
+        // Set the initial camera position based on start position and in-game camera offset.
+        SVector startPos = getMap().getCameraSourceOffset();
+        float gridX = Utils.fixedPointIntToFloat4Bit(getMap().getWorldX(getMap().getStartXTile(), true));
+        float baseY = -Utils.fixedPointIntToFloat4Bit(getMap().getGridStack(getMap().getStartXTile(), getMap().getStartZTile()).getHeight());
+        float gridZ = Utils.fixedPointIntToFloat4Bit(getMap().getWorldZ(getMap().getStartZTile(), true));
+        cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
+        cameraFPS.setCameraLookAt(gridX, baseY, gridZ); // Set the camera to look at the start position, too.
+
+        setupBindings(controller, subScene3D, meshView); // Setup UI.
     }
 
     /**
@@ -169,58 +228,12 @@ public class MapUIController implements Initializable {
     }
 
     /**
-     * Sets up the general editor.
-     */
-    public void setupGeneralEditor() {
-        if (generalEditor == null)
-            generalEditor = new GUIEditorGrid(generalGridPane);
-
-        generalEditor.clearEditor();
-        getController().getFile().setupEditor(getController(), generalEditor);
-    }
-
-    /**
-     * Setup the map geometry editor.
-     */
-    public void setupGeometryEditor() {
-        if (this.geometryEditor == null)
-            this.geometryEditor = new GUIEditorGrid(geometryGridPane);
-
-        this.geometryEditor.clearEditor();
-        this.geometryEditor.addButton("Edit Collision Grid", () -> GridController.openGridEditor(this));
-        this.geometryEditor.addCheckBox("Highlight Invisible Polygons", this.looseMeshData != null, this::updateVisibility);
-        this.geometryEditor.addSeparator(25);
-
-        MAPPolygon showPolygon = getController().getSelectedPolygon();
-        if (showPolygon != null) {
-            this.geometryEditor.addBoldLabel("Selected Polygon:");
-            showPolygon.setupEditor(this, this.geometryEditor);
-        }
-    }
-
-    private void updateVisibility(boolean drawState) {
-        if (this.looseMeshData != null) {
-            getMesh().getManager().removeMesh(this.looseMeshData);
-            this.looseMeshData = null;
-        }
-
-        if (drawState) {
-            getMap().forEachPrimitive(prim -> {
-                if (!prim.isAllowDisplay() && prim instanceof MAPPolygon)
-                    getController().renderOverPolygon((MAPPolygon) prim, MapMesh.INVISIBLE_COLOR);
-            });
-            this.looseMeshData = getMesh().getManager().addMesh();
-        }
-    }
-
-    /**
      * Primary function (entry point) for setting up data / control bindings, etc. (May be broken out and tidied up later in development).
      */
     public void setupBindings(MAPController controller, SubScene subScene3D, MeshView meshView) {
         this.controller = controller;
         this.subScene = subScene3D;
 
-        CameraFPS cameraFPS = controller.getCameraFPS();
         PerspectiveCamera camera = cameraFPS.getCamera();
 
         camera.setNearClip(MAP_VIEW_NEAR_CLIP);
@@ -269,8 +282,6 @@ public class MapUIController implements Initializable {
         // Must be called after MAPController is passed.
         getManagers().forEach(MapManager::onSetup); // Setup all of the managers.
         getManagers().forEach(MapManager::setupEditor); // Setup all of the managers editors.
-        setupGeneralEditor();
-        setupGeometryEditor();
     }
 
     /**
@@ -291,37 +302,14 @@ public class MapUIController implements Initializable {
     }
 
     /**
-     * Gets the mesh being controlled.
-     * @return mapMesh
-     */
-    public MapMesh getMesh() {
-        return getController().getMapMesh();
-    }
-
-    /**
      * Handle when a key is pressed.
      * @param event The key event fired.
      * @return wasHandled
      */
     public boolean onKeyPress(KeyEvent event) {
-        if (event.getCode() == KeyCode.ESCAPE) {
-            for (MapManager manager : getManagers()) { // Cancel active prompts.
-                if (manager.isPromptActive()) {
-                    manager.cancelPrompt();
-                    return true;
-                }
-            }
-
-            if (!getController().isPolygonSelected() && onSelect != null) { // Handle cancelling polygon selection.
-                onSelect = null;
-                if (cancelSelection != null) {
-                    cancelSelection.run();
-                    cancelSelection = null;
-                }
-
+        for (MapManager manager : getManagers()) // Handle key presses.
+            if (manager.onKeyPress(event))
                 return true;
-            }
-        }
 
         return false;
     }
@@ -333,17 +321,8 @@ public class MapUIController implements Initializable {
      * @return false = Not handled. True = handled.
      */
     public boolean handleClick(MouseEvent event, MAPPolygon clickedPolygon) {
-        // Highest priority.
-        if (getOnSelect() != null) {
-            getOnSelect().accept(clickedPolygon);
-            this.onSelect = null;
-            this.cancelSelection = null;
-            return true;
-        }
-
-        if (getLooseMeshData() != null) { // Toggle visibility.
-            clickedPolygon.setAllowDisplay(!clickedPolygon.isAllowDisplay());
-            updateVisibility(true);
+        if (getGeneralManager().isPromptActive()) { // Highest priority.
+            getGeneralManager().acceptPrompt(clickedPolygon);
             return true;
         }
 
@@ -352,18 +331,31 @@ public class MapUIController implements Initializable {
             if (manager.handleClick(event, clickedPolygon))
                 return true;
 
-        // Nothing has handled it yet.
-        Platform.runLater(this::setupGeometryEditor);
         return false;
     }
 
     /**
-     * Waits for the the user to select a polygon.
-     * @param onSelect The behavior when selected.
-     * @param onCancel The behavior if cancelled.
+     * Render over an existing polygon.
+     * @param targetPoly The polygon to render over.
+     * @param color      The color to render.
      */
-    public void selectPolygon(Consumer<MAPPolygon> onSelect, Runnable onCancel) {
-        this.onSelect = onSelect;
-        this.cancelSelection = onCancel;
+    public void renderOverPolygon(MAPPolygon targetPoly, CursorVertexColor color) {
+        MapMesh mapMesh = getMapMesh();
+        int increment = mapMesh.getVertexFormat().getVertexIndexSize();
+        boolean isQuad = (targetPoly.getVerticeCount() == MAPPolygon.QUAD_SIZE);
+
+        int face = mapMesh.getPolyFaceMap().get(targetPoly) * mapMesh.getFaceElementSize();
+        int v1 = mapMesh.getFaces().get(face);
+        int v2 = mapMesh.getFaces().get(face + increment);
+        int v3 = mapMesh.getFaces().get(face + (2 * increment));
+
+        if (isQuad) {
+            int v4 = mapMesh.getFaces().get(face + (3 * increment));
+            int v5 = mapMesh.getFaces().get(face + (4 * increment));
+            int v6 = mapMesh.getFaces().get(face + (5 * increment));
+            mapMesh.addRectangle(color.getTextureEntry(), v1, v2, v3, v4, v5, v6);
+        } else {
+            mapMesh.addTriangle(color.getTextureEntry(), v1, v2, v3);
+        }
     }
 }

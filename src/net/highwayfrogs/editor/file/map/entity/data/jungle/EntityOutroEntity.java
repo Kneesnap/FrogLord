@@ -66,7 +66,7 @@ public class EntityOutroEntity extends MatrixData {
         }
 
         public void setupEditor(GUIEditorGrid grid, MapUIController controller) {
-            grid.addFloatSVector("Target", getTarget(), controller.getController());
+            grid.addFloatSVector("Target", getTarget(), controller);
             grid.addIntegerField("Time", getTime(), this::setTime, null);
         }
     }

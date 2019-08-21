@@ -45,6 +45,6 @@ public class EntitySquirt extends MatrixData {
     @Override
     public void addData(EntityManager manager, GUIEditorGrid editor) {
         super.addData(manager, editor);
-        editor.addFloatSVector("Target", getTarget(), manager.getController().getController());
+        editor.addFloatSVector("Target", getTarget(), manager.getController());
     }
 }

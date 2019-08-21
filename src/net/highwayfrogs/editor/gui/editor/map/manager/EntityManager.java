@@ -143,10 +143,10 @@ public class EntityManager extends MapManager {
         if (newEntity.getMatrixInfo() != null) { // Lets you select a polygon to place the new entity on.
             for (GridStack stack : getMap().getGridStacks())
                 for (GridSquare square : stack.getGridSquares())
-                    getController().getController().renderOverPolygon(square.getPolygon(), MapMesh.GENERAL_SELECTION);
+                    getController().renderOverPolygon(square.getPolygon(), MapMesh.GENERAL_SELECTION);
             MeshData data = getMesh().getManager().addMesh();
 
-            getController().selectPolygon(poly -> {
+            getController().getGeneralManager().selectPolygon(poly -> {
                 getMesh().getManager().removeMesh(data);
 
                 // Set entity position to the clicked polygon.

@@ -86,7 +86,7 @@ public class AnimationManager extends MapManager {
             return;
 
         this.editAnimation = animation;
-        animation.getMapUVs().forEach(uvInfo -> uvInfo.writeOver(getController().getController(), MapMesh.ANIMATION_COLOR));
+        animation.getMapUVs().forEach(uvInfo -> uvInfo.writeOver(getController(), MapMesh.ANIMATION_COLOR));
         this.animationMarker = getMesh().getManager().addMesh();
     }
 
@@ -106,7 +106,7 @@ public class AnimationManager extends MapManager {
             return;
 
         getMesh().getManager().removeMesh(this.animationMarker);
-        this.editAnimation.getMapUVs().forEach(uvInfo -> uvInfo.writeOver(getController().getController(), MapMesh.ANIMATION_COLOR));
+        this.editAnimation.getMapUVs().forEach(uvInfo -> uvInfo.writeOver(getController(), MapMesh.ANIMATION_COLOR));
         this.animationMarker = getMesh().getManager().addMesh();
     }
 

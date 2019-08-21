@@ -108,9 +108,9 @@ public class PathManager extends MapManager {
         getRenderManager().clearDisplayList(DISPLAY_LIST_PATHS);
 
         if (isPromptActive()) {
-            addPaths(DISPLAY_LIST_PATHS, getController().getMap().getPaths(), MATERIAL_BLUE, MATERIAL_GREEN, MATERIAL_PURPLE);
+            addPaths(DISPLAY_LIST_PATHS, getMap().getPaths(), MATERIAL_BLUE, MATERIAL_GREEN, MATERIAL_PURPLE);
         } else if (this.displaySetting == PathDisplaySetting.ALL) {
-            addPaths(DISPLAY_LIST_PATHS, getController().getMap().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
+            addPaths(DISPLAY_LIST_PATHS, getMap().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
         } else if (this.displaySetting == PathDisplaySetting.SELECTED) {
             if (getSelectedPath() != null)
                 addPaths(DISPLAY_LIST_PATHS, Collections.singletonList(getSelectedPath()), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);

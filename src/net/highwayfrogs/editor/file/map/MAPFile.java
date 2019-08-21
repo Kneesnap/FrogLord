@@ -34,15 +34,12 @@ import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MAPController;
-import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -797,46 +794,6 @@ public class MAPFile extends GameFile {
         int realSize = (endPointer - lastEntity.getLoadScriptDataPointer());
         if (realSize != lastEntity.getLoadReadLength())
             System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormEntry().getFormName() + ", " + lastEntity.getFormEntry().getEntityName());
-    }
-
-    /**
-     * Setup a GUI editor for this file.
-     * @param editor The editor to setup under.
-     */
-    public void setupEditor(MAPController controller, GUIEditorGrid editor) {
-        editor.addLabel("Theme", getTheme().name()); // Should look into whether or not this is ok to edit.
-        editor.addShortField("Start xTile", getStartXTile(), this::setStartXTile, null);
-        editor.addShortField("Start zTile", getStartZTile(), this::setStartZTile, null);
-        editor.addEnumSelector("Start Rotation", getStartRotation(), StartRotation.values(), false, this::setStartRotation)
-                .setConverter(new AbstractStringConverter<>(StartRotation::getArrow));
-
-        editor.addShortField("Level Timer", getLevelTimer(), this::setLevelTimer, null);
-
-
-        IVector gridOrigin = new IVector(getWorldX(getStartXTile(), true), -getGridStack(getStartXTile(), getStartZTile()).getHeight(), getWorldZ(getStartZTile(), true));
-        editor.addFloatVector("Camera Source", getCameraSourceOffset(), null, controller, gridOrigin.defaultBits(), gridOrigin);
-        editor.addFloatVector("Camera Target", getCameraTargetOffset(), null, controller, gridOrigin.defaultBits(), gridOrigin);
-        editor.addSeparator(25);
-
-        // Group:
-        editor.addBoldLabel("Group:");
-        editor.addShortField("Base Point xTile", getBaseXTile(), newVal -> {
-            setBaseXTile(newVal);
-            controller.updateGroupView();
-        }, null);
-        editor.addShortField("Base Point zTile", getBaseZTile(), newVal -> {
-            setBaseZTile(newVal);
-            controller.updateGroupView();
-        }, null);
-        editor.addShortField("Group X Count", getGroupXCount(), newVal -> {
-            setGroupXCount(newVal);
-            controller.updateGroupView();
-        }, null);
-        editor.addShortField("Group Z Count", getGroupZCount(), newVal -> {
-            setGroupZCount(newVal);
-            controller.updateGroupView();
-        }, null);
-        editor.addCheckBox("Show Group Bounds", controller.isShowGroupBounds(), controller::setShowGroupBounds);
     }
 
     /**

@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.GeometryManager;
 import net.highwayfrogs.editor.system.TexturedPoly;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -128,11 +128,11 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
     }
 
     @Override
-    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
-        super.setupEditor(controller, editor);
+    public void setupEditor(GeometryManager manager, GUIEditorGrid editor) {
+        super.setupEditor(manager, editor);
 
-        TextureMap texMap = controller.getMesh().getTextureMap();
-        VLOArchive suppliedVLO = controller.getMap().getVlo();
+        TextureMap texMap = manager.getMesh().getTextureMap();
+        VLOArchive suppliedVLO = manager.getMap().getVlo();
         GameImage image = suppliedVLO.getImageByTextureId(texMap.getRemap(getTextureId()));
 
         ImageView view = editor.addCenteredImage(image.toFXImage(SHOW_SETTINGS), 150);
@@ -148,7 +148,7 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
 
             this.textureId = newValue;
             view.setImage(newImage.toFXImage(SHOW_SETTINGS));
-            controller.getController().refreshView();
+            manager.getController().getGeneralManager().refreshView();
         }, false));
 
         for (PolyTextureFlag flag : PolyTextureFlag.values())

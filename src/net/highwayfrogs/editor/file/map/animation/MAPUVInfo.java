@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.file.map.animation;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
@@ -11,7 +10,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.editor.MAPController;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents the MAP_UV_INFO struct.
@@ -57,7 +57,7 @@ public class MAPUVInfo extends GameObject {
     /**
      * Draw over the existing polygon.
      */
-    public void writeOver(MAPController controller, CursorVertexColor color) {
+    public void writeOver(MapUIController controller, CursorVertexColor color) {
         controller.renderOverPolygon(getPolygon(), color);
     }
 }

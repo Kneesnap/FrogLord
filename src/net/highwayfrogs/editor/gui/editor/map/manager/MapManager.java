@@ -1,10 +1,13 @@
 package net.highwayfrogs.editor.gui.editor.map.manager;
 
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.gui.editor.MAPController;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
 
@@ -87,7 +90,7 @@ public class MapManager {
      * Gets the RenderManager for this manager.
      */
     public RenderManager getRenderManager() {
-        return getController().getController().getRenderManager();
+        return getController().getRenderManager();
     }
 
     /**
@@ -95,7 +98,7 @@ public class MapManager {
      * @return mapFile
      */
     public MAPFile getMap() {
-        return getController().getMap();
+        return getBaseController().getFile();
     }
 
     /**
@@ -103,7 +106,15 @@ public class MapManager {
      * @return mapMesh
      */
     public MapMesh getMesh() {
-        return getController().getMesh();
+        return getController().getMapMesh();
+    }
+
+    /**
+     * Gets the base ui controller. (The menu which controls the 2d interface, so the remap editor, island fixer, etc)
+     * @return baseController
+     */
+    public MAPController getBaseController() {
+        return getController().getController();
     }
 
     /**
@@ -112,5 +123,19 @@ public class MapManager {
      */
     public void setupEditor() {
 
+    }
+
+    /**
+     * Handle when a key is pressed.
+     * @param event The key event fired.
+     * @return consumeEvent
+     */
+    public boolean onKeyPress(KeyEvent event) {
+        if (isPromptActive() && event.getCode() == KeyCode.ESCAPE) { // Cancel active prompt.
+            cancelPrompt();
+            return true;
+        }
+
+        return false;
     }
 }

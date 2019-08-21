@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.GeometryManager;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -52,8 +52,8 @@ public class MAPPolyFlat extends MAPPolygon implements VertexColor {
     }
 
     @Override
-    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
-        super.setupEditor(controller, editor);
+    public void setupEditor(GeometryManager manager, GUIEditorGrid editor) {
+        super.setupEditor(manager, editor);
         editor.addColorPicker("Color", color.toRGB(), color::fromRGB);
     }
 }

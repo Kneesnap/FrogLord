@@ -76,7 +76,7 @@ public class Light extends GameObject {
 
         if (getApiType() == APILightType.POINT || getApiType() == APILightType.PARALLEL)
             editor.addFloatVector(getApiType() == APILightType.POINT ? "Position:" : "Direction:", this.direction,
-                    lightManager::updateMapLighting, lightManager.getController().getController());
+                    lightManager::updateMapLighting, lightManager.getController());
     }
 
     /**

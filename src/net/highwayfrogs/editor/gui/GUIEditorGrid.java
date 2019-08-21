@@ -22,7 +22,7 @@ import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.gui.editor.MAPController;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -345,7 +345,7 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatSVector(String text, SVector vector, MAPController controller) {
+    public void addFloatSVector(String text, SVector vector, MapUIController controller) {
         addFloatVector(text, vector, null, controller, vector.defaultBits());
     }
 
@@ -354,7 +354,7 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatVector(String text, Vector vector, Runnable update, MAPController controller) {
+    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller) {
         addFloatVector(text, vector, update, controller, vector.defaultBits());
     }
 
@@ -363,7 +363,7 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatVector(String text, Vector vector, Runnable update, MAPController controller, int bits) {
+    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller, int bits) {
         addFloatVector(text, vector, update, controller, bits, null);
     }
 
@@ -372,17 +372,17 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatVector(String text, Vector vector, Runnable update, MAPController controller, int bits, Vector origin) {
+    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller, int bits, Vector origin) {
         if (controller != null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
-                    () -> controller.updateMarker(controller.getShowPosition() == null || !Objects.equals(vector, controller.getShowPosition()) ? vector : null, bits, origin));
+                    () -> controller.getGeneralManager().updateMarker(controller.getGeneralManager().getShowPosition() == null || !Objects.equals(vector, controller.getGeneralManager().getShowPosition()) ? vector : null, bits, origin));
         } else {
             addBoldLabel(text + ":");
         }
 
         Runnable onPass = () -> {
             if (controller != null)
-                controller.updateMarker(vector, bits, origin);
+                controller.getGeneralManager().updateMarker(vector, bits, origin);
 
             if (update != null)
                 update.run();
@@ -657,7 +657,7 @@ public class GUIEditorGrid {
      * @param matrix           The rotation matrix to add data for.
      * @param onPositionUpdate Behavior to apply when the position is updated.
      */
-    public void addMatrix(PSXMatrix matrix, MAPController controller, Runnable onPositionUpdate) {
+    public void addMatrix(PSXMatrix matrix, MapUIController controller, Runnable onPositionUpdate) {
         IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
 
         addFloatVector("Position", vec, () -> {

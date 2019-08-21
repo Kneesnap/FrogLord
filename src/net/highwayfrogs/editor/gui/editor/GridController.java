@@ -29,6 +29,7 @@ import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.map.zone.ZoneRegion;
 import net.highwayfrogs.editor.file.map.zone.ZoneRegion.RegionEditState;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.gui.editor.map.manager.GeometryManager;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -74,7 +75,7 @@ public class GridController implements Initializable {
     @FXML private Button hideZoneButton;
 
     private Stage stage;
-    private MapUIController controller;
+    private GeometryManager manager;
     private MAPFile map;
 
     private RegionEditState editState = RegionEditState.NONE_SELECTED;
@@ -89,10 +90,10 @@ public class GridController implements Initializable {
     private static final int DEFAULT_REGION_ID = 0;
     private static final int DEFAULT_ZONE_ID = 0;
 
-    private GridController(Stage stage, MapUIController controller, MAPFile map) {
+    private GridController(Stage stage, GeometryManager manager) {
         this.stage = stage;
-        this.controller = controller;
-        this.map = map;
+        this.manager = manager;
+        this.map = manager.getMap();
     }
 
     @Override
@@ -209,7 +210,7 @@ public class GridController implements Initializable {
 
         graphics.clearRect(0, 0, gridCanvas.getWidth(), gridCanvas.getHeight());
 
-        TextureMap texMap = getController().getMesh().getTextureMap();
+        TextureMap texMap = getManager().getMesh().getTextureMap();
         Image fxTextureImage = Utils.toFXImage(texMap.getImage(), true);
 
         ZoneRegion currentRegion = getCurrentRegion();
@@ -256,16 +257,16 @@ public class GridController implements Initializable {
 
         for (GridStack stack : getMap().getGridStacks())
             for (GridSquare square : stack.getGridSquares())
-                getController().getController().renderOverPolygon(square.getPolygon(), MapMesh.GRID_COLOR);
-        MeshData data = getController().getMesh().getManager().addMesh();
+                getManager().getController().renderOverPolygon(square.getPolygon(), MapMesh.GRID_COLOR);
+        MeshData data = getManager().getMesh().getManager().addMesh();
 
-        getController().selectPolygon(poly -> {
-            getController().getMesh().getManager().removeMesh(data);
+        getManager().getController().getGeneralManager().selectPolygon(poly -> {
+            getManager().getMesh().getManager().removeMesh(data);
             onSelect.accept(poly);
             updateCanvas();
             Platform.runLater(stage::showAndWait);
         }, () -> {
-            getController().getMesh().getManager().removeMesh(data);
+            getManager().getMesh().getManager().removeMesh(data);
             Platform.runLater(stage::showAndWait);
         });
     }
@@ -375,7 +376,7 @@ public class GridController implements Initializable {
     public void setSelectedSquare(GridStack stack, int layer) {
         this.selectedLayer = layer;
 
-        TextureMap texMap = getController().getMesh().getTextureMap();
+        TextureMap texMap = getManager().getMesh().getTextureMap();
         GridSquare square = stack.getGridSquares().get(layer);
         TextureEntry entry = square.getPolygon().getEntry(texMap);
 
@@ -530,9 +531,9 @@ public class GridController implements Initializable {
 
     /**
      * Open the padding menu for a particular image.
-     * @param controller The VLO controller opening this.
+     * @param manager The geometry manager.
      */
-    public static void openGridEditor(MapUIController controller) {
-        Utils.loadFXMLTemplate("grid", "Grid Editor", newStage -> new GridController(newStage, controller, controller.getMap()));
+    public static void openGridEditor(GeometryManager manager) {
+        Utils.loadFXMLTemplate("grid", "Grid Editor", newStage -> new GridController(newStage, manager));
     }
 }
