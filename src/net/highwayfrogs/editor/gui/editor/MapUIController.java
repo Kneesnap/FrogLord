@@ -203,10 +203,11 @@ public class MapUIController implements Initializable {
         });
 
         // Set the initial camera position based on start position and in-game camera offset.
-        SVector startPos = getMap().getCameraSourceOffset();
-        float gridX = Utils.fixedPointIntToFloat4Bit(getMap().getWorldX(getMap().getStartXTile(), true));
-        float baseY = -Utils.fixedPointIntToFloat4Bit(getMap().getGridStack(getMap().getStartXTile(), getMap().getStartZTile()).getHeight());
-        float gridZ = Utils.fixedPointIntToFloat4Bit(getMap().getWorldZ(getMap().getStartZTile(), true));
+        MAPFile map = getController().getFile();
+        SVector startPos = map.getCameraSourceOffset();
+        float gridX = Utils.fixedPointIntToFloat4Bit(map.getWorldX(map.getStartXTile(), true));
+        float baseY = -Utils.fixedPointIntToFloat4Bit(map.getGridStack(map.getStartXTile(), map.getStartZTile()).getHeight());
+        float gridZ = Utils.fixedPointIntToFloat4Bit(map.getWorldZ(map.getStartZTile(), true));
         cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
         cameraFPS.setCameraLookAt(gridX, baseY, gridZ); // Set the camera to look at the start position, too.
 
@@ -291,14 +292,6 @@ public class MapUIController implements Initializable {
     @FXML
     public void onActionClearFocus() {
         this.subScene.requestFocus();
-    }
-
-    /**
-     * Gets the map file being edited.
-     * @return mapFile
-     */
-    public MAPFile getMap() {
-        return getController().getFile();
     }
 
     /**

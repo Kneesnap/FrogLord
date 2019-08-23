@@ -258,7 +258,7 @@ public class PathManager extends MapManager {
 
             this.pathEditor.addSeparator(25.0);
             this.pathEditor.addBoldLabel("Path Data");
-            this.selectedPath.setupEditor(getController(), this.pathEditor);
+            this.selectedPath.setupEditor(this, this.pathEditor);
         }
     }
 

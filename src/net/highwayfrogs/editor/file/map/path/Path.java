@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.map.manager.PathManager;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -60,11 +60,10 @@ public class Path extends GameObject {
 
     /**
      * Setup the editor.
-     * @param controller The ui controller.
-     * @param editor     The editor to setup under.
+     * @param manager The path manager.
+     * @param editor  The editor to setup under.
      */
-    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
-
+    public void setupEditor(PathManager manager, GUIEditorGrid editor) {
         for (int i = 0; i < getSegments().size(); i++) {
             final int tempIndex = i;
 
@@ -72,7 +71,7 @@ public class Path extends GameObject {
                 getSegments().remove(tempIndex);
 
                 // Fix entities attached to segments after this.
-                MAPFile map = controller.getMap();
+                MAPFile map = manager.getMap();
                 for (Entity entity : map.getEntities()) {
                     if (entity.getPathInfo() == null)
                         continue;
@@ -86,17 +85,17 @@ public class Path extends GameObject {
                     }
                 }
 
-                controller.getPathManager().setupEditor();
-                controller.getEntityManager().updateEntities();
+                manager.setupEditor();
+                manager.getController().getEntityManager().updateEntities();
             });
 
-            getSegments().get(i).setupEditor(this, controller, editor);
+            getSegments().get(i).setupEditor(this, manager.getController(), editor);
             editor.addSeparator(25.0);
         }
 
         editor.addButtonWithEnumSelection("Add Segment", pathType -> {
             getSegments().add(pathType.getMaker().get());
-            controller.getPathManager().setupEditor();
+            manager.setupEditor();
         }, PathType.values(), PathType.SPLINE);
     }
 
