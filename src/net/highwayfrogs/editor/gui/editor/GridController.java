@@ -260,7 +260,7 @@ public class GridController implements Initializable {
                 getManager().getController().renderOverPolygon(square.getPolygon(), MapMesh.GRID_COLOR);
         MeshData data = getManager().getMesh().getManager().addMesh();
 
-        getManager().getController().getGeneralManager().selectPolygon(poly -> {
+        getManager().getController().getGeometryManager().selectPolygon(poly -> {
             getManager().getMesh().getManager().removeMesh(data);
             onSelect.accept(poly);
             updateCanvas();

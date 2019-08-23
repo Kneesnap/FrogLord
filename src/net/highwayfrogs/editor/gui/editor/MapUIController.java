@@ -127,7 +127,7 @@ public class MapUIController implements Initializable {
     private EntityManager entityManager;
     private AnimationManager animationManager;
     private FormManager formManager;
-    private GeometryManager geometryManager; // Should be second to last, so when a successful click goes through it will update itself.
+    private GeometryManager geometryManager; // Should be second to last, so when a successful click goes through it will update itself. Also, now this handles cancelling polygon selection.
     private GeneralManager generalManager; // Should be last, so things like cancelling polygon selection happen last.
 
     // Map Data:
@@ -314,8 +314,8 @@ public class MapUIController implements Initializable {
      * @return false = Not handled. True = handled.
      */
     public boolean handleClick(MouseEvent event, MAPPolygon clickedPolygon) {
-        if (getGeneralManager().isPromptActive()) { // Highest priority.
-            getGeneralManager().acceptPrompt(clickedPolygon);
+        if (getGeometryManager().isPromptActive()) { // Highest priority.
+            getGeometryManager().acceptPrompt(clickedPolygon);
             return true;
         }
 

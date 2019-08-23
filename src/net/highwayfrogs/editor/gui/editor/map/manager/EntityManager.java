@@ -146,7 +146,7 @@ public class EntityManager extends MapManager {
                     getController().renderOverPolygon(square.getPolygon(), MapMesh.GENERAL_SELECTION);
             MeshData data = getMesh().getManager().addMesh();
 
-            getController().getGeneralManager().selectPolygon(poly -> {
+            getController().getGeometryManager().selectPolygon(poly -> {
                 getMesh().getManager().removeMesh(data);
 
                 // Set entity position to the clicked polygon.

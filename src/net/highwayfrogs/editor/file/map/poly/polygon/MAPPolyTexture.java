@@ -148,7 +148,7 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
 
             this.textureId = newValue;
             view.setImage(newImage.toFXImage(SHOW_SETTINGS));
-            manager.getController().getGeneralManager().refreshView();
+            manager.getController().getGeometryManager().refreshView();
         }, false));
 
         for (PolyTextureFlag flag : PolyTextureFlag.values())
