@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.ImageView;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -142,7 +143,7 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
                 newValue = (short) texMap.getRemapList().indexOf(newValue);
 
             if (newValue == (short) -1) {
-                System.out.println("This image is not part of the remap! It can't be used!"); // Show this as a popup maybe.
+                Utils.makePopUp("This image is not part of the remap! It can't be used!", AlertType.INFORMATION); // Show this as a popup maybe.
                 return;
             }
 
