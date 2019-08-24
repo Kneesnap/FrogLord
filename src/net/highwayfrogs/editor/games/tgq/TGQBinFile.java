@@ -67,6 +67,8 @@ public class TGQBinFile extends GameObject {
         TGQFile readFile;
         if (Utils.testSignature(fileBytes, TGQImageFile.SIGNATURE)) {
             readFile = new TGQImageFile(this);
+        } else if (Utils.testSignature(fileBytes, TGQVertexFile.SIGNATURE)) {
+            readFile = new TGQVertexFile(this);
         } else {
             readFile = new TGQDummyFile(this, fileBytes.length);
         }
@@ -181,14 +183,19 @@ public class TGQBinFile extends GameObject {
         File exportDir = new File(binFile.getParentFile(), "Export");
         Utils.makeDirectory(exportDir);
         exportImages(exportDir, mainFile);
+        exportModels(exportDir, mainFile);
         exportDummyFiles(exportDir, mainFile);
         System.out.println("Done.");
     }
 
     private static void exportImages(File baseFolder, TGQBinFile mainArchive) throws IOException {
-        System.out.println("Exporting Textures...");
-
         File saveFolder = new File(baseFolder, "Textures");
+        if (saveFolder.exists()) {
+            System.out.println("Skipping Textures, they already exist.");
+            return;
+        }
+
+        System.out.println("Exporting Textures...");
         Utils.makeDirectory(saveFolder);
 
         for (TGQFile file : mainArchive.getFiles()) {
@@ -200,8 +207,28 @@ public class TGQBinFile extends GameObject {
         }
     }
 
+    private static void exportModels(File baseFolder, TGQBinFile mainArchive) throws IOException {
+        File saveFolder = new File(baseFolder, "Models");
+        if (saveFolder.exists()) {
+            System.out.println("Skipping models, they already exist.");
+            return;
+        }
+
+        Utils.makeDirectory(saveFolder);
+
+        System.out.println("Exporting Models...");
+        for (TGQFile file : mainArchive.getFiles())
+            if (file instanceof TGQVertexFile)
+                ((TGQVertexFile) file).saveToFile(new File(saveFolder, file.getExportName() + ".obj"));
+    }
+
     private static void exportDummyFiles(File baseFolder, TGQBinFile mainArchive) throws IOException {
         File saveFolder = new File(baseFolder, "Dummy");
+        if (saveFolder.exists()) {
+            System.out.println("Skipping 'Dummy', it already exists.");
+            return;
+        }
+
         Utils.makeDirectory(saveFolder);
 
         System.out.println("Exporting Everything Else...");
