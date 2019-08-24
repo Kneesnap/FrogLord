@@ -22,6 +22,7 @@ import java.util.Comparator;
 
 /**
  * A singular game image. MR_TXSETUP struct.
+ * TODO: Better support for texture page value. Build it, don't cache it.
  * Created by Kneesnap on 8/30/2018.
  */
 @Getter
@@ -46,9 +47,6 @@ public class GameImage extends GameObject implements Cloneable {
 
     public static final int MAX_DIMENSION = 256;
     private static final int PC_BYTES_PER_PIXEL = 4;
-    private static final int PSX_PIXELS_PER_BYTE = 2;
-    private static final int PSX_WIDTH_MODIFIER = 4;
-    private static final int PSX_INDEX_BIT_SIZE = (Constants.BITS_PER_BYTE / PSX_PIXELS_PER_BYTE);
 
     public static final int FLAG_TRANSLUCENT = Constants.BIT_FLAG_0;
     public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused.
@@ -68,14 +66,14 @@ public class GameImage extends GameObject implements Cloneable {
         this.vramY = reader.readShort();
         this.fullWidth = reader.readShort();
         this.fullHeight = reader.readShort();
-        if (getParent().isPsxMode()) {
-            this.vramX *= PSX_WIDTH_MODIFIER;
-            this.fullWidth *= PSX_WIDTH_MODIFIER;
-        }
 
         int offset = reader.readInt();
         this.textureId = reader.readShort();
         this.texturePage = reader.readShort();
+
+        // Can do this after texturePage is set.
+        this.vramX *= getWidthMultiplier();
+        this.fullWidth *= getWidthMultiplier();
 
         if (getParent().isPsxMode()) {
             this.clutId = reader.readShort();
@@ -95,15 +93,24 @@ public class GameImage extends GameObject implements Cloneable {
         int pixelCount = getFullWidth() * getFullHeight();
         if (getParent().isPsxMode()) {
             ByteBuffer buffer = ByteBuffer.allocate(PC_BYTES_PER_PIXEL * pixelCount);
-            ClutEntry clut = getClut();
 
-            for (int i = 0; i < pixelCount / PSX_PIXELS_PER_BYTE; i++) { // We read two pixels per iteration.
-                short value = reader.readUnsignedByteAsShort();
-                int low = value & 0x0F;
-                int high = value >> PSX_INDEX_BIT_SIZE;
+            if (getClutMode() == ImageClutMode.MODE_15BIT_NO_CLUT) { // Used in PS1 demo. Example: Frogger's eye, VOL@35 (The fireball texture)
+                for (int i = 0; i < pixelCount; i++)
+                    buffer.putInt(PSXClutColor.readColorFromShort(reader.readShort()));
+            } else if (getClutMode() == ImageClutMode.MODE_8BIT) { // Used in PS1 release. Example: STARTNTSC.VLO
+                ClutEntry clut = getClut();
+                for (int i = 0; i < pixelCount; i++)
+                    readPSXPixel(reader.readUnsignedByteAsShort(), clut, buffer);
+            } else { // 4bit (normal) mode.
+                ClutEntry clut = getClut();
+                for (int i = 0; i < pixelCount / 2; i++) { // We read two pixels per iteration.
+                    short value = reader.readUnsignedByteAsShort();
+                    int low = value & 0x0F;
+                    int high = value >> 4;
 
-                readPSXPixel(low, clut, buffer);
-                readPSXPixel(high, clut, buffer);
+                    readPSXPixel(low, clut, buffer);
+                    readPSXPixel(high, clut, buffer);
+                }
             }
 
             this.imageBytes = buffer.array();
@@ -112,22 +119,17 @@ public class GameImage extends GameObject implements Cloneable {
         }
 
         reader.jumpReturn();
-        Utils.verify(getParent().isPsxMode() || (readU == getU() && readV == getV()), "Image UV does not match the calculated one! [%d,%d] [%d, %d]", readU, readV, getU(), getV()); // Psx mode has this disabled because there are lots of problems with saving PSX VLOs right now.
+        //Utils.verify(getParent().isPsxMode() || (readU == getU() && readV == getV()), "Image UV does not match the calculated one! [%d,%d] [%d, %d]", readU, readV, getU(), getV()); // Psx mode has this disabled because there are lots of problems with saving PSX VLOs right now. //TODO: Fix this check.
+        //if (readU != getU() || readV != getV()) //TODO
+        //    System.out.println("Mismatch! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "]");
     }
 
     @Override
     public void save(DataWriter writer) {
-        short vramX = this.vramX;
-        if (getParent().isPsxMode())
-            vramX /= PSX_WIDTH_MODIFIER;
-        writer.writeShort(vramX);
+        writer.writeShort((short) (this.vramX / getWidthMultiplier()));
         writer.writeShort(this.vramY);
 
-        short width = this.fullWidth;
-        if (getParent().isPsxMode())
-            width /= PSX_WIDTH_MODIFIER;
-        writer.writeShort(width);
-
+        writer.writeShort((short) (this.fullWidth / getWidthMultiplier()));
         writer.writeShort(this.fullHeight);
         this.tempSaveImageDataPointer = writer.writeNullPointer();
         writer.writeShort(this.textureId);
@@ -162,29 +164,38 @@ public class GameImage extends GameObject implements Cloneable {
             return;
         }
 
+        if (getClutMode() == ImageClutMode.MODE_15BIT_NO_CLUT) {
+            for (int i = 0; i < getImageBytes().length; i += PC_BYTES_PER_PIXEL)
+                PSXClutColor.fromRGBA(this.imageBytes, i).save(writer);
+            return;
+        }
+
         ClutEntry clut = getClut();
         clut.getColors().clear(); // Generate a new clut.
-
         int maxColors = getClut().calculateColorCount();
-        for (int i = 0; i < getImageBytes().length; i += (PC_BYTES_PER_PIXEL * PSX_PIXELS_PER_BYTE)) {
-            PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
-            PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PC_BYTES_PER_PIXEL);
 
-            if (!clut.getColors().contains(color1))
-                clut.getColors().add(color1);
-
-            if (!clut.getColors().contains(color2))
-                clut.getColors().add(color2);
+        for (int i = 0; i < getImageBytes().length; i += PC_BYTES_PER_PIXEL) {
+            PSXClutColor color = PSXClutColor.fromRGBA(this.imageBytes, i);
+            if (!clut.getColors().contains(color))
+                clut.getColors().add(color);
         }
 
         if (clut.getColors().size() > maxColors)
             throw new RuntimeException("Tried to save a PSX image with too many colors. [Max: " + maxColors + ", Colors: " + clut.getColors().size() + "]");
 
         clut.getColors().sort(Comparator.comparingInt(PSXClutColor::toRGBA));
-        for (int i = 0; i < getImageBytes().length; i += (PC_BYTES_PER_PIXEL * PSX_PIXELS_PER_BYTE)) {
-            PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
-            PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PC_BYTES_PER_PIXEL);
-            writer.writeByte((byte) (clut.getColors().indexOf(color1) | (clut.getColors().indexOf(color2) << PSX_INDEX_BIT_SIZE)));
+
+        if (getClutMode() == ImageClutMode.MODE_8BIT) {
+            for (int i = 0; i < getImageBytes().length; i += PC_BYTES_PER_PIXEL)
+                writer.writeByte((byte) clut.getColors().indexOf(PSXClutColor.fromRGBA(this.imageBytes, i)));
+        } else if (getClutMode() == ImageClutMode.MODE_4BIT) {
+            for (int i = 0; i < getImageBytes().length; i += (PC_BYTES_PER_PIXEL * 2)) {
+                PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
+                PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PC_BYTES_PER_PIXEL);
+                writer.writeByte((byte) (clut.getColors().indexOf(color1) | (clut.getColors().indexOf(color2) << 4)));
+            }
+        } else {
+            throw new RuntimeException("Could not handle clut mode: " + getClutMode());
         }
 
         // For any unfilled part of the clut, fill it with black.
@@ -194,11 +205,30 @@ public class GameImage extends GameObject implements Cloneable {
     }
 
     /**
+     * Gets the clut mode for this image.
+     * This information seems very similar to what's found on:
+     * http://wiki.xentax.com/index.php/Playstation_TMD
+     * @return clutMode
+     */
+    public ImageClutMode getClutMode() {
+        if (!getParent().isPsxMode())
+            throw new UnsupportedOperationException("Can only get clut mode for PSX VLOs.");
+        return ImageClutMode.values()[(this.texturePage & 0b110000000) >> 7];
+    }
+
+    /**
+     * Gets the width multiplier for the image.
+     */
+    public int getWidthMultiplier() {
+        return getParent().isPsxMode() ? getClutMode().getMultiplier() : 1;
+    }
+
+    /**
      * Generates the U value used by this image.
      * @return uValue
      */
     public short getU() {
-        return (short) ((getVramX() % MAX_DIMENSION) + ((getFullWidth() - getIngameWidth()) / 2));
+        return (short) ((getVramX() % MAX_DIMENSION) + ((getFullWidth() - getIngameWidth()) / 2) - (getParent().isPsxMode() ? 1 : 0));
     }
 
     /**
@@ -217,16 +247,11 @@ public class GameImage extends GameObject implements Cloneable {
         int clutX = ((clutId & 0x3F) << 4);
         int clutY = (clutId >> 6);
 
-        ClutEntry clut = getParent().getClutEntries().stream()
-                .filter(entry -> entry.getClutRect().getX() == clutX)
-                .filter(entry -> entry.getClutRect().getY() == clutY)
-                .findAny().orElse(null);
+        for (ClutEntry testEntry : getParent().getClutEntries())
+            if (testEntry.getClutRect().getX() == clutX && testEntry.getClutRect().getY() == clutY)
+                return testEntry;
 
-        if (clut == null && clutX == 0 && clutY == 0) // The demo MWD seems to have some broken images or something.
-            return getParent().getClutEntries().get(0);
-
-        Utils.verify(clut != null, "Failed to find clut for coordinates [%d,%d].", clutX, clutY);
-        return clut;
+        throw new RuntimeException("FAiled to find clut for coordinates [" + clutX + ", " + clutY + "].");
     }
 
     /**

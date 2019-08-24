@@ -36,7 +36,7 @@ public class PSXClutColor extends GameObject {
         this.stp = (value & STP_FLAG) == STP_FLAG;
     }
 
-    private byte getByte(short value, int byteOffset) {
+    private static byte getByte(short value, int byteOffset) {
         value >>= byteOffset;
         for (int i = BITS_PER_VALUE; i < Constants.BITS_PER_BYTE; i++)
             value &= ~(1 << i); // Disable bits 5-7, as bits 0-4 are the values we care about for this number.
@@ -109,5 +109,23 @@ public class PSXClutColor extends GameObject {
      */
     public static PSXClutColor fromRGBA(byte[] array, int index) {
         return fromRGBA(array[index + 3], array[index + 2], array[index + 1], array[index]);
+    }
+
+    /**
+     * Reads a PSXClutColor from a 16bit short into an RGBA int.
+     * @param color The short to read from.
+     * @return rgbaColor
+     */
+    public static int readColorFromShort(short color) {
+        byte blue = getByte(color, BLUE_OFFSET);
+        byte green = getByte(color, GREEN_OFFSET);
+        byte red = getByte(color, RED_OFFSET);
+        boolean stp = (color & STP_FLAG) == STP_FLAG;
+        byte[] arr = new byte[4]; //RGBA
+        arr[0] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(red) << TO_FULL_BYTE));
+        arr[1] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(green) << TO_FULL_BYTE));
+        arr[2] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(blue) << TO_FULL_BYTE));
+        arr[3] = (byte) (stp ? 0x01 : 0x00);
+        return Utils.readNumberFromBytes(arr);
     }
 }
