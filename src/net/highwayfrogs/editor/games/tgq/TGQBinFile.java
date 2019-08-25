@@ -40,17 +40,15 @@ public class TGQBinFile extends GameObject {
         reader.jumpReturn();
 
         // Read unnamed files.
-        for (int i = 0; i < unnamedFiles; i++) {
-            int crc = reader.readInt();
-            files.add(readFile(reader, null));
-        }
+        for (int i = 0; i < unnamedFiles; i++)
+            files.add(readFile(reader, null, reader.readInt()));
 
         // Read named files.
         for (int i = 0; i < namedFiles; i++)
-            files.add(readFile(reader, reader.readTerminatedStringOfLength(NAME_SIZE)));
+            files.add(readFile(reader, reader.readTerminatedStringOfLength(NAME_SIZE), 0));
     }
 
-    private TGQFile readFile(DataReader reader, String name) {
+    private TGQFile readFile(DataReader reader, String name, int crc) {
         int size = reader.readInt();
         int zSize = reader.readInt();
         int offset = reader.readInt();
@@ -74,7 +72,7 @@ public class TGQBinFile extends GameObject {
         }
 
         // Read file.
-        readFile.init(name, isCompressed);
+        readFile.init(name, isCompressed, crc);
 
         try {
             DataReader fileReader = new DataReader(new ArraySource(fileBytes));
@@ -97,7 +95,6 @@ public class TGQBinFile extends GameObject {
         writer.writeInt(namedFiles.size());
         int nameAddress = writer.writeNullPointer();
 
-        //Map<TGQFile, Integer> fileCrcTable = new HashMap<>();
         Map<TGQFile, Integer> fileSizeTable = new HashMap<>();
         Map<TGQFile, Integer> fileZSizeTable = new HashMap<>();
         Map<TGQFile, Integer> fileOffsetTable = new HashMap<>();
@@ -109,8 +106,7 @@ public class TGQBinFile extends GameObject {
                 writer.writeTerminatorString(file.getRawName());
                 writer.writeTo(endIndex, (byte) 0xCD);
             } else {
-                //fileCrcTable.put(file, writer.getIndex());
-                writer.writeInt(0); // CRC
+                writer.writeInt(file.getNameHash());
             }
 
             fileSizeTable.put(file, writer.getIndex());
@@ -124,10 +120,6 @@ public class TGQBinFile extends GameObject {
 
         // Write files:
         for (TGQFile file : getFiles()) {
-            //if (fileCrcTable.containsKey(file)) {
-            // WARNING: It is unknown how to calculate this CRC value. This should be added.
-            //}
-
             writer.writeAddressTo(fileOffsetTable.get(file));
 
             ArrayReceiver receiver = new ArrayReceiver();

@@ -16,6 +16,7 @@ public abstract class TGQFile extends GameObject {
     private TGQBinFile mainArchive;
     private String cleanName;
     private String rawName;
+    private int nameHash;
     private boolean compressed;
 
     public TGQFile(TGQBinFile mainArchive) {
@@ -32,7 +33,7 @@ public abstract class TGQFile extends GameObject {
      * @param realName   This file's raw name. Can be null.
      * @param compressed Whether or not this file is compressed.
      */
-    public void init(String realName, boolean compressed) {
+    public void init(String realName, boolean compressed, int hash) {
         if (realName != null) {
             this.rawName = realName;
             this.cleanName = realName;
@@ -41,6 +42,7 @@ public abstract class TGQFile extends GameObject {
         }
 
         this.compressed = compressed;
+        this.nameHash = hash;
     }
 
     /**
