@@ -15,6 +15,7 @@ import java.util.function.BiFunction;
 public enum TOCChunkType {
     OTT("OTT\0", (file, magic) -> new OTTChunk(file)),
     TEX("TEX\0", (file, magic) -> new TEXChunk(file)),
+    NST("NST\0", (file, magic) -> new NSTChunk(file)),
     DUMMY(null, TOCDummyChunk::new);
 
     private final String signature;

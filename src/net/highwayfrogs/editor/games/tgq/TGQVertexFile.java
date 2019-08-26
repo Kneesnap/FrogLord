@@ -4,7 +4,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.system.Tuple3;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,10 +32,10 @@ public class TGQVertexFile extends TGQFile {
         //TODO: The rest of the file.
         reader.setIndex(0x20);
         int vertexCount = reader.readInt();
-        System.out.println("Vertice Count: " + vertexCount);
+        //System.out.println("Vertice Count: " + vertexCount);
 
         try {
-            System.out.println("Reading from: " + Utils.toHexString(reader.getSize() - (68 * vertexCount)));
+            //System.out.println("Reading from: " + Utils.toHexString(reader.getSize() - (68 * vertexCount)));
             reader.jumpTemp(reader.getSize() - (68 * vertexCount));
             for (int i = 0; i < vertexCount; i++) {
                 this.vertices.add(new Tuple3<>(reader.readFloat(), reader.readFloat(), reader.readFloat()));
@@ -45,9 +44,9 @@ public class TGQVertexFile extends TGQFile {
                 reader.skipBytes(12);
             }
 
-            System.out.println("Left: " + reader.getRemaining());
+            //System.out.println("Left: " + reader.getRemaining());
         } catch (Exception ex) { //TODO: Lmao, actually parse the file.
-            System.out.println("Failure!");
+            //System.out.println("Failure!");
         }
     }
 
