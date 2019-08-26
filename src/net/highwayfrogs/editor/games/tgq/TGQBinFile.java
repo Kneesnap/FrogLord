@@ -175,6 +175,10 @@ public class TGQBinFile extends GameObject {
         TGQBinFile mainFile = new TGQBinFile();
         mainFile.load(reader);
 
+        //testString(mainFile, "bark.img");
+        //testString(mainFile, "\\GameSource\\Level05MushroomValley\\Level\\bark.img");
+
+
         // Export.
         File exportDir = new File(binFile.getParentFile(), "Export");
         Utils.makeDirectory(exportDir);

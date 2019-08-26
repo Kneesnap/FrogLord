@@ -93,7 +93,7 @@ public class OTTChunk extends TOCChunk {
 
             // Faces.
             writer.write("g Mesh_" + Utils.padNumberString(i, 4) + Constants.NEWLINE);
-            writer.write("usemtl " + fileName + "_" + Utils.padNumberString(i, 4) + Constants.NEWLINE);
+            writer.write("usemtl Mat_" + Utils.padNumberString(i, 4) + Constants.NEWLINE);
             for (int j = 0; j < mesh.getCount(); j++) {
                 writer.write("f");
                 for (int k = 0; k < 3; k++) {

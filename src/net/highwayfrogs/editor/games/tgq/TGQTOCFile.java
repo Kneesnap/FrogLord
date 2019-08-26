@@ -4,10 +4,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.tgq.toc.OTTChunk;
 import net.highwayfrogs.editor.games.tgq.toc.TOCChunk;
 import net.highwayfrogs.editor.games.tgq.toc.TOCChunkType;
-import net.highwayfrogs.editor.games.tgq.toc.TOCDummyChunk;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,19 +30,14 @@ public class TGQTOCFile extends TGQFile {
         while (reader.hasMore()) {
             String magic = reader.readString(4);
             int length = reader.readInt() + 0x20; // 0x20 and not 0x24 because we're reading from the start of the data, not the length.
-
-            System.out.println("Reading: " + magic + ", " + length + " from " + reader.getIndex());
             byte[] readBytes = reader.readBytes(length);
 
             // Read chunk.
             TOCChunkType readType = TOCChunkType.getByMagic(magic);
-            TOCChunk newChunk;
-            if (readType == TOCChunkType.OTT) {
-                newChunk = new OTTChunk(this);
-            } else {
-                newChunk = new TOCDummyChunk(this, readType, magic);
-            }
+            if (readType == TOCChunkType.DUMMY)
+                System.out.println("Unknown chunk: " + magic);
 
+            TOCChunk newChunk = readType.getMaker().apply(this, magic);
             newChunk.load(new DataReader(new ArraySource(readBytes)));
             this.chunks.add(newChunk);
         }

@@ -2,6 +2,9 @@ package net.highwayfrogs.editor.games.tgq.toc;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.tgq.TGQTOCFile;
+
+import java.util.function.BiFunction;
 
 /**
  * A registry of TOC Chunk Types.
@@ -10,11 +13,12 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum TOCChunkType {
-    OTT("OTT", "OTT\0"),
-    DUMMY("???", "????");
+    OTT("OTT\0", (file, magic) -> new OTTChunk(file)),
+    TEX("TEX\0", (file, magic) -> new TEXChunk(file)),
+    DUMMY(null, TOCDummyChunk::new);
 
-    private final String name;
     private final String signature;
+    private BiFunction<TGQTOCFile, String, TOCChunk> maker;
 
     /**
      * Gets the chunk type based on a magic number.

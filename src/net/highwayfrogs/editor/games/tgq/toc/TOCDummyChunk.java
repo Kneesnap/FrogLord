@@ -14,8 +14,8 @@ public class TOCDummyChunk extends TOCChunk {
     private byte[] data;
     private String magic;
 
-    public TOCDummyChunk(TGQTOCFile parentFile, TOCChunkType chunkType, String magic) {
-        super(parentFile, chunkType);
+    public TOCDummyChunk(TGQTOCFile parentFile, String magic) {
+        super(parentFile, TOCChunkType.getByMagic(magic));
         this.magic = magic;
     }
 
