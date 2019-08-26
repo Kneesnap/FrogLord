@@ -34,7 +34,6 @@ public class OTTChunk extends TOCChunk {
         int meshCount = reader.readInt();
         skipSize += reader.readInt(); //TODO: This too.
         reader.skipBytes(skipSize + 0x28);
-        System.out.println("Mesh Count: " + meshCount + ", Start: " + Utils.toHexString(reader.getIndex()));
 
         for (int i = 0; i < meshCount; i++) {
             reader.skipBytes(0x44); // TODO: Read.

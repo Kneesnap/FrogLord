@@ -30,7 +30,7 @@ public class NSTChunk extends TOCChunk {
         this.y = reader.readFloat();
         this.z = reader.readFloat();
 
-        System.out.println("[" + this.x + ", " + this.y + ", " + this.z + "]");
+        System.out.println(this.name + " -> [" + this.x + ", " + this.y + ", " + this.z + "]");
 
         //TODO
     }

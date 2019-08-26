@@ -228,7 +228,7 @@ public class GameImage extends GameObject implements Cloneable {
      * @return uValue
      */
     public short getU() {
-        return (short) ((getVramX() % MAX_DIMENSION) + (((getWidthMultiplier() - 1 + getFullWidth() - getIngameWidth()) / 2)));
+        return (short) ((getVramX() % MAX_DIMENSION) + ((getFullWidth() - getIngameWidth()) / 2));
     }
 
     /**
