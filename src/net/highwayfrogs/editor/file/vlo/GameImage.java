@@ -120,8 +120,8 @@ public class GameImage extends GameObject implements Cloneable {
 
         reader.jumpReturn();
         //Utils.verify(getParent().isPsxMode() || (readU == getU() && readV == getV()), "Image UV does not match the calculated one! [%d,%d] [%d, %d]", readU, readV, getU(), getV()); // Psx mode has this disabled because there are lots of problems with saving PSX VLOs right now. //TODO: Fix this check.
-        //if (readU != getU() || readV != getV()) //TODO
-        //    System.out.println("Mismatch! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "]");
+        if (readU != getU() || readV != getV()) //TODO
+            System.out.println(getParent().getFileEntry().getDisplayName() + "@" + getParent().getImages().size() + " Mismatch! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "]");
     }
 
     @Override
@@ -228,7 +228,7 @@ public class GameImage extends GameObject implements Cloneable {
      * @return uValue
      */
     public short getU() {
-        return (short) ((getVramX() % MAX_DIMENSION) + ((getFullWidth() - getIngameWidth()) / 2) - (getParent().isPsxMode() ? 1 : 0));
+        return (short) ((getVramX() % MAX_DIMENSION) + (((getWidthMultiplier() - 1 + getFullWidth() - getIngameWidth()) / 2)));
     }
 
     /**

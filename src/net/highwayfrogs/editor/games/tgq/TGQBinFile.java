@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.games.tgq.toc.OTTChunk;
+import net.highwayfrogs.editor.games.tgq.toc.TOCChunk;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -67,6 +69,8 @@ public class TGQBinFile extends GameObject {
             readFile = new TGQImageFile(this);
         } else if (Utils.testSignature(fileBytes, TGQVertexFile.SIGNATURE)) {
             readFile = new TGQVertexFile(this);
+        } else if (Utils.testSignature(fileBytes, TGQTOCFile.SIGNATURE)) {
+            readFile = new TGQTOCFile(this);
         } else {
             readFile = new TGQDummyFile(this, fileBytes.length);
         }
@@ -175,6 +179,7 @@ public class TGQBinFile extends GameObject {
         File exportDir = new File(binFile.getParentFile(), "Export");
         Utils.makeDirectory(exportDir);
         exportImages(exportDir, mainFile);
+        exportMaps(exportDir, mainFile);
         exportModels(exportDir, mainFile);
         exportDummyFiles(exportDir, mainFile);
         System.out.println("Done.");
@@ -199,6 +204,36 @@ public class TGQBinFile extends GameObject {
         }
     }
 
+    private static void exportMaps(File baseFolder, TGQBinFile mainArchive) throws IOException {
+        File saveFolder = new File(baseFolder, "Maps");
+        if (saveFolder.exists()) {
+            System.out.println("Skipping maps, they already exist.");
+            return;
+        }
+
+        Utils.makeDirectory(saveFolder);
+
+        System.out.println("Exporting Maps...");
+        for (TGQFile file : mainArchive.getFiles()) {
+            if (!(file instanceof TGQTOCFile))
+                continue;
+
+            TGQTOCFile tocFile = (TGQTOCFile) file;
+
+            DataWriter writer = new DataWriter(new FileReceiver(new File(saveFolder, tocFile.getExportName())));
+            tocFile.save(writer);
+            writer.closeReceiver();
+
+            OTTChunk chunk = null;
+            for (TOCChunk testChunk : tocFile.getChunks())
+                if (testChunk instanceof OTTChunk)
+                    chunk = (OTTChunk) testChunk;
+
+            if (chunk != null)
+                chunk.exportAsObj(saveFolder, Utils.stripExtension(tocFile.getExportName()));
+        }
+    }
+
     private static void exportModels(File baseFolder, TGQBinFile mainArchive) throws IOException {
         File saveFolder = new File(baseFolder, "Models");
         if (saveFolder.exists()) {
@@ -217,7 +252,7 @@ public class TGQBinFile extends GameObject {
     private static void exportDummyFiles(File baseFolder, TGQBinFile mainArchive) throws IOException {
         File saveFolder = new File(baseFolder, "Dummy");
         if (saveFolder.exists()) {
-            System.out.println("Skipping 'Dummy', it already exists.");
+            System.out.println("Skipping dummy files, they already exist.");
             return;
         }
 

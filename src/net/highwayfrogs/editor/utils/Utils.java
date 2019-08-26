@@ -16,8 +16,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.stage.*;
-import javafx.stage.Window;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Window;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
@@ -30,8 +30,8 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -1427,5 +1427,21 @@ public class Utils {
         } catch (IOException e) {
             return false;
         }
+    }
+
+    /**
+     * Pads the number with 0s as a string.
+     * @param number The number to pad.
+     * @param digits The number of digits to include.
+     * @return paddedString
+     */
+    public static String padNumberString(int number, int digits) {
+        int usedDigits = (int) Math.log(number) + 1;
+
+        StringBuilder prependStr = new StringBuilder();
+        for (int i = 0; i < (digits - usedDigits); i++)
+            prependStr.append("0");
+
+        return prependStr.toString() + String.valueOf(number);
     }
 }
