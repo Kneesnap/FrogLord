@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.vlo;
 
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
@@ -310,16 +311,11 @@ public class GameImage extends GameObject implements Cloneable {
         short imageHeight = (short) image.getHeight();
         Utils.verify(imageWidth <= MAX_DIMENSION && imageHeight <= MAX_DIMENSION, "The imported image is too big. Frogger's engine only supports up to %dx%d.", MAX_DIMENSION, MAX_DIMENSION);
 
-        if (imageWidth + getVramX() > MAX_DIMENSION) {
-            System.out.println("This image would not fit horizontally in VRAM. Use the VRAM editor to move it around.");
-            return;
-        }
+        if ((imageWidth / getWidthMultiplier()) + getVramX() > MAX_DIMENSION)
+            Utils.makePopUp("This image does not fit horizontally in VRAM. Use the VRAM editor to make it fit.", AlertType.WARNING);
 
-        if (imageWidth > getFullWidth() || imageHeight > getFullHeight()) {
-            System.out.println("WARNING: The image you just imported is larger than the image it replaced.");
-            System.out.println("This may cause problems if it overlaps with another texture.");
-            System.out.println("Click on the 'VRAM' option to move the texture, if it overlaps.");
-        }
+        if (imageWidth > getFullWidth() || imageHeight > getFullHeight())
+            Utils.makePopUp("The image you have imported is larger than the image it replaced.\nThis may cause problems if it overlaps with another texture. Click on the 'VRAM' option to make sure the texture is ok.", AlertType.WARNING);
 
         if (getFullWidth() != imageWidth || getFullHeight() != imageHeight) {
             this.fullWidth = imageWidth;

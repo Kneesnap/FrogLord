@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
@@ -76,10 +77,15 @@ public class ScriptEditorController implements Initializable {
         printUsagesButton.setOnAction(evt -> {
             FroggerScript script = this.scriptSelector.getValue();
             int id = GUIMain.EXE_CONFIG.getScripts().indexOf(script);
-            System.out.println("Usages of " + script.getName() + " (" + id + "):");
+
+            StringBuilder results = new StringBuilder("Usages of ").append(script.getName())
+                    .append(" (").append(id).append("):").append(Constants.NEWLINE);
             for (FormEntry entry : GUIMain.EXE_CONFIG.getFullFormBook())
                 if (entry.getScriptId() == id)
-                    System.out.println(" - " + entry.getFormName());
+                    results.append(" - ").append(entry.getFormName()).append(Constants.NEWLINE);
+
+            System.out.println(results.toString());
+            Utils.makePopUp(results.toString(), AlertType.INFORMATION);
         });
 
         Utils.closeOnEscapeKey(stage, null);

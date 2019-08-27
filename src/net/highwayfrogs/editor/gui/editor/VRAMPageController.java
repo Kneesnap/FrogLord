@@ -31,6 +31,8 @@ import java.util.ResourceBundle;
 
 /**
  * Allows editing the arrangement of a VRAM page.
+ * TODO: Warning of texture overlap.
+ * TODO: Warning of textures spanning multiple pages.
  * Created by Kneesnap on 12/2/2018.
  */
 public class VRAMPageController implements Initializable {
