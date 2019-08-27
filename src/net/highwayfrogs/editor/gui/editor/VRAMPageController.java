@@ -7,6 +7,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -17,7 +18,7 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.system.Tuple3;
+import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -37,18 +38,16 @@ public class VRAMPageController implements Initializable {
     @FXML private ImageView miniView;
     @FXML private Label xLabel;
     @FXML private Label yLabel;
-    @FXML private Label pLabel;
     @FXML private Label helpLabel;
     @FXML private TextField xField;
     @FXML private TextField yField;
-    @FXML private TextField pField;
     @FXML private Button applyButton;
 
     private Stage stage;
     private VLOArchive vloArchive;
     private VLOController controller;
     private GameImage selectedImage;
-    private Map<GameImage, Tuple3<Short, Short, Short>> originalState = new HashMap<>();
+    private Map<GameImage, Tuple2<Short, Short>> originalState = new HashMap<>();
 
     private static final ImageFilterSettings SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
     private static final int EXTRA_SCROLL_BUFFER = 30;
@@ -93,7 +92,6 @@ public class VRAMPageController implements Initializable {
             if (newImage != null) {
                 xField.setText(String.valueOf(newImage.getVramX()));
                 yField.setText(String.valueOf(newImage.getVramY()));
-                pField.setText(String.valueOf(newImage.getTexturePage()));
                 miniView.setImage(Utils.toFXImage(newImage.toBufferedImage(SETTINGS), true));
                 imageView.requestFocus(); // Allow arrow keys to be listened for, instead of moving cursor.
             }
@@ -149,10 +147,8 @@ public class VRAMPageController implements Initializable {
         boolean hasSelectedImage = this.selectedImage != null;
         xLabel.setVisible(hasSelectedImage);
         yLabel.setVisible(hasSelectedImage);
-        pLabel.setVisible(hasSelectedImage);
         xField.setVisible(hasSelectedImage);
         yField.setVisible(hasSelectedImage);
-        pField.setVisible(hasSelectedImage);
         miniView.setVisible(hasSelectedImage);
         applyButton.setVisible(hasSelectedImage);
         helpLabel.setVisible(!hasSelectedImage);
@@ -164,12 +160,11 @@ public class VRAMPageController implements Initializable {
     }
 
     private void cancel() {
-        for (Entry<GameImage, Tuple3<Short, Short, Short>> entry : originalState.entrySet()) {
+        for (Entry<GameImage, Tuple2<Short, Short>> entry : originalState.entrySet()) {
             GameImage image = entry.getKey();
-            Tuple3<Short, Short, Short> tuple = entry.getValue();
+            Tuple2<Short, Short> tuple = entry.getValue();
             image.setVramX(tuple.getA());
             image.setVramY(tuple.getB());
-            image.setTexturePage(tuple.getC());
         }
         originalState.clear();
 
@@ -186,31 +181,22 @@ public class VRAMPageController implements Initializable {
     private void applyChanges(ActionEvent evt) {
         short newX;
         short newY;
-        short newPage;
 
         try {
             newX = Short.parseShort(xField.getText());
         } catch (NumberFormatException nfe) {
-            System.out.println(xField.getText() + " is not a valid number.");
+            Utils.makePopUp(xField.getText() + " is not a valid number.", AlertType.ERROR);
             return;
         }
 
         try {
             newY = Short.parseShort(yField.getText());
         } catch (NumberFormatException nfe) {
-            System.out.println(yField.getText() + " is not a valid number.");
-            return;
-        }
-
-        try {
-            newPage = Short.parseShort(pField.getText());
-        } catch (NumberFormatException nfe) {
-            System.out.println(yField.getText() + " is not a valid number.");
+            Utils.makePopUp(yField.getText() + " is not a valid number.", AlertType.ERROR);
             return;
         }
 
         saveOriginalPosition();
-        this.selectedImage.setTexturePage(newPage);
         this.selectedImage.setVramX(newX);
         this.selectedImage.setVramY(newY);
         updateImage();
@@ -218,7 +204,7 @@ public class VRAMPageController implements Initializable {
 
     private void saveOriginalPosition() {
         if (!originalState.containsKey(this.selectedImage)) // Save original state, in case everything is cancelled.
-            originalState.put(this.selectedImage, new Tuple3<>(this.selectedImage.getVramX(), this.selectedImage.getVramY(), this.selectedImage.getTexturePage()));
+            originalState.put(this.selectedImage, new Tuple2<>(this.selectedImage.getVramX(), this.selectedImage.getVramY()));
     }
 
     private static Point2D getImageCoords(ImageView view, double x, double y) {

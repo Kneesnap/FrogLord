@@ -13,8 +13,6 @@
         <TextField layoutX="270.0" layoutY="11.0" prefHeight="25.0" prefWidth="47.0" fx:id="xField"/>
         <Label fx:id="yLabel" layoutX="258.0" layoutY="44.0" text="Y:"/>
         <TextField fx:id="yField" layoutX="270.0" layoutY="40.0" prefHeight="25.0" prefWidth="47.0"/>
-        <Label fx:id="pLabel" layoutX="321.0" layoutY="7.0" prefHeight="17.0" prefWidth="32.0" text="Page"/>
-        <TextField fx:id="pField" layoutX="320.0" layoutY="24.0" prefHeight="25.0" prefWidth="36.0"/>
         <Button layoutX="280.0" layoutY="230.0" mnemonicParsing="false" onAction="#cancelChanges" text="Cancel"/>
         <Button layoutX="277.0" layoutY="204.0" mnemonicParsing="false" onAction="#confirmChanges" text="Confirm"/>
         <ImageView fx:id="miniView" fitHeight="60.0" fitWidth="60.0" layoutX="277.0" layoutY="110.0" pickOnBounds="true"

@@ -214,7 +214,7 @@ public class VLOController extends EditorController<VLOArchive> {
     public void updateImageInfo() {
         dimensionLabel.setText("Archive Dimensions: [Width: " + this.selectedImage.getFullWidth() + ", Height: " + this.selectedImage.getFullHeight() + "]");
         ingameDimensionLabel.setText("In-Game Dimensions: [Width: " + this.selectedImage.getIngameWidth() + ", Height: " + this.selectedImage.getIngameHeight() + "]");
-        idLabel.setText("Texture ID: " + this.selectedImage.getTextureId() + " Page: " + this.selectedImage.getTexturePage());
+        idLabel.setText("ABR: " + this.selectedImage.getAbr() + " CLUT Mode: " + this.selectedImage.getClutMode().getDisplayName());
     }
 
     /**

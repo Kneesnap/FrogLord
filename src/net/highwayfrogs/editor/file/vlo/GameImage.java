@@ -41,13 +41,16 @@ public class GameImage extends GameObject implements Cloneable {
     private byte[] imageBytes;
     private ImageClutMode clutMode; // TPF
     private int abr; // ABR.
-    private short texturePage; // TPAGE. TODO: On PC, this is (vramY / 256). On PS1, this is a little more complicated.
 
     private transient int tempSaveImageDataPointer;
     private transient BufferedImage cachedImage;
 
     public static final int MAX_DIMENSION = 256;
     private static final int PC_BYTES_PER_PIXEL = 4;
+    private static final int PC_PAGE_HEIGHT = 256;
+    private static final int PSX_PAGE_WIDTH = 64;
+    private static final int PSX_PAGE_HEIGHT = 256;
+    private static final int PSX_X_PAGES = 16;
 
     public static final int FLAG_TRANSLUCENT = Constants.BIT_FLAG_0;
     public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused.
@@ -74,7 +77,6 @@ public class GameImage extends GameObject implements Cloneable {
         short readPage = reader.readShort();
         this.clutMode = ImageClutMode.values()[(readPage & 0b110000000) >> 7];
         this.abr = (readPage & 0b1100000) >> 5;
-        this.texturePage = (short) (readPage & 0b11111);
         if (getTexturePageShort() != readPage) // Verify this is both read and calculated properly.
             throw new RuntimeException("Calculated tpage short as " + getTexturePageShort() + ", Real: " + readPage + "!");
 
@@ -212,13 +214,23 @@ public class GameImage extends GameObject implements Cloneable {
     }
 
     /**
+     * Calculates the page this image lies in.
+     * @return page
+     */
+    public short getPage() {
+        return getParent().isPsxMode()
+                ? (short) (((getVramY() / PSX_PAGE_HEIGHT) * PSX_X_PAGES) + (getVramX() / PSX_PAGE_WIDTH))
+                : (short) (getVramY() / PC_PAGE_HEIGHT);
+    }
+
+    /**
      * Gets the tpage short for this image.
      * This information seems very similar to what's found on:
      * http://wiki.xentax.com/index.php/Playstation_TMD
      * @return tpageShort
      */
     public short getTexturePageShort() {
-        return (short) (this.texturePage | (this.abr << 5) | (getClutMode().ordinal() << 7));
+        return (short) (getPage() | (this.abr << 5) | (getClutMode().ordinal() << 7));
     }
 
     /**
