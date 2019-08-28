@@ -32,7 +32,7 @@ public class ImagePaddingController implements Initializable {
     private Stage stage;
     private GameImage image;
 
-    private static final ImageFilterSettings SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setAllowFlip(true);
+    private static final ImageFilterSettings SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
 
     public ImagePaddingController(Stage stage, VLOController controller) {
         this.stage = stage;

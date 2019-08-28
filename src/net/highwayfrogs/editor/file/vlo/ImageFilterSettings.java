@@ -17,6 +17,7 @@ public class ImageFilterSettings {
     private boolean trimEdges;
     private boolean allowTransparency;
     private boolean allowFlip;
+    private boolean allowScrunch;
     private Map<BufferedImage, BufferedImage> renderCache = new HashMap<>();
 
     public ImageFilterSettings(ImageState state) {
@@ -76,6 +77,18 @@ public class ImageFilterSettings {
     }
 
     /**
+     * Set if we will allow scrunching the image or not.
+     * @param newState Should we allow scrunching?
+     * @return this
+     */
+    public ImageFilterSettings setAllowScrunch(boolean newState) {
+        if (newState != isAllowScrunch())
+            invalidateRenderCache();
+        this.allowScrunch = newState;
+        return this;
+    }
+
+    /**
      * Invalidate the render cache, such as when settings change.
      */
     public void invalidateRenderCache() {
@@ -99,6 +112,9 @@ public class ImageFilterSettings {
 
         if (isAllowFlip() && !gameImage.testFlag(GameImage.FLAG_HIT_X))
             image = ImageWorkHorse.flipVertically(image);
+
+        if (isAllowScrunch() && gameImage.getParent().isPsxMode())
+            image = ImageWorkHorse.scaleWidth(image, isImport() ? (double) gameImage.getWidthMultiplier() : (1D / (double) gameImage.getWidthMultiplier()));
 
         boolean transparencyGoal = isAllowTransparency() && gameImage.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT);
         if (transparencyGoal)

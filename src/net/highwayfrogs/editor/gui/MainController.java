@@ -198,7 +198,7 @@ public class MainController implements Initializable {
     private void actionExportBulkTextures(ActionEvent evt) {
         File targetFolder = Utils.promptChooseDirectory("Choose the directory to save all textures to.", true);
 
-        ImageFilterSettings exportSettings = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(false).setAllowFlip(true).setAllowTransparency(true);
+        ImageFilterSettings exportSettings = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(false).setAllowTransparency(true);
         List<VLOArchive> allVlos = getMwdFile().getAllFiles(VLOArchive.class);
         for (VLOArchive saveVLO : allVlos) {
             File vloFolder = new File(targetFolder, Utils.stripExtension(saveVLO.getFileEntry().getDisplayName()));

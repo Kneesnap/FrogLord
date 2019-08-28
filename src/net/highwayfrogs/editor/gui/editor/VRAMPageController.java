@@ -21,7 +21,6 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.HashMap;
@@ -135,7 +134,7 @@ public class VRAMPageController implements Initializable {
     }
 
     private void updateImage() {
-        BufferedImage vramImage = makeVRAMImage(vloArchive);
+        BufferedImage vramImage = vloArchive.makeVRAMImage(); //TODO: Cache.
 
         this.imageView.setPreserveRatio(true);
         if (this.imageView.getViewport() == null)
@@ -215,28 +214,6 @@ public class VRAMPageController implements Initializable {
 
         Rectangle2D viewport = view.getViewport();
         return new Point2D(viewport.getMinX() + (xScale * viewport.getWidth()), viewport.getMinY() + (yScale * viewport.getHeight()));
-    }
-
-    /**
-     * Create a BufferedImage which effectively mirrors how Frogger will structure VRAM in-game.
-     * @param vloArchive The archive to make an image of.
-     * @return vramImage
-     */
-    public static BufferedImage makeVRAMImage(VLOArchive vloArchive) {
-        int maxWidth = vloArchive.getImages().stream().mapToInt(img -> img.getVramX() + img.getFullWidth()).max().orElse(0);
-        int maxHeight = vloArchive.getImages().stream().mapToInt(img -> img.getVramY() + img.getFullHeight()).max().orElse(0);
-
-        BufferedImage vramImage = new BufferedImage(maxWidth, maxHeight, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphics = vramImage.createGraphics();
-
-        graphics.setColor(Color.MAGENTA);
-        graphics.fillRect(0, 0, vramImage.getWidth(), vramImage.getHeight());
-
-        for (GameImage image : vloArchive.getImages())
-            graphics.drawImage(image.toBufferedImage(SETTINGS), null, image.getVramX(), image.getVramY());
-
-        graphics.dispose();
-        return vramImage;
     }
 
     /**

@@ -33,6 +33,24 @@ public class ImageWorkHorse {
     }
 
     /**
+     * Scale an image by its width.
+     * @param image       The image to scale.
+     * @param scaleFactor The factor to scale the image horizontally by.
+     * @return scaledImage
+     */
+    public static BufferedImage scaleWidth(BufferedImage image, double scaleFactor) {
+        int newWidth = (int) (image.getWidth() * scaleFactor);
+        if (newWidth == image.getWidth())
+            return image; // There would be no change.
+
+        BufferedImage scaleImage = new BufferedImage(newWidth, image.getHeight(), image.getType());
+        Graphics2D graphics = scaleImage.createGraphics();
+        graphics.drawImage(image, 0, 0, newWidth, image.getHeight(), null);
+        graphics.dispose();
+        return scaleImage;
+    }
+
+    /**
      * Flip an image vertically.
      * @param image The image to flip.
      * @return flippedImage

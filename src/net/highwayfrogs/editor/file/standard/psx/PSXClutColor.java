@@ -85,6 +85,18 @@ public class PSXClutColor extends GameObject {
     }
 
     /**
+     * Get this value as a BGRA integer.
+     */
+    public int toBGRA() {
+        byte[] arr = new byte[4]; //BGRA
+        arr[0] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(getBlue()) << TO_FULL_BYTE));
+        arr[1] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(getGreen()) << TO_FULL_BYTE));
+        arr[2] = Utils.unsignedShortToByte((short) (Utils.byteToUnsignedShort(getRed()) << TO_FULL_BYTE));
+        arr[3] = (byte) (isStp() ? 0x00 : 0xFF);
+        return Utils.readNumberFromBytes(arr);
+    }
+
+    /**
      * Turn red, green, blue, alpha values (0 -> 255) into a PSX Clut color.
      * @param red   Red color value.
      * @param green Green color value.

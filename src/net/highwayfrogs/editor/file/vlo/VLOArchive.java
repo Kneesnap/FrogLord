@@ -17,11 +17,11 @@ import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.editor.VLOController;
-import net.highwayfrogs.editor.gui.editor.VRAMPageController;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +50,8 @@ public class VLOArchive extends GameFile {
     public static final int TYPE_ID = 1;
     public static final int WAD_TYPE = 0;
     public static final Image ICON = loadIcon("image");
-    public static final ImageFilterSettings ICON_EXPORT = new ImageFilterSettings(ImageState.EXPORT).setAllowFlip(true);
+    public static final ImageFilterSettings ICON_EXPORT = new ImageFilterSettings(ImageState.EXPORT);
+    public static final ImageFilterSettings VRAM_EXPORT = new ImageFilterSettings(ImageState.EXPORT).setAllowScrunch(true);
 
     @Override
     public void load(DataReader reader) {
@@ -150,8 +151,7 @@ public class VLOArchive extends GameFile {
     @Override
     @SneakyThrows
     public void exportAlternateFormat(FileEntry fileEntry) {
-        BufferedImage image = VRAMPageController.makeVRAMImage(this);
-        ImageIO.write(image, "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(fileEntry.getDisplayName()) + ".png"));
+        ImageIO.write(makeVRAMImage(), "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(fileEntry.getDisplayName()) + ".png"));
         System.out.println("Exported VRAM Image.");
     }
 
@@ -217,5 +217,84 @@ public class VLOArchive extends GameFile {
         SelectionMenu.promptSelection("Select an image.", handler, allImages,
                 image -> image != null ? "#" + image.getLocalImageID() + " (" + image.getTextureId() + ")" : "No Image",
                 image -> image.toFXImage(ICON_EXPORT));
+    }
+
+    /**
+     * Create a BufferedImage which effectively mirrors how Frogger will layout this VLO in memory.
+     * @return vramImage
+     */
+    public BufferedImage makeVRAMImage() {
+        return makeVRAMImage(null);
+    }
+
+    private int getVramWidth() {
+        return (isPsxMode() ? GameImage.PSX_X_PAGES * GameImage.PSX_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH);
+    }
+
+    private int getVramHeight() {
+        if (isPsxMode())
+            return GameImage.PSX_Y_PAGES * GameImage.PSX_PAGE_HEIGHT;
+
+        int maxHeight = 0;
+        for (GameImage testImage : getImages())
+            maxHeight = Math.max(maxHeight, testImage.getVramY() + testImage.getFullHeight());
+        return GameImage.PC_PAGE_HEIGHT * ((maxHeight / GameImage.PC_PAGE_HEIGHT) + (maxHeight % GameImage.PC_PAGE_HEIGHT != 0 ? 1 : 0));
+
+    }
+
+    /**
+     * Create a BufferedImage which effectively mirrors how Frogger will layout this VLO in memory.
+     * @param vramImage The image to write the data onto. If the image is not the right dimensions, it will make a new image and use that one.
+     * @return vramImage
+     */
+    public BufferedImage makeVRAMImage(BufferedImage vramImage) {
+        int calcWidth = getVramWidth();
+        int calcHeight = getVramHeight();
+        if (vramImage == null || (calcWidth != vramImage.getWidth() || calcHeight != vramImage.getHeight()))
+            vramImage = new BufferedImage(calcWidth, calcHeight, BufferedImage.TYPE_INT_ARGB);
+
+        // Draw on image.
+        Graphics2D graphics = vramImage.createGraphics();
+
+        // Fill background.
+        graphics.setColor(Constants.COLOR_TURQUOISE);
+        graphics.fillRect(0, 0, vramImage.getWidth(), vramImage.getHeight());
+
+        // Draw screen-buffer as a different color.
+        if (isPsxMode()) {
+            graphics.setColor(Constants.COLOR_DEEP_GREEN); // Screen buffer.
+            graphics.fillRect(0, 0, 320, 240);
+            graphics.setColor(Constants.COLOR_DARK_YELLOW); // Next frame.
+            graphics.fillRect(0, 240, 320, 240);
+        }
+
+        // Draw cluts.
+        if (isPsxMode())
+            for (ClutEntry clutEntry : getClutEntries())
+                graphics.drawImage(clutEntry.makeImage(), null, clutEntry.getClutRect().getX(), clutEntry.getClutRect().getY());
+
+        // Create outlines. TODO: This should probably be done by the editor instead, by splitting up the image into chunks.
+        graphics.setColor(Constants.COLOR_TAN);
+        if (isPsxMode()) {
+            for (int yLine = 0; yLine <= GameImage.PSX_Y_PAGES; yLine++) {
+                int drawY = GameImage.PSX_PAGE_HEIGHT * yLine;
+                graphics.drawLine(0, drawY, vramImage.getWidth(), drawY);
+            }
+
+            for (int xLine = 0; xLine <= GameImage.PSX_X_PAGES; xLine++) {
+                int drawX = GameImage.PSX_PAGE_WIDTH * xLine;
+                graphics.drawLine(drawX, 0, drawX, vramImage.getHeight());
+            }
+
+        } else {
+            for (int yLine = 0; yLine < vramImage.getHeight(); yLine += GameImage.PC_PAGE_HEIGHT)
+                graphics.drawLine(0, yLine, vramImage.getWidth(), yLine);
+        }
+
+        for (GameImage image : getImages())
+            graphics.drawImage(image.toBufferedImage(VRAM_EXPORT), null, (image.getVramX() / image.getWidthMultiplier()), image.getVramY()); //TODO: Is this the secret to U calculation?
+
+        graphics.dispose();
+        return vramImage;
     }
 }

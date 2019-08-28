@@ -2,8 +2,10 @@
   <dictionary name="david">
     <words>
       <w>celset</w>
+      <w>cluts</w>
       <w>hilite</w>
       <w>kneesnap</w>
+      <w>vram</w>
     </words>
   </dictionary>
 </component>

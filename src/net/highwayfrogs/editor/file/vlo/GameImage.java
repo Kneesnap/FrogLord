@@ -48,10 +48,12 @@ public class GameImage extends GameObject implements Cloneable {
 
     public static final int MAX_DIMENSION = 256;
     private static final int PC_BYTES_PER_PIXEL = 4;
-    private static final int PC_PAGE_HEIGHT = 256;
-    private static final int PSX_PAGE_WIDTH = 64;
-    private static final int PSX_PAGE_HEIGHT = 256;
-    private static final int PSX_X_PAGES = 16;
+    public static final int PC_PAGE_WIDTH = 256;
+    public static final int PC_PAGE_HEIGHT = 256;
+    public static final int PSX_PAGE_WIDTH = 64;
+    public static final int PSX_PAGE_HEIGHT = 256;
+    public static final int PSX_X_PAGES = 16;
+    public static final int PSX_Y_PAGES = 2;
 
     public static final int FLAG_TRANSLUCENT = Constants.BIT_FLAG_0;
     public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused.

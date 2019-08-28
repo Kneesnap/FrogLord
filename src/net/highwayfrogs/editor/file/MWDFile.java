@@ -52,7 +52,7 @@ public class MWDFile extends GameObject {
     private static final String MARKER = "DAWM";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEEE, d MMMM yyyy");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
-    public static final ImageFilterSettings VLO_ICON_SETTING = new ImageFilterSettings(ImageState.EXPORT).setAllowFlip(true);
+    public static final ImageFilterSettings VLO_ICON_SETTING = new ImageFilterSettings(ImageState.EXPORT);
 
     public MWDFile(MWIFile table) {
         this.wadIndexTable = table;

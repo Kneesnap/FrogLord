@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.standard.psx.PSXRect;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,5 +68,17 @@ public class ClutEntry extends GameObject {
      */
     public int calculateColorCount() {
         return getClutRect().getWidth() * getClutRect().getHeight();
+    }
+
+    /**
+     * Creates an image with clut colors.
+     * @return clutImage
+     */
+    public BufferedImage makeImage() {
+        BufferedImage clutImage = new BufferedImage(getClutRect().getWidth(), getClutRect().getHeight(), BufferedImage.TYPE_INT_ARGB);
+        for (int x = 0; x < getClutRect().getWidth(); x++)
+            for (int y = 0; y < getClutRect().getHeight(); y++)
+                clutImage.setRGB(x, y, getColors().get((y * getClutRect().getWidth()) + x).toBGRA());
+        return clutImage;
     }
 }
