@@ -224,12 +224,16 @@ public class GameImage extends GameObject implements Cloneable {
         return getPage(getVramX(), getVramY());
     }
 
+    public short getMultiplierPage() {
+        return getPage(getVramX() / getWidthMultiplier(), getVramY());
+    }
+
     /**
      * Gets the page the end of this image lies on.
      * @return endPage
      */
     public short getEndPage() {
-        return getPage(getVramX() + ((getFullWidth() - 1) / getWidthMultiplier()), getVramY() + getFullHeight() - 1);
+        return getPage(getVramX() / getWidthMultiplier() + ((getFullWidth() - 1) / getWidthMultiplier()), getVramY() + getFullHeight() - 1);
     }
 
 

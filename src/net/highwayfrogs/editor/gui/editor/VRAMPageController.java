@@ -11,7 +11,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.GridPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
@@ -32,14 +32,11 @@ import java.util.ResourceBundle;
 
 /**
  * Allows editing the arrangement of a VRAM page.
- * TODO: Find the max acceptable page, and restrict any further from that. With 5 bits, a hard max is 32, but can we really go that far?
- * TODO: Consider changing the PS1 editor to work like the PC editor, where there's a selection box. It would allow a uniform GUI and things wouldn't be tiny. [First try doubling size.]
  * Created by Kneesnap on 12/2/2018.
  */
 public class VRAMPageController implements Initializable {
-    @FXML private ImageView pcImageView;
-    @FXML private ChoiceBox<Integer> pcPageSelection;
-    @FXML private GridPane psxImageGrid;
+    @FXML private ImageView imageView;
+    @FXML private ChoiceBox<Integer> pageSelection;
 
     @FXML private ImageView selectedView;
     @FXML private Label xLabel;
@@ -51,12 +48,9 @@ public class VRAMPageController implements Initializable {
     // Editor data.
     private BufferedImage fullImage;
     private BufferedImage[] splitImages;
-    private ImageView[] splitImageViews;
     private HashSet<Short> changedPages = new HashSet<>(); // A set of pages which need updating.
     //private boolean[][] overlapGrid; // Used to test if textures overlap.
-
-    // Platform:
-    private int pcSelectedPage;
+    private int selectedPage;
 
     // Configuration:
     private Stage stage;
@@ -74,94 +68,53 @@ public class VRAMPageController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Choose visibility of UI based on
-        boolean isPsx = isPsxMode();
         //this.overlapGrid = new boolean[isPsx ? GameImage.PSX_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH][isPsx ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT];
-        pcImageView.setVisible(!isPsx);
-        pcPageSelection.setVisible(!isPsx);
-        psxImageGrid.setVisible(isPsx);
         setupImages();
 
-        if (isPsx) { // Setup PS1 mode.
-            int index = 0;
-            for (int row = 0; row < psxImageGrid.getRowConstraints().size(); row++) // y
-                for (int column = 0; column < psxImageGrid.getColumnConstraints().size(); column++) // x
-                    psxImageGrid.add(this.splitImageViews[index++], column, row);
+        pageSelection.setItems(FXCollections.observableArrayList(Utils.getIntegerList(this.splitImages.length)));
+        pageSelection.setConverter(new AbstractStringConverter<>(findPage -> {
+            int total = 0;
+            for (int i = 0; i < vloArchive.getImages().size(); i++)
+                if (vloArchive.getImages().get(i).getMultiplierPage() == findPage)
+                    total++;
 
-            for (int i = 0; i < this.splitImageViews.length; i++) {
-                final int finalIndex = i;
+            return "Texture Page #" + findPage + " [" + total + " textures]";
+        }));
 
-                // Handle a click.
-                splitImageViews[i].setOnMousePressed(evt -> {
-                    if (!evt.isPrimaryButtonDown())
-                        return;
+        pageSelection.setValue(this.selectedPage);
+        pageSelection.getSelectionModel().select(this.selectedPage);
+        pageSelection.valueProperty().addListener(((observable, oldValue, newValue) -> {
+            this.selectedPage = newValue;
+            updateAll();
+        }));
 
-                    int realX = ((finalIndex % GameImage.PSX_X_PAGES) * GameImage.PSX_PAGE_WIDTH) + (int) evt.getX() * 2;
-                    int realY = ((finalIndex / GameImage.PSX_X_PAGES) * GameImage.PC_PAGE_HEIGHT) + (int) evt.getY() * 2;
-                    GameImage newImage = vloArchive.getImage(realX, realY);
 
-                    if (newImage == this.selectedImage) {
-                        splitImageViews[finalIndex].requestFocus(); // Allow arrow keys to be listened for, instead of moving cursor.
-                        return; // Has not changed.
-                    }
+        imageView.setOnKeyPressed(this::handleKeyPress);
 
-                    if (newImage != null) {
-                        xField.setText(String.valueOf(newImage.getVramX()));
-                        yField.setText(String.valueOf(newImage.getVramY()));
-                        this.selectedView.setImage(Utils.toFXImage(newImage.toBufferedImage(), true));
-                        splitImageViews[finalIndex].requestFocus(); // Allow arrow keys to be listened for, instead of moving cursor.
-                    }
+        imageView.setOnMousePressed(evt -> {
+            if (!evt.isPrimaryButtonDown())
+                return;
 
-                    this.selectedImage = newImage;
-                    updateDisplay();
-                });
+            double scale = imageView.getFitWidth() / (double) this.splitImages[this.selectedPage].getWidth();
+            int realX = isPsxMode() ? ((this.selectedPage % GameImage.PSX_X_PAGES) * GameImage.PSX_PAGE_WIDTH) + (int) (evt.getX() / scale) : (int) evt.getX();
+            int realY = isPsxMode() ? ((this.selectedPage / GameImage.PSX_X_PAGES) * GameImage.PSX_PAGE_HEIGHT) + (int) evt.getY() : ((this.selectedPage * GameImage.PC_PAGE_HEIGHT) + (int) evt.getY());
+            GameImage newImage = vloArchive.getImage(realX, realY);
 
-                splitImageViews[i].setOnKeyPressed(this::handleKeyPress); // Handle a key-press.
+            if (newImage == this.selectedImage) {
+                this.imageView.requestFocus(); // Allow arrow keys to be listened for, instead of moving cursor.
+                return; // Has not changed.
             }
-        } else { // Setup PC mode.
-            pcPageSelection.setItems(FXCollections.observableArrayList(Utils.getIntegerList(this.splitImages.length)));
-            pcPageSelection.setConverter(new AbstractStringConverter<>(findPage -> {
-                int total = 0;
-                for (int i = 0; i < vloArchive.getImages().size(); i++)
-                    if (vloArchive.getImages().get(i).getPage() == findPage)
-                        total++;
 
-                return "Texture Page #" + findPage + " [" + total + " textures]";
-            }));
+            if (newImage != null) {
+                xField.setText(String.valueOf(newImage.getVramX()));
+                yField.setText(String.valueOf(newImage.getVramY()));
+                this.selectedView.setImage(Utils.toFXImage(newImage.toBufferedImage(), true));
+                this.imageView.requestFocus(); // Allow arrow keys to be listened for, instead of moving cursor.
+            }
 
-            pcPageSelection.setValue(this.pcSelectedPage);
-            pcPageSelection.getSelectionModel().select(this.pcSelectedPage);
-            pcPageSelection.valueProperty().addListener(((observable, oldValue, newValue) -> {
-                this.pcSelectedPage = newValue;
-                updateAll();
-            }));
-
-
-            pcImageView.setOnKeyPressed(this::handleKeyPress);
-
-            pcImageView.setOnMousePressed(evt -> {
-                if (!evt.isPrimaryButtonDown())
-                    return;
-
-                int realX = (int) evt.getX();
-                int realY = (this.pcSelectedPage * GameImage.PC_PAGE_HEIGHT) + (int) evt.getY();
-                GameImage newImage = vloArchive.getImage(realX, realY);
-
-                if (newImage == this.selectedImage) {
-                    this.pcImageView.requestFocus(); // Allow arrow keys to be listened for, instead of moving cursor.
-                    return; // Has not changed.
-                }
-
-                if (newImage != null) {
-                    xField.setText(String.valueOf(newImage.getVramX()));
-                    yField.setText(String.valueOf(newImage.getVramY()));
-                    this.selectedView.setImage(Utils.toFXImage(newImage.toBufferedImage(), true));
-                    this.pcImageView.requestFocus(); // Allow arrow keys to be listened for, instead of moving cursor.
-                }
-
-                this.selectedImage = newImage;
-                updateDisplay();
-            });
-        }
+            this.selectedImage = newImage;
+            updateDisplay();
+        });
 
         Utils.setHandleTestKeyPress(this.xField, Utils::isSignedShort, newX -> setPosition(Integer.parseInt(newX), this.selectedImage.getVramY(), false));
         Utils.setHandleTestKeyPress(this.yField, Utils::isSignedShort, newY -> setPosition(this.selectedImage.getVramX(), Integer.parseInt(newY), false));
@@ -171,10 +124,6 @@ public class VRAMPageController implements Initializable {
         Platform.runLater(() -> {
             stage.setOnCloseRequest(evt -> cancel()); // Window closed -> cancel.
             Utils.closeOnEscapeKey(stage, this::cancel); // Escape -> cancel.
-            if (!isPsxMode()) { // Shrink to a smaller size when the total space is unused.
-                stage.setMaxWidth(262);
-                stage.setMinWidth(stage.getMaxWidth());
-            }
         });
     }
 
@@ -210,13 +159,13 @@ public class VRAMPageController implements Initializable {
         if (this.selectedImage == null)
             return;
 
-        short finalX = (short) Math.min(Math.max(0, x), this.fullImage.getWidth() - (this.selectedImage.getFullWidth() / this.selectedImage.getWidthMultiplier()));
+        short finalX = (short) Math.min(Math.max(0, x), (this.fullImage.getWidth() * (isPsxMode() ? 4 : 1)) - this.selectedImage.getFullWidth());
         short finalY = (short) Math.min(Math.max(0, y), this.fullImage.getHeight() - this.selectedImage.getFullHeight());
         updateTextFields |= ((short) x != finalX) || ((short) y != finalY);
         if (finalX == this.selectedImage.getVramX() && finalY == this.selectedImage.getVramY())
             return; // No change!
 
-        this.changedPages.add(this.selectedImage.getPage()); // Mark the source page for updating.
+        this.changedPages.add(this.selectedImage.getMultiplierPage()); // Mark the source page for updating.
         this.changedPages.add(this.selectedImage.getEndPage()); // Make sure if the image is split among two texture pages they both get updated.
         saveOriginalPosition();
 
@@ -228,7 +177,7 @@ public class VRAMPageController implements Initializable {
         if (updateTextFields)
             yField.setText(String.valueOf(this.selectedImage.getVramY()));
 
-        this.changedPages.add(this.selectedImage.getPage()); // Mark the destination page for updating.
+        this.changedPages.add(this.selectedImage.getMultiplierPage()); // Mark the destination page for updating.
         this.changedPages.add(this.selectedImage.getEndPage()); // Make sure if the image is split among two texture pages they both get updated.
         updateAll();
     }
@@ -239,26 +188,21 @@ public class VRAMPageController implements Initializable {
             updateSplitImage(updatePage);
         this.changedPages.clear();
 
-        if (!isPsxMode()) // Update PC UI.
-            this.pcImageView.setImage(Utils.toFXImage(this.splitImages[this.pcSelectedPage], false));
+        this.imageView.setImage(Utils.toFXImage(this.splitImages[this.selectedPage], false));
+        this.imageView.setPreserveRatio(false);
+        this.imageView.setFitWidth(256);
+        this.imageView.setFitHeight(256);
     }
 
     @SneakyThrows
     private void setupImages() {
         this.fullImage = vloArchive.makeVRAMImage(this.fullImage); // Main image. (Must run first so split images have something to grab from.)
 
-        // Setup image cache.
-        int totalPages = GameImage.TOTAL_PAGES;
-
-        // Setup image views.
-        this.splitImageViews = new ImageView[totalPages];
-        for (int i = 0; i < this.splitImageViews.length; i++)
-            this.splitImageViews[i] = new ImageView();
-
         // Setup images. (After views)
+        int totalPages = GameImage.TOTAL_PAGES;
         this.splitImages = new BufferedImage[totalPages];
         for (int i = 0; i < this.splitImages.length; i++) {
-            this.splitImages[i] = new BufferedImage(isPsxMode() ? GameImage.PSX_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH, isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT, fullImage.getType());
+            this.splitImages[i] = new BufferedImage(isPsxMode() ? GameImage.PSX_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH, isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT, this.fullImage.getType());
             updateSplitImage(i);
         }
     }
@@ -274,11 +218,6 @@ public class VRAMPageController implements Initializable {
         Graphics2D graphics = image.createGraphics();
         graphics.drawImage(this.fullImage, 0, 0, image.getWidth(), image.getHeight(), startX, startY, startX + width, startY + height, null);
         graphics.dispose();
-
-        // Update view.
-        splitImageViews[splitIndex].setImage(Utils.toFXImage(image, false));
-        splitImageViews[splitIndex].setFitWidth(image.getWidth() / 2);
-        splitImageViews[splitIndex].setFitHeight(image.getHeight() / 2);
     }
 
     private void updateAll() {
@@ -302,8 +241,8 @@ public class VRAMPageController implements Initializable {
 
         // Keep within one page test.
         for (GameImage image : vloArchive.getImages()) {
-            if (image.getPage() != image.getEndPage()) {
-                warning.append("WARNING: Texture exceeds size of page ").append(image.getPage()).append(".").append(Constants.NEWLINE);
+            if (image.getMultiplierPage() != image.getEndPage()) {
+                warning.append("WARNING: Texture exceeds size of page ").append(image.getMultiplierPage()).append(".").append(Constants.NEWLINE);
                 break;
             }
         }
@@ -336,11 +275,11 @@ public class VRAMPageController implements Initializable {
         // Finish warning.
         if (warning.length() > 0) { // Has warning.
             textLabel.setText(warning.toString());
-            textLabel.setStyle("-fx-text-inner-color: red;");
+            textLabel.setTextFill(Color.RED);
             textLabel.setVisible(true);
         } else { // No warning.
             textLabel.setText("Select an image in the texture page.");
-            textLabel.setStyle(null);
+            textLabel.setTextFill(Color.BLACK);
             textLabel.setVisible(!hasSelectedImage);
         }
     }
