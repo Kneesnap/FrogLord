@@ -54,6 +54,7 @@ public class GameImage extends GameObject implements Cloneable {
     public static final int PSX_PAGE_HEIGHT = 256;
     public static final int PSX_X_PAGES = 16;
     public static final int PSX_Y_PAGES = 2;
+    public static final int TOTAL_PAGES = 32; // It seems to be 32 on both PC and PS1.
 
     public static final int FLAG_TRANSLUCENT = Constants.BIT_FLAG_0;
     public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused.
@@ -220,9 +221,22 @@ public class GameImage extends GameObject implements Cloneable {
      * @return page
      */
     public short getPage() {
+        return getPage(getVramX(), getVramY());
+    }
+
+    /**
+     * Gets the page the end of this image lies on.
+     * @return endPage
+     */
+    public short getEndPage() {
+        return getPage(getVramX() + ((getFullWidth() - 1) / getWidthMultiplier()), getVramY() + getFullHeight() - 1);
+    }
+
+
+    private short getPage(int vramX, int vramY) {
         return getParent().isPsxMode()
-                ? (short) (((getVramY() / PSX_PAGE_HEIGHT) * PSX_X_PAGES) + (getVramX() / PSX_PAGE_WIDTH))
-                : (short) (getVramY() / PC_PAGE_HEIGHT);
+                ? (short) (((vramY / PSX_PAGE_HEIGHT) * PSX_X_PAGES) + (vramX / PSX_PAGE_WIDTH))
+                : (short) (vramY / PC_PAGE_HEIGHT);
     }
 
     /**

@@ -174,7 +174,7 @@ public class VLOArchive extends GameFile {
      */
     public GameImage getImage(double x, double y) {
         for (GameImage image : getImages())
-            if (image.contains(x, y))
+            if (image.contains(x * image.getWidthMultiplier(), y))
                 return image;
         return null;
     }
@@ -232,14 +232,7 @@ public class VLOArchive extends GameFile {
     }
 
     private int getVramHeight() {
-        if (isPsxMode())
-            return GameImage.PSX_Y_PAGES * GameImage.PSX_PAGE_HEIGHT;
-
-        int maxHeight = 0;
-        for (GameImage testImage : getImages())
-            maxHeight = Math.max(maxHeight, testImage.getVramY() + testImage.getFullHeight());
-        return GameImage.PC_PAGE_HEIGHT * ((maxHeight / GameImage.PC_PAGE_HEIGHT) + (maxHeight % GameImage.PC_PAGE_HEIGHT != 0 ? 1 : 0));
-
+        return isPsxMode() ? (GameImage.PSX_PAGE_HEIGHT * GameImage.PSX_Y_PAGES) : (GameImage.PC_PAGE_HEIGHT * GameImage.TOTAL_PAGES);
     }
 
     /**
@@ -273,28 +266,11 @@ public class VLOArchive extends GameFile {
             for (ClutEntry clutEntry : getClutEntries())
                 graphics.drawImage(clutEntry.makeImage(), null, clutEntry.getClutRect().getX(), clutEntry.getClutRect().getY());
 
-        // Create outlines. TODO: This should probably be done by the editor instead, by splitting up the image into chunks.
-        graphics.setColor(Constants.COLOR_TAN);
-        if (isPsxMode()) {
-            for (int yLine = 0; yLine <= GameImage.PSX_Y_PAGES; yLine++) {
-                int drawY = GameImage.PSX_PAGE_HEIGHT * yLine;
-                graphics.drawLine(0, drawY, vramImage.getWidth(), drawY);
-            }
-
-            for (int xLine = 0; xLine <= GameImage.PSX_X_PAGES; xLine++) {
-                int drawX = GameImage.PSX_PAGE_WIDTH * xLine;
-                graphics.drawLine(drawX, 0, drawX, vramImage.getHeight());
-            }
-
-        } else {
-            for (int yLine = 0; yLine < vramImage.getHeight(); yLine += GameImage.PC_PAGE_HEIGHT)
-                graphics.drawLine(0, yLine, vramImage.getWidth(), yLine);
-        }
-
+        // Draw images.
         for (GameImage image : getImages())
             graphics.drawImage(image.toBufferedImage(VRAM_EXPORT), null, (image.getVramX() / image.getWidthMultiplier()), image.getVramY());
 
-        graphics.dispose();
+        graphics.dispose(); // Cleanup.
         return vramImage;
     }
 }

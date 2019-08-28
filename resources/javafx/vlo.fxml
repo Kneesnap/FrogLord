@@ -55,8 +55,12 @@
             <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" HBox.hgrow="NEVER" />
           <AnchorPane HBox.hgrow="ALWAYS">
                <children>
-                    <Button layoutX="4.0" layoutY="4.0" mnemonicParsing="false" onAction="#openPaddingEditor" prefHeight="25.0" prefWidth="72.0" text="Padding..." AnchorPane.leftAnchor="4.0" AnchorPane.topAnchor="4.0" />
-                    <Button layoutX="4.0" layoutY="31.0" mnemonicParsing="false" onAction="#openVramEditor" prefHeight="25.0" prefWidth="72.0" text="VRAM..." AnchorPane.leftAnchor="4.0" AnchorPane.topAnchor="31.0" />
+                   <Button layoutX="4.0" layoutY="4.0" mnemonicParsing="false" onAction="#openPaddingEditor"
+                           prefHeight="25.0" prefWidth="72.0" text="Padding" AnchorPane.leftAnchor="4.0"
+                           AnchorPane.topAnchor="4.0"/>
+                   <Button layoutX="4.0" layoutY="31.0" mnemonicParsing="false" onAction="#openVramEditor"
+                           prefHeight="25.0" prefWidth="72.0" text="VRAM" AnchorPane.leftAnchor="4.0"
+                           AnchorPane.topAnchor="31.0"/>
                     <VBox fx:id="flagBox" centerShape="false" layoutX="4.0" layoutY="64.0" prefHeight="180.0" prefWidth="98.0" AnchorPane.leftAnchor="4.0" />
                     <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" pickOnBounds="true" preserveRatio="true" x="344.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                     <CheckBox fx:id="sizeCheckBox" layoutX="4.0" layoutY="248.0" mnemonicParsing="false" onAction="#onImageToggle" selected="true" text="Large Image" AnchorPane.leftAnchor="4.0" />
