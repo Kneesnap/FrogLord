@@ -292,7 +292,7 @@ public class VLOArchive extends GameFile {
         }
 
         for (GameImage image : getImages())
-            graphics.drawImage(image.toBufferedImage(VRAM_EXPORT), null, (image.getVramX() / image.getWidthMultiplier()), image.getVramY()); //TODO: Is this the secret to U calculation?
+            graphics.drawImage(image.toBufferedImage(VRAM_EXPORT), null, (image.getVramX() / image.getWidthMultiplier()), image.getVramY());
 
         graphics.dispose();
         return vramImage;

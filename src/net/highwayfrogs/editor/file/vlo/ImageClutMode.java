@@ -10,9 +10,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum ImageClutMode {
-    MODE_4BIT(4, "4-Bit"),
-    MODE_8BIT(2, "8-Bit"),
-    MODE_15BIT_NO_CLUT(1, "15-Bit No CLUT");
+    MODE_4BIT(4, "4-Bit CLUT"),
+    MODE_8BIT(2, "8-Bit CLUT"),
+    MODE_15BIT_NO_CLUT(1, "15-Bit Color");
 
     private final int multiplier;
     private final String displayName;

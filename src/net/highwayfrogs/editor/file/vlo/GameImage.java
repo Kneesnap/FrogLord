@@ -131,9 +131,8 @@ public class GameImage extends GameObject implements Cloneable {
         }
 
         reader.jumpReturn();
-        //Utils.verify(getParent().isPsxMode() || (readU == getU() && readV == getV()), "Image UV does not match the calculated one! [%d,%d] [%d, %d]", readU, readV, getU(), getV()); // Psx mode has this disabled because there are lots of problems with saving PSX VLOs right now. //TODO: Fix this check.
-        if (readU != getU() || readV != getV()) //TODO
-            System.out.println(getParent().getFileEntry().getDisplayName() + "@" + getParent().getImages().size() + " Mismatch! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "]");
+        if (readU != getU() || readV != getV())
+            System.out.println(getParent().getFileEntry().getDisplayName() + "@" + getParent().getImages().size() + " UV Mismatch! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "]");
     }
 
     @Override
@@ -248,7 +247,16 @@ public class GameImage extends GameObject implements Cloneable {
      * @return uValue
      */
     public short getU() {
-        return (short) ((getVramX() % MAX_DIMENSION) + ((getFullWidth() - getIngameWidth()) / 2));
+        short u = (short) (getVramX() % (getParent().isPsxMode() ? PSX_PAGE_WIDTH * getWidthMultiplier() : PC_PAGE_WIDTH));
+
+        if (getParent().isPsxMode()) { // PS1 logic.
+            if (getFullHeight() != getIngameHeight())
+                u++;
+            return u;
+        }
+
+        // PC logic.
+        return (short) (u + ((getFullWidth() - getIngameWidth()) / 2));
     }
 
     /**
@@ -256,7 +264,7 @@ public class GameImage extends GameObject implements Cloneable {
      * @return vValue
      */
     public short getV() {
-        return (short) ((getVramY() % MAX_DIMENSION) + ((getFullHeight() - getIngameHeight()) / 2));
+        return (short) ((getVramY() % (getParent().isPsxMode() ? PSX_PAGE_HEIGHT : PC_PAGE_HEIGHT)) + ((getFullHeight() - getIngameHeight()) / 2));
     }
 
     private void readPSXPixel(int clutIndex, ClutEntry clut, ByteBuffer buffer) {
