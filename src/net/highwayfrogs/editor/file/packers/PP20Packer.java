@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.packers;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.writer.BitWriter;
 import net.highwayfrogs.editor.system.ByteArrayWrapper;
@@ -22,6 +23,8 @@ import java.nio.ByteBuffer;
  * - https://eblong.com/zarf/blorb/mod-spec.txt
  * - https://books.google.com/books?id=ujnQogzx_2EC&printsec=frontcover (Specifically, the section about how LzSS improves upon Lz77)
  * - https://www.programcreek.com/java-api-examples/index.php?source_dir=trie4j-master/trie4j/src/kitchensink/java/org/trie4j/lz/LZSS.java
+ * - http://michael.dipperstein.com/lzss/
+ * - https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
@@ -39,11 +42,7 @@ public class PP20Packer {
     public static final int OPTIONAL_BITS_SMALL_SIZE_MAX_OFFSET = Utils.power(2, OPTIONAL_BITS_SMALL_OFFSET);
     public static final String MARKER = "PP20";
     public static final byte[] MARKER_BYTES = MARKER.getBytes();
-
-    private static final IntList[] DICTIONARY = new IntList[256];
-    private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
-    private static final ByteArrayWrapper searchBuffer = new ByteArrayWrapper(0);
-    private static final ByteArrayWrapper noMatchQueue = new ByteArrayWrapper(0);
+    private static final ThreadLocal<PackerDataInstance> dataPerThread = ThreadLocal.withInitial(PackerDataInstance::new);
 
     /**
      * Pack a byte array into PP20 compressed data.
@@ -52,24 +51,26 @@ public class PP20Packer {
      */
     public static byte[] packData(byte[] data) {
         Utils.reverseByteArray(data); // Does this cause problems?
+        PackerDataInstance packerData = dataPerThread.get();
 
         // Take the compressed data, and pad it with the file structure. Then, we're done.
-        byte[] compressedData = compressData(data);
+        byte[] compressedData = compressData(data, packerData);
         System.arraycopy(MARKER_BYTES, 0, compressedData, 0, MARKER_BYTES.length);
         System.arraycopy(COMPRESSION_SETTINGS, 0, compressedData, 4, COMPRESSION_SETTINGS.length);
 
-        INT_BUFFER.clear();
-        System.arraycopy(INT_BUFFER.putInt(data.length).array(), 1, compressedData, compressedData.length - 4, Constants.INTEGER_SIZE - 1);
+        System.arraycopy(packerData.getIntBytes(data.length), 1, compressedData, compressedData.length - 4, Constants.INTEGER_SIZE - 1);
         Utils.reverseByteArray(data); // Makes sure the input array's contents have no net change when this method finishes.
         return compressedData;
     }
 
-    private static int findLongest(byte[] data, int bufferEnd, ByteArrayWrapper target) {
+    private static int findLongest(PackerDataInstance packerData, byte[] data, int bufferEnd) {
+        ByteArrayWrapper target = packerData.getSearchBuffer();
+
         target.clear();
         byte startByte = data[bufferEnd];
         target.add(startByte);
 
-        IntList possibleResults = DICTIONARY[hashCode(startByte)];
+        IntList possibleResults = packerData.getDictionary()[hashCode(startByte)];
         if (possibleResults == null)
             return -1;
 
@@ -109,26 +110,22 @@ public class PP20Packer {
         return target.size() >= MINIMUM_DECODE_DATA_LENGTH ? bestIndex : -1;
     }
 
-    private static byte[] compressData(byte[] data) {
+    private static byte[] compressData(byte[] data, PackerDataInstance packerData) {
         if (COMPRESSION_SETTING_MAX_OFFSETS == null) { // Generate cached offset values. (This is a rather heavy operation, so we cache the stuff.)
             COMPRESSION_SETTING_MAX_OFFSETS = new int[COMPRESSION_SETTINGS.length + MINIMUM_DECODE_DATA_LENGTH];
             for (int i = 0; i < COMPRESSION_SETTING_MAX_OFFSETS.length; i++)
                 COMPRESSION_SETTING_MAX_OFFSETS[i] = getMaximumOffset(i);
         }
 
-        // Clear dictionary.
-        for (IntList list : DICTIONARY)
-            if (list != null)
-                list.clear();
-
+        packerData.setup(data.length);
         BitWriter writer = new BitWriter();
         writer.setReverseBytes(true);
 
-        noMatchQueue.clearExpand(data.length);
-        searchBuffer.clearExpand(data.length);
+        ByteArrayWrapper searchBuffer = packerData.getSearchBuffer();
+        ByteArrayWrapper noMatchQueue = packerData.getNoMatchQueue();
 
         for (int i = 0; i < data.length; i++) {
-            int bestIndex = findLongest(data, i, searchBuffer);
+            int bestIndex = findLongest(packerData, data, i);
 
             if (bestIndex >= 0) { // Verify the compression index was found.
                 boolean hasRawData = (noMatchQueue.size() > 0);
@@ -142,13 +139,13 @@ public class PP20Packer {
 
                 writeDataReference(writer, searchBuffer.size(), i - bestIndex - 1);
                 for (int byteId = 0; byteId < searchBuffer.size(); byteId++) // Add to dictionary.
-                    addToDictionary(searchBuffer.get(byteId), i++);
+                    packerData.addToDictionary(searchBuffer.get(byteId), i++);
 
                 i--;
             } else { // It's not large enough to be compressed.
                 byte temp = data[i];
                 noMatchQueue.add(temp);
-                addToDictionary(temp, i); // Add current byte to the search dictionary.
+                packerData.addToDictionary(temp, i); // Add current byte to the search dictionary.
             }
         }
 
@@ -158,15 +155,6 @@ public class PP20Packer {
         }
 
         return writer.toByteArray(8, 4);
-    }
-
-    private static void addToDictionary(byte byteValue, int index) {
-        int hashCode = hashCode(byteValue);
-        IntList list = DICTIONARY[hashCode];
-        if (list == null)
-            DICTIONARY[hashCode] = list = new IntList();
-
-        list.add(index);
     }
 
     private static int hashCode(byte byteVal) {
@@ -224,5 +212,37 @@ public class PP20Packer {
 
         for (int i = 0; i < bytes.size(); i++) // Writes the data.
             writer.writeByte(bytes.get(i));
+    }
+
+    @Getter
+    private static class PackerDataInstance {
+        private final IntList[] dictionary = new IntList[256];
+        private final ByteBuffer intBuffer = ByteBuffer.allocate(Constants.INTEGER_SIZE);
+        private final ByteArrayWrapper searchBuffer = new ByteArrayWrapper(0);
+        private final ByteArrayWrapper noMatchQueue = new ByteArrayWrapper(0);
+
+        public byte[] getIntBytes(int number) {
+            intBuffer.clear();
+            return intBuffer.putInt(number).array();
+        }
+
+        public void setup(int uncompressedLength) {
+            // Clear dictionary.
+            for (int i = 0; i < dictionary.length; i++)
+                if (dictionary[i] != null)
+                    dictionary[i].clear();
+
+            noMatchQueue.clearExpand(uncompressedLength);
+            searchBuffer.clearExpand(uncompressedLength);
+        }
+
+        public void addToDictionary(byte byteValue, int index) {
+            int hashCode = PP20Packer.hashCode(byteValue);
+            IntList list = dictionary[hashCode];
+            if (list == null)
+                dictionary[hashCode] = list = new IntList();
+
+            list.add(index);
+        }
     }
 }
