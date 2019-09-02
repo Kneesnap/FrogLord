@@ -13,6 +13,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Box;
 import javafx.util.StringConverter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -364,7 +365,7 @@ public class GUIEditorGrid {
      * @param vector The SVector itself.
      */
     public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller, int bits) {
-        addFloatVector(text, vector, update, controller, bits, null);
+        addFloatVector(text, vector, update, controller, bits, null, null);
     }
 
     /**
@@ -372,17 +373,17 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller, int bits, Vector origin) {
-        if (controller != null) {
+    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller, int bits, Vector origin, Box moveBox) {
+        if (controller != null && moveBox == null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
-                    () -> controller.getGeneralManager().updateMarker(controller.getGeneralManager().getShowPosition() == null || !Objects.equals(vector, controller.getGeneralManager().getShowPosition()) ? vector : null, bits, origin));
+                    () -> controller.getGeneralManager().updateMarker(controller.getGeneralManager().getShowPosition() == null || !Objects.equals(vector, controller.getGeneralManager().getShowPosition()) ? vector : null, bits, origin, null));
         } else {
             addBoldLabel(text + ":");
         }
 
         Runnable onPass = () -> {
             if (controller != null)
-                controller.getGeneralManager().updateMarker(vector, bits, origin);
+                controller.getGeneralManager().updateMarker(vector, bits, origin, moveBox);
 
             if (update != null)
                 update.run();

@@ -1,11 +1,22 @@
 package net.highwayfrogs.editor.file.map.poly;
 
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.image.ImageView;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.poly.polygon.*;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture.PolyTextureFlag;
+import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Arrays;
 
@@ -30,6 +41,7 @@ public class MAPPolygonData {
     private static final String[] TRI_COLOR_NAMES = {"1?", "2?", "3?"}; //TODO
     private static final String[] QUAD_COLOR_NAMES = {"Top Left", "Bottom Left", "Top Right", "Bottom Right"};
     private static final String[][] COLOR_BANK = {SINGLE_COLOR_NAME, null, TRI_COLOR_NAMES, QUAD_COLOR_NAMES};
+    private static final ImageFilterSettings SHOW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true);
 
     /**
      * Gets the amount of vertices this polygon uses.
@@ -146,12 +158,40 @@ public class MAPPolygonData {
     /**
      * Setup an editor for this data.
      */
-    public void setupEditor(GUIEditorGrid editor) {
+    public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
         //TODO: Toggles. [careful here to make sure it stays compatible!]
 
+        // Texture Editor.
         if (isTextured()) {
-            //TODO: textureId, flags, uvs, image preview.
+            TextureMap texMap = controller.getMapMesh().getTextureMap();
+            VLOArchive suppliedVLO = controller.getController().getFile().getVlo();
+            GameImage image = suppliedVLO.getImageByTextureId(texMap.getRemap(getTextureId()));
+
+            // Texture Preview. (Click -> change.)
+            ImageView view = editor.addCenteredImage(image.toFXImage(SHOW_SETTINGS), 150);
+            view.setOnMouseClicked(evt -> suppliedVLO.promptImageSelection(newImage -> {
+                short newValue = newImage.getTextureId();
+                if (texMap.getRemapList() != null)
+                    newValue = (short) texMap.getRemapList().indexOf(newValue);
+
+                if (newValue == (short) -1) {
+                    Utils.makePopUp("This image is not part of the remap! It can't be used!", AlertType.INFORMATION); // Show this as a popup maybe.
+                    return;
+                }
+
+                this.textureId = newValue;
+                view.setImage(newImage.toFXImage(SHOW_SETTINGS));
+                controller.getGeometryManager().refreshView();
+            }, false));
+
+            // Flags.
+            for (PolyTextureFlag flag : PolyTextureFlag.values())
+                editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> setFlag(flag, newState));
         }
+
+        // UVs. (TODO: Better editor? Maybe have sliders + a live preview?)
+        for (int i = 0; i < getUvs().length; i++)
+            getUvs()[i].setupEditor("UV #" + i, editor);
 
         // Color Editor.
         if (this.colors != null) {
@@ -159,11 +199,56 @@ public class MAPPolygonData {
             String[] nameArray = COLOR_BANK[this.colors.length - 1];
             for (int i = 0; i < this.colors.length; i++)
                 editor.addColorPicker(nameArray[i], this.colors[i].toRGB(), this.colors[i]::fromRGB);
-            //TODO: Update preview when color is updated.
+            //TODO: Update map display when color is updated. (Update texture map.)
         }
 
-        // TODO: Vertice tools. [Show vertices, change them. Add new ones]
-        editor.addLabel("Vertices", Arrays.toString(this.vertices));
+        controller.getVertexManager().showVertices(getVertices());
+        editor.addBoldLabel("Vertice Controls:");
+        editor.addButton("Change Vertex", () -> {
+            SVector selected = controller.getVertexManager().getSelectedVector();
+            if (selected == null) {
+                Utils.makePopUp("You must select the vertex you'd like to change first.", AlertType.WARNING);
+                return;
+            }
+
+            // Allow changing.
+            controller.getVertexManager().selectVertex(newVertex -> {
+                int oldArrayIndex = Utils.indexOf(getVertices(), controller.getController().getFile().getVertexes().indexOf(selected));
+                if (oldArrayIndex == -1)
+                    throw new RuntimeException("Failed to find the real index into the vertex array.");
+
+                getVertices()[oldArrayIndex] = controller.getController().getFile().getVertexes().indexOf(newVertex);
+                if (getVertices()[oldArrayIndex] == -1)
+                    throw new RuntimeException("Failed to find the vertex id for the new vertex.");
+            }, null);
+
+        });
+    }
+
+    /**
+     * Test if a texture flag is present.
+     * @param flag The flag in question.
+     * @return flagPresent
+     */
+    public boolean testFlag(PolyTextureFlag flag) {
+        return (this.flags & flag.getFlag()) == flag.getFlag();
+    }
+
+    /**
+     * Set a texture flag state.
+     * @param flag     The flag to set.
+     * @param newState The new flag state.
+     */
+    public void setFlag(PolyTextureFlag flag, boolean newState) {
+        boolean currentState = testFlag(flag);
+        if (currentState == newState)
+            return; // Prevents the ^ operation from breaking the value.
+
+        if (newState) {
+            this.flags |= flag.getFlag();
+        } else {
+            this.flags ^= flag.getFlag();
+        }
     }
 
     private static ByteUV[] cloneUVs(ByteUV[] toClone) {

@@ -4,7 +4,10 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Box;
 import javafx.scene.shape.DrawMode;
+import javafx.scene.transform.Transform;
+import javafx.scene.transform.Translate;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -74,8 +77,8 @@ public class GeneralManager extends MapManager {
         generalEditor.addShortField("Level Timer", map.getLevelTimer(), map::setLevelTimer, null);
 
         IVector gridOrigin = new IVector(map.getWorldX(map.getStartXTile(), true), -map.getGridStack(map.getStartXTile(), map.getStartZTile()).getHeight(), map.getWorldZ(map.getStartZTile(), true));
-        generalEditor.addFloatVector("Camera Source", map.getCameraSourceOffset(), null, getController(), gridOrigin.defaultBits(), gridOrigin);
-        generalEditor.addFloatVector("Camera Target", map.getCameraTargetOffset(), null, getController(), gridOrigin.defaultBits(), gridOrigin);
+        generalEditor.addFloatVector("Camera Source", map.getCameraSourceOffset(), null, getController(), gridOrigin.defaultBits(), gridOrigin, null);
+        generalEditor.addFloatVector("Camera Target", map.getCameraTargetOffset(), null, getController(), gridOrigin.defaultBits(), gridOrigin, null);
         generalEditor.addSeparator(25);
 
         // Group:
@@ -128,10 +131,14 @@ public class GeneralManager extends MapManager {
      * Updates the marker to display at the given position.
      * If null is supplied, it'll get removed.
      */
-    public void updateMarker(Vector vec, int bits, Vector origin) {
-        getRenderManager().addMissingDisplayList(GENERIC_POS_LIST);
-        getRenderManager().clearDisplayList(GENERIC_POS_LIST);
+    public void updateMarker(Vector vec, int bits, Vector origin, Box updateBox) {
+        if (updateBox == null) {
+            getRenderManager().addMissingDisplayList(GENERIC_POS_LIST);
+            getRenderManager().clearDisplayList(GENERIC_POS_LIST);
+        }
+
         this.showPosition = vec;
+
         if (vec != null) {
             float baseX = vec.getFloatX(bits);
             float baseY = vec.getFloatY(bits);
@@ -142,7 +149,20 @@ public class GeneralManager extends MapManager {
                 baseZ += origin.getFloatZ();
             }
 
-            getRenderManager().addBoundingBoxFromMinMax(GENERIC_POS_LIST, baseX - GENERIC_POS_SIZE, baseY - GENERIC_POS_SIZE, baseZ - GENERIC_POS_SIZE, baseX + GENERIC_POS_SIZE, baseY + GENERIC_POS_SIZE, baseZ + GENERIC_POS_SIZE, GENERIC_POS_MATERIAL, true);
+            if (updateBox != null) {
+                if (updateBox.getTransforms() != null)
+                    for (Transform transform : updateBox.getTransforms()) {
+                        if (!(transform instanceof Translate))
+                            continue;
+
+                        Translate translate = (Translate) transform;
+                        translate.setX(baseX);
+                        translate.setY(baseY);
+                        translate.setZ(baseZ);
+                    }
+            } else {
+                getRenderManager().addBoundingBoxFromMinMax(GENERIC_POS_LIST, baseX - GENERIC_POS_SIZE, baseY - GENERIC_POS_SIZE, baseZ - GENERIC_POS_SIZE, baseX + GENERIC_POS_SIZE, baseY + GENERIC_POS_SIZE, baseZ + GENERIC_POS_SIZE, GENERIC_POS_MATERIAL, true);
+            }
         }
     }
 }

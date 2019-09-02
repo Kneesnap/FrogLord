@@ -1392,12 +1392,36 @@ public class Utils {
      * @param find  The value to look for. Can be null.
      * @return contains
      */
-    @SuppressWarnings({"ForLoopReplaceableByForEach"})
     public static <T> boolean contains(T[] array, T find) {
+        return indexOf(array, find) >= 0;
+    }
+
+    /**
+     * Tests if an array contains a value. Creates no objects.
+     * @param array The array to search.
+     * @param find  The value to look for. Can be null.
+     * @return contains
+     */
+    @SuppressWarnings({"ForLoopReplaceableByForEach"})
+    public static <T> int indexOf(T[] array, T find) {
         for (int i = 0; i < array.length; i++)
             if (Objects.equals(find, array[i]))
-                return true;
-        return false;
+                return i;
+        return -1;
+    }
+
+    /**
+     * Tests if an array contains a value. Creates no objects.
+     * @param array The array to search.
+     * @param find  The value to look for. Can be null.
+     * @return contains
+     */
+    @SuppressWarnings({"ForLoopReplaceableByForEach"})
+    public static int indexOf(int[] array, int find) {
+        for (int i = 0; i < array.length; i++)
+            if (find == array[i])
+                return i;
+        return -1;
     }
 
     /**
