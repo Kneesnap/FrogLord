@@ -29,6 +29,6 @@ public class CursorVertexColor implements VertexColor {
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
 
         graphics.setColor(getOutlineColor());
-        graphics.drawRect(0, 0, image.getWidth(), image.getHeight());
+        graphics.drawRect(0, 0, image.getWidth() - 1, image.getHeight() - 1);
     }
 }
