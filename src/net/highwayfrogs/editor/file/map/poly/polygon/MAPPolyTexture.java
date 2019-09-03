@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
@@ -124,7 +124,7 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
     }
 
     @Override
-    public TextureEntry getEntry(TextureMap map) {
+    public TextureTreeNode getNode(TextureMap map) {
         return map.getEntry(getTextureId());
     }
 

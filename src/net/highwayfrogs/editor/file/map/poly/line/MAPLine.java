@@ -4,7 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 
 /**
  * Represents a PSX line.
@@ -17,7 +17,7 @@ public class MAPLine extends MAPPrimitive {
     }
 
     @Override
-    public TextureEntry getEntry(TextureMap map) {
+    public TextureTreeNode getNode(TextureMap map) {
         return null;
     }
 }

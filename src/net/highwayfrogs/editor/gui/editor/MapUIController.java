@@ -346,9 +346,9 @@ public class MapUIController implements Initializable {
             int v4 = mapMesh.getFaces().get(face + (3 * increment));
             int v5 = mapMesh.getFaces().get(face + (4 * increment));
             int v6 = mapMesh.getFaces().get(face + (5 * increment));
-            mapMesh.addRectangle(color.getTextureEntry(), v1, v2, v3, v4, v5, v6);
+            mapMesh.addRectangle(color.getTextureNode(), v1, v2, v3, v4, v5, v6);
         } else {
-            mapMesh.addTriangle(color.getTextureEntry(), v1, v2, v3);
+            mapMesh.addTriangle(color.getTextureNode(), v1, v2, v3);
         }
     }
 }

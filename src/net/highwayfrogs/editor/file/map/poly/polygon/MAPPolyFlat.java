@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file.map.poly.polygon;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
@@ -22,7 +22,7 @@ import java.awt.image.BufferedImage;
 @Setter
 public class MAPPolyFlat extends MAPPolygon implements VertexColor {
     private PSXColorVector color = new PSXColorVector();
-    private transient TextureEntry textureEntry;
+    private transient TextureTreeNode textureNode;
 
     public MAPPolyFlat(MAPPolygonType type, int verticeCount) {
         super(type, verticeCount);
@@ -41,8 +41,8 @@ public class MAPPolyFlat extends MAPPolygon implements VertexColor {
     }
 
     @Override
-    public TextureEntry getEntry(TextureMap map) {
-        return getTextureEntry();
+    public TextureTreeNode getNode(TextureMap map) {
+        return getTextureNode();
     }
 
     @Override

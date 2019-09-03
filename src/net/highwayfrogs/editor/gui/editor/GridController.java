@@ -22,7 +22,7 @@ import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.map.zone.CameraZone;
 import net.highwayfrogs.editor.file.map.zone.CameraZone.CameraZoneFlag;
 import net.highwayfrogs.editor.file.map.zone.Zone;
@@ -211,7 +211,7 @@ public class GridController implements Initializable {
         graphics.clearRect(0, 0, gridCanvas.getWidth(), gridCanvas.getHeight());
 
         TextureMap texMap = getManager().getMesh().getTextureMap();
-        Image fxTextureImage = Utils.toFXImage(texMap.getImage(), true);
+        Image fxTextureImage = Utils.toFXImage(texMap.getTextureTree().getImage(), false);
 
         ZoneRegion currentRegion = getCurrentRegion();
         for (int z = 0; z < getMap().getGridZCount(); z++) {
@@ -235,8 +235,8 @@ public class GridController implements Initializable {
                     graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
                 } else if (stack.getGridSquares().size() > 0) {
                     GridSquare square = stack.getGridSquares().get(stack.getGridSquares().size() - 1);
-                    TextureEntry entry = square.getPolygon().getEntry(texMap);
-                    graphics.drawImage(fxTextureImage, entry.getX(texMap), entry.getY(texMap), entry.getWidth(texMap), entry.getHeight(texMap), xPos, yPos, getTileWidth(), getTileHeight());
+                    TextureTreeNode entry = square.getPolygon().getNode(texMap);
+                    graphics.drawImage(fxTextureImage, entry.getX(), entry.getY(), entry.getWidth(), entry.getHeight(), xPos, yPos, getTileWidth(), getTileHeight());
                 } else {
                     graphics.setFill(Color.GRAY);
                     graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
@@ -378,9 +378,9 @@ public class GridController implements Initializable {
 
         TextureMap texMap = getManager().getMesh().getTextureMap();
         GridSquare square = stack.getGridSquares().get(layer);
-        TextureEntry entry = square.getPolygon().getEntry(texMap);
+        TextureTreeNode entry = square.getPolygon().getNode(texMap);
 
-        selectedImage.setImage(Utils.toFXImage(entry.getImage(texMap), false));
+        selectedImage.setImage(Utils.toFXImage(entry.getImage(), false));
 
         int x = 1;
         int y = 0;

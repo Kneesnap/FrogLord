@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
@@ -23,7 +23,7 @@ import java.awt.image.BufferedImage;
 @Setter
 public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
     private PSXColorVector[] colors;
-    private transient TextureEntry textureEntry;
+    private transient TextureTreeNode textureNode;
 
     private static final int FULL_SIZE = MAPFile.VERTEX_COLOR_IMAGE_SIZE;
     private static final int SMALL_SIZE = FULL_SIZE / 2;
@@ -71,8 +71,8 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
     }
 
     @Override
-    public TextureEntry getEntry(TextureMap map) {
-        return textureEntry;
+    public TextureTreeNode getNode(TextureMap map) {
+        return textureNode;
     }
 
     @Override

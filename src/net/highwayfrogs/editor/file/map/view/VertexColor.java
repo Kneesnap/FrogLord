@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.map.view;
 
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -14,9 +14,9 @@ public interface VertexColor {
 
     /**
      * Set the cached vertex color texture information.
-     * @param entry Vertex color information.
+     * @param node Vertex color information.
      */
-    public void setTextureEntry(TextureEntry entry);
+    public void setTextureNode(TextureTreeNode node);
 
     /**
      * Make the displayed texture on an image.

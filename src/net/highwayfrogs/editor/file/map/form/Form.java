@@ -195,7 +195,7 @@ public class Form extends GameObject {
             throw new RuntimeException("Tried to create FormData image without FormData.");
 
         BufferedImage newImage = new BufferedImage(getXGridSquareCount() * GRID_PIXELS, getZGridSquareCount() * GRID_PIXELS, BufferedImage.TYPE_INT_ARGB);
-        Graphics graphics = newImage.getGraphics();
+        Graphics graphics = newImage.createGraphics();
 
         // Fill background.
         graphics.setColor(Color.GRAY);

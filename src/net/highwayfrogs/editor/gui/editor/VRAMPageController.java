@@ -32,6 +32,7 @@ import java.util.ResourceBundle;
 
 /**
  * Allows editing the arrangement of a VRAM page.
+ * TODO: Re-add PS1 preview, make it like how TIM Tool works though. One panel is 32x116, and is 2 pixels away horizontally, 2 vertically. Click on one panel to select. When selected, there will be a one-pixel-wide red border surrounding the selected one.
  * Created by Kneesnap on 12/2/2018.
  */
 public class VRAMPageController implements Initializable {

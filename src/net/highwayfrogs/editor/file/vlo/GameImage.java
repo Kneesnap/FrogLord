@@ -330,7 +330,7 @@ public class GameImage extends GameObject implements Cloneable {
         if (image.getType() != BufferedImage.TYPE_INT_ARGB) { // We can only parse TYPE_INT_ARGB, so if it's not that, we must convert the image to that, so it can be parsed properly.
             BufferedImage sourceImage = image;
             image = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
-            Graphics graphics = image.getGraphics();
+            Graphics graphics = image.createGraphics();
             graphics.drawImage(sourceImage, 0, 0, null);
             graphics.dispose();
         }

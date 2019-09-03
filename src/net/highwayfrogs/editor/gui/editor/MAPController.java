@@ -25,6 +25,9 @@ import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.utils.Utils;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -39,6 +42,7 @@ public class MAPController extends EditorController<MAPFile> {
     @FXML private ImageView remapImage;
     @FXML private Button changeTextureButton;
     private MapUIController mapUIController;
+    @FXML private Button saveTextureButton;
 
     @Override
     public void loadFile(MAPFile mapFile) {
@@ -85,6 +89,15 @@ public class MAPController extends EditorController<MAPFile> {
                 this.remapImage.setImage(temp.toFXImage(MWDFile.VLO_ICON_SETTING));
         });
         this.remapList.getSelectionModel().selectFirst();
+
+        saveTextureButton.setOnAction(evt -> {
+            try {
+                ImageIO.write(TextureMap.newTextureMap(getFile()).getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), getFile().getFileEntry().getDisplayName() + ".png"));
+                System.out.print("Saved " + getFile().getFileEntry().getDisplayName() + ".png");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @FXML
@@ -122,7 +135,7 @@ public class MAPController extends EditorController<MAPFile> {
     private void setupMapViewer(Stage stageToOverride, MapMesh mesh, TextureMap texMap) {
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseMap(Utils.toFXImage(texMap.getImage(), true));
+        material.setDiffuseMap(Utils.toFXImage(texMap.getTextureTree().getImage(), false));
 
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(mesh);

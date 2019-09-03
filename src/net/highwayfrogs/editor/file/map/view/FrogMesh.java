@@ -5,7 +5,7 @@ import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
@@ -78,7 +78,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
     /**
      * Add a rectangle polygon.
      */
-    public void addRectangle(TextureEntry entry, int v1, int v2, int v3, int v4, int v5, int v6) {
+    public void addRectangle(TextureTreeNode entry, int v1, int v2, int v3, int v4, int v5, int v6) {
         int texId = getTexCoords().size() / getTexCoordElementSize();
         entry.applyMesh(this, MAPPolygon.QUAD_SIZE);
         getFaces().addAll(v1 + getVerticeStart(), texId, v2 + getVerticeStart(), texId + 1, v3 + getVerticeStart(), texId + 2);
@@ -105,7 +105,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
      * Add a triangle.
      * @param entry The uvs of the texture to add.
      */
-    public void addTriangle(TextureEntry entry, int v1, int v2, int v3) {
+    public void addTriangle(TextureTreeNode entry, int v1, int v2, int v3) {
         int texId = getTexCoords().size() / getTexCoordElementSize();
         entry.applyMesh(this, MAPPolygon.TRI_SIZE);
         getFaces().addAll(v1 + getVerticeStart(), texId, v2 + getVerticeStart(), texId + 1, v3 + getVerticeStart(), texId + 2);
@@ -116,10 +116,10 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
         int texCount = poly.getVerticeCount();
 
         texCoord.addAndGet(texCount);
-        TextureEntry entry = poly.getEntry(textureMap);
+        TextureTreeNode entry = poly.getNode(textureMap);
         if (entry == null) {
-            System.out.println("There were issues setting up textures for this mesh.");
-            entry = new TextureEntry();
+            System.out.println("There were issues setting up textures for this " + poly.getClass().getSimpleName());
+            entry = new TextureTreeNode(textureMap.getTextureTree());
         }
 
         float uSize = (entry.getMaxU() - entry.getMinU());

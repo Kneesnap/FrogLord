@@ -4,6 +4,7 @@ import javafx.scene.paint.PhongMaterial;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
@@ -16,23 +17,32 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 /**
  * Represents a texture map.
+ * TODO: Allow rebuilding the colored square data, which would make changing colors better.
+ *
+ * References:
+ *  - https://github.com/juj/RectangleBinPack/blob/master/old/RectangleBinPack.cpp
+ *  - http://blackpawn.com/texts/lightmaps/default.html
+ *  - https://web.archive.org/web/20180913014836/http://clb.demon.fi:80/projects/rectangle-bin-packing
+ *  - http://www.gamedev.net/community/forums/topic.asp?topic_id=392413
  * Created by Kneesnap on 11/28/2018.
  */
 @Getter
 @AllArgsConstructor
 public class TextureMap {
     private VLOArchive vloArchive;
-    private BufferedImage image;
-    private Map<Short, TextureEntry> entryMap;
     @Setter private List<Short> remapList;
     private PhongMaterial phongMaterial;
+    private TextureTree textureTree;
 
+    private static final int TEXTURE_PAGE_WIDTH = 1024; // The largest VLO is the SWP VLO, on the PS1.
+    private static final int TEXTURE_PAGE_HEIGHT = 1024;
     private static final ImageFilterSettings DISPLAY_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setAllowTransparency(true);
 
     /**
@@ -52,42 +62,7 @@ public class TextureMap {
     }
 
     private static TextureMap makeMap(VLOArchive vloSource, List<Short> remapTable, Map<VertexColor, BufferedImage> texMap) {
-        int height = vloSource.getImages().stream().mapToInt(GameImage::getFullHeight).max().orElse(0); // Size of largest texture.
-        int width = vloSource.getImages().stream().mapToInt(GameImage::getFullWidth).sum(); //Sum of all texture widths.
-        width += (texMap.values().stream().mapToInt(BufferedImage::getWidth).sum() / (height / MAPFile.VERTEX_COLOR_IMAGE_SIZE)); // Add vertex colors.
-        width += MAPFile.VERTEX_COLOR_IMAGE_SIZE;
-
-        BufferedImage fullImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphics = fullImage.createGraphics();
-
-        Map<Short, TextureEntry> entryMap = new HashMap<>();
-        int x = 0;
-        for (GameImage image : vloSource.getImages()) {
-            BufferedImage copyImage = image.toBufferedImage(DISPLAY_SETTINGS);
-            graphics.drawImage(copyImage, x, 0, copyImage.getWidth(), copyImage.getHeight(), null);
-
-            int startX = x + ((image.getFullWidth() - image.getIngameWidth()) / 2);
-            int startY = (image.getFullHeight() - image.getIngameHeight()) / 2;
-            entryMap.put(image.getTextureId(), TextureEntry.newEntry(startX, startY, image.getIngameWidth(), image.getIngameHeight(), width, height));
-            x += image.getFullWidth();
-        }
-
-        // Vertex Color Textures.
-        int y = 0;
-        for (Entry<VertexColor, BufferedImage> entry : texMap.entrySet()) {
-            BufferedImage image = entry.getValue();
-            graphics.drawImage(image, x, y, image.getWidth(), image.getHeight(), null);
-            entry.getKey().setTextureEntry(TextureEntry.newEntry(x + 1, y + 1, image.getWidth() - 2, image.getHeight() - 2, width, height));
-
-            // Condense these things.
-            if ((y += image.getHeight()) > height - image.getHeight()) {
-                y = 0;
-                x += image.getWidth();
-            }
-        }
-
-        graphics.dispose();
-        return new TextureMap(vloSource, fullImage, entryMap, remapTable, null);
+        return new TextureMap(vloSource, remapTable, null, new TextureTree(vloSource, texMap));
     }
 
     /**
@@ -104,69 +79,283 @@ public class TextureMap {
      * @param index The index.
      * @return entry
      */
-    public TextureEntry getEntry(short index) {
-        return getEntryMap().get(getRemap(index));
+    public TextureTreeNode getEntry(short index) {
+        return getTextureTree().getEntryMap().get(getRemap(index));
+    }
+
+    /**
+     * Gets the 3D PhongMaterial (diffuse components only, affected by lighting).
+     * @return phongMaterial
+     */
+    public PhongMaterial getDiffuseMaterial() {
+        if (this.phongMaterial == null)
+            this.phongMaterial = Utils.makeDiffuseMaterial(Utils.toFXImage(getTextureTree().getImage(), false));
+        return this.phongMaterial;
+    }
+
+    /**
+     * Gets the 3D PhongMaterial. (Unaffected by lighting.)
+     * @return phongMaterial
+     */
+    public PhongMaterial getPhongMaterial() {
+        if (this.phongMaterial == null)
+            this.phongMaterial = Utils.makeSpecialMaterial(Utils.toFXImage(getTextureTree().getImage(), false));
+        return this.phongMaterial;
+    }
+
+    // Stuff beyond here is heavily based on https://github.com/juj/RectangleBinPack/blob/master/old/RectangleBinPack.cpp (Public Domain)
+
+    @Getter
+    public static class TextureTree {
+        private final VLOArchive vloSource;
+        private final Map<VertexColor, BufferedImage> vertexMap;
+        private final int width = TEXTURE_PAGE_WIDTH; // Width of tree.
+        private final int height = TEXTURE_PAGE_HEIGHT; // Height of tree.
+        private TextureTreeNode rootNode;
+        private Map<Short, TextureTreeNode> entryMap = new HashMap<>();
+        private BufferedImage image;
+
+        public TextureTree(VLOArchive vloSource, Map<VertexColor, BufferedImage> vertexMap) {
+            this.vloSource = vloSource;
+            this.vertexMap = vertexMap;
+            buildTree(); // Builds the tree contents.
+            updateImage(); // Makes the image.
+        }
+
+        public TextureTreeNode insert(GameImage image) {
+            return insert(getRootNode(), image);
+        }
+
+        private TextureTreeNode insert(TextureTreeNode node, GameImage image) {
+            int width = image.getFullWidth();
+            int height = image.getFullHeight();
+
+            if (node.getLeft() != null || node.getRight() != null) {
+                if (node.getLeft() != null) {
+                    TextureTreeNode newNode = insert(node.getLeft(), image);
+                    if (newNode != null)
+                        return newNode;
+                }
+
+                if (node.getRight() != null) {
+                    TextureTreeNode newNode = insert(node.getRight(), image);
+                    if (newNode != null)
+                        return newNode;
+                }
+
+                return null; // Didn't fit into either sub-tree.
+            }
+
+            // This node is a leaf, but can we fit the new rectangle here?
+            if (width > node.getWidth() || height > node.getHeight())
+                return null; // Nope, there isn't enough space.
+
+            int w = node.getWidth() - width;
+            int h = node.getHeight() - height;
+            node.setLeft(new TextureTreeNode(this));
+            node.setRight(new TextureTreeNode(this));
+
+            TextureTreeNode left = node.getLeft();
+            TextureTreeNode right = node.getRight();
+            if (w <= h) { // Split the remaining space in the horizontal dimension.
+                left.setX(node.getX() + width);
+                left.setY(node.getY());
+                left.setWidth(w);
+                left.setHeight(height);
+                right.setX(node.getX());
+                right.setY(node.getY() + height);
+                right.setWidth(node.getWidth());
+                right.setHeight(h);
+            } else {
+                left.setX(node.getX());
+                left.setY(node.getY() + height);
+                left.setWidth(width);
+                left.setHeight(h);
+
+                right.setX(node.getX() + width);
+                right.setY(node.getY());
+                right.setWidth(w);
+                right.setHeight(node.getHeight());
+            }
+
+            // Note that as a result of the above, it can happen that node->left or node->right
+            // is now a degenerate (zero area) rectangle. No need to do anything about it,
+            // like remove the nodes as "unnecessary" since they need to exist as children of
+            // this node (this node can't be a leaf anymore).
+
+            // This node is now a non-leaf, so shrink its area - it now denotes
+            // *occupied* space instead of free space. Its children spawn the resulting area of free space.
+            node.setWidth(width);
+            node.setHeight(height);
+            node.setGameImage(image);
+            return node;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            getRootNode().toString("", builder, "Root");
+            return builder.toString();
+        }
+
+        /**
+         * Builds this tree from scratch.
+         */
+        public void buildTree() {
+            this.rootNode = new TextureTreeNode(this);
+            this.rootNode.setWidth(getWidth());
+            this.rootNode.setHeight(getHeight());
+
+            // Build the tree.
+            for (int i = 0; i < getVloSource().getImages().size(); i++)
+                insert(getVloSource().getImages().get(i));
+
+            buildEntryMap();
+        }
+
+        // Rebuilds the entry map.
+        private void buildEntryMap() {
+            getEntryMap().clear();
+            handleNode(getRootNode());
+        }
+
+        private void handleNode(TextureTreeNode node) {
+            if (node.getGameImage() != null)
+                getEntryMap().put(node.getGameImage().getTextureId(), node);
+
+            if (node.getLeft() != null)
+                handleNode(node.getLeft());
+            if (node.getRight() != null)
+                handleNode(node.getRight());
+        }
+
+        /**
+         * Updates the image, remaking it if necessary.
+         */
+        public void updateImage() {
+            if (this.image == null) // Gotta make a new one, the old one is invalidated.
+                this.image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+            Graphics2D graphics = this.image.createGraphics();
+
+            // Writes the images.
+            for (short i = 0; i < getVloSource().getImages().size(); i++) {
+                GameImage image = getVloSource().getImages().get(i);
+                TextureTreeNode node = getEntryMap().get(image.getTextureId());
+                if (node == null)
+                    continue; // Got nothing!
+
+                graphics.drawImage(image.toBufferedImage(DISPLAY_SETTINGS), node.getX(), node.getY(), node.getWidth(), node.getHeight(), null);
+            }
+
+            // Calculate the last used pixel by an image.
+            int calcLines = (getVertexMap().size() / (getHeight() / MAPFile.VERTEX_COLOR_IMAGE_SIZE)) * 2; // This might have problems if the textures go past half-way down.
+            int minX = getWidth() - (calcLines * MAPFile.VERTEX_COLOR_IMAGE_SIZE); // The minimum X to use.
+            int minY = 0;
+            LinkedList<TextureTreeNode> queue = new LinkedList<>();
+            queue.add(getRootNode());
+            while (queue.size() > 0) {
+                TextureTreeNode node = queue.pop();
+                if (node.getLeft() != null)
+                    queue.add(node.getLeft());
+                if (node.getRight() != null)
+                    queue.add(node.getRight());
+
+                if (node.getGameImage() != null && node.getX() + node.getWidth() >= minX && node.getY() + node.getHeight() > minY)
+                    minY = node.getY() + node.getHeight();
+            }
+
+            // Write the vertex colors.
+            int resetY = getHeight() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+            int x = getWidth() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+            int y = resetY;
+            for (Entry<VertexColor, BufferedImage> entry : getVertexMap().entrySet()) {
+                BufferedImage image = entry.getValue();
+                graphics.drawImage(image, x, y, image.getWidth(), image.getHeight(), null);
+
+                TextureTreeNode vtxNode = TextureTreeNode.newNode(this, x, y, image.getWidth(), image.getHeight());
+                vtxNode.setCachedImage(image);
+                entry.getKey().setTextureNode(vtxNode);
+
+                // Condense these things.
+                if ((y -= image.getHeight()) < minY) { // Start again at the bottom (move over horizontally) once it clashes with a texture.
+                    y = resetY;
+                    x -= image.getWidth();
+                }
+            }
+
+            graphics.dispose();
+        }
     }
 
     @Getter
     @Setter
-    public static final class TextureEntry {
-        private float minU = 0;
-        private float maxU = 1;
-        private float minV = 0;
-        private float maxV = 1;
-        private transient BufferedImage cachedImage;
+    public static class TextureTreeNode {
+        private final TextureTree tree;
+        private TextureTreeNode left;
+        private TextureTreeNode right;
+        private int x;
+        private int y;
+        private int width;
+        private int height;
+        private GameImage gameImage;
+        private BufferedImage cachedImage;
 
-        /**
-         * Get this texture's xPosition.
-         */
-        public double getX(TextureMap map) {
-            return minU * map.getImage().getWidth();
+        private static final ImageFilterSettings NODE_DISPLAY_SETTING = new ImageFilterSettings(ImageState.EXPORT)
+                .setAllowTransparency(true).setTrimEdges(true).setAllowFlip(true);
+
+        public TextureTreeNode(TextureTree tree) {
+            this.tree = tree;
         }
 
         /**
-         * Get this texture's yPosition.
+         * Used when getting tree as a string.
          */
-        public double getY(TextureMap map) {
-            return minV * map.getImage().getHeight();
+        public void toString(String padding, StringBuilder builder, String prefix) {
+            builder.append(padding).append("- ");
+            if (prefix != null)
+                builder.append(prefix).append(" ");
+            builder.append("Node ").append(gameImage != null ? gameImage.getLocalImageID() : -1).append("@[").append(this.x).append(", ").append(this.y)
+                    .append(", ").append(this.width).append(", ").append(this.height).append("]").append(Constants.NEWLINE);
+            if (getLeft() != null)
+                getLeft().toString(padding + " ", builder, "Left");
+            if (getRight() != null)
+                getRight().toString(padding + " ", builder, "Right");
+        }
+
+        public float getMinU() {
+            return (float) getStartX() / (float) getTree().getWidth();
+        }
+
+        public float getMaxU() {
+            return (float) (getStartX() + (getGameImage() != null ? getGameImage().getIngameWidth() : MAPFile.VERTEX_COLOR_IMAGE_SIZE - 2)) / (float) getTree().getWidth();
+        }
+
+        public float getMinV() {
+            return (float) getStartY() / (float) getTree().getHeight();
+        }
+
+        public float getMaxV() {
+            return (float) (getStartY() + (getGameImage() != null ? getGameImage().getIngameHeight() : MAPFile.VERTEX_COLOR_IMAGE_SIZE - 2)) / (float) getTree().getHeight();
+        }
+
+        private int getStartX() {
+            return getX() + (getGameImage() != null ? ((getGameImage().getFullWidth() - getGameImage().getIngameWidth()) / 2) : 1);
+        }
+
+        private int getStartY() {
+            return getY() + (getGameImage() != null ? ((getGameImage().getFullHeight() - getGameImage().getIngameHeight()) / 2) : 1);
         }
 
         /**
-         * Get this texture's width.
+         * Get this entry's texture image.
          */
-        public double getWidth(TextureMap map) {
-            return (maxU * map.getImage().getWidth()) - getX(map);
+        public BufferedImage getImage() {
+            return this.cachedImage != null ? this.cachedImage : (this.cachedImage = getGameImage().toBufferedImage(NODE_DISPLAY_SETTING));
         }
 
         /**
-         * Get this texture's height.
-         */
-        public double getHeight(TextureMap map) {
-            return (maxV * map.getImage().getHeight()) - getY(map);
-        }
-
-        /**
-         * Get this entry as a BufferedImage
-         */
-        public BufferedImage getImage(TextureMap map) {
-            if (this.cachedImage != null)
-                return cachedImage;
-
-            int x = (int) getX(map);
-            int y = (int) getY(map);
-            int width = (int) getWidth(map);
-            int height = (int) getHeight(map);
-
-            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D graphics = image.createGraphics();
-            graphics.drawImage(map.getImage(), 0, 0, width, height, x, y, x + width, y + height, null);
-            graphics.dispose();
-            this.cachedImage = image;
-            return image;
-        }
-
-        /**
-         * Apply this TextureEntry to a MapMesh.
+         * Apply this node to a MapMesh.
          * @param mesh      The mesh to apply this entry to.
          * @param vertCount The amount of vertices to add.
          */
@@ -179,47 +368,16 @@ public class TextureMap {
         }
 
         /**
-         * Create a new TextureEntry for a texture.
-         * @return texEntry
+         * Makes a new texture node with given data.
+         * @return newNode
          */
-        public static TextureEntry newEntry(int startX, int startY, int showWidth, int showHeight, int totalWidth, int totalHeight) {
-            TextureEntry entry = new TextureEntry();
-            entry.setMinU((float) startX / totalWidth);
-            entry.setMaxU((float) (startX + showWidth) / totalWidth);
-            entry.setMinV((float) startY / totalHeight);
-            entry.setMaxV((float) (startY + showHeight) / totalHeight);
-            return entry;
+        public static TextureTreeNode newNode(TextureTree textureTree, int x, int y, int width, int height) {
+            TextureTreeNode newNode = new TextureTreeNode(textureTree);
+            newNode.setX(x);
+            newNode.setY(y);
+            newNode.setWidth(width);
+            newNode.setHeight(height);
+            return newNode;
         }
-    }
-
-    /**
-     * Gets the 3D PhongMaterial (diffuse components only, affected by lighting).
-     * @return phongMaterial
-     */
-    public PhongMaterial getDiffuseMaterial() {
-        if (this.phongMaterial == null)
-            this.phongMaterial = makeMaterial(true);
-        return this.phongMaterial;
-    }
-
-    /**
-     * Gets the 3D PhongMaterial. (Unaffected by lighting.)
-     * @return phongMaterial
-     */
-    public PhongMaterial getPhongMaterial() {
-        if (this.phongMaterial == null)
-            this.phongMaterial = makeMaterial(false);
-        return this.phongMaterial;
-    }
-
-    /**
-     * Makes the material for this map.
-     * @param diffuseOnly   Whether or not to make material with diffuse components only.
-     * @return material
-     */
-    protected PhongMaterial makeMaterial(boolean diffuseOnly) {
-        return diffuseOnly
-                ? Utils.makeDiffuseMaterial(Utils.toFXImage(getImage(), true))
-                : Utils.makeSpecialMaterial(Utils.toFXImage(getImage(), true));
     }
 }

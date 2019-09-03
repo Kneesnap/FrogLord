@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file.mof.prims;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureEntry;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 
@@ -16,15 +16,15 @@ import java.awt.image.BufferedImage;
  */
 @Getter
 public class MOFColorPolygon extends MOFPolygon implements VertexColor {
-    @Setter private transient TextureEntry textureEntry;
+    @Setter private transient TextureTreeNode textureNode;
 
     public MOFColorPolygon(MOFPart parent, MOFPrimType type, int verticeCount, int normalCount, int enCount) {
         super(parent, type, verticeCount, normalCount, enCount);
     }
 
     @Override
-    public TextureEntry getEntry(TextureMap map) {
-        return getTextureEntry();
+    public TextureTreeNode getNode(TextureMap map) {
+        return getTextureNode();
     }
 
     @Override
