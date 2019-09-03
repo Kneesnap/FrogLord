@@ -98,21 +98,21 @@ public abstract class MAPPolygon extends MAPPrimitive {
         if (poly == null)
             return null;
 
-        int[] vertexIndices = poly.getVertices();
-
         float x = 0.0f;
         float y = 0.0f;
         float z = 0.0f;
-
-        for (int index : vertexIndices) {
+        for (int index : poly.getVertices()) {
             x += mesh.getVertices().get(index).getFloatX();
             y += mesh.getVertices().get(index).getFloatY();
             z += mesh.getVertices().get(index).getFloatZ();
         }
 
-        x /= vertexIndices.length;
-        y /= vertexIndices.length;
-        z /= vertexIndices.length;
+        int count = poly.getVertices().length;
+        if (count != 0) {
+            x /= count;
+            y /= count;
+            z /= count;
+        }
 
         return new SVector(x, y, z);
 

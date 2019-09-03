@@ -100,6 +100,11 @@ public class MapUIController implements Initializable {
     @FXML private TitledPane geometryPane;
     @FXML private GridPane geometryGridPane;
 
+    // Vertex pane.
+    @FXML private TitledPane vtxPane;
+    @FXML private GridPane vtxGridPane;
+    @FXML private CheckBox showAllVerticesToggle;
+
     // Animation pane.
     @FXML private TitledPane animationPane;
     @FXML private GridPane animationGridPane;
@@ -127,6 +132,7 @@ public class MapUIController implements Initializable {
     private EntityManager entityManager;
     private AnimationManager animationManager;
     private FormManager formManager;
+    private VertexManager vertexManager;
     private GeometryManager geometryManager; // Should be second to last, so when a successful click goes through it will update itself. Also, now this handles cancelling polygon selection.
     private GeneralManager generalManager; // Should be last, so things like cancelling polygon selection happen last.
 
@@ -153,6 +159,7 @@ public class MapUIController implements Initializable {
         this.managers.add(this.entityManager = new EntityManager(this));
         this.managers.add(this.animationManager = new AnimationManager(this));
         this.managers.add(this.formManager = new FormManager(this));
+        this.managers.add(this.vertexManager = new VertexManager(this));
         this.managers.add(this.geometryManager = new GeometryManager(this));
         this.managers.add(this.generalManager = new GeneralManager(this));
     }

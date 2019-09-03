@@ -28,6 +28,7 @@
                 </Label>
                 <Label text="Unfortunately, Playstation sounds are complicated, and are not supported by FrogLord."/>
                 <Label text="Export this file and use a program called 'PSound' to get the sounds from the data."/>
+                <Label text="To myself, or anyone who wants to add support, check out https://github.com/losnoco/vgmstream/blob/2125433cd5fc362e679373cce7777110f7b5fba0/src/coding/psx_decoder.c"/>
             </children>
         </VBox>
         <Button onAction="#actionExport" layoutX="14.0" layoutY="266.0" mnemonicParsing="false" text="Export File"
