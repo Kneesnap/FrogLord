@@ -11,6 +11,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.ScrollEvent;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import lombok.SneakyThrows;
@@ -32,12 +35,12 @@ import java.util.ResourceBundle;
 
 /**
  * Allows editing the arrangement of a VRAM page.
- * TODO: Re-add PS1 preview, make it like how TIM Tool works though. One panel is 32x116, and is 2 pixels away horizontally, 2 vertically. Click on one panel to select. When selected, there will be a one-pixel-wide red border surrounding the selected one.
  * Created by Kneesnap on 12/2/2018.
  */
 public class VRAMPageController implements Initializable {
     @FXML private ImageView imageView;
-    @FXML private ChoiceBox<Integer> pageSelection;
+    @FXML private ChoiceBox<Integer> pcPageSelection;
+    @FXML private GridPane psxGridPane;
 
     @FXML private ImageView selectedView;
     @FXML private Label xLabel;
@@ -50,6 +53,8 @@ public class VRAMPageController implements Initializable {
     private BufferedImage fullImage;
     private BufferedImage[] splitImages;
     private HashSet<Short> changedPages = new HashSet<>(); // A set of pages which need updating.
+    private ImageView[] splitImageViews = new ImageView[GameImage.TOTAL_PAGES]; // A set of pages which need updating.
+    private HBox[] splitHBoxes = new HBox[splitImageViews.length];
     //private boolean[][] overlapGrid; // Used to test if textures overlap.
     private int selectedPage;
 
@@ -72,26 +77,52 @@ public class VRAMPageController implements Initializable {
         //this.overlapGrid = new boolean[isPsx ? GameImage.PSX_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH][isPsx ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT];
         setupImages();
 
-        pageSelection.setItems(FXCollections.observableArrayList(Utils.getIntegerList(this.splitImages.length)));
-        pageSelection.setConverter(new AbstractStringConverter<>(findPage -> {
-            int total = 0;
-            for (int i = 0; i < vloArchive.getImages().size(); i++)
-                if (vloArchive.getImages().get(i).getMultiplierPage() == findPage)
-                    total++;
+        if (isPsxMode()) {
+            int index = 0;
+            for (int row = 0; row < psxGridPane.getRowConstraints().size(); row++) { // y
+                for (int column = 0; column < psxGridPane.getColumnConstraints().size(); column++) { // x
+                    HBox newBox = new HBox();
+                    this.splitHBoxes[index] = newBox;
+                    newBox.getChildren().add(this.splitImageViews[index++]);
+                    psxGridPane.add(newBox, column, row);
+                }
+            }
 
-            return "Texture Page #" + findPage + " [" + total + " textures]";
-        }));
+            for (int i = 0; i < this.splitImageViews.length; i++) {
+                final int finalIndex = i;
 
-        pageSelection.setValue(this.selectedPage);
-        pageSelection.getSelectionModel().select(this.selectedPage);
-        pageSelection.valueProperty().addListener(((observable, oldValue, newValue) -> {
-            this.selectedPage = newValue;
-            updateAll();
-        }));
+                // Handle a click.
+                splitImageViews[i].setOnMousePressed(evt -> {
+                    if (evt.isPrimaryButtonDown()) {
+                        this.selectedPage = finalIndex;
+                        updateAll();
+                    }
+                });
 
+                splitImageViews[i].setOnScroll(this::handleScroll);
+            }
+
+        } else {
+            pcPageSelection.setItems(FXCollections.observableArrayList(Utils.getIntegerList(this.splitImages.length)));
+            pcPageSelection.setConverter(new AbstractStringConverter<>(findPage -> {
+                int total = 0;
+                for (int i = 0; i < vloArchive.getImages().size(); i++)
+                    if (vloArchive.getImages().get(i).getMultiplierPage() == findPage)
+                        total++;
+
+                return "Texture Page #" + findPage + " [" + total + " textures]";
+            }));
+
+            pcPageSelection.setValue(this.selectedPage);
+            pcPageSelection.getSelectionModel().select(this.selectedPage);
+            pcPageSelection.valueProperty().addListener(((observable, oldValue, newValue) -> {
+                this.selectedPage = newValue;
+                updateAll();
+            }));
+        }
 
         imageView.setOnKeyPressed(this::handleKeyPress);
-
+        imageView.setOnScroll(this::handleScroll); // The scroll wheel will scroll through the texture pages.
         imageView.setOnMousePressed(evt -> {
             if (!evt.isPrimaryButtonDown())
                 return;
@@ -133,6 +164,22 @@ public class VRAMPageController implements Initializable {
      */
     public boolean isPsxMode() {
         return vloArchive.isPsxMode();
+    }
+
+    private void handleScroll(ScrollEvent evt) {
+        if (Math.abs(evt.getDeltaY()) < 1)
+            return; // Didn't move enough;
+
+        int newPage = Math.min(Math.max(0, this.selectedPage + (evt.getDeltaY() > 0 ? -1 : 1)), this.splitImages.length - 1); // Gets the new page number.
+        if (newPage != this.selectedPage) { // There is a change between the current page and the new one.
+            if (!isPsxMode()) { // Update the selected menu option.
+                pcPageSelection.setValue(newPage);
+                pcPageSelection.getSelectionModel().select(newPage);
+            }
+
+            this.selectedPage = newPage; // Update the selected page.
+            updateAll();
+        }
     }
 
     private void handleKeyPress(KeyEvent evt) {
@@ -199,6 +246,11 @@ public class VRAMPageController implements Initializable {
     private void setupImages() {
         this.fullImage = vloArchive.makeVRAMImage(this.fullImage); // Main image. (Must run first so split images have something to grab from.)
 
+        // Setup image views.
+        if (isPsxMode())
+            for (int i = 0; i < this.splitImageViews.length; i++)
+                this.splitImageViews[i] = new ImageView();
+
         // Setup images. (After views)
         int totalPages = GameImage.TOTAL_PAGES;
         this.splitImages = new BufferedImage[totalPages];
@@ -219,6 +271,13 @@ public class VRAMPageController implements Initializable {
         Graphics2D graphics = image.createGraphics();
         graphics.drawImage(this.fullImage, 0, 0, image.getWidth(), image.getHeight(), startX, startY, startX + width, startY + height, null);
         graphics.dispose();
+
+        if (isPsxMode()) { // Update displayed image.
+            ImageView updateView = this.splitImageViews[splitIndex];
+            updateView.setImage(Utils.toFXImage(image, false));
+            updateView.setFitWidth(32);
+            updateView.setFitHeight(128);
+        }
     }
 
     private void updateAll() {
@@ -234,6 +293,13 @@ public class VRAMPageController implements Initializable {
         yField.setVisible(hasSelectedImage);
         selectedView.setVisible(hasSelectedImage);
         updateWarning();
+
+        if (isPsxMode()) { // Update which ImageView is highlighted.
+            for (int i = 0; i < splitHBoxes.length; i++)
+                splitHBoxes[i].setStyle(null); // Clear styles.
+
+            splitHBoxes[this.selectedPage].setStyle("-fx-border-color: red;-fx-border-width: 1;");
+        }
     }
 
     private void updateWarning() {
@@ -318,6 +384,7 @@ public class VRAMPageController implements Initializable {
      * @param controller The VLO controller we'll be modifying.
      */
     public static void openEditor(VLOController controller) {
-        Utils.loadFXMLTemplate("vram-editor", "VRAM Editor", newStage -> new VRAMPageController(newStage, controller));
+        boolean isPsx = controller.getFile().isPsxMode();
+        Utils.loadFXMLTemplate(isPsx ? "vram-psx" : "vram-pc", (isPsx ? "PS1" : "PC") + " VRAM Editor", newStage -> new VRAMPageController(newStage, controller));
     }
 }

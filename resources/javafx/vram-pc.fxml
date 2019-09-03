@@ -6,7 +6,7 @@
 <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
             minWidth="-Infinity" prefHeight="370.0" prefWidth="262.0" AnchorPane.bottomAnchor="0.0"
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
-            xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+            xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1">
     <children>
         <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" pickOnBounds="true" preserveRatio="true"
                    AnchorPane.leftAnchor="3.0" AnchorPane.rightAnchor="3.0" AnchorPane.topAnchor="0.0"/>
@@ -25,7 +25,7 @@
         <ImageView fx:id="selectedView" fitHeight="60.0" fitWidth="60.0" layoutX="344.0" layoutY="287.0"
                    pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="3.0"
                    AnchorPane.rightAnchor="196.0"/>
-        <ChoiceBox fx:id="pageSelection" layoutX="14.0" layoutY="69.0" prefHeight="25.0" prefWidth="256.0"
+        <ChoiceBox fx:id="pcPageSelection" layoutX="14.0" layoutY="69.0" prefHeight="25.0" prefWidth="256.0"
                    AnchorPane.leftAnchor="3.0" AnchorPane.rightAnchor="3.0" AnchorPane.topAnchor="256.0"/>
         <Label fx:id="textLabel" layoutX="344.0" layoutY="281.0" prefWidth="256.0" text="Placeholder text goes here."
                AnchorPane.leftAnchor="3.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="281.0"/>
