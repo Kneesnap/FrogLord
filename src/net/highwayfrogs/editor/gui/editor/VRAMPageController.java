@@ -55,7 +55,7 @@ public class VRAMPageController implements Initializable {
     private HashSet<Short> changedPages = new HashSet<>(); // A set of pages which need updating.
     private ImageView[] splitImageViews = new ImageView[GameImage.TOTAL_PAGES]; // A set of pages which need updating.
     private HBox[] splitHBoxes = new HBox[splitImageViews.length];
-    //private boolean[][] overlapGrid; // Used to test if textures overlap.
+    private boolean[][] overlapGrid; // Used to test if textures overlap.
     private int selectedPage;
 
     // Configuration:
@@ -74,7 +74,7 @@ public class VRAMPageController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Choose visibility of UI based on
-        //this.overlapGrid = new boolean[isPsx ? GameImage.PSX_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH][isPsx ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT];
+        this.overlapGrid = new boolean[isPsxMode() ? GameImage.PSX_PAGE_WIDTH * 4 : GameImage.PC_PAGE_WIDTH][isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT];
         setupImages();
 
         if (isPsxMode()) {
@@ -307,37 +307,51 @@ public class VRAMPageController implements Initializable {
         StringBuilder warning = new StringBuilder();
 
         // Keep within one page test.
+        boolean multiPageTest = false;
         for (GameImage image : vloArchive.getImages()) {
             if (image.getMultiplierPage() != image.getEndPage()) {
                 warning.append("WARNING: Texture exceeds size of page ").append(image.getMultiplierPage()).append(".").append(Constants.NEWLINE);
+                multiPageTest = true;
                 break;
             }
         }
 
-        /*
+
         // Overlap Test:
         // I couldn't find an algorithm on google which could efficiently find if any boxes overlapped in an arbitrary list of boxes. Literally everything was in regards to testing if two boxes overlap. So, I made my own. I'm sure there's a more efficient way of doing this though.
-        // Clear grid.
-        for (int y = 0; y < overlapGrid.length; y++)
-            for (int x = 0; x < overlapGrid[y].length; x++)
-                overlapGrid[y][x] = false;
+        // Actually, something called an R-Tree may be a good data structure for this. Unfortunately, it's rather complicated.
+        // https://stackoverflow.com/questions/13910287/data-structure-to-hold-list-of-rectangles
+        if (!multiPageTest) { // If the previous test passes, skip this test, it will error.
+            loopEnd:
+            for (int i = 0; i < this.splitImages.length; i++) { // Test all of the texture pages.
+                // Clear grid.
+                for (int y = 0; y < overlapGrid.length; y++)
+                    for (int x = 0; x < overlapGrid[y].length; x++)
+                        overlapGrid[y][x] = false;
 
-        loopEnd: for (GameImage image : vloArchive.getImages()) {
-            int baseX = (image.getVramX() % (vloArchive.isPsxMode() ? GameImage.PSX_PAGE_WIDTH * image.getWidthMultiplier() : GameImage.PC_PAGE_WIDTH));
-            int baseY = (image.getVramY() % (vloArchive.isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT));
-            for (int y = 0; y < image.getFullHeight(); y++) {
-                for (int x = 0; x < image.getFullWidth(); x++) {
-                    if (overlapGrid[baseY + y][baseX + x]) {
-                        warning.append("WARNING: Texture overlap on page ").append(image.getPage()).append(" (").append(x).append(" ").append(y).append(").").append(Constants.NEWLINE);
-                        break loopEnd;
+                for (GameImage image : vloArchive.getImages()) {
+                    if (image.getMultiplierPage() != i)
+                        continue; // If an image's texture page is not the page we're currently looking for overlaps on, we should skip the image.
+
+                    int baseX = (image.getVramX() % (vloArchive.isPsxMode() ? GameImage.PSX_PAGE_WIDTH * image.getWidthMultiplier() : GameImage.PC_PAGE_WIDTH));
+                    int baseY = (image.getVramY() % (vloArchive.isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT));
+                    for (int y = 0; y < image.getFullHeight(); y++) {
+                        for (int x = 0; x < image.getFullWidth(); x++) {
+                            int gridX = baseX + x;
+                            int gridY = baseY + y;
+
+                            //System.out.println("X: "+ (baseX + x) + ", Y: " + (baseY + y) + ", " + overlapGrid[baseY + y][baseX + x]);
+                            if (overlapGrid[gridY][gridX]) {
+                                warning.append("WARNING: Texture overlap on page ").append(image.getMultiplierPage()).append(" (").append(gridX).append(" ").append(gridY).append(").").append(Constants.NEWLINE);
+                                break loopEnd;
+                            }
+
+                            overlapGrid[gridY][gridX] = true;
+                        }
                     }
-
-                    overlapGrid[baseY + y][baseX + x] = true;
                 }
             }
         }
-        //TODO: Fix and enable.
-        */
 
         // Finish warning.
         if (warning.length() > 0) { // Has warning.
