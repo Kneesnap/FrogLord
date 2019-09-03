@@ -5,10 +5,6 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.map.manager.GeometryManager;
-
-import java.util.Arrays;
 
 /**
  * Represents a MAP primitive.
@@ -35,15 +31,5 @@ public abstract class MAPPrimitive extends PSXGPUPrimitive {
     public void save(DataWriter writer) {
         for (int vertice : getVertices())
             writer.writeUnsignedShort(vertice);
-    }
-
-    /**
-     * Setup an editor for this prim.
-     * @param manager The geometry manager.
-     * @param editor  The editor to create.
-     */
-    public void setupEditor(GeometryManager manager, GUIEditorGrid editor) {
-        editor.addLabel("Type", getType().name());
-        editor.addLabel("Vertices", Arrays.toString(getVertices()));
     }
 }

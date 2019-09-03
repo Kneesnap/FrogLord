@@ -9,8 +9,6 @@ import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.map.manager.GeometryManager;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -91,14 +89,5 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
             int[][] points = TRIANGLE_POSITION[i];
             graphics.fillPolygon(points[0], points[1], TRIANGLE_SIZE);
         }
-    }
-
-    @Override
-    public void setupEditor(GeometryManager manager, GUIEditorGrid editor) {
-        super.setupEditor(manager, editor);
-
-        int id = 0;
-        for (PSXColorVector colorVec : getColors())
-            editor.addColorPicker("Color #" + (++id), colorVec.toRGB(), colorVec::fromRGB);
     }
 }

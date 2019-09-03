@@ -22,7 +22,6 @@ import java.util.Arrays;
 
 /**
  * Holds data about a polygon, and can create / apply polygon data.
- * TODO: If a type change happens, be careful to make sure data structures get updated.
  * Created by Kneesnap on 8/19/2019.
  */
 @Getter
@@ -33,12 +32,13 @@ public class MAPPolygonData {
     private boolean allowDisplay = true; // Whether or not to include in a map group.
     private int[] vertices;
     private PSXColorVector[] colors;
-    private short textureId;
+    private short textureId = 0;
     private short flags;
     private ByteUV[] uvs;
+    private MapUIController controller;
 
     private static final String[] SINGLE_COLOR_NAME = {"Color"};
-    private static final String[] TRI_COLOR_NAMES = {"1?", "2?", "3?"}; //TODO
+    private static final String[] TRI_COLOR_NAMES = {"Corner 1", "Corner 2", "Corner 3"};
     private static final String[] QUAD_COLOR_NAMES = {"Top Left", "Bottom Left", "Top Right", "Bottom Right"};
     private static final String[][] COLOR_BANK = {SINGLE_COLOR_NAME, null, TRI_COLOR_NAMES, QUAD_COLOR_NAMES};
     private static final ImageFilterSettings SHOW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true);
@@ -155,11 +155,57 @@ public class MAPPolygonData {
         poly.setAllowDisplay(this.allowDisplay);
     }
 
+    private void updateColors() {
+        int newSize = isGouraud() ? (isQuad() ? 4 : 3) : 1;
+        if (this.colors.length == newSize)
+            return;
+
+        PSXColorVector[] newColors = new PSXColorVector[newSize];
+        System.arraycopy(this.colors, 0, newColors, 0, Math.min(this.colors.length, newSize));
+        for (int i = 0; i < newColors.length; i++)
+            if (newColors[i] == null)
+                newColors[i] = new PSXColorVector();
+
+        this.colors = newColors;
+        getController().getGeometryManager().setupEditor(); // Update the editor.
+    }
+
     /**
      * Setup an editor for this data.
      */
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
-        //TODO: Toggles. [careful here to make sure it stays compatible!]
+        this.controller = controller;
+
+        editor.addCheckBox("Quad", isQuad(), newValue -> {
+            int newSize = newValue ? 4 : 3;
+            int copySize = Math.min(newSize, this.vertices.length);
+
+            // Copy vertices.
+            int[] newVertices = new int[newSize];
+            System.arraycopy(this.vertices, 0, newVertices, 0, copySize);
+            this.vertices = newVertices;
+
+            // Copy uvs.
+            ByteUV[] newUvs = new ByteUV[newSize];
+            if (this.uvs != null)
+                System.arraycopy(this.uvs, 0, newUvs, 0, copySize);
+            for (int i = 0; i < newUvs.length; i++)
+                if (newUvs[i] == null)
+                    newUvs[i] = new ByteUV();
+            this.uvs = newUvs;
+
+            updateColors();
+        });
+
+        editor.addCheckBox("Gouraud", isGouraud(), newState -> {
+            this.gouraud = newState;
+            updateColors();
+        });
+
+        editor.addCheckBox("Textured", isTextured(), newState -> {
+            this.textured = newState;
+            updateColors();
+        });
 
         // Texture Editor.
         if (isTextured()) {
@@ -190,8 +236,10 @@ public class MAPPolygonData {
         }
 
         // UVs. (TODO: Better editor? Maybe have sliders + a live preview?)
-        for (int i = 0; i < getUvs().length; i++)
-            getUvs()[i].setupEditor("UV #" + i, editor);
+        if (this.uvs != null) {
+            for (int i = 0; i < getUvs().length; i++)
+                getUvs()[i].setupEditor("UV #" + i, editor);
+        }
 
         // Color Editor.
         if (this.colors != null) {
@@ -222,9 +270,7 @@ public class MAPPolygonData {
                     throw new RuntimeException("Failed to find the vertex id for the new vertex.");
                 getVertices()[oldArrayIndex] = newIndex;
 
-                controller.getGeometryManager().refreshView();
-                controller.getVertexManager().updateVisibility();
-                //TODO: This doesn't actually apply because applyToPolygon isn't being called.
+                //TODO: It would be nice for this to be a live update.
             }, null);
 
         });

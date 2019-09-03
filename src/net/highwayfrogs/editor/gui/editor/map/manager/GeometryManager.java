@@ -31,6 +31,7 @@ public class GeometryManager extends MapManager {
     private boolean polygonSelected;
     private MeshData cursorData;
     private Consumer<MAPPolygon> promptHandler;
+    MAPPolygonData polygonData = new MAPPolygonData();
 
     public GeometryManager(MapUIController controller) {
         super(controller);
@@ -64,15 +65,19 @@ public class GeometryManager extends MapManager {
                 if (isPolygonSelected()) {
                     this.polygonImmuneToTarget = getSelectedPolygon();
                     removeCursorPolygon();
+                    getController().getVertexManager().showVertices(null);
                 } else if (getController() == null || !getController().handleClick(evt, clickedPoly)) {
                     if (getController() != null && getController().getCheckBoxFaceRemoveMode().isSelected()) {
                         getMap().removeFace(getSelectedPolygon());
                         removeCursorPolygon();
                         refreshView();
                         getController().getAnimationManager().setupEditor();
+                        getController().getVertexManager().showVertices(null);
                     } else {
                         setCursorPolygon(clickedPoly);
                         this.polygonSelected = true;
+                        this.polygonData.loadFrom(clickedPoly);
+                        setupEditor(); // Update editor.
                     }
                 }
             }
@@ -100,14 +105,14 @@ public class GeometryManager extends MapManager {
         this.geometryEditor.addSeparator(25);
 
         if (getSelectedPolygon() != null) {
-            this.geometryEditor.addBoldLabel("Selected Polygon:");
-            getSelectedPolygon().setupEditor(this, this.geometryEditor);
+            this.polygonData.setupEditor(this.geometryEditor, getController());
 
-            this.geometryEditor.addSeparator(25);
-            MAPPolygonData data = new MAPPolygonData();
-            data.loadFrom(getSelectedPolygon());
-            data.setupEditor(this.geometryEditor, getController());
-            this.geometryEditor.addButton("Apply Changes", () -> data.applyToPolygon(getSelectedPolygon()));
+            //TODO: Handle changing polygon types.
+            this.geometryEditor.addButton("Apply Changes", () -> {
+                this.polygonData.applyToPolygon(getSelectedPolygon());
+                refreshView();
+                getController().getVertexManager().updateVisibility();
+            });
         }
     }
 

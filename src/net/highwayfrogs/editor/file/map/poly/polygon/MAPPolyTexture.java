@@ -1,7 +1,5 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.image.ImageView;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,15 +9,10 @@ import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.map.manager.GeometryManager;
 import net.highwayfrogs.editor.system.TexturedPoly;
-import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents PSX polygons with a texture.
@@ -126,42 +119,6 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
     @Override
     public TextureTreeNode getNode(TextureMap map) {
         return map.getEntry(getTextureId());
-    }
-
-    @Override
-    public void setupEditor(GeometryManager manager, GUIEditorGrid editor) {
-        super.setupEditor(manager, editor);
-
-        TextureMap texMap = manager.getMesh().getTextureMap();
-        VLOArchive suppliedVLO = manager.getMap().getVlo();
-        GameImage image = suppliedVLO.getImageByTextureId(texMap.getRemap(getTextureId()));
-
-        ImageView view = editor.addCenteredImage(image.toFXImage(SHOW_SETTINGS), 150);
-        view.setOnMouseClicked(evt -> suppliedVLO.promptImageSelection(newImage -> {
-            short newValue = newImage.getTextureId();
-            if (texMap.getRemapList() != null)
-                newValue = (short) texMap.getRemapList().indexOf(newValue);
-
-            if (newValue == (short) -1) {
-                Utils.makePopUp("This image is not part of the remap! It can't be used!", AlertType.INFORMATION); // Show this as a popup maybe.
-                return;
-            }
-
-            this.textureId = newValue;
-            view.setImage(newImage.toFXImage(SHOW_SETTINGS));
-            manager.getController().getGeometryManager().refreshView();
-        }, false));
-
-        for (PolyTextureFlag flag : PolyTextureFlag.values())
-            editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> setFlag(flag, newState));
-
-        int id = 0;
-        for (PSXColorVector colorVec : getVectors())
-            editor.addColorPicker("Color #" + (++id), colorVec.toRGB(), colorVec::fromRGB);
-
-        id = 0;
-        for (ByteUV byteUV : getUvs())
-            byteUV.setupEditor("UV #" + (++id), editor);
     }
 
     /**
