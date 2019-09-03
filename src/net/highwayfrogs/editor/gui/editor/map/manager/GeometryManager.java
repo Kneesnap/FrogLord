@@ -6,6 +6,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.poly.MAPPolygonData;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -101,6 +102,12 @@ public class GeometryManager extends MapManager {
         if (getSelectedPolygon() != null) {
             this.geometryEditor.addBoldLabel("Selected Polygon:");
             getSelectedPolygon().setupEditor(this, this.geometryEditor);
+
+            this.geometryEditor.addSeparator(25);
+            MAPPolygonData data = new MAPPolygonData();
+            data.loadFrom(getSelectedPolygon());
+            data.setupEditor(this.geometryEditor, getController());
+            this.geometryEditor.addButton("Apply Changes", () -> data.applyToPolygon(getSelectedPolygon()));
         }
     }
 

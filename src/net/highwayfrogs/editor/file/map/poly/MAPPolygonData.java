@@ -217,9 +217,14 @@ public class MAPPolygonData {
                 if (oldArrayIndex == -1)
                     throw new RuntimeException("Failed to find the real index into the vertex array.");
 
-                getVertices()[oldArrayIndex] = controller.getController().getFile().getVertexes().indexOf(newVertex);
-                if (getVertices()[oldArrayIndex] == -1)
+                int newIndex = controller.getController().getFile().getVertexes().indexOf(newVertex);
+                if (newIndex == -1)
                     throw new RuntimeException("Failed to find the vertex id for the new vertex.");
+                getVertices()[oldArrayIndex] = newIndex;
+
+                controller.getGeometryManager().refreshView();
+                controller.getVertexManager().updateVisibility();
+                //TODO: This doesn't actually apply because applyToPolygon isn't being called.
             }, null);
 
         });

@@ -128,5 +128,6 @@ public class VertexManager extends MapManager {
     protected void cleanChildPrompt() {
         super.cleanChildPrompt();
         this.promptHandler = null;
+        updateVisibility(); // Don't show the select color anymore.
     }
 }
