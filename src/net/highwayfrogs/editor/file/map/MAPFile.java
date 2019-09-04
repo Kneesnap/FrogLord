@@ -23,6 +23,7 @@ import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
+import net.highwayfrogs.editor.file.map.poly.MAPPolygonData;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
 import net.highwayfrogs.editor.file.map.poly.line.MAPLineType;
@@ -794,6 +795,14 @@ public class MAPFile extends GameFile {
         int realSize = (endPointer - lastEntity.getLoadScriptDataPointer());
         if (realSize != lastEntity.getLoadReadLength())
             System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormEntry().getFormName() + ", " + lastEntity.getFormEntry().getEntityName());
+    }
+
+    /**
+     * Adds a new polygon to this map.
+     * @param data The polygon data to add.
+     */
+    public void addPolygon(MAPPolygonData data) {
+        this.polygons.get(data.getPolygonType()).add(data.makeNewPolygon());
     }
 
     /**

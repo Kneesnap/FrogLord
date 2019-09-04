@@ -65,14 +65,12 @@ public class GeometryManager extends MapManager {
                 if (isPolygonSelected()) {
                     this.polygonImmuneToTarget = getSelectedPolygon();
                     removeCursorPolygon();
-                    getController().getVertexManager().showVertices(null);
                 } else if (getController() == null || !getController().handleClick(evt, clickedPoly)) {
                     if (getController() != null && getController().getCheckBoxFaceRemoveMode().isSelected()) {
                         getMap().removeFace(getSelectedPolygon());
                         removeCursorPolygon();
                         refreshView();
                         getController().getAnimationManager().setupEditor();
-                        getController().getVertexManager().showVertices(null);
                     } else {
                         setCursorPolygon(clickedPoly);
                         this.polygonSelected = true;
@@ -179,6 +177,8 @@ public class GeometryManager extends MapManager {
         this.polygonSelected = false;
         this.selectedPolygon = null;
         hideCursorPolygon();
+        if (getController().getVertexManager().getShownVertices() != null)
+            getController().getVertexManager().showVertices(null);
     }
 
     /**
