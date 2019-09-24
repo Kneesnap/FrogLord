@@ -93,7 +93,7 @@ public class MAPController extends EditorController<MAPFile> {
         saveTextureButton.setOnAction(evt -> {
             try {
                 ImageIO.write(TextureMap.newTextureMap(getFile()).getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), getFile().getFileEntry().getDisplayName() + ".png"));
-                System.out.print("Saved " + getFile().getFileEntry().getDisplayName() + ".png");
+                System.out.println("Saved " + getFile().getFileEntry().getDisplayName() + ".png");
             } catch (IOException e) {
                 e.printStackTrace();
             }

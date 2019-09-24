@@ -95,8 +95,9 @@ public class Path extends GameObject {
 
         editor.addButtonWithEnumSelection("Add Segment", pathType -> {
             getSegments().add(pathType.getMaker().get());
+            //TODO: Set path data like start position.
             manager.setupEditor();
-        }, PathType.values(), PathType.SPLINE);
+        }, PathType.values(), PathType.LINE);
     }
 
     /**

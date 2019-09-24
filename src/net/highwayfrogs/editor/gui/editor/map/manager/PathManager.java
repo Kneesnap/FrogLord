@@ -201,6 +201,12 @@ public class PathManager extends MapManager {
                     material = materialArc;
 
                 final int stepSize = Math.min(32, segment.getLength());
+                if (stepSize == 0) { // If the path is 100% empty, just show the start.
+                    Vector pos = segment.getStartPosition();
+                    addPathLineSegment(listID, pos.getFloatX(), pos.getFloatY(), pos.getFloatZ(), pos.getFloatX(), pos.getFloatY(), pos.getFloatZ(), .2, material, true, path, segment, 0);
+                    continue;
+                }
+
                 final int numSteps = 1 + (segment.getLength() / stepSize);
 
                 for (int step = 0; step < numSteps; ++step) {
