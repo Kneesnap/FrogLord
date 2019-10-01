@@ -5,7 +5,6 @@ Map Editor:
  - Better polygon editor.
  - Fix adding new matrix entities. (They don't show up in-game It seems like invalid matrix, as this can happen if you move an entity.)
  - Would it be efficient to display the map by adding each poly as a mesh view? It could result in much better map controls. It also may be terrible. [May allow us to add per-face textures.]
- - Would it be possible to change the SVector editor to calculate X + Z relative to the camera?
 
 Future:
  - Spline Editor [@Andy, I don't know what all of this data is, and I don't understand the math behind this. Even if you could just give me some documentation that lets me understand each piece of data, this would be useful.]

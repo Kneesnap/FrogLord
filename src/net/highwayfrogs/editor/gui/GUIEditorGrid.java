@@ -452,9 +452,10 @@ public class GUIEditorGrid {
 
             double xDiff = -(lastDrag.getX() - evt.getX()) / 10;
             double zDiff = (lastDrag.getY() - evt.getY()) / 10;
+            double angle = controller != null ? -Math.toRadians(controller.getCameraFPS().getCamYawProperty().doubleValue()) : Math.PI / 2;
 
-            vector.setFloatX((float) (vector.getFloatX(bits) + xDiff), bits);
-            vector.setFloatZ((float) (vector.getFloatZ(bits) + zDiff), bits);
+            vector.setFloatX((float) (vector.getFloatX(bits) + (xDiff * Math.cos(angle)) - (zDiff * Math.sin(angle))), bits);
+            vector.setFloatZ((float) (vector.getFloatZ(bits) + (xDiff * Math.sin(angle)) + (zDiff * Math.cos(angle))), bits);
             xField.setText(String.valueOf(vector.getFloatX(bits)));
             zField.setText(String.valueOf(vector.getFloatZ(bits)));
 
