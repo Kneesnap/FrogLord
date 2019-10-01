@@ -38,9 +38,7 @@ import java.util.ResourceBundle;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
- * TODO:
- * Cache things, for instance, if we have an entity manager, and we just want to update the position of entities, just update the positions of entities instead of clearing the list fully and starting over.
- * Try creating a system which is better in terms of memory usage, for the 2D editor too.
+ * TODO: Try creating a system which is better in terms of memory usage, for the 2D editor too.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter

@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.gui.editor.map.manager;
 
-import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Transform;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
@@ -39,16 +39,20 @@ import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Manages map entities.
  * Created by Kneesnap on 8/19/2019.
  */
 public class EntityManager extends MapManager {
     private GUIEditorGrid entityEditor;
+    private List<MeshView> entityModelViews = new ArrayList<>();
+    private List<FormEntry> entityTypes = new ArrayList<>();
 
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
     private static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
-    private static final String ENTITY_LIST = "entityList";
 
     public EntityManager(MapUIController controller) {
         super(controller);
@@ -57,6 +61,7 @@ public class EntityManager extends MapManager {
     @Override
     public void onSetup() {
         super.onSetup();
+        getRenderManager().addMissingDisplayList("entityModelViews");
         updateEntities();
         MapUIController.getPropertyEntityIconSize().addListener((observable, old, newVal) -> updateEntities());
     }
@@ -64,6 +69,14 @@ public class EntityManager extends MapManager {
     @Override
     public void setupEditor() {
         showEntityInfo(null);
+    }
+
+    /**
+     * Gets the entities this will work with.
+     * @return entityList
+     */
+    public List<Entity> getEntities() {
+        return getMap().getEntities();
     }
 
     /**
@@ -213,28 +226,89 @@ public class EntityManager extends MapManager {
     }
 
     /**
-     * Update entity display.
+     * Updates displayed entities.
      */
     public void updateEntities() {
-        getRenderManager().addMissingDisplayList(ENTITY_LIST);
-        getRenderManager().clearDisplayList(ENTITY_LIST);
+        List<Entity> entities = getEntities();
 
-        float[] pos = new float[6];
-        for (Entity entity : getMap().getEntities()) {
-            entity.getPosition(pos, getMap());
-            MeshView meshView = makeEntityIcon(entity, pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
-            meshView.setOnMouseClicked(evt -> showEntityInfo(entity));
+        // Add new entity models.
+        while (entities.size() > entityModelViews.size()) {
+            this.entityTypes.add(null);
+
+            MeshView newView = new MeshView();
+            newView.setCullFace(CullFace.NONE);
+            newView.setDrawMode(DrawMode.FILL);
+            this.entityModelViews.add(newView);
+            getRenderManager().addNode("entityModelViews", newView);
+
+            newView.setOnMouseClicked(evt -> { // Handle being clicked.
+                MeshView safeView = (MeshView) evt.getSource();
+                showEntityInfo(getEntities().get(this.entityModelViews.indexOf(safeView)));
+            });
         }
+
+        // Update entity models.
+        for (int i = 0; i < getEntities().size(); i++)
+            updateEntityMesh(i);
+
+        // Update entity positions.
+        float[] pos = new float[6];
+        for (int i = 0; i < entities.size(); i++) {
+            Entity entity = entities.get(i);
+            entity.getPosition(pos, getMap());
+
+            float yaw = pos[3];
+            float pitch = pos[4];
+            float roll = pos[5];
+            MeshView view = this.entityModelViews.get(i);
+            boolean hasModel = !entity.getFormEntry().testFlag(FormLibFlag.NO_MODEL);
+            if (hasModel) {
+                int foundRotations = 0;
+                for (Transform transform : view.getTransforms()) { // Update existing rotations.
+                    if (!(transform instanceof Rotate))
+                        continue;
+
+                    foundRotations++;
+                    double value = pos[2 + foundRotations];
+
+                    ((Rotate) transform).setAngle(Math.toDegrees(value));
+                    if (foundRotations == 3)
+                        break;
+                }
+
+                if (foundRotations == 0) { // There are no rotations, so add rotations.
+                    view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.X_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.Y_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.Z_AXIS));
+                }
+            }
+
+            view.setTranslateX(pos[0]);
+            view.setTranslateY(pos[1]);
+            view.setTranslateZ(pos[2]);
+        }
+
+
+        // Update visibility.
+        for (int i = 0; i < this.entityModelViews.size(); i++)
+            this.entityModelViews.get(i).setVisible(entities.size() > i); // Update visibility.
     }
 
-    private MeshView makeEntityIcon(Entity entity, float x, float y, float z, float yaw, float pitch, float roll) {
-        float entityIconSize = MapUIController.getPropertyEntityIconSize().getValue();
+    private void updateEntityMesh(int entityIndex) {
+        Entity entity = getEntities().get(entityIndex);
+        MeshView entityMesh = this.entityModelViews.get(entityIndex);
+        FormEntry oldForm = this.entityTypes.get(entityIndex);
+        FormEntry newForm = entity.getFormEntry();
 
-        FormEntry form = entity.getFormEntry();
+        if (oldForm == newForm)
+            return; // The entity form has not changed, so we shouldn't change the model.
 
-        if (!form.testFlag(FormLibFlag.NO_MODEL)) {
-            boolean isGeneralTheme = form.getTheme() == MAPTheme.GENERAL;
-            ThemeBook themeBook = getMap().getConfig().getThemeBook(form.getTheme());
+        this.entityTypes.set(entityIndex, newForm);
+        boolean hasModel = !newForm.testFlag(FormLibFlag.NO_MODEL);
+
+        if (hasModel) {
+            boolean isGeneralTheme = newForm.getTheme() == MAPTheme.GENERAL;
+            ThemeBook themeBook = getMap().getConfig().getThemeBook(newForm.getTheme());
 
             WADFile wadFile = null;
             if (isGeneralTheme) {
@@ -245,8 +319,8 @@ public class EntityManager extends MapManager {
                     wadFile = mapBook.getWad(getMap());
             }
 
-            int wadIndex = form.getWadIndex();
-            if (wadFile != null && wadFile.getFiles().size() > wadIndex) {
+            int wadIndex = newForm.getWadIndex();
+            if (wadFile != null && wadFile.getFiles().size() > wadIndex) { // Test if there's an associated WAD.
                 WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
 
                 if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
@@ -258,22 +332,20 @@ public class EntityManager extends MapManager {
                         vlo = themeBook.getVLO(getMap());
                     holder.setVloFile(vlo);
 
-                    // Setup MeshView.
-                    MeshView view = setupNode(new MeshView(holder.getMofMesh()), x, y, z);
-                    view.setMaterial(holder.getTextureMap().getPhongMaterial());
-                    view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.X_AXIS));
-                    view.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.Y_AXIS));
-                    view.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.Z_AXIS));
-                    return view;
+                    // Update MeshView.
+                    entityMesh.setMesh(holder.getMofMesh());
+                    entityMesh.setMaterial(holder.getTextureMap().getPhongMaterial());
+                    return;
                 }
             }
         }
 
+        // Couldn't find a model to use, so instead we'll display as a 2D sprite.
+        float entityIconSize = MapUIController.getPropertyEntityIconSize().getValue();
+
+        // Attempt to apply 2d textures, instead of the default texture.
         PhongMaterial material = MATERIAL_ENTITY_ICON;
-
         FroggerEXEInfo config = getMap().getConfig();
-
-        // Attempt to apply fly texture.
         if (config.getPickupData() != null) {
             FlyScoreType flyType = null;
             if (entity.getEntityData() instanceof BonusFlyEntity)
@@ -293,24 +365,14 @@ public class EntityManager extends MapManager {
             }
         }
 
+        // NOTE: Maybe this could be a single tri mesh, local to this manager, and we just update its points in updateEntities().
         TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
         triMesh.getPoints().addAll(-entityIconSize * 0.5f, entityIconSize * 0.5f, 0, -entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, entityIconSize * 0.5f, 0);
         triMesh.getTexCoords().addAll(0, 1, 0, 0, 1, 0, 1, 1);
         triMesh.getFaces().addAll(0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 0, 0);
 
-        MeshView triMeshView = new MeshView(triMesh);
-        triMeshView.setDrawMode(DrawMode.FILL);
-        triMeshView.setMaterial(material);
-        triMeshView.setCullFace(CullFace.NONE);
-
-        return setupNode(triMeshView, x, y, z);
-    }
-
-    private <T extends Node> T setupNode(T node, float x, float y, float z) {
-        node.setTranslateX(x);
-        node.setTranslateY(y);
-        node.setTranslateZ(z);
-        getRenderManager().addNode(ENTITY_LIST, node);
-        return node;
+        // Update mesh.
+        entityMesh.setMesh(triMesh);
+        entityMesh.setMaterial(material);
     }
 }
