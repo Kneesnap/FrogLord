@@ -4,6 +4,9 @@ import javafx.application.Platform;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.DrawMode;
+import javafx.scene.transform.Translate;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.poly.MAPPolygonData;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -11,6 +14,8 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -26,11 +31,13 @@ public class VertexManager extends MapManager {
     private Consumer<SVector> promptHandler;
     private int[] shownVertices;
     private int polyIndex;
-    private static final String VERTICE_LIST = "shownVertices";
     private static final double SIZE = 1.5;
     private static final PhongMaterial NORMAL_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
     private static final PhongMaterial SELECT_MATERIAL = Utils.makeSpecialMaterial(Color.BLUE);
     private static final PhongMaterial PROMPT_MATERIAL = Utils.makeSpecialMaterial(Color.PINK);
+    private List<Box> boxes = new ArrayList<>();
+    private List<SVector> vectors = new ArrayList<>();
+    private List<SVector> tempList = new ArrayList<>();
 
     public VertexManager(MapUIController controller) {
         super(controller);
@@ -39,6 +46,7 @@ public class VertexManager extends MapManager {
     @Override
     public void onSetup() {
         super.onSetup();
+        getRenderManager().addMissingDisplayList("vertexBoxes");
         getController().getShowAllVerticesToggle().setOnAction(evt -> {
             this.shownVertices = null;
             updateVisibility();
@@ -65,6 +73,11 @@ public class VertexManager extends MapManager {
             chooseNextPoly();
         });
 
+        this.verticeEditor.addButton("Remove Unused Vertices", () -> {
+            getMap().removeUnusedVertices();
+            updateVisibility();
+        });
+
         if (this.selectedVector != null) {
             this.verticeEditor.addFloatVector("Vertex", this.selectedVector,
                     () -> getController().getGeometryManager().refreshView(), getController(), this.selectedVector.defaultBits(), null, this.selectedBox);
@@ -88,53 +101,91 @@ public class VertexManager extends MapManager {
         }, null);
     }
 
+    private void updateBoxes(List<SVector> newBoxes) {
+        // Add vector data.
+        while (newBoxes.size() > this.vectors.size())
+            this.vectors.add(null);
+
+        for (int i = 0; i < this.vectors.size(); i++)
+            this.vectors.set(i, (newBoxes.size() > i ? newBoxes.get(i) : null));
+
+        // Add new boxes.
+        while (newBoxes.size() > this.boxes.size()) {
+            Box box = new Box(SIZE, SIZE, SIZE);
+            box.setMaterial(NORMAL_MATERIAL);
+            box.setDrawMode(DrawMode.LINE);
+            box.setCullFace(CullFace.BACK);
+            box.getTransforms().addAll(new Translate(0, 0, 0));
+            box.setMouseTransparent(false);
+            this.boxes.add(box);
+            getRenderManager().addNode("vertexBoxes", box);
+
+            box.setOnMouseClicked(evt -> {
+                Box safeBox = (Box) evt.getSource();
+                int boxIndex = this.boxes.indexOf(safeBox);
+                SVector vec = this.vectors.get(boxIndex);
+
+                if (isPromptActive()) {
+                    acceptPrompt(vec);
+                    return;
+                }
+
+                if (Objects.equals(this.selectedVector, vec)) { // Clicked the selected vertex. Deselect!
+                    this.selectedVector = null;
+                    this.selectedBox = null;
+                    updateVisibility();
+                    setupEditor();
+                    return;
+                }
+
+                if (this.selectedBox != null)
+                    this.selectedBox.setMaterial(NORMAL_MATERIAL);
+                safeBox.setMaterial(SELECT_MATERIAL);
+
+                this.selectedVector = vec;
+                this.selectedBox = safeBox;
+                updateVisibility();
+                setupEditor(); // Update editor / selected.
+            });
+        }
+
+        // Update existing boxes.
+        for (int i = 0; i < this.boxes.size(); i++) {
+            Box box = this.boxes.get(i);
+            boolean isUsed = i < newBoxes.size();
+            box.setVisible(isUsed);
+
+            if (isUsed) {
+                SVector vec = this.vectors.get(i);
+                Translate translate = (Translate) box.getTransforms().get(0);
+                translate.setX(vec.getFloatX()); // Update transform.
+                translate.setY(vec.getFloatY());
+                translate.setZ(vec.getFloatZ());
+                box.setMaterial(Objects.equals(this.selectedVector, vec) ? SELECT_MATERIAL : (isPromptActive() ? PROMPT_MATERIAL : NORMAL_MATERIAL)); // Update material.
+            }
+        }
+    }
+
     /**
      * Updates the vertex display.
      */
     public void updateVisibility() {
-        getRenderManager().addMissingDisplayList(VERTICE_LIST);
-        getRenderManager().clearDisplayList(VERTICE_LIST);
-
         if ((this.shownVertices == null && getController().getShowAllVerticesToggle().isSelected()) || isPromptActive()) {
-            for (SVector vec : getMap().getVertexes())
-                setupVertex(vec);
+            updateBoxes(getMap().getVertexes());
         } else if (this.shownVertices != null) {
-            for (int id : this.shownVertices)
-                setupVertex(getMap().getVertexes().get(id));
+            tempList.clear();
+            for (int i = 0; i < this.shownVertices.length; i++)
+                tempList.add(getMap().getVertexes().get(this.shownVertices[i]));
+            updateBoxes(tempList);
         } else if (this.selectedVector != null && this.selectedBox == null) {
-            this.selectedBox = setupVertex(this.selectedVector);
+            tempList.clear();
+            tempList.add(this.selectedVector);
+            updateBoxes(tempList);
+            this.selectedBox = this.boxes.get(0);
+        } else { // Don't show any vertices.
+            tempList.clear();
+            updateBoxes(tempList);
         }
-    }
-
-    private Box setupVertex(SVector vec) {
-        PhongMaterial material = (Objects.equals(this.selectedVector, vec) ? SELECT_MATERIAL : (isPromptActive() ? PROMPT_MATERIAL : NORMAL_MATERIAL));
-        Box box = getRenderManager().addBoundingBoxCenteredWithDimensions(VERTICE_LIST, vec.getFloatX(), vec.getFloatY(), vec.getFloatZ(), SIZE, SIZE, SIZE, material, true);
-        box.setMouseTransparent(false);
-        box.setOnMouseClicked(evt -> {
-            if (isPromptActive()) {
-                acceptPrompt(vec);
-                return;
-            }
-
-            if (Objects.equals(this.selectedVector, vec)) { // Clicked the selected vertex. Deselect!
-                this.selectedVector = null;
-                this.selectedBox = null;
-                updateVisibility();
-                setupEditor();
-                return;
-            }
-
-            if (this.selectedBox != null)
-                this.selectedBox.setMaterial(NORMAL_MATERIAL);
-            box.setMaterial(SELECT_MATERIAL);
-
-            this.selectedVector = vec;
-            this.selectedBox = box;
-            updateVisibility();
-            setupEditor(); // Update editor / selected.
-        });
-
-        return box;
     }
 
     /**

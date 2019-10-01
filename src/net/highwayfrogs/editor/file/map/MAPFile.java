@@ -33,7 +33,6 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygonType;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.map.zone.Zone;
-import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -194,14 +193,11 @@ public class MAPFile extends GameFile {
      * @return isUsed
      */
     public boolean isVerticeUsed(int vertice) {
-        for (List<MAPPrimitive> prim : getPolygons().values()) {
-            if (!(prim instanceof MOFPolygon))
-                continue;
-            MOFPolygon poly = (MOFPolygon) prim;
-            for (int testVertex : poly.getVertices())
-                if (testVertex == vertice)
-                    return true;
-        }
+        for (List<MAPPrimitive> primList : getPolygons().values())
+            for (MAPPrimitive prim : primList)
+                for (int i = 0; i < prim.getVerticeCount(); i++)
+                    if (prim.getVertices()[i] == vertice)
+                        return true;
 
         return false;
     }
@@ -211,14 +207,12 @@ public class MAPFile extends GameFile {
      * @param vertice The vertice to remove.
      */
     public void removeVertice(int vertice) {
-        for (List<MAPPrimitive> prim : getPolygons().values()) {
-            if (!(prim instanceof MOFPolygon))
-                continue;
-            MOFPolygon poly = (MOFPolygon) prim;
-            for (int i = 0; i < poly.getVertices().length; i++)
-                if (poly.getVertices()[i] > vertice)
-                    poly.getVertices()[i]--;
-        }
+        this.vertexes.remove(vertice);
+        for (List<MAPPrimitive> primList : getPolygons().values())
+            for (MAPPrimitive prim : primList)
+                for (int i = 0; i < prim.getVerticeCount(); i++)
+                    if (prim.getVertices()[i] > vertice)
+                        prim.getVertices()[i]--;
     }
 
     @Override
@@ -1133,6 +1127,23 @@ public class MAPFile extends GameFile {
         setGroupZCount(groupCount);
 
         System.out.println("Scrambled " + getFileEntry().getDisplayName());
+    }
+
+    /**
+     * Removes unused vertices from the file.
+     */
+    public void removeUnusedVertices() {
+        boolean[] foundVertices = new boolean[this.vertexes.size()];
+        for (List<MAPPrimitive> mapPolyList : getPolygons().values())
+            for (MAPPrimitive mapPoly : mapPolyList)
+                for (int i = 0; i < mapPoly.getVerticeCount(); i++)
+                    foundVertices[mapPoly.getVertices()[i]] = true;
+
+        // Remove the vertices.
+        int removeCount = 0;
+        for (int i = 0; i < foundVertices.length; i++)
+            if (!foundVertices[i])
+                removeVertice(i - removeCount++);
     }
 
     /**

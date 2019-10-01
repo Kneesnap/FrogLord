@@ -3,8 +3,8 @@ Look into that stupid MWD saving bug. Why does it work on 1.8.0_111, 1.8.0_144, 
 Map Editor:
  - Add polygons.
  - Better polygon editor.
- - Fix adding new matrix entities. (They don't show up in-game)
- - Would it be efficient to display the map by adding each poly as a mesh view? It could result in much better map controls. It also may be terrible. [May fix display on laptops?]
+ - Fix adding new matrix entities. (They don't show up in-game It seems like invalid matrix, as this can happen if you move an entity.)
+ - Would it be efficient to display the map by adding each poly as a mesh view? It could result in much better map controls. It also may be terrible. [May allow us to add per-face textures.]
  - Would it be possible to change the SVector editor to calculate X + Z relative to the camera?
 
 Future:
