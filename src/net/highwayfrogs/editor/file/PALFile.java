@@ -35,14 +35,14 @@ public class PALFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
-        Utils.verify(reader.readString(RIFF_SIGNATURE.length()).equals(RIFF_SIGNATURE), "Invalid RIFF signature!");
+        reader.verifyString(RIFF_SIGNATURE);
         reader.skipInt(); // File size. Does not include marker.
-        Utils.verify(reader.readString(PAL_SIGNATURE.length()).equals(PAL_SIGNATURE), "Invalid PAL signature!");
-        Utils.verify(reader.readString(DATA_HEADER.length()).equals(DATA_HEADER), "Invalid data chunk signature.");
+        reader.verifyString(PAL_SIGNATURE);
+        reader.verifyString(DATA_HEADER);
         reader.skipInt(); // Data chunk size. Excludes the header.
         Utils.verify(reader.readShort() == PAL_VERSION, "Unknown PAL version.");
-        short colorCount = reader.readShort();
 
+        short colorCount = reader.readShort();
         for (int i = 0; i < colorCount; i++) {
             byte red = reader.readByte();
             byte green = reader.readByte();
