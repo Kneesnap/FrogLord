@@ -132,7 +132,7 @@ public class MWDFile extends GameObject {
             if (entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX)) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
                 file = new SkyLand();
             } else {
-                file = new MAPFile(this);
+                file = new MAPFile();
             }
         } else if (entry.getTypeId() == WADFile.TYPE_ID) {
             file = new WADFile();

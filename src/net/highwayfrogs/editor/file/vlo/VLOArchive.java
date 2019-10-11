@@ -31,6 +31,7 @@ import java.util.function.Consumer;
 
 /**
  * VLOArchive - Image archive format created by VorgPC/Vorg2.
+ * Images are ordered in descending size. (Largest area -> smallest area).
  * ABGR 8888 = 24 + 8.
  * Created by Kneesnap on 8/17/2018.
  */

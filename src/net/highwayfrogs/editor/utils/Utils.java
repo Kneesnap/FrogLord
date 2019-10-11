@@ -16,8 +16,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.stage.*;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Window;
+import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
@@ -30,8 +30,8 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -1129,6 +1129,16 @@ public class Utils {
         return imageCacheMap.computeIfAbsent(image, bufferedImage -> new TextureCache(SwingFXUtils.toFXImage(bufferedImage, null))).getImage();
     }
 
+    /**
+     * Reads all of the bytes in a file.
+     * @param file The file to read bytes from.
+     * @return fileBytes
+     */
+    @SneakyThrows
+    public static byte[] readFileBytes(File file) {
+        return Files.readAllBytes(file.toPath());
+    }
+
     private static class TextureCache {
         private long lastUpdate;
         private Image fxImage;
@@ -1356,6 +1366,14 @@ public class Utils {
      */
     public static void makePopUp(String message, AlertType type) {
         new Alert(type, message, ButtonType.OK).showAndWait();
+    }
+
+    /**
+     * Make a yes or no popup prompt show up.
+     * @param message The message to display.
+     */
+    public static boolean makePopUpYesNo(String message) {
+        return new Alert(AlertType.CONFIRMATION, message, ButtonType.YES, ButtonType.NO).showAndWait().orElseGet(() -> ButtonType.NO) == ButtonType.YES;
     }
 
     /**

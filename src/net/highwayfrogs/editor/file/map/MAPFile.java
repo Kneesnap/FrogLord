@@ -83,7 +83,6 @@ public class MAPFile extends GameFile {
     private short gridZSize = (short) 768; // Seems to always be 768.
 
     private transient VLOArchive vlo;
-    private transient MWDFile parentMWD;
     private transient Map<MAPPrimitiveType, List<MAPPrimitive>> polygons = new HashMap<>();
 
     private transient List<GridSquare> loadGridSquares = new ArrayList<>();
@@ -123,10 +122,6 @@ public class MAPFile extends GameFile {
     public static final int VERTEX_COLOR_IMAGE_SIZE = 8;
     private static final ImageFilterSettings OBJ_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
             .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
-
-    public MAPFile(MWDFile parent) {
-        this.parentMWD = parent;
-    }
 
     static {
         PRIMITIVE_TYPES.addAll(POLYGON_TYPES);
