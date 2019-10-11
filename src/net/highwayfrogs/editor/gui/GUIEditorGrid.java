@@ -3,13 +3,11 @@ package net.highwayfrogs.editor.gui;
 import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
 import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -31,7 +29,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -682,33 +679,6 @@ public class GUIEditorGrid {
         rollUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
     }
 
-    public HBox addVector3D(float[] vec3D, double height, BiConsumer<Integer, Float> handler) {
-        HBox container;
-
-        // Check to ensure we are receiving a 3-component vector
-        if (vec3D.length != 3) {
-            container = setupSecondNode(new HBox(new Label("*Invalid vector length*")), true);
-        } else {
-            HBox hBox = new HBox(1D);
-
-            for (int i = 0; i < vec3D.length; i++) {
-                final int tempIndex = i;
-                TextField field = new TextField(Float.toString(vec3D[i]));
-                field.setAlignment(Pos.CENTER_RIGHT);
-                field.textProperty().addListener((observable, oldValue, newValue) -> {
-                    if (Utils.isNumber(newValue) && handler != null)
-                        handler.accept(tempIndex, Float.parseFloat(newValue));
-                });
-                hBox.getChildren().add(field);
-            }
-
-            container = setupSecondNode(hBox, true);
-        }
-
-        addRow(height);
-        return container;
-    }
-
     /**
      * Setup the first node.
      * @param node The node to setup.
@@ -750,7 +720,7 @@ public class GUIEditorGrid {
      * Add a horizontal separator.
      */
     public void addSeparator(double height) {
-        Separator sep = setupSecondNode(new Separator(Orientation.HORIZONTAL), true);
+        setupSecondNode(new Separator(Orientation.HORIZONTAL), true);
         addRow(height);
     }
 
