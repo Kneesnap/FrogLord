@@ -30,7 +30,7 @@ public class MOFPart extends GameObject {
     private int flags;
     private List<MOFPartcel> partcels = new ArrayList<>();
     private List<MOFHilite> hilites = new ArrayList<>();
-    private PSXMatrix matrix; // Seems to usually be null, or if it's not, everything is zero.
+    private PSXMatrix matrix; // Seems to usually be null. JUN_PLANT is the only model that uses this, to add a slight roll rotation.
     private MOFCollprim collprim;
     private List<MOFPartPolyAnim> partPolyAnims = new ArrayList<>();
     private List<MOFPartPolyAnimEntryList> partPolyAnimLists = new ArrayList<>();

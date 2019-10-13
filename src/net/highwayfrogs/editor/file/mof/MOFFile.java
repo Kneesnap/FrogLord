@@ -69,7 +69,7 @@ public class MOFFile extends MOFBase {
 
     @Override
     public void save(DataWriter writer) {
-        if (getHolder().isIncomplete() && getBytes() != null) { // If the MOF is incomplete, save the incomplete mof.
+        if (getHolder().isIncomplete() && this.bytes != null) { // If the MOF is incomplete, save the incomplete mof.
             writer.writeBytes(this.bytes);
             return;
         }
