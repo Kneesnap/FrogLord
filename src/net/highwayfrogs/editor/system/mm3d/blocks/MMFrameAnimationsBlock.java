@@ -98,7 +98,7 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
         private float z;
 
         public MMFloatVertex(Vector vec) {
-            this(vec.getFloatX(), vec.getFloatY(), vec.getFloatZ());
+            this(vec.getExportFloatX(), vec.getExportFloatY(), vec.getExportFloatZ());
         }
 
         @Override

@@ -302,12 +302,12 @@ public class FileUtils3D {
 
     /**
      * Convert a MOF to a MisfitModel3D.
-     * TODO: mm3d features
-     *  - Support texture animations. (If possible.)
-     *  - Support lighting.
-     *  - Support bounding box.
-     *  - Other missing things like collprim and matrix.
-     *  - Fix animations being upside-down.
+     *
+     * mm3d does not support:
+     *  - Texture animations. (Flipbook)
+     *  - Lighting.
+     *  - Quads
+     *
      * @param holder The mof to convert.
      * @return misfit3d
      */
