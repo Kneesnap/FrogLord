@@ -99,4 +99,28 @@ public class ImageWorkHorse {
             return alpha == 0 ? 0xFF000000 : rgb;
         }
     }
+
+    /**
+     * Creates a duplicate of an image.
+     * @param source The image to create a duplicate of.
+     * @return newImage
+     */
+    public static BufferedImage copyImage(BufferedImage source) {
+        return copyImage(source, null);
+    }
+
+    /**
+     * Copies the contents of one image to another.
+     * @param source The image to transfer from.
+     * @param target The target to transfer to.
+     * @return targetImage
+     */
+    public static BufferedImage copyImage(BufferedImage source, BufferedImage target) {
+        if (target == null || target.getWidth() != source.getWidth() || target.getHeight() != source.getHeight() || target.getType() != source.getType())
+            target = new BufferedImage(source.getWidth(), source.getHeight(), source.getType());
+        Graphics g = target.getGraphics();
+        g.drawImage(source, 0, 0, null);
+        g.dispose();
+        return target;
+    }
 }

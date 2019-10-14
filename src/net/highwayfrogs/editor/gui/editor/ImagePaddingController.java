@@ -11,6 +11,7 @@ import javafx.stage.Stage;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -28,11 +29,12 @@ public class ImagePaddingController implements Initializable {
     @FXML private Slider heightSlider;
     @FXML private ColorPicker bgColor;
 
+    private BufferedImage appliedImage;
     private VLOController controller;
     private Stage stage;
     private GameImage image;
 
-    private static final ImageFilterSettings SETTINGS = new ImageFilterSettings(ImageState.EXPORT);
+    private final ImageFilterSettings filterSettings = new ImageFilterSettings(ImageState.EXPORT);
 
     public ImagePaddingController(Stage stage, VLOController controller) {
         this.stage = stage;
@@ -57,8 +59,8 @@ public class ImagePaddingController implements Initializable {
     }
 
     private void updateDisplay() {
-        SETTINGS.invalidateRenderCache();
-        BufferedImage image = this.image.toBufferedImage(SETTINGS);
+        BufferedImage image = this.appliedImage = ImageWorkHorse.copyImage(this.image.toBufferedImage(filterSettings), this.appliedImage);
+
         Graphics2D graphics = image.createGraphics();
         graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .5F));
         graphics.setPaint(Utils.toAWTColor(this.bgColor.getValue()));
