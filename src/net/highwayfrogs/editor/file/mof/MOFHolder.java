@@ -140,11 +140,8 @@ public class MOFHolder extends GameFile {
             MOFFile staticMof = asStaticFile();
             list.add(new Tuple2<>("Parts", String.valueOf(staticMof.getParts().size())));
             list.add(new Tuple2<>("Texture Animation", String.valueOf(staticMof.hasTextureAnimation())));
-
-            int hiliteCount = 0;
-            for (MOFPart part : staticMof.getParts())
-                hiliteCount += part.getHilites().size();
-            list.add(new Tuple2<>("Hilites", String.valueOf(hiliteCount)));
+            list.add(new Tuple2<>("Hilites", String.valueOf(staticMof.getHiliteCount())));
+            list.add(new Tuple2<>("Collprims", String.valueOf(staticMof.getCollprimCount())));
         }
 
         return list;

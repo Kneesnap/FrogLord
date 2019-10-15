@@ -122,4 +122,27 @@ public class MOFFile extends MOFBase {
                 return true;
         return false;
     }
+
+    /**
+     * Gets the number of hilites this model has.
+     * @return hiliteCount
+     */
+    public int getHiliteCount() {
+        int totalHilites = 0;
+        for (int i = 0; i < getParts().size(); i++)
+            totalHilites += getParts().get(i).getHilites().size();
+        return totalHilites;
+    }
+
+    /**
+     * Gets the number of collprims in this model.
+     * @return collprimCount
+     */
+    public int getCollprimCount() {
+        int totalCollprim = 0;
+        for (int i = 0; i < getParts().size(); i++)
+            if (getParts().get(i).getCollprim() != null)
+                totalCollprim++;
+        return totalCollprim;
+    }
 }

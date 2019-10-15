@@ -27,6 +27,7 @@ import javafx.util.Duration;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.mof.MOFBBox;
+import net.highwayfrogs.editor.file.mof.MOFCollprim;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
@@ -66,8 +67,10 @@ public class MOFController extends EditorController<MOFHolder> {
     private static final String LIGHTING_LIST = "extraLighting";
     private static final String HILITE_LIST = "hiliteBoxes";
     private static final String BBOX_LIST = "boundingBoxes";
+    private static final String COLLPRIM_BOX_LIST = "collprimBoxes";
 
     private static final PhongMaterial HILITE_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial COLLPRIM_MATERIAL = Utils.makeSpecialMaterial(Color.LIGHTGREEN);
     private static final PhongMaterial BBOX_MATERIAL = Utils.makeSpecialMaterial(Color.RED);
 
     @Override
@@ -227,6 +230,23 @@ public class MOFController extends EditorController<MOFHolder> {
     }
 
     /**
+     * Update collprim boxes.
+     * @param showCollprim Should show collprim boxes.
+     */
+    public void updateCollprimBoxes(boolean showCollprim) {
+        getRenderManager().addMissingDisplayList(COLLPRIM_BOX_LIST);
+        getRenderManager().clearDisplayList(COLLPRIM_BOX_LIST);
+        if (!showCollprim)
+            return;
+
+        for (MOFPart part : getFile().asStaticFile().getParts()) {
+            MOFCollprim collprim = part.getCollprim();
+            if (collprim != null)
+                applyRotation(collprim.addDisplay(getRenderManager(), COLLPRIM_BOX_LIST, COLLPRIM_MATERIAL));
+        }
+    }
+
+    /**
      * Update bounding boxes.
      * @param showBoxes Should show hilite boxes.
      */
@@ -296,6 +316,7 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private ComboBox<Integer> animationSelector;
         @FXML private CheckBox brightModeCheckbox;
         @FXML private CheckBox viewHilitesCheckbox;
+        @FXML private CheckBox viewCollprimCheckbox;
         @FXML private CheckBox viewBoundingBoxesCheckbox;
 
         private List<Node> toggleNodes = new ArrayList<>();
@@ -314,6 +335,7 @@ public class MOFController extends EditorController<MOFHolder> {
         public void initialize(URL location, ResourceBundle resources) {
             this.brightModeCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateLighting(newValue)));
             this.viewHilitesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateHiliteBoxes(newValue)));
+            this.viewCollprimCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateCollprimBoxes(newValue)));
             this.viewBoundingBoxesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateBoundingBoxes(newValue)));
 
             toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, btnNext, btnLast));
@@ -362,11 +384,13 @@ public class MOFController extends EditorController<MOFHolder> {
             this.holder = controller.getFile();
 
             // Handle the hilite setting.
-            int totalHilites = 0;
-            for (MOFPart part : getHolder().asStaticFile().getParts())
-                totalHilites += part.getHilites().size();
+            int totalHilites = getHolder().asStaticFile().getHiliteCount();
             this.viewHilitesCheckbox.setText(this.viewHilitesCheckbox.getText() + " [" + totalHilites + "]");
             this.viewHilitesCheckbox.setDisable(totalHilites == 0);
+
+            int totalCollprim = getHolder().asStaticFile().getCollprimCount();
+            this.viewCollprimCheckbox.setText(this.viewCollprimCheckbox.getText() + " [" + totalCollprim + "]");
+            this.viewCollprimCheckbox.setDisable(totalCollprim == 0);
 
             // Setup animation control.
             List<Integer> numbers = new ArrayList<>(Utils.getIntegerList(holder.getMaxAnimation()));

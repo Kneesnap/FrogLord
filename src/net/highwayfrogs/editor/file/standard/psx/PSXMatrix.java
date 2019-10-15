@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.mof.animation.transform.MR_MAT34;
 import net.highwayfrogs.editor.file.mof.animation.transform.MR_MAT34B;
 import net.highwayfrogs.editor.file.mof.animation.transform.MR_QUATB_TRANS;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -140,6 +141,21 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
+     * Make a new PSXMAtrix from a MR_MAT34 transform.
+     * @param mat34 The transform to turn into a matrix.
+     * @return matrix
+     */
+    public static PSXMatrix makeMatrixFromMat34(MR_MAT34 mat34) {
+        PSXMatrix newMatrix = new PSXMatrix();
+        for (int i = 0; i < mat34.getMatrix().length; i++)
+            System.arraycopy(mat34.getMatrix()[i], 0, newMatrix.getMatrix()[i], 0, mat34.getMatrix()[i].length);
+
+        for (int i = 0; i < mat34.getTransform().length; i++)
+            newMatrix.getTransform()[i] = mat34.getTransform()[i];
+        return newMatrix;
+    }
+
+    /**
      * Make a new PSXMatrix from a QUATB_TRANSLATION.
      * @param quatB The QuatB to make the matrix from.
      * @return psxMatrix
@@ -245,7 +261,7 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
-     * Equivalent to ApplyMatrix. matrix.svec = vec (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0392.html?sidebar=outlines)
+     * Equivalent to ApplyMatrix. matrix -> vec (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0392.html?sidebar=outlines)
      * @param matrix The matrix to multiply.
      * @param vector The short vector to multiply the matrix by.
      * @param output The output to write to.
@@ -255,5 +271,10 @@ public class PSXMatrix extends GameObject {
         output.setY((((matrix.matrix[1][0] * vector.getX()) + (matrix.matrix[1][1] * vector.getY()) + (matrix.matrix[1][2] * vector.getZ())) >> 12) + matrix.transform[1]);
         output.setZ((((matrix.matrix[2][0] * vector.getX()) + (matrix.matrix[2][1] * vector.getY()) + (matrix.matrix[2][2] * vector.getZ())) >> 12) + matrix.transform[2]);
         return output;
+    }
+
+    @Override
+    public String toString() {
+        return "PsxMatrix Pos[" + getTransform()[0] + ", " + getTransform()[1] + ", " + getTransform()[2] + "] Yaw: " + getYawAngle() + ", Pitch: " + getPitchAngle() + ", Roll: " + getRollAngle();
     }
 }

@@ -36,6 +36,6 @@ public class MR_MAT34 extends TransformObject {
 
     @Override
     public PSXMatrix createMatrix() {
-        throw new UnsupportedOperationException();
+        return PSXMatrix.makeMatrixFromMat34(this);
     }
 }
