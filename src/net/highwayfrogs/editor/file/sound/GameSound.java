@@ -71,24 +71,25 @@ public abstract class GameSound extends GameObject {
      * Import a new AudioFormat.
      * @param newFormat The new AudioFormat to import.
      */
-    public void importFormat(AudioFormat newFormat) {
+    public boolean importFormat(AudioFormat newFormat) {
         if (newFormat.isBigEndian()) {
             Utils.makePopUp("Big Endian audio files are not accepted. Please convert to a little endian audio file.", AlertType.WARNING);
-            return;
+            return false;
         }
 
         if (newFormat.getEncoding() != Encoding.PCM_SIGNED) {
             Utils.makePopUp(newFormat.getEncoding() + " audio files are not accepted. Please use PCM_SIGNED audio files.", AlertType.WARNING);
-            return;
+            return false;
         }
 
         if (newFormat.getChannels() != VHFile.CHANNEL_COUNT) {
             Utils.makePopUp("This audio file contains " + newFormat.getChannels() + " channel(s), but Frogger only supports files with " + VHFile.CHANNEL_COUNT + " channel(s).", AlertType.WARNING);
-            return;
+            return false;
         }
 
         setBitWidth(newFormat.getSampleSizeInBits());
         setSampleRate((int) newFormat.getSampleRate());
+        return true;
     }
 
     /**

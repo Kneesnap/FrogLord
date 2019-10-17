@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.file.sound.prototype;
 
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.GameSound;
 import net.highwayfrogs.editor.file.sound.PCVBFile;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.*;
 import java.io.BufferedInputStream;
@@ -70,9 +70,10 @@ public class PrototypeVBFile extends PCVBFile {
             Utils.verify(Arrays.equals(RIFF_SIGNATURE, header), "INVALID RIFF SIGNATURE: %s!", new String(header));
 
             //Import the file.
-            this.importFormat(AudioSystem.getAudioInputStream(file).getFormat());
-            this.wavBytes = newBytes;
-            onImport();
+            if (this.importFormat(AudioSystem.getAudioInputStream(file).getFormat())) {
+                this.wavBytes = newBytes; // Keep the audio data.
+                onImport(); // Call onImport hook.
+            }
         }
 
         @Override

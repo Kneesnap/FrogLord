@@ -81,8 +81,10 @@ public class RetailPCVBFile extends PCVBFile {
         @Override
         public void replaceWithFile(File file) throws IOException, UnsupportedAudioFileException {
             AudioInputStream inputStream = AudioSystem.getAudioInputStream(file);
+            if (!this.importFormat(inputStream.getFormat()))
+                return; // Import failed.
+
             getAudioData().clear();
-            this.importFormat(inputStream.getFormat());
 
             ArrayReceiver receiver = new ArrayReceiver();
             DataWriter writer = new DataWriter(receiver);
