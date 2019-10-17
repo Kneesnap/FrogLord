@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.file.sound;
 
+import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
+import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioFormat.Encoding;
@@ -71,9 +72,20 @@ public abstract class GameSound extends GameObject {
      * @param newFormat The new AudioFormat to import.
      */
     public void importFormat(AudioFormat newFormat) {
-        Utils.verify(!newFormat.isBigEndian(), "Big Endian audio files are not accepted.");
-        Utils.verify(newFormat.getEncoding() == Encoding.PCM_SIGNED, "Unsigned audio files are not supported. (%s)", newFormat.getEncoding());
-        Utils.verify(newFormat.getChannels() == VHFile.CHANNEL_COUNT, "%d-channel audio is not supported!", newFormat.getChannels());
+        if (newFormat.isBigEndian()) {
+            Utils.makePopUp("Big Endian audio files are not accepted. Please convert to a little endian audio file.", AlertType.WARNING);
+            return;
+        }
+
+        if (newFormat.getEncoding() != Encoding.PCM_SIGNED) {
+            Utils.makePopUp(newFormat.getEncoding() + " audio files are not accepted. Please use PCM_SIGNED audio files.", AlertType.WARNING);
+            return;
+        }
+
+        if (newFormat.getChannels() != VHFile.CHANNEL_COUNT) {
+            Utils.makePopUp("This audio file contains " + newFormat.getChannels() + " channel(s), but Frogger only supports files with " + VHFile.CHANNEL_COUNT + " channel(s).", AlertType.WARNING);
+            return;
+        }
 
         setBitWidth(newFormat.getSampleSizeInBits());
         setSampleRate((int) newFormat.getSampleRate());
