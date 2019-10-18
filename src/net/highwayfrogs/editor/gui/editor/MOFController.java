@@ -45,6 +45,9 @@ import java.util.ResourceBundle;
 
 /**
  * Controls the MOF editor GUI.
+ * TODO: Texture editor.
+ * TODO: Hilite editor.
+ * TODO: Collprim editor.
  * Created by Kneesnap on 2/13/2019.
  */
 @Getter
