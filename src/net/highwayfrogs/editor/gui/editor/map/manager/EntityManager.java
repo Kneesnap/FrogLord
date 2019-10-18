@@ -334,7 +334,7 @@ public class EntityManager extends MapManager {
             }
 
             int wadIndex = newForm.getWadIndex();
-            if (wadFile != null && wadFile.getFiles().size() > wadIndex) { // Test if there's an associated WAD.
+            if (wadFile != null && wadFile.getFiles().size() > wadIndex && wadIndex >= 0) { // Test if there's an associated WAD.
                 WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
 
                 if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
