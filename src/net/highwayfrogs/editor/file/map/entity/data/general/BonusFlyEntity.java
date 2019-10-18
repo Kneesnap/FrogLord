@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 
 /**
  * Data for a entity.
@@ -30,8 +31,11 @@ public class BonusFlyEntity extends MatrixData {
     }
 
     @Override
-    public void addData(GUIEditorGrid editor) {
-        super.addData(editor);
-        editor.addEnumSelector("Fly Type", getType(), FlyScoreType.values(), false, this::setType);
+    public void addData(EntityManager manager, GUIEditorGrid editor) {
+        super.addData(manager, editor);
+        editor.addEnumSelector("Fly Type", getType(), FlyScoreType.values(), false, newType -> {
+            this.type = newType;
+            manager.updateEntity(getParentEntity());
+        });
     }
 }

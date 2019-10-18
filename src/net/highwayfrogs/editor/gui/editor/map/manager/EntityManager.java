@@ -40,7 +40,9 @@ import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Manages map entities.
@@ -50,6 +52,7 @@ public class EntityManager extends MapManager {
     private GUIEditorGrid entityEditor;
     private List<MeshView> entityModelViews = new ArrayList<>();
     private List<FormEntry> entityTypes = new ArrayList<>();
+    private Set<Integer> entitiesToUpdate = new HashSet<>();
 
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
     private static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
@@ -292,6 +295,17 @@ public class EntityManager extends MapManager {
         // Update visibility.
         for (int i = 0; i < this.entityModelViews.size(); i++)
             this.entityModelViews.get(i).setVisible(entities.size() > i); // Update visibility.
+
+        entitiesToUpdate.clear();
+    }
+
+    /**
+     * Updates the mesh of a given entity.
+     * @param entity The entity to update.
+     */
+    public void updateEntity(Entity entity) {
+        this.entitiesToUpdate.add(getEntities().indexOf(entity));
+        updateEntities();
     }
 
     private void updateEntityMesh(int entityIndex) {
@@ -300,7 +314,7 @@ public class EntityManager extends MapManager {
         FormEntry oldForm = this.entityTypes.get(entityIndex);
         FormEntry newForm = entity.getFormEntry();
 
-        if (oldForm == newForm)
+        if (oldForm == newForm && !entitiesToUpdate.contains(entityIndex))
             return; // The entity form has not changed, so we shouldn't change the model.
 
         this.entityTypes.set(entityIndex, newForm);
