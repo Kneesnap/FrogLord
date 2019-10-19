@@ -1350,6 +1350,67 @@ public class Utils {
     }
 
     /**
+     * Calculate interpolated color value based on 't' between source and target colours.
+     * @param colorSrc The source color.
+     * @param colorTgt The target color.
+     * @param t The desired delta (from 0.0 to 1.0 inclusive).
+     * @return Color
+     */
+    public static Color calculateInterpolatedColour(final Color colorSrc, final Color colorTgt, float t) {
+        t = Math.min(t, 1.0f);
+        t = Math.max(t, 0.0f);
+
+        final double rSrc = colorSrc.getRed();
+        final double gSrc = colorSrc.getGreen();
+        final double bSrc = colorSrc.getBlue();
+        final double aSrc = colorSrc.getOpacity();
+
+        final double rTgt = colorTgt.getRed();
+        final double gTgt = colorTgt.getGreen();
+        final double bTgt = colorTgt.getBlue();
+        final double aTgt = colorTgt.getOpacity();
+
+        final double rDelta = rTgt - rSrc;
+        final double gDelta = gTgt - gSrc;
+        final double bDelta = bTgt - bSrc;
+        final double aDelta = aTgt - aSrc;
+
+        double rNew = rSrc + (rDelta * t);
+        rNew = Math.min(rNew, 1.0f);
+        rNew = Math.max(rNew, 0.0f);
+
+        double gNew = gSrc + (gDelta * t);
+        gNew = Math.min(gNew, 1.0f);
+        gNew = Math.max(gNew, 0.0f);
+
+        double bNew = bSrc + (bDelta * t);
+        bNew = Math.min(bNew, 1.0f);
+        bNew = Math.max(bNew, 0.0f);
+
+        double aNew = aSrc + (aDelta * t);
+        aNew = Math.min(aNew, 1.0f);
+        aNew = Math.max(aNew, 0.0f);
+
+        return new Color(rNew, gNew, bNew, aNew);
+    }
+
+    /**
+     * Calculate bilinear interpolated color value.
+     * @param color0 The first color.
+     * @param color1 The second color.
+     * @param color2 The third color.
+     * @param color3 The fourth color.
+     * @param tx The desired delta in x (from 0.0 to 1.0 inclusive).
+     * @param ty The desired delta in y (from 0.0 to 1.0 inclusive).
+     * @return Color
+     */
+    public static Color calculateBilinearInterpolatedColour(final Color color0, final Color color1, final Color color2, final Color color3, float tx, float ty) {
+        final Color colX0 = calculateInterpolatedColour(color0, color1, tx);
+        final Color colX1 = calculateInterpolatedColour(color2, color3, tx);
+        return calculateInterpolatedColour(colX0, colX1, ty);
+    }
+
+    /**
      * Make a popup show up from an exception.
      * @param message The message to display.
      * @param ex      The exception which caused the error.
