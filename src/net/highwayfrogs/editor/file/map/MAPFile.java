@@ -119,7 +119,7 @@ public class MAPFile extends GameFile {
     public static final List<MAPPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
     public static final List<MAPPrimitiveType> POLYGON_TYPES = Arrays.asList(MAPPolygonType.values());
 
-    public static final int VERTEX_COLOR_IMAGE_SIZE = 8;
+    public static final int VERTEX_COLOR_IMAGE_SIZE = 12;
     private static final ImageFilterSettings OBJ_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
             .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
 

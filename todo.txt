@@ -4,8 +4,6 @@ Map Editor:
  - Better polygon editor. [Use hellfire's suggestions]
  - Fix adding new matrix entities. (They don't show up in-game It seems like invalid matrix, as this can happen if you move an entity.)
 
-Try to get the colors to interpolate, instead of making it funky myself. What could be done is each color gets a square. If there's a fourth color, it should be white, or a mix of the three.
-
 v1.0.0:
  - Guide & Functionality for adding textures, even textures from other vlos.
  - Guide for game patches.
@@ -17,11 +15,10 @@ v1.0.0:
 
 Future:
  - Spline Editor [@Andy, I don't know what all of this data is, and I don't understand the math behind this. Even if you could just give me some documentation that lets me understand each piece of data, this would be useful.]
- - Support Gouraud shading on things like MAPPolyG4. [Andy Eder?] (We could finally show accurate textures in the map view.) I believe this can be achieved by making a GouraudMaterial class which works similar to PhongMaterial, but with Gouraud shading.
  - Support blender importing and exporting.
  - Reverse official PP20 packer library, or see if Nico is willing to send the code for it.
  - Perfect path position calculation. It's fairly close right now. Go over the code for all of the paths to make sure it's accurate, and then go over how it gets used to make sure it gets used properly. [Log path calculations for a specific path in the frogger engine, and see how froglord's rotation matrix differs.]
  - If possible, an automatic space allocator. Something that would let us, let's say... add bytes into the level struct to let us add a new level! It would need to account for pointers, and it would probably be a PC-only feature.
- - Per-face textures. (This would allow us to show the water in Uncanny Crusher as green, when the texture itself is purple.)
+ - Per-face textures. (This would allow us to show the water in Uncanny Crusher as green, when the texture itself is purple.) (OR, we could generate overlay faces with semi-transparent materials which will apply the correct color.)
  - Work with Andy to make better 3D tools.
  - Add support for selecting multiple grid squares and applying flags.
