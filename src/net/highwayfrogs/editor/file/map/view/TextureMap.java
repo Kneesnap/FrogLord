@@ -25,12 +25,11 @@ import java.util.Map.Entry;
 /**
  * Represents a texture map.
  * TODO: Allow rebuilding the colored square data, which would make changing colors better.
- *
  * References:
- *  - https://github.com/juj/RectangleBinPack/blob/master/old/RectangleBinPack.cpp
- *  - http://blackpawn.com/texts/lightmaps/default.html
- *  - https://web.archive.org/web/20180913014836/http://clb.demon.fi:80/projects/rectangle-bin-packing
- *  - http://www.gamedev.net/community/forums/topic.asp?topic_id=392413
+ * - https://github.com/juj/RectangleBinPack/blob/master/old/RectangleBinPack.cpp
+ * - http://blackpawn.com/texts/lightmaps/default.html
+ * - https://web.archive.org/web/20180913014836/http://clb.demon.fi:80/projects/rectangle-bin-packing
+ * - http://www.gamedev.net/community/forums/topic.asp?topic_id=392413
  * Created by Kneesnap on 11/28/2018.
  */
 @Getter

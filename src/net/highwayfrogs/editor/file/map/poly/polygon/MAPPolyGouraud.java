@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
+import javafx.scene.paint.Color;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -9,6 +10,7 @@ import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -23,26 +25,14 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
     private PSXColorVector[] colors;
     private transient TextureTreeNode textureNode;
 
+    // NOTE: Changing MAPFile.VERTEX_COLOR_IMAGE_SIZE to a higher value will improve the shading quality, but may
+    //       also break texture related stuff elsewhere (I haven't done much in the way of testing).
+    //       Try changing the default value from 8 to 32 for example.
+    //       I don't like the fact we are relying on texture generation and resolution to shade the polygons. We should
+    //       really just be setting vertex color values and letting the hardware do the shading work. This just seems
+    //       very, very wrong - but I don't know how we can get around it right now due to the crappy limitations of
+    //       JavaFx. It's a problem for sure.
     private static final int FULL_SIZE = MAPFile.VERTEX_COLOR_IMAGE_SIZE;
-    private static final int SMALL_SIZE = FULL_SIZE / 2;
-    private static final int TRIANGLE_SIZE = 3;
-
-    private static final int[][] POSITION = {
-            {0, 0},
-            {0, 1},
-            {1, 0},
-            {1, 1}
-    };
-
-    //0-2
-    //| |
-    //1-3
-    private static final int[][][] TRIANGLE_POSITION = {
-            {{0, FULL_SIZE, 0}, {FULL_SIZE, 0, 0}},
-            {{0, FULL_SIZE, 0}, {0, FULL_SIZE, FULL_SIZE}},
-            {{0, FULL_SIZE, FULL_SIZE}, {0, FULL_SIZE, 0}},
-            {{0, FULL_SIZE, FULL_SIZE}, {FULL_SIZE, 0, FULL_SIZE}}
-    };
 
     public MAPPolyGouraud(MAPPolygonType type, int verticeCount) {
         super(type, verticeCount);
@@ -75,19 +65,21 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
 
     @Override
     public void makeTexture(BufferedImage image, Graphics2D graphics) {
-        for (int i = 0; i < colors.length; i++) {
-            graphics.setColor(colors[i].toColor());
-            int[] pos = POSITION[i];
-            graphics.fillRect(pos[0] * SMALL_SIZE, pos[1] * SMALL_SIZE, SMALL_SIZE, SMALL_SIZE);
-        }
+        final Color c0 = Utils.fromRGB(this.colors[0].toRGB());
+        final Color c1 = Utils.fromRGB(this.colors[1].toRGB());
+        final Color c2 = Utils.fromRGB(this.colors[2].toRGB());
+        final Color c3 = (this.colors.length > 3 ? Utils.fromRGB(this.colors[3].toRGB()) : c2);
 
-        // Apply Vertex Shading.
-        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .5F));
-        for (int i = 0; i < colors.length; i++) {
-            graphics.setPaint(colors[i].toColor());
+        float tx, ty;
 
-            int[][] points = TRIANGLE_POSITION[i];
-            graphics.fillPolygon(points[0], points[1], TRIANGLE_SIZE);
+        for (int x = 0; x < FULL_SIZE; x++) {
+            tx = (x == FULL_SIZE - 1) ? 1F : (float) x / (float) FULL_SIZE;
+            for (int y = 0; y < FULL_SIZE; y++) {
+                ty = (y == FULL_SIZE - 1) ? 1F : (float) y / (float) FULL_SIZE;
+                final Color newColor = Utils.calculateBilinearInterpolatedColour(c0, c2, c1, c3, tx, ty);
+                graphics.setColor(Utils.toAWTColor(newColor));
+                graphics.fillRect(x, y, x + 1, y + 1);
+            }
         }
     }
 }
