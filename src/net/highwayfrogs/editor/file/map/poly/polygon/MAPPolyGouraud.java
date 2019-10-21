@@ -63,34 +63,19 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
         return textureNode;
     }
 
-    private Color getFromColor(PSXColorVector psxColVec) {
-        float r = psxColVec.getRed() / 255.0f;
-        float g = psxColVec.getGreen() / 255.0f;
-        float b = psxColVec.getBlue() / 255.0f;
-        float a = psxColVec.getCd() / 255.0f;
-
-        // Not really sure how out-of-range color values should be handled... hence grabbing absolute values for now.
-        if (r < 0.0f) { r = Math.abs(r); }
-        if (g < 0.0f) { g = Math.abs(g); }
-        if (b < 0.0f) { b = Math.abs(b); }
-        if (a < 0.0f) { a = Math.abs(a); }
-
-        return new Color(r, g, b, a);
-    }
-
     @Override
     public void makeTexture(BufferedImage image, Graphics2D graphics) {
-        final Color c0 = this.getFromColor(colors[0]);
-        final Color c1 = this.getFromColor(colors[1]);
-        final Color c2 = this.getFromColor(colors[2]);
-        final Color c3 = (colors.length > 3) ? (this.getFromColor(colors[3])) : (c2);
+        final Color c0 = Utils.fromRGB(this.colors[0].toRGB());
+        final Color c1 = Utils.fromRGB(this.colors[1].toRGB());
+        final Color c2 = Utils.fromRGB(this.colors[2].toRGB());
+        final Color c3 = (this.colors.length > 3 ? Utils.fromRGB(this.colors[3].toRGB()) : c2);
 
         float tx, ty;
 
         for (int x = 0; x < FULL_SIZE; x++) {
-            tx = (x == FULL_SIZE - 1) ? (1.0f) : (float)x / (float)FULL_SIZE;
+            tx = (x == FULL_SIZE - 1) ? 1F : (float) x / (float) FULL_SIZE;
             for (int y = 0; y < FULL_SIZE; y++) {
-                ty = (y == FULL_SIZE - 1) ? (1.0f) : (float)y / (float)FULL_SIZE;
+                ty = (y == FULL_SIZE - 1) ? 1F : (float) y / (float) FULL_SIZE;
                 final Color newColor = Utils.calculateBilinearInterpolatedColour(c0, c2, c1, c3, tx, ty);
                 graphics.setColor(Utils.toAWTColor(newColor));
                 graphics.fillRect(x, y, x + 1, y + 1);
