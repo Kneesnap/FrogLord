@@ -141,7 +141,7 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
-     * Make a new PSXMAtrix from a MR_MAT34 transform.
+     * Make a new PSXMatrix from a MR_MAT34 transform.
      * @param mat34 The transform to turn into a matrix.
      * @return matrix
      */
@@ -271,6 +271,19 @@ public class PSXMatrix extends GameObject {
         output.setY((((matrix.matrix[1][0] * vector.getX()) + (matrix.matrix[1][1] * vector.getY()) + (matrix.matrix[1][2] * vector.getZ())) >> 12) + matrix.transform[1]);
         output.setZ((((matrix.matrix[2][0] * vector.getX()) + (matrix.matrix[2][1] * vector.getY()) + (matrix.matrix[2][2] * vector.getZ())) >> 12) + matrix.transform[2]);
         return output;
+    }
+
+    public static PSXMatrix WriteAxesAsMatrix(PSXMatrix matrix, IVector vecX, IVector vecY, IVector vecZ) {
+        matrix.getMatrix()[0][0] = (short) vecX.getX();
+        matrix.getMatrix()[1][0] = (short) vecX.getY();
+        matrix.getMatrix()[2][0] = (short) vecX.getZ();
+        matrix.getMatrix()[0][1] = (short) vecY.getX();
+        matrix.getMatrix()[1][1] = (short) vecY.getY();
+        matrix.getMatrix()[2][1] = (short) vecY.getZ();
+        matrix.getMatrix()[0][2] = (short) vecZ.getX();
+        matrix.getMatrix()[1][2] = (short) vecZ.getY();
+        matrix.getMatrix()[2][2] = (short) vecZ.getZ();
+        return matrix;
     }
 
     @Override

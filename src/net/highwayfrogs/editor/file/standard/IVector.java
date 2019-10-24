@@ -187,4 +187,8 @@ public class IVector extends GameObject implements Vector {
         IVector otherV = (IVector) other;
         return otherV.getX() == getX() && otherV.getY() == getY() && otherV.getZ() == getZ();
     }
+
+    public static void MROuterProduct12(IVector vec0, IVector vec1, IVector output) {
+        output.outerProduct12(vec0, vec1);
+    }
 }

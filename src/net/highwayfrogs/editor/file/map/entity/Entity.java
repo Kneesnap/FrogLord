@@ -148,28 +148,17 @@ public class Entity extends GameObject {
         }
 
         PathInfo pathInfo = getPathInfo();
-        if (pathInfo != null) {
+        if (pathInfo != null) { // Similar to ENTSTRUpdateMovingMOF
             Path path = map.getPaths().get(pathInfo.getPathId());
             PathResult result = path.evaluatePosition(pathInfo);
 
             IVector vec_x = new IVector();
-            IVector vec_z = result.getRotation();
-            vec_x.outerProduct12(GAME_Y_AXIS_POS, vec_z);
-            vec_x.normalise();
-
             IVector vec_y = new IVector();
-            vec_y.outerProduct12(vec_z, vec_x);
-
-            matrix = new PSXMatrix();
-            matrix.getMatrix()[0][0] = (short) vec_x.getX();
-            matrix.getMatrix()[1][0] = (short) vec_x.getY();
-            matrix.getMatrix()[2][0] = (short) vec_x.getZ();
-            matrix.getMatrix()[0][1] = (short) vec_y.getX();
-            matrix.getMatrix()[1][1] = (short) vec_y.getY();
-            matrix.getMatrix()[2][1] = (short) vec_y.getZ();
-            matrix.getMatrix()[0][2] = (short) vec_z.getX();
-            matrix.getMatrix()[1][2] = (short) vec_z.getY();
-            matrix.getMatrix()[2][2] = (short) vec_z.getZ();
+            IVector vec_z = result.getRotation();
+            IVector.MROuterProduct12(GAME_Y_AXIS_POS, vec_z, vec_x);
+            vec_x.normalise();
+            IVector.MROuterProduct12(vec_z, vec_x, vec_y);
+            matrix = PSXMatrix.WriteAxesAsMatrix(new PSXMatrix(), vec_x, vec_y, vec_z);
 
             Vector endVec = result.getPosition();
             position[0] = endVec.getFloatX();
