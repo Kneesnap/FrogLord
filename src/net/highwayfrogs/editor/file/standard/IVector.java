@@ -80,6 +80,7 @@ public class IVector extends GameObject implements Vector {
 
     /**
      * Equivalent to MRNormaliseVec ?? I think [AndyEder]
+     * TODO: This is incorrect.
      */
     public IVector normalise() {
         double[] tmpVec = new double[3];
