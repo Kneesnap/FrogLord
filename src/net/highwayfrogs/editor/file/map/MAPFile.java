@@ -77,16 +77,14 @@ public class MAPFile extends GameFile {
     private short groupXSize = (short) 256; // Seems to always be 256. Appears to be related to the X size of one group.
     private short groupZSize = (short) 256; // Seems to always be 256. Appears to be related to the Z size of one group.
 
-    private short gridXCount;
-    private short gridZCount;
+    @Setter private short gridXCount;
+    @Setter private short gridZCount;
     private short gridXSize = (short) 768; // Seems to always be 768.
     private short gridZSize = (short) 768; // Seems to always be 768.
 
     private transient VLOArchive vlo;
     private transient Map<MAPPrimitiveType, List<MAPPrimitive>> polygons = new HashMap<>();
 
-    private transient List<GridSquare> loadGridSquares = new ArrayList<>();
-    private transient Map<MAPPrimitive, Integer> loadPolygonPointerMap = new HashMap<>();
     private transient Map<Integer, MAPPrimitive> loadPointerPolygonMap = new HashMap<>();
 
     private transient Map<MAPPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
@@ -213,7 +211,6 @@ public class MAPFile extends GameFile {
     @Override
     public void load(DataReader reader) {
         boolean isQB = isQB();
-        getLoadPolygonPointerMap().clear();
         getLoadPointerPolygonMap().clear();
 
         reader.verifyString(SIGNATURE);
@@ -373,7 +370,6 @@ public class MAPFile extends GameFile {
 
                 for (int i = 0; i < polyCount; i++) {
                     MAPPrimitive primitive = type.newPrimitive();
-                    getLoadPolygonPointerMap().put(primitive, reader.getIndex());
                     getLoadPointerPolygonMap().put(reader.getIndex(), primitive);
                     primitive.load(reader);
                     primitives.add(primitive);
@@ -418,13 +414,14 @@ public class MAPFile extends GameFile {
         for (GridStack stack : gridStacks)
             squareCount = Math.max(squareCount, stack.getTempIndex() + stack.getLoadedSquareCount());
 
+        List<GridSquare> loadedGridSquares = new ArrayList<>();
         for (int i = 0; i < squareCount; i++) {
             GridSquare square = new GridSquare(this);
             square.load(reader);
-            loadGridSquares.add(square);
+            loadedGridSquares.add(square);
         }
 
-        getGridStacks().forEach(stack -> stack.loadSquares(this));
+        getGridStacks().forEach(stack -> stack.loadSquares(loadedGridSquares));
 
         // Read "ANIM".
         if (!isQB) {

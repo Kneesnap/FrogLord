@@ -2,13 +2,13 @@ package net.highwayfrogs.editor.file.map.grid;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents the GRID_SQUARE struct.
@@ -27,6 +27,11 @@ public class GridSquare extends GameObject {
     public GridSquare(MAPPolygon poly, MAPFile parent) {
         this(parent);
         this.polygon = poly;
+    }
+
+    public GridSquare(MAPPolygon poly, MAPFile parent, int flags) {
+        this(poly, parent);
+        this.flags = flags;
     }
 
     @Override

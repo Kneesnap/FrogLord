@@ -86,6 +86,17 @@ public class PSXColorVector extends GameObject {
     }
 
     /**
+     * Create a PSXColorVector from an RGB value.
+     * @param rgbValue The rgb color value.
+     * @return colorVector
+     */
+    public static PSXColorVector makeColorFromRGB(int rgbValue) {
+        PSXColorVector vec = new PSXColorVector();
+        vec.fromRGB(rgbValue);
+        return vec;
+    }
+
+    /**
      * Creates a copy of this object.
      */
     @SuppressWarnings("MethodDoesntCallSuperMethod")

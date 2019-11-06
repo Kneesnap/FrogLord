@@ -234,7 +234,7 @@ public class MAPAnimation extends GameObject {
         }
 
         editor.addButton("Add Texture", () -> {
-            getTextures().add(getTextures().isEmpty() ? 0 : getTextures().get(getTextures().size() - 1));
+            getTextures().add(getTextures().isEmpty() ? (short) 0 : getTextures().get(getTextures().size() - 1));
             manager.setupEditor();
         });
     }

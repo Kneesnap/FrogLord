@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file.map.grid;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -55,10 +54,10 @@ public class GridStack extends GameObject {
 
     /**
      * Load squares after they're loaded.
-     * @param file The file to read the squares from.
+     * @param loadedGridSquares The list of squares to read from.
      */
-    public void loadSquares(MAPFile file) {
+    public void loadSquares(List<GridSquare> loadedGridSquares) {
         for (int i = 0; i < getLoadedSquareCount(); i++)
-            gridSquares.add(file.getLoadGridSquares().get(getTempIndex() + i));
+            gridSquares.add(loadedGridSquares.get(getTempIndex() + i));
     }
 }

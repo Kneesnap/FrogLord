@@ -255,10 +255,20 @@ public class Utils {
      * @return floatValue
      */
     public static float unsignedByteToFloat(byte unsignedByte) {
-        float num = (float) unsignedByte;
+        float num = unsignedByte;
         if (num < 0)
             num += 256;
         return num / 0xFF;
+    }
+
+    /**
+     * Convert a float 0-1 to a byte.
+     * @param floatValue The float to convert to a byte.
+     * @return byteValue
+     */
+    public static byte floatToByte(float floatValue) {
+        short small = (short) (floatValue * 0xFF);
+        return small > 0x7F ? ((byte) -(0x100 - small)) : (byte) small;
     }
 
     /**
@@ -399,7 +409,7 @@ public class Utils {
      * @return unsignedShort
      */
     public static short byteToUnsignedShort(byte unsignedByte) {
-        short num = (short) unsignedByte;
+        short num = unsignedByte;
         if (num < 0)
             num += 256;
         return num;
@@ -422,7 +432,7 @@ public class Utils {
      * @return unsignedShort
      */
     public static int shortToUnsignedInt(short unsignedShort) {
-        int num = (int) unsignedShort;
+        int num = unsignedShort;
         if (num < 0)
             num += 65536;
         return num;
@@ -445,7 +455,7 @@ public class Utils {
      * @return unsignedLong
      */
     public static long intToUnsignedLong(int unsignedInt) {
-        long num = (long) unsignedInt;
+        long num = unsignedInt;
         if (num < 0) {
             num += Integer.MAX_VALUE;
             num++;

@@ -17,6 +17,7 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
+import net.highwayfrogs.editor.file.map.FFSUtil;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
@@ -43,6 +44,8 @@ public class MAPController extends EditorController<MAPFile> {
     @FXML private Button changeTextureButton;
     private MapUIController mapUIController;
     @FXML private Button saveTextureButton;
+    @FXML private Button loadFromFFS;
+    @FXML private Button saveToFFS;
 
     @Override
     public void loadFile(MAPFile mapFile) {
@@ -52,6 +55,8 @@ public class MAPController extends EditorController<MAPFile> {
         if (remapTable == null) {
             changeTextureButton.setDisable(true);
             remapList.setDisable(true);
+            loadFromFFS.setDisable(true);
+            saveToFFS.setDisable(true);
             return; // Empty.
         }
 
@@ -129,6 +134,18 @@ public class MAPController extends EditorController<MAPFile> {
     @FXML
     private void makeNewMap(ActionEvent event) {
         getFile().randomizeMap();
+    }
+
+    @FXML
+    @SneakyThrows
+    private void loadFromFFS(ActionEvent event) {
+        FFSUtil.importFFSToMap(getFile(), Utils.promptFileOpen("Choose the .ffs file to import", "FrogLord Map", "ffs"));
+    }
+
+    @FXML
+    @SneakyThrows
+    private void exportToFFS(ActionEvent event) {
+        FFSUtil.saveMapAsFFS(getFile(), Utils.promptChooseDirectory("Choose the directory to save the model to.", true));
     }
 
     @SneakyThrows

@@ -20,16 +20,21 @@ import net.highwayfrogs.editor.utils.Utils;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ByteUV extends GameObject {
-    private short u;
-    private short v;
+    private byte u;
+    private byte v;
 
     public static final int BYTE_SIZE = 2 * Constants.BYTE_SIZE;
     private static final String SPLIT_CHAR = ",";
 
+    public ByteUV(float u, float v) {
+        this.u = Utils.floatToByte(u);
+        this.v = Utils.floatToByte(v);
+    }
+
     @Override
     public void load(DataReader reader) {
-        this.u = reader.readUnsignedByteAsShort();
-        this.v = reader.readUnsignedByteAsShort();
+        this.u = reader.readByte();
+        this.v = reader.readByte();
     }
 
     /**
@@ -37,7 +42,7 @@ public class ByteUV extends GameObject {
      * @return floatU
      */
     public float getFloatU() {
-        return Utils.unsignedByteToFloat(Utils.unsignedShortToByte(this.u));
+        return Utils.unsignedByteToFloat(this.u);
     }
 
     /**
@@ -45,13 +50,13 @@ public class ByteUV extends GameObject {
      * @return floatV
      */
     public float getFloatV() {
-        return Utils.unsignedByteToFloat(Utils.unsignedShortToByte(this.v));
+        return Utils.unsignedByteToFloat(this.v);
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedByte(this.u);
-        writer.writeUnsignedByte(this.v);
+        writer.writeByte(this.u);
+        writer.writeByte(this.v);
     }
 
     /**
@@ -83,8 +88,8 @@ public class ByteUV extends GameObject {
             if (split.length != 2 || !Utils.isUnsignedByte(split[0]) || !Utils.isUnsignedByte(split[1]))
                 return false;
 
-            this.u = Short.parseShort(split[0]);
-            this.v = Short.parseShort(split[1]);
+            this.u = Utils.unsignedShortToByte(Short.parseShort(split[0]));
+            this.v = Utils.unsignedShortToByte(Short.parseShort(split[1]));
             return true;
         });
     }

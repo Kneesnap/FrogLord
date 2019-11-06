@@ -7,7 +7,7 @@
 <AnchorPane fx:id="rootPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
             minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0"
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
-            xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+            xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
     <children>
       <HBox prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -52,6 +52,12 @@
                                           AnchorPane.topAnchor="0.0"/>
                                <Button fx:id="saveTextureButton" mnemonicParsing="false" prefWidth="99.0"
                                        text="Save Texture" AnchorPane.bottomAnchor="66.0" AnchorPane.rightAnchor="8.0"/>
+                               <Button fx:id="saveToFFS" layoutX="14.0" layoutY="226.0" mnemonicParsing="false"
+                                       onAction="#exportToFFS" prefWidth="99.0" text="Export to .ffs"
+                                       AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0"/>
+                               <Button fx:id="loadFromFFS" layoutX="14.0" layoutY="200.0" mnemonicParsing="false"
+                                       onAction="#loadFromFFS" prefWidth="99.0" text="Import .ffs"
+                                       AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="14.0"/>
                            </children>
                         </AnchorPane>
                      </children>
