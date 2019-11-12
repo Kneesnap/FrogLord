@@ -47,13 +47,17 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
         loadUV(1, reader);
         this.textureId = reader.readShort();
 
-        for (int i = 2; i < this.uvs.length; i++)
-            loadUV(i, reader);
-
-        if (this.uvs.length == MAPPolygon.TRI_SIZE)
+        if (this.uvs.length == 3) {
+            loadUV(2, reader);
             reader.skipShort(); // Padding.
+        } else if (this.uvs.length == 4) {
+            loadUV(3, reader); // Read out of order.
+            loadUV(2, reader);
+        } else {
+            throw new RuntimeException("Cannot handle " + this.uvs.length + " uvs.");
+        }
 
-        for (int i = 0; i < this.vectors.length; i++) {
+        for (int i = 0; i < this.vectors.length; i++) { //TODO: Do colors need swapping too?
             PSXColorVector vector = new PSXColorVector();
             vector.load(reader);
             this.vectors[i] = vector;
@@ -71,11 +75,15 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
         this.uvs[1].save(writer);
         writer.writeShort(this.textureId);
 
-        for (int i = 2; i < this.uvs.length; i++)
-            this.uvs[i].save(writer);
-
-        if (this.uvs.length == 3)
+        if (this.uvs.length == 3) {
+            this.uvs[2].save(writer);
             writer.writeNull(Constants.SHORT_SIZE);
+        } else if (this.uvs.length == 4) {
+            this.uvs[3].save(writer); // Save out of order.
+            this.uvs[2].save(writer);
+        } else {
+            throw new RuntimeException("Cannot save " + this.uvs.length + " uvs.");
+        }
 
         for (PSXColorVector colorVector : this.vectors)
             colorVector.save(writer);
@@ -92,23 +100,7 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
      * @return objUvString
      */
     public String getObjUVString(int index) {
-        boolean shouldSwap = (this.uvs.length == MAPPolygon.QUAD_SIZE);
-
-        if (shouldSwap) { // I believe we have to swap it due to the .obj format.
-            ByteUV temp = this.uvs[2];
-            this.uvs[2] = this.uvs[3];
-            this.uvs[3] = temp;
-        }
-
-        String uvString = this.uvs[index].toObjTextureString();
-
-        if (shouldSwap) {
-            ByteUV temp = this.uvs[2];
-            this.uvs[2] = this.uvs[3];
-            this.uvs[3] = temp;
-        }
-
-        return uvString;
+        return this.uvs[index].toObjTextureString();
     }
 
     @Override
@@ -128,6 +120,15 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
      */
     public boolean testFlag(PolyTextureFlag flag) {
         return (this.flags & flag.getFlag()) == flag.getFlag();
+    }
+
+    @Override
+    public void performSwap() {
+        if (this.uvs.length == 4) {
+            ByteUV temp = this.uvs[3];
+            this.uvs[3] = this.uvs[2];
+            this.uvs[2] = temp;
+        }
     }
 
     /**

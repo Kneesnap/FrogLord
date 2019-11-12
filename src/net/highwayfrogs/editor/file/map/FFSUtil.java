@@ -11,10 +11,12 @@ import net.highwayfrogs.editor.file.map.poly.polygon.*;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.utils.Utils;
 
+import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -43,13 +45,25 @@ public class FFSUtil {
         if (outputDir == null)
             return;
 
+        List<Short> remapTable = map.getConfig().getRemapTable(map.getFileEntry());
+        if (remapTable == null) {
+            Utils.makePopUp("No remap could be found for this level, so unfortunately this cannot be exported to ffs.", AlertType.INFORMATION);
+            return;
+        }
+
         if (!outputDir.isDirectory()) {
             Utils.makePopUp("This is not a directory!", AlertType.ERROR);
             return;
         }
 
-        if (map.getVlo() != null)
-            map.getVlo().exportAllImages(outputDir, FFS_EXPORT_FILTER); // Export VLO images.
+        // Export textures.
+        if (map.getVlo() != null) {
+            for (int i = 0; i < map.getVlo().getImages().size(); i++) {
+                GameImage image = map.getVlo().getImages().get(i);
+                if (remapTable.contains(image.getTextureId()))
+                    ImageIO.write(image.toBufferedImage(FFS_EXPORT_FILTER), "png", new File(outputDir, image.getTextureId() + ".png"));
+            }
+        }
 
         @Cleanup PrintWriter pw = new PrintWriter(new File(outputDir, Utils.stripExtension(map.getFileEntry().getDisplayName()) + ".ffs"));
 
@@ -58,12 +72,6 @@ public class FFSUtil {
             if (prim instanceof MAPPolygon)
                 polygons.add((MAPPolygon) prim);
         });
-
-        List<Short> remapTable = map.getConfig().getRemapTable(map.getFileEntry());
-        if (remapTable == null) {
-            Utils.makePopUp("No remap could be found for this level, so unfortunately this cannot be exported to ffs.", AlertType.INFORMATION);
-            return;
-        }
 
         // Write Vertices.
         for (SVector vec : map.getVertexes())
@@ -140,6 +148,7 @@ public class FFSUtil {
         pw.write(Constants.NEWLINE);
 
         pw.close();
+        System.out.println("Exported " + map.getFileEntry().getDisplayName() + " to " + outputDir.getName() + File.separator + ".");
     }
 
     /**
@@ -246,5 +255,6 @@ public class FFSUtil {
                 fullPolygonList.add(newPolygon);
             }
         }
+        System.out.println("Imported " + inputFile.getName() + " as " + map.getFileEntry().getDisplayName() + ".");
     }
 }

@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represents Playstation polygon data.
+ * TODO: Fix needing to swap vertices.
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
