@@ -40,6 +40,8 @@ public class GUIMain extends Application {
     public void start(Stage primaryStage) throws Exception {
         //MisfitModel3DObject.performTest();
 
+        Files.write(new File("./frogger-map-blender-plugin.py").toPath(), Utils.readBytesFromStream(Utils.getResourceStream("frogger-map-blender-plugin.py")));
+
         INSTANCE = this;
         MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();

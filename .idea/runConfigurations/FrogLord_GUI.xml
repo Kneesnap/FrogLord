@@ -2,6 +2,7 @@
   <configuration default="false" name="FrogLord GUI" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="net.highwayfrogs.editor.gui.GUIMain" />
     <module name="FrogLord" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/debug" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
