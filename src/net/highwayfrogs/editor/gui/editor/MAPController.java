@@ -5,6 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
@@ -24,6 +25,7 @@ import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
+import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -46,6 +48,7 @@ public class MAPController extends EditorController<MAPFile> {
     @FXML private Button saveTextureButton;
     @FXML private Button loadFromFFS;
     @FXML private Button saveToFFS;
+    @FXML private Button saveToObj;
 
     @Override
     public void loadFile(MAPFile mapFile) {
@@ -108,7 +111,7 @@ public class MAPController extends EditorController<MAPFile> {
     @FXML
     private void onChangeTexture(ActionEvent event) {
         if (getFile().getVlo() == null) {
-            System.out.println("Cannot edit remaps for a map which has no associated VLO!");
+            Utils.makePopUp("Cannot edit remaps for a map which has no associated VLO!", AlertType.WARNING);
             return;
         }
 
@@ -145,7 +148,13 @@ public class MAPController extends EditorController<MAPFile> {
     @FXML
     @SneakyThrows
     private void exportToFFS(ActionEvent event) {
-        FFSUtil.saveMapAsFFS(getFile(), Utils.promptChooseDirectory("Choose the directory to save the model to.", true));
+        FFSUtil.saveMapAsFFS(getFile(), Utils.promptChooseDirectory("Choose the directory to save the map to.", false));
+    }
+
+    @FXML
+    @SneakyThrows
+    private void exportToObj(ActionEvent event) {
+        FileUtils3D.exportMapToObj(getFile(), Utils.promptChooseDirectory("Choose the directory to save the map to.", false));
     }
 
     @SneakyThrows

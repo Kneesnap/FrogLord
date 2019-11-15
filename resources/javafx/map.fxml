@@ -52,6 +52,9 @@
                                           AnchorPane.topAnchor="0.0"/>
                                <Button fx:id="saveTextureButton" mnemonicParsing="false" prefWidth="99.0"
                                        text="Save Texture" AnchorPane.bottomAnchor="66.0" AnchorPane.rightAnchor="8.0"/>
+                               <Button fx:id="saveToObj" layoutX="14.0" layoutY="252.0" mnemonicParsing="false"
+                                       onAction="#exportToObj" prefWidth="99.0" text="Export to .ffs"
+                                       AnchorPane.bottomAnchor="66.0" AnchorPane.leftAnchor="14.0"/>
                                <Button fx:id="saveToFFS" layoutX="14.0" layoutY="226.0" mnemonicParsing="false"
                                        onAction="#exportToFFS" prefWidth="99.0" text="Export to .ffs"
                                        AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0"/>

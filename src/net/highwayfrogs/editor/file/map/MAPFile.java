@@ -8,7 +8,6 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
@@ -40,11 +39,9 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.editor.MAPController;
-import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
@@ -716,18 +713,6 @@ public class MAPFile extends GameFile {
         getMapAnimations().forEach(anim -> anim.writeMapUVs(writer));
 
         writer.writeAddressTo(fileLengthPointer); // Write file length to start of file.
-    }
-
-    @Override
-    public void exportAlternateFormat(FileEntry entry) {
-        File selectedFolder = Utils.promptChooseDirectory("Select the folder to export this map into.", false);
-        if (selectedFolder == null)
-            return;
-
-        if (getVlo() != null)
-            getVlo().exportAllImages(selectedFolder, OBJ_EXPORT_FILTER); // Export VLO images.
-
-        FileUtils3D.exportMapToObj(this, selectedFolder);
     }
 
     /**

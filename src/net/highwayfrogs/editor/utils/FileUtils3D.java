@@ -182,6 +182,9 @@ public class FileUtils3D {
      */
     @SneakyThrows
     public static void exportMapToObj(MAPFile map, File directory) {
+        if (directory == null)
+            return;
+
         FileEntry entry = map.getFileEntry();
         VLOArchive vloArchive = map.getVlo();
         List<Short> remapTable = map.isQB() ? Collections.emptyList() : map.getConfig().getRemapTable(entry);

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map.form;
 
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
@@ -111,7 +112,7 @@ public class Form extends GameObject {
         } else {
             editor.addButton("Add Form Data", () -> {
                 if (getXGridSquareCount() <= 0 || getZGridSquareCount() <= 0) {
-                    System.out.println("Grid Counts must be positive non-zero numbers!"); // Might want to make this a popup in the future.
+                    Utils.makePopUp("Grid Counts must be positive non-zero numbers!", AlertType.WARNING); // Might want to make this a popup in the future.
                     return;
                 }
 

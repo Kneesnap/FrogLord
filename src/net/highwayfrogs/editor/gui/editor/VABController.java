@@ -5,12 +5,13 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.sound.AbstractVBFile;
 import net.highwayfrogs.editor.file.sound.GameSound;
+import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent.Type;
@@ -103,7 +104,7 @@ public class VABController extends EditorController<AbstractVBFile> {
     @FXML
     @SneakyThrows
     private void exportAllSounds(ActionEvent event) {
-        File selectedFolder = Utils.promptChooseDirectory("Select the directory to export sounds to.", true);
+        File selectedFolder = Utils.promptChooseDirectory("Select the directory to export sounds to.", false);
         if (selectedFolder == null)
             return; // Cancelled.
 
@@ -143,7 +144,7 @@ public class VABController extends EditorController<AbstractVBFile> {
         try {
             newRate = Integer.parseInt(text);
         } catch (NumberFormatException nfx) {
-            System.out.println("Improperly formatted number: '" + text + "'.");
+            Utils.makePopUp("Improperly formatted number: '" + text + "'.", AlertType.ERROR);
             return;
         }
 
