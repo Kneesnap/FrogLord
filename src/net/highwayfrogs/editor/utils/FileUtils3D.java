@@ -13,6 +13,8 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyFlat;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyGouraud;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
+import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
@@ -25,6 +27,7 @@ import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -35,8 +38,10 @@ import net.highwayfrogs.editor.system.mm3d.blocks.*;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMFrameAnimationsBlock.MMAnimationFrame;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMFrameAnimationsBlock.MMFloatVertex;
 
+import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -187,7 +192,7 @@ public class FileUtils3D {
 
         FileEntry entry = map.getFileEntry();
         VLOArchive vloArchive = map.getVlo();
-        List<Short> remapTable = map.isQB() ? Collections.emptyList() : map.getConfig().getRemapTable(entry);
+        TextureMap textureMap = TextureMap.newTextureMap(map);
         String cleanName = Utils.getRawFileName(entry.getDisplayName());
         boolean exportTextures = vloArchive != null;
 
@@ -207,97 +212,76 @@ public class FileUtils3D {
         }
 
         // Write Vertexes.
-        map.getVertexes().forEach(vertex -> objWriter.write(vertex.toOBJString() + Constants.NEWLINE));
+        for (SVector vertex : map.getVertexes())
+            objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
         objWriter.write(Constants.NEWLINE);
 
         // Write Faces.
-        List<MAPPolygon> allPolygons = new ArrayList<>();
-        map.forEachPrimitive(prim -> {
-            if (prim instanceof MAPPolygon)
-                allPolygons.add((MAPPolygon) prim);
-        });
+        List<MAPPolygon> allPolygons = map.getAllPolygonsSafe();
 
         // Register textures.
         if (exportTextures) {
-            allPolygons.sort(Comparator.comparingInt(MAPPolygon::getOrderId));
+            allPolygons.sort(Comparator.comparingInt(MAPPolygon::getOrderId)); // Groups textures together.
             objWriter.write("# Vertex Textures" + Constants.NEWLINE);
+
+            DecimalFormat df = new DecimalFormat("#");
+            df.setMaximumFractionDigits(8);
 
             for (MAPPolygon poly : allPolygons) {
                 if (poly instanceof MAPPolyTexture) {
                     MAPPolyTexture polyTex = (MAPPolyTexture) poly;
-                    for (int i = polyTex.getUvs().length - 1; i >= 0; i--)
-                        objWriter.write(polyTex.getObjUVString(i) + Constants.NEWLINE);
+
+                    TextureTreeNode node = polyTex.getNode(textureMap);
+                    for (int i = polyTex.getUvs().length - 1; i >= 0; i--) {
+                        ByteUV uv = polyTex.getUvs()[i];
+                        float u = uv.getFloatU();
+                        float v = uv.getFloatV();
+
+                        float fullU = (node.getMaxU() - node.getMinU());
+                        float fullV = (node.getMaxV() - node.getMinV());
+
+                        objWriter.write("vt " + df.format(node.getMinU() + (u * fullU)) + " " + df.format(1F - (node.getMinV() + (v * fullV))) + Constants.NEWLINE);
+                    }
+                } else if (poly instanceof MAPPolyGouraud || poly instanceof MAPPolyFlat) {
+                    TextureTreeNode node = poly.getNode(textureMap);
+                    if (poly.isQuadFace()) {
+                        objWriter.write("vt " + node.getMinU() + " " + (1F - node.getMinV()) + Constants.NEWLINE); // BL
+                        objWriter.write("vt " + node.getMaxU() + " " + (1F - node.getMinV()) + Constants.NEWLINE); // BR
+                        objWriter.write("vt " + node.getMaxU() + " " + (1F - node.getMaxV()) + Constants.NEWLINE); // TR
+                        objWriter.write("vt " + node.getMinU() + " " + (1F - node.getMaxV()) + Constants.NEWLINE); // TL
+                    } else {
+                        objWriter.write("vt " + node.getMaxU() + " " + (1F - node.getMinV()) + Constants.NEWLINE); //BR
+                        objWriter.write("vt " + node.getMaxU() + " " + (1F - node.getMaxV()) + Constants.NEWLINE); //TR
+                        objWriter.write("vt " + node.getMinU() + " " + (1F - node.getMaxV()) + Constants.NEWLINE); //TL
+                    }
+                } else {
+                    throw new RuntimeException("Don't know how to handle a " + poly + " poly.");
                 }
             }
 
             objWriter.write(Constants.NEWLINE);
         }
 
+        // Write Faces.
         objWriter.write("# Faces" + Constants.NEWLINE);
+        if (exportTextures)
+            objWriter.write("usemtl master" + Constants.NEWLINE);
 
-        AtomicInteger textureId = new AtomicInteger(Integer.MIN_VALUE);
         AtomicInteger counter = new AtomicInteger();
+        for (MAPPolygon polygon : allPolygons)
+            objWriter.write(polygon.toObjFaceCommand(exportTextures, counter) + Constants.NEWLINE);
 
-        Map<Integer, GameImage> textureMap = new HashMap<>();
-        List<PSXColorVector> faceColors = new ArrayList<>();
-        Map<PSXColorVector, List<MAPPolygon>> facesWithColors = new HashMap<>();
-
-        allPolygons.forEach(polygon -> {
-            if (polygon instanceof MAPPolyTexture) {
-                MAPPolyTexture texture = (MAPPolyTexture) polygon;
-
-                if (exportTextures) {
-                    int newTextureId = texture.getTextureId();
-
-                    if (remapTable != null) { // Apply remap.
-                        GameImage image = textureMap.computeIfAbsent(newTextureId, key -> vloArchive.getImageByTextureId(remapTable.get(key)));
-                        newTextureId = image.getTextureId();
-                    }
-
-                    if (newTextureId != textureId.get()) { // It's time to change the texture.
-                        textureId.set(newTextureId);
-                        objWriter.write(Constants.NEWLINE);
-                        objWriter.write("usemtl tex" + newTextureId + Constants.NEWLINE);
-                    }
-                }
-
-                objWriter.write(polygon.toObjFaceCommand(exportTextures, counter) + Constants.NEWLINE);
-            } else {
-                PSXColorVector color = (polygon instanceof MAPPolyFlat) ? ((MAPPolyFlat) polygon).getColor() : ((MAPPolyGouraud) polygon).getColors()[0];
-                if (!faceColors.contains(color))
-                    faceColors.add(color);
-                facesWithColors.computeIfAbsent(color, key -> new ArrayList<>()).add(polygon);
-            }
-        });
-
-        objWriter.append(Constants.NEWLINE);
-        objWriter.append("# Faces without textures.").append(Constants.NEWLINE);
-        for (Entry<PSXColorVector, List<MAPPolygon>> mapEntry : facesWithColors.entrySet()) {
-            objWriter.write("usemtl color" + faceColors.indexOf(mapEntry.getKey()) + Constants.NEWLINE);
-            mapEntry.getValue().forEach(poly -> objWriter.write(poly.toObjFaceCommand(exportTextures, null) + Constants.NEWLINE));
-        }
-
-
-        // Write MTL file.
+        // Write MTL file and textures.
         if (exportTextures) {
             @Cleanup PrintWriter mtlWriter = new PrintWriter(new File(directory, mtlName));
+            mtlWriter.write("newmtl master" + Constants.NEWLINE);
+            mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE); // Diffuse color.
+            // "d 0.75" = Partially transparent, if we want to support this later.
+            mtlWriter.write("map_Kd " + cleanName + ".png" + Constants.NEWLINE);
+            mtlWriter.write(Constants.NEWLINE);
+            mtlWriter.close();
 
-            for (GameImage image : textureMap.values()) {
-                mtlWriter.write("newmtl tex" + image.getTextureId() + Constants.NEWLINE);
-                mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE); // Diffuse color.
-                // "d 0.75" = Partially transparent, if we want to support this later.
-                mtlWriter.write("map_Kd " + image.getLocalImageID() + ".png" + Constants.NEWLINE);
-                mtlWriter.write(Constants.NEWLINE);
-            }
-
-            for (int i = 0; i < faceColors.size(); i++) {
-                PSXColorVector color = faceColors.get(i);
-                mtlWriter.write("newmtl color" + i + Constants.NEWLINE);
-                if (i == 0)
-                    mtlWriter.write("d 1" + Constants.NEWLINE); // All further textures should be completely solid.
-                mtlWriter.write("Kd " + Utils.unsignedByteToFloat(color.getRed()) + " " + Utils.unsignedByteToFloat(color.getGreen()) + " " + Utils.unsignedByteToFloat(color.getBlue()) + Constants.NEWLINE); // Diffuse color.
-                mtlWriter.write(Constants.NEWLINE);
-            }
+            ImageIO.write(textureMap.getTextureTree().getImage(), "png", new File(directory, cleanName + ".png"));
         }
 
         System.out.println("Export complete.");
@@ -305,12 +289,10 @@ public class FileUtils3D {
 
     /**
      * Convert a MOF to a MisfitModel3D.
-     *
      * mm3d does not support:
-     *  - Texture animations. (Flipbook)
-     *  - Lighting.
-     *  - Quads
-     *
+     * - Texture animations. (Flipbook)
+     * - Lighting.
+     * - Quads
      * @param holder The mof to convert.
      * @return misfit3d
      */

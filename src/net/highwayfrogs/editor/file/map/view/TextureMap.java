@@ -108,6 +108,7 @@ public class TextureMap {
     public static class TextureTree {
         private final VLOArchive vloSource;
         private final Map<VertexColor, BufferedImage> vertexMap;
+        private final Map<VertexColor, TextureTreeNode> vertexNodeMap;
         private final int width = TEXTURE_PAGE_WIDTH; // Width of tree.
         private final int height = TEXTURE_PAGE_HEIGHT; // Height of tree.
         private TextureTreeNode rootNode;
@@ -117,6 +118,7 @@ public class TextureMap {
         public TextureTree(VLOArchive vloSource, Map<VertexColor, BufferedImage> vertexMap) {
             this.vloSource = vloSource;
             this.vertexMap = vertexMap;
+            this.vertexNodeMap = new HashMap<>();
             buildTree(); // Builds the tree contents.
             updateImage(); // Makes the image.
         }
@@ -210,12 +212,50 @@ public class TextureMap {
                 insert(getVloSource().getImages().get(i));
 
             buildEntryMap();
+            buildColorMap();
         }
 
         // Rebuilds the entry map.
         private void buildEntryMap() {
             getEntryMap().clear();
             handleNode(getRootNode());
+        }
+
+        private void buildColorMap() {
+            getVertexNodeMap().clear();
+
+            int calcLines = (getVertexMap().size() / (getHeight() / MAPFile.VERTEX_COLOR_IMAGE_SIZE)) * 2; // This might have problems if the textures go past half-way down.
+            int minX = getWidth() - (calcLines * MAPFile.VERTEX_COLOR_IMAGE_SIZE); // The minimum X to use.
+            int minY = 0;
+            LinkedList<TextureTreeNode> queue = new LinkedList<>();
+            queue.add(getRootNode());
+            while (queue.size() > 0) {
+                TextureTreeNode node = queue.pop();
+                if (node.getLeft() != null)
+                    queue.add(node.getLeft());
+                if (node.getRight() != null)
+                    queue.add(node.getRight());
+
+                if (node.getGameImage() != null && node.getX() + node.getWidth() >= minX && node.getY() + node.getHeight() > minY)
+                    minY = node.getY() + node.getHeight();
+            }
+
+            int resetY = getHeight() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+            int x = getWidth() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+            int y = resetY;
+            for (Entry<VertexColor, BufferedImage> entry : getVertexMap().entrySet()) {
+                BufferedImage image = entry.getValue();
+
+                TextureTreeNode vtxNode = TextureTreeNode.newNode(this, x, y, image.getWidth(), image.getHeight());
+                vtxNode.setCachedImage(image);
+                getVertexNodeMap().put(entry.getKey(), vtxNode);
+
+                // Condense these things.
+                if ((y -= image.getHeight()) < minY) { // Start again at the bottom (move over horizontally) once it clashes with a texture.
+                    y = resetY;
+                    x -= image.getWidth();
+                }
+            }
         }
 
         private void handleNode(TextureTreeNode node) {
@@ -247,40 +287,10 @@ public class TextureMap {
                 graphics.drawImage(image.toBufferedImage(DISPLAY_SETTINGS), node.getX(), node.getY(), node.getWidth(), node.getHeight(), null);
             }
 
-            // Calculate the last used pixel by an image.
-            int calcLines = (getVertexMap().size() / (getHeight() / MAPFile.VERTEX_COLOR_IMAGE_SIZE)) * 2; // This might have problems if the textures go past half-way down.
-            int minX = getWidth() - (calcLines * MAPFile.VERTEX_COLOR_IMAGE_SIZE); // The minimum X to use.
-            int minY = 0;
-            LinkedList<TextureTreeNode> queue = new LinkedList<>();
-            queue.add(getRootNode());
-            while (queue.size() > 0) {
-                TextureTreeNode node = queue.pop();
-                if (node.getLeft() != null)
-                    queue.add(node.getLeft());
-                if (node.getRight() != null)
-                    queue.add(node.getRight());
-
-                if (node.getGameImage() != null && node.getX() + node.getWidth() >= minX && node.getY() + node.getHeight() > minY)
-                    minY = node.getY() + node.getHeight();
-            }
-
-            // Write the vertex colors.
-            int resetY = getHeight() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
-            int x = getWidth() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
-            int y = resetY;
-            for (Entry<VertexColor, BufferedImage> entry : getVertexMap().entrySet()) {
-                BufferedImage image = entry.getValue();
-                graphics.drawImage(image, x, y, image.getWidth(), image.getHeight(), null);
-
-                TextureTreeNode vtxNode = TextureTreeNode.newNode(this, x, y, image.getWidth(), image.getHeight());
-                vtxNode.setCachedImage(image);
-                entry.getKey().setTextureNode(vtxNode);
-
-                // Condense these things.
-                if ((y -= image.getHeight()) < minY) { // Start again at the bottom (move over horizontally) once it clashes with a texture.
-                    y = resetY;
-                    x -= image.getWidth();
-                }
+            // Draw the vertex color entries.
+            for (Entry<VertexColor, TextureTreeNode> entry : getVertexNodeMap().entrySet()) {
+                TextureTreeNode node = entry.getValue();
+                graphics.drawImage(node.getCachedImage(), node.getX(), node.getY(), node.getWidth(), node.getHeight(), null);
             }
 
             graphics.dispose();

@@ -20,7 +20,6 @@ import java.awt.image.BufferedImage;
 @Setter
 public class MAPPolyFlat extends MAPPolygon implements VertexColor {
     private PSXColorVector color = new PSXColorVector();
-    private transient TextureTreeNode textureNode;
 
     public MAPPolyFlat(MAPPolygonType type, int verticeCount) {
         super(type, verticeCount);
@@ -40,7 +39,7 @@ public class MAPPolyFlat extends MAPPolygon implements VertexColor {
 
     @Override
     public TextureTreeNode getNode(TextureMap map) {
-        return getTextureNode();
+        return getTreeNode(map);
     }
 
     @Override

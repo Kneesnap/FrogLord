@@ -132,10 +132,9 @@ public class GeometryManager extends MapManager {
         }
 
         if (drawState) {
-            getMap().forEachPrimitive(prim -> {
-                if (!prim.isAllowDisplay() && prim instanceof MAPPolygon)
-                    getController().renderOverPolygon((MAPPolygon) prim, MapMesh.INVISIBLE_COLOR);
-            });
+            for (MAPPolygon poly : getMap().getAllPolygons())
+                if (!poly.isAllowDisplay())
+                    getController().renderOverPolygon(poly, MapMesh.INVISIBLE_COLOR);
             this.looseMeshData = getMesh().getManager().addMesh();
         }
     }

@@ -23,7 +23,6 @@ import java.awt.image.BufferedImage;
 @Setter
 public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
     private PSXColorVector[] colors; //TODO: Does this need swapping?
-    private transient TextureTreeNode textureNode;
 
     // NOTE: Changing MAPFile.VERTEX_COLOR_IMAGE_SIZE to a higher value will improve the shading quality, but may
     //       also break texture related stuff elsewhere (I haven't done much in the way of testing).
@@ -60,7 +59,7 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
 
     @Override
     public TextureTreeNode getNode(TextureMap map) {
-        return textureNode;
+        return getTreeNode(map);
     }
 
     @Override

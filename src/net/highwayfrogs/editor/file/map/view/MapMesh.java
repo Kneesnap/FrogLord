@@ -34,10 +34,8 @@ public class MapMesh extends FrogMesh<MAPPolygon> {
     @Override
     public void onUpdatePolygonData() {
         AtomicInteger texId = new AtomicInteger();
-        getMap().forEachPrimitive(prim -> {
-            if (prim instanceof MAPPolygon)
-                addPolygon((MAPPolygon) prim, texId);
-        });
+        for (MAPPolygon poly : getMap().getAllPolygons())
+            addPolygon(poly, texId);
     }
 
     @Override

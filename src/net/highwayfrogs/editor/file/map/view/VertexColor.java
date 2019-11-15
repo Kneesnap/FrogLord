@@ -11,13 +11,6 @@ import java.awt.image.BufferedImage;
  * Created by Kneesnap on 12/1/2018.
  */
 public interface VertexColor {
-
-    /**
-     * Set the cached vertex color texture information.
-     * @param node Vertex color information.
-     */
-    public void setTextureNode(TextureTreeNode node);
-
     /**
      * Make the displayed texture on an image.
      * @param image    The image.
@@ -35,5 +28,14 @@ public interface VertexColor {
         makeTexture(image, graphics);
         graphics.dispose();
         return image;
+    }
+
+    /**
+     * Gets this node value from the TextureMap
+     * @param map The map to get the node from.
+     * @return node
+     */
+    public default TextureTreeNode getTreeNode(TextureMap map) {
+        return map.getTextureTree().getVertexNodeMap().get(this);
     }
 }

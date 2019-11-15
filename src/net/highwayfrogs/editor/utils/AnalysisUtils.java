@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
@@ -83,10 +84,9 @@ public class AnalysisUtils {
                     textureIds.add(remapTable.get(texValue));
 
             // Populate face data.
-            map.forEachPrimitive(prim -> {
-                if (prim instanceof MAPPolyTexture)
-                    textureIds.add(remapTable.get(((MAPPolyTexture) prim).getTextureId()));
-            });
+            for (MAPPolygon poly : map.getAllPolygons())
+                if (poly instanceof MAPPolyTexture)
+                    textureIds.add(remapTable.get(((MAPPolyTexture) poly).getTextureId()));
         });
 
         // Find unused textures.

@@ -44,7 +44,6 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
 
 /**
  * Parses Frogger MAP files.
@@ -81,6 +80,7 @@ public class MAPFile extends GameFile {
 
     private transient VLOArchive vlo;
     private transient Map<MAPPrimitiveType, List<MAPPrimitive>> polygons = new HashMap<>();
+    private transient List<MAPPolygon> allPolygons = new ArrayList<>();
 
     private transient Map<Integer, MAPPrimitive> loadPointerPolygonMap = new HashMap<>();
 
@@ -722,14 +722,14 @@ public class MAPFile extends GameFile {
     public Map<VertexColor, BufferedImage> makeVertexColorTextures() {
         Map<VertexColor, BufferedImage> texMap = new HashMap<>();
 
-        forEachPrimitive(prim -> {
-            if (!(prim instanceof VertexColor))
-                return;
+        for (MAPPolygon poly : getAllPolygons()) {
+            if (!(poly instanceof VertexColor))
+                continue;
 
-            VertexColor vertexColor = (VertexColor) prim;
+            VertexColor vertexColor = (VertexColor) poly;
             BufferedImage image = vertexColor.makeTexture();
             texMap.put(vertexColor, image);
-        });
+        }
 
         texMap.put(MapMesh.CURSOR_COLOR, MapMesh.CURSOR_COLOR.makeTexture());
         texMap.put(MapMesh.ANIMATION_COLOR, MapMesh.ANIMATION_COLOR.makeTexture());
@@ -927,12 +927,29 @@ public class MAPFile extends GameFile {
     }
 
     /**
-     * Executes behavior for each map primitive.
-     * @param handler Behavior to execute.
+     * Gets all of the polygons in this map, in a list.
+     * @return allPolygons
      */
-    public void forEachPrimitive(Consumer<MAPPrimitive> handler) {
+    public List<MAPPolygon> getAllPolygons() {
+        this.allPolygons.clear();
         for (List<MAPPrimitive> list : getPolygons().values())
-            list.forEach(handler);
+            for (MAPPrimitive prim : list)
+                if (prim instanceof MAPPolygon)
+                    this.allPolygons.add((MAPPolygon) prim);
+        return this.allPolygons;
+    }
+
+    /**
+     * Gets all of the polygons in this map, in a list.
+     * @return allPolygons
+     */
+    public List<MAPPolygon> getAllPolygonsSafe() {
+        List<MAPPolygon> polyList = new ArrayList<>();
+        for (List<MAPPrimitive> list : getPolygons().values())
+            for (MAPPrimitive prim : list)
+                if (prim instanceof MAPPolygon)
+                    polyList.add((MAPPolygon) prim);
+        return polyList;
     }
 
     /**
@@ -944,15 +961,15 @@ public class MAPFile extends GameFile {
             groups.add(new MAPGroup(false));
 
         // Recalculate it.
-        forEachPrimitive(prim -> {
-            if (!prim.isAllowDisplay())
-                return;
+        for (MAPPolygon poly : getAllPolygons()) {
+            if (!poly.isAllowDisplay())
+                continue;
 
-            SVector vertex = getVertexes().get(prim.getVertices()[prim.getVerticeCount() - 1]);
+            SVector vertex = getVertexes().get(poly.getVertices()[poly.getVerticeCount() - 1]);
             int groupX = getGroupX(vertex.getX());
             int groupZ = getGroupZ(vertex.getZ());
-            groups.get(getGroupIndex(groupX, groupZ)).getPolygonMap().get(prim.getType()).add(prim);
-        });
+            groups.get(getGroupIndex(groupX, groupZ)).getPolygonMap().get(poly.getType()).add(poly);
+        }
 
         return groups;
     }

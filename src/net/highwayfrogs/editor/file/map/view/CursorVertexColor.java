@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.file.map.view;
 
 import lombok.Getter;
-import lombok.Setter;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -12,11 +10,9 @@ import java.awt.image.BufferedImage;
  * Created by Kneesnap on 12/4/2018.
  */
 @Getter
-@Setter
 public class CursorVertexColor implements VertexColor {
     private Color bodyColor;
     private Color outlineColor;
-    private TextureTreeNode textureNode;
 
     public CursorVertexColor(Color bodyColor, Color outlineColor) {
         this.bodyColor = bodyColor;

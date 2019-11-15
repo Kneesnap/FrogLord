@@ -67,11 +67,7 @@ public class FFSUtil {
 
         @Cleanup PrintWriter pw = new PrintWriter(new File(outputDir, Utils.stripExtension(map.getFileEntry().getDisplayName()) + ".ffs"));
 
-        List<MAPPolygon> polygons = new ArrayList<>();
-        map.forEachPrimitive(prim -> {
-            if (prim instanceof MAPPolygon)
-                polygons.add((MAPPolygon) prim);
-        });
+        List<MAPPolygon> polygons = map.getAllPolygonsSafe();
 
         // Write Vertices.
         for (SVector vec : map.getVertexes())
