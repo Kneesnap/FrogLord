@@ -109,7 +109,6 @@ public class GeometryManager extends MapManager {
             this.geometryEditor.addButton("Apply Changes", () -> {
                 this.polygonData.applyToPolygon(getSelectedPolygon());
                 refreshView();
-                getController().getVertexManager().updateVisibility();
             });
         }
     }
@@ -177,8 +176,6 @@ public class GeometryManager extends MapManager {
         this.polygonSelected = false;
         this.selectedPolygon = null;
         hideCursorPolygon();
-        if (getController().getVertexManager().getShownVertices() != null)
-            getController().getVertexManager().showVertices(null);
     }
 
     /**

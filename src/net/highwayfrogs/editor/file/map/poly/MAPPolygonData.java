@@ -7,7 +7,6 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.map.poly.polygon.*;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture.PolyTextureFlag;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -249,31 +248,6 @@ public class MAPPolygonData {
                 editor.addColorPicker(nameArray[i], this.colors[i].toRGB(), this.colors[i]::fromRGB);
             //TODO: Update map display when color is updated. (Update texture map.)
         }
-
-        controller.getVertexManager().showVertices(getVertices());
-        editor.addBoldLabel("Vertice Controls:");
-        editor.addButton("Change Vertex", () -> {
-            SVector selected = controller.getVertexManager().getSelectedVector();
-            if (selected == null) {
-                Utils.makePopUp("You must select the vertex you'd like to change first.", AlertType.WARNING);
-                return;
-            }
-
-            // Allow changing.
-            controller.getVertexManager().selectVertex(newVertex -> {
-                int oldArrayIndex = Utils.indexOf(getVertices(), controller.getController().getFile().getVertexes().indexOf(selected));
-                if (oldArrayIndex == -1)
-                    throw new RuntimeException("Failed to find the real index into the vertex array.");
-
-                int newIndex = controller.getController().getFile().getVertexes().indexOf(newVertex);
-                if (newIndex == -1)
-                    throw new RuntimeException("Failed to find the vertex id for the new vertex.");
-                getVertices()[oldArrayIndex] = newIndex;
-
-                //TODO: It would be nice for this to be a live update.
-            }, null);
-
-        });
     }
 
     /**

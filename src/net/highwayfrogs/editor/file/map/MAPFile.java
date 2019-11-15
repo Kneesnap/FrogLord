@@ -1126,23 +1126,6 @@ public class MAPFile extends GameFile {
     }
 
     /**
-     * Removes unused vertices from the file.
-     */
-    public void removeUnusedVertices() {
-        boolean[] foundVertices = new boolean[this.vertexes.size()];
-        for (List<MAPPrimitive> mapPolyList : getPolygons().values())
-            for (MAPPrimitive mapPoly : mapPolyList)
-                for (int i = 0; i < mapPoly.getVerticeCount(); i++)
-                    foundVertices[mapPoly.getVertices()[i]] = true;
-
-        // Remove the vertices.
-        int removeCount = 0;
-        for (int i = 0; i < foundVertices.length; i++)
-            if (!foundVertices[i])
-                removeVertice(i - removeCount++);
-    }
-
-    /**
      * Get the types to use based on if this is QB or not.
      * @param isQB Is this the QB map?
      * @return types

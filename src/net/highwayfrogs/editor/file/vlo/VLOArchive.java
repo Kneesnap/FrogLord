@@ -53,6 +53,7 @@ public class VLOArchive extends GameFile {
     public static final Image ICON = loadIcon("image");
     public static final ImageFilterSettings ICON_EXPORT = new ImageFilterSettings(ImageState.EXPORT);
     public static final ImageFilterSettings VRAM_EXPORT = new ImageFilterSettings(ImageState.EXPORT).setAllowScrunch(true);
+    public static final ImageFilterSettings VRAM_EXPORT_NO_SCRUNCH = new ImageFilterSettings(ImageState.EXPORT);
 
     @Override
     public void load(DataReader reader) {
@@ -238,6 +239,8 @@ public class VLOArchive extends GameFile {
 
     /**
      * Create a BufferedImage which effectively mirrors how Frogger will layout this VLO in memory.
+     * One pixel maps to one byte of VRAM.
+     * On the PS1, multiple pixels can be stored in a single byte, so there is a loss of quality.
      * @param vramImage The image to write the data onto. If the image is not the right dimensions, it will make a new image and use that one.
      * @return vramImage
      */
