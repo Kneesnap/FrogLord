@@ -346,6 +346,8 @@ class SaveFfsOperator(bpy.types.Operator):
         bm = bmesh.new()
         bm.from_mesh(mesh)
         bm.faces.ensure_lookup_table()
+        bm.verts.ensure_lookup_table()
+        bm.edges.ensure_lookup_table()
 
         texflag_layer = bm.faces.layers.int[0]
         stack_layer = bm.faces.layers.int[1]
