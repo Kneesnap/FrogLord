@@ -688,6 +688,10 @@ public class MAPFile extends GameFile {
         writer.writeShort(this.gridXSize);
         writer.writeShort(this.gridZSize);
 
+        int calcStackCount = (getGridXCount() * getGridZCount());
+        if (getGridStacks().size() != calcStackCount)
+            throw new RuntimeException("Tried to save " + getGridStacks().size() + " grid stacks, required: " + calcStackCount + ".");
+
         List<GridSquare> saveSquares = new ArrayList<>();
         getGridStacks().forEach(stack -> {
             stack.setTempIndex(saveSquares.size());

@@ -174,6 +174,7 @@ public class FFSUtil {
 
         List<String> lines = Files.readAllLines(inputFile.toPath());
 
+        int gridId = 0;
         List<MAPPolygon> fullPolygonList = new ArrayList<>();
         for (String line : lines) {
             if (line.isEmpty() || line.equals(" "))
@@ -188,16 +189,22 @@ public class FFSUtil {
                 map.getVertexes().add(new SVector(-Float.parseFloat(args[1]), -Float.parseFloat(args[2]), Float.parseFloat(args[3])));
             } else if (action.equalsIgnoreCase("grid-size")) {
                 map.setGridXCount(Short.parseShort(args[1]));
-                map.setGridXCount(Short.parseShort(args[2]));
+                map.setGridZCount(Short.parseShort(args[2]));
+
+                gridId = 0;
+                map.getGridStacks().clear();
+                for (int i = 0; i < map.getGridXCount() * map.getGridZCount(); i++)
+                    map.getGridStacks().add(new GridStack());
             } else if (action.equalsIgnoreCase("grid")) {
-                GridStack stack = new GridStack();
+                if (gridId >= map.getGridStacks().size())
+                    throw new RuntimeException("There are more than " + map.getGridStacks().size() + " stacks in the .ffs file!");
+
+                GridStack stack = map.getGridStacks().get(gridId++);
                 stack.setHeight(Integer.parseInt(args[1]));
                 for (int i = 2; i < args.length; i++) {
                     String[] split = args[i].split(":");
                     stack.getGridSquares().add(new GridSquare(fullPolygonList.get(Integer.parseInt(split[0])), map, Integer.parseInt(split[1])));
                 }
-
-                map.getGridStacks().add(stack);
             } else if (action.equalsIgnoreCase("anim")) {
                 MAPAnimation mapAnim = new MAPAnimation(map);
                 mapAnim.setUChange(Short.parseShort(args[1]));
