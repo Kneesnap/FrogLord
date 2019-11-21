@@ -43,6 +43,7 @@ public class PP20Packer {
     public static final String MARKER = "PP20";
     public static final byte[] MARKER_BYTES = MARKER.getBytes();
     private static final ThreadLocal<PackerDataInstance> dataPerThread = ThreadLocal.withInitial(PackerDataInstance::new);
+    public static final int MAX_UNCOMPRESSED_FILE_SIZE = Utils.power(2, 3 * Constants.BYTE_SIZE) - 1; // Has 3 bytes to store this info in.
 
     /**
      * Pack a byte array into PP20 compressed data.
@@ -50,6 +51,9 @@ public class PP20Packer {
      * @return packedData
      */
     public static byte[] packData(byte[] data) {
+        if (data.length > MAX_UNCOMPRESSED_FILE_SIZE)
+            throw new RuntimeException("packData tried to compress data larger than the maximum PP20 file size! (" + data.length + " > " + MAX_UNCOMPRESSED_FILE_SIZE + ")!");
+
         Utils.reverseByteArray(data); // Does this cause problems?
         PackerDataInstance packerData = dataPerThread.get();
 
