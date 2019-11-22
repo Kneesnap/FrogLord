@@ -17,7 +17,6 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -224,36 +223,20 @@ public class TextureMap {
         private void buildColorMap() {
             getVertexNodeMap().clear();
 
-            int calcLines = (getVertexMap().size() / (getHeight() / MAPFile.VERTEX_COLOR_IMAGE_SIZE)) * 2; // This might have problems if the textures go past half-way down.
-            int minX = getWidth() - (calcLines * MAPFile.VERTEX_COLOR_IMAGE_SIZE); // The minimum X to use.
-            int minY = 0;
-            LinkedList<TextureTreeNode> queue = new LinkedList<>();
-            queue.add(getRootNode());
-            while (queue.size() > 0) {
-                TextureTreeNode node = queue.pop();
-                if (node.getLeft() != null)
-                    queue.add(node.getLeft());
-                if (node.getRight() != null)
-                    queue.add(node.getRight());
-
-                if (node.getGameImage() != null && node.getX() + node.getWidth() >= minX && node.getY() + node.getHeight() > minY)
-                    minY = node.getY() + node.getHeight();
-            }
-
-            int resetY = getHeight() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
-            int x = getWidth() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
-            int y = resetY;
+            int minX = getWidth() - ((int) Math.ceil(Math.sqrt(getVertexMap().size())) * MAPFile.VERTEX_COLOR_IMAGE_SIZE);
+            int startX = getWidth() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+            int x = startX;
+            int y = getHeight() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
             for (Entry<VertexColor, BufferedImage> entry : getVertexMap().entrySet()) {
                 BufferedImage image = entry.getValue();
-
                 TextureTreeNode vtxNode = TextureTreeNode.newNode(this, x, y, image.getWidth(), image.getHeight());
                 vtxNode.setCachedImage(image);
                 getVertexNodeMap().put(entry.getKey(), vtxNode);
 
                 // Condense these things.
-                if ((y -= image.getHeight()) < minY) { // Start again at the bottom (move over horizontally) once it clashes with a texture.
-                    y = resetY;
-                    x -= image.getWidth();
+                if ((x -= image.getWidth()) < minX) { // Start again at the bottom (move over horizontally) once it clashes with a texture.
+                    y -= image.getHeight();
+                    x = startX;
                 }
             }
         }
