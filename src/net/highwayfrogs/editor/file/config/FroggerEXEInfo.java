@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
@@ -55,6 +56,7 @@ public class FroggerEXEInfo extends Config {
     private List<LevelInfo> raceLevelInfo = new ArrayList<>();
     private List<LevelInfo> allLevelInfo = new ArrayList<>();
     private Map<MAPLevel, LevelInfo> levelInfoMap = new HashMap<>();
+    private List<DemoTableEntry> demoTableEntries = new ArrayList<>();
     private List<Long> bmpTexturePointers = new ArrayList<>();
     private List<FormEntry> fullFormBook = new ArrayList<>();
     private List<FroggerScript> scripts = new ArrayList<>();
@@ -76,6 +78,7 @@ public class FroggerEXEInfo extends Config {
     private int arcadeLevelAddress;
     private int bmpPointerAddress;
     private int musicAddress;
+    private int demoTableAddress;
     private int pickupDataAddress;
     private int scriptArrayAddress;
     private boolean prototype;
@@ -144,6 +147,7 @@ public class FroggerEXEInfo extends Config {
         readCosTable();
         readPickupData();
         readThemeLibrary();
+        readDemoTable();
         readMapLibrary();
         readScripts();
         readRemapData();
@@ -162,6 +166,7 @@ public class FroggerEXEInfo extends Config {
         this.MWILength = getInt("mwiLength");
         this.themeBookAddress = getInt("themeBook");
         this.mapBookAddress = getInt("mapBook");
+        this.demoTableAddress = getInt("demoTable", -1);
         this.ramPointerOffset = getLong("ramOffset"); // If I have an offset in a file, adding this number will give its pointer.
         this.arcadeLevelAddress = getInt("arcadeLevelAddress", 0);
         this.musicAddress = getInt("musicAddress"); // Music is generally always the same data, so you can find it with a search.
@@ -275,6 +280,41 @@ public class FroggerEXEInfo extends Config {
         ThemeBook lastBook = getThemeBook(lastTheme);
         int nameCount = getFormBank().getChildBank(lastTheme.name()).size();
         lastBook.loadFormLibrary(this, nameCount);
+    }
+
+    private void readDemoTable() {
+        if (this.demoTableAddress == -1) { // The demo table wasn't specified, so we'll search for it ourselves.
+            FileEntry demoEntry = getMWI().getEntries().stream().filter(file -> file.getDisplayName().startsWith("SUB1DEMO.DAT")).findAny().orElse(null);
+            if (demoEntry == null)
+                return; // Couldn't find a demo by this name, so... skip.
+
+            byte[] levelId = Utils.toByteArray(MAPLevel.SUBURBIA1.ordinal());
+            byte[] demoId = Utils.toByteArray(demoEntry.getLoadedId());
+
+            byte[] searchFor = new byte[levelId.length + demoId.length];
+            System.arraycopy(levelId, 0, searchFor, 0, levelId.length);
+            System.arraycopy(demoId, 0, searchFor, levelId.length, demoId.length);
+
+            int findIndex = Utils.indexOf(getExeBytes(), searchFor);
+            if (findIndex == -1)
+                return; // Didn't find the bytes, ABORT!
+
+            this.demoTableAddress = findIndex;
+        }
+
+        getReader().setIndex(this.demoTableAddress);
+        while (getReader().hasMore()) {
+            int levelId = getReader().readInt();
+            int resourceId = getReader().readInt();
+            int minLevel = getReader().readInt();
+
+            if (levelId == -1 || minLevel == -1)
+                break; // Reached terminator.
+
+            // Add demo entry.
+            boolean isValid = (levelId != DemoTableEntry.SKIP_INT && minLevel != DemoTableEntry.SKIP_INT);
+            demoTableEntries.add(new DemoTableEntry(isValid ? MAPLevel.values()[levelId] : null, isValid ? resourceId : -1, isValid ? MAPLevel.values()[minLevel] : null, isValid));
+        }
     }
 
     private void readMapLibrary() {
@@ -394,6 +434,7 @@ public class FroggerEXEInfo extends Config {
         patchMapLibrary(exeWriter);
         patchRemapData(exeWriter);
         patchScripts(exeWriter);
+        patchDemoTable(exeWriter);
         patchMusicData(exeWriter);
         patchLevelData(exeWriter);
         patchBmpPointerData(exeWriter);
@@ -449,6 +490,15 @@ public class FroggerEXEInfo extends Config {
             exeWriter.setIndex((int) (address - getRamPointerOffset()));
             script.save(exeWriter);
         }
+    }
+
+    private void patchDemoTable(DataWriter exeWriter) {
+        if (this.demoTableAddress == -1)
+            return;
+
+        exeWriter.setIndex(this.demoTableAddress);
+        for (DemoTableEntry entry : this.demoTableEntries)
+            entry.save(exeWriter);
     }
 
     private void patchMusicData(DataWriter exeWriter) {
@@ -564,7 +614,7 @@ public class FroggerEXEInfo extends Config {
      * @return fileEntry
      */
     public FileEntry getResourceEntry(int resourceId) {
-        return getMWI().getEntries().get(resourceId);
+        return resourceId >= 0 && resourceId < getMWI().getEntries().size() ? getMWI().getEntries().get(resourceId) : null;
     }
 
     /**

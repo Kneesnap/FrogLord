@@ -43,7 +43,7 @@ public class PP20Packer {
     public static final String MARKER = "PP20";
     public static final byte[] MARKER_BYTES = MARKER.getBytes();
     private static final ThreadLocal<PackerDataInstance> dataPerThread = ThreadLocal.withInitial(PackerDataInstance::new);
-    public static final int MAX_UNCOMPRESSED_FILE_SIZE = Utils.power(2, 3 * Constants.BYTE_SIZE) - 1; // Has 3 bytes to store this info in.
+    public static final int MAX_UNCOMPRESSED_FILE_SIZE = Utils.power(2, 3 * Constants.BITS_PER_BYTE) - 1; // Has 3 bytes to store this info in.
 
     /**
      * Pack a byte array into PP20 compressed data.

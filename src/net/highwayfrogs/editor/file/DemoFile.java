@@ -141,6 +141,7 @@ public class DemoFile extends GameFile {
         RIGHT("Move Right", 0x01, false),
         DOWN("Move Down", 0x02, false),
         LEFT("Move Left", 0x03, false),
+        // Bit 2 is unused, it isn't croak, it's just plain unused.
         SUPER_HOP("Super Hop", Constants.BIT_FLAG_3, true),
         TONGUE("Tongue", Constants.BIT_FLAG_4, true),
         ROTATE_COUNTER_CLOCKWISE("Rotate Counter-Clockwise", Constants.BIT_FLAG_5, true),

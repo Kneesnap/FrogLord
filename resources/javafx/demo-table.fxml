@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
+            minWidth="-Infinity" prefHeight="150.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0"
+            AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
+            xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <ChoiceBox fx:id="demoSelector" layoutX="75.0" layoutY="2.0" prefHeight="25.0" prefWidth="125.0"
+                   AnchorPane.leftAnchor="75.0" AnchorPane.topAnchor="2.0"/>
+        <ChoiceBox fx:id="levelSelector" layoutX="64.0" layoutY="71.0" prefHeight="25.0" prefWidth="111.0"
+                   AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="46.0"/>
+        <ChoiceBox fx:id="fileSelector" layoutX="64.0" layoutY="71.0" prefHeight="25.0" prefWidth="111.0"
+                   AnchorPane.rightAnchor="11.0" AnchorPane.topAnchor="71.0"/>
+        <Label layoutX="10.0" layoutY="75.0" text="Demo Level:" AnchorPane.leftAnchor="7.0"
+               AnchorPane.topAnchor="50.0"/>
+        <Label layoutX="14.0" layoutY="100.0" text="Unlocked At: " AnchorPane.leftAnchor="7.0"
+               AnchorPane.topAnchor="100.0"/>
+        <Button fx:id="doneButton" layoutX="78.0" layoutY="124.0" mnemonicParsing="false" onAction="#onDone" text="Done"
+                AnchorPane.bottomAnchor="1.0" AnchorPane.leftAnchor="78.0" AnchorPane.rightAnchor="77.0"/>
+        <Label layoutX="12.0" layoutY="71.0" text="Demo File: " AnchorPane.leftAnchor="7.0"
+               AnchorPane.topAnchor="75.0"/>
+        <Label layoutX="10.0" layoutY="6.0" text="Demo Entry: " AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="6.0"/>
+        <ChoiceBox fx:id="unlockSelector" layoutX="78.0" layoutY="96.0" prefHeight="25.0" prefWidth="111.0"/>
+    </children>
+</AnchorPane>

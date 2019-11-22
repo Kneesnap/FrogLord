@@ -62,6 +62,8 @@
                                   text="Edit Form Library"/>
                         <MenuItem fx:id="scriptEditor" mnemonicParsing="false" onAction="#editScript"
                                   text="Edit Scripts"/>
+                        <MenuItem fx:id="demoTableEditor" mnemonicParsing="false" onAction="#editDemoTable"
+                                  text="Edit Demo Table"/>
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">

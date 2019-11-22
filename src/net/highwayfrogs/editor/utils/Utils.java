@@ -111,8 +111,12 @@ public class Utils {
      * @return byteArray
      */
     public static byte[] toByteArray(int value) {
-        INT_BUFFER.clear();
-        return INT_BUFFER.order(ByteOrder.LITTLE_ENDIAN).putInt(value).array();
+        byte[] bytes = new byte[Constants.INTEGER_SIZE];
+        bytes[0] = (byte) value;
+        bytes[1] = (byte) ((value >> 8) & 0xFF);
+        bytes[2] = (byte) ((value >> 16) & 0xFF);
+        bytes[3] = (byte) ((value >> 24) & 0xFF);
+        return bytes;
     }
 
     /**
@@ -1483,6 +1487,28 @@ public class Utils {
      */
     public static <T> boolean contains(T[] array, T find) {
         return indexOf(array, find) >= 0;
+    }
+
+    /**
+     * Find the index that a sequence of bytes is found in another sequence of bytes.
+     * @param searchArray The array to search.
+     * @param findArray   The bytes to look for.
+     * @return indexOf
+     */
+    public static int indexOf(byte[] searchArray, byte[] findArray) {
+        for (int i = 0; i < searchArray.length - findArray.length + 1; i++) {
+            boolean match = true;
+            for (int j = 0; j < findArray.length; j++) {
+                if (searchArray[i + j] != findArray[j]) {
+                    match = false;
+                    break;
+                }
+            }
+
+            if (match)
+                return i;
+        }
+        return -1;
     }
 
     /**
