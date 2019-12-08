@@ -11,9 +11,13 @@
 # Mesh Data:
 # https://docs.blender.org/api/current/bpy.types.Mesh.html#bpy.types.Mesh
 # https://docs.blender.org/api/current/bmesh.types.html
+
+# https://bitbucket.org/kurethedead/fast64/src/master/__init__.py
+
 bl_info = {
     "name": "FrogLord Map",
     "category": "Object",
+    "blender": (2, 80, 0),
 }
 
 import bpy
@@ -52,8 +56,8 @@ class MapPanel(bpy.types.Panel):
     """Creates a menu in object properties with FrogLord utilities"""
     bl_label = "FrogLord Map Tools"
     bl_idname = "FROGLORD_PT_HELLO"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW' # https://docs.blender.org/api/current/bpy.types.Panel.html
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI' # https://docs.blender.org/api/current/bpy.types.Panel.html
     bl_context = "object"
 
     def draw(self, context):

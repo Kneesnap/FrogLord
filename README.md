@@ -10,8 +10,8 @@ To use this tool, you must have a copy of the game.
 
 ## Usage:
 Download: [here](https://github.com/Kneesnap/FrogLord/releases)  
-Website: [here](http://highwayfrogs.freeforums.net/)  
-Discord: [here](http://highwayfrogs.freeforums.net/thread/26/discord-group)  
+Website: [here](https://highwayfrogs.net/)  
+Discord: [here](https://highwayfrogs.net/thread/26/discord-group)  
 If you need any help, have questions, or want to get in touch, don't hesitate to talk to us on our website or our discord.  
 
 ## Can I Contribute?

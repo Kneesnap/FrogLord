@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.gui.MainController;
 
 /**
  * Controls the UI for the PS1 sounds.
+ * TODO: https://github.com/simias/psxsdk/blob/master/tools/vag2wav.c
  * Created by Kneesnap on 7/24/2019.
  */
 public class PS1SoundController extends EditorController<PSXSoundDummy> {
