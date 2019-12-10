@@ -82,12 +82,13 @@ public class IVector extends GameObject implements Vector {
      * Equivalent to MRNormaliseVec ?? I think [AndyEder]
      */
     public IVector normalise() {
-        long oldX = this.x;
+        /*long oldX = this.x;
         long oldY = this.y;
         long oldZ = this.z;
         long added = (oldX * oldX) + (oldY * oldY) + (oldZ * oldZ);
         if (added > 134217727L || added < 0L) // LIBREF46.PDF lists this restriction as throwing a processor exception.
             throw new RuntimeException("Tried to normalise a vector which exceeded the limit! " + added);
+         */
 
         double tmpX = Utils.fixedPointIntToFloatNBits(this.x, 12);
         double tmpY = Utils.fixedPointIntToFloatNBits(this.y, 12);

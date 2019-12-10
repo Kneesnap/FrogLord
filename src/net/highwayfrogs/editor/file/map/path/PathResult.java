@@ -14,4 +14,5 @@ import net.highwayfrogs.editor.file.standard.SVector;
 public class PathResult {
     private SVector position;
     private IVector rotation;
+    private boolean reverseAngle;
 }

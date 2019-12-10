@@ -39,7 +39,8 @@ public class PathData extends EntityData {
 
         // Motion Data:
         for (PathMotionType type : PathMotionType.values())
-            editor.addCheckBox(Utils.capitalize(type.name()), getPathInfo().testFlag(type), newState -> getPathInfo().setFlag(type, newState));
+            if (type.isAllowEdit())
+                editor.addCheckBox(Utils.capitalize(type.name()), getPathInfo().testFlag(type), newState -> getPathInfo().setFlag(type, newState));
     }
 
     @Override
@@ -54,6 +55,7 @@ public class PathData extends EntityData {
                         getPathInfo().setPath(manager.getMap(), path, segment);
                         getPathInfo().setSegmentDistance(segDistance);
                         manager.updateEntities();
+                        manager.showEntityInfo(getParentEntity()); // Update the entity editor display, update path slider, etc.
                     }, null));
         }
 

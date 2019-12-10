@@ -157,12 +157,13 @@ public class PathInfo extends GameObject {
     @Getter
     @AllArgsConstructor
     public enum PathMotionType {
-        ACTIVE(Constants.BIT_FLAG_0),
-        BACKWARDS(Constants.BIT_FLAG_1),
-        ONE_SHOT(Constants.BIT_FLAG_2),
-        REPEAT(Constants.BIT_FLAG_3),
-        FINISHED(Constants.BIT_FLAG_4);
+        ACTIVE(Constants.BIT_FLAG_0, false),
+        BACKWARDS(Constants.BIT_FLAG_1, false),
+        ONE_SHOT(Constants.BIT_FLAG_2, false),
+        REPEAT(Constants.BIT_FLAG_3, true),
+        FINISHED(Constants.BIT_FLAG_4, false);
 
         private final int flag;
+        private final boolean allowEdit; // If this isn't true, this value is not a runtime value.
     }
 }

@@ -65,7 +65,7 @@ public class SplineSegment extends PathSegment {
 
     @Override
     protected PathResult calculatePosition(PathInfo info) {
-        return new PathResult(calculateSplinePoint(info.getSegmentDistance()), calculateSplineTangent(info.getSegmentDistance()));
+        return new PathResult(calculateSplinePoint(info.getSegmentDistance()), calculateSplineTangent(info.getSegmentDistance()), false);
     }
 
     // What follows is insanely nasty, but it is what the game engine does, so we have no choice...

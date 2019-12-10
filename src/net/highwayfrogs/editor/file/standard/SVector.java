@@ -120,6 +120,28 @@ public class SVector extends GameObject implements Vector {
     }
 
     /**
+     * Subtract another SVector from this one.
+     * @param other The other SVector to subtract.
+     */
+    public SVector subtract(SVector other) {
+        this.x -= other.getX();
+        this.y -= other.getY();
+        this.z -= other.getZ();
+        return this;
+    }
+
+    /**
+     * Multiply SVector.
+     * @param factor The factor.
+     */
+    public SVector multiply(int factor) {
+        this.x *= factor;
+        this.y *= factor;
+        this.z *= factor;
+        return this;
+    }
+
+    /**
      * Write an SVector with an extra 2 bytes of padding.
      * @param writer The writer to write data to.
      */

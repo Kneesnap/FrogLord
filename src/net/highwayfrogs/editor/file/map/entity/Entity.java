@@ -13,7 +13,6 @@ import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
-import net.highwayfrogs.editor.file.map.path.PathInfo.PathMotionType;
 import net.highwayfrogs.editor.file.map.path.PathResult;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
@@ -142,9 +141,9 @@ public class Entity extends GameObject {
             position[0] = Utils.fixedPointIntToFloat20Bit(pos[0]);
             position[1] = Utils.fixedPointIntToFloat20Bit(pos[1]);
             position[2] = Utils.fixedPointIntToFloat20Bit(pos[2]);
-            position[3] = (float) matrix.getYawAngle();
+            position[3] = (float) matrix.getRollAngle();
             position[4] = (float) matrix.getPitchAngle();
-            position[5] = (float) matrix.getRollAngle();
+            position[5] = (float) matrix.getYawAngle();
             return position;
         }
 
@@ -161,20 +160,15 @@ public class Entity extends GameObject {
             IVector.MROuterProduct12(vec_z, vec_x, vec_y);
             matrix = PSXMatrix.WriteAxesAsMatrix(new PSXMatrix(), vec_x, vec_y, vec_z);
 
+            //String.valueOf(matrix.getYawAngle()).equals("-0.0") && matrix.getRollAngle() < 0 && matrix.getRollAngle() > -.1
+
             Vector endVec = result.getPosition();
             position[0] = endVec.getFloatX();
             position[1] = endVec.getFloatY();
             position[2] = endVec.getFloatZ();
-            position[3] = pathInfo.testFlag(PathMotionType.ACTIVE) ? 0 : (float) matrix.getRollAngle(); // Side to side.
-            position[4] = pathInfo.testFlag(PathMotionType.ONE_SHOT) ? 0 : (float) matrix.getPitchAngle(); // Rotates the base, so it turns on the ground.
-            position[5] = pathInfo.testFlag(PathMotionType.FINISHED) ? 0 : (float) matrix.getYawAngle(); // Rotates side to side.
-
-            if (pathInfo.testFlag(PathMotionType.BACKWARDS)) {
-                float temp = position[3];
-                position[3] = position[5];
-                position[5] = temp;
-            }
-
+            position[3] = (float) matrix.getRollAngle();
+            position[4] = (float) (result.isReverseAngle() ? matrix.getFixedPitchAngle() : matrix.getPitchAngle());
+            position[5] = (float) matrix.getYawAngle();
             return position;
         }
 
