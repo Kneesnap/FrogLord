@@ -56,8 +56,8 @@ class MapPanel(bpy.types.Panel):
     """Creates a menu in object properties with FrogLord utilities"""
     bl_label = "FrogLord Map Tools"
     bl_idname = "FROGLORD_PT_HELLO"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI' # https://docs.blender.org/api/current/bpy.types.Panel.html
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW' # https://docs.blender.org/api/current/bpy.types.Panel.html
     bl_context = "object"
 
     def draw(self, context):

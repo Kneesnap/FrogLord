@@ -272,16 +272,21 @@ public class EntityManager extends MapManager {
                         continue;
 
                     foundRotations++;
-                    double value = pos[2 + foundRotations];
-
-                    ((Rotate) transform).setAngle(Math.toDegrees(value));
-                    if (foundRotations == 3)
-                        break;
+                    Rotate rotate = (Rotate) transform;
+                    if (rotate.getAxis() == Rotate.X_AXIS) {
+                        rotate.setAngle(Math.toDegrees(yaw));
+                    } else if (rotate.getAxis() == Rotate.Y_AXIS) {
+                        rotate.setAngle(Math.toDegrees(pitch));
+                    } else if (rotate.getAxis() == Rotate.Z_AXIS) {
+                        rotate.setAngle(Math.toDegrees(roll));
+                    } else {
+                        foundRotations--;
+                    }
                 }
 
                 if (foundRotations == 0) { // There are no rotations, so add rotations.
-                    view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.X_AXIS));
                     view.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.Y_AXIS));
+                    view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.X_AXIS));
                     view.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.Z_AXIS));
                 }
             }

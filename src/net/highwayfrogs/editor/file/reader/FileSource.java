@@ -1,50 +1,51 @@
 package net.highwayfrogs.editor.file.reader;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.nio.file.Files;
 
 /**
  * Turns a file into a data source.
  * Created by Kneesnap on 8/10/2018.
  */
 public class FileSource implements DataSource {
-    private RandomAccessFile file;
+    private byte[] fileData;
+    private int index;
 
-    public FileSource(File file) throws FileNotFoundException {
-        this.file = new RandomAccessFile(file, "r");
+    public FileSource(File file) throws IOException {
+        this.fileData = Files.readAllBytes(file.toPath());
     }
 
     @Override
     public byte readByte() throws IOException {
-        return (byte) file.read();
+        return this.fileData[this.index++];
     }
 
     @Override
     public byte[] readBytes(int amount) throws IOException {
         byte[] bytes = new byte[amount];
-        file.read(bytes);
+        System.arraycopy(this.fileData, this.index, bytes, 0, amount);
+        this.index += amount;
         return bytes;
     }
 
     @Override
     public void skip(int byteCount) throws IOException {
-        file.skipBytes(byteCount);
+        this.index += byteCount;
     }
 
     @Override
     public void setIndex(int newIndex) throws IOException {
-        file.seek(newIndex);
+        this.index = newIndex;
     }
 
     @Override
     public int getIndex() throws IOException {
-        return (int) file.getFilePointer();
+        return this.index;
     }
 
     @Override
     public int getSize() throws IOException {
-        return (int) file.length();
+        return this.fileData.length;
     }
 }

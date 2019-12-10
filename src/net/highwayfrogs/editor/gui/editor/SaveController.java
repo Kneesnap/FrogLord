@@ -5,6 +5,7 @@ import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.stage.Stage;
@@ -19,7 +20,6 @@ import net.highwayfrogs.editor.system.AbstractService;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -78,16 +78,15 @@ public class SaveController implements Initializable {
             AtomicInteger currentFile = new AtomicInteger(0);
             AtomicBoolean alreadyScheduledUpdate = new AtomicBoolean();
 
-            DataWriter mwdWriter;
-            try {
-                mwdWriter = new DataWriter(new FileReceiver(outputMWD));
-            } catch (FileNotFoundException ex) { // Can happen when you don't have permission to write to this file, or the file is read-only, etc.
+            if (!outputMWD.getParentFile().canWrite()) {
                 Platform.runLater(() -> {
                     saveController.getStage().close();
-                    Utils.makeErrorPopUp("Failed to save file." + Constants.NEWLINE + "Do you have permission to save in this folder?", ex, false);
+                    Utils.makePopUp("Can't write to the file." + Constants.NEWLINE + "Do you have permission to save in this folder?", AlertType.ERROR);
                 });
                 return null;
             }
+
+            DataWriter mwdWriter = new DataWriter(new FileReceiver(outputMWD));
 
             mwdToSave.setSaveCallback((entry, file) -> {
                 currentFile.incrementAndGet();

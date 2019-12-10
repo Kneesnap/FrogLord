@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
+import net.highwayfrogs.editor.file.map.path.PathInfo.PathMotionType;
 import net.highwayfrogs.editor.file.map.path.PathResult;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
@@ -164,9 +165,16 @@ public class Entity extends GameObject {
             position[0] = endVec.getFloatX();
             position[1] = endVec.getFloatY();
             position[2] = endVec.getFloatZ();
-            position[3] = (float) matrix.getYawAngle();
-            position[4] = (float) matrix.getPitchAngle();
-            position[5] = (float) matrix.getRollAngle();
+            position[3] = pathInfo.testFlag(PathMotionType.ACTIVE) ? 0 : (float) matrix.getRollAngle(); // Side to side.
+            position[4] = pathInfo.testFlag(PathMotionType.ONE_SHOT) ? 0 : (float) matrix.getPitchAngle(); // Rotates the base, so it turns on the ground.
+            position[5] = pathInfo.testFlag(PathMotionType.FINISHED) ? 0 : (float) matrix.getYawAngle(); // Rotates side to side.
+
+            if (pathInfo.testFlag(PathMotionType.BACKWARDS)) {
+                float temp = position[3];
+                position[3] = position[5];
+                position[5] = temp;
+            }
+
             return position;
         }
 

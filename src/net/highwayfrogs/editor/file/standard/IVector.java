@@ -80,26 +80,27 @@ public class IVector extends GameObject implements Vector {
 
     /**
      * Equivalent to MRNormaliseVec ?? I think [AndyEder]
-     * TODO: This is incorrect.
      */
     public IVector normalise() {
-        double[] tmpVec = new double[3];
-        tmpVec[0] = this.x;
-        tmpVec[1] = this.y;
-        tmpVec[2] = this.z;
+        long oldX = this.x;
+        long oldY = this.y;
+        long oldZ = this.z;
+        long added = (oldX * oldX) + (oldY * oldY) + (oldZ * oldZ);
+        if (added > 134217727L || added < 0L) // LIBREF46.PDF lists this restriction as throwing a processor exception.
+            throw new RuntimeException("Tried to normalise a vector which exceeded the limit! " + added);
 
-        double res = Math.sqrt((tmpVec[0] * tmpVec[0]) + (tmpVec[1] * tmpVec[1]) + (tmpVec[2] * tmpVec[2]));
-        tmpVec[0] /= res;
-        tmpVec[1] /= res;
-        tmpVec[2] /= res;
+        double tmpX = Utils.fixedPointIntToFloatNBits(this.x, 12);
+        double tmpY = Utils.fixedPointIntToFloatNBits(this.y, 12);
+        double tmpZ = Utils.fixedPointIntToFloatNBits(this.z, 12);
 
-        tmpVec[0] *= (4096);   // 4096 => (1 << 12)
-        tmpVec[1] *= (4096);
-        tmpVec[2] *= (4096);
+        double res = Math.sqrt((tmpX * tmpX) + (tmpY * tmpY) + (tmpZ * tmpZ));
+        tmpX /= res;
+        tmpY /= res;
+        tmpZ /= res;
 
-        this.x = (int)tmpVec[0];
-        this.y = (int)tmpVec[1];
-        this.z = (int)tmpVec[2];
+        this.x = Utils.floatToFixedPointInt((float) tmpX, 12);
+        this.y = Utils.floatToFixedPointInt((float) tmpY, 12);
+        this.z = Utils.floatToFixedPointInt((float) tmpZ, 12);
         return this;
     }
 
