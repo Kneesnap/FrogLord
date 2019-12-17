@@ -49,7 +49,6 @@ import java.util.Set;
  * Created by Kneesnap on 8/19/2019.
  */
 public class EntityManager extends MapManager {
-    private Entity selectedEntity;
     private GUIEditorGrid entityEditor;
     private List<MeshView> entityModelViews = new ArrayList<>();
     private List<FormEntry> entityTypes = new ArrayList<>();
@@ -88,7 +87,6 @@ public class EntityManager extends MapManager {
      * @param entity The entity to show information for.
      */
     public void showEntityInfo(Entity entity) {
-        this.selectedEntity = entity;
         FormEntry[] entries = getMap().getConfig().getAllowedForms(getMap().getTheme());
         if (entity != null && !Utils.contains(entries, entity.getFormEntry())) // This wasn't found in this
             entries = getMap().getConfig().getFullFormBook().toArray(new FormEntry[0]);
@@ -266,28 +264,22 @@ public class EntityManager extends MapManager {
             float pitch = pos[4];
             float yaw = pos[5];
 
-            if (entity == this.selectedEntity)
-                System.out.println("Roll: " + roll + ", Pitch: " + pitch + ", Yaw: " + yaw);
-
             MeshView view = this.entityModelViews.get(i);
-            boolean hasModel = !entity.getFormEntry().testFlag(FormLibFlag.NO_MODEL);
-            if (hasModel) {
-                int foundRotations = 0;
-                for (Transform transform : view.getTransforms()) { // Update existing rotations.
-                    if (!(transform instanceof Rotate))
-                        continue;
+            int foundRotations = 0;
+            for (Transform transform : view.getTransforms()) { // Update existing rotations.
+                if (!(transform instanceof Rotate))
+                    continue;
 
-                    foundRotations++;
-                    Rotate rotate = (Rotate) transform;
-                    if (rotate.getAxis() == Rotate.X_AXIS) {
-                        rotate.setAngle(Math.toDegrees(roll));
-                    } else if (rotate.getAxis() == Rotate.Y_AXIS) {
-                        rotate.setAngle(Math.toDegrees(pitch));
-                    } else if (rotate.getAxis() == Rotate.Z_AXIS) {
-                        rotate.setAngle(Math.toDegrees(yaw));
-                    } else {
-                        foundRotations--;
-                    }
+                foundRotations++;
+                Rotate rotate = (Rotate) transform;
+                if (rotate.getAxis() == Rotate.X_AXIS) {
+                    rotate.setAngle(Math.toDegrees(roll));
+                } else if (rotate.getAxis() == Rotate.Y_AXIS) {
+                    rotate.setAngle(Math.toDegrees(pitch));
+                } else if (rotate.getAxis() == Rotate.Z_AXIS) {
+                    rotate.setAngle(Math.toDegrees(yaw));
+                } else {
+                    foundRotations--;
                 }
 
                 if (foundRotations == 0) { // There are no rotations, so add rotations.
