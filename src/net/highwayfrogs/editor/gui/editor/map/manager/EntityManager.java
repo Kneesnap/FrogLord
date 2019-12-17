@@ -281,12 +281,12 @@ public class EntityManager extends MapManager {
                 } else {
                     foundRotations--;
                 }
+            }
 
-                if (foundRotations == 0) { // There are no rotations, so add rotations.
-                    view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.Z_AXIS));
-                    view.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.Y_AXIS));
-                    view.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.X_AXIS));
-                }
+            if (foundRotations == 0) { // There are no rotations, so add rotations.
+                view.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.Z_AXIS));
+                view.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.Y_AXIS));
+                view.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.X_AXIS));
             }
 
             view.setTranslateX(pos[0]);
