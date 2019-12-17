@@ -14,6 +14,5 @@ v1.0.0:
 Future:
  - Spline Editor [@Andy, I don't know what all of this data is, and I don't understand the math behind this. Even if you could just give me some documentation that lets me understand each piece of data, this would be useful.]
  - Reverse official PP20 packer library, or see if Nico is willing to send the code for it.
- - Perfect path position calculation. It's fairly close right now. Go over the code for all of the paths to make sure it's accurate, and then go over how it gets used to make sure it gets used properly. [Log path calculations for a specific path in the frogger engine, and see how froglord's rotation matrix differs.]
  - Per-face textures. (This would allow us to show the water in Uncanny Crusher as green, when the texture itself is purple.) (OR, we could generate overlay faces with semi-transparent materials which will apply the correct color.)
  - Add support for selecting multiple grid squares and applying flags.
