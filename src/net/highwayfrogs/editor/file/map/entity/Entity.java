@@ -160,14 +160,12 @@ public class Entity extends GameObject {
             IVector.MROuterProduct12(vec_z, vec_x, vec_y);
             matrix = PSXMatrix.WriteAxesAsMatrix(new PSXMatrix(), vec_x, vec_y, vec_z);
 
-            //String.valueOf(matrix.getYawAngle()).equals("-0.0") && matrix.getRollAngle() < 0 && matrix.getRollAngle() > -.1
-
             Vector endVec = result.getPosition();
             position[0] = endVec.getFloatX();
             position[1] = endVec.getFloatY();
             position[2] = endVec.getFloatZ();
             position[3] = (float) matrix.getRollAngle();
-            position[4] = (float) (result.isReverseAngle() ? matrix.getFixedPitchAngle() : matrix.getPitchAngle());
+            position[4] = (float) matrix.getPitchAngle();
             position[5] = (float) matrix.getYawAngle();
             return position;
         }

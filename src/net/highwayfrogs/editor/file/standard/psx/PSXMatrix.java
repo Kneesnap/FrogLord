@@ -77,12 +77,7 @@ public class PSXMatrix extends GameObject {
         } else {
             double r11 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]));
             double r21 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[1][0]));
-            double result = Math.atan2(r21, r11);
-            if (result <= -(Math.PI / 2))
-                result += Math.PI;
-            if (result >= (Math.PI / 2))
-                result = -(Math.PI - result);
-            return result;
+            return Math.atan2(r21, r11);
         }
     }
 
@@ -93,19 +88,6 @@ public class PSXMatrix extends GameObject {
     public double getPitchAngle() {
         float r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
         return Math.asin(clampPi(-r31));
-    }
-
-    /**
-     * Gets the pitch from this matrix.
-     * @return pitch
-     */
-    public double getFixedPitchAngle() {
-        double pitch = getPitchAngle();
-        if (pitch >= -(Math.PI / 2) && pitch < 0)
-            pitch = -(Math.PI / 2) - (pitch + (Math.PI) / 2);
-        if (pitch > 0 && pitch <= (Math.PI / 2))
-            pitch = Math.PI - pitch;
-        return pitch;
     }
 
     /**
@@ -124,13 +106,7 @@ public class PSXMatrix extends GameObject {
         } else {
             double r32 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]));
             double r33 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]));
-            double result = Math.atan2(r32, r33);
-            if (result <= -(Math.PI / 2))
-                result += Math.PI;
-            if (result >= (Math.PI / 2))
-                result = -(Math.PI - result);
-
-            return result;
+            return Math.atan2(r32, r33);
         }
     }
 

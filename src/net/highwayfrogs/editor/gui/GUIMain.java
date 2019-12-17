@@ -103,8 +103,6 @@ public class GUIMain extends Application {
 
         primaryStage.setTitle("FrogLord " + Constants.VERSION);
         primaryStage.setScene(scene);
-        primaryStage.setMinWidth(800);
-        primaryStage.setMinHeight(400);
         primaryStage.getIcons().add(NORMAL_ICON);
         primaryStage.show();
 
