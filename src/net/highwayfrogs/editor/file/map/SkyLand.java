@@ -19,7 +19,7 @@ import java.util.List;
 public class SkyLand extends GameFile {
     private int xLength;
     private int yLength;
-    private List<Short> skyData = new ArrayList<>();
+    private List<SkyLandTile> skyData = new ArrayList<>();
 
     @Override
     public Image getIcon() {
@@ -36,14 +36,19 @@ public class SkyLand extends GameFile {
         this.xLength = reader.readUnsignedShortAsInt();
         this.yLength = reader.readUnsignedShortAsInt();
         for (int i = 0; i < (xLength * yLength); i++)
-            skyData.add(reader.readShort());
+            skyData.add(new SkyLandTile(reader.readShort()));
+
+        // & 0x3FFF -> Get texture id in txl_sky_land. Bits 0 -> 13.
+        // & 0xC000 -> Texture Rotation [0->4]. Bits 14 + 15.
+        //TODO: Use disassembly to find these values in the exe. Then, configure
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedShort(this.xLength);
         writer.writeUnsignedShort(this.yLength);
-        skyData.forEach(writer::writeShort);
+        for (SkyLandTile tile : getSkyData())
+            writer.writeShort(tile.toShort());
     }
 
     /**
@@ -52,13 +57,28 @@ public class SkyLand extends GameFile {
      */
     public int getMaxIndex() {
         int max = -1;
+        for (SkyLandTile tile : getSkyData())
+            if (tile.getId() > max)
+                max = tile.getId();
+        return max;
+    }
 
-        for (short value : skyData) {
-            int testVal = (value & 0x3FFF);
-            if (testVal > max)
-                max = testVal;
+    @Getter
+    public static final class SkyLandTile {
+        private short id;
+        private SkyLandRotation rotation;
+
+        public SkyLandTile(short readShort) {
+            this.id = (short) (readShort & 0x3FFF);
+            this.rotation = SkyLandRotation.values()[((readShort & 0xC000) >> 14)];
         }
 
-        return max;
+        public short toShort() {
+            return (short) ((this.id & 0x3FFF) | (this.rotation.ordinal() << 14));
+        }
+    }
+
+    public enum SkyLandRotation {
+        NORMAL, MODE1, MODE2, MODE3
     }
 }
