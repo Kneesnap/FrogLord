@@ -108,14 +108,18 @@ public class GeneralManager extends MapManager {
     public void updateGroupView() {
         getRenderManager().addMissingDisplayList("groupOutline");
         getRenderManager().clearDisplayList("groupOutline");
-
         if (!isShowGroupBounds())
             return;
 
         SVector basePoint = getMap().makeBasePoint();
-        float maxX = Utils.fixedPointShortToFloat4Bit((short) (basePoint.getX() + (getMap().getGroupXSize()) * getMap().getGroupXCount()));
-        float maxZ = Utils.fixedPointShortToFloat4Bit((short) (basePoint.getZ() + (getMap().getGroupZSize()) * getMap().getGroupZCount()));
-        getRenderManager().addBoundingBoxFromMinMax("groupOutline", basePoint.getFloatX(), 0, basePoint.getFloatZ(), maxX, 0, maxZ, Utils.makeSpecialMaterial(Color.YELLOW), true);
+        float baseX = basePoint.getFloatX();
+        float baseZ = basePoint.getFloatZ();
+        float xSize = Utils.fixedPointShortToFloat4Bit(getMap().getGroupXSize());
+        float zSize = Utils.fixedPointShortToFloat4Bit(getMap().getGroupZSize());
+        PhongMaterial material = Utils.makeSpecialMaterial(Color.YELLOW);
+        for (int x = 0; x < getMap().getGroupXCount(); x++)
+            for (int z = 0; z < getMap().getGroupZCount(); z++)
+                getRenderManager().addBoundingBoxFromMinMax("groupOutline", baseX + (x * xSize), 0, baseZ + (z * zSize), baseX + ((x + 1) * xSize), 0, baseZ + ((z + 1) * zSize), material, true);
     }
 
     /**

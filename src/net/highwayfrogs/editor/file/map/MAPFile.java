@@ -891,7 +891,7 @@ public class MAPFile extends GameFile {
     }
 
     /**
-     * Get the group X value from a world X value.
+     * Get the group X value from a world X value. Expects a 4 bit fixed point short.
      * @param worldX The world X coordinate.
      * @return groupX
      */
@@ -900,7 +900,7 @@ public class MAPFile extends GameFile {
     }
 
     /**
-     * Get the group Z value from a world Z value.
+     * Get the group Z value from a world Z value. Expects a 4 bit fixed point short.
      * @param worldZ The world Z coordinate.
      * @return groupZ
      */
