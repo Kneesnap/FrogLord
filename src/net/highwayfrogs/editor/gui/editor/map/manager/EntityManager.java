@@ -242,6 +242,7 @@ public class EntityManager extends MapManager {
             newView.setCullFace(CullFace.NONE);
             newView.setDrawMode(DrawMode.FILL);
             this.entityModelViews.add(newView);
+            getController().getGeometryManager().setupView(newView);
             getRenderManager().addNode("entityModelViews", newView);
 
             newView.setOnMouseClicked(evt -> { // Handle being clicked.

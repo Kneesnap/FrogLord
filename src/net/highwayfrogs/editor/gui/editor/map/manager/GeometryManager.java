@@ -5,7 +5,9 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.shape.MeshView;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.map.poly.MAPPolygonData;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
@@ -14,6 +16,7 @@ import net.highwayfrogs.editor.gui.editor.GridController;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -31,6 +34,7 @@ public class GeometryManager extends MapManager {
     private boolean polygonSelected;
     private MeshData cursorData;
     private Consumer<MAPPolygon> promptHandler;
+    @Setter private MeshView hoverView; // Anything we're hovering over which should allow selection instead of the cursor.
     MAPPolygonData polygonData = new MAPPolygonData();
 
     public GeometryManager(MapUIController controller) {
@@ -54,14 +58,14 @@ public class GeometryManager extends MapManager {
         });
 
         mapScene.setOnMouseMoved(evt -> {
-            if (!isPolygonSelected())
+            if (!isPolygonSelected() && this.hoverView == null)
                 setCursorPolygon(getMesh().getFacePolyMap().get(evt.getPickResult().getIntersectedFace()));
         });
 
         mapScene.setOnMouseClicked(evt -> {
             MAPPolygon clickedPoly = getMesh().getFacePolyMap().get(evt.getPickResult().getIntersectedFace());
 
-            if (getSelectedPolygon() != null && (getSelectedPolygon() == clickedPoly)) {
+            if (this.hoverView == null && getSelectedPolygon() != null && (getSelectedPolygon() == clickedPoly)) {
                 if (isPolygonSelected()) {
                     this.polygonImmuneToTarget = getSelectedPolygon();
                     removeCursorPolygon();
@@ -80,6 +84,24 @@ public class GeometryManager extends MapManager {
                 }
             }
         });
+    }
+
+    /**
+     * Called when the mouse stops hovering over a given mesh.
+     * @param view The view to stop.
+     */
+    public void onStopHover(MeshView view) {
+        if (Objects.equals(view, this.hoverView))
+            this.hoverView = null;
+    }
+
+    /**
+     * Setup a node so the cursor will not be shown when the mouse hovers over the node.
+     * @param view The node to setup.
+     */
+    public void setupView(MeshView view) {
+        view.setOnMouseEntered(evt -> setHoverView((MeshView) evt.getSource()));
+        view.setOnMouseExited(evt -> onStopHover((MeshView) evt.getSource()));
     }
 
     @Override
@@ -203,7 +225,7 @@ public class GeometryManager extends MapManager {
     }
 
     private void renderCursor(MAPPolygon cursorPoly) {
-        if (cursorPoly == null)
+        if (cursorPoly == null || this.hoverView != null)
             return;
 
         boolean showRemoveColor = !isPolygonSelected() && getController().getCheckBoxFaceRemoveMode().isSelected();
