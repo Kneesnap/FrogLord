@@ -20,7 +20,6 @@ import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.map.MAPTheme;
-import net.highwayfrogs.editor.file.map.SkyLand;
 import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -81,6 +80,7 @@ public class FroggerEXEInfo extends Config {
     private int demoTableAddress;
     private int pickupDataAddress;
     private int scriptArrayAddress;
+    private int skyLandTextureAddress;
     private boolean prototype;
     private boolean demo;
     private TargetPlatform platform;
@@ -173,6 +173,7 @@ public class FroggerEXEInfo extends Config {
         this.bmpPointerAddress = getInt("bmpPointerAddress", 0); // Gives output to assist in finding.
         this.pickupDataAddress = getInt("pickupData", 0); // Pointer to Pickup_data[] in ent_gen. If this is not set, bugs will not have textures in the viewer. On PSX, search for 63 63 63 00 then after this entries image pointers, there's Pickup_data.
         this.scriptArrayAddress = getInt("scripts", 0); // Get this by searching for "07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1e 00 00 00 03 00 00 00 01 00 00 00 07 00 00 00". Search for the pointer that points to this (Don't forget to include ramOffset)
+        this.skyLandTextureAddress = getInt("txl_sky_land", 0); // Get this by searching for the hex texture ids of sky images as shorts. The textures in the PSX US Demo are textures #98, #97, #96. -> 1723, 1722, 1753 -> "BB 06 BA 06 D9 06".
     }
 
     private void loadBanks() {
@@ -759,10 +760,13 @@ public class FroggerEXEInfo extends Config {
         vramHWriter.write(Constants.NEWLINE);
         vramCWriter.write("MR_USHORT txl_sky_land[] = {");
 
-        SkyLand skyLand = getMWD().getSkyLand();
-        for (int i = 0; i < skyLand.getMaxIndex(); i++) {
-            vramCWriter.write("1791"); // TODO: Use real sky_land data.
-            vramCWriter.write(", ");
+        short[] skyTxlData = getMWD().getSkyLand().getSkyLandTextures();
+        if (skyTxlData != null) {
+            for (int i = 0; i < skyTxlData.length; i++) {
+                if (i > 0)
+                    vramCWriter.write(", ");
+                vramCWriter.write(String.valueOf(skyTxlData[i]));
+            }
         }
 
         vramCWriter.write("};" + Constants.NEWLINE);

@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.vlo;
 import net.highwayfrogs.editor.Constants;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
@@ -122,5 +123,34 @@ public class ImageWorkHorse {
         g.drawImage(source, 0, 0, null);
         g.dispose();
         return target;
+    }
+
+    /**
+     * Takes an image and creates a new rotated version.
+     * Copied from https://stackoverflow.com/questions/37758061/rotate-a-buffered-image-in-java/37758533
+     * @param img   The image to rotate.
+     * @param angle The angle to rotate.
+     * @return rotatedImage
+     */
+    public static BufferedImage rotateImage(BufferedImage img, double angle) {
+        double rads = Math.toRadians(angle);
+        double sin = Math.abs(Math.sin(rads)), cos = Math.abs(Math.cos(rads));
+        int w = img.getWidth();
+        int h = img.getHeight();
+        int newWidth = (int) Math.floor(w * cos + h * sin);
+        int newHeight = (int) Math.floor(h * cos + w * sin);
+
+        BufferedImage rotated = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = rotated.createGraphics();
+        AffineTransform at = new AffineTransform();
+        at.translate((newWidth - w) / 2D, (newHeight - h) / 2D);
+
+        int x = w / 2;
+        int y = h / 2;
+
+        at.rotate(rads, x, y);
+        g2d.setTransform(at);
+        g2d.drawImage(img, 0, 0, null);
+        return rotated;
     }
 }
