@@ -52,25 +52,8 @@ def rgb_color_to_int(rgb_color):
     red = (round(rgb_color[2] * 255) & 255)
     return red | green | blue
 
-class MapPanel(bpy.types.Panel):
-    """Creates a menu in object properties with FrogLord utilities"""
-    bl_label = "FrogLord Map Tools"
-    bl_idname = "FROGLORD_PT_HELLO"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW' # https://docs.blender.org/api/current/bpy.types.Panel.html
-    bl_context = "object"
-
-    def draw(self, context):
-        layout = self.layout
-
-        row = layout.row()
-        row.operator("frog.load_ffs")
-
-        row = layout.row()
-        row.operator("frog.save_ffs")
-
 class LoadFfsOperator(bpy.types.Operator):
-    """Loads a .ffs file into the scene."""
+    """Loads a .ffs file into the scene"""
     bl_idname = "frog.load_ffs"
     bl_label = "Load .FFS File"
 
@@ -338,6 +321,7 @@ class LoadFfsOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 class SaveFfsOperator(bpy.types.Operator):
+    """Saves a .ffs file from the scene"""
     bl_idname = "frog.save_ffs"
     bl_label = "Save .FFS File"
 
@@ -466,17 +450,22 @@ class SaveFfsOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def menu_func(self, context):
+    self.layout.separator()
+    self.layout.operator(LoadFfsOperator.bl_idname)
+    self.layout.operator(SaveFfsOperator.bl_idname)
+
+
 def register():
     bpy.utils.register_class(SaveFfsOperator)
     bpy.utils.register_class(LoadFfsOperator)
-    bpy.utils.register_class(MapPanel)
+    bpy.types.VIEW3D_MT_object.append(menu_func)
 
 
 def unregister():
     bpy.utils.unregister_class(SaveFfsOperator)
     bpy.utils.unregister_class(LoadFfsOperator)
-    bpy.utils.unregister_class(MapPanel)
-
+    bpy.types.VIEW3D_MT_object.remove(menu_func)
 
 if __name__ == "__main__":
     register()
