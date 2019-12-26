@@ -41,6 +41,7 @@ public class ScriptEditorController implements Initializable {
     @FXML private Button doneButton;
     @FXML private Label warningLabel;
     @FXML private Button printUsagesButton;
+    private int baseHeight;
 
     private Stage stage;
     private FroggerScript openScript;
@@ -50,6 +51,7 @@ public class ScriptEditorController implements Initializable {
 
     public ScriptEditorController(Stage stage) {
         this.stage = stage;
+        this.baseHeight = 100;
     }
 
     public ScriptEditorController(Stage stage, FroggerScript openScript) {
@@ -106,6 +108,7 @@ public class ScriptEditorController implements Initializable {
         this.warningLabel.setVisible(currentScript.isTooLarge());
 
         // Update editors.
+        int cmdSize = 0;
         for (ScriptCommand command : currentScript.getCommands()) {
             GridPane pane = new GridPane();
             pane.setMinHeight(10);
@@ -137,10 +140,12 @@ public class ScriptEditorController implements Initializable {
                 pane.addColumn(i, node);
             }
             commandEditors.getChildren().add(pane);
+            cmdSize += 25;
         }
 
 
         // Update text view.
+        int textSize = 0;
         for (ScriptCommand command : currentScript.getCommands()) {
             Text commandTypeText = new Text(command.getCommandType().name());
             commandTypeText.setStyle(COMMAND_TYPE_STYLE);
@@ -157,7 +162,20 @@ public class ScriptEditorController implements Initializable {
             }
 
             codeArea.getChildren().add(new Text(Constants.NEWLINE));
+            textSize += commandTypeText.getFont().getSize() * 1.5D;
         }
+
+        // Update window size.
+        this.commandEditors.setMinHeight(cmdSize);
+        this.commandEditors.setPrefHeight(cmdSize);
+        this.commandEditors.setMaxHeight(cmdSize);
+        this.codeArea.setMinHeight(textSize);
+        this.codeArea.setPrefHeight(textSize);
+
+        int newHeight = this.baseHeight + cmdSize + textSize;
+        this.stage.setMinHeight(newHeight);
+        this.stage.setMaxHeight(newHeight);
+        this.stage.setHeight(newHeight);
     }
 
     /**
