@@ -64,6 +64,8 @@
                                   text="Edit Scripts"/>
                         <MenuItem fx:id="demoTableEditor" mnemonicParsing="false" onAction="#editDemoTable"
                                   text="Edit Demo Table"/>
+                        <MenuItem fx:id="textureFinder" mnemonicParsing="false" onAction="#actionSearchForTexture"
+                                  text="Find Texture"/>
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">

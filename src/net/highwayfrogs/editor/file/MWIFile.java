@@ -6,7 +6,9 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.ArrayList;
@@ -128,6 +130,17 @@ public class MWIFile extends GameObject {
         public FileEntry(FroggerEXEInfo config, int loadedId) {
             this.loadedId = loadedId;
             this.config = config;
+        }
+
+        /**
+         * Gets the type id, but allow changing the type id in case it's wrong.
+         * @return spoofedTypeId
+         */
+        public int getSpoofedTypeId() {
+            int id = this.typeId;
+            if (id == MAPFile.TYPE_ID && getDisplayName().startsWith("LS_ALL")) // LS_ALL is masked as a MAP, when it is a VLO.
+                id = VLOArchive.TYPE_ID;
+            return id;
         }
 
         /**

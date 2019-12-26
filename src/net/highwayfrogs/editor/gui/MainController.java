@@ -7,6 +7,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import lombok.AllArgsConstructor;
@@ -18,6 +19,7 @@ import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.sound.VHFile;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -26,6 +28,7 @@ import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.editor.EditorController;
 import net.highwayfrogs.editor.gui.editor.SaveController;
 import net.highwayfrogs.editor.gui.editor.ScriptEditorController;
+import net.highwayfrogs.editor.gui.editor.VLOController;
 import net.highwayfrogs.editor.gui.extra.DemoTableEditorController;
 import net.highwayfrogs.editor.gui.extra.FormEntryController;
 import net.highwayfrogs.editor.gui.extra.LevelInfoController;
@@ -81,10 +84,7 @@ public class MainController implements Initializable {
         for (GameFile gameFile : mwdFile.getFiles()) {
             // Grab corresponding file entry information for the game file
             FileEntry fileEntry = mwdFile.getEntryMap().get(gameFile);
-            int type = fileEntry.getTypeId();
-
-            if (type == MAPFile.TYPE_ID && fileEntry.getDisplayName().startsWith("LS_ALL")) // LS_ALL is masked as a MAP, when it is a VLO.
-                type = VLOArchive.TYPE_ID;
+            int type = fileEntry.getSpoofedTypeId();
 
             if (!gameFileRegistry.containsKey(type))
                 gameFileRegistry.put(type, FXCollections.observableArrayList());
@@ -200,6 +200,27 @@ public class MainController implements Initializable {
     @FXML
     private void editDemoTable(ActionEvent evt) {
         DemoTableEditorController.openEditor();
+    }
+
+    @FXML
+    private void actionSearchForTexture(ActionEvent evt) {
+        InputMenu.promptInput("Please enter the texture id to lookup.", str -> {
+            if (!Utils.isInteger(str)) {
+                Utils.makePopUp("'" + str + "' is not a valid number.", AlertType.WARNING);
+                return;
+            }
+
+            int texId = Integer.parseInt(str);
+            GameImage image = getMwdFile().getImageByTextureId(texId);
+            if (image == null) {
+                Utils.makePopUp("Could not find an image with the id " + texId + ".", AlertType.WARNING);
+                return;
+            }
+
+            System.out.println("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + Utils.stripExtension(image.getParent().getFileEntry().getDisplayName()) + ".");
+            openEditor(this.currentFilesList, image.getParent());
+            ((VLOController) getCurrentController()).selectImage(image, true);
+        });
     }
 
     @FXML

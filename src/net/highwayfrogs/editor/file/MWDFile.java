@@ -126,7 +126,7 @@ public class MWDFile extends GameObject {
         // Turn the byte data into the appropriate game-file.
         GameFile file;
 
-        if (entry.getTypeId() == VLOArchive.TYPE_ID || entry.getDisplayName().startsWith("LS_ALL")) { // For some reason, Level Select vlos are registered as maps. This loads them as their proper VLO.
+        if (entry.getSpoofedTypeId() == VLOArchive.TYPE_ID) {
             file = new VLOArchive();
         } else if (entry.getTypeId() == MAPFile.TYPE_ID) {
             if (entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX)) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
@@ -339,6 +339,14 @@ public class MWDFile extends GameObject {
             for (GameImage testImage : vlo.getImages())
                 if (testImage.getTextureId() == textureId)
                     return testImage;
+
+        // Search wad files for any vlos.
+        for (WADFile wadFile : getAllFiles(WADFile.class))
+            for (WADEntry entry : wadFile.getFiles())
+                if (entry.getFile() instanceof VLOArchive)
+                    for (GameImage testImage : ((VLOArchive) entry.getFile()).getImages())
+                        if (testImage.getTextureId() == textureId)
+                            return testImage;
         return null;
     }
 

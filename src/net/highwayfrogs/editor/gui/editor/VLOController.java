@@ -61,14 +61,7 @@ public class VLOController extends EditorController<VLOArchive> {
         imageList.setCellFactory(param -> new AbstractAttachmentCell<>((image, index) -> image == null ? null
                 : index + ": [" + image.getFullWidth() + ", " + image.getFullHeight() + "] (Tex ID: " + image.getTextureId() + ")"));
 
-        imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue == null)
-                return;
-
-            this.selectedImage = newValue;
-            this.updateFlags();
-            this.updateDisplay();
-        });
+        imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> selectImage(newValue, false));
 
         imageList.getSelectionModel().select(0);
     }
@@ -224,6 +217,24 @@ public class VLOController extends EditorController<VLOArchive> {
     public void setParentWad(WADFile wadFile) {
         this.parentWad = wadFile;
         backButton.setVisible(true);
+    }
+
+    /**
+     * Select a particular image in the vlo.
+     * @param image The image to select.
+     */
+    public void selectImage(GameImage image, boolean forceSelect) {
+        if (image == null)
+            return;
+
+        this.selectedImage = image;
+        this.updateFlags();
+        this.updateDisplay();
+
+        if (forceSelect) {
+            this.imageList.getSelectionModel().select(image);
+            this.imageList.scrollTo(image);
+        }
     }
 
     /**
