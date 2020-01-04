@@ -35,6 +35,8 @@ import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
+import java.util.Collections;
+import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -81,7 +83,10 @@ public class GridController implements Initializable {
     private RegionEditState editState = RegionEditState.NONE_SELECTED;
     private Zone selectedZone;
     private int selectedRegion;
-    private GridStack selectedStack;
+    private int lastSelectionX = -1;
+    private int lastSelectionZ = -1;
+    private Collection<GridStack> lastSelection;
+    private Collection<GridStack> selectedStacks;
     private int selectedLayer;
     private double tileWidth;
     private double tileHeight;
@@ -100,7 +105,7 @@ public class GridController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         layerSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
             if (newValue != null)
-                setSelectedSquare(getSelectedStack(), newValue);
+                setSelectedSquares(getSelectedStacks(), newValue);
         }));
 
         layerSelector.setConverter(new AbstractStringConverter<>(id -> "Layer #" + (id + 1)));
@@ -109,7 +114,39 @@ public class GridController implements Initializable {
             int gridX = (int) (evt.getSceneX() / getTileWidth());
             int gridZ = (int) (evt.getSceneY() / getTileHeight());
             GridStack stack = getMap().getGridStack(gridX, getMap().getGridZCount() - gridZ - 1);
-
+            Collection<GridStack> stacks = null;
+            if (lastSelection != null && !lastSelection.isEmpty()) {
+                // control click to add grid stacks one at a time
+                // shift click to do a grid
+                if (evt.isControlDown()) {
+                    stacks = new ArrayList<>(lastSelection);
+                    if (lastSelection.contains(stack))
+                        stacks.remove(stack);
+                    else
+                        stacks.add(stack);
+                } else if (evt.isShiftDown()) {
+                    int minGridX = gridX < lastSelectionX ? gridX : lastSelectionX;
+                    int minGridZ = gridZ < lastSelectionZ ? gridZ : lastSelectionZ;
+                    int maxGridX = gridX >= lastSelectionX ? gridX : lastSelectionX;
+                    int maxGridZ = gridZ >= lastSelectionZ ? gridZ : lastSelectionZ;
+                    stacks = new ArrayList<>();
+                    for (int x = minGridX; x <= maxGridX; x++) {
+                        for (int z = minGridZ; z <= maxGridZ; z++) {
+                            GridStack stackXZ = getMap().getGridStack(x, getMap().getGridZCount() - z - 1);
+                            stacks.add(stackXZ);
+                        }
+                    }
+                } else {
+                    stacks = Collections.singletonList(stack);
+                }
+            } else {
+                stacks = Collections.singletonList(stack);
+            }
+            lastSelection = stacks;
+            if (!evt.isShiftDown() || lastSelectionX == -1) {
+                lastSelectionX = gridX;
+                lastSelectionZ = gridZ;
+            }
             if (this.zoneEditorCheckBox.isSelected()) {
                 gridZ = getMap().getGridZ(stack);
 
@@ -161,7 +198,7 @@ public class GridController implements Initializable {
                 updateCanvas();
             }
 
-            setSelectedStack(stack);
+            setSelectedStacks(stacks);
         });
 
         for (int i = 0; i < CameraZoneFlag.values().length; i++) {
@@ -199,7 +236,7 @@ public class GridController implements Initializable {
 
         graphics = gridCanvas.getGraphicsContext2D();
         updateCanvas();
-        setSelectedStack(null);
+        setSelectedStacks(null);
         setSelectedZone(null);
         setSelectedRegion(null, DEFAULT_REGION_ID);
     }
@@ -221,7 +258,7 @@ public class GridController implements Initializable {
                 double xPos = getTileWidth() * x;
                 double yPos = getTileHeight() * (getMap().getGridZCount() - z - 1);
 
-                if (this.selectedStack != null && this.selectedStack == stack) {
+                if (this.selectedStacks != null && this.selectedStacks.contains(stack)) {
                     graphics.setFill(Color.AQUA);
                     graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
                 } else if (currentRegion != null && currentRegion.contains(x, z)) {
@@ -273,51 +310,62 @@ public class GridController implements Initializable {
 
     @FXML
     private void choosePolygon(ActionEvent evt) {
-        if (getSelectedStack() == null)
+        if (getSelectedStacks() == null)
             return;
 
         selectSquare(poly -> {
-            getSelectedStack().getGridSquares().get(getSelectedLayer()).setPolygon(poly);
-            setSelectedSquare(getSelectedStack(), getSelectedLayer());
+            getSelectedStacks().forEach(stack -> stack.getGridSquares().get(getSelectedLayer()).setPolygon(poly));
+            setSelectedSquares(getSelectedStacks(), getSelectedLayer());
         });
     }
 
     @FXML
     private void selectPolygon(ActionEvent evt) {
         selectSquare(poly -> {
-            for (GridStack stack : getMap().getGridStacks()) {
-                for (GridSquare square : stack.getGridSquares()) {
-                    if (square.getPolygon() == poly) {
-                        setSelectedStack(stack);
-                        setSelectedSquare(stack, stack.getGridSquares().indexOf(square));
-                        return;
+            int index = -1;
+            List<GridStack> matched = new ArrayList<>();
+            for(GridStack stack : getMap().getGridStacks()) {
+                for(GridSquare square : stack.getGridSquares()) {
+                    if(square.getPolygon() == poly) {
+                        matched.add(stack);
+                        index = stack.getGridSquares().indexOf(square);
                     }
                 }
             }
-
-            setSelectedStack(null);
+            if(matched.isEmpty() || !sameGridSquareListSize(matched)) {
+                setSelectedStacks(null);
+                return;
+            }
+            setSelectedStacks(matched);
+            setSelectedSquares(matched, index);
         });
     }
 
     @FXML
     private void addLayer(ActionEvent evt) {
-        if (getSelectedStack() == null)
+        if (getSelectedStacks() == null)
             return;
 
         selectSquare(poly -> {
-            getSelectedStack().getGridSquares().add(new GridSquare(poly, getMap()));
-            setSelectedStack(getSelectedStack());
-            setSelectedSquare(getSelectedStack(), getSelectedStack().getGridSquares().size() - 1);
+            if (!sameLayerCount(getSelectedStacks()))
+                return;
+            getSelectedStacks().forEach(stack ->
+                    stack.getGridSquares().add(new GridSquare(poly, getMap()))
+            );
+            setSelectedStacks(getSelectedStacks());
+            setSelectedSquares(getSelectedStacks(), getSelectedStacks().iterator().next().getGridSquares().size() - 1);
         });
     }
 
     @FXML
     private void removeLayer(ActionEvent evt) {
-        if (getSelectedStack() == null || getSelectedStack().getGridSquares().isEmpty())
+        if (getSelectedStacks() == null)
             return;
-
-        getSelectedStack().getGridSquares().remove(this.selectedLayer);
-        setSelectedStack(getSelectedStack());
+        getSelectedStacks().forEach(stack -> {
+            if (stack.getGridSquares().isEmpty()) return;
+            stack.getGridSquares().remove(this.selectedLayer);
+        });
+        setSelectedStacks(getSelectedStacks());
         updateCanvas();
     }
 
@@ -325,8 +373,7 @@ public class GridController implements Initializable {
     private void onUpdateHeight(ActionEvent evt) {
         String text = stackHeightField.getText();
         if (Utils.isSignedShort(text))
-            this.selectedStack.setAverageHeight(Short.parseShort(text));
-    }
+            this.selectedStacks.forEach(stack -> stack.setAverageHeight(Short.parseShort(text)));    }
 
     @FXML
     private void addZone(ActionEvent evt) {
@@ -369,55 +416,65 @@ public class GridController implements Initializable {
     }
 
     /**
-     * Select a square.
-     * @param stack The stack the square belongs to.
+     * Select squares.
+     * @param stacks The stacks the squares belong to.
      * @param layer The layer.
      */
-    public void setSelectedSquare(GridStack stack, int layer) {
+    public void setSelectedSquares(Collection<GridStack> stacks, int layer) {
         this.selectedLayer = layer;
-
         TextureMap texMap = getManager().getMesh().getTextureMap();
+        GridStack stack = stacks.iterator().next();
         GridSquare square = stack.getGridSquares().get(layer);
         TextureTreeNode entry = square.getPolygon().getNode(texMap);
-
-        selectedImage.setImage(Utils.toFXImage(entry.getImage(), false));
-
+        selectedImage.setImage(sameLayerTypes(stacks, layer) ? Utils.toFXImage(entry.getImage(), false) : null);
         int x = 1;
         int y = 0;
         flagTable.getChildren().clear();
-        for (GridSquareFlag flag : GridSquareFlag.values()) {
-            if (x == 2) {
+        for(GridSquareFlag flag : GridSquareFlag.values()) {
+            if(x == 2) {
                 x = 0;
                 y++;
             }
-
             CheckBox checkBox = new CheckBox(Utils.capitalize(flag.name()));
             GridPane.setRowIndex(checkBox, y);
             GridPane.setColumnIndex(checkBox, x++);
-            checkBox.setSelected(square.testFlag(flag));
-            checkBox.selectedProperty().addListener(((observable, oldValue, newValue) -> square.setFlag(flag, newValue)));
+            boolean state = square.testFlag(flag);
+            boolean statesMatch = stacks.stream()
+                    .map(stk -> stk.getGridSquares().get(layer).testFlag(flag))
+                    .allMatch(gflag -> gflag == state);
+            if (statesMatch) {
+                checkBox.setSelected(state);
+            } else {
+                checkBox.indeterminateProperty().set(true);
+                checkBox.setAllowIndeterminate(false);
+            }
+            checkBox.selectedProperty().addListener(((observable, oldValue, newValue) -> {
+                stacks.forEach(sq -> sq.getGridSquares().get(layer).setFlag(flag, newValue));
+            }));
             flagTable.getChildren().add(checkBox);
         }
     }
 
     /**
-     * Select the stack currently being edited.
-     * @param stack The stack to select.
+     * Select the stacks currently being edited.
+     * @param stacks The stacks to select.
      */
-    public void setSelectedStack(GridStack stack) {
-        this.selectedStack = stack;
-
-        if (stack != null) {
-            List<Integer> layers = Utils.getIntegerList(stack.getGridSquares().size());
-            layerSelector.setItems(FXCollections.observableArrayList(layers));
-            if (layers.size() > 0)
-                layerSelector.getSelectionModel().select(0); // Automatically calls setSquare
+    public void setSelectedStacks(Collection<GridStack> stacks) {
+        this.selectedStacks = stacks;
+        int squareCount = 0;
+        boolean noStack = stacks == null || stacks.isEmpty();
+        boolean differingLayerCount = false;
+        if (stacks != null && !stacks.isEmpty()) {
+            int min = getMinCommonSquareListSize(stacks);
+            differingLayerCount = !sameLayerCount(stacks);
+            if (min > 0) {
+                squareCount = min;
+                List<Integer> layers = Utils.getIntegerList(squareCount);
+                layerSelector.setItems(FXCollections.observableArrayList(layers));
+                if (layers.size() > 0) layerSelector.getSelectionModel().select(0); // Automatically calls setSquare
+            }
         }
-
-        int squareCount = stack != null ? stack.getGridSquares().size() : 0;
         boolean disable = (squareCount == 0);
-        boolean noStack = (stack == null);
-
         flagTable.setDisable(disable);
         selectedImage.setVisible(!disable);
         layerSelector.setDisable(squareCount <= 1);
@@ -425,15 +482,52 @@ public class GridController implements Initializable {
         stackHeightField.setDisable(noStack);
         stackHeightLabel.setDisable(noStack);
         choosePolygonButton.setDisable(disable);
-        addLayerButton.setDisable(noStack);
-        removeLayerButton.setDisable(disable);
-
-        if (stack != null) {
-            stackIdLabel.setText("Stack ID: #" + getMap().getGridStacks().indexOf(stack) + " [X: " + getMap().getGridX(stack) + ",Z: " + getMap().getGridZ(stack) + "]");
-            stackHeightField.setText(String.valueOf(stack.getAverageHeight()));
+        addLayerButton.setDisable(noStack || differingLayerCount);
+        removeLayerButton.setDisable(disable || differingLayerCount);
+        if (stacks != null && !stacks.isEmpty()) {
+            GridStack stack = stacks.iterator().next();
+            if (stacks.size() == 1) {
+                stackIdLabel.setText("Stack ID: #" + getMap().getGridStacks().indexOf(stack) + " [X: " + getMap().getGridX(stack) + ",Z: " + getMap().getGridZ(stack) + "]");
+                stackHeightField.setText(String.valueOf(stack.getAverageHeight()));
+            } else {
+                stackIdLabel.setText(stacks.size() + " stacks selected");
+                if(sameHeight(stacks))
+                    stackHeightField.setText(String.valueOf(stack.getAverageHeight()));
+                else
+                    stackHeightField.setText("");
+            }
         }
-
         updateCanvas();
+    }
+
+    private static int getMinCommonSquareListSize(Collection<GridStack> stacks) {
+        return stacks.stream()
+                .mapToInt(stack -> stack.getGridSquares().size())
+                .min().orElse(0);
+    }
+
+    private static boolean sameGridSquareListSize(Collection<GridStack> stacks) {
+        return stacks.stream()
+                .mapToInt(stack -> stack.getGridSquares().size())
+                .distinct().count() == 1;
+    }
+
+    private static boolean sameHeight(Collection<GridStack> stacks) {
+        return stacks.stream()
+                .mapToInt(stack -> stack.getAverageHeight())
+                .distinct().count() == 1;
+    }
+
+    private static boolean sameLayerCount(Collection<GridStack> stacks) {
+        return stacks.stream()
+                .mapToInt(stack -> stack.getGridSquares().size())
+                .distinct().count() == 1;
+    }
+
+    private static boolean sameLayerTypes(Collection<GridStack> stacks, int layer) {
+        return stacks.stream()
+                .map(stack -> stack.getGridSquares().get(layer).getPolygon().getType())
+                .distinct().count() == 1;
     }
 
     /**
@@ -519,13 +613,11 @@ public class GridController implements Initializable {
      */
     public void handleResize(int newX, int newZ) {
         getMap().resizeGrid(newX, newZ);
-
         // Update the selected stack.
-        GridStack newStack = getMap().getGridStacks().contains(selectedStack) ? selectedStack : null;
-        setSelectedStack(newStack);
+        Collection<GridStack> newStack = getMap().getGridStacks().containsAll(selectedStacks) ? selectedStacks : null;
+        setSelectedStacks(newStack);
         if (newStack != null)
-            setSelectedSquare(newStack, this.selectedLayer);
-
+            setSelectedSquares(newStack, this.selectedLayer);
         updateCanvas();
     }
 
