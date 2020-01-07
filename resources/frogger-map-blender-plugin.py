@@ -52,25 +52,58 @@ def rgb_color_to_int(rgb_color):
     red = (round(rgb_color[2] * 255) & 255)
     return red | green | blue
 
-class MapPanel(bpy.types.Panel):
-    """Creates a menu in object properties with FrogLord utilities"""
-    bl_label = "FrogLord Map Tools"
-    bl_idname = "FROGLORD_PT_HELLO"
+# Clear all nodes in a material
+def clear_material(material):
+    if material.node_tree:
+        material.node_tree.links.clear()
+        material.node_tree.nodes.clear()
+
+# Create diffuse BSDF shader
+def create_diffuse_bsdf(material, folder, test_file):
+    clear_material(material)
+    material.use_nodes = True
+
+    material.node_tree.nodes.remove(material.node_tree.nodes.get('Principled BSDF'))
+
+    nodes = material.node_tree.nodes
+    links = material.node_tree.links
+
+    texture = nodes.new(type='ShaderNodeTexImage')
+    diffuse = nodes.new(type='ShaderNodeBsdfDiffuse')
+    output = nodes.get('Material Output')
+
+    texture.image = bpy.data.images.load(folder + os.path.sep + test_file)
+
+    link0 = links.new(diffuse.outputs['BSDF'], output.inputs['Surface'])
+    link1 = links.new(texture.outputs['Color'], diffuse.inputs['Color'])
+
+# [AE] Panel for aggregation of polygon properties
+class PolygonPropsPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_polygon_props"
+    bl_label = "Polygon Props"
     bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW' # https://docs.blender.org/api/current/bpy.types.Panel.html
+    bl_region_type = 'WINDOW'
     bl_context = "object"
+
+    @classmethod
+    def poll(cls, context):
+        hasobj = (context.object is not None)
+        isedit = (context.object.mode == 'EDIT')
+        return (hasobj and isedit)
 
     def draw(self, context):
         layout = self.layout
+        obj = context.object
 
-        row = layout.row()
-        row.operator("frog.load_ffs")
-
-        row = layout.row()
-        row.operator("frog.save_ffs")
+        if (obj.mode != 'EDIT'):
+            row = layout.row()
+            row.label(text="(Only available in Edit mode)")
+        else:
+            row = layout.row()
+            row.label(text="Custom properties go in here...")
 
 class LoadFfsOperator(bpy.types.Operator):
-    """Loads a .ffs file into the scene."""
+    """Loads a .ffs file into the scene"""
     bl_idname = "frog.load_ffs"
     bl_label = "Load .FFS File"
 
@@ -111,11 +144,14 @@ class LoadFfsOperator(bpy.types.Operator):
             action = split[0].lower()
 
             if action == "v":
-                verts.append([float(split[1]), float(split[2]), float(split[3])])
+                # [AE] Negate x-axis and swap y-/z-axes for import (to align with Blender's coordinate system)
+                verts.append([-float(split[1]), float(split[3]), float(split[2])])
             elif action == "f3" or action == "ft3" or action == "g3" or action == "gt3":
-                faces.append([int(split[2]), int(split[3]), int(split[4])])
+				# [AE] Refactor face winding order (to align with Blender's face-winding order)
+                faces.append([int(split[4]), int(split[3]), int(split[2])])
             elif action == "f4" or action == "ft4" or action == "g4" or action == "gt4":
-                faces.append([int(split[2]), int(split[3]), int(split[4]), int(split[5])])
+				# [AE] Refactor face winding order (to align with Blender's face-winding order)
+                faces.append([int(split[5]), int(split[4]), int(split[3]), int(split[2])])
 
         mesh.from_pydata(verts, [], faces)
         mesh = bpy.data.meshes["LevelMesh"]
@@ -135,7 +171,10 @@ class LoadFfsOperator(bpy.types.Operator):
         # Create a material for faces without textures.
         no_material = bpy.data.materials.new(name="NoTexture")
         no_material.diffuse_color = (1.0, 1.0, 1.0, 1.0)
+        no_material.specular_intensity = 0.0
         obj.data.materials.append(no_material)
+
+        materials = bpy.data.materials
 
         mat_count = 1
         for test_file in os.listdir(folder):
@@ -144,15 +183,10 @@ class LoadFfsOperator(bpy.types.Operator):
 
             id = pathlib.Path(test_file).stem
             material_name = "Tex" + id
-            new_material = bpy.data.materials.new(name=material_name)
-            new_material.diffuse_color = (1.0, 1.0, 1.0, 1.0)
-            new_material.use_nodes = True
-            new_material.specular_intensity = 0.0 # This removes the gleam from the materials.
 
-            bsdf = new_material.node_tree.nodes["Principled BSDF"]
-            texture = new_material.node_tree.nodes.new("ShaderNodeTexImage")
-            texture.image = bpy.data.images.load(folder + os.path.sep + test_file)
-            new_material.node_tree.links.new(bsdf.inputs['Base Color'], texture.outputs['Color'])
+            new_material = (materials.get(material_name) or materials.new(material_name))
+            create_diffuse_bsdf(new_material, folder, test_file)
+
             obj.data.materials.append(new_material)
             tex_dict[id] = mat_count
             mat_count += 1
@@ -203,7 +237,7 @@ class LoadFfsOperator(bpy.types.Operator):
                 # UVs:
                 for i, loop_idx in enumerate(poly.loop_indices):
                     uv_text = split[8 + i].split(":")
-                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), float(uv_text[1])]
+                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), 1.0 - float(uv_text[1])]
 
                 index += 1
             elif action == "ft4": # ft4 show v1 v2 v3 v4 flags texture color uv1 uv2 uv3 uv4
@@ -219,7 +253,8 @@ class LoadFfsOperator(bpy.types.Operator):
                 # UVs:
                 for i, loop_idx in enumerate(poly.loop_indices):
                     uv_text = split[9 + i].split(":")
-                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), float(uv_text[1])]
+                    # [AE] Negating v component to align with Blender
+                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), 1.0 - float(uv_text[1])]
 
                 index += 1
             elif action == "g3": # g3 show v1 v2 v3 color1 color2 color3
@@ -241,12 +276,12 @@ class LoadFfsOperator(bpy.types.Operator):
 
                 # Colors:
                 for i in range(0, poly.loop_total):
-                    color_layer.data[poly.loop_start + i].color = int_to_rgb_color(int(split[7+ i]))
+                    color_layer.data[poly.loop_start + i].color = int_to_rgb_color(int(split[7 + i]))
 
                 # UVs:
                 for i, loop_idx in enumerate(poly.loop_indices):
                     uv_text = split[10 + i].split(":")
-                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), float(uv_text[1])]
+                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), 1.0 - float(uv_text[1])]
 
                 index += 1
             elif action == "gt4": # gt4 show v1 v2 v3 v4 flags texture color1 color2 color3 color4 uv1 uv2 uv3 uv4
@@ -261,7 +296,8 @@ class LoadFfsOperator(bpy.types.Operator):
                 # UVs:
                 for i, loop_idx in enumerate(poly.loop_indices):
                     uv_text = split[12 + i].split(":")
-                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), float(uv_text[1])]
+                    # [AE] Negating v component to align with Blender
+                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), 1.0 - float(uv_text[1])]
 
                 index += 1
             elif action != "v" and action != "anim" and action != "grid":
@@ -335,9 +371,17 @@ class LoadFfsOperator(bpy.types.Operator):
         bpy.context.view_layer.objects.active = obj # Set the active object.
         obj.select_set(True) # Select the object.
 
+        # [AE] Set initial rendering modes, etc.
+        for area in context.screen.areas:
+            if area.type == 'VIEW_3D':
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.shading.type = 'MATERIAL'
+
         return {'FINISHED'}
 
 class SaveFfsOperator(bpy.types.Operator):
+    """Saves a .ffs file from the scene"""
     bl_idname = "frog.save_ffs"
     bl_label = "Save .FFS File"
 
@@ -363,7 +407,8 @@ class SaveFfsOperator(bpy.types.Operator):
 
         # Write Vertices:
         for vert in bm.verts:
-            out_file.write("v " + str(vert.co.x) + " " + str(vert.co.y) + " " + str(vert.co.z) + linesep)
+            # [AE] Remember to negate x-axis and swap y-/z-axes for export (to align with FrogLord's coordinate system)
+            out_file.write("v " + str(-vert.co.x) + " " + str(vert.co.z) + " " + str(vert.co.y) + linesep)
         out_file.write(linesep)
 
         # Setup Data:
@@ -417,22 +462,24 @@ class SaveFfsOperator(bpy.types.Operator):
                     animation_faces[anim_id] = []
                 animation_faces[anim_id].append(poly_index)
 
+			# [AE] Refactor face winding order ensure correct normals and correct ordering for FrogLord
+			# [AE] Still not sure about ordering on colors and uvs (something to look at?)...
             if not textured and not quad and not gouraud: # f3 show v1 v2 v3 color
-                out_file.write("f3 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + colors[0])
+                out_file.write("f3 " + show_text + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + colors[0])
             elif not textured and not quad and gouraud: # g3 show v1 v2 v3 color1 color2 color3
-                out_file.write("g3 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + colors[0] + " " + colors[1] + " " + colors[2])
+                out_file.write("g3 " + show_text + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + colors[0] + " " + colors[1] + " " + colors[2])
             elif not textured and quad and not gouraud: # f4 show v1 v2 v3 v4 color
-                out_file.write("f4 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + verts[3] + " " + colors[0])
+                out_file.write("f4 " + show_text + " " + verts[3] + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + colors[0])
             elif not textured and quad and gouraud: # g4 show v1 v2 v3 v4 color1 color2 color3 color4
-                out_file.write("g4 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + verts[3] + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + colors[3])
+                out_file.write("g4 " + show_text + " " + verts[3] + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + colors[3])
             elif textured and not quad and not gouraud: # FT3 show v1 v2 v3 flags texture color uv1 uv2 uv3
-                out_file.write("ft3 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]))
+                out_file.write("ft3 " + show_text + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]))
             elif textured and not quad and gouraud: # GT3 show v1 v2 v3 flags texture color1 color2 color3 uv1 uv2 uv3
-                out_file.write("gt3 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]))
+                out_file.write("gt3 " + show_text + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]))
             elif textured and quad and not gouraud: # ft4 show v1 v2 v3 v4 flags texture color uv1 uv2 uv3 uv4
-                out_file.write("ft4 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + verts[3] + " "  + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]) + " " + uv_str(uvs[3]))
+                out_file.write("ft4 " + show_text + " " + verts[3] + " " + verts[2] + " " + verts[1] + " " + verts[0] + " "  + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]) + " " + uv_str(uvs[3]))
             elif textured and quad and gouraud: # gt4 show v1 v2 v3 v4 flags texture color1 color2 color3 color4 uv1 uv2 uv3 uv4
-                out_file.write("gt4 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + verts[3] + " "  + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + colors[3] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]) + " " + uv_str(uvs[3]))
+                out_file.write("gt4 " + show_text + " " + verts[3] + " " + verts[2] + " " + verts[1] + " " + verts[0] + " "  + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + colors[3] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]) + " " + uv_str(uvs[3]))
             out_file.write(linesep)
         out_file.write(linesep)
 
@@ -466,17 +513,24 @@ class SaveFfsOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def menu_func(self, context):
+    self.layout.separator()
+    self.layout.operator(LoadFfsOperator.bl_idname)
+    self.layout.operator(SaveFfsOperator.bl_idname)
+
+
 def register():
+    bpy.utils.register_class(PolygonPropsPanel)
     bpy.utils.register_class(SaveFfsOperator)
     bpy.utils.register_class(LoadFfsOperator)
-    bpy.utils.register_class(MapPanel)
+    bpy.types.VIEW3D_MT_object.append(menu_func)
 
 
 def unregister():
+    bpy.utils.unregister_class(PolygonPropsPanel)
     bpy.utils.unregister_class(SaveFfsOperator)
     bpy.utils.unregister_class(LoadFfsOperator)
-    bpy.utils.unregister_class(MapPanel)
-
+    bpy.types.VIEW3D_MT_object.remove(menu_func)
 
 if __name__ == "__main__":
     register()
