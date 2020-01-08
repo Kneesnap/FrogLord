@@ -8,5 +8,6 @@ FrogLord.jar
 /nbproject/
 /build/
 /dist/
+target/
 build.xml
 /.idea/workspace.xml

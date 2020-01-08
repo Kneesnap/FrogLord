@@ -18,13 +18,33 @@ If you need any help, have questions, or want to get in touch, don't hesitate to
 Yes! Pull requests are welcome.  
 
 ## Build Instructions:
-Using the IntelliJ IDE, setting up FrogLord is very simple.  
+
+### Using IntelliJ
+
+**Setup:**
 1. Select ``Git`` from the ``Check out from Version Control`` option on the main menu. (It may be ``File > New > Project from Version Control`` if you're not on the main menu.)  
 2. Clone this repository. The URL is: ``https://github.com/Kneesnap/FrogLord.git``.
 3. Install the Lombok IntelliJ Plugin using the steps found [here](https://projectlombok.org/setup/intellij).
 
-Run FrogLord: ``Run > Run 'FrogLord GUI'``  
-Create FrogLord.jar: ``Build > Build Artifacts... > FrogLord > Build``
+**Running:**
+1. ``Run > Run 'FrogLord GUI'``  
+
+**Building:**
+1. ``Build > Build Artifacts... > FrogLord > Build``
+
+### Using Maven
+
+**Setup:**
+1. ``git clone https://github.com/Kneesnap/FrogLord.git``
+2. ``cd FrogLord``
+3. ``mvn compile`` - Verify code compiles
+
+**Building:**
+1. ``mvn package``
+
+**Running:**
+1. ``java -jar target/editor-{version}-jar-with-dependencies.jar`` 
+    * `{version}` is the current release
 
 ## Special Thanks:
  - Andy Eder (Frogger 2 Programmer, Significant FrogLord contributor)
