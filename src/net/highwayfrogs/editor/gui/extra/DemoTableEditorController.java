@@ -25,6 +25,7 @@ import java.util.ResourceBundle;
 public class DemoTableEditorController implements Initializable {
     private Stage stage;
     private DemoTableEntry selectedEntry;
+    private FroggerEXEInfo config;
     @FXML private ChoiceBox<DemoTableEntry> demoSelector;
     @FXML private ChoiceBox<MAPLevel> levelSelector;
     @FXML private ChoiceBox<DemoFile> fileSelector;
@@ -41,7 +42,7 @@ public class DemoTableEditorController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        FroggerEXEInfo config = GUIMain.EXE_CONFIG;
+        this.config = GUIMain.EXE_CONFIG;
 
         Utils.closeOnEscapeKey(this.stage, null);
         this.demoSelector.setItems(FXCollections.observableArrayList(config.getDemoTableEntries()));
@@ -71,7 +72,7 @@ public class DemoTableEditorController implements Initializable {
 
         if (newEntry.isValidData()) {
             this.levelSelector.getSelectionModel().select(newEntry.getLevel());
-            this.fileSelector.getSelectionModel().select((Integer) newEntry.getDemoResourceFile());
+            this.fileSelector.getSelectionModel().select(config.getGameFile(newEntry.getDemoResourceFile()));
             this.unlockSelector.getSelectionModel().select(newEntry.getUnlockLevel());
         }
     }
