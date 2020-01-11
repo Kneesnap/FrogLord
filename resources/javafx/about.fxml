@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
+            minWidth="-Infinity" prefHeight="325.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0"
+            AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
+            xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <Button layoutX="178.0" layoutY="299.0" mnemonicParsing="false" onAction="#onDone" text="Done"
+                AnchorPane.bottomAnchor="3.0"/>
+        <ImageView fitHeight="150.0" fitWidth="300.0" layoutX="50.0" layoutY="7.0" pickOnBounds="true"
+                   preserveRatio="true" AnchorPane.topAnchor="7.0">
+            <image>
+                <Image url="@/graphics/logo-large.png"/>
+            </image>
+        </ImageView>
+        <VBox layoutX="85.0" layoutY="149.0" prefHeight="125.0" prefWidth="315.0">
+            <children>
+                <Label fx:id="versionLabel" style="-fx-font-weight: bold;" text="FrogLord v?.?.?"/>
+                <Label prefWidth="127.0" text="By Kneesnap (&amp; Others)"/>
+                <Label/>
+                <Label fx:id="javaVersionLabel" text="Java Version: "/>
+                <Label fx:id="javaRuntimeName" text="Java Runtime:"/>
+                <Label fx:id="memoryLabel" text="Memory:"/>
+                <Label/>
+                <Hyperlink text="http://highwayfrogs.net/"/>
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>

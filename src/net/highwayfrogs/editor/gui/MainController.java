@@ -54,6 +54,7 @@ public class MainController implements Initializable {
     @FXML private MenuItem levelInfoEditor;
     @FXML private MenuItem formLibEditor;
     @FXML private MenuItem scriptEditor;
+    @FXML private MenuItem textureFinder;
     @FXML private MenuItem demoTableEditor;
     private MWDFile mwdFile;
     private ListView<GameFile> currentFilesList;
@@ -221,6 +222,11 @@ public class MainController implements Initializable {
             openEditor(this.currentFilesList, image.getParent());
             ((VLOController) getCurrentController()).selectImage(image, true);
         });
+    }
+
+    @FXML
+    private void actionOpenAbout(ActionEvent evt) {
+        AboutController.openAboutMenu();
     }
 
     @FXML
