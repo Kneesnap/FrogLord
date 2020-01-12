@@ -11,3 +11,4 @@ FrogLord.jar
 target/
 build.xml
 /.idea/workspace.xml
+.DS_Store
