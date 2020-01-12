@@ -7,11 +7,14 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.editor.PaletteController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -114,5 +117,32 @@ public class PALFile extends GameFile {
         graphics.dispose();
 
         return Utils.toFXImage(image, false);
+    }
+
+    /**
+     * Save palette data to an .act file for processing in Photoshop.
+     * @param fileEntry     The palette to export.
+     */
+    @Override
+    public void exportAlternateFormat(FileEntry fileEntry) {
+        // TODO: consider exporting to alternative palette formats (.pal, etc.)
+        File file = Utils.promptFileSave("Save the Color Palette.", Utils.stripExtension(fileEntry.getDisplayName()), "ACT File", "act");
+        if (file != null) {
+            final int redMask = 0xFF0000, greenMask = 0xFF00, blueMask = 0xFF;
+
+            DataWriter writer = new DataWriter(new FileReceiver(file));
+            for (Color color : colors) {
+                final int intColor = Utils.toRGB(color);
+                writer.writeByte((byte)((intColor & redMask) >> 16));
+                writer.writeByte((byte)((intColor & greenMask) >> 8));
+                writer.writeByte((byte)(intColor & blueMask));
+            }
+            writer.closeReceiver();
+
+            System.out.println("Exported PAL file to '" + file.getName() + "'.");
+        }
+        else {
+            System.out.println("Aborted export of PAL file.");
+        }
     }
 }
