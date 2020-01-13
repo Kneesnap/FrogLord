@@ -144,14 +144,11 @@ class LoadFfsOperator(bpy.types.Operator):
             action = split[0].lower()
 
             if action == "v":
-                # [AE] Negate x-axis and swap y-/z-axes for import (to align with Blender's coordinate system)
-                verts.append([-float(split[1]), float(split[3]), float(split[2])])
+                verts.append([float(split[1]), float(split[2]), float(split[3])])
             elif action == "f3" or action == "ft3" or action == "g3" or action == "gt3":
-				# [AE] Refactor face winding order (to align with Blender's face-winding order)
-                faces.append([int(split[4]), int(split[3]), int(split[2])])
+                faces.append([int(split[2]), int(split[3]), int(split[4])])
             elif action == "f4" or action == "ft4" or action == "g4" or action == "gt4":
-				# [AE] Refactor face winding order (to align with Blender's face-winding order)
-                faces.append([int(split[5]), int(split[4]), int(split[3]), int(split[2])])
+                faces.append([int(split[2]), int(split[3]), int(split[4]), int(split[5])])
 
         mesh.from_pydata(verts, [], faces)
         mesh = bpy.data.meshes["LevelMesh"]
@@ -253,8 +250,7 @@ class LoadFfsOperator(bpy.types.Operator):
                 # UVs:
                 for i, loop_idx in enumerate(poly.loop_indices):
                     uv_text = split[9 + i].split(":")
-                    # [AE] Negating v component to align with Blender
-                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), 1.0 - float(uv_text[1])]
+                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), float(uv_text[1])]
 
                 index += 1
             elif action == "g3": # g3 show v1 v2 v3 color1 color2 color3
@@ -296,8 +292,7 @@ class LoadFfsOperator(bpy.types.Operator):
                 # UVs:
                 for i, loop_idx in enumerate(poly.loop_indices):
                     uv_text = split[12 + i].split(":")
-                    # [AE] Negating v component to align with Blender
-                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), 1.0 - float(uv_text[1])]
+                    uv_layer.data[loop_idx].uv = [float(uv_text[0]), float(uv_text[1])]
 
                 index += 1
             elif action != "v" and action != "anim" and action != "grid":
@@ -407,8 +402,7 @@ class SaveFfsOperator(bpy.types.Operator):
 
         # Write Vertices:
         for vert in bm.verts:
-            # [AE] Remember to negate x-axis and swap y-/z-axes for export (to align with FrogLord's coordinate system)
-            out_file.write("v " + str(-vert.co.x) + " " + str(vert.co.z) + " " + str(vert.co.y) + linesep)
+            out_file.write("v " + str(vert.co.x) + " " + str(vert.co.y) + " " + str(vert.co.z) + linesep)
         out_file.write(linesep)
 
         # Setup Data:
@@ -462,24 +456,23 @@ class SaveFfsOperator(bpy.types.Operator):
                     animation_faces[anim_id] = []
                 animation_faces[anim_id].append(poly_index)
 
-			# [AE] Refactor face winding order ensure correct normals and correct ordering for FrogLord
 			# [AE] Still not sure about ordering on colors and uvs (something to look at?)...
             if not textured and not quad and not gouraud: # f3 show v1 v2 v3 color
-                out_file.write("f3 " + show_text + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + colors[0])
+                out_file.write("f3 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + colors[0])
             elif not textured and not quad and gouraud: # g3 show v1 v2 v3 color1 color2 color3
-                out_file.write("g3 " + show_text + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + colors[0] + " " + colors[1] + " " + colors[2])
+                out_file.write("g3 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + colors[0] + " " + colors[1] + " " + colors[2])
             elif not textured and quad and not gouraud: # f4 show v1 v2 v3 v4 color
-                out_file.write("f4 " + show_text + " " + verts[3] + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + colors[0])
+                out_file.write("f4 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + verts[3] + " " + colors[0])
             elif not textured and quad and gouraud: # g4 show v1 v2 v3 v4 color1 color2 color3 color4
-                out_file.write("g4 " + show_text + " " + verts[3] + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + colors[3])
+                out_file.write("g4 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + verts[3] + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + colors[3])
             elif textured and not quad and not gouraud: # FT3 show v1 v2 v3 flags texture color uv1 uv2 uv3
-                out_file.write("ft3 " + show_text + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]))
+                out_file.write("ft3 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]))
             elif textured and not quad and gouraud: # GT3 show v1 v2 v3 flags texture color1 color2 color3 uv1 uv2 uv3
-                out_file.write("gt3 " + show_text + " " + verts[2] + " " + verts[1] + " " + verts[0] + " " + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]))
+                out_file.write("gt3 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]))
             elif textured and quad and not gouraud: # ft4 show v1 v2 v3 v4 flags texture color uv1 uv2 uv3 uv4
-                out_file.write("ft4 " + show_text + " " + verts[3] + " " + verts[2] + " " + verts[1] + " " + verts[0] + " "  + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]) + " " + uv_str(uvs[3]))
+                out_file.write("ft4 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + verts[3] + " "  + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]) + " " + uv_str(uvs[3]))
             elif textured and quad and gouraud: # gt4 show v1 v2 v3 v4 flags texture color1 color2 color3 color4 uv1 uv2 uv3 uv4
-                out_file.write("gt4 " + show_text + " " + verts[3] + " " + verts[2] + " " + verts[1] + " " + verts[0] + " "  + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + colors[3] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]) + " " + uv_str(uvs[3]))
+                out_file.write("gt4 " + show_text + " " + verts[0] + " " + verts[1] + " " + verts[2] + " " + verts[3] + " "  + str(flags) + " " + str(tex_id) + " " + colors[0] + " " + colors[1] + " " + colors[2] + " " + colors[3] + " " + uv_str(uvs[0]) + " " + uv_str(uvs[1]) + " " + uv_str(uvs[2]) + " " + uv_str(uvs[3]))
             out_file.write(linesep)
         out_file.write(linesep)
 
