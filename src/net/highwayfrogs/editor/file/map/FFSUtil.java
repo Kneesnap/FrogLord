@@ -67,33 +67,54 @@ public class FFSUtil {
 
         @Cleanup PrintWriter pw = new PrintWriter(new File(outputDir, Utils.stripExtension(map.getFileEntry().getDisplayName()) + ".ffs"));
 
+        // Grab polygons and vertices
         List<MAPPolygon> polygons = map.getAllPolygonsSafe();
+        List<SVector> allVertices = map.getVertexes();
 
         // Write Vertices.
-        for (SVector vec : map.getVertexes())
-            pw.write(vec.toOBJString() + Constants.NEWLINE);
+        for (SVector vec : allVertices) {
+            final float x = vec.getFloatX();
+            final float y = vec.getFloatY();
+            final float z = vec.getFloatZ();
+            // [AE] - we need to negate the y-axis and then swap the y-/z-axes on export to Blender
+            pw.write("v " + x + " " + z + " " + -y + Constants.NEWLINE);
+        }
         pw.write(Constants.NEWLINE);
 
         // Faces:
         for (MAPPolygon polygon : polygons) {
             pw.write(polygon.getType().name().toLowerCase() + " " + (polygon.isAllowDisplay() ? "show" : "hide") + " ");
-            for (int i = 0; i < polygon.getVerticeCount(); i++)
+
+            // [AE] Note face winding (vertex index ordering)
+            for (int i = polygon.getVerticeCount() - 1; i >= 0; i--) {
                 pw.write(polygon.getVertices()[i] + " ");
+            }
 
             if (polygon instanceof MAPPolyFlat) {
                 pw.write(String.valueOf(((MAPPolyFlat) polygon).getColor().toRGB()));
             } else if (polygon instanceof MAPPolyGouraud) {
                 MAPPolyGouraud polyGouraud = (MAPPolyGouraud) polygon;
-                for (int i = 0; i < polyGouraud.getColors().length; i++)
-                    pw.write((i > 0 ? " " : "") + polyGouraud.getColors()[i].toRGB());
+                for (int i = polyGouraud.getColors().length - 1; i >= 0; i--)
+                    pw.write((i != polyGouraud.getColors().length - 1 ? " " : "") + polyGouraud.getColors()[i].toRGB());
             } else if (polygon instanceof MAPPolyTexture) {
                 MAPPolyTexture polyTex = (MAPPolyTexture) polygon;
                 pw.write(polyTex.getFlags() + " ");
                 pw.write(String.valueOf(remapTable.get(polyTex.getTextureId())));
-                for (PSXColorVector color : polyTex.getVectors())
+
+                for (int i = polyTex.getVectors().length - 1; i >= 0; i--) {
+                    PSXColorVector color = polyTex.getVectors()[i];
                     pw.write(" " + color.toRGB());
-                for (ByteUV uv : polyTex.getUvs())
-                    pw.write(" " + uv.getFloatU() + ":" + uv.getFloatV());
+                }
+
+                for (int i = polyTex.getUvs().length - 1; i >= 0; i--) {
+                    ByteUV uv = polyTex.getUvs()[i];
+                    float u = uv.getFloatU();
+                    float v = uv.getFloatV();
+
+                    pw.write(" " + u + ":" + v);
+                }
+
+
             } else {
                 throw new RuntimeException("Unknown polygon-type: " + polygon);
             }
@@ -181,8 +202,10 @@ public class FFSUtil {
                 continue;
 
             String action = args[0];
-            if (action.equalsIgnoreCase("v")) { // Vertex.
-                map.getVertexes().add(new SVector(-Float.parseFloat(args[1]), -Float.parseFloat(args[2]), Float.parseFloat(args[3])));
+            if (action.equalsIgnoreCase("v")) {
+                // Read vertex.
+                // [AE] - we need to swap the y-/z-axes and then negate the y-axis on import back into FrogLord
+                map.getVertexes().add(new SVector(Float.parseFloat(args[1]), -Float.parseFloat(args[3]), Float.parseFloat(args[2])));
             } else if (action.equalsIgnoreCase("grid-size")) {
                 map.setGridXCount(Short.parseShort(args[1]));
                 map.setGridZCount(Short.parseShort(args[2]));
@@ -231,8 +254,11 @@ public class FFSUtil {
                 newPolygon.setAllowDisplay(args[1].equalsIgnoreCase("show"));
 
                 int index = 2;
-                for (int j = 0; j < newPolygon.getVerticeCount(); j++, index++)
+
+                for (int j = newPolygon.getVerticeCount() - 1; j >= 0; j--, index++) {
+                    // [AE] Note face winding (vertex index ordering)
                     newPolygon.getVertices()[j] = Integer.parseInt(args[index]);
+                }
 
                 if (newPolygon instanceof MAPPolyFlat) {
                     ((MAPPolyFlat) newPolygon).setColor(PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index])));
