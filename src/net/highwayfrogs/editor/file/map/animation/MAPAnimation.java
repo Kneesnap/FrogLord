@@ -28,6 +28,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
  * Represents the MAP_ANIM struct.
@@ -154,17 +155,17 @@ public class MAPAnimation extends GameObject {
             setType(newValue);
             manager.setupEditor(); // Change what's visible.
         });
-
+        // Common controls
         if (isUV) {
-            editor.addShortField("u Frame Change", getUChange(), (value) -> {
-                setUChange(value);
+            editor.addDoubleSlider("x Change", toPercent(getUChange()), (value) -> {
+                setUChange(toShort(value));
                 manager.setupEditor();
-            }, null);
-            editor.addShortField("v Frame Change", getVChange(), (value) -> {
-                setVChange(value);
+            }, 0, 1, true);
+            editor.addDoubleSlider("y Change", toPercent(getVChange()), (value) -> {
+                setVChange(toShort(value));
                 manager.setupEditor();
-            }, null);
-            editor.addIntegerField("Total Frames", getUvDuration(), (value) -> {
+            }, 0, 1, true);
+            editor.addIntegerField("Speed", getUvDuration(), (value) -> {
                 setUvDuration(value);
                 manager.setupEditor();
             }, null);
@@ -288,5 +289,13 @@ public class MAPAnimation extends GameObject {
             getTextures().add(getTextures().isEmpty() ? (short) 0 : getTextures().get(getTextures().size() - 1));
             manager.setupEditor();
         });
+    }
+
+    private static double toPercent(int value) {
+        return value / 255.0;
+    }
+
+    private static short toShort(double percent) {
+        return (short) Math.round(percent * 255);
     }
 }
