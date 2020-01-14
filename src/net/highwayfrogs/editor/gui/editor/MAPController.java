@@ -181,13 +181,15 @@ public class MAPController extends EditorController<MAPFile> {
             double zDis = (pos[2] - baseZ);
             double distance = Math.sqrt((xDis * xDis) + (zDis * zDis));
 
-            System.out.println(entity.getFormEntry().getFormName() + "[" + entity.getUniqueId() + "]" + " X: " + pos[0] + ", Y: " + pos[1] + ", Z: " + pos[2]);
+            System.out.println(entity.getFormEntry().getFormName() + "[" + entity.getUniqueId() + "]" + " X: " + pos[0] + ", Y: " + pos[1] + ", Z: " + pos[2] + ", " + matrix.getTransform()[0] + ", " + matrix.getTransform()[1] + ", " + matrix.getTransform()[2] + ", " + getFile().getGroupX(matrix.getTransform()[0] >> 16) + ", " + getFile().getGroupZ(matrix.getTransform()[2] >> 16));
             // Probably: Order, position, or unique id.
 
             // Stuff to test:
             // Distance from origin and id. Nope
             // Distance from origin and sorting. Nope
             // Position and id.
+
+            //TODO: Map Group and registration order are the answer.
         }
 
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.

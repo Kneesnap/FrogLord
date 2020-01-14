@@ -656,13 +656,13 @@ public class GUIEditorGrid {
      * @param matrix           The rotation matrix to add data for.
      * @param onPositionUpdate Behavior to apply when the position is updated.
      */
-    public void addMatrix(PSXMatrix matrix, MapUIController controller, Runnable onPositionUpdate) {
+    public void addEntityMatrix(PSXMatrix matrix, MapUIController controller, Runnable onPositionUpdate) {
         IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
 
         addFloatVector("Position", vec, () -> {
-            matrix.getTransform()[0] = vec.getX(); // Update matrix.
-            matrix.getTransform()[1] = vec.getY();
-            matrix.getTransform()[2] = vec.getZ();
+            matrix.getTransform()[0] = vec.getFloatX() >= 0 ? vec.getX() >> 16 : vec.getX(); // Update matrix. Positive.
+            matrix.getTransform()[1] = vec.getY(); // No change.
+            matrix.getTransform()[2] = vec.getFloatZ() >= 0 ? vec.getZ() : ((vec.getZ() >> 16) | 0xFFFF0000); // Negative.
             if (onPositionUpdate != null)
                 onPositionUpdate.run(); // Run position hook.
         }, controller, 20);
