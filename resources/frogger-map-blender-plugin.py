@@ -347,8 +347,8 @@ class LoadFfsOperator(bpy.types.Operator):
                 flags = int(split[6 if action.endswith("4") else 5])
                 bm.faces.ensure_lookup_table()
                 bm.faces[poly_index][texflag_layer] = flags
-                index += 1
-            elif poly_index == "f3" or action == "f4" or action == "g3" or action == "g4":
+                poly_index += 1
+            elif action == "f3" or action == "f4" or action == "g3" or action == "g4":
                 poly_index += 1
 
 
