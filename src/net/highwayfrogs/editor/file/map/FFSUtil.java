@@ -128,7 +128,7 @@ public class FFSUtil {
 
         // Animation Data.
         for (MAPAnimation mapAnim : map.getMapAnimations()) {
-            pw.write("anim " + mapAnim.getType().name() + " " + mapAnim.getUChange() + " " + mapAnim.getVChange() + " " + mapAnim.getUvDuration() + " " + mapAnim.getTexDuration() + " ");
+            pw.write("anim " + mapAnim.getType().name() + " " + mapAnim.getUChange() + " " + mapAnim.getVChange() + " " + mapAnim.getUvFrameCount() + " " + mapAnim.getTexFrameDuration() + " ");
 
             // Write Textures.
             for (int i = 0; i < mapAnim.getTextures().size(); i++)
@@ -205,8 +205,8 @@ public class FFSUtil {
                 MAPAnimation mapAnim = new MAPAnimation(map);
                 mapAnim.setUChange(Short.parseShort(args[1]));
                 mapAnim.setVChange(Short.parseShort(args[2]));
-                mapAnim.setUvDuration(Short.parseShort(args[3]));
-                mapAnim.setTexDuration(Short.parseShort(args[4]));
+                mapAnim.setUvFrameCount(Short.parseShort(args[3]));
+                mapAnim.setTexFrameDuration(Short.parseShort(args[4]));
 
                 String[] texSplit = args[5].split(",");
                 for (int i = 0; i < texSplit.length; i++)

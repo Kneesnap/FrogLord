@@ -20,8 +20,11 @@ import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.map.FFSUtil;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
@@ -159,6 +162,32 @@ public class MAPController extends EditorController<MAPFile> {
 
     @SneakyThrows
     private void setupMapViewer(Stage stageToOverride, MapMesh mesh, TextureMap texMap) {
+        SVector basePoint = getFile().makeBasePoint();
+        float baseX = basePoint.getFloatX();
+        float baseZ = basePoint.getFloatZ();
+        System.out.println("Base: " + baseX + ", " + baseZ);
+
+        float[] pos = new float[6];
+        for (Entity entity : getFile().getEntities()) {
+            PSXMatrix matrix = entity.getMatrixInfo();
+            if (matrix == null)
+                continue;
+
+            entity.getPosition(pos, getFile());
+
+            double xDis = (pos[0] - baseX);
+            double zDis = (pos[2] - baseZ);
+            double distance = Math.sqrt((xDis * xDis) + (zDis * zDis));
+
+            System.out.println(entity.getFormEntry().getFormName() + "[" + entity.getUniqueId() + "]" + " X: " + pos[0] + ", Y: " + pos[1] + ", Z: " + pos[2]);
+            // Probably: Order, position, or unique id.
+
+            // Stuff to test:
+            // Distance from origin and id. Nope
+            // Distance from origin and sorting. Nope
+            // Position and id.
+        }
+
         // Create and setup material properties for rendering the level, entity icons and bounding boxes.
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(Utils.toFXImage(texMap.getTextureTree().getImage(), false));

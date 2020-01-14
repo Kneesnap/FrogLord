@@ -16,8 +16,6 @@ import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 
-import javax.swing.text.html.ImageView;
-
 /**
  * Manages map animations.
  * Created by Kneesnap on 8/20/2019.
@@ -48,11 +46,13 @@ public class AnimationManager extends MapManager {
         box.setCellFactory(param -> new AttachmentListCell<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim), anim -> {
             if(anim.getTextures().size() > 0) {
                 return getMap().getVlo().getImageByTextureId(getMap().getConfig().getRemapTable(getMap().getFileEntry()).get(anim.getTextures().get(0))).toFXImage(MWDFile.VLO_ICON_SETTING);
-            } else {
+            } else if (anim.getMapUVs().size() > 0) {
                 int uvTexture = ((MAPPolyGT4) anim.getMapUVs().get(0).getPolygon()).getTextureId();
                 GameImage gameImage = getMap().getVlo().getImageByTextureId(getMap().getConfig().getRemapTable(getMap().getFileEntry()).get(uvTexture));
                 return gameImage.toFXImage(MWDFile.VLO_ICON_SETTING.setTrimEdges(true));
             }
+
+            return null;
         }));
 
         if (this.selectedAnimation != null) {

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.map.animation;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
@@ -14,11 +15,12 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyGT4;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -28,7 +30,6 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 
 /**
  * Represents the MAP_ANIM struct.
@@ -40,14 +41,16 @@ public class MAPAnimation extends GameObject {
     private MAPAnimationType type = MAPAnimationType.UV;
     private short uChange; // Delta U (Each frame)
     private short vChange;
-    private int uvDuration; // Frames before resetting.
-    private int texDuration; // Also known as celPeriod.
+    private int uvFrameCount; // Frames before resetting.
+    private int texFrameDuration; // Also known as celPeriod.
     private List<Short> textures = new ArrayList<>(); // Non-remapped texture id array.
     private List<MAPUVInfo> mapUVs = new ArrayList<>();
 
     private transient MAPFile parentMap;
     private transient int texturePointerAddress;
     private transient int uvPointerAddress;
+
+    public static final ImageFilterSettings PREVIEW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true);
 
     public static final int BYTE_SIZE = 2 + (7 * Constants.SHORT_SIZE) + (4 * Constants.INTEGER_SIZE);
 
@@ -59,14 +62,14 @@ public class MAPAnimation extends GameObject {
     public void load(DataReader reader) {
         this.uChange = reader.readUnsignedByteAsShort();
         this.vChange = reader.readUnsignedByteAsShort();
-        this.uvDuration = reader.readUnsignedShortAsInt();
+        this.uvFrameCount = reader.readUnsignedShortAsInt();
         reader.skipBytes(4); // Four run-time bytes.
 
         // Texture information.
         int celCount = reader.readUnsignedShortAsInt();
         reader.skipShort(); // Run-time short.
         int celListPointer = reader.readInt();
-        this.texDuration = reader.readUnsignedShortAsInt(); // Frames before resetting.
+        this.texFrameDuration = reader.readUnsignedShortAsInt(); // Frames before resetting.
         reader.skipShort(); // Run-time variable.
         this.type = MAPAnimationType.getType(reader.readUnsignedShortAsInt());
         int polygonCount = reader.readUnsignedShortAsInt();
@@ -93,12 +96,12 @@ public class MAPAnimation extends GameObject {
     public void save(DataWriter writer) {
         writer.writeUnsignedByte(this.uChange);
         writer.writeUnsignedByte(this.vChange);
-        writer.writeUnsignedShort(this.uvDuration);
+        writer.writeUnsignedShort(this.uvFrameCount);
         writer.writeNull(4); // Run-time.
         writer.writeUnsignedShort(this.textures.size());
         writer.writeNull(Constants.SHORT_SIZE); // Run-time.
         this.texturePointerAddress = writer.writeNullPointer();
-        writer.writeUnsignedShort(this.texDuration);
+        writer.writeUnsignedShort(this.texFrameDuration);
         writer.writeShort((short) 0); // Runtime.
         writer.writeUnsignedShort(getType().getFlag());
         writer.writeUnsignedShort(getMapUVs().size());
@@ -165,14 +168,15 @@ public class MAPAnimation extends GameObject {
                 setVChange(toShort(value));
                 manager.setupEditor();
             }, 0, 1, true);
-            editor.addIntegerField("Speed", getUvDuration(), (value) -> {
-                setUvDuration(value);
-                manager.setupEditor();
-            }, null);
         }
 
-        TextField speedField = isTexture ? editor.addIntegerField("Speed", getTexDuration(), newVal -> {
-            setTexDuration(newVal);
+        TextField uvFrameField = isUV ? editor.addIntegerField("UV Frame Count", getUvFrameCount(), (value) -> {
+            setUvFrameCount(value);
+            manager.setupEditor();
+        }, null) : null;
+
+        TextField speedField = isTexture ? editor.addIntegerField("Speed", getTexFrameDuration(), newVal -> {
+            setTexFrameDuration(newVal);
             manager.setupEditor();
         }, null) : null;
 
@@ -180,72 +184,83 @@ public class MAPAnimation extends GameObject {
             manager.editAnimation(this);
             manager.setupEditor();
         });
-        // Common animation controls & data
-        editor.addBoldLabel("Preview:");
-        AtomicBoolean isAnimating = new AtomicBoolean(false);
-        // Setup.
+
+        // Find the base image used to preview.
         VLOArchive vlo = getParentMap().getVlo();
         List<Short> remap = getConfig().getRemapTable(getParentMap().getFileEntry());
-        // Setup UV
-        if (isUV) {
-            int uvTexture = ((MAPPolyGT4) getMapUVs().get(0).getPolygon()).getTextureId();
-            GameImage gameImage = vlo.getImageByTextureId(remap.get(uvTexture));
-            ImageView animView = editor.addCenteredImage(gameImage.toFXImage(MWDFile.VLO_ICON_SETTING.setTrimEdges(true)), 150);
-            Slider frameSlider = editor.addDoubleSlider("UV Phase", 0, percent -> {
-                int width = gameImage.getIngameWidth();
-                int height = gameImage.getIngameHeight();
-                FloatMap floatMap = new FloatMap();
-                floatMap.setWidth(width);
-                floatMap.setHeight(height);
-                float uPercentDiff = ((float)uChange / 255);
-                float vPercentDiff = ((float)vChange / 255);
-                float u = (float) (percent * uPercentDiff);
-                float v = (float) (percent * vPercentDiff);
-                for (int i = 0; i < width; i++) {
-                    for (int j = 0; j < height; j++) {
-                        floatMap.setSamples(i, j, u, v);
-                    }
-                }
-                DisplacementMap displacementMap = new DisplacementMap();
-                displacementMap.setMapData(floatMap);
-                displacementMap.setWrap(true);
-                animView.setEffect(displacementMap);
-            }, 0, 1);
-            Timeline animationTimeline = new Timeline(new KeyFrame(Duration.millis(getUvDuration() * 1000.0 / getMWD().getFPS()), evt -> {
-                double next = frameSlider.getValue() +  1.0 / getMWD().getFPS();
-                if (next >= 1) next = 0;
-                frameSlider.setValue(next);
-            }));
-            animationTimeline.setCycleCount(Timeline.INDEFINITE);
-            animView.setOnMouseClicked(evt -> {
-                isAnimating.set(!isAnimating.get());
-                boolean playNow = isAnimating.get();
-                if (playNow) {
-                    animationTimeline.play();
-                } else {
-                    animationTimeline.pause();
-                }
-                frameSlider.setDisable(playNow);
-            });
-            return;
-        }
-        List<GameImage> images = new ArrayList<>(getTextures().size());
-        getTextures().forEach(toRemap -> images.add(vlo.getImageByTextureId(remap.get(toRemap))));
-        // Setup textures.
-        if (getTextures().size() > 0) {
-            ImageView animView = editor.addCenteredImage(images.get(0).toFXImage(MWDFile.VLO_ICON_SETTING), 150);
-            Slider frameSlider = editor.addIntegerSlider("Texture", 0, newFrame ->
-                    animView.setImage(images.get(newFrame).toFXImage(MWDFile.VLO_ICON_SETTING)), 0, getTextures().size() - 1);
 
-            Timeline animationTimeline = new Timeline(new KeyFrame(Duration.millis(getTexDuration() * 1000D / getMWD().getFPS()), evt -> {
+        GameImage gameImage = null;
+        List<GameImage> images = null;
+        boolean hasTextures = isTexture && getTextures().size() > 0;
+        boolean hasUV = isUV && getMapUVs().size() > 0;
+        boolean hasBoth = (hasTextures && hasUV);
+
+        if (hasTextures) {
+            List<GameImage> finalImages = new ArrayList<>(getTextures().size());
+            getTextures().forEach(toRemap -> finalImages.add(vlo.getImageByTextureId(remap.get(toRemap))));
+            images = finalImages;
+            gameImage = images.get(0);
+        } else if (hasUV) {
+            for (MAPUVInfo uvInfo : getMapUVs()) {
+                gameImage = vlo.getImageByTextureId(remap.get(((MAPPolyTexture) uvInfo.getPolygon()).getTextureId()), false);
+                if (gameImage != null)
+                    break;
+            }
+        }
+
+        // Create the animation preview.
+        if (gameImage != null) {
+            editor.addBoldLabel("Preview:");
+            AtomicBoolean isAnimating = new AtomicBoolean(false);
+            ImageView imagePreview = editor.addCenteredImage(gameImage.toFXImage(PREVIEW_SETTINGS), 150);
+
+            int maxValidTexture = getTextures().size() - 1;
+            int maxValidUV = getUvFrameCount() - 1;
+            int maxValidBoth = Math.min(maxValidTexture, maxValidUV);
+            int usedMax = hasBoth ? maxValidBoth : (hasTextures ? maxValidTexture : maxValidUV);
+
+            final GameImage finalImage = gameImage;
+            final List<GameImage> finalImages = images;
+            Slider frameSlider = editor.addIntegerSlider("Animation Frame", 0, newFrame -> {
+                GameImage useImage = hasTextures ? finalImages.get(newFrame) : finalImage;
+
+                if (hasTextures) { // Apply texture animation.
+                    imagePreview.setImage(useImage.toFXImage(PREVIEW_SETTINGS));
+                }
+
+                if (hasUV) { // Apply UV animation.
+                    int width = useImage.getIngameWidth();
+                    int height = useImage.getIngameHeight();
+                    FloatMap floatMap = new FloatMap(width, height);
+
+                    double percent = ((newFrame + 1D) / (double) getUvFrameCount());
+                    float u = (float) (percent * ((float) this.uChange / 255));
+                    float v = (float) (percent * ((float) this.vChange / 255));
+                    for (int i = 0; i < width; i++)
+                        for (int j = 0; j < height; j++)
+                            floatMap.setSamples(i, j, u, v);
+
+                    DisplacementMap displacementMap = new DisplacementMap(floatMap);
+                    displacementMap.setWrap(true);
+                    imagePreview.setEffect(displacementMap);
+                } else {
+                    imagePreview.setEffect(null);
+                }
+            }, 0, usedMax);
+
+            double millisInterval = 1000D / getMWD().getFPS();
+            if (isTexture)
+                millisInterval *= getTexFrameDuration(); // Apply the duration of each texture.
+
+            Timeline animationTimeline = new Timeline(new KeyFrame(Duration.millis(millisInterval), evt -> {
                 int i = (int) frameSlider.getValue() + 1;
-                if (i == images.size())
+                if (i == usedMax + 1)
                     i = 0;
                 frameSlider.setValue(i);
             }));
             animationTimeline.setCycleCount(Timeline.INDEFINITE);
 
-            animView.setOnMouseClicked(evt -> {
+            imagePreview.setOnMouseClicked(evt -> {
                 isAnimating.set(!isAnimating.get());
                 boolean playNow = isAnimating.get();
                 if (playNow) {
@@ -255,40 +270,63 @@ public class MAPAnimation extends GameObject {
                 }
 
                 frameSlider.setDisable(playNow);
-                speedField.setDisable(playNow);
+                if (speedField != null)
+                    speedField.setDisable(playNow);
+                if (uvFrameField != null)
+                    uvFrameField.setDisable(playNow);
             });
+
+            if (hasUV && !hasTextures) { // Allow changing the texture of all polygons affected by a UV animation.
+                editor.addBoldLabel("UV Texture:");
+                editor.addButton("Change Texture", () -> {
+                    vlo.promptImageSelection(newImage -> {
+                        int newIndex = remap.indexOf(newImage.getTextureId());
+                        if (newIndex == -1) {
+                            Utils.makePopUp("This texture is not present in the remap.", AlertType.ERROR);
+                            return;
+                        }
+
+                        for (MAPUVInfo mapuvInfo : getMapUVs())
+                            ((MAPPolyTexture) mapuvInfo.getPolygon()).setTextureId((short) newIndex);
+                        manager.setupEditor();
+                        manager.getBaseController().getMapUIController().getGeometryManager().refreshView();
+                    }, false);
+                });
+            }
         }
 
         // Setup editor.
-        editor.addBoldLabel("Textures:");
-        for (int i = 0; i < images.size(); i++) {
-            final int tempIndex = i;
-            GameImage image = images.get(i);
+        if (isTexture && images != null) {
+            editor.addBoldLabel("Textures:");
+            for (int i = 0; i < images.size(); i++) {
+                final int tempIndex = i;
+                GameImage image = images.get(i);
 
-            Image scaledImage = Utils.toFXImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), true);
-            ImageView view = editor.setupNode(new ImageView(scaledImage));
-            view.setFitWidth(20);
-            view.setFitHeight(20);
+                Image scaledImage = Utils.toFXImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), true);
+                ImageView view = editor.setupNode(new ImageView(scaledImage));
+                view.setFitWidth(20);
+                view.setFitHeight(20);
 
-            view.setOnMouseClicked(evt -> vlo.promptImageSelection(newImage -> {
-                int newIndex = remap.indexOf(newImage.getTextureId());
-                Utils.verify(newIndex >= 0, "Failed to find remap for texture id: %d!", newImage.getTextureId());
-                getTextures().set(tempIndex, (short) newIndex);
-                manager.setupEditor();
-            }, false));
+                view.setOnMouseClicked(evt -> vlo.promptImageSelection(newImage -> {
+                    int newIndex = remap.indexOf(newImage.getTextureId());
+                    Utils.verify(newIndex >= 0, "Failed to find remap for texture id: %d!", newImage.getTextureId());
+                    getTextures().set(tempIndex, (short) newIndex);
+                    manager.setupEditor();
+                }, false));
 
-            editor.setupSecondNode(new Button("Remove #" + image.getLocalImageID() + " (" + image.getTextureId() + ")"), false).setOnAction(evt -> {
-                getTextures().remove(tempIndex);
+                editor.setupSecondNode(new Button("Remove #" + image.getLocalImageID() + " (" + image.getTextureId() + ")"), false).setOnAction(evt -> {
+                    getTextures().remove(tempIndex);
+                    manager.setupEditor();
+                });
+
+                editor.addRow(25);
+            }
+
+            editor.addButton("Add Texture", () -> {
+                getTextures().add(getTextures().isEmpty() ? (short) 0 : getTextures().get(getTextures().size() - 1));
                 manager.setupEditor();
             });
-
-            editor.addRow(25);
         }
-
-        editor.addButton("Add Texture", () -> {
-            getTextures().add(getTextures().isEmpty() ? (short) 0 : getTextures().get(getTextures().size() - 1));
-            manager.setupEditor();
-        });
     }
 
     private static double toPercent(int value) {
