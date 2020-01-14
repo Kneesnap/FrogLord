@@ -113,8 +113,6 @@ public class FFSUtil {
 
                     pw.write(" " + u + ":" + v);
                 }
-
-
             } else {
                 throw new RuntimeException("Unknown polygon-type: " + polygon);
             }
@@ -273,7 +271,7 @@ public class FFSUtil {
                     for (int j = 0; j < polyTexture.getVectors().length; j++, index++)
                         polyTexture.getVectors()[j] = PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index]));
 
-                    for (int j = 0; j < polyTexture.getUvs().length; j++, index++) {
+                    for (int j = polyTexture.getUvs().length - 1; j >= 0; j--, index++) {
                         String[] split = args[index].split(":");
                         polyTexture.getUvs()[j] = new ByteUV(Float.parseFloat(split[0]), Float.parseFloat(split[1]));
                     }
