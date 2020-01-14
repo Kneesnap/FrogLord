@@ -34,6 +34,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 
 /**
@@ -152,6 +153,7 @@ public class MAPController extends EditorController<MAPFile> {
     @SneakyThrows
     private void exportToFFS(ActionEvent event) {
         FFSUtil.saveMapAsFFS(getFile(), Utils.promptChooseDirectory("Choose the directory to save the map to.", false));
+        Files.write(new File("./frogger-map-blender-plugin.py").toPath(), Utils.readBytesFromStream(Utils.getResourceStream("frogger-map-blender-plugin.py")));
     }
 
     @FXML

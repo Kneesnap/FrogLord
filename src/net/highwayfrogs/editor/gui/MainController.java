@@ -164,6 +164,20 @@ public class MainController implements Initializable {
     }
 
     @FXML
+    private void actionSaveMWI(ActionEvent evt) {
+        File selectedFile = Utils.promptFileSave("Specify the file to export the MWI as...", "FROGPSX", "Millenium WAD Index", "MWI");
+        if (selectedFile == null)
+            return; // Cancel.
+
+        Utils.deleteFile(selectedFile); // Don't merge files, create a new one.
+        DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
+        getMwdFile().getConfig().getMWI().save(writer);
+        writer.closeReceiver();
+
+        System.out.println("Exported MWI.");
+    }
+
+    @FXML
     private void actionImportFile(ActionEvent evt) {
         importFile();
     }

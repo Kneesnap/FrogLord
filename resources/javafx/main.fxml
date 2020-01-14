@@ -25,6 +25,7 @@
                                                     shortcut="UP"/>
                             </accelerator>
                         </MenuItem>
+                        <MenuItem mnemonicParsing="false" onAction="#actionSaveMWI" text="Save MWI"/>
                         <MenuItem mnemonicParsing="false" onAction="#actionImportFile" text="Import Frogger File">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="I" control="DOWN" meta="UP" shift="UP"
