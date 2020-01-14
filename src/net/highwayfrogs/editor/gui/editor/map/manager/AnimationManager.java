@@ -6,13 +6,17 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyGT4;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+
+import javax.swing.text.html.ImageView;
 
 /**
  * Manages map animations.
@@ -41,8 +45,15 @@ public class AnimationManager extends MapManager {
             setupEditor();
         });
         box.setConverter(new AbstractStringConverter<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim)));
-        box.setCellFactory(param -> new AttachmentListCell<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim), anim ->
-                anim.getTextures().size() > 0 ? getMap().getVlo().getImageByTextureId(getMap().getConfig().getRemapTable(getMap().getFileEntry()).get(anim.getTextures().get(0))).toFXImage(MWDFile.VLO_ICON_SETTING) : null));
+        box.setCellFactory(param -> new AttachmentListCell<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim), anim -> {
+            if(anim.getTextures().size() > 0) {
+                return getMap().getVlo().getImageByTextureId(getMap().getConfig().getRemapTable(getMap().getFileEntry()).get(anim.getTextures().get(0))).toFXImage(MWDFile.VLO_ICON_SETTING);
+            } else {
+                int uvTexture = ((MAPPolyGT4) anim.getMapUVs().get(0).getPolygon()).getTextureId();
+                GameImage gameImage = getMap().getVlo().getImageByTextureId(getMap().getConfig().getRemapTable(getMap().getFileEntry()).get(uvTexture));
+                return gameImage.toFXImage(MWDFile.VLO_ICON_SETTING.setTrimEdges(true));
+            }
+        }));
 
         if (this.selectedAnimation != null) {
             this.animationEditor.addBoldLabelButton("Animation #" + getMap().getMapAnimations().indexOf(this.selectedAnimation) + ":", "Remove", 25, () -> {
