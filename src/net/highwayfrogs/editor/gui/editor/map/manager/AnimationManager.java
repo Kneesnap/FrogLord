@@ -6,7 +6,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyGT4;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -47,7 +47,7 @@ public class AnimationManager extends MapManager {
             if(anim.getTextures().size() > 0) {
                 return getMap().getVlo().getImageByTextureId(getMap().getConfig().getRemapTable(getMap().getFileEntry()).get(anim.getTextures().get(0))).toFXImage(MWDFile.VLO_ICON_SETTING);
             } else if (anim.getMapUVs().size() > 0) {
-                int uvTexture = ((MAPPolyGT4) anim.getMapUVs().get(0).getPolygon()).getTextureId();
+                int uvTexture = ((MAPPolyTexture) anim.getMapUVs().get(0).getPolygon()).getTextureId();
                 GameImage gameImage = getMap().getVlo().getImageByTextureId(getMap().getConfig().getRemapTable(getMap().getFileEntry()).get(uvTexture));
                 return gameImage.toFXImage(MWDFile.VLO_ICON_SETTING.setTrimEdges(true));
             }
