@@ -521,6 +521,20 @@ public class Utils {
     }
 
     /**
+     * Read lines of text from a file.
+     * @param file The file to read from.
+     * @return fileText
+     */
+    public static List<String> readLinesFromFile(File file) {
+        try {
+            return Files.readAllLines(file.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
+    }
+
+    /**
      * Read bytes from an InputStream
      * Stolen from sun.nio.ch
      * @param stream The stream to read from.
@@ -693,6 +707,25 @@ public class Utils {
         for (int i = startIndex; i < str.length(); i++)
             if (Character.digit(str.charAt(i), 10) < 0)
                 return false;
+        return true;
+    }
+
+    /**
+     * Test if a string is a hex number.
+     * @param str The string to test.
+     * @return isHexInteger
+     */
+    public static boolean isHexInteger(String str) {
+        if (!str.startsWith("0x"))
+            return false;
+
+        for (int i = 2; i < str.length(); i++) {
+            char temp = str.charAt(i);
+            boolean isHex = (temp >= '0' && temp <= '9') || (temp >= 'a' && temp <= 'f') || (temp >= 'A' && temp <= 'F');
+            if (!isHex)
+                return false;
+        }
+
         return true;
     }
 
@@ -1580,6 +1613,6 @@ public class Utils {
         for (int i = 0; i < (digits - usedDigits); i++)
             prependStr.append("0");
 
-        return prependStr.toString() + String.valueOf(number);
+        return prependStr.toString() + number;
     }
 }

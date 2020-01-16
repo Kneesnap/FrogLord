@@ -34,7 +34,7 @@ public class MatrixData extends EntityData {
 
     @Override
     public void addData(EntityManager manager, GUIEditorGrid editor) {
-        editor.addMatrix(matrix, manager.getController(), manager::updateEntities);
+        editor.addEntityMatrix(matrix, manager.getController(), manager::updateEntities);
         super.addData(manager, editor);
     }
 }

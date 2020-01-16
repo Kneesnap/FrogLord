@@ -40,8 +40,6 @@ public class GUIMain extends Application {
     public void start(Stage primaryStage) throws Exception {
         //MisfitModel3DObject.performTest();
 
-        Files.write(new File("./frogger-map-blender-plugin.py").toPath(), Utils.readBytesFromStream(Utils.getResourceStream("frogger-map-blender-plugin.py")));
-
         INSTANCE = this;
         MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();
@@ -49,15 +47,26 @@ public class GUIMain extends Application {
         openFroggerFiles();
     }
 
+    /**
+     * Gets a map of versions to acceptable exe hashes.
+     */
+    public static Map<String, String[]> getVersions() {
+        Config execRegistry = new Config(Utils.getResourceStream("executables.cfg"));
+
+        Map<String, String[]> versionMap = new HashMap<>();
+        for (String configName : execRegistry.keySet())
+            versionMap.put(configName, execRegistry.getString(configName).split(","));
+        return versionMap;
+    }
 
     private void resolveEXE(File exeFile, Runnable onConfigLoad) throws IOException {
-        Config execRegistry = new Config(Utils.getResourceStream("executables.cfg"));
+        Map<String, String[]> versions = getVersions();
         byte[] fileBytes = Files.readAllBytes(exeFile.toPath());
 
         long crcHash = Utils.getCRC32(exeFile);
         Map<String, String> configDisplayName = new HashMap<>();
-        for (String configName : execRegistry.keySet()) {
-            String[] hashes = execRegistry.getString(configName).split(",");
+        for (String configName : versions.keySet()) {
+            String[] hashes = versions.get(configName);
 
             // Executables modified by FrogLord will have a small marker at the end saying which config to use. This works on both playstation and windows executable formats.
             byte[] configNameBytes = configName.getBytes();
@@ -130,7 +139,7 @@ public class GUIMain extends Application {
         boolean isLoadingAgain = (EXE_CONFIG != null); // Is this loading a second time? Ie is there already a loaded game?
 
         // If this isn't a debug setup, prompt the user to select the files to load.
-        File mwdFile = Utils.promptFileOpen("Please select a Frogger MWAD", "Medievil WAD", "MWD");
+        File mwdFile = Utils.promptFileOpen("Please select a Frogger MWAD", "Millenium WAD", "MWD");
         if (mwdFile == null) {
             if (!isLoadingAgain)
                 Platform.exit(); // No file given. Shutdown if there is nothing loaded already. Otherwise, keep the last data active.

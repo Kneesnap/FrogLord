@@ -25,10 +25,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
-import net.highwayfrogs.editor.gui.editor.EditorController;
-import net.highwayfrogs.editor.gui.editor.SaveController;
-import net.highwayfrogs.editor.gui.editor.ScriptEditorController;
-import net.highwayfrogs.editor.gui.editor.VLOController;
+import net.highwayfrogs.editor.gui.editor.*;
 import net.highwayfrogs.editor.gui.extra.DemoTableEditorController;
 import net.highwayfrogs.editor.gui.extra.FormEntryController;
 import net.highwayfrogs.editor.gui.extra.LevelInfoController;
@@ -56,6 +53,7 @@ public class MainController implements Initializable {
     @FXML private MenuItem scriptEditor;
     @FXML private MenuItem textureFinder;
     @FXML private MenuItem demoTableEditor;
+    @FXML private MenuItem patchMenu;
     private MWDFile mwdFile;
     private ListView<GameFile> currentFilesList;
 
@@ -164,6 +162,20 @@ public class MainController implements Initializable {
     }
 
     @FXML
+    private void actionSaveMWI(ActionEvent evt) {
+        File selectedFile = Utils.promptFileSave("Specify the file to export the MWI as...", "FROGPSX", "Millenium WAD Index", "MWI");
+        if (selectedFile == null)
+            return; // Cancel.
+
+        Utils.deleteFile(selectedFile); // Don't merge files, create a new one.
+        DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
+        getMwdFile().getConfig().getMWI().save(writer);
+        writer.closeReceiver();
+
+        System.out.println("Exported MWI.");
+    }
+
+    @FXML
     private void actionImportFile(ActionEvent evt) {
         importFile();
     }
@@ -201,6 +213,11 @@ public class MainController implements Initializable {
     @FXML
     private void editDemoTable(ActionEvent evt) {
         DemoTableEditorController.openEditor();
+    }
+
+    @FXML
+    private void actionOpenPatchMenu(ActionEvent evt) {
+        PatchController.openMenu();
     }
 
     @FXML

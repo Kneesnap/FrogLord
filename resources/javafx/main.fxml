@@ -25,6 +25,7 @@
                                                     shortcut="UP"/>
                             </accelerator>
                         </MenuItem>
+                        <MenuItem mnemonicParsing="false" onAction="#actionSaveMWI" text="Save MWI"/>
                         <MenuItem mnemonicParsing="false" onAction="#actionImportFile" text="Import Frogger File">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="I" control="DOWN" meta="UP" shift="UP"
@@ -66,6 +67,8 @@
                                   text="Edit Demo Table"/>
                         <MenuItem fx:id="textureFinder" mnemonicParsing="false" onAction="#actionSearchForTexture"
                                   text="Find Texture"/>
+                        <MenuItem fx:id="patchMenu" mnemonicParsing="false" onAction="#actionOpenPatchMenu"
+                                  text="Patches"/>
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">

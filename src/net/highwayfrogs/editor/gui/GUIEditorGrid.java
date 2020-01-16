@@ -656,13 +656,13 @@ public class GUIEditorGrid {
      * @param matrix           The rotation matrix to add data for.
      * @param onPositionUpdate Behavior to apply when the position is updated.
      */
-    public void addMatrix(PSXMatrix matrix, MapUIController controller, Runnable onPositionUpdate) {
+    public void addEntityMatrix(PSXMatrix matrix, MapUIController controller, Runnable onPositionUpdate) {
         IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
 
         addFloatVector("Position", vec, () -> {
-            matrix.getTransform()[0] = vec.getX(); // Update matrix.
-            matrix.getTransform()[1] = vec.getY();
-            matrix.getTransform()[2] = vec.getZ();
+            matrix.getTransform()[0] = vec.getFloatX() >= 0 ? vec.getX() >> 16 : vec.getX(); // Update matrix. Positive.
+            matrix.getTransform()[1] = vec.getY(); // No change.
+            matrix.getTransform()[2] = vec.getFloatZ() >= 0 ? vec.getZ() : ((vec.getZ() >> 16) | 0xFFFF0000); // Negative.
             if (onPositionUpdate != null)
                 onPositionUpdate.run(); // Run position hook.
         }, controller, 20);
@@ -768,11 +768,31 @@ public class GUIEditorGrid {
      * @return slider
      */
     public Slider addDoubleSlider(String sliderName, double currentValue, Consumer<Double> setter, double minValue, double maxValue) {
+        return addDoubleSlider(sliderName, currentValue, setter, minValue, maxValue, false);
+    }
+
+    /**
+	 * Add a slider to set the value.
+	 * @param sliderName   The name of the slider.
+	 * @param currentValue The current slider value.
+	 * @param setter       What to do with the slider value on update.
+	 * @param minValue     The minimum slider value.
+	 * @param maxValue     The maximum slider value.
+	 * @param onRelease    If setter should only be called when mouse is released.
+	 * @return slider
+	 */
+    public Slider addDoubleSlider(String sliderName, double currentValue, Consumer<Double> setter, double minValue, double maxValue, boolean onRelease) {
         addLabel(sliderName);
         Slider slider = setupSecondNode(new Slider(minValue, maxValue, currentValue), false);
         slider.setDisable(setter == null);
+        if (onRelease) {
+           slider.valueChangingProperty().addListener(((observable, wasChanging, changing) -> {
+               if (setter != null && !changing)
+                   setter.accept(slider.getValue());
+           }));
+        }
         slider.valueProperty().addListener(((observable, oldValue, newValue) -> {
-            if (setter != null)
+            if (setter != null && !onRelease)
                 setter.accept(newValue.doubleValue());
             onChange();
         }));
