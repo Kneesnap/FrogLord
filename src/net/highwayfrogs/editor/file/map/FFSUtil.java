@@ -253,8 +253,8 @@ public class FFSUtil {
 
                 int index = 2;
 
+                // [AE] Note face winding (vertex index ordering)
                 for (int j = newPolygon.getVerticeCount() - 1; j >= 0; j--, index++) {
-                    // [AE] Note face winding (vertex index ordering)
                     newPolygon.getVertices()[j] = Integer.parseInt(args[index]);
                 }
 
@@ -268,8 +268,10 @@ public class FFSUtil {
                     MAPPolyTexture polyTexture = (MAPPolyTexture) newPolygon;
                     polyTexture.setFlags(Short.parseShort(args[index++]));
                     polyTexture.setTextureId((short) remapTable.indexOf(Short.parseShort(args[index++])));
-                    for (int j = 0; j < polyTexture.getVectors().length; j++, index++)
+
+                    for (int j = polyTexture.getVectors().length - 1; j >= 0; j--, index++) {
                         polyTexture.getVectors()[j] = PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index]));
+                    }
 
                     for (int j = polyTexture.getUvs().length - 1; j >= 0; j--, index++) {
                         String[] split = args[index].split(":");
