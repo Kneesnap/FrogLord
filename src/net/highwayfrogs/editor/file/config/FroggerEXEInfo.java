@@ -541,7 +541,7 @@ public class FroggerEXEInfo extends Config {
      * Gets a writer which rights to the executable.
      * @return writer
      */
-    private DataWriter getWriter() {
+    public DataWriter getWriter() {
         loadExeData();
         return new DataWriter(new FixedArrayReceiver(this.exeBytes));
     }

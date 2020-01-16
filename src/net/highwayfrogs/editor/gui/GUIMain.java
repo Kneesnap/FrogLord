@@ -47,15 +47,26 @@ public class GUIMain extends Application {
         openFroggerFiles();
     }
 
+    /**
+     * Gets a map of versions to acceptable exe hashes.
+     */
+    public static Map<String, String[]> getVersions() {
+        Config execRegistry = new Config(Utils.getResourceStream("executables.cfg"));
+
+        Map<String, String[]> versionMap = new HashMap<>();
+        for (String configName : execRegistry.keySet())
+            versionMap.put(configName, execRegistry.getString(configName).split(","));
+        return versionMap;
+    }
 
     private void resolveEXE(File exeFile, Runnable onConfigLoad) throws IOException {
-        Config execRegistry = new Config(Utils.getResourceStream("executables.cfg"));
+        Map<String, String[]> versions = getVersions();
         byte[] fileBytes = Files.readAllBytes(exeFile.toPath());
 
         long crcHash = Utils.getCRC32(exeFile);
         Map<String, String> configDisplayName = new HashMap<>();
-        for (String configName : execRegistry.keySet()) {
-            String[] hashes = execRegistry.getString(configName).split(",");
+        for (String configName : versions.keySet()) {
+            String[] hashes = versions.get(configName);
 
             // Executables modified by FrogLord will have a small marker at the end saying which config to use. This works on both playstation and windows executable formats.
             byte[] configNameBytes = configName.getBytes();

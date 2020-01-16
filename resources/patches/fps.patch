@@ -1,0 +1,22 @@
+Name=Change Game Speed
+Description=Changes the FPS. This will not be accurate down to the number of frames. # It's as close as it can be though.
+Author=Kneesnap
+Versions=30e
+
+[Args]
+int,fps,Frames Per Second,25,1,1000
+
+[30e]
+updateDelayAddress=0x228EC
+
+[Code]
+set msg "Updating Frogger's FPS to "
+add msg fps
+add msg "."
+print msg
+
+set millis 1000
+multiply fps 2
+divide millis fps
+writeb updateDelayAddress millis # Game Logic.
+print "Patch Complete."

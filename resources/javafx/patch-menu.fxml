@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane fx:id="editorPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
+            minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="750.0"
+            xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <ChoiceBox fx:id="patchSelector" layoutX="14.0" layoutY="14.0" prefHeight="25.0" prefWidth="200.0"
+                   AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="14.0"/>
+        <Button fx:id="doneButton" layoutX="684.0" layoutY="467.0" mnemonicParsing="false" text="Cancel"
+                AnchorPane.bottomAnchor="8.0" AnchorPane.rightAnchor="14.0"/>
+        <Button fx:id="loadExternalButton" layoutX="7.0" layoutY="467.0" mnemonicParsing="false"
+                text="Load External Patch" AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="14.0"/>
+        <Button fx:id="applyButton" layoutX="604.0" layoutY="467.0" mnemonicParsing="false" text="Apply Patch"
+                AnchorPane.bottomAnchor="8.0" AnchorPane.rightAnchor="67.0"/>
+        <VBox fx:id="patchConfigEditors" layoutX="14.0" layoutY="39.0" prefHeight="230.0" prefWidth="722.0"
+              AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="40.0"/>
+        <Label fx:id="nameLabel" layoutX="214.0" layoutY="18.0" prefHeight="17.0" prefWidth="523.0"
+               text="[NAME] (By [AUTHOR])" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="8.0"/>
+        <Label fx:id="warningLabel" layoutX="137.0" layoutY="471.0" prefHeight="17.0" prefWidth="458.0"
+               text="WARNING: Bla bla bla, bla bla bla." textFill="RED" underline="true" AnchorPane.bottomAnchor="12.0"
+               AnchorPane.leftAnchor="137.0"/>
+        <Label fx:id="descLabel" layoutX="227.0" layoutY="20.0" prefHeight="17.0" prefWidth="523.0" text="[DESCRIPTION]"
+               AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="24.0"/>
+    </children>
+</AnchorPane>
