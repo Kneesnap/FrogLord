@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.patch.argtypes;
 
 import net.highwayfrogs.editor.file.patch.PatchArgument;
+import net.highwayfrogs.editor.file.patch.PatchValue;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -30,5 +31,10 @@ public class IntegerArgument extends PatchArgumentBehavior<Integer> {
     @Override
     protected boolean isValidValueInternal(Integer value, PatchArgument argument) {
         return (value >= argument.getMinimumValue()) && (value <= argument.getMaximumValue());
+    }
+
+    @Override
+    public boolean isTrueValue(PatchValue value) {
+        return value.isInteger() && value.getAsInteger() != 0;
     }
 }

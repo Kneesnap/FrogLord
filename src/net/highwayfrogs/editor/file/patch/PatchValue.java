@@ -1,11 +1,13 @@
 package net.highwayfrogs.editor.file.patch;
 
+import lombok.Getter;
+
 /**
  * Represents a variable value.
  * Created by Kneesnap on 1/15/2020.
  */
 public class PatchValue {
-    private PatchArgumentType type;
+    @Getter private PatchArgumentType type;
     private Object value;
 
     public PatchValue(PatchArgumentType type, Object value) {

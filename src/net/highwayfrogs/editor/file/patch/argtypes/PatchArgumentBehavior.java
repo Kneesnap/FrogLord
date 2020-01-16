@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.patch.argtypes;
 
 import net.highwayfrogs.editor.file.patch.PatchArgument;
+import net.highwayfrogs.editor.file.patch.PatchValue;
 
 /**
  * Base patch argument behavior.
@@ -64,4 +65,11 @@ public abstract class PatchArgumentBehavior<T> {
      * @return isValid
      */
     protected abstract boolean isValidValueInternal(T value, PatchArgument argument);
+
+    /**
+     * Test if a value is a proper true value.
+     * @param value The value to test.
+     * @return isTrueValue
+     */
+    public abstract boolean isTrueValue(PatchValue value);
 }

@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.patch.argtypes;
 
 import net.highwayfrogs.editor.file.patch.PatchArgument;
+import net.highwayfrogs.editor.file.patch.PatchValue;
 
 /**
  * Created by Kneesnap on 1/15/2020.
@@ -29,5 +30,10 @@ public class StringArgument extends PatchArgumentBehavior<String> {
     @Override
     protected boolean isValidValueInternal(String value, PatchArgument argument) {
         return true;
+    }
+
+    @Override
+    public boolean isTrueValue(PatchValue value) {
+        return value.isString() && !value.getAsString().equals("null");
     }
 }

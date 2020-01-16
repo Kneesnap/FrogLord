@@ -122,6 +122,8 @@ public class PatchRuntime {
     }
 
     private void setupVariables() {
+        getPatch().getDefaultVariables().forEach(this.variables::put); // Copy the default variables too.
+
         for (PatchArgument argument : patch.getArguments())
             this.variables.put(argument.getName(), new PatchValue(argument.getType(), argument.getDefaultValue()));
 
