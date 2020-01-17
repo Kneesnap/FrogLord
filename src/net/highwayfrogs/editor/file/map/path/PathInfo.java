@@ -118,7 +118,7 @@ public class PathInfo extends GameObject {
         Path path = getPath(map);
         for (int i = 0; i < path.getSegments().size(); i++) {
             PathSegment segment = path.getSegments().get(i);
-            if (totalDistance >= segment.getLength()) {
+            if (totalDistance > segment.getLength()) {
                 totalDistance -= segment.getLength();
             } else { // Found it!
                 this.segmentId = i;
