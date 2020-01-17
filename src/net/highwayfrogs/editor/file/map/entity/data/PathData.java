@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.map.entity.data;
 
+import javafx.scene.control.TextField;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -34,8 +35,16 @@ public class PathData extends EntityData {
     public void addData(GUIEditorGrid editor) {
         MAPFile map = getParentEntity().getMap();
         editor.addIntegerField("Speed", getPathInfo().getSpeed(), getPathInfo()::setSpeed, null);
-        editor.addIntegerSlider("Distance", getPathInfo().getTotalPathDistance(map),
-                distance -> getPathInfo().setTotalPathDistance(getParentEntity().getMap(), distance), 0, getPathInfo().getPath(map).getTotalLength());
+
+        final float distAlongPath = Utils.fixedPointIntToFloat4Bit(getPathInfo().getTotalPathDistance(map));
+        final float totalPathDist = Utils.fixedPointIntToFloat4Bit(getPathInfo().getPath(map).getTotalLength());
+
+        editor.addFloatField("Travel Distance:", distAlongPath, newValue -> getPathInfo().setTotalPathDistance(getParentEntity().getMap(),
+                Utils.floatToFixedPointInt4Bit(newValue)), newValue -> !((newValue < 0.0f) || (newValue > totalPathDist)));
+
+        TextField txtFieldMaxTravel = editor.addFloatField("(Max. Travel):", totalPathDist);
+        txtFieldMaxTravel.setEditable(false);
+        txtFieldMaxTravel.setDisable(true);
 
         // Motion Data:
         for (PathMotionType type : PathMotionType.values())
