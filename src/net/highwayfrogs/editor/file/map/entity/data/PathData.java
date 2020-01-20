@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.file.map.entity.data;
 
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
+import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -11,6 +13,8 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 import net.highwayfrogs.editor.utils.Utils;
+
+import java.text.DecimalFormat;
 
 /**
  * Base entity data which holds path data.
@@ -39,8 +43,9 @@ public class PathData extends EntityData {
         final float distAlongPath = Utils.fixedPointIntToFloat4Bit(getPathInfo().getTotalPathDistance(map));
         final float totalPathDist = Utils.fixedPointIntToFloat4Bit(getPathInfo().getPath(map).getTotalLength());
 
-        editor.addFloatField("Travel Distance:", distAlongPath, newValue -> getPathInfo().setTotalPathDistance(getParentEntity().getMap(),
-                Utils.floatToFixedPointInt4Bit(newValue)), newValue -> !((newValue < 0.0f) || (newValue > totalPathDist)));
+        Slider travDistSlider = editor.addDoubleSlider("Travel Distance:", distAlongPath, newValue -> getPathInfo().setTotalPathDistance(getParentEntity().getMap(), Utils.floatToFixedPointInt4Bit(newValue.floatValue())), 0.0, totalPathDist);
+        TextField travDistText = editor.addFloatField("", distAlongPath, newValue -> getPathInfo().setTotalPathDistance(getParentEntity().getMap(), Utils.floatToFixedPointInt4Bit(newValue)), newValue -> !((newValue < 0.0f) || (newValue > totalPathDist)));
+        travDistText.textProperty().bindBidirectional(travDistSlider.valueProperty(), new NumberStringConverter(new DecimalFormat("####0.00")));
 
         TextField txtFieldMaxTravel = editor.addFloatField("(Max. Travel):", totalPathDist);
         txtFieldMaxTravel.setEditable(false);
