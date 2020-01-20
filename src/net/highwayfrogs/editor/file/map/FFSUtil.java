@@ -262,7 +262,7 @@ public class FFSUtil {
                     ((MAPPolyFlat) newPolygon).setColor(PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index])));
                 } else if (newPolygon instanceof MAPPolyGouraud) {
                     MAPPolyGouraud polyGouraud = (MAPPolyGouraud) newPolygon;
-                    for (int j = 0; j < polyGouraud.getColors().length; j++, index++)
+                    for (int j = polyGouraud.getColors().length - 1; j >= 0; j--, index++)
                         polyGouraud.getColors()[j] = PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index]));
                 } else if (newPolygon instanceof MAPPolyTexture) {
                     MAPPolyTexture polyTexture = (MAPPolyTexture) newPolygon;
