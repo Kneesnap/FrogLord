@@ -5,28 +5,32 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="316.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="425.0" prefWidth="310.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
     <children>
-        <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" layoutX="-330.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true" x="344.0" AnchorPane.leftAnchor="40.0" AnchorPane.topAnchor="16.0" />
-        <Button layoutX="238.0" layoutY="339.0" mnemonicParsing="false" onAction="#confirmChanges" text="OK" AnchorPane.bottomAnchor="16.0" AnchorPane.rightAnchor="72.0" />
-        <Button layoutX="201.0" layoutY="271.0" mnemonicParsing="false" onAction="#cancelChanges" text="Cancel" AnchorPane.bottomAnchor="16.0" AnchorPane.rightAnchor="16.0" />
-        <Slider fx:id="widthSlider" blockIncrement="1.0" layoutX="108.0" layoutY="282.0" majorTickUnit="10.0" minorTickCount="0" prefWidth="256" AnchorPane.leftAnchor="40.0" AnchorPane.topAnchor="282.0" />
-        <Slider fx:id="heightSlider" blockIncrement="1.0" orientation="VERTICAL" prefHeight="256" AnchorPane.leftAnchor="16.0" AnchorPane.topAnchor="16.0" />
+        <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" layoutX="-330.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true" x="344.0" AnchorPane.bottomAnchor="140.0" AnchorPane.leftAnchor="44.0" />
+        <Button layoutX="212.0" layoutY="394.0" mnemonicParsing="false" onAction="#confirmChanges" text="OK" AnchorPane.bottomAnchor="16.0" />
+        <Button layoutX="251.0" layoutY="405.0" mnemonicParsing="false" onAction="#cancelChanges" text="Cancel" AnchorPane.bottomAnchor="16.0" />
+        <Slider fx:id="widthSlider" blockIncrement="1.0" layoutX="108.0" layoutY="282.0" majorTickUnit="10.0" minorTickCount="0" prefWidth="256" AnchorPane.bottomAnchor="115.0" AnchorPane.leftAnchor="44.0" />
+        <Slider fx:id="heightSlider" blockIncrement="1.0" orientation="VERTICAL" prefHeight="256" AnchorPane.bottomAnchor="140.0" AnchorPane.leftAnchor="16.0" />
         <ColorPicker fx:id="bgColor" editable="true" promptText="Select the overlay color." AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="16.0" />
         <Label fx:id="labelInfoFull" layoutX="16.0" layoutY="306.0" prefHeight="17.0" prefWidth="80.0" text="Label" AnchorPane.bottomAnchor="64.0" AnchorPane.leftAnchor="16.0" />
-        <Label fx:id="labelInfoInGame" alignment="CENTER_RIGHT" layoutX="167.0" layoutY="299.0" prefHeight="17.0" prefWidth="80.0" text="Label" AnchorPane.bottomAnchor="64.0" AnchorPane.rightAnchor="16.0" />
+        <Label fx:id="labelInfoInGame" alignment="CENTER_RIGHT" layoutX="220.0" layoutY="365.0" prefHeight="17.0" prefWidth="80.0" text="Label" AnchorPane.bottomAnchor="64.0" />
         <Label layoutX="16.0" layoutY="299.0" text="Full-Size" AnchorPane.bottomAnchor="80.0" AnchorPane.leftAnchor="16.0">
          <font>
             <Font name="System Bold" size="12.0" />
          </font></Label>
-        <Label alignment="CENTER_RIGHT" layoutX="13.0" layoutY="319.0" text="In-Game" AnchorPane.bottomAnchor="80.0" AnchorPane.rightAnchor="16.0">
+        <Label alignment="CENTER_RIGHT" layoutX="252.0" layoutY="349.0" text="In-Game" AnchorPane.bottomAnchor="80.0">
          <font>
             <Font name="System Bold" size="12.0" />
          </font></Label>
-      <Separator layoutY="349.0" prefWidth="200.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+        <Separator layoutY="349.0" prefWidth="200.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+        <TextField fx:id="textFieldVPad" alignment="CENTER" disable="true" editable="false" layoutX="14.0" layoutY="27.0" prefHeight="25.0" prefWidth="40.0" AnchorPane.bottomAnchor="400.0" AnchorPane.leftAnchor="16.0" />
+        <TextField fx:id="textFieldUPad" alignment="CENTER" disable="true" editable="false" layoutX="152.0" layoutY="337.0" prefHeight="25.0" prefWidth="40.0" AnchorPane.bottomAnchor="84.0" />
+        <Label layoutX="71.0" layoutY="25.0" text="(Use the sliders to adjust the padding)" AnchorPane.bottomAnchor="405.0" />
     </children>
 </AnchorPane>
