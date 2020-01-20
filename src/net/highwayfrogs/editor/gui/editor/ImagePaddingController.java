@@ -4,6 +4,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ColorPicker;
+import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
@@ -28,6 +29,8 @@ public class ImagePaddingController implements Initializable {
     @FXML private Slider widthSlider;
     @FXML private Slider heightSlider;
     @FXML private ColorPicker bgColor;
+    @FXML private Label labelInfoFull;
+    @FXML private Label labelInfoInGame;
 
     private BufferedImage appliedImage;
     private VLOController controller;
@@ -70,6 +73,9 @@ public class ImagePaddingController implements Initializable {
         int xClip = (imgWidth - (int) this.widthSlider.getValue()) / 2;
         int yClip = (imgHeight - (int) this.heightSlider.getValue()) / 2;
         int secondY = image.getHeight() - yClip;
+
+        this.labelInfoFull.setText(imgWidth + "x" + imgHeight);
+        this.labelInfoInGame.setText((imgWidth - (xClip * 2)) + "x" + (imgHeight - (yClip * 2)));
 
         graphics.fillRect(0, 0, imgWidth, yClip);
         graphics.fillRect(0, secondY, imgWidth, yClip);
