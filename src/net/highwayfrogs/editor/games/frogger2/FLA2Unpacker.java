@@ -1,8 +1,8 @@
-package net.highwayfrogs.editor.file.packers;
+package net.highwayfrogs.editor.games.frogger2;
 
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.system.ByteArrayWrapper;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Supports FLA2 unpacking, used in Frogger 2.

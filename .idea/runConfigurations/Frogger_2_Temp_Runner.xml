@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Frogger 2 Temp Runner" type="Application" factoryName="Application" singleton="false">
+    <option name="MAIN_CLASS_NAME" value="net.highwayfrogs.editor.games.frogger2.Frogger2Main" />
+    <module name="FrogLord" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
