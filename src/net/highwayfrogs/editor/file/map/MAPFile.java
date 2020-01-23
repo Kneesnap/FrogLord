@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
-import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
@@ -769,7 +768,7 @@ public class MAPFile extends GameFile {
             return;
         int realSize = (endPointer - lastEntity.getLoadScriptDataPointer());
         if (realSize != lastEntity.getLoadReadLength())
-            System.out.println("[INVALID/" + MWDFile.CURRENT_FILE_NAME + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormEntry().getFormName() + ", " + lastEntity.getFormEntry().getEntityName());
+            System.out.println("[INVALID/" + getFileEntry().getDisplayName() + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormEntry().getFormName() + ", " + lastEntity.getFormEntry().getEntityName());
     }
 
     /**
