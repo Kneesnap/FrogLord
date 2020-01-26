@@ -135,6 +135,17 @@ public class FFSUtil {
         // gt3 show v1 v2 v3 flags texture color1 color2 color3 uv1 uv2 uv3
         // gt4 show v1 v2 v3 v4 flags texture color1 color2 color3 color4 uv1 uv2 uv3 uv4
 
+        // Map Group Data.
+        pw.write("group-count-x-z " + map.getGroupCount() + " " + map.getGroupXCount() + " " + map.getGroupZCount() + Constants.NEWLINE);
+        pw.write("group-size-x-z " + map.getGroupXSize() + " " + map.getGroupZSize() + Constants.NEWLINE);
+        pw.write(Constants.NEWLINE);
+
+        // Map Base Data.
+        pw.write("base-grid-x-z " + map.getBaseGridX() + " " + map.getBaseGridZ() + Constants.NEWLINE);
+        pw.write("base-point-world-x-z " + map.getBasePointWorldX() + " " + map.getBasePointWorldZ() + Constants.NEWLINE);
+        pw.write("base-tile-x-z " + map.getBaseXTile() + " " + map.getBaseZTile() + Constants.NEWLINE);
+        pw.write(Constants.NEWLINE);
+
         // Grid Data.
         pw.write("grid-size " + map.getGridXCount() + " " + map.getGridZCount() + Constants.NEWLINE);
         for (GridStack stack : map.getGridStacks()) {
@@ -162,6 +173,7 @@ public class FFSUtil {
         }
         pw.write(Constants.NEWLINE);
 
+        // Close the file stream.
         pw.close();
         System.out.println("Exported " + map.getFileEntry().getDisplayName() + " to " + outputDir.getName() + File.separator + ".");
     }
@@ -204,6 +216,32 @@ public class FFSUtil {
                 // Read vertex.
                 // [AE] - we need to swap the y-/z-axes and then negate the y-axis on import back into FrogLord
                 map.getVertexes().add(new SVector(Float.parseFloat(args[1]), -Float.parseFloat(args[3]), Float.parseFloat(args[2])));
+            } else if (action.equalsIgnoreCase("group-count-x-z")) {
+                short[] groupCount = new short[3];
+                groupCount[0] = Short.parseShort(args[1]);
+                groupCount[1] = Short.parseShort(args[2]);
+                groupCount[2] = Short.parseShort(args[3]);
+                System.out.println("group-count-x-z " + groupCount[0] + " " + groupCount[1] + " " + groupCount[2]);
+            } else if (action.equalsIgnoreCase("group-size-x-z")) {
+                short[] groupSize = new short[2];
+                groupSize[0] = Short.parseShort(args[1]);
+                groupSize[1] = Short.parseShort(args[2]);
+                System.out.println("group-size-x-z " + groupSize[0] + " " + groupSize[1]);
+            } else if (action.equalsIgnoreCase("base-grid-x-z")) {
+                short[] baseGrid = new short[2];
+                baseGrid[0] = Short.parseShort(args[1]);
+                baseGrid[1] = Short.parseShort(args[2]);
+                System.out.println("base-grid-x-z " + baseGrid[0] + " " + baseGrid[1]);
+            } else if (action.equalsIgnoreCase("base-point-world-x-z")) {
+                short[] basePointWorld = new short[2];
+                basePointWorld[0] = Short.parseShort(args[1]);
+                basePointWorld[1] = Short.parseShort(args[2]);
+                System.out.println("base-point-world-x-z " + basePointWorld[0] + " " + basePointWorld[1]);
+            } else if (action.equalsIgnoreCase("base-tile-x-z")) {
+                short[] baseTile = new short[2];
+                baseTile[0] = Short.parseShort(args[1]);
+                baseTile[1] = Short.parseShort(args[2]);
+                System.out.println("base-tile-x-z " + baseTile[0] + " " + baseTile[1]);
             } else if (action.equalsIgnoreCase("grid-size")) {
                 map.setGridXCount(Short.parseShort(args[1]));
                 map.setGridZCount(Short.parseShort(args[2]));
@@ -275,7 +313,11 @@ public class FFSUtil {
 
                     for (int j = polyTexture.getUvs().length - 1; j >= 0; j--, index++) {
                         String[] split = args[index].split(":");
-                        polyTexture.getUvs()[j] = new ByteUV(Float.parseFloat(split[0]), Float.parseFloat(split[1]));
+
+                        float u = Float.parseFloat(split[0]);
+                        float v = Float.parseFloat(split[1]);
+
+                        polyTexture.getUvs()[j] = new ByteUV(u, v);
                     }
                 } else {
                     throw new RuntimeException("Unknown polygon-type: " + newPolygon + ", " + polyType);
