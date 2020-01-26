@@ -191,6 +191,17 @@ class LoadFfsOperator(bpy.types.Operator):
         # Load all of the remaining data.
         gridX = 0
         gridZ = 0
+        groupCount = 0
+        groupXCount = 0
+        groupZCount = 0
+        groupXSize = 0
+        groupZSize = 0
+        baseGridX = 0
+        baseGridZ = 0
+        basePointWorldX = 0
+        basePointWorldZ = 0
+        baseXTile = 0
+        baseZTile = 0
         index = 0
         mesh = bpy.data.meshes["LevelMesh"]
         uv_layer = mesh.uv_layers.new() if not mesh.uv_layers else mesh.uv_layers.active
@@ -206,13 +217,28 @@ class LoadFfsOperator(bpy.types.Operator):
             if action == "grid-size": # grid-size xSize zSize
                 mesh["gridX"] = gridX = int(split[1])
                 mesh["gridZ"] = gridZ = int(split[2])
+            elif action == "group-count-x-z": # group-count-x-z groupCount groupXCount groupZCount
+                mesh["groupCount"] = groupCount = int(split[1])
+                mesh["groupXCount"] = groupXCount = int(split[2])
+                mesh["groupZCount"] = groupZCount = int(split[3])
+            elif action == "group-size-x-z": # group-size-x-z groupXSize groupZSize
+                mesh["groupXSize"] = groupZSize = int(split[1])
+                mesh["groupZSize"] = groupZSize = int(split[2])
+            elif action == "base-grid-x-z": # base-grid-x-z baseGridX baseGridZ
+                mesh["baseGridX"] = baseGridX = int(split[1])
+                mesh["baseGridZ"] = baseGridZ = int(split[2])
+            elif action == "base-point-world-x-z": # base-point-world-x-z basePointWorldX basePointWorldZ
+                mesh["basePointWorldX"] = basePointWorldX = int(split[1])
+                mesh["basePointWorldZ"] = basePointWorldZ = int(split[2])
+            elif action == "base-tile-x-z": # base-tile-x-z baseXTile baseZTile
+                mesh["baseXTile"] = baseXTile = int(split[1])
+                mesh["baseZTile"] = baseZTile = int(split[2])
             elif action == "f3": # f3 show v1 v2 v3 color
                 poly = mesh.polygons[index]
                 poly.hide = (split[1] == "hide")
                 color = int_to_rgb_color(int(split[5]))
                 for i in range(0, poly.loop_total):
                     color_layer.data[poly.loop_start + i].color = color
-
                 index += 1
             elif action == "f4": # f4 show v1 v2 v3 v4 color
                 poly = mesh.polygons[index]
@@ -350,7 +376,6 @@ class LoadFfsOperator(bpy.types.Operator):
                 poly_index += 1
             elif action == "f3" or action == "f4" or action == "g3" or action == "g4":
                 poly_index += 1
-
 
         bm.to_mesh(mesh)
         bm.free()
