@@ -38,7 +38,7 @@ public class MAPPolygonData {
 
     private static final String[] SINGLE_COLOR_NAME = {"Color"};
     private static final String[] TRI_COLOR_NAMES = {"Corner 1", "Corner 2", "Corner 3"};
-    private static final String[] QUAD_COLOR_NAMES = {"Top Left", "Bottom Left", "Top Right", "Bottom Right"};
+    private static final String[] QUAD_COLOR_NAMES = {"Top Left", "Top Right", "Bottom Right", "Bottom Left"};
     private static final String[][] COLOR_BANK = {SINGLE_COLOR_NAME, null, TRI_COLOR_NAMES, QUAD_COLOR_NAMES};
     private static final ImageFilterSettings SHOW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true);
 

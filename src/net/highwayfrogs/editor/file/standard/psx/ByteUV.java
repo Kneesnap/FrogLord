@@ -80,16 +80,22 @@ public class ByteUV extends GameObject {
      * @param editor The editor to setup under.
      */
     public void setupEditor(String label, GUIEditorGrid editor) {
-        editor.addTextField(label, getU() + SPLIT_CHAR + getV(), newStr -> {
+        editor.addTextField(label, getFloatU() + SPLIT_CHAR + getFloatV(), newStr -> {
             if (!newStr.contains(SPLIT_CHAR))
                 return false;
 
             String[] split = newStr.split(SPLIT_CHAR);
-            if (split.length != 2 || !Utils.isUnsignedByte(split[0]) || !Utils.isUnsignedByte(split[1]))
+            if (split.length != 2)
                 return false;
 
-            this.u = Utils.unsignedShortToByte(Short.parseShort(split[0]));
-            this.v = Utils.unsignedShortToByte(Short.parseShort(split[1]));
+            float u = Float.parseFloat(split[0]);
+            float v = Float.parseFloat(split[1]);
+
+            if ((u < 0.0) || (u > 1.0) || (v < 0.0) || (v > 1.0))
+                return false;
+
+            this.u = Utils.floatToByte(u);
+            this.v = Utils.floatToByte(v);
             return true;
         });
     }

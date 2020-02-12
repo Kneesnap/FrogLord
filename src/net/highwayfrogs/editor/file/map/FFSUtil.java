@@ -67,33 +67,52 @@ public class FFSUtil {
 
         @Cleanup PrintWriter pw = new PrintWriter(new File(outputDir, Utils.stripExtension(map.getFileEntry().getDisplayName()) + ".ffs"));
 
+        // Grab polygons and vertices
         List<MAPPolygon> polygons = map.getAllPolygonsSafe();
+        List<SVector> allVertices = map.getVertexes();
 
         // Write Vertices.
-        for (SVector vec : map.getVertexes())
-            pw.write(vec.toOBJString() + Constants.NEWLINE);
+        for (SVector vec : allVertices) {
+            final float x = vec.getFloatX();
+            final float y = vec.getFloatY();
+            final float z = vec.getFloatZ();
+            // [AE] - we need to negate the y-axis and then swap the y-/z-axes on export to Blender
+            pw.write("v " + x + " " + z + " " + -y + Constants.NEWLINE);
+        }
         pw.write(Constants.NEWLINE);
 
         // Faces:
         for (MAPPolygon polygon : polygons) {
             pw.write(polygon.getType().name().toLowerCase() + " " + (polygon.isAllowDisplay() ? "show" : "hide") + " ");
-            for (int i = 0; i < polygon.getVerticeCount(); i++)
+
+            // [AE] Note face winding (vertex index ordering)
+            for (int i = polygon.getVerticeCount() - 1; i >= 0; i--) {
                 pw.write(polygon.getVertices()[i] + " ");
+            }
 
             if (polygon instanceof MAPPolyFlat) {
                 pw.write(String.valueOf(((MAPPolyFlat) polygon).getColor().toRGB()));
             } else if (polygon instanceof MAPPolyGouraud) {
                 MAPPolyGouraud polyGouraud = (MAPPolyGouraud) polygon;
-                for (int i = 0; i < polyGouraud.getColors().length; i++)
-                    pw.write((i > 0 ? " " : "") + polyGouraud.getColors()[i].toRGB());
+                for (int i = polyGouraud.getColors().length - 1; i >= 0; i--)
+                    pw.write((i != polyGouraud.getColors().length - 1 ? " " : "") + polyGouraud.getColors()[i].toRGB());
             } else if (polygon instanceof MAPPolyTexture) {
                 MAPPolyTexture polyTex = (MAPPolyTexture) polygon;
                 pw.write(polyTex.getFlags() + " ");
                 pw.write(String.valueOf(remapTable.get(polyTex.getTextureId())));
-                for (PSXColorVector color : polyTex.getVectors())
+
+                for (int i = polyTex.getVectors().length - 1; i >= 0; i--) {
+                    PSXColorVector color = polyTex.getVectors()[i];
                     pw.write(" " + color.toRGB());
-                for (ByteUV uv : polyTex.getUvs())
-                    pw.write(" " + uv.getFloatU() + ":" + uv.getFloatV());
+                }
+
+                for (int i = polyTex.getUvs().length - 1; i >= 0; i--) {
+                    ByteUV uv = polyTex.getUvs()[i];
+                    float u = uv.getFloatU();
+                    float v = uv.getFloatV();
+
+                    pw.write(" " + u + ":" + v);
+                }
             } else {
                 throw new RuntimeException("Unknown polygon-type: " + polygon);
             }
@@ -115,6 +134,17 @@ public class FFSUtil {
         // ft4 show v1 v2 v3 v4 flags texture color uv1 uv2 uv3 uv4
         // gt3 show v1 v2 v3 flags texture color1 color2 color3 uv1 uv2 uv3
         // gt4 show v1 v2 v3 v4 flags texture color1 color2 color3 color4 uv1 uv2 uv3 uv4
+
+        // Map Group Data.
+        pw.write("group-count-x-z " + map.getGroupCount() + " " + map.getGroupXCount() + " " + map.getGroupZCount() + Constants.NEWLINE);
+        pw.write("group-size-x-z " + map.getGroupXSize() + " " + map.getGroupZSize() + Constants.NEWLINE);
+        pw.write(Constants.NEWLINE);
+
+        // Map Base Data.
+        pw.write("base-grid-x-z " + map.getBaseGridX() + " " + map.getBaseGridZ() + Constants.NEWLINE);
+        pw.write("base-point-world-x-z " + map.getBasePointWorldX() + " " + map.getBasePointWorldZ() + Constants.NEWLINE);
+        pw.write("base-tile-x-z " + map.getBaseXTile() + " " + map.getBaseZTile() + Constants.NEWLINE);
+        pw.write(Constants.NEWLINE);
 
         // Grid Data.
         pw.write("grid-size " + map.getGridXCount() + " " + map.getGridZCount() + Constants.NEWLINE);
@@ -143,6 +173,7 @@ public class FFSUtil {
         }
         pw.write(Constants.NEWLINE);
 
+        // Close the file stream.
         pw.close();
         System.out.println("Exported " + map.getFileEntry().getDisplayName() + " to " + outputDir.getName() + File.separator + ".");
     }
@@ -181,8 +212,36 @@ public class FFSUtil {
                 continue;
 
             String action = args[0];
-            if (action.equalsIgnoreCase("v")) { // Vertex.
-                map.getVertexes().add(new SVector(-Float.parseFloat(args[1]), -Float.parseFloat(args[2]), Float.parseFloat(args[3])));
+            if (action.equalsIgnoreCase("v")) {
+                // Read vertex.
+                // [AE] - we need to swap the y-/z-axes and then negate the y-axis on import back into FrogLord
+                map.getVertexes().add(new SVector(Float.parseFloat(args[1]), -Float.parseFloat(args[3]), Float.parseFloat(args[2])));
+            } else if (action.equalsIgnoreCase("group-count-x-z")) {
+                short[] groupCount = new short[3];
+                groupCount[0] = Short.parseShort(args[1]);
+                groupCount[1] = Short.parseShort(args[2]);
+                groupCount[2] = Short.parseShort(args[3]);
+                System.out.println("group-count-x-z " + groupCount[0] + " " + groupCount[1] + " " + groupCount[2]);
+            } else if (action.equalsIgnoreCase("group-size-x-z")) {
+                short[] groupSize = new short[2];
+                groupSize[0] = Short.parseShort(args[1]);
+                groupSize[1] = Short.parseShort(args[2]);
+                System.out.println("group-size-x-z " + groupSize[0] + " " + groupSize[1]);
+            } else if (action.equalsIgnoreCase("base-grid-x-z")) {
+                short[] baseGrid = new short[2];
+                baseGrid[0] = Short.parseShort(args[1]);
+                baseGrid[1] = Short.parseShort(args[2]);
+                System.out.println("base-grid-x-z " + baseGrid[0] + " " + baseGrid[1]);
+            } else if (action.equalsIgnoreCase("base-point-world-x-z")) {
+                short[] basePointWorld = new short[2];
+                basePointWorld[0] = Short.parseShort(args[1]);
+                basePointWorld[1] = Short.parseShort(args[2]);
+                System.out.println("base-point-world-x-z " + basePointWorld[0] + " " + basePointWorld[1]);
+            } else if (action.equalsIgnoreCase("base-tile-x-z")) {
+                short[] baseTile = new short[2];
+                baseTile[0] = Short.parseShort(args[1]);
+                baseTile[1] = Short.parseShort(args[2]);
+                System.out.println("base-tile-x-z " + baseTile[0] + " " + baseTile[1]);
             } else if (action.equalsIgnoreCase("grid-size")) {
                 map.setGridXCount(Short.parseShort(args[1]));
                 map.setGridZCount(Short.parseShort(args[2]));
@@ -231,25 +290,34 @@ public class FFSUtil {
                 newPolygon.setAllowDisplay(args[1].equalsIgnoreCase("show"));
 
                 int index = 2;
-                for (int j = 0; j < newPolygon.getVerticeCount(); j++, index++)
+
+                // [AE] Note face winding (vertex index ordering)
+                for (int j = newPolygon.getVerticeCount() - 1; j >= 0; j--, index++) {
                     newPolygon.getVertices()[j] = Integer.parseInt(args[index]);
+                }
 
                 if (newPolygon instanceof MAPPolyFlat) {
                     ((MAPPolyFlat) newPolygon).setColor(PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index])));
                 } else if (newPolygon instanceof MAPPolyGouraud) {
                     MAPPolyGouraud polyGouraud = (MAPPolyGouraud) newPolygon;
-                    for (int j = 0; j < polyGouraud.getColors().length; j++, index++)
+                    for (int j = polyGouraud.getColors().length - 1; j >= 0; j--, index++)
                         polyGouraud.getColors()[j] = PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index]));
                 } else if (newPolygon instanceof MAPPolyTexture) {
                     MAPPolyTexture polyTexture = (MAPPolyTexture) newPolygon;
                     polyTexture.setFlags(Short.parseShort(args[index++]));
                     polyTexture.setTextureId((short) remapTable.indexOf(Short.parseShort(args[index++])));
-                    for (int j = 0; j < polyTexture.getVectors().length; j++, index++)
-                        polyTexture.getVectors()[j] = PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index]));
 
-                    for (int j = 0; j < polyTexture.getUvs().length; j++, index++) {
+                    for (int j = polyTexture.getVectors().length - 1; j >= 0; j--, index++) {
+                        polyTexture.getVectors()[j] = PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index]));
+                    }
+
+                    for (int j = polyTexture.getUvs().length - 1; j >= 0; j--, index++) {
                         String[] split = args[index].split(":");
-                        polyTexture.getUvs()[j] = new ByteUV(Float.parseFloat(split[0]), Float.parseFloat(split[1]));
+
+                        float u = Float.parseFloat(split[0]);
+                        float v = Float.parseFloat(split[1]);
+
+                        polyTexture.getUvs()[j] = new ByteUV(u, v);
                     }
                 } else {
                     throw new RuntimeException("Unknown polygon-type: " + newPolygon + ", " + polyType);

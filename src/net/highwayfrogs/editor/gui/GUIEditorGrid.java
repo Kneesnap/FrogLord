@@ -660,9 +660,9 @@ public class GUIEditorGrid {
         IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
 
         addFloatVector("Position", vec, () -> {
-            matrix.getTransform()[0] = vec.getFloatX() >= 0 ? vec.getX() >> 16 : vec.getX(); // Update matrix. Positive.
-            matrix.getTransform()[1] = vec.getY(); // No change.
-            matrix.getTransform()[2] = vec.getFloatZ() >= 0 ? vec.getZ() : ((vec.getZ() >> 16) | 0xFFFF0000); // Negative.
+            matrix.getTransform()[0] = vec.getX();
+            matrix.getTransform()[1] = vec.getY();
+            matrix.getTransform()[2] = vec.getZ();
             if (onPositionUpdate != null)
                 onPositionUpdate.run(); // Run position hook.
         }, controller, 20);
