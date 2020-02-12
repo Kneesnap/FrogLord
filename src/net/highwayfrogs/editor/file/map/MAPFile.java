@@ -177,6 +177,24 @@ public class MAPFile extends GameFile {
     }
 
     /**
+     * Gets the x origin position for the collision grid
+     * Fixed point 4 bits.
+     * @return baseGridX
+     */
+    public int getGridBaseX() {
+        return (-(getGridXSize() * getGridXCount()) >> 1);
+    }
+
+    /**
+     * Gets the z origin position for the collision grid
+     * Fixed point 4 bits.
+     * @return baseGridZ
+     */
+    public int getGridBaseZ() {
+        return (-(getGridZSize() * getGridZCount()) >> 1);
+    }
+
+    /**
      * Test if a vertice is used.
      * @param vertice The vertice to test.
      * @return isUsed

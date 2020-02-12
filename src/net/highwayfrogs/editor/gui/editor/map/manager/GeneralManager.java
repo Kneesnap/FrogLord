@@ -29,6 +29,7 @@ import net.highwayfrogs.editor.utils.Utils;
 public class GeneralManager extends MapManager {
     private GUIEditorGrid generalEditor;
     private boolean showGroupBounds;
+    private boolean showCollisionGrid;
     private Vector showPosition;
 
     private static final String GENERIC_POS_LIST = "genericPositionList";
@@ -43,6 +44,7 @@ public class GeneralManager extends MapManager {
     public void onSetup() {
         super.onSetup();
         updateGroupView();
+        updateGridView();
     }
 
     @Override
@@ -86,10 +88,12 @@ public class GeneralManager extends MapManager {
         generalEditor.addShortField("Base Point xTile", map.getBaseXTile(), newVal -> {
             getMap().setBaseXTile(newVal);
             updateGroupView();
+            updateGridView();
         }, null);
         generalEditor.addShortField("Base Point zTile", map.getBaseZTile(), newVal -> {
             getMap().setBaseZTile(newVal);
             updateGroupView();
+            updateGridView();
         }, null);
         generalEditor.addShortField("Group X Count", map.getGroupXCount(), newVal -> {
             getMap().setGroupXCount(newVal);
@@ -100,6 +104,7 @@ public class GeneralManager extends MapManager {
             updateGroupView();
         }, null);
         generalEditor.addCheckBox("Show Group Bounds", isShowGroupBounds(), this::setShowGroupBounds);
+        generalEditor.addCheckBox("Show Collision Grid", isShowCollisionGrid(), this::setShowCollisionGrid);
     }
 
     /**
@@ -123,12 +128,40 @@ public class GeneralManager extends MapManager {
     }
 
     /**
+     * Update the group display.
+     */
+    public void updateGridView() {
+        getRenderManager().addMissingDisplayList("gridOutline");
+        getRenderManager().clearDisplayList("gridOutline");
+        if (!isShowCollisionGrid())
+            return;
+
+        float baseX = Utils.fixedPointIntToFloatNBits(getMap().getBaseGridX(), 4);
+        float baseZ = Utils.fixedPointIntToFloatNBits(getMap().getBaseGridZ(), 4);
+        float xSize = Utils.fixedPointShortToFloat4Bit(getMap().getGridXSize());
+        float zSize = Utils.fixedPointShortToFloat4Bit(getMap().getGridZSize());
+        PhongMaterial material = Utils.makeSpecialMaterial(Color.RED);
+        for (int x = 0; x < getMap().getGridXCount(); x++)
+            for (int z = 0; z < getMap().getGridZCount(); z++)
+                getRenderManager().addBoundingBoxFromMinMax("gridOutline", baseX + (x * xSize), 0, baseZ + (z * zSize), baseX + ((x + 1) * xSize), 0, baseZ + ((z + 1) * zSize), material, true);
+    }
+
+    /**
      * Sets whether or not to show group bounds.
      * @param newState The new show state.
      */
     public void setShowGroupBounds(boolean newState) {
         this.showGroupBounds = newState;
         updateGroupView();
+    }
+
+    /**
+     * Sets whether or not to show the collision grid.
+     * @param newState The new show state.
+     */
+    public void setShowCollisionGrid(boolean newState) {
+        this.showCollisionGrid = newState;
+        updateGridView();
     }
 
     /**
