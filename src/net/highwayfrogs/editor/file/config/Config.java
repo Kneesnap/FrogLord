@@ -38,7 +38,7 @@ public class Config {
         boolean readingText = false;
 
         for (String line : lines) {
-            line = line.split(COMMENT_SPLIT)[0]; // Remove comments.
+            line = line.split(COMMENT_SPLIT)[0].trim(); // Remove comments.
 
             if (line.isEmpty())
                 continue; // Skip empty lines.
