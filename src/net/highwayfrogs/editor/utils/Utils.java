@@ -1615,4 +1615,16 @@ public class Utils {
 
         return prependStr.toString() + number;
     }
+
+    /**
+     * A clamp method that clamps down on negative numbers, and up on positive numbers.
+     * @param value The value to clamp.
+     * @return clampedCeil
+     */
+    public static int ceilNegative(double value) {
+        if ((int) value == value)
+            return (int) value;
+
+        return (value > 0) ? ((int) value + 1) : ((int) value - 1);
+    }
 }

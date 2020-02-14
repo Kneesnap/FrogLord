@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.StartRotation;
+import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
@@ -140,10 +141,15 @@ public class GeneralManager extends MapManager {
         float baseZ = Utils.fixedPointIntToFloatNBits(getMap().getBaseGridZ(), 4);
         float xSize = Utils.fixedPointShortToFloat4Bit(getMap().getGridXSize());
         float zSize = Utils.fixedPointShortToFloat4Bit(getMap().getGridZSize());
-        PhongMaterial material = Utils.makeSpecialMaterial(Color.RED);
-        for (int x = 0; x < getMap().getGridXCount(); x++)
-            for (int z = 0; z < getMap().getGridZCount(); z++)
-                getRenderManager().addBoundingBoxFromMinMax("gridOutline", baseX + (x * xSize), 0, baseZ + (z * zSize), baseX + ((x + 1) * xSize), 0, baseZ + ((z + 1) * zSize), material, true);
+        PhongMaterial gridMaterial = Utils.makeSpecialMaterial(Color.RED);
+        PhongMaterial heightMaterial = Utils.makeSpecialMaterial(Color.GREEN);
+        for (int x = 0; x < getMap().getGridXCount(); x++) {
+            for (int z = 0; z < getMap().getGridZCount(); z++) {
+                getRenderManager().addBoundingBoxFromMinMax("gridOutline", baseX + (x * xSize), 0, baseZ + (z * zSize), baseX + ((x + 1) * xSize), 0, baseZ + ((z + 1) * zSize), gridMaterial, true);
+                GridStack stack = getMap().getGridStack(x, z);
+                getRenderManager().addBoundingBoxFromMinMax("gridOutline", baseX + (x * xSize), -1 - (3 * stack.getAverageHeight()), baseZ + (z * zSize), baseX + ((x + 1) * xSize), -1 - (3 * stack.getAverageHeight()), baseZ + ((z + 1) * zSize), heightMaterial, true);
+            }
+        }
     }
 
     /**

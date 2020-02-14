@@ -1,12 +1,11 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
-import javafx.scene.shape.CullFace;
-import javafx.scene.shape.DrawMode;
-import javafx.scene.shape.Sphere;
+import javafx.scene.shape.*;
+import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
 
@@ -176,6 +175,43 @@ public class RenderManager {
         } else {
             throw new RuntimeException("RenderManager::removeBoundingBox() - " + listID + " does not exist!");
         }
+    }
+
+    /**
+     * Adds a cylindrical representation of a 3D line.
+     * @param listID   The display list ID.
+     * @param x0       The x-coordinate defining the start of the line segment.
+     * @param y0       The y-coordinate defining the start of the line segment.
+     * @param z0       The z-coordinate defining the start of the line segment.
+     * @param x1       The x-coordinate defining the end of the line segment.
+     * @param y1       The y-coordinate defining the end of the line segment.
+     * @param z1       The z-coordinate defining the end of the line segment.
+     * @param radius   The radius of the cylinder (effectively the 'width' of the line).
+     * @param material The material used to render the line segment.
+     * @return The newly created/added cylinder (cylinder primitive only!)
+     */
+    public Cylinder addLine(String listID, double x0, double y0, double z0, double x1, double y1, double z1, double radius, PhongMaterial material) {
+        final Point3D yAxis = new Point3D(0.0, 1.0, 0.0);
+        final Point3D p0 = new Point3D(x0, y0, z0);
+        final Point3D p1 = new Point3D(x1, y1, z1);
+        final Point3D diff = p1.subtract(p0);
+        final double length = diff.magnitude();
+
+        final Point3D mid = p1.midpoint(p0);
+        final Translate moveToMidpoint = new Translate(mid.getX(), mid.getY(), mid.getZ());
+
+        final Point3D axisOfRotation = diff.crossProduct(yAxis);
+        final double angle = Math.acos(diff.normalize().dotProduct(yAxis));
+        final Rotate rotateAroundCenter = new Rotate(-Math.toDegrees(angle), axisOfRotation);
+
+        Cylinder line = new Cylinder(radius, length, 3);
+        line.setMaterial(material);
+        line.setDrawMode(DrawMode.FILL);
+        line.setCullFace(CullFace.BACK);
+        line.setMouseTransparent(false);
+        line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
+        addNode(listID, line);
+        return line;
     }
 
     /**

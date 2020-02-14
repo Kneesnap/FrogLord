@@ -5,9 +5,15 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.WADFile;
+import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
+import net.highwayfrogs.editor.file.config.exe.MapBook;
+import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -146,6 +152,35 @@ public class FormEntry extends GameObject {
         } else {
             this.flags ^= flag.getFlag();
         }
+    }
+
+    /**
+     * Gets the MOF for this particular form.
+     */
+    public WADEntry getModel(MAPFile mapFile) {
+        if (testFlag(FormLibFlag.NO_MODEL))
+            return null;
+
+        boolean isGeneralTheme = getTheme() == MAPTheme.GENERAL;
+        ThemeBook themeBook = getConfig().getThemeBook(getTheme());
+
+        WADFile wadFile = null;
+        if (isGeneralTheme) {
+            wadFile = themeBook.getWAD(mapFile);
+        } else {
+            MapBook mapBook = mapFile.getFileEntry().getMapBook();
+            if (mapBook != null)
+                wadFile = mapBook.getWad(mapFile);
+        }
+
+        int wadIndex = getWadIndex();
+        if (wadFile != null && wadFile.getFiles().size() > wadIndex && wadIndex >= 0) { // Test if there's an associated WAD.
+            WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
+            if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder)
+                return wadEntry;
+        }
+
+        return null;
     }
 
     @Getter

@@ -44,4 +44,20 @@ public class MOFBBox extends GameObject {
                 return false;
         return true;
     }
+
+    public float getMinX() {
+        return this.vertices[0].getFloatX();
+    }
+
+    public float getMaxX() {
+        return this.vertices[7].getFloatX();
+    }
+
+    public float getMinZ() {
+        return this.vertices[0].getFloatZ();
+    }
+
+    public float getMaxZ() {
+        return this.vertices[7].getFloatZ();
+    }
 }

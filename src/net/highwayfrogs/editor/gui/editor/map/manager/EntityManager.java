@@ -7,15 +7,10 @@ import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import net.highwayfrogs.editor.file.GameFile;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
-import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry.FormLibFlag;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.entity.Entity.EntityFlag;
 import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
@@ -322,40 +317,21 @@ public class EntityManager extends MapManager {
             return; // The entity form has not changed, so we shouldn't change the model.
 
         this.entityTypes.set(entityIndex, newForm);
-        boolean hasModel = !newForm.testFlag(FormLibFlag.NO_MODEL);
 
-        if (hasModel) {
-            boolean isGeneralTheme = newForm.getTheme() == MAPTheme.GENERAL;
-            ThemeBook themeBook = getMap().getConfig().getThemeBook(newForm.getTheme());
+        WADEntry modelEntry = entity.getFormEntry().getModel(getMap());
+        if (modelEntry != null) {
+            MOFHolder holder = (MOFHolder) modelEntry.getFile();
 
-            WADFile wadFile = null;
-            if (isGeneralTheme) {
-                wadFile = themeBook.getWAD(getMap());
-            } else {
-                MapBook mapBook = getMap().getFileEntry().getMapBook();
-                if (mapBook != null)
-                    wadFile = mapBook.getWad(getMap());
-            }
+            // Setup VLO.
+            VLOArchive vlo = getMap().getConfig().getForcedVLO(modelEntry.getDisplayName());
+            if (vlo == null)
+                vlo = newForm.getConfig().getThemeBook(newForm.getTheme()).getVLO(getMap());
+            holder.setVloFile(vlo);
 
-            int wadIndex = newForm.getWadIndex();
-            if (wadFile != null && wadFile.getFiles().size() > wadIndex && wadIndex >= 0) { // Test if there's an associated WAD.
-                WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
-
-                if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder) {
-                    MOFHolder holder = (MOFHolder) wadEntry.getFile();
-
-                    // Setup VLO.
-                    VLOArchive vlo = getMap().getConfig().getForcedVLO(wadEntry.getDisplayName());
-                    if (vlo == null)
-                        vlo = themeBook.getVLO(getMap());
-                    holder.setVloFile(vlo);
-
-                    // Update MeshView.
-                    entityMesh.setMesh(holder.getMofMesh());
-                    entityMesh.setMaterial(holder.getTextureMap().getPhongMaterial());
-                    return;
-                }
-            }
+            // Update MeshView.
+            entityMesh.setMesh(holder.getMofMesh());
+            entityMesh.setMaterial(holder.getTextureMap().getPhongMaterial());
+            return;
         }
 
         // Couldn't find a model to use, so instead we'll display as a 2D sprite.

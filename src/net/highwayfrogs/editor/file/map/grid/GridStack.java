@@ -37,7 +37,7 @@ public class GridStack extends GameObject {
     }
 
     /**
-     * Gets the stack height
+     * Gets the stack height.
      * @return height
      */
     public int getHeight() {

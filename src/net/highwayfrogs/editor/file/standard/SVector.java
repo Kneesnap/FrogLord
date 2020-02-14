@@ -35,6 +35,12 @@ public class SVector extends GameObject implements Vector {
         this((short) clone.getX(), (short) clone.getY(), (short) clone.getZ());
     }
 
+    public SVector(int x, int y, int z) {
+        setX((short) x);
+        setX((short) y);
+        setX((short) z);
+    }
+
     public SVector(float x, float y, float z) {
         setFloatX(x);
         setFloatY(y);
@@ -241,5 +247,16 @@ public class SVector extends GameObject implements Vector {
     @Override
     public String toString() {
         return toString0();
+    }
+
+    /**
+     * Get the squared distance between this and another SVector.
+     * @param other the other vector
+     * @return distanceSquared
+     */
+    public double distanceSquared(SVector other) {
+        return ((other.getFloatX() - getFloatX()) * (other.getFloatX() - getFloatX()))
+                + ((other.getFloatY() - getFloatY()) * (other.getFloatY() - getFloatY()))
+                + ((other.getFloatZ() - getFloatZ()) * (other.getFloatZ() - getFloatZ()));
     }
 }
