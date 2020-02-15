@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.file.mof.poly_anim;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents "MR_PART_POLY_ANIM".
@@ -24,6 +24,13 @@ public class MOFPartPolyAnim extends GameObject {
 
     public MOFPartPolyAnim(MOFPart part) {
         this.parentPart = part;
+    }
+
+    public MOFPartPolyAnim(MOFPart part, MOFPolygon polygon) {
+        this(part);
+        this.primType = polygon.getType();
+        this.mofPolygon = polygon;
+        this.entryList = new MOFPartPolyAnimEntryList(part);
     }
 
     @Override

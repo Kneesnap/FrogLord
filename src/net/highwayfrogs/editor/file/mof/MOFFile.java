@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
@@ -109,6 +110,7 @@ public class MOFFile extends MOFBase {
             texMap.put(vertexColor, image);
         });
 
+        texMap.put(MOFController.ANIMATION_COLOR, MOFController.ANIMATION_COLOR.makeTexture());
         return texMap;
     }
 

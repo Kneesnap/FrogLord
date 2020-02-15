@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
+import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -492,6 +493,133 @@ public class GUIEditorGrid {
         addRow(75);
     }
 
+    /**
+     * Add a float SVector for editing.
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     */
+    public void addFloatVector(String text, Vector vector, Runnable update, MOFController controller, int bits, Vector origin, Box moveBox) {
+        if (controller != null && moveBox == null) {
+            addBoldLabelButton(text + ":", "Toggle Display", 25,
+                    () -> controller.updateMarker(controller.getShowPosition() == null || !Objects.equals(vector, controller.getShowPosition()) ? vector : null, bits, origin, null));
+        } else {
+            addBoldLabel(text + ":");
+        }
+
+        Runnable onPass = () -> {
+            if (controller != null)
+                controller.updateMarker(vector, bits, origin, moveBox);
+
+            if (update != null)
+                update.run();
+            onChange();
+        };
+
+        GridPane vecPane = new GridPane();
+        vecPane.addRow(0);
+
+        // Label:
+        VBox labelBox = new VBox();
+        labelBox.getChildren().add(new Label("X:"));
+        labelBox.getChildren().add(new Label("Y:"));
+        labelBox.getChildren().add(new Label("Z:"));
+        labelBox.setSpacing(10);
+        vecPane.addColumn(0, labelBox);
+
+        // XYZ:
+        VBox posBox = new VBox();
+        TextField xField = new TextField(String.valueOf(vector.getFloatX(bits)));
+        TextField yField = new TextField(String.valueOf(vector.getFloatY(bits)));
+        TextField zField = new TextField(String.valueOf(vector.getFloatZ(bits)));
+        xField.setPrefWidth(60);
+        yField.setPrefWidth(60);
+        zField.setPrefWidth(60);
+        Utils.setHandleKeyPress(xField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            vector.setFloatX(Float.parseFloat(str), bits);
+            return true;
+        }, onPass);
+        Utils.setHandleKeyPress(yField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            vector.setFloatY(Float.parseFloat(str), bits);
+            return true;
+        }, onPass);
+        Utils.setHandleKeyPress(zField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            vector.setFloatZ(Float.parseFloat(str), bits);
+            return true;
+        }, onPass);
+
+        posBox.getChildren().add(xField);
+        posBox.getChildren().add(yField);
+        posBox.getChildren().add(zField);
+        posBox.setSpacing(2);
+        vecPane.addColumn(1, posBox);
+
+        // XZ Move.
+        ImageView xzView = new ImageView(GRAY_IMAGE_XZ);
+        vecPane.addColumn(2, xzView);
+
+        DragPos[] xzLastDrag = new DragPos[1];
+        xzView.setOnMouseClicked(evt -> xzLastDrag[0] = new DragPos(evt.getX(), evt.getY()));
+        xzView.setOnMouseDragged(evt -> {
+            DragPos lastDrag = xzLastDrag[0];
+            if (lastDrag == null) { // Set it up if it's not present.
+                xzLastDrag[0] = new DragPos(evt.getX(), evt.getY());
+                return;
+            }
+
+            double xDiff = -(lastDrag.getX() - evt.getX()) / 10;
+            double zDiff = (lastDrag.getY() - evt.getY()) / 10;
+            double angle = controller != null ? -Math.toRadians(controller.getRotY().getAngle()) : Math.PI / 2;
+
+            vector.setFloatX((float) (vector.getFloatX(bits) + (xDiff * Math.cos(angle)) - (zDiff * Math.sin(angle))), bits);
+            vector.setFloatZ((float) (vector.getFloatZ(bits) + (xDiff * Math.sin(angle)) + (zDiff * Math.cos(angle))), bits);
+            xField.setText(String.valueOf(vector.getFloatX(bits)));
+            zField.setText(String.valueOf(vector.getFloatZ(bits)));
+
+            onPass.run();
+
+            lastDrag.setX(evt.getX());
+            lastDrag.setY(evt.getY());
+        });
+        xzView.setOnMouseReleased(evt -> xzLastDrag[0] = null);
+
+        // Y Move.
+        ImageView yView = new ImageView(GRAY_IMAGE_Y);
+        vecPane.addColumn(3, yView);
+
+        DragPos[] yLastDrag = new DragPos[1];
+        yView.setOnMouseClicked(evt -> yLastDrag[0] = new DragPos(evt.getX(), evt.getY()));
+        yView.setOnMouseDragged(evt -> {
+            DragPos lastDrag = yLastDrag[0];
+            if (lastDrag == null) { // Set it up if it's not present.
+                yLastDrag[0] = new DragPos(evt.getX(), evt.getY());
+                return;
+            }
+
+            double yDiff = -(lastDrag.getY() - evt.getY()) / 10;
+            vector.setFloatY((float) (vector.getFloatY(bits) + yDiff), bits);
+            yField.setText(String.valueOf(vector.getFloatY(bits)));
+            onPass.run();
+
+            lastDrag.setX(evt.getX());
+            lastDrag.setY(evt.getY());
+        });
+        yView.setOnMouseReleased(evt -> yLastDrag[0] = null);
+
+        vecPane.setHgap(10);
+        GridPane.setColumnSpan(vecPane, 2); // Make it take up the full space in the grid it will be added to.
+        setupNode(vecPane); // Setup this in the new area.
+        addRow(75);
+    }
+
     @Getter
     @Setter
     @AllArgsConstructor
@@ -667,12 +795,34 @@ public class GUIEditorGrid {
                 onPositionUpdate.run(); // Run position hook.
         }, controller, 20);
 
-        // Transform information is in fixed point format, hence conversion to float representation.
+        addRotationMatrix(matrix, null);
+    }
+
+    /**
+     * Add PSXMatrix rotation data to the edit grid.
+     * @param matrix   The rotation matrix to add data for.
+     * @param onUpdate Behavior to apply when the rotation is updated.
+     */
+    public void addRotationMatrix(PSXMatrix matrix, Runnable onUpdate) {
         addNormalLabel("Rotation:");
 
-        Slider yawUI = addDoubleSlider("Yaw", matrix.getYawAngle(), yaw -> matrix.updateMatrix(yaw, matrix.getPitchAngle(), matrix.getRollAngle()), -Math.PI, Math.PI);
-        Slider pitchUI = addDoubleSlider("Pitch", matrix.getPitchAngle(), pitch -> matrix.updateMatrix(matrix.getYawAngle(), pitch, matrix.getRollAngle()), -Math.PI / 2, Math.PI / 2); // Cuts off at 90 degrees to prevent gymbal lock.
-        Slider rollUI = addDoubleSlider("Roll", matrix.getRollAngle(), roll -> matrix.updateMatrix(matrix.getYawAngle(), matrix.getPitchAngle(), roll), -Math.PI, Math.PI);
+        Slider yawUI = addDoubleSlider("Yaw", matrix.getYawAngle(), yaw -> {
+            matrix.updateMatrix(yaw, matrix.getPitchAngle(), matrix.getRollAngle());
+            if (onUpdate != null)
+                onUpdate.run();
+        }, -Math.PI, Math.PI);
+
+        Slider pitchUI = addDoubleSlider("Pitch", matrix.getPitchAngle(), pitch -> {
+            matrix.updateMatrix(matrix.getYawAngle(), pitch, matrix.getRollAngle());
+            if (onUpdate != null)
+                onUpdate.run();
+        }, -Math.PI / 2, Math.PI / 2); // Cuts off at 90 degrees to prevent gymbal lock.
+
+        Slider rollUI = addDoubleSlider("Roll", matrix.getRollAngle(), roll -> {
+            matrix.updateMatrix(matrix.getYawAngle(), matrix.getPitchAngle(), roll);
+            if (onUpdate != null)
+                onUpdate.run();
+        }, -Math.PI, Math.PI);
 
         yawUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
         pitchUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
@@ -711,6 +861,16 @@ public class GUIEditorGrid {
      * @param height The height to add.
      */
     public void addRow(double height) {
+        RowConstraints newRow = new RowConstraints(height + 1);
+        gridPane.getRowConstraints().add(newRow);
+        this.rowIndex++;
+    }
+
+    /**
+     * Add height to reach the next row.
+     * @param height The height to add.
+     */
+    public void addRow(double height, double width) {
         RowConstraints newRow = new RowConstraints(height + 1);
         gridPane.getRowConstraints().add(newRow);
         this.rowIndex++;

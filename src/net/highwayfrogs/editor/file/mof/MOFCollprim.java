@@ -10,27 +10,37 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
- * Represents MR_COLLPRIM
+ * Represents MR_COLLPRIM.
+ * The way this works is, Frogger has a collision hilite.
+ * When testing collision, it will check if any of Frogger's collision hilites are inside the collprim, or bbox. If a collprim exists, it will check the collprim, otherwise it will check the bbox.
+ * If the collprim is the last one on the model (the vanilla game only ever has 1 collprim per model, though it's not necessarily that way always), use the last in list flag.
  * Created by Kneesnap on 1/8/2019.
  */
 @Getter
 public class MOFCollprim extends GameObject {
-    private int flags;
-    private SVector offset;
-    private int radius2; // For cylinder base or sphere. Squared.
+    private int flags; // Seems to always be two.
+    private SVector offset = new SVector();
+    private int radius2; // For cylinder base or sphere. It seems like we can safely ignore this value, leaving it as is.
     private float xLength;
     private float yLength;
     private float zLength;
-    private CollprimReactionType reaction;
+    private CollprimReactionType reaction = CollprimReactionType.DEADLY;
     private PSXMatrix matrix; // Only present in JUN_PLANT.
+    private transient MOFPart parent;
 
-    public static final int FLAG_STATIC = Constants.BIT_FLAG_0;
+    public static final int FLAG_STATIC = Constants.BIT_FLAG_0; // Unused. I don't know either.
     public static final int FLAG_LAST_IN_LIST = Constants.BIT_FLAG_1;
-    public static final int FLAG_COLLISION_DISABLED = Constants.BIT_FLAG_8;
+    public static final int FLAG_COLLISION_DISABLED = Constants.BIT_FLAG_8; // Completely unused. Seems like maybe this was used to disable something without deleting it, for testing purposes.
+
+    public MOFCollprim(MOFPart parent) {
+        this.parent = parent;
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -41,7 +51,7 @@ public class MOFCollprim extends GameObject {
         this.flags = reader.readUnsignedShortAsInt();
         reader.skipInt(); // Run-time.
         reader.skipInt(); // Run-time.
-        this.offset = SVector.readWithPadding(reader);
+        this.offset.loadWithPadding(reader);
         this.radius2 = reader.readInt();
         this.xLength = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
         this.yLength = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
@@ -54,12 +64,14 @@ public class MOFCollprim extends GameObject {
             this.matrix = new PSXMatrix();
             this.matrix.load(reader);
         }
+
+        Utils.verify((this.flags & FLAG_LAST_IN_LIST) == FLAG_LAST_IN_LIST, "There were multiple collprims specified, but FrogLord only supports one!");
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedShort(CollprimType.CUBOID.ordinal());
-        writer.writeUnsignedShort(this.flags);
+        writer.writeUnsignedShort(this.flags | FLAG_LAST_IN_LIST);
         writer.writeInt(0); // Run-time.
         writer.writeInt(0); // Run-time.
         this.offset.saveWithPadding(writer);
@@ -82,25 +94,52 @@ public class MOFCollprim extends GameObject {
     }
 
     /**
+     * Setup the editor to display collprim information.
+     * @param controller The controller controlling the model.
+     */
+    public void setupEditor(MOFController controller, Box box) {
+        GUIEditorGrid grid = controller.getUiController().getCollprimEditorGrid();
+        grid.clearEditor();
+
+        grid.addFloatVector("Position", getOffset(), () -> controller.updateRotation(box), controller, getOffset().defaultBits(), null, box);
+        grid.addFloatField("xLength", getXLength(), newVal -> {
+            this.xLength = newVal;
+            box.setWidth(this.xLength * 2);
+        }, null);
+
+        grid.addFloatField("yLength", getYLength(), newVal -> {
+            this.yLength = newVal;
+            box.setHeight(this.yLength * 2);
+        }, null);
+
+        grid.addFloatField("zLength", getZLength(), newVal -> {
+            this.zLength = newVal;
+            box.setDepth(this.zLength * 2);
+        }, null);
+
+        grid.addEnumSelector("Reaction", getReaction(), CollprimReactionType.values(), false, newReaction -> this.reaction = newReaction);
+
+        grid.addButton("Remove Collprim", () -> {
+            getParent().setCollprim(null);
+            grid.clearEditor();
+            controller.updateMarker(null, 4, null, null); // Hide the active position display.
+            controller.updateCollprimBoxes();
+        });
+
+        controller.getUiController().getCollprimPane().setExpanded(true);
+    }
+
+    /**
      * Add this collprim to the 3D display.
      * @param manager  The render manager to add the display to.
      * @param listID   The list of collprims to add to.
      * @param material The collprim material.
      * @return display
      */
-    public Shape3D addDisplay(RenderManager manager, String listID, PhongMaterial material) {
-        Box box = manager.addBoundingBoxCenteredWithDimensions(listID, getOffset().getFloatX(), getOffset().getFloatY(), getOffset().getFloatZ(), this.xLength, this.yLength, this.zLength, material, true);
-
+    public Shape3D addDisplay(MOFController controller, RenderManager manager, String listID, PhongMaterial material) {
+        Box box = manager.addBoundingBoxCenteredWithDimensions(listID, getOffset().getFloatX(), getOffset().getFloatY(), getOffset().getFloatZ(), this.xLength * 2, this.yLength * 2, this.zLength * 2, material, true);
+        box.setOnMouseClicked(evt -> setupEditor(controller, box));
         box.setMouseTransparent(false);
-        box.setOnMouseClicked(evt -> {
-            System.out.println("Collprim Info:");
-            System.out.println(" - Pos: " + getXLength() + ", " + getYLength() + ", " + getZLength());
-            System.out.println(" - Flags: " + getFlags());
-            System.out.println(" - Matrix: " + (getMatrix() != null ? getMatrix() : "None"));
-            System.out.println(" - Radius2: " + getRadius2());
-            System.out.println(" - Reaction: " + getReaction());
-        });
-
         return box;
     }
 
@@ -113,9 +152,9 @@ public class MOFCollprim extends GameObject {
     }
 
     public enum CollprimReactionType {
-        SAFE,
-        DEADLY,
-        BOUNCY,
+        SAFE, // Unused
+        DEADLY, // Kills Frogger
+        BOUNCY, // Unused.
         FORM, // Form callback.
     }
 }

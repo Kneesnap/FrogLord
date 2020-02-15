@@ -1,6 +1,9 @@
 package net.highwayfrogs.editor.file.mof.poly_anim;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -10,6 +13,9 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 1/8/2019.
  */
 @Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class MOFPartPolyAnimEntry extends GameObject {
     private int imageId; // Within .TXL, resolved to global image ID.
     private int duration; // >= 1 Game Cycles.

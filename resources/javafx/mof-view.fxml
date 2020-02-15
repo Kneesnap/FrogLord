@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0"
-            xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+            xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
     <Accordion fx:id="accordionLeft" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <panes>
-         <TitledPane fx:id="paneAnim" animated="false" text="Animation Data">
+          <TitledPane fx:id="paneAnim" animated="false" text="Preview Settings">
            <content>
              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                   <children>
@@ -35,15 +36,110 @@
                              prefWidth="80.0" text="Frame ?" AnchorPane.topAnchor="60.0"/>
                       <CheckBox fx:id="brightModeCheckbox" layoutX="4.0" layoutY="96.0" mnemonicParsing="false"
                                 text="Bright Mode" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="85.0"/>
-                      <CheckBox fx:id="viewCollprimCheckbox" layoutX="3.0" layoutY="113.0" mnemonicParsing="false"
-                                text="Show Collprim" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="100.0"/>
-                      <CheckBox fx:id="viewHilitesCheckbox" layoutX="3.0" layoutY="128.0" mnemonicParsing="false"
-                                text="Show Hilites" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="115.0"/>
                       <CheckBox fx:id="viewBoundingBoxesCheckbox" layoutX="13.0" layoutY="153.0" mnemonicParsing="false"
-                                text="Show Bounding Boxes" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="130.0"/>
+                                text="Show Bounding Boxes" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="100.0"/>
                   </children>
                </AnchorPane>
            </content>
          </TitledPane>
+          <TitledPane fx:id="generalPane" animated="false" text="Texture Animation">
+              <content>
+                  <ScrollPane fitToWidth="true">
+                      <content>
+                          <AnchorPane>
+                              <children>
+                                  <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                                        AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                      <children>
+                                          <CheckBox fx:id="textureEditCheckbox" mnemonicParsing="false"
+                                                    text="Show Texture Animation"/>
+                                          <Button fx:id="addTextureAnimationButton" mnemonicParsing="false"
+                                                  text="Add Texture Animation"/>
+                                          <Separator prefWidth="200.0"/>
+                                          <GridPane fx:id="textureEditPane" prefWidth="250.0">
+                                              <columnConstraints>
+                                                  <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0" minWidth="10.0"
+                                                                     prefWidth="100.0"/>
+                                                  <ColumnConstraints hgrow="ALWAYS" maxWidth="140.0" minWidth="10.0"
+                                                                     prefWidth="150.0"/>
+                                              </columnConstraints>
+                                          </GridPane>
+                                      </children>
+                                  </VBox>
+                              </children>
+                          </AnchorPane>
+                      </content>
+                      <padding>
+                          <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                      </padding>
+                  </ScrollPane>
+              </content>
+          </TitledPane>
+          <TitledPane fx:id="collprimPane" animated="false" text="Collprim Editor">
+              <content>
+                  <ScrollPane fitToWidth="true">
+                      <content>
+                          <AnchorPane>
+                              <children>
+                                  <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                                        AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                      <children>
+                                          <CheckBox fx:id="viewCollprimCheckbox" mnemonicParsing="false"
+                                                    text="Show Collprim"/>
+                                          <Button fx:id="addCollprimButton" mnemonicParsing="false"
+                                                  text="Add Collprim"/>
+                                          <Separator prefWidth="200.0"/>
+                                          <GridPane fx:id="collprimEditPane" prefWidth="250.0">
+                                              <columnConstraints>
+                                                  <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0" minWidth="10.0"
+                                                                     prefWidth="100.0"/>
+                                                  <ColumnConstraints hgrow="ALWAYS" maxWidth="140.0" minWidth="10.0"
+                                                                     prefWidth="150.0"/>
+                                              </columnConstraints>
+                                          </GridPane>
+                                      </children>
+                                  </VBox>
+                              </children>
+                          </AnchorPane>
+                      </content>
+                      <padding>
+                          <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                      </padding>
+                  </ScrollPane>
+              </content>
+          </TitledPane>
+          <TitledPane fx:id="hilitePane" animated="false" text="Hilite Editor">
+              <content>
+                  <ScrollPane fitToWidth="true">
+                      <content>
+                          <AnchorPane>
+                              <children>
+                                  <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                                        AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                      <children>
+                                          <CheckBox fx:id="viewHilitesCheckbox" mnemonicParsing="false"
+                                                    text="Show Hilites"/>
+                                          <Button fx:id="addHiliteButton" mnemonicParsing="false"
+                                                  text="Add New Hilite"/>
+                                          <Separator prefWidth="200.0"/>
+                                          <GridPane fx:id="hiliteEditPane" prefWidth="250.0">
+                                              <columnConstraints>
+                                                  <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0" minWidth="10.0"
+                                                                     prefWidth="100.0"/>
+                                                  <ColumnConstraints hgrow="ALWAYS" maxWidth="140.0" minWidth="10.0"
+                                                                     prefWidth="150.0"/>
+                                              </columnConstraints>
+                                          </GridPane>
+                                      </children>
+                                  </VBox>
+                              </children>
+                          </AnchorPane>
+                      </content>
+                      <padding>
+                          <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                      </padding>
+                  </ScrollPane>
+              </content>
+          </TitledPane>
       </panes></Accordion>
 </AnchorPane>
