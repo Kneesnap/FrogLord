@@ -31,7 +31,7 @@ public class RetailPCVBFile extends PCVBFile {
 
     @Getter
     public static class PCSound extends GameSound {
-        private List<Integer> audioData = new ArrayList<>();
+        private int[] audioData;
 
         public PCSound(AudioHeader vhEntry, int vanillaTrackId, int readLength) {
             super(vhEntry, vanillaTrackId, readLength / vhEntry.getByteWidth());
@@ -39,13 +39,14 @@ public class RetailPCVBFile extends PCVBFile {
 
         @Override
         public void load(DataReader reader) {
+            this.audioData = new int[getReadLength()];
             for (int i = 0; i < getReadLength(); i++)
-                getAudioData().add(reader.readInt(getHeader().getByteWidth()));
+                this.audioData[i] = reader.readInt(getHeader().getByteWidth());
         }
 
         @Override
         public void save(DataWriter writer) {
-            for (int toWrite : getAudioData())
+            for (int toWrite : this.audioData)
                 writer.writeNumber(toWrite, getHeader().getByteWidth());
         }
 
@@ -57,8 +58,8 @@ public class RetailPCVBFile extends PCVBFile {
             ArrayReceiver receiver = new ArrayReceiver();
             DataWriter writer = new DataWriter(receiver);
 
-            for (int i = 0; i < getAudioData().size(); i++)
-                writer.writeNumber(getAudioData().get(i), getByteWidth());
+            for (int i = 0; i < getAudioData().length; i++)
+                writer.writeNumber(getAudioData()[i], getByteWidth());
             return receiver.toArray();
         }
 
@@ -84,8 +85,6 @@ public class RetailPCVBFile extends PCVBFile {
             if (!this.importFormat(inputStream.getFormat()))
                 return; // Import failed.
 
-            getAudioData().clear();
-
             ArrayReceiver receiver = new ArrayReceiver();
             DataWriter writer = new DataWriter(receiver);
             int byteLength = getByteWidth();
@@ -97,9 +96,14 @@ public class RetailPCVBFile extends PCVBFile {
             byte[] data = receiver.toArray();
             setDataSize(data.length);
 
+            List<Integer> audioData = new ArrayList<>();
             DataReader reader = new DataReader(new ArraySource(data));
             while (reader.hasMore())
-                this.audioData.add(reader.readInt(byteLength));
+                audioData.add(reader.readInt(byteLength));
+
+            this.audioData = new int[audioData.size()];
+            for (int i = 0; i < audioData.size(); i++)
+                this.audioData[i] = audioData.get(i);
 
             onImport();
         }

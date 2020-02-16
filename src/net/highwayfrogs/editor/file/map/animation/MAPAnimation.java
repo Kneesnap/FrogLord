@@ -302,7 +302,7 @@ public class MAPAnimation extends GameObject {
                 final int tempIndex = i;
                 GameImage image = images.get(i);
 
-                Image scaledImage = Utils.toFXImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), true);
+                Image scaledImage = Utils.toFXImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), false);
                 ImageView view = editor.setupNode(new ImageView(scaledImage));
                 view.setFitWidth(20);
                 view.setFitHeight(20);

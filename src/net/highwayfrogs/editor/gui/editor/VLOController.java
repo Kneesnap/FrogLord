@@ -250,7 +250,7 @@ public class VLOController extends EditorController<VLOArchive> {
             boolean scaleSize = sizeCheckBox.isSelected();
             imageView.setFitWidth(scaleSize ? SCALE_DIMENSION : image.getWidth());
             imageView.setFitHeight(scaleSize ? SCALE_DIMENSION : image.getHeight());
-            imageView.setImage(Utils.toFXImage(image, true));
+            imageView.setImage(Utils.toFXImage(image, false));
         }
     }
 

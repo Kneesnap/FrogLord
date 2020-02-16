@@ -427,7 +427,7 @@ public class GameImage extends GameObject implements Cloneable {
      * @return fxImage
      */
     public Image toFXImage(ImageFilterSettings settings) {
-        return Utils.toFXImage(toBufferedImage(settings), true);
+        return Utils.toFXImage(toBufferedImage(settings), false);
     }
 
     /**
@@ -435,7 +435,7 @@ public class GameImage extends GameObject implements Cloneable {
      * @return fxImage
      */
     public Image toFXImage() {
-        return Utils.toFXImage(toBufferedImage(), true);
+        return Utils.toFXImage(toBufferedImage(), false);
     }
 
     /**

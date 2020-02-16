@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -16,6 +17,7 @@ import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
+import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -43,6 +45,14 @@ public class GUIMain extends Application {
         INSTANCE = this;
         MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();
+
+        long availableMemory = Runtime.getRuntime().maxMemory();
+        long minMemory = DataSizeUnit.GIGABYTE.getIncrement();
+
+        if (availableMemory < minMemory)
+            Utils.makePopUp("FrogLord needs at least 1GB of RAM to function properly.\n"
+                    + "FrogLord has only been given " + DataSizeUnit.formatSize(availableMemory) + " Memory.\n"
+                    + "Proceed at your own risk. Things may not work properly.", AlertType.WARNING);
 
         openFroggerFiles();
     }
