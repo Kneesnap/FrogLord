@@ -16,6 +16,6 @@ public class PatchTextReference implements PatchValueReference {
 
     @Override
     public PatchValue getValue(PatchRuntime runtime) {
-        return runtime.getVariables().get(this.textData);
+        return runtime.getVariable(this.textData, true);
     }
 }

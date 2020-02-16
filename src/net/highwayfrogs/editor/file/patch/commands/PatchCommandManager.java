@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.file.patch.commands;
 
+import net.highwayfrogs.editor.utils.Utils;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,11 +35,13 @@ public class PatchCommandManager {
         addCommand(new PatchCommandWrite("writes", (writer, value) -> writer.writeShort((short) value.getAsInteger())));
         addCommand(new PatchCommandWrite("writei", (writer, value) -> writer.writeInt(value.getAsInteger() & 0xFF)));
         addCommand(new PatchCommandWrite("writef", (writer, value) -> writer.writeFloat((float) value.getAsDecimal())));
+        addCommand(new PatchCommandWrite("writecolor", (writer, value) -> writer.writeInt(Utils.toRGB(value.getAsColor()))));
         addCommand(new PatchCommandIf());
         addCommand(new PatchCommandRead("readb", (reader, value) -> value.setInteger(reader.readUnsignedByteAsShort())));
         addCommand(new PatchCommandRead("reads", (reader, value) -> value.setInteger(reader.readShort())));
         addCommand(new PatchCommandRead("readi", (reader, value) -> value.setInteger(reader.readInt())));
         addCommand(new PatchCommandRead("readf", (reader, value) -> value.setDecimal(reader.readFloat())));
+        addCommand(new PatchCommandRead("readcolor", (reader, value) -> value.setColor(Utils.fromRGB(reader.readInt()))));
         addCommand(new PatchCommandHex());
     }
 

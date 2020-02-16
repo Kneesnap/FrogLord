@@ -17,6 +17,7 @@ public class GamePatch {
     private String author;
     private Set<String> supportedVersions = new HashSet<>();
     private Map<String, PatchValue> defaultVariables = new HashMap<>();
+    private List<String> argsCode = new ArrayList<>();
     private List<String> code = new ArrayList<>();
     private Map<String, Map<String, PatchValue>> versionSpecificVariables = new HashMap<>();
     private List<PatchArgument> arguments = new ArrayList<>();
@@ -42,6 +43,10 @@ public class GamePatch {
                 if (line.length() > 0)
                     this.arguments.add(PatchArgument.parsePatchArgument(line));
         }
+
+        // Read args code.
+        if (config.hasChild("ArgsCode"))
+            this.argsCode.addAll(config.getChild("ArgsCode").getText());
 
         // Read code.
         if (config.hasChild("Code"))

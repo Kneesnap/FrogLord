@@ -24,7 +24,7 @@ public class PatchCommandDivide extends PatchCommand {
         } else if (value.isInteger() && otherValue.isInteger()) {
             value.setInteger(value.getAsInteger() / otherValue.getAsInteger());
         } else {
-            throw new RuntimeException("Cannot divide '" + value.toString() + "'.");
+            throw new RuntimeException("Cannot divide '" + value + "' by '" + otherValue + ".");
         }
     }
 }

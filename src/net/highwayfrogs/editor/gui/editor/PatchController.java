@@ -3,11 +3,11 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.patch.GamePatch;
 import net.highwayfrogs.editor.file.patch.PatchArgument;
 import net.highwayfrogs.editor.file.patch.PatchRuntime;
-import net.highwayfrogs.editor.file.patch.argtypes.PatchArgumentBehavior;
+import net.highwayfrogs.editor.file.patch.PatchValue;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -61,6 +61,11 @@ public class PatchController implements Initializable {
         this.patchSelector.setItems(FXCollections.observableArrayList(getPatches()));
         this.patchSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
             this.selectedPatchRuntime = newValue != null ? new PatchRuntime(newValue) : null;
+            if (this.selectedPatchRuntime != null && !this.selectedPatchRuntime.runSetup()) {
+                this.stage.close();
+                return;
+            }
+
             updatePatchDisplay();
         }));
 
@@ -87,7 +92,11 @@ public class PatchController implements Initializable {
             GamePatch loadPatch = new GamePatch();
             loadPatch.loadPatchFromConfig(new Config(Utils.readLinesFromFile(patchFile)));
             this.selectedPatchRuntime = new PatchRuntime(loadPatch);
-            updatePatchDisplay();
+            if (this.selectedPatchRuntime.runSetup()) { // Setup success.
+                updatePatchDisplay();
+            } else { // Setup failure.
+                this.stage.close();
+            }
         });
 
         // Apply the patch when clicked.
@@ -96,7 +105,10 @@ public class PatchController implements Initializable {
                 this.selectedPatchRuntime.run();
                 if (!this.selectedPatchRuntime.isHadError())
                     Utils.makePopUp("Patch has been applied.", AlertType.INFORMATION);
-                this.applyButton.setDisable(true); // Don't allow running the same runtime twice.
+
+                // Reset the patch.
+                this.selectedPatchRuntime.runSetup();
+                updatePatchDisplay();
             }
         });
     }
@@ -139,22 +151,12 @@ public class PatchController implements Initializable {
             HBox.setHgrow(pane, Priority.SOMETIMES);
 
             pane.addRow(0);
+            pane.addColumn(0, new Label(argument.getDescription() + ": "));
+            pane.setHgap(5);
 
-            pane.addColumn(0, new Label(argument.getDescription()));
-            TextField field = new TextField(this.selectedPatchRuntime.getVariables().get(argument.getName()).toString());
-            Utils.setHandleKeyPress(field, newValue -> {
-                PatchArgumentBehavior<?> behavior = argument.getType().getBehavior();
-                if (!behavior.isValidString(newValue))
-                    return false;
-
-                Object resultValue = behavior.parseString(newValue);
-                if (!behavior.isValidValue(resultValue, argument))
-                    return false;
-
-                this.selectedPatchRuntime.getVariables().get(argument.getName()).setObject(resultValue);
-                return true;
-            }, this::updatePatchDisplay);
-            pane.addColumn(1, field);
+            PatchValue varValue = this.selectedPatchRuntime.getVariable(argument.getName());
+            Node valueNode = varValue.getType().getBehavior().createEditor(this, argument, varValue);
+            pane.addColumn(1, valueNode);
 
             this.patchConfigEditors.getChildren().add(pane);
             configSize += 25;

@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.patch.PatchValue;
 import net.highwayfrogs.editor.file.patch.reference.PatchValueReference;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Adds an if condition option.
@@ -16,7 +17,6 @@ public class PatchCommandIf extends PatchCommand {
     }
 
     @Override
-    @SuppressWarnings("DuplicateExpressions")
     public void execute(PatchRuntime runtime, List<PatchValueReference> args) {
         PatchValue value = runtime.getVariable(getValueText(args, 0));
         if (args.size() == 1) { // Only one parameter is there, so we'll check if it's defined.
@@ -31,10 +31,10 @@ public class PatchCommandIf extends PatchCommand {
         boolean conditionPass;
         switch (comparison) {
             case "==":
-                conditionPass = value.toString().equals(otherValue.toString());
+                conditionPass = Objects.equals(value, otherValue);
                 break;
             case "!=":
-                conditionPass = !value.toString().equals(otherValue.toString());
+                conditionPass = !Objects.equals(value, otherValue);
                 break;
             case ">":
                 conditionPass = (value.isDecimal() ? value.getAsDecimal() : value.getAsInteger()) > (otherValue.isDecimal() ? otherValue.getAsDecimal() : otherValue.getAsInteger());

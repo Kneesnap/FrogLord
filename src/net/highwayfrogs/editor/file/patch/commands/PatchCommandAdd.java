@@ -26,6 +26,8 @@ public class PatchCommandAdd extends PatchCommand {
             value.setDecimal((value.isDecimal() ? value.getAsDecimal() : value.getAsInteger()) + (otherValue.isDecimal() ? otherValue.getAsDecimal() : otherValue.getAsInteger()));
         } else if (value.isInteger() && otherValue.isInteger()) {
             value.setInteger(value.getAsInteger() + otherValue.getAsInteger());
+        } else {
+            throw new RuntimeException("Patch cannot add " + value.getType() + " and " + otherValue.getType() + " together. (" + value + ", " + otherValue + ")");
         }
     }
 }

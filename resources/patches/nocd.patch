@@ -1,0 +1,40 @@
+Name=No CD
+Description=Run the game without a CD. (Also without music + FMVs)
+Author=Kneesnap
+Versions=30e,30u,10
+# Copied functionality from the crack writeup at https://pastebin.com/UPQeiTmr
+
+[30e]
+address1=140785
+address2=194012
+
+[30u]
+address1=9009
+address2=91122
+
+[10]
+address1=0x2281
+address2=0x5A11
+
+[Code]
+writeb 0x90 address1
+writeb 0x90
+writeb 0x90
+writeb 0x90
+writeb 0x90
+writeb 0x90
+
+set temp address1
+add temp 7
+writeb 0xEB temp
+
+writeb 0x90 address2
+writeb 0x90
+writeb 0x90
+writeb 0x90
+writeb 0x90
+writeb 0x90
+
+set temp address2
+add temp 7
+writeb 0xEB temp

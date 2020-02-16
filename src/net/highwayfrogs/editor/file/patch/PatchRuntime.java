@@ -32,22 +32,76 @@ public class PatchRuntime {
 
     public PatchRuntime(GamePatch patch) {
         this.patch = patch;
-        setupVariables();
+    }
+
+    /**
+     * Gets a variable value by its name.
+     * @param varName The variable name to get.
+     * @return varValue
+     */
+    public PatchValue getVariable(String varName) {
+        return getVariable(varName, false);
+    }
+
+    /**
+     * Gets a variable value by its name.
+     * @param varName The variable name to get.
+     * @return varValue
+     */
+    public PatchValue getVariable(String varName, boolean allowNull) {
+        if (varName.equalsIgnoreCase("$VERSION"))
+            return new PatchValue(PatchArgumentType.STRING, exeInfo.getInternalName());
+
+        if (!allowNull && !this.variables.containsKey(varName))
+            throw new RuntimeException("Cannot get value of unknown variable '" + varName + "'.");
+        return this.variables.get(varName);
     }
 
     /**
      * Runs the patch.
      */
     public void run() {
+        String lastLine = null;
         try {
-            patch.getCode().forEach(this::runLine);
+            for (String line : patch.getCode()) {
+                lastLine = line;
+                runLine(line);
+            }
         } catch (Exception ex) {
             hadError = true;
             printRuntimeInformation();
             System.out.println("Encountered an error while running '" + getPatch().getName() + "'.");
+            System.out.println("Line: '" + lastLine + "'.");
             Utils.makeErrorPopUp("There was an error while applying the patch.", ex, true);
         }
         onFinish();
+    }
+
+    /**
+     * Attempts to setup the patch.
+     */
+    public boolean runSetup() {
+        this.hadError = false;
+        this.variables.clear();
+        this.executionLevel = 0;
+        setupVariables();
+
+        String lastLine = null;
+        try {
+            for (String line : patch.getArgsCode()) {
+                lastLine = line;
+                runLine(line);
+            }
+
+            return true;
+        } catch (Exception ex) {
+            hadError = true;
+            printRuntimeInformation();
+            System.out.println("Encountered an error while running setup for '" + getPatch().getName() + "'.");
+            System.out.println("Line: '" + lastLine + "'.");
+            Utils.makeErrorPopUp("There was an error while setting up the patch.", ex, true);
+            return false;
+        }
     }
 
     /**
@@ -148,16 +202,5 @@ public class PatchRuntime {
         if (this.exeWriter == null)
             this.exeWriter = getExeInfo().getWriter();
         return this.exeWriter;
-    }
-
-    /**
-     * Gets a variable by its name.
-     * @param varName The name of the variable.
-     * @return value
-     */
-    public PatchValue getVariable(String varName) {
-        if (!this.variables.containsKey(varName))
-            throw new RuntimeException("Cannot get value of unknown variable '" + varName + "'.");
-        return this.variables.get(varName);
     }
 }

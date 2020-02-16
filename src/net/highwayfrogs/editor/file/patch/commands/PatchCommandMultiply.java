@@ -25,7 +25,7 @@ public class PatchCommandMultiply extends PatchCommand {
         } else if (value.isInteger() && otherValue.isInteger()) {
             value.setInteger(value.getAsInteger() * otherValue.getAsInteger());
         } else {
-            throw new RuntimeException("Cannot multiply '" + value.toString() + "'.");
+            throw new RuntimeException("Cannot multiply '" + value + "' by '" + otherValue + "'.");
         }
     }
 }

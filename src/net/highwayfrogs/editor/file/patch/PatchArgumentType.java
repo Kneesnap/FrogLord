@@ -2,10 +2,7 @@ package net.highwayfrogs.editor.file.patch;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.patch.argtypes.DoubleArgument;
-import net.highwayfrogs.editor.file.patch.argtypes.IntegerArgument;
-import net.highwayfrogs.editor.file.patch.argtypes.PatchArgumentBehavior;
-import net.highwayfrogs.editor.file.patch.argtypes.StringArgument;
+import net.highwayfrogs.editor.file.patch.argtypes.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +16,9 @@ import java.util.Map;
 public enum PatchArgumentType {
     INT(new IntegerArgument()),
     DECIMAL(new DoubleArgument()),
-    STRING(new StringArgument());
+    STRING(new StringArgument()),
+    COLOR(new ColorArgument()),
+    BOOLEAN(new BooleanArgument());
 
     private PatchArgumentBehavior<?> behavior;
 

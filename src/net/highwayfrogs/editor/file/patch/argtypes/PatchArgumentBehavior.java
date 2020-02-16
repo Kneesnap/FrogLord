@@ -1,7 +1,11 @@
 package net.highwayfrogs.editor.file.patch.argtypes;
 
+import javafx.scene.Node;
+import javafx.scene.control.TextField;
 import net.highwayfrogs.editor.file.patch.PatchArgument;
 import net.highwayfrogs.editor.file.patch.PatchValue;
+import net.highwayfrogs.editor.gui.editor.PatchController;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Base patch argument behavior.
@@ -72,4 +76,29 @@ public abstract class PatchArgumentBehavior<T> {
      * @return isTrueValue
      */
     public abstract boolean isTrueValue(PatchValue value);
+
+    /**
+     * Create a JavaFX editor node for data of this argument type.
+     * @param controller The controller the editor will be placed in.
+     * @param argument   The argument to create an editor for.
+     * @param variable   The variable to edit.
+     * @return editorNode
+     */
+    public Node createEditor(PatchController controller, PatchArgument argument, PatchValue variable) {
+        TextField field = new TextField(variable.toString());
+        Utils.setHandleKeyPress(field, newValue -> {
+            PatchArgumentBehavior<?> behavior = argument.getType().getBehavior();
+            if (!behavior.isValidString(newValue))
+                return false;
+
+            Object resultValue = behavior.parseString(newValue);
+            if (!behavior.isValidValue(resultValue, argument))
+                return false;
+
+            variable.setObject(resultValue);
+            return true;
+        }, controller::updatePatchDisplay);
+
+        return field;
+    }
 }

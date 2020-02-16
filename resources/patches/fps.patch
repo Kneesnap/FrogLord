@@ -4,7 +4,6 @@ Author=Kneesnap
 Versions=30e,30e-music,kaos-prototype,10,pc-demo
 
 [Args]
-shouldDouble=1
 int,fps,Frames Per Second,25,1,1000
 
 [30e]
@@ -15,14 +14,19 @@ updateDelayAddress=0x228EC
 
 [kaos-prototype]
 updateDelayAddress=0x1542
-shouldDouble=0
-fps=30
 
 [10]
 updateDelayAddress=0x257C
 
 [pc-demo]
 updateDelayAddress=0x16F4
+
+[ArgsCode]
+readb millis updateDelayAddress
+set fps 1000
+divide fps millis
+if $VERSION != "kaos-prototype"
+ divide fps 2
 
 [Code]
 set msg "Updating Frogger's FPS to "
@@ -31,8 +35,8 @@ add msg "."
 print msg
 
 set millis 1000
-if shouldDouble
+if $VERSION != "kaos-prototype" # For some unknown reason, this version does not double the value.
  multiply fps 2
 divide millis fps
-writeb updateDelayAddress millis # Game Logic.
+writeb millis updateDelayAddress
 print "Patch Complete."

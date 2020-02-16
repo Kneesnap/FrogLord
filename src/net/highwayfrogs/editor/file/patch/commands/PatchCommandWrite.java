@@ -23,7 +23,8 @@ public class PatchCommandWrite extends PatchCommand {
     @Override
     public void execute(PatchRuntime runtime, List<PatchValueReference> args) {
         DataWriter dataWriter = runtime.getExeWriter();
-        dataWriter.setIndex(getValue(runtime, args, 0).getAsInteger());
-        this.writer.accept(dataWriter, getValue(runtime, args, 1));
+        if (args.size() > 1) // Address is specified.
+            dataWriter.setIndex(getValue(runtime, args, 1).getAsInteger());
+        this.writer.accept(dataWriter, getValue(runtime, args, 0));
     }
 }

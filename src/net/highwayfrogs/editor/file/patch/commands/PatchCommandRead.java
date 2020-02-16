@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.file.patch.commands;
 
+import net.highwayfrogs.editor.file.patch.PatchArgumentType;
 import net.highwayfrogs.editor.file.patch.PatchRuntime;
 import net.highwayfrogs.editor.file.patch.PatchValue;
 import net.highwayfrogs.editor.file.patch.reference.PatchValueReference;
@@ -24,7 +25,13 @@ public class PatchCommandRead extends PatchCommand {
     public void execute(PatchRuntime runtime, List<PatchValueReference> args) {
         DataReader reader = runtime.getExeInfo().getReader();
         PatchValue value = getValue(runtime, args, 0);
-        reader.setIndex(getValue(runtime, args, 1).getAsInteger());
+        if (value == null) { // Create a new variable.
+            value = new PatchValue(PatchArgumentType.BOOLEAN, false);
+            runtime.getVariables().put(getValueText(args, 0), value);
+        }
+
+        if (args.size() > 1) // Address is specified.
+            reader.setIndex(getValue(runtime, args, 1).getAsInteger());
         this.reader.accept(reader, value);
     }
 }
