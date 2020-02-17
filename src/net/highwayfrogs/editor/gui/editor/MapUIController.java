@@ -39,7 +39,6 @@ import java.util.ResourceBundle;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
- * TODO: Try creating a system which is better in terms of memory usage, for the 2D editor too.
  * TODO: Cache resources for all of the different managers, especially paths.
  * Created by AndyEder on 1/4/2019.
  */

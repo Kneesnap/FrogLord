@@ -19,11 +19,6 @@ import net.highwayfrogs.editor.utils.MathUtils;
  * Specialized camera class to allow FPS-like movement within the map editor.
  * Created by AndyEder on 2/14/2019.
  */
-
-// TODO:
-//  - Finish writing this camera component!
-//  - Implement roll (is it really needed...?)
-
 public class CameraFPS extends Parent {
     // Constants / variables used for frame delta calculations
     private final double NANOSEC_IN_SECONDS = 1.0 / 1000000000.0;

@@ -125,7 +125,6 @@ public class PALFile extends GameFile {
      */
     @Override
     public void exportAlternateFormat(FileEntry fileEntry) {
-        // TODO: consider exporting to alternative palette formats (.pal, etc.)
         File file = Utils.promptFileSave("Save the Color Palette.", Utils.stripExtension(fileEntry.getDisplayName()), "ACT File", "act");
         if (file != null) {
             final int redMask = 0xFF0000, greenMask = 0xFF00, blueMask = 0xFF;
