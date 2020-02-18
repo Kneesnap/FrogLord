@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Represents a VB file with PC VH headers.
  * Created by Kneesnap on 2/13/2019.
  */
-public abstract class PCVBFile extends AbstractVBFile {
+public abstract class PCVBFile extends AbstractVBFile<VHFile> {
     @Override
     public void load(DataReader reader) {
         if (getHeader() == null) {

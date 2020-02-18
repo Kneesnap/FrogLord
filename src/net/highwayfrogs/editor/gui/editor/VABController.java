@@ -24,7 +24,7 @@ import java.io.IOException;
  * Controls the VAB sound screen.
  * Created by Kneesnap on 9/18/2018.
  */
-public class VABController extends EditorController<AbstractVBFile> {
+public class VABController extends EditorController<AbstractVBFile<?>> {
     @FXML private ListView<GameSound> soundList;
     @FXML private Button playButton;
     @FXML private Label label1;
@@ -36,7 +36,7 @@ public class VABController extends EditorController<AbstractVBFile> {
     private Clip currentClip;
 
     @Override
-    public void loadFile(AbstractVBFile vbFile) {
+    public void loadFile(AbstractVBFile<?> vbFile) {
         super.loadFile(vbFile);
 
         sliderSampleRate.valueProperty().addListener((observable, oldValue, newValue) -> {

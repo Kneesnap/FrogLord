@@ -105,7 +105,8 @@ public abstract class GameSound extends GameObject {
      * @param newSampleRate The sample rate to set.
      */
     public void setSampleRate(int newSampleRate) {
-        header.setSampleRate(newSampleRate);
+        if (this.header != null)
+            header.setSampleRate(newSampleRate);
     }
 
     /**
@@ -121,7 +122,8 @@ public abstract class GameSound extends GameObject {
      * @param newBitWidth The bit width to set.
      */
     public void setBitWidth(int newBitWidth) {
-        header.setBitWidth(newBitWidth);
+        if (this.header != null)
+            header.setBitWidth(newBitWidth);
     }
 
     /**
@@ -137,7 +139,8 @@ public abstract class GameSound extends GameObject {
      * @param newSize The audio data's new size.
      */
     public void setDataSize(int newSize) {
-        header.setDataSize(newSize);
+        if (this.header != null)
+            header.setDataSize(newSize);
     }
 
     /**
