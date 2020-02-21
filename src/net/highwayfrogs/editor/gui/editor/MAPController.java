@@ -165,6 +165,11 @@ public class MAPController extends EditorController<MAPFile> {
                 return;
             }
 
+            if (x > 255 || z > 255) { // Frogger limitation.
+                Utils.makePopUp("The collision grid cannot go larger than 255x255.", AlertType.ERROR);
+                return;
+            }
+
             getFile().randomizeMap(x, z);
         });
     }
