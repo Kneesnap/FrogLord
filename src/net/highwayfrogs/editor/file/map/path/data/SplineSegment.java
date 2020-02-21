@@ -1,6 +1,9 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.path.*;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
@@ -65,8 +68,8 @@ public class SplineSegment extends PathSegment {
     }
 
     @Override
-    protected PathResult calculatePosition(PathInfo info) {
-        return new PathResult(calculateSplinePoint(info.getSegmentDistance()), calculateSplineTangent(info.getSegmentDistance()), false);
+    public PathResult calculatePosition(PathInfo info) {
+        return new PathResult(calculateSplinePoint(info.getSegmentDistance()), calculateSplineTangent(info.getSegmentDistance()));
     }
 
     // What follows is insanely nasty, but it is what the game engine does, so we have no choice...
@@ -174,6 +177,23 @@ public class SplineSegment extends PathSegment {
         editor.addLabel("Smooth C:", Utils.matrixToString(this.smoothC), 25.0);
     }
 
+    @Override
+    public void setupNewSegment(MAPFile map, Path path) {
+        SVector start;
+
+        if (path.getSegments().isEmpty()) {
+            PathSegment lastSegment = path.getSegments().get(path.getSegments().size() - 1);
+            start = lastSegment.calculatePosition(map, path, lastSegment.getLength()).getPosition();
+        } else {
+            start = new SVector();
+        }
+
+        SVector cp1 = new SVector(start).add(new SVector(400, 0, 400));
+        SVector cp2 = new SVector(start).add(new SVector(-400, 0, 400));
+        SVector end = new SVector(start).add(new SVector(0, 0, 800));
+        loadFromCurve(new BezierCurve(start, cp1, cp2, end), null);
+    }
+
     /**
      * Loads curve data from a bezier curve.
      * @param curve The curve to load data from.
@@ -262,6 +282,8 @@ public class SplineSegment extends PathSegment {
     }
 
     @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class BezierCurve {
         private SVector start = new SVector();
         private SVector control1 = new SVector();

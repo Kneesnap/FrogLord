@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.map.path.data;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.MWDFile;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.path.*;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
@@ -52,7 +53,7 @@ public class ArcSegment extends PathSegment {
     }
 
     @Override
-    protected PathResult calculatePosition(PathInfo info) {
+    public PathResult calculatePosition(PathInfo info) {
         int segmentDistance = info.getSegmentDistance();
 
         IVector vec = new IVector(start.getX() - center.getX(), start.getY() - center.getY(), start.getZ() - center.getZ());
@@ -89,7 +90,7 @@ public class ArcSegment extends PathSegment {
         vec.add(center);
         svec.setValues((short) -sin, (short) 0, (short) cos);
 
-        return new PathResult(new SVector(vec), PSXMatrix.MRApplyRotMatrix(matrix, svec, new IVector()), false);
+        return new PathResult(new SVector(vec), PSXMatrix.MRApplyRotMatrix(matrix, svec, new IVector()));
     }
 
     @Override
@@ -125,5 +126,18 @@ public class ArcSegment extends PathSegment {
         double xDiff = (start.getFloatX() - center.getFloatX());
         double zDiff = (start.getFloatZ() - center.getFloatZ());
         return Utils.floatToFixedPointInt4Bit((float) Math.sqrt((xDiff * xDiff) + (zDiff * zDiff)));
+    }
+
+    @Override
+    public void setupNewSegment(MAPFile map, Path path) {
+        if (path.getSegments().size() > 0) {
+            PathSegment lastSegment = path.getSegments().get(path.getSegments().size() - 1);
+            this.start = lastSegment.calculatePosition(map, path, lastSegment.getLength()).getPosition();
+        }
+
+        this.pitch = 0;
+        this.center = new SVector(this.start).add(new SVector(-400, 0, -400));
+        this.normal.setFloatY(-1F, 12);
+        onUpdate(null);
     }
 }

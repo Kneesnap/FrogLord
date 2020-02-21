@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.path.*;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
@@ -24,6 +25,17 @@ public class LineSegment extends PathSegment {
     }
 
     @Override
+    public void setupNewSegment(MAPFile map, Path path) {
+        if (path.getSegments().size() > 0) {
+            PathSegment lastSegment = path.getSegments().get(path.getSegments().size() - 1);
+            this.start = lastSegment.calculatePosition(map, path, lastSegment.getLength()).getPosition();
+        }
+
+        this.end = new SVector(this.start).add(new SVector(0, 0, 800));
+        onUpdate(null);
+    }
+
+    @Override
     protected void loadData(DataReader reader) {
         this.start.loadWithPadding(reader);
         this.end.loadWithPadding(reader);
@@ -36,7 +48,7 @@ public class LineSegment extends PathSegment {
     }
 
     @Override
-    protected PathResult calculatePosition(PathInfo info) {
+    public PathResult calculatePosition(PathInfo info) {
         int deltaX = end.getX() - start.getX();
         int deltaY = end.getY() - start.getY();
         int deltaZ = end.getZ() - start.getZ();
@@ -45,7 +57,7 @@ public class LineSegment extends PathSegment {
         result.setX((short) (start.getX() + ((deltaX * info.getSegmentDistance()) / getLength())));
         result.setY((short) (start.getY() + ((deltaY * info.getSegmentDistance()) / getLength())));
         result.setZ((short) (start.getZ() + ((deltaZ * info.getSegmentDistance()) / getLength())));
-        return new PathResult(result, new IVector(deltaX, deltaY, deltaZ).normalise(), false);
+        return new PathResult(result, new IVector(deltaX, deltaY, deltaZ).normalise());
     }
 
     @Override

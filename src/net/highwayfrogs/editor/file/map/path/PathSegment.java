@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.map.path;
 import javafx.scene.control.TextField;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -40,6 +41,12 @@ public abstract class PathSegment extends GameObject {
     }
 
     /**
+     * Setup this segment at the end of the given path.
+     * @param path The path this will be added to.
+     */
+    public abstract void setupNewSegment(MAPFile map, Path path);
+
+    /**
      * Load segment specific data.
      * @param reader Data source.
      */
@@ -56,7 +63,22 @@ public abstract class PathSegment extends GameObject {
      * @param info The info to calculate with.
      * @return finishPosition
      */
-    protected abstract PathResult calculatePosition(PathInfo info);
+    public abstract PathResult calculatePosition(PathInfo info);
+
+    /**
+     * Calculate the position along this segment.
+     * @param map      The map containing the path.
+     * @param path     The path containing this segment.
+     * @param distance The distance along this segment.
+     * @return pathResult
+     */
+    public PathResult calculatePosition(MAPFile map, Path path, int distance) {
+        PathInfo fakeInfo = new PathInfo();
+        fakeInfo.setPath(map, path, this);
+        fakeInfo.setSegmentDistance(distance);
+        fakeInfo.setSpeed(1);
+        return calculatePosition(fakeInfo);
+    }
 
     /**
      * Recalculates the length of this segment.
@@ -86,8 +108,10 @@ public abstract class PathSegment extends GameObject {
      */
     public void onUpdate(MapUIController controller) {
         recalculateLength();
-        controller.getPathManager().updatePathDisplay();
-        controller.getEntityManager().updateEntities();
+        if (controller != null) {
+            controller.getPathManager().updatePathDisplay();
+            controller.getEntityManager().updateEntities();
+        }
     }
 
     /**
