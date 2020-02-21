@@ -285,8 +285,6 @@ public class FFSUtil {
                 }
 
                 MAPPolygon newPolygon = polyType.getMaker().get();
-
-                newPolygon.setFlippedVertices(true);
                 newPolygon.setAllowDisplay(args[1].equalsIgnoreCase("show"));
 
                 int index = 2;

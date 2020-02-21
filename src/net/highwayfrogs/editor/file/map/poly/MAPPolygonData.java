@@ -150,7 +150,6 @@ public class MAPPolygonData {
 
         // Apply general data.
         poly.setVertices(Arrays.copyOf(this.vertices, getVerticeCount()));
-        poly.setFlippedVertices(true);
         poly.setAllowDisplay(this.allowDisplay);
     }
 

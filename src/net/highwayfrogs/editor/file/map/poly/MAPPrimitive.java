@@ -23,13 +23,27 @@ public abstract class MAPPrimitive extends PSXGPUPrimitive {
 
     @Override
     public void load(DataReader reader) {
-        for (int i = 0; i < vertices.length; i++)
-            this.vertices[i] = reader.readUnsignedShortAsInt();
+        if (this.vertices.length == 3) {
+            for (int i = 0; i < vertices.length; i++)
+                this.vertices[i] = reader.readUnsignedShortAsInt();
+        } else {
+            this.vertices[0] = reader.readUnsignedShortAsInt();
+            this.vertices[1] = reader.readUnsignedShortAsInt();
+            this.vertices[3] = reader.readUnsignedShortAsInt();
+            this.vertices[2] = reader.readUnsignedShortAsInt();
+        }
     }
 
     @Override
     public void save(DataWriter writer) {
-        for (int vertice : getVertices())
-            writer.writeUnsignedShort(vertice);
+        if (this.vertices.length == 3) {
+            for (int i = 0; i < this.vertices.length; i++)
+                writer.writeUnsignedShort(this.vertices[i]);
+        } else {
+            writer.writeUnsignedShort(this.vertices[0]);
+            writer.writeUnsignedShort(this.vertices[1]);
+            writer.writeUnsignedShort(this.vertices[3]);
+            writer.writeUnsignedShort(this.vertices[2]);
+        }
     }
 }

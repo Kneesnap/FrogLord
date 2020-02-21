@@ -22,7 +22,7 @@ import java.awt.image.BufferedImage;
 @Getter
 @Setter
 public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
-    private PSXColorVector[] colors; //TODO: Does this need swapping?
+    private PSXColorVector[] colors;
 
     // NOTE: Changing MAPFile.VERTEX_COLOR_IMAGE_SIZE to a higher value will improve the shading quality, but may
     //       also break texture related stuff elsewhere (I haven't done much in the way of testing).

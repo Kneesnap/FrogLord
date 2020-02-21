@@ -1112,8 +1112,6 @@ public class MAPFile extends GameFile {
                 polyF4.getVertices()[1] = leftIndex + 1;
                 polyF4.getVertices()[2] = leftIndex + 3; // Swapped with the next one to make work.
                 polyF4.getVertices()[3] = leftIndex + 2;
-                polyF4.setFlippedVertices(true);
-
                 list.add(polyF4);
 
                 GridSquare newSquare = new GridSquare(polyF4, this);
