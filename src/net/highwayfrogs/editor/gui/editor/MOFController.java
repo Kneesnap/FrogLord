@@ -167,6 +167,7 @@ public class MOFController extends EditorController<MOFHolder> {
 
                 if (isSelectingAnimationFace()) {
                     this.selectingAnimationFace = false;
+                    updateTexture3D();
                     return;
                 }
 
@@ -460,6 +461,7 @@ public class MOFController extends EditorController<MOFHolder> {
 
         // Setup preview.
         // Create the animation preview.
+        List<Node> toDisable = new ArrayList<>();
         if (anim.getEntryList().getEntries().size() > 0) {
             List<MOFPartPolyAnimEntry> entries = anim.getEntryList().getEntries();
             MWDFile mwd = anim.getMWD();
@@ -472,6 +474,7 @@ public class MOFController extends EditorController<MOFHolder> {
             Slider frameSlider = grid.addIntegerSlider("Animation Frame", 0, newFrame ->
                     imagePreview.setImage(mwd.getImageByTextureId(entries.get(newFrame).getImageId()).toFXImage(MAPAnimation.PREVIEW_SETTINGS)), 0, maxValidFrame);
 
+            toDisable.add(frameSlider);
             double millisInterval = (1000D / mwd.getFPS());
             Timeline animationTimeline = new Timeline(new KeyFrame(Duration.millis(millisInterval), evt -> {
                 if (framesWaited.getAndIncrement() == entries.get((int) frameSlider.getValue()).getDuration()) {
@@ -496,7 +499,8 @@ public class MOFController extends EditorController<MOFHolder> {
                     animationTimeline.pause();
                 }
 
-                frameSlider.setDisable(playNow);
+                for (Node node : toDisable)
+                    node.setDisable(playNow);
             });
         }
 
@@ -525,7 +529,10 @@ public class MOFController extends EditorController<MOFHolder> {
             HBox hbox2 = new HBox();
 
             TextField durationField = grid.setupSecondNode(new TextField(String.valueOf(entry.getDuration())), false);
-            Utils.setHandleTestKeyPress(durationField, Utils::isInteger, newValue -> entry.setDuration(Integer.parseInt(newValue)));
+            Utils.setHandleTestKeyPress(durationField, Utils::isInteger, newValue -> {
+                entry.setDuration(Integer.parseInt(newValue));
+                setupAnimationEditor(anim);
+            });
             durationField.setMaxWidth(30);
 
             Button removeButton = new Button("Remove");
@@ -539,12 +546,16 @@ public class MOFController extends EditorController<MOFHolder> {
             hbox2.getChildren().add(removeButton);
             grid.setupSecondNode(hbox2, false);
             grid.addRow(25);
+
+            toDisable.add(view);
+            toDisable.add(durationField);
+            toDisable.add(removeButton);
         }
 
-        grid.addButton("Add Texture", () -> getMofMesh().getMofHolder().getVloFile().promptImageSelection(newImage -> {
+        toDisable.add(grid.addButton("Add Texture", () -> getMofMesh().getMofHolder().getVloFile().promptImageSelection(newImage -> {
             anim.getEntryList().getEntries().add(new MOFPartPolyAnimEntry(newImage.getTextureId(), 1));
             setupAnimationEditor(anim);
-        }, false));
+        }, false)));
     }
 
     public void updateTexture3D() {
