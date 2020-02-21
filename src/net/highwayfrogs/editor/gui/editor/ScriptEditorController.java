@@ -98,6 +98,7 @@ public class ScriptEditorController implements Initializable {
      * Updates the code display.
      */
     public void updateCodeDisplay() {
+        commandEditors.setSpacing(2);
         commandEditors.getChildren().clear();
         codeArea.getChildren().clear();
         this.warningLabel.setVisible(false);
@@ -118,6 +119,7 @@ public class ScriptEditorController implements Initializable {
             pane.setPrefWidth(100);
             HBox.setHgrow(pane, Priority.SOMETIMES);
 
+            pane.setHgap(2);
             pane.addRow(0);
             for (int i = 0; i < command.getCommandType().getSize(); i++) {
                 Node node;
@@ -140,7 +142,7 @@ public class ScriptEditorController implements Initializable {
                 pane.addColumn(i, node);
             }
             commandEditors.getChildren().add(pane);
-            cmdSize += 25;
+            cmdSize += 25 + commandEditors.getSpacing();
         }
 
 
