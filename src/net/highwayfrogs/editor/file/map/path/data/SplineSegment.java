@@ -173,7 +173,29 @@ public class SplineSegment extends PathSegment {
         editor.addFloatVector("Control 2", curve.getControl2(), () -> loadFromCurve(curve, controller), controller);
         editor.addFloatVector("End", curve.getEnd(), () -> loadFromCurve(curve, controller), controller);
 
-        editor.addLabel("Smooth T:", Arrays.toString(this.smoothT), 25.0); //TODO: Allow edits.
+        editor.addBoldLabel("Smooth T:");
+        for (int i = 0; i < this.smoothT.length; i++) {
+            final int index = i;
+            editor.addIntegerField(String.valueOf(i), this.smoothT[i], newVal -> {
+                this.smoothT[index] = newVal;
+                onUpdate(controller);
+            }, null);
+        }
+
+        editor.addBoldLabel("Smooth C:");
+        for (int i = 0; i < this.smoothC.length; i++) {
+            final int index1 = i;
+            for (int j = 0; j < this.smoothC[i].length; j++) {
+                final int index2 = j;
+                editor.addIntegerField(i + "," + j, this.smoothC[i][j], newVal -> {
+                    this.smoothC[index1][index2] = newVal;
+                    onUpdate(controller);
+                }, null);
+            }
+        }
+
+        //TODO: Is smoothT smoothC a PSXMatrix, but one which uses ints? I think it might be?
+        editor.addLabel("Smooth T:", Arrays.toString(this.smoothT), 25.0); //TODO: These appear to be auto-generated, and they smooth out the curve. Figure out how to generate them. T might be per bezier point?
         editor.addLabel("Smooth C:", Utils.matrixToString(this.smoothC), 25.0);
     }
 
