@@ -69,13 +69,13 @@ public class MAPFile extends GameFile {
     private List<MAPAnimation> mapAnimations = new ArrayList<>();
     @Setter private short groupXCount;
     @Setter private short groupZCount;
-    private short groupXSize = (short) 256; // Seems to always be 256. Appears to be related to the X size of one group.
-    private short groupZSize = (short) 256; // Seems to always be 256. Appears to be related to the Z size of one group.
+    private short groupXSize = (short) 768; // Seems to always be 768. Appears to be related to the X size of one group.
+    private short groupZSize = (short) 768; // Seems to always be 768. Appears to be related to the Z size of one group.
 
     @Setter private short gridXCount;
     @Setter private short gridZCount;
-    private short gridXSize = (short) 768; // Seems to always be 768.
-    private short gridZSize = (short) 768; // Seems to always be 768.
+    private short gridXSize = (short) 256; // Seems to always be 256.
+    private short gridZSize = (short) 256; // Seems to always be 256.
 
     private transient VLOArchive vlo;
     private transient Map<MAPPrimitiveType, List<MAPPrimitive>> polygons = new HashMap<>();
@@ -1051,14 +1051,9 @@ public class MAPFile extends GameFile {
     }
 
     /**
-     * Procedurally generate a test map.
-     * TODO: Fix collision grid.
+     * Procedurally generate an empty map, making it easier to start from scratch on a map you'd like to make in Blender.
      */
-    public void randomizeMap() {
-        final int size = 5;
-        int halfSize = size / 2;
-        final float SQUARE_SIZE = 20;
-
+    public void randomizeMap(final int xTileCount, final int zTileCount) {
         this.startRotation = StartRotation.NORTH;
         this.levelTimer = 99;
         this.cameraSourceOffset.loadFromFloatText("0, -50, -3");
@@ -1072,9 +1067,9 @@ public class MAPFile extends GameFile {
         this.vertexes.clear();
         this.gridStacks.clear();
         this.mapAnimations.clear();
-        this.gridXCount = size + 2; // Add two, so we can have a border surrounding the map.
-        this.gridZCount = size + 2;
-        this.startXTile = (short) (halfSize + 1);
+        this.gridXCount = (short) (xTileCount + 2); // Add two, so we can have a border surrounding the map.
+        this.gridZCount = (short) (zTileCount + 2);
+        this.startXTile = (short) ((xTileCount / 2) + 1);
         this.startZTile = (short) 1;
 
         polygons.values().forEach(List::clear); // Clear the list of polygons.
@@ -1082,6 +1077,10 @@ public class MAPFile extends GameFile {
 
         // Create stacks.
         Random random = new Random();
+        float xSize = Utils.fixedPointShortToFloat4Bit(getGridXSize());
+        float zSize = Utils.fixedPointShortToFloat4Bit(getGridZSize());
+        float baseX = Utils.fixedPointShortToFloat4Bit(getBaseGridX());
+        float baseZ = Utils.fixedPointShortToFloat4Bit(getBaseGridZ());
         for (int z = 0; z < getGridZCount(); z++) {
             for (int x = 0; x < getGridXCount(); x++) {
                 GridStack newStack = new GridStack();
@@ -1089,14 +1088,10 @@ public class MAPFile extends GameFile {
                 if (x == 0 || x == getGridXCount() - 1 || z == 0 || z == getGridZCount() - 1)
                     continue; // No squares around edges.
 
-                x -= halfSize;
-                z -= halfSize;
-                SVector topLeft = new SVector(x * SQUARE_SIZE, 0, (z + 1) * SQUARE_SIZE);
-                SVector topRight = new SVector((x + 1) * SQUARE_SIZE, 0, (z + 1) * SQUARE_SIZE);
-                SVector botLeft = new SVector(x * SQUARE_SIZE, 0, z * SQUARE_SIZE);
-                SVector botRight = new SVector((x + 1) * SQUARE_SIZE, 0, z * SQUARE_SIZE);
-                x += halfSize;
-                z += halfSize;
+                SVector topLeft = new SVector(baseX + (x * xSize), 0, baseZ + (z + 1) * zSize);
+                SVector topRight = new SVector(baseX + (x + 1) * xSize, 0, baseZ + (z + 1) * zSize);
+                SVector botLeft = new SVector(baseX + x * xSize, 0, baseZ + z * zSize);
+                SVector botRight = new SVector(baseX + (x + 1) * xSize, 0, baseZ + z * zSize);
 
                 int leftIndex = this.vertexes.size();
                 this.vertexes.add(topLeft);
@@ -1104,6 +1099,7 @@ public class MAPFile extends GameFile {
                 this.vertexes.add(botLeft);
                 this.vertexes.add(botRight);
                 MAPPolyF4 polyF4 = new MAPPolyF4();
+                polyF4.setAllowDisplay(true);
                 polyF4.getColor().setCd((byte) 0xFF);
                 polyF4.getColor().setRed((byte) (random.nextInt(511) - 256));
                 polyF4.getColor().setGreen((byte) (random.nextInt(511) - 256));
@@ -1132,12 +1128,11 @@ public class MAPFile extends GameFile {
         getLights().add(light2);
 
         // Setup Group:
-        setBaseXTile((short) -halfSize);
-        setBaseZTile((short) -halfSize);
+        setBaseXTile((short) -((xTileCount / 2) + 1));
+        setBaseZTile((short) -((zTileCount / 2) + 1));
 
-        short groupCount = (short) (Math.ceil((double) size / (double) (getGroupXSize() / getGridXSize())));
-        setGroupXCount(groupCount);
-        setGroupZCount(groupCount);
+        setGroupXCount((short) (1 + (xTileCount / (getGroupXSize() / getGridXSize()))));
+        setGroupZCount((short) (1 + (zTileCount / (getGroupZSize() / getGridZSize()))));
 
         System.out.println("Scrambled " + getFileEntry().getDisplayName());
     }

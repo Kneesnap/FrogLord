@@ -26,7 +26,16 @@ public class InputMenu {
      * @param handler The behavior to execute when the user accepts.
      */
     public static void promptInput(String prompt, Consumer<String> handler) {
-        Utils.loadFXMLTemplate("input", "Waiting for user input...", newStage -> new InputController(newStage, prompt, handler));
+        promptInput(prompt, null, handler);
+    }
+
+    /**
+     * Require the user to perform a selection.
+     * @param prompt  The prompt to display the user.
+     * @param handler The behavior to execute when the user accepts.
+     */
+    public static void promptInput(String prompt, String defaultText, Consumer<String> handler) {
+        Utils.loadFXMLTemplate("input", "Waiting for user input...", newStage -> new InputController(newStage, prompt, handler, defaultText));
     }
 
     public static class InputController implements Initializable {
@@ -36,16 +45,21 @@ public class InputMenu {
         private Stage stage;
         private String text;
         private Consumer<String> handler;
+        private String defaultText;
 
-        public InputController(Stage stage, String promptText, Consumer<String> handler) {
+        public InputController(Stage stage, String promptText, Consumer<String> handler, String defaultText) {
             this.text = promptText;
             this.handler = handler;
             this.stage = stage;
+            this.defaultText = defaultText;
         }
 
         @Override
         public void initialize(URL location, ResourceBundle resources) {
             this.promptText.setText(this.text);
+
+            if (this.defaultText != null)
+                this.textField.setText(this.defaultText);
 
             this.textField.setOnKeyPressed(evt -> {
                 if (evt.getCode() == KeyCode.ENTER)

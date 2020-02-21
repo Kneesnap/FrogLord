@@ -27,6 +27,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
@@ -140,7 +141,32 @@ public class MAPController extends EditorController<MAPFile> {
 
     @FXML
     private void makeNewMap(ActionEvent event) {
-        getFile().randomizeMap();
+        InputMenu.promptInput("Please enter the grid dimensions for the cleared map.", "5,5", newText -> {
+            String[] split = newText.split(",");
+            if (split.length != 2) {
+                Utils.makePopUp("'" + newText + "' was invalid.\nPlease enter two numbers separated by a comma.", AlertType.ERROR);
+                return;
+            }
+
+            if (!Utils.isInteger(split[0])) {
+                Utils.makePopUp("'" + split[0] + "' is not a valid number.", AlertType.ERROR);
+                return;
+            }
+
+            if (!Utils.isInteger(split[1])) {
+                Utils.makePopUp("'" + split[1] + "' is not a valid number.", AlertType.ERROR);
+                return;
+            }
+
+            int x = Integer.parseInt(split[0]);
+            int z = Integer.parseInt(split[1]);
+            if (x < 0 || z < 0) {
+                Utils.makePopUp("Dimensions cannot be less than zero.", AlertType.ERROR);
+                return;
+            }
+
+            getFile().randomizeMap(x, z);
+        });
     }
 
     @FXML
