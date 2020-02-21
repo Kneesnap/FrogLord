@@ -39,7 +39,6 @@ import java.util.ResourceBundle;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
- * TODO: Cache resources for all of the different managers, especially paths.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter

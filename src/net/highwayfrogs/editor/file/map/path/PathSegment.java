@@ -109,7 +109,9 @@ public abstract class PathSegment extends GameObject {
     public void onUpdate(MapUIController controller) {
         recalculateLength();
         if (controller != null) {
-            controller.getPathManager().updatePathDisplay();
+            Path selectedPath = controller.getPathManager().getSelectedPath();
+            if (selectedPath != null)
+                controller.getPathManager().updatePath(selectedPath);
             controller.getEntityManager().updateEntities();
         }
     }

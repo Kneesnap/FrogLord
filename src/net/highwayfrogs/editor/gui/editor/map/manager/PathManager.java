@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.gui.editor.map.manager;
 import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.geometry.Point3D;
+import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.input.MouseEvent;
@@ -27,8 +28,10 @@ import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.TriConsumer;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.WeakHashMap;
 
 /**
  * Manages paths in the 3D view.
@@ -40,6 +43,7 @@ public class PathManager extends MapManager {
     private Path selectedPath;
     private GUIEditorGrid pathEditor;
     private TriConsumer<Path, PathSegment, Integer> promptHandler; // Path, Segment, Segment Distance.
+    private WeakHashMap<Path, List<Node>> perPathNodes = new WeakHashMap<>();
 
     private static final String DISPLAY_LIST_PATHS = "displayListPaths";
     private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
@@ -117,6 +121,20 @@ public class PathManager extends MapManager {
         }
     }
 
+    /**
+     * Update the display of a single path, if it should be shown.
+     * @param toUpdate The path to update.
+     */
+    public void updatePath(Path toUpdate) {
+        if (toUpdate != null && (this.displaySetting == PathDisplaySetting.ALL || (this.displaySetting == PathDisplaySetting.SELECTED && getSelectedPath() == toUpdate))) {
+            List<Node> nodes = this.perPathNodes.remove(toUpdate);
+            if (nodes != null && getRenderManager().displayListExists(DISPLAY_LIST_PATHS))
+                getRenderManager().removeAllFromList(DISPLAY_LIST_PATHS, nodes);
+
+            addPaths(DISPLAY_LIST_PATHS, Collections.singletonList(toUpdate), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
+        }
+    }
+
     private void handleClick(Path path, PathSegment segment, int segDistance) {
         if (isPromptActive()) {
             acceptPrompt(path, segment, segDistance);
@@ -142,7 +160,7 @@ public class PathManager extends MapManager {
      * @param showStart Whether or not to display a sphere at the start of the line segment.
      * @return The newly created/added cylinder (cylinder primitive only!)
      */
-    public Cylinder addPathLineSegment(String listID, double x0, double y0, double z0, double x1, double y1, double z1, double radius, PhongMaterial material, boolean showStart, Path path, PathSegment segment, int segDistance) {
+    public Cylinder addPathLineSegment(List<Node> nodes, String listID, double x0, double y0, double z0, double x1, double y1, double z1, double radius, PhongMaterial material, boolean showStart, Path path, PathSegment segment, int segDistance) {
         EventHandler<MouseEvent> mouseEventEventHandler = evt -> handleClick(path, segment, segDistance);
         final Point3D yAxis = new Point3D(0.0, 1.0, 0.0);
         final Point3D p0 = new Point3D(x0, y0, z0);
@@ -169,8 +187,10 @@ public class PathManager extends MapManager {
         if (showStart) {
             Sphere sphStart = getRenderManager().addSphere(listID, x0, y0, z0, radius * 5.0, material, false);
             sphStart.setOnMouseClicked(mouseEventEventHandler);
+            nodes.add(sphStart);
         }
 
+        nodes.add(line);
         return line;
     }
 
@@ -189,6 +209,7 @@ public class PathManager extends MapManager {
         for (int pathIndex = 0; pathIndex < pathList.size(); pathIndex++) {
             Path path = pathList.get(pathIndex);
 
+            List<Node> nodes = this.perPathNodes.computeIfAbsent(path, key -> new ArrayList<>());
             for (int segmentIndex = 0; segmentIndex < path.getSegments().size(); segmentIndex++) {
                 PathSegment segment = path.getSegments().get(segmentIndex);
                 pathInfo.setPathId(pathIndex);
@@ -203,7 +224,7 @@ public class PathManager extends MapManager {
                 final int stepSize = Math.min(32, segment.getLength());
                 if (stepSize == 0) { // If the path is 100% empty, just show the start.
                     Vector pos = segment.getStartPosition();
-                    addPathLineSegment(listID, pos.getFloatX(), pos.getFloatY(), pos.getFloatZ(), pos.getFloatX(), pos.getFloatY(), pos.getFloatZ(), .2, material, true, path, segment, 0);
+                    addPathLineSegment(nodes, listID, pos.getFloatX(), pos.getFloatY(), pos.getFloatZ(), pos.getFloatX(), pos.getFloatY(), pos.getFloatZ(), .2, material, true, path, segment, 0);
                     continue;
                 }
 
@@ -216,7 +237,7 @@ public class PathManager extends MapManager {
                     pathInfo.setSegmentDistance(Math.min((step + 1) * stepSize, segment.getLength()));
                     Vector v1 = path.evaluatePosition(pathInfo).getPosition();
                     if (!v0.equals(v1))
-                        addPathLineSegment(listID, v0.getFloatX(), v0.getFloatY(), v0.getFloatZ(), v1.getFloatX(), v1.getFloatY(), v1.getFloatZ(), 0.20,
+                        addPathLineSegment(nodes, listID, v0.getFloatX(), v0.getFloatY(), v0.getFloatZ(), v1.getFloatX(), v1.getFloatY(), v1.getFloatZ(), 0.20,
                                 material, step == 0, path, segment, (step * stepSize) + (stepSize / 2));
                 }
             }
@@ -231,7 +252,12 @@ public class PathManager extends MapManager {
         if (this.selectedPath == null && !getMap().getPaths().isEmpty())
             this.selectedPath = getMap().getPaths().get(0);
 
-        updatePathDisplay();
+        if (this.selectedPath != null) {
+            updatePath(this.selectedPath);
+        } else {
+            updatePathDisplay();
+        }
+
         this.pathEditor.clearEditor();
 
         ComboBox<Path> box = this.pathEditor.addSelectionBox("Path:", getSelectedPath(), getMap().getPaths(), newPath -> {
@@ -258,7 +284,6 @@ public class PathManager extends MapManager {
                 // Remove path.
                 getMap().removePath(this.selectedPath);
                 this.selectedPath = null;
-                updatePathDisplay();
                 setupEditor();
             });
 

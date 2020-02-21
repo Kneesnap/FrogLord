@@ -314,4 +314,11 @@ public class RenderManager {
         System.out.println("[ RenderManager - Display Lists ]");
         displayListCache.forEach((key, val) -> System.out.println("displayListCache[" + key + "] contains " + val.size() + " items"));
     }
+
+    public void removeAllFromList(String listID, List<Node> nodes) {
+        if (!this.displayListCache.containsKey(listID))
+            throw new RuntimeException("RenderManager::removeAllFromList() - " + listID + " does not exist!");
+        this.displayListCache.get(listID).removeAll(nodes);
+        this.root.getChildren().removeAll(nodes);
+    }
 }
