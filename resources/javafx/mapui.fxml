@@ -186,7 +186,7 @@
                         </ScrollPane>
                     </content>
                 </TitledPane>
-                <TitledPane fx:id="lightPane" animated="false" text="Lights">
+                <TitledPane fx:id="lightPane" animated="false" text="Entity Lights">
                     <content>
                         <ScrollPane fitToWidth="true">
                             <content>

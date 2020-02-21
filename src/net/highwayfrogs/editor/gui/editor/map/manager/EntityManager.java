@@ -1,11 +1,13 @@
 package net.highwayfrogs.editor.gui.editor.map.manager;
 
+import javafx.scene.Group;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
+import lombok.Getter;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
@@ -48,6 +50,7 @@ public class EntityManager extends MapManager {
     private List<MeshView> entityModelViews = new ArrayList<>();
     private List<FormEntry> entityTypes = new ArrayList<>();
     private Set<Integer> entitiesToUpdate = new HashSet<>();
+    @Getter private Group entityRenderGroup;
 
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
     private static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
@@ -59,7 +62,8 @@ public class EntityManager extends MapManager {
     @Override
     public void onSetup() {
         super.onSetup();
-        getRenderManager().addMissingDisplayList("entityModelViews");
+        this.entityRenderGroup = new Group();
+        getRenderManager().addNode(this.entityRenderGroup);
         updateEntities();
         MapUIController.getPropertyEntityIconSize().addListener((observable, old, newVal) -> updateEntities());
     }
@@ -217,7 +221,6 @@ public class EntityManager extends MapManager {
             }
         }
 
-        //TODO: New matrix entities don't show up in-game, but path entities work fine.
         getMap().getEntities().add(entity);
         showEntityInfo(entity);
         updateEntities();
@@ -238,7 +241,7 @@ public class EntityManager extends MapManager {
             newView.setDrawMode(DrawMode.FILL);
             this.entityModelViews.add(newView);
             getController().getGeometryManager().setupView(newView);
-            getRenderManager().addNode("entityModelViews", newView);
+            getEntityRenderGroup().getChildren().add(newView);
 
             newView.setOnMouseClicked(evt -> { // Handle being clicked.
                 MeshView safeView = (MeshView) evt.getSource();
@@ -330,7 +333,7 @@ public class EntityManager extends MapManager {
 
             // Update MeshView.
             entityMesh.setMesh(holder.getMofMesh());
-            entityMesh.setMaterial(holder.getTextureMap().getPhongMaterial());
+            entityMesh.setMaterial(holder.getTextureMap().getDiffuseMaterial());
             return;
         }
 

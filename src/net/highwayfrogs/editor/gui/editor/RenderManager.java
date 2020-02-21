@@ -150,6 +150,14 @@ public class RenderManager {
     }
 
     /**
+     * Adds a node, without putting it in a display list.
+     * @param node The node to add.
+     */
+    public void addNode(Node node) {
+        this.root.getChildren().add(node);
+    }
+
+    /**
      * Adds a bounding box to the specified display list.
      * @param listID The ID of the display list.
      * @param node   The node to add.

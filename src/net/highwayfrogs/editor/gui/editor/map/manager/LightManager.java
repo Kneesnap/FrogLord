@@ -1,12 +1,18 @@
 package net.highwayfrogs.editor.gui.editor.map.manager;
 
 import javafx.scene.AmbientLight;
+import javafx.scene.LightBase;
+import javafx.scene.Node;
 import javafx.scene.PointLight;
+import javafx.scene.paint.Color;
 import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Manages map lights.
@@ -15,6 +21,8 @@ import net.highwayfrogs.editor.utils.Utils;
 public class LightManager extends MapManager {
     private GUIEditorGrid lightEditor;
     private static final String LIGHT_LIST = "lightList";
+    private List<LightBase> lights = new ArrayList<>();
+    private LightBase mainLight;
 
     public LightManager(MapUIController controller) {
         super(controller);
@@ -23,12 +31,17 @@ public class LightManager extends MapManager {
     @Override
     public void onSetup() {
         super.onSetup();
-        getController().getApplyLightsCheckBox().setOnAction(evt -> updateMapLighting());
+        getRenderManager().addMissingDisplayList(LIGHT_LIST);
+        getController().getApplyLightsCheckBox().setOnAction(evt -> updateEntityLighting());
+
+        this.mainLight = new AmbientLight(Color.WHITE);
+        getRenderManager().addNode(this.mainLight); // Add white light to the map.
+        this.mainLight.getScope().add(getController().getMeshView());
     }
 
     @Override
     public void setupEditor() {
-        updateMapLighting();
+        updateEntityLighting();
         if (lightEditor == null)
             lightEditor = new GUIEditorGrid(getController().getLightGridPane());
 
@@ -53,24 +66,45 @@ public class LightManager extends MapManager {
     }
 
     /**
+     * Update the lighting applied to a node.
+     * @param node The node to update lighting for.
+     */
+    public void updateLightsForNode(Node node) {
+        if (getController().getApplyLightsCheckBox().isSelected()) {
+            this.mainLight.getScope().remove(node);
+            for (LightBase light : this.lights)
+                light.getScope().remove(node);
+        } else { // We're not applying the lighting that the game will, instead we're going to apply white light to make it visible.
+            this.mainLight.getScope().add(node);
+        }
+    }
+
+    private void updateEntityLightingDisplay() {
+        getController().getEntityManager().getEntityRenderGroup().getChildren().forEach(this::updateLightsForNode);
+    }
+
+    /**
      * Applies the current lighting setup to the level.
      */
-    public void updateMapLighting() {
-        if (getRenderManager().displayListExists(LIGHT_LIST))
-            getRenderManager().clearDisplayList(LIGHT_LIST);
+    public void updateEntityLighting() {
+        getRenderManager().clearDisplayList(LIGHT_LIST);
+        this.lights.clear();
 
-        if (!getController().getApplyLightsCheckBox().isSelected())
+        if (!getController().getApplyLightsCheckBox().isSelected()) {
+            updateEntityLightingDisplay();
             return; // Don't lights if they're disabled.
+        }
 
-        getRenderManager().addMissingDisplayList(LIGHT_LIST);
 
         // Iterate through each light and apply the the root scene graph node
         for (Light light : getMap().getLights()) {
+
+            LightBase lightBase = null;
             switch (light.getApiType()) {
                 case AMBIENT:
                     AmbientLight ambLight = new AmbientLight();
                     ambLight.setColor(Utils.fromBGR(light.getColor()));
-                    getRenderManager().addNode(LIGHT_LIST, ambLight);
+                    lightBase = ambLight;
                     break;
 
                 case PARALLEL:
@@ -81,19 +115,26 @@ public class LightManager extends MapManager {
                     parallelLight.setTranslateX(-light.getDirection().getFloatX(12) * 1024);
                     parallelLight.setTranslateY(-light.getDirection().getFloatY(12) * 1024);
                     parallelLight.setTranslateZ(-light.getDirection().getFloatZ(12) * 1024);
-                    getRenderManager().addNode(LIGHT_LIST, parallelLight);
+                    lightBase = parallelLight;
                     break;
 
-                case POINT:
+                case POINT: // Point lights are not used.
                     PointLight pointLight = new PointLight();
                     pointLight.setColor(Utils.fromBGR(light.getColor()));
                     // Assuming direction is position? Are POINT lights ever used? [AndyEder]
                     pointLight.setTranslateX(light.getDirection().getFloatX());
                     pointLight.setTranslateY(light.getDirection().getFloatY());
                     pointLight.setTranslateZ(light.getDirection().getFloatZ());
-                    getRenderManager().addNode(LIGHT_LIST, pointLight);
+                    lightBase = pointLight;
                     break;
             }
+
+            if (lightBase != null) {
+                this.lights.add(lightBase);
+                getRenderManager().addNode(LIGHT_LIST, lightBase);
+            }
         }
+
+        updateEntityLightingDisplay();
     }
 }

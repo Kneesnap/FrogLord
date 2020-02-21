@@ -17,7 +17,6 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 @Setter
 public class Light extends GameObject {
-    private LightType type = LightType.STATIC;
     private APILightType apiType = APILightType.AMBIENT;
     private int color; // BbGgRr
     private SVector direction = new SVector();
@@ -30,7 +29,10 @@ public class Light extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        this.type = LightType.values()[reader.readUnsignedByteAsShort()];
+        short lightType = reader.readUnsignedByteAsShort();
+        if (lightType != 1)
+            throw new RuntimeException("Light type was not STATIC, instead it was " + lightType + ".");
+
         reader.skipByte(); // Unused 'priority'.
         reader.skipShort(); // Unused 'parentId'.
         this.apiType = APILightType.getType(reader.readUnsignedByteAsShort());
@@ -46,7 +48,7 @@ public class Light extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedByte((short) this.type.ordinal());
+        writer.writeUnsignedByte((short) 1); // Light type. Always STATIC.
         writer.writeUnsignedByte((short) 0); // Unused 'priority'.
         writer.writeUnsignedShort(0); // Unused 'parentId'.
         writer.writeUnsignedByte((short) this.apiType.getFlag());
@@ -65,18 +67,16 @@ public class Light extends GameObject {
      * @param editor Lighting editor.
      */
     public void makeEditor(GUIEditorGrid editor, LightManager lightManager) {
-        editor.addEnumSelector("Type", getType(), LightType.values(), false, this::setType);
-
         // Don't need to edit the lightType, as static is the only one that does anything.
         int rgbColor = Utils.toRGB(Utils.fromBGR(getColor()));
         editor.addColorPicker("Color:", 25, rgbColor, newColor -> {
             setColor(Utils.toBGR(Utils.fromRGB(newColor)));
-            lightManager.updateMapLighting();
+            lightManager.updateEntityLighting();
         });
 
         if (getApiType() == APILightType.POINT || getApiType() == APILightType.PARALLEL)
             editor.addFloatVector(getApiType() == APILightType.POINT ? "Position:" : "Direction:", this.direction,
-                    lightManager::updateMapLighting, lightManager.getController());
+                    lightManager::updateEntityLighting, lightManager.getController());
     }
 
     /**
