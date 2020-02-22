@@ -147,7 +147,8 @@ public class GeneralManager extends MapManager {
             for (int z = 0; z < getMap().getGridZCount(); z++) {
                 getRenderManager().addBoundingBoxFromMinMax("gridOutline", baseX + (x * xSize), 0, baseZ + (z * zSize), baseX + ((x + 1) * xSize), 0, baseZ + ((z + 1) * zSize), gridMaterial, true);
                 GridStack stack = getMap().getGridStack(x, z);
-                getRenderManager().addBoundingBoxFromMinMax("gridOutline", baseX + (x * xSize), -1 - (3 * stack.getAverageHeight()), baseZ + (z * zSize), baseX + ((x + 1) * xSize), -1 - (3 * stack.getAverageHeight()), baseZ + ((z + 1) * zSize), heightMaterial, true);
+                float floatPos = Utils.fixedPointIntToFloat4Bit(stack.getAverageHeight() << 6);
+                getRenderManager().addBoundingBoxFromMinMax("gridOutline", baseX + (x * xSize), -1 - floatPos, baseZ + (z * zSize), baseX + ((x + 1) * xSize), -1 - floatPos, baseZ + ((z + 1) * zSize), heightMaterial, true);
             }
         }
     }
