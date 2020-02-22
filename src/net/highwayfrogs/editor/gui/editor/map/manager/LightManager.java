@@ -4,7 +4,6 @@ import javafx.scene.AmbientLight;
 import javafx.scene.LightBase;
 import javafx.scene.Node;
 import javafx.scene.PointLight;
-import javafx.scene.paint.Color;
 import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -34,8 +33,7 @@ public class LightManager extends MapManager {
         getRenderManager().addMissingDisplayList(LIGHT_LIST);
         getController().getApplyLightsCheckBox().setOnAction(evt -> updateEntityLighting());
 
-        this.mainLight = new AmbientLight(Color.WHITE);
-        getRenderManager().addNode(this.mainLight); // Add white light to the map.
+        this.mainLight = new AmbientLight(Utils.fromRGB(0xA0A0A0));
         this.mainLight.getScope().add(getController().getMeshView());
     }
 
@@ -74,8 +72,10 @@ public class LightManager extends MapManager {
             this.mainLight.getScope().remove(node);
             for (LightBase light : this.lights)
                 light.getScope().remove(node);
+            this.mainLight.setVisible(!this.mainLight.getScope().isEmpty());
         } else { // We're not applying the lighting that the game will, instead we're going to apply white light to make it visible.
             this.mainLight.getScope().add(node);
+            this.mainLight.setVisible(true);
         }
     }
 
