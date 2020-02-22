@@ -1,10 +1,13 @@
 package net.highwayfrogs.editor.file.map.view;
 
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 
 /**
  * Represents a polygon which has a VertexColor.
@@ -36,6 +39,16 @@ public interface VertexColor {
      * @return node
      */
     public default TextureTreeNode getTreeNode(TextureMap map) {
-        return map.getTextureTree().getVertexNodeMap().get(this);
+        return map.getTextureTree().getVertexNodeMap().get(makeColorIdentifier());
+    }
+
+    public BigInteger makeColorIdentifier();
+
+    public default BigInteger makeColorIdentifier(String prefix, int... colors) {
+        StringBuilder sb = new StringBuilder(prefix);
+        for (int i : colors)
+            sb.append(Utils.padStringLeft(Integer.toHexString(i).toUpperCase(), Constants.INTEGER_SIZE, '0'));
+
+        return new BigInteger(sb.toString(), 16);
     }
 }

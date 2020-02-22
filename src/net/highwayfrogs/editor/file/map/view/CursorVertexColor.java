@@ -4,6 +4,7 @@ import lombok.Getter;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 
 /**
  * The texture for the cursor.
@@ -26,5 +27,10 @@ public class CursorVertexColor implements VertexColor {
 
         graphics.setColor(getOutlineColor());
         graphics.drawRect(0, 0, image.getWidth() - 1, image.getHeight() - 1);
+    }
+
+    @Override
+    public BigInteger makeColorIdentifier() {
+        return makeColorIdentifier("1337BEEFBABE6969", this.bodyColor.getRGB(), this.outlineColor.getRGB()); // Scuffed, but it'll do. No other color is gonna conflict.
     }
 }

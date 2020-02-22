@@ -64,7 +64,15 @@ public class PSXColorVector extends GameObject {
      * @return javaColor
      */
     public Color toColor() {
-        return new Color(Utils.byteToUnsignedShort(getRed()), Utils.byteToUnsignedShort(getGreen()), Utils.byteToUnsignedShort(getBlue()));
+        return toColor((byte) 0xFF);
+    }
+
+    /**
+     * Get this color as a Java color.
+     * @return javaColor
+     */
+    public Color toColor(byte alpha) {
+        return new Color(Utils.byteToUnsignedShort(getRed()), Utils.byteToUnsignedShort(getGreen()), Utils.byteToUnsignedShort(getBlue()), (alpha & 0xFF));
     }
 
     /**

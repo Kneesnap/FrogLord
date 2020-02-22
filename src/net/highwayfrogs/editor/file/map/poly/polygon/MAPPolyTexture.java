@@ -57,7 +57,7 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
             throw new RuntimeException("Cannot handle " + this.uvs.length + " uvs.");
         }
 
-        for (int i = 0; i < this.vectors.length; i++) { //TODO: Do colors need swapping too?
+        for (int i = 0; i < this.vectors.length; i++) {
             PSXColorVector vector = new PSXColorVector();
             vector.load(reader);
             this.vectors[i] = vector;
@@ -92,15 +92,6 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
     private void loadUV(int id, DataReader reader) {
         this.uvs[id] = new ByteUV();
         this.uvs[id].load(reader);
-    }
-
-    /**
-     * Get the nth obj UV string.
-     * @param index The index to get.
-     * @return objUvString
-     */
-    public String getObjUVString(int index) {
-        return this.uvs[index].toObjTextureString();
     }
 
     @Override

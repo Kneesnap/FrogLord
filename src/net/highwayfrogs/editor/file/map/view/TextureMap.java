@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,6 @@ import java.util.Map.Entry;
 
 /**
  * Represents a texture map.
- * TODO: Allow rebuilding the colored square data, which would make changing colors better.
  * References:
  * - https://github.com/juj/RectangleBinPack/blob/master/old/RectangleBinPack.cpp
  * - http://blackpawn.com/texts/lightmaps/default.html
@@ -36,7 +36,7 @@ import java.util.Map.Entry;
 public class TextureMap {
     private VLOArchive vloArchive;
     @Setter private List<Short> remapList;
-    private PhongMaterial phongMaterial;
+    private PhongMaterial material;
     private TextureTree textureTree;
 
     private static final int TEXTURE_PAGE_WIDTH = 1024; // The largest VLO is the SWP VLO, on the PS1.
@@ -86,19 +86,20 @@ public class TextureMap {
      * @return phongMaterial
      */
     public PhongMaterial getDiffuseMaterial() {
-        if (this.phongMaterial == null)
-            this.phongMaterial = Utils.makeDiffuseMaterial(Utils.toFXImage(getTextureTree().getImage(), false));
-        return this.phongMaterial;
+        if (this.material == null)
+            this.material = Utils.makeDiffuseMaterial(Utils.toFXImage(getTextureTree().getImage(), false));
+        return this.material;
     }
 
     /**
-     * Gets the 3D PhongMaterial. (Unaffected by lighting.)
-     * @return phongMaterial
+     * Updates the color data for the tree.
+     * @param vertexMap The map in question to update.
      */
-    public PhongMaterial getPhongMaterial() {
-        if (this.phongMaterial == null)
-            this.phongMaterial = Utils.makeSpecialMaterial(Utils.toFXImage(getTextureTree().getImage(), false));
-        return this.phongMaterial;
+    public void updateTreeColorData(Map<VertexColor, BufferedImage> vertexMap) {
+        this.textureTree.vertexMap = vertexMap;
+        this.textureTree.buildColorMap();
+        if (this.material != null)
+            this.material.setDiffuseMap(Utils.toFXImage(getTextureTree().getImage(), false));
     }
 
     // Stuff beyond here is heavily based on https://github.com/juj/RectangleBinPack/blob/master/old/RectangleBinPack.cpp (Public Domain)
@@ -106,8 +107,8 @@ public class TextureMap {
     @Getter
     public static class TextureTree {
         private final VLOArchive vloSource;
-        private final Map<VertexColor, BufferedImage> vertexMap;
-        private final Map<VertexColor, TextureTreeNode> vertexNodeMap;
+        private Map<VertexColor, BufferedImage> vertexMap;
+        private final Map<BigInteger, TextureTreeNode> vertexNodeMap;
         private final int width = TEXTURE_PAGE_WIDTH; // Width of tree.
         private final int height = TEXTURE_PAGE_HEIGHT; // Height of tree.
         private TextureTreeNode rootNode;
@@ -139,8 +140,7 @@ public class TextureMap {
 
                 if (node.getRight() != null) {
                     TextureTreeNode newNode = insert(node.getRight(), image);
-                    if (newNode != null)
-                        return newNode;
+                    return newNode;
                 }
 
                 return null; // Didn't fit into either sub-tree.
@@ -231,7 +231,7 @@ public class TextureMap {
                 BufferedImage image = entry.getValue();
                 TextureTreeNode vtxNode = TextureTreeNode.newNode(this, x, y, image.getWidth(), image.getHeight());
                 vtxNode.setCachedImage(image);
-                getVertexNodeMap().put(entry.getKey(), vtxNode);
+                getVertexNodeMap().put(entry.getKey().makeColorIdentifier(), vtxNode);
 
                 // Condense these things.
                 if ((x -= image.getWidth()) < minX) { // Start again at the bottom (move over horizontally) once it clashes with a texture.
@@ -239,6 +239,8 @@ public class TextureMap {
                     x = startX;
                 }
             }
+
+            this.vertexMap = null; // No longer needed.
         }
 
         private void handleNode(TextureTreeNode node) {
@@ -271,7 +273,7 @@ public class TextureMap {
             }
 
             // Draw the vertex color entries.
-            for (Entry<VertexColor, TextureTreeNode> entry : getVertexNodeMap().entrySet()) {
+            for (Entry<BigInteger, TextureTreeNode> entry : getVertexNodeMap().entrySet()) {
                 TextureTreeNode node = entry.getValue();
                 graphics.drawImage(node.getCachedImage(), node.getX(), node.getY(), node.getWidth(), node.getHeight(), null);
             }

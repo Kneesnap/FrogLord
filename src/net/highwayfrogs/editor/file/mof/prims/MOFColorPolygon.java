@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.mof.MOFPart;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 
 /**
  * Represents a vertex color mof polygon.
@@ -28,5 +29,10 @@ public class MOFColorPolygon extends MOFPolygon implements VertexColor {
     public void makeTexture(BufferedImage image, Graphics2D graphics) {
         graphics.setColor(getColor().toColor());
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+    }
+
+    @Override
+    public BigInteger makeColorIdentifier() {
+        return makeColorIdentifier("", getColor().toRGB());
     }
 }

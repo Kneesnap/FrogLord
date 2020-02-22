@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file.map.poly.polygon;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 
 /**
  * Represents polygons with gouraud shading.
@@ -21,17 +21,8 @@ import java.awt.image.BufferedImage;
  */
 @Getter
 @Setter
-public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
+public class MAPPolyGouraud extends MAPPolygon implements VertexColor, ColoredPoly {
     private PSXColorVector[] colors;
-
-    // NOTE: Changing MAPFile.VERTEX_COLOR_IMAGE_SIZE to a higher value will improve the shading quality, but may
-    //       also break texture related stuff elsewhere (I haven't done much in the way of testing).
-    //       Try changing the default value from 8 to 32 for example.
-    //       I don't like the fact we are relying on texture generation and resolution to shade the polygons. We should
-    //       really just be setting vertex color values and letting the hardware do the shading work. This just seems
-    //       very, very wrong - but I don't know how we can get around it right now due to the crappy limitations of
-    //       JavaFx. It's a problem for sure.
-    private static final int FULL_SIZE = MAPFile.VERTEX_COLOR_IMAGE_SIZE;
 
     public MAPPolyGouraud(MAPPolygonType type, int verticeCount) {
         super(type, verticeCount);
@@ -71,14 +62,22 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
 
         float tx, ty;
 
-        for (int x = 0; x < FULL_SIZE; x++) {
-            tx = (x == FULL_SIZE - 1) ? 1F : (float) x / (float) FULL_SIZE;
-            for (int y = 0; y < FULL_SIZE; y++) {
-                ty = (y == FULL_SIZE - 1) ? 1F : (float) y / (float) FULL_SIZE;
+        for (int x = 0; x < image.getWidth(); x++) {
+            tx = (x == image.getWidth() - 1) ? 1F : (float) x / (float) image.getWidth();
+            for (int y = 0; y < image.getHeight(); y++) {
+                ty = (y == image.getHeight() - 1) ? 1F : (float) y / (float) image.getHeight();
                 final Color newColor = Utils.calculateBilinearInterpolatedColour(c0, c2, c1, c3, tx, ty);
                 graphics.setColor(Utils.toAWTColor(newColor));
                 graphics.fillRect(x, y, x + 1, y + 1);
             }
         }
+    }
+
+    @Override
+    public BigInteger makeColorIdentifier() {
+        int[] colors = new int[getColors().length];
+        for (int i = 0; i < getColors().length; i++)
+            colors[i] = getColors()[i].toRGB();
+        return makeColorIdentifier("", colors);
     }
 }

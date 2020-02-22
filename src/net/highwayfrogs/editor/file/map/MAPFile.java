@@ -41,6 +41,7 @@ import net.highwayfrogs.editor.gui.editor.MAPController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -113,6 +114,14 @@ public class MAPFile extends GameFile {
     public static final List<MAPPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
     public static final List<MAPPrimitiveType> POLYGON_TYPES = Arrays.asList(MAPPolygonType.values());
 
+    // NOTE: Changing MAPFile.VERTEX_COLOR_IMAGE_SIZE to a higher value will improve the shading quality, but may
+    //       also break texture related stuff elsewhere (I haven't done much in the way of testing).
+    //       Try changing the default value from 8 to 32 for example.
+    //       I don't like the fact we are relying on texture generation and resolution to shade the polygons. We should
+    //       really just be setting vertex color values and letting the hardware do the shading work. This just seems
+    //       very, very wrong - but I don't know how we can get around it right now due to the crappy limitations of
+    //       JavaFx. It's a problem for sure.
+    public static final byte VERTEX_SHADING_APPROXIMATION_ALPHA = (byte) 0x7F;
     public static final int VERTEX_COLOR_IMAGE_SIZE = 12;
     private static final ImageFilterSettings OBJ_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
             .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
@@ -739,13 +748,14 @@ public class MAPFile extends GameFile {
     public Map<VertexColor, BufferedImage> makeVertexColorTextures() {
         Map<VertexColor, BufferedImage> texMap = new HashMap<>();
 
+        Set<BigInteger> usedTextures = new HashSet<>();
         for (MAPPolygon poly : getAllPolygons()) {
             if (!(poly instanceof VertexColor))
                 continue;
 
             VertexColor vertexColor = (VertexColor) poly;
-            BufferedImage image = vertexColor.makeTexture();
-            texMap.put(vertexColor, image);
+            if (usedTextures.add(vertexColor.makeColorIdentifier()))
+                texMap.put(vertexColor, vertexColor.makeTexture());
         }
 
         texMap.put(MapMesh.CURSOR_COLOR, MapMesh.CURSOR_COLOR.makeTexture());

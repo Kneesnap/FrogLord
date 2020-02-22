@@ -1397,6 +1397,15 @@ public class Utils {
     }
 
     /**
+     * Convert a JavaFX color to an AWT color.
+     * @param fxColor The fx color to convert.
+     * @return awtColor
+     */
+    public static java.awt.Color toAWTColor(Color fxColor, byte alpha) {
+        return new java.awt.Color(toRGB(fxColor) | ((alpha & 0xFF) << 24), true);
+    }
+
+    /**
      * Calculate interpolated color value based on 't' between source and target colours.
      * @param colorSrc The source color.
      * @param colorTgt The target color.
@@ -1481,7 +1490,7 @@ public class Utils {
      * @param message The message to display.
      */
     public static boolean makePopUpYesNo(String message) {
-        return new Alert(AlertType.CONFIRMATION, message, ButtonType.YES, ButtonType.NO).showAndWait().orElseGet(() -> ButtonType.NO) == ButtonType.YES;
+        return new Alert(AlertType.CONFIRMATION, message, ButtonType.YES, ButtonType.NO).showAndWait().orElse(ButtonType.NO) == ButtonType.YES;
     }
 
     /**
@@ -1614,6 +1623,20 @@ public class Utils {
             prependStr.append("0");
 
         return prependStr.toString() + number;
+    }
+
+    /**
+     * Pads the number with 0s as a string.
+     * @param baseStr      The string to pad.
+     * @param targetLength The target string size.
+     * @return paddedString
+     */
+    public static String padStringLeft(String baseStr, int targetLength, char toAdd) {
+        StringBuilder prependStr = new StringBuilder();
+        while (targetLength > prependStr.length() + baseStr.length())
+            prependStr.append(toAdd);
+
+        return prependStr.toString() + baseStr;
     }
 
     /**

@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 
 /**
  * Flat shaded polygon.
@@ -18,7 +19,7 @@ import java.awt.image.BufferedImage;
  */
 @Getter
 @Setter
-public class MAPPolyFlat extends MAPPolygon implements VertexColor {
+public class MAPPolyFlat extends MAPPolygon implements VertexColor, ColoredPoly {
     private PSXColorVector color = new PSXColorVector();
 
     public MAPPolyFlat(MAPPolygonType type, int verticeCount) {
@@ -46,5 +47,15 @@ public class MAPPolyFlat extends MAPPolygon implements VertexColor {
     public void makeTexture(BufferedImage image, Graphics2D graphics) {
         graphics.setColor(getColor().toColor());
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+    }
+
+    @Override
+    public PSXColorVector[] getColors() {
+        return new PSXColorVector[]{this.color};
+    }
+
+    @Override
+    public BigInteger makeColorIdentifier() {
+        return makeColorIdentifier("", this.color.toRGB());
     }
 }
