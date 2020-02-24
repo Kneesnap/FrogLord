@@ -111,7 +111,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
         getFaces().addAll(v1 + getVerticeStart(), texId + 2, v2 + getVerticeStart(), texId + 1, v3 + getVerticeStart(), texId);
     }
 
-    private int addTexCoords(T poly, AtomicInteger texCoord) {
+    protected int addTexCoords(T poly, AtomicInteger texCoord) {
         int texId = texCoord.get();
         int texCount = poly.getVerticeCount();
 

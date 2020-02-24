@@ -1148,6 +1148,14 @@ public class MAPFile extends GameFile {
     }
 
     /**
+     * Gets the remap table for this map.
+     * @return remapTable
+     */
+    public List<Short> getRemapTable() {
+        return getConfig().getRemapTable(getFileEntry());
+    }
+
+    /**
      * Get the types to use based on if this is QB or not.
      * @param isQB Is this the QB map?
      * @return types

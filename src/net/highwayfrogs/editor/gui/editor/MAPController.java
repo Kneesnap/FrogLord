@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.application.ConditionalFeature;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -130,6 +132,11 @@ public class MAPController extends EditorController<MAPFile> {
 
     @FXML
     private void onMapButtonClicked(ActionEvent event) {
+        if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {
+            Utils.makePopUp("Your version of JavaFX does not support 3D, so maps cannot be previewed.", AlertType.WARNING);
+            return;
+        }
+
         TextureMap textureMap = TextureMap.newTextureMap(getFile());
         setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), textureMap), textureMap);
     }

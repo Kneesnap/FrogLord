@@ -56,8 +56,19 @@ public class MAPPolyGT extends MAPPolyTexture implements VertexColor, ColoredPol
     }
 
     public static Color loadColor(PSXColorVector color) {
+        // Alpha = the %age of the color to apply.
+        // How does application work? Approximately (texBlue - (alphaAsPercentage * (texBlue - shadeBlue)))
+
+        // B 120 -> 22, with 0 as value, 211  as alpha
+
+        // Real Pixel Value, Overlay Pixel, Overlay Alpha, Result Value
+        // Blue at 120, 0, 211, 22
+        // Blue at 120, 15, 255, 15
+
+        // Alpha is a percent of how much to apply.
+
         //TODO: 1. Can we make overlays more accurate?
-        //TODO: 2. Is there some other non-overlay system which we could use to do this.
+        //TODO: 2. Is there some other non-overlay system which we could use to do this? (Blend)
         //TODO: 3 How realistic is it to create a texture for each shading. Attempt to use a mix of things, where all sprites above a certain area get shaded by the shitty shader, but everything else gets HQ shading.
         return Utils.fromRGB(color.toRGB(), (1D - ((color.getRed() + color.getGreen() + color.getBlue()) / 127D / 3D)));
     }

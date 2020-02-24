@@ -1,6 +1,9 @@
 package net.highwayfrogs.editor.file.mof;
 
+import javafx.application.ConditionalFeature;
+import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
@@ -149,6 +152,11 @@ public class MOFHolder extends GameFile {
 
     @Override
     public void handleWadEdit(WADFile parent) {
+        if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {
+            Utils.makePopUp("Your version of JavaFX does not support 3D, so models cannot be previewed.", AlertType.WARNING);
+            return;
+        }
+
         if (getVloFile() != null) {
             MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
             return;
