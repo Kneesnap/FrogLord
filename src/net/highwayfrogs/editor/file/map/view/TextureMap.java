@@ -98,6 +98,7 @@ public class TextureMap {
     public void updateTreeColorData(Map<VertexColor, BufferedImage> vertexMap) {
         this.textureTree.vertexMap = vertexMap;
         this.textureTree.buildColorMap();
+        this.textureTree.updateImage();
         if (this.material != null)
             this.material.setDiffuseMap(Utils.toFXImage(getTextureTree().getImage(), false));
     }
@@ -138,10 +139,8 @@ public class TextureMap {
                         return newNode;
                 }
 
-                if (node.getRight() != null) {
-                    TextureTreeNode newNode = insert(node.getRight(), image);
-                    return newNode;
-                }
+                if (node.getRight() != null)
+                    return insert(node.getRight(), image);
 
                 return null; // Didn't fit into either sub-tree.
             }

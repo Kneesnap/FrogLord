@@ -61,13 +61,11 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor, ColoredPo
         final Color c3 = (this.colors.length > 3 ? Utils.fromRGB(this.colors[3].toRGB()) : c2);
 
         float tx, ty;
-
         for (int x = 0; x < image.getWidth(); x++) {
-            tx = (x == image.getWidth() - 1) ? 1F : (float) x / (float) image.getWidth();
+            tx = (image.getWidth() == 1) ? .5F : (float) x / (float) (image.getWidth() - 1);
             for (int y = 0; y < image.getHeight(); y++) {
-                ty = (y == image.getHeight() - 1) ? 1F : (float) y / (float) image.getHeight();
-                final Color newColor = Utils.calculateBilinearInterpolatedColour(c0, c2, c1, c3, tx, ty);
-                graphics.setColor(Utils.toAWTColor(newColor));
+                ty = (image.getHeight() == 1) ? .5F : (float) y / (float) (image.getHeight() - 1);
+                graphics.setColor(Utils.toAWTColor(Utils.calculateBilinearInterpolatedColour(c0, c2, c1, c3, tx, ty)));
                 graphics.fillRect(x, y, x + 1, y + 1);
             }
         }

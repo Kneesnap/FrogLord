@@ -236,8 +236,9 @@ public class GeometryManager extends MapManager {
     /**
      * Refresh map data.
      */
-    public void refreshView() {
+    public void refreshView() { //TODO: This utterly breaks the map display when you change the data on a polygon.
         hideCursorPolygon();
+        getController().getMapMesh().getTextureMap().updateTreeColorData(getMap().makeVertexColorTextures());
         getMesh().updateData();
         renderCursor(getSelectedPolygon());
     }

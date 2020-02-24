@@ -11,10 +11,8 @@ import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.math.BigInteger;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -101,13 +99,14 @@ public class MOFFile extends MOFBase {
     public Map<VertexColor, BufferedImage> makeVertexColorTextures() {
         Map<VertexColor, BufferedImage> texMap = new HashMap<>();
 
+        Set<BigInteger> alreadyAdded = new HashSet<>();
         forEachPolygon(prim -> {
             if (!(prim instanceof VertexColor))
                 return;
 
             VertexColor vertexColor = (VertexColor) prim;
-            BufferedImage image = vertexColor.makeTexture();
-            texMap.put(vertexColor, image);
+            if (alreadyAdded.add(vertexColor.makeColorIdentifier()))
+                texMap.put(vertexColor, vertexColor.makeTexture());
         });
 
         texMap.put(MOFController.ANIMATION_COLOR, MOFController.ANIMATION_COLOR.makeTexture());

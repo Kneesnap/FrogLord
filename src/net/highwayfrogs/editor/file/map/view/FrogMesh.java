@@ -39,7 +39,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
     }
 
     /**
-     * Add a polygon of intederminate size!
+     * Add a polygon regardless of size!
      * @param prim  The primitive to add.
      * @param texId The texture id.
      */
@@ -81,7 +81,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
     public void addRectangle(TextureTreeNode entry, int v1, int v2, int v3, int v4, int v5, int v6) {
         int texId = getTexCoords().size() / getTexCoordElementSize();
         entry.applyMesh(this, MAPPolygon.QUAD_SIZE);
-        getFaces().addAll(v1 + getVerticeStart(), texId, v2 + getVerticeStart(), texId + 1, v3 + getVerticeStart(), texId + 2);
+        getFaces().addAll(v1 + getVerticeStart(), texId, v2 + getVerticeStart(), texId + 2, v3 + getVerticeStart(), texId + 1);
         getFaces().addAll(v4 + getVerticeStart(), texId + 1, v5 + getVerticeStart(), texId + 2, v6 + getVerticeStart(), texId + 3);
     }
 
@@ -166,6 +166,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
      * Load polygon data.
      */
     public void updatePolygonData() {
+        getManager().getMeshData().clear();
         getFacePolyMap().clear();
         getPolyFaceMap().clear();
         getFaces().clear();
