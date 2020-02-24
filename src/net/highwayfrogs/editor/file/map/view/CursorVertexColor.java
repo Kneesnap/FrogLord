@@ -21,7 +21,7 @@ public class CursorVertexColor implements VertexColor {
     }
 
     @Override
-    public void makeTexture(BufferedImage image, Graphics2D graphics) {
+    public void makeTexture(BufferedImage image, Graphics2D graphics, boolean isRaw) {
         graphics.setColor(getBodyColor());
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
 

@@ -33,7 +33,7 @@ public class LightManager extends MapManager {
         getRenderManager().addMissingDisplayList(LIGHT_LIST);
         getController().getApplyLightsCheckBox().setOnAction(evt -> updateEntityLighting());
 
-        this.mainLight = new AmbientLight(Utils.fromRGB(0xA0A0A0));
+        this.mainLight = new AmbientLight(Utils.fromRGB(0xFFFFFF));
         this.mainLight.getScope().add(getController().getMeshView());
     }
 

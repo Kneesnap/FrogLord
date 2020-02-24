@@ -1056,6 +1056,33 @@ public class Utils {
     /**
      * Get the red value from an int value.
      * @param rgb The int value to get the color from.
+     * @return colorValue
+     */
+    public static int getRedInt(int rgb) {
+        return getRed(rgb) & 0xFF;
+    }
+
+    /**
+     * Get the green value from an int value.
+     * @param rgb The int value to get the color from.
+     * @return colorValue
+     */
+    public static int getGreenInt(int rgb) {
+        return getGreen(rgb) & 0xFF;
+    }
+
+    /**
+     * Get the blue value from an int value.
+     * @param rgb The int value to get the color from.
+     * @return colorValue
+     */
+    public static int getBlueInt(int rgb) {
+        return getBlue(rgb) & 0xFF;
+    }
+
+    /**
+     * Get the red value from an int value.
+     * @param rgb The int value to get the color from.
      * @return colorByte
      */
     public static byte getRed(int rgb) {
@@ -1087,6 +1114,15 @@ public class Utils {
      */
     public static Color fromRGB(int rgb) {
         return Color.rgb((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+    }
+
+    /**
+     * Get a Color object from an integer.
+     * @param rgb The integer to get the color from.
+     * @return color
+     */
+    public static Color fromRGB(int rgb, double alpha) {
+        return Color.rgb((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, alpha);
     }
 
     /**
@@ -1393,7 +1429,7 @@ public class Utils {
      * @return awtColor
      */
     public static java.awt.Color toAWTColor(Color fxColor) {
-        return awtColorCacheMap.computeIfAbsent(fxColor, key -> new java.awt.Color(toRGB(key)));
+        return toAWTColor(fxColor, (byte) (int) (fxColor.getOpacity() * 255));
     }
 
     /**
@@ -1402,7 +1438,7 @@ public class Utils {
      * @return awtColor
      */
     public static java.awt.Color toAWTColor(Color fxColor, byte alpha) {
-        return new java.awt.Color(toRGB(fxColor) | ((alpha & 0xFF) << 24), true);
+        return new java.awt.Color((toRGB(fxColor) & 0xFFFFFF) | ((alpha & 0xFF) << 24), true);
     }
 
     /**
@@ -1627,7 +1663,7 @@ public class Utils {
 
     /**
      * Pads the number with 0s as a string.
-     * @param baseStr      The string to pad.
+     * @param baseStr The string to pad.
      * @param targetLength The target string size.
      * @return paddedString
      */

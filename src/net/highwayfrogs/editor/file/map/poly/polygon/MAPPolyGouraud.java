@@ -54,7 +54,7 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor, ColoredPo
     }
 
     @Override
-    public void makeTexture(BufferedImage image, Graphics2D graphics) {
+    public void makeTexture(BufferedImage image, Graphics2D graphics, boolean isRaw) {
         final Color c0 = Utils.fromRGB(this.colors[0].toRGB());
         final Color c1 = Utils.fromRGB(this.colors[1].toRGB());
         final Color c2 = Utils.fromRGB(this.colors[2].toRGB());
@@ -66,7 +66,7 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor, ColoredPo
             for (int y = 0; y < image.getHeight(); y++) {
                 ty = (image.getHeight() == 1) ? .5F : (float) y / (float) (image.getHeight() - 1);
                 graphics.setColor(Utils.toAWTColor(Utils.calculateBilinearInterpolatedColour(c0, c2, c1, c3, tx, ty)));
-                graphics.fillRect(x, y, x + 1, y + 1);
+                graphics.fillRect(x, y, 1, 1);
             }
         }
     }

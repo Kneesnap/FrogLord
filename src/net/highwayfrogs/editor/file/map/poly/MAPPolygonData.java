@@ -210,9 +210,10 @@ public class MAPPolygonData {
             TextureMap texMap = controller.getMapMesh().getTextureMap();
             VLOArchive suppliedVLO = controller.getController().getFile().getVlo();
             GameImage image = suppliedVLO.getImageByTextureId(texMap.getRemap(getTextureId()));
+            MAPPolyTexture polyTex = (MAPPolyTexture) makeNewPolygon();
 
             // Texture Preview. (Click -> change.)
-            ImageView view = editor.addCenteredImage(image.toFXImage(SHOW_SETTINGS), 150);
+            ImageView view = editor.addCenteredImage(Utils.toFXImage(polyTex.makeShadedTexture(texMap, image.toBufferedImage(SHOW_SETTINGS)), false), 150);
             view.setOnMouseClicked(evt -> suppliedVLO.promptImageSelection(newImage -> {
                 short newValue = newImage.getTextureId();
                 if (texMap.getRemapList() != null)
@@ -224,7 +225,7 @@ public class MAPPolygonData {
                 }
 
                 this.textureId = newValue;
-                view.setImage(newImage.toFXImage(SHOW_SETTINGS));
+                view.setImage(Utils.toFXImage(polyTex.makeShadedTexture(texMap, newImage.toBufferedImage(SHOW_SETTINGS)), false));
                 controller.getGeometryManager().refreshView();
             }, false));
 

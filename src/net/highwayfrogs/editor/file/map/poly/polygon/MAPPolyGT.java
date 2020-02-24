@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
-import net.highwayfrogs.editor.file.map.MAPFile;
+import javafx.scene.paint.Color;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
@@ -19,26 +19,22 @@ public class MAPPolyGT extends MAPPolyTexture implements VertexColor, ColoredPol
     }
 
     @Override
-    public void makeTexture(BufferedImage image, Graphics2D graphics) {
-        final javafx.scene.paint.Color c0 = Utils.fromRGB(getVectors()[0].toRGB());
-        final javafx.scene.paint.Color c1 = Utils.fromRGB(getVectors()[1].toRGB());
-        final javafx.scene.paint.Color c2 = Utils.fromRGB(getVectors()[2].toRGB());
-        final javafx.scene.paint.Color c3 = (getVectors().length > 3 ? Utils.fromRGB(getVectors()[3].toRGB()) : c2);
+    public void makeTexture(BufferedImage image, Graphics2D graphics, boolean raw) {
+        final Color c0 = loadColor(getVectors()[0]);
+        final Color c1 = loadColor(getVectors()[1]);
+        final Color c2 = loadColor(getVectors()[2]);
+        final Color c3 = (getVectors().length > 3 ? loadColor(getVectors()[3]) : c2);
 
         float tx, ty;
-        for (int x = 0; x < image.getWidth(); x++) { //TODO: Doesn't give a great preview. Bad color approximation, washes color out in many cases.
+        for (int x = 0; x < image.getWidth(); x++) {
             tx = (image.getWidth() == 1) ? .5F : (float) x / (float) (image.getWidth() - 1);
             for (int y = 0; y < image.getHeight(); y++) {
                 ty = (image.getHeight() == 1) ? .5F : (float) y / (float) (image.getHeight() - 1);
-                graphics.setColor(Utils.toAWTColor(Utils.calculateBilinearInterpolatedColour(c0, c2, c1, c3, tx, ty)));
-                graphics.fillRect(x, y, x + 1, y + 1);
+                final Color fxColor = Utils.calculateBilinearInterpolatedColour(c0, c2, c1, c3, tx, ty);
+                graphics.setColor(Utils.toAWTColor(fxColor));
+                graphics.fillRect(x, y, 1, 1);
             }
         }
-
-        // Fixes the alpha, makes sure the texture is evenly distributed.
-        for (int x = 0; x < image.getWidth(); x++) //TODO: Consider basing the alpha on the intensity of the color away from white.
-            for (int y = 0; y < image.getHeight(); y++)
-                image.setRGB(x, y, (image.getRGB(x, y) & 0xFFFFFF) | (MAPFile.VERTEX_SHADING_APPROXIMATION_ALPHA << 24));
     }
 
     @Override
@@ -57,5 +53,12 @@ public class MAPPolyGT extends MAPPolyTexture implements VertexColor, ColoredPol
         for (int i = 0; i < getColors().length; i++)
             colors[i] = getColors()[i].toRGB();
         return makeColorIdentifier("", colors);
+    }
+
+    public static Color loadColor(PSXColorVector color) {
+        //TODO: 1. Can we make overlays more accurate?
+        //TODO: 2. Is there some other non-overlay system which we could use to do this.
+        //TODO: 3 How realistic is it to create a texture for each shading. Attempt to use a mix of things, where all sprites above a certain area get shaded by the shitty shader, but everything else gets HQ shading.
+        return Utils.fromRGB(color.toRGB(), (1D - ((color.getRed() + color.getGreen() + color.getBlue()) / 127D / 3D)));
     }
 }

@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -23,8 +23,8 @@ public class MAPPolyFT extends MAPPolyTexture implements VertexColor, ColoredPol
     }
 
     @Override
-    public void makeTexture(BufferedImage image, Graphics2D graphics) {
-        graphics.setColor(getColors()[0].toColor(MAPFile.VERTEX_SHADING_APPROXIMATION_ALPHA));
+    public void makeTexture(BufferedImage image, Graphics2D graphics, boolean useRaw) {
+        graphics.setColor(Utils.toAWTColor(useRaw ? Utils.fromRGB(getColors()[0].toRGB()) : MAPPolyGT.loadColor(getColors()[0])));
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
     }
 
@@ -35,9 +35,6 @@ public class MAPPolyFT extends MAPPolyTexture implements VertexColor, ColoredPol
 
     @Override
     public BigInteger makeColorIdentifier() {
-        int[] colors = new int[getColors().length];
-        for (int i = 0; i < getColors().length; i++)
-            colors[i] = getColors()[i].toRGB();
-        return makeColorIdentifier("", colors);
+        return makeColorIdentifier("", getColors()[0].toRGB());
     }
 }

@@ -19,16 +19,24 @@ public interface VertexColor {
      * @param image    The image.
      * @param graphics The graphics to write to.
      */
-    public void makeTexture(BufferedImage image, Graphics2D graphics);
+    public void makeTexture(BufferedImage image, Graphics2D graphics, boolean raw);
 
     /**
      * Make this texture.
      * @return newTexture
      */
     default BufferedImage makeTexture() {
-        BufferedImage image = new BufferedImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
+        return makeTexture(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, false);
+    }
+
+    /**
+     * Make this texture.
+     * @return newTexture
+     */
+    default BufferedImage makeTexture(int width, int height, boolean raw) {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
-        makeTexture(image, graphics);
+        makeTexture(image, graphics, raw);
         graphics.dispose();
         return image;
     }

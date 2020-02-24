@@ -44,7 +44,7 @@ public class MAPPolyFlat extends MAPPolygon implements VertexColor, ColoredPoly 
     }
 
     @Override
-    public void makeTexture(BufferedImage image, Graphics2D graphics) {
+    public void makeTexture(BufferedImage image, Graphics2D graphics, boolean isRaw) {
         graphics.setColor(getColor().toColor());
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
     }
