@@ -108,7 +108,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
     public void addTriangle(TextureTreeNode entry, int v1, int v2, int v3) {
         int texId = getTexCoords().size() / getTexCoordElementSize();
         entry.applyMesh(this, MAPPolygon.TRI_SIZE);
-        getFaces().addAll(v1 + getVerticeStart(), texId, v2 + getVerticeStart(), texId + 1, v3 + getVerticeStart(), texId + 2);
+        getFaces().addAll(v1 + getVerticeStart(), texId + 2, v2 + getVerticeStart(), texId + 1, v3 + getVerticeStart(), texId);
     }
 
     private int addTexCoords(T poly, AtomicInteger texCoord) {

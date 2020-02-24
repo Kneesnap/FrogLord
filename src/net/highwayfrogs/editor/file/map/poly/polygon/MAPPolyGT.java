@@ -36,7 +36,7 @@ public class MAPPolyGT extends MAPPolyTexture implements VertexColor, ColoredPol
         }
 
         // Fixes the alpha, makes sure the texture is evenly distributed.
-        for (int x = 0; x < image.getWidth(); x++)
+        for (int x = 0; x < image.getWidth(); x++) //TODO: Consider basing the alpha on the intensity of the color away from white.
             for (int y = 0; y < image.getHeight(); y++)
                 image.setRGB(x, y, (image.getRGB(x, y) & 0xFFFFFF) | (MAPFile.VERTEX_SHADING_APPROXIMATION_ALPHA << 24));
     }
