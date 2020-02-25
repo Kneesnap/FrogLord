@@ -12,7 +12,11 @@ import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.system.TexturedPoly;
+
+import static net.highwayfrogs.editor.gui.editor.PolyEditorHelper.*;
 
 /**
  * Represents PSX polygons with a texture.
@@ -24,7 +28,7 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
     private short flags;
     private ByteUV[] uvs;
     private short textureId;
-    private PSXColorVector[] vectors;
+    private PSXColorVector[] colors;
 
     private static final ImageFilterSettings SHOW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true).setAllowFlip(true);
     private static final int SHOW_SIZE = 150;
@@ -32,7 +36,7 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
     public MAPPolyTexture(MAPPolygonType type, int verticeCount, int colorCount) {
         super(type, verticeCount);
         this.uvs = new ByteUV[verticeCount];
-        this.vectors = new PSXColorVector[colorCount];
+        this.colors = new PSXColorVector[colorCount];
     }
 
     @Override
@@ -57,10 +61,10 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
             throw new RuntimeException("Cannot handle " + this.uvs.length + " uvs.");
         }
 
-        for (int i = 0; i < this.vectors.length; i++) { //TODO: Do colors need swapping too?
+        for (int i = 0; i < this.colors.length; i++) { //TODO: Do colors need swapping too?
             PSXColorVector vector = new PSXColorVector();
             vector.load(reader);
-            this.vectors[i] = vector;
+            this.colors[i] = vector;
         }
     }
 
@@ -85,8 +89,16 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
             throw new RuntimeException("Cannot save " + this.uvs.length + " uvs.");
         }
 
-        for (PSXColorVector colorVector : this.vectors)
+        for (PSXColorVector colorVector : this.colors)
             colorVector.save(writer);
+    }
+
+    @Override
+    public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
+        editor.addBoldLabel(getClass().getSimpleName());
+        addTextureEditor(editor, controller, this);
+        addColorEditor(editor, controller, this);
+        addUvEditor(editor, controller, this);
     }
 
     private void loadUV(int id, DataReader reader) {

@@ -10,10 +10,14 @@ import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+
+import static net.highwayfrogs.editor.gui.editor.PolyEditorHelper.*;
 
 /**
  * Represents polygons with gouraud shading.
@@ -55,6 +59,13 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
         super.save(writer);
         for (PSXColorVector vector : colors)
             vector.save(writer);
+    }
+
+    @Override
+    public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
+        editor.addBoldLabel(getClass().getSimpleName());
+        addQuadEditor(editor, controller, this);
+        addColorEditor(editor, controller, this);
     }
 
     @Override

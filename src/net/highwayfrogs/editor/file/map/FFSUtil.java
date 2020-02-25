@@ -101,8 +101,8 @@ public class FFSUtil {
                 pw.write(polyTex.getFlags() + " ");
                 pw.write(String.valueOf(remapTable.get(polyTex.getTextureId())));
 
-                for (int i = polyTex.getVectors().length - 1; i >= 0; i--) {
-                    PSXColorVector color = polyTex.getVectors()[i];
+                for (int i = polyTex.getColors().length - 1; i >= 0; i--) {
+                    PSXColorVector color = polyTex.getColors()[i];
                     pw.write(" " + color.toRGB());
                 }
 
@@ -305,8 +305,8 @@ public class FFSUtil {
                     polyTexture.setFlags(Short.parseShort(args[index++]));
                     polyTexture.setTextureId((short) remapTable.indexOf(Short.parseShort(args[index++])));
 
-                    for (int j = polyTexture.getVectors().length - 1; j >= 0; j--, index++) {
-                        polyTexture.getVectors()[j] = PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index]));
+                    for (int j = polyTexture.getColors().length - 1; j >= 0; j--, index++) {
+                        polyTexture.getColors()[j] = PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index]));
                     }
 
                     for (int j = polyTexture.getUvs().length - 1; j >= 0; j--, index++) {

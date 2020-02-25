@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -44,6 +46,11 @@ public abstract class MAPPolygon extends MAPPrimitive {
         if (getVerticeCount() == REQUIRES_VERTEX_PADDING)
             writer.writeShort(this.padding);
     }
+
+    /**
+     * Setup an editor for this data.
+     */
+    public abstract void setupEditor(GUIEditorGrid editor, MapUIController controller);
 
     /**
      * Convert this into a wavefront object face command.

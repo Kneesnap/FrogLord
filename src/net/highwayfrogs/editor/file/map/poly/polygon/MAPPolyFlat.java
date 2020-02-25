@@ -8,9 +8,13 @@ import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+
+import static net.highwayfrogs.editor.gui.editor.PolyEditorHelper.*;
 
 /**
  * Flat shaded polygon.
@@ -35,6 +39,13 @@ public class MAPPolyFlat extends MAPPolygon implements VertexColor {
     public void save(DataWriter writer) {
         super.save(writer);
         this.color.save(writer);
+    }
+
+    @Override
+    public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
+        editor.addBoldLabel(getClass().getSimpleName());
+        addQuadEditor(editor, controller, this);
+        addColorEditor(editor, controller, this);
     }
 
     @Override
