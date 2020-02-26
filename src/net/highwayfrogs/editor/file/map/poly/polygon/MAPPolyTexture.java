@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
+import javafx.scene.control.Alert;
+import javafx.scene.image.ImageView;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,14 +11,15 @@ import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.system.TexturedPoly;
-
-import static net.highwayfrogs.editor.gui.editor.PolyEditorHelper.*;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents PSX polygons with a texture.
@@ -95,10 +98,80 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
 
     @Override
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
-        editor.addBoldLabel(getClass().getSimpleName());
-        addTextureEditor(editor, controller, this);
-        addColorEditor(editor, controller, this);
-        addUvEditor(editor, controller, this);
+        super.setupEditor(editor, controller);
+        addTextureEditor(editor, controller);
+        addColorEditor(editor);
+        addUvEditor(editor, this);
+    }
+
+    private static void addUvEditor(GUIEditorGrid editor, MAPPolyTexture poly) {
+        // UVs. (TODO: Better editor? Maybe have sliders + a live preview?)
+        if (poly.getUvs() != null) {
+            for (int i = 0; i < poly.getUvs().length; i++)
+                poly.getUvs()[i].setupEditor("UV #" + i, editor);
+        }
+    }
+
+    private void addTextureEditor(GUIEditorGrid editor, MapUIController controller) {
+        TextureMap texMap = controller.getMapMesh().getTextureMap();
+        VLOArchive suppliedVLO = controller.getController().getFile().getVlo();
+        GameImage image = suppliedVLO.getImageByTextureId(texMap.getRemap(getTextureId()));
+
+        // Texture Preview. (Click -> change.)
+        ImageView view = editor.addCenteredImage(image.toFXImage(SHOW_SETTINGS), 150);
+        view.setOnMouseClicked(evt -> suppliedVLO.promptImageSelection(newImage -> {
+            short newValue = newImage.getTextureId();
+            if (texMap.getRemapList() != null)
+                newValue = (short) texMap.getRemapList().indexOf(newValue);
+
+            if (newValue == (short) -1) {
+                Utils.makePopUp("This image is not part of the remap! It can't be used!",
+                        Alert.AlertType.INFORMATION); // Show this as a popup maybe.
+                return;
+            }
+
+            setTextureId(newValue);
+            view.setImage(newImage.toFXImage(SHOW_SETTINGS));
+            controller.getGeometryManager().refreshView();
+        }, false));
+
+        // Flags.
+        for (MAPPolyTexture.PolyTextureFlag flag : MAPPolyTexture.PolyTextureFlag.values())
+            editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> setFlag(flag, newState));
+
+    }
+
+    protected void addColorEditor(GUIEditorGrid editor) {
+        // Color Editor.
+        if (getColors() != null) {
+            editor.addBoldLabel("Colors:");
+            String[] nameArray = COLOR_BANK[getColors().length - 1];
+            for (int i = 0; i < getColors().length; i++)
+                editor.addColorPicker(nameArray[i], getColors()[i].toRGB(), getColors()[i]::fromRGB);
+            //TODO: Update map display when color is updated. (Update texture map.)
+        }
+    }
+
+    @Override
+    protected void addQuadEditor(GUIEditorGrid editor) {
+        editor.addCheckBox("Quad", isQuadFace(), newValue -> {
+            int newSize = newValue ? 4 : 3;
+            int copySize = Math.min(newSize, getVertices().length);
+
+            // Copy vertices.
+            int[] newVertices = new int[newSize];
+            System.arraycopy(getVertices(), 0, newVertices, 0, copySize);
+            setVertices(newVertices);
+
+            // Copy uvs.
+            ByteUV[] newUvs = new ByteUV[newSize];
+            if (getUvs() != null)
+                System.arraycopy(getUvs(), 0, newUvs, 0, copySize);
+            for (int i = 0; i < newUvs.length; i++)
+                if (newUvs[i] == null)
+                    newUvs[i] = new ByteUV();
+            setUvs(newUvs);
+        });
     }
 
     private void loadUV(int id, DataReader reader) {

@@ -17,8 +17,6 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import static net.highwayfrogs.editor.gui.editor.PolyEditorHelper.*;
-
 /**
  * Represents polygons with gouraud shading.
  * Created by Kneesnap on 8/25/2018.
@@ -63,9 +61,8 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
 
     @Override
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
-        editor.addBoldLabel(getClass().getSimpleName());
-        addQuadEditor(editor, controller, this);
-        addColorEditor(editor, controller, this);
+        super.setupEditor(editor, controller);
+        addColorEditor(editor);
     }
 
     @Override
@@ -90,6 +87,17 @@ public class MAPPolyGouraud extends MAPPolygon implements VertexColor {
                 graphics.setColor(Utils.toAWTColor(newColor));
                 graphics.fillRect(x, y, x + 1, y + 1);
             }
+        }
+    }
+
+    protected void addColorEditor(GUIEditorGrid editor) {
+        // Color Editor.
+        if (getColors() != null) {
+            editor.addBoldLabel("Colors:");
+            String[] nameArray = COLOR_BANK[getColors().length - 1];
+            for (int i = 0; i < getColors().length; i++)
+                editor.addColorPicker(nameArray[i], getColors()[i].toRGB(), getColors()[i]::fromRGB);
+            //TODO: Update map display when color is updated. (Update texture map.)
         }
     }
 }

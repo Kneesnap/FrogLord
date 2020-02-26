@@ -14,8 +14,6 @@ import net.highwayfrogs.editor.gui.editor.MapUIController;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import static net.highwayfrogs.editor.gui.editor.PolyEditorHelper.*;
-
 /**
  * Flat shaded polygon.
  * Created by Kneesnap on 8/25/2018.
@@ -43,9 +41,8 @@ public class MAPPolyFlat extends MAPPolygon implements VertexColor {
 
     @Override
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
-        editor.addBoldLabel(getClass().getSimpleName());
-        addQuadEditor(editor, controller, this);
-        addColorEditor(editor, controller, this);
+        super.setupEditor(editor, controller);
+        addColorEditor(editor);
     }
 
     @Override
@@ -57,5 +54,14 @@ public class MAPPolyFlat extends MAPPolygon implements VertexColor {
     public void makeTexture(BufferedImage image, Graphics2D graphics) {
         graphics.setColor(getColor().toColor());
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+    }
+
+    protected void addColorEditor(GUIEditorGrid editor) {
+        // Color Editor.
+        if (getColor() != null) {
+            editor.addBoldLabel("Color:");
+            editor.addColorPicker(SINGLE_COLOR_NAME[0], getColor().toRGB(), getColor()::fromRGB);
+            //TODO: Update map display when color is updated. (Update texture map.)
+        }
     }
 }

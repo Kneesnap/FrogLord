@@ -17,12 +17,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public abstract class MAPPolygon extends MAPPrimitive {
-    private short padding;
-
+    protected static final String[] SINGLE_COLOR_NAME = {"Color"};
+    private static final String[] TRI_COLOR_NAMES = {"Corner 1", "Corner 2", "Corner 3"};
+    private static final String[] QUAD_COLOR_NAMES = {"Top Left", "Top Right", "Bottom Right", "Bottom Left"};
+    protected static final String[][] COLOR_BANK = {SINGLE_COLOR_NAME, null, TRI_COLOR_NAMES, QUAD_COLOR_NAMES};
     public static final int TRI_SIZE = 3;
     public static final int QUAD_SIZE = 4;
     public static final int REQUIRES_VERTEX_PADDING = TRI_SIZE;
     public static final int REQUIRES_VERTEX_SWAPPING = QUAD_SIZE;
+    private short padding;
+
 
     public MAPPolygon(MAPPolygonType type, int verticeCount) {
         super(type, verticeCount);
@@ -50,7 +54,22 @@ public abstract class MAPPolygon extends MAPPrimitive {
     /**
      * Setup an editor for this data.
      */
-    public abstract void setupEditor(GUIEditorGrid editor, MapUIController controller);
+    public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
+        editor.addBoldLabel(getClass().getSimpleName());
+        addQuadEditor(editor);
+    }
+
+    protected void addQuadEditor(GUIEditorGrid editor) {
+        editor.addCheckBox("Quad", isQuadFace(), newValue -> {
+            int newSize = newValue ? 4 : 3;
+            int copySize = Math.min(newSize, getVertices().length);
+
+            // Copy vertices.
+            int[] newVertices = new int[newSize];
+            System.arraycopy(getVertices(), 0, newVertices, 0, copySize);
+            setVertices(newVertices);
+        });
+    }
 
     /**
      * Convert this into a wavefront object face command.
