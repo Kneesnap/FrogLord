@@ -1147,6 +1147,15 @@ public class Utils {
     }
 
     /**
+     * Get a integer from a color object.
+     * @param color The color to turn into rgb.
+     * @return rgbInt
+     */
+    public static int toARGB(Color color) {
+        return ((int) (color.getOpacity() * 255) << 24) | toRGB(color);
+    }
+
+    /**
      * Get a integer from color bytes.
      * @return rgbInt
      */

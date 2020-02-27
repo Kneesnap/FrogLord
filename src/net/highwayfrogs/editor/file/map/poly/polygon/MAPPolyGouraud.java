@@ -11,7 +11,6 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.math.BigInteger;
 
@@ -88,19 +87,16 @@ public class MAPPolyGouraud extends MAPPolygon {
      */
     public static BufferedImage makeGouraudImage(int width, int height, Color c0, Color c1, Color c2, Color c3) {
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics graphics = image.createGraphics();
 
         float tx, ty;
         for (int x = 0; x < image.getWidth(); x++) {
             tx = (image.getWidth() == 1) ? .5F : (float) x / (float) (image.getWidth() - 1);
             for (int y = 0; y < image.getHeight(); y++) {
                 ty = (image.getHeight() == 1) ? .5F : (float) y / (float) (image.getHeight() - 1);
-                graphics.setColor(Utils.toAWTColor(Utils.calculateBilinearInterpolatedColour(c0, c2, c1, c3, tx, ty)));
-                graphics.fillRect(x, y, 1, 1);
+                image.setRGB(x, y, Utils.toARGB(Utils.calculateBilinearInterpolatedColour(c0, c2, c1, c3, tx, ty)));
             }
         }
 
-        graphics.dispose();
         return image;
     }
 }
