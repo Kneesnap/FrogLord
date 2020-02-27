@@ -52,7 +52,12 @@ public class MAPPolyGouraud extends MAPPolygon {
     @Override
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
         super.setupEditor(editor, controller);
-        addColorEditor(editor);
+
+        // Color Editor.
+        editor.addBoldLabel("Colors:");
+        String[] nameArray = COLOR_BANK[getColors().length - 1];
+        for (int i = 0; i < getColors().length; i++)
+            editor.addColorPicker(nameArray[i], this.colors[i].toRGB(), this.colors[i]::fromRGB);
     }
 
     @Override
@@ -106,16 +111,5 @@ public class MAPPolyGouraud extends MAPPolygon {
         }
 
         return image;
-    }
-
-    protected void addColorEditor(GUIEditorGrid editor) {
-        // Color Editor.
-        if (getColors() != null) {
-            editor.addBoldLabel("Colors:");
-            String[] nameArray = COLOR_BANK[getColors().length - 1];
-            for (int i = 0; i < getColors().length; i++)
-                editor.addColorPicker(nameArray[i], getColors()[i].toRGB(), getColors()[i]::fromRGB);
-            //TODO: Update map display when color is updated. (Update texture map.)
-        }
     }
 }

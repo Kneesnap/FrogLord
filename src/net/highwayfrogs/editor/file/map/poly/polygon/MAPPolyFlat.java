@@ -43,7 +43,10 @@ public class MAPPolyFlat extends MAPPolygon {
     @Override
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
         super.setupEditor(editor, controller);
-        addColorEditor(editor);
+
+        // Color Editor.
+        editor.addBoldLabel("Color:");
+        editor.addColorPicker(SINGLE_COLOR_NAME[0], getColor().toRGB(), getColor()::fromRGB);
     }
 
     @Override
@@ -71,14 +74,5 @@ public class MAPPolyFlat extends MAPPolygon {
     @Override
     public GameImage getGameImage(TextureMap map) {
         return null;
-    }
-
-    protected void addColorEditor(GUIEditorGrid editor) {
-        // Color Editor.
-        if (getColor() != null) {
-            editor.addBoldLabel("Color:");
-            editor.addColorPicker(SINGLE_COLOR_NAME[0], getColor().toRGB(), getColor()::fromRGB);
-            //TODO: Update map display when color is updated. (Update texture map.)
-        }
     }
 }

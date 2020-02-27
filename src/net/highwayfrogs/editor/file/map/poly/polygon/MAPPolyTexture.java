@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.system.TexturedPoly;
 import net.highwayfrogs.editor.utils.Utils;
+
 import java.awt.image.BufferedImage;
 
 /**
@@ -66,7 +67,7 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
             throw new RuntimeException("Cannot handle " + this.uvs.length + " uvs.");
         }
 
-        for (int i = 0; i < this.colors.length; i++) { //TODO: Do colors need swapping too?
+        for (int i = 0; i < this.colors.length; i++) {
             PSXColorVector vector = new PSXColorVector();
             vector.load(reader);
             this.colors[i] = vector;
@@ -102,16 +103,8 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
         super.setupEditor(editor, controller);
         addTextureEditor(editor, controller);
-        addColorEditor(editor);
-        addUvEditor(editor, this);
-    }
-
-    private static void addUvEditor(GUIEditorGrid editor, MAPPolyTexture poly) {
-        // UVs. (TODO: Better editor? Maybe have sliders + a live preview?)
-        if (poly.getUvs() != null) {
-            for (int i = 0; i < poly.getUvs().length; i++)
-                poly.getUvs()[i].setupEditor("UV #" + i, editor);
-        }
+        addColorEditor(editor, controller);
+        addUvEditor(editor);
     }
 
     private void addTextureEditor(GUIEditorGrid editor, MapUIController controller) {
@@ -120,38 +113,36 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
         GameImage image = suppliedVLO.getImageByTextureId(texMap.getRemap(getTextureId()));
 
         // Texture Preview. (Click -> change.)
-        ImageView view = editor.addCenteredImage(image.toFXImage(SHOW_SETTINGS), 150);
+        ImageView view = editor.addCenteredImage(Utils.toFXImage(makeShadedTexture(texMap, image.toBufferedImage(SHOW_SETTINGS)), false), 150);
         view.setOnMouseClicked(evt -> suppliedVLO.promptImageSelection(newImage -> {
             short newValue = newImage.getTextureId();
             if (texMap.getRemapList() != null)
                 newValue = (short) texMap.getRemapList().indexOf(newValue);
 
             if (newValue == (short) -1) {
-                Utils.makePopUp("This image is not part of the remap! It can't be used!",
-                        Alert.AlertType.INFORMATION); // Show this as a popup maybe.
+                Utils.makePopUp("This image is not part of the remap.", Alert.AlertType.INFORMATION);
                 return;
             }
 
             setTextureId(newValue);
-            view.setImage(newImage.toFXImage(SHOW_SETTINGS));
-            controller.getGeometryManager().refreshView();
+            view.setImage(Utils.toFXImage(makeShadedTexture(texMap, newImage.toBufferedImage(SHOW_SETTINGS)), false));
         }, false));
 
         // Flags.
         for (MAPPolyTexture.PolyTextureFlag flag : MAPPolyTexture.PolyTextureFlag.values())
             editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> setFlag(flag, newState));
-
     }
 
-    protected void addColorEditor(GUIEditorGrid editor) {
-        // Color Editor.
-        if (getColors() != null) {
-            editor.addBoldLabel("Colors:");
-            String[] nameArray = COLOR_BANK[getColors().length - 1];
-            for (int i = 0; i < getColors().length; i++)
-                editor.addColorPicker(nameArray[i], getColors()[i].toRGB(), getColors()[i]::fromRGB);
-            //TODO: Update map display when color is updated. (Update texture map.)
-        }
+    private void addColorEditor(GUIEditorGrid editor, MapUIController controller) {
+        editor.addBoldLabel("Colors:");
+        String[] nameArray = COLOR_BANK[getColors().length - 1];
+        for (int i = 0; i < getColors().length; i++)
+            editor.addColorPicker(nameArray[i], getColors()[i].toRGB(), getColors()[i]::fromRGB);
+    }
+
+    private void addUvEditor(GUIEditorGrid editor) {
+        for (int i = 0; i < this.uvs.length; i++) // TODO: Consider having sliders + a live preview.
+            this.uvs[i].setupEditor("UV #" + i, editor);
     }
 
     @Override

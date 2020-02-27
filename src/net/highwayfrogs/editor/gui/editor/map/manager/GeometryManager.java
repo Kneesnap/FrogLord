@@ -130,6 +130,7 @@ public class GeometryManager extends MapManager {
         this.geometryEditor.clearEditor();
         this.geometryEditor.addButton("Edit Collision Grid", () -> GridController.openGridEditor(this));
         this.geometryEditor.addCheckBox("Highlight Invisible Polygons", this.looseMeshData != null, this::updateVisibility);
+        this.geometryEditor.addButton("Refresh View", getController().getGeometryManager()::refreshView);
         this.geometryEditor.addSeparator(25);
 
         if (getSelectedPolygon() != null) {

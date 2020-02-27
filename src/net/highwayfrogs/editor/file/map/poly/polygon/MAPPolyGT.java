@@ -63,7 +63,7 @@ public class MAPPolyGT extends MAPPolyTexture {
             return MAPPolyGouraud.makeGouraudImage(width, height, c0, c1, c2, c3); //c0 c1 c2 c3 -> works nicely for overlay mode. Doesn't work as well outside overlay mode.
 
         //TODO: Apply UVs / proper direction. [Overlay surprisingly gets this right, maybe we should take a page out of that.]
-        if (getColors().length == 4) {
+        if (isQuadFace()) {
             return MAPPolyGouraud.makeGouraudImage(width, height, c0, c2, c1, c3);
         } else {
             return MAPPolyGouraud.makeGouraudImage(width, height, c0, c1, c2, c3);
@@ -76,6 +76,6 @@ public class MAPPolyGT extends MAPPolyTexture {
      * @return loadedColor
      */
     public static Color loadColor(PSXColorVector color) { // Color Application works with approximately this formula: (texBlue - (alphaAsPercentage * (texBlue - shadeBlue)))
-        return Utils.fromRGB(color.toRGB(), (1D - ((color.getRed() + color.getGreen() + color.getBlue()) / 127D / 3D)));
+        return Utils.fromRGB(color.toRGB(), (1D - Math.max(0D, Math.min(1D, ((color.getRed() + color.getGreen() + color.getBlue()) / 127D / 3D)))));
     }
 }
