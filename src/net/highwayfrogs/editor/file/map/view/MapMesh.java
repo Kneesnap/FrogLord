@@ -4,6 +4,7 @@ import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.standard.SVector;
 
 import java.awt.*;
@@ -36,6 +37,43 @@ public class MapMesh extends FrogMesh<MAPPolygon> {
         AtomicInteger texId = new AtomicInteger();
         for (MAPPolygon poly : getMap().getAllPolygons())
             addPolygon(poly, texId);
+
+        // Apply shading to textured polygons. This is done separately from adding the polygons, because for some reason it garbles the textures if we don't separate it. (I think it's expected that polygons are added before anything else.)
+        for (MAPPolygon poly : getMap().getAllPolygons())
+            poly.onMeshSetup(this);
+    }
+
+    /**
+     * Render over an existing polygon.
+     * @param targetPoly The polygon to render over.
+     * @param color      The color to render.
+     */
+    public void renderOverPolygon(MAPPolygon targetPoly, CursorVertexColor color) {
+        renderOverPolygon(targetPoly, color.getTreeNode(getTextureMap()));
+    }
+
+    /**
+     * Render over an existing polygon.
+     * @param targetPoly The polygon to render over.
+     * @param node       The node to render.
+     */
+    public void renderOverPolygon(MAPPolygon targetPoly, TextureTreeNode node) {
+        int increment = getVertexFormat().getVertexIndexSize();
+        boolean isQuad = (targetPoly.getVerticeCount() == MAPPolygon.QUAD_SIZE);
+
+        int face = getPolyFaceMap().get(targetPoly) * getFaceElementSize();
+        int v1 = getFaces().get(face);
+        int v2 = getFaces().get(face + increment);
+        int v3 = getFaces().get(face + (2 * increment));
+
+        if (isQuad) {
+            int v4 = getFaces().get(face + (3 * increment));
+            int v5 = getFaces().get(face + (4 * increment));
+            int v6 = getFaces().get(face + (5 * increment));
+            addRectangle(node, v1, v2, v3, v4, v5, v6);
+        } else {
+            addTriangle(node, v1, v2, v3);
+        }
     }
 
     @Override

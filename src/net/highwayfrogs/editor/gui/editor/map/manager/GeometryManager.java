@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.gui.editor.map.manager;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -10,10 +11,12 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.GridController;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
+import net.highwayfrogs.editor.system.AbstractStringConverter;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -42,6 +45,14 @@ public class GeometryManager extends MapManager {
     @Override
     public void onSetup() {
         super.onSetup();
+
+        getController().getShaderModeChoiceBox().setItems(FXCollections.observableArrayList(ShaderMode.values()));
+        getController().getShaderModeChoiceBox().setValue(getMesh().getTextureMap().getMode());
+        getController().getShaderModeChoiceBox().setConverter(new AbstractStringConverter<>(ShaderMode::getName));
+        getController().getShaderModeChoiceBox().valueProperty().addListener((observable, oldValue, newValue) -> {
+            getMesh().getTextureMap().setMode(newValue);
+            refreshView();
+        });
 
         Scene mapScene = getController().getMapScene();
         mapScene.setOnMousePressed(e -> {
@@ -229,6 +240,7 @@ public class GeometryManager extends MapManager {
      */
     public void refreshView() {
         hideCursorPolygon();
+        getController().getMapMesh().getTextureMap().updateMap(getMap(), null);
         getMesh().updateData();
         renderCursor(getSelectedPolygon());
     }

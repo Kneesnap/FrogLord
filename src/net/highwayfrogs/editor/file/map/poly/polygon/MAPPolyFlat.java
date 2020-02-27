@@ -2,17 +2,18 @@ package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
-import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 
 /**
  * Flat shaded polygon.
@@ -20,7 +21,7 @@ import java.awt.image.BufferedImage;
  */
 @Getter
 @Setter
-public class MAPPolyFlat extends MAPPolygon implements VertexColor {
+public class MAPPolyFlat extends MAPPolygon {
     private PSXColorVector color = new PSXColorVector();
 
     public MAPPolyFlat(MAPPolygonType type, int verticeCount) {
@@ -46,14 +47,30 @@ public class MAPPolyFlat extends MAPPolygon implements VertexColor {
     }
 
     @Override
-    public TextureTreeNode getNode(TextureMap map) {
-        return getTreeNode(map);
+    public BufferedImage makeTexture(TextureMap map) {
+        BufferedImage image = new BufferedImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = image.createGraphics();
+
+        graphics.setColor(getColor().toColor());
+        graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+
+        graphics.dispose();
+        return image;
     }
 
     @Override
-    public void makeTexture(BufferedImage image, Graphics2D graphics) {
-        graphics.setColor(getColor().toColor());
-        graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+    public boolean isOverlay(TextureMap map) {
+        return true;
+    }
+
+    @Override
+    public BigInteger makeIdentifier(TextureMap map) {
+        return makeIdentifier(0xF1A7C010, this.color.toRGB());
+    }
+
+    @Override
+    public GameImage getGameImage(TextureMap map) {
+        return null;
     }
 
     protected void addColorEditor(GUIEditorGrid editor) {

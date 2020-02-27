@@ -1056,6 +1056,33 @@ public class Utils {
     /**
      * Get the red value from an int value.
      * @param rgb The int value to get the color from.
+     * @return colorValue
+     */
+    public static int getRedInt(int rgb) {
+        return getRed(rgb) & 0xFF;
+    }
+
+    /**
+     * Get the green value from an int value.
+     * @param rgb The int value to get the color from.
+     * @return colorValue
+     */
+    public static int getGreenInt(int rgb) {
+        return getGreen(rgb) & 0xFF;
+    }
+
+    /**
+     * Get the blue value from an int value.
+     * @param rgb The int value to get the color from.
+     * @return colorValue
+     */
+    public static int getBlueInt(int rgb) {
+        return getBlue(rgb) & 0xFF;
+    }
+
+    /**
+     * Get the red value from an int value.
+     * @param rgb The int value to get the color from.
      * @return colorByte
      */
     public static byte getRed(int rgb) {
@@ -1094,6 +1121,15 @@ public class Utils {
      * @param rgb The integer to get the color from.
      * @return color
      */
+    public static Color fromRGB(int rgb, double alpha) {
+        return Color.rgb((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, alpha);
+    }
+
+    /**
+     * Get a Color object from an integer.
+     * @param rgb The integer to get the color from.
+     * @return color
+     */
     public static Color fromBGR(int rgb) {
         return Color.rgb(rgb & 0xFF, (rgb >> 8) & 0xFF, (rgb >> 16) & 0xFF);
     }
@@ -1108,6 +1144,15 @@ public class Utils {
         result = (result << 8) + (int) (color.getGreen() * 0xFF);
         result = (result << 8) + (int) (color.getBlue() * 0xFF);
         return result;
+    }
+
+    /**
+     * Get a integer from a color object.
+     * @param color The color to turn into rgb.
+     * @return rgbInt
+     */
+    public static int toARGB(Color color) {
+        return ((int) (color.getOpacity() * 255) << 24) | toRGB(color);
     }
 
     /**
@@ -1393,7 +1438,16 @@ public class Utils {
      * @return awtColor
      */
     public static java.awt.Color toAWTColor(Color fxColor) {
-        return awtColorCacheMap.computeIfAbsent(fxColor, key -> new java.awt.Color(toRGB(key)));
+        return toAWTColor(fxColor, (byte) (int) (fxColor.getOpacity() * 255));
+    }
+
+    /**
+     * Convert a JavaFX color to an AWT color.
+     * @param fxColor The fx color to convert.
+     * @return awtColor
+     */
+    public static java.awt.Color toAWTColor(Color fxColor, byte alpha) {
+        return new java.awt.Color((toRGB(fxColor) & 0xFFFFFF) | ((alpha & 0xFF) << 24), true);
     }
 
     /**
@@ -1481,7 +1535,7 @@ public class Utils {
      * @param message The message to display.
      */
     public static boolean makePopUpYesNo(String message) {
-        return new Alert(AlertType.CONFIRMATION, message, ButtonType.YES, ButtonType.NO).showAndWait().orElseGet(() -> ButtonType.NO) == ButtonType.YES;
+        return new Alert(AlertType.CONFIRMATION, message, ButtonType.YES, ButtonType.NO).showAndWait().orElse(ButtonType.NO) == ButtonType.YES;
     }
 
     /**
@@ -1614,6 +1668,20 @@ public class Utils {
             prependStr.append("0");
 
         return prependStr.toString() + number;
+    }
+
+    /**
+     * Pads the number with 0s as a string.
+     * @param baseStr The string to pad.
+     * @param targetLength The target string size.
+     * @return paddedString
+     */
+    public static String padStringLeft(String baseStr, int targetLength, char toAdd) {
+        StringBuilder prependStr = new StringBuilder();
+        while (targetLength > prependStr.length() + baseStr.length())
+            prependStr.append(toAdd);
+
+        return prependStr.toString() + baseStr;
     }
 
     /**

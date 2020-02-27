@@ -27,8 +27,6 @@ import net.highwayfrogs.editor.file.map.poly.line.MAPLineType;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyF4;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygonType;
-import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -39,7 +37,6 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -112,6 +109,14 @@ public class MAPFile extends GameFile {
     public static final List<MAPPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
     public static final List<MAPPrimitiveType> POLYGON_TYPES = Arrays.asList(MAPPolygonType.values());
 
+    // NOTE: Changing MAPFile.VERTEX_COLOR_IMAGE_SIZE to a higher value will improve the shading quality, but may
+    //       also break texture related stuff elsewhere (I haven't done much in the way of testing).
+    //       Try changing the default value from 8 to 32 for example.
+    //       I don't like the fact we are relying on texture generation and resolution to shade the polygons. We should
+    //       really just be setting vertex color values and letting the hardware do the shading work. This just seems
+    //       very, very wrong - but I don't know how we can get around it right now due to the crappy limitations of
+    //       JavaFx. It's a problem for sure.
+    public static final byte VERTEX_SHADING_APPROXIMATION_ALPHA = (byte) 0x7F;
     public static final int VERTEX_COLOR_IMAGE_SIZE = 12;
     private static final ImageFilterSettings OBJ_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
             .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
@@ -731,31 +736,6 @@ public class MAPFile extends GameFile {
         writer.writeAddressTo(fileLengthPointer); // Write file length to start of file.
     }
 
-    /**
-     * Create a map of textures which were generated
-     * @return texMap
-     */
-    public Map<VertexColor, BufferedImage> makeVertexColorTextures() {
-        Map<VertexColor, BufferedImage> texMap = new HashMap<>();
-
-        for (MAPPolygon poly : getAllPolygons()) {
-            if (!(poly instanceof VertexColor))
-                continue;
-
-            VertexColor vertexColor = (VertexColor) poly;
-            BufferedImage image = vertexColor.makeTexture();
-            texMap.put(vertexColor, image);
-        }
-
-        texMap.put(MapMesh.CURSOR_COLOR, MapMesh.CURSOR_COLOR.makeTexture());
-        texMap.put(MapMesh.ANIMATION_COLOR, MapMesh.ANIMATION_COLOR.makeTexture());
-        texMap.put(MapMesh.INVISIBLE_COLOR, MapMesh.INVISIBLE_COLOR.makeTexture());
-        texMap.put(MapMesh.GRID_COLOR, MapMesh.GRID_COLOR.makeTexture());
-        texMap.put(MapMesh.REMOVE_FACE_COLOR, MapMesh.REMOVE_FACE_COLOR.makeTexture());
-        texMap.put(MapMesh.GENERAL_SELECTION, MapMesh.GENERAL_SELECTION.makeTexture());
-        return texMap;
-    }
-
     @Override
     public Image getIcon() {
         MAPLevel level = MAPLevel.getByName(getFileEntry().getDisplayName());
@@ -1126,6 +1106,14 @@ public class MAPFile extends GameFile {
         setGroupZCount((short) (1 + (zTileCount / (getGroupZSize() / getGridZSize()))));
 
         System.out.println("Scrambled " + getFileEntry().getDisplayName());
+    }
+
+    /**
+     * Gets the remap table for this map.
+     * @return remapTable
+     */
+    public List<Short> getRemapTable() {
+        return getConfig().getRemapTable(getFileEntry());
     }
 
     /**

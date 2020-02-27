@@ -49,6 +49,11 @@ public class GridResizeController implements Initializable {
 
         int newX = Integer.parseInt(xText);
         int newZ = Integer.parseInt(zText);
+        if (newX > 255 || newZ > 255) { // Engine limitation, the game sometimes does things like (x & 0xFF), which effectively means it can't go higher than 0xFF.
+            Utils.makePopUp("The grid cannot go larger than 255x255.", AlertType.ERROR);
+            return;
+        }
+
         this.gridController.handleResize(newX, newZ);
         this.stage.close();
     }

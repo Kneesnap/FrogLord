@@ -45,10 +45,10 @@ public class AnimationManager extends MapManager {
         box.setConverter(new AbstractStringConverter<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim)));
         box.setCellFactory(param -> new AttachmentListCell<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim), anim -> {
             if(anim.getTextures().size() > 0) {
-                return getMap().getVlo().getImageByTextureId(getMap().getConfig().getRemapTable(getMap().getFileEntry()).get(anim.getTextures().get(0))).toFXImage(MWDFile.VLO_ICON_SETTING);
+                return getMap().getVlo().getImageByTextureId(getMap().getRemapTable().get(anim.getTextures().get(0))).toFXImage(MWDFile.VLO_ICON_SETTING);
             } else if (anim.getMapUVs().size() > 0) {
                 int uvTexture = ((MAPPolyTexture) anim.getMapUVs().get(0).getPolygon()).getTextureId();
-                GameImage gameImage = getMap().getVlo().getImageByTextureId(getMap().getConfig().getRemapTable(getMap().getFileEntry()).get(uvTexture));
+                GameImage gameImage = getMap().getVlo().getImageByTextureId(getMap().getRemapTable().get(uvTexture));
                 return gameImage.toFXImage(MWDFile.VLO_ICON_SETTING.setTrimEdges(true));
             }
 

@@ -37,7 +37,11 @@
                       <CheckBox fx:id="brightModeCheckbox" layoutX="4.0" layoutY="96.0" mnemonicParsing="false"
                                 text="Bright Mode" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="85.0"/>
                       <CheckBox fx:id="viewBoundingBoxesCheckbox" layoutX="13.0" layoutY="153.0" mnemonicParsing="false"
-                                text="Show Bounding Boxes" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="100.0"/>
+                                text="Show Bounding Boxes" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="101.0"/>
+                      <Label layoutX="11.0" layoutY="148.0" text="Shading: " AnchorPane.leftAnchor="0.0"
+                             AnchorPane.topAnchor="136.0"/>
+                      <ComboBox fx:id="shaderModeComboBox" layoutX="61.0" layoutY="142.0" prefWidth="150.0"
+                                AnchorPane.leftAnchor="55.0" AnchorPane.topAnchor="135.0"/>
                   </children>
                </AnchorPane>
            </content>

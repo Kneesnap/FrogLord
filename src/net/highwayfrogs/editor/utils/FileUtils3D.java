@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyGouraud;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
@@ -192,7 +193,7 @@ public class FileUtils3D {
 
         FileEntry entry = map.getFileEntry();
         VLOArchive vloArchive = map.getVlo();
-        TextureMap textureMap = TextureMap.newTextureMap(map);
+        TextureMap textureMap = TextureMap.newTextureMap(map, ShaderMode.NO_SHADING);
         String cleanName = Utils.getRawFileName(entry.getDisplayName());
         boolean exportTextures = vloArchive != null;
 
@@ -231,7 +232,7 @@ public class FileUtils3D {
                 if (poly instanceof MAPPolyTexture) {
                     MAPPolyTexture polyTex = (MAPPolyTexture) poly;
 
-                    TextureTreeNode node = polyTex.getNode(textureMap);
+                    TextureTreeNode node = polyTex.getTreeNode(textureMap);
                     for (int i = polyTex.getUvs().length - 1; i >= 0; i--) {
                         ByteUV uv = polyTex.getUvs()[i];
                         float u = uv.getFloatU();
@@ -243,7 +244,7 @@ public class FileUtils3D {
                         objWriter.write("vt " + df.format(node.getMinU() + (u * fullU)) + " " + df.format(1F - (node.getMinV() + (v * fullV))) + Constants.NEWLINE);
                     }
                 } else if (poly instanceof MAPPolyGouraud || poly instanceof MAPPolyFlat) {
-                    TextureTreeNode node = poly.getNode(textureMap);
+                    TextureTreeNode node = poly.getTreeNode(textureMap);
                     if (poly.isQuadFace()) {
                         objWriter.write("vt " + node.getMinU() + " " + (1F - node.getMinV()) + Constants.NEWLINE); // BL
                         objWriter.write("vt " + node.getMaxU() + " " + (1F - node.getMinV()) + Constants.NEWLINE); // BR

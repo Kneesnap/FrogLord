@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.map.poly.polygon;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -16,16 +17,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public abstract class MAPPolygon extends MAPPrimitive {
+public abstract class MAPPolygon extends MAPPrimitive implements TextureSource {
     protected static final String[] SINGLE_COLOR_NAME = {"Color"};
     private static final String[] TRI_COLOR_NAMES = {"Corner 1", "Corner 2", "Corner 3"};
     private static final String[] QUAD_COLOR_NAMES = {"Top Left", "Top Right", "Bottom Right", "Bottom Left"};
     protected static final String[][] COLOR_BANK = {SINGLE_COLOR_NAME, null, TRI_COLOR_NAMES, QUAD_COLOR_NAMES};
+    private short padding;
     public static final int TRI_SIZE = 3;
     public static final int QUAD_SIZE = 4;
     public static final int REQUIRES_VERTEX_PADDING = TRI_SIZE;
     public static final int REQUIRES_VERTEX_SWAPPING = QUAD_SIZE;
-    private short padding;
 
 
     public MAPPolygon(MAPPolygonType type, int verticeCount) {
@@ -118,6 +119,5 @@ public abstract class MAPPolygon extends MAPPrimitive {
         }
 
         return new SVector(x, y, z);
-
     }
 }

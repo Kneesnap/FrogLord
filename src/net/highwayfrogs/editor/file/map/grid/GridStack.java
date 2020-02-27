@@ -17,7 +17,7 @@ import java.util.List;
 @Setter
 public class GridStack extends GameObject {
     private List<GridSquare> gridSquares = new ArrayList<>();
-    private short averageHeight; // This appears unused, but it isn't. Removing it can cause broken behavior for some grid squares like cliffs.
+    private short averageHeight; // This is only used for cliff deaths. However it gets calculated, I'm not sure, it's pretty complicated it seems.
 
     private transient int loadedSquareCount;
     private transient int tempIndex;

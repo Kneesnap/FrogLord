@@ -74,7 +74,7 @@ public class AnalysisUtils {
 
         // Populate MAP ids.
         mapFiles.forEach(map -> {
-            List<Short> remapTable = mwd.getConfig().getRemapTable(map.getFileEntry());
+            List<Short> remapTable = map.getRemapTable();
             if (remapTable == null)
                 return; // Failed to get a remap table. It's likely an unused map.
 

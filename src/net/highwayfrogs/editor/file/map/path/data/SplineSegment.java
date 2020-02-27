@@ -23,8 +23,8 @@ import java.util.Arrays;
  */
 public class SplineSegment extends PathSegment {
     private int[][] splineMatrix = new int[4][3];
-    private int[] smoothT = new int[4];
-    private int[][] smoothC = new int[4][3];
+    private int[] smoothT = new int[4]; // Smoothing coefficient data.
+    private int[][] smoothC = new int[4][3]; // Smoothing coefficient data.
 
     private static final int SPLINE_FIX_INTERVAL = 0x200;
 

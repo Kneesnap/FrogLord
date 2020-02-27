@@ -6,8 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
@@ -20,6 +21,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.system.TexturedPoly;
 import net.highwayfrogs.editor.utils.Utils;
+import java.awt.image.BufferedImage;
 
 /**
  * Represents PSX polygons with a texture.
@@ -27,13 +29,13 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 @Getter
 @Setter
-public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
+public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
+    private static final ImageFilterSettings SHOW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true);
     private short flags;
     private ByteUV[] uvs;
     private short textureId;
     private PSXColorVector[] colors;
 
-    private static final ImageFilterSettings SHOW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true).setAllowFlip(true);
     private static final int SHOW_SIZE = 150;
 
     public MAPPolyTexture(MAPPolygonType type, int verticeCount, int colorCount) {
@@ -174,28 +176,38 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
         });
     }
 
+    /**
+     * Makes the image used for shading.
+     * @return shadeImage
+     */
+    public abstract BufferedImage makeShadeImage(TextureMap map, int width, int height, boolean useRaw);
+
+    /**
+     * Makes the image used for shading.
+     * @return shadeImage
+     */
+    public BufferedImage makeShadeImage(TextureMap map, boolean useRaw) {
+        return makeShadeImage(map, MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, useRaw);
+    }
+
+    /**
+     * Creates a texture which has shading applied.
+     * @return shadedTexture
+     */
+    public BufferedImage makeShadedTexture(TextureMap map, BufferedImage applyTo) {
+        BufferedImage normalImage = applyTo != null ? applyTo : getTreeNode(map).getImage();
+        BufferedImage shadeImage = makeShadeImage(map, normalImage.getWidth(), normalImage.getHeight(), true);
+        return makeShadedTexture(normalImage, shadeImage);
+    }
+
     private void loadUV(int id, DataReader reader) {
         this.uvs[id] = new ByteUV();
         this.uvs[id].load(reader);
     }
 
-    /**
-     * Get the nth obj UV string.
-     * @param index The index to get.
-     * @return objUvString
-     */
-    public String getObjUVString(int index) {
-        return this.uvs[index].toObjTextureString();
-    }
-
     @Override
     public int getOrderId() {
         return getTextureId();
-    }
-
-    @Override
-    public TextureTreeNode getNode(TextureMap map) {
-        return map.getEntry(getTextureId());
     }
 
     /**
@@ -241,5 +253,44 @@ public class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
         MAX_ORDER_TABLE(Constants.BIT_FLAG_2); // Puts at the back of the order table. Either the very lowest rendering priority, or the very highest.
 
         private final int flag;
+    }
+
+    @Override
+    public GameImage getGameImage(TextureMap map) {
+        return map.getVloArchive().getImageByTextureId(map.getRemap(getTextureId()));
+    }
+
+    @Override
+    public boolean isOverlay(TextureMap map) {
+        if (map.getMode() == ShaderMode.OVERLAY_SHADING)
+            return true;
+
+        if (map.getMode() != ShaderMode.MIXED_SHADING)
+            return false;
+
+        GameImage image = getGameImage(map);
+        long combinedArea = map.getMapTextureList().get(getTextureId()).size() * (image.getFullWidth() * image.getFullHeight());
+        return combinedArea >= (map.getMode().getPageWidth() * map.getMode().getPageHeight() / 8); // Test if it's too frequent.
+    }
+
+    /**
+     * Creates a texture which has shading applied.
+     * @return shadedTexture
+     */
+    public static BufferedImage makeShadedTexture(BufferedImage applyImage, BufferedImage shadeImage) {
+        BufferedImage newImage = new BufferedImage(applyImage.getWidth(), applyImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        for (int x = 0; x < newImage.getWidth(); x++) {
+            for (int y = 0; y < newImage.getHeight(); y++) {
+                int rgb = applyImage.getRGB(x, y);
+                int overlay = shadeImage.getRGB(x, y);
+                int alpha = (rgb & 0xFF000000) >> 24;
+                int red = (int) (((double) Utils.getRedInt(overlay) / 127D) * (double) Utils.getRedInt(rgb));
+                int green = (int) (((double) Utils.getGreenInt(overlay) / 127D) * (double) Utils.getGreenInt(rgb));
+                int blue = (int) (((double) Utils.getBlueInt(overlay) / 127D) * (double) Utils.getBlueInt(rgb));
+                newImage.setRGB(x, y, ((alpha << 24) | ((red & 0xFF) << 16) | ((green & 0xFF) << 8) | (blue & 0xFF)));
+            }
+        }
+
+        return newImage;
     }
 }

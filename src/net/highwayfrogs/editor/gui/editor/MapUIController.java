@@ -25,7 +25,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.gui.editor.map.manager.*;
 import net.highwayfrogs.editor.gui.editor.map.manager.PathManager.PathDisplaySetting;
@@ -68,6 +68,7 @@ public class MapUIController implements Initializable {
     @FXML private CheckBox checkBoxFaceRemoveMode;
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
     @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
+    @FXML private ChoiceBox<ShaderMode> shaderModeChoiceBox;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldCamMoveSpeed;
     @FXML private Button btnResetCamMoveSpeed;
@@ -164,7 +165,7 @@ public class MapUIController implements Initializable {
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group(meshView);
         SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
-        subScene3D.setFill(Color.GRAY);
+        subScene3D.setFill(Color.BLACK);
         subScene3D.setCamera(cameraFPS.getCamera());
 
         // Ensure that the render manager has access to the root node
@@ -331,23 +332,6 @@ public class MapUIController implements Initializable {
      * @param color      The color to render.
      */
     public void renderOverPolygon(MAPPolygon targetPoly, CursorVertexColor color) {
-        MapMesh mapMesh = getMapMesh();
-        int increment = mapMesh.getVertexFormat().getVertexIndexSize();
-        boolean isQuad = (targetPoly.getVerticeCount() == MAPPolygon.QUAD_SIZE);
-
-        int face = mapMesh.getPolyFaceMap().get(targetPoly) * mapMesh.getFaceElementSize();
-        int v1 = mapMesh.getFaces().get(face);
-        int v2 = mapMesh.getFaces().get(face + increment);
-        int v3 = mapMesh.getFaces().get(face + (2 * increment));
-
-        TextureTreeNode node = color.getTreeNode(getMapMesh().getTextureMap());
-        if (isQuad) {
-            int v4 = mapMesh.getFaces().get(face + (3 * increment));
-            int v5 = mapMesh.getFaces().get(face + (4 * increment));
-            int v6 = mapMesh.getFaces().get(face + (5 * increment));
-            mapMesh.addRectangle(node, v1, v2, v3, v4, v5, v6);
-        } else {
-            mapMesh.addTriangle(node, v1, v2, v3);
-        }
+        getMapMesh().renderOverPolygon(targetPoly, color);
     }
 }

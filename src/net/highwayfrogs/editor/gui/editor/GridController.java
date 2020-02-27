@@ -266,7 +266,7 @@ public class GridController implements Initializable {
                     graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
                 } else if (stack.getGridSquares().size() > 0) {
                     GridSquare square = stack.getGridSquares().get(stack.getGridSquares().size() - 1);
-                    TextureTreeNode entry = square.getPolygon().getNode(texMap);
+                    TextureTreeNode entry = square.getPolygon().getTreeNode(texMap);
                     graphics.drawImage(fxTextureImage, entry.getX(), entry.getY(), entry.getWidth(), entry.getHeight(), xPos, yPos, getTileWidth(), getTileHeight());
                 } else {
                     graphics.setFill(Color.GRAY);
@@ -423,7 +423,7 @@ public class GridController implements Initializable {
         TextureMap texMap = getManager().getMesh().getTextureMap();
         GridStack stack = stacks.iterator().next();
         GridSquare square = stack.getGridSquares().get(layer);
-        TextureTreeNode entry = square.getPolygon().getNode(texMap);
+        TextureTreeNode entry = square.getPolygon().getTreeNode(texMap);
         selectedImage.setImage(sameLayerTypes(stacks, layer) ? Utils.toFXImage(entry.getImage(), false) : null);
         int x = 1;
         int y = 0;

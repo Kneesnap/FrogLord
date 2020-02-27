@@ -7,6 +7,8 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.BlackFilter;
@@ -15,6 +17,7 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -28,7 +31,7 @@ import java.util.Comparator;
 @Getter
 @Setter
 @SuppressWarnings("unused")
-public class GameImage extends GameObject implements Cloneable {
+public class GameImage extends GameObject implements Cloneable, TextureSource {
     private VLOArchive parent;
     private short vramX;
     private short vramY;
@@ -511,5 +514,25 @@ public class GameImage extends GameObject implements Cloneable {
      */
     public int getLocalImageID() {
         return getParent().getImages().indexOf(this);
+    }
+
+    @Override
+    public BufferedImage makeTexture(TextureMap map) {
+        return toBufferedImage(map.getDisplaySettings());
+    }
+
+    @Override
+    public boolean isOverlay(TextureMap map) {
+        return false;
+    }
+
+    @Override
+    public BigInteger makeIdentifier(TextureMap map) {
+        return makeIdentifier(0x7E8BA5E, getTextureId());
+    }
+
+    @Override
+    public GameImage getGameImage(TextureMap map) {
+        return this;
     }
 }

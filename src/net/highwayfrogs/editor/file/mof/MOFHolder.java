@@ -1,6 +1,9 @@
 package net.highwayfrogs.editor.file.mof;
 
+import javafx.application.ConditionalFeature;
+import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,6 +15,7 @@ import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
@@ -149,6 +153,11 @@ public class MOFHolder extends GameFile {
 
     @Override
     public void handleWadEdit(WADFile parent) {
+        if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {
+            Utils.makePopUp("Your version of JavaFX does not support 3D, so models cannot be previewed.", AlertType.WARNING);
+            return;
+        }
+
         if (getVloFile() != null) {
             MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
             return;
@@ -259,7 +268,7 @@ public class MOFHolder extends GameFile {
      */
     public TextureMap getTextureMap() {
         if (this.textureMap == null)
-            this.textureMap = TextureMap.newTextureMap(this);
+            this.textureMap = TextureMap.newTextureMap(this, ShaderMode.NO_SHADING);
         return this.textureMap;
     }
 
