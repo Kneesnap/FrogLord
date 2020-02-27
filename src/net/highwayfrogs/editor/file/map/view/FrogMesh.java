@@ -5,10 +5,12 @@ import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.gui.mesh.MeshManager;
 import net.highwayfrogs.editor.system.TexturedPoly;
 import net.highwayfrogs.editor.utils.Utils;
@@ -23,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 2/13/2019.
  */
 @Getter
-public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
+public abstract class FrogMesh<T extends PSXGPUPrimitive & TextureSource> extends TriangleMesh {
     private Map<Integer, T> facePolyMap = new HashMap<>();
     private Map<T, Integer> polyFaceMap = new HashMap<>();
     private TextureMap textureMap;
@@ -112,13 +114,16 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive> extends TriangleMesh {
     }
 
     protected int addTexCoords(T poly, AtomicInteger texCoord) {
+        GameImage image = poly.isOverlay(getTextureMap()) ? poly.getGameImage(getTextureMap()) : null;
+        TextureSource source = image != null ? image : poly;
+
         int texId = texCoord.get();
         int texCount = poly.getVerticeCount();
 
         texCoord.addAndGet(texCount);
-        TextureTreeNode entry = poly.getNode(textureMap);
+        TextureTreeNode entry = source.getTreeNode(textureMap);
         if (entry == null) {
-            System.out.println("There were issues setting up textures for this " + poly.getClass().getSimpleName());
+            System.out.println("There were issues setting up textures for this " + poly.getClass().getSimpleName() + "/" + source.getClass().getSimpleName() + ".");
             entry = new TextureTreeNode(textureMap.getTextureTree());
         }
 

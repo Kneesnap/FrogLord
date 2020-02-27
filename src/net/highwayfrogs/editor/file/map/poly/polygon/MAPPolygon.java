@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.map.poly.polygon;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -14,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public abstract class MAPPolygon extends MAPPrimitive {
+public abstract class MAPPolygon extends MAPPrimitive implements TextureSource {
     private short padding;
 
     public static final int TRI_SIZE = 3;
@@ -92,6 +93,5 @@ public abstract class MAPPolygon extends MAPPrimitive {
         }
 
         return new SVector(x, y, z);
-
     }
 }

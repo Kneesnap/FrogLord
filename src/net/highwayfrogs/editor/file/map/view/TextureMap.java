@@ -1,26 +1,29 @@
 package net.highwayfrogs.editor.file.map.view;
 
+import javafx.scene.image.Image;
 import javafx.scene.paint.PhongMaterial;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
+import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
+import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.*;
 
 /**
  * Represents a texture map.
@@ -29,38 +32,48 @@ import java.util.Map.Entry;
  * - http://blackpawn.com/texts/lightmaps/default.html
  * - https://web.archive.org/web/20180913014836/http://clb.demon.fi:80/projects/rectangle-bin-packing
  * - http://www.gamedev.net/community/forums/topic.asp?topic_id=392413
+ *
+ * Future Ideas:
+ * 1. Instead of putting all of the vertex colors in the corner, we could just add them to the tree, though preferably after all of the textures have been added. This would ensure they don't overlap with textures, and it would ensure as many vertex colors as possible are stored. This would also allow for pages of different sizes to be used.
+ *
  * Created by Kneesnap on 11/28/2018.
  */
 @Getter
-@AllArgsConstructor
 public class TextureMap {
     private VLOArchive vloArchive;
-    @Setter private List<Short> remapList;
+    private List<Short> remapList;
     private PhongMaterial material;
     private TextureTree textureTree;
+    @Setter private ShaderMode mode;
+    private Map<Short, Set<BigInteger>> mapTextureList = new HashMap<>();
+    private final ImageFilterSettings displaySettings = new ImageFilterSettings(ImageState.EXPORT).setAllowTransparency(true); // This is not static because we want it to be gc'd when the TextureMap is.
+    // The largest VLO is the SWP VLO, on the PS1. The texture map with the most used space is SUB1.
 
-    private static final int TEXTURE_PAGE_WIDTH = 1024; // The largest VLO is the SWP VLO, on the PS1.
-    private static final int TEXTURE_PAGE_HEIGHT = 1024;
-    private static final ImageFilterSettings DISPLAY_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setAllowTransparency(true);
+    private TextureMap(VLOArchive vlo, List<Short> remapList, ShaderMode mode) {
+        this.vloArchive = vlo;
+        this.remapList = remapList;
+        this.textureTree = new TextureTree(this);
+        this.mode = mode;
+    }
 
     /**
      * Create a new texture map from an existing MOF.
      * @return newTextureMap
      */
-    public static TextureMap newTextureMap(MOFHolder mofHolder) {
-        return makeMap(mofHolder.getVloFile(), null, mofHolder.asStaticFile().makeVertexColorTextures());
+    public static TextureMap newTextureMap(MOFHolder mofHolder, ShaderMode mode) {
+        TextureMap newMap = new TextureMap(mofHolder.getVloFile(), null, mode);
+        newMap.updateTree(newMap.createSourceMap(mofHolder));
+        return newMap;
     }
 
     /**
      * Create a new texture map from an existing VLOArchive.
      * @return newTextureMap
      */
-    public static TextureMap newTextureMap(MAPFile mapFile) {
-        return makeMap(mapFile.getVlo(), mapFile.getConfig().getRemapTable(mapFile.getFileEntry()), mapFile.makeVertexColorTextures());
-    }
-
-    private static TextureMap makeMap(VLOArchive vloSource, List<Short> remapTable, Map<VertexColor, BufferedImage> texMap) {
-        return new TextureMap(vloSource, remapTable, null, new TextureTree(vloSource, texMap));
+    public static TextureMap newTextureMap(MAPFile mapFile, ShaderMode mode) {
+        TextureMap newMap = new TextureMap(mapFile.getVlo(), mapFile.getRemapTable(), mode);
+        newMap.updateTree(newMap.createSourceMap(mapFile));
+        return newMap;
     }
 
     /**
@@ -72,14 +85,7 @@ public class TextureMap {
         return this.remapList != null ? this.remapList.get(index) : index;
     }
 
-    /**
-     * Get the entry for the tex id.
-     * @param index The index.
-     * @return entry
-     */
-    public TextureTreeNode getEntry(short index) {
-        return getTextureTree().getEntryMap().get(getRemap(index));
-    }
+
 
     /**
      * Gets the 3D PhongMaterial (diffuse components only, affected by lighting).
@@ -93,38 +99,203 @@ public class TextureMap {
 
     /**
      * Updates the color data for the tree.
-     * @param vertexMap The map in question to update.
+     * @param sourceMap The map in question to update the tree with.
      */
-    public void updateTreeColorData(Map<VertexColor, BufferedImage> vertexMap) {
-        this.textureTree.vertexMap = vertexMap;
-        this.textureTree.buildColorMap();
-        this.textureTree.updateImage();
-        if (this.material != null)
-            this.material.setDiffuseMap(Utils.toFXImage(getTextureTree().getImage(), false));
+    public void updateTree(Map<BigInteger, TextureSource> sourceMap) {
+        this.textureTree.rebuildTree(sourceMap, getMode());
+        if (this.material == null)
+            this.material = getDiffuseMaterial();
+
+        Image image = Utils.toFXImage(getTextureTree().getImage(), false);
+        this.material.setDiffuseMap(image);
+        this.material.setSpecularMap(image); // Fixes polygon lighting.
+    }
+
+    /**
+     * Updates this map texture map.
+     * @param mapFile The map file to update for.
+     * @param newMode The shading mode to use.
+     */
+    public void updateMap(MAPFile mapFile, ShaderMode newMode) {
+        if (newMode != null)
+            this.mode = newMode;
+        updateTree(createSourceMap(mapFile));
+    }
+
+    /**
+     * Updates this model texture map.
+     * @param mof     The model to update for.
+     * @param newMode The shading mode to use.
+     */
+    public void updateModel(MOFHolder mof, ShaderMode newMode) {
+        if (newMode != null)
+            this.mode = newMode;
+        updateTree(createSourceMap(mof));
+    }
+
+    /**
+     * Creates a texture source map for a map.
+     */
+    public Map<BigInteger, TextureSource> createSourceMap(MAPFile map) {
+        // Calculate how many of each are used.
+        this.mapTextureList.clear();
+        for (MAPPolygon poly : map.getAllPolygons()) {
+            if (poly instanceof MAPPolyTexture) {
+                MAPPolyTexture polyTex = (MAPPolyTexture) poly;
+                this.mapTextureList.computeIfAbsent(polyTex.getTextureId(), key -> new HashSet<>()).add(polyTex.makeIdentifier(this));
+            }
+        }
+
+        // Calculate the polygon data.
+        Map<BigInteger, TextureSource> texMap = new HashMap<>();
+        Set<Short> visitedTextures = new HashSet<>();
+        for (MAPPolygon poly : map.getAllPolygons()) {
+            BigInteger id = poly.makeIdentifier(this);
+            if (!texMap.containsKey(id))
+                texMap.put(id, poly);
+
+            if (poly instanceof MAPPolyTexture && poly.isOverlay(this)) {
+                MAPPolyTexture polyTex = (MAPPolyTexture) poly;
+                if (visitedTextures.add(polyTex.getTextureId())) {
+                    GameImage image = polyTex.getGameImage(this);
+                    id = image.makeIdentifier(this);
+                    if (!texMap.containsKey(id))
+                        texMap.put(id, image);
+                }
+            }
+        }
+
+        texMap.put(MapMesh.CURSOR_COLOR.makeIdentifier(this), MapMesh.CURSOR_COLOR);
+        texMap.put(MapMesh.ANIMATION_COLOR.makeIdentifier(this), MapMesh.ANIMATION_COLOR);
+        texMap.put(MapMesh.INVISIBLE_COLOR.makeIdentifier(this), MapMesh.INVISIBLE_COLOR);
+        texMap.put(MapMesh.GRID_COLOR.makeIdentifier(this), MapMesh.GRID_COLOR);
+        texMap.put(MapMesh.REMOVE_FACE_COLOR.makeIdentifier(this), MapMesh.REMOVE_FACE_COLOR);
+        texMap.put(MapMesh.GENERAL_SELECTION.makeIdentifier(this), MapMesh.GENERAL_SELECTION);
+        return texMap;
+    }
+
+    /**
+     * Creates a texture source map for the model.
+     */
+    public Map<BigInteger, TextureSource> createSourceMap(MOFHolder mof) {
+        Map<BigInteger, TextureSource> texMap = new HashMap<>();
+
+        Set<Short> visitedTextures = new HashSet<>();
+        for (MOFPolygon poly : mof.asStaticFile().getAllPolygons()) {
+            BigInteger id = poly.makeIdentifier(this);
+            if (!texMap.containsKey(id))
+                texMap.put(id, poly);
+
+            if (poly instanceof MOFPolyTexture && poly.isOverlay(this)) {
+                MOFPolyTexture polyTex = (MOFPolyTexture) poly;
+                if (visitedTextures.add(polyTex.getImageId())) {
+                    GameImage image = polyTex.getGameImage(this);
+                    id = image.makeIdentifier(this);
+                    if (!texMap.containsKey(id))
+                        texMap.put(id, image);
+                }
+            }
+        }
+
+        texMap.put(MOFController.ANIMATION_COLOR.makeIdentifier(this), MOFController.ANIMATION_COLOR);
+        return texMap;
+    }
+
+    /**
+     * Gets the TextureTreeNode for a given TextureSource, if found.
+     */
+    public TextureTreeNode getNode(TextureSource source) {
+        return this.textureTree.getAccessMap().get(source.makeIdentifier(this));
     }
 
     // Stuff beyond here is heavily based on https://github.com/juj/RectangleBinPack/blob/master/old/RectangleBinPack.cpp (Public Domain)
 
     @Getter
     public static class TextureTree {
-        private final VLOArchive vloSource;
-        private Map<VertexColor, BufferedImage> vertexMap;
-        private final Map<BigInteger, TextureTreeNode> vertexNodeMap;
-        private final int width = TEXTURE_PAGE_WIDTH; // Width of tree.
-        private final int height = TEXTURE_PAGE_HEIGHT; // Height of tree.
+        private TextureMap parentMap;
+        private final Map<BigInteger, TextureTreeNode> accessMap;
+        private int width; // Width of tree.
+        private int height; // Height of tree.
         private TextureTreeNode rootNode;
-        private Map<Short, TextureTreeNode> entryMap = new HashMap<>();
         private BufferedImage image;
 
-        public TextureTree(VLOArchive vloSource, Map<VertexColor, BufferedImage> vertexMap) {
-            this.vloSource = vloSource;
-            this.vertexMap = vertexMap;
-            this.vertexNodeMap = new HashMap<>();
-            buildTree(); // Builds the tree contents.
-            updateImage(); // Makes the image.
+        public TextureTree(TextureMap parentMap) {
+            this.parentMap = parentMap;
+            this.accessMap = new HashMap<>();
         }
 
-        public TextureTreeNode insert(GameImage image) {
+        /**
+         * Rebuilds the texture tree.
+         */
+        public void rebuildTree(Map<BigInteger, TextureSource> sourceMap, ShaderMode mode) {
+            this.width = mode.getPageWidth();
+            this.height = mode.getPageHeight();
+
+            this.rootNode = new TextureTreeNode(this);
+            this.rootNode.setWidth(getWidth());
+            this.rootNode.setHeight(getHeight());
+
+            this.accessMap.clear();
+
+            int minX = getWidth() - MAPFile.VERTEX_COLOR_IMAGE_SIZE; // Our goal is to start in the bottom right corner, and grow out.
+            int minY = getHeight() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+            int x = minX;
+            int y = minY;
+
+            List<TextureEntry> images = new ArrayList<>();
+            for (BigInteger key : sourceMap.keySet()) {
+                TextureSource source = sourceMap.get(key);
+
+                BufferedImage image = source.makeTexture(getParentMap());
+                if (source.isOverlay(getParentMap())) {
+                    this.accessMap.put(key, TextureTreeNode.newNode(this, x, y, image.getWidth(), image.getHeight(), image));
+
+                    if (y > minY) {
+                        y -= image.getHeight();
+                    } else {
+                        x += image.getWidth();
+                    }
+
+                    if (minY >= y && x >= getWidth()) { // We've reached the end of the cycle, time to reset.
+                        minX -= image.getWidth();
+                        minY -= image.getHeight();
+                        x = minX;
+                        y = getHeight() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+                    }
+                } else {
+                    images.add(new TextureEntry(key, source, image));
+                }
+            }
+
+            // Now, we have to build the actual "tree" part of the texture tree.
+            // This data structure seems to work best when nodes are added in descending size, so the first thing we'll do is get them in descending size.
+            images.sort(Comparator.comparingInt(entry -> -(entry.getImage().getWidth() * entry.getImage().getHeight())));
+
+            // Now, we'll add them.
+            for (TextureEntry entry : images) {
+                GameImage gameImage = entry.getSource().getGameImage(getParentMap());
+                if (gameImage == null)
+                    throw new RuntimeException("TextureSource returned null GameImage. " + entry.getSource());
+
+                TextureTreeNode newNode = insert(gameImage);
+                if (newNode != null) {
+                    newNode.setImage(entry.getImage());
+                    this.accessMap.put(entry.getId(), newNode);
+                }
+            }
+
+            updateImage();
+        }
+
+        @Getter
+        @AllArgsConstructor
+        private static class TextureEntry {
+            private BigInteger id;
+            private TextureSource source;
+            private BufferedImage image;
+        }
+
+        private TextureTreeNode insert(GameImage image) {
             return insert(getRootNode(), image);
         }
 
@@ -198,84 +369,19 @@ public class TextureMap {
         }
 
         /**
-         * Builds this tree from scratch.
-         */
-        public void buildTree() {
-            this.rootNode = new TextureTreeNode(this);
-            this.rootNode.setWidth(getWidth());
-            this.rootNode.setHeight(getHeight());
-
-            // Build the tree.
-            for (int i = 0; i < getVloSource().getImages().size(); i++)
-                insert(getVloSource().getImages().get(i));
-
-            buildEntryMap();
-            buildColorMap();
-        }
-
-        // Rebuilds the entry map.
-        private void buildEntryMap() {
-            getEntryMap().clear();
-            handleNode(getRootNode());
-        }
-
-        private void buildColorMap() {
-            getVertexNodeMap().clear();
-
-            int minX = getWidth() - ((int) Math.ceil(Math.sqrt(getVertexMap().size())) * MAPFile.VERTEX_COLOR_IMAGE_SIZE);
-            int startX = getWidth() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
-            int x = startX;
-            int y = getHeight() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
-            for (Entry<VertexColor, BufferedImage> entry : getVertexMap().entrySet()) {
-                BufferedImage image = entry.getValue();
-                TextureTreeNode vtxNode = TextureTreeNode.newNode(this, x, y, image.getWidth(), image.getHeight());
-                vtxNode.setCachedImage(image);
-                getVertexNodeMap().put(entry.getKey().makeColorIdentifier(), vtxNode);
-
-                // Condense these things.
-                if ((x -= image.getWidth()) < minX) { // Start again at the bottom (move over horizontally) once it clashes with a texture.
-                    y -= image.getHeight();
-                    x = startX;
-                }
-            }
-
-            this.vertexMap = null; // No longer needed.
-        }
-
-        private void handleNode(TextureTreeNode node) {
-            if (node.getGameImage() != null)
-                getEntryMap().put(node.getGameImage().getTextureId(), node);
-
-            if (node.getLeft() != null)
-                handleNode(node.getLeft());
-            if (node.getRight() != null)
-                handleNode(node.getRight());
-        }
-
-        /**
          * Updates the image, remaking it if necessary.
          */
         public void updateImage() {
-            if (this.image == null) // Gotta make a new one, the old one is invalidated.
+            if (this.image == null || (this.image.getWidth() != getWidth() || this.image.getHeight() != getHeight())) // Gotta make a new one, the old one is invalidated.
                 this.image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
 
             Graphics2D graphics = this.image.createGraphics();
+            graphics.setBackground(new Color(255, 255, 255, 0));
+            graphics.clearRect(0, 0, this.image.getWidth(), this.image.getHeight());
 
-            // Writes the images.
-            for (short i = 0; i < getVloSource().getImages().size(); i++) {
-                GameImage image = getVloSource().getImages().get(i);
-                TextureTreeNode node = getEntryMap().get(image.getTextureId());
-                if (node == null)
-                    continue; // Got nothing!
-
-                graphics.drawImage(image.toBufferedImage(DISPLAY_SETTINGS), node.getX(), node.getY(), node.getWidth(), node.getHeight(), null);
-            }
-
-            // Draw the vertex color entries.
-            for (Entry<BigInteger, TextureTreeNode> entry : getVertexNodeMap().entrySet()) {
-                TextureTreeNode node = entry.getValue();
-                graphics.drawImage(node.getCachedImage(), node.getX(), node.getY(), node.getWidth(), node.getHeight(), null);
-            }
+            // Draw each node.
+            for (TextureTreeNode node : this.accessMap.values())
+                graphics.drawImage(node.getImage(), node.getX(), node.getY(), node.getWidth(), node.getHeight(), null);
 
             graphics.dispose();
         }
@@ -292,17 +398,14 @@ public class TextureMap {
         private int width;
         private int height;
         private GameImage gameImage;
-        private BufferedImage cachedImage;
-
-        private static final ImageFilterSettings NODE_DISPLAY_SETTING = new ImageFilterSettings(ImageState.EXPORT)
-                .setAllowTransparency(true).setTrimEdges(true).setAllowFlip(true);
+        private BufferedImage image;
 
         public TextureTreeNode(TextureTree tree) {
             this.tree = tree;
         }
 
         /**
-         * Used when getting tree as a string.
+         * Gets this node (and subsequent nodes) returned as a display string.
          */
         public void toString(String padding, StringBuilder builder, String prefix) {
             builder.append(padding).append("- ");
@@ -341,13 +444,6 @@ public class TextureMap {
         }
 
         /**
-         * Get this entry's texture image.
-         */
-        public BufferedImage getImage() {
-            return this.cachedImage != null ? this.cachedImage : (this.cachedImage = getGameImage().toBufferedImage(NODE_DISPLAY_SETTING));
-        }
-
-        /**
          * Apply this node to a MapMesh.
          * @param mesh      The mesh to apply this entry to.
          * @param vertCount The amount of vertices to add.
@@ -364,13 +460,76 @@ public class TextureMap {
          * Makes a new texture node with given data.
          * @return newNode
          */
-        public static TextureTreeNode newNode(TextureTree textureTree, int x, int y, int width, int height) {
+        public static TextureTreeNode newNode(TextureTree textureTree, int x, int y, int width, int height, BufferedImage image) {
             TextureTreeNode newNode = new TextureTreeNode(textureTree);
-            newNode.setX(x);
-            newNode.setY(y);
-            newNode.setWidth(width);
-            newNode.setHeight(height);
+            newNode.x = x;
+            newNode.y = y;
+            newNode.width = width;
+            newNode.height = height;
+            newNode.image = image;
             return newNode;
+        }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum ShaderMode {
+        NO_SHADING("None", 1024, 1024),
+        OVERLAY_SHADING("Overlay", 1024, 1024),
+        MIXED_SHADING("Mixed", 2048, 2048), // Works to create a middle-ground between accurate and low quality.
+        EVERYTHING("Texture", 4096, 4096);
+
+        private final String name;
+        private final int pageWidth;
+        private final int pageHeight;
+    }
+
+    /**
+     * Represents something which creates a texture that goes into the TextureTree.
+     * Created by Kneesnap on 2/25/2020.
+     */
+    public interface TextureSource {
+        /**
+         * Creates the texture which should be put into the texture map.
+         */
+        public BufferedImage makeTexture(TextureMap map);
+
+        /**
+         * Tests if the source creates an overlay texture, or an actual texture.
+         */
+        public boolean isOverlay(TextureMap map);
+
+        /**
+         * Creates a hash code identifier which should match other textures that would look exactly the same, but not match others.
+         */
+        public BigInteger makeIdentifier(TextureMap map);
+
+        public default BigInteger makeIdentifier(int... colors) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < colors.length; i++)
+                sb.append(Utils.padStringLeft(Integer.toHexString(colors[i]).toUpperCase(), Constants.INTEGER_SIZE, '0'));
+
+            return new BigInteger(sb.toString(), 16);
+        }
+
+        /**
+         * Gets the GameImage this source represents, if it represents one.
+         */
+        public GameImage getGameImage(TextureMap map);
+
+        /**
+         * Called when a mesh using this TextureSource is setup.
+         */
+        public default void onMeshSetup(FrogMesh mesh) {
+            // Do nothing, by default.
+        }
+
+        /**
+         * Get the node associated with this source, if it exists.
+         * @param map The map to get the node from.
+         */
+        public default TextureTreeNode getTreeNode(TextureMap map) {
+            return map.getNode(this);
         }
     }
 }

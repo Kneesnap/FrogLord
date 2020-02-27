@@ -3,15 +3,25 @@ package net.highwayfrogs.editor.file.mof.prims;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyGT;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
+import net.highwayfrogs.editor.file.map.view.FrogMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.file.mof.MOFPart;
+import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
-import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.TexturedPoly;
+import net.highwayfrogs.editor.utils.Utils;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 
 
 /**
@@ -25,8 +35,6 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     private short clutId;
     private short textureId;
     private short imageId;
-    private PSXColorVector color;
-    private boolean flippedUVs;
 
     private transient short viewImageId = -1; // The image id while this MOF is being viewed.
 
@@ -90,16 +98,59 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     }
 
     @Override
-    public TextureTreeNode getNode(TextureMap map) {
-        return map.getEntry(this.viewImageId == -1 ? getImageId() : this.viewImageId);
-    }
-
-    @Override
     public void performSwap() {
         if (getUvs().length == MAPPolygon.QUAD_SIZE) {
             ByteUV temp = this.uvs[2];
             this.uvs[2] = this.uvs[3];
             this.uvs[3] = temp;
         }
+    }
+
+    @Override
+    public BufferedImage makeTexture(TextureMap map) {
+        if (map.getMode() == ShaderMode.NO_SHADING) {
+            return getGameImage(map).toBufferedImage(map.getDisplaySettings());
+        } else if (map.getMode() == ShaderMode.OVERLAY_SHADING) {
+            return makeShadeImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, false);
+        } else {
+            BufferedImage texture = getGameImage(map).toBufferedImage(map.getDisplaySettings());
+            return MAPPolyTexture.makeShadedTexture(texture, makeShadeImage(texture.getWidth(), texture.getHeight(), true));
+        }
+    }
+
+    private BufferedImage makeShadeImage(int width, int height, boolean useRaw) {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = image.createGraphics();
+        graphics.setColor(useRaw ? getColor().toColor() : Utils.toAWTColor(MAPPolyGT.loadColor(getColor())));
+        graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+        graphics.dispose();
+        return image;
+    }
+
+    @Override
+    public boolean isOverlay(TextureMap map) {
+        return map.getMode() == ShaderMode.OVERLAY_SHADING;
+    }
+
+    @Override
+    public BigInteger makeIdentifier(TextureMap map) {
+        if (map.getMode() == ShaderMode.NO_SHADING) {
+            return makeIdentifier(0xF1A7BA5E, getImageId());
+        } else if (isOverlay(map)) {
+            return makeIdentifier(0xF1A754AD, getColor().toRGB());
+        } else {
+            return makeIdentifier(0xF1A77E8, getImageId(), getColor().toRGB());
+        }
+    }
+
+    @Override
+    public GameImage getGameImage(TextureMap map) {
+        return map.getVloArchive().getMWD().getImageByTextureId(getImageId());
+    }
+
+    @Override
+    public void onMeshSetup(FrogMesh mesh) {
+        if (mesh instanceof MOFMesh && isOverlay(mesh.getTextureMap()))
+            ((MOFMesh) mesh).renderOverPolygon(this, this);
     }
 }

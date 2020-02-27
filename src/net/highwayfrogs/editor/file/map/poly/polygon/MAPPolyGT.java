@@ -1,75 +1,81 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import javafx.scene.paint.Color;
+import net.highwayfrogs.editor.file.map.view.FrogMesh;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.file.map.view.VertexColor;
+import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.math.BigInteger;
 
 /**
+ * Represents gouraud textured polys.
  * Created by Kneesnap on 2/21/2020.
  */
-public class MAPPolyGT extends MAPPolyTexture implements VertexColor, ColoredPoly {
+public class MAPPolyGT extends MAPPolyTexture {
     public MAPPolyGT(MAPPolygonType type, int verticeCount, int colorCount) {
         super(type, verticeCount, colorCount);
     }
 
     @Override
-    public void makeTexture(BufferedImage image, Graphics2D graphics, boolean raw) {
-        final Color c0 = loadColor(getVectors()[0]);
-        final Color c1 = loadColor(getVectors()[1]);
-        final Color c2 = loadColor(getVectors()[2]);
-        final Color c3 = (getVectors().length > 3 ? loadColor(getVectors()[3]) : c2);
+    public void onMeshSetup(FrogMesh mesh) {
+        TextureMap map = mesh.getTextureMap();
+        if (mesh instanceof MapMesh && isOverlay(map))
+            ((MapMesh) mesh).renderOverPolygon(this, getTreeNode(mesh.getTextureMap()));
+    }
 
-        float tx, ty;
-        for (int x = 0; x < image.getWidth(); x++) {
-            tx = (image.getWidth() == 1) ? .5F : (float) x / (float) (image.getWidth() - 1);
-            for (int y = 0; y < image.getHeight(); y++) {
-                ty = (image.getHeight() == 1) ? .5F : (float) y / (float) (image.getHeight() - 1);
-                final Color fxColor = Utils.calculateBilinearInterpolatedColour(c0, c2, c1, c3, tx, ty);
-                graphics.setColor(Utils.toAWTColor(fxColor));
-                graphics.fillRect(x, y, 1, 1);
-            }
+    @Override
+    public BufferedImage makeTexture(TextureMap map) {
+        if (map.getMode() == ShaderMode.NO_SHADING) {
+            return getGameImage(map).toBufferedImage(map.getDisplaySettings());
+        } else if (isOverlay(map)) {
+            return makeShadeImage(map, false);
+        } else {
+            return makeShadedTexture(map, getGameImage(map).toBufferedImage(map.getDisplaySettings()));
         }
     }
 
     @Override
-    public void onDrawMap(MapMesh mesh) {
-        mesh.renderOverPolygon(this, getTreeNode(mesh.getTextureMap()));
+    public BigInteger makeIdentifier(TextureMap map) {
+        if (map.getMode() == ShaderMode.NO_SHADING) {
+            return makeIdentifier(0x7E8BA5E, getTextureId());
+        } else {
+            int[] colors = new int[getVectors().length + 2];
+            colors[0] = 0xF0A54ADE;
+            colors[1] = getTextureId();
+            for (int i = 0; i < getVectors().length; i++)
+                colors[i + 2] = getVectors()[i].toRGB();
+            return makeIdentifier(colors);
+        }
     }
 
     @Override
-    public PSXColorVector[] getColors() {
-        return getVectors();
+    public BufferedImage makeShadeImage(TextureMap map, int width, int height, boolean useRaw) {
+        final Color c0 = useRaw ? Utils.fromRGB(getVectors()[0].toRGB()) : loadColor(getVectors()[0]);
+        final Color c1 = useRaw ? Utils.fromRGB(getVectors()[1].toRGB()) : loadColor(getVectors()[1]);
+        final Color c2 = useRaw ? Utils.fromRGB(getVectors()[2].toRGB()) : loadColor(getVectors()[2]);
+        final Color c3 = (getVectors().length > 3 ? (useRaw ? Utils.fromRGB(getVectors()[3].toRGB()) : loadColor(getVectors()[3])) : Color.TRANSPARENT);
+
+        if (isOverlay(map))
+            return MAPPolyGouraud.makeGouraudImage(width, height, c0, c1, c2, c3); //c0 c1 c2 c3 -> works nicely for overlay mode. Doesn't work as well outside overlay mode.
+
+        //TODO: Apply UVs / proper direction. [Overlay surprisingly gets this right, maybe we should take a page out of that.]
+        if (getVectors().length == 4) {
+            return MAPPolyGouraud.makeGouraudImage(width, height, c0, c2, c1, c3);
+        } else {
+            return MAPPolyGouraud.makeGouraudImage(width, height, c0, c1, c2, c3);
+        }
     }
 
-    @Override
-    public BigInteger makeColorIdentifier() {
-        int[] colors = new int[getColors().length];
-        for (int i = 0; i < getColors().length; i++)
-            colors[i] = getColors()[i].toRGB();
-        return makeColorIdentifier("", colors);
-    }
-
-    public static Color loadColor(PSXColorVector color) {
-        // Alpha = the %age of the color to apply.
-        // How does application work? Approximately (texBlue - (alphaAsPercentage * (texBlue - shadeBlue)))
-
-        // B 120 -> 22, with 0 as value, 211  as alpha
-
-        // Real Pixel Value, Overlay Pixel, Overlay Alpha, Result Value
-        // Blue at 120, 0, 211, 22
-        // Blue at 120, 15, 255, 15
-
-        // Alpha is a percent of how much to apply.
-
-        //TODO: 1. Can we make overlays more accurate?
-        //TODO: 2. Is there some other non-overlay system which we could use to do this? (Blend)
-        //TODO: 3 How realistic is it to create a texture for each shading. Attempt to use a mix of things, where all sprites above a certain area get shaded by the shitty shader, but everything else gets HQ shading.
+    /**
+     * Turn color data into a color which can be used to create images.
+     * @param color The color to convert.
+     * @return loadedColor
+     */
+    public static Color loadColor(PSXColorVector color) { // Color Application works with approximately this formula: (texBlue - (alphaAsPercentage * (texBlue - shadeBlue)))
         return Utils.fromRGB(color.toRGB(), (1D - ((color.getRed() + color.getGreen() + color.getBlue()) / 127D / 3D)));
     }
 }

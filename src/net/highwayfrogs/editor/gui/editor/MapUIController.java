@@ -25,6 +25,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.gui.editor.map.manager.*;
 import net.highwayfrogs.editor.gui.editor.map.manager.PathManager.PathDisplaySetting;
@@ -67,6 +68,7 @@ public class MapUIController implements Initializable {
     @FXML private CheckBox checkBoxFaceRemoveMode;
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
     @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
+    @FXML private ChoiceBox<ShaderMode> shaderModeChoiceBox;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldCamMoveSpeed;
     @FXML private Button btnResetCamMoveSpeed;
@@ -163,7 +165,7 @@ public class MapUIController implements Initializable {
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group(meshView);
         SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
-        subScene3D.setFill(Color.GRAY);
+        subScene3D.setFill(Color.BLACK);
         subScene3D.setCamera(cameraFPS.getCamera());
 
         // Ensure that the render manager has access to the root node

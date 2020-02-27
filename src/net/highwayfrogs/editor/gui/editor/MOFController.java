@@ -33,9 +33,9 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.mof.*;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
@@ -577,29 +577,10 @@ public class MOFController extends EditorController<MOFHolder> {
     /**
      * Render over an existing polygon.
      * @param targetPoly The polygon to render over.
-     * @param color      The color to render.
+     * @param source     The source to render.
      */
-    public void renderOverPolygon(MOFPolygon targetPoly, CursorVertexColor color) {
-        MOFMesh mofMesh = getMofMesh();
-
-        mofMesh.setVerticeStart(0);
-        int increment = mofMesh.getVertexFormat().getVertexIndexSize();
-        boolean isQuad = (targetPoly.getVerticeCount() == MAPPolygon.QUAD_SIZE);
-
-        int face = mofMesh.getPolyFaceMap().get(targetPoly) * mofMesh.getFaceElementSize();
-        int v1 = mofMesh.getFaces().get(face);
-        int v2 = mofMesh.getFaces().get(face + increment);
-        int v3 = mofMesh.getFaces().get(face + (2 * increment));
-
-        TextureTreeNode node = color.getTreeNode(getMofMesh().getTextureMap());
-        if (isQuad) {
-            int v4 = mofMesh.getFaces().get(face + (3 * increment));
-            int v5 = mofMesh.getFaces().get(face + (4 * increment));
-            int v6 = mofMesh.getFaces().get(face + (5 * increment));
-            mofMesh.addRectangle(node, v1, v2, v3, v4, v5, v6);
-        } else {
-            mofMesh.addTriangle(node, v1, v2, v3);
-        }
+    public void renderOverPolygon(MOFPolygon targetPoly, TextureSource source) {
+        getMofMesh().renderOverPolygon(targetPoly, source);
     }
 
     @Getter
@@ -619,6 +600,8 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private Label frameLabel;
         @FXML private Button btnLast;
         @FXML private Button btnNext;
+
+        @FXML private ComboBox<ShaderMode> shaderModeComboBox;
 
         @FXML private TitledPane paneAnim;
         @FXML private ComboBox<Integer> animationSelector;
@@ -661,6 +644,17 @@ public class MOFController extends EditorController<MOFHolder> {
             this.viewHilitesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateHiliteBoxes(newValue)));
             this.viewCollprimCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateCollprimBoxes(newValue)));
             this.viewBoundingBoxesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateBoundingBoxes(newValue)));
+
+
+            // Shader stuff.
+            this.shaderModeComboBox.setItems(FXCollections.observableArrayList(ShaderMode.values()));
+            this.shaderModeComboBox.getSelectionModel().select(getMofMesh().getTextureMap().getMode());
+            this.shaderModeComboBox.setConverter(new AbstractStringConverter<>(ShaderMode::getName));
+            this.shaderModeComboBox.getSelectionModel().selectedItemProperty().addListener(((observable, oldValue, newValue) -> {
+                getMofMesh().getTextureMap().updateModel(getHolder(), newValue);
+                getMofMesh().updateFrame();
+            }));
+
             this.addCollprimButton.setOnAction(evt -> {
                 getHolder().asStaticFile().getParts().get(0).setCollprim(new MOFCollprim(getHolder().asStaticFile().getParts().get(0)));
                 controller.updateCollprimBoxes();

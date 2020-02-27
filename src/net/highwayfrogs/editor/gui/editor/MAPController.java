@@ -11,7 +11,6 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
-import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
@@ -25,6 +24,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -61,7 +61,7 @@ public class MAPController extends EditorController<MAPFile> {
     public void loadFile(MAPFile mapFile) {
         super.loadFile(mapFile);
 
-        List<Short> remapTable = mapFile.getConfig().getRemapTable(mapFile.getFileEntry());
+        List<Short> remapTable = mapFile.getRemapTable();
         if (remapTable == null) {
             changeTextureButton.setDisable(true);
             remapList.setDisable(true);
@@ -107,8 +107,11 @@ public class MAPController extends EditorController<MAPFile> {
 
         saveTextureButton.setOnAction(evt -> {
             try {
-                ImageIO.write(TextureMap.newTextureMap(getFile()).getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), getFile().getFileEntry().getDisplayName() + ".png"));
-                System.out.println("Saved " + getFile().getFileEntry().getDisplayName() + ".png");
+                for (ShaderMode mode : ShaderMode.values()) {
+                    File file = new File(GUIMain.getWorkingDirectory(), getFile().getFileEntry().getDisplayName() + "-" + mode + ".png");
+                    ImageIO.write(TextureMap.newTextureMap(getFile(), mode).getTextureTree().getImage(), "png", file);
+                    System.out.println("Saved " + file.getName());
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -124,8 +127,8 @@ public class MAPController extends EditorController<MAPFile> {
 
         getFile().getVlo().promptImageSelection(newImage -> {
             int index = this.remapList.getSelectionModel().getSelectedIndex();
-            getFile().getConfig().getRemapTable(getFile().getFileEntry()).set(index, newImage.getTextureId());
-            this.remapList.setItems(FXCollections.observableArrayList(getFile().getConfig().getRemapTable(getFile().getFileEntry()))); // Refresh remap.
+            getFile().getRemapTable().set(index, newImage.getTextureId());
+            this.remapList.setItems(FXCollections.observableArrayList(getFile().getRemapTable())); // Refresh remap.
             this.remapList.getSelectionModel().select(index);
         }, false);
     }
@@ -137,7 +140,7 @@ public class MAPController extends EditorController<MAPFile> {
             return;
         }
 
-        TextureMap textureMap = TextureMap.newTextureMap(getFile());
+        TextureMap textureMap = TextureMap.newTextureMap(getFile(), ShaderMode.NO_SHADING);
         setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), textureMap), textureMap);
     }
 
@@ -230,13 +233,9 @@ public class MAPController extends EditorController<MAPFile> {
             //TODO: Map Group and registration order are the answer.
         }
 
-        // Create and setup material properties for rendering the level, entity icons and bounding boxes.
-        PhongMaterial material = new PhongMaterial();
-        material.setDiffuseMap(Utils.toFXImage(texMap.getTextureTree().getImage(), false));
-
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(mesh);
-        meshView.setMaterial(material);
+        meshView.setMaterial(texMap.getDiffuseMaterial());
         meshView.setCullFace(CullFace.BACK);
 
         // Load FXML for UI layout.

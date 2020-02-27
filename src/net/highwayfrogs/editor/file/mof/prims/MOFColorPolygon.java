@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.file.mof.prims;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
-import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.mof.MOFPart;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -15,24 +15,35 @@ import java.math.BigInteger;
  * Created by Kneesnap on 2/13/2019.
  */
 @Getter
-public class MOFColorPolygon extends MOFPolygon implements VertexColor {
+public class MOFColorPolygon extends MOFPolygon {
     public MOFColorPolygon(MOFPart parent, MOFPrimType type, int verticeCount, int normalCount, int enCount) {
         super(parent, type, verticeCount, normalCount, enCount);
     }
 
     @Override
-    public TextureTreeNode getNode(TextureMap map) {
-        return getTreeNode(map);
-    }
+    public BufferedImage makeTexture(TextureMap map) {
+        BufferedImage shadeImage = new BufferedImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = shadeImage.createGraphics();
 
-    @Override
-    public void makeTexture(BufferedImage image, Graphics2D graphics, boolean isRaw) {
         graphics.setColor(getColor().toColor());
-        graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+        graphics.fillRect(0, 0, shadeImage.getWidth(), shadeImage.getHeight());
+
+        graphics.dispose();
+        return shadeImage;
     }
 
     @Override
-    public BigInteger makeColorIdentifier() {
-        return makeColorIdentifier("", getColor().toRGB());
+    public boolean isOverlay(TextureMap map) {
+        return true;
+    }
+
+    @Override
+    public BigInteger makeIdentifier(TextureMap map) {
+        return makeIdentifier(0xF1A7C010, getColor().toRGB());
+    }
+
+    @Override
+    public GameImage getGameImage(TextureMap map) {
+        return null;
     }
 }

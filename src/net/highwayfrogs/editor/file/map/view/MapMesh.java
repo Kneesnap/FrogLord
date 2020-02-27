@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file.map.view;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.poly.polygon.ColoredPoly;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -41,8 +40,7 @@ public class MapMesh extends FrogMesh<MAPPolygon> {
 
         // Apply shading to textured polygons. This is done separately from adding the polygons, because for some reason it garbles the textures if we don't separate it. (I think it's expected that polygons are added before anything else.)
         for (MAPPolygon poly : getMap().getAllPolygons())
-            if (poly instanceof ColoredPoly) // Textured shaded poly.
-                ((ColoredPoly) poly).onDrawMap(this);
+            poly.onMeshSetup(this);
     }
 
     /**

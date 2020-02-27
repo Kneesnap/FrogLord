@@ -1,18 +1,15 @@
 package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.awt.image.BufferedImage;
-import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -93,24 +90,14 @@ public class MOFFile extends MOFBase {
     }
 
     /**
-     * Create a map of textures which were generated
-     * @return texMap
+     * Gets all of the polygons within this model.
      */
-    public Map<VertexColor, BufferedImage> makeVertexColorTextures() {
-        Map<VertexColor, BufferedImage> texMap = new HashMap<>();
-
-        Set<BigInteger> alreadyAdded = new HashSet<>();
-        forEachPolygon(prim -> {
-            if (!(prim instanceof VertexColor))
-                return;
-
-            VertexColor vertexColor = (VertexColor) prim;
-            if (alreadyAdded.add(vertexColor.makeColorIdentifier()))
-                texMap.put(vertexColor, vertexColor.makeTexture());
-        });
-
-        texMap.put(MOFController.ANIMATION_COLOR, MOFController.ANIMATION_COLOR.makeTexture());
-        return texMap;
+    public List<MOFPolygon> getAllPolygons() {
+        List<MOFPolygon> polygons = new ArrayList<>();
+        for (MOFPart part : getParts())
+            for (List<MOFPolygon> list : part.getMofPolygons().values())
+                polygons.addAll(list);
+        return polygons;
     }
 
     /**

@@ -28,8 +28,6 @@ import net.highwayfrogs.editor.file.map.poly.line.MAPLineType;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyF4;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygonType;
-import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.file.map.view.VertexColor;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -40,8 +38,6 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.awt.image.BufferedImage;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -739,32 +735,6 @@ public class MAPFile extends GameFile {
         getMapAnimations().forEach(anim -> anim.writeMapUVs(writer));
 
         writer.writeAddressTo(fileLengthPointer); // Write file length to start of file.
-    }
-
-    /**
-     * Create a map of textures which were generated
-     * @return texMap
-     */
-    public Map<VertexColor, BufferedImage> makeVertexColorTextures() {
-        Map<VertexColor, BufferedImage> texMap = new HashMap<>();
-
-        Set<BigInteger> usedTextures = new HashSet<>();
-        for (MAPPolygon poly : getAllPolygons()) {
-            if (!(poly instanceof VertexColor))
-                continue;
-
-            VertexColor vertexColor = (VertexColor) poly;
-            if (usedTextures.add(vertexColor.makeColorIdentifier()))
-                texMap.put(vertexColor, vertexColor.makeTexture());
-        }
-
-        texMap.put(MapMesh.CURSOR_COLOR, MapMesh.CURSOR_COLOR.makeTexture());
-        texMap.put(MapMesh.ANIMATION_COLOR, MapMesh.ANIMATION_COLOR.makeTexture());
-        texMap.put(MapMesh.INVISIBLE_COLOR, MapMesh.INVISIBLE_COLOR.makeTexture());
-        texMap.put(MapMesh.GRID_COLOR, MapMesh.GRID_COLOR.makeTexture());
-        texMap.put(MapMesh.REMOVE_FACE_COLOR, MapMesh.REMOVE_FACE_COLOR.makeTexture());
-        texMap.put(MapMesh.GENERAL_SELECTION, MapMesh.GENERAL_SELECTION.makeTexture());
-        return texMap;
     }
 
     @Override

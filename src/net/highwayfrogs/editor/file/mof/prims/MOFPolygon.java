@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof.prims;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
@@ -14,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public abstract class MOFPolygon extends PSXGPUPrimitive {
+public abstract class MOFPolygon extends PSXGPUPrimitive implements TextureSource {
     private int[] vertices; // An integer array so it matches the type PSX
     private short[] en; // Not entirely sure what this is.
     private short[] normals;

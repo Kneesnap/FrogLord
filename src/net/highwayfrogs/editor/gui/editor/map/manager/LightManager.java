@@ -4,6 +4,7 @@ import javafx.scene.AmbientLight;
 import javafx.scene.LightBase;
 import javafx.scene.Node;
 import javafx.scene.PointLight;
+import javafx.scene.paint.Color;
 import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -33,7 +34,7 @@ public class LightManager extends MapManager {
         getRenderManager().addMissingDisplayList(LIGHT_LIST);
         getController().getApplyLightsCheckBox().setOnAction(evt -> updateEntityLighting());
 
-        this.mainLight = new AmbientLight(Utils.fromRGB(0xFFFFFF));
+        this.mainLight = new AmbientLight(Color.WHITE);
         this.mainLight.getScope().add(getController().getMeshView());
     }
 

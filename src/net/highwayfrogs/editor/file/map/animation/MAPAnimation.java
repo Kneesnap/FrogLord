@@ -187,7 +187,7 @@ public class MAPAnimation extends GameObject {
 
         // Find the base image used to preview.
         VLOArchive vlo = getParentMap().getVlo();
-        List<Short> remap = getConfig().getRemapTable(getParentMap().getFileEntry());
+        List<Short> remap = getParentMap().getRemapTable();
 
         GameImage gameImage = null;
         List<GameImage> images = null;

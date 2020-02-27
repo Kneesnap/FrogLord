@@ -3,7 +3,10 @@ package net.highwayfrogs.editor.file.mof.view;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.FrogMesh;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
+import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.MOFPartcel;
@@ -117,6 +120,13 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     }
 
     /**
+     * Update this frame.
+     */
+    public void updateFrame() {
+        setFrame(this.frameCount);
+    }
+
+    /**
      * Resets the current frame to the starting frame.
      */
     public void resetFrame() {
@@ -166,5 +176,31 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
      */
     public int getAction() {
         return Math.max(0, this.animationId);
+    }
+
+    /**
+     * Render over an existing polygon.
+     * @param targetPoly The polygon to render over.
+     * @param source     The source to render.
+     */
+    public void renderOverPolygon(MOFPolygon targetPoly, TextureSource source) {
+        setVerticeStart(0);
+        int increment = getVertexFormat().getVertexIndexSize();
+        boolean isQuad = (targetPoly.getVerticeCount() == MAPPolygon.QUAD_SIZE);
+
+        int face = getPolyFaceMap().get(targetPoly) * getFaceElementSize();
+        int v1 = getFaces().get(face);
+        int v2 = getFaces().get(face + increment);
+        int v3 = getFaces().get(face + (2 * increment));
+
+        TextureTreeNode node = source.getTreeNode(getTextureMap());
+        if (isQuad) {
+            int v4 = getFaces().get(face + (3 * increment));
+            int v5 = getFaces().get(face + (4 * increment));
+            int v6 = getFaces().get(face + (5 * increment));
+            addRectangle(node, v1, v2, v3, v4, v5, v6);
+        } else {
+            addTriangle(node, v1, v2, v3);
+        }
     }
 }

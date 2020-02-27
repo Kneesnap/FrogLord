@@ -45,7 +45,7 @@ public class FFSUtil {
         if (outputDir == null)
             return;
 
-        List<Short> remapTable = map.getConfig().getRemapTable(map.getFileEntry());
+        List<Short> remapTable = map.getRemapTable();
         if (remapTable == null) {
             Utils.makePopUp("No remap could be found for this level, so unfortunately this cannot be exported to ffs.", AlertType.INFORMATION);
             return;
@@ -187,7 +187,7 @@ public class FFSUtil {
         if (inputFile == null)
             return;
 
-        List<Short> remapTable = map.getConfig().getRemapTable(map.getFileEntry());
+        List<Short> remapTable = map.getRemapTable();
         if (remapTable == null) {
             Utils.makePopUp("No remap could be found for this level, so unfortunately this cannot be imported from ffs.", AlertType.INFORMATION);
             return;
