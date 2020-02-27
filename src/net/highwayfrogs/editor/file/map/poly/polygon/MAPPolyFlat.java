@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -39,6 +41,12 @@ public class MAPPolyFlat extends MAPPolygon {
     }
 
     @Override
+    public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
+        super.setupEditor(editor, controller);
+        addColorEditor(editor);
+    }
+
+    @Override
     public BufferedImage makeTexture(TextureMap map) {
         BufferedImage image = new BufferedImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
@@ -63,5 +71,14 @@ public class MAPPolyFlat extends MAPPolygon {
     @Override
     public GameImage getGameImage(TextureMap map) {
         return null;
+    }
+
+    protected void addColorEditor(GUIEditorGrid editor) {
+        // Color Editor.
+        if (getColor() != null) {
+            editor.addBoldLabel("Color:");
+            editor.addColorPicker(SINGLE_COLOR_NAME[0], getColor().toRGB(), getColor()::fromRGB);
+            //TODO: Update map display when color is updated. (Update texture map.)
+        }
     }
 }

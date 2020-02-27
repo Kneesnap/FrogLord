@@ -41,7 +41,7 @@ public class MAPPolyFT extends MAPPolyTexture {
         if (map.getMode() == ShaderMode.NO_SHADING) {
             return makeIdentifier(0x7E8BA5E, getTextureId());
         } else {
-            return makeIdentifier(0xF1A77E8, getTextureId(), getVectors()[0].toRGB());
+            return makeIdentifier(0xF1A77E8, getTextureId(), getColors()[0].toRGB());
         }
     }
 
@@ -50,7 +50,7 @@ public class MAPPolyFT extends MAPPolyTexture {
         BufferedImage shadeImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = shadeImage.createGraphics();
 
-        graphics.setColor(useRaw ? getVectors()[0].toColor() : Utils.toAWTColor(MAPPolyGT.loadColor(getVectors()[0])));
+        graphics.setColor(useRaw ? getColors()[0].toColor() : Utils.toAWTColor(MAPPolyGT.loadColor(getColors()[0])));
         graphics.fillRect(0, 0, shadeImage.getWidth(), shadeImage.getHeight());
 
         graphics.dispose();

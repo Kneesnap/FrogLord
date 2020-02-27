@@ -7,6 +7,8 @@ import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MapUIController;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,12 +18,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public abstract class MAPPolygon extends MAPPrimitive implements TextureSource {
+    protected static final String[] SINGLE_COLOR_NAME = {"Color"};
+    private static final String[] TRI_COLOR_NAMES = {"Corner 1", "Corner 2", "Corner 3"};
+    private static final String[] QUAD_COLOR_NAMES = {"Top Left", "Top Right", "Bottom Right", "Bottom Left"};
+    protected static final String[][] COLOR_BANK = {SINGLE_COLOR_NAME, null, TRI_COLOR_NAMES, QUAD_COLOR_NAMES};
     private short padding;
-
     public static final int TRI_SIZE = 3;
     public static final int QUAD_SIZE = 4;
     public static final int REQUIRES_VERTEX_PADDING = TRI_SIZE;
     public static final int REQUIRES_VERTEX_SWAPPING = QUAD_SIZE;
+
 
     public MAPPolygon(MAPPolygonType type, int verticeCount) {
         super(type, verticeCount);
@@ -44,6 +50,26 @@ public abstract class MAPPolygon extends MAPPrimitive implements TextureSource {
         super.save(writer);
         if (getVerticeCount() == REQUIRES_VERTEX_PADDING)
             writer.writeShort(this.padding);
+    }
+
+    /**
+     * Setup an editor for this data.
+     */
+    public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
+        editor.addBoldLabel(getClass().getSimpleName());
+        addQuadEditor(editor);
+    }
+
+    protected void addQuadEditor(GUIEditorGrid editor) {
+        editor.addCheckBox("Quad", isQuadFace(), newValue -> {
+            int newSize = newValue ? 4 : 3;
+            int copySize = Math.min(newSize, getVertices().length);
+
+            // Copy vertices.
+            int[] newVertices = new int[newSize];
+            System.arraycopy(getVertices(), 0, newVertices, 0, copySize);
+            setVertices(newVertices);
+        });
     }
 
     /**

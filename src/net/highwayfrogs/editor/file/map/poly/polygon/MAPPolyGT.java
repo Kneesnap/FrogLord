@@ -43,27 +43,27 @@ public class MAPPolyGT extends MAPPolyTexture {
         if (map.getMode() == ShaderMode.NO_SHADING) {
             return makeIdentifier(0x7E8BA5E, getTextureId());
         } else {
-            int[] colors = new int[getVectors().length + 2];
+            int[] colors = new int[getColors().length + 2];
             colors[0] = 0xF0A54ADE;
             colors[1] = getTextureId();
-            for (int i = 0; i < getVectors().length; i++)
-                colors[i + 2] = getVectors()[i].toRGB();
+            for (int i = 0; i < getColors().length; i++)
+                colors[i + 2] = getColors()[i].toRGB();
             return makeIdentifier(colors);
         }
     }
 
     @Override
     public BufferedImage makeShadeImage(TextureMap map, int width, int height, boolean useRaw) {
-        final Color c0 = useRaw ? Utils.fromRGB(getVectors()[0].toRGB()) : loadColor(getVectors()[0]);
-        final Color c1 = useRaw ? Utils.fromRGB(getVectors()[1].toRGB()) : loadColor(getVectors()[1]);
-        final Color c2 = useRaw ? Utils.fromRGB(getVectors()[2].toRGB()) : loadColor(getVectors()[2]);
-        final Color c3 = (getVectors().length > 3 ? (useRaw ? Utils.fromRGB(getVectors()[3].toRGB()) : loadColor(getVectors()[3])) : Color.TRANSPARENT);
+        final Color c0 = useRaw ? Utils.fromRGB(getColors()[0].toRGB()) : loadColor(getColors()[0]);
+        final Color c1 = useRaw ? Utils.fromRGB(getColors()[1].toRGB()) : loadColor(getColors()[1]);
+        final Color c2 = useRaw ? Utils.fromRGB(getColors()[2].toRGB()) : loadColor(getColors()[2]);
+        final Color c3 = (getColors().length > 3 ? (useRaw ? Utils.fromRGB(getColors()[3].toRGB()) : loadColor(getColors()[3])) : Color.TRANSPARENT);
 
         if (isOverlay(map))
             return MAPPolyGouraud.makeGouraudImage(width, height, c0, c1, c2, c3); //c0 c1 c2 c3 -> works nicely for overlay mode. Doesn't work as well outside overlay mode.
 
         //TODO: Apply UVs / proper direction. [Overlay surprisingly gets this right, maybe we should take a page out of that.]
-        if (getVectors().length == 4) {
+        if (getColors().length == 4) {
             return MAPPolyGouraud.makeGouraudImage(width, height, c0, c2, c1, c3);
         } else {
             return MAPPolyGouraud.makeGouraudImage(width, height, c0, c1, c2, c3);

@@ -9,7 +9,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.map.poly.MAPPolygonData;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
@@ -38,7 +37,6 @@ public class GeometryManager extends MapManager {
     private MeshData cursorData;
     private Consumer<MAPPolygon> promptHandler;
     @Setter private MeshView hoverView; // Anything we're hovering over which should allow selection instead of the cursor.
-    MAPPolygonData polygonData = new MAPPolygonData();
 
     public GeometryManager(MapUIController controller) {
         super(controller);
@@ -89,7 +87,6 @@ public class GeometryManager extends MapManager {
                     } else {
                         setCursorPolygon(clickedPoly);
                         this.polygonSelected = true;
-                        this.polygonData.loadFrom(clickedPoly);
                         setupEditor(); // Update editor.
                     }
                 }
@@ -136,13 +133,7 @@ public class GeometryManager extends MapManager {
         this.geometryEditor.addSeparator(25);
 
         if (getSelectedPolygon() != null) {
-            this.polygonData.setupEditor(this.geometryEditor, getController());
-
-            //TODO: Handle changing polygon types.
-            this.geometryEditor.addButton("Apply Changes", () -> {
-                this.polygonData.applyToPolygon(getSelectedPolygon());
-                refreshView();
-            });
+            getSelectedPolygon().setupEditor(this.geometryEditor, getController());
         }
     }
 
