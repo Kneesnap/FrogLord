@@ -65,7 +65,6 @@ public class EntityManager extends MapManager {
         this.entityRenderGroup = new Group();
         getRenderManager().addNode(this.entityRenderGroup);
         updateEntities();
-        MapUIController.getPropertyEntityIconSize().addListener((observable, old, newVal) -> updateEntities());
     }
 
     @Override
@@ -338,7 +337,7 @@ public class EntityManager extends MapManager {
         }
 
         // Couldn't find a model to use, so instead we'll display as a 2D sprite.
-        float entityIconSize = MapUIController.getPropertyEntityIconSize().getValue();
+        float entityIconSize = MapUIController.ENTITY_ICON_SIZE;
 
         // Attempt to apply 2d textures, instead of the default texture.
         PhongMaterial material = MATERIAL_ENTITY_ICON;

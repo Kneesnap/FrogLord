@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.gui.editor;
 
-import javafx.beans.property.FloatProperty;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -51,8 +49,7 @@ public class MapUIController implements Initializable {
     private static final int VERTEX_SPEED = 3;
     @Getter private static IntegerProperty propertyVertexSpeed = new SimpleIntegerProperty(3);
 
-    private static float ENTITY_ICON_SIZE = 16.0f;
-    @Getter private static FloatProperty propertyEntityIconSize = new SimpleFloatProperty(ENTITY_ICON_SIZE);
+    public static final float ENTITY_ICON_SIZE = 16.0f;
 
     private MAPController controller;
     private SubScene subScene;
@@ -88,7 +85,6 @@ public class MapUIController implements Initializable {
     @FXML private TextField textFieldCamYaw;
     @FXML private TextField textFieldCamPitch;
     @FXML private TextField textFieldCamRoll;
-    @FXML private TextField textFieldEntityIconSize;
     @FXML private CheckBox applyLightsCheckBox;
 
     // General pane.
@@ -276,8 +272,6 @@ public class MapUIController implements Initializable {
 
         comboBoxMeshCullFace.getItems().setAll(CullFace.values());
         comboBoxMeshCullFace.valueProperty().bindBidirectional(meshView.cullFaceProperty());
-
-        textFieldEntityIconSize.textProperty().bindBidirectional(propertyEntityIconSize, NUM_TO_STRING_CONVERTER);
 
         // Must be called after MAPController is passed.
         getManagers().forEach(MapManager::onSetup); // Setup all of the managers.

@@ -131,24 +131,6 @@
                                     <children>
                                         <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
-                                    <GridPane>
-                                      <columnConstraints>
-                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                                      </columnConstraints>
-                                      <rowConstraints>
-                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                      </rowConstraints>
-                                       <children>
-                                          <Label text="Entity Icon Size:" />
-                                          <TextField fx:id="textFieldEntityIconSize" alignment="CENTER_RIGHT" onAction="#onActionClearFocus" GridPane.columnIndex="1" />
-                                       </children>
-                                    </GridPane>
-                                    <Separator prefWidth="200.0">
-                                       <padding>
-                                          <Insets bottom="4.0" top="6.0" />
-                                       </padding>
-                                    </Separator>
                                                 <GridPane fx:id="entityGridPane" prefWidth="250.0">
                                                     <columnConstraints>
                                                         <ColumnConstraints hgrow="ALWAYS" maxWidth="110.0" minWidth="10.0" prefWidth="100.0" />
