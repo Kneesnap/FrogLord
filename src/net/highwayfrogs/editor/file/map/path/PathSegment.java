@@ -11,6 +11,8 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.lang.ref.WeakReference;
+
 /**
  * A single part of the path. When saved, this is broken up by <type,offset> -> segment data
  * Created by Kneesnap on 8/22/2018.
@@ -20,7 +22,7 @@ public abstract class PathSegment extends GameObject {
     private PathType type;
     private int length;
     private boolean allowLengthEdit;
-    private transient TextField lengthField;
+    private transient WeakReference<TextField> lengthField;
 
     public PathSegment(PathType type, boolean allowLengthEdit) {
         this.type = type;
@@ -99,7 +101,7 @@ public abstract class PathSegment extends GameObject {
      */
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         editor.addLabel("Type:", getType().name(), 25);
-        this.lengthField = editor.addFloatField("Length:", Utils.fixedPointIntToFloat4Bit(getLength()), isAllowLengthEdit() ? newVal -> setLength(Utils.floatToFixedPointShort4Bit(newVal)) : null, null); // Read-Only.
+        this.lengthField = new WeakReference<>(editor.addFloatField("Length:", Utils.fixedPointIntToFloat4Bit(getLength()), isAllowLengthEdit() ? newVal -> setLength(Utils.floatToFixedPointShort4Bit(newVal)) : null, null)); // Read-Only.
     }
 
     /**
@@ -120,9 +122,10 @@ public abstract class PathSegment extends GameObject {
      * Sets the length of this segment.
      * @param newLength The segment length
      */
+    @SuppressWarnings("ConstantConditions")
     public void setLength(int newLength) {
         this.length = newLength;
-        if (this.lengthField != null)
-            this.lengthField.setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(newLength)));
+        if (this.lengthField != null && this.lengthField.get() != null)
+            this.lengthField.get().setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(newLength)));
     }
 }
