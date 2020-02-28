@@ -55,8 +55,6 @@ public class MOFHolder extends GameFile {
     private transient MAPTheme theme;
     @Setter private transient VLOArchive vloFile;
     private MOFHolder completeMOF; // This is the last MOF which was not incomplete.
-    private transient TextureMap textureMap;
-    private transient MOFMesh mofMesh;
 
     public static final int MOF_ID = 3;
     public static final int MAP_MOF_ID = 4;
@@ -263,22 +261,18 @@ public class MOFHolder extends GameFile {
     }
 
     /**
-     * Gets this MOF's TextureMap.
+     * Make a TextureMap for this MOF.
      * @return textureMap
      */
-    public TextureMap getTextureMap() {
-        if (this.textureMap == null)
-            this.textureMap = TextureMap.newTextureMap(this, ShaderMode.NO_SHADING);
-        return this.textureMap;
+    public TextureMap makeTextureMap() {
+        return TextureMap.newTextureMap(this, ShaderMode.NO_SHADING);
     }
 
     /**
-     * Get this MOF's mesh.
+     * Make a MOFMesh for this mof.
      * @return mofMesh
      */
-    public MOFMesh getMofMesh() {
-        if (this.mofMesh == null)
-            this.mofMesh = new MOFMesh(this);
-        return this.mofMesh;
+    public MOFMesh makeMofMesh() {
+        return new MOFMesh(this);
     }
 }

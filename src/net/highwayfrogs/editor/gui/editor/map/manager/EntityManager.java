@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
+import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -36,10 +37,7 @@ import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Manages map entities.
@@ -50,6 +48,7 @@ public class EntityManager extends MapManager {
     private List<MeshView> entityModelViews = new ArrayList<>();
     private List<FormEntry> entityTypes = new ArrayList<>();
     private Set<Integer> entitiesToUpdate = new HashSet<>();
+    private Map<MOFHolder, MOFMesh> meshMap = new HashMap<>();
     @Getter private Group entityRenderGroup;
 
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
@@ -331,8 +330,9 @@ public class EntityManager extends MapManager {
             holder.setVloFile(vlo);
 
             // Update MeshView.
-            entityMesh.setMesh(holder.getMofMesh());
-            entityMesh.setMaterial(holder.getTextureMap().getDiffuseMaterial());
+            MOFMesh modelMesh = this.meshMap.computeIfAbsent(holder, MOFHolder::makeMofMesh);
+            entityMesh.setMesh(modelMesh);
+            entityMesh.setMaterial(modelMesh.getTextureMap().getDiffuseMaterial());
             return;
         }
 

@@ -109,7 +109,7 @@ public class MOFController extends EditorController<MOFHolder> {
 
     @SneakyThrows
     private void setupMofViewer(Stage stageToOverride) {
-        this.mofMesh = getFile().getMofMesh();
+        this.mofMesh = getFile().makeMofMesh();
         this.uiController = new MOFUIController(this);
 
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
@@ -120,7 +120,7 @@ public class MOFController extends EditorController<MOFHolder> {
         this.rotZ = new Rotate(0, Rotate.Z_AXIS);
         meshView.getTransforms().addAll(rotX, rotY, rotZ);
 
-        meshView.setMaterial(getFile().getTextureMap().getDiffuseMaterial());
+        meshView.setMaterial(getMofMesh().getTextureMap().getDiffuseMaterial());
         meshView.setCullFace(CullFace.NONE);
 
         // Setup a perspective camera through which the 3D view is realised.

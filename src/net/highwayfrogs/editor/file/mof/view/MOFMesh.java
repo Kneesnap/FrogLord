@@ -37,7 +37,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     @Setter private boolean showOverlay;
 
     public MOFMesh(MOFHolder holder) {
-        super(holder.getTextureMap(), VertexFormat.POINT_TEXCOORD);
+        super(holder.makeTextureMap(), VertexFormat.POINT_TEXCOORD);
         this.mofHolder = holder;
         updateData();
     }
