@@ -479,7 +479,7 @@ public class GridController implements Initializable {
         stackHeightField.setDisable(noStack);
         stackHeightLabel.setDisable(noStack);
         choosePolygonButton.setDisable(disable);
-        addLayerButton.setDisable(squareCount > 1);
+        addLayerButton.setDisable(stacks == null || stacks.size() != 1);
         removeLayerButton.setDisable(disable || differingLayerCount);
         if (stacks != null && !stacks.isEmpty()) {
             GridStack stack = stacks.iterator().next();
