@@ -17,11 +17,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public abstract class MOFPolygon extends PSXGPUPrimitive implements TextureSource {
     private int[] vertices; // An integer array so it matches the type PSX
-    private short[] en; // Not entirely sure what this is.
+    private short[] en; // I don't know what these are. The good news is that these are only used by the mof-specific polygons, which as it turns out aren't used. So, the retail game shouldn't have any of these to begin with.
     private short[] normals;
-    private short padding;
     private PSXColorVector color = new PSXColorVector();
-    private MOFPrimType type;
+    private transient MOFPrimType type;
     private transient MOFPart parentPart;
 
     public MOFPolygon(MOFPart parent, MOFPrimType type, int verticeCount, int normalCount, int enCount) {
@@ -44,7 +43,7 @@ public abstract class MOFPolygon extends PSXGPUPrimitive implements TextureSourc
             this.normals[i] = reader.readShort();
 
         if (shouldAddInitialPadding())
-            this.padding = reader.readShort(); // Padding? This value seems to sometimes match the last vertices element, and sometimes it doesn't. I don't believe this value is used.
+            reader.skipShort();
 
         onLoad(reader);
         this.color.load(reader);
@@ -62,7 +61,7 @@ public abstract class MOFPolygon extends PSXGPUPrimitive implements TextureSourc
             writer.writeShort(normal);
 
         if (shouldAddInitialPadding())
-            writer.writeShort(this.padding);
+            writer.writeShort((short) 0);
 
         onSave(writer);
         this.color.save(writer);

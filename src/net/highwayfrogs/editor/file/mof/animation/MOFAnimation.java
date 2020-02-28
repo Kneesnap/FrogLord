@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.mof.*;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformType;
@@ -22,17 +23,23 @@ public class MOFAnimation extends MOFBase {
     private MOFAnimationModelSet modelSet;
     private MOFFile staticMOF;
     private MOFAnimCommonData commonData;
+    private boolean startAtFrameZero = true;
+    private TransformType transformType = TransformType.QUAT_BYTE;
 
-    public static final byte FILE_START_FRAME_AT_ZERO = (byte) 0x31; // '1'
     private static final int STATIC_MOF_COUNT = 1;
 
     public MOFAnimation(MOFHolder holder) {
         super(holder);
+        this.modelSet = new MOFAnimationModelSet(this);
+        this.commonData = new MOFAnimCommonData(this);
+        this.staticMOF = new MOFFile(holder);
     }
 
     @Override
-    public void onLoad(DataReader reader) {
-        Utils.verify(shouldStartAtFrameZero(), "Animations which do not start at frame-zero are not currently supported.");
+    public void onLoad(DataReader reader, byte[] signature) {
+        this.startAtFrameZero = (signature[0] == (byte) 0x31); // '1'
+        this.transformType = TransformType.getType(signature[1]);
+        Utils.verify(isStartAtFrameZero(), "Animations which do not start at frame-zero are not currently supported.");
 
         int modelSetCount = reader.readUnsignedShortAsInt();
         int staticFileCount = reader.readUnsignedShortAsInt();
@@ -45,13 +52,11 @@ public class MOFAnimation extends MOFBase {
 
         // Read model sets.
         reader.jumpTemp(modelSetPointer);
-        this.modelSet = new MOFAnimationModelSet(this);
         this.modelSet.load(reader);
         reader.jumpReturn();
 
         // Read common data.
         reader.jumpTemp(commonDataPointer);
-        this.commonData = new MOFAnimCommonData(this);
         this.commonData.load(reader);
         reader.jumpReturn();
 
@@ -60,7 +65,6 @@ public class MOFAnimation extends MOFBase {
         reader.jumpReturn();
 
         DataReader mofReader = reader.newReader(mofPointer, staticFilePointer - mofPointer);
-        this.staticMOF = new MOFFile(getHolder());
         this.staticMOF.load(mofReader);
     }
 
@@ -92,22 +96,6 @@ public class MOFAnimation extends MOFBase {
         // Write pointers.
         writer.writeAddressTo(staticFilePointer);
         writer.writeInt(mofPointer);
-    }
-
-    /**
-     * Does this animation start at frame zero?
-     * @return startAtFrameZero
-     */
-    public boolean shouldStartAtFrameZero() {
-        return getSignature()[0] == FILE_START_FRAME_AT_ZERO;
-    }
-
-    /**
-     * Get the TransformType for this animation.
-     * @return transformType.
-     */
-    public TransformType getTransformType() {
-        return TransformType.getType(getSignature()[1]);
     }
 
     /**
@@ -191,5 +179,15 @@ public class MOFAnimation extends MOFBase {
         box.getVertices()[6].setValues(maxX, maxY, minZ, 4);
         box.getVertices()[7].setValues(maxX, maxY, maxZ, 4);
         return box;
+    }
+
+    @Override
+    public int buildFlags() {
+        return Constants.BIT_FLAG_3 | Constants.BIT_FLAG_16 | Constants.BIT_FLAG_20; // Seems to be constant. 3 - XAR Animation 16 - Transforms Indexed, 20 - Bboxes Indexed
+    }
+
+    @Override
+    public String makeSignature() {
+        return (isStartAtFrameZero() ? "1" : "0") + (char) getTransformType().getByteValue() + "ax";
     }
 }

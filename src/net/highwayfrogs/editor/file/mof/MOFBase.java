@@ -12,10 +12,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 public abstract class MOFBase extends GameObject {
-    private MOFHolder holder;
-
-    private byte[] signature;
-    private int flags;
+    private transient MOFHolder holder;
 
     public MOFBase(MOFHolder holder) {
         this.holder = holder;
@@ -31,25 +28,33 @@ public abstract class MOFBase extends GameObject {
 
     @Override
     public final void load(DataReader reader) {
-        this.signature = reader.readBytes(MOFHolder.DUMMY_DATA.length);
+        byte[] signature = reader.readBytes(MOFHolder.DUMMY_DATA.length);
         reader.skipInt(); // File length, including header.
-        this.flags = reader.readInt();
-        onLoad(reader);
+        int flags = reader.readInt();
+        onLoad(reader, signature);
+
+        // This is done after the file is read, because to generate flags we must know the contents of the file first.
+        if (flags != buildFlags())
+            throw new RuntimeException("Generated Flags (" + buildFlags() + ") do not match read flags (" + flags + ") in " + getFileEntry().getDisplayName());
+        if (!makeSignature().equals(new String(signature)))
+            throw new RuntimeException("Generated Signature (" + makeSignature() + ") does not match read signature (" + new String(signature) + ") in " + getFileEntry().getDisplayName());
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeBytes(getSignature());
-        writer.writeNullPointer(); // File size. Maybe in the future we'll set the value to be proper.
-        writer.writeInt(this.flags);
+        int startIndex = writer.getIndex();
+        writer.writeStringBytes(makeSignature());
+        int sizeAddress = writer.writeNullPointer();
+        writer.writeInt(buildFlags());
         onSave(writer);
+        writer.writeAddressAt(sizeAddress, writer.getIndex() - startIndex);
     }
 
     /**
      * Called when it's time to load.
      * @param reader The reader to read data from.
      */
-    public abstract void onLoad(DataReader reader);
+    public abstract void onLoad(DataReader reader, byte[] signature);
 
     /**
      * Called when it's time to load.
@@ -58,11 +63,13 @@ public abstract class MOFBase extends GameObject {
     public abstract void onSave(DataWriter writer);
 
     /**
-     * Test if a flag is present.
-     * @param flag The flag to test.
-     * @return flagPresent
+     * Builds the flags used for this mof.
+     * @return mofFlags
      */
-    public boolean testFlag(int flag) {
-        return (this.flags & flag) == flag;
-    }
+    public abstract int buildFlags();
+
+    /**
+     * Creates the signature that goes at the start of this file.
+     */
+    public abstract String makeSignature();
 }

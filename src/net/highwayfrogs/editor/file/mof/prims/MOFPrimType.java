@@ -19,14 +19,14 @@ public enum MOFPrimType {
     G4(MOFPolyG4::new),
     GT3(MOFPolyGT3::new),
     GT4(MOFPolyGT4::new),
-    E3(MOFPolyE3::new),
-    E4(MOFPolyE4::new),
-    LF2(MOFPolyLF2::new),
-    LF3(MOFPolyLF3::new),
-    HLF3(MOFPolyHLF3::new),
-    HLF4(MOFPolyHLF4::new),
-    GE3(MOFPolyGE3::new),
-    GE4(MOFPolyGE4::new);
+    E3(MOFPolyE3::new), // Unused by Frogger, though it exists in the PC rendering dlls.
+    E4(MOFPolyE4::new), // Unused by Frogger, though it exists in the PC rendering dlls.
+    LF2(MOFPolyLF2::new), // Unused by Frogger, though it exists in the PC rendering dlls.
+    LF3(MOFPolyLF3::new), // Unused by Frogger, though it exists in the PC rendering dlls.
+    HLF3(MOFPolyHLF3::new), // Unused by Frogger, though it exists in the PC rendering dlls.
+    HLF4(MOFPolyHLF4::new), // Unused by Frogger, though it exists in the PC rendering dlls.
+    GE3(MOFPolyGE3::new), // Unused by Frogger, though it exists in the PC rendering dlls.
+    GE4(MOFPolyGE4::new); // Unused by Frogger, though it exists in the PC rendering dlls.
 
     private final Function<MOFPart, MOFPolygon> maker;
 

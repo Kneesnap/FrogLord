@@ -43,17 +43,16 @@ import java.util.Objects;
  * Created by Kneesnap on 2/25/2019.
  */
 @Getter
+@Setter
 public class MOFHolder extends GameFile {
     private boolean dummy; // Is this dummied data?
-    @Setter private boolean incomplete; // Some mofs are changed at run-time to share information. This attempts to handle that.
-    private boolean staticMOF;
-    private boolean animatedMOF;
+    private boolean incomplete; // Some mofs are changed at run-time to share information. This attempts to handle that.
 
     private MOFFile staticFile;
     private MOFAnimation animatedFile;
 
     private transient MAPTheme theme;
-    @Setter private transient VLOArchive vloFile;
+    private transient VLOArchive vloFile;
     private MOFHolder completeMOF; // This is the last MOF which was not incomplete.
 
     public static final int MOF_ID = 3;
@@ -108,7 +107,6 @@ public class MOFHolder extends GameFile {
     }
 
     private void resolveStaticMOF(DataReader reader) {
-        this.staticMOF = true;
         this.staticFile = new MOFFile(this);
         this.staticFile.load(reader);
         if (!isIncomplete()) // We're not incomplete, we don't need to hold onto this value.
@@ -116,7 +114,6 @@ public class MOFHolder extends GameFile {
     }
 
     private void resolveAnimatedMOF(DataReader reader) {
-        this.animatedMOF = true;
         this.animatedFile = new MOFAnimation(this);
         this.animatedFile.load(reader);
         if (!isIncomplete()) // We're not incomplete, we don't need to hold onto this value.
@@ -274,5 +271,19 @@ public class MOFHolder extends GameFile {
      */
     public MOFMesh makeMofMesh() {
         return new MOFMesh(this);
+    }
+
+    /**
+     * Gets whether this is first and foremost a static MOF.
+     */
+    public boolean isStaticMOF() {
+        return this.staticFile != null;
+    }
+
+    /**
+     * Get whether or not this is an animated (XAR) MOF.
+     */
+    public boolean isAnimatedMOF() {
+        return this.animatedFile != null;
     }
 }

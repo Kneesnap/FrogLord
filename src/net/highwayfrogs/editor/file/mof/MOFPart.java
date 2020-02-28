@@ -34,9 +34,7 @@ public class MOFPart extends GameObject {
     @Setter private MOFCollprim collprim;
     private List<MOFPartPolyAnim> partPolyAnims = new ArrayList<>();
     private List<MOFPartPolyAnimEntryList> partPolyAnimLists = new ArrayList<>();
-    private MOFFlipbook flipbook;
-    private int verticeCount;
-    private int normalCount;
+    @Setter private MOFFlipbook flipbook;
 
     private transient MOFFile parent;
     private transient Map<Integer, MOFPartPolyAnimEntryList> loadAnimEntryListMap = new HashMap<>();
@@ -60,8 +58,8 @@ public class MOFPart extends GameObject {
     public void load(DataReader reader) {
         this.flags = reader.readUnsignedShortAsInt();
         int partcelCount = reader.readUnsignedShortAsInt();
-        this.verticeCount = reader.readUnsignedShortAsInt();
-        this.normalCount = reader.readUnsignedShortAsInt();
+        int verticeCount = reader.readUnsignedShortAsInt();
+        int normalCount = reader.readUnsignedShortAsInt();
         int primitiveCount = reader.readUnsignedShortAsInt();
         int hiliteCount = reader.readUnsignedShortAsInt();
 
@@ -159,10 +157,19 @@ public class MOFPart extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
+        int verticeCount = getStaticPartcel().getVertices().size();
+        int normalCount = getStaticPartcel().getNormals().size();
+        for (MOFPartcel partcel : getPartcels()) { // Extra safety check, so if this somehow happens we won't be baffled by the in-game results.
+            if (verticeCount != partcel.getVertices().size())
+                throw new RuntimeException("Not all of the partcels in part #" + getPartID() + " had the same number of vertices! (" + verticeCount + ", " + partcel.getVertices().size() + ")");
+            if (normalCount != partcel.getNormals().size())
+                throw new RuntimeException("Not all of the partcels in part #" + getPartID() + " had the same number of normals! (" + normalCount + ", " + partcel.getNormals().size() + ")");
+        }
+
         writer.writeUnsignedShort(this.flags);
         writer.writeUnsignedShort(getPartcels().size());
-        writer.writeUnsignedShort(getVerticeCount());
-        writer.writeUnsignedShort(getNormalCount());
+        writer.writeUnsignedShort(verticeCount);
+        writer.writeUnsignedShort(normalCount);
         writer.writeUnsignedShort(getMofPolygons().values().stream().mapToInt(List::size).sum()); // PrimitiveCount.
         writer.writeUnsignedShort(getHilites().size());
 
@@ -317,8 +324,6 @@ public class MOFPart extends GameObject {
         incompletePart.collprim = this.collprim;
         incompletePart.matrix = this.matrix;
         incompletePart.flipbook = this.flipbook;
-        incompletePart.verticeCount = this.verticeCount;
-        incompletePart.normalCount = this.normalCount;
         if (getParent().hasTextureAnimation())
             throw new RuntimeException("Texture animation cannot be copied to an incomplete MOF right now!"); // It is believed this wouldn't work in the retail game either.
     }

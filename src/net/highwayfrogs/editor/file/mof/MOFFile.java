@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -21,7 +22,7 @@ import java.util.function.Consumer;
 public class MOFFile extends MOFBase {
     private byte[] bytes;
     private List<MOFPart> parts = new ArrayList<>();
-    private int unknownValue;
+    private int unknownValue; // As far as I can tell, this value is unused. It might be a checksum of some kind, really I have no information to go off. Keeping it at zero should be fine for most purposes.
 
     private static final int INCOMPLETE_TEST_ADDRESS = 0x1C;
     private static final int INCOMPLETE_TEST_VALUE = 0x40;
@@ -33,7 +34,7 @@ public class MOFFile extends MOFBase {
     }
 
     @Override
-    public void onLoad(DataReader reader) {
+    public void onLoad(DataReader reader, byte[] signature) {
         int partCount = reader.readInt();
 
         reader.jumpTemp(INCOMPLETE_TEST_ADDRESS);
@@ -132,5 +133,20 @@ public class MOFFile extends MOFBase {
             if (getParts().get(i).getCollprim() != null)
                 totalCollprim++;
         return totalCollprim;
+    }
+
+    @Override
+    public int buildFlags() {
+        int flags = 0; // Bits 0, 1, 2 are runtime only.
+        if (getParts().stream().anyMatch(part -> part.getPartPolyAnims().size() > 0))
+            flags |= Constants.BIT_FLAG_4; // Bit 4 is texture animation.
+        if (getParts().stream().anyMatch(part -> part.getFlipbook() != null))
+            flags |= Constants.BIT_FLAG_5; // Bit 5 is flipbook animation.
+        return flags;
+    }
+
+    @Override
+    public String makeSignature() {
+        return "\2FOM"; // Seems to be constant.
     }
 }

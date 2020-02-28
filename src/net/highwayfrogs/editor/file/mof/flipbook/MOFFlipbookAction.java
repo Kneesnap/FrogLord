@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.file.mof.flipbook;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -10,6 +12,8 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  * Created by Kneesnap on 1/8/2019.
  */
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class MOFFlipbookAction extends GameObject {
     private int partcelCount;
     private int partcelIndex;
