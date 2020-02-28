@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.sound.psx;
 
-import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -79,12 +78,21 @@ public class PSXVBFile extends AbstractVBFile<PSXVHFile> {
 
         @Override
         public void exportToFile(File saveTo) throws IOException {
-            Files.write(saveTo.toPath(), VAGUtil.rawVagToWav(toRawAudio(), 11025));
+            Files.write(saveTo.toPath(), toRawAudio());
         }
 
         @Override
         public void replaceWithFile(File file) {
-            Utils.makePopUp("Importing Playstation Audio is not currently supported.", AlertType.INFORMATION); // We'll need an encoder if we ever want this.
+            byte[] wavBytes;
+
+            try {
+                wavBytes = Files.readAllBytes(file.toPath());
+            } catch (Exception ex) {
+                Utils.makeErrorPopUp("There was an error reading the wav file.", ex, true);
+                return;
+            }
+
+            this.audioData = VAGUtil.wavToVag(wavBytes);
         }
 
         @Override

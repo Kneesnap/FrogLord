@@ -95,7 +95,7 @@ public class VABController extends EditorController<AbstractVBFile<?>> {
         try {
             this.selectedSound.replaceWithFile(selectedFile);
         } catch (UnsupportedAudioFileException | IOException ex) {
-            throw new RuntimeException("Failed to import sound file " + selectedFile.getName(), ex);
+            Utils.makeErrorPopUp("Failed to import sound file " + selectedFile.getName(), ex, true);
         }
 
         updateInterface();
