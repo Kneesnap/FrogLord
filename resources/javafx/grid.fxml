@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <AnchorPane fx:id="editorPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
             minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="900.0"
-            xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+            xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
     <children>
         <Canvas fx:id="gridCanvas" height="500.0" width="500.0"/>
         <AnchorPane prefHeight="225.0" prefWidth="407.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
@@ -44,11 +44,11 @@
                         AnchorPane.rightAnchor="105.0" AnchorPane.topAnchor="2.0"/>
                 <Label fx:id="stackIdLabel" layoutX="5.0" layoutY="200.0" text="Stack ID: #??? [X: ???, Z: ???]"
                        AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="5.0"/>
-                <Label fx:id="stackHeightLabel" layoutX="184.0" layoutY="200.0" text="Height: "
-                       AnchorPane.bottomAnchor="8.0" AnchorPane.rightAnchor="184.0"/>
+                <Label fx:id="stackHeightLabel" layoutX="184.0" layoutY="200.0" text="Cliff Height: "
+                       AnchorPane.bottomAnchor="8.0" AnchorPane.rightAnchor="165.0"/>
                 <TextField fx:id="stackHeightField" layoutX="226.0" layoutY="196.0" onAction="#onUpdateHeight"
                            prefHeight="25.0" prefWidth="60.0" AnchorPane.bottomAnchor="4.0"
-                           AnchorPane.rightAnchor="124.0"/>
+                           AnchorPane.rightAnchor="105.0"/>
                 <Button layoutX="211.0" layoutY="27.0" mnemonicParsing="false" onAction="#selectPolygon"
                         prefHeight="25.0" prefWidth="180.0" text="Select Stack From 3D Viewer"
                         AnchorPane.leftAnchor="211.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="27.0"/>
