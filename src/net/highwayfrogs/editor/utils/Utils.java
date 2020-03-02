@@ -810,7 +810,7 @@ public class Utils {
         }
         fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, allExtensions));
 
-        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+        fileChooser.setInitialDirectory(getValidFolder(GUIMain.getWorkingDirectory()));
 
         File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
         if (selectedFile != null)
@@ -855,7 +855,7 @@ public class Utils {
             }
         }
 
-        fileChooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+        fileChooser.setInitialDirectory(getValidFolder(GUIMain.getWorkingDirectory()));
         if (suggestName != null) {
             String initialName = suggestName;
             if (extension != null && !extension.equals("*"))
@@ -872,6 +872,18 @@ public class Utils {
     }
 
     /**
+     * Find the valid folder, for instance maybe the file was deleted.
+     * @param folder The folder to get a valid one from.
+     * @return validFolder
+     */
+    public static File getValidFolder(File folder) {
+        if (folder != null && folder.exists() && folder.isDirectory())
+            return folder;
+
+        return folder != null ? getValidFolder(folder.getParentFile()) : new File("./");
+    }
+
+    /**
      * Prompt the user to select a directory.
      * @param title         The title of the window.
      * @param saveDirectory Should this directory be saved as the current directory?
@@ -880,7 +892,7 @@ public class Utils {
     public static File promptChooseDirectory(String title, boolean saveDirectory) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle(title);
-        chooser.setInitialDirectory(GUIMain.getWorkingDirectory());
+        chooser.setInitialDirectory(getValidFolder(GUIMain.getWorkingDirectory()));
 
         File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
         if (selectedFolder != null && saveDirectory)

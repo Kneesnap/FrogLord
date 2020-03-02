@@ -27,10 +27,9 @@ import java.util.Map;
 @Getter
 public class MOFPart extends GameObject {
     private Map<MOFPrimType, List<MOFPolygon>> mofPolygons = new HashMap<>();
-    private int flags;
     private List<MOFPartcel> partcels = new ArrayList<>();
     private List<MOFHilite> hilites = new ArrayList<>();
-    private PSXMatrix matrix; // Seems to usually be null. JUN_PLANT is the only model that uses this, to add a slight roll rotation.
+    @Setter private PSXMatrix matrix; // Seems to usually be null. JUN_PLANT is the only model that uses this, to add a slight roll rotation.
     @Setter private MOFCollprim collprim;
     private List<MOFPartPolyAnim> partPolyAnims = new ArrayList<>();
     private List<MOFPartPolyAnimEntryList> partPolyAnimLists = new ArrayList<>();
@@ -56,7 +55,8 @@ public class MOFPart extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readUnsignedShortAsInt();
+        int flags = reader.readUnsignedShortAsInt();
+
         int partcelCount = reader.readUnsignedShortAsInt();
         int verticeCount = reader.readUnsignedShortAsInt();
         int normalCount = reader.readUnsignedShortAsInt();
@@ -153,6 +153,16 @@ public class MOFPart extends GameObject {
             this.flipbook.load(reader);
             reader.jumpReturn();
         }
+
+        if (flags != buildFlags())
+            throw new RuntimeException("Generated Flags do not match real flags. (" + flags + ", " + buildFlags() + ")");
+    }
+
+    /**
+     * Build flags for this MOF, based on the data in this MOF.
+     */
+    public int buildFlags() {
+        return getPartPolyAnims().size() > 0 ? 1 : 0;
     }
 
     @Override
@@ -166,7 +176,7 @@ public class MOFPart extends GameObject {
                 throw new RuntimeException("Not all of the partcels in part #" + getPartID() + " had the same number of normals! (" + normalCount + ", " + partcel.getNormals().size() + ")");
         }
 
-        writer.writeUnsignedShort(this.flags);
+        writer.writeUnsignedShort(buildFlags());
         writer.writeUnsignedShort(getPartcels().size());
         writer.writeUnsignedShort(verticeCount);
         writer.writeUnsignedShort(normalCount);

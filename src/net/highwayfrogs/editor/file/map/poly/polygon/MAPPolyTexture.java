@@ -261,7 +261,7 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
 
         GameImage image = getGameImage(map);
         long combinedArea = map.getMapTextureList().get(getTextureId()).size() * (image.getFullWidth() * image.getFullHeight());
-        return combinedArea >= (map.getMode().getPageWidth() * map.getMode().getPageHeight() / 8); // Test if it's too frequent.
+        return combinedArea >= (map.getWidth() * map.getHeight() / 8); // Test if it's too frequent.
     }
 
     /**

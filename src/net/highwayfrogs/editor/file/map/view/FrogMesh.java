@@ -123,7 +123,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive & TextureSource> extend
         texCoord.addAndGet(texCount);
         TextureTreeNode entry = source.getTreeNode(textureMap);
         if (entry == null) {
-            System.out.println("There were issues setting up textures for this " + poly.getClass().getSimpleName() + "/" + source.getClass().getSimpleName() + ".");
+            System.out.println("There were issues setting up textures for this " + poly.getClass().getSimpleName() + "/" + source.getClass().getSimpleName() + ". (ID: " + poly.getGameImage(getTextureMap()).getTextureId() + ")");
             entry = new TextureTreeNode(textureMap.getTextureTree());
         }
 

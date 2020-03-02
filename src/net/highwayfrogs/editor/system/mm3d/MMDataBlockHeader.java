@@ -39,7 +39,7 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
                 T body = addNewElement();
                 body.load(reader);
                 if (reader.getIndex() != readGoal) {
-                    System.out.println("[A/" + this.dataBlockBodies.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementSize + ", " + elementCount + ")");
+                    System.out.println("[A/" + i + "/" + this.dataBlockBodies.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementSize + ", " + elementCount + ")");
                     getDataBlockBodies().remove(body); // It's invalid.
                     this.invalidBodies++;
                 }
@@ -51,7 +51,7 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
                 T body = addNewElement();
                 body.load(reader);
                 if (reader.getIndex() != readGoal) {
-                    System.out.println("[B/" + this.dataBlockBodies.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementCount + ")");
+                    System.out.println("[B/" + i + "/" + this.dataBlockBodies.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementCount + ")");
                     getDataBlockBodies().remove(body); // It's invalid.
                     this.invalidBodies++;
                 }

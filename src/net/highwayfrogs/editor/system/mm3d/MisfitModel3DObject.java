@@ -3,21 +3,14 @@ package net.highwayfrogs.editor.system.mm3d;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.system.mm3d.blocks.*;
 import net.highwayfrogs.editor.system.mm3d.holders.MMExternalTextureHolder;
 import net.highwayfrogs.editor.system.mm3d.holders.MMTextureCoordinateHolder;
 import net.highwayfrogs.editor.system.mm3d.holders.MMTriangleFaceHolder;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Represents a mm3d file.
@@ -43,6 +36,8 @@ public class MisfitModel3DObject extends GameObject {
     private MMDataBlockHeader<MMVerticeBlock> vertices = new MMDataBlockHeader<>(OffsetType.VERTICES, this);
     private MMDataBlockHeader<MMPointsBlock> points = new MMDataBlockHeader<>(OffsetType.POINTS, this);
 
+    private static final Set<OffsetType> FIRST_ROUND_READ = new HashSet<>(Arrays.asList(OffsetType.VERTICES, OffsetType.POINTS)); // These values need to be read before the rest, since information about them are used in other places.
+
     private static final String SIGNATURE = "MISFIT3D";
     private static final short MAJOR_VERSION = 0x01;
     private static final short MINOR_VERSION = 0x06;
@@ -57,6 +52,8 @@ public class MisfitModel3DObject extends GameObject {
 
         Utils.verify(majorVersion == MAJOR_VERSION && minorVersion == MINOR_VERSION, "Unknown Version: [" + majorVersion + ", " + minorVersion + "]");
 
+        // First Reading Round.
+        reader.jumpTemp(reader.getIndex());
         for (int i = 0; i < dataSegmentCount; i++) {
             int offsetType = reader.readUnsignedShortAsInt();
             OffsetType type = OffsetType.getOffsetType(offsetType);
@@ -70,14 +67,41 @@ public class MisfitModel3DObject extends GameObject {
             if (type == OffsetType.END_OF_FILE)
                 break; // Reached end.
 
-            System.out.println("Reading: " + type.ordinal() + ", " + type.getTypeCode() + ", " + type.name());
-
-            reader.jumpTemp(offsetAddress);
-            MMDataBlockHeader<?> header = type.findHeader(this);
-            header.load(reader);
-            this.segments.add(header);
-            reader.jumpReturn();
+            if (FIRST_ROUND_READ.contains(type)) {
+//                System.out.println("Round 1 Reading: " + type.ordinal() + "/" + type.name());
+                loadHeader(reader, type, offsetAddress);
+            }
         }
+
+        reader.jumpReturn();
+
+        // Main Reading Round.
+        for (int i = 0; i < dataSegmentCount; i++) {
+            int offsetType = reader.readUnsignedShortAsInt();
+            OffsetType type = OffsetType.getOffsetType(offsetType);
+            int offsetAddress = reader.readInt();
+
+            if (type == null) {
+                System.out.println("Unknown OffsetType: " + Utils.toHexString(offsetType));
+                continue;
+            }
+
+            if (type == OffsetType.END_OF_FILE)
+                break; // Reached end.
+
+            if (!FIRST_ROUND_READ.contains(type)) {
+//                System.out.println("Main Reading: " + type.ordinal() + "/" + type.name());
+                loadHeader(reader, type, offsetAddress);
+            }
+        }
+    }
+
+    private void loadHeader(DataReader reader, OffsetType type, int offsetAddress) {
+        reader.jumpTemp(offsetAddress);
+        MMDataBlockHeader<?> header = type.findHeader(this);
+        header.load(reader);
+        this.segments.add(header);
+        reader.jumpReturn();
     }
 
     @Override
@@ -126,34 +150,5 @@ public class MisfitModel3DObject extends GameObject {
 
         // Write EOF Pointer.
         writer.writeAddressTo(eofHeaderAddress);
-    }
-
-    /**
-     * Gets a metadata value by its key. (Case sensitive)
-     * @param metaKey The metadata key to get the value of.
-     * @return metadataValue
-     */
-    public String getMetadata(String metaKey) {
-        for (MMMetaDataBlock dataBlock : getMetadata().getDataBlockBodies())
-            if (dataBlock.getKey().equals(metaKey))
-                return dataBlock.getValue();
-        return null;
-    }
-
-    public static void performTest() throws IOException {
-        File birdInput = new File("debug\\BIRD_MODIFIED.mm3d");
-        File birdOutput = new File("debug\\BIRD_FAKE.mm3d");
-
-        DataReader reader = new DataReader(new FileSource(birdInput));
-        MisfitModel3DObject object = new MisfitModel3DObject();
-        object.load(reader);
-
-        Utils.deleteFile(birdOutput);
-
-        DataWriter writer = new DataWriter(new FileReceiver(birdOutput));
-        object.save(writer);
-        writer.closeReceiver();
-
-        System.out.println("Ran model test.");
     }
 }

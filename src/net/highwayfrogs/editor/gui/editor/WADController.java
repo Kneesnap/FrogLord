@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -12,11 +13,16 @@ import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
+import net.highwayfrogs.editor.file.reader.ArraySource;
+import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -75,17 +81,48 @@ public class WADController extends EditorController<WADFile> {
     @FXML
     @SneakyThrows
     private void importEntry(ActionEvent event) {
-        File selectedFile = Utils.promptFileOpen("Select the WAD Entry to import...", "All Files", "*");
+        File selectedFile = Utils.promptFileOpenExtensions("Select the WAD Entry to import...", "Usable Files", "mm3d", "VLO", "XAR", "XMR", "*");
         if (selectedFile == null)
             return; // Cancelled.
 
-        WADFile.CURRENT_FILE_NAME = selectedEntry.getFileEntry().getDisplayName();
+        String fileName = selectedFile.getName().toLowerCase();
         byte[] newBytes = Files.readAllBytes(selectedFile.toPath());
-        this.selectedEntry.setFile(getFile().getMWD().replaceFile(newBytes, selectedEntry.getFileEntry(), selectedEntry.getFile()));
 
-        updateEntry(); // Update the display.
-        WADFile.CURRENT_FILE_NAME = null;
+        if (fileName.endsWith(".mm3d")) {
+            GameFile selectFile = this.selectedEntry.getFile();
+            if (!(selectFile instanceof MOFHolder)) {
+                Utils.makePopUp("You cannot import a model over a " + (selectFile != null ? selectFile.getClass().getSimpleName() : "null") + ".", AlertType.ERROR);
+                return;
+            }
+
+            MOFHolder mofHolder = (MOFHolder) selectFile;
+            MisfitModel3DObject newObject = new MisfitModel3DObject();
+            DataReader reader = new DataReader(new ArraySource(newBytes));
+
+            try {
+                newObject.load(reader);
+            } catch (Exception ex) {
+                Utils.makeErrorPopUp("There was an error loading the mm3d model.", ex, true);
+                return;
+            }
+
+            try {
+                FileUtils3D.importMofFromModel(newObject, mofHolder);
+            } catch (Exception ex) {
+                Utils.makeErrorPopUp("An error occured when importing the model.", ex, true);
+                return;
+            }
+        } else if (fileName.endsWith(".vlo") || fileName.endsWith(".xar") || fileName.endsWith(".xmr")) {
+            WADFile.CURRENT_FILE_NAME = selectedEntry.getFileEntry().getDisplayName();
+            this.selectedEntry.setFile(getFile().getMWD().replaceFile(newBytes, selectedEntry.getFileEntry(), selectedEntry.getFile()));
+            WADFile.CURRENT_FILE_NAME = null;
+        } else {
+            Utils.makePopUp("Don't know how to import this file type. Aborted.", AlertType.WARNING);
+            return;
+        }
+
         System.out.println("Imported WAD Entry.");
+        updateEntry(); // Update the display.
         updateEntryText();
     }
 

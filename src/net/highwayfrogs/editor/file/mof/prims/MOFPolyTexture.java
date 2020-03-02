@@ -32,8 +32,6 @@ import java.math.BigInteger;
 @Setter
 public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     private ByteUV[] uvs;
-    private short clutId;
-    private short textureId;
     private short imageId;
 
     private transient short viewImageId = -1; // The image id while this MOF is being viewed.
@@ -54,9 +52,15 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     @Override
     public void onLoad(DataReader reader) {
         loadUV(0, reader);
-        this.clutId = reader.readShort();
+        short clutId = reader.readShort();
+        if (clutId != 0)
+            throw new RuntimeException("MOFPolyTexture had clut id which was not zero! (" + clutId + ").");
+
         loadUV(1, reader);
-        this.textureId = reader.readShort();
+        short textureId = reader.readShort();
+        if (textureId != 0)
+            throw new RuntimeException("MOFPolyTexture had texture id which was not zero! (" + textureId + ").");
+
         for (int i = 2; i < this.uvs.length; i++)
             loadUV(i, reader);
 
@@ -68,9 +72,9 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
         super.onSave(writer);
 
         this.uvs[0].save(writer);
-        writer.writeShort(this.clutId);
+        writer.writeShort((short) 0);
         this.uvs[1].save(writer);
-        writer.writeShort(this.textureId);
+        writer.writeShort((short) 0);
 
         for (int i = 2; i < this.uvs.length; i++)
             this.uvs[i].save(writer);

@@ -14,12 +14,13 @@ import java.util.List;
  */
 @Getter
 public class MOFFlipbook extends GameObject {
-    private int flags;
     private List<MOFFlipbookAction> actions = new ArrayList<>();
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readUnsignedShortAsInt();
+        int flags = reader.readUnsignedShortAsInt();
+        if (flags != 0)
+            throw new RuntimeException("Flipbook Flags were not zero! (" + flags + ").");
 
         int actionCount = reader.readUnsignedShortAsInt();
         for (int i = 0; i < actionCount; i++) {
@@ -31,7 +32,7 @@ public class MOFFlipbook extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.flags);
+        writer.writeUnsignedShort(0);
         writer.writeUnsignedShort(this.actions.size());
         this.actions.forEach(action -> action.save(writer));
     }

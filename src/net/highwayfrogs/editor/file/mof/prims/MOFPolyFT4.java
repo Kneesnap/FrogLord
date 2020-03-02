@@ -16,20 +16,24 @@ public class MOFPolyFT4 extends MOFPolyTexture {
     public void onLoad(DataReader reader) {
         setImageId(reader.readShort());
         loadUV(0, reader);
-        setClutId(reader.readShort());
+        short clutId = reader.readShort();
         loadUV(1, reader);
-        setTextureId(reader.readShort());
+        short texId = reader.readShort();
         loadUV(2, reader);
         loadUV(3, reader);
+        if (clutId != 0)
+            throw new RuntimeException("MOFPolyFT4 had clut id which was not zero! (" + clutId + ").");
+        if (texId != 0)
+            throw new RuntimeException("MOFPolyFT4 had texture id which was not zero! (" + texId + ").");
     }
 
     @Override
     public void onSave(DataWriter writer) {
         writer.writeShort(getImageId());
         getUvs()[0].save(writer);
-        writer.writeShort(getClutId());
+        writer.writeShort((short) 0);
         getUvs()[1].save(writer);
-        writer.writeShort(getTextureId());
+        writer.writeShort((short) 0);
         getUvs()[2].save(writer);
         getUvs()[3].save(writer);
     }

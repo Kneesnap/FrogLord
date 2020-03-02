@@ -40,6 +40,7 @@ import net.highwayfrogs.editor.file.mof.*;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
+import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntryList;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -52,6 +53,9 @@ import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -174,6 +178,12 @@ public class MOFController extends EditorController<MOFHolder> {
                 getUiController().stopPlaying();
                 getRenderManager().removeAllDisplayLists();
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
+            } else if (event.getCode() == KeyCode.S && event.isControlDown()) { // Save the texture map.
+                try {
+                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + Utils.stripExtension(getMofMesh().getMofHolder().getFileEntry().getDisplayName()) + ".png"));
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
             }
 
             // Toggle wireframe mode.
@@ -204,7 +214,7 @@ public class MOFController extends EditorController<MOFHolder> {
                     return; // Face is already used for another anim.
 
                 // Create a new animation.
-                MOFPartPolyAnim newAnim = new MOFPartPolyAnim(clickedPoly.getParentPart());
+                MOFPartPolyAnim newAnim = new MOFPartPolyAnim(clickedPoly.getParentPart(), clickedPoly, new MOFPartPolyAnimEntryList(clickedPoly.getParentPart()));
                 clickedPoly.getParentPart().getPartPolyAnims().add(newAnim);
                 setupAnimationEditor(newAnim);
                 this.selectingAnimationFace = false;
@@ -462,7 +472,7 @@ public class MOFController extends EditorController<MOFHolder> {
         // Setup preview.
         // Create the animation preview.
         List<Node> toDisable = new ArrayList<>();
-        if (anim.getEntryList().getEntries().size() > 0) {
+        if (anim.getEntryList() != null && anim.getEntryList().getEntries().size() > 0) {
             List<MOFPartPolyAnimEntry> entries = anim.getEntryList().getEntries();
             MWDFile mwd = anim.getMWD();
 

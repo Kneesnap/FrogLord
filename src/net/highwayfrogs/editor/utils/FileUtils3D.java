@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.utils;
 
+import javafx.scene.control.Alert.AlertType;
 import lombok.AllArgsConstructor;
 import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyFlat;
@@ -16,16 +16,18 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
-import net.highwayfrogs.editor.file.mof.MOFFile;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.mof.MOFPart;
-import net.highwayfrogs.editor.file.mof.MOFPartcel;
+import net.highwayfrogs.editor.file.mof.*;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimationCels;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
+import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
+import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
+import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
+import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntryList;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
+import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
@@ -33,7 +35,6 @@ import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.blocks.*;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMFrameAnimationsBlock.MMAnimationFrame;
@@ -46,14 +47,13 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 /**
  * Contains static 3d file utilities.
  * Created by Kneesnap on 2/28/2019.
  */
 public class FileUtils3D {
-    private static final String META_KEY_MOF_THEME = "frogMofTheme";
+    private static final String MATERIAL_NAME_PREFIX = "tex";
 
     /**
      * Export a MOF file to Wavefront OBJ.
@@ -133,7 +133,7 @@ public class FileUtils3D {
                 MOFPolyTexture texture = (MOFPolyTexture) polygon;
 
                 if (exportTextures) {
-                    GameImage image = textureMap.computeIfAbsent((int) texture.getImageId(), vloTable::getImageByTextureId);
+                    GameImage image = textureMap.computeIfAbsent((int) texture.getImageId(), polygon.getMWD()::getImageByTextureId);
                     int newTextureId = image.getTextureId();
 
                     if (newTextureId != textureId.get()) { // It's time to change the texture.
@@ -233,6 +233,7 @@ public class FileUtils3D {
                     MAPPolyTexture polyTex = (MAPPolyTexture) poly;
 
                     TextureTreeNode node = polyTex.getTreeNode(textureMap);
+
                     for (int i = polyTex.getUvs().length - 1; i >= 0; i--) {
                         ByteUV uv = polyTex.getUvs()[i];
                         float u = uv.getFloatU();
@@ -246,14 +247,14 @@ public class FileUtils3D {
                 } else if (poly instanceof MAPPolyGouraud || poly instanceof MAPPolyFlat) {
                     TextureTreeNode node = poly.getTreeNode(textureMap);
                     if (poly.isQuadFace()) {
+                        objWriter.write("vt " + node.getMaxU() + " " + (1F - node.getMinV()) + Constants.NEWLINE); // TR
+                        objWriter.write("vt " + node.getMaxU() + " " + (1F - node.getMaxV()) + Constants.NEWLINE); // TL
+                        objWriter.write("vt " + node.getMinU() + " " + (1F - node.getMaxV()) + Constants.NEWLINE); // BR
                         objWriter.write("vt " + node.getMinU() + " " + (1F - node.getMinV()) + Constants.NEWLINE); // BL
-                        objWriter.write("vt " + node.getMaxU() + " " + (1F - node.getMinV()) + Constants.NEWLINE); // BR
-                        objWriter.write("vt " + node.getMaxU() + " " + (1F - node.getMaxV()) + Constants.NEWLINE); // TR
-                        objWriter.write("vt " + node.getMinU() + " " + (1F - node.getMaxV()) + Constants.NEWLINE); // TL
                     } else {
                         objWriter.write("vt " + node.getMaxU() + " " + (1F - node.getMinV()) + Constants.NEWLINE); //BR
-                        objWriter.write("vt " + node.getMaxU() + " " + (1F - node.getMaxV()) + Constants.NEWLINE); //TR
                         objWriter.write("vt " + node.getMinU() + " " + (1F - node.getMaxV()) + Constants.NEWLINE); //TL
+                        objWriter.write("vt " + node.getMinU() + " " + (1F - node.getMinV()) + Constants.NEWLINE); //BL
                     }
                 } else {
                     throw new RuntimeException("Don't know how to handle a " + poly + " poly.");
@@ -292,7 +293,6 @@ public class FileUtils3D {
      * Convert a MOF to a MisfitModel3D.
      * mm3d does not support:
      * - Texture animations. (Flipbook)
-     * - Lighting.
      * - Quads
      * @param holder The mof to convert.
      * @return misfit3d
@@ -328,14 +328,13 @@ public class FileUtils3D {
                 MMFrameAnimationsBlock animation = model.getFrameAnimations().getBody(action);
                 if (animation == null) {
                     animation = model.getFrameAnimations().addNewElement();
-                    animation.setFramesPerSecond(20);
+                    animation.setFramesPerSecond(holder.getMWD().getFPS());
                     animation.setName(holder.getName(action));
                 }
 
                 MOFFlipbookAction flipbookAction = part.getFlipbook().getAction(action);
                 for (int frame = 0; frame < flipbookAction.getFrameCount(); frame++) {
                     MOFPartcel partcel = part.getCel(action, frame);
-
                     if (frame >= animation.getFrames().size())
                         animation.getFrames().add(new MMAnimationFrame());
 
@@ -354,7 +353,7 @@ public class FileUtils3D {
                     MMFrameAnimationsBlock animation = model.getFrameAnimations().getBody(action);
                     if (animation == null) {
                         animation = model.getFrameAnimations().addNewElement();
-                        animation.setFramesPerSecond(20);
+                        animation.setFramesPerSecond(holder.getMWD().getFPS());
                         animation.setName(holder.getName(action));
                     }
 
@@ -377,14 +376,16 @@ public class FileUtils3D {
         // Add Faces and Textures.
         Map<Short, MOFTextureData> dataMap = new HashMap<>();
         Map<PSXColorVector, MOFTextureData> colorMap = new HashMap<>();
-        staticMof.forEachPolygon(poly -> {
+        List<MOFPolygon> polygonList = staticMof.getAllPolygons();
+        for (MOFPolygon poly : polygonList) {
             long faceIndex = model.getTriangleFaces().size();
             model.getTriangleFaces().addMofPolygon(poly);
 
+            MOFTextureData data;
             if (poly instanceof MOFPolyTexture) {
                 MOFPolyTexture polyTex = (MOFPolyTexture) poly;
 
-                MOFTextureData data = dataMap.computeIfAbsent(polyTex.getImageId(), key -> {
+                data = dataMap.computeIfAbsent(polyTex.getImageId(), key -> {
                     GameImage image = vloTable.getImageByTextureId(key);
                     int localId = image.getLocalImageID();
                     int texId = image.getTextureId();
@@ -396,29 +397,23 @@ public class FileUtils3D {
                     int materialId = model.getMaterials().size();
                     MMMaterialsBlock material = model.getMaterials().addNewElement();
                     material.setTexture(externalTextureId);
-                    material.setName("mat" + texId);
+                    material.setName(MATERIAL_NAME_PREFIX + texId);
 
                     // Create new group.
                     MMTriangleGroupsBlock group = model.getGroups().addNewElement();
-                    group.setName("group" + texId);
+                    group.setName("texGroup" + texId);
                     group.setMaterial(materialId);
                     return new MOFTextureData(image, externalTextureId, group, material);
                 });
 
                 model.getTextureCoordinates().addMofPolygon(faceIndex, polyTex); // Add UVs.
-
-                // Link faces to texture group.
-                List<Long> triangleIndices = data.getGroup().getTriangleIndices();
-                triangleIndices.add(faceIndex);
-                if (poly.isQuadFace())
-                    triangleIndices.add(faceIndex + 1);
             } else {
-                MOFTextureData colorData = colorMap.computeIfAbsent(poly.getColor(), colorKey -> {
+                data = colorMap.computeIfAbsent(poly.getColor(), colorKey -> {
                     // Create material.
                     int materialId = model.getMaterials().size();
                     MMMaterialsBlock material = model.getMaterials().addNewElement();
                     material.setFlags(MMMaterialsBlock.FLAG_NO_TEXTURE);
-                    material.setName("colorMaterial" + materialId);
+                    material.setName("color" + materialId);
                     material.getDiffuse()[0] = Utils.unsignedByteToFloat(colorKey.getRed());
                     material.getDiffuse()[1] = Utils.unsignedByteToFloat(colorKey.getGreen());
                     material.getDiffuse()[2] = Utils.unsignedByteToFloat(colorKey.getBlue());
@@ -429,23 +424,60 @@ public class FileUtils3D {
                     group.setMaterial(materialId);
                     return new MOFTextureData(null, MMTriangleGroupsBlock.EMPTY_MATERIAL, group, material);
                 });
-
-                // Link faces to texture group.
-                List<Long> triangleIndices = colorData.getGroup().getTriangleIndices();
-                triangleIndices.add(faceIndex);
-                if (poly.isQuadFace())
-                    triangleIndices.add(faceIndex + 1);
             }
-        });
 
-        // Add normals.
-        for (int i = 0; i < model.getTriangleFaces().size(); i++) {
-            MMTriangleNormalsBlock normal = model.getNormals().addNewElement();
-            normal.setIndex(i);
-            //TODO: Add normal data.
+            // Link faces to texture group.
+            List<Long> triangleIndices = data.getGroup().getTriangleIndices();
+            triangleIndices.add(faceIndex);
+            if (poly.isQuadFace())
+                triangleIndices.add(faceIndex + 1);
+
+            // Add normals, if there are any present.
+            if (poly.getNormals().length > 0) {
+                MOFPartcel partcel = poly.getParentPart().getStaticPartcel();
+                MMTriangleNormalsBlock normal1 = model.getNormals().addNewElement();
+                normal1.setIndex(faceIndex);
+
+                if (poly.getNormals().length == 1) {
+                    SVector normal = partcel.getNormals().get(poly.getNormals()[0]);
+                    normal1.setV1Normals(vecToFloat(normal));
+                    normal1.setV2Normals(vecToFloat(normal));
+                    normal1.setV3Normals(vecToFloat(normal));
+
+                    if (poly.isQuadFace()) {
+                        MMTriangleNormalsBlock normal2 = model.getNormals().addNewElement();
+                        normal2.setIndex(faceIndex + 1);
+                        normal2.setV1Normals(vecToFloat(normal));
+                        normal2.setV2Normals(vecToFloat(normal));
+                        normal2.setV3Normals(vecToFloat(normal));
+                    }
+                } else if (poly.getNormals().length == 3) {
+                    normal1.setV1Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[0])));
+                    normal1.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
+                    normal1.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[2])));
+                } else if (poly.getNormals().length == 4) {
+                    normal1.setV1Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[0])));
+                    normal1.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[3])));
+                    normal1.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
+
+                    MMTriangleNormalsBlock normal2 = model.getNormals().addNewElement();
+                    normal2.setIndex(faceIndex + 1);
+                    normal2.setV1Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
+                    normal2.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[3])));
+                    normal2.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[2])));
+                }
+            }
         }
 
         return model;
+    }
+
+    private static float[] vecToFloat(SVector vec) {
+        return new float[]{vec.getExportFloatX(), vec.getExportFloatY(), vec.getExportFloatZ()};
+    }
+
+    private static SVector floatToVec(float[] floatArray) {
+        return new SVector(floatArray[0], floatArray[1], floatArray[2]);
     }
 
     @Getter
@@ -457,28 +489,226 @@ public class FileUtils3D {
         private MMMaterialsBlock material;
     }
 
+    // Other TODOs:
+    // TODO: MOF UI Better Organization, Running Texture Animation with other animations is optional.
+    // TODO: Fix previewing mof texture animations. I think it has to do with TextureMap.
+
     /**
      * Load a MOF from a model.
-     * @param model The model to load from.
+     * Due to limits of the mm3d file format, we are unable to generate a MOFAnimation, however it should be able to make a MOFFile just fine.
+     * @param model  The model to load from.
+     * @param holder The data to overwrite.
      */
-    public static void importMofFromModel(FroggerEXEInfo config, MisfitModel3DObject model, Consumer<MOFHolder> handler) {
-        String themeValue = model.getMetadata(META_KEY_MOF_THEME);
-        if (themeValue != null) {
-            handler.accept(importMofFromModel(model, MAPTheme.valueOf(themeValue)));
+    public static void importMofFromModel(MisfitModel3DObject model, MOFHolder holder) {
+        if (holder.isIncomplete()) {
+            Utils.makePopUp("Importing over incomplete mofs is not currently supported.", AlertType.WARNING);
             return;
         }
 
-        SelectionMenu.promptThemeSelection(config, theme -> handler.accept(importMofFromModel(model, theme)), true);
-    }
+        boolean isUnsafeReplacementArea = (holder.getTheme() == null || holder.getTheme() == MAPTheme.GENERAL);
+        if (isUnsafeReplacementArea && holder.isAnimatedMOF()) { // Unfortunately, the game assumes these models are animated, and it will crap itself if we try to give it a static model.
+            Utils.makePopUp("This XAR model cannot be overwritten by a mm3d model.", AlertType.ERROR);
+            return; //TODO: Look into supporting parts.
+        }
 
-    /**
-     * Load a MOF from a model.
-     * @param model The model to load from.
-     * @return importedMof
-     */
-    public static MOFHolder importMofFromModel(MisfitModel3DObject model, MAPTheme mofTheme) {
-        MOFHolder holder = new MOFHolder(mofTheme, null);
-        //TODO: Import data.
-        return holder;
+        MOFFile staticMof = holder.isDummy() ? new MOFFile(holder) : holder.asStaticFile();
+        holder.setStaticFile(staticMof);
+        holder.setAnimatedFile(null);
+        holder.setDummy(false);
+
+        // Build Parts.
+        List<MOFPart> oldParts = new ArrayList<>(staticMof.getParts());
+        staticMof.getParts().clear();
+
+        // Unfortunately, we can't actually discern part information, so we have to create it all under a single part.
+        // I'd imagine this would cause lag if you tried to run this on hardware of the time, especially combined with the whole part thing.
+        // However, since our target is the PC version on modern PCs, this is an acceptable solution for now.
+        // If we make a blender plugin for editing models, that would also be an ample solution.
+
+        MOFPart part = new MOFPart(staticMof);
+        staticMof.getParts().add(part);
+
+        // Build Polygon Data:
+
+        MOFPartcel basePartcel = new MOFPartcel(part, 0, 0);
+        Map<SVector, Short> baseNormalIndices = new HashMap<>();
+
+        // Load Vertices.
+        for (MMVerticeBlock block : model.getVertices().getDataBlockBodies())
+            basePartcel.getVertices().add(new SVector(-block.getX(), -block.getY(), block.getZ()));
+
+        // Load Normals.
+        for (MMTriangleNormalsBlock block : model.getNormals().getDataBlockBodies()) {
+            SVector n1 = new SVector(-block.getV1Normals()[0], -block.getV1Normals()[1], block.getV1Normals()[2]);
+            SVector n2 = new SVector(-block.getV2Normals()[0], -block.getV2Normals()[1], block.getV2Normals()[2]);
+            SVector n3 = new SVector(-block.getV3Normals()[0], -block.getV3Normals()[1], block.getV3Normals()[2]);
+
+            short index = (short) basePartcel.getNormals().size();
+            if (!baseNormalIndices.containsKey(n1)) {
+                baseNormalIndices.put(n1, index++);
+                basePartcel.getNormals().add(n1);
+            }
+
+            if (!baseNormalIndices.containsKey(n2)) {
+                baseNormalIndices.put(n2, index++);
+                basePartcel.getNormals().add(n2);
+            }
+
+            if (!baseNormalIndices.containsKey(n3)) {
+                baseNormalIndices.put(n3, index);
+                basePartcel.getNormals().add(n3);
+            }
+        }
+
+        part.getPartcels().add(basePartcel);
+
+        // Port data which isn't supposed to be overwritten by an import.
+
+        if (oldParts.size() == 1 && oldParts.get(0).getMatrix() != null) // If there's more than one part, this would be a problem, since it would apply to parts it originally didn't apply to.
+            part.setMatrix(oldParts.get(0).getMatrix());
+
+        for (MOFPart oldPart : oldParts) {
+            if (oldPart.getCollprim() != null) { // Transition collprim.
+                MOFCollprim oldCollprim = oldPart.getCollprim();
+                oldCollprim.setParent(part);
+                part.setCollprim(oldCollprim);
+            }
+
+            for (MOFHilite oldHilite : oldPart.getHilites()) { // Transition Hilites.
+                if (basePartcel.getVertices().contains(oldHilite.getVertex())) {
+                    oldHilite.setParent(part);
+                    part.getHilites().add(oldHilite);
+                }
+            }
+
+            for (MOFPartPolyAnim partPolyAnim : oldPart.getPartPolyAnims()) { // Port Texture Animations.
+                MOFPolygon newPolygon = null; //TODO: !!! [How will figuring out what the new representation of an old polygon work? Probably just compare vertices and order. Quads still create a problem.] Maybe: Keep track of polygons which share vertices, indexed by vertice. That way we can just find useful ones, and work from there.
+                if (newPolygon == null)
+                    continue; // Couldn't find a new polygon which matched the old one, so skip.
+
+                MOFPolygon oldPolygon = partPolyAnim.getMofPolygon();
+                partPolyAnim.setPrimType(newPolygon.getType());
+                partPolyAnim.setMofPolygon(newPolygon);
+                partPolyAnim.setParentPart(part);
+                part.getPartPolyAnims().add(partPolyAnim);
+
+                MOFPartPolyAnimEntryList entryList = partPolyAnim.getEntryList();
+                if (oldPolygon.isQuadFace() && !newPolygon.isQuadFace()) {
+                    MOFPolygon otherNew = null; //TODO: Figure this out as well.
+                    if (otherNew != null)
+                        part.getPartPolyAnims().add(new MOFPartPolyAnim(part, otherNew, entryList));
+                }
+
+                if (entryList.getParent() != part) { // Link the old entry list, unless it's already linked to the new part.
+                    entryList.setParent(part);
+                    part.getPartPolyAnimLists().add(entryList);
+                }
+            }
+        }
+
+        // Add Flipbook animations.
+        MOFFlipbook flipbook = new MOFFlipbook();
+        for (MMFrameAnimationsBlock block : model.getFrameAnimations().getDataBlockBodies()) {
+            int partcelIndex = part.getPartcels().size();
+
+            for (MMAnimationFrame frame : block.getFrames()) {
+                MOFPartcel newCel = new MOFPartcel(part, frame.getVertexPositions().size(), frame.getVertexPositions().size());
+                for (MMFloatVertex vertex : frame.getVertexPositions())
+                    newCel.getVertices().add(new SVector(-vertex.getX(), -vertex.getY(), vertex.getZ()));
+
+                newCel.getNormals().addAll(basePartcel.getNormals()); //TODO: Calculate Normals Instead. (Need to know what the normals data is first.)
+
+                // Add new frame of animation.
+                part.getPartcels().add(newCel);
+            }
+
+            flipbook.getActions().add(new MOFFlipbookAction(part.getPartcels().size() - partcelIndex, partcelIndex));
+        }
+
+        if (flipbook.getActions().size() > 0)
+            part.setFlipbook(flipbook);
+
+        // Load Polygons.
+        Map<Integer, MMMaterialsBlock> materialMap = new HashMap<>();
+        Map<Integer, MMTriangleNormalsBlock> normalMap = new HashMap<>();
+        Map<Integer, MMTextureCoordinatesBlock> uvMap = new HashMap<>();
+
+        // Build Maps.
+        for (MMTextureCoordinatesBlock block : model.getTextureCoordinates().getDataBlockBodies())
+            uvMap.put((int) block.getTriangle(), block);
+
+        for (MMTriangleNormalsBlock block : model.getNormals().getDataBlockBodies())
+            normalMap.put((int) block.getIndex(), block);
+
+        for (MMTriangleGroupsBlock block : model.getGroups().getDataBlockBodies()) {
+            MMMaterialsBlock material = block.getMaterial() != MMTriangleGroupsBlock.EMPTY_MATERIAL ? model.getMaterials().getBody((int) block.getMaterial()) : null;
+            for (Long face : block.getTriangleIndices())
+                materialMap.put((int) (long) face, material);
+        }
+
+        Set<Short> allowedTextureIds = new HashSet<>();
+        for (VLOArchive vloArchive : holder.getMWD().getAllFiles(VLOArchive.class))
+            for (GameImage gameImage : vloArchive.getImages())
+                allowedTextureIds.add(gameImage.getTextureId());
+
+        for (int i = 0; i < model.getTriangleFaces().size(); i++) {
+            MMTriangleFaceBlock faceBlock = model.getTriangleFaces().getBody(i);
+            MMMaterialsBlock material = materialMap.get(i);
+            MMTriangleNormalsBlock normals = normalMap.get(i);
+            MMTextureCoordinatesBlock texCoords = uvMap.get(i);
+
+            boolean isTextured = material != null && ((material.getFlags() & MMMaterialsBlock.FLAG_NO_TEXTURE) != MMMaterialsBlock.FLAG_NO_TEXTURE);
+            boolean isGouraud = normals != null && Arrays.equals(normals.getV1Normals(), normals.getV2Normals()) && Arrays.equals(normals.getV1Normals(), normals.getV3Normals());
+
+            // Build the polygon. (We always use Tris, since mm3d doesn't support quads.)
+            MOFPrimType primType = isTextured
+                    ? (isGouraud ? MOFPrimType.GT3 : MOFPrimType.FT3)
+                    : (isGouraud ? MOFPrimType.G3 : MOFPrimType.F3);
+
+            MOFPolygon poly = primType.makeNew(part);
+            if (isTextured && (poly instanceof MOFPolyTexture) && material.getName().startsWith(MATERIAL_NAME_PREFIX)) {
+                MOFPolyTexture polyTex = (MOFPolyTexture) poly;
+                String trailingNumber = material.getName().substring(MATERIAL_NAME_PREFIX.length()).split("-")[0];
+                if (!Utils.isInteger(trailingNumber))
+                    throw new RuntimeException("'" + trailingNumber + "' is not a numeric texture id. (Material Name)");
+
+                int textureId = Integer.parseInt(trailingNumber);
+                if (!allowedTextureIds.contains((short) textureId))
+                    throw new RuntimeException(textureId + " does not map to real texture.");
+
+                polyTex.setImageId((short) textureId);
+
+                // Load UVs.
+                if (texCoords != null)
+                    for (int j = 0; j < polyTex.getUvs().length; j++)
+                        polyTex.getUvs()[poly.getVerticeCount() - j - 1] = new ByteUV(texCoords.getXCoordinates()[j], texCoords.getYCoordinates()[j]);
+
+                polyTex.getColor().fromRGB(0x7F7F7F); // No color. TODO: Look into how important keeping the color is. Can we use any material properties to make this work? For instance, combining the external texture with a diffuse color? As long as we're able to look the color up both ways, we should be able to append an arbitrary suffix like tex123-color1 or tex123-user_message
+            }
+
+            for (int j = 0; j < poly.getVerticeCount(); j++)
+                poly.getVertices()[poly.getVerticeCount() - j - 1] = (int) faceBlock.getVertices()[j];
+
+            if (normals != null) { //TODO: This is busted atm.
+                /*if (poly.getNormals().length == 1) {
+                    poly.getNormals()[0] = baseNormalIndices.get(floatToVec(normals.getV1Normals()));
+                } else if (poly.getNormals().length == 3) {
+                    poly.getNormals()[0] = baseNormalIndices.get(floatToVec(normals.getV1Normals()));;
+                    poly.getNormals()[1] = baseNormalIndices.get(floatToVec(normals.getV2Normals()));;
+                    poly.getNormals()[2] = baseNormalIndices.get(floatToVec(normals.getV3Normals()));;
+                }*/
+            }
+
+            if (!isTextured) { // Load the color.
+                int red = (material != null ? ((int) (material.getDiffuse()[0] * 255)) & 0xFF : 255);
+                int green = (material != null ? ((int) (material.getDiffuse()[1] * 255)) & 0xFF : 0);
+                int blue = (material != null ? ((int) (material.getDiffuse()[2] * 255)) & 0xFF : 255);
+                poly.getColor().fromRGB((red << 16) | (green << 8) | blue);
+            }
+
+            // Register the polygon.
+            part.getMofPolygons().computeIfAbsent(poly.getType(), key -> new ArrayList<>()).add(poly);
+            part.getOrderedByLoadPolygons().add(poly);
+        }
     }
 }

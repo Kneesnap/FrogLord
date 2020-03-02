@@ -4,6 +4,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.Shape3D;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -23,6 +24,7 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 1/8/2019.
  */
 @Getter
+@Setter
 public class MOFCollprim extends GameObject {
     private int flags; // Seems to always be two.
     private SVector offset = new SVector();

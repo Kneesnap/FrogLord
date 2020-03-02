@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof.poly_anim;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -17,7 +18,7 @@ import java.util.List;
 public class MOFPartPolyAnimEntryList extends GameObject {
     private List<MOFPartPolyAnimEntry> entries = new ArrayList<>();
     private transient int tempSavePointer;
-    private transient MOFPart parent;
+    @Setter private transient MOFPart parent;
 
     public MOFPartPolyAnimEntryList(MOFPart parent) {
         this.parent = parent;

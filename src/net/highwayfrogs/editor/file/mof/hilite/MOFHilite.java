@@ -20,8 +20,9 @@ import java.util.List;
  * Created by Kneesnap on 1/8/2019.
  */
 @Getter
+@Setter
 public class MOFHilite extends GameObject {
-    @Setter private HiliteType type = HiliteType.values()[0];
+    private HiliteType type = HiliteType.values()[0];
     private SVector vertex;
     private transient MOFPart parent;
 

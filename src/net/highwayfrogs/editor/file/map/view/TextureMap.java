@@ -47,13 +47,18 @@ public class TextureMap {
     @Setter private ShaderMode mode;
     private Map<Short, Set<BigInteger>> mapTextureList = new HashMap<>();
     private final ImageFilterSettings displaySettings = new ImageFilterSettings(ImageState.EXPORT).setAllowTransparency(true); // This is not static because we want it to be gc'd when the TextureMap is.
+    private int width;
+    private int height;
+
     // The largest VLO is the SWP VLO, on the PS1. The texture map with the most used space is SUB1.
 
-    private TextureMap(VLOArchive vlo, List<Short> remapList, ShaderMode mode) {
+    private TextureMap(VLOArchive vlo, List<Short> remapList, ShaderMode mode, int width, int height) {
         this.vloArchive = vlo;
         this.remapList = remapList;
         this.textureTree = new TextureTree(this);
         this.mode = mode;
+        this.width = width;
+        this.height = height;
     }
 
     /**
@@ -61,8 +66,8 @@ public class TextureMap {
      * @return newTextureMap
      */
     public static TextureMap newTextureMap(MOFHolder mofHolder, ShaderMode mode) {
-        TextureMap newMap = new TextureMap(mofHolder.getVloFile(), null, mode);
-        newMap.updateTree(newMap.createSourceMap(mofHolder));
+        TextureMap newMap = new TextureMap(mofHolder.getVloFile(), null, mode, 0, 0);
+        newMap.updateModel(mofHolder, mode);
         return newMap;
     }
 
@@ -71,9 +76,20 @@ public class TextureMap {
      * @return newTextureMap
      */
     public static TextureMap newTextureMap(MAPFile mapFile, ShaderMode mode) {
-        TextureMap newMap = new TextureMap(mapFile.getVlo(), mapFile.getRemapTable(), mode);
-        newMap.updateTree(newMap.createSourceMap(mapFile));
+        TextureMap newMap = new TextureMap(mapFile.getVlo(), mapFile.getRemapTable(), mode, 1024, 1024);
+        newMap.updateMap(mapFile, mode);
         return newMap;
+    }
+
+    public int getWidth() {
+        return (int) (this.width * getMode().getWidthMultiplier());
+    }
+
+    /**
+     * Gets the height of the texture map.
+     */
+    public int getHeight() {
+        return (int) (this.height * getMode().getHeightMultiplier());
     }
 
     /**
@@ -84,8 +100,6 @@ public class TextureMap {
     public Short getRemap(short index) {
         return this.remapList != null ? this.remapList.get(index) : index;
     }
-
-
 
     /**
      * Gets the 3D PhongMaterial (diffuse components only, affected by lighting).
@@ -102,7 +116,7 @@ public class TextureMap {
      * @param sourceMap The map in question to update the tree with.
      */
     public void updateTree(Map<BigInteger, TextureSource> sourceMap) {
-        this.textureTree.rebuildTree(sourceMap, getMode());
+        this.textureTree.rebuildTree(sourceMap);
         if (this.material == null)
             this.material = getDiffuseMaterial();
 
@@ -130,13 +144,35 @@ public class TextureMap {
     public void updateModel(MOFHolder mof, ShaderMode newMode) {
         if (newMode != null)
             this.mode = newMode;
-        updateTree(createSourceMap(mof));
+
+        Map<BigInteger, TextureSource> sourceMap = createSourceMap(mof);
+
+        // Dynamic resizing to keep it small.
+        int totalArea = 0;
+        double toBase2 = Math.log10(10) / Math.log10(2);
+        final int vertexArea = (MAPFile.VERTEX_COLOR_IMAGE_SIZE * MAPFile.VERTEX_COLOR_IMAGE_SIZE);
+        for (TextureSource source : sourceMap.values()) {
+            GameImage gameImage = source.getGameImage(this);
+
+            if (gameImage != null) {
+                totalArea += (gameImage.getFullWidth() * gameImage.getFullHeight());
+            } else {
+                totalArea += vertexArea;
+            }
+        }
+
+        int newSize = Utils.power(2, (int) (Math.log10(Math.sqrt(totalArea * 2)) * toBase2) + 1); // One size up, because it won't be stored completely optimally.
+        this.width = (int) (newSize / getMode().getWidthMultiplier());
+        this.height = (int) (newSize / getMode().getHeightMultiplier());
+
+        // Build the tree.
+        updateTree(sourceMap);
     }
 
     /**
      * Creates a texture source map for a map.
      */
-    public Map<BigInteger, TextureSource> createSourceMap(MAPFile map) {
+    private Map<BigInteger, TextureSource> createSourceMap(MAPFile map) {
         // Calculate how many of each are used.
         this.mapTextureList.clear();
         for (MAPPolygon poly : map.getAllPolygons()) {
@@ -177,7 +213,7 @@ public class TextureMap {
     /**
      * Creates a texture source map for the model.
      */
-    public Map<BigInteger, TextureSource> createSourceMap(MOFHolder mof) {
+    private Map<BigInteger, TextureSource> createSourceMap(MOFHolder mof) {
         Map<BigInteger, TextureSource> texMap = new HashMap<>();
 
         Set<Short> visitedTextures = new HashSet<>();
@@ -227,9 +263,9 @@ public class TextureMap {
         /**
          * Rebuilds the texture tree.
          */
-        public void rebuildTree(Map<BigInteger, TextureSource> sourceMap, ShaderMode mode) {
-            this.width = mode.getPageWidth();
-            this.height = mode.getPageHeight();
+        public void rebuildTree(Map<BigInteger, TextureSource> sourceMap) {
+            this.width = getParentMap().getWidth();
+            this.height = getParentMap().getHeight();
 
             this.rootNode = new TextureTreeNode(this);
             this.rootNode.setWidth(getWidth());
@@ -474,14 +510,14 @@ public class TextureMap {
     @Getter
     @AllArgsConstructor
     public enum ShaderMode {
-        NO_SHADING("None", 1024, 1024),
-        OVERLAY_SHADING("Overlay", 1024, 1024),
-        MIXED_SHADING("Mixed", 2048, 2048), // Works to create a middle-ground between accurate and low quality.
-        EVERYTHING("Texture", 4096, 4096);
+        NO_SHADING("None", 1, 1),
+        OVERLAY_SHADING("Overlay", 1, 1),
+        MIXED_SHADING("Mixed", 2, 2), // Works to create a middle-ground between accurate and low quality.
+        EVERYTHING("Texture", 4, 4);
 
         private final String name;
-        private final int pageWidth;
-        private final int pageHeight;
+        private final double widthMultiplier;
+        private final double heightMultiplier;
     }
 
     /**

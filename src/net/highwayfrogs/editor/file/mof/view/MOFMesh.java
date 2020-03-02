@@ -78,10 +78,10 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     public List<Vector> getVertices() {
         this.verticeCache.clear();
         for (MOFPart part : getMofHolder().asStaticFile().getParts()) {
-            MOFPartcel partcel = part.getCel(getAction(), getFrame());
             if (shouldSkip(part))
                 continue;
 
+            MOFPartcel partcel = hasEnabledAnimation() ? part.getCel(getAction(), getFrame()) : part.getStaticPartcel();
             if (getMofHolder().isAnimatedMOF() && hasEnabledAnimation()) {
                 TransformObject transform = getMofHolder().getAnimatedFile().getTransform(part, getAction(), getFrame());
                 for (SVector vertex : partcel.getVertices())
