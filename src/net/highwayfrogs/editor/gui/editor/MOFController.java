@@ -105,6 +105,7 @@ public class MOFController extends EditorController<MOFHolder> {
     private static final double GENERIC_POS_SIZE = 3;
     private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(java.awt.Color.MAGENTA, java.awt.Color.BLACK);
+    public static final CursorVertexColor ANIMATION_SELECTION_COLOR = new CursorVertexColor(java.awt.Color.GREEN, java.awt.Color.BLACK);
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -178,7 +179,10 @@ public class MOFController extends EditorController<MOFHolder> {
                 getUiController().stopPlaying();
                 getRenderManager().removeAllDisplayLists();
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
-            } else if (event.getCode() == KeyCode.S && event.isControlDown()) { // Save the texture map.
+                return;
+            }
+
+            if (event.getCode() == KeyCode.S && event.isControlDown()) { // Save the texture map.
                 try {
                     ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + Utils.stripExtension(getMofMesh().getMofHolder().getFileEntry().getDisplayName()) + ".png"));
                 } catch (IOException ex) {
@@ -189,6 +193,16 @@ public class MOFController extends EditorController<MOFHolder> {
             // Toggle wireframe mode.
             if (event.getCode() == KeyCode.X)
                 meshView.setDrawMode(meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
+
+            if (!getUiController().shouldPreventFrameChange()) {
+                if (event.getCode() == KeyCode.LEFT) {
+                    getMofMesh().previousFrame();
+                    getUiController().updateFrameText();
+                } else if (event.getCode() == KeyCode.RIGHT) {
+                    getMofMesh().nextFrame();
+                    getUiController().updateFrameText();
+                }
+            }
         });
 
 
@@ -317,6 +331,7 @@ public class MOFController extends EditorController<MOFHolder> {
     public void updateHiliteBoxes(boolean showBoxes) {
         getRenderManager().addMissingDisplayList(HILITE_LIST);
         getRenderManager().clearDisplayList(HILITE_LIST);
+
         if (!showBoxes)
             return;
 
@@ -352,8 +367,10 @@ public class MOFController extends EditorController<MOFHolder> {
     public void updateCollprimBoxes(boolean showCollprim) {
         getRenderManager().addMissingDisplayList(COLLPRIM_BOX_LIST);
         getRenderManager().clearDisplayList(COLLPRIM_BOX_LIST);
-        if (!showCollprim)
+        if (!showCollprim) {
+            getUiController().getCollprimEditorGrid().clearEditor();
             return;
+        }
 
         for (MOFPart part : getFile().asStaticFile().getParts()) {
             MOFCollprim collprim = part.getCollprim();
@@ -579,7 +596,7 @@ public class MOFController extends EditorController<MOFHolder> {
 
         for (MOFPart part : getMofMesh().getMofHolder().asStaticFile().getParts())
             for (MOFPartPolyAnim anim : part.getPartPolyAnims())
-                renderOverPolygon(anim.getMofPolygon(), ANIMATION_COLOR);
+                renderOverPolygon(anim.getMofPolygon(), isSelectingAnimationFace() ? ANIMATION_SELECTION_COLOR : ANIMATION_COLOR);
 
         this.textureOverlay = getMofMesh().getManager().addMesh();
     }
@@ -603,18 +620,17 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private Accordion accordionLeft;
 
         @FXML private Label modelName;
+        @FXML private ComboBox<Integer> animationSelector;
         @FXML private Button playButton;
         @FXML private CheckBox repeatCheckbox;
+        @FXML private CheckBox textureAnimationCheckbox;
         @FXML private TextField fpsField;
 
+        @FXML private Slider frameSlider;
         @FXML private Label frameLabel;
-        @FXML private Button btnLast;
-        @FXML private Button btnNext;
-
-        @FXML private ComboBox<ShaderMode> shaderModeComboBox;
 
         @FXML private TitledPane paneAnim;
-        @FXML private ComboBox<Integer> animationSelector;
+        @FXML private ComboBox<ShaderMode> shaderModeComboBox;
         @FXML private CheckBox brightModeCheckbox;
         @FXML private CheckBox viewBoundingBoxesCheckbox;
 
@@ -655,6 +671,26 @@ public class MOFController extends EditorController<MOFHolder> {
             this.viewCollprimCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateCollprimBoxes(newValue)));
             this.viewBoundingBoxesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateBoundingBoxes(newValue)));
 
+            // Allow toggling texture animations.
+            this.textureAnimationCheckbox.setSelected(getMofMesh().getTextureMap().isUseModelTextureAnimation());
+            this.textureAnimationCheckbox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                getMofMesh().getTextureMap().setUseModelTextureAnimation(newValue);
+                getMofMesh().updateFrame(); // Update the display.
+            });
+
+            // Setup frame slider.
+            frameSlider.setMin(0);
+            frameSlider.setBlockIncrement(1);
+            frameSlider.setMinorTickCount(1);
+            frameSlider.setSnapToTicks(true);
+            frameSlider.setShowTickLabels(false);
+            frameSlider.setShowTickMarks(true);
+            frameSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
+                if (!isAnimationPlaying()) { // If an animation is playing, this is handled by the animation.
+                    getMofMesh().setFrame((int) (double) newValue);
+                    updateFrameText();
+                }
+            }));
 
             // Shader stuff.
             this.shaderModeComboBox.setItems(FXCollections.observableArrayList(ShaderMode.values()));
@@ -680,8 +716,9 @@ public class MOFController extends EditorController<MOFHolder> {
                 RenderManager manager = getController().getRenderManager();
                 manager.clearDisplayList(HILITE_VERTICE_LIST);
 
+                getController().selectingVertex = true;
                 for (MOFPart part : getHolder().asStaticFile().getParts()) {
-                    MOFPartcel partcel = part.getCel(getMofMesh().getAnimationId(), getMofMesh().getFrame());
+                    MOFPartcel partcel = part.getCel(Math.max(0, getMofMesh().getAnimationId()), getMofMesh().getFrame());
 
                     for (int i = 0; i < partcel.getVertices().size(); i++) {
                         final int index = i;
@@ -696,10 +733,10 @@ public class MOFController extends EditorController<MOFHolder> {
                             SVector realVec = part.getStaticPartcel().getVertices().get(index);
                             MOFHilite newHilite = new MOFHilite(part, realVec);
                             part.getHilites().add(newHilite);
+                            getController().updateHiliteBoxes();
                             newHilite.setupEditor(getController());
                         });
                     }
-
                 }
             });
 
@@ -709,8 +746,8 @@ public class MOFController extends EditorController<MOFHolder> {
             this.collprimEditorGrid = new GUIEditorGrid(getCollprimEditPane());
             this.hiliteEditorGrid = new GUIEditorGrid(getHiliteEditPane());
 
-            toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, btnNext, btnLast));
-            playNodes.addAll(Arrays.asList(playButton, btnLast, frameLabel, btnNext));
+            toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, frameSlider, textureAnimationCheckbox));
+            playNodes.addAll(Arrays.asList(playButton, frameSlider, frameLabel));
 
             playButton.setOnAction(evt -> {
                 boolean newState = !isAnimationPlaying();
@@ -774,22 +811,8 @@ public class MOFController extends EditorController<MOFHolder> {
             modelName.setText(getHolder().getFileEntry().getDisplayName());
         }
 
-        @FXML
-        private void nextFrame(ActionEvent evt) {
-            if (getController().isSelectingVertex())
-                return;
-
-            getController().getMofMesh().nextFrame();
-            updateFrameText();
-        }
-
-        @FXML
-        private void lastFrame(ActionEvent evt) {
-            if (getController().isSelectingVertex())
-                return;
-
-            getController().getMofMesh().previousFrame();
-            updateFrameText();
+        private boolean shouldPreventFrameChange() {
+            return getController().isSelectingVertex() || isAnimationPlaying();
         }
 
         /**
@@ -822,7 +845,12 @@ public class MOFController extends EditorController<MOFHolder> {
         }
 
         private void updateFrameText() {
-            frameLabel.setText("Frame " + getController().getMofMesh().getFrameCount());
+            int currentFrame = getController().getMofMesh().getFrameCount();
+            int frameCount = getMofMesh().getMofHolder().getFrameCount(getMofMesh().getAnimationId());
+
+            frameLabel.setText("Frame " + currentFrame);
+            frameSlider.setMax(frameCount - 1);
+            frameSlider.setValue(currentFrame);
         }
 
         /**
@@ -842,7 +870,7 @@ public class MOFController extends EditorController<MOFHolder> {
                 getMofMesh().nextFrame();
                 updateFrameText();
             }));
-            this.animationTimeline.setCycleCount(repeat ? Timeline.INDEFINITE : getMofMesh().getMofHolder().getMaxFrame(getMofMesh().getAction()) - 1);
+            this.animationTimeline.setCycleCount(repeat ? Timeline.INDEFINITE : getMofMesh().getMofHolder().getFrameCount(getMofMesh().getAction()) - 1);
             this.animationTimeline.play();
             this.animationTimeline.setOnFinished(onFinish);
         }

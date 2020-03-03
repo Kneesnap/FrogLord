@@ -10,6 +10,9 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
+import net.highwayfrogs.editor.file.mof.MOFPart;
+import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
+import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntryList;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -49,6 +52,7 @@ public class TextureMap {
     private final ImageFilterSettings displaySettings = new ImageFilterSettings(ImageState.EXPORT).setAllowTransparency(true); // This is not static because we want it to be gc'd when the TextureMap is.
     private int width;
     private int height;
+    @Setter private boolean useModelTextureAnimation;
 
     // The largest VLO is the SWP VLO, on the PS1. The texture map with the most used space is SUB1.
 
@@ -67,6 +71,7 @@ public class TextureMap {
      */
     public static TextureMap newTextureMap(MOFHolder mofHolder, ShaderMode mode) {
         TextureMap newMap = new TextureMap(mofHolder.getVloFile(), null, mode, 0, 0);
+        newMap.setUseModelTextureAnimation(true);
         newMap.updateModel(mofHolder, mode);
         return newMap;
     }
@@ -145,6 +150,8 @@ public class TextureMap {
         if (newMode != null)
             this.mode = newMode;
 
+        boolean oldModelTextureState = this.useModelTextureAnimation;
+        this.useModelTextureAnimation = false; // Makes sure animated textures are properly applied.
         Map<BigInteger, TextureSource> sourceMap = createSourceMap(mof);
 
         // Dynamic resizing to keep it small.
@@ -167,6 +174,8 @@ public class TextureMap {
 
         // Build the tree.
         updateTree(sourceMap);
+        if (oldModelTextureState)
+            this.useModelTextureAnimation = true; // Enables the use of animated textures.
     }
 
     /**
@@ -201,6 +210,7 @@ public class TextureMap {
             }
         }
 
+        texMap.put(UnknownTextureSource.INSTANCE.makeIdentifier(this), UnknownTextureSource.INSTANCE);
         texMap.put(MapMesh.CURSOR_COLOR.makeIdentifier(this), MapMesh.CURSOR_COLOR);
         texMap.put(MapMesh.ANIMATION_COLOR.makeIdentifier(this), MapMesh.ANIMATION_COLOR);
         texMap.put(MapMesh.INVISIBLE_COLOR.makeIdentifier(this), MapMesh.INVISIBLE_COLOR);
@@ -233,7 +243,23 @@ public class TextureMap {
             }
         }
 
+        // Add texture animations to the map as well.
+        for (MOFPart part : mof.asStaticFile().getParts()) {
+            for (MOFPartPolyAnimEntryList entryList : part.getPartPolyAnimLists()) {
+                for (MOFPartPolyAnimEntry entry : entryList.getEntries()) {
+                    if (visitedTextures.add((short) entry.getImageId())) {
+                        GameImage image = mof.getMWD().getImageByTextureId(entry.getImageId());
+                        BigInteger id = image.makeIdentifier(this);
+                        if (!texMap.containsKey(id))
+                            texMap.put(id, image);
+                    }
+                }
+            }
+        }
+
+        texMap.put(UnknownTextureSource.INSTANCE.makeIdentifier(this), UnknownTextureSource.INSTANCE);
         texMap.put(MOFController.ANIMATION_COLOR.makeIdentifier(this), MOFController.ANIMATION_COLOR);
+        texMap.put(MOFController.ANIMATION_SELECTION_COLOR.makeIdentifier(this), MOFController.ANIMATION_SELECTION_COLOR);
         return texMap;
     }
 

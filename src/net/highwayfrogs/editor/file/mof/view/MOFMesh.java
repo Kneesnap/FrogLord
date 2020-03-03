@@ -99,9 +99,9 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
      */
     public void setFrame(int newFrame) {
         if (newFrame < 0)
-            return;
+            newFrame = getMofHolder().getFrameCount(this.animationId) + newFrame;
 
-        this.frameCount = newFrame;
+        this.frameCount = (newFrame % getMofHolder().getFrameCount(this.animationId));
         updateData();
     }
 

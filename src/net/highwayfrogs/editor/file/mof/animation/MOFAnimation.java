@@ -145,7 +145,7 @@ public class MOFAnimation extends MOFBase {
 
         for (MOFPart part : getStaticMOF().getParts()) {
             for (int action = 0; action < getHolder().getMaxAnimation(); action++) {
-                for (int frame = 0; frame < getHolder().getMaxFrame(action); frame++) {
+                for (int frame = 0; frame < getHolder().getFrameCount(action); frame++) {
                     MOFPartcel partcel = part.getCel(action, frame);
                     TransformObject transform = getTransform(part, action, frame);
 

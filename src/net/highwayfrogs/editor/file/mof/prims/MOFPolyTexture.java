@@ -34,7 +34,7 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     private ByteUV[] uvs;
     private short imageId;
 
-    private transient short viewImageId = -1; // The image id while this MOF is being viewed.
+    private transient short viewImageId = -1; // The image id while this MOF is being viewed, so things like animations happen.
 
     public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_0; // setSemiTrans(true)
     public static final int FLAG_ENVIRONMENT_IMAGE = Constants.BIT_FLAG_1; // Show the solid environment bitmap. (For instance, how water appears as a solid body, or sludge in the sewer levels.)
@@ -138,8 +138,8 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
 
     @Override
     public BigInteger makeIdentifier(TextureMap map) {
-        if (map.getMode() == ShaderMode.NO_SHADING) {
-            return makeIdentifier(0xF1A7BA5E, getImageId());
+        if (map.getMode() == ShaderMode.NO_SHADING || (map.isUseModelTextureAnimation() && this.viewImageId != (short) -1)) {
+            return makeIdentifier(0x7E8BA5E, getUseTextureId(map));
         } else if (isOverlay(map)) {
             return makeIdentifier(0xF1A754AD, getColor().toRGB());
         } else {
@@ -149,12 +149,16 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
 
     @Override
     public GameImage getGameImage(TextureMap map) {
-        return map.getVloArchive().getMWD().getImageByTextureId(getImageId());
+        return map.getVloArchive().getMWD().getImageByTextureId(getUseTextureId(map));
     }
 
     @Override
     public void onMeshSetup(FrogMesh mesh) {
         if (mesh instanceof MOFMesh && isOverlay(mesh.getTextureMap()))
             ((MOFMesh) mesh).renderOverPolygon(this, this);
+    }
+
+    private int getUseTextureId(TextureMap map) {
+        return (map.isUseModelTextureAnimation() && this.viewImageId != (short) -1) ? this.viewImageId : getImageId();
     }
 }

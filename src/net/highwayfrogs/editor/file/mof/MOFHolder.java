@@ -183,31 +183,31 @@ public class MOFHolder extends GameFile {
 
     /**
      * Get the animation's frame count.
-     * @return maxFrame
+     * @return frameCount
      */
-    public int getMaxFrame(int animationId) {
-        if (isAnimatedMOF())
+    public int getFrameCount(int animationId) {
+        if (isAnimatedMOF() && animationId != -1) // XAR
             return getAnimatedFile().getAnimationById(animationId).getFrameCount();
 
-        // Flipbook.
+        // Flipbook and Texture.
         int maxFrame = 0;
-        for (MOFPart part : getStaticFile().getParts()) {
+        for (MOFPart part : asStaticFile().getParts()) {
             MOFFlipbook flipbook = part.getFlipbook();
 
-            if (flipbook != null) {
+            if (animationId == -1) {
+                for (MOFPartPolyAnim anim : part.getPartPolyAnims()) {
+                    int frameCount = anim.getTotalFrames();
+                    if (frameCount > maxFrame)
+                        maxFrame = frameCount;
+                }
+            } else if (flipbook != null) {
                 MOFFlipbookAction action = flipbook.getAction(animationId);
                 if (action.getFrameCount() > maxFrame)
                     maxFrame = action.getFrameCount();
             }
-
-            for (MOFPartPolyAnim anim : part.getPartPolyAnims()) {
-                int frameCount = anim.getTotalFrames();
-                if (frameCount > maxFrame)
-                    maxFrame = frameCount;
-            }
         }
 
-        return maxFrame;
+        return Math.max(maxFrame, 1);
     }
 
     /**

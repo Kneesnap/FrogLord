@@ -29,9 +29,9 @@ public class MOFCollprim extends GameObject {
     private int flags; // Seems to always be two.
     private SVector offset = new SVector();
     private int radius2; // For cylinder base or sphere. It seems like we can safely ignore this value, leaving it as is.
-    private float xLength;
-    private float yLength;
-    private float zLength;
+    private float xLength = 1F;
+    private float yLength = 1F;
+    private float zLength = 1F;
     private CollprimReactionType reaction = CollprimReactionType.DEADLY;
     private PSXMatrix matrix; // Only present in JUN_PLANT.
     private transient MOFPart parent;

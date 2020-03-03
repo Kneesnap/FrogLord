@@ -490,8 +490,7 @@ public class FileUtils3D {
     }
 
     // Other TODOs:
-    // TODO: MOF UI Better Organization, Running Texture Animation with other animations is optional.
-    // TODO: Fix previewing mof texture animations. I think it has to do with TextureMap.
+    // TODO: Import textures from imported models.
 
     /**
      * Load a MOF from a model.

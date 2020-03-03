@@ -123,8 +123,10 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive & TextureSource> extend
         texCoord.addAndGet(texCount);
         TextureTreeNode entry = source.getTreeNode(textureMap);
         if (entry == null) {
-            System.out.println("There were issues setting up textures for this " + poly.getClass().getSimpleName() + "/" + source.getClass().getSimpleName() + ". (ID: " + poly.getGameImage(getTextureMap()).getTextureId() + ")");
-            entry = new TextureTreeNode(textureMap.getTextureTree());
+            System.out.println("There was a texture on this " + getClass().getSimpleName() + " which was not found in the TextureMap! (ID: " + poly.getGameImage(getTextureMap()).getTextureId() + ")");
+            entry = textureMap.getNode(UnknownTextureSource.INSTANCE);
+            if (entry == null)
+                throw new RuntimeException("The default unknown texture was not found in the TextureMap.");
         }
 
         float uSize = (entry.getMaxU() - entry.getMinU());
