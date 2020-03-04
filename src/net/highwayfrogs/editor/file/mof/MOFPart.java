@@ -376,4 +376,14 @@ public class MOFPart extends GameObject {
         box.getVertices()[7].setValues(maxX, maxY, maxZ, 4);
         return box;
     }
+
+    /**
+     * Gets all of the polygons within this model.
+     */
+    public List<MOFPolygon> getAllPolygons() {
+        List<MOFPolygon> polygons = new ArrayList<>();
+        for (List<MOFPolygon> list : getMofPolygons().values())
+            polygons.addAll(list);
+        return polygons;
+    }
 }

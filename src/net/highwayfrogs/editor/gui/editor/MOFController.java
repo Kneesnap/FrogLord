@@ -41,6 +41,7 @@ import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntryList;
+import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -50,6 +51,7 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
+import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -86,7 +88,7 @@ public class MOFController extends EditorController<MOFHolder> {
     private Rotate rotZ;
     private RenderManager renderManager = new RenderManager();
     private boolean selectingVertex;
-    private boolean selectingAnimationFace;
+    private boolean selectingPart;
     private MeshData textureOverlay;
 
     @Setter private Vector showPosition;
@@ -105,7 +107,7 @@ public class MOFController extends EditorController<MOFHolder> {
     private static final double GENERIC_POS_SIZE = 3;
     private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(java.awt.Color.MAGENTA, java.awt.Color.BLACK);
-    public static final CursorVertexColor ANIMATION_SELECTION_COLOR = new CursorVertexColor(java.awt.Color.GREEN, java.awt.Color.BLACK);
+    public static final CursorVertexColor CANT_APPLY_COLOR = new CursorVertexColor(java.awt.Color.RED, java.awt.Color.BLACK);
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -170,8 +172,8 @@ public class MOFController extends EditorController<MOFHolder> {
                     return;
                 }
 
-                if (isSelectingAnimationFace()) {
-                    this.selectingAnimationFace = false;
+                if (isSelectingPart()) {
+                    this.selectingPart = false;
                     updateTexture3D();
                     return;
                 }
@@ -205,38 +207,48 @@ public class MOFController extends EditorController<MOFHolder> {
             }
         });
 
-
         mofScene.setOnScroll(evt -> camera.setTranslateZ(camera.getTranslateZ() + (evt.getDeltaY() * .25)));
 
         mofScene.setOnMouseClicked(evt -> {
-            MOFPartPolyAnim anim = null;
             MOFPolygon clickedPoly = getMofMesh().getFacePolyMap().get(evt.getPickResult().getIntersectedFace());
             if (clickedPoly == null)
                 return;
 
-            for (MOFPart part : getMofMesh().getMofHolder().asStaticFile().getParts()) {
-                for (MOFPartPolyAnim testAnim : part.getPartPolyAnims()) {
-                    if (clickedPoly.equals(testAnim.getMofPolygon())) {
-                        anim = testAnim;
-                        break;
-                    }
+            if (isSelectingPart()) {
+                MOFPartPolyAnimEntryList newList = new MOFPartPolyAnimEntryList(clickedPoly.getParentPart());
+                newList.getParent().getPartPolyAnimLists().add(newList);
+                getUiController().updateTextureList();
+                getUiController().getAnimationListChoiceBox().getSelectionModel().select(newList);
+                this.selectingPart = false;
+                updateTexture3D();
+                return;
+            }
+
+            if (!(clickedPoly instanceof MOFPolyTexture) || getUiController().getSelectedList() == null)
+                return;
+
+            MOFPartPolyAnim anim = null;
+            MOFPart part = clickedPoly.getParentPart();
+            for (MOFPartPolyAnim testAnim : part.getPartPolyAnims()) {
+                if (clickedPoly.equals(testAnim.getMofPolygon())) {
+                    anim = testAnim;
+                    break;
                 }
             }
 
-            if (isSelectingAnimationFace()) { // Make a new animation with a face.
-                if (anim != null)
-                    return; // Face is already used for another anim.
+            if (anim != null && anim.getEntryList() != getUiController().getSelectedList())
+                return; // If there's already an animation, but it's on a different entry list, don't remove it.
 
-                // Create a new animation.
-                MOFPartPolyAnim newAnim = new MOFPartPolyAnim(clickedPoly.getParentPart(), clickedPoly, new MOFPartPolyAnimEntryList(clickedPoly.getParentPart()));
-                clickedPoly.getParentPart().getPartPolyAnims().add(newAnim);
-                setupAnimationEditor(newAnim);
-                this.selectingAnimationFace = false;
-                updateTexture3D();
-            } else if (getUiController().getTextureEditCheckbox().isSelected()) { //
-                if (anim != null)
-                    setupAnimationEditor(anim);
+            if (anim == null && (clickedPoly.getParentPart() != getUiController().getSelectedList().getParent()))
+                return; // If the poly is not on the part which the texture list is for, then we can't add the texture.
+
+            if (anim != null) { // Remove anim entry.
+                anim.getParentPart().getPartPolyAnims().remove(anim);
+            } else { // Add anim entry.
+                clickedPoly.getParentPart().getPartPolyAnims().add(new MOFPartPolyAnim(part, clickedPoly, getUiController().getSelectedList()));
             }
+
+            updateTexture3D();
         });
 
         mofScene.setOnMousePressed(e -> {
@@ -478,20 +490,20 @@ public class MOFController extends EditorController<MOFHolder> {
 
     /**
      * Setup the editor to edit an animation.
-     * @param anim The animation to edit.
+     * @param entryList The animation to edit.
      */
-    public void setupAnimationEditor(MOFPartPolyAnim anim) {
+    public void setupAnimationEditor(MOFPartPolyAnimEntryList entryList) {
         GUIEditorGrid grid = getUiController().getTextureEditGrid();
         grid.clearEditor();
-
-        grid.addBoldLabel("Animation #" + (anim.getParentPart().getPartPolyAnims().indexOf(anim) + 1) + "/" + (anim.getParentPart().getPartID() + 1) + ":");
+        if (entryList == null)
+            return;
 
         // Setup preview.
         // Create the animation preview.
         List<Node> toDisable = new ArrayList<>();
-        if (anim.getEntryList() != null && anim.getEntryList().getEntries().size() > 0) {
-            List<MOFPartPolyAnimEntry> entries = anim.getEntryList().getEntries();
-            MWDFile mwd = anim.getMWD();
+        if (entryList.getEntries().size() > 0) {
+            List<MOFPartPolyAnimEntry> entries = entryList.getEntries();
+            MWDFile mwd = entryList.getMWD();
 
             grid.addBoldLabel("Preview:");
             AtomicBoolean isAnimating = new AtomicBoolean(false);
@@ -533,10 +545,10 @@ public class MOFController extends EditorController<MOFHolder> {
 
         // Setup editor.
         grid.addBoldLabel("Textures:");
-        for (int i = 0; i < anim.getEntryList().getEntries().size(); i++) {
+        for (int i = 0; i < entryList.getEntries().size(); i++) {
             final int tempIndex = i;
-            MOFPartPolyAnimEntry entry = anim.getEntryList().getEntries().get(i);
-            GameImage image = anim.getMWD().getImageByTextureId(entry.getImageId());
+            MOFPartPolyAnimEntry entry = entryList.getEntries().get(i);
+            GameImage image = entryList.getMWD().getImageByTextureId(entry.getImageId());
             Image scaledImage = Utils.toFXImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), true);
             ImageView view = new ImageView(scaledImage);
             view.setFitWidth(20);
@@ -544,7 +556,7 @@ public class MOFController extends EditorController<MOFHolder> {
 
             view.setOnMouseClicked(evt -> getMofMesh().getMofHolder().getVloFile().promptImageSelection(newImage -> {
                 entry.setImageId(newImage.getTextureId());
-                setupAnimationEditor(anim);
+                setupAnimationEditor(entryList);
             }, false));
 
             HBox hbox = new HBox();
@@ -558,14 +570,14 @@ public class MOFController extends EditorController<MOFHolder> {
             TextField durationField = grid.setupSecondNode(new TextField(String.valueOf(entry.getDuration())), false);
             Utils.setHandleTestKeyPress(durationField, Utils::isInteger, newValue -> {
                 entry.setDuration(Integer.parseInt(newValue));
-                setupAnimationEditor(anim);
+                setupAnimationEditor(entryList);
             });
             durationField.setMaxWidth(30);
 
             Button removeButton = new Button("Remove");
             removeButton.setOnAction(evt -> {
-                anim.getEntryList().getEntries().remove(tempIndex);
-                setupAnimationEditor(anim);
+                entryList.getEntries().remove(tempIndex);
+                setupAnimationEditor(entryList);
             });
 
             hbox2.setSpacing(40);
@@ -580,9 +592,18 @@ public class MOFController extends EditorController<MOFHolder> {
         }
 
         toDisable.add(grid.addButton("Add Texture", () -> getMofMesh().getMofHolder().getVloFile().promptImageSelection(newImage -> {
-            anim.getEntryList().getEntries().add(new MOFPartPolyAnimEntry(newImage.getTextureId(), 1));
-            setupAnimationEditor(anim);
+            entryList.getEntries().add(new MOFPartPolyAnimEntry(newImage.getTextureId(), 1));
+            setupAnimationEditor(entryList);
         }, false)));
+
+        toDisable.add(grid.addButton("Delete Animation", () -> {
+            entryList.getParent().getPartPolyAnims().removeIf(anim -> anim.getEntryList() == entryList);
+            entryList.getParent().getPartPolyAnimLists().remove(entryList);
+
+            getUiController().updateTextureList();
+            getUiController().getAnimationListChoiceBox().getSelectionModel().selectFirst();
+            updateTexture3D();
+        }));
     }
 
     public void updateTexture3D() {
@@ -591,14 +612,34 @@ public class MOFController extends EditorController<MOFHolder> {
             this.textureOverlay = null;
         }
 
-        if (!getUiController().getTextureEditCheckbox().isSelected() && !isSelectingAnimationFace())
+        if (isSelectingPart()) {
+            for (MOFPolygon mofPolygon : getFile().asStaticFile().getAllPolygons())
+                renderOverPolygon(mofPolygon, ANIMATION_COLOR);
+
+            this.textureOverlay = getMofMesh().getManager().addMesh();
             return;
+        }
 
-        for (MOFPart part : getMofMesh().getMofHolder().asStaticFile().getParts())
-            for (MOFPartPolyAnim anim : part.getPartPolyAnims())
-                renderOverPolygon(anim.getMofPolygon(), isSelectingAnimationFace() ? ANIMATION_SELECTION_COLOR : ANIMATION_COLOR);
+        MOFPartPolyAnimEntryList entryList = getUiController().getSelectedList();
+        if (entryList != null) {
+            for (MOFPart part : getFile().asStaticFile().getParts()) {
+                if (part == entryList.getParent()) { // It's the part we can edit.
+                    for (MOFPartPolyAnim anim : part.getPartPolyAnims())
+                        renderOverPolygon(anim.getMofPolygon(), (anim.getEntryList() == entryList) ? ANIMATION_COLOR : CANT_APPLY_COLOR);
 
-        this.textureOverlay = getMofMesh().getManager().addMesh();
+                    // Render over non-textured polys.
+                    for (MOFPolygon mofPolygon : part.getAllPolygons())
+                        if (!(mofPolygon instanceof MOFPolyTexture))
+                            renderOverPolygon(mofPolygon, CANT_APPLY_COLOR);
+                } else { // We can't control this part.
+                    for (MOFPolygon mofPoly : part.getAllPolygons())
+                        renderOverPolygon(mofPoly, CANT_APPLY_COLOR);
+                }
+            }
+
+
+            this.textureOverlay = getMofMesh().getManager().addMesh();
+        }
     }
 
     /**
@@ -634,8 +675,9 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private CheckBox brightModeCheckbox;
         @FXML private CheckBox viewBoundingBoxesCheckbox;
 
+        private MOFPartPolyAnimEntryList selectedList;
         @FXML private TitledPane texturePane;
-        @FXML private CheckBox textureEditCheckbox;
+        @FXML private ChoiceBox<MOFPartPolyAnimEntryList> animationListChoiceBox;
         @FXML private Button addTextureAnimationButton;
         @FXML private GridPane textureEditPane;
         private GUIEditorGrid textureEditGrid;
@@ -706,8 +748,14 @@ public class MOFController extends EditorController<MOFHolder> {
                 controller.updateCollprimBoxes();
             });
 
+            this.animationListChoiceBox.valueProperty().addListener(((observable, oldValue, newValue) -> {
+                this.selectedList = newValue;
+                getController().updateTexture3D();
+                getController().setupAnimationEditor(newValue);
+            }));
+
             this.addTextureAnimationButton.setOnAction(evt -> {
-                getController().selectingAnimationFace = true;
+                getController().selectingPart = true;
                 getController().updateTexture3D();
             });
 
@@ -739,8 +787,6 @@ public class MOFController extends EditorController<MOFHolder> {
                     }
                 }
             });
-
-            getTextureEditCheckbox().setOnMouseClicked(evt -> getController().updateTexture3D());
 
             this.textureEditGrid = new GUIEditorGrid(getTextureEditPane());
             this.collprimEditorGrid = new GUIEditorGrid(getCollprimEditPane());
@@ -777,6 +823,17 @@ public class MOFController extends EditorController<MOFHolder> {
             setHolder(getController()); // Setup current MOF.
         }
 
+        private void updateTextureList() {
+            List<MOFPartPolyAnimEntryList> entryLists = new ArrayList<>();
+            entryLists.add(null);
+            for (MOFPart part : getHolder().asStaticFile().getParts())
+                for (MOFPartPolyAnimEntryList entryList : part.getPartPolyAnimLists())
+                    if (!entryLists.contains(entryList))
+                        entryLists.add(entryList);
+            this.animationListChoiceBox.setItems(FXCollections.observableArrayList(entryLists));
+            this.animationListChoiceBox.setConverter(new AbstractIndexStringConverter<>(entryLists, (index, val) -> val != null ? "Animation #" + (index + 1) + ", Part #" + val.getParent().getPartID() : "None"));
+        }
+
         /**
          * Get the root pane width.
          */
@@ -809,6 +866,8 @@ public class MOFController extends EditorController<MOFHolder> {
 
             updateTempUI();
             modelName.setText(getHolder().getFileEntry().getDisplayName());
+            updateTextureList();
+            this.animationListChoiceBox.getSelectionModel().selectFirst();
         }
 
         private boolean shouldPreventFrameChange() {

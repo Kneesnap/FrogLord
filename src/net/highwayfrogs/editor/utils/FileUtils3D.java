@@ -491,7 +491,6 @@ public class FileUtils3D {
 
     // Other TODOs:
     // TODO: Import textures from imported models. [Requires a system to automatically put textures in vram safely. Also requires FrogLord to be able to handle multiple images with the same id.]
-    // TODO: The texture animation editor should work differently. There should be a list of texture animations, and you should be able to apply one to a polygon. Otherwise, you're just duplicating them over and over.
 
     /**
      * Load a MOF from a model.
