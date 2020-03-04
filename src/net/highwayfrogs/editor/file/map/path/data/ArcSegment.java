@@ -25,6 +25,7 @@ public class ArcSegment extends PathSegment {
     private SVector center = new SVector();
     private SVector normal = new SVector();
     private int pitch; // Delta Y in helix frame. (Can be opposite direction of normal)
+    private transient float distance = (float) (Math.PI / 2); // Length of arc (in radians).
 
     public ArcSegment() {
         super(PathType.ARC, false);
@@ -41,6 +42,11 @@ public class ArcSegment extends PathSegment {
         float diff = Math.abs(Utils.fixedPointIntToFloat4Bit(readRadius - getRadius()));
         if (diff >= 3)
             System.out.println(MWDFile.CURRENT_FILE_NAME + "'s getRadius() calculation was too inaccurate in ArcSegment! (" + diff + ").");
+
+        this.distance = Utils.fixedPointIntToFloat4Bit(getLength()) / Utils.fixedPointIntToFloat4Bit(getRadius());
+
+        if (this.start.getY() != this.center.getY())
+            System.out.println(MWDFile.CURRENT_FILE_NAME + ", " + this.start.getY() + ", " + this.center.getY());
     }
 
     @Override
@@ -95,7 +101,7 @@ public class ArcSegment extends PathSegment {
 
     @Override
     public void recalculateLength() {
-        setLength(Utils.floatToFixedPointInt4Bit(Utils.fixedPointIntToFloat4Bit(getRadius()) * (float) (Math.PI / 2)));
+        setLength(Utils.floatToFixedPointInt4Bit(Utils.fixedPointIntToFloat4Bit(getRadius()) * this.distance));
     }
 
     @Override
@@ -106,9 +112,14 @@ public class ArcSegment extends PathSegment {
     @Override
     public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(path, controller, editor);
-        editor.addFloatVector("Start:", getStart(), () -> onUpdate(controller), controller);
-        editor.addFloatVector("Center:", getCenter(), () -> onUpdate(controller), controller);
 
+        editor.addDoubleSlider("Length", this.distance, newDistance -> {
+            this.distance = (float) (double) newDistance;
+            onUpdate(controller);
+        }, 0, 2 * Math.PI);
+
+        editor.addFloatVector("Center:", getCenter(), () -> onUpdate(controller), controller);
+        editor.addFloatVector("Start:", getStart(), () -> onUpdate(controller), controller);
         editor.addSVector("Normal:", 12, getNormal(), () -> onUpdate(controller));
 
         editor.addFloatField("Pitch:", Utils.fixedPointIntToFloat4Bit(getPitch()), newValue -> {
