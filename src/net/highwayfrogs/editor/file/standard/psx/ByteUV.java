@@ -79,7 +79,7 @@ public class ByteUV extends GameObject {
      * Setup an editor.
      * @param editor The editor to setup under.
      */
-    public void setupEditor(String label, GUIEditorGrid editor) {
+    public void setupEditor(String label, GUIEditorGrid editor, Runnable onUpdate) {
         editor.addTextField(label, getFloatU() + SPLIT_CHAR + getFloatV(), newStr -> {
             if (!newStr.contains(SPLIT_CHAR))
                 return false;
@@ -96,6 +96,8 @@ public class ByteUV extends GameObject {
 
             this.u = Utils.floatToByte(u);
             this.v = Utils.floatToByte(v);
+            if (onUpdate != null)
+                onUpdate.run();
             return true;
         });
     }

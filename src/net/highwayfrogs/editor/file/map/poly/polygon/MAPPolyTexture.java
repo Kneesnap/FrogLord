@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import javafx.scene.control.Alert;
 import javafx.scene.image.ImageView;
+import javafx.scene.paint.Color;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,6 +23,7 @@ import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.system.TexturedPoly;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
@@ -102,18 +104,11 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
     @Override
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
         super.setupEditor(editor, controller);
-        addTextureEditor(editor, controller);
-        addColorEditor(editor, controller);
-        addUvEditor(editor);
-    }
-
-    private void addTextureEditor(GUIEditorGrid editor, MapUIController controller) {
         TextureMap texMap = controller.getMapMesh().getTextureMap();
         VLOArchive suppliedVLO = controller.getController().getFile().getVlo();
-        GameImage image = suppliedVLO.getImageByTextureId(texMap.getRemap(getTextureId()));
 
         // Texture Preview. (Click -> change.)
-        ImageView view = editor.addCenteredImage(Utils.toFXImage(makeShadedTexture(texMap, image.toBufferedImage(SHOW_SETTINGS)), false), 150);
+        ImageView view = editor.addCenteredImage(Utils.toFXImage(makePreviewImage(controller), false), 150);
         view.setOnMouseClicked(evt -> suppliedVLO.promptImageSelection(newImage -> {
             short newValue = newImage.getTextureId();
             if (texMap.getRemapList() != null)
@@ -125,46 +120,57 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
             }
 
             setTextureId(newValue);
-            view.setImage(Utils.toFXImage(makeShadedTexture(texMap, newImage.toBufferedImage(SHOW_SETTINGS)), false));
+            view.setImage(Utils.toFXImage(makePreviewImage(controller), false));
         }, false));
 
         // Flags.
         for (MAPPolyTexture.PolyTextureFlag flag : MAPPolyTexture.PolyTextureFlag.values())
             editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> setFlag(flag, newState));
-    }
 
-    private void addColorEditor(GUIEditorGrid editor, MapUIController controller) {
+        // UVs
+        for (int i = 0; i < this.uvs.length; i++)
+            this.uvs[i].setupEditor("UV #" + i, editor, () -> view.setImage(Utils.toFXImage(makePreviewImage(controller), false)));
+
+        // Colors
         editor.addBoldLabel("Colors:");
         String[] nameArray = COLOR_BANK[getColors().length - 1];
         for (int i = 0; i < getColors().length; i++)
             editor.addColorPicker(nameArray[i], getColors()[i].toRGB(), getColors()[i]::fromRGB);
     }
 
-    private void addUvEditor(GUIEditorGrid editor) {
-        for (int i = 0; i < this.uvs.length; i++) // TODO: Consider having sliders + a live preview.
-            this.uvs[i].setupEditor("UV #" + i, editor);
-    }
+    private BufferedImage makePreviewImage(MapUIController controller) {
+        BufferedImage previewImage = makeShadedTexture(controller.getMapMesh().getTextureMap(), getGameImage(controller.getMapMesh().getTextureMap()).toBufferedImage(SHOW_SETTINGS));
 
-    @Override
-    protected void addQuadEditor(GUIEditorGrid editor) {
-        editor.addCheckBox("Quad", isQuadFace(), newValue -> {
-            int newSize = newValue ? 4 : 3;
-            int copySize = Math.min(newSize, getVertices().length);
+        // Apply UVs.
+        int width = previewImage.getWidth();
+        int height = previewImage.getHeight();
+        int minX = width - 1;
+        int maxX = 0;
+        int minY = height - 1;
+        int maxY = 0;
+        for (ByteUV uv : getUvs()) {
+            int x = Math.round(uv.getFloatU() * width);
+            int y = Math.round(uv.getFloatV() * height);
+            if (x < minX)
+                minX = x;
+            if (x > maxX)
+                maxX = x;
+            if (y > maxY)
+                maxY = y;
+            if (y < minY)
+                minY = y;
+        }
 
-            // Copy vertices.
-            int[] newVertices = new int[newSize];
-            System.arraycopy(getVertices(), 0, newVertices, 0, copySize);
-            setVertices(newVertices);
+        Graphics2D graphics = previewImage.createGraphics();
+        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .5F));
+        graphics.setPaint(Utils.toAWTColor(Color.BLACK));
+        graphics.fillRect(0, 0, minX, height);
+        graphics.fillRect(maxX, 0, width - maxX, height);
+        graphics.fillRect(minX, 0, maxX - minX, minY);
+        graphics.fillRect(minX, maxY, maxX - minX, height - maxY);
+        graphics.dispose();
 
-            // Copy uvs.
-            ByteUV[] newUvs = new ByteUV[newSize];
-            if (getUvs() != null)
-                System.arraycopy(getUvs(), 0, newUvs, 0, copySize);
-            for (int i = 0; i < newUvs.length; i++)
-                if (newUvs[i] == null)
-                    newUvs[i] = new ByteUV();
-            setUvs(newUvs);
-        });
+        return previewImage;
     }
 
     /**
@@ -274,6 +280,27 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
             for (int y = 0; y < newImage.getHeight(); y++) {
                 int rgb = applyImage.getRGB(x, y);
                 int overlay = shadeImage.getRGB(x, y);
+                int alpha = (rgb & 0xFF000000) >> 24;
+                int red = (int) (((double) Utils.getRedInt(overlay) / 127D) * (double) Utils.getRedInt(rgb));
+                int green = (int) (((double) Utils.getGreenInt(overlay) / 127D) * (double) Utils.getGreenInt(rgb));
+                int blue = (int) (((double) Utils.getBlueInt(overlay) / 127D) * (double) Utils.getBlueInt(rgb));
+                newImage.setRGB(x, y, ((alpha << 24) | ((red & 0xFF) << 16) | ((green & 0xFF) << 8) | (blue & 0xFF)));
+            }
+        }
+
+        return newImage;
+    }
+
+    /**
+     * Creates a texture which has flat shading applied.
+     * @return shadedTexture
+     */
+    public static BufferedImage makeFlatShadedTexture(BufferedImage applyImage, Color color) {
+        int overlay = Utils.toRGB(color);
+        BufferedImage newImage = new BufferedImage(applyImage.getWidth(), applyImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        for (int x = 0; x < newImage.getWidth(); x++) {
+            for (int y = 0; y < newImage.getHeight(); y++) {
+                int rgb = applyImage.getRGB(x, y);
                 int alpha = (rgb & 0xFF000000) >> 24;
                 int red = (int) (((double) Utils.getRedInt(overlay) / 127D) * (double) Utils.getRedInt(rgb));
                 int green = (int) (((double) Utils.getGreenInt(overlay) / 127D) * (double) Utils.getGreenInt(rgb));

@@ -57,19 +57,6 @@ public abstract class MAPPolygon extends MAPPrimitive implements TextureSource {
      */
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
         editor.addBoldLabel(getClass().getSimpleName());
-        addQuadEditor(editor);
-    }
-
-    protected void addQuadEditor(GUIEditorGrid editor) {
-        editor.addCheckBox("Quad", isQuadFace(), newValue -> {
-            int newSize = newValue ? 4 : 3;
-            int copySize = Math.min(newSize, getVertices().length);
-
-            // Copy vertices.
-            int[] newVertices = new int[newSize];
-            System.arraycopy(getVertices(), 0, newVertices, 0, copySize);
-            setVertices(newVertices);
-        });
     }
 
     /**
