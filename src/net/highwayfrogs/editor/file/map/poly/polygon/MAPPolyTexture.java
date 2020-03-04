@@ -135,7 +135,7 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
         editor.addBoldLabel("Colors:");
         String[] nameArray = COLOR_BANK[getColors().length - 1];
         for (int i = 0; i < getColors().length; i++)
-            editor.addColorPicker(nameArray[i], getColors()[i].toRGB(), getColors()[i]::fromRGB);
+            getColors()[i].setupEditor(editor, nameArray[i], getGameImage(controller.getMapMesh().getTextureMap()).toBufferedImage(SHOW_SETTINGS), null);
     }
 
     private BufferedImage makePreviewImage(MapUIController controller) {

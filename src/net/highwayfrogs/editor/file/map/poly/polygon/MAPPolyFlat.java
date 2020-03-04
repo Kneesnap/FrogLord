@@ -43,10 +43,7 @@ public class MAPPolyFlat extends MAPPolygon {
     @Override
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
         super.setupEditor(editor, controller);
-
-        // Color Editor.
-        editor.addBoldLabel("Color:");
-        editor.addColorPicker(SINGLE_COLOR_NAME[0], getColor().toRGB(), getColor()::fromRGB);
+        getColor().setupEditor(editor, "Color", null, null);
     }
 
     @Override
