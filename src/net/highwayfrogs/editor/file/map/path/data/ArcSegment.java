@@ -44,9 +44,6 @@ public class ArcSegment extends PathSegment {
             System.out.println(MWDFile.CURRENT_FILE_NAME + "'s getRadius() calculation was too inaccurate in ArcSegment! (" + diff + ").");
 
         this.distance = Utils.fixedPointIntToFloat4Bit(getLength()) / Utils.fixedPointIntToFloat4Bit(getRadius());
-
-        if (this.start.getY() != this.center.getY())
-            System.out.println(MWDFile.CURRENT_FILE_NAME + ", " + this.start.getY() + ", " + this.center.getY());
     }
 
     @Override
