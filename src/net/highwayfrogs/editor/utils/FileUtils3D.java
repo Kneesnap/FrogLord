@@ -477,7 +477,7 @@ public class FileUtils3D {
     }
 
     private static SVector floatToVec(float[] floatArray) {
-        return new SVector(floatArray[0], floatArray[1], floatArray[2]);
+        return new SVector(-floatArray[0], -floatArray[1], floatArray[2]);
     }
 
     @Getter
@@ -490,7 +490,8 @@ public class FileUtils3D {
     }
 
     // Other TODOs:
-    // TODO: Import textures from imported models.
+    // TODO: Import textures from imported models. [Requires a system to automatically put textures in vram safely. Also requires FrogLord to be able to handle multiple images with the same id.]
+    // TODO: The texture animation editor should work differently. There should be a list of texture animations, and you should be able to apply one to a polygon. Otherwise, you're just duplicating them over and over.
 
     /**
      * Load a MOF from a model.
@@ -507,7 +508,14 @@ public class FileUtils3D {
         boolean isUnsafeReplacementArea = (holder.getTheme() == null || holder.getTheme() == MAPTheme.GENERAL);
         if (isUnsafeReplacementArea && holder.isAnimatedMOF()) { // Unfortunately, the game assumes these models are animated, and it will crap itself if we try to give it a static model.
             Utils.makePopUp("This XAR model cannot be overwritten by a mm3d model.", AlertType.ERROR);
-            return; //TODO: Look into supporting parts.
+
+            // TODO: For supporting parts.
+            //  - Is it possible to have the same triangle in multiple groups? Maybe we could have groups for parts, parallel to textures.
+            //  - For keeping XAR animation, we can use the whole skeletal animation system.
+            //  - Yeah, this can be done.
+            //  - Though, we'll need to fix the rest of the method to not work under the assumption that there's a single static part.
+
+            return;
         }
 
         MOFFile staticMof = holder.isDummy() ? new MOFFile(holder) : holder.asStaticFile();
@@ -579,30 +587,6 @@ public class FileUtils3D {
                     part.getHilites().add(oldHilite);
                 }
             }
-
-            for (MOFPartPolyAnim partPolyAnim : oldPart.getPartPolyAnims()) { // Port Texture Animations.
-                MOFPolygon newPolygon = null; //TODO: !!! [How will figuring out what the new representation of an old polygon work? Probably just compare vertices and order. Quads still create a problem.] Maybe: Keep track of polygons which share vertices, indexed by vertice. That way we can just find useful ones, and work from there.
-                if (newPolygon == null)
-                    continue; // Couldn't find a new polygon which matched the old one, so skip.
-
-                MOFPolygon oldPolygon = partPolyAnim.getMofPolygon();
-                partPolyAnim.setPrimType(newPolygon.getType());
-                partPolyAnim.setMofPolygon(newPolygon);
-                partPolyAnim.setParentPart(part);
-                part.getPartPolyAnims().add(partPolyAnim);
-
-                MOFPartPolyAnimEntryList entryList = partPolyAnim.getEntryList();
-                if (oldPolygon.isQuadFace() && !newPolygon.isQuadFace()) {
-                    MOFPolygon otherNew = null; //TODO: Figure this out as well.
-                    if (otherNew != null)
-                        part.getPartPolyAnims().add(new MOFPartPolyAnim(part, otherNew, entryList));
-                }
-
-                if (entryList.getParent() != part) { // Link the old entry list, unless it's already linked to the new part.
-                    entryList.setParent(part);
-                    part.getPartPolyAnimLists().add(entryList);
-                }
-            }
         }
 
         // Add Flipbook animations.
@@ -615,7 +599,7 @@ public class FileUtils3D {
                 for (MMFloatVertex vertex : frame.getVertexPositions())
                     newCel.getVertices().add(new SVector(-vertex.getX(), -vertex.getY(), vertex.getZ()));
 
-                newCel.getNormals().addAll(basePartcel.getNormals()); //TODO: Calculate Normals Instead. (Need to know what the normals data is first.)
+                newCel.getNormals().addAll(basePartcel.getNormals()); //TODO: Calculate Normals instead. See if there's any easy way to do this. Do the partcels even have normals usually? As far as I'm aware, XAR animations don't use normals, so we should check that vertex normals are used as well. Check what XAR animation does, and if it's really unused.
 
                 // Add new frame of animation.
                 part.getPartcels().add(newCel);
@@ -656,6 +640,7 @@ public class FileUtils3D {
             MMTriangleNormalsBlock normals = normalMap.get(i);
             MMTextureCoordinatesBlock texCoords = uvMap.get(i);
 
+            MOFPart partOwner = part; //TODO: Get this from somewhere. If there's a joint, get it from that, otherwise use a static part.
             boolean isTextured = material != null && ((material.getFlags() & MMMaterialsBlock.FLAG_NO_TEXTURE) != MMMaterialsBlock.FLAG_NO_TEXTURE);
             boolean isGouraud = normals != null && Arrays.equals(normals.getV1Normals(), normals.getV2Normals()) && Arrays.equals(normals.getV1Normals(), normals.getV3Normals());
 
@@ -664,7 +649,7 @@ public class FileUtils3D {
                     ? (isGouraud ? MOFPrimType.GT3 : MOFPrimType.FT3)
                     : (isGouraud ? MOFPrimType.G3 : MOFPrimType.F3);
 
-            MOFPolygon poly = primType.makeNew(part);
+            MOFPolygon poly = primType.makeNew(partOwner);
             if (isTextured && (poly instanceof MOFPolyTexture) && material.getName().startsWith(MATERIAL_NAME_PREFIX)) {
                 MOFPolyTexture polyTex = (MOFPolyTexture) poly;
                 String trailingNumber = material.getName().substring(MATERIAL_NAME_PREFIX.length()).split("-")[0];
@@ -682,20 +667,20 @@ public class FileUtils3D {
                     for (int j = 0; j < polyTex.getUvs().length; j++)
                         polyTex.getUvs()[poly.getVerticeCount() - j - 1] = new ByteUV(texCoords.getXCoordinates()[j], texCoords.getYCoordinates()[j]);
 
-                polyTex.getColor().fromRGB(0x7F7F7F); // No color. TODO: Look into how important keeping the color is. Can we use any material properties to make this work? For instance, combining the external texture with a diffuse color? As long as we're able to look the color up both ways, we should be able to append an arbitrary suffix like tex123-color1 or tex123-user_message
+                polyTex.getColor().fromRGB(0x7F7F7F); // TODO: Remember color. Can we use any material properties to make this work? If yes, we can have arbitrary suffix like tex123-color1 or tex123-user_message, otherwise it has to be tex123-7f7f7f. Another option is to analyze models and see if maybe it's not so unique, for instance if all colors are shared per texture, or something.
             }
 
             for (int j = 0; j < poly.getVerticeCount(); j++)
                 poly.getVertices()[poly.getVerticeCount() - j - 1] = (int) faceBlock.getVertices()[j];
 
-            if (normals != null) { //TODO: This is busted atm.
-                /*if (poly.getNormals().length == 1) {
+            if (normals != null) {
+                if (poly.getNormals().length == 1) {
                     poly.getNormals()[0] = baseNormalIndices.get(floatToVec(normals.getV1Normals()));
                 } else if (poly.getNormals().length == 3) {
-                    poly.getNormals()[0] = baseNormalIndices.get(floatToVec(normals.getV1Normals()));;
-                    poly.getNormals()[1] = baseNormalIndices.get(floatToVec(normals.getV2Normals()));;
-                    poly.getNormals()[2] = baseNormalIndices.get(floatToVec(normals.getV3Normals()));;
-                }*/
+                    poly.getNormals()[0] = baseNormalIndices.get(floatToVec(normals.getV1Normals()));
+                    poly.getNormals()[1] = baseNormalIndices.get(floatToVec(normals.getV2Normals()));
+                    poly.getNormals()[2] = baseNormalIndices.get(floatToVec(normals.getV3Normals()));
+                }
             }
 
             if (!isTextured) { // Load the color.
@@ -706,8 +691,61 @@ public class FileUtils3D {
             }
 
             // Register the polygon.
-            part.getMofPolygons().computeIfAbsent(poly.getType(), key -> new ArrayList<>()).add(poly);
-            part.getOrderedByLoadPolygons().add(poly);
+            partOwner.getMofPolygons().computeIfAbsent(poly.getType(), key -> new ArrayList<>()).add(poly);
+            partOwner.getOrderedByLoadPolygons().add(poly);
         }
+
+        // Build Vertex Map.
+        Map<SVector, Set<MOFPolygon>> polyMap = new HashMap<>();
+        for (MOFPolygon poly : staticMof.getAllPolygons()) {
+            MOFPartcel partCel = poly.getParentPart().getStaticPartcel();
+            for (int i = 0; i < poly.getVerticeCount(); i++)
+                polyMap.computeIfAbsent(partCel.getVertices().get(poly.getVertices()[i]), key -> new HashSet<>()).add(poly);
+        }
+
+        // Port Texture Animations to the new model.
+        for (MOFPart oldPart : oldParts) {
+            for (MOFPartPolyAnim partPolyAnim : oldPart.getPartPolyAnims()) {
+                MOFPolygon oldPolygon = partPolyAnim.getMofPolygon();
+                MOFPartcel oldPartcel = oldPart.getStaticPartcel();
+                MOFPolygon newPolygon = getPolygonFromVertices(polyMap, oldPolygon, oldPartcel.getVertices().get(oldPolygon.getVertices()[0]), oldPartcel.getVertices().get(oldPolygon.getVertices()[1]), oldPartcel.getVertices().get(oldPolygon.getVertices()[oldPolygon.isQuadFace() ? 3 : 2]));
+                if (newPolygon == null)
+                    continue; // Couldn't find a new polygon which matched the old one, so skip.
+
+                MOFPart polyPart = newPolygon.getParentPart();
+                partPolyAnim.setPrimType(newPolygon.getType());
+                partPolyAnim.setMofPolygon(newPolygon);
+                partPolyAnim.setParentPart(polyPart);
+                polyPart.getPartPolyAnims().add(partPolyAnim);
+
+                MOFPartPolyAnimEntryList entryList = partPolyAnim.getEntryList();
+                if (oldPolygon.isQuadFace() && !newPolygon.isQuadFace()) {
+                    MOFPolygon otherNew = getPolygonFromVertices(polyMap, oldPolygon, oldPartcel.getVertices().get(oldPolygon.getVertices()[1]), oldPartcel.getVertices().get(oldPolygon.getVertices()[2]), oldPartcel.getVertices().get(oldPolygon.getVertices()[3]));
+                    if (otherNew != null)
+                        polyPart.getPartPolyAnims().add(new MOFPartPolyAnim(polyPart, otherNew, entryList));
+                }
+
+                if (entryList.getParent() != polyPart) { // Link the old entry list, unless it's already linked to the new part.
+                    entryList.setParent(polyPart);
+                    polyPart.getPartPolyAnimLists().add(entryList);
+                }
+            }
+        }
+    }
+
+    private static MOFPolygon getPolygonFromVertices(Map<SVector, Set<MOFPolygon>> polyMap, MOFPolygon oldPoly, SVector... vertices) {
+        short oldTextureId = (oldPoly instanceof MOFPolyTexture) ? ((MOFPolyTexture) oldPoly).getImageId() : (short) -1;
+
+        Map<MOFPolygon, Integer> countMap = new HashMap<>();
+        for (SVector vertex : vertices)
+            for (MOFPolygon poly : polyMap.get(vertex))
+                countMap.put(poly, countMap.getOrDefault(poly, 0) + 1);
+
+        MOFPolygon bestMatch = null;
+        for (MOFPolygon poly : countMap.keySet())
+            if (countMap.get(poly) == vertices.length && (bestMatch == null || (poly instanceof MOFPolyTexture && ((MOFPolyTexture) poly).getImageId() == oldTextureId)))
+                bestMatch = poly;
+
+        return bestMatch;
     }
 }
