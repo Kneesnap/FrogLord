@@ -212,17 +212,39 @@ public class FileUtils3D {
             objWriter.write(Constants.NEWLINE);
         }
 
-        // Write Vertexes.
-        for (SVector vertex : map.getVertexes())
-            objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
-        objWriter.write(Constants.NEWLINE);
-
-        // Write Faces.
         List<MAPPolygon> allPolygons = map.getAllPolygonsSafe();
+        if (exportTextures)
+            allPolygons.sort(Comparator.comparingInt(MAPPolygon::getOrderId)); // Groups textures together. Must happen before any other use of this.
+
+        // Write Vertices.
+        for (MAPPolygon poly : allPolygons) {
+            for (int i = 0; i < poly.getVerticeCount(); i++) {
+                SVector vtx = map.getVertexes().get(poly.getVertices()[poly.getVerticeCount() - i - 1]);
+                String base = vtx.toOBJString();
+
+                if (poly instanceof MAPPolyTexture) {
+                    MAPPolyTexture polyTex = (MAPPolyTexture) poly;
+
+                    int colorIndex = poly.getVerticeCount() - i - 1;
+                    if (polyTex.getColors().length == 1) {
+                        colorIndex = 0;
+                    } else if (colorIndex == 3) {
+                        colorIndex = 2;
+                    } else if (colorIndex == 2 && poly.isQuadFace()) {
+                        colorIndex = 3;
+                    }
+
+                    PSXColorVector color = polyTex.getColors()[colorIndex];
+                    base += " " + (color.getRed() / 127D) + " " + (color.getGreen() / 127D) + " " + (color.getBlue() / 127D);
+                }
+
+                objWriter.write(base + Constants.NEWLINE);
+            }
+        }
+        objWriter.write(Constants.NEWLINE);
 
         // Register textures.
         if (exportTextures) {
-            allPolygons.sort(Comparator.comparingInt(MAPPolygon::getOrderId)); // Groups textures together.
             objWriter.write("# Vertex Textures" + Constants.NEWLINE);
 
             DecimalFormat df = new DecimalFormat("#");
@@ -269,9 +291,18 @@ public class FileUtils3D {
         if (exportTextures)
             objWriter.write("usemtl master" + Constants.NEWLINE);
 
-        AtomicInteger counter = new AtomicInteger();
-        for (MAPPolygon polygon : allPolygons)
-            objWriter.write(polygon.toObjFaceCommand(exportTextures, counter) + Constants.NEWLINE);
+        int count = 1;
+        for (int i = 0; i < allPolygons.size(); i++) {
+            MAPPolygon mapPoly = allPolygons.get(i);
+
+            StringBuilder builder = new StringBuilder("f");
+            for (int j = 0; j < mapPoly.getVerticeCount(); j++, count++) {
+                builder.append(" ").append(count);
+                if (exportTextures)
+                    builder.append("/").append(count);
+            }
+            objWriter.write(builder.toString() + Constants.NEWLINE);
+        }
 
         // Write MTL file and textures.
         if (exportTextures) {

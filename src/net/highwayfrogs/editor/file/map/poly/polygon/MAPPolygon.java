@@ -10,8 +10,6 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * Represents Playstation polygon data.
  * Created by Kneesnap on 8/25/2018.
@@ -57,20 +55,6 @@ public abstract class MAPPolygon extends MAPPrimitive implements TextureSource {
      */
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
         editor.addBoldLabel(getClass().getSimpleName());
-    }
-
-    /**
-     * Convert this into a wavefront object face command.
-     * @return faceCommand
-     */
-    public String toObjFaceCommand(boolean showTextures, AtomicInteger textureCounter) {
-        StringBuilder builder = new StringBuilder("f");
-        for (int i = getVerticeCount() - 1; i >= 0; i--) {
-            builder.append(" ").append(getVertices()[i] + 1);
-            if (showTextures)
-                builder.append("/").append(textureCounter != null ? textureCounter.incrementAndGet() : 0);
-        }
-        return builder.toString();
     }
 
     /**

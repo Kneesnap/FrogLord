@@ -158,7 +158,6 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive & TextureSource> extend
 
     /**
      * Load mesh data from the map.
-     * TODO: Keep everything added after polygon data.
      */
     public void updateData() {
         this.verticeStart = 0;
