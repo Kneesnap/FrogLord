@@ -405,7 +405,8 @@ public class FileUtils3D {
         }
 
         // Add Faces and Textures.
-        Map<Short, MOFTextureData> dataMap = new HashMap<>();
+        Map<ColorKey, MOFTextureData> dataMap = new HashMap<>();
+        Map<Short, Integer> exTexMap = new HashMap<>();
         Map<PSXColorVector, MOFTextureData> colorMap = new HashMap<>();
         List<MOFPolygon> polygonList = staticMof.getAllPolygons();
         for (MOFPolygon poly : polygonList) {
@@ -416,23 +417,30 @@ public class FileUtils3D {
             if (poly instanceof MOFPolyTexture) {
                 MOFPolyTexture polyTex = (MOFPolyTexture) poly;
 
-                data = dataMap.computeIfAbsent(polyTex.getImageId(), key -> {
-                    GameImage image = vloTable.getImageByTextureId(key);
+                data = dataMap.computeIfAbsent(new ColorKey(polyTex.getImageId(), polyTex.getColor()), key -> {
+                    GameImage image = vloTable.getImageByTextureId(key.getImageId());
                     int localId = image.getLocalImageID();
                     int texId = image.getTextureId();
 
                     // Create material.
-                    int externalTextureId = model.getExternalTextures().size();
-                    model.getExternalTextures().addTexture(localId + ".png"); // Add external texture.
+                    if (!exTexMap.containsKey(key.getImageId())) { //TODO: Somehow the external texture is wrong, even when the group name is correct.
+                        exTexMap.put(key.getImageId(), model.getExternalTextures().size());
+                        model.getExternalTextures().addTexture(localId + ".png"); // Add external texture.
+                    }
+
+                    int externalTextureId = exTexMap.get(key.getImageId());
 
                     int materialId = model.getMaterials().size();
                     MMMaterialsBlock material = model.getMaterials().addNewElement();
                     material.setTexture(externalTextureId);
-                    material.setName(MATERIAL_NAME_PREFIX + texId);
+                    material.setName(MATERIAL_NAME_PREFIX + texId + "-" + Integer.toHexString(key.getColor().toRGB()));
+                    material.getDiffuse()[0] = (key.getColor().getRed() / 127F);
+                    material.getDiffuse()[1] = (key.getColor().getGreen() / 127F);
+                    material.getDiffuse()[2] = (key.getColor().getBlue() / 127F);
 
                     // Create new group.
                     MMTriangleGroupsBlock group = model.getGroups().addNewElement();
-                    group.setName("texGroup" + texId);
+                    group.setName("texGroup" + texId + "-" + Integer.toHexString(key.getColor().toRGB()));
                     group.setMaterial(materialId);
                     return new MOFTextureData(image, externalTextureId, group, material);
                 });
@@ -509,6 +517,23 @@ public class FileUtils3D {
 
     private static SVector floatToVec(float[] floatArray) {
         return new SVector(-floatArray[0], -floatArray[1], floatArray[2]);
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static class ColorKey {
+        private short imageId;
+        private final PSXColorVector color;
+
+        @Override
+        public int hashCode() {
+            return ((color.getRed() | 0b111111) << 10) | ((color.getBlue() | 0b11111) << 5) | (color.getGreen() | 0b11111) | (this.imageId << 15);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return (other instanceof ColorKey) && this.color.equals(((ColorKey) other).getColor()) && this.imageId == ((ColorKey) other).getImageId();
+        }
     }
 
     @Getter
@@ -682,7 +707,7 @@ public class FileUtils3D {
             MOFPolygon poly = primType.makeNew(partOwner);
             if (isTextured && (poly instanceof MOFPolyTexture) && material.getName().startsWith(MATERIAL_NAME_PREFIX)) {
                 MOFPolyTexture polyTex = (MOFPolyTexture) poly;
-                String trailingNumber = material.getName().substring(MATERIAL_NAME_PREFIX.length()).split("-")[0];
+                String trailingNumber = material.getName().substring(MATERIAL_NAME_PREFIX.length()).split("-")[0];  //TODO: Eventually switch this to check the texture filename, not the material name.
                 if (!Utils.isInteger(trailingNumber))
                     throw new RuntimeException("'" + trailingNumber + "' is not a numeric texture id. (Material Name)");
 
@@ -697,7 +722,7 @@ public class FileUtils3D {
                     for (int j = 0; j < polyTex.getUvs().length; j++)
                         polyTex.getUvs()[poly.getVerticeCount() - j - 1] = new ByteUV(texCoords.getXCoordinates()[j], texCoords.getYCoordinates()[j]);
 
-                polyTex.getColor().fromRGB(0x7F7F7F); // TODO: Remember color. Can we use any material properties to make this work? If yes, we can have arbitrary suffix like tex123-color1 or tex123-user_message, otherwise it has to be tex123-7f7f7f. Another option is to analyze models and see if maybe it's not so unique, for instance if all colors are shared per texture, or something.
+                polyTex.getColor().fromRGB(0x7F7F7F); // TODO: Remember color, we can make this work with diffuse color.
             }
 
             for (int j = 0; j < poly.getVerticeCount(); j++)
