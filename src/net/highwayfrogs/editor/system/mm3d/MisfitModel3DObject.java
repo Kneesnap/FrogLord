@@ -16,6 +16,7 @@ import java.util.*;
  * Represents a mm3d file.
  * Format Version: 1.6
  * Specification: http://www.misfitcode.com/misfitmodel3d/olh_mm3dformat.html
+ * New Spec: https://clover.moe/mm3d_manual/olh_mm3dformat.html#overview
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
@@ -35,6 +36,12 @@ public class MisfitModel3DObject extends GameObject {
     private MMDataBlockHeader<MMTriangleNormalsBlock> normals = new MMDataBlockHeader<>(OffsetType.TRIANGLE_NORMALS, this);
     private MMDataBlockHeader<MMVerticeBlock> vertices = new MMDataBlockHeader<>(OffsetType.VERTICES, this);
     private MMDataBlockHeader<MMPointsBlock> points = new MMDataBlockHeader<>(OffsetType.POINTS, this);
+    private MMDataBlockHeader<MMCanvasBackgroundImage> canvasBackgroundImages = new MMDataBlockHeader<>(OffsetType.CANVAS_BACKGROUND_IMAGES, this);
+    private MMDataBlockHeader<MMSkeletalAnimationBlock> skeletalAnimations = new MMDataBlockHeader<>(OffsetType.SKELETAL_ANIMATIONS, this);
+    private MMDataBlockHeader<MMJointsBlock> joints = new MMDataBlockHeader<>(OffsetType.JOINTS, this);
+    private MMDataBlockHeader<MMJointVerticesBlock> jointVertices = new MMDataBlockHeader<>(OffsetType.JOINT_VERTICES, this);
+    private MMDataBlockHeader<MMTextureProjectionsBlock> textureProjections = new MMDataBlockHeader<>(OffsetType.TEXTURE_PROJECTIONS, this);
+    private MMDataBlockHeader<MMWeightedInfluencesBlock> weightedInfluences = new MMDataBlockHeader<>(OffsetType.WEIGHTED_INFLUENCES, this);
 
     private static final Set<OffsetType> FIRST_ROUND_READ = new HashSet<>(Arrays.asList(OffsetType.VERTICES, OffsetType.POINTS)); // These values need to be read before the rest, since information about them are used in other places.
 
