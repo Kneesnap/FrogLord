@@ -322,9 +322,8 @@ public class FileUtils3D {
 
     /**
      * Convert a MOF to a MisfitModel3D.
-     * mm3d does not support:
-     * - Texture animations. (Flipbook)
-     * - Quads
+     * Notes: Misfit Model 3D has a bug in it regarding texture management, where it will use the wrong material, for instance on the underwater portion of SUB_LOG in SUB1.
+     * It seems using Maverick Model 3D instead fixes this problem.
      * @param holder The mof to convert.
      * @return misfit3d
      */
@@ -406,7 +405,7 @@ public class FileUtils3D {
 
         // Add Faces and Textures.
         Map<ColorKey, MOFTextureData> dataMap = new HashMap<>();
-        Map<Short, Integer> exTexMap = new HashMap<>();
+        Map<Integer, Integer> exTexMap = new HashMap<>();
         Map<PSXColorVector, MOFTextureData> colorMap = new HashMap<>();
         List<MOFPolygon> polygonList = staticMof.getAllPolygons();
         for (MOFPolygon poly : polygonList) {
@@ -423,13 +422,12 @@ public class FileUtils3D {
                     int texId = image.getTextureId();
 
                     // Create material.
-                    if (!exTexMap.containsKey(key.getImageId())) { //TODO: Somehow the external texture is wrong, even when the group name is correct.
-                        exTexMap.put(key.getImageId(), model.getExternalTextures().size());
+                    if (!exTexMap.containsKey(localId)) {
+                        exTexMap.put(localId, model.getExternalTextures().size());
                         model.getExternalTextures().addTexture(localId + ".png"); // Add external texture.
                     }
 
-                    int externalTextureId = exTexMap.get(key.getImageId());
-
+                    int externalTextureId = exTexMap.get(localId);
                     int materialId = model.getMaterials().size();
                     MMMaterialsBlock material = model.getMaterials().addNewElement();
                     material.setTexture(externalTextureId);
@@ -547,6 +545,7 @@ public class FileUtils3D {
 
     // Other TODOs:
     // TODO: Import textures from imported models. [Requires a system to automatically put textures in vram safely. Also requires FrogLord to be able to handle multiple images with the same id.]
+    //TODO: Fix model shading in viewer. (Example: SUB_LOG)
 
     /**
      * Load a MOF from a model.
@@ -722,7 +721,10 @@ public class FileUtils3D {
                     for (int j = 0; j < polyTex.getUvs().length; j++)
                         polyTex.getUvs()[poly.getVerticeCount() - j - 1] = new ByteUV(texCoords.getXCoordinates()[j], texCoords.getYCoordinates()[j]);
 
-                polyTex.getColor().fromRGB(0x7F7F7F); // TODO: Remember color, we can make this work with diffuse color.
+                byte red = (byte) (int) (material.getDiffuse()[0] * 127);
+                byte green = (byte) (int) (material.getDiffuse()[1] * 127);
+                byte blue = (byte) (int) (material.getDiffuse()[2] * 127);
+                polyTex.getColor().fromRGB(Utils.toRGB(red, green, blue));
             }
 
             for (int j = 0; j < poly.getVerticeCount(); j++)
