@@ -72,6 +72,10 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
                 }
             }
         }
+
+        // Setup the mesh for all of the polygons that have been drawn..
+        for (MOFPolygon poly : getMofHolder().asStaticFile().getAllPolygons())
+            poly.onMeshSetup(this);
     }
 
     @Override
