@@ -17,10 +17,12 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 @Setter
 public class MMWeightedInfluencesBlock extends MMDataBlockBody {
     private MMWeightedPositionType positionType;
-    private long positionIndex; // Index into vertex or point array, based on type.
-    private long boneJointIndex;
+    private int positionIndex; // Index into vertex or point array, based on type.
+    private int boneJointIndex;
     private MMWeightedInfluenceType influenceType;
     private byte influenceWeight; // 0 - 100.
+
+    public static final byte MAX_INFLUENCE_WEIGHT = (byte) 100;
 
     public MMWeightedInfluencesBlock(MisfitModel3DObject parent) {
         super(OffsetType.WEIGHTED_INFLUENCES, parent);
@@ -29,8 +31,8 @@ public class MMWeightedInfluencesBlock extends MMDataBlockBody {
     @Override
     public void load(DataReader reader) {
         this.positionType = MMWeightedPositionType.getType(reader.readByte());
-        this.positionIndex = reader.readUnsignedIntAsLong();
-        this.boneJointIndex = reader.readUnsignedIntAsLong();
+        this.positionIndex = reader.readInt();
+        this.boneJointIndex = reader.readInt();
         this.influenceType = MMWeightedInfluenceType.values()[reader.readByte()];
         this.influenceWeight = reader.readByte();
     }
@@ -38,8 +40,8 @@ public class MMWeightedInfluencesBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeByte((byte) this.positionType.getNumber());
-        writer.writeUnsignedInt(this.positionIndex);
-        writer.writeUnsignedInt(this.boneJointIndex);
+        writer.writeInt(this.positionIndex);
+        writer.writeInt(this.boneJointIndex);
         writer.writeByte((byte) this.influenceType.ordinal());
         writer.writeByte(this.influenceWeight);
     }
@@ -49,8 +51,8 @@ public class MMWeightedInfluencesBlock extends MMDataBlockBody {
      * @param newWeight The new weight to use. Must be within [0,100].
      */
     public void setInfluenceWeight(byte newWeight) {
-        if (newWeight < 0 || newWeight > 100)
-            throw new RuntimeException("The specified weight (" + newWeight + "), was not in the range [0, 100]!");
+        if (newWeight < 0 || newWeight > MAX_INFLUENCE_WEIGHT)
+            throw new RuntimeException("The specified weight (" + newWeight + "), was not in the range [0, " + MAX_INFLUENCE_WEIGHT + "]!");
         this.influenceWeight = newWeight;
     }
 

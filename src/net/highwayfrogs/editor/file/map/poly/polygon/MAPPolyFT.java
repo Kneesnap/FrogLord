@@ -50,7 +50,7 @@ public class MAPPolyFT extends MAPPolyTexture {
         BufferedImage shadeImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = shadeImage.createGraphics();
 
-        graphics.setColor(useRaw ? getColors()[0].toColor() : Utils.toAWTColor(MAPPolyGT.loadColor(getColors()[0])));
+        graphics.setColor(useRaw ? getColors()[0].toShadeColor() : Utils.toAWTColor(MAPPolyGT.loadColor(getColors()[0])));
         graphics.fillRect(0, 0, shadeImage.getWidth(), shadeImage.getHeight());
 
         graphics.dispose();

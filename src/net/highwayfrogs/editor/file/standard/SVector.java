@@ -115,6 +115,14 @@ public class SVector extends GameObject implements Vector {
     }
 
     /**
+     * Clones the SVector.
+     */
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    public SVector clone() {
+        return new SVector(this.x, this.y, this.z);
+    }
+
+    /**
      * Add another SVector to this one.
      * @param other The other SVector to add.
      */
@@ -140,7 +148,7 @@ public class SVector extends GameObject implements Vector {
      * Multiply SVector.
      * @param factor The factor.
      */
-    public SVector multiply(int factor) {
+    public SVector multiply(double factor) {
         this.x *= factor;
         this.y *= factor;
         this.z *= factor;

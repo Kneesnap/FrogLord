@@ -16,11 +16,11 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 @Getter
 @Setter
 public class MMTriangleFaceBlock extends MMDataBlockBody {
-    private int flags;
-    private long[] vertices = new long[3];
+    private short flags;
+    private int[] vertices = new int[3];
 
-    public static final int FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
-    public static final int FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
+    public static final short FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
+    public static final short FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
 
     public MMTriangleFaceBlock(MisfitModel3DObject parent) {
         super(OffsetType.TRIANGLES, parent);
@@ -28,13 +28,13 @@ public class MMTriangleFaceBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readUnsignedShortAsInt();
-        readUnsignedIntArray(reader, this.vertices);
+        this.flags = reader.readShort();
+        readIntArray(reader, this.vertices);
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.flags);
-        writeUnsignedIntArray(writer, this.vertices);
+        writer.writeShort(this.flags);
+        writeIntArray(writer, this.vertices);
     }
 }

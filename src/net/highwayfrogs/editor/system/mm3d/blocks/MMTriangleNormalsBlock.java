@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 @Getter
 @Setter
 public class MMTriangleNormalsBlock extends MMDataBlockBody {
-    private long index; // Triangle index (0 based)
+    private int index; // Triangle index (0 based)
     private float[] v1Normals = new float[3];
     private float[] v2Normals = new float[3];
     private float[] v3Normals = new float[3];
@@ -27,7 +27,7 @@ public class MMTriangleNormalsBlock extends MMDataBlockBody {
     @Override
     public void load(DataReader reader) {
         reader.skipShort(); // Flags
-        this.index = reader.readUnsignedIntAsLong();
+        this.index = reader.readInt();
         readFloatArray(reader, v1Normals);
         readFloatArray(reader, v2Normals);
         readFloatArray(reader, v3Normals);
@@ -36,7 +36,7 @@ public class MMTriangleNormalsBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedShort(0); // Flags
-        writer.writeUnsignedInt(this.index);
+        writer.writeInt(this.index);
         writeFloatArray(writer, v1Normals);
         writeFloatArray(writer, v2Normals);
         writeFloatArray(writer, v3Normals);

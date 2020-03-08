@@ -35,7 +35,43 @@ public class MR_MAT34 extends TransformObject {
     }
 
     @Override
+    public void fromMatrix(PSXMatrix matrix) {
+        this.transform[0] = (short) matrix.getTransform()[0];
+        this.transform[1] = (short) matrix.getTransform()[1];
+        this.transform[2] = (short) matrix.getTransform()[2];
+        for (int i = 0; i < getMatrix().length; i++)
+            System.arraycopy(matrix.getMatrix()[i], 0, getMatrix()[i], 0, getMatrix()[i].length);
+    }
+
+
+    @Override
     public PSXMatrix createMatrix() {
-        return PSXMatrix.makeMatrixFromMat34(this);
+        PSXMatrix newMatrix = new PSXMatrix();
+        for (int i = 0; i < getMatrix().length; i++)
+            System.arraycopy(getMatrix()[i], 0, newMatrix.getMatrix()[i], 0, getMatrix()[i].length);
+
+        for (int i = 0; i < getTransform().length; i++)
+            newMatrix.getTransform()[i] = getTransform()[i];
+        return newMatrix;
+    }
+
+    @Override
+    public int hashCode() {
+        return ((this.transform[2] & 0xFF0) << 20) | ((this.transform[0] & 0xFF0) << 12)
+                | ((this.matrix[0][1] & 0xFF0) << 4) | ((this.matrix[1][2] & 0xFF0) >> 4);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof MR_MAT34))
+            return false;
+
+        MR_MAT34 other = (MR_MAT34) obj;
+        for (int i = 0; i < this.matrix.length; i++)
+            for (int j = 0; j < this.matrix[i].length; j++)
+                if (this.matrix[i][j] != other.matrix[i][j])
+                    return false;
+
+        return this.transform[0] == other.transform[0] && this.transform[1] == other.transform[1] && this.transform[2] == other.transform[2];
     }
 }

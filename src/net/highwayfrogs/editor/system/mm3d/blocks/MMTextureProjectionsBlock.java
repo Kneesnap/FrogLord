@@ -19,7 +19,7 @@ import java.util.Arrays;
 @Getter
 public class MMTextureProjectionsBlock extends MMDataBlockBody {
     @Setter private short flags;
-    private byte[] name = new byte[40];
+    private byte[] name = new byte[NAME_BYTE_LENGTH];
     @Setter private MMProjectionType projectionType;
     @Setter private float centerPosX; // Projection Center.
     @Setter private float centerPosY;
@@ -35,6 +35,7 @@ public class MMTextureProjectionsBlock extends MMDataBlockBody {
     @Setter private float maxU;
     @Setter private float maxV;
 
+    private static final int NAME_BYTE_LENGTH = 40;
 
     public MMTextureProjectionsBlock(MisfitModel3DObject parent) {
         super(OffsetType.TEXTURE_PROJECTIONS, parent);
@@ -43,7 +44,7 @@ public class MMTextureProjectionsBlock extends MMDataBlockBody {
     @Override
     public void load(DataReader reader) {
         this.flags = reader.readShort();
-        this.name = reader.readBytes(40);
+        reader.readBytes(this.name);
         this.projectionType = MMProjectionType.values()[reader.readInt()];
         this.centerPosX = reader.readFloat();
         this.centerPosY = reader.readFloat();
@@ -87,8 +88,8 @@ public class MMTextureProjectionsBlock extends MMDataBlockBody {
      */
     public void setName(String name) {
         byte[] newBytes = name.getBytes(StandardCharsets.US_ASCII);
-        if (newBytes.length > this.name.length)
-            throw new RuntimeException("Joint names cannot exceed a length of 40 bytes.");
+        if (newBytes.length > NAME_BYTE_LENGTH)
+            throw new RuntimeException("Texture Projection names cannot exceed a length of " + NAME_BYTE_LENGTH + " bytes.");
 
         Arrays.fill(this.name, Constants.NULL_BYTE);
         System.arraycopy(newBytes, 0, this.name, 0, newBytes.length);

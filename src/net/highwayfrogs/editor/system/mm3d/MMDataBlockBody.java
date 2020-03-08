@@ -21,7 +21,7 @@ public abstract class MMDataBlockBody extends GameObject {
      * @return blockIndex
      */
     public int getBlockIndex() {
-        return getBodyType().getFinder().apply(getParent()).getDataBlockBodies().indexOf(this);
+        return getBodyType().getFinder().apply(getParent()).getBlocks().indexOf(this);
     }
 
     /**
@@ -41,18 +41,18 @@ public abstract class MMDataBlockBody extends GameObject {
     }
 
     /**
-     * Reads a long array from a reader.
+     * Reads an int array from a reader.
      */
-    public static void readUnsignedIntArray(DataReader reader, long[] readTo) {
+    public static void readIntArray(DataReader reader, int[] readTo) {
         for (int i = 0; i < readTo.length; i++)
-            readTo[i] = reader.readUnsignedIntAsLong();
+            readTo[i] = reader.readInt();
     }
 
     /**
-     * Writes a long array to a writer.
+     * Writes an int array to a writer.
      */
-    public static void writeUnsignedIntArray(DataWriter writer, long[] toWrite) {
-        for (long value : toWrite)
-            writer.writeUnsignedInt(value);
+    public static void writeIntArray(DataWriter writer, int[] toWrite) {
+        for (int value : toWrite)
+            writer.writeInt(value);
     }
 }

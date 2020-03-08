@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.mof.animation.transform;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 
 import java.util.function.Supplier;
 
@@ -29,6 +30,16 @@ public enum TransformType {
         if (maker == null) // The null ones are not used by the retail game files.
             throw new RuntimeException("FrogLord does not have a transform parser for " + name() + ".");
         return maker.get();
+    }
+
+    /**
+     * Make a transform of this type, loading data from a rotation matrix.
+     * @return mofTransform
+     */
+    public TransformObject makeTransform(PSXMatrix rotMatrix) {
+        TransformObject newObject = makeTransform();
+        newObject.fromMatrix(rotMatrix);
+        return newObject;
     }
 
     /**

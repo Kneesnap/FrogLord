@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.blocks.*;
 import net.highwayfrogs.editor.system.mm3d.holders.MMExternalTextureHolder;
+import net.highwayfrogs.editor.system.mm3d.holders.MMMetadataHolder;
 import net.highwayfrogs.editor.system.mm3d.holders.MMTextureCoordinateHolder;
 import net.highwayfrogs.editor.system.mm3d.holders.MMTriangleFaceHolder;
 import net.highwayfrogs.editor.utils.Utils;
@@ -27,7 +28,7 @@ public class MisfitModel3DObject extends GameObject {
     private MMDataBlockHeader<MMFrameAnimationPointsBlock> frameAnimationPoints = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATION_POINTS, this);
     private MMDataBlockHeader<MMFrameAnimationsBlock> frameAnimations = new MMDataBlockHeader<>(OffsetType.FRAME_ANIMATIONS, this);
     private MMDataBlockHeader<MMMaterialsBlock> materials = new MMDataBlockHeader<>(OffsetType.MATERIALS, this);
-    private MMDataBlockHeader<MMMetaDataBlock> metadata = new MMDataBlockHeader<>(OffsetType.META_DATA, this);
+    private MMMetadataHolder metadata = new MMMetadataHolder(this);
     private MMDataBlockHeader<MMSmoothnessAnglesBlock> smoothnessAngles = new MMDataBlockHeader<>(OffsetType.SMOOTHNESS_ANGLES, this);
     private MMTextureCoordinateHolder textureCoordinates = new MMTextureCoordinateHolder(this);
     private MMDataBlockHeader<MMTextureProjectionTrianglesBlock> textureProjectionTriangles = new MMDataBlockHeader<>(OffsetType.TEXTURE_PROJECTIONS_TRIANGLES, this);
@@ -111,6 +112,18 @@ public class MisfitModel3DObject extends GameObject {
         reader.jumpReturn();
     }
 
+    /**
+     * Gets the first metadata value with a given key.
+     * Returns null if not found.
+     * @param key The key to search for.
+     */
+    public String getFirstMetadataValue(String key) {
+        for (MMMetaDataBlock metaDataBlock : getMetadata().getBlocks())
+            if (metaDataBlock.getKey().equals(key))
+                return metaDataBlock.getValue();
+        return null;
+    }
+
     @Override
     public void save(DataWriter writer) {
         writer.writeStringBytes(SIGNATURE);
@@ -126,7 +139,7 @@ public class MisfitModel3DObject extends GameObject {
             MMDataBlockHeader<?> header = type.findHeader(this);
 
             boolean oldState = getSegments().contains(header);
-            boolean newState = !header.getDataBlockBodies().isEmpty();
+            boolean newState = !header.getBlocks().isEmpty();
 
             if (oldState != newState) {
                 getSegments().remove(header);

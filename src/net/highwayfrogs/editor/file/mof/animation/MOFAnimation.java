@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.mof.*;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
@@ -23,16 +24,20 @@ public class MOFAnimation extends MOFBase {
     private MOFAnimationModelSet modelSet;
     private MOFFile staticMOF;
     private MOFAnimCommonData commonData;
-    private boolean startAtFrameZero = true;
-    private TransformType transformType = TransformType.QUAT_BYTE;
+    @Setter private boolean startAtFrameZero = true;
+    @Setter private TransformType transformType = TransformType.QUAT_BYTE;
 
     private static final int STATIC_MOF_COUNT = 1;
 
     public MOFAnimation(MOFHolder holder) {
+        this(holder, new MOFFile(holder));
+    }
+
+    public MOFAnimation(MOFHolder holder, MOFFile staticMOF) {
         super(holder);
         this.modelSet = new MOFAnimationModelSet(this);
         this.commonData = new MOFAnimCommonData(this);
-        this.staticMOF = new MOFFile(holder);
+        this.staticMOF = staticMOF;
     }
 
     @Override

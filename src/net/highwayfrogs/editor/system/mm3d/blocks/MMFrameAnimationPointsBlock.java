@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.system.mm3d.blocks;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -16,10 +17,11 @@ import java.util.List;
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
+@Setter
 public class MMFrameAnimationPointsBlock extends MMDataBlockBody {
-    private int flags;
-    private long animIndex; // Index of frame animation this applies to.
-    private long frameCount; // Number of frames that follow.
+    private short flags;
+    private int animIndex; // Index of frame animation this applies to.
+    private int frameCount; // Number of frames that follow.
     private List<FrameAnimationPoint> points = new ArrayList<>();
 
     public MMFrameAnimationPointsBlock(MisfitModel3DObject parent) {
@@ -28,12 +30,12 @@ public class MMFrameAnimationPointsBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readUnsignedShortAsInt();
-        this.animIndex = reader.readUnsignedIntAsLong();
-        this.frameCount = reader.readUnsignedIntAsLong();
+        this.flags = reader.readShort();
+        this.animIndex = reader.readInt();
+        this.frameCount = reader.readInt();
 
-        long totalPoints = frameCount * getParent().getPoints().size();
-        for (long i = 0; i < totalPoints; i++) {
+        int totalPoints = frameCount * getParent().getPoints().size();
+        for (int i = 0; i < totalPoints; i++) {
             FrameAnimationPoint point = new FrameAnimationPoint();
             point.load(reader);
             this.points.add(point);
@@ -42,9 +44,9 @@ public class MMFrameAnimationPointsBlock extends MMDataBlockBody {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.flags);
-        writer.writeUnsignedInt(this.animIndex);
-        writer.writeUnsignedInt(this.frameCount);
+        writer.writeShort(this.flags);
+        writer.writeInt(this.animIndex);
+        writer.writeInt(this.frameCount);
         points.forEach(point -> point.save(writer));
     }
 

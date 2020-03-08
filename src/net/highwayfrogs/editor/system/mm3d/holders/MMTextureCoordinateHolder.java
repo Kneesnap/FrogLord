@@ -20,7 +20,7 @@ public class MMTextureCoordinateHolder extends MMDataBlockHeader<MMTextureCoordi
      * Adds a mof polygon coordinates.
      * @param polyTex Textured polygon.
      */
-    public void addMofPolygon(long face, MOFPolyTexture polyTex) {
+    public void addMofPolygon(int face, MOFPolyTexture polyTex) {
         if (polyTex.isQuadFace()) {
             addRectangle(face, polyTex);
         } else if (polyTex.isTriFace()) {
@@ -33,7 +33,7 @@ public class MMTextureCoordinateHolder extends MMDataBlockHeader<MMTextureCoordi
     /**
      * Add a triangle's texture coordinates to this.
      */
-    public void addTriangle(long face, MOFPolyTexture poly) {
+    public void addTriangle(int face, MOFPolyTexture poly) {
         MMTextureCoordinatesBlock block = addNewElement();
         block.setTriangle(face);
 
@@ -44,7 +44,7 @@ public class MMTextureCoordinateHolder extends MMDataBlockHeader<MMTextureCoordi
     /**
      * Add a rectangle polygon's texture coords to this.
      */
-    public void addRectangle(long face, MOFPolyTexture poly) {
+    public void addRectangle(int face, MOFPolyTexture poly) {
         MMTextureCoordinatesBlock block1 = addNewElement();
         block1.setTriangle(face);
         loadUV(poly, 0, block1, 0);

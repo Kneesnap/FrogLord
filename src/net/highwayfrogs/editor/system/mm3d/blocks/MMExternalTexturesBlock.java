@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 @Getter
 @Setter
 public class MMExternalTexturesBlock extends MMDataBlockBody {
-    private int flags;
+    private short flags;
     private String path; // File path to texture relative to model (directory separator is backslash)
 
     public static final String SEPARATOR = "\\";
@@ -26,13 +26,13 @@ public class MMExternalTexturesBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readUnsignedShortAsInt();
+        this.flags = reader.readShort();
         this.path = reader.readNullTerminatedString();
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.flags);
+        writer.writeShort(this.flags);
         writer.writeTerminatorString(this.path);
     }
 }

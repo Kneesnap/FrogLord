@@ -72,6 +72,34 @@ public class PSXColorVector extends GameObject {
     }
 
     /**
+     * Gets the red color value used for polygon shading.
+     */
+    public byte getShadingRed() {
+        return (byte) ((this.red & Constants.BIT_FLAG_7) == Constants.BIT_FLAG_7 ? 0x7F : (this.red & 0x7F));
+    }
+
+    /**
+     * Gets the green color value used for polygon shading.
+     */
+    public byte getShadingGreen() {
+        return (byte) ((this.green & Constants.BIT_FLAG_7) == Constants.BIT_FLAG_7 ? 0x7F : (this.green & 0x7F));
+    }
+
+    /**
+     * Gets the blue color value used for polygon shading.
+     */
+    public byte getShadingBlue() {
+        return (byte) ((this.blue & Constants.BIT_FLAG_7) == Constants.BIT_FLAG_7 ? 0x7F : (this.blue & 0x7F));
+    }
+
+    /**
+     * Gets the color used for shading.
+     */
+    public Color toShadeColor() {
+        return new Color(getShadingRed(), getShadingGreen(), getShadingBlue(), 255);
+    }
+
+    /**
      * Get this color as a Java color.
      * @return javaColor
      */
@@ -85,6 +113,14 @@ public class PSXColorVector extends GameObject {
      */
     public Color toColor(byte alpha) {
         return new Color(Utils.byteToUnsignedShort(getRed()), Utils.byteToUnsignedShort(getGreen()), Utils.byteToUnsignedShort(getBlue()), (alpha & 0xFF));
+    }
+
+    /**
+     * Turn this color into a shade RGB integer.
+     * @return rgbValue
+     */
+    public int toShadeRGB() {
+        return Utils.toRGB(getShadingRed(), getShadingGreen(), getShadingBlue());
     }
 
     /**

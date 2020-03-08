@@ -19,15 +19,15 @@ import java.util.List;
 @Getter
 @Setter
 public class MMTriangleGroupsBlock extends MMDataBlockBody {
-    private int flags;
+    private short flags;
     private String name = "";
-    private List<Long> triangleIndices = new ArrayList<>();
+    private List<Integer> triangleIndices = new ArrayList<>();
     private short smoothness = 0xFF;
-    private long material = EMPTY_MATERIAL; // Index into material list.
+    private int material = -1; // Index into material list.
 
-    public static final long EMPTY_MATERIAL = 0xFFFFFFFF;
-    public static final int FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
-    public static final int FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
+    public static final int EMPTY_MATERIAL = -1;
+    public static final short FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
+    public static final short FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
 
     public MMTriangleGroupsBlock(MisfitModel3DObject parent) {
         super(OffsetType.GROUPS, parent);
@@ -35,25 +35,25 @@ public class MMTriangleGroupsBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readUnsignedShortAsInt();
+        this.flags = reader.readShort();
         this.name = reader.readNullTerminatedString();
 
         int triangleCount = reader.readInt();
         for (int i = 0; i < triangleCount; i++)
-            triangleIndices.add(reader.readUnsignedIntAsLong());
+            triangleIndices.add(reader.readInt());
 
         this.smoothness = reader.readUnsignedByteAsShort();
-        this.material = reader.readUnsignedIntAsLong();
+        this.material = reader.readInt();
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.flags);
+        writer.writeShort(this.flags);
         writer.writeTerminatorString(this.name);
         writer.writeInt(this.triangleIndices.size());
-        for (Long toWrite : this.triangleIndices)
-            writer.writeUnsignedInt(toWrite);
+        for (int toWrite : this.triangleIndices)
+            writer.writeInt(toWrite);
         writer.writeUnsignedByte(this.smoothness);
-        writer.writeUnsignedInt(this.material);
+        writer.writeInt(this.material);
     }
 }

@@ -787,7 +787,7 @@ public class GUIEditorGrid {
     public void addEntityMatrix(PSXMatrix matrix, MapUIController controller, Runnable onPositionUpdate) {
         IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
 
-        addFloatVector("Position", vec, () -> {
+        addFloatVector("Position", vec, () -> { //TODO: Is -Utils.fixedPointToFloat(x) different from Utils.fixedPointToFloat(-x)? Also, look at how it gets used in animations, how it seems like it's not using the same math we're using here.
             matrix.getTransform()[0] = vec.getX();
             matrix.getTransform()[1] = vec.getY();
             matrix.getTransform()[2] = vec.getZ();

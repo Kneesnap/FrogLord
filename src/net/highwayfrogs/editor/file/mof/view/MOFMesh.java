@@ -78,6 +78,10 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
             poly.onMeshSetup(this);
     }
 
+    public MOFPartcel getCurrentParcel(MOFPart part) { //TODO: Get rid of once we remove normal preview.
+        return hasEnabledAnimation() ? part.getCel(getAction(), getFrame()) : part.getStaticPartcel();
+    }
+
     @Override
     public List<Vector> getVertices() {
         this.verticeCache.clear();
@@ -85,7 +89,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
             if (shouldSkip(part))
                 continue;
 
-            MOFPartcel partcel = hasEnabledAnimation() ? part.getCel(getAction(), getFrame()) : part.getStaticPartcel();
+            MOFPartcel partcel = getCurrentParcel(part);
             if (getMofHolder().isAnimatedMOF() && hasEnabledAnimation()) {
                 TransformObject transform = getMofHolder().getAnimatedFile().getTransform(part, getAction(), getFrame());
                 for (SVector vertex : partcel.getVertices())

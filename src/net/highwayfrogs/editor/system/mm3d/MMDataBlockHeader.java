@@ -14,7 +14,7 @@ import java.util.List;
  */
 @Getter
 public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
-    private List<T> dataBlockBodies = new ArrayList<>();
+    private List<T> blocks = new ArrayList<>();
     private int invalidBodies;
 
     private transient OffsetType offsetType;
@@ -39,8 +39,8 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
                 T body = addNewElement();
                 body.load(reader);
                 if (reader.getIndex() != readGoal) {
-                    System.out.println("[A/" + i + "/" + this.dataBlockBodies.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementSize + ", " + elementCount + ")");
-                    getDataBlockBodies().remove(body); // It's invalid.
+                    System.out.println("[A/" + i + "/" + this.blocks.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementSize + ", " + elementCount + ")");
+                    getBlocks().remove(body); // It's invalid.
                     this.invalidBodies++;
                 }
             }
@@ -51,8 +51,8 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
                 T body = addNewElement();
                 body.load(reader);
                 if (reader.getIndex() != readGoal) {
-                    System.out.println("[B/" + i + "/" + this.dataBlockBodies.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementCount + ")");
-                    getDataBlockBodies().remove(body); // It's invalid.
+                    System.out.println("[B/" + i + "/" + this.blocks.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementCount + ")");
+                    getBlocks().remove(body); // It's invalid.
                     this.invalidBodies++;
                 }
             }
@@ -62,10 +62,10 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
     @Override
     public void save(DataWriter writer) {
         writer.writeShort(FLAGS);
-        writer.writeUnsignedInt(dataBlockBodies.size() + this.invalidBodies);
+        writer.writeUnsignedInt(blocks.size() + this.invalidBodies);
 
         if (getOffsetType().isTypeA()) {
-            for (MMDataBlockBody body : dataBlockBodies) {
+            for (MMDataBlockBody body : blocks) {
                 int writeSizeTo = writer.writeNullPointer();
                 int structStart = writer.getIndex();
                 body.save(writer);
@@ -74,8 +74,8 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
         } else if (getOffsetType().isTypeB()) {
             int writeSizeTo = writer.writeNullPointer();
             int structStart = writer.getIndex();
-            this.dataBlockBodies.forEach(block -> block.save(writer));
-            writer.writeAddressAt(writeSizeTo, (writer.getIndex() - structStart) / this.dataBlockBodies.size());
+            this.blocks.forEach(block -> block.save(writer));
+            writer.writeAddressAt(writeSizeTo, (writer.getIndex() - structStart) / this.blocks.size());
         }
     }
 
@@ -84,7 +84,7 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
      * @return size
      */
     public int size() {
-        return getDataBlockBodies().size();
+        return getBlocks().size();
     }
 
     /**
@@ -94,7 +94,7 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
     @SuppressWarnings("unchecked")
     public T addNewElement() {
         T newElement = (T) getOffsetType().makeNew(getParent());
-        getDataBlockBodies().add(newElement);
+        getBlocks().add(newElement);
         return newElement;
     }
 
@@ -104,6 +104,6 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
      * @return body or null
      */
     public T getBody(int index) {
-        return index >= 0 && size() > index ? getDataBlockBodies().get(index) : null;
+        return index >= 0 && size() > index ? getBlocks().get(index) : null;
     }
 }

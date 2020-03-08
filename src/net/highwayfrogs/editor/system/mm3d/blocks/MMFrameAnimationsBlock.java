@@ -24,7 +24,7 @@ import java.util.List;
 @Getter
 @Setter
 public class MMFrameAnimationsBlock extends MMDataBlockBody {
-    private int flags;
+    private short flags;
     private String name;
     private float framesPerSecond;
     private List<MMAnimationFrame> frames = new ArrayList<>();
@@ -35,7 +35,7 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readUnsignedShortAsInt();
+        this.flags = reader.readShort();
         this.name = reader.readNullTerminatedString();
         this.framesPerSecond = reader.readFloat();
 
@@ -57,7 +57,7 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.flags);
+        writer.writeShort(this.flags);
         writer.writeTerminatorString(this.name);
         writer.writeFloat(this.framesPerSecond);
         writer.writeInt(getFrameCount());

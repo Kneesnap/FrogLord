@@ -17,8 +17,8 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 @Getter
 @Setter
 public class MMJointVerticesBlock extends MMDataBlockBody {
-    private long vertexIndex; // Index into the vertex array.
-    private long jointIndex; // Index into te joint array.
+    private int vertexIndex; // Index into the vertex array.
+    private int jointIndex; // Index into te joint array.
 
     public MMJointVerticesBlock(MisfitModel3DObject parent) {
         super(OffsetType.JOINT_VERTICES, parent);
@@ -26,13 +26,13 @@ public class MMJointVerticesBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.vertexIndex = reader.readUnsignedIntAsLong();
-        this.jointIndex = reader.readUnsignedIntAsLong();
+        this.vertexIndex = reader.readInt();
+        this.jointIndex = reader.readInt();
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedInt(this.vertexIndex);
-        writer.writeUnsignedInt(this.jointIndex);
+        writer.writeInt(this.vertexIndex);
+        writer.writeInt(this.jointIndex);
     }
 }

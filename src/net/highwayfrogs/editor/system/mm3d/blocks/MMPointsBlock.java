@@ -1,12 +1,16 @@
 package net.highwayfrogs.editor.system.mm3d.blocks;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 /**
  * Points are objects that have a position and orientation.
@@ -18,19 +22,20 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
  */
 @Getter
 public class MMPointsBlock extends MMDataBlockBody {
-    private int flags;
-    private byte[] pointName = new byte[40];
-    private int type; // Should be zero.
-    private int jointIndex; // Index of parent joint.
-    private float rotX; // NOTE: In radians!
-    private float rotY; // NOTE: In radians!
-    private float rotZ; // NOTE: In radians!
-    private float translationX;
-    private float translationY;
-    private float translationZ;
+    @Setter private short flags;
+    private byte[] name = new byte[NAME_BYTE_LENGTH];
+    @Setter private int type; // Should be zero.
+    @Setter private int jointIndex; // Index of parent joint.
+    @Setter private float rotX; // NOTE: In radians!
+    @Setter private float rotY; // NOTE: In radians!
+    @Setter private float rotZ; // NOTE: In radians!
+    @Setter private float translationX;
+    @Setter private float translationY;
+    @Setter private float translationZ;
 
-    public static final int FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
-    public static final int FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
+    private static final int NAME_BYTE_LENGTH = 40;
+    public static final short FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
+    public static final short FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
 
     public MMPointsBlock(MisfitModel3DObject parent) {
         super(OffsetType.POINTS, parent);
@@ -38,8 +43,8 @@ public class MMPointsBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readUnsignedShortAsInt();
-        reader.readBytes(this.pointName);
+        this.flags = reader.readShort();
+        reader.readBytes(this.name);
         this.type = reader.readInt();
         this.jointIndex = reader.readInt();
         this.rotX = reader.readFloat();
@@ -52,8 +57,8 @@ public class MMPointsBlock extends MMDataBlockBody {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.flags);
-        writer.writeBytes(this.pointName);
+        writer.writeShort(this.flags);
+        writer.writeBytes(this.name);
         writer.writeInt(this.type);
         writer.writeInt(this.jointIndex);
         writer.writeFloat(this.rotX);
@@ -62,5 +67,34 @@ public class MMPointsBlock extends MMDataBlockBody {
         writer.writeFloat(this.translationX);
         writer.writeFloat(this.translationY);
         writer.writeFloat(this.translationZ);
+    }
+
+    /**
+     * Sets the name of this joint.
+     * If a byte length of more than 40 is specified, an error will be thrown.
+     * @param name The new name for this point.
+     */
+    public void setName(String name) {
+        byte[] newBytes = name.getBytes(StandardCharsets.US_ASCII);
+        if (newBytes.length > NAME_BYTE_LENGTH)
+            throw new RuntimeException("Point names cannot exceed a length of " + NAME_BYTE_LENGTH + " bytes.");
+
+        Arrays.fill(this.name, Constants.NULL_BYTE);
+        System.arraycopy(newBytes, 0, this.name, 0, newBytes.length);
+    }
+
+    /**
+     * Gets the name of this joint.
+     */
+    public String getName() {
+        int findIndex = -1;
+        for (int i = 0; i < this.name.length; i++) {
+            if (this.name[i] == Constants.NULL_BYTE) {
+                findIndex = i;
+                break;
+            }
+        }
+
+        return findIndex != -1 ? new String(Arrays.copyOfRange(this.name, 0, findIndex)) : new String(this.name);
     }
 }

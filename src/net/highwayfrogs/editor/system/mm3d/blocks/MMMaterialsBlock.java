@@ -16,8 +16,8 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 @Getter
 @Setter
 public class MMMaterialsBlock extends MMDataBlockBody {
-    private int flags;
-    private long texture; // This can expand past normal texture count, as long as we increase texture count saved.
+    private short flags;
+    private int texture; // This can expand past normal texture count, as long as we increase texture count saved.
     private String name;
     private float[] ambient = new float[4];
     private float[] diffuse = new float[4]; // Diffuse color.
@@ -25,9 +25,9 @@ public class MMMaterialsBlock extends MMDataBlockBody {
     private float[] emissive = new float[4];
     private float shininess;
 
-    public static final int FLAG_NO_TEXTURE = 0b00001111;
-    public static final int FLAG_CLAMP_S = Constants.BIT_FLAG_4; // Clamp S texture coordinates. (Do not repeat)
-    public static final int FLAG_CLAMP_T = Constants.BIT_FLAG_5; // Clamp T texture coordinates. (Do not repeat)
+    public static final short FLAG_NO_TEXTURE = 0b00001111;
+    public static final short FLAG_CLAMP_S = Constants.BIT_FLAG_4; // Clamp S texture coordinates. (Do not repeat)
+    public static final short FLAG_CLAMP_T = Constants.BIT_FLAG_5; // Clamp T texture coordinates. (Do not repeat)
 
     public MMMaterialsBlock(MisfitModel3DObject parent) {
         super(OffsetType.MATERIALS, parent);
@@ -48,8 +48,8 @@ public class MMMaterialsBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readUnsignedShortAsInt();
-        this.texture = reader.readUnsignedIntAsLong();
+        this.flags = reader.readShort();
+        this.texture = reader.readInt();
         this.name = reader.readNullTerminatedString();
         readFloatArray(reader, this.ambient);
         readFloatArray(reader, this.diffuse);
@@ -60,8 +60,8 @@ public class MMMaterialsBlock extends MMDataBlockBody {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.flags);
-        writer.writeUnsignedInt(this.texture);
+        writer.writeShort(this.flags);
+        writer.writeInt(this.texture);
         writer.writeTerminatorString(this.name);
         writeFloatArray(writer, this.ambient);
         writeFloatArray(writer, this.diffuse);

@@ -20,6 +20,7 @@ import net.highwayfrogs.editor.file.mof.*;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimationCels;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
+import net.highwayfrogs.editor.file.mof.animation.transform.TransformType;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
@@ -28,7 +29,6 @@ import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntryList;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
-import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
@@ -39,6 +39,10 @@ import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.blocks.*;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMFrameAnimationsBlock.MMAnimationFrame;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMFrameAnimationsBlock.MMFloatVertex;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMSkeletalAnimationBlock.MMAnimationKeyframeType;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMSkeletalAnimationBlock.MMSkeletalAnimationFrame;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMWeightedInfluencesBlock.MMWeightedInfluenceType;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMWeightedInfluencesBlock.MMWeightedPositionType;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -235,7 +239,7 @@ public class FileUtils3D {
                     }
 
                     PSXColorVector color = polyTex.getColors()[colorIndex];
-                    base += " " + (color.getRed() / 127D) + " " + (color.getGreen() / 127D) + " " + (color.getBlue() / 127D);
+                    base += " " + (color.getShadingRed() / 127D) + " " + (color.getShadingGreen() / 127D) + " " + (color.getShadingBlue() / 127D);
                 }
 
                 objWriter.write(base + Constants.NEWLINE);
@@ -333,19 +337,43 @@ public class FileUtils3D {
         VLOArchive vloTable = holder.getVloFile();
         Utils.verify(vloTable != null, "Unknown VLO Table for %s!", holder.getFileEntry().getDisplayName());
 
+        // Add TransformType.
+        if (holder.isAnimatedMOF())
+            model.getMetadata().addMetadataValue("transformType", holder.getAnimatedFile().getTransformType().name());
+
+        // Add Joints.
+        for (int i = 0; i < staticMof.getParts().size(); i++) {
+            MMJointsBlock joint = model.getJoints().addNewElement();
+            joint.setName("part" + i);
+        }
+
         // Add Vertices.
         int verticeStart = 0;
-        for (MOFPart part : staticMof.getParts()) {
+        for (int i = 0; i < staticMof.getParts().size(); i++) {
+            MOFPart part = staticMof.getParts().get(i);
             part.setTempVertexStart(verticeStart);
             MOFPartcel partcel = part.getStaticPartcel();
             verticeStart += partcel.getVertices().size();
 
             for (SVector vertex : partcel.getVertices()) {
+                int vtxId = model.getVertices().size();
                 MMVerticeBlock mmVertice = model.getVertices().addNewElement();
                 mmVertice.setFlags(MMVerticeBlock.FLAG_FREE_VERTEX);
                 mmVertice.setX(vertex.getExportFloatX());
                 mmVertice.setY(vertex.getExportFloatY());
                 mmVertice.setZ(vertex.getExportFloatZ());
+
+                // Linked vertices to joints.
+                MMWeightedInfluencesBlock influence = model.getWeightedInfluences().addNewElement();
+                influence.setPositionType(MMWeightedPositionType.VERTEX);
+                influence.setPositionIndex(vtxId);
+                influence.setBoneJointIndex(i);
+                influence.setInfluenceType(MMWeightedInfluenceType.AUTOMATIC);
+                influence.setInfluenceWeight(MMWeightedInfluencesBlock.MAX_INFLUENCE_WEIGHT);
+
+                MMJointVerticesBlock jointVertices = model.getJointVertices().addNewElement();
+                jointVertices.setJointIndex(i);
+                jointVertices.setVertexIndex(vtxId);
             }
         }
 
@@ -375,30 +403,28 @@ public class FileUtils3D {
         }
 
         // Add XAR animations.
-        if (holder.isAnimatedMOF()) { // Maybe in the future we can use frame animation points, instead of using the final vertice location.
+        if (holder.isAnimatedMOF()) {
             MOFAnimation animatedMof = holder.getAnimatedFile();
 
-            for (MOFPart part : staticMof.getParts()) {
-                for (int action = 0; action < holder.getMaxAnimation(); action++) {
-                    MMFrameAnimationsBlock animation = model.getFrameAnimations().getBody(action);
-                    if (animation == null) {
-                        animation = model.getFrameAnimations().addNewElement();
-                        animation.setFramesPerSecond(holder.getMWD().getFPS());
-                        animation.setName(holder.getName(action));
-                    }
+            for (int action = 0; action < animatedMof.getModelSet().getCelSet().getCels().size(); action++) {
+                MOFAnimationCels celAction = animatedMof.getModelSet().getCelSet().getCels().get(action);
 
-                    MOFAnimationCels celAnimation = animatedMof.getAnimationById(action);
-                    for (int frame = 0; frame < celAnimation.getFrameCount(); frame++) {
-                        MOFPartcel partcel = part.getCel(action, frame);
+                MMSkeletalAnimationBlock skeletalAnimation = model.getSkeletalAnimations().addNewElement();
+                skeletalAnimation.setName(holder.getName(action));
+                skeletalAnimation.setFps(holder.getMWD().getFPS());
 
-                        if (frame >= animation.getFrames().size())
-                            animation.getFrames().add(new MMAnimationFrame());
+                for (int frame = 0; frame < celAction.getFrameCount(); frame++) {
+                    List<MMSkeletalAnimationFrame> keyframes = new ArrayList<>();
 
-                        MMAnimationFrame animFrame = animation.getFrames().get(frame);
+                    for (int i = 0; i < staticMof.getParts().size(); i++) { // Each part has its own information.
+                        MOFPart part = staticMof.getParts().get(i);
                         TransformObject transform = animatedMof.getTransform(part, action, frame);
-                        partcel.getVertices().forEach(vertex ->
-                                animFrame.getVertexPositions().add(new MMFloatVertex(PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(), vertex, new IVector()))));
+                        PSXMatrix matrix = transform.createMatrix();
+                        keyframes.add(new MMSkeletalAnimationFrame(i, MMAnimationKeyframeType.ROTATION, (float) -matrix.getRollAngle(), (float) -matrix.getPitchAngle(), (float) matrix.getYawAngle()));
+                        keyframes.add(new MMSkeletalAnimationFrame(i, MMAnimationKeyframeType.TRANSLATION, -Utils.fixedPointIntToFloat20Bit(matrix.getTransform()[0]), -Utils.fixedPointIntToFloat20Bit(matrix.getTransform()[1]), Utils.fixedPointIntToFloat20Bit(matrix.getTransform()[2])));
                     }
+
+                    skeletalAnimation.getFrames().add(keyframes);
                 }
             }
         }
@@ -409,7 +435,7 @@ public class FileUtils3D {
         Map<PSXColorVector, MOFTextureData> colorMap = new HashMap<>();
         List<MOFPolygon> polygonList = staticMof.getAllPolygons();
         for (MOFPolygon poly : polygonList) {
-            long faceIndex = model.getTriangleFaces().size();
+            int faceIndex = model.getTriangleFaces().size();
             model.getTriangleFaces().addMofPolygon(poly);
 
             MOFTextureData data;
@@ -432,9 +458,9 @@ public class FileUtils3D {
                     MMMaterialsBlock material = model.getMaterials().addNewElement();
                     material.setTexture(externalTextureId);
                     material.setName(MATERIAL_NAME_PREFIX + texId + "-" + Integer.toHexString(key.getColor().toRGB()));
-                    material.getDiffuse()[0] = (key.getColor().getRed() / 127F);
-                    material.getDiffuse()[1] = (key.getColor().getGreen() / 127F);
-                    material.getDiffuse()[2] = (key.getColor().getBlue() / 127F);
+                    material.getDiffuse()[0] = (key.getColor().getShadingRed() / 127F);
+                    material.getDiffuse()[1] = (key.getColor().getShadingGreen() / 127F);
+                    material.getDiffuse()[2] = (key.getColor().getShadingBlue() / 127F);
 
                     // Create new group.
                     MMTriangleGroupsBlock group = model.getGroups().addNewElement();
@@ -464,7 +490,7 @@ public class FileUtils3D {
             }
 
             // Link faces to texture group.
-            List<Long> triangleIndices = data.getGroup().getTriangleIndices();
+            List<Integer> triangleIndices = data.getGroup().getTriangleIndices();
             triangleIndices.add(faceIndex);
             if (poly.isQuadFace())
                 triangleIndices.add(faceIndex + 1);
@@ -545,7 +571,10 @@ public class FileUtils3D {
 
     // Other TODOs:
     // TODO: Import textures from imported models. [Requires a system to automatically put textures in vram safely. Also requires FrogLord to be able to handle multiple images with the same id.]
-    //TODO: Fix model shading in viewer. (Example: SUB_LOG)
+    // TODO: BAD IMPORT MATH. Even on the direct one, there's a question of how accurate it is. Are we using the wrong frames? Is it the math itself?
+    // TODO: Normals, Potentially colors. See the turtle3 in org1. No normals specified -> Generate them. Maybe generate them anyways!
+    // TODO: 1.7's format seems to break when we load EXTERNAL_TEXTURES.
+    // TODO: Make sure importing works on actual modified models. Basically, it's setup to assume the data is exactly how it is when we export. We don't want it to be possible for you to mess up importing by accident and not know why.
 
     /**
      * Load a MOF from a model.
@@ -559,197 +588,336 @@ public class FileUtils3D {
             return;
         }
 
+        boolean isReplacementAnimated = model.getSkeletalAnimations().size() > 0;
         boolean isUnsafeReplacementArea = (holder.getTheme() == null || holder.getTheme() == MAPTheme.GENERAL);
-        if (isUnsafeReplacementArea && holder.isAnimatedMOF()) { // Unfortunately, the game assumes these models are animated, and it will crap itself if we try to give it a static model.
-            Utils.makePopUp("This XAR model cannot be overwritten by a mm3d model.", AlertType.ERROR);
-
-            // TODO: For supporting parts.
-            //  - Is it possible to have the same triangle in multiple groups? Maybe we could have groups for parts, parallel to textures.
-            //  - For keeping XAR animation, we can use the whole skeletal animation system.
-            //  - Yeah, this can be done.
-            //  - Though, we'll need to fix the rest of the method to not work under the assumption that there's a single static part.
-
+        if (isUnsafeReplacementArea && (isReplacementAnimated != holder.isAnimatedMOF())) { // Any model which is accessed directly by the game code via hardcoded ids is assumed to be a certain type by the code, and we should not change this type.
+            Utils.makePopUp("This " + (holder.isAnimatedMOF() ? "animated" : "static") + " model cannot be overwritten by a " + (isReplacementAnimated ? "animated" : "static") + " model.", AlertType.ERROR);
             return;
         }
 
+        if (model.getFrameAnimationPoints().size() > 0)
+            Utils.makePopUp("Frame Point animations are not supported. " + model.getFrameAnimationPoints().size() + " frame point animations will be skipped.", AlertType.WARNING);
+
         MOFFile staticMof = holder.isDummy() ? new MOFFile(holder) : holder.asStaticFile();
-        holder.setStaticFile(staticMof);
-        holder.setAnimatedFile(null);
-        holder.setDummy(false);
+        MOFAnimation animatedMof = isReplacementAnimated ? new MOFAnimation(holder, staticMof) : null;
 
-        // Build Parts.
-        List<MOFPart> oldParts = new ArrayList<>(staticMof.getParts());
-        staticMof.getParts().clear();
-
-        // Unfortunately, we can't actually discern part information, so we have to create it all under a single part.
-        // I'd imagine this would cause lag if you tried to run this on hardware of the time, especially combined with the whole part thing.
-        // However, since our target is the PC version on modern PCs, this is an acceptable solution for now.
-        // If we make a blender plugin for editing models, that would also be an ample solution.
-
-        MOFPart part = new MOFPart(staticMof);
-        staticMof.getParts().add(part);
-
-        // Build Polygon Data:
-
-        MOFPartcel basePartcel = new MOFPartcel(part, 0, 0);
-        Map<SVector, Short> baseNormalIndices = new HashMap<>();
-
-        // Load Vertices.
-        for (MMVerticeBlock block : model.getVertices().getDataBlockBodies())
-            basePartcel.getVertices().add(new SVector(-block.getX(), -block.getY(), block.getZ()));
-
-        // Load Normals.
-        for (MMTriangleNormalsBlock block : model.getNormals().getDataBlockBodies()) {
-            SVector n1 = new SVector(-block.getV1Normals()[0], -block.getV1Normals()[1], block.getV1Normals()[2]);
-            SVector n2 = new SVector(-block.getV2Normals()[0], -block.getV2Normals()[1], block.getV2Normals()[2]);
-            SVector n3 = new SVector(-block.getV3Normals()[0], -block.getV3Normals()[1], block.getV3Normals()[2]);
-
-            short index = (short) basePartcel.getNormals().size();
-            if (!baseNormalIndices.containsKey(n1)) {
-                baseNormalIndices.put(n1, index++);
-                basePartcel.getNormals().add(n1);
-            }
-
-            if (!baseNormalIndices.containsKey(n2)) {
-                baseNormalIndices.put(n2, index++);
-                basePartcel.getNormals().add(n2);
-            }
-
-            if (!baseNormalIndices.containsKey(n3)) {
-                baseNormalIndices.put(n3, index);
-                basePartcel.getNormals().add(n3);
-            }
-        }
-
-        part.getPartcels().add(basePartcel);
-
-        // Port data which isn't supposed to be overwritten by an import.
-
-        if (oldParts.size() == 1 && oldParts.get(0).getMatrix() != null) // If there's more than one part, this would be a problem, since it would apply to parts it originally didn't apply to.
-            part.setMatrix(oldParts.get(0).getMatrix());
-
-        for (MOFPart oldPart : oldParts) {
-            if (oldPart.getCollprim() != null) { // Transition collprim.
-                MOFCollprim oldCollprim = oldPart.getCollprim();
-                oldCollprim.setParent(part);
-                part.setCollprim(oldCollprim);
-            }
-
-            for (MOFHilite oldHilite : oldPart.getHilites()) { // Transition Hilites.
-                if (basePartcel.getVertices().contains(oldHilite.getVertex())) {
-                    oldHilite.setParent(part);
-                    part.getHilites().add(oldHilite);
-                }
-            }
-        }
-
-        // Add Flipbook animations.
-        MOFFlipbook flipbook = new MOFFlipbook();
-        for (MMFrameAnimationsBlock block : model.getFrameAnimations().getDataBlockBodies()) {
-            int partcelIndex = part.getPartcels().size();
-
-            for (MMAnimationFrame frame : block.getFrames()) {
-                MOFPartcel newCel = new MOFPartcel(part, frame.getVertexPositions().size(), frame.getVertexPositions().size());
-                for (MMFloatVertex vertex : frame.getVertexPositions())
-                    newCel.getVertices().add(new SVector(-vertex.getX(), -vertex.getY(), vertex.getZ()));
-
-                newCel.getNormals().addAll(basePartcel.getNormals()); //TODO: Calculate Normals instead. See if there's any easy way to do this. Do the partcels even have normals usually? As far as I'm aware, XAR animations don't use normals, so we should check that vertex normals are used as well. Check what XAR animation does, and if it's really unused.
-
-                // Add new frame of animation.
-                part.getPartcels().add(newCel);
-            }
-
-            flipbook.getActions().add(new MOFFlipbookAction(part.getPartcels().size() - partcelIndex, partcelIndex));
-        }
-
-        if (flipbook.getActions().size() > 0)
-            part.setFlipbook(flipbook);
-
-        // Load Polygons.
+        // Pre-Build Data Maps.
+        int newPartCount = model.getJoints().size();
         Map<Integer, MMMaterialsBlock> materialMap = new HashMap<>();
         Map<Integer, MMTriangleNormalsBlock> normalMap = new HashMap<>();
         Map<Integer, MMTextureCoordinatesBlock> uvMap = new HashMap<>();
+        Map<Integer, List<Integer>> jointVerticeMap = new HashMap<>();
+        Map<Integer, List<MMTriangleFaceBlock>> jointFaceMap = new HashMap<>();
+        Map<Integer, Integer> modelVtxToPartcelVtxMap = new HashMap<>();
 
         // Build Maps.
-        for (MMTextureCoordinatesBlock block : model.getTextureCoordinates().getDataBlockBodies())
-            uvMap.put((int) block.getTriangle(), block);
+        for (MMTextureCoordinatesBlock block : model.getTextureCoordinates().getBlocks())
+            uvMap.put(block.getTriangle(), block);
 
-        for (MMTriangleNormalsBlock block : model.getNormals().getDataBlockBodies())
-            normalMap.put((int) block.getIndex(), block);
+        for (MMTriangleNormalsBlock block : model.getNormals().getBlocks())
+            normalMap.put(block.getIndex(), block);
 
-        for (MMTriangleGroupsBlock block : model.getGroups().getDataBlockBodies()) {
-            MMMaterialsBlock material = block.getMaterial() != MMTriangleGroupsBlock.EMPTY_MATERIAL ? model.getMaterials().getBody((int) block.getMaterial()) : null;
-            for (Long face : block.getTriangleIndices())
-                materialMap.put((int) (long) face, material);
+        for (MMTriangleGroupsBlock block : model.getGroups().getBlocks()) {
+            MMMaterialsBlock material = block.getMaterial() != MMTriangleGroupsBlock.EMPTY_MATERIAL ? model.getMaterials().getBody(block.getMaterial()) : null;
+            for (int face : block.getTriangleIndices())
+                materialMap.put(face, material);
         }
 
+        // Build Joint Map.
+        if (model.getWeightedInfluences().size() > 0) {
+            for (MMWeightedInfluencesBlock influence : model.getWeightedInfluences().getBlocks())
+                if (influence.getPositionType() == MMWeightedPositionType.VERTEX)
+                    jointVerticeMap.computeIfAbsent(influence.getBoneJointIndex(), boneIndex -> new ArrayList<>()).add(influence.getPositionIndex());
+        } else if (model.getJointVertices().size() > 0) { // Fallback to joint vertice block if weighted influences don't exist, but joint vertices do. It likely means the user is using mm3d 1.4.
+            for (MMJointVerticesBlock jointVertices : model.getJointVertices().getBlocks())
+                jointVerticeMap.computeIfAbsent(jointVertices.getJointIndex(), boneIndex -> new ArrayList<>()).add(jointVertices.getVertexIndex());
+        }
+
+        int failCount = 0;
+        for (MMTriangleFaceBlock face : model.getTriangleFaces().getBlocks()) {
+            boolean foundMatch = false;
+            for (Entry<Integer, List<Integer>> jointVerticeEntry : jointVerticeMap.entrySet()) {
+                boolean matchVertices = true;
+                for (int i = 0; i < face.getVertices().length; i++) {
+                    if (!jointVerticeEntry.getValue().contains(face.getVertices()[i])) {
+                        matchVertices = false;
+                        break;
+                    }
+                }
+
+                if (matchVertices) {
+                    foundMatch = true;
+                    jointFaceMap.computeIfAbsent(jointVerticeEntry.getKey(), key -> new ArrayList<>()).add(face);
+                    break;
+                }
+            }
+
+            if (!foundMatch)
+                failCount++;
+        }
+
+        if (failCount > 0)
+            Utils.makePopUp(failCount + " could not be linked to a part / joint. They will be ignored.", AlertType.WARNING);
+
+        // Figure out which textures are allowed. (All of them) Maybe later we can put extra restrictions to figure out which ones are loaded when the model is loaded.
         Set<Short> allowedTextureIds = new HashSet<>();
         for (VLOArchive vloArchive : holder.getMWD().getAllFiles(VLOArchive.class))
             for (GameImage gameImage : vloArchive.getImages())
                 allowedTextureIds.add(gameImage.getTextureId());
 
-        for (int i = 0; i < model.getTriangleFaces().size(); i++) {
-            MMTriangleFaceBlock faceBlock = model.getTriangleFaces().getBody(i);
-            MMMaterialsBlock material = materialMap.get(i);
-            MMTriangleNormalsBlock normals = normalMap.get(i);
-            MMTextureCoordinatesBlock texCoords = uvMap.get(i);
+        // Build Parts.
+        List<MOFPart> oldParts = new ArrayList<>(staticMof.getParts());
+        staticMof.getParts().clear();
 
-            MOFPart partOwner = part; //TODO: Get this from somewhere. If there's a joint, get it from that, otherwise use a static part.
-            boolean isTextured = material != null && ((material.getFlags() & MMMaterialsBlock.FLAG_NO_TEXTURE) != MMMaterialsBlock.FLAG_NO_TEXTURE);
-            boolean isGouraud = normals != null && Arrays.equals(normals.getV1Normals(), normals.getV2Normals()) && Arrays.equals(normals.getV1Normals(), normals.getV3Normals());
+        if (model.getSkeletalAnimations().size() > 0) { // This is an animated MOF.
+            String transformType = model.getFirstMetadataValue("transformType");
+            //if (transformType != null)
+            //    animatedMof.setTransformType(TransformType.valueOf(transformType)); //TODO
+            animatedMof.setTransformType(TransformType.NORMAL);
 
-            // Build the polygon. (We always use Tris, since mm3d doesn't support quads.)
-            MOFPrimType primType = isTextured
-                    ? (isGouraud ? MOFPrimType.GT3 : MOFPrimType.FT3)
-                    : (isGouraud ? MOFPrimType.G3 : MOFPrimType.F3);
+            Map<TransformObject, Integer> indexMap = new HashMap<>();
+            for (MMSkeletalAnimationBlock skeletalAnimation : model.getSkeletalAnimations().getBlocks()) {
+                MOFAnimationCels loadedAnimation = new MOFAnimationCels(animatedMof);
 
-            MOFPolygon poly = primType.makeNew(partOwner);
-            if (isTextured && (poly instanceof MOFPolyTexture) && material.getName().startsWith(MATERIAL_NAME_PREFIX)) {
-                MOFPolyTexture polyTex = (MOFPolyTexture) poly;
-                String trailingNumber = material.getName().substring(MATERIAL_NAME_PREFIX.length()).split("-")[0];  //TODO: Eventually switch this to check the texture filename, not the material name.
-                if (!Utils.isInteger(trailingNumber))
-                    throw new RuntimeException("'" + trailingNumber + "' is not a numeric texture id. (Material Name)");
+                int uniqueFrames = 0;
+                for (int frame = 0; frame < skeletalAnimation.getFrames().size(); frame++) {
+                    List<MMSkeletalAnimationFrame> frameData = skeletalAnimation.getFrames().get(frame);
 
-                int textureId = Integer.parseInt(trailingNumber);
-                if (!allowedTextureIds.contains((short) textureId))
-                    throw new RuntimeException(textureId + " does not map to real texture.");
+                    MMSkeletalAnimationFrame[][] frames = new MMSkeletalAnimationFrame[newPartCount][2];
+                    for (MMSkeletalAnimationFrame frameInfo : frameData) {
+                        if (frameInfo.getKeyframeType() == MMAnimationKeyframeType.ROTATION) {
+                            frames[frameInfo.getJointIndex()][0] = frameInfo;
+                        } else if (frameInfo.getKeyframeType() == MMAnimationKeyframeType.TRANSLATION) {
+                            frames[frameInfo.getJointIndex()][1] = frameInfo;
+                        }
+                    }
 
-                polyTex.setImageId((short) textureId);
+                    short[] frameIndices = new short[newPartCount];
 
-                // Load UVs.
-                if (texCoords != null)
-                    for (int j = 0; j < polyTex.getUvs().length; j++)
-                        polyTex.getUvs()[poly.getVerticeCount() - j - 1] = new ByteUV(texCoords.getXCoordinates()[j], texCoords.getYCoordinates()[j]);
+                    for (int i = 0; i < newPartCount; i++) {
+                        MMSkeletalAnimationFrame rotFrame = frames[i][0];
+                        MMSkeletalAnimationFrame posFrame = frames[i][1];
 
-                byte red = (byte) (int) (material.getDiffuse()[0] * 127);
-                byte green = (byte) (int) (material.getDiffuse()[1] * 127);
-                byte blue = (byte) (int) (material.getDiffuse()[2] * 127);
-                polyTex.getColor().fromRGB(Utils.toRGB(red, green, blue));
+                        // Create rotation matrix.
+                        PSXMatrix matrix = new PSXMatrix();
+                        if (posFrame != null) { // This may be subject to the same problem that causes static entities to not show up in-game, calculating the wrong group. If there are weird unexplainable issues, this could be the culprit.
+                            matrix.getTransform()[0] = Utils.floatToFixedPointInt20Bit(-posFrame.getPosX());
+                            matrix.getTransform()[1] = Utils.floatToFixedPointInt20Bit(-posFrame.getPosY());
+                            matrix.getTransform()[2] = Utils.floatToFixedPointInt20Bit(posFrame.getPosZ());
+                        }
+                        matrix.updateMatrix(rotFrame != null ? rotFrame.getPosZ() : 0D, rotFrame != null ? -rotFrame.getPosY() : 0D, rotFrame != null ? -rotFrame.getPosX() : 0D);
+                        TransformObject newTransform = animatedMof.getTransformType().makeTransform(matrix); // Create transform from matrix.
+
+                        int index = indexMap.computeIfAbsent(newTransform, key -> {
+                            int size = animatedMof.getCommonData().getTransforms().size();
+                            animatedMof.getCommonData().getTransforms().add(key);
+                            return size;
+                        });
+
+                        frameIndices[i] = (short) index;
+                    }
+
+                    int duplicateFrame = -1;
+                    for (int i = 0; i < uniqueFrames; i++) { // Find a duplicate frame.
+                        int startIndex = (i * newPartCount);
+                        boolean match = true;
+                        for (int j = 0; j < newPartCount; j++) { // Vanilla discrepancy. It appears the vanilla files only will duplicate the previous frame, but ours will duplicate any frame that matches.
+                            if (frameIndices[j] != loadedAnimation.getIndices().get(startIndex + j)) {
+                                match = false;
+                                break;
+                            }
+                        }
+
+                        if (match) {
+                            duplicateFrame = i;
+                            break;
+                        }
+                    }
+
+                    if (duplicateFrame != -1) { // This frame is duplicate of another, so add an index to that instead.
+                        loadedAnimation.getCelNumbers().add(duplicateFrame);
+                    } else { // The frame is new, add its data.
+                        for (int j = 0; j < frameIndices.length; j++)
+                            loadedAnimation.getIndices().add(frameIndices[j]);
+                        loadedAnimation.getCelNumbers().add(uniqueFrames);
+                        uniqueFrames++;
+                    }
+                }
+
+                // celNumbers = entry for each frame.
+                // indices = each frame has an index for each part, unless the frame exactly matches another frame.
+                animatedMof.getModelSet().getCelSet().getCels().add(loadedAnimation);
             }
 
-            for (int j = 0; j < poly.getVerticeCount(); j++)
-                poly.getVertices()[poly.getVerticeCount() - j - 1] = (int) faceBlock.getVertices()[j];
 
-            if (normals != null) {
-                if (poly.getNormals().length == 1) {
-                    poly.getNormals()[0] = baseNormalIndices.get(floatToVec(normals.getV1Normals()));
-                } else if (poly.getNormals().length == 3) {
-                    poly.getNormals()[0] = baseNormalIndices.get(floatToVec(normals.getV1Normals()));
-                    poly.getNormals()[1] = baseNormalIndices.get(floatToVec(normals.getV2Normals()));
-                    poly.getNormals()[2] = baseNormalIndices.get(floatToVec(normals.getV3Normals()));
+            // Apply animation data to the model.
+            holder.setStaticFile(null);
+            holder.setAnimatedFile(animatedMof);
+        }
+
+        for (int partId = 0; partId < model.getJoints().size(); partId++) {
+            MOFPart oldPart = oldParts.size() > partId ? oldParts.get(partId) : null;
+            MOFPart part = new MOFPart(staticMof);
+            staticMof.getParts().add(part);
+
+            MOFPartcel basePartcel = new MOFPartcel(part, 0, 0);
+            Map<SVector, Short> baseNormalIndices = new HashMap<>();
+            List<Integer> vertexIdList = jointVerticeMap.get(partId);
+
+            // Load Vertices.
+            for (int id : vertexIdList) {
+                MMVerticeBlock block = model.getVertices().getBody(id);
+                modelVtxToPartcelVtxMap.put(id, basePartcel.getVertices().size());
+                basePartcel.getVertices().add(new SVector(-block.getX(), -block.getY(), block.getZ()));
+            }
+
+            // Load Normals.
+            Map<Integer, int[]> normalIndexMap = new HashMap<>(); // <Face, Normal Indices>
+            for (MMTriangleNormalsBlock block : model.getNormals().getBlocks()) {
+                if (!jointFaceMap.get(partId).contains(model.getTriangleFaces().getBody(block.getIndex())))
+                    continue; // If the face these normals are for aren't in this joint, skip it.
+
+                SVector n1 = new SVector(-block.getV1Normals()[0], -block.getV1Normals()[1], block.getV1Normals()[2]);
+                SVector n2 = new SVector(-block.getV2Normals()[0], -block.getV2Normals()[1], block.getV2Normals()[2]);
+                SVector n3 = new SVector(-block.getV3Normals()[0], -block.getV3Normals()[1], block.getV3Normals()[2]);
+
+                int[] normalIndices = new int[3];
+                short index = (short) basePartcel.getNormals().size();
+                if (baseNormalIndices.containsKey(n1)) {
+                    normalIndices[0] = baseNormalIndices.get(n1);
+                } else {
+                    normalIndices[0] = index;
+                    baseNormalIndices.put(n1, index++);
+                    basePartcel.getNormals().add(n1);
+                }
+
+                if (baseNormalIndices.containsKey(n2)) {
+                    normalIndices[1] = baseNormalIndices.get(n2);
+                } else {
+                    normalIndices[1] = index;
+                    baseNormalIndices.put(n2, index++);
+                    basePartcel.getNormals().add(n2);
+                }
+
+                if (baseNormalIndices.containsKey(n3)) {
+                    normalIndices[2] = baseNormalIndices.get(n3);
+                } else {
+                    normalIndices[2] = index;
+                    baseNormalIndices.put(n3, index);
+                    basePartcel.getNormals().add(n3);
+                }
+
+                normalIndexMap.put(block.getIndex(), normalIndices);
+            }
+
+            part.getPartcels().add(basePartcel);
+
+            // Port data which isn't supposed to be overwritten by an import.
+            if (oldPart != null) {
+                if (oldPart.getMatrix() != null) // Transition matrix.
+                    part.setMatrix(oldPart.getMatrix());
+
+                if (oldPart.getCollprim() != null) { // Transition collprim.
+                    MOFCollprim oldCollprim = oldPart.getCollprim();
+                    oldCollprim.setParent(part);
+                    part.setCollprim(oldCollprim);
+                }
+
+                for (MOFHilite oldHilite : oldPart.getHilites()) { // Transition Hilites.
+                    if (basePartcel.getVertices().contains(oldHilite.getVertex())) {
+                        oldHilite.setParent(part);
+                        part.getHilites().add(oldHilite);
+                    }
                 }
             }
 
-            if (!isTextured) { // Load the color.
-                int red = (material != null ? ((int) (material.getDiffuse()[0] * 255)) & 0xFF : 255);
-                int green = (material != null ? ((int) (material.getDiffuse()[1] * 255)) & 0xFF : 0);
-                int blue = (material != null ? ((int) (material.getDiffuse()[2] * 255)) & 0xFF : 255);
-                poly.getColor().fromRGB((red << 16) | (green << 8) | blue);
+            // Add Flipbook animations.
+            if (!isReplacementAnimated && newPartCount == 1) {
+                MOFFlipbook flipbook = new MOFFlipbook();
+                for (MMFrameAnimationsBlock block : model.getFrameAnimations().getBlocks()) {
+                    int partcelIndex = part.getPartcels().size();
+
+                    for (MMAnimationFrame frame : block.getFrames()) {
+                        MOFPartcel newCel = new MOFPartcel(part, frame.getVertexPositions().size(), frame.getVertexPositions().size());
+                        for (MMFloatVertex vertex : frame.getVertexPositions())
+                            newCel.getVertices().add(new SVector(-vertex.getX(), -vertex.getY(), vertex.getZ()));
+
+                        newCel.getNormals().addAll(basePartcel.getNormals()); //TODO: Calculate Normals instead. See if there's any easy way to do this. Do the partcels even have normals usually? As far as I'm aware, XAR animations don't use normals, so we should check that vertex normals are used as well. Check what XAR animation does, and if it's really unused.
+
+                        // Add new frame of animation.
+                        part.getPartcels().add(newCel);
+                    }
+
+                    flipbook.getActions().add(new MOFFlipbookAction(part.getPartcels().size() - partcelIndex, partcelIndex));
+                }
+
+                if (flipbook.getActions().size() > 0)
+                    part.setFlipbook(flipbook);
+            } else if (model.getFrameAnimations().size() > 0) {
+                Utils.makePopUp(model.getFrameAnimations().size() + " flipbook (frame) animations have been skipped, since this is either XAR or has more than one part.", AlertType.WARNING);
             }
 
-            // Register the polygon.
-            partOwner.getMofPolygons().computeIfAbsent(poly.getType(), key -> new ArrayList<>()).add(poly);
-            partOwner.getOrderedByLoadPolygons().add(poly);
+            // Build Polygons.
+            for (MMTriangleFaceBlock faceBlock : jointFaceMap.get(partId)) {
+                int i = faceBlock.getBlockIndex();
+
+                MMMaterialsBlock material = materialMap.get(i);
+                MMTriangleNormalsBlock normals = normalMap.get(i);
+                MMTextureCoordinatesBlock texCoords = uvMap.get(i);
+
+                boolean isTextured = material != null && ((material.getFlags() & MMMaterialsBlock.FLAG_NO_TEXTURE) != MMMaterialsBlock.FLAG_NO_TEXTURE);
+                boolean isGouraud = normals != null && !(Arrays.equals(normals.getV1Normals(), normals.getV2Normals()) && Arrays.equals(normals.getV1Normals(), normals.getV3Normals()));
+
+                // Build the polygon. (We always use Tris, since mm3d doesn't support quads.)
+                MOFPrimType primType = isTextured
+                        ? (isGouraud ? MOFPrimType.GT3 : MOFPrimType.FT3)
+                        : (isGouraud ? MOFPrimType.G3 : MOFPrimType.F3);
+
+                MOFPolygon poly = primType.makeNew(part);
+                if (isTextured && (poly instanceof MOFPolyTexture) && material.getName().startsWith(MATERIAL_NAME_PREFIX)) {
+                    MOFPolyTexture polyTex = (MOFPolyTexture) poly;
+                    String trailingNumber = material.getName().substring(MATERIAL_NAME_PREFIX.length()).split("-")[0];  //TODO: Eventually switch this to check the texture filename, not the material name.
+                    if (!Utils.isInteger(trailingNumber))
+                        throw new RuntimeException("'" + trailingNumber + "' is not a numeric texture id. (Material Name)");
+
+                    int textureId = Integer.parseInt(trailingNumber);
+                    if (!allowedTextureIds.contains((short) textureId))
+                        throw new RuntimeException(textureId + " does not map to real texture.");
+
+                    polyTex.setImageId((short) textureId);
+
+                    // Load UVs.
+                    if (texCoords != null)
+                        for (int j = 0; j < polyTex.getUvs().length; j++)
+                            polyTex.getUvs()[poly.getVerticeCount() - j - 1] = new ByteUV(texCoords.getXCoordinates()[j], texCoords.getYCoordinates()[j]);
+
+                    byte red = (byte) (int) (material.getDiffuse()[0] * 127);
+                    byte green = (byte) (int) (material.getDiffuse()[1] * 127);
+                    byte blue = (byte) (int) (material.getDiffuse()[2] * 127);
+                    polyTex.getColor().fromRGB(Utils.toRGB(red, green, blue));
+                }
+
+                // Apply Vertices.
+                for (int j = 0; j < poly.getVerticeCount(); j++)
+                    poly.getVertices()[poly.getVerticeCount() - j - 1] = modelVtxToPartcelVtxMap.get(faceBlock.getVertices()[j]);
+
+                // Apply Normals.
+                int[] normalIndices = normalIndexMap.get(i);
+                if (normalIndices != null)
+                    for (int j = 0; j < poly.getNormals().length; j++)
+                        poly.getNormals()[j] = (short) normalIndices[j];
+
+                if (!isTextured) { // Load the color.
+                    int red = (material != null ? ((int) (material.getDiffuse()[0] * 255)) & 0xFF : 255);
+                    int green = (material != null ? ((int) (material.getDiffuse()[1] * 255)) & 0xFF : 0);
+                    int blue = (material != null ? ((int) (material.getDiffuse()[2] * 255)) & 0xFF : 255);
+                    poly.getColor().fromRGB((red << 16) | (green << 8) | blue);
+                }
+
+                // Register the polygon.
+                part.getMofPolygons().computeIfAbsent(poly.getType(), key -> new ArrayList<>()).add(poly);
+                part.getOrderedByLoadPolygons().add(poly);
+            }
         }
 
         // Build Vertex Map.
@@ -788,6 +956,11 @@ public class FileUtils3D {
                 }
             }
         }
+
+        // Finish Up, apply data.
+        holder.setStaticFile(animatedMof != null ? null : staticMof);
+        holder.setAnimatedFile(animatedMof);
+        holder.setDummy(false);
     }
 
     private static MOFPolygon getPolygonFromVertices(Map<SVector, Set<MOFPolygon>> polyMap, MOFPolygon oldPoly, SVector... vertices) {

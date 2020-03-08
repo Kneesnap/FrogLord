@@ -125,7 +125,7 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     private BufferedImage makeShadeImage(int width, int height, boolean useRaw) {
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
-        graphics.setColor(useRaw ? getColor().toColor() : Utils.toAWTColor(MAPPolyGT.loadColor(getColor())));
+        graphics.setColor(useRaw ? getColor().toShadeColor() : Utils.toAWTColor(MAPPolyGT.loadColor(getColor())));
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
         graphics.dispose();
         return image;

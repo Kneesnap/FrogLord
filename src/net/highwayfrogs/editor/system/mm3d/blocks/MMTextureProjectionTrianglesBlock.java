@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.system.mm3d.blocks;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
@@ -15,9 +16,10 @@ import java.util.List;
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
+@Setter
 public class MMTextureProjectionTrianglesBlock extends MMDataBlockBody {
-    private long index; // Texture projection index to which these triangles are assigned.
-    private List<Long> triangleIndices = new ArrayList<>(); // List of triangle indices that are assigned to projection
+    private int index; // Texture projection index to which these triangles are assigned.
+    private List<Integer> triangleIndices = new ArrayList<>(); // List of triangle indices that are assigned to projection
 
     public MMTextureProjectionTrianglesBlock(MisfitModel3DObject parent) {
         super(OffsetType.TEXTURE_PROJECTIONS_TRIANGLES, parent);
@@ -25,16 +27,16 @@ public class MMTextureProjectionTrianglesBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.index = reader.readUnsignedIntAsLong();
+        this.index = reader.readInt();
         int triCount = reader.readInt();
         for (int i = 0; i < triCount; i++)
-            this.triangleIndices.add(reader.readUnsignedIntAsLong());
+            this.triangleIndices.add(reader.readInt());
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedInt(this.index);
+        writer.writeInt(this.index);
         writer.writeInt(this.triangleIndices.size());
-        this.triangleIndices.forEach(writer::writeUnsignedInt);
+        this.triangleIndices.forEach(writer::writeInt);
     }
 }

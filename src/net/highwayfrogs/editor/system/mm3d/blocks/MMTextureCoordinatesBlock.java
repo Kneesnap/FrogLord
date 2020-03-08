@@ -15,8 +15,8 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 @Getter
 @Setter
 public class MMTextureCoordinatesBlock extends MMDataBlockBody {
-    private int flags;
-    private long triangle; // Triangle for this texture coordinate set.
+    private short flags;
+    private int triangle; // Triangle for this texture coordinate set.
     private float[] xCoordinates = new float[COORDINATES_COUNT]; // Indexed by v1, v2, v3.
     private float[] yCoordinates = new float[COORDINATES_COUNT]; // Indexed by v1, v2, v3.
 
@@ -28,16 +28,16 @@ public class MMTextureCoordinatesBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readUnsignedShortAsInt();
-        this.triangle = reader.readUnsignedIntAsLong();
+        this.flags = reader.readShort();
+        this.triangle = reader.readInt();
         readFloatArray(reader, this.xCoordinates);
         readFloatArray(reader, this.yCoordinates);
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.flags);
-        writer.writeUnsignedInt(this.triangle);
+        writer.writeShort(this.flags);
+        writer.writeInt(this.triangle);
         writeFloatArray(writer, this.xCoordinates);
         writeFloatArray(writer, this.yCoordinates);
     }

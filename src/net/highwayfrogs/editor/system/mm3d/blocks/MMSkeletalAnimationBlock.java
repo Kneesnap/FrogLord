@@ -54,7 +54,7 @@ public class MMSkeletalAnimationBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeShort(this.flags);
-        writer.writeStringBytes(this.name);
+        writer.writeTerminatorString(this.name);
         writer.writeFloat(this.fps);
 
         // Write frames.
@@ -89,7 +89,7 @@ public class MMSkeletalAnimationBlock extends MMDataBlockBody {
         @Override
         public void save(DataWriter writer) {
             writer.writeInt(this.jointIndex);
-            writer.writeBytes((byte) this.keyframeType.ordinal());
+            writer.writeByte((byte) this.keyframeType.ordinal());
             writer.writeFloat(this.posX);
             writer.writeFloat(this.posY);
             writer.writeFloat(this.posZ);
@@ -97,6 +97,6 @@ public class MMSkeletalAnimationBlock extends MMDataBlockBody {
     }
 
     public enum MMAnimationKeyframeType {
-        TRANSLATION, ROTATION
+        ROTATION, TRANSLATION
     }
 }

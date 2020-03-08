@@ -19,8 +19,8 @@ import java.util.Arrays;
 @Getter
 public class MMJointsBlock extends MMDataBlockBody {
     @Setter private short flags;
-    private byte[] name = new byte[40];
-    @Setter private long parentJointIndex;
+    private byte[] name = new byte[NAME_BYTE_LENGTH];
+    @Setter private int parentJointIndex = -1; // -1 = Not attached.
     @Setter private float xRotation;
     @Setter private float yRotation;
     @Setter private float zRotation;
@@ -28,8 +28,9 @@ public class MMJointsBlock extends MMDataBlockBody {
     @Setter private float yTranslation;
     @Setter private float zTranslation;
 
-    public static final int FLAG_HIDDEN = Constants.BIT_FLAG_0;
-    public static final int FLAG_SELECTED = Constants.BIT_FLAG_1;
+    private static final int NAME_BYTE_LENGTH = 40;
+    public static final short FLAG_HIDDEN = Constants.BIT_FLAG_0;
+    public static final short FLAG_SELECTED = Constants.BIT_FLAG_1;
 
     public MMJointsBlock(MisfitModel3DObject parent) {
         super(OffsetType.JOINTS, parent);
@@ -38,8 +39,8 @@ public class MMJointsBlock extends MMDataBlockBody {
     @Override
     public void load(DataReader reader) {
         this.flags = reader.readShort();
-        this.name = reader.readBytes(40);
-        this.parentJointIndex = reader.readUnsignedIntAsLong();
+        reader.readBytes(this.name);
+        this.parentJointIndex = reader.readInt();
         this.xRotation = reader.readFloat();
         this.yRotation = reader.readFloat();
         this.zRotation = reader.readFloat();
@@ -52,7 +53,7 @@ public class MMJointsBlock extends MMDataBlockBody {
     public void save(DataWriter writer) {
         writer.writeShort(this.flags);
         writer.writeBytes(this.name);
-        writer.writeUnsignedInt(this.parentJointIndex);
+        writer.writeInt(this.parentJointIndex);
         writer.writeFloat(this.xRotation);
         writer.writeFloat(this.yRotation);
         writer.writeFloat(this.zRotation);
@@ -68,8 +69,8 @@ public class MMJointsBlock extends MMDataBlockBody {
      */
     public void setName(String name) {
         byte[] newBytes = name.getBytes(StandardCharsets.US_ASCII);
-        if (newBytes.length > this.name.length)
-            throw new RuntimeException("Joint names cannot exceed a length of 40 bytes.");
+        if (newBytes.length > NAME_BYTE_LENGTH)
+            throw new RuntimeException("Joint names cannot exceed a length of " + NAME_BYTE_LENGTH + " bytes.");
 
         Arrays.fill(this.name, Constants.NULL_BYTE);
         System.arraycopy(newBytes, 0, this.name, 0, newBytes.length);

@@ -16,14 +16,14 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 @Getter
 @Setter
 public class MMVerticeBlock extends MMDataBlockBody {
-    private int flags;
+    private short flags;
     private float x;
     private float y;
     private float z;
 
-    public static final int FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
-    public static final int FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
-    public static final int FLAG_FREE_VERTEX = Constants.BIT_FLAG_2; // Set if vertex does not have to be connected to a face (don't auto-delete when face is deleted)
+    public static final short FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
+    public static final short FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
+    public static final short FLAG_FREE_VERTEX = Constants.BIT_FLAG_2; // Set if vertex does not have to be connected to a face (don't auto-delete when face is deleted)
 
     public MMVerticeBlock(MisfitModel3DObject parent) {
         super(OffsetType.VERTICES, parent);
@@ -31,7 +31,7 @@ public class MMVerticeBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        this.flags = reader.readUnsignedShortAsInt();
+        this.flags = reader.readShort();
         this.x = reader.readFloat();
         this.y = reader.readFloat();
         this.z = reader.readFloat();
@@ -39,7 +39,7 @@ public class MMVerticeBlock extends MMDataBlockBody {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.flags);
+        writer.writeShort(this.flags);
         writer.writeFloat(this.x);
         writer.writeFloat(this.y);
         writer.writeFloat(this.z);

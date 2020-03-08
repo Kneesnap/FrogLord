@@ -18,8 +18,8 @@ import java.util.List;
  */
 @Getter
 public class MOFAnimationCels extends GameObject {
-    private List<Integer> celNumbers = new ArrayList<>(); // celNumbers[virtualId] -> actualCel
-    private List<Short> indices = new ArrayList<>(); // Transform Ids. [(actualCel * partCount) + part] part is ?.
+    private List<Integer> celNumbers = new ArrayList<>(); // Entry for each frame. Starts at 0, counts up for each frame, unless there is a duplicate frame, where it won't count. Index into indice list.
+    private List<Short> indices = new ArrayList<>(); // All of the transform ids used. Each frame has indices for each part, seemingly in order from start to end of animation.
 
     private transient MOFAnimation parent;
     private transient int tempCelNumberPointer;
