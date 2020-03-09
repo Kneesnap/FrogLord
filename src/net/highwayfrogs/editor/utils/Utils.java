@@ -1243,6 +1243,15 @@ public class Utils {
         return Files.readAllBytes(file.toPath());
     }
 
+    /**
+     * Get the square root of a fixed-point integer.
+     * @param i The integer to get the square root of.
+     * @return squareRoot
+     */
+    public static int fixedSqrt(int i) {
+        return (int) Math.sqrt(i);
+    }
+
     private static class TextureCache {
         private long lastUpdate;
         private Image fxImage;

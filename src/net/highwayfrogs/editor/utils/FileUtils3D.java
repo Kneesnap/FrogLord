@@ -571,7 +571,7 @@ public class FileUtils3D {
 
     // Other TODOs:
     // TODO: Import textures from imported models. [Requires a system to automatically put textures in vram safely. Also requires FrogLord to be able to handle multiple images with the same id.]
-    // TODO: BAD IMPORT MATH. Even on the direct one, there's a question of how accurate it is. Are we using the wrong frames? Is it the math itself?
+    // TODO: It seems like the matrix generated is slightly wrong.
     // TODO: Normals, Potentially colors. See the turtle3 in org1. No normals specified -> Generate them. Maybe generate them anyways!
     // TODO: 1.7's format seems to break when we load EXTERNAL_TEXTURES.
     // TODO: Make sure importing works on actual modified models. Basically, it's setup to assume the data is exactly how it is when we export. We don't want it to be possible for you to mess up importing by accident and not know why.

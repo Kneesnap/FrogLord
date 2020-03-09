@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 public class MR_QUATB_TRANS extends TransformObject {
     private byte c; // 'real'.
-    private byte x; // Presumably delta?
+    private byte x; // Angle.
     private byte y;
     private byte z;
     private short[] transform = new short[3];
@@ -61,32 +61,44 @@ public class MR_QUATB_TRANS extends TransformObject {
         this.transform[1] = (short) matrix.getTransform()[1];
         this.transform[2] = (short) matrix.getTransform()[2];
 
-        short wx = (short) (((int) matrix.getMatrix()[1][2] - (int) matrix.getMatrix()[2][1]) / 2);
-        short wy = (short) (((int) matrix.getMatrix()[2][0] - (int) matrix.getMatrix()[0][2]) / 2);
-        short wz = (short) (((int) matrix.getMatrix()[0][1] - (int) matrix.getMatrix()[1][0]) / 2);
+        int trace = matrix.getMatrix()[0][0] + matrix.getMatrix()[1][1] + matrix.getMatrix()[2][2];
+        if (trace > 0) {
+            int s = Utils.fixedSqrt((trace + 0x1000) << 12);
+            this.c = (byte) (s >> 7);
+            this.x = (byte) (((matrix.getMatrix()[1][2] - matrix.getMatrix()[2][1]) << 5) / s);
+            this.y = (byte) (((matrix.getMatrix()[2][0] - matrix.getMatrix()[0][2]) << 5) / s);
+            this.z = (byte) (((matrix.getMatrix()[0][1] - matrix.getMatrix()[1][0]) << 5) / s);
+        } else {
+            int i = 0;
+            if (matrix.getMatrix()[1][1] > matrix.getMatrix()[0][0])
+                i = 1;
+            if (matrix.getMatrix()[2][2] > matrix.getMatrix()[i][i])
+                i = 2;
 
-        PSXMatrix tempMatrix = new PSXMatrix();
-        float bestDistance = Float.MAX_VALUE;
-        for (byte c = Byte.MIN_VALUE; c < Byte.MAX_VALUE; c++) {
-            byte calcX = (byte) (c != (byte) 0 ? ((wx / c) >> 1) : (byte) 0); //TODO: Make sure this works well.
-            byte calcY = (byte) (c != (byte) 0 ? ((wy / c) >> 1) : (byte) 0);
-            byte calcZ = (byte) (c != (byte) 0 ? ((wz / c) >> 1) : (byte) 0);
+            int j = (i == 2 ? 0 : i + 1);
+            int k = (j == 2 ? 0 : j + 1);
+            int s = Utils.fixedSqrt(((matrix.getMatrix()[i][i] - (matrix.getMatrix()[j][j] + matrix.getMatrix()[k][k])) + 0x1000) << 12);
+            byte v1 = (byte) (s >> 7);
+            byte v2 = (byte) (((matrix.getMatrix()[i][j] + matrix.getMatrix()[j][i]) << 5) / s);
+            byte v3 = (byte) (((matrix.getMatrix()[i][k] + matrix.getMatrix()[k][i]) << 5) / s);
+            this.c = (byte) (((matrix.getMatrix()[j][k] - matrix.getMatrix()[k][j]) << 5) / s);
 
-            applyToMatrix(tempMatrix, c, calcX, calcY, calcZ);
-
-            float tempDistance = 0;
-            for (int i = 0; i < matrix.getMatrix().length; i++)
-                for (int j = 0; j < matrix.getMatrix()[i].length; j++)
-                    tempDistance += Math.abs(Utils.fixedPointShortToFloat12Bit(matrix.getMatrix()[i][j]) - Utils.fixedPointShortToFloat12Bit(tempMatrix.getMatrix()[i][j]));
-
-            if (tempDistance < bestDistance) {
-                bestDistance = tempDistance;
-                this.c = c;
-                this.x = calcX;
-                this.y = calcY;
-                this.z = calcZ;
-                if (bestDistance == 0F)
-                    break; // Found the exact results, stop looking for more.
+            switch (i) {
+                case 0:
+                    this.x = v1;
+                    this.y = v2;
+                    this.z = v3;
+                    break;
+                case 1:
+                    this.y = v1;
+                    this.z = v2;
+                    this.x = v3;
+                    break;
+                case 2:
+                    this.z = v1;
+                    this.x = v2;
+                    this.y = v3;
+                    break;
             }
         }
     }
@@ -125,5 +137,10 @@ public class MR_QUATB_TRANS extends TransformObject {
         matrix.getMatrix()[2][0] = (short) (xz + wy);
         matrix.getMatrix()[2][1] = (short) (yz - wx);
         matrix.getMatrix()[2][2] = (short) (0x1000 - (xx + yy));
+    }
+
+    @Override
+    public String toString() {
+        return "MR_QUATB_TRANS<c=" + this.c + ",x=" + this.x + ",y=" + this.y + ",z=" + this.z + ",tx=" + this.transform[0] + ",ty=" + this.transform[1] + ",tz=" + this.transform[2] + ">";
     }
 }

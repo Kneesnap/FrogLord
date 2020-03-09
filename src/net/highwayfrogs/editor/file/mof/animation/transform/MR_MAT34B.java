@@ -44,7 +44,7 @@ public class MR_MAT34B extends TransformObject {
         this.transform[2] = (short) matrix.getTransform()[2];
         for (int i = 0; i < getMatrix().length; i++)
             for (int j = 0; j < getMatrix()[i].length; j++)
-                getMatrix()[i][j] = (byte) (short) (matrix.getMatrix()[i][j] >> 5);
+                getMatrix()[i][j] = (byte) (matrix.getMatrix()[i][j] >> 5);
     }
 
     @Override
