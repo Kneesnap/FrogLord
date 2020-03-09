@@ -27,11 +27,8 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.ResourceBundle;
 
 /**
  * Allows editing the arrangement of a VRAM page.
@@ -74,7 +71,7 @@ public class VRAMPageController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Choose visibility of UI based on
-        this.overlapGrid = new boolean[isPsxMode() ? GameImage.PSX_PAGE_WIDTH * 4 : GameImage.PC_PAGE_WIDTH][isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT];
+        this.overlapGrid = new boolean[isPsxMode() ? GameImage.PSX_FULL_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH][isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT];
         setupImages();
 
         if (isPsxMode()) {
@@ -128,7 +125,7 @@ public class VRAMPageController implements Initializable {
                 return;
 
             double scale = imageView.getFitWidth() / (double) this.splitImages[this.selectedPage].getWidth();
-            int realX = isPsxMode() ? ((this.selectedPage % GameImage.PSX_X_PAGES) * GameImage.PSX_PAGE_WIDTH) + (int) (evt.getX() / scale) : (int) evt.getX();
+            int realX = isPsxMode() ? ((this.selectedPage % GameImage.PSX_X_PAGES) * GameImage.PSX_PAGE_WIDTH) + (int) ((evt.getX() / scale) / (GameImage.PSX_FULL_PAGE_WIDTH / GameImage.PSX_PAGE_WIDTH)) : (int) evt.getX();
             int realY = isPsxMode() ? ((this.selectedPage / GameImage.PSX_X_PAGES) * GameImage.PSX_PAGE_HEIGHT) + (int) evt.getY() : ((this.selectedPage * GameImage.PC_PAGE_HEIGHT) + (int) evt.getY());
             GameImage newImage = vloArchive.getImage(realX, realY);
 
@@ -207,7 +204,7 @@ public class VRAMPageController implements Initializable {
         if (this.selectedImage == null)
             return;
 
-        short finalX = (short) Math.min(Math.max(0, x), (this.fullImage.getWidth() * (isPsxMode() ? 4 : 1)) - this.selectedImage.getFullWidth());
+        short finalX = (short) Math.min(Math.max(0, x), (this.fullImage.getWidth() - this.selectedImage.getFullWidth()));
         short finalY = (short) Math.min(Math.max(0, y), this.fullImage.getHeight() - this.selectedImage.getFullHeight());
         updateTextFields |= ((short) x != finalX) || ((short) y != finalY);
         if (finalX == this.selectedImage.getVramX() && finalY == this.selectedImage.getVramY())
@@ -255,15 +252,15 @@ public class VRAMPageController implements Initializable {
         int totalPages = GameImage.TOTAL_PAGES;
         this.splitImages = new BufferedImage[totalPages];
         for (int i = 0; i < this.splitImages.length; i++) {
-            this.splitImages[i] = new BufferedImage(isPsxMode() ? GameImage.PSX_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH, isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT, this.fullImage.getType());
+            this.splitImages[i] = new BufferedImage(isPsxMode() ? GameImage.PSX_FULL_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH, isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT, this.fullImage.getType());
             updateSplitImage(i);
         }
     }
 
     private void updateSplitImage(int splitIndex) {
-        int startX = (isPsxMode() ? ((splitIndex % GameImage.PSX_X_PAGES) * GameImage.PSX_PAGE_WIDTH) : 0);
+        int startX = (isPsxMode() ? ((splitIndex % GameImage.PSX_X_PAGES) * GameImage.PSX_FULL_PAGE_WIDTH) : 0);
         int startY = (isPsxMode() ? ((splitIndex / GameImage.PSX_X_PAGES) * GameImage.PSX_PAGE_HEIGHT) : (splitIndex * GameImage.PC_PAGE_HEIGHT));
-        int width = (isPsxMode() ? GameImage.PSX_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH);
+        int width = (isPsxMode() ? GameImage.PSX_FULL_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH);
         int height = (isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT);
 
         // Draw over image.
@@ -326,8 +323,7 @@ public class VRAMPageController implements Initializable {
             for (int i = 0; i < this.splitImages.length; i++) { // Test all of the texture pages.
                 // Clear grid.
                 for (int y = 0; y < overlapGrid.length; y++)
-                    for (int x = 0; x < overlapGrid[y].length; x++)
-                        overlapGrid[y][x] = false;
+                    Arrays.fill(overlapGrid[y], false);
 
                 for (GameImage image : vloArchive.getImages()) {
                     if (image.getMultiplierPage() != i)
@@ -339,6 +335,11 @@ public class VRAMPageController implements Initializable {
                         for (int x = 0; x < image.getFullWidth(); x++) {
                             int gridX = baseX + x;
                             int gridY = baseY + y;
+
+                            if (gridY < 0 || gridY >= overlapGrid.length || gridX < 0 || gridX >= overlapGrid[gridY].length) {
+                                warning.append("Bounds Error: [").append(gridX).append(", ").append(gridY).append("]").append(Constants.NEWLINE);
+                                break loopEnd;
+                            }
 
                             //System.out.println("X: "+ (baseX + x) + ", Y: " + (baseY + y) + ", " + overlapGrid[baseY + y][baseX + x]);
                             if (overlapGrid[gridY][gridX]) {

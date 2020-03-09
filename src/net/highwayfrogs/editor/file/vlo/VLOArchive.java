@@ -52,7 +52,6 @@ public class VLOArchive extends GameFile {
     public static final int WAD_TYPE = 0;
     public static final Image ICON = loadIcon("image");
     public static final ImageFilterSettings ICON_EXPORT = new ImageFilterSettings(ImageState.EXPORT);
-    public static final ImageFilterSettings VRAM_EXPORT = new ImageFilterSettings(ImageState.EXPORT).setAllowScrunch(true);
     public static final ImageFilterSettings VRAM_EXPORT_NO_SCRUNCH = new ImageFilterSettings(ImageState.EXPORT);
 
     @Override
@@ -230,7 +229,7 @@ public class VLOArchive extends GameFile {
     }
 
     private int getVramWidth() {
-        return (isPsxMode() ? GameImage.PSX_X_PAGES * GameImage.PSX_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH);
+        return (isPsxMode() ? GameImage.PSX_X_PAGES * GameImage.PSX_FULL_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH);
     }
 
     private int getVramHeight() {
@@ -257,22 +256,22 @@ public class VLOArchive extends GameFile {
         graphics.setColor(Constants.COLOR_TURQUOISE);
         graphics.fillRect(0, 0, vramImage.getWidth(), vramImage.getHeight());
 
-        // Draw screen-buffer as a different color.
+        final int psxMultiple = (GameImage.PSX_FULL_PAGE_WIDTH / GameImage.PSX_PAGE_WIDTH);
         if (isPsxMode()) {
+            // Draw screen-buffer as a different color.
             graphics.setColor(Constants.COLOR_DEEP_GREEN); // Screen buffer.
-            graphics.fillRect(0, 0, 320, 240);
+            graphics.fillRect(0, 0, 320 * psxMultiple, 240);
             graphics.setColor(Constants.COLOR_DARK_YELLOW); // Next frame.
-            graphics.fillRect(0, 240, 320, 240);
-        }
+            graphics.fillRect(0, 240, 320 * psxMultiple, 240);
 
-        // Draw cluts.
-        if (isPsxMode())
+            // Draw cluts.
             for (ClutEntry clutEntry : getClutEntries())
-                graphics.drawImage(clutEntry.makeImage(), null, clutEntry.getClutRect().getX(), clutEntry.getClutRect().getY());
+                graphics.drawImage(clutEntry.makeImage(), null, clutEntry.getClutRect().getX() * psxMultiple, clutEntry.getClutRect().getY());
+        }
 
         // Draw images.
         for (GameImage image : getImages())
-            graphics.drawImage(image.toBufferedImage(VRAM_EXPORT), null, (image.getVramX() / image.getWidthMultiplier()), image.getVramY());
+            graphics.drawImage(image.toBufferedImage(VRAM_EXPORT_NO_SCRUNCH), null, image.getVramX() * (isPsxMode() ? (psxMultiple / image.getWidthMultiplier()) : 1), image.getVramY());
 
         graphics.dispose(); // Cleanup.
         return vramImage;

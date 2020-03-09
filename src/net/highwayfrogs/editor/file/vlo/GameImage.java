@@ -54,6 +54,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
     public static final int PC_PAGE_WIDTH = 256;
     public static final int PC_PAGE_HEIGHT = 256;
     public static final int PSX_PAGE_WIDTH = 64;
+    public static final int PSX_FULL_PAGE_WIDTH = 256;
     public static final int PSX_PAGE_HEIGHT = 256;
     public static final int PSX_X_PAGES = 16;
     public static final int PSX_Y_PAGES = 2;

@@ -671,9 +671,8 @@ public class FileUtils3D {
 
         if (model.getSkeletalAnimations().size() > 0) { // This is an animated MOF.
             String transformType = model.getFirstMetadataValue("transformType");
-            //if (transformType != null)
-            //    animatedMof.setTransformType(TransformType.valueOf(transformType)); //TODO
-            animatedMof.setTransformType(TransformType.NORMAL);
+            if (transformType != null)
+                animatedMof.setTransformType(TransformType.valueOf(transformType));
 
             Map<TransformObject, Integer> indexMap = new HashMap<>();
             for (MMSkeletalAnimationBlock skeletalAnimation : model.getSkeletalAnimations().getBlocks()) {
