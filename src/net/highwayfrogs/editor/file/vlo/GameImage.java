@@ -58,7 +58,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
     public static final int PSX_PAGE_HEIGHT = 256;
     public static final int PSX_X_PAGES = 16;
     public static final int PSX_Y_PAGES = 2;
-    public static final int TOTAL_PAGES = 32; // It seems to be 32 on both PC and PS1.
+    public static final int TOTAL_PAGES = 32; // It seems to be 32 on both PC and PS1. We can't go higher than this because it encodes only 5 bits for the page id.
 
     public static final int FLAG_TRANSLUCENT = Constants.BIT_FLAG_0;
     public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused.
@@ -254,7 +254,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
      * @return tpageShort
      */
     public short getTexturePageShort() {
-        return (short) (getPage() | (this.abr << 5) | (getClutMode().ordinal() << 7));
+        return (short) ((getPage() & 0b11111) | (this.abr << 5) | (getClutMode().ordinal() << 7));
     }
 
     /**
