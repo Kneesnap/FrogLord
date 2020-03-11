@@ -386,4 +386,12 @@ public class MOFPart extends GameObject {
             polygons.addAll(list);
         return polygons;
     }
+
+    /**
+     * Tests if this part should be hidden.
+     * @return shouldHide
+     */
+    public boolean shouldHide() {
+        return "GEN_FROG.XAR".equals(getParent().getFileEntry().getDisplayName()) && getPartID() == 15;
+    }
 }

@@ -205,6 +205,15 @@ public class VLOArchive extends GameFile {
     }
 
     /**
+     * Gets a texture in any VLO by its id, but tests this one first.
+     * @param textureId The id to find
+     */
+    public GameImage getGlobalTexture(int textureId) {
+        GameImage foundImage = getImageByTextureId(textureId, false);
+        return foundImage != null ? foundImage : getMWD().getImageByTextureId(textureId);
+    }
+
+    /**
      * Select a VLO image
      * @param handler   The handler for when the VLO is determined.
      * @param allowNull Are null VLOs allowed?

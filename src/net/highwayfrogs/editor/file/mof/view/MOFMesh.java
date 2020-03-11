@@ -47,7 +47,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
         AtomicInteger texId = new AtomicInteger();
 
         for (MOFPart part : getMofHolder().asStaticFile().getParts()) {
-            if (shouldSkip(part))
+            if (part.shouldHide())
                 continue;
 
             part.getMofPolygons().values().forEach(list -> list.forEach(poly -> addPolygon(poly, texId)));
@@ -86,7 +86,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     public List<Vector> getVertices() {
         this.verticeCache.clear();
         for (MOFPart part : getMofHolder().asStaticFile().getParts()) {
-            if (shouldSkip(part))
+            if (part.shouldHide())
                 continue;
 
             MOFPartcel partcel = getCurrentParcel(part);
@@ -158,10 +158,6 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
 
         this.animationId = actionId;
         resetFrame();
-    }
-
-    private boolean shouldSkip(MOFPart part) { // Skip the croak for now. In the future we should make something non-hardcoded.
-        return getMofHolder().getFileEntry().getDisplayName().contains("GEN_FROG") && part.getPartID() == 15;
     }
 
     /**

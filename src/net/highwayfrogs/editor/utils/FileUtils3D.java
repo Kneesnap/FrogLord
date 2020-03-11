@@ -137,7 +137,7 @@ public class FileUtils3D {
                 MOFPolyTexture texture = (MOFPolyTexture) polygon;
 
                 if (exportTextures) {
-                    GameImage image = textureMap.computeIfAbsent((int) texture.getImageId(), polygon.getMWD()::getImageByTextureId);
+                    GameImage image = textureMap.computeIfAbsent((int) texture.getImageId(), vloTable::getGlobalTexture);
                     int newTextureId = image.getTextureId();
 
                     if (newTextureId != textureId.get()) { // It's time to change the texture.
@@ -421,7 +421,7 @@ public class FileUtils3D {
                         TransformObject transform = animatedMof.getTransform(part, action, frame);
                         PSXMatrix matrix = transform.createMatrix();
                         keyframes.add(new MMSkeletalAnimationFrame(i, MMAnimationKeyframeType.ROTATION, (float) -matrix.getRollAngle(), (float) -matrix.getPitchAngle(), (float) matrix.getYawAngle()));
-                        keyframes.add(new MMSkeletalAnimationFrame(i, MMAnimationKeyframeType.TRANSLATION, -Utils.fixedPointIntToFloat20Bit(matrix.getTransform()[0]), -Utils.fixedPointIntToFloat20Bit(matrix.getTransform()[1]), Utils.fixedPointIntToFloat20Bit(matrix.getTransform()[2])));
+                        keyframes.add(new MMSkeletalAnimationFrame(i, MMAnimationKeyframeType.TRANSLATION, -Utils.fixedPointIntToFloat4Bit(matrix.getTransform()[0]), -Utils.fixedPointIntToFloat4Bit(matrix.getTransform()[1]), Utils.fixedPointIntToFloat4Bit(matrix.getTransform()[2])));
                     }
 
                     skeletalAnimation.getFrames().add(keyframes);
@@ -571,7 +571,7 @@ public class FileUtils3D {
 
     // Other TODOs:
     // TODO: Import textures from imported models. [Requires a system to automatically put textures in vram safely. Also requires FrogLord to be able to handle multiple images with the same id.]
-    // TODO: It seems like the matrix generated is slightly wrong.
+    // TODO: It seems like the matrix generated is slightly wrong, probably because the values in the mm3d file are wrong.
     // TODO: Normals, Potentially colors. See the turtle3 in org1. No normals specified -> Generate them. Maybe generate them anyways!
     // TODO: 1.7's format seems to break when we load EXTERNAL_TEXTURES.
     // TODO: Make sure importing works on actual modified models. Basically, it's setup to assume the data is exactly how it is when we export. We don't want it to be possible for you to mess up importing by accident and not know why.
@@ -700,9 +700,9 @@ public class FileUtils3D {
                         // Create rotation matrix.
                         PSXMatrix matrix = new PSXMatrix();
                         if (posFrame != null) { // This may be subject to the same problem that causes static entities to not show up in-game, calculating the wrong group. If there are weird unexplainable issues, this could be the culprit.
-                            matrix.getTransform()[0] = Utils.floatToFixedPointInt20Bit(-posFrame.getPosX());
-                            matrix.getTransform()[1] = Utils.floatToFixedPointInt20Bit(-posFrame.getPosY());
-                            matrix.getTransform()[2] = Utils.floatToFixedPointInt20Bit(posFrame.getPosZ());
+                            matrix.getTransform()[0] = Utils.floatToFixedPointInt4Bit(-posFrame.getPosX());
+                            matrix.getTransform()[1] = Utils.floatToFixedPointInt4Bit(-posFrame.getPosY());
+                            matrix.getTransform()[2] = Utils.floatToFixedPointInt4Bit(posFrame.getPosZ());
                         }
                         matrix.updateMatrix(rotFrame != null ? rotFrame.getPosZ() : 0D, rotFrame != null ? -rotFrame.getPosY() : 0D, rotFrame != null ? -rotFrame.getPosX() : 0D);
                         TransformObject newTransform = animatedMof.getTransformType().makeTransform(matrix); // Create transform from matrix.
