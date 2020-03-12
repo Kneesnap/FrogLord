@@ -520,8 +520,8 @@ public class FileUtils3D {
                     normal1.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[2])));
                 } else if (poly.getNormals().length == 4) {
                     normal1.setV1Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[0])));
-                    normal1.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[3])));
-                    normal1.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
+                    normal1.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
+                    normal1.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[3])));
 
                     MMTriangleNormalsBlock normal2 = model.getNormals().addNewElement();
                     normal2.setIndex(faceIndex + 1);
@@ -537,10 +537,6 @@ public class FileUtils3D {
 
     private static float[] vecToFloat(SVector vec) {
         return new float[]{vec.getExportFloatX(), vec.getExportFloatY(), vec.getExportFloatZ()};
-    }
-
-    private static SVector floatToVec(float[] floatArray) {
-        return new SVector(-floatArray[0], -floatArray[1], floatArray[2]);
     }
 
     @Getter
@@ -571,9 +567,14 @@ public class FileUtils3D {
 
     // Other TODOs:
     // TODO: Import textures from imported models. [Requires a system to automatically put textures in vram safely. Also requires FrogLord to be able to handle multiple images with the same id.]
-    // TODO: It seems like the matrix generated is slightly wrong, probably because the values in the mm3d file are wrong.
-    // TODO: Normals, Potentially colors. See the turtle3 in org1. No normals specified -> Generate them. Maybe generate them anyways!
+    // TODO: The export mm3d file has bad skeletal rotations.
+    // TODO: Normals. See the turtle3 in org1. Vertex animation -> Generate them. Maybe generate them anyways, if possible.
     // TODO: Make sure importing works on actual modified models. Basically, it's setup to assume the data is exactly how it is when we export. We don't want it to be possible for you to mess up importing by accident and not know why.
+
+    //TODO: Try different orders of normals when saved, until we make it work.
+    //TODO: Try generating yaw pitch directly from transform.
+    //TODO: Try exporting normals in .obj so they can be viewed easier.
+
 
     /**
      * Load a MOF from a model.
@@ -866,7 +867,7 @@ public class FileUtils3D {
                 boolean isTextured = material != null && material.hasTexture();
                 boolean isGouraud = normals != null && !(Arrays.equals(normals.getV1Normals(), normals.getV2Normals()) && Arrays.equals(normals.getV1Normals(), normals.getV3Normals()));
 
-                // Build the polygon. (We always use Tris, since mm3d doesn't support quads.)
+                // Build the polygon. (We always use Tris, since mm3d doesn't support quads.) We could theoretically support quads by checking the vertices on each partcel (no need to check skeletal animation), but that might be more trouble than it's worth.
                 MOFPrimType primType = isTextured
                         ? (isGouraud ? MOFPrimType.GT3 : MOFPrimType.FT3)
                         : (isGouraud ? MOFPrimType.G3 : MOFPrimType.F3);
