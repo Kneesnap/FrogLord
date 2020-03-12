@@ -25,7 +25,7 @@ public class MMMaterialsBlock extends MMDataBlockBody {
     private float[] emissive = new float[4];
     private float shininess;
 
-    public static final short FLAG_NO_TEXTURE = 0b00001111;
+    public static final short FLAG_NO_TEXTURE = 0b1111;
     public static final short FLAG_CLAMP_S = Constants.BIT_FLAG_4; // Clamp S texture coordinates. (Do not repeat)
     public static final short FLAG_CLAMP_T = Constants.BIT_FLAG_5; // Clamp T texture coordinates. (Do not repeat)
 
@@ -68,5 +68,13 @@ public class MMMaterialsBlock extends MMDataBlockBody {
         writeFloatArray(writer, this.specular);
         writeFloatArray(writer, this.emissive);
         writer.writeFloat(this.shininess);
+    }
+
+    /**
+     * Test if this material has a texture.
+     * @return hasTexture
+     */
+    public boolean hasTexture() {
+        return (this.flags & FLAG_NO_TEXTURE) == 0;
     }
 }

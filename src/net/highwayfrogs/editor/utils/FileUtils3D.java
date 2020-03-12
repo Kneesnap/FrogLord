@@ -573,7 +573,6 @@ public class FileUtils3D {
     // TODO: Import textures from imported models. [Requires a system to automatically put textures in vram safely. Also requires FrogLord to be able to handle multiple images with the same id.]
     // TODO: It seems like the matrix generated is slightly wrong, probably because the values in the mm3d file are wrong.
     // TODO: Normals, Potentially colors. See the turtle3 in org1. No normals specified -> Generate them. Maybe generate them anyways!
-    // TODO: 1.7's format seems to break when we load EXTERNAL_TEXTURES.
     // TODO: Make sure importing works on actual modified models. Basically, it's setup to assume the data is exactly how it is when we export. We don't want it to be possible for you to mess up importing by accident and not know why.
 
     /**
@@ -864,7 +863,7 @@ public class FileUtils3D {
                 MMTriangleNormalsBlock normals = normalMap.get(i);
                 MMTextureCoordinatesBlock texCoords = uvMap.get(i);
 
-                boolean isTextured = material != null && ((material.getFlags() & MMMaterialsBlock.FLAG_NO_TEXTURE) != MMMaterialsBlock.FLAG_NO_TEXTURE);
+                boolean isTextured = material != null && material.hasTexture();
                 boolean isGouraud = normals != null && !(Arrays.equals(normals.getV1Normals(), normals.getV2Normals()) && Arrays.equals(normals.getV1Normals(), normals.getV3Normals()));
 
                 // Build the polygon. (We always use Tris, since mm3d doesn't support quads.)

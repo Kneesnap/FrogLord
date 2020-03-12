@@ -38,7 +38,7 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
                 int readGoal = (reader.getIndex() + elementSize);
                 T body = addNewElement();
                 body.load(reader);
-                if (reader.getIndex() != readGoal) {
+                if (reader.getIndex() != readGoal) { // This happens with EXTERNAL_TEXTURES on mm3d v1.3.12, it saves invalid data. However, it can be safely ignored.
                     System.out.println("[A/" + i + "/" + this.blocks.size() + "] " + getOffsetType() + ": Expected " + readGoal + ", Actual: " + reader.getIndex() + ", (" + elementSize + ", " + elementCount + ")");
                     getBlocks().remove(body); // It's invalid.
                     this.invalidBodies++;

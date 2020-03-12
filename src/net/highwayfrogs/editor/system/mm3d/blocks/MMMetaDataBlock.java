@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 /**
  * Holds ascii metadata.
+ * Version: 1.4+
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter

@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.system.mm3d;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -22,6 +23,8 @@ import java.util.*;
  */
 @Getter
 public class MisfitModel3DObject extends GameObject {
+    @Setter private short majorVersion = 1;
+    @Setter private short minorVersion = 6;
     private short modelFlags;
     private List<MMDataBlockHeader<?>> segments = new ArrayList<>();
     private MMExternalTextureHolder externalTextures = new MMExternalTextureHolder(this);
@@ -45,45 +48,28 @@ public class MisfitModel3DObject extends GameObject {
     private MMDataBlockHeader<MMWeightedInfluencesBlock> weightedInfluences = new MMDataBlockHeader<>(OffsetType.WEIGHTED_INFLUENCES, this);
 
     private static final Set<OffsetType> FIRST_ROUND_READ = new HashSet<>(Arrays.asList(OffsetType.VERTICES, OffsetType.POINTS)); // These values need to be read before the rest, since information about them are used in other places.
-
     private static final String SIGNATURE = "MISFIT3D";
-    private static final short MAJOR_VERSION = 0x01;
-    private static final short MINOR_VERSION = 0x06;
 
     @Override
     public void load(DataReader reader) {
         reader.verifyString(SIGNATURE);
-        short majorVersion = reader.readUnsignedByteAsShort();
-        short minorVersion = reader.readUnsignedByteAsShort();
+        this.majorVersion = reader.readUnsignedByteAsShort();
+        this.minorVersion = reader.readUnsignedByteAsShort();
         this.modelFlags = reader.readUnsignedByteAsShort();
         short dataSegmentCount = reader.readUnsignedByteAsShort();
 
-        Utils.verify(majorVersion == MAJOR_VERSION && minorVersion == MINOR_VERSION, "Unknown Version: [" + majorVersion + ", " + minorVersion + "]");
+        Utils.verify(majorVersion == 1 && (minorVersion >= 4 && minorVersion <= 7), "Unsupported Version: (" + majorVersion + "." + minorVersion + ")");
 
         // First Reading Round.
         reader.jumpTemp(reader.getIndex());
-        for (int i = 0; i < dataSegmentCount; i++) {
-            int offsetType = reader.readUnsignedShortAsInt();
-            OffsetType type = OffsetType.getOffsetType(offsetType);
-            int offsetAddress = reader.readInt();
-
-            if (type == null) {
-                System.out.println("Unknown OffsetType: " + Utils.toHexString(offsetType));
-                continue;
-            }
-
-            if (type == OffsetType.END_OF_FILE)
-                break; // Reached end.
-
-            if (FIRST_ROUND_READ.contains(type)) {
-//                System.out.println("Round 1 Reading: " + type.ordinal() + "/" + type.name());
-                loadHeader(reader, type, offsetAddress);
-            }
-        }
-
+        readRound(reader, dataSegmentCount, true);
         reader.jumpReturn();
 
-        // Main Reading Round.
+        // Main Round.
+        readRound(reader, dataSegmentCount, false);
+    }
+
+    private void readRound(DataReader reader, int dataSegmentCount, boolean firstRound) {
         for (int i = 0; i < dataSegmentCount; i++) {
             int offsetType = reader.readUnsignedShortAsInt();
             OffsetType type = OffsetType.getOffsetType(offsetType);
@@ -97,8 +83,8 @@ public class MisfitModel3DObject extends GameObject {
             if (type == OffsetType.END_OF_FILE)
                 break; // Reached end.
 
-            if (!FIRST_ROUND_READ.contains(type)) {
-//                System.out.println("Main Reading: " + type.ordinal() + "/" + type.name());
+            if (FIRST_ROUND_READ.contains(type) == firstRound) {
+//                System.out.println((firstRound ? "First" : "Main") + " Reading: " + type.ordinal() + "/" + type.name());
                 loadHeader(reader, type, offsetAddress);
             }
         }
@@ -127,8 +113,8 @@ public class MisfitModel3DObject extends GameObject {
     @Override
     public void save(DataWriter writer) {
         writer.writeStringBytes(SIGNATURE);
-        writer.writeUnsignedByte(MAJOR_VERSION);
-        writer.writeUnsignedByte(MINOR_VERSION);
+        writer.writeUnsignedByte(this.majorVersion);
+        writer.writeUnsignedByte(this.minorVersion);
         writer.writeUnsignedByte(this.modelFlags);
 
         // Determine which segments we're gonna save.
@@ -170,5 +156,15 @@ public class MisfitModel3DObject extends GameObject {
 
         // Write EOF Pointer.
         writer.writeAddressTo(eofHeaderAddress);
+    }
+
+    /**
+     * Check if the file version is at least a certain version.
+     * @param majorVersion The major version to test.
+     * @param minorVersion The minor version to test.
+     */
+    @SuppressWarnings("unused")
+    public boolean isVersionAtLeast(int majorVersion, int minorVersion) {
+        return (majorVersion >= this.majorVersion) && (majorVersion > this.majorVersion || minorVersion >= this.minorVersion);
     }
 }

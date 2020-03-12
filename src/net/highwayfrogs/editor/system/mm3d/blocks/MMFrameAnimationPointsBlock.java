@@ -14,6 +14,7 @@ import java.util.List;
 
 /**
  * The frame animations points section describes the location and rotation of points in frame animations.
+ * Version: 1.6+
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter

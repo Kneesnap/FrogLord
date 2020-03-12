@@ -18,6 +18,7 @@ import java.util.Arrays;
  * Points do not affect model geometry in any way.
  * They are simply reference objects for specifying a location in the model.
  * One potential use for this is bolt points for attaching one model to another (such as tags in MD3 models).
+ * Version: 1.6+
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter

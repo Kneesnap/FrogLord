@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 /**
  * Represents the weighted influences block.
+ * Version: 1.6+
  * Created by Kneesnap on 3/6/2020.
  */
 @Getter

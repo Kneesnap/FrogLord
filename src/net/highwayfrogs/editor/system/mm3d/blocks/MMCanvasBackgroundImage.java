@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 /**
  * The canvas background image block.
+ * Version: 1.4+
  * Created by Kneesnap on 3/6/2020.
  */
 @Getter

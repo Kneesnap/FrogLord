@@ -23,7 +23,7 @@ public class MMVerticeBlock extends MMDataBlockBody {
 
     public static final short FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
     public static final short FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
-    public static final short FLAG_FREE_VERTEX = Constants.BIT_FLAG_2; // Set if vertex does not have to be connected to a face (don't auto-delete when face is deleted)
+    public static final short FLAG_FREE_VERTEX = Constants.BIT_FLAG_2; // Set if vertex does not have to be connected to a face (don't auto-delete when face is deleted). 1.6+
 
     public MMVerticeBlock(MisfitModel3DObject parent) {
         super(OffsetType.VERTICES, parent);

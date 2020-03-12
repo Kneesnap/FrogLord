@@ -13,6 +13,7 @@ import java.util.List;
 
 /**
  * The texture projection triangles section is a list of which triangles are using a specified texture projection to set their texture coordinates.
+ * Version: 1.6+
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter

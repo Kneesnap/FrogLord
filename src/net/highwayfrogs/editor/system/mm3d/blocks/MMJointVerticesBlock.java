@@ -10,8 +10,7 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 /**
  * Represents the Joint Vertices block.
- * Deprecated as of 1.6, but this is still present in the format, and is here for compatibility.
- * Use Weighted Influences instead.
+ * Deprecated as of 1.6 in favor of Weighted Influences, but this should still be included in files.
  * Created by Kneesnap on 3/6/2020.
  */
 @Getter

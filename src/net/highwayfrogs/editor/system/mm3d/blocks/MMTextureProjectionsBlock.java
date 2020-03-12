@@ -14,6 +14,7 @@ import java.util.Arrays;
 
 /**
  * Represents the texture projections block.
+ * Version: 1.6+
  * Created by Kneesnap on 3/6/2020.
  */
 @Getter
