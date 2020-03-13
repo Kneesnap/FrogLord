@@ -834,10 +834,8 @@ public class FileUtils3D {
                         for (MMFloatVertex vertex : frame.getVertexPositions())
                             newCel.getVertices().add(new SVector(-vertex.getX(), -vertex.getY(), vertex.getZ()));
 
-                        newCel.getNormals().addAll(basePartcel.getNormals()); //TODO: Calculate Normals instead. See if there's any easy way to do this. Do the partcels even have normals usually? As far as I'm aware, XAR animations don't use normals, so we should check that vertex normals are used as well. Check what XAR animation does, and if it's really unused.
-
-                        // Add new frame of animation.
-                        part.getPartcels().add(newCel);
+                        newCel.getNormals().addAll(basePartcel.getNormals()); // There is no difference between these and the static partcel normals, at least not in any of Frogger's releases.
+                        part.getPartcels().add(newCel); // Add new frame of animation.
                     }
 
                     flipbook.getActions().add(new MOFFlipbookAction(part.getPartcels().size() - partcelIndex, partcelIndex));
@@ -895,7 +893,7 @@ public class FileUtils3D {
 
                 // Apply Normals.
                 int[] normalIndices = normalIndexMap.get(i);
-                if (normalIndices != null)
+                if (normalIndices != null) //TODO: If there are no normals, we should try to generate them. (Probably when the partcel is loaded, actually.)
                     for (int j = 0; j < poly.getNormals().length; j++)
                         poly.getNormals()[j] = (short) normalIndices[j];
 

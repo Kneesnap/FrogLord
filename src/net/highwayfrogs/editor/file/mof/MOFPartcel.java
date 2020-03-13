@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class MOFPartcel extends GameObject {
     @Getter private List<SVector> vertices = new ArrayList<>();
-    @Getter private List<SVector> normals = new ArrayList<>();
+    @Getter private List<SVector> normals = new ArrayList<>(); // This is the same on all partcels, ie it always matches the static partcel.
 
     private transient MOFPart parent;
     private transient int vertexCount;
