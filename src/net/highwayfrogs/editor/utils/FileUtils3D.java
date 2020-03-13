@@ -519,15 +519,15 @@ public class FileUtils3D {
                     normal1.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
                     normal1.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[2])));
                 } else if (poly.getNormals().length == 4) {
-                    normal1.setV1Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[0])));
-                    normal1.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
-                    normal1.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[3])));
+                    normal1.setV1Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
+                    normal1.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[3])));
+                    normal1.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[0])));
 
                     MMTriangleNormalsBlock normal2 = model.getNormals().addNewElement();
                     normal2.setIndex(faceIndex + 1);
-                    normal2.setV1Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
+                    normal2.setV1Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[2])));
                     normal2.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[3])));
-                    normal2.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[2])));
+                    normal2.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
                 }
             }
         }
@@ -567,14 +567,7 @@ public class FileUtils3D {
 
     // Other TODOs:
     // TODO: Import textures from imported models. [Requires a system to automatically put textures in vram safely. Also requires FrogLord to be able to handle multiple images with the same id.]
-    // TODO: The export mm3d file has bad skeletal rotations.
-    // TODO: Normals. See the turtle3 in org1. Vertex animation -> Generate them. Maybe generate them anyways, if possible.
-    // TODO: Make sure importing works on actual modified models. Basically, it's setup to assume the data is exactly how it is when we export. We don't want it to be possible for you to mess up importing by accident and not know why.
-
-    //TODO: Try different orders of normals when saved, until we make it work.
-    //TODO: Try generating yaw pitch directly from transform.
-    //TODO: Try exporting normals in .obj so they can be viewed easier.
-
+    // TODO: The export mm3d file has bad skeletal rotations. (Try generating yaw pitch roll directly from transform.)
 
     /**
      * Load a MOF from a model.
