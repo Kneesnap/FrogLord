@@ -567,7 +567,6 @@ public class FileUtils3D {
 
     // Other TODOs:
     // TODO: Import textures from imported models. [Requires a system to automatically put textures in vram safely. Also requires FrogLord to be able to handle multiple images with the same id.]
-    // TODO: The export mm3d file has bad skeletal rotations. (Try generating yaw pitch roll directly from transform.)
 
     /**
      * Load a MOF from a model.

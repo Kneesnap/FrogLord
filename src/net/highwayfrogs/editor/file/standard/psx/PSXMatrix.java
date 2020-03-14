@@ -67,13 +67,13 @@ public class PSXMatrix extends GameObject {
      * @return yaw
      */
     public double getYawAngle() {
-        double r31 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]));
+        double r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
 
-        if (r31 == 1 || r31 == -1) { // Gymbal lock at pitch = -90 or 90
+        if (r31 >= .95 || r31 <= -.95) { // Gymbal lock at pitch = -90 or 90
             return 0F;
         } else {
-            double r11 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]));
-            double r21 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[1][0]));
+            double r11 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
+            double r21 = Utils.fixedPointShortToFloat12Bit(getMatrix()[1][0]);
             return Math.atan2(r21, r11);
         }
     }
@@ -84,32 +84,35 @@ public class PSXMatrix extends GameObject {
      */
     public double getPitchAngle() {
         float r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
-        return Math.asin(clampPi(-r31));
+
+        if (r31 >= .95) {
+            return -Math.PI / 2;
+        } else if (r31 <= -.95) {
+            return Math.PI / 2;
+        } else {
+            return Math.asin(-r31);
+        }
     }
 
     /**
      * Gets the roll from this matrix.
+     * The rules for approaching 1 are from here. https://www.gregslabaugh.net/publications/euler.pdf
      * @return roll
      */
     public double getRollAngle() {
-        double r31 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]));
+        double r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
 
-        double r12 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[0][1]));
-        double r13 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[0][2]));
-        if (r31 == 1) { // Gymbal lock at pitch = -90
+        double r12 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][1]);
+        double r13 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][2]);
+        if (r31 >= .95) { // Gymbal lock at pitch = -90
             return Math.atan2(-r12, -r13);
-        } else if (r31 == -1) { // Lock at pitch = 90
+        } else if (r31 <= -.95) { // Lock at pitch = 90
             return Math.atan2(r12, r13);
         } else {
-            double r32 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]));
-            double r33 = clampPi(Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]));
+            double r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
+            double r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
             return Math.atan2(r32, r33);
         }
-    }
-
-    private static double clampPi(float num) {
-        boolean positive = num >= 0;
-        return Math.abs(Math.PI - num) < 0.000001 ? (positive ? Math.PI : -Math.PI) : num;
     }
 
     /**
