@@ -185,7 +185,7 @@ public class SplineSegment extends PathSegment {
         editor.addFloatVector("End", curve.getEnd(), () -> loadFromCurve(curve, controller), controller);
         makeTEditor(controller, editor);
 
-        editor.addBoldLabel("Smooth C:");
+        editor.addBoldLabel("Smooth C:"); //TODO: Make a real editor.
         for (int i = 0; i < this.smoothC.length; i++) {
             final int index1 = i;
             for (int j = 0; j < this.smoothC[i].length; j++) {
@@ -196,8 +196,6 @@ public class SplineSegment extends PathSegment {
                 }, null);
             }
         }
-
-        editor.addLabel("Smooth C:", Utils.matrixToString(this.smoothC), 25.0); // TODO: Figure out what do with these.
     }
 
     @Override
