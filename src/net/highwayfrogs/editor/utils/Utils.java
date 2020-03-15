@@ -371,15 +371,6 @@ public class Utils {
     }
 
     /**
-     * Convert an int value (fixed point, 20 fractional bits) into a float.
-     * @param intVal The integer to convert.
-     * @return floatValue
-     */
-    public static float fixedPointIntToFloat20Bit(int intVal) {
-        return fixedPointIntToFloatNBits(intVal, 20);
-    }
-
-    /**
      * Convert a float value into a int (fixed point, n fractional bits).
      * @param floatVal The float to convert.
      * @param n        The number of fractional bits.
@@ -396,15 +387,6 @@ public class Utils {
      */
     public static int floatToFixedPointInt4Bit(float floatVal) {
         return floatToFixedPointInt(floatVal, 4);
-    }
-
-    /**
-     * Convert a float value into a int (fixed point, 20 fractional bits).
-     * @param floatVal The float to convert.
-     * @return intValue
-     */
-    public static int floatToFixedPointInt20Bit(float floatVal) {
-        return floatToFixedPointInt(floatVal, 20);
     }
 
     /**

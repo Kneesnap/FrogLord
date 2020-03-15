@@ -23,7 +23,6 @@ import net.highwayfrogs.editor.utils.Utils;
 public class PSXMatrix extends GameObject {
     private short[][] matrix = new short[DIMENSION][DIMENSION]; // 3x3 Rotation Matrix.
     private int[] transform = new int[DIMENSION]; // Transform vector.
-    private short padding; // This is not in the struct. It is present in all tested versions, so it may be added automatically by the compiler.
 
     private static final int DIMENSION = 3;
     public static final int BYTE_SIZE = (DIMENSION * DIMENSION * Constants.SHORT_SIZE) + (DIMENSION * Constants.INTEGER_SIZE);
@@ -34,12 +33,12 @@ public class PSXMatrix extends GameObject {
             for (int j = 0; j < this.matrix[i].length; j++)
                 this.matrix[i][j] = reader.readShort();
 
+        short padding = reader.readShort(); // Used to align to 4-bytes.
+        if (padding != 0)
+            throw new RuntimeException("Matrix padding was not zero! (" + padding + ")");
+
         for (int i = 0; i < this.transform.length; i++)
             this.transform[i] = reader.readInt();
-
-        this.padding = reader.readShort();
-        if (this.padding != 0 && this.padding != -1)
-            throw new RuntimeException("Expected a padding value!");
     }
 
     @Override
@@ -48,10 +47,9 @@ public class PSXMatrix extends GameObject {
             for (short aShort : aMatrix)
                 writer.writeShort(aShort);
 
+        writer.writeShort((short) 0); // Padding.
         for (int aTransfer : this.transform)
             writer.writeInt(aTransfer);
-
-        writer.writeShort(this.padding);
     }
 
     /**

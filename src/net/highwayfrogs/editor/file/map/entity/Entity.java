@@ -138,9 +138,9 @@ public class Entity extends GameObject {
         PSXMatrix matrix = getMatrixInfo();
         if (matrix != null) {
             int[] pos = matrix.getTransform();
-            position[0] = Utils.fixedPointIntToFloat20Bit(pos[0]);
-            position[1] = Utils.fixedPointIntToFloat20Bit(pos[1]);
-            position[2] = Utils.fixedPointIntToFloat20Bit(pos[2]);
+            position[0] = Utils.fixedPointIntToFloat4Bit(pos[0]);
+            position[1] = Utils.fixedPointIntToFloat4Bit(pos[1]);
+            position[2] = Utils.fixedPointIntToFloat4Bit(pos[2]);
             position[3] = (float) matrix.getRollAngle();
             position[4] = (float) matrix.getPitchAngle();
             position[5] = (float) matrix.getYawAngle();

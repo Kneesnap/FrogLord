@@ -167,9 +167,9 @@ public class EntityManager extends MapManager {
                 // Set entity position to the clicked polygon.
                 PSXMatrix matrix = newEntity.getMatrixInfo();
                 SVector pos = MAPPolygon.getCenterOfPolygon(getMesh(), poly);
-                matrix.getTransform()[0] = Utils.floatToFixedPointInt20Bit(pos.getFloatX());
-                matrix.getTransform()[1] = Utils.floatToFixedPointInt20Bit(pos.getFloatY());
-                matrix.getTransform()[2] = Utils.floatToFixedPointInt20Bit(pos.getFloatZ());
+                matrix.getTransform()[0] = Utils.floatToFixedPointInt4Bit(pos.getFloatX());
+                matrix.getTransform()[1] = Utils.floatToFixedPointInt4Bit(pos.getFloatY());
+                matrix.getTransform()[2] = Utils.floatToFixedPointInt4Bit(pos.getFloatZ());
 
                 // Add entity.
                 addEntityToMap(newEntity);
