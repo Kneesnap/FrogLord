@@ -33,7 +33,7 @@ public class Path extends GameObject {
         for (int j = 0; j < segmentCount; j++) {
             reader.jumpTemp(reader.readInt());
             PathType type = PathType.values()[reader.readInt()];
-            PathSegment segment = type.getMaker().get();
+            PathSegment segment = type.makeNew(this);
             segment.load(reader);
             this.segments.add(segment);
             reader.jumpReturn();
@@ -89,13 +89,13 @@ public class Path extends GameObject {
                 manager.getController().getEntityManager().updateEntities();
             });
 
-            getSegments().get(i).setupEditor(this, manager.getController(), editor);
+            getSegments().get(i).setupEditor(manager.getController(), editor);
             editor.addSeparator(25.0);
         }
 
         editor.addButtonWithEnumSelection("Add Segment", pathType -> {
-            PathSegment newSegment = pathType.getMaker().get();
-            newSegment.setupNewSegment(manager.getMap(), this);
+            PathSegment newSegment = pathType.makeNew(this);
+            newSegment.setupNewSegment(manager.getMap());
             getSegments().add(newSegment);
             manager.setupEditor();
         }, PathType.values(), PathType.LINE);

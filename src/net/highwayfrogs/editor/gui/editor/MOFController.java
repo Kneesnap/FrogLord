@@ -347,17 +347,6 @@ public class MOFController extends EditorController<MOFHolder> {
         if (!showBoxes)
             return;
 
-        /*PhongMaterial material = Utils.makeSpecialMaterial(Color.RED); //TODO: Shows normals. Delete once normals are imported / generated correctly.
-        for (MOFPolygon poly : getFile().asStaticFile().getAllPolygons()) {
-            boolean useOne = (poly.getNormals().length == 1);
-            for (int i = 0; i < poly.getVertices().length; i++) {
-                Vector vec = getMofMesh().getVertices().get(poly.getVertices()[i]);
-                SVector svec = new SVector(vec.getFloatX(), vec.getFloatY(), vec.getFloatZ());
-                SVector end = svec.clone().add(getMofMesh().getCurrentParcel(poly.getParentPart()).getNormals().get(poly.getNormals()[useOne ? 0 : i]).clone().multiply(.01));
-                applyRotation(getRenderManager().addLine(HILITE_VERTICE_LIST, end.getFloatX(), end.getFloatY(), end.getFloatZ(), svec.getFloatX(), svec.getFloatY(), svec.getFloatZ(), .05, material));
-            }
-        }*/
-
         for (MOFPart part : getFile().asStaticFile().getParts()) {
             for (MOFHilite hilite : part.getHilites()) {
                 SVector vertex = hilite.getVertex();

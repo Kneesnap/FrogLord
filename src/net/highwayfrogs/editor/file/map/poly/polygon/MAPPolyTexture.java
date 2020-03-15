@@ -105,7 +105,7 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
         super.setupEditor(editor, controller);
         TextureMap texMap = controller.getMapMesh().getTextureMap();
-        VLOArchive suppliedVLO = controller.getController().getFile().getVlo();
+        VLOArchive suppliedVLO = controller.getMap().getVlo();
 
         // Texture Preview. (Click -> change.)
         ImageView view = editor.addCenteredImage(Utils.toFXImage(makePreviewImage(controller), false), 150);

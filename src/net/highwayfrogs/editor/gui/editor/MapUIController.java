@@ -198,7 +198,7 @@ public class MapUIController implements Initializable {
         });
 
         // Set the initial camera position based on start position and in-game camera offset.
-        MAPFile map = getController().getFile();
+        MAPFile map = getMap();
         SVector startPos = map.getCameraSourceOffset();
         float gridX = Utils.fixedPointIntToFloat4Bit(map.getWorldX(map.getStartXTile(), true));
         float baseY = -Utils.fixedPointIntToFloat4Bit(map.getGridStack(map.getStartXTile(), map.getStartZTile()).getHeight());
@@ -327,5 +327,12 @@ public class MapUIController implements Initializable {
      */
     public void renderOverPolygon(MAPPolygon targetPoly, CursorVertexColor color) {
         getMapMesh().renderOverPolygon(targetPoly, color);
+    }
+
+    /**
+     * Gets the map file this controls.
+     */
+    public MAPFile getMap() {
+        return getController().getFile();
     }
 }

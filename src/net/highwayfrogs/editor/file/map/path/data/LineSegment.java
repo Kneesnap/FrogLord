@@ -20,15 +20,16 @@ public class LineSegment extends PathSegment {
     private SVector start = new SVector();
     private SVector end = new SVector();
 
-    public LineSegment() {
-        super(PathType.LINE, false);
+    public LineSegment(Path path) {
+        super(path, PathType.LINE);
     }
 
     @Override
-    public void setupNewSegment(MAPFile map, Path path) {
+    public void setupNewSegment(MAPFile map) {
+        Path path = getPath();
         if (path.getSegments().size() > 0) {
             PathSegment lastSegment = path.getSegments().get(path.getSegments().size() - 1);
-            this.start = lastSegment.calculatePosition(map, path, lastSegment.getLength()).getPosition();
+            this.start = lastSegment.calculatePosition(map, lastSegment.getLength()).getPosition();
         }
 
         this.end = new SVector(this.start).add(new SVector(0, 0, 800));
@@ -61,8 +62,8 @@ public class LineSegment extends PathSegment {
     }
 
     @Override
-    public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
-        super.setupEditor(path, controller, editor);
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+        super.setupEditor(controller, editor);
         editor.addFloatVector("Start:", getStart(), () -> onUpdate(controller), controller);
         editor.addFloatVector("End:", getEnd(), () -> onUpdate(controller), controller);
     }
@@ -74,7 +75,7 @@ public class LineSegment extends PathSegment {
         float deltaZ = end.getFloatZ() - start.getFloatZ();
 
         float length = (float)Math.sqrt((deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ));
-        setLength(Utils.floatToFixedPointInt(length, 4));
+        setLength(Utils.floatToFixedPointInt4Bit(length));
     }
 
     @Override

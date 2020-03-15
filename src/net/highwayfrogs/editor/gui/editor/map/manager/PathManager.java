@@ -35,6 +35,7 @@ import java.util.WeakHashMap;
 
 /**
  * Manages paths in the 3D view.
+ * TODO: Allow selecting individual segments instead of showing them all at once.
  * Created by Kneesnap on 8/16/2019.
  */
 @Getter
@@ -105,6 +106,21 @@ public class PathManager extends MapManager {
     }
 
     /**
+     * Sets the selected path.
+     * @param path The path to select.
+     */
+    public void setSelectedPath(Path path) {
+        if (this.selectedPath != null) {
+            List<Node> nodes = this.perPathNodes.remove(this.selectedPath);
+            if (nodes != null && getRenderManager().displayListExists(DISPLAY_LIST_PATHS))
+                getRenderManager().removeAllFromList(DISPLAY_LIST_PATHS, nodes);
+        }
+
+
+        this.selectedPath = path;
+    }
+
+    /**
      * Update display of paths.
      */
     public void updatePathDisplay() {
@@ -117,7 +133,7 @@ public class PathManager extends MapManager {
             addPaths(DISPLAY_LIST_PATHS, getMap().getPaths(), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
         } else if (this.displaySetting == PathDisplaySetting.SELECTED) {
             if (getSelectedPath() != null)
-                addPaths(DISPLAY_LIST_PATHS, Collections.singletonList(getSelectedPath()), MATERIAL_WHITE, MATERIAL_YELLOW, MATERIAL_LIGHT_GREEN);
+                updatePath(getSelectedPath());
         }
     }
 
@@ -142,7 +158,7 @@ public class PathManager extends MapManager {
         }
 
         // Select clicked path.
-        this.selectedPath = path;
+        setSelectedPath(path);
         setupEditor(); // Show this path as the selected path.
     }
 
@@ -261,13 +277,15 @@ public class PathManager extends MapManager {
         this.pathEditor.clearEditor();
 
         ComboBox<Path> box = this.pathEditor.addSelectionBox("Path:", getSelectedPath(), getMap().getPaths(), newPath -> {
-            this.selectedPath = newPath;
+            setSelectedPath(newPath);
             setupEditor();
         });
         box.setConverter(new AbstractStringConverter<>(path -> "Path #" + getMap().getPaths().indexOf(path)));
 
         this.pathEditor.addLabelButton("", "Add Path", 25.0, () -> {
-            getMap().getPaths().add(this.selectedPath = new Path());
+            Path newPath = new Path();
+            getMap().getPaths().add(newPath);
+            setSelectedPath(newPath);
             setupEditor();
         });
 
@@ -283,7 +301,7 @@ public class PathManager extends MapManager {
 
                 // Remove path.
                 getMap().removePath(this.selectedPath);
-                this.selectedPath = null;
+                setSelectedPath(null);
                 setupEditor();
             });
 

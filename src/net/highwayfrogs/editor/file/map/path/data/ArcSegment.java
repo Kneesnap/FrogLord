@@ -27,8 +27,8 @@ public class ArcSegment extends PathSegment {
     private int pitch; // Delta Y in helix frame. (Can be opposite direction of normal)
     private transient float distance = (float) (Math.PI / 2); // Length of arc (in radians).
 
-    public ArcSegment() {
-        super(PathType.ARC, false);
+    public ArcSegment(Path path) {
+        super(path, PathType.ARC);
     }
 
     @Override
@@ -107,8 +107,8 @@ public class ArcSegment extends PathSegment {
     }
 
     @Override
-    public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
-        super.setupEditor(path, controller, editor);
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+        super.setupEditor(controller, editor);
 
         editor.addDoubleSlider("Length", this.distance, newDistance -> {
             this.distance = (float) (double) newDistance;
@@ -137,10 +137,11 @@ public class ArcSegment extends PathSegment {
     }
 
     @Override
-    public void setupNewSegment(MAPFile map, Path path) {
+    public void setupNewSegment(MAPFile map) {
+        Path path = getPath();
         if (path.getSegments().size() > 0) {
             PathSegment lastSegment = path.getSegments().get(path.getSegments().size() - 1);
-            this.start = lastSegment.calculatePosition(map, path, lastSegment.getLength()).getPosition();
+            this.start = lastSegment.calculatePosition(map, lastSegment.getLength()).getPosition();
         }
 
         this.pitch = 0;

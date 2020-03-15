@@ -98,7 +98,7 @@ public class MapManager {
      * @return mapFile
      */
     public MAPFile getMap() {
-        return getBaseController().getFile();
+        return getController().getMap();
     }
 
     /**

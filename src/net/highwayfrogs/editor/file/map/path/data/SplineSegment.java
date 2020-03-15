@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.Arrays;
+import java.util.function.Function;
 
 /**
  * Holds Spline segment data.
@@ -23,7 +23,7 @@ import java.util.Arrays;
  */
 public class SplineSegment extends PathSegment {
     private int[][] splineMatrix = new int[4][3];
-    private int[] smoothT = new int[4]; // Smoothing coefficient data.
+    private int[] smoothT = new int[4]; // Smooth T is the distance values to reach each point.
     private int[][] smoothC = new int[4][3]; // Smoothing coefficient data.
 
     private static final int SPLINE_FIX_INTERVAL = 0x200;
@@ -32,8 +32,13 @@ public class SplineSegment extends PathSegment {
     private static final int SPLINE_PARAM_SHIFT = 11;
     private static final int SPLINE_T2_SHIFT = 3;
 
-    public SplineSegment() {
-        super(PathType.SPLINE, false);
+    public SplineSegment(Path path) {
+        super(path, PathType.SPLINE);
+    }
+
+    @Override
+    public boolean isAllowLengthEdit() {
+        return true;
     }
 
     @Override
@@ -154,8 +159,14 @@ public class SplineSegment extends PathSegment {
     }
 
     @Override
+    public void onManualLengthUpdate(MapUIController controller, GUIEditorGrid editor) {
+        getPath().setupEditor(controller.getPathManager(), editor);
+    }
+
+    @Override
     public void recalculateLength() {
-        //TODO
+        // We leave this up to user input, since I've yet to come up with an algorithm which is accurate enough to get this right,
+        // and it seems like just leaving it as-is even during changes will create valid results.
     }
 
     @Override
@@ -164,23 +175,15 @@ public class SplineSegment extends PathSegment {
     }
 
     @Override
-    public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
-        super.setupEditor(path, controller, editor);
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
+        super.setupEditor(controller, editor);
 
         BezierCurve curve = convertToBezierCurve();
         editor.addFloatVector("Start", curve.getStart(), () -> loadFromCurve(curve, controller), controller);
         editor.addFloatVector("Control 1", curve.getControl1(), () -> loadFromCurve(curve, controller), controller);
         editor.addFloatVector("Control 2", curve.getControl2(), () -> loadFromCurve(curve, controller), controller);
         editor.addFloatVector("End", curve.getEnd(), () -> loadFromCurve(curve, controller), controller);
-
-        editor.addBoldLabel("Smooth T:");
-        for (int i = 0; i < this.smoothT.length; i++) {
-            final int index = i;
-            editor.addIntegerField(String.valueOf(i), this.smoothT[i], newVal -> {
-                this.smoothT[index] = newVal;
-                onUpdate(controller);
-            }, null);
-        }
+        makeTEditor(controller, editor);
 
         editor.addBoldLabel("Smooth C:");
         for (int i = 0; i < this.smoothC.length; i++) {
@@ -194,18 +197,17 @@ public class SplineSegment extends PathSegment {
             }
         }
 
-        //TODO: Is smoothT smoothC a PSXMatrix, but one which uses ints? I think it might be?
-        editor.addLabel("Smooth T:", Arrays.toString(this.smoothT), 25.0); //TODO: These appear to be auto-generated, and they smooth out the curve. Figure out how to generate them. T might be per bezier point?
-        editor.addLabel("Smooth C:", Utils.matrixToString(this.smoothC), 25.0);
+        editor.addLabel("Smooth C:", Utils.matrixToString(this.smoothC), 25.0); // TODO: Figure out what do with these.
     }
 
     @Override
-    public void setupNewSegment(MAPFile map, Path path) {
+    public void setupNewSegment(MAPFile map) {
         SVector start;
 
+        Path path = getPath();
         if (path.getSegments().isEmpty()) {
             PathSegment lastSegment = path.getSegments().get(path.getSegments().size() - 1);
-            start = lastSegment.calculatePosition(map, path, lastSegment.getLength()).getPosition();
+            start = lastSegment.calculatePosition(map, lastSegment.getLength()).getPosition();
         } else {
             start = new SVector();
         }
@@ -214,6 +216,30 @@ public class SplineSegment extends PathSegment {
         SVector cp2 = new SVector(start).add(new SVector(-400, 0, 400));
         SVector end = new SVector(start).add(new SVector(0, 0, 800));
         loadFromCurve(new BezierCurve(start, cp1, cp2, end), null);
+        loadSmoothT(new float[]{.25F, .5F, .75F, 1F});
+        //TODO: Make Smooth C. Calculate length too.
+    }
+
+    /**
+     * Calculates T smoothing percentages.
+     * @return tPercentages
+     */
+    public float[] calculateSmoothing() {
+        float length = Utils.fixedPointIntToFloat4Bit(getLength());
+        float[] result = new float[4];
+        for (int i = 0; i < result.length; i++)
+            result[i] = Utils.fixedPointIntToFloatNBits(this.smoothT[i], 12) / length;
+        return result;
+    }
+
+    /**
+     * Loads smooth T values, or the percentage
+     * @param smoothingT The amount of distance each segment takes up. [0,1]
+     */
+    public void loadSmoothT(float[] smoothingT) {
+        float length = Utils.fixedPointIntToFloat4Bit(getLength());
+        for (int i = 0; i < this.smoothT.length; i++)
+            this.smoothT[i] = Utils.floatToFixedPointInt((length * smoothingT[i]), 12);
     }
 
     /**
@@ -303,6 +329,19 @@ public class SplineSegment extends PathSegment {
         return bezier;
     }
 
+    private void makeTEditor(MapUIController controller, GUIEditorGrid editor) {
+        editor.addBoldLabel("Segment Length Percentages:");
+        float[] smoothingT = calculateSmoothing();
+        for (int i = 0; i < this.smoothT.length; i++) {
+            final int index = i;
+            editor.addFloatField("Segment #" + (i + 1) + ":", smoothingT[i], newValue -> {
+                smoothingT[index] = newValue;
+                loadSmoothT(smoothingT);
+                onUpdate(controller);
+            }, newValue -> newValue >= 0F && newValue <= 1.1F);
+        }
+    }
+
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
@@ -311,5 +350,54 @@ public class SplineSegment extends PathSegment {
         private SVector control1 = new SVector();
         private SVector control2 = new SVector();
         private SVector end = new SVector();
+
+        /**
+         * Calculate the length of this bezier curve. Doesn't seem very accurate.
+         * Nabbed from http://steve.hollasch.net/cgindex/curves/cbezarclen.html
+         * @return splineLength
+         */
+        public double calculateLength() {
+            SVector k1 = new SVector(this.end).subtract(this.start).add(this.control1.clone().subtract(this.control2).multiply(3));
+            SVector k2 = new SVector(this.start).add(this.control2).multiply(3).subtract(this.control1.clone().multiply(6)); // 3 * (p0 + p2) - 6 * p1;
+            SVector k3 = new SVector(this.control1).subtract(this.start).multiply(3);
+
+            double q1 = 9.0 * ((k1.getFloatX() * k1.getFloatX()) + (k1.getFloatY() * k1.getFloatY()));
+            double q2 = 12.0 * (k1.getFloatX() * k2.getFloatX() + k1.getFloatY() * k2.getFloatY());
+            double q3 = 3.0 * (k1.getFloatX() * k3.getFloatX() + k1.getFloatY() * k3.getFloatY()) + 4.0 * ((k2.getFloatX() * k2.getFloatX()) + (k2.getFloatY() * k2.getFloatY()));
+            double q4 = 4.0 * (k2.getFloatX() * k3.getFloatX() + k2.getFloatY() * k3.getFloatY());
+            double q5 = (k3.getFloatX() * k3.getFloatX()) + (k3.getFloatY() * k3.getFloatY());
+
+            return simpson(t -> Math.sqrt(q5 + t * (q4 + t * (q3 + t * (q2 + t * q1)))), 0, 1, 4096, .001);
+        }
+
+        private double simpson(Function<Double, Double> balf, double a, double b, int nLimit, double tolerance) {
+            int n = 1;
+            double multiplier = (b - a) / 6.0;
+            double endsum = balf.apply(a) + balf.apply(b);
+            double interval = (b - a) / 2.0;
+            double asum = 0;
+            double bsum = balf.apply(a + interval);
+            double est1 = multiplier * (endsum + 2 * asum + 4 * bsum);
+            double est0 = 2 * est1;
+
+            while (n < nLimit && (Math.abs(est1) > 0 && Math.abs((est1 - est0) / est1) > tolerance)) {
+                n *= 2;
+                multiplier /= 2;
+                interval /= 2;
+                asum += bsum;
+                bsum = 0;
+                est0 = est1;
+                double interval_div_2n = interval / (2.0 * n);
+
+                for (int i = 1; i < 2 * n; i += 2) {
+                    double t = a + i * interval_div_2n;
+                    bsum += balf.apply(t);
+                }
+
+                est1 = multiplier * (endsum + 2 * asum + 4 * bsum);
+            }
+
+            return est1;
+        }
     }
 }

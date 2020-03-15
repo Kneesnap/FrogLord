@@ -43,7 +43,6 @@ import java.util.function.Consumer;
 
 /**
  * Manages the grid editor gui.
- * TODO: Height Debugging
  * Created by Kneesnap on 1/24/2019.
  */
 @Getter

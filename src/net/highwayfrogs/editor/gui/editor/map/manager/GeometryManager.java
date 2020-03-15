@@ -51,6 +51,7 @@ public class GeometryManager extends MapManager {
         getController().getShaderModeChoiceBox().setConverter(new AbstractStringConverter<>(ShaderMode::getName));
         getController().getShaderModeChoiceBox().valueProperty().addListener((observable, oldValue, newValue) -> {
             getMesh().getTextureMap().setMode(newValue);
+            getController().getEntityManager().setShaderMode(newValue);
             refreshView();
         });
 

@@ -21,12 +21,12 @@ import java.lang.ref.WeakReference;
 public abstract class PathSegment extends GameObject {
     private PathType type;
     private int length;
-    private boolean allowLengthEdit;
     private transient WeakReference<TextField> lengthField;
+    private transient Path path;
 
-    public PathSegment(PathType type, boolean allowLengthEdit) {
+    public PathSegment(Path path, PathType type) {
+        this.path = path;
         this.type = type;
-        this.allowLengthEdit = allowLengthEdit;
     }
 
     @Override
@@ -44,9 +44,8 @@ public abstract class PathSegment extends GameObject {
 
     /**
      * Setup this segment at the end of the given path.
-     * @param path The path this will be added to.
      */
-    public abstract void setupNewSegment(MAPFile map, Path path);
+    public abstract void setupNewSegment(MAPFile map);
 
     /**
      * Load segment specific data.
@@ -70,13 +69,12 @@ public abstract class PathSegment extends GameObject {
     /**
      * Calculate the position along this segment.
      * @param map      The map containing the path.
-     * @param path     The path containing this segment.
      * @param distance The distance along this segment.
      * @return pathResult
      */
-    public PathResult calculatePosition(MAPFile map, Path path, int distance) {
+    public PathResult calculatePosition(MAPFile map, int distance) {
         PathInfo fakeInfo = new PathInfo();
-        fakeInfo.setPath(map, path, this);
+        fakeInfo.setPath(map, this.path, this);
         fakeInfo.setSegmentDistance(distance);
         fakeInfo.setSpeed(1);
         return calculatePosition(fakeInfo);
@@ -95,13 +93,16 @@ public abstract class PathSegment extends GameObject {
 
     /**
      * Setup a path editor.
-     * @param path       The path which owns this segment.
      * @param controller The UI controller.
      * @param editor     The editor to setup.
      */
-    public void setupEditor(Path path, MapUIController controller, GUIEditorGrid editor) {
+    public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
         editor.addLabel("Type:", getType().name(), 25);
-        this.lengthField = new WeakReference<>(editor.addFloatField("Length:", Utils.fixedPointIntToFloat4Bit(getLength()), isAllowLengthEdit() ? newVal -> setLength(Utils.floatToFixedPointShort4Bit(newVal)) : null, null)); // Read-Only.
+        this.lengthField = new WeakReference<>(editor.addFloatField("Length:", Utils.fixedPointIntToFloat4Bit(getLength()), isAllowLengthEdit() ? newVal -> {
+            setLength(Utils.floatToFixedPointShort4Bit(newVal));
+            onManualLengthUpdate(controller, editor);
+            updateDisplay(controller); // Don't call onUpdate because that will recalculate length.
+        } : null, null)); // Read-Only.
     }
 
     /**
@@ -110,6 +111,10 @@ public abstract class PathSegment extends GameObject {
      */
     public void onUpdate(MapUIController controller) {
         recalculateLength();
+        updateDisplay(controller);
+    }
+
+    private void updateDisplay(MapUIController controller) {
         if (controller != null) {
             Path selectedPath = controller.getPathManager().getSelectedPath();
             if (selectedPath != null)
@@ -127,5 +132,19 @@ public abstract class PathSegment extends GameObject {
         this.length = newLength;
         if (this.lengthField != null && this.lengthField.get() != null)
             this.lengthField.get().setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(newLength)));
+    }
+
+    /**
+     * Whether or not editing the length text box is allowed.
+     */
+    public boolean isAllowLengthEdit() {
+        return false;
+    }
+
+    /**
+     * Called when length is manually updated.
+     */
+    public void onManualLengthUpdate(MapUIController controller, GUIEditorGrid editor) {
+
     }
 }
