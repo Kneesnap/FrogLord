@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * Allows setting a variable value.
+ * set <varName> <value>
  * Created by Kneesnap on 1/15/2020.
  */
 public class PatchCommandSet extends PatchCommand {

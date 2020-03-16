@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
 
 /**
  * Allow reading data from the exe.
+ * read? <targetVar> [readAddress]
  * Created by Kneesnap on 1/15/2020.
  */
 public class PatchCommandRead extends PatchCommand {

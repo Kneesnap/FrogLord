@@ -8,6 +8,7 @@ import java.util.List;
 
 /**
  * Allow printing things to the console, likely for debugging.
+ * print <message>
  * Created by Kneesnap on 1/15/2020.
  */
 public class PatchCommandPrint extends PatchCommand {

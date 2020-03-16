@@ -8,6 +8,7 @@ import java.util.List;
 
 /**
  * Adds a value to a variable.
+ * add <targetVar> <valueToAdd>
  * Created by Kneesnap on 1/15/2020.
  */
 public class PatchCommandAdd extends PatchCommand {

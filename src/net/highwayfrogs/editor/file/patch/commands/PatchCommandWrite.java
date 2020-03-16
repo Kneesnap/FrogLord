@@ -10,6 +10,7 @@ import java.util.function.BiConsumer;
 
 /**
  * Write data to the EXE.
+ * write? <value> [toAddress]
  * Created by Kneesnap on 1/15/2020.
  */
 public class PatchCommandWrite extends PatchCommand {

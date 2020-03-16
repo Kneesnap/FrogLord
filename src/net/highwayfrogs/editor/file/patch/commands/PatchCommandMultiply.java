@@ -8,6 +8,7 @@ import java.util.List;
 
 /**
  * Multiply a variable.
+ * multiply <targetVar> <valueToMultiplyBy>
  * Created by Kneesnap on 1/15/2020.
  */
 public class PatchCommandMultiply extends PatchCommand {

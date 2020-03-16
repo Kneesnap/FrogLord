@@ -9,6 +9,7 @@ import java.util.List;
 
 /**
  * Turns a value into hex.
+ * hex <targetVar>, targetVar should be an integer.
  * Created by Kneesnap on 1/15/2020.
  */
 public class PatchCommandHex extends PatchCommand {

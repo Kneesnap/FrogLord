@@ -3,6 +3,19 @@ Description=Changes the FPS. This will not be accurate down to the number of fra
 Author=Kneesnap
 Versions=30e,30e-music,kaos-prototype,10,pc-demo
 
+# Note from Kneesnap
+#  On 3/15/2020 I tried to support decoupling the game logic from the FPS, because I saw two counters which I believed controlled each separately.
+#  Unfortunately, while I believe my assembly patch worked, it seems like it was probably just rendering the exact same frame multiple times, because the game tick updated things.
+#
+# Before Patch: https://i.imgur.com/ay8ESUc.png
+# After Patch: https://i.imgur.com/ATNNPJ2.png
+#
+# So, at this point it seems unlikely we'll really be able to decouple FPS from game logic without major changes.
+#
+# Resources:
+# - https://www.cs.virginia.edu/~evans/cs216/guides/x86.html
+# - http://ref.x86asm.net/coder32.html
+
 [Args]
 int,fps,Frames Per Second,25,1,1000
 

@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.patch.reference.PatchValueReference;
 import java.util.List;
 
 /**
+ * divide <targetVar> <valueToDivideBy>
  * Created by Kneesnap on 1/15/2020.
  */
 public class PatchCommandDivide extends PatchCommand {

@@ -9,6 +9,7 @@ import java.util.Objects;
 
 /**
  * Adds an if condition option.
+ * if <value> <operand> <value>
  * Created by Kneesnap on 1/15/2020.
  */
 public class PatchCommandIf extends PatchCommand {

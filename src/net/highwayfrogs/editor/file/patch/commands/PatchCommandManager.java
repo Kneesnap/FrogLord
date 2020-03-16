@@ -12,7 +12,6 @@ import java.util.Map;
 public class PatchCommandManager {
     private static Map<String, PatchCommand> commandMap = new HashMap<>();
 
-
     /**
      * Gets a PatchCommand by its name.
      * @param commandName The name of the command to get.
