@@ -38,7 +38,11 @@ public class Config {
         boolean readingText = false;
 
         for (String line : lines) {
-            line = line.split(COMMENT_SPLIT)[0].replaceAll(" $", ""); // Remove comments.
+            String[] split = line.split(COMMENT_SPLIT);
+            if (split.length == 0)
+                continue;
+
+            line = split[0].replaceAll(" $", ""); // Remove comments.
 
             if (line.isEmpty())
                 continue; // Skip empty lines.
