@@ -1,31 +1,38 @@
 package net.highwayfrogs.editor.games.tgq.toc;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.games.tgq.TGQTOCFile;
+import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Represents a chunk in a TOC file.
- * Created by Kneesnap on 8/25/2019.
+ * Created by Kneesnap on 4/1/2020.
  */
 @Getter
-public abstract class TOCChunk extends GameObject {
-    private TOCChunkType chunkType;
-    private TGQTOCFile parentFile;
+public class TOCChunk extends TGQFileChunk {
+    private String name;
+    private List<Integer> hashes = new ArrayList<>();
 
-    public TOCChunk(TGQTOCFile parentFile, TOCChunkType chunkType) {
-        this.chunkType = chunkType;
-        this.parentFile = parentFile;
+    private static final int NAME_SIZE = 32;
+
+    public TOCChunk(TGQChunkedFile chunkedFile) {
+        super(chunkedFile, TGQChunkType.TOC);
     }
 
-    /**
-     * Gets the signature this chunk uses
-     * @return signature
-     */
-    public String getSignature() {
-        if (getChunkType().getSignature() == null)
-            throw new UnsupportedOperationException("getSignature() was called on " + getChunkType() + ", which needs to be overwritten instead.");
+    @Override
+    public void load(DataReader reader) {
+        this.name = reader.readTerminatedStringOfLength(NAME_SIZE);
+        while (reader.hasMore())
+            this.hashes.add(reader.readInt());
+    }
 
-        return getChunkType().getSignature();
+    @Override
+    public void save(DataWriter writer) {
+        writer.writeTerminatedStringOfLength(this.name, NAME_SIZE);
+        for (int hash : getHashes())
+            writer.writeInt(hash);
     }
 }

@@ -3,19 +3,19 @@ package net.highwayfrogs.editor.games.tgq.toc;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.tgq.TGQTOCFile;
+import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 
 /**
  * Represents a dummy chunk of data.
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
-public class TOCDummyChunk extends TOCChunk {
+public class TGQDummyFileChunk extends TGQFileChunk {
     private byte[] data;
     private String magic;
 
-    public TOCDummyChunk(TGQTOCFile parentFile, String magic) {
-        super(parentFile, TOCChunkType.getByMagic(magic));
+    public TGQDummyFileChunk(TGQChunkedFile parentFile, String magic) {
+        super(parentFile, TGQChunkType.getByMagic(magic));
         this.magic = magic;
     }
 

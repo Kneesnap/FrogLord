@@ -1664,7 +1664,7 @@ public class Utils {
      * @return paddedString
      */
     public static String padNumberString(int number, int digits) {
-        int usedDigits = (int) Math.log(number) + 1;
+        int usedDigits = (int) Math.log10(number) + 1;
 
         StringBuilder prependStr = new StringBuilder();
         for (int i = 0; i < (digits - usedDigits); i++)
@@ -1697,5 +1697,20 @@ public class Utils {
             return (int) value;
 
         return (value > 0) ? ((int) value + 1) : ((int) value - 1);
+    }
+
+    /**
+     * Returns the string with all non alpha-numeric characters removed.
+     * @param input The input to strip.
+     * @return strippedStr
+     */
+    public static String stripAlphanumeric(String input) {
+        StringBuilder output = new StringBuilder();
+        for (int i = 0; i < input.length(); i++) {
+            char temp = input.charAt(i);
+            if (Character.isLetterOrDigit(temp))
+                output.append(temp);
+        }
+        return output.toString();
     }
 }

@@ -268,4 +268,24 @@ public class DataWriter {
         writeInt(pointerValue);
         jumpReturn();
     }
+
+    /**
+     * Writes a terminated string of a given length.
+     * @param stringToWrite The string to write
+     * @param byteSize      The string fixed size.
+     */
+    public void writeTerminatedStringOfLength(String stringToWrite, int byteSize) {
+        writeTerminatedStringOfLength(stringToWrite, byteSize, Constants.NULL_BYTE);
+    }
+
+    /**
+     * Writes a terminated string of a given length.
+     * @param stringToWrite The string to write
+     * @param byteSize      The string fixed size.
+     */
+    public void writeTerminatedStringOfLength(String stringToWrite, int byteSize, byte terminator) {
+        int pathEndIndex = (getIndex() + byteSize);
+        writeTerminatorString(stringToWrite); // Include the null byte after the string data before using 0xCD.
+        writeTo(pathEndIndex, terminator);
+    }
 }

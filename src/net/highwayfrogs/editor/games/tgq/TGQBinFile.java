@@ -8,8 +8,7 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
-import net.highwayfrogs.editor.games.tgq.toc.OTTChunk;
-import net.highwayfrogs.editor.games.tgq.toc.TOCChunk;
+import net.highwayfrogs.editor.games.tgq.toc.*;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -18,12 +17,17 @@ import java.util.*;
 
 /**
  * Parses Frogger TGQ's main game data file.
+ * Notes: PS2 bin is way smaller than PC file. Support it eventually.
+ * .SBR files contain sound headers. the SCK file seems to contain .wav files sequentially, likely using header data from the .SBR. TODO: Support exporting these to .wav
+ * .PSS (PS2) are video files. Can be opened with VLC.
+ * BUFFER.DAT files (PS2) are video files, and can be openned with VLC.
  * Created by Kneesnap on 8/17/2019.
  */
 @Getter
 public class TGQBinFile extends GameObject {
-    private List<String> globalPaths; // It is unknown what these are used for.
+    private List<String> globalPaths; // TODO: These are used to determine the full file path of a file. Figure out how to determine which files go in which path.
     private List<TGQFile> files = new ArrayList<>();
+    private Map<Integer, TGQFile> nameMap = new HashMap<>();
 
     private static final int NAME_SIZE = 0x108;
 
@@ -43,11 +47,30 @@ public class TGQBinFile extends GameObject {
 
         // Read unnamed files.
         for (int i = 0; i < unnamedFiles; i++)
-            files.add(readFile(reader, null, reader.readInt()));
+            readFile(reader, null, reader.readInt());
 
         // Read named files.
         for (int i = 0; i < namedFiles; i++)
-            files.add(readFile(reader, reader.readTerminatedStringOfLength(NAME_SIZE), 0));
+            readFile(reader, reader.readTerminatedStringOfLength(NAME_SIZE), 0);
+
+        //TODO: Clean this up, maybe move it somewhere else.
+        for (TGQFile file : getFiles()) {
+            if (!(file instanceof TGQChunkedFile))
+                continue;
+
+            TGQChunkedFile chunkedFile = (TGQChunkedFile) file;
+            for (TGQFileChunk chunk : chunkedFile.getChunks()) {
+                if (chunk instanceof TEXChunk)
+                    applyFileName(((TEXChunk) chunk).getPath());
+                if (chunk instanceof VTXChunk && ((VTXChunk) chunk).getFullReferenceName() != null) {
+                    applyFileName(((VTXChunk) chunk).getFullReferenceName());
+
+                    TGQFile tgqFile = getFileByName(((VTXChunk) chunk).getFullReferenceName());
+                    if (tgqFile instanceof TGQChunkedFile)
+                        ((VTXChunk) ((TGQChunkedFile) tgqFile).getChunks().get(0)).setEnvironmentFile(chunkedFile);
+                }
+            }
+        }
     }
 
     private TGQFile readFile(DataReader reader, String name, int crc) {
@@ -67,10 +90,8 @@ public class TGQBinFile extends GameObject {
         TGQFile readFile;
         if (Utils.testSignature(fileBytes, TGQImageFile.SIGNATURE)) {
             readFile = new TGQImageFile(this);
-        } else if (Utils.testSignature(fileBytes, TGQVertexFile.SIGNATURE)) {
-            readFile = new TGQVertexFile(this);
-        } else if (Utils.testSignature(fileBytes, TGQTOCFile.SIGNATURE)) {
-            readFile = new TGQTOCFile(this);
+        } else if (Utils.testSignature(fileBytes, "6YTV") || Utils.testSignature(fileBytes, "TOC\0")) { //TODO: Fix up.
+            readFile = new TGQChunkedFile(this);
         } else {
             readFile = new TGQDummyFile(this, fileBytes.length);
         }
@@ -84,6 +105,10 @@ public class TGQBinFile extends GameObject {
         } catch (Exception ex) {
             throw new RuntimeException("There was a problem reading " + readFile.getClass().getSimpleName() + " [File " + this.files.size() + "]", ex);
         }
+
+        this.files.add(readFile);
+        if (readFile.getNameHash() != 0)
+            this.nameMap.put(readFile.getNameHash(), readFile);
         return readFile;
     }
 
@@ -161,9 +186,15 @@ public class TGQBinFile extends GameObject {
     public static void main(String[] args) throws Exception {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Please enter the file path to data.bin: ");
-        File binFile = new File(scanner.nextLine());
+        String fileName;
+        if (args.length > 0) {
+            fileName = String.join(" ", args);
+        } else {
+            System.out.print("Please enter the file path to data.bin: ");
+            fileName = scanner.nextLine();
+        }
 
+        File binFile = new File(fileName);
         if (!binFile.exists() || !binFile.isFile()) {
             System.out.println("That is not a valid file!");
             return;
@@ -175,10 +206,6 @@ public class TGQBinFile extends GameObject {
         TGQBinFile mainFile = new TGQBinFile();
         mainFile.load(reader);
 
-        //testString(mainFile, "bark.img");
-        //testString(mainFile, "\\GameSource\\Level05MushroomValley\\Level\\bark.img");
-
-
         // Export.
         File exportDir = new File(binFile.getParentFile(), "Export");
         Utils.makeDirectory(exportDir);
@@ -187,6 +214,36 @@ public class TGQBinFile extends GameObject {
         exportModels(exportDir, mainFile);
         exportDummyFiles(exportDir, mainFile);
         System.out.println("Done.");
+
+        System.out.print(mainFile.getGlobalPaths().size() + " paths:");
+        for (String path : mainFile.getGlobalPaths())
+            System.out.println(" - " + path);
+    }
+
+
+    /**
+     * Activates the filename
+     * @param filePath The path of a game file.
+     */
+    public void applyFileName(String filePath) { //TODO: Apply file names.
+        int hash = TGQUtils.hash(TGQUtils.getFileIdFromPath(filePath), true);
+        TGQFile file = getNameMap().get(hash);
+        if (file != null) // What causes a file to have its name put in, instead of the hash? It doesn't seem to be collisions. Could it be if it doesn't fall under the file path used for the given level?
+            file.setRawName(filePath);
+    }
+
+    public TGQFile getFileByName(String filePath) {
+        int hash = TGQUtils.hash(TGQUtils.getFileIdFromPath(filePath), true);
+        TGQFile file = getNameMap().get(hash);
+        if (file != null)
+            return file;
+
+        for (TGQFile testFile : getFiles())
+            if (testFile.getRawName() != null && testFile.getRawName().toLowerCase().contains(filePath.toLowerCase()))
+                return testFile;
+
+        System.out.println("Failed to find " + filePath + " in " + getNameMap().size() + ". (" + TGQUtils.getFileIdFromPath(filePath) + ")");
+        return null;
     }
 
     private static void exportImages(File baseFolder, TGQBinFile mainArchive) throws IOException {
@@ -219,22 +276,25 @@ public class TGQBinFile extends GameObject {
 
         System.out.println("Exporting Maps...");
         for (TGQFile file : mainArchive.getFiles()) {
-            if (!(file instanceof TGQTOCFile))
+            if (!(file instanceof TGQChunkedFile))
                 continue;
 
-            TGQTOCFile tocFile = (TGQTOCFile) file;
-
-            DataWriter writer = new DataWriter(new FileReceiver(new File(saveFolder, tocFile.getExportName())));
-            tocFile.save(writer);
-            writer.closeReceiver();
+            TGQChunkedFile tocFile = (TGQChunkedFile) file;
 
             OTTChunk chunk = null;
-            for (TOCChunk testChunk : tocFile.getChunks())
+            for (TGQFileChunk testChunk : tocFile.getChunks())
                 if (testChunk instanceof OTTChunk)
                     chunk = (OTTChunk) testChunk;
 
             if (chunk != null)
                 chunk.exportAsObj(saveFolder, Utils.stripExtension(tocFile.getExportName()));
+
+            if (tocFile.getChunks().get(0) instanceof TOCChunk) {
+                tocFile.exportFileToDirectory(new File(saveFolder, Utils.stripExtension(tocFile.getExportName()) + "/"));
+                DataWriter writer = new DataWriter(new FileReceiver(new File(saveFolder, tocFile.getExportName())));
+                tocFile.save(writer);
+                writer.closeReceiver();
+            }
         }
     }
 
@@ -248,9 +308,15 @@ public class TGQBinFile extends GameObject {
         Utils.makeDirectory(saveFolder);
 
         System.out.println("Exporting Models...");
-        for (TGQFile file : mainArchive.getFiles())
-            if (file instanceof TGQVertexFile)
-                ((TGQVertexFile) file).saveToFile(new File(saveFolder, file.getExportName() + ".obj"));
+        for (TGQFile file : mainArchive.getFiles()) {
+            if (!(file instanceof TGQChunkedFile))
+                continue;
+
+            TGQChunkedFile chunkedFile = (TGQChunkedFile) file;
+            for (TGQFileChunk testChunk : chunkedFile.getChunks())
+                if (testChunk instanceof VTXChunk && testChunk.isRootChunk())
+                    ((VTXChunk) testChunk).saveToFile(new File(saveFolder, file.getExportName() + ".obj"));
+        }
     }
 
     private static void exportDummyFiles(File baseFolder, TGQBinFile mainArchive) throws IOException {

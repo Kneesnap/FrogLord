@@ -34,15 +34,20 @@ public abstract class TGQFile extends GameObject {
      * @param compressed Whether or not this file is compressed.
      */
     public void init(String realName, boolean compressed, int hash) {
-        if (realName != null) {
-            this.rawName = realName;
-            this.cleanName = realName;
-            if (realName.contains("\\")) // Remove path.
-                this.cleanName = realName.substring(realName.lastIndexOf("\\") + 1);
-        }
-
+        setRawName(realName);
         this.compressed = compressed;
         this.nameHash = hash;
+    }
+
+    /**
+     * Sets the raw file name of this file.
+     * @param rawName The raw file name. (Full path)
+     */
+    public void setRawName(String rawName) {
+        this.rawName = rawName;
+        this.cleanName = rawName;
+        if (rawName != null && rawName.contains("\\")) // Remove path.
+            this.cleanName = rawName.substring(rawName.lastIndexOf("\\") + 1);
     }
 
     /**

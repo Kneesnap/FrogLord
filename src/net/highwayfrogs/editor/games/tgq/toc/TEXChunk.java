@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.tgq.TGQTOCFile;
+import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 
 /**
  * Represents a texture.
@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.tgq.TGQTOCFile;
  */
 @Getter
 @Setter
-public class TEXChunk extends TOCChunk {
+public class TEXChunk extends TGQFileChunk {
     private String name;
     private String path;
 
@@ -20,25 +20,19 @@ public class TEXChunk extends TOCChunk {
     private static final int PATH_SIZE = 260;
     private static final byte PATH_TERMINATOR = (byte) 0xCD;
 
-    public TEXChunk(TGQTOCFile parentFile) {
-        super(parentFile, TOCChunkType.TEX);
+    public TEXChunk(TGQChunkedFile parentFile) {
+        super(parentFile, TGQChunkType.TEX);
     }
 
     @Override
     public void load(DataReader reader) {
         this.name = reader.readTerminatedStringOfLength(NAME_SIZE);
         this.path = reader.readTerminatedStringOfLength(PATH_SIZE);
-
     }
 
     @Override
     public void save(DataWriter writer) {
-        int nameEndIndex = (writer.getIndex() + NAME_SIZE);
-        writer.writeStringBytes(this.name);
-        writer.writeTo(nameEndIndex);
-
-        int pathEndIndex = (writer.getIndex() + PATH_SIZE);
-        writer.writeTerminatorString(this.path); // Include the null byte after the string data before using 0xCD.
-        writer.writeTo(pathEndIndex, PATH_TERMINATOR);
+        writer.writeTerminatedStringOfLength(this.name, NAME_SIZE);
+        writer.writeTerminatedStringOfLength(this.path, PATH_SIZE, PATH_TERMINATOR);
     }
 }

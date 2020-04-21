@@ -3,14 +3,14 @@ package net.highwayfrogs.editor.games.tgq.toc;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.tgq.TGQTOCFile;
+import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 
 /**
  * Appears to be something related to animations?
  * Created by Kneesnap on 8/26/2019.
  */
 @Getter
-public class NHSChunk extends TOCChunk {
+public class NHSChunk extends TGQFileChunk {
     private String name;
     private float unknown1;
     private float unknown2;
@@ -19,8 +19,8 @@ public class NHSChunk extends TOCChunk {
     private static final int NAME_SIZE = 48;
     private static final int ANIM_NAME_SIZE = 32;
 
-    public NHSChunk(TGQTOCFile parentFile) {
-        super(parentFile, TOCChunkType.NHS);
+    public NHSChunk(TGQChunkedFile parentFile) {
+        super(parentFile, TGQChunkType.NHS);
     }
 
     @Override
@@ -33,6 +33,7 @@ public class NHSChunk extends TOCChunk {
 
     @Override
     public void save(DataWriter writer) {
+        writer.writeTerminatedStringOfLength(this.name, NAME_SIZE);
         int endIndex = (writer.getIndex() + NAME_SIZE);
         writer.writeStringBytes(this.name);
         writer.writeTo(endIndex);

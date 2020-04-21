@@ -3,14 +3,14 @@ package net.highwayfrogs.editor.games.tgq.toc;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.tgq.TGQTOCFile;
+import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 
 /**
  * Holds entity instances? NST probably stands for instance.
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
-public class NSTChunk extends TOCChunk {
+public class NSTChunk extends TGQFileChunk {
     private String name;
     private float x;
     private float y;
@@ -26,8 +26,10 @@ public class NSTChunk extends TOCChunk {
 
     private static final int NAME_SIZE = 32;
 
-    public NSTChunk(TGQTOCFile parentFile) {
-        super(parentFile, TOCChunkType.NST);
+    private static final int FULL_SIZE = 272; //TODO: Always this size, except for some models which are 212 bytes.
+
+    public NSTChunk(TGQChunkedFile parentFile) {
+        super(parentFile, TGQChunkType.NST);
     }
 
     @Override
@@ -36,15 +38,15 @@ public class NSTChunk extends TOCChunk {
         this.unknown1 = reader.readInt(); // Usually 0xF0
         this.yaw = reader.readFloat(); // Could be wrong.
         this.pitch = reader.readFloat();
-        this.unknown2 = reader.readInt();
+        this.unknown2 = reader.readInt(); // Seems to be 1 usually.
 
         int alwaysZero = reader.readInt();
         if (alwaysZero != 0)
             throw new RuntimeException("NST always-zero value was not zero. (" + alwaysZero + ").");
 
-        this.unknown4 = reader.readInt();
-        this.unknown5 = reader.readFloat();
-        this.unknown6 = reader.readInt();
+        this.unknown4 = reader.readInt(); // -1.
+        this.unknown5 = reader.readFloat(); // Seems to be consistent among models.
+        this.unknown6 = reader.readInt(); // 0, 0x1000
 
         int alwaysOne = reader.readInt();
         if (alwaysOne != 1)
@@ -53,18 +55,16 @@ public class NSTChunk extends TOCChunk {
         this.x = reader.readFloat();
         this.y = reader.readFloat();
         this.z = reader.readFloat();
-        //TODO
 
-        System.out.println(this.name + " -> [" + this.x + ", " + this.y + ", " + this.z + "] " + this.unknown1 + ", " + this.unknown4 + ", " + this.unknown5 + ", " + this.unknown6 + " END [" + this.yaw + ", " + this.pitch + "]");
+        //System.out.println(this.name + " -> [" + this.x + ", " + this.y + ", " + this.z + "] " + this.unknown1 + ", " + this.unknown4 + ", " + this.unknown5 + ", " + this.unknown6 + " END [" + this.yaw + ", " + this.pitch + "]");
 
-        //TODO
+
+        //TODO: Model id?
     }
 
     @Override
     public void save(DataWriter writer) {
-        int endIndex = writer.getIndex() + NAME_SIZE;
-        writer.writeStringBytes(this.name);
-        writer.writeTo(endIndex);
+        writer.writeTerminatedStringOfLength(this.name, NAME_SIZE);
 
         writer.writeInt(this.unknown1);
         writer.writeFloat(this.yaw);
