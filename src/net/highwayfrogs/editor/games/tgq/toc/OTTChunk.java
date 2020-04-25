@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 import net.highwayfrogs.editor.games.tgq.TGQFile;
 import net.highwayfrogs.editor.games.tgq.TGQImageFile;
+import net.highwayfrogs.editor.games.tgq.toc.VTXChunk.TGQMaterial;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.system.Tuple3;
 import net.highwayfrogs.editor.utils.Utils;
@@ -26,11 +27,12 @@ import java.util.List;
 public class OTTChunk extends TGQFileChunk {
     private String name;
     private List<OTTMesh> meshes = new ArrayList<>();
+    private List<TGQMaterial> materials = new ArrayList<>();
 
     public static final int NAME_SIZE = 32;
 
     public OTTChunk(TGQChunkedFile parentFile) {
-        super(parentFile, TGQChunkType.OTT); //TODO
+        super(parentFile, TGQChunkType.OTT);
     }
 
     @Override
@@ -42,26 +44,21 @@ public class OTTChunk extends TGQFileChunk {
         int meshData = reader.readInt();
         int meshCount = reader.readInt();
         int unknownPointer3 = reader.readInt();
-        int unknownCount3 = reader.readInt();
+        int materialCount = reader.readInt();
         reader.setIndex(0x60); // End of header.
 
         // Skip
         reader.skipBytes(meshData + unknownPointer3);
 
-
-        //TODO: Read textures (maybe)
-        //TODO: Read materials.
         //TODO: Read Object Group?
 
         int matCount = (int) getParentFile().getChunks().stream().filter(chunk -> chunk instanceof TEXChunk).count();
-        System.out.println("Mesh Count: " + meshCount + ", " + matCount); //TODO
         for (int i = 0; i < meshCount; i++) {
-            reader.jumpTemp(reader.getIndex());
+            reader.jumpTemp(reader.getIndex()); //TODO: sh2_map_tri_header
             reader.skipInt();
-            int testMaterial = reader.readInt();
-            if (testMaterial < 0 || testMaterial > matCount)
-                System.out.println("Mesh Num BAD " + testMaterial);
+            int materialId = reader.readInt();
             reader.jumpReturn();
+            //TODO: Ranges.
 
             reader.skipBytes(0x44); // TODO: Read.
             int structSize = reader.readInt();
@@ -73,15 +70,21 @@ public class OTTChunk extends TGQFileChunk {
             int unknownValue = reader.readInt(); // Unknown. It seems to be a relatively small value ranging from 0 - 30,000.
             reader.skipBytes(3 * Constants.INTEGER_SIZE); // These seem to always be zero.
 
-            OTTMesh newMesh = new OTTMesh(count, testMaterial);
+            OTTMesh newMesh = new OTTMesh(count, materialId);
             for (int j = 0; j < count * 3; j++) {
                 newMesh.getPositions().add(new Tuple3<>(reader.readFloat(), reader.readFloat(), reader.readFloat()));
                 newMesh.getNormals().add(new Tuple3<>(reader.readFloat(), reader.readFloat(), reader.readFloat()));
-                int color = reader.readInt(); // Used for static lighting. Alpha is always 0xFF.
+                int color = reader.readInt(); // Either flags or used for static lighting. (Maybe flags are actually per mesh.)
                 newMesh.getTexCoords().add(new Tuple2<>(reader.readFloat(), reader.readFloat()));
             }
 
             getMeshes().add(newMesh);
+        }
+
+        for (int i = 0; i < materialCount; i++) {
+            TGQMaterial newMaterial = new TGQMaterial();
+            newMaterial.load(reader);
+            this.materials.add(newMaterial);
         }
     }
 
@@ -96,6 +99,11 @@ public class OTTChunk extends TGQFileChunk {
         writer.write("# Mesh Count: " + getMeshes().size() + Constants.NEWLINE);
         writer.write("mtllib " + fileName + ".mtl" + Constants.NEWLINE);
         writer.write(Constants.NEWLINE);
+
+        List<TEXChunk> chunks = new ArrayList<>();
+        for (TGQFileChunk chunk : getParentFile().getChunks())
+            if (chunk instanceof TEXChunk)
+                chunks.add((TEXChunk) chunk);
 
         int vId = 1;
         for (int i = 0; i < getMeshes().size(); i++) {
@@ -120,7 +128,7 @@ public class OTTChunk extends TGQFileChunk {
 
             // Faces.
             writer.write("g Mesh_" + Utils.padNumberString(i, 4) + Constants.NEWLINE);
-            writer.write("usemtl Mat_" + Utils.padNumberString(mesh.getMaterial(), 4) + Constants.NEWLINE);
+            writer.write("usemtl Mat_" + getMaterials().get(mesh.getMaterial()).getMaterialName().replace(' ', '_') + Constants.NEWLINE);
             for (int j = 0; j < mesh.getCount(); j++) {
                 writer.write("f");
                 for (int k = 0; k < 3; k++) {
@@ -133,17 +141,11 @@ public class OTTChunk extends TGQFileChunk {
         }
         writer.close();
 
-        List<TEXChunk> chunks = new ArrayList<>();
-        for (TGQFileChunk chunk : getParentFile().getChunks())
-            if (chunk instanceof TEXChunk)
-                chunks.add((TEXChunk) chunk);
-
-
         PrintWriter mtlWriter = new PrintWriter(new File(folder, fileName + ".mtl"));
-        for (int i = 0; i < chunks.size(); i++) {
-            mtlWriter.write("newmtl Mat_" + Utils.padNumberString(i, 4) + Constants.NEWLINE);
+        for (TGQMaterial material : getMaterials()) {
+            mtlWriter.write("newmtl Mat_" + material.getMaterialName().replace(' ', '_') + Constants.NEWLINE);
             mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE);
-            mtlWriter.write("map_Kd " + fileName + "/Textures/" + i + ".png" + Constants.NEWLINE);
+            mtlWriter.write("map_Kd " + fileName + "/Textures/" + material.getTextureFile().replace(".img", "") + ".png" + Constants.NEWLINE);
             mtlWriter.write(Constants.NEWLINE);
         }
         mtlWriter.close();
@@ -153,17 +155,12 @@ public class OTTChunk extends TGQFileChunk {
             if (!imgFolder.exists())
                 imgFolder.mkdirs();
 
-            int id = 0;
             for (TEXChunk texChunk : chunks) {
                 TGQFile file = getParentFile().getMainArchive().getFileByName(texChunk.getPath());
                 if (file instanceof TGQImageFile)
-                    ((TGQImageFile) file).saveImageToFile(new File(imgFolder, id + ".png"));
-                id++;
+                    ((TGQImageFile) file).saveImageToFile(new File(imgFolder, file.getExportName().replace(".img", "") + ".png"));
             }
         }
-
-        //TODO: Write mtl, grab textures too.
-
     }
 
     @Override

@@ -54,7 +54,7 @@ public class TGQImageFile extends TGQFile {
         int tempValue = reader.readInt();
         reader.jumpReturn();
 
-        this.unknown5 = reader.readShort(); //TODO: Could these be a hash?
+        this.unknown5 = reader.readShort(); //TODO: Could these be a hash? No.
         this.unknown6 = reader.readShort();
 
         int unknown7AlwaysSeemsToBeZero = reader.readInt();
@@ -64,7 +64,7 @@ public class TGQImageFile extends TGQFile {
         this.unknown8 = reader.readInt();
         this.unknown9 = reader.readInt();
 
-        //TODO: TOSS
+        //TODO: TOSS (Maybe the unknowns are an offset to the file, where the next data is?)
         System.out.println("5: " + this.unknown5 + ", 6: " + this.unknown6 + " (" + tempValue + "), 8: " + this.unknown8 + ", 9: " + this.unknown9 + ", W: " + width + ", H: " + height + ", A: " + (width * height) + ", ID: " + getMainArchive().getFiles().size());
 
         // Read Image.

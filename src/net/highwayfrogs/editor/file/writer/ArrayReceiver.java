@@ -13,8 +13,16 @@ import java.util.List;
  */
 @Getter
 public class ArrayReceiver implements DataReceiver {
-    private List<Byte> bytes = new ArrayList<>();
+    private List<Byte> bytes;
     private int index;
+
+    public ArrayReceiver() {
+        this.bytes = new ArrayList<>();
+    }
+
+    public ArrayReceiver(int startingSize) {
+        this.bytes = new ArrayList<>(startingSize);
+    }
 
     @Override
     public void writeByte(byte value)  {

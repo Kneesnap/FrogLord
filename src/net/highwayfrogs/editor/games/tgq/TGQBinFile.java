@@ -214,10 +214,6 @@ public class TGQBinFile extends GameObject {
         exportModels(exportDir, mainFile);
         exportDummyFiles(exportDir, mainFile);
         System.out.println("Done.");
-
-        System.out.print(mainFile.getGlobalPaths().size() + " paths:");
-        for (String path : mainFile.getGlobalPaths())
-            System.out.println(" - " + path);
     }
 
 
@@ -225,7 +221,7 @@ public class TGQBinFile extends GameObject {
      * Activates the filename
      * @param filePath The path of a game file.
      */
-    public void applyFileName(String filePath) { //TODO: Apply file names.
+    public void applyFileName(String filePath) {
         int hash = TGQUtils.hash(TGQUtils.getFileIdFromPath(filePath), true);
         TGQFile file = getNameMap().get(hash);
         if (file != null) // What causes a file to have its name put in, instead of the hash? It doesn't seem to be collisions. Could it be if it doesn't fall under the file path used for the given level?

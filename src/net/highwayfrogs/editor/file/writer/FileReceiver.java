@@ -22,6 +22,11 @@ public class FileReceiver implements DataReceiver {
         this.arrayReceiver = new ArrayReceiver();
     }
 
+    public FileReceiver(File file, int startingSize) {
+        this.targetFile = file;
+        this.arrayReceiver = new ArrayReceiver(startingSize);
+    }
+
     @Override
     public void writeByte(byte value) throws IOException {
         this.arrayReceiver.writeByte(value);
