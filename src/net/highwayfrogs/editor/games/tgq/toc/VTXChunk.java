@@ -41,6 +41,7 @@ public class VTXChunk extends TGQFileChunk {
     //TODO: Could materials be applied to groups? What about the extra bytes in the material? Maybe it has ranges of faces, or just plain faces?
     //TODO: Color.
     //TODO: Bones, Animations? It seems like these are probably in a different chunk, and on a per-file basis. [Maybe this means the bone definitions are in the animation data.]
+    //TODO: Materials are likely applied to whatever bone / grouping system being used.
 
     public static final int NAME_SIZE = 32;
     public static final int FULL_NAME_SIZE = 260;
@@ -65,11 +66,7 @@ public class VTXChunk extends TGQFileChunk {
         // Read Header. (TODO: Make sense of)
         int unk1 = reader.readInt(); //TODO: Flags? Always either 342 or 338. Could be flags. Though, what flags, I am not sure.
         int mode = reader.readInt(); // I think?
-
         int materialCount = reader.readInt();
-        if (materialCount > 1)
-            System.out.println(getParentFile().getMainArchive().getFiles().size() + " has MORE. " + materialCount);
-
         int nodeCount = reader.readInt(); // A node is probably a bone. TODO
         int byteCountForStep3 = reader.readInt();
         int materialAddress = reader.readInt(); //TODO: ?? Really?? Doesn't seem so, but the PS2 version seems to think so. Maybe it only has a value at runtime. Unsure.
@@ -124,12 +121,12 @@ public class VTXChunk extends TGQFileChunk {
                 this.normals.add(new Tuple3<>(reader.readFloat(), reader.readFloat(), reader.readFloat()));
                 reader.skipBytes(Constants.FLOAT_SIZE * 5); // Unsure, Seems to be 0x3F800000. Usually seems to be 1.0
                 this.uvs.add(new Tuple2<>(reader.readFloat(), reader.readFloat()));
-                reader.skipBytes(12); //TODO: Figure out this stuff. (Might have material id) 2 floats, 1 int.
+                reader.skipBytes(3 * Constants.FLOAT_SIZE); // 3 Floats. In a few cases, the last one is not present, for the last entry in the file.
             }
         }
 
         if (reader.hasMore())
-            System.out.println("More " + getParentFile().getMainArchive().getFiles().size() + ": " + reader.getRemaining());
+            System.out.println("More " + getParentFile().getMainArchive().getFiles().size() + ": " + reader.getRemaining() + ", " + Integer.toHexString(reader.getIndex()));
     }
 
     @Override
@@ -197,9 +194,9 @@ public class VTXChunk extends TGQFileChunk {
                     folder.mkdirs();
 
                 String stripped = material.getTextureFile().split("\\.")[0].toLowerCase();
-                TEXChunk foundChunk = null; //TODO: Gotta get this from the linked map.
+                TEXChunk foundChunk = null; // TODO: Get this the way the game gets it.
                 for (TEXChunk chunk : chunks)
-                    if (chunk.getName().toLowerCase().contains(stripped))
+                    if (chunk.getPath().toLowerCase().contains(stripped))
                         foundChunk = chunk;
 
                 if (foundChunk != null) {
@@ -223,13 +220,32 @@ public class VTXChunk extends TGQFileChunk {
     }
 
     @Getter
-    public static class TGQMaterial extends GameObject { //TODO: How does it know which material to apply to what face.
+    public static class TGQMaterial extends GameObject { // TODO: Figure out what each value is.
         private String materialName;
         private String textureFile;
-        private byte[] extraData; // Extra bytes. TODO: Some of this data is color data, presumably meaning whole materials can be recolored. If this is true, it should also impact the exported material.
+        private int unknown1 = 1; // Usually 1. (Might be type)
+        private int unknown2; // Usually 0. (Might be type)
+        private float unknown3 = 1F; // Grouped with 3-5.
+        private float unknown4 = 1F; // Grouped with 3-5.
+        private float unknown5 = 1F; // Grouped with 3-5.
+        private float unknown6 = 1F;
+        private float unknown7 = 1F; // Grouped with 7-9.
+        private float unknown8 = 1F; // Grouped with 7-9.
+        private float unknown9 = 1F; // Grouped with 7-9.
+        private float unknown10 = 1F;
+        private int unknown11; // May be some kind of color. Either way, the bits look suspiciously like ARGB.
+        private int unknown12; // May be some kind of color. Either way, the bits look suspiciously like ARGB.
+        private int unknown13; // May be some kind of color. Either way, the bits look suspiciously like ARGB.
+        private int unknown14;
+        private int unknown15;
+        private int unknown16;
+        private int unknown17;
+        private float unknown18 = 1F;
+        private float unknown19 = 1F;
+        private float unknown20;
         //TODO: Tint?
-        //TODO: Offset to texture data?
         //TODO: specular color?
+        // None of the values seem constant.
 
         private static final int NAME_SIZE = 32;
         private static final int FILENAME_SIZE = 32;
@@ -238,14 +254,52 @@ public class VTXChunk extends TGQFileChunk {
         public void load(DataReader reader) {
             this.materialName = reader.readTerminatedStringOfLength(NAME_SIZE);
             this.textureFile = reader.readTerminatedStringOfLength(FILENAME_SIZE);
-            this.extraData = reader.readBytes(80);
+            this.unknown1 = reader.readInt();
+            this.unknown2 = reader.readInt();
+            this.unknown3 = reader.readFloat();
+            this.unknown4 = reader.readFloat();
+            this.unknown5 = reader.readFloat();
+            this.unknown6 = reader.readFloat();
+            this.unknown7 = reader.readFloat();
+            this.unknown8 = reader.readFloat();
+            this.unknown9 = reader.readFloat();
+            this.unknown10 = reader.readFloat();
+            this.unknown11 = reader.readInt();
+            this.unknown12 = reader.readInt();
+            this.unknown13 = reader.readInt();
+            this.unknown14 = reader.readInt();
+            this.unknown15 = reader.readInt();
+            this.unknown16 = reader.readInt();
+            this.unknown17 = reader.readInt();
+            this.unknown18 = reader.readFloat();
+            this.unknown19 = reader.readFloat();
+            this.unknown20 = reader.readFloat();
         }
 
         @Override
         public void save(DataWriter writer) {
             writer.writeTerminatedStringOfLength(this.materialName, NAME_SIZE);
             writer.writeTerminatedStringOfLength(this.textureFile, FILENAME_SIZE);
-            writer.writeBytes(this.extraData);
+            writer.writeInt(this.unknown1);
+            writer.writeInt(this.unknown2);
+            writer.writeFloat(this.unknown3);
+            writer.writeFloat(this.unknown4);
+            writer.writeFloat(this.unknown5);
+            writer.writeFloat(this.unknown6);
+            writer.writeFloat(this.unknown7);
+            writer.writeFloat(this.unknown8);
+            writer.writeFloat(this.unknown9);
+            writer.writeFloat(this.unknown10);
+            writer.writeInt(this.unknown11);
+            writer.writeInt(this.unknown12);
+            writer.writeInt(this.unknown13);
+            writer.writeInt(this.unknown14);
+            writer.writeInt(this.unknown15);
+            writer.writeInt(this.unknown16);
+            writer.writeInt(this.unknown17);
+            writer.writeFloat(this.unknown18);
+            writer.writeFloat(this.unknown19);
+            writer.writeFloat(this.unknown20);
         }
     }
 }
