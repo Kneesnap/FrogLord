@@ -85,6 +85,7 @@ public class VTXChunk extends TGQFileChunk {
             materials.add(newMaterial);
         }
 
+
         // 2. Unknown integers which resemble faces. TODO: I bet this data has something to do with what it applies to.
         while (reader.hasMore()) {
             int temp = reader.readInt();
@@ -101,7 +102,12 @@ public class VTXChunk extends TGQFileChunk {
         if (reader.getIndex() % 4 != 0)
             reader.skipBytes(4 - (reader.getIndex() % 4)); // Pad.
 
-        // Read Vertices. TODO: If we're struggling to find materials, read all integers in a file. Target a specific texture. Get its global hash, hash to TEX chunk in TOC, etc, and work to find it.
+        // kcModelRender
+        // 0x11518C - s2 = Ptr to right after the material ends. s3=12 after s2. var2 = The start of the material block. Ie: Data right before the first material.
+
+        //TODO: Get breakpoints to the things which we don't know about.
+
+        // Read Vertices.
         //TODO: Is the first integer the count of faces in a mesh in certain cases?
         for (int i = 0; i < vertexCount; i++) {
             if (mode == 5) { // Should be 64.
@@ -217,6 +223,23 @@ public class VTXChunk extends TGQFileChunk {
         }
 
         //TODO: Get Textures from TEX section. Apply everything to texture 0 for now.
+    }
+
+    @Getter
+    public static class VTXNode extends GameObject {
+        private int a;
+        private int primCount; //TODO: Maybe?
+        private int materialId; //TODO: Resolve?
+
+        @Override
+        public void load(DataReader reader) {
+
+        }
+
+        @Override
+        public void save(DataWriter writer) {
+            //TODO
+        }
     }
 
     @Getter
