@@ -260,6 +260,7 @@ public class TextureMap {
         texMap.put(UnknownTextureSource.INSTANCE.makeIdentifier(this), UnknownTextureSource.INSTANCE);
         texMap.put(MOFController.ANIMATION_COLOR.makeIdentifier(this), MOFController.ANIMATION_COLOR);
         texMap.put(MOFController.CANT_APPLY_COLOR.makeIdentifier(this), MOFController.CANT_APPLY_COLOR);
+        texMap.put(MOFController.HILITE_COLOR.makeIdentifier(this), MOFController.HILITE_COLOR);
         return texMap;
     }
 

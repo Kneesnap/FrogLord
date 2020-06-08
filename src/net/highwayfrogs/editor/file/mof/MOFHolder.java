@@ -27,6 +27,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.MOFController;
+import net.highwayfrogs.editor.gui.editor.MOFMainController;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FileUtils3D;
@@ -60,7 +61,7 @@ public class MOFHolder extends GameFile {
 
     public static final int FLAG_ANIMATION_FILE = Constants.BIT_FLAG_3; // This is an animation MOF file.
 
-    private static final Image ICON = loadIcon("swampy");
+    private static final Image ICON = loadIcon("model");
     public static final byte[] DUMMY_DATA = "DUMY".getBytes();
 
     public MOFHolder(MAPTheme theme, MOFHolder lastCompleteMOF) {
@@ -89,6 +90,9 @@ public class MOFHolder extends GameFile {
         } else {
             resolveStaticMOF(reader);
         }
+
+        if (getMaxAnimation() > 1) //TODO: TOSS
+            System.out.println(getFileEntry().getDisplayName() + ": " + getMaxAnimation());
     }
 
     @Override
@@ -127,7 +131,7 @@ public class MOFHolder extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return null;
+        return loadEditor(new MOFMainController(), "mofmain", this);
     }
 
     @Override

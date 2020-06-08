@@ -38,6 +38,7 @@ import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.mof.*;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
+import net.highwayfrogs.editor.file.mof.hilite.MOFHilite.HiliteAttachType;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntryList;
@@ -90,6 +91,7 @@ public class MOFController extends EditorController<MOFHolder> {
     private boolean selectingVertex;
     private boolean selectingPart;
     private MeshData textureOverlay;
+    private MeshData hiliteOverlay;
 
     @Setter private Vector showPosition;
 
@@ -108,6 +110,7 @@ public class MOFController extends EditorController<MOFHolder> {
     private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(java.awt.Color.MAGENTA, java.awt.Color.BLACK);
     public static final CursorVertexColor CANT_APPLY_COLOR = new CursorVertexColor(java.awt.Color.RED, java.awt.Color.BLACK);
+    public static final CursorVertexColor HILITE_COLOR = new CursorVertexColor(Utils.toAWTColor(Color.PURPLE), java.awt.Color.BLACK);
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -222,6 +225,17 @@ public class MOFController extends EditorController<MOFHolder> {
                 this.selectingPart = false;
                 updateTexture3D();
                 return;
+            }
+
+            if (this.hiliteOverlay != null && this.getUiController().getViewHilitesCheckbox().isSelected()) {
+                for (MOFPart part : getFile().asStaticFile().getParts()) {
+                    for (MOFHilite hilite : part.getHilites()) {
+                        if (hilite.getAttachType() == HiliteAttachType.PRIM && hilite.getPolygon() == clickedPoly) {
+                            hilite.setupEditor(this);
+                            return;
+                        }
+                    }
+                }
             }
 
             if (!(clickedPoly instanceof MOFPolyTexture) || getUiController().getSelectedList() == null)
@@ -343,19 +357,33 @@ public class MOFController extends EditorController<MOFHolder> {
     public void updateHiliteBoxes(boolean showBoxes) {
         getRenderManager().addMissingDisplayList(HILITE_LIST);
         getRenderManager().clearDisplayList(HILITE_LIST);
+        if (this.hiliteOverlay != null) {
+            getMofMesh().getManager().removeMesh(this.hiliteOverlay);
+            this.hiliteOverlay = null;
+        }
 
         if (!showBoxes)
             return;
 
+        boolean renderOver = false;
         for (MOFPart part : getFile().asStaticFile().getParts()) {
             for (MOFHilite hilite : part.getHilites()) {
-                SVector vertex = hilite.getVertex();
-                Box hiliteBox = getRenderManager().addBoundingBoxCenteredWithDimensions(HILITE_LIST, vertex.getFloatX(), vertex.getFloatY(), vertex.getFloatZ(), 1, 1, 1, HILITE_MATERIAL, true);
-                applyRotation(hiliteBox);
-                hiliteBox.setOnMouseClicked(evt -> hilite.setupEditor(this));
-                hiliteBox.setMouseTransparent(false);
+                if (hilite.getAttachType() == HiliteAttachType.PRIM) {
+                    MOFPolygon poly = hilite.getPolygon();
+                    renderOverPolygon(poly, MOFController.HILITE_COLOR);
+                    renderOver = true;
+                } else if (hilite.getAttachType() == HiliteAttachType.VERTEX) {
+                    SVector vertex = hilite.getVertex();
+                    Box hiliteBox = getRenderManager().addBoundingBoxCenteredWithDimensions(HILITE_LIST, vertex.getFloatX(), vertex.getFloatY(), vertex.getFloatZ(), 1, 1, 1, HILITE_MATERIAL, true);
+                    applyRotation(hiliteBox);
+                    hiliteBox.setOnMouseClicked(evt -> hilite.setupEditor(this));
+                    hiliteBox.setMouseTransparent(false);
+                }
             }
         }
+
+        if (renderOver)
+            this.hiliteOverlay = getMofMesh().getManager().addMesh();
     }
 
     /**

@@ -87,9 +87,10 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
 
             MOFPartcel partcel = hasEnabledAnimation() ? part.getCel(getAction(), getFrame()) : part.getStaticPartcel();
             if (getMofHolder().isAnimatedMOF() && hasEnabledAnimation()) {
+                boolean useInterpolation = getMofHolder().getAnimatedFile().getAnimationById(getAction()).isInterpolationEnabled();
                 TransformObject transform = getMofHolder().getAnimatedFile().getTransform(part, getAction(), getFrame());
                 for (SVector vertex : partcel.getVertices())
-                    this.verticeCache.add(PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(), vertex, new IVector()));
+                    this.verticeCache.add(PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(useInterpolation), vertex, new IVector()));
             } else {
                 this.verticeCache.addAll(partcel.getVertices());
             }

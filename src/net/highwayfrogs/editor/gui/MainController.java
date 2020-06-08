@@ -14,10 +14,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.PLTFile;
 import net.highwayfrogs.editor.file.*;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -97,6 +99,9 @@ public class MainController implements Initializable {
         addFileList(WADFile.TYPE_ID, "WAD", gameFileRegistry);
         addFileList(PALFile.TYPE_ID, "PAL", gameFileRegistry);
         addFileList(VHFile.TYPE_ID, "VB/VH", gameFileRegistry);
+        addFileList(PLTFile.FILE_TYPE, "PLT", gameFileRegistry);
+        addFileList(MOFHolder.MOF_ID, "Models", gameFileRegistry);
+        addFileList(8, "TIM Image", gameFileRegistry);
 
         // Setup!
         FroggerEXEInfo config = mwdFile.getConfig();

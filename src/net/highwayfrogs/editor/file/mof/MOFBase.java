@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents the basic mof file types, static and animated.
@@ -37,7 +38,7 @@ public abstract class MOFBase extends GameObject {
         if (flags != buildFlags())
             throw new RuntimeException("Generated Flags (" + buildFlags() + ") do not match read flags (" + flags + ") in " + getFileEntry().getDisplayName());
         if (!makeSignature().equals(new String(signature)))
-            throw new RuntimeException("Generated Signature (" + makeSignature() + ") does not match read signature (" + new String(signature) + ") in " + getFileEntry().getDisplayName());
+            throw new RuntimeException("Generated Signature (" + makeSignature() + ") does not match read signature (" + new String(signature) + ") in " + getFileEntry().getDisplayName() + " (Real Signature Bytes: " + Utils.toByteString(signature) + ")");
     }
 
     @Override

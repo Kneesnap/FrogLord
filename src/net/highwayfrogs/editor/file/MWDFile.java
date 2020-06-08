@@ -3,9 +3,9 @@ package net.highwayfrogs.editor.file;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.PLTFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.SkyLand;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
@@ -16,8 +16,6 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.AbstractVBFile;
 import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.sound.prototype.PrototypeVBFile;
-import net.highwayfrogs.editor.file.sound.psx.PSXVBFile;
-import net.highwayfrogs.editor.file.sound.psx.PSXVHFile;
 import net.highwayfrogs.editor.file.sound.retail.RetailPCVBFile;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -63,7 +61,7 @@ public class MWDFile extends GameObject {
     public void load(DataReader reader) {
         reader.verifyString(MARKER);
 
-        AbstractVBFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
+        VHFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
 
         for (FileEntry entry : wadIndexTable.getEntries()) {
             if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
@@ -85,7 +83,7 @@ public class MWDFile extends GameObject {
             }
 
             files.add(file);
-            lastVB = file instanceof AbstractVBFile ? (AbstractVBFile) file : null;
+            lastVB = file instanceof VHFile ? (VHFile) file : null;
         }
     }
 
@@ -103,7 +101,7 @@ public class MWDFile extends GameObject {
             MOFHolder oldHolder = (MOFHolder) oldFile;
             newFile = (T) new MOFHolder(oldHolder.getTheme(), oldHolder.getCompleteMOF());
         } else {
-            AbstractVBFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile).getVB() : null;
+            VHFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile) : null;
             newFile = this.loadFile(fileBytes, entry, lastVB);
         }
 
@@ -119,42 +117,48 @@ public class MWDFile extends GameObject {
      * Create a GameFile instance.
      * @param fileBytes The data to read
      * @param entry     The file entry being loaded.
-     * @param lastVB    The lastVB value.
+     * @param lastVH    The lastVB value.
      * @return loadedFile
      */
     @SuppressWarnings("unchecked")
-    public <T extends GameFile> T loadFile(byte[] fileBytes, FileEntry entry, AbstractVBFile lastVB) {
+    public <T extends GameFile> T loadFile(byte[] fileBytes, FileEntry entry, VHFile lastVH) {
         // Turn the byte data into the appropriate game-file.
         GameFile file;
 
+        // .DAT is 0. (Remember, 0 is "standard", or .MAP, I believe it's game specific.)
+        // VB VH is 0.
+        // .BPP is also zero.
+
+        // WADs seem to be -1.
+        // VLOs seem to be 1, sometimes zero.
+        // XMR seems to be 3.
+        // MAP is four4
+        // TEX (REMAP???) is 5
+        // TIM seems to be 8.
+        // PLT (Palette) is 9.
+
+        //TODO:
+        // - Check out TEX, MAP.
+        // - Automatically determine textures, see if we can hook up things like a way to link things to vlos.
+        // - Automatically export assets.
+
         if (entry.getSpoofedTypeId() == VLOArchive.TYPE_ID) {
             file = new VLOArchive();
-        } else if (entry.getTypeId() == MAPFile.TYPE_ID) {
-            if (entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX)) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
-                file = new SkyLand();
-            } else {
-                file = new MAPFile();
-            }
-        } else if (entry.getTypeId() == WADFile.TYPE_ID) {
+        } else if (entry.getSpoofedTypeId() == WADFile.TYPE_ID) {
             file = new WADFile();
-        } else if (entry.getTypeId() == DemoFile.TYPE_ID) {
+        } else if (entry.getSpoofedTypeId() == MOFHolder.MOF_ID) {
+            file = new DummyFile(fileBytes.length); //TODO: Enable this. (Needs support for multiple models.)
+        } else if (entry.getSpoofedTypeId() == DemoFile.TYPE_ID) {
             file = new DemoFile();
-        } else if (entry.getTypeId() == PALFile.TYPE_ID) {
-            file = new PALFile();
-        } else if (entry.getTypeId() == VHFile.TYPE_ID) { // PSX support is disabled until it is complete.
-            if (getConfig().isPSX()) {
-                if (lastVB != null) {
-                    file = new PSXVHFile();
-                    ((PSXVHFile) file).setVB((PSXVBFile) lastVB);
-                } else {
-                    file = new PSXVBFile();
-                }
-            } else if (lastVB != null) {
-                VHFile vhFile = new VHFile();
-                vhFile.setVB(lastVB);
-                file = vhFile;
+        } else if (entry.getSpoofedTypeId() == PLTFile.FILE_TYPE) {
+            file = new PLTFile();
+        } else if (entry.getSpoofedTypeId() == VHFile.TYPE_ID) { // PSX support is disabled until it is complete.
+            if (lastVH == null) {
+                file = new VHFile();
             } else {
-                file = getConfig().isPrototype() ? new PrototypeVBFile() : new RetailPCVBFile();
+                AbstractVBFile vb = getConfig().isPrototype() ? new PrototypeVBFile() : new RetailPCVBFile();
+                file = vb;
+                vb.setHeader(lastVH);
             }
         } else {
             file = new DummyFile(fileBytes.length);

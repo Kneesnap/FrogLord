@@ -28,6 +28,7 @@ public class MOFAnimation extends MOFBase {
     @Setter private TransformType transformType = TransformType.QUAT_BYTE;
 
     private static final int STATIC_MOF_COUNT = 1;
+    private static final byte MR_ANIM_FILE_START_FRAME_AT_ZERO = (byte) 0x31; // '1'
 
     public MOFAnimation(MOFHolder holder) {
         this(holder, new MOFFile(holder));
@@ -42,9 +43,8 @@ public class MOFAnimation extends MOFBase {
 
     @Override
     public void onLoad(DataReader reader, byte[] signature) {
-        this.startAtFrameZero = (signature[0] == (byte) 0x31); // '1'
+        this.startAtFrameZero = (signature[0] == MR_ANIM_FILE_START_FRAME_AT_ZERO);
         this.transformType = TransformType.getType(signature[1]);
-        Utils.verify(isStartAtFrameZero(), "Animations which do not start at frame-zero are not currently supported.");
 
         int modelSetCount = reader.readUnsignedShortAsInt();
         int staticFileCount = reader.readUnsignedShortAsInt();
@@ -53,7 +53,7 @@ public class MOFAnimation extends MOFBase {
         int staticFilePointer = reader.readInt(); // After common data pointer.
 
         Utils.verify(modelSetCount == 1, "Multiple model sets are not supported by FrogLord. (%d)", modelSetCount);
-        Utils.verify(staticFileCount == 1, "FrogLord only supports one MOF. (%d)", staticFileCount);
+        Utils.verify(staticFileCount == 1, "FrogLord only supports one MOF per animation. (%d)", staticFileCount);
 
         // Read model sets.
         reader.jumpTemp(modelSetPointer);
@@ -155,7 +155,7 @@ public class MOFAnimation extends MOFBase {
                     TransformObject transform = getTransform(part, action, frame);
 
                     for (SVector sVec : partcel.getVertices()) {
-                        IVector vertex = PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(), sVec, new IVector());
+                        IVector vertex = PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(getAnimationById(action).isInterpolationEnabled()), sVec, new IVector());
 
                         minX = Math.min(minX, vertex.getFloatX());
                         minY = Math.min(minY, vertex.getFloatY());
@@ -193,6 +193,6 @@ public class MOFAnimation extends MOFBase {
 
     @Override
     public String makeSignature() {
-        return (isStartAtFrameZero() ? "1" : "0") + (char) getTransformType().getByteValue() + "ax";
+        return (isStartAtFrameZero() ? "1" : "\0") + (char) getTransformType().getByteValue() + "ax";
     }
 }

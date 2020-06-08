@@ -5,11 +5,11 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,6 @@ public class VHFile extends GameFile {
             getEntries().add(entry);
         }
 
-        getVB().load(this); // Load the linked body file.
     }
 
     @Override
@@ -59,8 +58,7 @@ public class VHFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        Utils.verify(getVB() != null, "VB sound is null.");
-        return getVB().makeEditor(); // Build the editor for the right file.
+        return null; // Build the editor for the right file.
     }
 
     @Setter
@@ -80,8 +78,11 @@ public class VHFile extends GameFile {
             this.audioPresent = (reader.readInt() == HAS_AUDIO);
             this.dataStartOffset = reader.readInt();
             this.dataSize = reader.readInt();
-            Utils.verify(reader.readInt() == UNKNOWN_VALUE, "Unknown Value #1 was not correct.");
-            Utils.verify(reader.readInt() == UNKNOWN_VALUE, "Unknown Value #2 was not correct.");
+
+            int unk1 = reader.readInt();
+            Utils.verify(unk1 == UNKNOWN_VALUE, "Unknown Value #1 was not correct. (%d)", unk1);
+            int unk2 = reader.readInt();
+            Utils.verify(unk2 == UNKNOWN_VALUE, "Unknown Value #2 was not correct. (%d)", unk2);
             this.sampleRate = reader.readInt();
             this.bitWidth = reader.readInt();
         }

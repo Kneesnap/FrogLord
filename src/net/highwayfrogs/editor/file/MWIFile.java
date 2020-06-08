@@ -5,9 +5,8 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 
@@ -51,6 +50,7 @@ public class MWIFile extends GameObject {
 
             entry.setFlags(reader.readInt());
             entry.setTypeId(reader.readInt());
+            System.out.println(entry.getFilePath());
             entry.setSectorOffset(reader.readInt());
             reader.skipInt(); // Should always be 0. This is used by the frogger.exe to locate where in RAM the file is located.
             reader.skipInt(); // Should always be 0. This is used by frogger.exe to locate where in RAM the file is depacked at.
@@ -138,8 +138,10 @@ public class MWIFile extends GameObject {
          */
         public int getSpoofedTypeId() {
             int id = this.typeId;
-            if (id == MAPFile.TYPE_ID && getDisplayName().startsWith("LS_ALL")) // LS_ALL is masked as a MAP, when it is a VLO.
+            if (id == 0 && getFilePath().endsWith(".VLO"))
                 id = VLOArchive.TYPE_ID;
+            if (id == 0 && (getFilePath().endsWith(".VH") || getFilePath().endsWith(".VB")))
+                id = VHFile.TYPE_ID;
             return id;
         }
 
@@ -230,17 +232,6 @@ public class MWIFile extends GameObject {
          */
         public MapBook getMapBook() {
             for (MapBook book : getConfig().getMapLibrary())
-                if (book.isEntry(this))
-                    return book;
-            return null;
-        }
-
-        /**
-         * Get the book which holds this FileEntry.
-         * @return book
-         */
-        public ThemeBook getThemeBook() {
-            for (ThemeBook book : getConfig().getThemeLibrary())
                 if (book.isEntry(this))
                     return book;
             return null;

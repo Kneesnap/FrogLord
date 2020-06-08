@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFPart;
@@ -20,12 +21,14 @@ import java.util.List;
 public class MOFAnimationCels extends GameObject {
     private List<Integer> celNumbers = new ArrayList<>(); // Entry for each frame. Starts at 0, counts up for each frame, unless there is a duplicate frame, where it won't count. Index into indice list.
     private List<Short> indices = new ArrayList<>(); // All of the transform ids used. Each frame has indices for each part, seemingly in order from start to end of animation.
+    @Setter private boolean interpolationEnabled;
 
     private transient MOFAnimation parent;
     private transient int tempCelNumberPointer;
     private transient int tempIndicePointer;
 
     public static final int FLAG_VIRTUAL_STANDARD = Constants.BIT_FLAG_0;
+    public static final int FLAG_VIRTUAL_INTERPOLATION = Constants.BIT_FLAG_1;
 
     public MOFAnimationCels(MOFAnimation parent) {
         this.parent = parent;
@@ -36,9 +39,7 @@ public class MOFAnimationCels extends GameObject {
         int celCount = reader.readUnsignedShortAsInt();
         int partCount = reader.readUnsignedShortAsInt();
         int virtualCelCount = reader.readUnsignedShortAsInt();
-
-        int flags = reader.readUnsignedShortAsInt();
-        Utils.verify(flags == FLAG_VIRTUAL_STANDARD, "Model cel-set had unsupported flags! (%d)", Utils.toHexString(flags)); // We don't support this mode as of now.
+        this.interpolationEnabled = (reader.readUnsignedShortAsInt() == FLAG_VIRTUAL_INTERPOLATION);
 
         int celNumberPointer = reader.readInt();
         int indicePointer = reader.readInt();
@@ -61,7 +62,7 @@ public class MOFAnimationCels extends GameObject {
         writer.writeUnsignedShort(this.celNumbers.size()); // This may need to have 1 subtracted if 1 is added while loading.
         writer.writeUnsignedShort(partCount);
         writer.writeUnsignedShort(this.indices.size() / partCount);
-        writer.writeUnsignedShort(FLAG_VIRTUAL_STANDARD);
+        writer.writeUnsignedShort(this.interpolationEnabled ? FLAG_VIRTUAL_INTERPOLATION : FLAG_VIRTUAL_STANDARD);
         this.tempCelNumberPointer = writer.writeNullPointer();
         this.tempIndicePointer = writer.writeNullPointer();
     }
@@ -95,7 +96,7 @@ public class MOFAnimationCels extends GameObject {
      * @return transformId
      */
     public int getTransformID(int frame, MOFPart part) {
-        int actualCel = celNumbers.get(frame % celNumbers.size());
+        int actualCel = celNumbers.get(frame % celNumbers.size()) - (getParent().isStartAtFrameZero() ? 0 : 1);
         int partCount = getParent().getStaticMOF().getParts().size();
         return indices.get((actualCel * partCount) + part.getPartID());
     }

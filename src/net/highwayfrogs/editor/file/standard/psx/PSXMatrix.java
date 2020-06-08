@@ -185,6 +185,53 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
+     * Equivalent to MR_SCALE_MATRIX.
+     */
+    public static void MRScaleMatrix(PSXMatrix matrix, int scaleX, int scaleY, int scaleZ) {
+        PSXMatrix scalingMatrix = new PSXMatrix();
+        scalingMatrix.getMatrix()[0][0] = (short) scaleX;
+        scalingMatrix.getMatrix()[1][1] = (short) scaleY;
+        scalingMatrix.getMatrix()[2][2] = (short) scaleZ;
+        MRMulMatrixABB(scalingMatrix, matrix);
+    }
+
+    /**
+     * Equivalent to MulMatrix2
+     * @param input  The matrix to multiply by.
+     * @param output The output matrix.
+     */
+    public static void MRMulMatrixABB(PSXMatrix input, PSXMatrix output) {
+        int i11 = input.getMatrix()[0][0];
+        int i12 = input.getMatrix()[0][1];
+        int i13 = input.getMatrix()[0][2];
+        int i21 = input.getMatrix()[1][0];
+        int i22 = input.getMatrix()[1][1];
+        int i23 = input.getMatrix()[1][2];
+        int i31 = input.getMatrix()[2][0];
+        int i32 = input.getMatrix()[2][1];
+        int i33 = input.getMatrix()[2][2];
+        int o11 = output.getMatrix()[0][0];
+        int o12 = output.getMatrix()[0][1];
+        int o13 = output.getMatrix()[0][2];
+        int o21 = output.getMatrix()[1][0];
+        int o22 = output.getMatrix()[1][1];
+        int o23 = output.getMatrix()[1][2];
+        int o31 = output.getMatrix()[2][0];
+        int o32 = output.getMatrix()[2][1];
+        int o33 = output.getMatrix()[2][2];
+
+        output.getMatrix()[0][0] = (short) (((i12 * o21) + (i13 * o31) + (o11 * i11)) >> 12);
+        output.getMatrix()[0][1] = (short) (((i12 * o22) + (i13 * o32) + (o12 * i11)) >> 12);
+        output.getMatrix()[0][2] = (short) (((i13 * o33) + (i12 * o23) + (o13 * i11)) >> 12);
+        output.getMatrix()[1][0] = (short) (((i23 * o31) + (o21 * i22) + (i21 * o11)) >> 12);
+        output.getMatrix()[1][1] = (short) (((o13 * i31) + (o23 * i32) + (o33 * i33)) >> 12);
+        output.getMatrix()[1][2] = (short) (((o12 * i21) + (o22 * i22) + (i23 * o32)) >> 12);
+        output.getMatrix()[2][0] = (short) (((o13 * i21) + (i22 * o23) + (i23 * o33)) >> 12);
+        output.getMatrix()[2][1] = (short) (((o21 * i32) + (o31 * i33) + (i31 * o11)) >> 12);
+        output.getMatrix()[2][2] = (short) (((o22 * i32) + (o12 * i31) + (o32 * i33)) >> 12);
+    }
+
+    /**
      * Equivalent to ApplyMatrix. matrix -> vec (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0392.html?sidebar=outlines)
      * @param matrix The matrix to multiply.
      * @param vector The short vector to multiply the matrix by.

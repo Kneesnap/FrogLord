@@ -5,8 +5,8 @@ import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.PLTFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
@@ -40,8 +40,7 @@ public class WADFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
-        ThemeBook themeBook = getFileEntry().getThemeBook();
-        this.theme = themeBook != null ? themeBook.getTheme() : MAPTheme.getTheme(getFileEntry().getDisplayName());
+        this.theme = null;
 
         MWIFile mwiTable = getConfig().getMWI();
 
@@ -59,6 +58,9 @@ public class WADFile extends GameFile {
 
             // Decompress if compressed.
             byte[] data = reader.readBytes(size);
+            if (reader.getIndex() % 4 != 0)
+                reader.skipBytes(4 - (reader.getIndex() % 4)); // Alignment.
+
             boolean compressed = PP20Unpacker.isCompressed(data);
             if (compressed)
                 data = PP20Unpacker.unpackData(data);
@@ -67,10 +69,13 @@ public class WADFile extends GameFile {
             if (Constants.ENABLE_WAD_FORMATS) {
                 if (fileType == VLOArchive.WAD_TYPE || fileType == 1) {
                     file = new VLOArchive();
-                } else if (fileType == MOFHolder.MOF_ID || fileType == MOFHolder.MAP_MOF_ID) {
+                } else if (fileType == MOFHolder.MOF_ID) {
                     file = new MOFHolder(theme, lastCompleteMOF);
+                } else if (fileType == PLTFile.FILE_TYPE) {
+                    file = new PLTFile();
                 } else {
-                    throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
+                    System.out.println("Unexpected WAD file-type: " + fileType + ".");
+                    file = new DummyFile(data.length);
                 }
             }
 

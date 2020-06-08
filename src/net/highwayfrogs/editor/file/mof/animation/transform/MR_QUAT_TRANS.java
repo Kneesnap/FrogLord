@@ -7,23 +7,25 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
- * Represents 'MR_QUATB_TRANS'.
- * Created by Kneesnap on 1/5/2019.
+ * Represents 'MR_QUAT_TRANS'.
+ * Not Used in: Frogger
+ * Used in: Beast Wars
+ * Created by Kneesnap on 5/23/2020.
  */
 @Getter
-public class MR_QUATB_TRANS extends TransformObject {
-    private byte c; // 'real'.
-    private byte x; // Angle.
-    private byte y;
-    private byte z;
+public class MR_QUAT_TRANS extends TransformObject {
+    private short c; // 'real'. (1.3.12 format)
+    private short x; // Angle.
+    private short y;
+    private short z;
     private short[] transform = new short[3];
 
     @Override
     public void load(DataReader reader) {
-        this.c = reader.readByte();
-        this.x = reader.readByte();
-        this.y = reader.readByte();
-        this.z = reader.readByte();
+        this.c = reader.readShort();
+        this.x = reader.readShort();
+        this.y = reader.readShort();
+        this.z = reader.readShort();
 
         for (int i = 0; i < this.transform.length; i++)
             this.transform[i] = reader.readShort();
@@ -31,10 +33,10 @@ public class MR_QUATB_TRANS extends TransformObject {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeByte(this.c);
-        writer.writeByte(this.x);
-        writer.writeByte(this.y);
-        writer.writeByte(this.z);
+        writer.writeShort(this.c);
+        writer.writeShort(this.x);
+        writer.writeShort(this.y);
+        writer.writeShort(this.z);
 
         for (short aTransfer : this.transform)
             writer.writeShort(aTransfer);
@@ -47,16 +49,16 @@ public class MR_QUATB_TRANS extends TransformObject {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof MR_QUATB_TRANS))
+        if (!(obj instanceof MR_QUAT_TRANS))
             return false;
 
-        MR_QUATB_TRANS other = (MR_QUATB_TRANS) obj;
+        MR_QUAT_TRANS other = (MR_QUAT_TRANS) obj;
         return this.c == other.c && this.x == other.x && this.y == other.y && this.z == other.z && this.transform[0] == other.transform[0]
                 && this.transform[1] == other.transform[1] && this.transform[2] == other.transform[2];
     }
 
     @Override
-    public void fromMatrix(PSXMatrix matrix) {
+    public void fromMatrix(PSXMatrix matrix) { //TODO: This is copied from MR_QUATB_TRANS. It needs to be updated for MR_QUAT_TRANS.
         this.transform[0] = (short) matrix.getTransform()[0];
         this.transform[1] = (short) matrix.getTransform()[1];
         this.transform[2] = (short) matrix.getTransform()[2];
@@ -104,22 +106,6 @@ public class MR_QUATB_TRANS extends TransformObject {
     }
 
     @Override
-    public PSXMatrix createInterpolatedResult() { //TODO: Move,. https://github.com/Kneesnap/Frogger/blob/a81c28bceea2f8696f9e399ee260180ae00dc7a8/source/API.SRC/MR_ANIM.C is how this is calculated. and https://github.com/Kneesnap/Frogger/blob/master/source/API.SRC/MR_QUAT.C
-        // index_ptr	= cels_ptr->ac_cel_numbers + (params->ac_cel * 3);
-        //
-        //				// index_ptr points to a group of 3 MR_USHORTs (prev actual cel index, next actual cel index, interpolation param)
-        //				quatb_prev 	= (MR_QUATB_TRANS*)(((MR_UBYTE*)env->ae_header->ah_common_data->ac_transforms) + ((cels_ptr->ac_transforms.ac_indices[(index_ptr[0] * parts) + part]) * tsize));
-        //				quatb_next 	= (MR_QUATB_TRANS*)(((MR_UBYTE*)env->ae_header->ah_common_data->ac_transforms) + ((cels_ptr->ac_transforms.ac_indices[(index_ptr[1] * parts) + part]) * tsize));
-        //				t			= index_ptr[2];
-        //				MR_INTERPOLATE_QUATB_TO_MAT(&quatb_prev->q, &quatb_next->q, (MR_MAT*)&MRTemp_matrix, t);
-
-        // ((MR_MAT34*)&MRTemp_matrix)->t[0]	= ((quatb_prev->t[0] * (0x1000 - t)) + (quatb_next->t[0] * t)) >> 12;
-        //				((MR_MAT34*)&MRTemp_matrix)->t[1]	= ((quatb_prev->t[1] * (0x1000 - t)) + (quatb_next->t[1] * t)) >> 12;
-        //				((MR_MAT34*)&MRTemp_matrix)->t[2]	= ((quatb_prev->t[2] * (0x1000 - t)) + (quatb_next->t[2] * t)) >> 12;
-        return createMatrix();
-    }
-
-    @Override
     public PSXMatrix createMatrix() {
         PSXMatrix matrix = new PSXMatrix();
         matrix.getTransform()[0] = getTransform()[0];
@@ -129,7 +115,7 @@ public class MR_QUATB_TRANS extends TransformObject {
         return matrix;
     }
 
-    private static void applyToMatrix(PSXMatrix matrix, byte c, byte x, byte y, byte z) {
+    private static void applyToMatrix(PSXMatrix matrix, short c, short x, short y, short z) {
         int xs = x << 1;
         int ys = y << 1;
         int zs = z << 1;
@@ -144,19 +130,19 @@ public class MR_QUATB_TRANS extends TransformObject {
         int zz = z * zs;
 
         // Oddly, every set is bit-shifted right 0 places. Not sure what that does, maybe it does something special in C.
-        matrix.getMatrix()[0][0] = (short) (0x1000 - (yy + zz));
-        matrix.getMatrix()[0][1] = (short) (xy + wz);
-        matrix.getMatrix()[0][2] = (short) (xz - wy);
-        matrix.getMatrix()[1][0] = (short) (xy - wz);
-        matrix.getMatrix()[1][1] = (short) (0x1000 - (xx + zz));
-        matrix.getMatrix()[1][2] = (short) (yz + wx);
-        matrix.getMatrix()[2][0] = (short) (xz + wy);
-        matrix.getMatrix()[2][1] = (short) (yz - wx);
-        matrix.getMatrix()[2][2] = (short) (0x1000 - (xx + yy));
+        matrix.getMatrix()[0][0] = (short) (0x1000 - ((yy + zz) >> 12));
+        matrix.getMatrix()[0][1] = (short) ((xy + wz) >> 12);
+        matrix.getMatrix()[0][2] = (short) ((xz - wy) >> 12);
+        matrix.getMatrix()[1][0] = (short) ((xy - wz) >> 12);
+        matrix.getMatrix()[1][1] = (short) (0x1000 - ((xx + zz) >> 12));
+        matrix.getMatrix()[1][2] = (short) ((yz + wx) >> 12);
+        matrix.getMatrix()[2][0] = (short) ((xz + wy) >> 12);
+        matrix.getMatrix()[2][1] = (short) ((yz - wx) >> 12);
+        matrix.getMatrix()[2][2] = (short) (0x1000 - ((xx + yy) >> 12));
     }
 
     @Override
     public String toString() {
-        return "MR_QUATB_TRANS<c=" + this.c + ",x=" + this.x + ",y=" + this.y + ",z=" + this.z + ",tx=" + this.transform[0] + ",ty=" + this.transform[1] + ",tz=" + this.transform[2] + ">";
+        return "MR_QUAT_TRANS<c=" + this.c + ",x=" + this.x + ",y=" + this.y + ",z=" + this.z + ",tx=" + this.transform[0] + ",ty=" + this.transform[1] + ",tz=" + this.transform[2] + ">";
     }
 }

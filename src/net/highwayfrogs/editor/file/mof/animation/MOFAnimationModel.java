@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
+import lombok.NonNull;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFBBox;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -10,18 +10,21 @@ import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents a MOF animation model. Struct "MR_ANIM_MODEL"
+ * Eventually, support PERCEL_BBOXES_INCLUDED.
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
 public class MOFAnimationModel extends GameObject {
+    @NonNull private ModelBoundingBoxMode mode = ModelBoundingBoxMode.GLOBAL_BBOXES_INCLUDED;
     // Bounding Box Set is unused.
     // Constraint is unused.
 
     private transient MOFAnimationModelSet parent;
     private transient int tempCelsetPointerAddress;
 
-    public static final int FLAG_GLOBAL_BBOXES_INCLUDED = Constants.BIT_FLAG_0;
-    public static final int FLAG_PERCEL_BBOXES_INCLUDED = Constants.BIT_FLAG_1;
+    public enum ModelBoundingBoxMode {
+        NONE, GLOBAL_BBOXES_INCLUDED, PERCEL_BBOXES_INCLUDED
+    }
 
     private static final int DEFAULT_ANIMATION_TYPE = 1;
     private static final int STATIC_MODEL_ID = 0; // It's always 0.
@@ -35,10 +38,9 @@ public class MOFAnimationModel extends GameObject {
         int animationType = reader.readUnsignedShortAsInt();
         Utils.verify(animationType == DEFAULT_ANIMATION_TYPE, "Unknown animation type: %d.", animationType);
 
-        int flags = reader.readUnsignedShortAsInt();
-        Utils.verify(flags == FLAG_GLOBAL_BBOXES_INCLUDED, "Global BBoxes is the only mode supported! (%s)", Utils.toHexString(flags));
+        this.mode = ModelBoundingBoxMode.values()[reader.readUnsignedShortAsInt()];
 
-        int partCount = reader.readUnsignedShortAsInt();
+        int partCount = reader.readUnsignedShortAsInt(); // Does not always match real one.
         int staticModelId = reader.readUnsignedShortAsInt();
         Utils.verify(staticModelId == STATIC_MODEL_ID, "Invalid Animation Model ID! (%d)", staticModelId);
 
@@ -51,27 +53,31 @@ public class MOFAnimationModel extends GameObject {
         Utils.verify(constraintPointer == 0, "Constraint Pointer was not null.");
         Utils.verify(celsetPointer == getCelSetPointer(), "Invalid CelSet Pointer! (%d, %d)", celsetPointer, getCelSetPointer());
 
-        reader.setIndex(bboxPointer);
-        new MOFBBox().load(reader); // Unused.
+        if (this.mode == ModelBoundingBoxMode.GLOBAL_BBOXES_INCLUDED) {
+            reader.setIndex(bboxPointer);
+            new MOFBBox().load(reader); // Unused.
+        }
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedShort(DEFAULT_ANIMATION_TYPE);
-        writer.writeUnsignedShort(FLAG_GLOBAL_BBOXES_INCLUDED);
+        writer.writeUnsignedShort(this.mode.ordinal());
         writer.writeUnsignedShort(getParent().getParent().getStaticMOF().getParts().size());
         writer.writeUnsignedShort(STATIC_MODEL_ID);
 
         this.tempCelsetPointerAddress = writer.getIndex();
         writer.writeInt(0); // Right after BBOX
 
-        int calculatedBboxPointer = writer.writeNullPointer();
+        int bboxPointer = writer.writeNullPointer();
         writer.writeNullPointer();
         writer.writeNullPointer();
 
         // Write BBOX
-        writer.writeAddressTo(calculatedBboxPointer);
-        getParent().getParent().makeBoundingBox().save(writer);
+        if (this.mode == ModelBoundingBoxMode.GLOBAL_BBOXES_INCLUDED) {
+            writer.writeAddressTo(bboxPointer);
+            getParent().getParent().makeBoundingBox().save(writer);
+        }
     }
 
     /**

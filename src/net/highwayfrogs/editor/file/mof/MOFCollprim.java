@@ -47,7 +47,7 @@ public class MOFCollprim extends GameObject {
     @Override
     public void load(DataReader reader) {
         CollprimType type = CollprimType.values()[reader.readUnsignedShortAsInt()];
-        if (type != CollprimType.CUBOID)
+        if (type != CollprimType.CUBOID && type != CollprimType.SPHERE)
             throw new RuntimeException("MOFCollprim was type " + type + ", which is not supported.");
 
         this.flags = reader.readUnsignedShortAsInt();
@@ -67,7 +67,8 @@ public class MOFCollprim extends GameObject {
             this.matrix.load(reader);
         }
 
-        Utils.verify((this.flags & FLAG_LAST_IN_LIST) == FLAG_LAST_IN_LIST, "There were multiple collprims specified, but FrogLord only supports one!");
+        //TODO: Support multiple.
+        //Utils.verify((this.flags & FLAG_LAST_IN_LIST) == FLAG_LAST_IN_LIST, "There were multiple collprims specified, but FrogLord only supports one!");
     }
 
     @Override

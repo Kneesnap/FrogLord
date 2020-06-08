@@ -79,7 +79,6 @@ public class PSXVHFile extends GameFile {
         for (int i = 0; i < this.loadedSampleAddresses.length; i++)
             this.loadedSampleAddresses[i] = (reader.readUnsignedShortAsInt() << 3);
 
-        getVB().load(this);
         this.loadedSampleAddresses = null;
     }
 

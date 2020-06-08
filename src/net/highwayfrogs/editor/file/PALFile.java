@@ -100,16 +100,17 @@ public class PALFile extends GameFile {
      */
     public Image makeImage(int imageSize) {
         double sqrt = Math.sqrt(this.colors.size());
-        Utils.verify(sqrt == (int) sqrt, "Color count is not a perfect square! [%d]", this.colors.size());
         int colorsPerLine = (int) sqrt;
-        int colorSize = (int) sqrt;
+        int colorSize = (int) (imageSize / sqrt);
 
         BufferedImage image = new BufferedImage(imageSize, imageSize, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
 
         for (int x = 0; x < colorsPerLine; x++) {
             for (int y = 0; y < colorsPerLine; y++) {
-                graphics.setColor(Utils.toAWTColor(getColors().get((y * colorsPerLine) + x)));
+                int index = (y * colorsPerLine) + x;
+                if (getColors().size() > index)
+                    graphics.setColor(Utils.toAWTColor(getColors().get(index)));
                 graphics.fillRect(x * colorSize, y * colorSize, colorSize, colorSize);
             }
         }
