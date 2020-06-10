@@ -29,7 +29,6 @@ public class ArrayReceiver implements DataReceiver {
         while (this.index > bytes.size()) // Add data up to the index.
             bytes.add(Constants.NULL_BYTE);
 
-
         if (bytes.size() > this.index) { // Writing over existing bytes.
             bytes.set(this.index, value);
         } else { // Index matches exactly. Append at end.
