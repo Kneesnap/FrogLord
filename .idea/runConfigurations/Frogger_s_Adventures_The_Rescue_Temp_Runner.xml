@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Frogger's Adventures The Rescue Temp Runner" type="Application" factoryName="Application" singleton="false">
+  <configuration default="false" name="Frogger's Adventures The Rescue Temp Runner" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="net.highwayfrogs.editor.games.rescue.FroggerRescueMain" />
     <module name="FrogLord" />
     <method v="2">

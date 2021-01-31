@@ -11,6 +11,11 @@ import net.highwayfrogs.editor.utils.Utils;
 public class PRS1Unpacker {
     private static final String MAGIC = "PRS1";
 
+    /**
+     * Decompresses data compressed with PRS1 compression.
+     * @param compressedData The compressed data.
+     * @return uncompressedData
+     */
     public static byte[] decompressPRS1(byte[] compressedData) {
         if (compressedData == null)
             throw new RuntimeException("Cannot decompress null PRS1 data.");
@@ -27,6 +32,7 @@ public class PRS1Unpacker {
 
     /**
      * Decompresses raw PRS1 data.
+     * Reverse engineered from "Frogger's Adventures: The Rescue".
      * @param reader         The reader to read data from.
      * @param compressedSize The size of the compressed data.
      * @return decompressedData

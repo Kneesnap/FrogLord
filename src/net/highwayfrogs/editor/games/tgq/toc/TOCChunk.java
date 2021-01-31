@@ -12,14 +12,14 @@ import java.util.List;
  * Created by Kneesnap on 4/1/2020.
  */
 @Getter
-public class TOCChunk extends TGQFileChunk {
+public class TOCChunk extends kcCResource {
     private String name;
     private List<Integer> hashes = new ArrayList<>();
 
     private static final int NAME_SIZE = 32;
 
     public TOCChunk(TGQChunkedFile chunkedFile) {
-        super(chunkedFile, TGQChunkType.TOC);
+        super(chunkedFile, KCResourceID.TOC);
     }
 
     @Override

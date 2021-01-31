@@ -23,7 +23,7 @@ import java.util.function.Function;
  */
 public class SplineSegment extends PathSegment {
     private int[][] splineMatrix = new int[4][3];
-    private int[] smoothT = new int[4]; // Smooth T is the distance values to reach each point.
+    private int[] smoothT = new int[4]; // Smooth T is the distance values to reach each point. (Translation)
     private int[][] smoothC = new int[4][3]; // Smoothing coefficient data.
 
     private static final int SPLINE_FIX_INTERVAL = 0x200;

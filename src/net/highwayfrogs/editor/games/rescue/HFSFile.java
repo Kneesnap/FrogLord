@@ -54,6 +54,7 @@ public class HFSFile extends GameObject {
         int cdSector = 1;
         for (DummyFile file : this.fileData) {
             writer.writeInt(cdSector | 0x01000000);
+            int dataSizePtr = writer.writeNullPointer();
 
             // Save file data.
             writer.jumpTemp(cdSector * Constants.CD_SECTOR_SIZE);
@@ -61,9 +62,11 @@ public class HFSFile extends GameObject {
             file.save(writer);
             int writtenBytes = (writer.getIndex() - startIndex);
             cdSector += (writtenBytes / Constants.CD_SECTOR_SIZE) + ((writtenBytes % Constants.CD_SECTOR_SIZE) != 0 ? 1 : 0);
+            writer.writeTo(cdSector * Constants.CD_SECTOR_SIZE);
             writer.jumpReturn();
+            writer.writeAddressAt(dataSizePtr, writtenBytes);
         }
 
-        writer.writeAddressTo(fullFileSizePtr);
+        writer.writeAddressAt(fullFileSizePtr, cdSector * Constants.CD_SECTOR_SIZE);
     }
 }
