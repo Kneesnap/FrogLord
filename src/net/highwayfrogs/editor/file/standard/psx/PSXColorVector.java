@@ -156,7 +156,7 @@ public class PSXColorVector extends GameObject {
      * Adds a color vector to the editor.
      * This is not for picking a color, rather it's for the PSX gouraud shading settings.
      */
-    public void setupEditor(GUIEditorGrid grid, String label, BufferedImage previewImage, Runnable onUpdate) {
+    public void setupEditor(GUIEditorGrid grid, String label, BufferedImage previewImage, Runnable onUpdate, boolean fullRange) {
         HBox box = new HBox();
 
         Runnable[] imageUpdate = new Runnable[1];
@@ -166,34 +166,47 @@ public class PSXColorVector extends GameObject {
         VBox greenBox = new VBox();
         VBox blueBox = new VBox();
 
-        Slider redSlider = new Slider(0D, 127D, getRed());
+        Slider redSlider = new Slider(0D, fullRange ? 255D : 127D, Utils.byteToUnsignedShort(getRed()));
         redSlider.setBlockIncrement(1);
         redSlider.setMinorTickCount(1);
         redSlider.setSnapToTicks(true);
         redSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
-            setRed((byte) (int) (double) newValue);
+            if (fullRange) {
+                setRed(Utils.unsignedShortToByte((short) (double) newValue));
+            } else {
+                setRed((byte) (int) (double) newValue);
+            }
             imageUpdate[0].run();
             if (onUpdate != null)
                 onUpdate.run();
         }));
 
-        Slider greenSlider = new Slider(0D, 127D, getGreen());
+        Slider greenSlider = new Slider(0D, fullRange ? 255D : 127D, Utils.byteToUnsignedShort(getGreen()));
         greenSlider.setBlockIncrement(1);
         greenSlider.setMinorTickCount(1);
         greenSlider.setSnapToTicks(true);
         greenSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
-            setGreen((byte) (int) (double) newValue);
+            if (fullRange) {
+                setGreen(Utils.unsignedShortToByte((short) (double) newValue));
+            } else {
+                setGreen((byte) (int) (double) newValue);
+            }
             imageUpdate[0].run();
             if (onUpdate != null)
                 onUpdate.run();
         }));
 
-        Slider blueSlider = new Slider(0D, 127D, getBlue());
+        Slider blueSlider = new Slider(0D, fullRange ? 255D : 127D, Utils.byteToUnsignedShort(getBlue()));
         blueSlider.setBlockIncrement(1);
         blueSlider.setMinorTickCount(1);
         blueSlider.setSnapToTicks(true);
         blueSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
-            setBlue((byte) (int) (double) newValue);
+            if (fullRange) {
+                setBlue(Utils.unsignedShortToByte((short) (double) newValue));
+            } else {
+                setBlue((byte) (int) (double) newValue);
+            }
+
             imageUpdate[0].run();
             if (onUpdate != null)
                 onUpdate.run();
@@ -228,16 +241,16 @@ public class PSXColorVector extends GameObject {
                     }
 
                     fromRGB(colorRGB);
-                    redSlider.setValue(getRed());
-                    greenSlider.setValue(getGreen());
-                    blueSlider.setValue(getBlue());
+                    redSlider.setValue(Utils.byteToUnsignedShort(getRed()));
+                    greenSlider.setValue(Utils.byteToUnsignedShort(getGreen()));
+                    blueSlider.setValue(Utils.byteToUnsignedShort(getBlue()));
                     imageUpdate[0].run();
                     if (onUpdate != null)
                         onUpdate.run();
                 }));
 
         imageUpdate[0] = () ->
-                preview.setImage(Utils.toFXImage(MAPPolyTexture.makeFlatShadedTexture(applyImage, Utils.fromRGB(toRGB())), false));
+                preview.setImage(Utils.toFXImage(MAPPolyTexture.makeFlatShadedTexture(applyImage, Utils.fromRGB(toRGB()), fullRange), false));
         imageUpdate[0].run();
 
         previewBox.getChildren().addAll(labelFont(label, useFont), preview);
