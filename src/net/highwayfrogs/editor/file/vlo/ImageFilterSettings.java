@@ -18,6 +18,7 @@ public class ImageFilterSettings {
     private boolean allowTransparency;
     private boolean allowFlip;
     private boolean allowScrunch;
+    private boolean scaleToMaxSize;
     private Map<BufferedImage, BufferedImage> renderCache = new HashMap<>();
 
     public ImageFilterSettings(ImageState state) {
@@ -65,6 +66,19 @@ public class ImageFilterSettings {
     }
 
     /**
+     * Set if we will use nearest neighor scaling to make it into a max size image.
+     * If we want to add other kinds of scaling, maybe consider replacing this with a system.
+     * @param newState Whether or not it should be scaled.
+     * @return this
+     */
+    public ImageFilterSettings setScaleToMaxSize(boolean newState) {
+        if (newState != isScaleToMaxSize())
+            invalidateRenderCache();
+        this.scaleToMaxSize = newState;
+        return this;
+    }
+
+    /**
      * Set if we will allow flipping the image or not.
      * @param newState Should we allow image flipping?
      * @return this
@@ -107,7 +121,7 @@ public class ImageFilterSettings {
             return result;
 
         BufferedImage image = firstImage;
-        if (isExport() && isTrimEdges())
+        if (isTrimEdges() && isExport())
             image = ImageWorkHorse.trimEdges(gameImage, image);
 
         if (isAllowFlip() && !gameImage.testFlag(GameImage.FLAG_HIT_X))
@@ -115,6 +129,9 @@ public class ImageFilterSettings {
 
         if (isAllowScrunch() && gameImage.getParent().isPsxMode())
             image = ImageWorkHorse.scaleWidth(image, isImport() ? (double) gameImage.getWidthMultiplier() : (1D / (double) gameImage.getWidthMultiplier()));
+
+        if (isScaleToMaxSize() && isExport())
+            image = ImageWorkHorse.scaleForDisplay(image, GameImage.PSX_FULL_PAGE_WIDTH, true);
 
         boolean transparencyGoal = isAllowTransparency() && gameImage.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT);
         if (transparencyGoal)

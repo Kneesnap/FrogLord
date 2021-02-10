@@ -10,12 +10,12 @@ import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
-public class TGQDummyFileChunk extends TGQFileChunk {
+public class TGQDummyFileChunk extends kcCResource {
     private byte[] data;
     private String magic;
 
     public TGQDummyFileChunk(TGQChunkedFile parentFile, String magic) {
-        super(parentFile, TGQChunkType.getByMagic(magic));
+        super(parentFile, KCResourceID.getByMagic(magic));
         this.magic = magic;
     }
 
@@ -30,7 +30,7 @@ public class TGQDummyFileChunk extends TGQFileChunk {
     }
 
     @Override
-    public String getSignature() {
+    public String getChunkMagic() {
         return this.magic;
     }
 }

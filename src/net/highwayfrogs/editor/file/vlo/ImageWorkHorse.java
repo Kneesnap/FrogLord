@@ -52,6 +52,55 @@ public class ImageWorkHorse {
     }
 
     /**
+     * Resizes an image to a new width / height.
+     * @param image           The image to scale.
+     * @param newWidth        The new image width.
+     * @param newHeight       The new image height.
+     * @param nearestNeighbor Whether or not nearest neighbor interpolation should be used.
+     * @return scaledImage
+     */
+    public static BufferedImage resizeImage(BufferedImage image, int newWidth, int newHeight, boolean nearestNeighbor) {
+        if (newWidth == image.getWidth() && newHeight == image.getHeight())
+            return image; // There would be no change.
+
+        BufferedImage scaleImage = new BufferedImage(newWidth, newHeight, image.getType());
+        Graphics2D graphics = scaleImage.createGraphics();
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, nearestNeighbor ? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR : RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        graphics.drawImage(image, 0, 0, newWidth, newHeight, null);
+        graphics.dispose();
+        return scaleImage;
+    }
+
+    /**
+     * Resizes an image to a new width / height.
+     * @param image           The image to scale.
+     * @param sideLength      The image size to rescale to.
+     * @param nearestNeighbor Whether or not nearest neighbor interpolation should be used.
+     * @return scaledImage
+     */
+    public static BufferedImage scaleForDisplay(BufferedImage image, int sideLength, boolean nearestNeighbor) {
+        if (sideLength == image.getWidth() || sideLength == image.getHeight())
+            return image; // There would be no change.
+
+        double scaleFactor;
+        if (image.getWidth() > image.getHeight()) {
+            scaleFactor = (double) sideLength / image.getWidth();
+        } else {
+            scaleFactor = (double) sideLength / image.getHeight();
+        }
+
+        int newWidth = (int) Math.round(scaleFactor * image.getWidth());
+        int newHeight = (int) Math.round(scaleFactor * image.getHeight());
+
+        BufferedImage scaleImage = new BufferedImage(newWidth, newHeight, image.getType());
+        Graphics2D graphics = scaleImage.createGraphics();
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, nearestNeighbor ? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR : RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        graphics.drawImage(image, 0, 0, newWidth, newHeight, null);
+        graphics.dispose();
+        return scaleImage;
+    }
+
+    /**
      * Flip an image vertically.
      * @param image The image to flip.
      * @return flippedImage

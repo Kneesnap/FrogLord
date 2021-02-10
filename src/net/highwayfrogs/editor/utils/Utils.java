@@ -463,13 +463,15 @@ public class Utils {
     /**
      * Reverse a byte array.
      * @param array The array to reverse
+     * @return array The input array.
      */
-    public static void reverseByteArray(byte[] array) {
+    public static byte[] reverseByteArray(byte[] array) {
         for (int i = 0; i < array.length / 2; i++) { // Reverse the byte order.
             byte temp = array[i];
             array[i] = array[array.length - 1 - i];
             array[array.length - 1 - i] = temp;
         }
+        return array;
     }
 
     /**

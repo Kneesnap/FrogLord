@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 import net.highwayfrogs.editor.games.tgq.TGQFile;
 import net.highwayfrogs.editor.games.tgq.TGQImageFile;
-import net.highwayfrogs.editor.games.tgq.toc.VTXChunk.TGQMaterial;
+import net.highwayfrogs.editor.games.tgq.toc.TGQChunk3DModel.TGQMaterial;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.system.Tuple3;
 import net.highwayfrogs.editor.utils.Utils;
@@ -24,20 +24,24 @@ import java.util.List;
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
-public class OTTChunk extends TGQFileChunk {
-    private String name;
+public class OTTChunk extends kcCResource {
     private List<OTTMesh> meshes = new ArrayList<>();
     private List<TGQMaterial> materials = new ArrayList<>();
+    private byte[] bytes;
 
     public static final int NAME_SIZE = 32;
 
     public OTTChunk(TGQChunkedFile parentFile) {
-        super(parentFile, TGQChunkType.OTT);
+        super(parentFile, KCResourceID.OCTTREESCENEMGR);
     }
 
     @Override
     public void load(DataReader reader) {
-        this.name = reader.readTerminatedStringOfLength(NAME_SIZE);
+        reader.jumpTemp(reader.getIndex());
+        this.bytes = reader.readBytes(reader.getRemaining());
+        reader.jumpReturn();
+
+        super.load(reader);
         int unknownPointer = reader.readInt();
         int unknownCount = reader.readInt();
         int unknownPointer2 = reader.readInt();
@@ -52,9 +56,9 @@ public class OTTChunk extends TGQFileChunk {
 
         //TODO: Read Object Group?
 
-        int matCount = (int) getParentFile().getChunks().stream().filter(chunk -> chunk instanceof TEXChunk).count();
+        int matCount = (int) getParentFile().getChunks().stream().filter(chunk -> chunk instanceof TGQChunkTextureReference).count();
         for (int i = 0; i < meshCount; i++) {
-            reader.jumpTemp(reader.getIndex()); //TODO: sh2_map_tri_header
+            reader.jumpTemp(reader.getIndex());
             reader.skipInt();
             int materialId = reader.readInt();
             reader.jumpReturn();
@@ -62,23 +66,37 @@ public class OTTChunk extends TGQFileChunk {
 
             reader.skipBytes(0x44); // TODO: Read.
             int structSize = reader.readInt();
-            if (structSize != 0x24)
-                break; // Break! (For some reason) PS2 Only. TODO: Check if it's 0x20. If it is, then likely we should handle it normally just without reading the color value.
+            if (structSize == 0x24) {
+                int unknownAlways4 = reader.readInt(); // Unknown, seems to always be four.
+                int count = reader.readInt();
+                int unknownValue = reader.readInt(); // Unknown. It seems to be a relatively small value ranging from 0 - 30,000.
+                reader.skipBytes(3 * Constants.INTEGER_SIZE); // These seem to always be zero.
 
-            int unknownAlways4 = reader.readInt(); // Unknown, seems to always be four.
-            int count = reader.readInt();
-            int unknownValue = reader.readInt(); // Unknown. It seems to be a relatively small value ranging from 0 - 30,000.
-            reader.skipBytes(3 * Constants.INTEGER_SIZE); // These seem to always be zero.
+                OTTMesh newMesh = new OTTMesh(count, materialId);
+                for (int j = 0; j < count * 3; j++) {
+                    newMesh.getPositions().add(new Tuple3<>(reader.readFloat(), reader.readFloat(), reader.readFloat()));
+                    newMesh.getNormals().add(new Tuple3<>(reader.readFloat(), reader.readFloat(), reader.readFloat()));
+                    int color = reader.readInt(); // Either flags or used for static lighting. (Maybe flags are actually per mesh.)
+                    newMesh.getTexCoords().add(new Tuple2<>(reader.readFloat(), reader.readFloat()));
+                }
 
-            OTTMesh newMesh = new OTTMesh(count, materialId);
-            for (int j = 0; j < count * 3; j++) {
-                newMesh.getPositions().add(new Tuple3<>(reader.readFloat(), reader.readFloat(), reader.readFloat()));
-                newMesh.getNormals().add(new Tuple3<>(reader.readFloat(), reader.readFloat(), reader.readFloat()));
-                int color = reader.readInt(); // Either flags or used for static lighting. (Maybe flags are actually per mesh.)
-                newMesh.getTexCoords().add(new Tuple2<>(reader.readFloat(), reader.readFloat()));
+                getMeshes().add(newMesh);
+            } else if (structSize == 0x20) {
+                int unknownAlways4 = reader.readInt(); // Unknown, seems to always be four.
+                int count = reader.readInt();
+                int unknownValue = reader.readInt(); // Unknown. It seems to be a relatively small value ranging from 0 - 30,000.
+                reader.skipBytes(3 * Constants.INTEGER_SIZE); // These seem to always be zero.
+
+                OTTMesh newMesh = new OTTMesh(count, materialId);
+                for (int j = 0; j < count * 3; j++) {
+                    newMesh.getPositions().add(new Tuple3<>(reader.readFloat(), reader.readFloat(), reader.readFloat()));
+                    newMesh.getNormals().add(new Tuple3<>(reader.readFloat(), reader.readFloat(), reader.readFloat()));
+                    //int color = reader.readInt(); // Either flags or used for static lighting. (Maybe flags are actually per mesh.)
+                    newMesh.getTexCoords().add(new Tuple2<>(reader.readFloat(), reader.readFloat()));
+                }
+
+                getMeshes().add(newMesh);
             }
-
-            getMeshes().add(newMesh);
         }
 
         for (int i = 0; i < materialCount; i++) {
@@ -100,10 +118,10 @@ public class OTTChunk extends TGQFileChunk {
         writer.write("mtllib " + fileName + ".mtl" + Constants.NEWLINE);
         writer.write(Constants.NEWLINE);
 
-        List<TEXChunk> chunks = new ArrayList<>();
-        for (TGQFileChunk chunk : getParentFile().getChunks())
-            if (chunk instanceof TEXChunk)
-                chunks.add((TEXChunk) chunk);
+        List<TGQChunkTextureReference> chunks = new ArrayList<>();
+        for (kcCResource chunk : getParentFile().getChunks())
+            if (chunk instanceof TGQChunkTextureReference)
+                chunks.add((TGQChunkTextureReference) chunk);
 
         int vId = 1;
         for (int i = 0; i < getMeshes().size(); i++) {
@@ -155,8 +173,8 @@ public class OTTChunk extends TGQFileChunk {
             if (!imgFolder.exists())
                 imgFolder.mkdirs();
 
-            for (TEXChunk texChunk : chunks) {
-                TGQFile file = getParentFile().getMainArchive().getFileByName(texChunk.getPath());
+            for (TGQChunkTextureReference TGQChunkTextureReference : chunks) {
+                TGQFile file = getParentFile().getMainArchive().getFileByName(TGQChunkTextureReference.getPath());
                 if (file instanceof TGQImageFile)
                     ((TGQImageFile) file).saveImageToFile(new File(imgFolder, file.getExportName().replace(".img", "") + ".png"));
             }
@@ -166,6 +184,7 @@ public class OTTChunk extends TGQFileChunk {
     @Override
     public void save(DataWriter writer) {
         //TODO
+        writer.writeBytes(this.bytes);
     }
 
     @Getter

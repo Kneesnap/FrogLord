@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.file.packers;
 
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.writer.BitReader;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * PP20 Unpacker: Unpacks PowerPacker compressed data.
  * Source:
- * Author: Josef Jelinek
+ * Original Author: Josef Jelinek
  * URL: https://github.com/josef-jelinek/tiny-mod-player/blob/master/lib.gamod/src/gamod/unpack/PowerPacker.java
  * Copied on August 11, 2018. There is no license attached to the repository, however the author has explicitly granted permission to use this code.
  */

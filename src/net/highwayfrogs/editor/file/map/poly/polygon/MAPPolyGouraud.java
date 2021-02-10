@@ -57,7 +57,7 @@ public class MAPPolyGouraud extends MAPPolygon {
         editor.addBoldLabel("Colors:");
         String[] nameArray = COLOR_BANK[getColors().length - 1];
         for (int i = 0; i < getColors().length; i++)
-            this.colors[i].setupEditor(editor, nameArray[i], null, null);
+            this.colors[i].setupEditor(editor, nameArray[i], null, null, false);
     }
 
     @Override

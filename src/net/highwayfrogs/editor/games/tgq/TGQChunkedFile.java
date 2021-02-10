@@ -8,8 +8,9 @@ import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.tgq.toc.TGQChunkType;
-import net.highwayfrogs.editor.games.tgq.toc.TGQFileChunk;
+import net.highwayfrogs.editor.games.tgq.toc.KCResourceID;
+import net.highwayfrogs.editor.games.tgq.toc.TGQDummyFileChunk;
+import net.highwayfrogs.editor.games.tgq.toc.kcCResource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -27,7 +28,7 @@ import java.util.Map;
  */
 @Getter
 public class TGQChunkedFile extends TGQFile {
-    private List<TGQFileChunk> chunks = new ArrayList<>();
+    private List<kcCResource> chunks = new ArrayList<>();
 
     public TGQChunkedFile(TGQBinFile mainArchive) {
         super(mainArchive);
@@ -41,11 +42,10 @@ public class TGQChunkedFile extends TGQFile {
             byte[] readBytes = reader.readBytes(Math.min(reader.getRemaining(), length)); //TODO: Handle bad length.
 
             // Read chunk.
-            TGQChunkType readType = TGQChunkType.getByMagic(magic);
-            //if (readType == TGQChunkType.DUMMY) //TODO
-            //    System.out.println("Unsupported chunk: " + magic);
+            KCResourceID readType = KCResourceID.getByMagic(magic);
 
-            TGQFileChunk newChunk = readType.getMaker().apply(this, magic);
+            kcCResource newChunk = readType != null && readType.getMaker() != null ?
+                    readType.getMaker().apply(this) : new TGQDummyFileChunk(this, magic);
             newChunk.load(new DataReader(new ArraySource(readBytes)));
             this.chunks.add(newChunk);
 
@@ -57,8 +57,8 @@ public class TGQChunkedFile extends TGQFile {
     public void save(DataWriter writer) {
         //TODO: Sort chunks by chunk ids.
 
-        for (TGQFileChunk chunk : getChunks()) {
-            writer.writeStringBytes(chunk.getSignature());
+        for (kcCResource chunk : getChunks()) {
+            writer.writeStringBytes(chunk.getChunkMagic());
             int lengthAddress = writer.writeNullPointer();
 
             // Write chunk data.
@@ -91,13 +91,13 @@ public class TGQChunkedFile extends TGQFile {
 
         // Export Chunks.
         Map<String, Integer> countMap = new HashMap<>();
-        for (TGQFileChunk chunk : this.chunks) {
+        for (kcCResource chunk : this.chunks) {
             ArrayReceiver receiver = new ArrayReceiver();
             DataWriter dataWriter = new DataWriter(receiver);
             chunk.save(dataWriter);
             dataWriter.closeReceiver();
 
-            String signature = Utils.stripAlphanumeric(chunk.getSignature());
+            String signature = Utils.stripAlphanumeric(chunk.getChunkMagic());
             int count = countMap.getOrDefault(signature, 0) + 1;
             countMap.put(signature, count);
             Files.write(new File(directory, signature + "-" + Utils.padNumberString(count, 2)).toPath(), receiver.toArray());

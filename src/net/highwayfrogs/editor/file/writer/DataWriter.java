@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.Stack;
 
 /**
@@ -64,8 +65,7 @@ public class DataWriter {
 
         byte[] byteArray = new byte[bytes];
         if (writeByte != Constants.NULL_BYTE)
-            for (int i = 0; i < byteArray.length; i++)
-                byteArray[i] = writeByte;
+            Arrays.fill(byteArray, writeByte);
 
         writeBytes(byteArray);
     }
