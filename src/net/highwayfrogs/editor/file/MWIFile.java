@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public class MWIFile extends GameObject {
-    private List<FileEntry> entries = new ArrayList<>();
+    private final List<FileEntry> entries = new ArrayList<>();
     private int fileSize;
 
     private static final int ENTRY_LENGTH = 32;
@@ -50,7 +50,6 @@ public class MWIFile extends GameObject {
 
             entry.setFlags(reader.readInt());
             entry.setTypeId(reader.readInt());
-            System.out.println(entry.getFilePath());
             entry.setSectorOffset(reader.readInt());
             reader.skipInt(); // Should always be 0. This is used by the frogger.exe to locate where in RAM the file is located.
             reader.skipInt(); // Should always be 0. This is used by frogger.exe to locate where in RAM the file is depacked at.
@@ -138,9 +137,9 @@ public class MWIFile extends GameObject {
          */
         public int getSpoofedTypeId() {
             int id = this.typeId;
-            if (id == 0 && getFilePath().endsWith(".VLO"))
+            if (id == 0 && getDisplayName().endsWith(".VLO"))
                 id = VLOArchive.TYPE_ID;
-            if (id == 0 && (getFilePath().endsWith(".VH") || getFilePath().endsWith(".VB")))
+            if (id == 0 && (getDisplayName().endsWith(".VH") || getDisplayName().endsWith(".VB")))
                 id = VHFile.TYPE_ID;
             return id;
         }

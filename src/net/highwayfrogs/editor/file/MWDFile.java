@@ -39,13 +39,13 @@ import java.util.stream.Collectors;
  */
 @Getter
 public class MWDFile extends GameObject {
-    private MWIFile wadIndexTable;
-    private List<GameFile> files = new ArrayList<>();
-    private Map<GameFile, FileEntry> entryMap = new HashMap<>();
-    private Map<FileEntry, GameFile> entryFileMap = new HashMap<>();
+    private final MWIFile wadIndexTable;
+    private final List<GameFile> files = new ArrayList<>();
+    private final Map<GameFile, FileEntry> entryMap = new HashMap<>();
+    private final Map<FileEntry, GameFile> entryFileMap = new HashMap<>();
     @Setter private BiConsumer<FileEntry, GameFile> saveCallback;
 
-    private transient Map<MAPTheme, VLOArchive> vloThemeCache = new HashMap<>();
+    private final transient Map<MAPTheme, VLOArchive> vloThemeCache = new HashMap<>();
 
     public static String CURRENT_FILE_NAME = null;
     private static final String MARKER = "DAWM";
@@ -161,6 +161,7 @@ public class MWDFile extends GameObject {
                 vb.setHeader(lastVH);
             }
         } else {
+            System.out.println("File Type: " + entry.getSpoofedTypeId());
             file = new DummyFile(fileBytes.length);
         }
 

@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Getter
 public class WADFile extends GameFile {
-    private List<WADEntry> files = new ArrayList<>();
+    private final List<WADEntry> files = new ArrayList<>();
     private MAPTheme theme;
 
     private static final Image ICON = loadIcon("packed");
@@ -67,14 +67,20 @@ public class WADFile extends GameFile {
 
             GameFile file;
             if (Constants.ENABLE_WAD_FORMATS) {
-                if (fileType == VLOArchive.WAD_TYPE || fileType == 1) {
+                if ((fileType == VLOArchive.WAD_TYPE || fileType == 1) && data[0] == (byte) '2') {
                     file = new VLOArchive();
-                } else if (fileType == MOFHolder.MOF_ID) {
+                } else if (fileType == MOFHolder.MOF_ID || fileType == 2) {
                     file = new MOFHolder(theme, lastCompleteMOF);
                 } else if (fileType == PLTFile.FILE_TYPE) {
                     file = new PLTFile();
                 } else {
-                    System.out.println("Unexpected WAD file-type: " + fileType + ".");
+                    if (fileType == 0) {
+                        getConfig().getResourceEntry(resourceId).setFilePath(getConfig().getResourceEntry(resourceId).getDisplayName() + "-UNK_TYPE" + fileType);
+                    } else if (fileType == 4 || fileType == 5 || fileType == 6) {
+                        getConfig().getResourceEntry(resourceId).setFilePath(getConfig().getResourceEntry(resourceId).getDisplayName() + "-MAP_RELATED" + fileType);
+                    } else {
+                        System.out.println("Unexpected WAD file-type: " + fileType + ".");
+                    }
                     file = new DummyFile(data.length);
                 }
             }
@@ -169,11 +175,11 @@ public class WADFile extends GameFile {
     @Getter
     @AllArgsConstructor
     public static class WADEntry {
-        private int resourceId;
-        private int fileType;
-        private boolean compressed;
+        private final int resourceId;
+        private final int fileType;
+        private final boolean compressed;
         private GameFile file;
-        private MWIFile mwiFile;
+        private final MWIFile mwiFile;
 
         /**
          * Get the FileEntry for this WAD Entry.

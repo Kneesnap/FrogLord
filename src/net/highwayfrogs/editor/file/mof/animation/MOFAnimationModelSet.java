@@ -11,9 +11,9 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 8/25/2018.
  */
 public class MOFAnimationModelSet extends GameObject {
-    private MOFAnimationModel model;
-    @Getter private MOFAnimationCelSet celSet;
-    @Getter private transient MOFAnimation parent;
+    private final MOFAnimationModel model;
+    @Getter private final MOFAnimationCelSet celSet;
+    @Getter private final transient MOFAnimation parent;
     // BBOX Set is always empty, so we don't keep it.
 
     public static final int CEL_SET_COUNT = 1;
@@ -41,7 +41,9 @@ public class MOFAnimationModelSet extends GameObject {
         int bboxPointer = reader.readInt();
 
         Utils.verify(bboxCount == 0, "The ModelSet has a non-zero BBOX count. (%d, %d)", bboxCount, bboxPointer);
-        Utils.verify(modelCount == FORCED_MODEL_COUNT, "FrogLord does not currently support MOFs with more than one model! (%d)", modelCount);
+        if (modelCount != FORCED_MODEL_COUNT)
+            getParent().getFileEntry().setFilePath(getParent().getFileEntry().getDisplayName() + "-FORCED_MODELS");
+//        Utils.verify(modelCount == FORCED_MODEL_COUNT, "FrogLord does not currently support MOFs with more than one model! (%d)", modelCount); // TODO: Medievil.
         Utils.verify(celsetCount == CEL_SET_COUNT, "FrogLord does not support MOFs with more than one cel-set! (%d)", celsetCount);
 
         // Read Celset.

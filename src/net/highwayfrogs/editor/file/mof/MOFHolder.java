@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
+import net.highwayfrogs.editor.file.mof.animation.MOFAnimationCels;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
@@ -142,11 +143,15 @@ public class MOFHolder extends GameFile {
         if (!isDummy()) {
             MOFFile staticMof = asStaticFile();
             list.add(new Tuple2<>("Parts", String.valueOf(staticMof.getParts().size())));
+            list.add(new Tuple2<>("Parts", String.valueOf(staticMof.getParts().size())));
             list.add(new Tuple2<>("Texture Animation", String.valueOf(staticMof.hasTextureAnimation())));
             list.add(new Tuple2<>("Hilites", String.valueOf(staticMof.getHiliteCount())));
             list.add(new Tuple2<>("Collprims", String.valueOf(staticMof.getCollprimCount())));
-            if (isAnimatedMOF())
+            if (isAnimatedMOF()) {
+                list.add(new Tuple2<>("Animation Count", String.valueOf(getAnimatedFile().getModelSet().getCelSet().getCels().size())));
+                list.add(new Tuple2<>("Interpolation Enabled", String.valueOf(getAnimatedFile().getModelSet().getCelSet().getCels().stream().filter(MOFAnimationCels::isInterpolationEnabled).count())));
                 list.add(new Tuple2<>("Translation Type", getAnimatedFile().getTransformType().name()));
+            }
         }
 
         return list;

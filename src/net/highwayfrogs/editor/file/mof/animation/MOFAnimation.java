@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents the MR_ANIM_HEADER struct.
@@ -21,9 +20,9 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 @Getter
 public class MOFAnimation extends MOFBase {
-    private MOFAnimationModelSet modelSet;
-    private MOFFile staticMOF;
-    private MOFAnimCommonData commonData;
+    private final MOFAnimationModelSet modelSet;
+    private final MOFFile staticMOF;
+    private final MOFAnimCommonData commonData;
     @Setter private boolean startAtFrameZero = true;
     @Setter private TransformType transformType = TransformType.QUAT_BYTE;
 
@@ -52,8 +51,13 @@ public class MOFAnimation extends MOFBase {
         int commonDataPointer = reader.readInt(); // Right after model set data.
         int staticFilePointer = reader.readInt(); // After common data pointer.
 
-        Utils.verify(modelSetCount == 1, "Multiple model sets are not supported by FrogLord. (%d)", modelSetCount);
-        Utils.verify(staticFileCount == 1, "FrogLord only supports one MOF per animation. (%d)", staticFileCount);
+        //Utils.verify(modelSetCount == 1, "Multiple model sets are not supported by FrogLord. (%d)", modelSetCount); // TODO: Medievil.
+        if (modelSetCount != 1)
+            getFileEntry().setFilePath(getFileEntry().getDisplayName() + "-MODELSETS");
+
+        //Utils.verify(staticFileCount == 1, "FrogLord only supports one MOF per animation. (%d)", staticFileCount); // TODO: Medievil.
+        if (staticFileCount != 1)
+            getFileEntry().setFilePath(getFileEntry().getDisplayName() + "-MULTIPLEMOF");
 
         // Read model sets.
         reader.jumpTemp(modelSetPointer);
