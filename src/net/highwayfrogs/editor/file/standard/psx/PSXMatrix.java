@@ -61,13 +61,54 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
+     * Gets the yaw, pitch, roll angles.
+     * @return array containing yaw, pitch, roll
+     */
+    public double[] getYawPitchRollAngles() {
+        double[] angle = new double[3];
+        double r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
+        angle[1] = -Math.asin(r31);
+
+        if (r31 == 1) {
+            // Gimbal lock protection when pitch is (-90)
+            double r12 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][1]);
+            double r13 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][2]);
+
+            angle[0] = 0.0;                     // Yaw
+            angle[2] = Math.atan2(-r12, -r13);  // Roll
+        }
+        else if (r31 == -1) {
+            // Gimbal lock protection when pitch is (90)
+            double r12 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][1]);
+            double r13 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][2]);
+
+            angle[0] = 0.0;                     // Yaw
+            angle[2] = Math.atan2(r12, r13);    // Roll
+        }
+        else {
+            // General solve / resolution
+            double r21 = Utils.fixedPointShortToFloat12Bit(getMatrix()[1][0]);
+            double r11 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
+            double r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
+            double r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
+
+            angle[0] = Math.atan2(r21, r11);
+            angle[2] = Math.atan2(r32, r33);
+        }
+
+        // Returns Euler angles in order yaw, pitch, roll
+        return angle;
+    }
+
+
+    /**
      * Gets the yaw from this matrix.
      * @return yaw
      */
     public double getYawAngle() {
         double r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
 
-        if (r31 >= .95 || r31 <= -.95) { // Gymbal lock at pitch = -90 or 90
+        if (r31 >= .95 || r31 <= -.95) { // Gimbal lock at pitch = -90 or 90
             return 0F;
         } else {
             double r11 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
@@ -102,7 +143,7 @@ public class PSXMatrix extends GameObject {
 
         double r12 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][1]);
         double r13 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][2]);
-        if (r31 >= .95) { // Gymbal lock at pitch = -90
+        if (r31 >= .95) { // Gimbal lock at pitch = -90
             return Math.atan2(-r12, -r13);
         } else if (r31 <= -.95) { // Lock at pitch = 90
             return Math.atan2(r12, r13);
@@ -121,9 +162,6 @@ public class PSXMatrix extends GameObject {
      * @param roll  The new roll.
      */
     public void updateMatrix(double yaw, double pitch, double roll) {
-        if (Math.abs(pitch) >= Math.PI / 2)
-            return; // LOCK! ABORT!
-
         double su = Math.sin(roll);
         double cu = Math.cos(roll);
         double sv = Math.sin(pitch);
