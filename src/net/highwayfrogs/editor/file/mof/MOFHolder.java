@@ -143,11 +143,12 @@ public class MOFHolder extends GameFile {
         if (!isDummy()) {
             MOFFile staticMof = asStaticFile();
             list.add(new Tuple2<>("Parts", String.valueOf(staticMof.getParts().size())));
-            list.add(new Tuple2<>("Parts", String.valueOf(staticMof.getParts().size())));
             list.add(new Tuple2<>("Texture Animation", String.valueOf(staticMof.hasTextureAnimation())));
             list.add(new Tuple2<>("Hilites", String.valueOf(staticMof.getHiliteCount())));
             list.add(new Tuple2<>("Collprims", String.valueOf(staticMof.getCollprimCount())));
             if (isAnimatedMOF()) {
+                list.add(new Tuple2<>("MOF Count", String.valueOf(getAnimatedFile().getMofCount())));
+                list.add(new Tuple2<>("Model Set Count", String.valueOf(getAnimatedFile().getModelSetCount())));
                 list.add(new Tuple2<>("Animation Count", String.valueOf(getAnimatedFile().getModelSet().getCelSet().getCels().size())));
                 list.add(new Tuple2<>("Interpolation Enabled", String.valueOf(getAnimatedFile().getModelSet().getCelSet().getCels().stream().filter(MOFAnimationCels::isInterpolationEnabled).count())));
                 list.add(new Tuple2<>("Translation Type", getAnimatedFile().getTransformType().name()));

@@ -71,6 +71,7 @@ public class WADFile extends GameFile {
                     file = new VLOArchive();
                 } else if (fileType == MOFHolder.MOF_ID || fileType == 2) {
                     file = new MOFHolder(theme, lastCompleteMOF);
+                    //file = new DummyFile(data.length);
                 } else if (fileType == PLTFile.FILE_TYPE) {
                     file = new PLTFile();
                 } else {

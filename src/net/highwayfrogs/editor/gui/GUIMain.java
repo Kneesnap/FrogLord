@@ -45,7 +45,7 @@ public class GUIMain extends Application {
         INSTANCE = this;
         MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();
-        checkForNewVersion();
+        // checkForNewVersion();
 
         long availableMemory = Runtime.getRuntime().maxMemory();
         long minMemory = DataSizeUnit.GIGABYTE.getIncrement();
@@ -199,10 +199,10 @@ public class GUIMain extends Application {
     @Getter
     @AllArgsConstructor
     public static class FrogLordVersion implements Serializable {
-        private String versionNumber; // The version displayed to the user.
-        private String updateURL;
-        private String releaseNotes; // Wondering if there's a more sensible way to store this. Works for now.
-        private int versionId; // This is a really simple way to check whether a version is newer than the current one.
+        private final String versionNumber; // The version displayed to the user.
+        private final String updateURL;
+        private final String releaseNotes; // Wondering if there's a more sensible way to store this. Works for now.
+        private final int versionId; // This is a really simple way to check whether a version is newer than the current one.
 
         /**
          * Checks if this update is newer than the version of FrogLord currently being urn.

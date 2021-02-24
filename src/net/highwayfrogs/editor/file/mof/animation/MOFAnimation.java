@@ -25,6 +25,8 @@ public class MOFAnimation extends MOFBase {
     private final MOFAnimCommonData commonData;
     @Setter private boolean startAtFrameZero = true;
     @Setter private TransformType transformType = TransformType.QUAT_BYTE;
+    private int mofCount;
+    private int modelSetCount;
 
     private static final int STATIC_MOF_COUNT = 1;
     private static final byte MR_ANIM_FILE_START_FRAME_AT_ZERO = (byte) 0x31; // '1'
@@ -51,10 +53,12 @@ public class MOFAnimation extends MOFBase {
         int commonDataPointer = reader.readInt(); // Right after model set data.
         int staticFilePointer = reader.readInt(); // After common data pointer.
 
+        this.modelSetCount = modelSetCount;
         //Utils.verify(modelSetCount == 1, "Multiple model sets are not supported by FrogLord. (%d)", modelSetCount); // TODO: Medievil.
         if (modelSetCount != 1)
             getFileEntry().setFilePath(getFileEntry().getDisplayName() + "-MODELSETS");
 
+        this.mofCount = staticFileCount;
         //Utils.verify(staticFileCount == 1, "FrogLord only supports one MOF per animation. (%d)", staticFileCount); // TODO: Medievil.
         if (staticFileCount != 1)
             getFileEntry().setFilePath(getFileEntry().getDisplayName() + "-MULTIPLEMOF");
