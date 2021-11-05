@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class FFSUtil {
     private static final ImageFilterSettings FFS_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
-            .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
+            .setTrimEdges(true).setAllowTransparency(true);
 
     /**
      * Save map data to a .ffs file for editing in Blender.
@@ -86,7 +86,7 @@ public class FFSUtil {
             pw.write(polygon.getType().name().toLowerCase() + " " + (polygon.isAllowDisplay() ? "show" : "hide") + " ");
 
             // [AE] Note face winding (vertex index ordering)
-            for (int i = polygon.getVerticeCount() - 1; i >= 0; i--) {
+            for (int i = 0; i < polygon.getVerticeCount(); i++) {
                 pw.write(polygon.getVertices()[i] + " ");
             }
 
@@ -94,19 +94,19 @@ public class FFSUtil {
                 pw.write(String.valueOf(((MAPPolyFlat) polygon).getColor().toRGB()));
             } else if (polygon instanceof MAPPolyGouraud) {
                 MAPPolyGouraud polyGouraud = (MAPPolyGouraud) polygon;
-                for (int i = polyGouraud.getColors().length - 1; i >= 0; i--)
-                    pw.write((i != polyGouraud.getColors().length - 1 ? " " : "") + polyGouraud.getColors()[i].toRGB());
+                for (int i = 0; i < polyGouraud.getColors().length; i++)
+                    pw.write((i > 0 ? " " : "") + polyGouraud.getColors()[i].toRGB());
             } else if (polygon instanceof MAPPolyTexture) {
                 MAPPolyTexture polyTex = (MAPPolyTexture) polygon;
                 pw.write(polyTex.getFlags() + " ");
                 pw.write(String.valueOf(remapTable.get(polyTex.getTextureId())));
 
-                for (int i = polyTex.getColors().length - 1; i >= 0; i--) {
+                for (int i = 0; i < polyTex.getColors().length; i++) {
                     PSXColorVector color = polyTex.getColors()[i];
                     pw.write(" " + color.toRGB());
                 }
 
-                for (int i = polyTex.getUvs().length - 1; i >= 0; i--) {
+                for (int i = 0; i < polyTex.getUvs().length; i++) {
                     ByteUV uv = polyTex.getUvs()[i];
                     float u = uv.getFloatU();
                     float v = uv.getFloatV();
