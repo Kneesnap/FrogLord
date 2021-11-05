@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
  * Created by Kneesnap on 8/26/2019.
  */
 @Getter
-public class NHSChunk extends TGQFileChunk {
+public class NHSChunk extends kcCResource {
     private String name;
     private float unknown1;
     private float unknown2;
@@ -20,7 +20,7 @@ public class NHSChunk extends TGQFileChunk {
     private static final int ANIM_NAME_SIZE = 32;
 
     public NHSChunk(TGQChunkedFile parentFile) {
-        super(parentFile, TGQChunkType.NHS);
+        super(parentFile, KCResourceID.NAMEDHASH);
     }
 
     @Override

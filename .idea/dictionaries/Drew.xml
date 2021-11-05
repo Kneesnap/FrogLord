@@ -16,6 +16,7 @@
       <w>emissive</w>
       <w>formatters</w>
       <w>frogger</w>
+      <w>gamecube</w>
       <w>gouraud</w>
       <w>gymbal</w>
       <w>hilites</w>
@@ -30,10 +31,13 @@
       <w>quat</w>
       <w>quatb</w>
       <w>rdrpenguin</w>
+      <w>renderware</w>
+      <w>resizes</w>
       <w>sanitization</w>
       <w>subscene</w>
       <w>unpacker</w>
       <w>vertice</w>
+      <w>xbox</w>
     </words>
   </dictionary>
 </component>

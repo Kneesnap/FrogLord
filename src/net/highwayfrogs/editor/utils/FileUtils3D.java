@@ -691,7 +691,7 @@ public class FileUtils3D {
 
                         // Create rotation matrix.
                         PSXMatrix matrix = new PSXMatrix();
-                        if (posFrame != null) { // This may be subject to the same problem that causes static entities to not show up in-game, calculating the wrong group. If there are weird unexplainable issues, this could be the culprit.
+                        if (posFrame != null) {
                             matrix.getTransform()[0] = Utils.floatToFixedPointInt4Bit(-posFrame.getPosX());
                             matrix.getTransform()[1] = Utils.floatToFixedPointInt4Bit(-posFrame.getPosY());
                             matrix.getTransform()[2] = Utils.floatToFixedPointInt4Bit(posFrame.getPosZ());

@@ -4,13 +4,11 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.WADFile;
@@ -20,6 +18,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
+import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -36,7 +35,7 @@ import java.util.Map.Entry;
 public class VLOController extends EditorController<VLOArchive> {
     @FXML private CheckBox paddingCheckBox;
     @FXML private CheckBox transparencyCheckBox;
-    @FXML private CheckBox sizeCheckBox;
+    @FXML private ChoiceBox<ImageControllerViewSetting> sizeChoiceBox;
     @FXML private ImageView imageView;
     @FXML private ListView<GameImage> imageList;
     @FXML private Label dimensionLabel;
@@ -70,6 +69,10 @@ public class VLOController extends EditorController<VLOArchive> {
     public void onInit(AnchorPane editorRoot) {
         super.onInit(editorRoot);
         this.defaultEditorMaxHeight = editorRoot.getMaxHeight();
+
+        this.sizeChoiceBox.setItems(FXCollections.observableArrayList(ImageControllerViewSetting.values()));
+        this.sizeChoiceBox.setConverter(new AbstractIndexStringConverter<>(ImageControllerViewSetting.values(), (index, entry) -> entry.getDescription()));
+        this.sizeChoiceBox.setValue(ImageControllerViewSetting.SCALED_NEAREST_NEIGHBOR);
 
         addFlag("Translucent", GameImage.FLAG_TRANSLUCENT);
         addFlag("Rotated", GameImage.FLAG_ROTATED);
@@ -242,15 +245,15 @@ public class VLOController extends EditorController<VLOArchive> {
      */
     public void updateImage() {
         boolean hasImage = (this.selectedImage != null);
-        imageView.setVisible(hasImage);
+        this.imageView.setVisible(hasImage);
 
         if (hasImage) {
             BufferedImage image = toBufferedImage(this.selectedImage);
 
-            boolean scaleSize = sizeCheckBox.isSelected();
-            imageView.setFitWidth(scaleSize ? SCALE_DIMENSION : image.getWidth());
-            imageView.setFitHeight(scaleSize ? SCALE_DIMENSION : image.getHeight());
-            imageView.setImage(Utils.toFXImage(image, false));
+            boolean scaleSize = this.sizeChoiceBox.getValue() != ImageControllerViewSetting.ORIGINAL_SIZE;
+            this.imageView.setFitWidth(scaleSize ? SCALE_DIMENSION : image.getWidth());
+            this.imageView.setFitHeight(scaleSize ? SCALE_DIMENSION : image.getHeight());
+            this.imageView.setImage(Utils.toFXImage(image, false));
         }
     }
 
@@ -264,11 +267,22 @@ public class VLOController extends EditorController<VLOArchive> {
 
     private BufferedImage toBufferedImage(GameImage image) {
         updateFilter();
-        return image.toBufferedImage(imageFilterSettings);
+        return image.toBufferedImage(this.imageFilterSettings);
     }
 
     private void updateFilter() {
-        imageFilterSettings.setTrimEdges(!this.paddingCheckBox.isSelected());
-        imageFilterSettings.setAllowTransparency(this.transparencyCheckBox.isSelected());
+        this.imageFilterSettings.setTrimEdges(!this.paddingCheckBox.isSelected());
+        this.imageFilterSettings.setAllowTransparency(this.transparencyCheckBox.isSelected());
+        this.imageFilterSettings.setScaleToMaxSize(this.sizeChoiceBox.getValue() == ImageControllerViewSetting.SCALED_NEAREST_NEIGHBOR);
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum ImageControllerViewSetting {
+        ORIGINAL_SIZE("Original Size"),
+        SCALED_BLURRY("Scaled (Blurry)"),
+        SCALED_NEAREST_NEIGHBOR("Scaled (Sharp)");
+
+        private final String description;
     }
 }

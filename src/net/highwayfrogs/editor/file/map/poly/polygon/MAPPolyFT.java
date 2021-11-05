@@ -32,7 +32,7 @@ public class MAPPolyFT extends MAPPolyTexture {
         } else if (isOverlay(map)) {
             return makeShadeImage(map, false);
         } else {
-            return MAPPolyTexture.makeFlatShadedTexture(getGameImage(map).toBufferedImage(map.getDisplaySettings()), Utils.fromRGB(getColors()[0].toRGB()));
+            return MAPPolyTexture.makeFlatShadedTexture(getGameImage(map).toBufferedImage(map.getDisplaySettings()), Utils.fromRGB(getColors()[0].toRGB()), false);
         }
     }
 

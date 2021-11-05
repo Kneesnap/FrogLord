@@ -135,7 +135,7 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
         editor.addBoldLabel("Colors:");
         String[] nameArray = COLOR_BANK[getColors().length - 1];
         for (int i = 0; i < getColors().length; i++)
-            getColors()[i].setupEditor(editor, nameArray[i], getGameImage(controller.getMapMesh().getTextureMap()).toBufferedImage(SHOW_SETTINGS), null);
+            getColors()[i].setupEditor(editor, nameArray[i], getGameImage(controller.getMapMesh().getTextureMap()).toBufferedImage(SHOW_SETTINGS), null, false);
     }
 
     private BufferedImage makePreviewImage(MapUIController controller) {
@@ -295,16 +295,16 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
      * Creates a texture which has flat shading applied.
      * @return shadedTexture
      */
-    public static BufferedImage makeFlatShadedTexture(BufferedImage applyImage, Color color) {
+    public static BufferedImage makeFlatShadedTexture(BufferedImage applyImage, Color color, boolean fullRange) {
         int overlay = Utils.toRGB(color);
         BufferedImage newImage = new BufferedImage(applyImage.getWidth(), applyImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
         for (int x = 0; x < newImage.getWidth(); x++) {
             for (int y = 0; y < newImage.getHeight(); y++) {
                 int rgb = applyImage.getRGB(x, y);
                 int alpha = (rgb & 0xFF000000) >> 24;
-                int red = (int) (((double) Utils.getRedInt(overlay) / 127D) * (double) Utils.getRedInt(rgb));
-                int green = (int) (((double) Utils.getGreenInt(overlay) / 127D) * (double) Utils.getGreenInt(rgb));
-                int blue = (int) (((double) Utils.getBlueInt(overlay) / 127D) * (double) Utils.getBlueInt(rgb));
+                int red = (int) (((double) Utils.getRedInt(overlay) / (fullRange ? 255D : 127D)) * (double) Utils.getRedInt(rgb));
+                int green = (int) (((double) Utils.getGreenInt(overlay) / (fullRange ? 255D : 127D)) * (double) Utils.getGreenInt(rgb));
+                int blue = (int) (((double) Utils.getBlueInt(overlay) / (fullRange ? 255D : 127D)) * (double) Utils.getBlueInt(rgb));
                 newImage.setRGB(x, y, ((alpha << 24) | ((red & 0xFF) << 16) | ((green & 0xFF) << 8) | (blue & 0xFF)));
             }
         }

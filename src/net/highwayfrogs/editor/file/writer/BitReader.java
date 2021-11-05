@@ -49,7 +49,7 @@ public class BitReader {
     public int readBits(int amount) {
         int num = 0;
         for (int i = 0; i < amount; i++)
-            num = num << 1 | readBit(); // Shift the existing read bits left, and add the next available bit. If you read four bits, it will read it like an integer.
+            num = (num << 1) | readBit(); // Shift the existing read bits left, and add the next available bit. If you read four bits, it will read it like an integer.
         return num;
     }
 

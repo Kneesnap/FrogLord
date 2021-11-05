@@ -32,7 +32,14 @@ public class DummyFile extends GameFile {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeBytes(buffer.array());
+        writer.writeBytes(getArray());
+    }
+
+    /**
+     * Gets the file data as an array.
+     */
+    public byte[] getArray() {
+        return this.buffer.array();
     }
 
     /**

@@ -59,15 +59,15 @@ public class TGQBinFile extends GameObject {
                 continue;
 
             TGQChunkedFile chunkedFile = (TGQChunkedFile) file;
-            for (TGQFileChunk chunk : chunkedFile.getChunks()) {
-                if (chunk instanceof TEXChunk)
-                    applyFileName(((TEXChunk) chunk).getPath());
-                if (chunk instanceof VTXChunk && ((VTXChunk) chunk).getFullReferenceName() != null) {
-                    applyFileName(((VTXChunk) chunk).getFullReferenceName());
+            for (kcCResource chunk : chunkedFile.getChunks()) {
+                if (chunk instanceof TGQChunkTextureReference)
+                    applyFileName(((TGQChunkTextureReference) chunk).getPath());
+                if (chunk instanceof TGQChunk3DModel && ((TGQChunk3DModel) chunk).getFullReferenceName() != null) {
+                    applyFileName(((TGQChunk3DModel) chunk).getFullReferenceName());
 
-                    TGQFile tgqFile = getFileByName(((VTXChunk) chunk).getFullReferenceName());
+                    TGQFile tgqFile = getFileByName(((TGQChunk3DModel) chunk).getFullReferenceName());
                     if (tgqFile instanceof TGQChunkedFile)
-                        ((VTXChunk) ((TGQChunkedFile) tgqFile).getChunks().get(0)).setEnvironmentFile(chunkedFile);
+                        ((TGQChunk3DModel) ((TGQChunkedFile) tgqFile).getChunks().get(0)).setEnvironmentFile(chunkedFile);
                 }
             }
         }
@@ -89,9 +89,11 @@ public class TGQBinFile extends GameObject {
 
         TGQFile readFile;
         if (Utils.testSignature(fileBytes, TGQImageFile.SIGNATURE)) {
-            readFile = new TGQImageFile(this);
+            readFile = new TGQImageFile(this, true);
         } else if (Utils.testSignature(fileBytes, "6YTV") || Utils.testSignature(fileBytes, "TOC\0")) { //TODO: Fix up.
             readFile = new TGQChunkedFile(this);
+        } else if (this.files.size() > 100 && fileBytes.length > 30) {
+            readFile = new TGQImageFile(this, false);
         } else {
             readFile = new TGQDummyFile(this, fileBytes.length);
         }
@@ -278,7 +280,7 @@ public class TGQBinFile extends GameObject {
             TGQChunkedFile tocFile = (TGQChunkedFile) file;
 
             OTTChunk chunk = null;
-            for (TGQFileChunk testChunk : tocFile.getChunks())
+            for (kcCResource testChunk : tocFile.getChunks())
                 if (testChunk instanceof OTTChunk)
                     chunk = (OTTChunk) testChunk;
 
@@ -309,9 +311,9 @@ public class TGQBinFile extends GameObject {
                 continue;
 
             TGQChunkedFile chunkedFile = (TGQChunkedFile) file;
-            for (TGQFileChunk testChunk : chunkedFile.getChunks())
-                if (testChunk instanceof VTXChunk && testChunk.isRootChunk())
-                    ((VTXChunk) testChunk).saveToFile(new File(saveFolder, file.getExportName() + ".obj"));
+            for (kcCResource testChunk : chunkedFile.getChunks())
+                if (testChunk instanceof TGQChunk3DModel && testChunk.isRootChunk())
+                    ((TGQChunk3DModel) testChunk).saveToFile(new File(saveFolder, file.getExportName() + ".obj"));
         }
     }
 

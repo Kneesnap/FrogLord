@@ -23,6 +23,15 @@ public class BitWriter {
     @Setter private boolean reverseBits;
 
     /**
+     * Gets the current number of bytes this takes up.
+     * Even if only 1 bit is used in a byte, that counts.
+     * @return byteCount
+     */
+    public int getByteCount() {
+        return this.bytes.size() + (this.currentBit != Constants.BITS_PER_BYTE ? 1 : 0);
+    }
+
+    /**
      * Write a singular bit.
      * @param bit The bit to write. 1 or 0.
      */
@@ -43,7 +52,7 @@ public class BitWriter {
     }
 
     private int getCurrentBitID() {
-        return isReverseBits() ? this.currentBit : Constants.BITS_PER_BYTE - this.currentBit;
+        return isReverseBits() ? this.currentBit - 1 : Constants.BITS_PER_BYTE - this.currentBit;
     }
 
     /**
@@ -61,8 +70,13 @@ public class BitWriter {
      * @param bitCount the number of bits.
      */
     public void writeBits(int number, int bitCount) {
-        for (int i = bitCount - 1; i >= 0; i--)
-            writeBit((number >> i) & Constants.BIT_TRUE);
+        if (this.reverseBits) {
+            for (int i = 0; i < bitCount; i++)
+                writeBit(((number & (Constants.BIT_TRUE << i)) != 0) ? Constants.BIT_TRUE : Constants.BIT_FALSE);
+        } else {
+            for (int i = bitCount - 1; i >= 0; i--)
+                writeBit((number >> i) & Constants.BIT_TRUE);
+        }
     }
 
     /**
@@ -70,8 +84,13 @@ public class BitWriter {
      * @param value The byte to write bits from.
      */
     public void writeByte(byte value) {
-        for (int i = Constants.BITS_PER_BYTE - 1; i >= 0; i--)
-            writeBit((value >> i) & Constants.BIT_TRUE);
+        if (this.reverseBits) {
+            for (int i = 0; i < Constants.BITS_PER_BYTE; i++)
+                writeBit(((value & (Constants.BIT_TRUE << i)) != 0) ? Constants.BIT_TRUE : Constants.BIT_FALSE);
+        } else {
+            for (int i = Constants.BITS_PER_BYTE - 1; i >= 0; i--)
+                writeBit((value >> i) & Constants.BIT_TRUE);
+        }
     }
 
     /**
@@ -103,8 +122,13 @@ public class BitWriter {
     /**
      * Finish the current byte being written.
      */
-    private void finishCurrentByte() {
-        while (this.currentBit != Constants.BITS_PER_BYTE)
+    public int finishCurrentByte() {
+        int writtenBits = 0;
+        while (this.currentBit != Constants.BITS_PER_BYTE) {
             writeBit(0); // Finish the current byte.
+            writtenBits++;
+        }
+
+        return writtenBits;
     }
 }
