@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class FFSUtil {
     private static final ImageFilterSettings FFS_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
-            .setTrimEdges(true).setAllowTransparency(true);
+            .setAllowTransparency(true);
 
     /**
      * Save map data to a .ffs file for editing in Blender.
@@ -56,16 +56,21 @@ public class FFSUtil {
             return;
         }
 
+        @Cleanup PrintWriter pw = new PrintWriter(new File(outputDir, Utils.stripExtension(map.getFileEntry().getDisplayName()) + ".ffs"));
+
+
         // Export textures.
         if (map.getVlo() != null) {
             for (int i = 0; i < map.getVlo().getImages().size(); i++) {
                 GameImage image = map.getVlo().getImages().get(i);
-                if (remapTable.contains(image.getTextureId()))
+                if (remapTable.contains(image.getTextureId())) {
                     ImageIO.write(image.toBufferedImage(FFS_EXPORT_FILTER), "png", new File(outputDir, image.getTextureId() + ".png"));
+                    pw.write("tex " + image.getTextureId() + " " + ((image.getFullWidth() - image.getIngameWidth()) / 2) + " " + ((image.getFullHeight() - image.getIngameHeight()) / 2) + Constants.NEWLINE);
+                }
             }
-        }
 
-        @Cleanup PrintWriter pw = new PrintWriter(new File(outputDir, Utils.stripExtension(map.getFileEntry().getDisplayName()) + ".ffs"));
+            pw.write(Constants.NEWLINE);
+        }
 
         // Grab polygons and vertices
         List<MAPPolygon> polygons = map.getAllPolygonsSafe();
@@ -103,7 +108,7 @@ public class FFSUtil {
 
                 for (int i = 0; i < polyTex.getColors().length; i++) {
                     PSXColorVector color = polyTex.getColors()[i];
-                    pw.write(" " + color.toRGB());
+                    pw.write(" " + color.toFullRGB());
                 }
 
                 for (int i = 0; i < polyTex.getUvs().length; i++) {
