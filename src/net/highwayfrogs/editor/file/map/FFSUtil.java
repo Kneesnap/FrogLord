@@ -168,11 +168,15 @@ public class FFSUtil {
             // Write Textures.
             for (int i = 0; i < mapAnim.getTextures().size(); i++)
                 pw.write((i > 0 ? "," : "") + remapTable.get(mapAnim.getTextures().get(i)));
+            if (mapAnim.getTextures().size() == 0)
+                pw.write("-");
             pw.write(" ");
 
             // Write the faces that this animation applies to.
             for (int i = 0; i < mapAnim.getMapUVs().size(); i++)
                 pw.write((i > 0 ? "," : "") + polygons.indexOf(mapAnim.getMapUVs().get(i).getPolygon()));
+            if (mapAnim.getMapUVs().size() == 0)
+                pw.write("-");
 
             pw.write(Constants.NEWLINE);
         }
