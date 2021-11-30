@@ -55,14 +55,14 @@ public class MAPFile extends GameFile {
     @Setter private SVector cameraTargetOffset;
     @Setter private short baseXTile; // These point to the bottom left of the map group grid.
     @Setter private short baseZTile;
-    private List<Path> paths = new ArrayList<>();
-    private List<Zone> zones = new ArrayList<>();
-    private List<Form> forms = new ArrayList<>();
-    private List<Entity> entities = new ArrayList<>();
-    private List<Light> lights = new ArrayList<>();
-    private List<SVector> vertexes = new ArrayList<>();
+    private final List<Path> paths = new ArrayList<>();
+    private final List<Zone> zones = new ArrayList<>();
+    private final List<Form> forms = new ArrayList<>();
+    private final List<Entity> entities = new ArrayList<>();
+    private final List<Light> lights = new ArrayList<>();
+    private final List<SVector> vertexes = new ArrayList<>();
     private List<GridStack> gridStacks = new ArrayList<>();
-    private List<MAPAnimation> mapAnimations = new ArrayList<>();
+    private final List<MAPAnimation> mapAnimations = new ArrayList<>();
     @Setter private short groupXCount;
     @Setter private short groupZCount;
     private short groupXSize = (short) 768; // Seems to always be 768. Appears to be related to the X size of one group.
@@ -74,13 +74,13 @@ public class MAPFile extends GameFile {
     private short gridZSize = (short) 256; // Seems to always be 256.
 
     private transient VLOArchive vlo;
-    private transient Map<MAPPrimitiveType, List<MAPPrimitive>> polygons = new HashMap<>();
-    private transient List<MAPPolygon> allPolygons = new ArrayList<>();
+    private final transient Map<MAPPrimitiveType, List<MAPPrimitive>> polygons = new HashMap<>();
+    private final transient List<MAPPolygon> allPolygons = new ArrayList<>();
 
-    private transient Map<Integer, MAPPrimitive> loadPointerPolygonMap = new HashMap<>();
+    private final transient Map<Integer, MAPPrimitive> loadPointerPolygonMap = new HashMap<>();
 
-    private transient Map<MAPPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
-    private transient Map<Integer, MAPPrimitive> savePointerPolygonMap = new HashMap<>();
+    private final transient Map<MAPPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
+    private final transient Map<Integer, MAPPrimitive> savePointerPolygonMap = new HashMap<>();
 
     public static final int TYPE_ID = 0;
     private static final String SIGNATURE = "FROG";
@@ -338,8 +338,7 @@ public class MAPFile extends GameFile {
         for (int i = 0; i < lightCount; i++) {
             Light light = new Light();
             light.load(reader);
-            if (light.isWorthKeeping())
-                lights.add(light);
+            lights.add(light);
         }
 
         reader.setIndex(groupAddress);

@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
+import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.poly.polygon.*;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
@@ -153,13 +154,36 @@ public class FFSUtil {
 
         // Grid Data.
         pw.write("grid-size " + map.getGridXCount() + " " + map.getGridZCount() + Constants.NEWLINE);
-        for (GridStack stack : map.getGridStacks()) {
+        for (GridStack stack : map.getGridStacks()) { // TODO: See if I can light the frogger map properly.
             pw.write("grid " + stack.getHeight());
             for (GridSquare square : stack.getGridSquares())
                 pw.write(" " + polygons.indexOf(square.getPolygon()) + ":" + square.getFlags());
             pw.write(Constants.NEWLINE);
         }
         pw.write(Constants.NEWLINE);
+
+        // Light Data.
+        for (Light light : map.getLights()) {
+            pw.write("light ");
+            pw.write(light.getApiType().name());
+            pw.write(" ");
+            pw.write(light.getPriority());
+            pw.write(" ");
+            pw.write(light.getParentId());
+            pw.write(" ");
+            pw.write(light.getColor());
+            pw.write(" ");
+            pw.write(light.getPosition().getFloatX(12) + "," + light.getPosition().getFloatY(12) + "," + light.getPosition().getFloatZ(12));
+            pw.write(" ");
+            pw.write(light.getDirection().getFloatX(12) + "," + light.getDirection().getFloatY(12) + "," + light.getDirection().getFloatZ(12));
+            pw.write(" ");
+            pw.write(light.getAttribute1());
+            pw.write(" ");
+            pw.write(light.getAttribute1());
+            pw.write(Constants.NEWLINE);
+        }
+        if (map.getLights().size() > 0)
+            pw.write(Constants.NEWLINE);
 
         // Animation Data.
         for (MAPAnimation mapAnim : map.getMapAnimations()) {
