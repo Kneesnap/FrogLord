@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.shadow;
 
+import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.DummyFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
@@ -29,6 +30,33 @@ public class XboxShadowFileMain {
         File file = new File(scanner.nextLine());
 
         FroggerBeyondUtil.exportVoices(file, new File(file.getName() + "_EXPORT/"), FroggerBeyondPlatform.WINDOWS);
+    }
+
+    @SneakyThrows
+    public static void exportHFS(File file) {
+        if (!file.exists()) {
+            System.out.println("File does not exist.");
+            return;
+        }
+
+        byte[] packed = Files.readAllBytes(file.toPath());
+        HFSFile hfsFile = new HFSFile();
+        hfsFile.load(new DataReader(new ArraySource(packed)));
+
+        // Save data.
+        int id = 0;
+        for (List<DummyFile> dummyFiles : hfsFile.getHfsFiles()) {
+            for (DummyFile dummyFile : dummyFiles) {
+                boolean compressed = PRS1Unpacker.isCompressedPRS1(dummyFile.getArray());
+                File outputFile = new File("./" + id++ + "-" + (compressed ? "UNPACKED" : "RAW"));
+
+                byte[] data = (compressed ? PRS1Unpacker.decompressPRS1(dummyFile.getArray()) : dummyFile.getArray());
+                Files.write(outputFile.toPath(), data);
+                System.out.println("Saved to: " + outputFile);
+            }
+        }
+
+        System.out.println("Done.");
     }
 
     public static void main(String[] args) throws Exception {
