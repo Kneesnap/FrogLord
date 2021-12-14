@@ -4,9 +4,11 @@ import javafx.scene.control.Alert.AlertType;
 import lombok.Cleanup;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
+import net.highwayfrogs.editor.file.map.animation.MAPAnimationType;
 import net.highwayfrogs.editor.file.map.animation.MAPUVInfo;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
+import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.map.light.Light;
 import net.highwayfrogs.editor.file.map.poly.polygon.*;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -59,7 +61,6 @@ public class FFSUtil {
 
         @Cleanup PrintWriter pw = new PrintWriter(new File(outputDir, Utils.stripExtension(map.getFileEntry().getDisplayName()) + ".ffs"));
 
-
         // Export textures.
         if (map.getVlo() != null) {
             for (int i = 0; i < map.getVlo().getImages().size(); i++) {
@@ -82,8 +83,7 @@ public class FFSUtil {
             final float x = vec.getFloatX();
             final float y = vec.getFloatY();
             final float z = vec.getFloatZ();
-            // [AE] - we need to negate the y-axis and then swap the y-/z-axes on export to Blender
-            pw.write("v " + x + " " + z + " " + -y + Constants.NEWLINE);
+            pw.write("v " + x + " " + -y + " " + z + Constants.NEWLINE);
         }
         pw.write(Constants.NEWLINE);
 
@@ -92,9 +92,8 @@ public class FFSUtil {
             pw.write(polygon.getType().name().toLowerCase() + " " + (polygon.isAllowDisplay() ? "show" : "hide") + " ");
 
             // [AE] Note face winding (vertex index ordering)
-            for (int i = 0; i < polygon.getVerticeCount(); i++) {
+            for (int i = 0; i < polygon.getVerticeCount(); i++)
                 pw.write(polygon.getVertices()[i] + " ");
-            }
 
             if (polygon instanceof MAPPolyFlat) {
                 pw.write(String.valueOf(((MAPPolyFlat) polygon).getColor().toRGB()));
@@ -154,7 +153,7 @@ public class FFSUtil {
 
         // Grid Data.
         pw.write("grid-size " + map.getGridXCount() + " " + map.getGridZCount() + Constants.NEWLINE);
-        for (GridStack stack : map.getGridStacks()) { // TODO: See if I can light the frogger map properly.
+        for (GridStack stack : map.getGridStacks()) {
             pw.write("grid " + stack.getHeight());
             for (GridSquare square : stack.getGridSquares())
                 pw.write(" " + polygons.indexOf(square.getPolygon()) + ":" + square.getFlags());
@@ -167,19 +166,19 @@ public class FFSUtil {
             pw.write("light ");
             pw.write(light.getApiType().name());
             pw.write(" ");
-            pw.write(light.getPriority());
+            pw.write(String.valueOf(light.getPriority()));
             pw.write(" ");
-            pw.write(light.getParentId());
+            pw.write(String.valueOf(light.getParentId()));
             pw.write(" ");
-            pw.write(light.getColor());
+            pw.write(String.valueOf(light.getColor()));
             pw.write(" ");
             pw.write(light.getPosition().getFloatX(12) + "," + light.getPosition().getFloatY(12) + "," + light.getPosition().getFloatZ(12));
             pw.write(" ");
             pw.write(light.getDirection().getFloatX(12) + "," + light.getDirection().getFloatY(12) + "," + light.getDirection().getFloatZ(12));
             pw.write(" ");
-            pw.write(light.getAttribute1());
+            pw.write(String.valueOf(light.getAttribute1()));
             pw.write(" ");
-            pw.write(light.getAttribute1());
+            pw.write(String.valueOf(light.getAttribute1()));
             pw.write(Constants.NEWLINE);
         }
         if (map.getLights().size() > 0)
@@ -216,6 +215,7 @@ public class FFSUtil {
      * @param map       The map to export.
      * @param inputFile The file to read from.
      */
+    @SuppressWarnings("StatementWithEmptyBody")
     public static void importFFSToMap(MAPFile map, File inputFile) throws IOException {
         if (inputFile == null)
             return;
@@ -231,6 +231,7 @@ public class FFSUtil {
         map.getGridStacks().clear();
         map.getMapAnimations().clear();
         map.getVertexes().clear();
+        map.getLights().clear();
 
         List<String> lines = Files.readAllLines(inputFile.toPath());
 
@@ -247,34 +248,24 @@ public class FFSUtil {
             String action = args[0];
             if (action.equalsIgnoreCase("v")) {
                 // Read vertex.
-                // [AE] - we need to swap the y-/z-axes and then negate the y-axis on import back into FrogLord
-                map.getVertexes().add(new SVector(Float.parseFloat(args[1]), -Float.parseFloat(args[3]), Float.parseFloat(args[2])));
+                // v <x> <y> <z>
+                map.getVertexes().add(new SVector(Float.parseFloat(args[1]), -Float.parseFloat(args[2]), Float.parseFloat(args[3])));
             } else if (action.equalsIgnoreCase("group-count-x-z")) {
-                short[] groupCount = new short[3];
-                groupCount[0] = Short.parseShort(args[1]);
-                groupCount[1] = Short.parseShort(args[2]);
-                groupCount[2] = Short.parseShort(args[3]);
-                System.out.println("group-count-x-z " + groupCount[0] + " " + groupCount[1] + " " + groupCount[2]);
+                // group-count-x-z groupCount groupXCount groupZCount
+                map.setGroupXCount(Short.parseShort(args[2]));
+                map.setGroupZCount(Short.parseShort(args[3]));
             } else if (action.equalsIgnoreCase("group-size-x-z")) {
-                short[] groupSize = new short[2];
-                groupSize[0] = Short.parseShort(args[1]);
-                groupSize[1] = Short.parseShort(args[2]);
-                System.out.println("group-size-x-z " + groupSize[0] + " " + groupSize[1]);
+                // group-size-x-z <xSize> <zSize>
+                map.setGroupXSize(Short.parseShort(args[1]));
+                map.setGroupZSize(Short.parseShort(args[2]));
             } else if (action.equalsIgnoreCase("base-grid-x-z")) {
-                short[] baseGrid = new short[2];
-                baseGrid[0] = Short.parseShort(args[1]);
-                baseGrid[1] = Short.parseShort(args[2]);
-                System.out.println("base-grid-x-z " + baseGrid[0] + " " + baseGrid[1]);
+                // Automatically calculated.
             } else if (action.equalsIgnoreCase("base-point-world-x-z")) {
-                short[] basePointWorld = new short[2];
-                basePointWorld[0] = Short.parseShort(args[1]);
-                basePointWorld[1] = Short.parseShort(args[2]);
-                System.out.println("base-point-world-x-z " + basePointWorld[0] + " " + basePointWorld[1]);
+                // Automatically generated.
             } else if (action.equalsIgnoreCase("base-tile-x-z")) {
-                short[] baseTile = new short[2];
-                baseTile[0] = Short.parseShort(args[1]);
-                baseTile[1] = Short.parseShort(args[2]);
-                System.out.println("base-tile-x-z " + baseTile[0] + " " + baseTile[1]);
+                // base-tile-x-z <x> <z>
+                map.setBaseXTile(Short.parseShort(args[1]));
+                map.setBaseZTile(Short.parseShort(args[2]));
             } else if (action.equalsIgnoreCase("grid-size")) {
                 map.setGridXCount(Short.parseShort(args[1]));
                 map.setGridZCount(Short.parseShort(args[2]));
@@ -293,21 +284,45 @@ public class FFSUtil {
                     String[] split = args[i].split(":");
                     stack.getGridSquares().add(new GridSquare(fullPolygonList.get(Integer.parseInt(split[0])), map, Integer.parseInt(split[1])));
                 }
+            } else if (action.equalsIgnoreCase("tex")) {
+                // Do nothing.
             } else if (action.equalsIgnoreCase("anim")) {
                 MAPAnimation mapAnim = new MAPAnimation(map);
-                mapAnim.setUChange(Short.parseShort(args[1]));
-                mapAnim.setVChange(Short.parseShort(args[2]));
-                mapAnim.setUvFrameCount(Short.parseShort(args[3]));
-                mapAnim.setTexFrameDuration(Short.parseShort(args[4]));
+                mapAnim.setType(MAPAnimationType.valueOf(args[1].toUpperCase()));
+                mapAnim.setUChange(Short.parseShort(args[2]));
+                mapAnim.setVChange(Short.parseShort(args[3]));
+                mapAnim.setUvFrameCount(Short.parseShort(args[4]));
+                mapAnim.setTexFrameDuration(Short.parseShort(args[5]));
 
-                String[] texSplit = args[5].split(",");
-                for (int i = 0; i < texSplit.length; i++)
-                    mapAnim.getTextures().add(Short.parseShort(texSplit[i]));
+                if (!args[6].equalsIgnoreCase("-")) {
+                    String[] texSplit = args[6].split(",");
+                    for (int i = 0; i < texSplit.length; i++)
+                        mapAnim.getTextures().add((short) remapTable.indexOf(Short.parseShort(texSplit[i])));
+                }
 
-                String[] faceSplit = args.length > 6 ? args[6].split(",") : new String[0];
-                for (int i = 0; i < faceSplit.length; i++)
-                    mapAnim.getMapUVs().add(new MAPUVInfo(map, fullPolygonList.get(Integer.parseInt(faceSplit[i]))));
+                if (args.length > 7 && !args[7].equalsIgnoreCase("-")) {
+                    String[] faceSplit = args[7].split(",");
+                    for (int i = 0; i < faceSplit.length; i++)
+                        mapAnim.getMapUVs().add(new MAPUVInfo(map, fullPolygonList.get(Integer.parseInt(faceSplit[i]))));
+                }
+
                 map.getMapAnimations().add(mapAnim);
+            } else if (action.equalsIgnoreCase("light")) {
+                Light mapLight = new Light();
+                mapLight.setApiType(APILightType.valueOf(args[1].toUpperCase()));
+                mapLight.setPriority(Short.parseShort(args[2]));
+                mapLight.setParentId(Integer.parseInt(args[3]));
+                mapLight.setColor(Integer.parseInt(args[4]));
+
+                String[] splitPos = args[5].split(",");
+                mapLight.getPosition().setValues(Float.parseFloat(splitPos[0]), Float.parseFloat(splitPos[1]), Float.parseFloat(splitPos[2]), 12);
+
+                String[] splitDirection = args[6].split(",");
+                mapLight.getDirection().setValues(Float.parseFloat(splitDirection[0]), Float.parseFloat(splitDirection[1]), Float.parseFloat(splitDirection[2]), 12);
+
+                mapLight.setAttribute0(Integer.parseInt(args[7]));
+                mapLight.setAttribute1(Integer.parseInt(args[8]));
+                map.getLights().add(mapLight);
             } else {
                 MAPPolygonType polyType;
                 try {
@@ -323,26 +338,24 @@ public class FFSUtil {
                 int index = 2;
 
                 // [AE] Note face winding (vertex index ordering)
-                for (int j = newPolygon.getVerticeCount() - 1; j >= 0; j--, index++) {
+                for (int j = 0; j < newPolygon.getVerticeCount(); j++, index++)
                     newPolygon.getVertices()[j] = Integer.parseInt(args[index]);
-                }
 
                 if (newPolygon instanceof MAPPolyFlat) {
                     ((MAPPolyFlat) newPolygon).setColor(PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index])));
                 } else if (newPolygon instanceof MAPPolyGouraud) {
                     MAPPolyGouraud polyGouraud = (MAPPolyGouraud) newPolygon;
-                    for (int j = polyGouraud.getColors().length - 1; j >= 0; j--, index++)
+                    for (int j = 0; j < polyGouraud.getColors().length; j++, index++)
                         polyGouraud.getColors()[j] = PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index]));
                 } else if (newPolygon instanceof MAPPolyTexture) {
                     MAPPolyTexture polyTexture = (MAPPolyTexture) newPolygon;
                     polyTexture.setFlags(Short.parseShort(args[index++]));
                     polyTexture.setTextureId((short) remapTable.indexOf(Short.parseShort(args[index++])));
 
-                    for (int j = polyTexture.getColors().length - 1; j >= 0; j--, index++) {
-                        polyTexture.getColors()[j] = PSXColorVector.makeColorFromRGB(Integer.parseInt(args[index]));
-                    }
+                    for (int j = 0; j < polyTexture.getColors().length; j++, index++)
+                        polyTexture.getColors()[j] = PSXColorVector.makeColorFromFullRGB(Integer.parseInt(args[index]));
 
-                    for (int j = polyTexture.getUvs().length - 1; j >= 0; j--, index++) {
+                    for (int j = 0; j < polyTexture.getUvs().length; j++, index++) {
                         String[] split = args[index].split(":");
 
                         float u = Float.parseFloat(split[0]);

@@ -161,6 +161,20 @@ public class PSXColorVector extends GameObject {
     }
 
     /**
+     * Create a PSXColorVector from an RGB value.
+     * @param rgbValue The rgb color value.
+     * @return colorVector
+     */
+    public static PSXColorVector makeColorFromFullRGB(int rgbValue) {
+        PSXColorVector vec = new PSXColorVector();
+        vec.fromRGB(rgbValue);
+        vec.red /= 2;
+        vec.green /= 2;
+        vec.blue /= 2;
+        return vec;
+    }
+
+    /**
      * Adds a color vector to the editor.
      * This is not for picking a color, rather it's for the PSX gouraud shading settings.
      */

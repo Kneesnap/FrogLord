@@ -65,13 +65,13 @@ public class MAPFile extends GameFile {
     private final List<MAPAnimation> mapAnimations = new ArrayList<>();
     @Setter private short groupXCount;
     @Setter private short groupZCount;
-    private short groupXSize = (short) 768; // Seems to always be 768. Appears to be related to the X size of one group.
-    private short groupZSize = (short) 768; // Seems to always be 768. Appears to be related to the Z size of one group.
+    @Setter private short groupXSize = (short) 768; // Seems to always be 768. Appears to be related to the X size of one group. This is actually fixed point.
+    @Setter private short groupZSize = (short) 768; // Seems to always be 768. Appears to be related to the Z size of one group. This is actually fixed point.
 
     @Setter private short gridXCount;
     @Setter private short gridZCount;
-    private short gridXSize = (short) 256; // Seems to always be 256.
-    private short gridZSize = (short) 256; // Seems to always be 256.
+    private short gridXSize = (short) 256; // Seems to always be 256. This is actually fixed point.
+    private short gridZSize = (short) 256; // Seems to always be 256. This is actually fixed point.
 
     private transient VLOArchive vlo;
     private final transient Map<MAPPrimitiveType, List<MAPPrimitive>> polygons = new HashMap<>();
@@ -928,14 +928,19 @@ public class MAPFile extends GameFile {
 
     /**
      * Gets all of the polygons in this map, in a list.
+     * Ensures they are returned in a predictable order.
      * @return allPolygons
      */
     public List<MAPPolygon> getAllPolygonsSafe() {
         List<MAPPolygon> polyList = new ArrayList<>();
-        for (List<MAPPrimitive> list : getPolygons().values())
-            for (MAPPrimitive prim : list)
-                if (prim instanceof MAPPolygon)
-                    polyList.add((MAPPolygon) prim);
+        for (MAPPolygonType polyType : MAPPolygonType.values()) {
+            List<MAPPrimitive> list = getPolygons().get(polyType);
+            if (list != null)
+                for (MAPPrimitive prim : list)
+                    if (prim instanceof MAPPolygon)
+                        polyList.add((MAPPolygon) prim);
+        }
+
         return polyList;
     }
 

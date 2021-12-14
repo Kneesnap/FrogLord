@@ -21,7 +21,7 @@ public class Light extends GameObject {
     private int parentId;
     private APILightType apiType = APILightType.AMBIENT;
     private int color; // BbGgRr
-    private SVector position; // This is probably the place in the world the light is placed in the editor.
+    private SVector position = new SVector(); // This is probably the place in the world the light is placed in the editor.
     private SVector direction = new SVector(); // When this is AMBIENT, I think this is arbitrary. When this is parallel, it seems to be a 12bit normalized direction vector. When this is point it is unused.
     private int attribute0; // "falloff if point, umbra angle if spot."
     private int attribute1;
