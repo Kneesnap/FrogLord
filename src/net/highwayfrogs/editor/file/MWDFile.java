@@ -79,7 +79,9 @@ public class MWDFile extends GameObject {
             try {
                 file.load(new DataReader(new ArraySource(fileBytes)));
             } catch (Exception ex) {
-                throw new RuntimeException("Failed to load " + entry.getDisplayName() + ", " + entry.getLoadedId(), ex);
+                System.out.println("ERROR LOADING " + entry.getDisplayName() + "(" + entry.getLoadedId() + ")");
+                ex.printStackTrace();
+                // throw new RuntimeException("Failed to load " + entry.getDisplayName() + ", " + entry.getLoadedId(), ex);
             }
 
             files.add(file);

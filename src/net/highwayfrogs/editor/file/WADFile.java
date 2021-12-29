@@ -71,13 +71,18 @@ public class WADFile extends GameFile {
                     file = new VLOArchive();
                 } else if (fileType == MOFHolder.MOF_ID || fileType == 2) {
                     file = new MOFHolder(theme, lastCompleteMOF);
-                    //file = new DummyFile(data.length);
+                    if (data[0] == (byte) 'G') // Rolling Demo.
+                        file = new DummyFile(data.length);
                 } else if (fileType == PLTFile.FILE_TYPE) {
                     file = new PLTFile();
                 } else {
                     if (fileType == 0) {
                         getConfig().getResourceEntry(resourceId).setFilePath(getConfig().getResourceEntry(resourceId).getDisplayName() + "-UNK_TYPE" + fileType);
-                    } else if (fileType == 4 || fileType == 5 || fileType == 6) {
+                    } else if (fileType == 4) {
+                        getConfig().getResourceEntry(resourceId).setFilePath(getConfig().getResourceEntry(resourceId).getDisplayName() + "-QTREE");
+                    } else if (fileType == 5) {
+                        getConfig().getResourceEntry(resourceId).setFilePath(getConfig().getResourceEntry(resourceId).getDisplayName() + "-GRID");
+                    } else if (fileType == 6) {
                         getConfig().getResourceEntry(resourceId).setFilePath(getConfig().getResourceEntry(resourceId).getDisplayName() + "-MAP_RELATED" + fileType);
                     } else {
                         System.out.println("Unexpected WAD file-type: " + fileType + ".");
@@ -99,7 +104,9 @@ public class WADFile extends GameFile {
                         lastCompleteMOF = newHolder;
                 }
             } catch (Exception ex) {
-                throw new RuntimeException("Failed to load " + CURRENT_FILE_NAME + ".", ex);
+                System.out.println("Failed to load WAD File " + CURRENT_FILE_NAME + ". (" + resourceId + ")");
+                ex.printStackTrace();
+                //throw new RuntimeException("Failed to load " + CURRENT_FILE_NAME + ".", ex);
             }
         }
 

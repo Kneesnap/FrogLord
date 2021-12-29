@@ -393,6 +393,6 @@ public class MOFPart extends GameObject {
      */
     public boolean shouldHide() {
         return "GEN_FROG.XAR".equals(getParent().getFileEntry().getDisplayName()) && getPartID() == 15
-                || ("DAN".equals(getParent().getFileEntry().getDisplayName()) && (getPartID() > 14));
+                || ("DAN.XAR".equals(getParent().getFileEntry().getDisplayName()) && (getPartID() > 14));
     }
 }
