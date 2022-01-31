@@ -7,10 +7,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.sound.GameSound;
-import net.highwayfrogs.editor.file.sound.psx.PSXVBFile.PSXSound;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Reads a PSX vab header file.
@@ -30,9 +27,8 @@ public class PSXVHFile extends GameFile {
     private short attr1;
     private short attr2;
     private long reserved1;
-    private VABProgram[] programs = new VABProgram[128];
+    private final VABProgram[] programs = new VABProgram[128];
     private VABTone[] tones;
-    @Setter private transient PSXVBFile VB;
     private transient int[] loadedSampleAddresses;
 
     private static final int TONES_PER_PROGRAM = 16;
@@ -45,7 +41,7 @@ public class PSXVHFile extends GameFile {
     public void load(DataReader reader) {
         reader.verifyString(SIGNATURE);
         this.fileVersion = reader.readInt();
-        if (this.fileVersion != 7 && this.fileVersion != 6)
+        if (this.fileVersion != 7 && this.fileVersion != 6 && this.fileVersion != 5) // 5 is used by MediEvil.
             throw new RuntimeException("Unknown Vab Header Version: " + this.fileVersion + "!");
 
         this.vabBankId = reader.readInt();
@@ -78,8 +74,6 @@ public class PSXVHFile extends GameFile {
         this.loadedSampleAddresses = new int[256];
         for (int i = 0; i < this.loadedSampleAddresses.length; i++)
             this.loadedSampleAddresses[i] = (reader.readUnsignedShortAsInt() << 3);
-
-        this.loadedSampleAddresses = null;
     }
 
     @Override
@@ -107,13 +101,13 @@ public class PSXVHFile extends GameFile {
             tone.save(writer);
 
         // Write Sample Addresses.
-        for (GameSound sound : getVB().getAudioEntries())
-            writer.writeUnsignedShort(((PSXSound) sound).getAddressWrittenTo() >> 3);
+        //for (GameSound sound : getVB().getAudioEntries())
+        //    writer.writeUnsignedShort(((PSXSound) sound).getAddressWrittenTo() >> 3);
 
         // Write the final size.
-        int headerSize = writer.getIndex();
+        //int headerSize = writer.getIndex();
         writer.jumpTemp(sizeAddress);
-        writer.writeInt(headerSize + getVB().getSavedTotalSize());
+        //writer.writeInt(headerSize + getVB().getSavedTotalSize());
         writer.jumpReturn();
     }
 
@@ -124,8 +118,7 @@ public class PSXVHFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        Utils.verify(getVB() != null, "VB sound is null.");
-        return getVB().makeEditor(); // Build the editor for the right file.
+        return null;
     }
 
     @Getter

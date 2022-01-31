@@ -26,19 +26,17 @@ public class PSXVBFile extends AbstractVBFile<PSXVHFile> {
 
     @Override
     public void load(DataReader reader) {
-        if (this.cachedReader == null) {
-            this.cachedReader = reader;
-            return;
-        }
-
         int[] addresses = getHeader().getLoadedSampleAddresses();
         for (int i = 0; i < addresses.length; i++) {
-            int nextAddress = (addresses.length > i + 1 ? addresses[i + 1] : 0);
-            int audioSize = nextAddress > 0 ? nextAddress : reader.getSize() - reader.getIndex(); // Where the reading ends.
+            int audioSize = i >= addresses.length - 1 ? reader.getSize() - reader.getIndex() : addresses[i + 1]; // Where the reading ends.
             if (audioSize == 0)
                 break;
 
-            String name = getConfig().getSoundBank().getChildBank(Utils.stripExtension(getFileEntry().getDisplayName())).getName(i);
+            String name = String.valueOf(i);
+            String bankName = Utils.stripExtension(getFileEntry().getDisplayName());
+            if (getConfig().getSoundBank().getChildBank(bankName) != null)
+                name = getConfig().getSoundBank().getChildBank(bankName).getName(i);
+
             PSXSound newSound = new PSXSound(getConfig().getSoundBank().getNames().indexOf(name), audioSize);
             newSound.load(reader);
             getAudioEntries().add(newSound);

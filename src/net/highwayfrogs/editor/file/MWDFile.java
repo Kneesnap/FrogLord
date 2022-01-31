@@ -16,6 +16,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.AbstractVBFile;
 import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.sound.prototype.PrototypeVBFile;
+import net.highwayfrogs.editor.file.sound.psx.PSXVBFile;
+import net.highwayfrogs.editor.file.sound.psx.PSXVHFile;
 import net.highwayfrogs.editor.file.sound.retail.RetailPCVBFile;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -61,7 +63,7 @@ public class MWDFile extends GameObject {
     public void load(DataReader reader) {
         reader.verifyString(MARKER);
 
-        VHFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
+        GameFile lastVH = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
 
         for (FileEntry entry : wadIndexTable.getEntries()) {
             if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
@@ -74,18 +76,28 @@ public class MWDFile extends GameObject {
             if (entry.isCompressed())
                 fileBytes = PP20Unpacker.unpackData(fileBytes);
 
-            GameFile file = loadFile(fileBytes, entry, lastVB);
+            GameFile file = loadFile(fileBytes, entry, lastVH);
 
             try {
                 file.load(new DataReader(new ArraySource(fileBytes)));
             } catch (Exception ex) {
                 System.out.println("ERROR LOADING " + entry.getDisplayName() + "(" + entry.getLoadedId() + ")");
                 ex.printStackTrace();
+
+                try {
+                    Thread.sleep(500); // Ensure the stack trace shows with the error message.
+                } catch (Throwable th) {
+
+                }
                 // throw new RuntimeException("Failed to load " + entry.getDisplayName() + ", " + entry.getLoadedId(), ex);
             }
 
             files.add(file);
-            lastVB = file instanceof VHFile ? (VHFile) file : null;
+            if (file instanceof VHFile || file instanceof PSXVHFile) {
+                lastVH = file;
+            } else if (file instanceof AbstractVBFile) {
+                lastVH = null;
+            }
         }
     }
 
@@ -123,7 +135,7 @@ public class MWDFile extends GameObject {
      * @return loadedFile
      */
     @SuppressWarnings("unchecked")
-    public <T extends GameFile> T loadFile(byte[] fileBytes, FileEntry entry, VHFile lastVH) {
+    public <T extends GameFile> T loadFile(byte[] fileBytes, FileEntry entry, GameFile lastVH) {
         // Turn the byte data into the appropriate game-file.
         GameFile file;
 
@@ -156,9 +168,10 @@ public class MWDFile extends GameObject {
             file = new PLTFile();
         } else if (entry.getSpoofedTypeId() == VHFile.TYPE_ID) { // PSX support is disabled until it is complete.
             if (lastVH == null) {
-                file = new VHFile();
+                file = entry.getConfig().isPSX() ? new PSXVHFile() : new VHFile();
             } else {
-                AbstractVBFile vb = getConfig().isPrototype() ? new PrototypeVBFile() : new RetailPCVBFile();
+                AbstractVBFile vb = entry.getConfig().isPSX() ? new PSXVBFile()
+                        : (getConfig().isPrototype() ? new PrototypeVBFile() : new RetailPCVBFile());
                 file = vb;
                 vb.setHeader(lastVH);
             }
