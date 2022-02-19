@@ -349,14 +349,23 @@ public class MWDFile extends GameObject {
                 if (testImage.getTextureId() == textureId)
                     return testImage;
 
-        // Search wad files for any vlos.
-        for (WADFile wadFile : getAllFiles(WADFile.class))
-            for (WADEntry entry : wadFile.getFiles())
-                if (entry.getFile() instanceof VLOArchive)
-                    for (GameImage testImage : ((VLOArchive) entry.getFile()).getImages())
-                        if (testImage.getTextureId() == textureId)
-                            return testImage;
         return null;
+    }
+
+    /**
+     * Gets an image by the given texture ID.
+     * @param textureId The texture ID to get.
+     * @return gameImage
+     */
+    public List<GameImage> getImagesByTextureId(int textureId) {
+        List<GameImage> results = new ArrayList<>();
+
+        for (VLOArchive vlo : getAllFiles(VLOArchive.class))
+            for (GameImage testImage : vlo.getImages())
+                if (testImage.getTextureId() == textureId)
+                    results.add(testImage);
+
+        return results;
     }
 
     /**
