@@ -48,24 +48,24 @@ public class FroggerEXEInfo extends Config {
     private MWDFile MWD;
     private MWIFile MWI;
     private ThemeBook[] themeLibrary;
-    private List<MapBook> mapLibrary = new ArrayList<>();
-    private Map<FileEntry, List<Short>> remapTable = new HashMap<>();
-    private List<MusicTrack> musicTracks = new ArrayList<>();
-    private List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
-    private List<LevelInfo> raceLevelInfo = new ArrayList<>();
-    private List<LevelInfo> allLevelInfo = new ArrayList<>();
-    private Map<MAPLevel, LevelInfo> levelInfoMap = new HashMap<>();
-    private List<DemoTableEntry> demoTableEntries = new ArrayList<>();
-    private List<Long> bmpTexturePointers = new ArrayList<>();
-    private List<FormEntry> fullFormBook = new ArrayList<>();
-    private List<FroggerScript> scripts = new ArrayList<>();
-    private short[] cosEntries = new short[ACOSTABLE_ENTRIES];
-    private short[] sinEntries = new short[ACOSTABLE_ENTRIES];
+    private final List<MapBook> mapLibrary = new ArrayList<>();
+    private final Map<FileEntry, List<Short>> remapTable = new HashMap<>();
+    private final List<MusicTrack> musicTracks = new ArrayList<>();
+    private final List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
+    private final List<LevelInfo> raceLevelInfo = new ArrayList<>();
+    private final List<LevelInfo> allLevelInfo = new ArrayList<>();
+    private final Map<MAPLevel, LevelInfo> levelInfoMap = new HashMap<>();
+    private final List<DemoTableEntry> demoTableEntries = new ArrayList<>();
+    private final List<Long> bmpTexturePointers = new ArrayList<>();
+    private final List<FormEntry> fullFormBook = new ArrayList<>();
+    private final List<FroggerScript> scripts = new ArrayList<>();
+    private final short[] cosEntries = new short[ACOSTABLE_ENTRIES];
+    private final short[] sinEntries = new short[ACOSTABLE_ENTRIES];
     private PickupData[] pickupData;
-    private String internalName;
+    private final String internalName;
     private boolean hasConfigIdentifier;
-    private Map<MAPLevel, Image> levelImageMap = new HashMap<>();
-    private Map<MAPTheme, FormEntry[]> allowedForms = new HashMap<>();
+    private final Map<MAPLevel, Image> levelImageMap = new HashMap<>();
+    private final Map<MAPTheme, FormEntry[]> allowedForms = new HashMap<>();
 
 
     private String name;
@@ -92,8 +92,8 @@ public class FroggerEXEInfo extends Config {
 
     private DataReader reader;
     private byte[] exeBytes;
-    private File folder;
-    private File inputFile;
+    private final File folder;
+    private final File inputFile;
     private List<String> fallbackFileNames;
 
     private static final int ACOSTABLE_ENTRIES = 4096;
@@ -103,7 +103,7 @@ public class FroggerEXEInfo extends Config {
 
     private static final String CHILD_RESTORE_MAP_BOOK = "MapBookRestore";
     private static final String CHILD_RESTORE_THEME_BOOK = "ThemeBookRestore";
-    private static final String CHILD_IMAGE_NAMES = "ImageNames";
+    public static final String CHILD_IMAGE_NAMES = "ImageNames";
     private static final String CHILD_MOF_FORCE_VLO = "ForceVLO";
 
     public FroggerEXEInfo(File inputExe, InputStream inputStream, String internalName, boolean hasConfigIdentifier) {
@@ -751,26 +751,30 @@ public class FroggerEXEInfo extends Config {
         vramCWriter.write(Constants.NEWLINE);
         vramHWriter.write(Constants.NEWLINE);
         for (String imageName : imageNames) {
+            if (imageName == null)
+                continue;
             vramCWriter.write("MR_TEXTURE " + imageName + " = {0};" + Constants.NEWLINE);
             vramHWriter.write("extern MR_TEXTURE " + imageName + ";" + Constants.NEWLINE);
         }
 
         // Unsure where this goes, or where to read it from.
-        vramCWriter.write(Constants.NEWLINE);
-        vramHWriter.write(Constants.NEWLINE);
-        vramCWriter.write("MR_USHORT txl_sky_land[] = {");
+        if (getMWD().getSkyLand().getSkyLandTextures() != null && getMWD().getSkyLand().getSkyLandTextures().length > 0) {
+            vramCWriter.write(Constants.NEWLINE);
+            vramHWriter.write(Constants.NEWLINE);
+            vramCWriter.write("MR_USHORT txl_sky_land[] = {");
 
-        short[] skyTxlData = getMWD().getSkyLand().getSkyLandTextures();
-        if (skyTxlData != null) {
-            for (int i = 0; i < skyTxlData.length; i++) {
-                if (i > 0)
-                    vramCWriter.write(", ");
-                vramCWriter.write(String.valueOf(skyTxlData[i]));
+            short[] skyTxlData = getMWD().getSkyLand().getSkyLandTextures();
+            if (skyTxlData != null) {
+                for (int i = 0; i < skyTxlData.length; i++) {
+                    if (i > 0)
+                        vramCWriter.write(", ");
+                    vramCWriter.write(String.valueOf(skyTxlData[i]));
+                }
             }
-        }
 
-        vramCWriter.write("};" + Constants.NEWLINE);
-        vramHWriter.write("extern MR_USHORT txl_sky_land[];" + Constants.NEWLINE);
+            vramCWriter.write("};" + Constants.NEWLINE);
+            vramHWriter.write("extern MR_USHORT txl_sky_land[];" + Constants.NEWLINE);
+        }
 
         vramHWriter.write("#endif" + Constants.NEWLINE);
     }

@@ -229,13 +229,16 @@ public class MainController implements Initializable {
             }
 
             int texId = Integer.parseInt(str);
-            GameImage image = getMwdFile().getImageByTextureId(texId);
-            if (image == null) {
+            List<GameImage> images = getMwdFile().getImagesByTextureId(texId);
+            if (images.isEmpty()) {
                 Utils.makePopUp("Could not find an image with the id " + texId + ".", AlertType.WARNING);
                 return;
             }
 
-            System.out.println("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + Utils.stripExtension(image.getParent().getFileEntry().getDisplayName()) + ".");
+            for (GameImage image : images)
+                System.out.println("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + Utils.stripExtension(image.getParent().getFileEntry().getDisplayName()) + ".");
+
+            GameImage image = images.get(0);
             openEditor(this.currentFilesList, image.getParent());
             ((VLOController) getCurrentController()).selectImage(image, true);
         });
@@ -339,7 +342,7 @@ public class MainController implements Initializable {
 
     @AllArgsConstructor
     private static class AttachmentListCell extends ListCell<GameFile> {
-        private MWDFile mwdFile;
+        private final MWDFile mwdFile;
 
         @Override
         public void updateItem(GameFile file, boolean empty) {

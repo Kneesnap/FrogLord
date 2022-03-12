@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.Constants;
 
 /**
  * Represents types of MR_LIGHT.
+ * Based on the lighting options Maya had https://www.expertrating.com/courseware/mayacourse/MAYA-Cameras-Lighting-2.asp
+ * Frogger was built with Maya.
  * Created by Kneesnap on 1/20/2019.
  */
 @Getter
@@ -14,9 +16,9 @@ public enum APILightType {
     AMBIENT(Constants.BIT_FLAG_0), // Bumps up ambient color. viewport back color is increased by color value.
     PARALLEL(Constants.BIT_FLAG_1), // Rebuilds light and color matrices.
     POINT(Constants.BIT_FLAG_2), // Rebuilds color matrix.
-    UNKNOWN(Constants.BIT_FLAG_3); // This does not seem to be supported by the code.
+    SPOT(Constants.BIT_FLAG_3); // This does not seem to be supported by the code, it seems to be baked when the map is exported. It might be spot, it might be area, not sure.
 
-    private int flag;
+    private final int flag;
 
     /**
      * Gets the APILightType by its number.

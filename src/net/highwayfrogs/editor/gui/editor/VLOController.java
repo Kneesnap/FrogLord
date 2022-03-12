@@ -12,6 +12,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.WADFile;
+import net.highwayfrogs.editor.file.config.Config;
+import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -47,8 +49,8 @@ public class VLOController extends EditorController<VLOArchive> {
     @Getter private GameImage selectedImage;
     private WADFile parentWad;
     private double defaultEditorMaxHeight;
-    private Map<Integer, CheckBox> flagCheckBoxMap = new HashMap<>();
-    private ImageFilterSettings imageFilterSettings = new ImageFilterSettings(ImageState.EXPORT);
+    private final Map<Integer, CheckBox> flagCheckBoxMap = new HashMap<>();
+    private final ImageFilterSettings imageFilterSettings = new ImageFilterSettings(ImageState.EXPORT);
 
     private static final int SCALE_DIMENSION = 256;
 
@@ -57,8 +59,22 @@ public class VLOController extends EditorController<VLOArchive> {
         super.loadFile(vlo);
 
         imageList.setItems(FXCollections.observableArrayList(vlo.getImages()));
-        imageList.setCellFactory(param -> new AbstractAttachmentCell<>((image, index) -> image == null ? null
-                : index + ": [" + image.getFullWidth() + ", " + image.getFullHeight() + "] (Tex ID: " + image.getTextureId() + ")"));
+        imageList.setCellFactory(param -> new AbstractAttachmentCell<>((image, index) -> {
+            if (image == null)
+                return null;
+
+            String imageName = "";
+
+            Config config = getFile().getMWD().getConfig();
+            if (config.hasChild(FroggerEXEInfo.CHILD_IMAGE_NAMES)) {
+                Config childSection = config.getChild(FroggerEXEInfo.CHILD_IMAGE_NAMES);
+                String imageKey = String.valueOf(image.getTextureId());
+                if (childSection.has(imageKey))
+                    imageName = childSection.getString(imageKey);
+            }
+
+            return index + ": " + imageName + " [" + image.getFullWidth() + ", " + image.getFullHeight() + "] (ID: " + image.getTextureId() + ")";
+        }));
 
         imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> selectImage(newValue, false));
 

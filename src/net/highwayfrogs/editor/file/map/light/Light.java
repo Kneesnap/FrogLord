@@ -17,11 +17,17 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 @Setter
 public class Light extends GameObject {
+    private short priority; // Always 131 for PARALLEL, 4 or 128 = UNKNOWN (4 is seen in SWP2.MAP), 130 = POINT, 255 = AMBIENT
+    private int parentId;
     private APILightType apiType = APILightType.AMBIENT;
     private int color; // BbGgRr
-    private SVector direction = new SVector();
+    private SVector position = new SVector(); // This is probably the place in the world the light is placed in the editor.
+    private SVector direction = new SVector(); // When this is AMBIENT, I think this is arbitrary. When this is parallel, it seems to be a 12bit normalized direction vector. When this is point it is unused.
+    private int attribute0; // "falloff if point, umbra angle if spot."
+    private int attribute1;
 
-    public Light() {}
+    public Light() {
+    }
 
     public Light(APILightType apiLightType) {
         this.apiType = apiLightType;
@@ -33,31 +39,31 @@ public class Light extends GameObject {
         if (lightType != 1)
             throw new RuntimeException("Light type was not STATIC, instead it was " + lightType + ".");
 
-        reader.skipByte(); // Unused 'priority'.
-        reader.skipShort(); // Unused 'parentId'.
+        this.priority = reader.readUnsignedByteAsShort();
+        this.parentId = reader.readUnsignedShortAsInt();
         this.apiType = APILightType.getType(reader.readUnsignedByteAsShort());
-        reader.skipBytes(3); // Padding
+        reader.skipBytes(3); // Padding (Always zero)
         this.color = reader.readInt();
-        SVector.readWithPadding(reader); // Unused position.
+        this.position = SVector.readWithPadding(reader);
         this.direction = SVector.readWithPadding(reader);
-        reader.skipShort(); // Unused 'attribute0'.
-        reader.skipShort(); // Unused 'attribute1'.
-        reader.skipPointer(); // Frame pointer. Only used at run-time.
-        reader.skipPointer(); // Object pointer. Only used at run-time.
+        this.attribute0 = reader.readUnsignedShortAsInt();
+        this.attribute1 = reader.readUnsignedShortAsInt();
+        reader.skipPointer(); // Frame pointer. Only has a value at run-time.
+        reader.skipPointer(); // Object pointer. Only has a value at run-time.
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedByte((short) 1); // Light type. Always STATIC.
-        writer.writeUnsignedByte((short) 0); // Unused 'priority'.
-        writer.writeUnsignedShort(0); // Unused 'parentId'.
+        writer.writeUnsignedByte(this.priority);
+        writer.writeUnsignedShort(this.parentId);
         writer.writeUnsignedByte((short) this.apiType.getFlag());
         writer.writeNull(3);
         writer.writeInt(this.color);
-        SVector.EMPTY.saveWithPadding(writer); // Unused 'position'.
+        this.position.saveWithPadding(writer);
         this.direction.saveWithPadding(writer);
-        writer.writeUnsignedShort((short) 0); // Unused 'attribute0'.
-        writer.writeUnsignedShort((short) 0); // Unused 'attribute1'.
+        writer.writeUnsignedShort(this.attribute0);
+        writer.writeUnsignedShort(this.attribute1);
         writer.writeNullPointer();
         writer.writeNullPointer();
     }
@@ -74,16 +80,18 @@ public class Light extends GameObject {
             lightManager.updateEntityLighting();
         });
 
-        if (getApiType() == APILightType.POINT || getApiType() == APILightType.PARALLEL)
-            editor.addFloatVector(getApiType() == APILightType.POINT ? "Position:" : "Direction:", this.direction,
-                    lightManager::updateEntityLighting, lightManager.getController());
-    }
+        editor.addShortField("Priority:", this.priority, newPriority -> this.priority = newPriority, newPriority -> newPriority >= 0 && newPriority <= 0xFF);
 
-    /**
-     * It appears UNKNOWN API light-types are pointless.
-     * @return isWorthKeeping
-     */
-    public boolean isWorthKeeping() {
-        return getApiType() != APILightType.UNKNOWN;
+        editor.addIntegerField("Parent ID:", this.parentId, newId -> this.parentId = newId, newId -> newId >= 0 && newId <= 0xFFFF);
+
+        editor.addFloatVector("Position", this.position,
+                lightManager::updateEntityLighting, lightManager.getController());
+
+        editor.addFloatVector("Direction", this.direction,
+                lightManager::updateEntityLighting, lightManager.getController(), 12);
+
+        editor.addIntegerField("Attribute 0:", this.attribute0, newValue -> this.attribute0 = newValue, newValue -> newValue >= 0 && newValue <= 0xFFFF);
+        editor.addIntegerField("Attribute 1:", this.attribute1, newValue -> this.attribute1 = newValue, newValue -> newValue >= 0 && newValue <= 0xFFFF);
+
     }
 }

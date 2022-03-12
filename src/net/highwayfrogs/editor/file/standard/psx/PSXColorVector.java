@@ -132,6 +132,14 @@ public class PSXColorVector extends GameObject {
     }
 
     /**
+     * Turn this color into an RGB integer.
+     * @return rgbValue
+     */
+    public int toFullRGB() {
+        return Utils.toRGB((byte) (getRed() * 2), (byte) (getGreen() * 2), (byte) (getBlue() * 2));
+    }
+
+    /**
      * Read color data from an integer value.
      * @param rgbValue The value to read from.
      */
@@ -149,6 +157,20 @@ public class PSXColorVector extends GameObject {
     public static PSXColorVector makeColorFromRGB(int rgbValue) {
         PSXColorVector vec = new PSXColorVector();
         vec.fromRGB(rgbValue);
+        return vec;
+    }
+
+    /**
+     * Create a PSXColorVector from an RGB value.
+     * @param rgbValue The rgb color value.
+     * @return colorVector
+     */
+    public static PSXColorVector makeColorFromFullRGB(int rgbValue) {
+        PSXColorVector vec = new PSXColorVector();
+        vec.fromRGB(rgbValue);
+        vec.red /= 2;
+        vec.green /= 2;
+        vec.blue /= 2;
         return vec;
     }
 
