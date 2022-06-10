@@ -69,6 +69,8 @@
                                   text="Find Texture"/>
                         <MenuItem fx:id="patchMenu" mnemonicParsing="false" onAction="#actionOpenPatchMenu"
                                   text="Patches"/>
+                        <MenuItem mnemonicParsing="false" onAction="#actionHashPlayground"
+                                  text="Hash Playground"/>
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">

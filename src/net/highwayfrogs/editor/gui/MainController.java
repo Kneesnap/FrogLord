@@ -29,6 +29,7 @@ import net.highwayfrogs.editor.gui.editor.*;
 import net.highwayfrogs.editor.gui.extra.DemoTableEditorController;
 import net.highwayfrogs.editor.gui.extra.FormEntryController;
 import net.highwayfrogs.editor.gui.extra.LevelInfoController;
+import net.highwayfrogs.editor.gui.extra.hash.HashPlaygroundController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -218,6 +219,11 @@ public class MainController implements Initializable {
     @FXML
     private void actionOpenPatchMenu(ActionEvent evt) {
         PatchController.openMenu();
+    }
+
+    @FXML
+    private void actionHashPlayground(ActionEvent evt) {
+        HashPlaygroundController.openEditor();
     }
 
     @FXML
