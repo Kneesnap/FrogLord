@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Medieval Wad Index: Holds information about the MWD file.
- * Located in frogger.exe
+ * MediEvil Wad Index: Holds information about the MWD file.
+ * Located in game executable.
  * This should always export exactly the same size as the original MWI, as this gets pasted directly in the executable.
  * Created by Kneesnap on 8/10/2018.
  */
@@ -37,7 +37,9 @@ public class MWIFile extends GameObject {
         int loadingId = 0;
         while (reader.hasMore() && (nameStartAddress == null || nameStartAddress.get() > reader.getIndex())) { // Read entries until we reach file-names.
             int nameOffset = reader.readInt();
-            FileEntry entry = new FileEntry(getConfig(), loadingId++);
+
+            FroggerEXEInfo exe = getConfig();
+            FileEntry entry = new FileEntry(exe, loadingId++);
 
             if (nameOffset != CODE_NO_FILE_NAME) { // If the file name is present, read the file name. (File-names are present on the PC version, but not the PSX version.)
                 if (nameStartAddress == null) // Use the first name address as the address which starts the name table.
@@ -55,6 +57,11 @@ public class MWIFile extends GameObject {
             reader.skipInt(); // Should always be 0. This is used by frogger.exe to locate where in RAM the file is depacked at.
             entry.setPackedSize(reader.readInt());
             entry.unpackedSize = reader.readInt(); // Set the raw value, not through the setter.
+
+            if (exe.isPostMediEvil()) { // Discard checksum from post-MediEvil MWIs.
+                reader.skipInt();
+            }
+
             getEntries().add(entry);
         }
 

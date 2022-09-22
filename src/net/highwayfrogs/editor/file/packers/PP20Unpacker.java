@@ -29,7 +29,6 @@ public class PP20Unpacker {
      * @return unpackedData
      */
     public static byte[] unpackData(byte[] data) {
-        Utils.verify(isCompressed(data), "Not PowerPacker (PP20) compressed data!");
         int[] offsetBitLengths = getOffsetBitLengths(data);
         int skip = data[data.length - 1] & 0xFF; // Last byte contains the amount of bits to trash.
         byte[] out = new byte[getDecodedDataSize(data)];

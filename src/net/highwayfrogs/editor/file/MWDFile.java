@@ -33,7 +33,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * MWAD File Format: Medieval WAD Archive.
+ * MWAD File Format: MediEvil WAD Archive.
  * This represents a loaded MWAD file.
  * Created by Kneesnap on 8/10/2018.
  */
@@ -62,17 +62,23 @@ public class MWDFile extends GameObject {
         reader.verifyString(MARKER);
 
         VHFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
+        int index = 1;
 
         for (FileEntry entry : wadIndexTable.getEntries()) {
             if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
                 continue; // This file is part of a WAD archive, and isn't a file entry in the MWD, so we can't load it here.
 
             reader.setIndex(entry.getArchiveOffset());
+            System.out.println("Entry #" + index + " at offset: " + entry.getArchiveOffset() + " (dec) of size " + entry.getArchiveSize() + " (dec).");
 
-            // Read the file. Decompress if needed.
+            // Read the file. Decompress if it is PP20 compression.
             byte[] fileBytes = reader.readBytes(entry.getArchiveSize());
-            if (entry.isCompressed())
+            if (entry.isCompressed() && PP20Unpacker.isCompressed(fileBytes)) {
                 fileBytes = PP20Unpacker.unpackData(fileBytes);
+            }
+            else if (entry.isCompressed()) {
+                System.out.println("ERROR: File is compressed, but not using PowerPacker (PP20) compression.");
+            }
 
             GameFile file = loadFile(fileBytes, entry, lastVB);
 
@@ -86,6 +92,7 @@ public class MWDFile extends GameObject {
 
             files.add(file);
             lastVB = file instanceof VHFile ? (VHFile) file : null;
+            index++;
         }
     }
 

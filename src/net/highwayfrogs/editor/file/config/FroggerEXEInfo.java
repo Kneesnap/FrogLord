@@ -83,6 +83,7 @@ public class FroggerEXEInfo extends Config {
     private int skyLandTextureAddress;
     private boolean prototype;
     private boolean demo;
+    private boolean postMediEvil; // MWIs after MediEvil have a checksum.
     private TargetPlatform platform;
     private NameBank soundBank;
     private NameBank animationBank;
@@ -164,6 +165,7 @@ public class FroggerEXEInfo extends Config {
         this.platform = getEnum("platform", TargetPlatform.class);
         this.MWIOffset = getInt("mwiOffset");
         this.MWILength = getInt("mwiLength");
+        this.postMediEvil = getBoolean("postMediEvil");
         this.themeBookAddress = getInt("themeBook");
         this.mapBookAddress = getInt("mapBook");
         this.demoTableAddress = getInt("demoTable", -1);
