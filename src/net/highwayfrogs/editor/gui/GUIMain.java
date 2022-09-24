@@ -149,14 +149,14 @@ public class GUIMain extends Application {
         boolean isLoadingAgain = (EXE_CONFIG != null); // Is this loading a second time? Ie is there already a loaded game?
 
         // If this isn't a debug setup, prompt the user to select the files to load.
-        File mwdFile = Utils.promptFileOpen("Please select a Frogger MWAD", "Millenium WAD", "MWD");
+        File mwdFile = Utils.promptFileOpen("Please select a Millennium WAD", "Millennium WAD", "MWD");
         if (mwdFile == null) {
             if (!isLoadingAgain)
                 Platform.exit(); // No file given. Shutdown if there is nothing loaded already. Otherwise, keep the last data active.
             return;
         }
 
-        File exeFile = Utils.promptFileOpenExtensions("Please select a Frogger executable", "Frogger Executable", "EXE", "dat", "04", "06", "99");
+        File exeFile = Utils.promptFileOpenExtensions("Please select a Millennium executable", "Millennium Executable", "EXE", "dat", "04", "06", "26", "64", "65", "66", "99");
         if (exeFile == null) {
             if (!isLoadingAgain)
                 Platform.exit(); // No file given. Shutdown if there is nothing loaded already. Otherwise, keep the last data active.
