@@ -82,6 +82,7 @@ public class MOFController extends EditorController<MOFHolder> {
     private MOFUIController uiController;
     private PerspectiveCamera camera;
     private Scene mofScene;
+    private SubScene subScene3D;
     private MOFMesh mofMesh;
     private Group root3D;
     private Rotate rotX;
@@ -143,7 +144,7 @@ public class MOFController extends EditorController<MOFHolder> {
 
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group(this.camera, meshView);
-        SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - uiController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
+        subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - uiController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
         camera.setFarClip(MapUIController.MAP_VIEW_FAR_CLIP);
         subScene3D.setFill(Color.GRAY);
         subScene3D.setCamera(camera);
@@ -690,6 +691,7 @@ public class MOFController extends EditorController<MOFHolder> {
 
         @FXML private Label modelName;
         @FXML private ComboBox<Integer> animationSelector;
+        @FXML private ColorPicker colorPicker;
         @FXML private Button playButton;
         @FXML private CheckBox repeatCheckbox;
         @FXML private CheckBox textureAnimationCheckbox;
@@ -736,6 +738,7 @@ public class MOFController extends EditorController<MOFHolder> {
 
         @Override
         public void initialize(URL location, ResourceBundle resources) {
+            this.colorPicker.setOnAction(e -> getController().subScene3D.setFill(colorPicker.getValue()));
             this.brightModeCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateLighting(newValue)));
             this.viewHilitesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateHiliteBoxes(newValue)));
             this.viewCollprimCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateCollprimBoxes(newValue)));
