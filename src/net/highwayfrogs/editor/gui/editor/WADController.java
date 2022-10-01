@@ -52,6 +52,14 @@ public class WADController extends EditorController<WADFile> {
             this.updateEntry();
         });
 
+        entryList.setOnMouseClicked(click -> {
+            if (click.getClickCount() == 2) {
+                this.selectedEntry = entryList.getSelectionModel().getSelectedItem();
+                this.updateEntry();
+                this.editFile();
+            }
+        });
+
         entryList.getSelectionModel().select(0);
     }
 
@@ -163,6 +171,10 @@ public class WADController extends EditorController<WADFile> {
 
     @FXML
     private void editSelectedFile(ActionEvent event) {
+        this.editFile();
+    }
+
+    private void editFile() {
         selectedEntry.getFile().handleWadEdit(getFile());
     }
 

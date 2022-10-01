@@ -170,10 +170,18 @@ public class MOFHolder extends GameFile {
             return;
         }
 
-        getMWD().promptVLOSelection(getTheme(), vlo -> {
-            setVloFile(vlo);
+        // Just grab the first VLO.
+        try {
+            setVloFile(getMWD().getVLO());
             MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
-        }, false);
+        }
+        // Guess that was a bad idea, let's just show the VLO selection prompt.
+        catch(Exception e) {
+            getMWD().promptVLOSelection(getTheme(), vlo -> {
+                setVloFile(vlo);
+                MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
+            }, false);
+        }
     }
 
     /**

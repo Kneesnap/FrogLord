@@ -227,6 +227,19 @@ public class MWDFile extends GameObject {
     }
 
     /**
+     * Grab a VLO.
+     * @return The VLO.
+     */
+    public VLOArchive getVLO() {
+        List<VLOArchive> allVLOs = getFiles().stream()
+                .filter(VLOArchive.class::isInstance)
+                .map(VLOArchive.class::cast)
+                .collect(Collectors.toList());
+
+        return allVLOs.get(0);
+    }
+
+    /**
      * Get the VLO for a given map theme.
      * @param theme     The theme to get it for. Can be null, will prompt user then.
      * @param handler   The handler for when the VLO is determined.
