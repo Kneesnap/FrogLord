@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Getter
 public class WADFile extends GameFile {
-    private List<WADEntry> files = new ArrayList<>();
+    private final List<WADEntry> files = new ArrayList<>();
     private MAPTheme theme;
 
     private static final Image ICON = loadIcon("packed");
@@ -69,8 +69,11 @@ public class WADFile extends GameFile {
                     file = new VLOArchive();
                 } else if (fileType == MOFHolder.MOF_ID || fileType == MOFHolder.MAP_MOF_ID) {
                     file = new MOFHolder(theme, lastCompleteMOF);
+                } else if (fileType == DemoFile.TYPE_ID) {
+                    file = new DemoFile();
                 } else {
-                    throw new RuntimeException("Unexpected WAD file-type: " + fileType + ".");
+                    file = new DummyFile(data.length);
+                    System.out.println("File '" + CURRENT_FILE_NAME + "' was of an unknown file type.");
                 }
             }
 
@@ -87,7 +90,8 @@ public class WADFile extends GameFile {
                         lastCompleteMOF = newHolder;
                 }
             } catch (Exception ex) {
-                throw new RuntimeException("Failed to load " + CURRENT_FILE_NAME + ".", ex);
+                System.out.println("Failed to load " + CURRENT_FILE_NAME + ".");
+                ex.printStackTrace();
             }
         }
 
@@ -164,11 +168,11 @@ public class WADFile extends GameFile {
     @Getter
     @AllArgsConstructor
     public static class WADEntry {
-        private int resourceId;
-        private int fileType;
-        private boolean compressed;
+        private final int resourceId;
+        private final int fileType;
+        private final boolean compressed;
         private GameFile file;
-        private MWIFile mwiFile;
+        private final MWIFile mwiFile;
 
         /**
          * Get the FileEntry for this WAD Entry.

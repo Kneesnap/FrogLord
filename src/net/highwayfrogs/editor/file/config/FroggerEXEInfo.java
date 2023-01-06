@@ -29,6 +29,7 @@ import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -66,9 +67,11 @@ public class FroggerEXEInfo extends Config {
     private boolean hasConfigIdentifier;
     private final Map<MAPLevel, Image> levelImageMap = new HashMap<>();
     private final Map<MAPTheme, FormEntry[]> allowedForms = new HashMap<>();
+    private final List<Short> islandRemap = new ArrayList<>();
 
 
     private String name;
+    private int build;
     private long ramPointerOffset;
     private int MWIOffset;
     private int MWILength;
@@ -159,17 +162,18 @@ public class FroggerEXEInfo extends Config {
 
     private void readConfig() {
         this.name = getString(FIELD_NAME);
+        this.build = getInt("build", -1);
         this.demo = getBoolean("demo");
         this.prototype = getBoolean("prototype");
         this.platform = getEnum("platform", TargetPlatform.class);
         this.MWIOffset = getInt("mwiOffset");
         this.MWILength = getInt("mwiLength");
-        this.themeBookAddress = getInt("themeBook");
-        this.mapBookAddress = getInt("mapBook");
+        this.themeBookAddress = getInt("themeBook", -1);
+        this.mapBookAddress = getInt("mapBook", -1);
         this.demoTableAddress = getInt("demoTable", -1);
         this.ramPointerOffset = getLong("ramOffset"); // If I have an offset in a file, adding this number will give its pointer.
         this.arcadeLevelAddress = getInt("arcadeLevelAddress", 0);
-        this.musicAddress = getInt("musicAddress"); // Music is generally always the same data, so you can find it with a search.
+        this.musicAddress = getInt("musicAddress", -1); // Music is generally always the same data, so you can find it with a search.
         this.bmpPointerAddress = getInt("bmpPointerAddress", 0); // Gives output to assist in finding.
         this.pickupDataAddress = getInt("pickupData", 0); // Pointer to Pickup_data[] in ent_gen. If this is not set, bugs will not have textures in the viewer. On PSX, search for 63 63 63 00 then after this entries image pointers, there's Pickup_data.
         this.scriptArrayAddress = getInt("scripts", 0); // Get this by searching for "07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1e 00 00 00 03 00 00 00 01 00 00 00 07 00 00 00". Search for the pointer that points to this (Don't forget to include ramOffset)
@@ -236,28 +240,27 @@ public class FroggerEXEInfo extends Config {
     private void readThemeLibrary() {
         themeLibrary = new ThemeBook[MAPTheme.values().length];
 
-        DataReader reader = getReader();
-        reader.setIndex(getThemeBookAddress());
+        if (getThemeBookAddress() >= 0) {
+            DataReader reader = getReader();
+            reader.setIndex(getThemeBookAddress());
 
-        for (int i = 0; i < themeLibrary.length; i++) {
-            ThemeBook book = TargetPlatform.makeNewThemeBook(this);
-            book.setTheme(MAPTheme.values()[i]);
-            book.load(reader);
-            themeLibrary[i] = book;
-            Constants.logExeInfo(book);
-        }
+            for (int i = 0; i < themeLibrary.length; i++) {
+                ThemeBook book = TargetPlatform.makeNewThemeBook(this);
+                book.setTheme(MAPTheme.values()[i]);
+                book.load(reader);
+                themeLibrary[i] = book;
+                Constants.logExeInfo(book);
+            }
 
-        if (!hasChild(CHILD_RESTORE_THEME_BOOK)) {
-            readFormLibrary();
-            return;
-        }
+            if (hasChild(CHILD_RESTORE_THEME_BOOK)) {
+                Config themeBookRestore = getChild(CHILD_RESTORE_THEME_BOOK);
 
-        Config themeBookRestore = getChild(CHILD_RESTORE_THEME_BOOK);
-
-        for (String key : themeBookRestore.keySet()) {
-            MAPTheme theme = MAPTheme.getTheme(key);
-            Utils.verify(theme != null, "Unknown theme: '%s'", key);
-            getThemeBook(theme).handleCorrection(themeBookRestore.getString(key));
+                for (String key : themeBookRestore.keySet()) {
+                    MAPTheme theme = MAPTheme.getTheme(key);
+                    Utils.verify(theme != null, "Unknown theme: '%s'", key);
+                    getThemeBook(theme).handleCorrection(themeBookRestore.getString(key));
+                }
+            }
         }
 
         readFormLibrary();
@@ -270,7 +273,7 @@ public class FroggerEXEInfo extends Config {
 
             ThemeBook lastBook = getThemeBook(lastTheme);
             ThemeBook currentBook = getThemeBook(currentTheme);
-            if (currentBook.getFormLibraryPointer() == 0)
+            if (currentBook == null || currentBook.getFormLibraryPointer() == 0)
                 continue;
 
             lastBook.loadFormLibrary(this, (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / FormEntry.BYTE_SIZE);
@@ -279,8 +282,10 @@ public class FroggerEXEInfo extends Config {
 
         // Load the last theme, which we use the number of names for to determine size.
         ThemeBook lastBook = getThemeBook(lastTheme);
-        int nameCount = getFormBank().getChildBank(lastTheme.name()).size();
-        lastBook.loadFormLibrary(this, nameCount);
+        if (lastBook != null) {
+            int nameCount = getFormBank().getChildBank(lastTheme.name()).size();
+            lastBook.loadFormLibrary(this, nameCount);
+        }
     }
 
     private void readDemoTable() {
@@ -323,11 +328,13 @@ public class FroggerEXEInfo extends Config {
         reader.setIndex(getMapBookAddress());
 
         int themeAddress = getThemeBookAddress();
-        while (themeAddress > reader.getIndex()) {
-            MapBook book = TargetPlatform.makeNewMapBook(this);
-            book.load(reader);
-            this.mapLibrary.add(book);
-            Constants.logExeInfo(book);
+        if (themeAddress >= 0) {
+            while (themeAddress > reader.getIndex()) {
+                MapBook book = TargetPlatform.makeNewMapBook(this);
+                book.load(reader);
+                this.mapLibrary.add(book);
+                Constants.logExeInfo(book);
+            }
         }
 
         if (!hasChild(CHILD_RESTORE_MAP_BOOK))
@@ -357,8 +364,13 @@ public class FroggerEXEInfo extends Config {
             getReader().jumpTemp((int) (address - getRamPointerOffset()));
             FroggerScript newScript = new FroggerScript();
             getScripts().add(newScript); // Adds before loading so getName() can be accessed.
-            newScript.load(getReader());
-            getReader().jumpReturn();
+            try {
+                newScript.load(getReader());
+            } catch (Throwable th) {
+                System.out.println("Failed to load script '" + getScriptBank().getName(i) + "'");
+            } finally {
+                getReader().jumpReturn();
+            }
         }
     }
 
@@ -367,6 +379,9 @@ public class FroggerEXEInfo extends Config {
     }
 
     private void readMusicData() {
+        if (getMusicAddress() < 0)
+            return;
+
         getReader().setIndex(getMusicAddress());
 
         byte readByte;
@@ -378,6 +393,7 @@ public class FroggerEXEInfo extends Config {
         if (getArcadeLevelAddress() == 0)
             return; // No level select is present.
 
+        GUIMain.EXE_CONFIG = this; // Fixes logging of the below things.
         getReader().setIndex(getArcadeLevelAddress());
         LevelInfo level = null;
         while (level == null || !level.isTerminator()) {
@@ -624,7 +640,11 @@ public class FroggerEXEInfo extends Config {
      * @return fileEntryName
      */
     public String getResourceName(int resourceId) {
-        return getResourceEntry(resourceId).getDisplayName();
+        FileEntry entry = getResourceEntry(resourceId);
+        if (entry == null)
+            return "NULL/" + resourceId;
+
+        return entry.getDisplayName();
     }
 
     /**
@@ -868,6 +888,14 @@ public class FroggerEXEInfo extends Config {
      */
     public boolean isRetail() {
         return !isDemo() && !isPrototype();
+    }
+
+    /**
+     * Tests if the build is at/before build 20.
+     * @return isBuildAtOrBeforeBuild20
+     */
+    public boolean isAtOrBeforeBuild20() {
+        return this.build > 0 && this.build <= 20;
     }
 
     /**

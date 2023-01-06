@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public class MWIFile extends GameObject {
-    private List<FileEntry> entries = new ArrayList<>();
+    private final List<FileEntry> entries = new ArrayList<>();
     private int fileSize;
 
     private static final int ENTRY_LENGTH = 32;
@@ -230,7 +230,7 @@ public class MWIFile extends GameObject {
          */
         public MapBook getMapBook() {
             for (MapBook book : getConfig().getMapLibrary())
-                if (book.isEntry(this))
+                if (book != null && book.isEntry(this))
                     return book;
             return null;
         }
@@ -241,7 +241,7 @@ public class MWIFile extends GameObject {
          */
         public ThemeBook getThemeBook() {
             for (ThemeBook book : getConfig().getThemeLibrary())
-                if (book.isEntry(this))
+                if (book != null && book.isEntry(this))
                     return book;
             return null;
         }

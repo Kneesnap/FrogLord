@@ -21,9 +21,9 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 @Getter
 public class MOFAnimation extends MOFBase {
-    private MOFAnimationModelSet modelSet;
-    private MOFFile staticMOF;
-    private MOFAnimCommonData commonData;
+    private final MOFAnimationModelSet modelSet;
+    private final MOFFile staticMOF;
+    private final MOFAnimCommonData commonData;
     @Setter private boolean startAtFrameZero = true;
     @Setter private TransformType transformType = TransformType.QUAT_BYTE;
 
@@ -44,7 +44,6 @@ public class MOFAnimation extends MOFBase {
     public void onLoad(DataReader reader, byte[] signature) {
         this.startAtFrameZero = (signature[0] == (byte) 0x31); // '1'
         this.transformType = TransformType.getType(signature[1]);
-        Utils.verify(isStartAtFrameZero(), "Animations which do not start at frame-zero are not currently supported.");
 
         int modelSetCount = reader.readUnsignedShortAsInt();
         int staticFileCount = reader.readUnsignedShortAsInt();
@@ -193,6 +192,6 @@ public class MOFAnimation extends MOFBase {
 
     @Override
     public String makeSignature() {
-        return (isStartAtFrameZero() ? "1" : "0") + (char) getTransformType().getByteValue() + "ax";
+        return (getConfig().isAtOrBeforeBuild20() ? "\0" : (isStartAtFrameZero() ? "1" : "0")) + (char) getTransformType().getByteValue() + "ax";
     }
 }

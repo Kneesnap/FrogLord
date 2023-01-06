@@ -14,7 +14,7 @@ import java.util.List;
  * Created by Kneesnap on 8/1/2019.
  */
 public class FroggerScript extends GameObject {
-    @Getter private List<ScriptCommand> commands = new ArrayList<>();
+    @Getter private final List<ScriptCommand> commands = new ArrayList<>();
     private int maxSize;
     public static final FroggerScript EMPTY_SCRIPT = new FroggerScript();
 

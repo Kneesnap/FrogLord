@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.sound.psx;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.AbstractVBFile;
 import net.highwayfrogs.editor.file.sound.GameSound;
@@ -38,8 +39,8 @@ public class PSXVBFile extends AbstractVBFile<PSXVHFile> {
             if (audioSize == 0)
                 break;
 
-            String name = getConfig().getSoundBank().getChildBank(Utils.stripExtension(getFileEntry().getDisplayName())).getName(i);
-            PSXSound newSound = new PSXSound(getConfig().getSoundBank().getNames().indexOf(name), audioSize);
+            NameBank bank = getConfig().getSoundBank().getChildBank(Utils.stripExtension(getFileEntry().getDisplayName()));
+            PSXSound newSound = new PSXSound(bank != null ? getConfig().getSoundBank().getNames().indexOf(bank.getName(i)) : -1, audioSize);
             newSound.load(reader);
             getAudioEntries().add(newSound);
         }

@@ -48,12 +48,20 @@ public class Form extends GameObject {
             return; // There is no form data.
         }
 
-        Utils.verify(dataCount == 1, "Invalid Form Data Count: " + dataCount); // The game only supports 1 form data even if it has a count for more.
+        //Utils.verify(dataCount == 1, "Invalid Form Data Count: " + dataCount); // The game only supports 1 form data in the retail build even if it has a count for more. It appears more than 1 was supported in build 20 though.
 
         reader.jumpTemp(reader.readInt()); // Form Data Pointer.
         this.data = new FormData(this);
         data.load(reader);
         reader.jumpReturn();
+
+        // TODO: Support this? This just reads the data, it doesn't actually store it.
+        for (int i = 1; i < dataCount; i++) {
+            reader.jumpTemp(reader.readInt());
+            FormData newData = new FormData(this);
+            newData.load(reader);
+            reader.jumpReturn();
+        }
     }
 
     @Override

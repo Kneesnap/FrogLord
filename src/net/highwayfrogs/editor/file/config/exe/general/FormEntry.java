@@ -121,8 +121,8 @@ public class FormEntry extends GameObject {
         int wadIndex = getId();
         if (getTheme() == MAPTheme.GENERAL) {
             wadIndex -= getTheme().getFormOffset();
-            if (getConfig().isPSX() || getConfig().isPrototype())
-                wadIndex++;
+            if ((getConfig().isPSX() || getConfig().isPrototype()) && !getConfig().isAtOrBeforeBuild20())
+                wadIndex++; // TODO: I think the thing here is actually due to an incorrect form name bank. We should look into it.
         }
 
         return wadIndex;
@@ -162,11 +162,11 @@ public class FormEntry extends GameObject {
             return null;
 
         boolean isGeneralTheme = getTheme() == MAPTheme.GENERAL;
-        ThemeBook themeBook = getConfig().getThemeBook(getTheme());
 
         WADFile wadFile = null;
         if (isGeneralTheme) {
-            wadFile = themeBook.getWAD(mapFile);
+            ThemeBook themeBook = getConfig().getThemeBook(getTheme());
+            wadFile = themeBook != null ? themeBook.getWAD(mapFile) : null;
         } else {
             MapBook mapBook = mapFile.getFileEntry().getMapBook();
             if (mapBook != null)

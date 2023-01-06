@@ -47,12 +47,21 @@ public abstract class MapBook extends ExeStruct {
         reader.setIndex(fileAddress);
 
         List<Short> shortList = new ArrayList<>();
-
         short tempShort;
         while ((tempShort = reader.readShort()) != REMAP_TERMINATOR)
             shortList.add(tempShort);
 
         config.getRemapTable().put(config.getResourceEntry(resourceId), shortList);
+
+        // Hack to read island remap
+        if (getConfig().getBuild() == 20 && getConfig().getResourceName(resourceId).equals("ARN1.MAP")) {
+            while ((tempShort = reader.readShort()) == REMAP_TERMINATOR) ;
+
+            do {
+                getConfig().getIslandRemap().add(tempShort);
+                tempShort = reader.readShort();
+            } while (tempShort != REMAP_TERMINATOR);
+        }
     }
 
     /**

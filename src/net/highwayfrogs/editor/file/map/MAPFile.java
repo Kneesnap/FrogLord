@@ -826,7 +826,8 @@ public class MAPFile extends GameFile {
      * @return gridStack
      */
     public GridStack getGridStack(int gridX, int gridZ) {
-        return getGridStacks().get((gridZ * getGridXCount()) + gridX);
+        int stackIndex = (gridZ * getGridXCount()) + gridX;
+        return stackIndex >= this.gridStacks.size() ? null : this.gridStacks.get(stackIndex);
     }
 
     /**
@@ -996,8 +997,16 @@ public class MAPFile extends GameFile {
      * This method fixes this MAP (If it is ISLAND.MAP) so it will load properly.
      */
     public void fixAsIslandMap() {
-        removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity.
-        getConfig().changeRemap(getFileEntry(), getConfig().isPC() ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP);
+        removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity. TODO: Perhaps just fix and update.
+
+        List<Integer> remap = getConfig().isPC() ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP;
+        if (getConfig().getIslandRemap() != null && getConfig().getIslandRemap().size() > 0) {
+            remap = new ArrayList<>();
+            for (Short value : getConfig().getIslandRemap()) // Read island remap.
+                remap.add((int) (short) value);
+        }
+
+        getConfig().changeRemap(getFileEntry(), remap);
     }
 
     /**
@@ -1117,6 +1126,9 @@ public class MAPFile extends GameFile {
      * @return remapTable
      */
     public List<Short> getRemapTable() {
+        if (getConfig().getBuild() == 20 && getFileEntry().getDisplayName().contains("ISLAND.MAP"))
+            return getConfig().getIslandRemap();
+
         return getConfig().getRemapTable(getFileEntry());
     }
 

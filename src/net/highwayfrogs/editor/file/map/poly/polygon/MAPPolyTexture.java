@@ -254,7 +254,13 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
 
     @Override
     public GameImage getGameImage(TextureMap map) {
-        return map.getVloArchive().getImageByTextureId(map.getRemap(getTextureId()));
+        short globalTextureId = map.getRemap(getTextureId());
+        GameImage image = map.getVloArchive() != null ? map.getVloArchive().getImageByTextureId(globalTextureId, false) : null;
+        if (image == null) // This is probably not going to give a useful texture generally. It was added for build 20 compatibility.
+            image = getConfig().getMWD().getImageByTextureId(globalTextureId);
+        if (image == null)
+            throw new RuntimeException("Could not found a texture with the id: " + getTextureId() + "/" + globalTextureId + ".");
+        return image;
     }
 
     @Override

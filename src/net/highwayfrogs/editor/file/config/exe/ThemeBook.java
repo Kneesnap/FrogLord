@@ -25,7 +25,7 @@ import java.util.function.Function;
 @Getter
 public abstract class ThemeBook extends ExeStruct {
     @Setter private transient MAPTheme theme;
-    private List<FormEntry> formBook = new ArrayList<>();
+    private final List<FormEntry> formBook = new ArrayList<>();
 
     public void loadFormLibrary(FroggerEXEInfo config, int toRead) {
         DataReader reader = config.getReader();
