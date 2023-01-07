@@ -1143,6 +1143,21 @@ public class Utils {
     }
 
     /**
+     * Swaps the red/blue value in ARGB or ABGR.
+     * @param color The color to turn into rgb.
+     * @return rgbInt
+     */
+    public static int swapRedBlue(int color) {
+        int oldBlue = (color & 0xFF);
+        int oldRed = ((color >> 16) & 0xFF);
+
+        int result = color & 0xFF00FF00;
+        result |= oldRed;
+        result |= ((oldBlue << 16) & 0xFF0000);
+        return result;
+    }
+
+    /**
      * Get a integer from a color object.
      * @param color The color to turn into rgb.
      * @return rgbInt
@@ -1238,7 +1253,7 @@ public class Utils {
 
     private static class TextureCache {
         private long lastUpdate;
-        private Image fxImage;
+        private final Image fxImage;
 
         public TextureCache(Image fxImage) {
             this.fxImage = fxImage;
@@ -1666,7 +1681,7 @@ public class Utils {
      * @return paddedString
      */
     public static String padNumberString(int number, int digits) {
-        int usedDigits = (int) Math.log10(number) + 1;
+        int usedDigits = (number == 0) ? 1 : (int) Math.log10(number) + 1;
 
         StringBuilder prependStr = new StringBuilder();
         for (int i = 0; i < (digits - usedDigits); i++)

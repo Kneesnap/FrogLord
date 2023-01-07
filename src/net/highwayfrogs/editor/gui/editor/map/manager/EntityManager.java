@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
+import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.entity.Entity.EntityFlag;
@@ -47,10 +48,10 @@ import java.util.*;
  */
 public class EntityManager extends MapManager {
     private GUIEditorGrid entityEditor;
-    private List<MeshView> entityModelViews = new ArrayList<>();
-    private List<FormEntry> entityTypes = new ArrayList<>();
-    private Set<Integer> entitiesToUpdate = new HashSet<>();
-    private Map<MOFHolder, MOFMesh> meshMap = new HashMap<>();
+    private final List<MeshView> entityModelViews = new ArrayList<>();
+    private final List<FormEntry> entityTypes = new ArrayList<>();
+    private final Set<Integer> entitiesToUpdate = new HashSet<>();
+    private final Map<MOFHolder, MOFMesh> meshMap = new HashMap<>();
     @Getter private Group entityRenderGroup;
 
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
@@ -327,8 +328,11 @@ public class EntityManager extends MapManager {
 
             // Setup VLO.
             VLOArchive vlo = getMap().getConfig().getForcedVLO(modelEntry.getDisplayName());
-            if (vlo == null)
-                vlo = newForm.getConfig().getThemeBook(newForm.getTheme()).getVLO(getMap());
+            if (vlo == null) {
+                ThemeBook themeBook = newForm.getConfig().getThemeBook(newForm.getTheme());
+                if (themeBook != null)
+                    vlo = themeBook.getVLO(getMap());
+            }
             holder.setVloFile(vlo);
 
             // Update MeshView.

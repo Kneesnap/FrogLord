@@ -149,6 +149,9 @@ public class Entity extends GameObject {
 
         PathInfo pathInfo = getPathInfo();
         if (pathInfo != null) { // Similar to ENTSTRUpdateMovingMOF
+            if (pathInfo.getPathId() >= map.getPaths().size())
+                return position; // TODO: Fixes build 20, hmm. Maybe we should instead build an entity management system which can handle errorenous entities and log their errors but still load successfully in new FrogLord.
+
             Path path = map.getPaths().get(pathInfo.getPathId());
             PathResult result = path.evaluatePosition(pathInfo);
 

@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 @Getter
 public class MOFFile extends MOFBase {
     private byte[] bytes;
-    private List<MOFPart> parts = new ArrayList<>();
+    private final List<MOFPart> parts = new ArrayList<>();
     private int unknownValue; // As far as I can tell, this value is unused. It might be a checksum of some kind, really I have no information to go off. Keeping it at zero should be fine for most purposes.
 
     private static final int INCOMPLETE_TEST_ADDRESS = 0x1C;
@@ -56,7 +56,7 @@ public class MOFFile extends MOFBase {
             MOFPart part = new MOFPart(this);
             part.load(reader);
             if (isIncomplete)
-                getHolder().getCompleteMOF().getStaticFile().getParts().get(i).copyToIncompletePart(part);
+                getHolder().getCompleteMOF().asStaticFile().getParts().get(i).copyToIncompletePart(part);
 
             parts.add(part);
         }

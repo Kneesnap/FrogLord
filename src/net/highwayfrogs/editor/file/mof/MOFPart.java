@@ -26,20 +26,20 @@ import java.util.Map;
  */
 @Getter
 public class MOFPart extends GameObject {
-    private Map<MOFPrimType, List<MOFPolygon>> mofPolygons = new HashMap<>();
+    private final Map<MOFPrimType, List<MOFPolygon>> mofPolygons = new HashMap<>();
     private List<MOFPartcel> partcels = new ArrayList<>();
     private List<MOFHilite> hilites = new ArrayList<>();
     @Setter private PSXMatrix matrix; // Seems to usually be null. JUN_PLANT is the only model that uses this, to add a slight roll rotation.
     @Setter private MOFCollprim collprim;
-    private List<MOFPartPolyAnim> partPolyAnims = new ArrayList<>();
-    private List<MOFPartPolyAnimEntryList> partPolyAnimLists = new ArrayList<>();
+    private final List<MOFPartPolyAnim> partPolyAnims = new ArrayList<>();
+    private final List<MOFPartPolyAnimEntryList> partPolyAnimLists = new ArrayList<>();
     @Setter private MOFFlipbook flipbook;
 
-    private transient MOFFile parent;
-    private transient Map<Integer, MOFPartPolyAnimEntryList> loadAnimEntryListMap = new HashMap<>();
-    private transient Map<List<SVector>, Integer> saveNormalMap = new HashMap<>();
+    private final transient MOFFile parent;
+    private final transient Map<Integer, MOFPartPolyAnimEntryList> loadAnimEntryListMap = new HashMap<>();
+    private final transient Map<List<SVector>, Integer> saveNormalMap = new HashMap<>();
     @Setter private transient int saveBboxPointer;
-    private transient List<MOFPolygon> orderedByLoadPolygons = new ArrayList<>();
+    private final transient List<MOFPolygon> orderedByLoadPolygons = new ArrayList<>();
     private transient int tempPartcelPointer;
     private transient int tempPrimitivePointer;
     private transient int tempHilitePointer;
@@ -334,7 +334,7 @@ public class MOFPart extends GameObject {
         incompletePart.collprim = this.collprim;
         incompletePart.matrix = this.matrix;
         incompletePart.flipbook = this.flipbook;
-        if (getParent().hasTextureAnimation())
+        if (getParent().hasTextureAnimation() && !getConfig().isAtOrBeforeBuild20()) // TODO: Replace with some kind of warning system, where instead of throwing exceptions, we can have warnings per-file, etc.
             throw new RuntimeException("Texture animation cannot be copied to an incomplete MOF right now!"); // It is believed this wouldn't work in the retail game either.
     }
 

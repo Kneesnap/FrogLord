@@ -35,7 +35,7 @@ public class DemoFile extends GameFile {
         this.frameCount = reader.readInt();
         this.startX = reader.readInt();
         this.startZ = reader.readInt();
-        for (int i = 0; i < MAX_DEMO_FRAMES; i++)
+        for (int i = 0; i < MAX_DEMO_FRAMES && reader.hasMore(); i++)
             this.frames[i] = new DemoFrame(reader.readByte());
     }
 
@@ -147,9 +147,9 @@ public class DemoFile extends GameFile {
         ROTATE_COUNTER_CLOCKWISE("Rotate Counter-Clockwise", Constants.BIT_FLAG_5, true),
         ROTATE_CLOCKWISE("Rotate Clockwise", Constants.BIT_FLAG_6, true);
 
-        private String info;
-        private int id;
-        private boolean additive;
+        private final String info;
+        private final int id;
+        private final boolean additive;
         private static DemoAction[] cachedAdditives;
         private static DemoAction[] cachedNonAdditives;
 

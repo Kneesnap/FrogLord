@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
@@ -47,7 +48,7 @@ public class MapUIController implements Initializable {
     public static final double MAP_VIEW_FOV = 60.0;
 
     private static final int VERTEX_SPEED = 3;
-    @Getter private static IntegerProperty propertyVertexSpeed = new SimpleIntegerProperty(3);
+    @Getter private static final IntegerProperty propertyVertexSpeed = new SimpleIntegerProperty(3);
 
     public static final float ENTITY_ICON_SIZE = 16.0f;
 
@@ -116,7 +117,7 @@ public class MapUIController implements Initializable {
     @FXML private GridPane pathGridPane;
 
     // Managers:
-    private List<MapManager> managers = new ArrayList<>();
+    private final List<MapManager> managers = new ArrayList<>();
     private PathManager pathManager;
     private LightManager lightManager;
     private EntityManager entityManager;
@@ -126,9 +127,9 @@ public class MapUIController implements Initializable {
     private GeneralManager generalManager; // Should be last, so things like cancelling polygon selection happen last.
 
     // Map Data:
-    private CameraFPS cameraFPS = new CameraFPS();
+    private final CameraFPS cameraFPS = new CameraFPS();
     private MapMesh mapMesh;
-    private RenderManager renderManager = new RenderManager();
+    private final RenderManager renderManager = new RenderManager();
     private Group root3D;
     private Scene mapScene;
     private MeshView meshView;
@@ -200,8 +201,10 @@ public class MapUIController implements Initializable {
         // Set the initial camera position based on start position and in-game camera offset.
         MAPFile map = getMap();
         SVector startPos = map.getCameraSourceOffset();
+
+        GridStack startStack = map.getGridStack(map.getStartXTile(), map.getStartZTile());
         float gridX = Utils.fixedPointIntToFloat4Bit(map.getWorldX(map.getStartXTile(), true));
-        float baseY = -Utils.fixedPointIntToFloat4Bit(map.getGridStack(map.getStartXTile(), map.getStartZTile()).getHeight());
+        float baseY = startStack != null ? -Utils.fixedPointIntToFloat4Bit(startStack.getHeight()) : 0;
         float gridZ = Utils.fixedPointIntToFloat4Bit(map.getWorldZ(map.getStartZTile(), true));
         cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
         cameraFPS.setCameraLookAt(gridX, baseY, gridZ); // Set the camera to look at the start position, too.

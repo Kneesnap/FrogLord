@@ -40,7 +40,7 @@ import java.util.function.Predicate;
  */
 @SuppressWarnings("UnusedReturnValue")
 public class GUIEditorGrid {
-    private GridPane gridPane;
+    private final GridPane gridPane;
     private int rowIndex;
 
     private static final Image GRAY_IMAGE_XZ = Utils.makeColorImageNoCache(Color.GRAY, 60, 60);
@@ -813,6 +813,9 @@ public class GUIEditorGrid {
         }, -Math.PI, Math.PI);
 
         Slider pitchUI = addDoubleSlider("Pitch", matrix.getPitchAngle(), pitch -> {
+            if (Math.abs(pitch) >= Math.PI / 2)
+                return; // LOCK! ABORT!
+
             matrix.updateMatrix(matrix.getYawAngle(), pitch, matrix.getRollAngle());
             if (onUpdate != null)
                 onUpdate.run();

@@ -79,9 +79,12 @@ public class GeneralManager extends MapManager {
 
         generalEditor.addShortField("Level Timer", map.getLevelTimer(), map::setLevelTimer, null);
 
-        IVector gridOrigin = new IVector(map.getWorldX(map.getStartXTile(), true), -map.getGridStack(map.getStartXTile(), map.getStartZTile()).getHeight(), map.getWorldZ(map.getStartZTile(), true));
-        generalEditor.addFloatVector("Camera Source", map.getCameraSourceOffset(), null, getController(), gridOrigin.defaultBits(), gridOrigin, null);
-        generalEditor.addFloatVector("Camera Target", map.getCameraTargetOffset(), null, getController(), gridOrigin.defaultBits(), gridOrigin, null);
+        GridStack baseStack = map.getGridStack(map.getStartXTile(), map.getStartZTile());
+        if (baseStack != null) {
+            IVector gridOrigin = new IVector(map.getWorldX(map.getStartXTile(), true), -baseStack.getHeight(), map.getWorldZ(map.getStartZTile(), true));
+            generalEditor.addFloatVector("Camera Source", map.getCameraSourceOffset(), null, getController(), gridOrigin.defaultBits(), gridOrigin, null);
+            generalEditor.addFloatVector("Camera Target", map.getCameraTargetOffset(), null, getController(), gridOrigin.defaultBits(), gridOrigin, null);
+        }
         generalEditor.addSeparator(25);
 
         // Group:
@@ -147,8 +150,10 @@ public class GeneralManager extends MapManager {
             for (int z = 0; z < getMap().getGridZCount(); z++) {
                 getRenderManager().addBoundingBoxFromMinMax("gridOutline", baseX + (x * xSize), 0, baseZ + (z * zSize), baseX + ((x + 1) * xSize), 0, baseZ + ((z + 1) * zSize), gridMaterial, true);
                 GridStack stack = getMap().getGridStack(x, z);
-                float floatPos = Utils.fixedPointIntToFloat4Bit(stack.getAverageHeight() << 6);
-                getRenderManager().addBoundingBoxFromMinMax("gridOutline", baseX + (x * xSize), -1 - floatPos, baseZ + (z * zSize), baseX + ((x + 1) * xSize), -1 - floatPos, baseZ + ((z + 1) * zSize), heightMaterial, true);
+                if (stack != null) {
+                    float floatPos = Utils.fixedPointIntToFloat4Bit(stack.getAverageHeight() << 6);
+                    getRenderManager().addBoundingBoxFromMinMax("gridOutline", baseX + (x * xSize), -1 - floatPos, baseZ + (z * zSize), baseX + ((x + 1) * xSize), -1 - floatPos, baseZ + ((z + 1) * zSize), heightMaterial, true);
+                }
             }
         }
     }

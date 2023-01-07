@@ -75,9 +75,9 @@ public class GridController implements Initializable {
     @FXML private GridPane flagGrid;
     @FXML private Button hideZoneButton;
 
-    private Stage stage;
-    private GeometryManager manager;
-    private MAPFile map;
+    private final Stage stage;
+    private final GeometryManager manager;
+    private final MAPFile map;
 
     private RegionEditState editState = RegionEditState.NONE_SELECTED;
     private Zone selectedZone;
@@ -88,7 +88,7 @@ public class GridController implements Initializable {
     private int selectedLayer;
     private double tileWidth;
     private double tileHeight;
-    private CheckBox[] zoneFlagMap = new CheckBox[CameraZoneFlag.values().length];
+    private final CheckBox[] zoneFlagMap = new CheckBox[CameraZoneFlag.values().length];
 
     private static final int DEFAULT_REGION_ID = 0;
     private static final int DEFAULT_ZONE_ID = 0;
@@ -112,6 +112,9 @@ public class GridController implements Initializable {
             int gridX = (int) (evt.getSceneX() / getTileWidth());
             int gridZ = (int) (evt.getSceneY() / getTileHeight());
             GridStack stack = getMap().getGridStack(gridX, getMap().getGridZCount() - gridZ - 1);
+            if (stack == null)
+                return;
+
             if (this.selectedStacks != null && this.selectedStacks.size() > 0) {
                 if (evt.isControlDown()) { // Toggle grid stacks one at a time.
                     if (!this.selectedStacks.remove(stack))
