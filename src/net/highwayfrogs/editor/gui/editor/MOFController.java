@@ -86,7 +86,7 @@ public class MOFController extends EditorController<MOFHolder> {
     private Rotate rotX;
     private Rotate rotY;
     private Rotate rotZ;
-    private RenderManager renderManager = new RenderManager();
+    private final RenderManager renderManager = new RenderManager();
     private boolean selectingVertex;
     private boolean selectingPart;
     private MeshData textureOverlay;
@@ -182,6 +182,8 @@ public class MOFController extends EditorController<MOFHolder> {
                 getRenderManager().removeAllDisplayLists();
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
                 return;
+            } else if (event.getCode() == KeyCode.F10) {
+                Utils.takeScreenshot(subScene3D, getMofScene(), Utils.stripExtension(getFile().getFileEntry().getDisplayName()));
             }
 
             if (event.getCode() == KeyCode.S && event.isControlDown()) { // Save the texture map.
@@ -288,11 +290,12 @@ public class MOFController extends EditorController<MOFHolder> {
     public void updateLighting(boolean useBrightMode) {
         getRenderManager().addMissingDisplayList(LIGHTING_LIST);
         getRenderManager().clearDisplayList(LIGHTING_LIST);
+        Group lightingGroup = new Group();
 
         AmbientLight ambLight = new AmbientLight();
         float colorValue = useBrightMode ? .2F : 1;
         ambLight.setColor(Color.color(colorValue, colorValue, colorValue));
-        getRenderManager().addNode(LIGHTING_LIST, ambLight);
+        lightingGroup.getChildren().add(ambLight);
 
         if (useBrightMode) {
             PointLight pointLight1 = new PointLight();
@@ -300,15 +303,17 @@ public class MOFController extends EditorController<MOFHolder> {
             pointLight1.setTranslateX(-100.0);
             pointLight1.setTranslateY(-100.0);
             pointLight1.setTranslateZ(-100.0);
-            getRenderManager().addNode(LIGHTING_LIST, pointLight1);
+            lightingGroup.getChildren().add(pointLight1);
 
             PointLight pointLight2 = new PointLight();
             pointLight2.setColor(Color.color(0.8, 0.8, 1.0));
             pointLight2.setTranslateX(100.0);
             pointLight2.setTranslateY(-100.0);
             pointLight2.setTranslateZ(-100.0);
-            getRenderManager().addNode(LIGHTING_LIST, pointLight2);
+            lightingGroup.getChildren().add(pointLight2);
         }
+
+        getRenderManager().addNode(LIGHTING_LIST, lightingGroup);
     }
 
     /**
@@ -694,8 +699,8 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private GridPane hiliteEditPane;
         private GUIEditorGrid hiliteEditorGrid;
 
-        private List<Node> toggleNodes = new ArrayList<>();
-        private List<Node> playNodes = new ArrayList<>();
+        private final List<Node> toggleNodes = new ArrayList<>();
+        private final List<Node> playNodes = new ArrayList<>();
 
         // Animation data.
         private int framesPerSecond = 20;

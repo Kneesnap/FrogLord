@@ -35,6 +35,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
@@ -195,6 +196,8 @@ public class MapUIController implements Initializable {
                 cameraFPS.stopThreadProcessing();
                 renderManager.removeAllDisplayLists();
                 Utils.setSceneKeepPosition(this.overwrittenStage, this.defaultScene);
+            } else if (event.getCode() == KeyCode.F10) {
+                Utils.takeScreenshot(this.subScene, getMapScene(), Utils.stripExtension(getMap().getFileEntry().getDisplayName()));
             }
         });
 
@@ -277,8 +280,19 @@ public class MapUIController implements Initializable {
         comboBoxMeshCullFace.valueProperty().bindBidirectional(meshView.cullFaceProperty());
 
         // Must be called after MAPController is passed.
-        getManagers().forEach(MapManager::onSetup); // Setup all of the managers.
-        getManagers().forEach(MapManager::setupEditor); // Setup all of the managers editors.
+        runForEachManager(MapManager::onSetup, "onSetup"); // Setup all of the managers.
+        runForEachManager(MapManager::setupEditor, "setupEditor"); // Setup all of the managers editors.
+    }
+
+    private void runForEachManager(Consumer<MapManager> execution, String name) {
+        for (MapManager manager : getManagers()) {
+            try {
+                execution.accept(manager);
+            } catch (Throwable th) {
+                System.out.println("Failed to run '" + name + "' for the map manager '" + manager.getClass().getSimpleName() + "'.");
+                th.printStackTrace();
+            }
+        }
     }
 
     /**

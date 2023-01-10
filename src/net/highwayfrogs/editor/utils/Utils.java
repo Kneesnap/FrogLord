@@ -6,12 +6,14 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.SubScene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
@@ -23,6 +25,7 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.gui.GUIMain;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -1701,7 +1704,7 @@ public class Utils {
         while (targetLength > prependStr.length() + baseStr.length())
             prependStr.append(toAdd);
 
-        return prependStr.toString() + baseStr;
+        return prependStr + baseStr;
     }
 
     /**
@@ -1729,5 +1732,44 @@ public class Utils {
                 output.append(temp);
         }
         return output.toString();
+    }
+
+    /**
+     * Takes a screenshot of a given SubScene.
+     * @param subScene   The subScene to take a screenshot of.
+     * @param namePrefix The file name prefix to save the image as.
+     */
+    public static void takeScreenshot(SubScene subScene, Scene scene, String namePrefix) {
+        WritableImage image = scene.snapshot(null);
+        BufferedImage sceneImage = SwingFXUtils.fromFXImage(image, null);
+        BufferedImage croppedImage = cropImage(sceneImage, (int) subScene.getLayoutX(), (int) subScene.getLayoutY(), (int) subScene.getWidth(), (int) subScene.getHeight());
+
+        // Write to file.
+        int id = -1;
+        while (id++ < 1000) {
+            File testFile = new File(GUIMain.getWorkingDirectory(), (namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "") + Utils.padStringLeft(Integer.toString(id), 4, '0') + ".png");
+            if (!testFile.exists()) {
+                try {
+                    ImageIO.write(croppedImage, "png", testFile);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+
+                break;
+            }
+        }
+    }
+
+    /**
+     * Crop an image.
+     * @param image The image to trim.
+     * @return croppedImage
+     */
+    public static BufferedImage cropImage(BufferedImage image, int x, int y, int width, int height) {
+        BufferedImage croppedImage = new BufferedImage(width, height, image.getType());
+        Graphics2D graphics = croppedImage.createGraphics();
+        graphics.drawImage(image, -x, -y, image.getWidth(), image.getHeight(), null);
+        graphics.dispose();
+        return croppedImage;
     }
 }
