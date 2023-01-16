@@ -13,10 +13,12 @@ import java.util.function.Function;
  */
 @Getter
 public class Config {
-    private Map<String, String> values = new HashMap<>();
-    private Map<String, Config> children = new HashMap<>();
-    private List<String> text = new ArrayList<>();
-    private List<String> orderedChildren = new ArrayList<>();
+    private final String name;
+    private final int layer;
+    private final Map<String, String> values = new HashMap<>();
+    private final Map<String, Config> children = new HashMap<>();
+    private final List<String> text = new ArrayList<>();
+    private final List<Config> orderedChildren = new ArrayList<>();
 
     public static final String VALUE_SPLIT = "=";
     public static final String EMPTY_LINE = "``";
@@ -29,21 +31,21 @@ public class Config {
     }
 
     public Config(List<String> lines) {
+        this(lines, null, 0);
+    }
+
+    private Config(List<String> lines, String name, int layer) {
+        this.name = name;
+        this.layer = layer;
         this.load(lines);
     }
 
     private void load(List<String> lines) {
-        String childName = null;
         List<String> childLines = new ArrayList<>();
         boolean readingText = false;
 
-        for (String line : lines) {
-            String[] split = line.split(COMMENT_SPLIT);
-            if (split.length == 0)
-                continue;
-
-            line = split[0].replaceAll(" $", ""); // Remove comments.
-
+        for (int i = 0; i < lines.size(); i++) {
+            String line = stripLine(lines.get(i));
             if (line.isEmpty())
                 continue; // Skip empty lines.
 
@@ -51,17 +53,31 @@ public class Config {
                 line = "";
 
             if (line.startsWith(CHILD_OPEN_TAG) && line.endsWith(CHILD_CLOSE_TAG)) { // Defining a child-config.
-                if (childName != null) // Done with the current child, add it.
-                    children.put(childName, new Config(childLines));
+                int newLayer = getConfigLayer(line);
+                String childName = line.substring(newLayer, line.length() - newLayer);
+                int expectedLayer = this.layer + 1;
+                if (newLayer != expectedLayer)
+                    throw new RuntimeException("'" + line + "' is not the right layer. (New Layer: " + newLayer + ", Expected Layer: " + expectedLayer + ")");
 
+                while (++i < lines.size()) {
+                    String childLine = stripLine(lines.get(i));
+                    if (childLine.startsWith(CHILD_OPEN_TAG) && childLine.endsWith(CHILD_CLOSE_TAG)) {
+                        int childLayer = getConfigLayer(childLine);
+                        if (childLayer > expectedLayer) {
+                            childLines.add(childLine);
+                        } else { // Exit, this is a new child layer for the current level or previous level.
+                            i--;
+                            break;
+                        }
+                    } else {
+                        childLines.add(childLine);
+                    }
+                }
+
+                Config childConfig = new Config(childLines, childName, newLayer);
+                this.orderedChildren.add(childConfig);
+                this.children.put(childName, childConfig);
                 childLines.clear();
-                childName = line.substring(1, line.length() - 1);
-                getOrderedChildren().add(childName);
-                continue;
-            }
-
-            if (childName != null) { // Add to child.
-                childLines.add(line);
                 continue;
             }
 
@@ -73,22 +89,10 @@ public class Config {
             }
 
             // Add key-value pairs, if the line is not empty.
-            if (values.containsKey(name))
+            if (this.values.containsKey(name))
                 System.out.println("Config Overwriting Key: " + name);
-            values.put(name, line.substring(line.indexOf(VALUE_SPLIT) + 1));
+            this.values.put(name, line.substring(line.indexOf(VALUE_SPLIT) + 1));
         }
-
-        if (childName != null) // Add the final child config, if there is one.
-            children.put(childName, new Config(childLines));
-
-        this.onLoad();
-    }
-
-    /**
-     * Called when this config is loaded.
-     */
-    protected void onLoad() {
-
     }
 
     /**
@@ -130,6 +134,15 @@ public class Config {
     }
 
     /**
+     * Get a boolean value.
+     * @param keyName The name of the key.
+     * @return booleanValue
+     */
+    public boolean getBoolean(String keyName, boolean defaultValue) {
+        return has(keyName) ? getString(keyName).equalsIgnoreCase("true") : defaultValue;
+    }
+
+    /**
      * Get an enum config value.
      * @param keyName   The name of the key.
      * @param enumClass The class of the enum to get.
@@ -149,6 +162,22 @@ public class Config {
     public <E extends Enum<E>> E getEnum(String keyName, E defaultEnum) {
         Utils.verify(defaultEnum != null, "Default Enum cannot be null.");
         return has(keyName) ? getEnum(keyName, (Class<E>) defaultEnum.getClass()) : defaultEnum;
+    }
+
+    /**
+     * Get an integer array from the config value.
+     * @param keyName The name of the key.
+     * @return intArray
+     */
+    public int[] getIntArray(String keyName) {
+        return get(keyName, str -> {
+            String[] split = str.split(",");
+            int[] results = new int[split.length];
+            for (int i = 0; i < results.length; i++)
+                results[i] = Integer.parseInt(split[i]);
+
+            return results;
+        });
     }
 
     /**
@@ -249,5 +278,34 @@ public class Config {
      */
     public Set<String> keySet() {
         return values.keySet();
+    }
+
+    private static int getConfigLayer(String childLine) {
+        int openCount = 0;
+        for (int j = 0; j < childLine.length(); j++) {
+            if (childLine.charAt(j) != CHILD_OPEN_TAG.charAt(0))
+                break;
+            openCount++;
+        }
+
+        int closeCount = 0;
+        for (int j = childLine.length() - 1; j >= 0; j--) {
+            if (childLine.charAt(j) != CHILD_CLOSE_TAG.charAt(0))
+                break;
+            closeCount++;
+        }
+
+        if (openCount != closeCount)
+            throw new RuntimeException("Config child identifier '" + childLine + "' has unbalanced brackets! [Open: " + openCount + ", Close: " + closeCount + "]");
+
+        return openCount;
+    }
+
+    private static String stripLine(String line) {
+        String[] split = line.split(COMMENT_SPLIT);
+        if (split.length == 0)
+            return "";
+
+        return split[0].replaceAll("(\\s+)$", ""); // Remove comments.
     }
 }

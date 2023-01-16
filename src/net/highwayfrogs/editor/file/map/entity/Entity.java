@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.data.EntityData;
@@ -36,6 +37,8 @@ public class Entity extends GameObject {
     private int flags;
     private EntityData entityData;
     private EntityScriptData scriptData;
+    @Setter private byte[] rawData;
+    @Setter private boolean invalid; // This is set if we know that the entity data we loaded was not the proper size.
 
     private transient int loadScriptDataPointer;
     private transient int loadReadLength;
@@ -57,19 +60,30 @@ public class Entity extends GameObject {
     public void load(DataReader reader) {
         this.formGridId = reader.readUnsignedShortAsInt();
         this.uniqueId = reader.readUnsignedShortAsInt();
-        this.formEntry = getConfig().getMapFormEntry(map.getTheme(), reader.readUnsignedShortAsInt());
+        int formId = reader.readUnsignedShortAsInt();
+        this.formEntry = getConfig().getMapFormEntry(map.getTheme(), formId);
         this.flags = reader.readUnsignedShortAsInt();
         reader.skipBytes(RUNTIME_POINTERS * Constants.POINTER_SIZE);
-
         this.loadScriptDataPointer = reader.getIndex();
 
-        this.entityData = EntityData.makeData(getConfig(), getFormEntry(), this);
-        if (this.entityData != null)
-            this.entityData.load(reader);
+        if (this.formEntry == null) {
+            this.entityData = new MatrixData();
+            System.out.println("Failed to find form for entity " + this.uniqueId + "/Form: " + formId + " in " + MWDFile.CURRENT_FILE_NAME + ".");
+            return; // Can't read more data. Ideally this doesn't happen, but this is a good failsafe. It's most likely to happen in early builds, and it does happen in Build 01.
+        }
 
-        this.scriptData = EntityScriptData.makeData(getConfig(), getFormEntry());
-        if (this.scriptData != null)
-            scriptData.load(reader);
+        try {
+            this.entityData = EntityData.makeData(getConfig(), getFormEntry(), this);
+            if (this.entityData != null)
+                this.entityData.load(reader);
+
+            this.scriptData = EntityScriptData.makeData(getConfig(), getFormEntry());
+            if (this.scriptData != null)
+                scriptData.load(reader);
+        } catch (Throwable th) {
+            System.out.println("Failed to load entity data for entity " + this.uniqueId + "/" + this.formEntry.getFormName() + " in " + MWDFile.CURRENT_FILE_NAME + ".");
+            th.printStackTrace();
+        }
 
         this.loadReadLength = reader.getIndex() - this.loadScriptDataPointer;
     }

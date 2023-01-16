@@ -7,9 +7,12 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.MWDFile;
+import net.highwayfrogs.editor.file.config.FroggerMapConfig;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
@@ -42,6 +45,17 @@ import java.util.Map.Entry;
 
 /**
  * Parses Frogger MAP files.
+ * TODO: When we port this to new FrogLord,
+ *  - Each part should be broken off into a separate class, one interface for loading / saving, and one for holding the data.
+ *  - The loading / saving part should be able to perform diagnostics. Eg: Allow previewing byte data in some kind of debug viewer.
+ *  - Which loader / saver classes get used should be chosen by having each of the loader classes have an overridable "testCompatibiity" method, so we can use build number, look at any data in the thing, file name, etc.
+ *  - New FrogLord should be able to configure form & entity library overrides per-level, per-build. For example, QB.MAP is in many builds, but is clearly using a form library from before even build #1.
+ *  - New FrogLord should be able to open maps like ISLAND.MAP directly, without importing nonsense. Eg: If we're not sure, let the user select the theme to load a map with.
+ *  - New FrogLord will have an understanding of the formats from Build 1 to the full retail release.
+ *   - Old FrogLord should fully support all existing file formats in order to confirm knowledge.
+ *   - I'm thinking it makes sense to pick our approach on a per file type basis. Eg: VLO may have few changes, whereas maps may have many, and different design choices for each.
+ *   - Make the file formats shared between games more flexible.
+ *   - Interfaces or abstract classes really seem to be the way to go when considering data modelling, etc. Allows different versions of roughly the same data.
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
@@ -81,6 +95,7 @@ public class MAPFile extends GameFile {
 
     private final transient Map<MAPPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
     private final transient Map<Integer, MAPPrimitive> savePointerPolygonMap = new HashMap<>();
+    private transient FroggerMapConfig cachedMapConfig;
 
     public static final int TYPE_ID = 0;
     private static final String SIGNATURE = "FROG";
@@ -228,7 +243,7 @@ public class MAPFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
-        boolean isQB = isQB();
+        FroggerMapConfig mapConfig = getMapConfig();
         getLoadPointerPolygonMap().clear();
 
         reader.verifyString(SIGNATURE);
@@ -312,17 +327,25 @@ public class MAPFile extends GameFile {
         Entity lastEntity = null;
         for (int i = 0; i < entityCount; i++) {
             int newEntityPointer = reader.readInt();
-            printInvalidEntityReadDetection(lastEntity, newEntityPointer);
+            printInvalidEntityReadDetection(reader, lastEntity, newEntityPointer);
 
             reader.jumpTemp(newEntityPointer);
-            Entity entity = new Entity(this);
-            entity.load(reader);
-            entities.add(entity);
-            reader.jumpReturn();
-            lastEntity = entity;
-        }
-        printInvalidEntityReadDetection(lastEntity, graphicalAddress); // Go over the last entity.
+            try {
+                Entity entity = new Entity(this);
+                entity.load(reader);
+                entities.add(entity);
+                lastEntity = entity;
+            } catch (Throwable th) {
+                System.out.println("Failed to load an entity which was part of " + getFileEntry().getDisplayName());
+                th.printStackTrace();
+                lastEntity = null;
+            }
 
+            reader.jumpReturn();
+        }
+        printInvalidEntityReadDetection(reader, lastEntity, graphicalAddress); // Go over the last entity.
+
+        // 'GRAP'
         reader.setIndex(graphicalAddress);
         reader.verifyString(GRAPHICAL_SIGNATURE);
         int lightAddress = reader.readInt();
@@ -330,7 +353,7 @@ public class MAPFile extends GameFile {
         int polygonAddress = reader.readInt();
         int vertexAddress = reader.readInt();
         int gridAddress = reader.readInt();
-        int animAddress = isQB ? 0 : reader.readInt(); // Animations don't exist yet in the QB format.
+        int animAddress = mapConfig.isMapAnimationSupported() ? reader.readInt() : 0; // Animations don't exist yet in some of the older maps.
 
         reader.setIndex(lightAddress);
         reader.verifyString(LIGHT_SIGNATURE);
@@ -351,7 +374,7 @@ public class MAPFile extends GameFile {
 
         MAPGroup[] loadGroups = new MAPGroup[getGroupCount()];
         for (int i = 0; i < loadGroups.length; i++) {
-            MAPGroup group = new MAPGroup(isQB);
+            MAPGroup group = new MAPGroup(mapConfig);
             group.load(reader);
             loadGroups[i] = group;
         }
@@ -363,11 +386,11 @@ public class MAPFile extends GameFile {
         Map<MAPPrimitiveType, Short> polyCountMap = new HashMap<>();
         Map<MAPPrimitiveType, Integer> polyOffsetMap = new HashMap<>();
 
-        List<MAPPrimitiveType> types = getTypes(isQB);
+        List<MAPPrimitiveType> types = getTypes(mapConfig.isG2Supported());
         for (MAPPrimitiveType type : types)
             polyCountMap.put(type, reader.readShort());
 
-        if (!isQB)
+        if ((types.size() % 2) != 0)
             reader.skipShort(); // Padding.
 
         for (MAPPrimitiveType type : types)
@@ -385,11 +408,18 @@ public class MAPFile extends GameFile {
             if (polyCount > 0) {
                 reader.jumpTemp(polyOffset);
 
-                for (int i = 0; i < polyCount; i++) {
-                    MAPPrimitive primitive = type.newPrimitive();
-                    getLoadPointerPolygonMap().put(reader.getIndex(), primitive);
-                    primitive.load(reader);
-                    primitives.add(primitive);
+                try {
+                    for (int i = 0; i < polyCount; i++) {
+                        MAPPrimitive primitive = type.newPrimitive();
+                        if (primitive instanceof MAPPolygon)
+                            ((MAPPolygon) primitive).setMapFile(this);
+
+                        getLoadPointerPolygonMap().put(reader.getIndex(), primitive);
+                        primitive.load(reader);
+                        primitives.add(primitive);
+                    }
+                } catch (Throwable th) {
+                    throw new RuntimeException("Failed to load " + primitives.size() + " " + type + " primitives in " + MWDFile.CURRENT_FILE_NAME + ".", th);
                 }
 
                 reader.jumpReturn();
@@ -441,7 +471,7 @@ public class MAPFile extends GameFile {
         getGridStacks().forEach(stack -> stack.loadSquares(loadedGridSquares));
 
         // Read "ANIM".
-        if (!isQB) {
+        if (animAddress > 0) {
             reader.setIndex(animAddress);
             reader.verifyString(ANIMATION_SIGNATURE);
             int mapAnimCount = reader.readInt(); // 0c
@@ -572,6 +602,7 @@ public class MAPFile extends GameFile {
 
         writer.writeStringBytes(ENTITY_SIGNATURE);
         writer.writeInt(0); // This is the entity packet length. It is unused.
+
         short entityCount = (short) this.entities.size();
         writer.writeShort(entityCount);
         writer.writeShort((short) 0); // Padding.
@@ -759,12 +790,22 @@ public class MAPFile extends GameFile {
         return loadEditor(new MAPController(), "map", this);
     }
 
-    private void printInvalidEntityReadDetection(Entity lastEntity, int endPointer) {
+    private void printInvalidEntityReadDetection(DataReader reader, Entity lastEntity, int endPointer) {
         if (lastEntity == null)
             return;
+
         int realSize = (endPointer - lastEntity.getLoadScriptDataPointer());
-        if (realSize != lastEntity.getLoadReadLength())
-            System.out.println("[INVALID/" + getFileEntry().getDisplayName() + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + ", " + lastEntity.getFormEntry().getFormName() + ", " + lastEntity.getFormEntry().getEntityName());
+        if (realSize != lastEntity.getLoadReadLength()) {
+            lastEntity.setInvalid(true);
+
+            FormEntry formEntry = lastEntity.getFormEntry();
+            System.out.println("[INVALID/" + getFileEntry().getDisplayName() + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + (formEntry != null ? ", " + formEntry.getFormName() + ", " + formEntry.getEntityName() : ""));
+            if (realSize < 1024 && realSize >= 0) {
+                reader.jumpTemp(lastEntity.getLoadScriptDataPointer());
+                lastEntity.setRawData(reader.readBytes(realSize));
+                reader.jumpReturn();
+            }
+        }
     }
 
     /**
@@ -949,9 +990,10 @@ public class MAPFile extends GameFile {
      * Recalculate map groups.
      */
     public List<MAPGroup> calculateGroups() {
+        FroggerMapConfig mapConfig = getMapConfig();
         List<MAPGroup> groups = new ArrayList<>(getGroupCount());
         for (int i = 0; i < getGroupCount(); i++)
-            groups.add(new MAPGroup(false));
+            groups.add(new MAPGroup(mapConfig));
 
         // Recalculate it.
         for (MAPPolygon poly : getAllPolygons()) {
@@ -997,8 +1039,6 @@ public class MAPFile extends GameFile {
      * This method fixes this MAP (If it is ISLAND.MAP) so it will load properly.
      */
     public void fixAsIslandMap() {
-        removeEntity(getEntities().get(11)); // Remove corrupted butterfly entity. TODO: Perhaps just fix and update.
-
         List<Integer> remap = getConfig().isPC() ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP;
         if (getConfig().getIslandRemap() != null && getConfig().getIslandRemap().size() > 0) {
             remap = new ArrayList<>();
@@ -1126,7 +1166,7 @@ public class MAPFile extends GameFile {
      * @return remapTable
      */
     public List<Short> getRemapTable() {
-        if (getConfig().getBuild() == 20 && getFileEntry().getDisplayName().contains("ISLAND.MAP"))
+        if (getConfig().getIslandRemap().size() > 0 && getFileEntry().getDisplayName().contains("ISLAND.MAP"))
             return getConfig().getIslandRemap();
 
         return getConfig().getRemapTable(getFileEntry());
@@ -1134,10 +1174,22 @@ public class MAPFile extends GameFile {
 
     /**
      * Get the types to use based on if this is QB or not.
-     * @param isQB Is this the QB map?
+     * @param includeG2 Whether or not the G2 primitive should be included?
      * @return types
      */
-    public static List<MAPPrimitiveType> getTypes(boolean isQB) {
-        return isQB ? POLYGON_TYPES : PRIMITIVE_TYPES;
+    public static List<MAPPrimitiveType> getTypes(boolean includeG2) {
+        return includeG2 ? PRIMITIVE_TYPES : POLYGON_TYPES;
+    }
+
+    /**
+     * Gets the map config usable by this map.
+     * @return mapConfig
+     */
+    public FroggerMapConfig getMapConfig() {
+        if (this.cachedMapConfig != null)
+            return this.cachedMapConfig;
+
+        FroggerMapConfig mapConfig = getConfig().getMapConfigs().get(getFileEntry().getDisplayName());
+        return this.cachedMapConfig = mapConfig != null ? mapConfig : getConfig().getDefaultMapConfig();
     }
 }

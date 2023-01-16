@@ -40,6 +40,7 @@ public class FormEntry extends GameObject {
 
     public static final int FLAG_GENERAL = 0x8000;
     public static final int BYTE_SIZE = (8 * Constants.INTEGER_SIZE);
+    public static final int BUILD1_BYTE_SIZE = (7 * Constants.INTEGER_SIZE);
 
     public FormEntry(FroggerEXEInfo config, MAPTheme theme, int formId, int globalFormId) {
         this.config = config;
@@ -58,7 +59,8 @@ public class FormEntry extends GameObject {
         this.collisionReactFunction = reader.readUnsignedIntAsLong();
         this.radiusSquared = reader.readInt();
         this.deathType = FormDeathType.values()[reader.readInt()];
-        this.bonusCallbackFunction = reader.readUnsignedIntAsLong();
+        if (!getConfig().isAtOrBeforeBuild1())
+            this.bonusCallbackFunction = reader.readUnsignedIntAsLong();
     }
 
     @Override
@@ -70,7 +72,8 @@ public class FormEntry extends GameObject {
         writer.writeUnsignedInt(this.collisionReactFunction);
         writer.writeInt(this.radiusSquared);
         writer.writeInt(this.deathType.ordinal());
-        writer.writeUnsignedInt(this.bonusCallbackFunction);
+        if (!getConfig().isAtOrBeforeBuild1())
+            writer.writeUnsignedInt(this.bonusCallbackFunction);
     }
 
     /**

@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.utils.Utils;
 public class GridSquare extends GameObject {
     private int flags;
     @Setter private MAPPolygon polygon;
-    private transient MAPFile parent;
+    private final transient MAPFile parent;
 
     public GridSquare(MAPFile parent) {
         this.parent = parent;
@@ -40,8 +40,11 @@ public class GridSquare extends GameObject {
         int polyF4Pointer = reader.readInt();
 
         PSXGPUPrimitive prim = parent.getLoadPointerPolygonMap().get(polyF4Pointer);
-        Utils.verify(prim != null, "GridSquare's Polygon Pointer does not point to a primitive! (%d)", polyF4Pointer);
-        Utils.verify(prim instanceof MAPPolygon, "GridSquare's Polygon Pointer does not point to a polygon! (%d)", polyF4Pointer);
+        if (polyF4Pointer != 0) {
+            Utils.verify(prim != null, "GridSquare's Polygon Pointer does not point to a primitive! (%d)", polyF4Pointer);
+            Utils.verify(prim instanceof MAPPolygon, "GridSquare's Polygon Pointer does not point to a polygon! (%d)", polyF4Pointer);
+        }
+
         this.polygon = (MAPPolygon) prim;
     }
 
@@ -49,7 +52,10 @@ public class GridSquare extends GameObject {
     public void save(DataWriter writer) {
         writer.writeInt(this.flags);
 
-        Integer polyPointer = parent.getSavePolygonPointerMap().get(polygon);
+        Integer polyPointer = parent.getSavePolygonPointerMap().get(this.polygon);
+        if (this.polygon == null)
+            polyPointer = 0; // Can write null.
+
         Utils.verify(polyPointer != null, "A GridSquare's polygon was not saved! This means this GridSquare likely should not be saved!");
         writer.writeInt(polyPointer);
     }

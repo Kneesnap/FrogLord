@@ -15,10 +15,7 @@ import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Represents the MR_PART struct.
@@ -392,6 +389,7 @@ public class MOFPart extends GameObject {
      * @return shouldHide
      */
     public boolean shouldHide() {
-        return "GEN_FROG.XAR".equals(getParent().getFileEntry().getDisplayName()) && getPartID() == 15;
+        int[] hiddenParts = getConfig().getHiddenPartIds().get(getParent().getFileEntry().getDisplayName());
+        return hiddenParts != null && Arrays.binarySearch(hiddenParts, getPartID()) >= 0;
     }
 }

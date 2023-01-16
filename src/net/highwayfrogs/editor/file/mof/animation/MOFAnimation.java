@@ -42,7 +42,7 @@ public class MOFAnimation extends MOFBase {
 
     @Override
     public void onLoad(DataReader reader, byte[] signature) {
-        this.startAtFrameZero = (signature[0] == (byte) 0x31); // '1'
+        this.startAtFrameZero = (signature[0] == (byte) 0x31) || getConfig().isAtOrBeforeBuild1(); // '1'
         this.transformType = TransformType.getType(signature[1]);
 
         int modelSetCount = reader.readUnsignedShortAsInt();
@@ -148,7 +148,7 @@ public class MOFAnimation extends MOFBase {
         float testZ = Float.MAX_VALUE;
 
         for (MOFPart part : getStaticMOF().getParts()) {
-            for (int action = 0; action < getHolder().getMaxAnimation(); action++) {
+            for (int action = 0; action < getHolder().getAnimationCount(); action++) {
                 for (int frame = 0; frame < getHolder().getFrameCount(action); frame++) {
                     MOFPartcel partcel = part.getCel(action, frame);
                     TransformObject transform = getTransform(part, action, frame);

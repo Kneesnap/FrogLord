@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.NameBank;
@@ -138,11 +139,15 @@ public class MOFHolder extends GameFile {
         if (!isDummy()) {
             MOFFile staticMof = asStaticFile();
             list.add(new Tuple2<>("Parts", String.valueOf(staticMof.getParts().size())));
+            list.add(new Tuple2<>("Animations", String.valueOf(getAnimationCount())));
             list.add(new Tuple2<>("Texture Animation", String.valueOf(staticMof.hasTextureAnimation())));
             list.add(new Tuple2<>("Hilites", String.valueOf(staticMof.getHiliteCount())));
             list.add(new Tuple2<>("Collprims", String.valueOf(staticMof.getCollprimCount())));
-            if (isAnimatedMOF())
-                list.add(new Tuple2<>("Translation Type", getAnimatedFile().getTransformType().name()));
+            if (isAnimatedMOF()) {
+                MOFAnimation animMof = getAnimatedFile();
+                list.add(new Tuple2<>("Translation Type", animMof.getTransformType().name()));
+                list.add(new Tuple2<>("Start at Frame Zero?", String.valueOf(animMof.isStartAtFrameZero())));
+            }
         }
 
         return list;
@@ -167,10 +172,12 @@ public class MOFHolder extends GameFile {
     }
 
     /**
+     * Gets the number of animations in this mof. (Does not include texture animation).
+     * Also
      * Get the maximum animation action id.
      * @return maxAnimation
      */
-    public int getMaxAnimation() {
+    public int getAnimationCount() {
         if (isAnimatedMOF())
             return getAnimatedFile().getAnimationCount();
 
@@ -231,7 +238,7 @@ public class MOFHolder extends GameFile {
 
         String bankName = Utils.stripWin95(Utils.stripExtension(getFileEntry().getDisplayName()));
         NameBank childBank = getConfig().getAnimationBank().getChildBank(bankName);
-        return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getMaxAnimation());
+        return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getAnimationCount());
     }
 
     /**
@@ -268,6 +275,24 @@ public class MOFHolder extends GameFile {
     }
 
     /**
+     * Gets the override of this MOFHolder, if there is one.
+     * @return override
+     */
+    public MOFHolder getOverride() {
+        String mofOverride = getConfig().getMofRenderOverrides().get(getFileEntry().getDisplayName());
+        if (mofOverride != null) {
+            FileEntry entry = getConfig().getResourceEntry(mofOverride);
+            if (entry != null) {
+                GameFile file = getConfig().getGameFile(entry.getLoadedId());
+                if (file instanceof MOFHolder)
+                    return (MOFHolder) file;
+            }
+        }
+
+        return this;
+    }
+
+    /**
      * Make a MOFMesh for this mof.
      * @return mofMesh
      */
@@ -283,7 +308,7 @@ public class MOFHolder extends GameFile {
     }
 
     /**
-     * Get whether or not this is an animated (XAR) MOF.
+     * Get whether this is an animated (XAR) MOF.
      */
     public boolean isAnimatedMOF() {
         return this.animatedFile != null;

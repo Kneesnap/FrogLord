@@ -30,10 +30,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public class MOFMesh extends FrogMesh<MOFPolygon> {
-    private MOFHolder mofHolder;
+    private final MOFHolder mofHolder;
     private int animationId;
     private int frameCount;
-    private List<Vector> verticeCache = new ArrayList<>();
+    private final List<Vector> verticeCache = new ArrayList<>();
     @Setter private boolean showOverlay;
 
     public MOFMesh(MOFHolder holder) {
@@ -149,7 +149,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
             if (part.getFlipbook() != null && part.getFlipbook().getActions().size() <= actionId)
                 return;
 
-        if (actionId >= getMofHolder().getMaxAnimation())
+        if (actionId >= getMofHolder().getAnimationCount())
             return;
 
         this.animationId = actionId;

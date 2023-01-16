@@ -1567,7 +1567,7 @@ public class Utils {
      * @return cleanStr
      */
     public static String removeDuplicateSpaces(String toRemove) {
-        return replaceDouble(toRemove, ' ').replaceAll(" $", ""); // Removes trailing space.
+        return replaceDouble(toRemove, ' ').replaceAll("(\\s+)$", ""); // Removes trailing space.
     }
 
     /**

@@ -42,12 +42,12 @@ public class PatchController implements Initializable {
     @FXML private Label nameLabel;
     @FXML private Label descLabel;
     @FXML private Label warningLabel;
-    private int baseHeight;
+    private final int baseHeight;
 
-    private Stage stage;
+    private final Stage stage;
     private PatchRuntime selectedPatchRuntime;
 
-    @Getter private static List<GamePatch> patches = new ArrayList<>();
+    @Getter private static final List<GamePatch> patches = new ArrayList<>();
 
     public PatchController(Stage stage) {
         this.stage = stage;
@@ -199,7 +199,7 @@ public class PatchController implements Initializable {
         List<String> lines = Utils.readLinesFromStream(Utils.getResourceStream("patches/list"));
 
         for (String patchName : lines) {
-            Config config = new Config(Utils.readLinesFromStream(Utils.getResourceStream("patches/" + patchName + ".patch")));
+            Config config = new Config(Utils.getResourceStream("patches/" + patchName + ".patch"));
             GamePatch loadPatch = new GamePatch();
             loadPatch.loadPatchFromConfig(config);
             getPatches().add(loadPatch);

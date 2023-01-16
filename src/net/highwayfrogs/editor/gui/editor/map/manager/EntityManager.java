@@ -107,22 +107,26 @@ public class EntityManager extends MapManager {
                 .setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
 
         entityEditor.addBoldLabel("General Information:");
-        entityEditor.addLabel("Entity Type", entity.getFormEntry().getEntityName());
+        if (entity.getFormEntry() != null) {
+            entityEditor.addLabel("Entity Type", entity.getFormEntry().getEntityName());
 
-        entityEditor.addEnumSelector("Form Type", entity.getFormEntry(), entries, false, newEntry -> {
-            entity.setFormEntry(newEntry);
-            showEntityInfo(entity);
-            updateEntities();
-        }).setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
+            entityEditor.addEnumSelector("Form Type", entity.getFormEntry(), entries, false, newEntry -> {
+                entity.setFormEntry(newEntry);
+                showEntityInfo(entity);
+                updateEntities();
+            }).setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
+        } else {
+            entityEditor.addLabel("Entity Type", "Unknown");
+        }
 
         entityEditor.addIntegerField("Entity ID", entity.getUniqueId(), entity::setUniqueId, null);
 
         if (entity.getFormGridId() >= 0 && getMap().getForms().size() > entity.getFormGridId()) {
-            entityEditor.addSelectionBox("Form", getMap().getForms().get(entity.getFormGridId()), getMap().getForms(),
-                    newForm -> entity.setFormGridId(getMap().getForms().indexOf(newForm)))
+            entityEditor.addSelectionBox("Form Grid", getMap().getForms().get(entity.getFormGridId()), getMap().getForms(),
+                            newForm -> entity.setFormGridId(getMap().getForms().indexOf(newForm)))
                     .setConverter(new AbstractIndexStringConverter<>(getMap().getForms(), (index, form) -> "Form #" + index + " (" + form.getXGridSquareCount() + "," + form.getZGridSquareCount() + ")"));
         } else { // This form is invalid, so show this as a text box.
-            entityEditor.addIntegerField("Form ID", entity.getFormGridId(), entity::setFormGridId, null);
+            entityEditor.addIntegerField("Form Grid ID", entity.getFormGridId(), entity::setFormGridId, null);
         }
 
         entityEditor.addBoldLabel("Flags:");
@@ -143,6 +147,10 @@ public class EntityManager extends MapManager {
             entity.getScriptData().addData(this.entityEditor);
         }
 
+        // Add raw data.
+        if (entity.getRawData() != null)
+            this.entityEditor.addTextField("Raw Data", Utils.toByteString(entity.getRawData()));
+
         this.entityEditor.addSeparator(25);
         this.entityEditor.addButton("Remove Entity", () -> {
             getMap().getEntities().remove(entity);
@@ -159,7 +167,8 @@ public class EntityManager extends MapManager {
         if (newEntity.getMatrixInfo() != null) { // Lets you select a polygon to place the new entity on.
             for (GridStack stack : getMap().getGridStacks())
                 for (GridSquare square : stack.getGridSquares())
-                    getController().renderOverPolygon(square.getPolygon(), MapMesh.GENERAL_SELECTION);
+                    if (square.getPolygon() != null)
+                        getController().renderOverPolygon(square.getPolygon(), MapMesh.GENERAL_SELECTION);
             MeshData data = getMesh().getManager().addMesh();
 
             getController().getGeometryManager().selectPolygon(poly -> {
@@ -322,9 +331,9 @@ public class EntityManager extends MapManager {
 
         this.entityTypes.set(entityIndex, newForm);
 
-        WADEntry modelEntry = entity.getFormEntry().getModel(getMap());
+        WADEntry modelEntry = newForm != null ? newForm.getModel(getMap()) : null;
         if (modelEntry != null) {
-            MOFHolder holder = (MOFHolder) modelEntry.getFile();
+            MOFHolder holder = ((MOFHolder) modelEntry.getFile()).getOverride();
 
             // Setup VLO.
             VLOArchive vlo = getMap().getConfig().getForcedVLO(modelEntry.getDisplayName());
@@ -350,8 +359,8 @@ public class EntityManager extends MapManager {
         FroggerEXEInfo config = getMap().getConfig();
         if (config.getPickupData() != null) {
             FlyScoreType flyType = null;
-            if (entity.getEntityData() instanceof BonusFlyEntity)
-                flyType = ((BonusFlyEntity) entity.getEntityData()).getType();
+            if (entity.getEntityData() instanceof BonusFlyEntity) // TODO: Perhaps switch to implementing an interface which allows specifying a sprite to render.
+                flyType = ((BonusFlyEntity) entity.getEntityData()).getFlyType();
             if (entity.getScriptData() instanceof ScriptButterflyData)
                 flyType = ((ScriptButterflyData) entity.getScriptData()).getType();
             if (entity.getEntityData() instanceof EntityFatFireFly)

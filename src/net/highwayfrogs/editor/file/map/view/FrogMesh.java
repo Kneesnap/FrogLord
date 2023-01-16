@@ -26,10 +26,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public abstract class FrogMesh<T extends PSXGPUPrimitive & TextureSource> extends TriangleMesh {
-    private Map<Integer, T> facePolyMap = new HashMap<>();
-    private Map<T, Integer> polyFaceMap = new HashMap<>();
-    private TextureMap textureMap;
-    private MeshManager manager;
+    private final Map<Integer, T> facePolyMap = new HashMap<>();
+    private final Map<T, Integer> polyFaceMap = new HashMap<>();
+    private final TextureMap textureMap;
+    private final MeshManager manager;
     private int faceCount;
     private int textureCount;
     @Setter private int verticeStart;
@@ -123,7 +123,8 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive & TextureSource> extend
         texCoord.addAndGet(texCount);
         TextureTreeNode entry = source.getTreeNode(textureMap);
         if (entry == null) {
-            System.out.println("There was a texture on this " + getClass().getSimpleName() + " which was not found in the TextureMap! (ID: " + poly.getGameImage(getTextureMap()).getTextureId() + ")");
+            GameImage searchImage = poly.getGameImage(getTextureMap());
+            System.out.println("There was a texture on this " + getClass().getSimpleName() + " which was not found in the TextureMap! (ID: " + (searchImage != null ? searchImage.getTextureId() : "null") + ")");
             entry = textureMap.getNode(UnknownTextureSource.INSTANCE);
             if (entry == null)
                 throw new RuntimeException("The default unknown texture was not found in the TextureMap.");

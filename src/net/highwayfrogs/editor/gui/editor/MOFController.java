@@ -854,7 +854,7 @@ public class MOFController extends EditorController<MOFHolder> {
             this.holder = controller.getFile();
 
             // Setup animation control.
-            List<Integer> numbers = new ArrayList<>(Utils.getIntegerList(holder.getMaxAnimation()));
+            List<Integer> numbers = new ArrayList<>(Utils.getIntegerList(holder.getAnimationCount()));
             numbers.add(0, -1);
             animationSelector.setItems(FXCollections.observableArrayList(numbers));
             animationSelector.setConverter(new AbstractStringConverter<>(holder::getName));

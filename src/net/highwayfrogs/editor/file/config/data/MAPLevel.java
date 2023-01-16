@@ -41,12 +41,12 @@ public enum MAPLevel {
     ORIGINAL4(MAPTheme.ORIGINAL, "ORG4", true),
     ORIGINAL5(MAPTheme.ORIGINAL, "ORG5", true),
     ORIGINAL_MULTIPLAYER(MAPTheme.ORIGINAL, "ORGM", true),
-    RUINS1(MAPTheme.RUINED, "ARN1", false), // 30
-    RUINS2(MAPTheme.RUINED, "ARN2", false),
-    RUINS3(MAPTheme.RUINED, "ARN3", false),
-    RUINS4(MAPTheme.RUINED, "ARN4", false),
-    RUINS5(MAPTheme.RUINED, "ARN5", false),
-    RUINS_MULTIPLAYER(MAPTheme.RUINED, "ARNM", false),
+    RUINS1(MAPTheme.RUINS, "ARN1", false), // 30
+    RUINS2(MAPTheme.RUINS, "ARN2", false),
+    RUINS3(MAPTheme.RUINS, "ARN3", false),
+    RUINS4(MAPTheme.RUINS, "ARN4", false),
+    RUINS5(MAPTheme.RUINS, "ARN5", false),
+    RUINS_MULTIPLAYER(MAPTheme.RUINS, "ARNM", false),
     SWAMP1(MAPTheme.SWAMP, "SWP1", true), // 36
     SWAMP2(MAPTheme.SWAMP, "SWP2", true),
     SWAMP3(MAPTheme.SWAMP, "SWP3", true),

@@ -37,7 +37,7 @@ public abstract class MOFBase extends GameObject {
         // This is done after the file is read, because to generate flags we must know the contents of the file first.
         if (flags != buildFlags())
             throw new RuntimeException("Generated Flags (" + buildFlags() + ") do not match read flags (" + flags + ") in " + getFileEntry().getDisplayName());
-        if (!makeSignature().equals(new String(signature)))
+        if (!makeSignature().equals(new String(signature)) && !getConfig().isAtOrBeforeBuild1()) // Build 1 seems to skip on the signature.
             throw new RuntimeException("Generated Signature (" + makeSignature() + ") does not match read signature (" + new String(signature) + "/" + Utils.toByteString(signature) + ") in " + getFileEntry().getDisplayName());
     }
 

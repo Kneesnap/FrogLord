@@ -92,6 +92,10 @@ public class FroggerEXEInfo extends Config {
     private NameBank formBank;
     private NameBank entityBank;
     private NameBank scriptBank; // Name of scripts.
+    private final Map<String, FroggerMapConfig> mapConfigs = new HashMap<>();
+    private final FroggerMapConfig defaultMapConfig = new FroggerMapConfig();
+    private final Map<String, int[]> hiddenPartIds = new HashMap<>();
+    private final Map<String, String> mofRenderOverrides = new HashMap<>();
 
     private DataReader reader;
     private byte[] exeBytes;
@@ -146,6 +150,7 @@ public class FroggerEXEInfo extends Config {
     public void setup() {
         loadBanks();
         readConfig();
+        readMapConfigs();
         readMWI();
         readCosTable();
         readPickupData();
@@ -157,6 +162,8 @@ public class FroggerEXEInfo extends Config {
         readMusicData();
         readLevelData();
         readBmpPointerData();
+        readHiddenParts();
+        readMofOverrides();
         this.MWD = new MWDFile(getMWI());
     }
 
@@ -178,6 +185,20 @@ public class FroggerEXEInfo extends Config {
         this.pickupDataAddress = getInt("pickupData", 0); // Pointer to Pickup_data[] in ent_gen. If this is not set, bugs will not have textures in the viewer. On PSX, search for 63 63 63 00 then after this entries image pointers, there's Pickup_data.
         this.scriptArrayAddress = getInt("scripts", 0); // Get this by searching for "07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1e 00 00 00 03 00 00 00 01 00 00 00 07 00 00 00". Search for the pointer that points to this (Don't forget to include ramOffset)
         this.skyLandTextureAddress = getInt("txl_sky_land", 0); // Get this by searching for the hex texture ids of sky images as shorts. The textures in the PSX US Demo are textures #98, #97, #96. -> 1723, 1722, 1753 -> "BB 06 BA 06 D9 06".
+    }
+
+    private void readMapConfigs() {
+        if (!hasChild("MapConfig"))
+            return;
+
+        Config defaultMapConfig = getChild("MapConfig");
+        this.defaultMapConfig.load(defaultMapConfig, this.defaultMapConfig);
+
+        for (Config singleMapConfig : defaultMapConfig.getOrderedChildren()) {
+            FroggerMapConfig newMapConfig = new FroggerMapConfig();
+            newMapConfig.load(singleMapConfig, this.defaultMapConfig);
+            this.mapConfigs.put(singleMapConfig.getName(), newMapConfig);
+        }
     }
 
     private void loadBanks() {
@@ -276,7 +297,15 @@ public class FroggerEXEInfo extends Config {
             if (currentBook == null || currentBook.getFormLibraryPointer() == 0)
                 continue;
 
-            lastBook.loadFormLibrary(this, (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / FormEntry.BYTE_SIZE);
+            // Determine number of form entries and compare with name bank.
+            int nameCount = getFormBank().getChildBank(lastTheme.name()) != null ? getFormBank().getChildBank(lastTheme.name()).size() : 0;
+            int byteSize = isAtOrBeforeBuild1() ? FormEntry.BUILD1_BYTE_SIZE : FormEntry.BYTE_SIZE;
+            int entryCount = (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / byteSize;
+            if (entryCount != nameCount)
+                System.out.println(lastTheme + " has " + nameCount + " configured form names but " + entryCount + " calculated form entries in the form library.");
+
+            // Load form library.
+            lastBook.loadFormLibrary(this, entryCount);
             lastTheme = currentTheme;
         }
 
@@ -439,6 +468,29 @@ public class FroggerEXEInfo extends Config {
         int totalCount = (stopReading - getBmpPointerAddress()) / Constants.POINTER_SIZE;
         for (int i = 0; i < totalCount; i++)
             bmpTexturePointers.add(getReader().readUnsignedIntAsLong());
+    }
+
+    private void readHiddenParts() {
+        this.hiddenPartIds.clear();
+        if (!hasChild("HiddenParts"))
+            return;
+
+        Config hiddenPartsCfg = getChild("HiddenParts");
+        for (String key : hiddenPartsCfg.keySet()) {
+            int[] hiddenParts = hiddenPartsCfg.getIntArray(key);
+            Arrays.sort(hiddenParts);
+            this.hiddenPartIds.put(key, hiddenParts);
+        }
+    }
+
+    private void readMofOverrides() {
+        this.mofRenderOverrides.clear();
+        if (!hasChild("MofOverride"))
+            return;
+
+        Config mofOverridesCfg = getChild("MofOverride");
+        for (String key : mofOverridesCfg.keySet())
+            this.mofRenderOverrides.put(key, mofOverridesCfg.getString(key));
     }
 
     /**
@@ -632,6 +684,24 @@ public class FroggerEXEInfo extends Config {
      */
     public FileEntry getResourceEntry(int resourceId) {
         return resourceId >= 0 && resourceId < getMWI().getEntries().size() ? getMWI().getEntries().get(resourceId) : null;
+    }
+
+    /**
+     * Gets the resource entry from a given name.
+     * @param name The name to lookup.
+     * @return foundEntry, if any.
+     */
+    public FileEntry getResourceEntry(String name) {
+        if (name == null || name.isEmpty())
+            return null;
+
+        for (int i = 0; i < getMWI().getEntries().size(); i++) {
+            FileEntry entry = getMWI().getEntries().get(i);
+            if (name.equalsIgnoreCase(entry.getDisplayName()))
+                return entry;
+        }
+
+        return null;
     }
 
     /**
@@ -858,7 +928,14 @@ public class FroggerEXEInfo extends Config {
     public FormEntry getMapFormEntry(MAPTheme mapTheme, int formBookId) {
         if ((formBookId & FormEntry.FLAG_GENERAL) == FormEntry.FLAG_GENERAL)
             mapTheme = MAPTheme.GENERAL;
-        return getThemeBook(mapTheme).getFormBook().get(formBookId & (FormEntry.FLAG_GENERAL - 1));
+
+        ThemeBook themeBook = getThemeBook(mapTheme);
+        if (themeBook == null)
+            return null;
+
+        int formIndex = formBookId & (FormEntry.FLAG_GENERAL - 1);
+        List<FormEntry> formBook = themeBook.getFormBook();
+        return formBook != null && formBook.size() > formIndex ? formBook.get(formIndex) : null;
     }
 
     /**
@@ -896,6 +973,14 @@ public class FroggerEXEInfo extends Config {
      */
     public boolean isAtOrBeforeBuild20() {
         return this.build > 0 && this.build <= 20;
+    }
+
+    /**
+     * Tests if the build is at/before build 1.
+     * @return isBuildAtOrBeforeBuild1
+     */
+    public boolean isAtOrBeforeBuild1() {
+        return this.build == 1;
     }
 
     /**

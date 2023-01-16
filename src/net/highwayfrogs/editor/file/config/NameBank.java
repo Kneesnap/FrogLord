@@ -11,9 +11,9 @@ import java.util.function.BiFunction;
  * Created by Kneesnap on 2/24/2019.
  */
 public class NameBank {
-    @Getter private Config config;
-    @Getter private List<String> names = new ArrayList<>();
-    private Map<String, NameBank> subBanks = new HashMap<>();
+    @Getter private final Config config;
+    @Getter private final List<String> names = new ArrayList<>();
+    private final Map<String, NameBank> subBanks = new HashMap<>();
     private BiFunction<NameBank, Integer, String> unknownMaker;
     private int spoofSize;
 
@@ -109,10 +109,9 @@ public class NameBank {
         Config config = new Config(Utils.getResourceStream("banks/" + folder + "/" + configName + ".cfg"));
         NameBank bank = new NameBank(config, config.getText(), unknownMaker);
 
-        for (String childName : config.getOrderedChildren()) {
-            Config childConfig = config.getChild(childName);
+        for (Config childConfig : config.getOrderedChildren()) {
             List<String> childData = childConfig.getText();
-            bank.subBanks.put(childName, new NameBank(childConfig, childData, unknownMaker));
+            bank.subBanks.put(childConfig.getName(), new NameBank(childConfig, childData, unknownMaker));
             bank.names.addAll(childData);
         }
 

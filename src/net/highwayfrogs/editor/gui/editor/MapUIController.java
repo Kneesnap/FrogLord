@@ -207,10 +207,16 @@ public class MapUIController implements Initializable {
 
         GridStack startStack = map.getGridStack(map.getStartXTile(), map.getStartZTile());
         float gridX = Utils.fixedPointIntToFloat4Bit(map.getWorldX(map.getStartXTile(), true));
-        float baseY = startStack != null ? -Utils.fixedPointIntToFloat4Bit(startStack.getHeight()) : 0;
+        float baseY = startStack != null ? startStack.calculateWorldHeight(map) : 0;
         float gridZ = Utils.fixedPointIntToFloat4Bit(map.getWorldZ(map.getStartZTile(), true));
-        cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
-        cameraFPS.setCameraLookAt(gridX, baseY, gridZ); // Set the camera to look at the start position, too.
+
+        // Make sure the start position is off the ground.
+        float yOffset = startPos.getFloatY();
+        if (Math.abs(yOffset) <= .0001)
+            yOffset = -100f;
+
+        cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + yOffset, gridZ + startPos.getFloatZ());
+        cameraFPS.setCameraLookAt(gridX, baseY, gridZ + 1); // Set the camera to look at the start position, too. The -1 is necessary to fix some near-zero math. It fixes it for QB.MAP for example.
 
         setupBindings(controller, subScene3D, meshView); // Setup UI.
     }

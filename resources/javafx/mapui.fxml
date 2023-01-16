@@ -190,11 +190,11 @@
                                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                        </rowConstraints>
                                        <children>
-                                           <Label text="Apply Lights:">
-                                             <font>
-                                                <Font name="System Bold" size="12.0" />
-                                             </font>
-                                          </Label>
+                                           <Label text="Display Entity Lighting:">
+                                               <font>
+                                                   <Font name="System Bold" size="12.0"/>
+                                               </font>
+                                           </Label>
                                            <CheckBox fx:id="applyLightsCheckBox" mnemonicParsing="false" selected="true"
                                                      GridPane.columnIndex="1"/>
                                        </children>

@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -23,7 +24,7 @@ public class PSXMapBook extends MapBook {
     private long remapPointer;
     private boolean useCaveLights;
     private long environmentTexturePointer;
-    private int wadId;
+    private int wadId = -1;
 
     @Override
     public void load(DataReader reader) {
@@ -31,7 +32,12 @@ public class PSXMapBook extends MapBook {
         this.remapPointer = reader.readUnsignedIntAsLong();
         this.useCaveLights = (reader.readInt() == 1);
         this.environmentTexturePointer = reader.readUnsignedIntAsLong();
-        this.wadId = reader.readInt();
+        if (getConfig().isAtOrBeforeBuild1()) {
+            //System.out.println("THEME FOR " + getConfig().getResourceName(this.mapId) + " IS " + MAPTheme.values()[1 + (getConfig().getMapLibrary().size() / 5)]);
+            this.wadId = ((PSXThemeBook) getConfig().getThemeBook(MAPTheme.values()[1 + (getConfig().getMapLibrary().size() / 5)])).getWadId();
+        } else {
+            this.wadId = reader.readInt();
+        }
     }
 
     @Override
@@ -40,7 +46,8 @@ public class PSXMapBook extends MapBook {
         writer.writeUnsignedInt(this.remapPointer);
         writer.writeInt(this.useCaveLights ? 1 : 0);
         writer.writeUnsignedInt(this.environmentTexturePointer);
-        writer.writeInt(this.wadId);
+        if (!getConfig().isAtOrBeforeBuild1())
+            writer.writeInt(this.wadId);
     }
 
     @Override

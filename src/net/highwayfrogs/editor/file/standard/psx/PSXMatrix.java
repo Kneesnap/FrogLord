@@ -34,7 +34,7 @@ public class PSXMatrix extends GameObject {
                 this.matrix[i][j] = reader.readShort();
 
         short padding = reader.readShort(); // Used to align to 4-bytes.
-        if (padding != 0)
+        if (padding != 0 && padding != -1) // It's -1 in some of the maps in Build 01.
             throw new RuntimeException("Matrix padding was not zero! (" + padding + ")");
 
         for (int i = 0; i < this.transform.length; i++)

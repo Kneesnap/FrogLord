@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFly;
+import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFlyBuild1;
 import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFrogLight;
 import net.highwayfrogs.editor.file.map.entity.data.cave.EntityRaceSnail;
 import net.highwayfrogs.editor.file.map.entity.data.desert.EntityCrack;
@@ -50,7 +51,8 @@ public abstract class EntityData extends GameObject {
             EntityPress.class, EntityEvilPlant.class, EntityCrack.class, EntityFatFireFly.class, EntityThermal.class, CheckpointEntity.class,
             EntityBeaver.class, EntitySquirrel.class, PathData.class, EntitySnake.class, BonusFlyEntity.class, EntityPlinthFrog.class,
             MatrixData.class, EntityRaceSnail.class, EntityColorTrigger.class, SwayingBranchEntity.class, EntityTurtle.class,
-            EntityOutroPlinth.class, EntityHedgehog.class, FallingLeafEntity.class, EntityCrocodileHead.class, TriggerEntity.class);
+            EntityOutroPlinth.class, EntityHedgehog.class, FallingLeafEntity.class, EntityCrocodileHead.class, TriggerEntity.class,
+            EntityFatFireFlyBuild1.class);
 
 
     /**
