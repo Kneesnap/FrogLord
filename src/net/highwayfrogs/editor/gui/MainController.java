@@ -368,7 +368,7 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         MAIN_WINDOW = this;
-        System.out.println("Hello from FrogLord.");
+        System.out.println("Hello! FrogLord is loading config '" + GUIMain.EXE_CONFIG.getInternalName() + "'.");
         menuBar.prefWidthProperty().bind(rootAnchor.widthProperty());
     }
 }
