@@ -1,10 +1,10 @@
 Name=No CD
 Description=Run the game without a CD. (Also without music + FMVs)
 Author=Kneesnap
-Versions=30e,30u,10
+Versions=pc-retail-v1.0,pc-retail-v3.0e
 # Copied functionality from the crack writeup at https://pastebin.com/UPQeiTmr
 
-[30e]
+[pc-retail-v3.0e]
 address1=140785
 address2=194012
 
@@ -12,7 +12,7 @@ address2=194012
 address1=9009
 address2=91122
 
-[10]
+[pc-retail-v1.0]
 address1=0x2281
 address2=0x5A11
 

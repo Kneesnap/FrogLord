@@ -1028,14 +1028,6 @@ public class MAPFile extends GameFile {
     }
 
     /**
-     * Tests if this is the QB map.
-     * @return isQBMap
-     */
-    public boolean isQB() {
-        return getFileEntry().getDisplayName().startsWith(MAPLevel.QB.getInternalName());
-    }
-
-    /**
      * This method fixes this MAP (If it is ISLAND.MAP) so it will load properly.
      */
     public void fixAsIslandMap() {
