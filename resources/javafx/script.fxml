@@ -20,7 +20,7 @@
         <Label fx:id="warningLabel" layoutX="14.0" layoutY="479.0"
                text="WARNING: This script is too large. It will most likely fail." textFill="RED" underline="true"
                visible="false" AnchorPane.bottomAnchor="4.0" AnchorPane.leftAnchor="14.0"/>
-        <Button fx:id="printUsagesButton" layoutX="404.0" layoutY="14.0" mnemonicParsing="false" text="Print Usages"
-                AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="14.0"/>
+        <Label fx:id="usagesLabel" layoutX="220.0" layoutY="8.0" text="Forms: PLACEHOLDER&#xD;Called by: PLACEHOLDER"
+               AnchorPane.leftAnchor="220.0" AnchorPane.topAnchor="8.0"/>
     </children>
 </AnchorPane>
