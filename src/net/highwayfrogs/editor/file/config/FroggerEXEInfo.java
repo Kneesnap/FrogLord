@@ -92,6 +92,7 @@ public class FroggerEXEInfo extends Config {
     private NameBank formBank;
     private NameBank entityBank;
     private NameBank scriptBank; // Name of scripts.
+    private NameBank scriptCallbackBank; // Name of scripts.
     private final Map<String, FroggerMapConfig> mapConfigs = new HashMap<>();
     private final FroggerMapConfig defaultMapConfig = new FroggerMapConfig();
     private final Map<String, int[]> hiddenPartIds = new HashMap<>();
@@ -202,20 +203,21 @@ public class FroggerEXEInfo extends Config {
     }
 
     private void loadBanks() {
-        this.soundBank = loadBank("soundList", "main", "sounds", "Sound");
-        this.animationBank = loadBank("animList", "main-pc", "anims", (bank, index) -> bank.size() <= 1 ? "Default Animation" : "Animation " + index);
-        this.formBank = loadBank("formList", "main", "forms", "Form");
-        this.entityBank = loadBank("entityList", "main", "entities", "Entity");
-        this.scriptBank = loadBank("scriptList", "main", "scripts", "Script");
+        this.soundBank = loadBank("soundList", "main", "sounds", "Sound", true);
+        this.animationBank = loadBank("animList", "main-pc", "anims", true, (bank, index) -> bank.size() <= 1 ? "Default Animation" : "Animation " + index);
+        this.formBank = loadBank("formList", "main", "forms", "Form", true);
+        this.entityBank = loadBank("entityList", "main", "entities", "Entity", true);
+        this.scriptBank = loadBank("scriptList", "main", "scripts", "Script", false);
+        this.scriptCallbackBank = this.scriptBank.getChildBank("CallbackNames");
     }
 
-    private NameBank loadBank(String configKey, String defaultBank, String bankName, String unknownName) {
-        return loadBank(configKey, defaultBank, bankName, (bank, index) -> "Unknown " + unknownName + " [" + index + "]");
+    private NameBank loadBank(String configKey, String defaultBank, String bankName, String unknownName, boolean addChildrenToMainBank) {
+        return loadBank(configKey, defaultBank, bankName, addChildrenToMainBank, (bank, index) -> "Unknown " + unknownName + " [" + index + "]");
     }
 
-    private NameBank loadBank(String configKey, String defaultBank, String bankName, BiFunction<NameBank, Integer, String> nameHandler) {
+    private NameBank loadBank(String configKey, String defaultBank, String bankName, boolean addChildrenToMainBank, BiFunction<NameBank, Integer, String> nameHandler) {
         String animBankName = getString(configKey, defaultBank);
-        return NameBank.readBank(bankName, animBankName, nameHandler);
+        return NameBank.readBank(bankName, animBankName, addChildrenToMainBank, nameHandler);
     }
 
     private void readPickupData() {
@@ -397,6 +399,13 @@ public class FroggerEXEInfo extends Config {
                 newScript.load(getReader());
             } catch (Throwable th) {
                 System.out.println("Failed to load script '" + getScriptBank().getName(i) + "'");
+                th.printStackTrace();
+
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException ex) {
+                    // Do nothing.
+                }
             } finally {
                 getReader().jumpReturn();
             }

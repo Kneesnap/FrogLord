@@ -105,14 +105,15 @@ public class NameBank {
      * @param unknownMaker What to return when an id wasn't found. Null is allowed.
      * @return newBank
      */
-    public static NameBank readBank(String folder, String configName, BiFunction<NameBank, Integer, String> unknownMaker) {
+    public static NameBank readBank(String folder, String configName, boolean addChildrenToMainBank, BiFunction<NameBank, Integer, String> unknownMaker) {
         Config config = new Config(Utils.getResourceStream("banks/" + folder + "/" + configName + ".cfg"));
         NameBank bank = new NameBank(config, config.getText(), unknownMaker);
 
         for (Config childConfig : config.getOrderedChildren()) {
             List<String> childData = childConfig.getText();
             bank.subBanks.put(childConfig.getName(), new NameBank(childConfig, childData, unknownMaker));
-            bank.names.addAll(childData);
+            if (addChildrenToMainBank)
+                bank.names.addAll(childData);
         }
 
         return bank;

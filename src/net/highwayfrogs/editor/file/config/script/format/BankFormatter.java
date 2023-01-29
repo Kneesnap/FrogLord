@@ -24,10 +24,12 @@ public class BankFormatter extends ScriptFormatter {
     private Function<FroggerEXEInfo, NameBank> getter;
     public static final BankFormatter SOUND_INSTANCE = new BankFormatter(FroggerEXEInfo::getSoundBank);
     public static final BankFormatter SCRIPT_INSTANCE = new BankFormatter(FroggerEXEInfo::getScriptBank);
+    public static final BankFormatter SCRIPT_CALLBACK_INSTANCE = new BankFormatter(FroggerEXEInfo::getScriptCallbackBank);
 
     @Override
     public String numberToString(int number) {
-        return getBank().hasName(number) ? getBank().getName(number) : super.numberToString(number);
+        NameBank bank = getBank();
+        return bank != null && bank.hasName(number) ? bank.getName(number) : super.numberToString(number);
     }
 
     @Override
@@ -35,7 +37,8 @@ public class BankFormatter extends ScriptFormatter {
         if (Utils.isInteger(str))
             return super.stringToNumber(str);
 
-        int index = getBank().getNames().indexOf(str);
+        NameBank bank = getBank();
+        int index = bank != null ? bank.getNames().indexOf(str) : -1;
         if (index == -1)
             throw new ScriptParseException("Could not find sound named '" + str + "'.");
         return index;
