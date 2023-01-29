@@ -194,20 +194,31 @@ public class MWIFile extends GameObject {
         }
 
         /**
+         * Gets the full file path of the file.
+         * @return fullFilePath
+         */
+        public String getFullFilePath() {
+            if (hasFilePath()) {
+                return getFilePath();
+            } else if (getConfig().getFileNames().size() > this.loadedId) {
+                return getConfig().getFileNames().get(this.loadedId);
+            } else {
+                return null;
+            }
+        }
+
+        /**
          * Get the display name of this file entry.
          * @return displayName
          */
         public String getDisplayName() {
-            if (hasFilePath()) {
-                String file = getFilePath().substring(getFilePath().lastIndexOf("\\") + 1); // Remove \ paths.
-                file = file.substring(file.lastIndexOf("/") + 1); // Remove / paths.
-                return file;
-            }
+            String fileName = getFullFilePath();
+            if (fileName == null)
+                return "File " + this.loadedId;
 
-            if (getConfig().getFileNames().size() > this.loadedId)
-                return getConfig().getFileNames().get(this.loadedId);
-
-            return "File " + this.loadedId;
+            fileName = fileName.substring(fileName.lastIndexOf("\\") + 1); // Remove \ paths.
+            fileName = fileName.substring(fileName.lastIndexOf("/") + 1); // Remove / paths.
+            return fileName;
         }
 
         /**
