@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -23,7 +22,7 @@ public class PSXMapBook extends MapBook {
     private int mapId;
     private long remapPointer;
     private boolean useCaveLights;
-    private long environmentTexturePointer;
+    private long environmentTexturePointer = -1;
     private int wadId = -1;
 
     @Override
@@ -31,13 +30,12 @@ public class PSXMapBook extends MapBook {
         this.mapId = reader.readInt();
         this.remapPointer = reader.readUnsignedIntAsLong();
         this.useCaveLights = (reader.readInt() == 1);
-        this.environmentTexturePointer = reader.readUnsignedIntAsLong();
-        if (getConfig().isAtOrBeforeBuild1()) {
-            //System.out.println("THEME FOR " + getConfig().getResourceName(this.mapId) + " IS " + MAPTheme.values()[1 + (getConfig().getMapLibrary().size() / 5)]);
-            this.wadId = ((PSXThemeBook) getConfig().getThemeBook(MAPTheme.values()[1 + (getConfig().getMapLibrary().size() / 5)])).getWadId();
-        } else {
+
+        if (!getConfig().isE3Build())
+            this.environmentTexturePointer = reader.readUnsignedIntAsLong();
+
+        if (!getConfig().isAtOrBeforeBuild1())
             this.wadId = reader.readInt();
-        }
     }
 
     @Override
@@ -45,7 +43,8 @@ public class PSXMapBook extends MapBook {
         writer.writeInt(this.mapId);
         writer.writeUnsignedInt(this.remapPointer);
         writer.writeInt(this.useCaveLights ? 1 : 0);
-        writer.writeUnsignedInt(this.environmentTexturePointer);
+        if (!getConfig().isE3Build())
+            writer.writeUnsignedInt(this.environmentTexturePointer);
         if (!getConfig().isAtOrBeforeBuild1())
             writer.writeInt(this.wadId);
     }
@@ -77,7 +76,11 @@ public class PSXMapBook extends MapBook {
 
     @Override
     public WADFile getWad(MAPFile map) {
-        return getConfig().getGameFile(this.wadId);
+        int wadId = this.wadId;
+        if (wadId < 0) // Determine the WAD ID from the map theme if necessary.
+            wadId = ((PSXThemeBook) getConfig().getThemeBook(map.getTheme())).getWadId();
+
+        return getConfig().getGameFile(wadId);
     }
 
     @Override

@@ -989,7 +989,21 @@ public class FroggerEXEInfo extends Config {
      * @return isBuildAtOrBeforeBuild1
      */
     public boolean isAtOrBeforeBuild1() {
-        return this.build == 1;
+        return this.build == 1 || isBeforeBuild1();
+    }
+
+    /**
+     * Test if the configuration is for a build before build 01.
+     */
+    public boolean isBeforeBuild1() {
+        return isE3Build();
+    }
+
+    /**
+     * Checks if this build is the E3 build or not.
+     */
+    public boolean isE3Build() {
+        return "psx-1997-06-13-e3".equalsIgnoreCase(getInternalName());
     }
 
     /**

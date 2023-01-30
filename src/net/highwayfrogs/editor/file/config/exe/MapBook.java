@@ -46,21 +46,21 @@ public abstract class MapBook extends ExeStruct {
         int fileAddress = (int) (remapAddress - config.getRamPointerOffset());
         reader.setIndex(fileAddress);
 
-        List<Short> shortList = new ArrayList<>();
-        short tempShort;
-        while ((tempShort = reader.readShort()) != REMAP_TERMINATOR)
-            shortList.add(tempShort);
+        List<Short> remap = new ArrayList<>();
+        short textureId;
+        while ((textureId = reader.readShort()) != REMAP_TERMINATOR)
+            remap.add(textureId);
 
-        config.getRemapTable().put(config.getResourceEntry(resourceId), shortList);
+        config.getRemapTable().put(config.getResourceEntry(resourceId), remap);
 
         // Hack to read island remap
         if (getConfig().getBuild() == 20 && getConfig().getResourceName(resourceId).equals("ARN1.MAP")) {
-            while ((tempShort = reader.readShort()) == REMAP_TERMINATOR) ;
+            while ((textureId = reader.readShort()) == REMAP_TERMINATOR) ;
 
             do {
-                getConfig().getIslandRemap().add(tempShort);
-                tempShort = reader.readShort();
-            } while (tempShort != REMAP_TERMINATOR);
+                getConfig().getIslandRemap().add(textureId);
+                textureId = reader.readShort();
+            } while (textureId != REMAP_TERMINATOR);
         }
     }
 
