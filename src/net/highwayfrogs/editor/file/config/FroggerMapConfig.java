@@ -12,6 +12,8 @@ public class FroggerMapConfig {
     private boolean g2Supported = true; // Whether G2 primitives are enabled in a map or not.
     private boolean mapAnimationSupported = true; // Whether map animation is supported.
     private boolean oldMapTexturedPolyFormat = false; // Whether the old textured polygon format should be used.
+    private boolean oldPathFormat = false; // Whether the old path format is used or not.
+    private boolean oldFormFormat = false; // Whether the old form format is used or not.
 
     /**
      * Loads data from the config.
@@ -23,5 +25,7 @@ public class FroggerMapConfig {
         this.g2Supported = config.getBoolean("g2Supported", defaultConfig.isG2Supported());
         this.mapAnimationSupported = config.getBoolean("enableMapAnimations", defaultConfig.isMapAnimationSupported());
         this.oldMapTexturedPolyFormat = config.getBoolean("oldMapTexturedPolyFormat", defaultConfig.isOldMapTexturedPolyFormat());
+        this.oldPathFormat = config.getBoolean("oldPathFormat", defaultConfig.isOldPathFormat());
+        this.oldFormFormat = config.getBoolean("oldFormFormat", defaultConfig.isOldFormFormat());
     }
 }

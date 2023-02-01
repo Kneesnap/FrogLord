@@ -361,7 +361,7 @@ public class MainController implements Initializable {
 
             FileEntry entry = mwdFile.getEntryMap().get(file);
             setGraphic(new ImageView(file.getIcon()));
-            setText(entry.getDisplayName() + " [" + entry.getLoadedId() + "]");
+            setText(entry.getDisplayName() + " [" + entry.getResourceId() + "]");
         }
     }
 

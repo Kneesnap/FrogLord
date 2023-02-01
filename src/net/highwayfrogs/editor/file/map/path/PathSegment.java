@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.map.path;
 import javafx.scene.control.TextField;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.config.FroggerMapConfig;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -19,10 +20,10 @@ import java.lang.ref.WeakReference;
  */
 @Getter
 public abstract class PathSegment extends GameObject {
-    private PathType type;
+    private final PathType type;
     private int length;
     private transient WeakReference<TextField> lengthField;
-    private transient Path path;
+    private final transient Path path;
 
     public PathSegment(Path path, PathType type) {
         this.path = path;
@@ -31,14 +32,20 @@ public abstract class PathSegment extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        this.length = reader.readInt();
+        FroggerMapConfig mapConfig = this.path.getMapFile().getMapConfig();
+
+        if (!mapConfig.isOldPathFormat())
+            this.length = reader.readInt();
         this.loadData(reader);
+        if (mapConfig.isOldPathFormat())
+            recalculateLength();
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(getType().ordinal());
-        writer.writeInt(this.length);
+        if (!this.path.getMapFile().getMapConfig().isOldPathFormat())
+            writer.writeInt(this.length);
         saveData(writer);
     }
 

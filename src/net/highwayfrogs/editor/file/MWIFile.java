@@ -117,7 +117,7 @@ public class MWIFile extends GameObject {
         private int packedSize;
         private int unpackedSize;
         private String filePath;
-        private transient int loadedId;
+        private transient int resourceId;
         private transient FroggerEXEInfo config;
 
         public static final int FLAG_SINGLE_ACCESS = Constants.BIT_FLAG_0; // I assume this is for files loaded individually, by themselves.
@@ -127,8 +127,8 @@ public class MWIFile extends GameObject {
         public static final int FLAG_AUTOMATIC_COMPRESSION = Constants.BIT_FLAG_4;
         public static final int FLAG_MANUAL_COMPRESSION = Constants.BIT_FLAG_5;
 
-        public FileEntry(FroggerEXEInfo config, int loadedId) {
-            this.loadedId = loadedId;
+        public FileEntry(FroggerEXEInfo config, int resourceId) {
+            this.resourceId = resourceId;
             this.config = config;
         }
 
@@ -200,8 +200,8 @@ public class MWIFile extends GameObject {
         public String getFullFilePath() {
             if (hasFilePath()) {
                 return getFilePath();
-            } else if (getConfig().getFileNames().size() > this.loadedId) {
-                return getConfig().getFileNames().get(this.loadedId);
+            } else if (getConfig().getFileNames().size() > this.resourceId) {
+                return getConfig().getFileNames().get(this.resourceId);
             } else {
                 return null;
             }
@@ -214,7 +214,7 @@ public class MWIFile extends GameObject {
         public String getDisplayName() {
             String fileName = getFullFilePath();
             if (fileName == null)
-                return "File " + this.loadedId;
+                return "File " + this.resourceId;
 
             fileName = fileName.substring(fileName.lastIndexOf("\\") + 1); // Remove \ paths.
             fileName = fileName.substring(fileName.lastIndexOf("/") + 1); // Remove / paths.

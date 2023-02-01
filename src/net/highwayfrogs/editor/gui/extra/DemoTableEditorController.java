@@ -23,7 +23,7 @@ import java.util.ResourceBundle;
  * Created by Kneesnap on 11/21/2019.
  */
 public class DemoTableEditorController implements Initializable {
-    private Stage stage;
+    private final Stage stage;
     private DemoTableEntry selectedEntry;
     private FroggerEXEInfo config;
     @FXML private ChoiceBox<DemoTableEntry> demoSelector;
@@ -57,7 +57,7 @@ public class DemoTableEditorController implements Initializable {
         fileSelector.setConverter(new AbstractIndexStringConverter<>(demoFiles, (index, entry) -> Utils.stripExtension(entry.getFileEntry().getDisplayName())));
 
         levelSelector.valueProperty().addListener(((observable, oldValue, newValue) -> this.selectedEntry.setLevel(newValue)));
-        fileSelector.valueProperty().addListener(((observable, oldValue, newValue) -> this.selectedEntry.setDemoResourceFile(newValue.getFileEntry().getLoadedId())));
+        fileSelector.valueProperty().addListener(((observable, oldValue, newValue) -> this.selectedEntry.setDemoResourceFile(newValue.getFileEntry().getResourceId())));
         unlockSelector.valueProperty().addListener(((observable, oldValue, newValue) -> this.selectedEntry.setUnlockLevel(newValue)));
 
         this.demoSelector.getSelectionModel().selectFirst();

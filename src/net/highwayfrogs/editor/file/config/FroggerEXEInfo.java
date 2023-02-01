@@ -204,7 +204,7 @@ public class FroggerEXEInfo extends Config {
 
     private void loadBanks() {
         this.soundBank = loadBank("soundList", "main", "sounds", "Sound", true);
-        this.animationBank = loadBank("animList", "main-pc", "anims", true, (bank, index) -> bank.size() <= 1 ? "Default Animation" : "Animation " + index);
+        this.animationBank = loadBank("animList", null, "anims", true, (bank, index) -> bank.size() <= 1 ? "Default Animation" : "Animation " + index);
         this.formBank = loadBank("formList", "main", "forms", "Form", true);
         this.entityBank = loadBank("entityList", "main", "entities", "Entity", true);
         this.scriptBank = loadBank("scriptList", "main", "scripts", "Script", false);
@@ -217,6 +217,9 @@ public class FroggerEXEInfo extends Config {
 
     private NameBank loadBank(String configKey, String defaultBank, String bankName, boolean addChildrenToMainBank, BiFunction<NameBank, Integer, String> nameHandler) {
         String animBankName = getString(configKey, defaultBank);
+        if (animBankName == null)
+            return null;
+
         return NameBank.readBank(bankName, animBankName, addChildrenToMainBank, nameHandler);
     }
 
@@ -326,7 +329,7 @@ public class FroggerEXEInfo extends Config {
                 return; // Couldn't find a demo by this name, so... skip.
 
             byte[] levelId = Utils.toByteArray(MAPLevel.SUBURBIA1.ordinal());
-            byte[] demoId = Utils.toByteArray(demoEntry.getLoadedId());
+            byte[] demoId = Utils.toByteArray(demoEntry.getResourceId());
 
             byte[] searchFor = new byte[levelId.length + demoId.length];
             System.arraycopy(levelId, 0, searchFor, 0, levelId.length);
@@ -358,13 +361,16 @@ public class FroggerEXEInfo extends Config {
         DataReader reader = getReader();
         reader.setIndex(getMapBookAddress());
 
-        int themeAddress = getThemeBookAddress();
+        int themeAddress = isSonyPresentation() ? Integer.MAX_VALUE : getThemeBookAddress();
         if (themeAddress >= 0) {
             while (themeAddress > reader.getIndex()) {
                 MapBook book = TargetPlatform.makeNewMapBook(this);
                 book.load(reader);
                 this.mapLibrary.add(book);
                 Constants.logExeInfo(book);
+
+                if (isSonyPresentation())
+                    break; // There's only one map.
             }
         }
 
@@ -996,7 +1002,7 @@ public class FroggerEXEInfo extends Config {
      * Test if the configuration is for a build before build 01.
      */
     public boolean isBeforeBuild1() {
-        return isE3Build();
+        return isE3Build() || isSonyPresentation();
     }
 
     /**
@@ -1004,6 +1010,13 @@ public class FroggerEXEInfo extends Config {
      */
     public boolean isE3Build() {
         return "psx-1997-06-13-e3".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Tests if this is the sony presentation April 28th build.
+     */
+    public boolean isSonyPresentation() {
+        return "psx-1997-04-28-sony".equalsIgnoreCase(getInternalName());
     }
 
     /**
@@ -1030,9 +1043,17 @@ public class FroggerEXEInfo extends Config {
      */
     public FormEntry[] getAllowedForms(MAPTheme theme) {
         return allowedForms.computeIfAbsent(theme, safeTheme -> {
-            List<FormEntry> formType = new ArrayList<>(getThemeLibrary()[MAPTheme.GENERAL.ordinal()].getFormBook());
-            if (safeTheme != null && safeTheme != MAPTheme.GENERAL)
-                formType.addAll(getThemeLibrary()[safeTheme.ordinal()].getFormBook());
+            ThemeBook themeBook = getThemeLibrary()[MAPTheme.GENERAL.ordinal()];
+            if (themeBook == null)
+                return new FormEntry[0];
+
+            List<FormEntry> formType = new ArrayList<>(themeBook.getFormBook());
+            if (safeTheme != null && safeTheme != MAPTheme.GENERAL) {
+                ThemeBook mapBook = getThemeLibrary()[safeTheme.ordinal()];
+                if (mapBook != null)
+                    formType.addAll(mapBook.getFormBook());
+            }
+
             return formType.toArray(new FormEntry[0]);
         });
     }

@@ -33,13 +33,13 @@ public class MAPGroup extends GameObject {
 
     public MAPGroup(FroggerMapConfig mapConfig) {
         this.mapConfig = mapConfig;
-        for (MAPPrimitiveType type : MAPFile.getTypes(mapConfig.isG2Supported()))
+        for (MAPPrimitiveType type : MAPFile.getTypes(mapConfig))
             polygonMap.put(type, new ArrayList<>());
     }
 
     @Override
     public void load(DataReader reader) {
-        List<MAPPrimitiveType> types = MAPFile.getTypes(this.mapConfig.isG2Supported());
+        List<MAPPrimitiveType> types = MAPFile.getTypes(this.mapConfig);
         for (MAPPrimitiveType type : types)
             loadPolygonCountMap.put(type, reader.readUnsignedByteAsShort());
 
@@ -55,7 +55,7 @@ public class MAPGroup extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        List<MAPPrimitiveType> types = MAPFile.getTypes(this.mapConfig.isG2Supported());
+        List<MAPPrimitiveType> types = MAPFile.getTypes(this.mapConfig);
         for (MAPPrimitiveType type : types)
             writer.writeUnsignedByte((short) this.polygonMap.get(type).size());
 
@@ -97,6 +97,8 @@ public class MAPGroup extends GameObject {
      */
     public void setupPolygonData(MAPFile map, Map<MAPPrimitiveType, List<MAPPrimitive>> group) {
         Utils.verify(this.loadPolygonCountMap.size() > 0, "Cannot setup polygon data twice.");
+        if (map.getMapConfig().isOldFormFormat())
+            return; // The groups data looks correct, but it doesn't seem to align with the expected data format.
 
         for (MAPPrimitiveType type : group.keySet()) {
             List<MAPPrimitive> from = group.get(type);

@@ -7,6 +7,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
@@ -55,7 +56,8 @@ public class WADFile extends GameFile {
             int size = reader.readInt();
             reader.skipInt(); // Padding.
 
-            CURRENT_FILE_NAME = getConfig().getResourceEntry(resourceId).getDisplayName();
+            String fileName = getConfig().getResourceEntry(resourceId).getDisplayName();
+            CURRENT_FILE_NAME = fileName;
 
             // Decompress if compressed.
             byte[] data = reader.readBytes(size);
@@ -66,14 +68,18 @@ public class WADFile extends GameFile {
             GameFile file;
             if (Constants.ENABLE_WAD_FORMATS) {
                 if (fileType == VLOArchive.WAD_TYPE || fileType == 1) {
-                    file = new VLOArchive();
+                    if (fileName != null && fileName.endsWith(".MAP")) {
+                        file = new MAPFile();
+                    } else {
+                        file = new VLOArchive();
+                    }
                 } else if (fileType == MOFHolder.MOF_ID || fileType == MOFHolder.MAP_MOF_ID) {
                     file = new MOFHolder(theme, lastCompleteMOF);
                 } else if (fileType == DemoFile.TYPE_ID) {
                     file = new DemoFile();
                 } else {
                     file = new DummyFile(data.length);
-                    System.out.println("File '" + CURRENT_FILE_NAME + "' was of an unknown file type.");
+                    System.out.println("File '" + CURRENT_FILE_NAME + "' was of an unknown file type. (" + fileType + ")");
                 }
             }
 

@@ -6,12 +6,15 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.MWDFile;
+import net.highwayfrogs.editor.file.WADFile;
+import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.entity.data.EntityData;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
+import net.highwayfrogs.editor.file.map.form.OldForm;
 import net.highwayfrogs.editor.file.map.path.Path;
 import net.highwayfrogs.editor.file.map.path.PathInfo;
 import net.highwayfrogs.editor.file.map.path.PathResult;
@@ -26,6 +29,7 @@ import java.util.Objects;
 
 /**
  * Represents the "ENTITY" struct.
+ * TODO: In new FrogLord this should probably be abstracted to "IFroggerMapEntity" or "FroggerMapEntity" due to the difference in data but the need for shared behavior.
  * Created by Kneesnap on 8/24/2018.
  */
 @Getter
@@ -34,6 +38,7 @@ public class Entity extends GameObject {
     private int formGridId = -1; // Default (CHANGE THIS!)
     private int uniqueId = -1; // Default (CHANGE THIS!)
     private FormEntry formEntry;
+    private OldForm oldFormEntry; // TODO: This code is pretty low quality, new FrogLord should have actual handling in place for this kind of stuff.
     private int flags;
     private EntityData entityData;
     private EntityScriptData scriptData;
@@ -60,20 +65,29 @@ public class Entity extends GameObject {
     public void load(DataReader reader) {
         this.formGridId = reader.readUnsignedShortAsInt();
         this.uniqueId = reader.readUnsignedShortAsInt();
-        int formId = reader.readUnsignedShortAsInt();
-        this.formEntry = getConfig().getMapFormEntry(map.getTheme(), formId);
-        this.flags = reader.readUnsignedShortAsInt();
-        reader.skipBytes(RUNTIME_POINTERS * Constants.POINTER_SIZE);
+
+        int formId = this.formGridId;
+        if (this.map.getMapConfig().isOldFormFormat()) {
+            this.oldFormEntry = this.map.getOldForms().get(this.formGridId);
+            reader.skipInt(); // Skip runtime pointer.
+            reader.skipInt(); // Skip runtime pointer.
+        } else {
+            formId = reader.readUnsignedShortAsInt();
+            this.formEntry = getConfig().getMapFormEntry(map.getTheme(), formId);
+            this.flags = reader.readUnsignedShortAsInt();
+            reader.skipBytes(RUNTIME_POINTERS * Constants.POINTER_SIZE);
+        }
+
         this.loadScriptDataPointer = reader.getIndex();
 
-        if (this.formEntry == null) {
+        if (this.formEntry == null && this.oldFormEntry == null) {
             this.entityData = new MatrixData();
-            System.out.println("Failed to find form for entity " + this.uniqueId + "/Form: " + formId + " in " + MWDFile.CURRENT_FILE_NAME + ".");
+            System.out.println("Failed to find form for entity " + this.uniqueId + "/Form: " + formId + "/" + this.formGridId + " in " + MWDFile.CURRENT_FILE_NAME + ".");
             return; // Can't read more data. Ideally this doesn't happen, but this is a good failsafe. It's most likely to happen in early builds, and it does happen in Build 01.
         }
 
         try {
-            this.entityData = EntityData.makeData(getConfig(), getFormEntry(), this);
+            this.entityData = EntityData.makeData(getConfig(), this, this);
             if (this.entityData != null)
                 this.entityData.load(reader);
 
@@ -99,6 +113,37 @@ public class Entity extends GameObject {
             this.entityData.save(writer);
         if (this.scriptData != null)
             this.scriptData.save(writer);
+    }
+
+    /**
+     * Gets the name of the entity type.
+     */
+    public String getTypeName() {
+        if (this.formEntry != null) {
+            return this.formEntry.getEntityName();
+        } else if (this.oldFormEntry != null && getConfig().getEntityBank() != null) {
+            return getConfig().getEntityBank().getName(this.oldFormEntry.getEntityTypeId());
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Gets the entity model, if there is one and we know how to resolve it.
+     * @param file The map file to lookup the model with.
+     * @return modelFile
+     */
+    public WADEntry getEntityModel(MAPFile file) {
+        if (this.formEntry != null) {
+            return this.formEntry.getModel(file);
+        } else if (this.oldFormEntry != null && getConfig().isSonyPresentation()) {
+            // TODO: New FrogLord should have a way to configure this probably. Perhaps we have a way to say "use the WAD which the map file is saved in."
+            int resourceId = getConfig().getResourceEntry("MAP_RUSHED.WAD").getResourceId();
+            WADFile wadFile = getConfig().getGameFile(resourceId);
+            return wadFile.getFiles().get(1 + this.oldFormEntry.getMofId());
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -163,9 +208,6 @@ public class Entity extends GameObject {
 
         PathInfo pathInfo = getPathInfo();
         if (pathInfo != null) { // Similar to ENTSTRUpdateMovingMOF
-            if (pathInfo.getPathId() >= map.getPaths().size())
-                return position; // TODO: Fixes build 20, hmm. Maybe we should instead build an entity management system which can handle errorenous entities and log their errors but still load successfully in new FrogLord.
-
             Path path = map.getPaths().get(pathInfo.getPathId());
             PathResult result = path.evaluatePosition(pathInfo);
 
@@ -205,7 +247,7 @@ public class Entity extends GameObject {
         if (this.formEntry == null || !Objects.equals(newEntityDataClass, oldEntityDataClass)) {
             PSXMatrix oldMatrix = getMatrixInfo(); // Call before setting entityData to null.
             PathInfo oldPath = getPathInfo();
-            this.entityData = EntityData.makeData(getConfig(), newEntry, this);
+            this.entityData = EntityData.makeData(getConfig(), this, this);
 
             if (this.entityData instanceof MatrixData && oldMatrix != null)
                 ((MatrixData) this.entityData).setMatrix(oldMatrix);

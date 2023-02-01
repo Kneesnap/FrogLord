@@ -85,8 +85,8 @@ public class PSXThemeBook extends ThemeBook {
 
     @Override
     public boolean isEntry(FileEntry test) {
-        return wadId == test.getLoadedId() || multiplayerWadId == test.getLoadedId()
-                || vloId == test.getLoadedId() || multiplayerVloId == test.getLoadedId();
+        return wadId == test.getResourceId() || multiplayerWadId == test.getResourceId()
+                || vloId == test.getResourceId() || multiplayerVloId == test.getResourceId();
     }
 
     @Override

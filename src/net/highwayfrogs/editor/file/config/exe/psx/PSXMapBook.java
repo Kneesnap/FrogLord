@@ -31,7 +31,7 @@ public class PSXMapBook extends MapBook {
         this.remapPointer = reader.readUnsignedIntAsLong();
         this.useCaveLights = (reader.readInt() == 1);
 
-        if (!getConfig().isE3Build())
+        if (!getConfig().isBeforeBuild1())
             this.environmentTexturePointer = reader.readUnsignedIntAsLong();
 
         if (!getConfig().isAtOrBeforeBuild1())
@@ -61,7 +61,7 @@ public class PSXMapBook extends MapBook {
 
     @Override
     public boolean isEntry(FileEntry test) {
-        return this.mapId == test.getLoadedId() || this.wadId == test.getLoadedId();
+        return this.mapId == test.getResourceId() || this.wadId == test.getResourceId();
     }
 
     @Override

@@ -17,7 +17,7 @@ public class MOFAnimationModel extends GameObject {
     // Bounding Box Set is unused.
     // Constraint is unused.
 
-    private transient MOFAnimationModelSet parent;
+    private final transient MOFAnimationModelSet parent;
     private transient int tempCelsetPointerAddress;
 
     public static final int FLAG_GLOBAL_BBOXES_INCLUDED = Constants.BIT_FLAG_0;
@@ -36,7 +36,7 @@ public class MOFAnimationModel extends GameObject {
         Utils.verify(animationType == DEFAULT_ANIMATION_TYPE, "Unknown animation type: %d.", animationType);
 
         int flags = reader.readUnsignedShortAsInt();
-        Utils.verify(flags == FLAG_GLOBAL_BBOXES_INCLUDED, "Global BBoxes is the only mode supported! (%s)", Utils.toHexString(flags));
+        Utils.verify(flags == FLAG_GLOBAL_BBOXES_INCLUDED || (getConfig().isSonyPresentation() && flags == 0), "Global BBoxes is the only mode supported! (%s)", Utils.toHexString(flags));
 
         int partCount = reader.readUnsignedShortAsInt();
         int staticModelId = reader.readUnsignedShortAsInt();

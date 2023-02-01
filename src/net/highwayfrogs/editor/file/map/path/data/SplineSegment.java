@@ -22,9 +22,9 @@ import java.util.function.Function;
  * Created by Kneesnap on 9/16/2018.
  */
 public class SplineSegment extends PathSegment {
-    private int[][] splineMatrix = new int[4][3];
-    private int[] smoothT = new int[4]; // Smooth T is the distance values to reach each point. (Translation)
-    private int[][] smoothC = new int[4][3]; // Smoothing coefficient data.
+    private final int[][] splineMatrix = new int[4][3];
+    private final int[] smoothT = new int[4]; // Smooth T is the distance values to reach each point. (Translation)
+    private final int[][] smoothC = new int[4][3]; // Smoothing coefficient data.
 
     private static final int SPLINE_FIX_INTERVAL = 0x200;
 
@@ -167,6 +167,24 @@ public class SplineSegment extends PathSegment {
     public void recalculateLength() {
         // We leave this up to user input, since I've yet to come up with an algorithm which is accurate enough to get this right,
         // and it seems like just leaving it as-is even during changes will create valid results.
+        final int maxLength = 1000 * (1 << 4);
+        int bestLength = 0;
+        double bestDistance = Double.MAX_VALUE;
+
+        SVector endPoint = convertToBezierCurve().getEnd();
+        for (int testLength = 0; testLength < maxLength; testLength++) {
+            this.setLength(testLength);
+            SVector point = calculateSplinePoint(testLength);
+            double distanceSq = point.distanceSquared(endPoint);
+            if (distanceSq < bestDistance) {
+                bestDistance = distanceSq;
+                bestLength = testLength;
+            } else if (bestDistance <= 10 && distanceSq > 10) {
+                break;
+            }
+        }
+
+        this.setLength(bestLength);
     }
 
     @Override

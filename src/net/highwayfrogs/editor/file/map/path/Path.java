@@ -21,12 +21,18 @@ import java.util.List;
  */
 @Getter
 public class Path extends GameObject {
-    private List<PathSegment> segments = new ArrayList<>();
+    private final MAPFile mapFile;
+    private final List<PathSegment> segments = new ArrayList<>();
     private transient int tempEntityIndexPointer;
+
+    public Path(MAPFile mapFile) {
+        this.mapFile = mapFile;
+    }
 
     @Override
     public void load(DataReader reader) {
-        reader.skipPointer(); // Points to a -1 terminated entity index list of entities using this path. Seems to be invalid data in many cases. Since it appears to only ever be used for the retro beaver, we auto-generate it in that scenario.
+        if (!this.mapFile.getMapConfig().isOldPathFormat())
+            reader.skipPointer(); // Points to a -1 terminated entity index list of entities using this path. Seems to be invalid data in many cases. Since it appears to only ever be used for the retro beaver, we auto-generate it in that scenario.
 
         // Read segments.
         int segmentCount = reader.readInt();
@@ -42,7 +48,8 @@ public class Path extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        this.tempEntityIndexPointer = writer.writeNullPointer();
+        if (!this.mapFile.getMapConfig().isOldPathFormat())
+            this.tempEntityIndexPointer = writer.writeNullPointer();
         writer.writeInt(segments.size());
 
         int segmentPointer = writer.getIndex() + (Constants.POINTER_SIZE * segments.size());

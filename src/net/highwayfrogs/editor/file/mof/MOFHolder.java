@@ -236,8 +236,12 @@ public class MOFHolder extends GameFile {
         if (animationId == -1)
             return asStaticFile().hasTextureAnimation() ? "Texture Animation" : "No Animation";
 
+        NameBank bank = getConfig().getAnimationBank();
+        if (bank == null)
+            return (animationId != 0) ? "Animation " + animationId : "Default Animation";
+
         String bankName = Utils.stripWin95(Utils.stripExtension(getFileEntry().getDisplayName()));
-        NameBank childBank = getConfig().getAnimationBank().getChildBank(bankName);
+        NameBank childBank = bank.getChildBank(bankName);
         return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getAnimationCount());
     }
 
@@ -283,7 +287,7 @@ public class MOFHolder extends GameFile {
         if (mofOverride != null) {
             FileEntry entry = getConfig().getResourceEntry(mofOverride);
             if (entry != null) {
-                GameFile file = getConfig().getGameFile(entry.getLoadedId());
+                GameFile file = getConfig().getGameFile(entry.getResourceId());
                 if (file instanceof MOFHolder)
                     return (MOFHolder) file;
             }

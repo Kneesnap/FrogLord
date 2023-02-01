@@ -8,6 +8,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.FroggerMapConfig;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
@@ -16,6 +17,7 @@ import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.form.Form;
+import net.highwayfrogs.editor.file.map.form.OldForm;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridSquareFlag;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
@@ -37,6 +39,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -72,6 +75,7 @@ public class MAPFile extends GameFile {
     private final List<Path> paths = new ArrayList<>();
     private final List<Zone> zones = new ArrayList<>();
     private final List<Form> forms = new ArrayList<>();
+    private final List<OldForm> oldForms = new ArrayList<>();
     private final List<Entity> entities = new ArrayList<>();
     private final List<Light> lights = new ArrayList<>();
     private final List<SVector> vertexes = new ArrayList<>();
@@ -284,7 +288,7 @@ public class MAPFile extends GameFile {
         // PATH
         for (int i = 0; i < pathCount; i++) {
             reader.jumpTemp(reader.readInt()); // Starts after the pointers.
-            Path path = new Path();
+            Path path = new Path(this);
             path.load(reader);
             this.paths.add(path);
             reader.jumpReturn();
@@ -311,9 +315,17 @@ public class MAPFile extends GameFile {
 
         for (int i = 0; i < formCount; i++) {
             reader.jumpTemp(reader.readInt());
-            Form form = new Form();
-            form.load(reader);
-            forms.add(form);
+
+            if (getMapConfig().isOldFormFormat()) {
+                OldForm oldForm = new OldForm(this);
+                oldForm.load(reader);
+                this.oldForms.add(oldForm);
+            } else {
+                Form form = new Form();
+                form.load(reader);
+                forms.add(form);
+            }
+
             reader.jumpReturn();
         }
 
@@ -386,7 +398,7 @@ public class MAPFile extends GameFile {
         Map<MAPPrimitiveType, Short> polyCountMap = new HashMap<>();
         Map<MAPPrimitiveType, Integer> polyOffsetMap = new HashMap<>();
 
-        List<MAPPrimitiveType> types = getTypes(mapConfig.isG2Supported());
+        List<MAPPrimitiveType> types = getTypes(mapConfig);
         for (MAPPrimitiveType type : types)
             polyCountMap.put(type, reader.readShort());
 
@@ -790,6 +802,11 @@ public class MAPFile extends GameFile {
         return loadEditor(new MAPController(), "map", this);
     }
 
+    @Override
+    public void handleWadEdit(WADFile parent) {
+        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), this);
+    }
+
     private void printInvalidEntityReadDetection(DataReader reader, Entity lastEntity, int endPointer) {
         if (lastEntity == null)
             return;
@@ -799,7 +816,7 @@ public class MAPFile extends GameFile {
             lastEntity.setInvalid(true);
 
             FormEntry formEntry = lastEntity.getFormEntry();
-            System.out.println("[INVALID/" + getFileEntry().getDisplayName() + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + (formEntry != null ? ", " + formEntry.getFormName() + ", " + formEntry.getEntityName() : ""));
+            System.out.println("[INVALID/" + getFileEntry().getDisplayName() + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + "/" + lastEntity.getFormGridId() + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + (formEntry != null ? ", " + formEntry.getFormName() + ", " + formEntry.getEntityName() : ", " + lastEntity.getTypeName()));
             if (realSize < 1024 && realSize >= 0) {
                 reader.jumpTemp(lastEntity.getLoadScriptDataPointer());
                 lastEntity.setRawData(reader.readBytes(realSize));
@@ -1166,11 +1183,11 @@ public class MAPFile extends GameFile {
 
     /**
      * Get the types to use based on if this is QB or not.
-     * @param includeG2 Whether or not the G2 primitive should be included?
+     * @param mapConfig The map config to get types from.
      * @return types
      */
-    public static List<MAPPrimitiveType> getTypes(boolean includeG2) {
-        return includeG2 ? PRIMITIVE_TYPES : POLYGON_TYPES;
+    public static List<MAPPrimitiveType> getTypes(FroggerMapConfig mapConfig) {
+        return mapConfig.isG2Supported() ? PRIMITIVE_TYPES : POLYGON_TYPES;
     }
 
     /**

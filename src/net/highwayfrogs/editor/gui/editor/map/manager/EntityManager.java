@@ -20,6 +20,7 @@ import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
 import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFly;
 import net.highwayfrogs.editor.file.map.entity.data.general.BonusFlyEntity;
 import net.highwayfrogs.editor.file.map.entity.script.ScriptButterflyData;
+import net.highwayfrogs.editor.file.map.form.OldForm;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
@@ -98,8 +99,9 @@ public class EntityManager extends MapManager {
         entityEditor.clearEditor();
         if (entity == null) {
             entityEditor.addBoldLabel("There is no entity selected.");
-            entityEditor.addButtonWithEnumSelection("Add Entity", this::addNewEntity, entries, entries[0])
-                    .setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
+            if (entries.length > 0)
+                entityEditor.addButtonWithEnumSelection("Add Entity", this::addNewEntity, entries, entries[0])
+                        .setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
             return;
         }
 
@@ -108,13 +110,17 @@ public class EntityManager extends MapManager {
 
         entityEditor.addBoldLabel("General Information:");
         if (entity.getFormEntry() != null) {
-            entityEditor.addLabel("Entity Type", entity.getFormEntry().getEntityName());
+            entityEditor.addLabel("Entity Type", entity.getTypeName());
 
             entityEditor.addEnumSelector("Form Type", entity.getFormEntry(), entries, false, newEntry -> {
                 entity.setFormEntry(newEntry);
                 showEntityInfo(entity);
                 updateEntities();
             }).setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
+        } else if (entity.getOldFormEntry() != null) {
+            OldForm oldFormEntry = entity.getOldFormEntry();
+            entityEditor.addLabel("Entity Type", entity.getTypeName());
+            entityEditor.addLabel("MOF Index", String.valueOf(oldFormEntry.getMofId()));
         } else {
             entityEditor.addLabel("Entity Type", "Unknown");
         }
@@ -326,18 +332,18 @@ public class EntityManager extends MapManager {
         FormEntry oldForm = this.entityTypes.get(entityIndex);
         FormEntry newForm = entity.getFormEntry();
 
-        if (oldForm == newForm && !entitiesToUpdate.contains(entityIndex))
+        if (oldForm == newForm && !entitiesToUpdate.contains(entityIndex) && !getMap().getMapConfig().isOldFormFormat())
             return; // The entity form has not changed, so we shouldn't change the model.
 
         this.entityTypes.set(entityIndex, newForm);
 
-        WADEntry modelEntry = newForm != null ? newForm.getModel(getMap()) : null;
+        WADEntry modelEntry = entity.getEntityModel(getMap());
         if (modelEntry != null) {
             MOFHolder holder = ((MOFHolder) modelEntry.getFile()).getOverride();
 
             // Setup VLO.
             VLOArchive vlo = getMap().getConfig().getForcedVLO(modelEntry.getDisplayName());
-            if (vlo == null) {
+            if (vlo == null && newForm != null) {
                 ThemeBook themeBook = newForm.getConfig().getThemeBook(newForm.getTheme());
                 if (themeBook != null)
                     vlo = themeBook.getVLO(getMap());

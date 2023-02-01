@@ -44,7 +44,7 @@ public class PathManager extends MapManager {
     private Path selectedPath;
     private GUIEditorGrid pathEditor;
     private TriConsumer<Path, PathSegment, Integer> promptHandler; // Path, Segment, Segment Distance.
-    private WeakHashMap<Path, List<Node>> perPathNodes = new WeakHashMap<>();
+    private final WeakHashMap<Path, List<Node>> perPathNodes = new WeakHashMap<>();
 
     private static final String DISPLAY_LIST_PATHS = "displayListPaths";
     private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
@@ -283,7 +283,7 @@ public class PathManager extends MapManager {
         box.setConverter(new AbstractStringConverter<>(path -> "Path #" + getMap().getPaths().indexOf(path)));
 
         this.pathEditor.addLabelButton("", "Add Path", 25.0, () -> {
-            Path newPath = new Path();
+            Path newPath = new Path(getMap());
             getMap().getPaths().add(newPath);
             setSelectedPath(newPath);
             setupEditor();

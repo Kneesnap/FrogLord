@@ -76,7 +76,7 @@ public enum MAPLevel {
 
     private final MAPTheme theme;
     private final String internalName;
-    private final boolean exists; // Whether or not this map exists on the level stack.
+    private final boolean exists; // Whether this map exists on the level stack.
 
     /**
      * Get a MAPLevel by its internal name.

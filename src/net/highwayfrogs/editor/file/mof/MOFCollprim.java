@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
@@ -47,8 +48,8 @@ public class MOFCollprim extends GameObject {
     @Override
     public void load(DataReader reader) {
         CollprimType type = CollprimType.values()[reader.readUnsignedShortAsInt()];
-        if (type != CollprimType.CUBOID)
-            throw new RuntimeException("MOFCollprim was type " + type + ", which is not supported.");
+        if (type != CollprimType.CUBOID && !getConfig().isSonyPresentation())
+            throw new RuntimeException("MOFCollprim was type " + type + ", which is not supported. (" + WADFile.CURRENT_FILE_NAME + ")");
 
         this.flags = reader.readUnsignedShortAsInt();
         reader.skipInt(); // Run-time.
