@@ -983,29 +983,6 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
-     * Tests if the build is at/before build 20.
-     * @return isBuildAtOrBeforeBuild20
-     */
-    public boolean isAtOrBeforeBuild20() {
-        return this.build > 0 && this.build <= 20;
-    }
-
-    /**
-     * Tests if the build is at/before build 1.
-     * @return isBuildAtOrBeforeBuild1
-     */
-    public boolean isAtOrBeforeBuild1() {
-        return this.build == 1 || isBeforeBuild1();
-    }
-
-    /**
-     * Test if the configuration is for a build before build 01.
-     */
-    public boolean isBeforeBuild1() {
-        return isE3Build() || isSonyPresentation();
-    }
-
-    /**
      * Checks if this build is the E3 build or not.
      */
     public boolean isE3Build() {
@@ -1017,6 +994,37 @@ public class FroggerEXEInfo extends Config {
      */
     public boolean isSonyPresentation() {
         return "psx-1997-04-28-sony".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Test if the configuration is for a build before build 01.
+     */
+    public boolean isBeforeBuild1() {
+        return isE3Build() || isSonyPresentation();
+    }
+
+    /**
+     * Tests if the build is at/before build 1.
+     * @return isBuildAtOrBeforeBuild1
+     */
+    public boolean isAtOrBeforeBuild1() {
+        return this.build == 1 || isBeforeBuild1();
+    }
+
+    /**
+     * Tests if the build is at/before build 20.
+     * @return isBuildAtOrBeforeBuild20
+     */
+    public boolean isAtOrBeforeBuild11() {
+        return (this.build >= 0 && this.build <= 11) || isBeforeBuild1();
+    }
+
+    /**
+     * Tests if the build is at/before build 20.
+     * @return isBuildAtOrBeforeBuild20
+     */
+    public boolean isAtOrBeforeBuild20() {
+        return (this.build >= 0 && this.build <= 20) || isBeforeBuild1();
     }
 
     /**

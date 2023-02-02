@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
+ * Represents the swaying branch entity data.
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
@@ -22,8 +23,10 @@ public class SwayingBranchEntity extends MatrixData {
         super.load(reader);
         this.swayAngle = reader.readUnsignedShortAsInt();
         this.swayDuration = reader.readUnsignedShortAsInt();
-        this.onceOffDelay = reader.readUnsignedShortAsInt();
-        reader.skipShort();
+        if (!getConfig().isAtOrBeforeBuild11()) {
+            this.onceOffDelay = reader.readUnsignedShortAsInt();
+            reader.skipShort();
+        }
     }
 
     @Override
@@ -31,8 +34,10 @@ public class SwayingBranchEntity extends MatrixData {
         super.save(writer);
         writer.writeUnsignedShort(this.swayAngle);
         writer.writeUnsignedShort(this.swayDuration);
-        writer.writeUnsignedShort(this.onceOffDelay);
-        writer.writeUnsignedShort(0);
+        if (!getConfig().isAtOrBeforeBuild11()) {
+            writer.writeUnsignedShort(this.onceOffDelay);
+            writer.writeUnsignedShort(0);
+        }
     }
 
     @Override
@@ -40,6 +45,7 @@ public class SwayingBranchEntity extends MatrixData {
         super.addData(editor);
         editor.addIntegerField("Sway Duration", getSwayDuration(), this::setSwayDuration, null);
         editor.addIntegerField("Sway Angle", getSwayAngle(), this::setSwayAngle, null);
-        editor.addIntegerField("Once Off Delay", getOnceOffDelay(), this::setOnceOffDelay, null);
+        if (!getConfig().isAtOrBeforeBuild11())
+            editor.addIntegerField("Once Off Delay", getOnceOffDelay(), this::setOnceOffDelay, null);
     }
 }

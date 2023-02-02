@@ -58,7 +58,8 @@ public class FormEntry extends GameObject {
         this.flags = reader.readInt();
         this.collisionReactFunction = reader.readUnsignedIntAsLong();
         this.radiusSquared = reader.readInt();
-        this.deathType = FormDeathType.values()[reader.readInt()];
+        int deathTypeId = reader.readInt();
+        this.deathType = deathTypeId >= 0 && deathTypeId < FormDeathType.values().length ? FormDeathType.values()[deathTypeId] : null;
         if (!getConfig().isAtOrBeforeBuild1())
             this.bonusCallbackFunction = reader.readUnsignedIntAsLong();
     }
