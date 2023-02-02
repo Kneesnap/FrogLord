@@ -25,22 +25,17 @@ public class PickupData extends GameObject {
         this.unknown2 = reader.readInt();
 
         if (getConfig().isAtOrBeforeBuild20()) {
-            // TODO: Properly support the format.
-            reader.skipBytes(Constants.INTEGER_SIZE - 1);
-            short nextNum = reader.readUnsignedByteAsShort();
-            while ((nextNum != 0x80)) {
-                if (!reader.hasMore())
-                    return;
+            // TODO: Properly support the format. (This doesn't work on PC...)
+            long nextTexture = reader.readUnsignedIntAsLong();
+            while (reader.hasMore() && !getConfig().getBmpTexturePointers().contains(nextTexture))
+                nextTexture = reader.readUnsignedIntAsLong();
 
-                reader.skipBytes(Constants.INTEGER_SIZE - 1);
-                nextNum = reader.readUnsignedByteAsShort();
-            }
             reader.setIndex(reader.getIndex() - Constants.INTEGER_SIZE);
         }
 
         // Read image pointers.
         long imagePointer;
-        while ((imagePointer = reader.readUnsignedIntAsLong()) != 0)
+        while (reader.hasMore() && (imagePointer = reader.readUnsignedIntAsLong()) != 0)
             imagePointers.add(imagePointer);
     }
 

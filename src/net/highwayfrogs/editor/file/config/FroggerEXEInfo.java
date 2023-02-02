@@ -154,7 +154,6 @@ public class FroggerEXEInfo extends Config {
         readMapConfigs();
         readMWI();
         readCosTable();
-        readPickupData();
         readThemeLibrary();
         readDemoTable();
         readMapLibrary();
@@ -163,6 +162,7 @@ public class FroggerEXEInfo extends Config {
         readMusicData();
         readLevelData();
         readBmpPointerData();
+        readPickupData();
         readHiddenParts();
         readMofOverrides();
         this.MWD = new MWDFile(getMWI());
