@@ -304,7 +304,7 @@ public class FroggerEXEInfo extends Config {
 
             // Determine number of form entries and compare with name bank.
             int nameCount = getFormBank().getChildBank(lastTheme.name()) != null ? getFormBank().getChildBank(lastTheme.name()).size() : 0;
-            int byteSize = isAtOrBeforeBuild1() ? FormEntry.BUILD1_BYTE_SIZE : FormEntry.BYTE_SIZE;
+            int byteSize = isAtOrBeforeBuild1() || isWindowsAlpha() ? FormEntry.BUILD1_BYTE_SIZE : FormEntry.BYTE_SIZE;
             int entryCount = (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / byteSize;
             if (entryCount != nameCount)
                 System.out.println(lastTheme + " has " + nameCount + " configured form names but " + entryCount + " calculated form entries in the form library.");
@@ -987,6 +987,13 @@ public class FroggerEXEInfo extends Config {
      */
     public boolean isE3Build() {
         return "psx-1997-06-13-e3".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Test if this build is the windows alpha build from June 29 1997.
+     */
+    public boolean isWindowsAlpha() {
+        return "pc-1997-06-29-alpha".equalsIgnoreCase(getInternalName());
     }
 
     /**

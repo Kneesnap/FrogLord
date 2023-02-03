@@ -60,7 +60,7 @@ public class FormEntry extends GameObject {
         this.radiusSquared = reader.readInt();
         int deathTypeId = reader.readInt();
         this.deathType = deathTypeId >= 0 && deathTypeId < FormDeathType.values().length ? FormDeathType.values()[deathTypeId] : null;
-        if (!getConfig().isAtOrBeforeBuild1())
+        if (!getConfig().isAtOrBeforeBuild1() && !getConfig().isWindowsAlpha())
             this.bonusCallbackFunction = reader.readUnsignedIntAsLong();
     }
 

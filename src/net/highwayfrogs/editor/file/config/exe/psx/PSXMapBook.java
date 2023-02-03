@@ -34,7 +34,7 @@ public class PSXMapBook extends MapBook {
         if (!getConfig().isBeforeBuild1())
             this.environmentTexturePointer = reader.readUnsignedIntAsLong();
 
-        if (!getConfig().isAtOrBeforeBuild1())
+        if (!getConfig().isAtOrBeforeBuild1() && !getConfig().isWindowsAlpha())
             this.wadId = reader.readInt();
     }
 
