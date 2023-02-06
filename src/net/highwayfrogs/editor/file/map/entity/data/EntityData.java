@@ -52,7 +52,8 @@ public abstract class EntityData extends GameObject {
             EntityBeaver.class, EntitySquirrel.class, PathData.class, EntitySnake.class, BonusFlyEntity.class, EntityPlinthFrog.class,
             MatrixData.class, EntityRaceSnail.class, EntityColorTrigger.class, SwayingBranchEntity.class, EntityTurtle.class,
             EntityOutroPlinth.class, EntityHedgehog.class, FallingLeafEntity.class, EntityCrocodileHead.class, TriggerEntity.class,
-            EntityFatFireFlyBuild1.class, EntityWeb.class, EntityTurtleOld.class, EntitySwanOld.class, EntityCrocodileOld.class);
+            EntityFatFireFlyBuild1.class, EntityWeb.class, EntityTurtleOld.class, EntitySwanOld.class, EntityCrocodileOld.class,
+            EntitySpider.class);
 
     /**
      * Add entity data to a table.
