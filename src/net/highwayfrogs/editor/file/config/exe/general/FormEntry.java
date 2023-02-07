@@ -73,7 +73,7 @@ public class FormEntry extends GameObject {
         writer.writeUnsignedInt(this.collisionReactFunction);
         writer.writeInt(this.radiusSquared);
         writer.writeInt(this.deathType.ordinal());
-        if (!getConfig().isAtOrBeforeBuild1())
+        if (!getConfig().isAtOrBeforeBuild1() && !getConfig().isWindowsAlpha())
             writer.writeUnsignedInt(this.bonusCallbackFunction);
     }
 

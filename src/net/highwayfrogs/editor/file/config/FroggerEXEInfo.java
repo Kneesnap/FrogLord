@@ -310,7 +310,7 @@ public class FroggerEXEInfo extends Config {
                 System.out.println(lastTheme + " has " + nameCount + " configured form names but " + entryCount + " calculated form entries in the form library.");
 
             // Load form library.
-            lastBook.loadFormLibrary(this, entryCount);
+            lastBook.loadFormLibrary(this, nameCount);
             lastTheme = currentTheme;
         }
 
