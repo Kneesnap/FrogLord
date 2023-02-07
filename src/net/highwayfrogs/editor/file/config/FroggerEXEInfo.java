@@ -986,7 +986,7 @@ public class FroggerEXEInfo extends Config {
      * Checks if this build is the E3 build or not.
      */
     public boolean isE3Build() {
-        return isE3Build1() || isE3Build2();
+        return isE3Build1() || isE3Build2() || isE3Build3();
     }
 
     /**
@@ -1001,6 +1001,13 @@ public class FroggerEXEInfo extends Config {
      */
     public boolean isE3Build2() {
         return "psx-1997-06-13-e3".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Checks if this build is the third E3 build or not.
+     */
+    public boolean isE3Build3() {
+        return "psx-1997-06-14-e3".equalsIgnoreCase(getInternalName());
     }
 
     /**
