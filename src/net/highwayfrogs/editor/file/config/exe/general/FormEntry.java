@@ -60,7 +60,7 @@ public class FormEntry extends GameObject {
         this.radiusSquared = reader.readInt();
         int deathTypeId = reader.readInt();
         this.deathType = deathTypeId >= 0 && deathTypeId < FormDeathType.values().length ? FormDeathType.values()[deathTypeId] : null;
-        if (!getConfig().isAtOrBeforeBuild2())
+        if (!getConfig().isAtOrBeforeBuild4())
             this.bonusCallbackFunction = reader.readUnsignedIntAsLong();
     }
 
@@ -73,7 +73,7 @@ public class FormEntry extends GameObject {
         writer.writeUnsignedInt(this.collisionReactFunction);
         writer.writeInt(this.radiusSquared);
         writer.writeInt(this.deathType.ordinal());
-        if (!getConfig().isAtOrBeforeBuild2())
+        if (!getConfig().isAtOrBeforeBuild4())
             writer.writeUnsignedInt(this.bonusCallbackFunction);
     }
 

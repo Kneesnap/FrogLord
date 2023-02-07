@@ -304,7 +304,7 @@ public class FroggerEXEInfo extends Config {
 
             // Determine number of form entries and compare with name bank.
             int nameCount = getFormBank().getChildBank(lastTheme.name()) != null ? getFormBank().getChildBank(lastTheme.name()).size() : 0;
-            int byteSize = isAtOrBeforeBuild2() ? FormEntry.OLD_BYTE_SIZE : FormEntry.BYTE_SIZE;
+            int byteSize = isAtOrBeforeBuild4() ? FormEntry.OLD_BYTE_SIZE : FormEntry.BYTE_SIZE;
             int entryCount = (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / byteSize;
             if (entryCount != nameCount)
                 System.out.println(lastTheme + " has " + nameCount + " configured form names but " + entryCount + " calculated form entries in the form library.");
@@ -1040,11 +1040,11 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
-     * Tests if the build is at/before build 2.
-     * @return isBuildAtOrBeforeBuild2
+     * Tests if the build is at/before build 4.
+     * @return isBuildAtOrBeforeBuild4
      */
-    public boolean isAtOrBeforeBuild2() {
-        return (this.build > 0 && this.build <= 2) || isBeforeBuild1() || isWindowsAlpha();
+    public boolean isAtOrBeforeBuild4() {
+        return (this.build > 0 && this.build <= 4) || isBeforeBuild1() || isWindowsAlpha();
     }
 
     /**

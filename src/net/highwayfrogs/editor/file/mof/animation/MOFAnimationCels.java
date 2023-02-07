@@ -39,7 +39,7 @@ public class MOFAnimationCels extends GameObject {
         int virtualCelCount = reader.readUnsignedShortAsInt();
 
         int flags = reader.readUnsignedShortAsInt();
-        if (!getConfig().isAtOrBeforeBuild2()) // Seems this was indeed used for flags at one point.
+        if (!getConfig().isAtOrBeforeBuild4()) // Seems this was indeed used for flags at one point.
             Utils.verify(flags == FLAG_VIRTUAL_STANDARD, "Model cel-set had unsupported flags! (%s)", Utils.toHexString(flags)); // We don't support this mode as of now.
 
         int celNumberPointer = reader.readInt();

@@ -34,7 +34,7 @@ public class PSXMapBook extends MapBook {
         if (!getConfig().isBeforeBuild1())
             this.environmentTexturePointer = reader.readUnsignedIntAsLong();
 
-        if (!getConfig().isAtOrBeforeBuild2())
+        if (!getConfig().isAtOrBeforeBuild4())
             this.wadId = reader.readInt();
     }
 
@@ -45,7 +45,7 @@ public class PSXMapBook extends MapBook {
         writer.writeInt(this.useCaveLights ? 1 : 0);
         if (!getConfig().isE3Build())
             writer.writeUnsignedInt(this.environmentTexturePointer);
-        if (!getConfig().isAtOrBeforeBuild2())
+        if (!getConfig().isAtOrBeforeBuild4())
             writer.writeInt(this.wadId);
     }
 
