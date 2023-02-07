@@ -40,7 +40,7 @@ public class FormEntry extends GameObject {
 
     public static final int FLAG_GENERAL = 0x8000;
     public static final int BYTE_SIZE = (8 * Constants.INTEGER_SIZE);
-    public static final int BUILD1_BYTE_SIZE = (7 * Constants.INTEGER_SIZE);
+    public static final int OLD_BYTE_SIZE = (7 * Constants.INTEGER_SIZE);
 
     public FormEntry(FroggerEXEInfo config, MAPTheme theme, int formId, int globalFormId) {
         this.config = config;
@@ -60,7 +60,7 @@ public class FormEntry extends GameObject {
         this.radiusSquared = reader.readInt();
         int deathTypeId = reader.readInt();
         this.deathType = deathTypeId >= 0 && deathTypeId < FormDeathType.values().length ? FormDeathType.values()[deathTypeId] : null;
-        if (!getConfig().isAtOrBeforeBuild1() && !getConfig().isWindowsAlpha())
+        if (!getConfig().isAtOrBeforeBuild2())
             this.bonusCallbackFunction = reader.readUnsignedIntAsLong();
     }
 
@@ -73,7 +73,7 @@ public class FormEntry extends GameObject {
         writer.writeUnsignedInt(this.collisionReactFunction);
         writer.writeInt(this.radiusSquared);
         writer.writeInt(this.deathType.ordinal());
-        if (!getConfig().isAtOrBeforeBuild1() && !getConfig().isWindowsAlpha())
+        if (!getConfig().isAtOrBeforeBuild2())
             writer.writeUnsignedInt(this.bonusCallbackFunction);
     }
 
@@ -125,7 +125,7 @@ public class FormEntry extends GameObject {
         int wadIndex = getId();
         if (getTheme() == MAPTheme.GENERAL) {
             wadIndex -= getTheme().getFormOffset();
-            if ((getConfig().isPSX() || getConfig().isPrototype()) && !getConfig().isAtOrBeforeBuild20())
+            if ((getConfig().isPSX() || getConfig().isPrototype()) && (!getConfig().isAtOrBeforeBuild20() || getConfig().isWindowsAlpha()))
                 wadIndex++; // Some builds have GEN_VRAM.VLO in THEME_GEN.WAD, which requires this offset.
         }
 
