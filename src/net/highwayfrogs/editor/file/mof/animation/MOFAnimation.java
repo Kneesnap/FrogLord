@@ -42,7 +42,7 @@ public class MOFAnimation extends MOFBase {
 
     @Override
     public void onLoad(DataReader reader, byte[] signature) {
-        boolean forceFrameZero = (getConfig().isAtOrBeforeBuild1() && !getConfig().isSonyPresentation());
+        boolean forceFrameZero = (getConfig().getBuild() == 1);
         this.startAtFrameZero = (signature[0] == (byte) 0x31) || forceFrameZero; // '1'
         this.transformType = TransformType.getType(signature[1]);
 
