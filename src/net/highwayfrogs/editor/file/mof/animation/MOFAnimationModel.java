@@ -36,7 +36,7 @@ public class MOFAnimationModel extends GameObject {
         Utils.verify(animationType == DEFAULT_ANIMATION_TYPE, "Unknown animation type: %d.", animationType);
 
         int flags = reader.readUnsignedShortAsInt();
-        boolean buildAllowsZeroFlag = getConfig().isSonyPresentation() || getConfig().isE3Build1();
+        boolean buildAllowsZeroFlag = getConfig().isSonyPresentation() || getConfig().isPSXAlpha();
         Utils.verify(flags == FLAG_GLOBAL_BBOXES_INCLUDED || (buildAllowsZeroFlag && flags == 0), "Global BBoxes is the only mode supported! (%s)", Utils.toHexString(flags));
 
         int partCount = reader.readUnsignedShortAsInt();

@@ -985,30 +985,23 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
-     * Checks if this build is the E3 build or not.
+     * Checks if this build is the PSX alpha build or not.
      */
-    public boolean isE3Build() {
-        return isE3Build1() || isE3Build2() || isE3Build3();
+    public boolean isPSXAlpha() {
+        return "psx-1997-06-02-alpha".equalsIgnoreCase(getInternalName());
     }
 
     /**
      * Checks if this build is the first E3 build or not.
      */
     public boolean isE3Build1() {
-        return "psx-1997-06-02-e3".equalsIgnoreCase(getInternalName());
+        return "psx-1997-06-12-e3".equalsIgnoreCase(getInternalName());
     }
 
     /**
      * Checks if this build is the second E3 build or not.
      */
     public boolean isE3Build2() {
-        return "psx-1997-06-12-e3".equalsIgnoreCase(getInternalName());
-    }
-
-    /**
-     * Checks if this build is the third E3 build or not.
-     */
-    public boolean isE3Build3() {
         return "psx-1997-06-13-e3".equalsIgnoreCase(getInternalName());
     }
 
@@ -1037,7 +1030,7 @@ public class FroggerEXEInfo extends Config {
      * Test if the configuration is for a build before build 01.
      */
     public boolean isBeforeBuild1() {
-        return isE3Build() || isSonyPresentation();
+        return isSonyPresentation() || isPSXAlpha() || isE3Build1() || isE3Build2();
     }
 
     /**
