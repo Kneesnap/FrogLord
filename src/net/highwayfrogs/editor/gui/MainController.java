@@ -361,6 +361,10 @@ public class MainController implements Initializable {
 
             FileEntry entry = mwdFile.getEntryMap().get(file);
             setGraphic(new ImageView(file.getIcon()));
+
+            // Update text.
+            boolean isIslandPlaceholder = file instanceof MAPFile && ((MAPFile) file).getMapConfig().isIslandPlaceholder();
+            setStyle(isIslandPlaceholder ? "-fx-text-fill: red;" : null);
             setText(entry.getDisplayName() + " [" + entry.getResourceId() + "]");
         }
     }

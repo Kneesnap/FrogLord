@@ -54,7 +54,7 @@ public abstract class MapBook extends ExeStruct {
         config.getRemapTable().put(config.getResourceEntry(resourceId), remap);
 
         // Hack to read island remap
-        if ((getConfig().isAtOrBeforeBuild20()) && getConfig().getResourceName(resourceId).equals("ARN1.MAP")) {
+        if ((!getConfig().isAtOrBeforeBuild1() && getConfig().isAtOrBeforeBuild20()) && getConfig().getResourceName(resourceId).equals("ARN1.MAP")) {
             while ((textureId = reader.readShort()) == REMAP_TERMINATOR) ;
 
             do {

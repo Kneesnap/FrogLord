@@ -23,7 +23,7 @@ public class SwayingBranchEntity extends MatrixData {
         super.load(reader);
         this.swayAngle = reader.readUnsignedShortAsInt();
         this.swayDuration = reader.readUnsignedShortAsInt();
-        if (!getConfig().isAtOrBeforeBuild11()) {
+        if (!getConfig().isAtOrBeforeBuild11() && !getConfig().isWindowsBeta()) {
             this.onceOffDelay = reader.readUnsignedShortAsInt();
             reader.skipShort();
         }
@@ -34,7 +34,7 @@ public class SwayingBranchEntity extends MatrixData {
         super.save(writer);
         writer.writeUnsignedShort(this.swayAngle);
         writer.writeUnsignedShort(this.swayDuration);
-        if (!getConfig().isAtOrBeforeBuild11()) {
+        if (!getConfig().isAtOrBeforeBuild11() && !getConfig().isWindowsBeta()) {
             writer.writeUnsignedShort(this.onceOffDelay);
             writer.writeUnsignedShort(0);
         }
@@ -45,7 +45,7 @@ public class SwayingBranchEntity extends MatrixData {
         super.addData(editor);
         editor.addIntegerField("Sway Duration", getSwayDuration(), this::setSwayDuration, null);
         editor.addIntegerField("Sway Angle", getSwayAngle(), this::setSwayAngle, null);
-        if (!getConfig().isAtOrBeforeBuild11())
+        if (!getConfig().isAtOrBeforeBuild11() && !getConfig().isWindowsBeta())
             editor.addIntegerField("Once Off Delay", getOnceOffDelay(), this::setOnceOffDelay, null);
     }
 }

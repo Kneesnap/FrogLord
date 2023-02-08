@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.file.config.script.format;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
-import lombok.AllArgsConstructor;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.config.script.ScriptCommand;
 import net.highwayfrogs.editor.file.config.script.ScriptParseException;
@@ -13,22 +11,29 @@ import net.highwayfrogs.editor.gui.editor.ScriptEditorController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.function.Function;
-
 /**
- * Formats bank names.
- * Created by Kneesnap on 8/1/2019.
+ * Created by Kneesnap on 2/7/2023.
  */
-@AllArgsConstructor
-public class BankFormatter extends ScriptFormatter {
-    private final Function<FroggerEXEInfo, NameBank> getter;
-    public static final BankFormatter SCRIPT_INSTANCE = new BankFormatter(FroggerEXEInfo::getScriptBank);
-    public static final BankFormatter SCRIPT_CALLBACK_INSTANCE = new BankFormatter(FroggerEXEInfo::getScriptCallbackBank);
+public class SoundNameFormatter extends ScriptFormatter {
+    public static final SoundNameFormatter INSTANCE = new SoundNameFormatter();
+
+    private SoundNameFormatter() {
+    }
 
     @Override
     public String numberToString(int number) {
         NameBank bank = getBank();
-        return bank != null && bank.hasName(number) ? bank.getName(number) : super.numberToString(number);
+        if (bank == null)
+            return super.numberToString(number);
+
+        if (GUIMain.EXE_CONFIG.isPSX() && GUIMain.EXE_CONFIG.isRetail()) { // PSX builds do lookup differently.
+            NameBank childBank = bank.getChildBank("GENERIC");
+            if (childBank != null && number >= childBank.size() + 5)
+                number -= 5; // The PSX version has a few duplicate entries which are here to
+            // TODO: In the future, we should have a separate configuration for this (Or improve the existing config file to allow entries with this kind of info), and read the sound table from ingame, so we have the actual sample rates.
+        }
+
+        return bank.hasName(number) ? bank.getName(number) : super.numberToString(number);
     }
 
     @Override
@@ -39,7 +44,16 @@ public class BankFormatter extends ScriptFormatter {
         NameBank bank = getBank();
         int index = bank != null ? bank.getNames().indexOf(str) : -1;
         if (index == -1)
-            throw new ScriptParseException("Could not find bank entry named '" + str + "'.");
+            throw new ScriptParseException("Could not find sound named '" + str + "'.");
+
+        if (GUIMain.EXE_CONFIG.isPSX() && GUIMain.EXE_CONFIG.isRetail()) { // PSX builds do lookup differently.
+            NameBank childBank = bank.getChildBank("GENERIC");
+            if (childBank != null && index >= childBank.size() + 5)
+                index += 5; // The PSX version has a few duplicate entries which are here to
+            // TODO: In the future, we should have a separate configuration for this (Or improve the existing config file to allow entries with this kind of info), and read the sound table from ingame, so we have the actual sample rates.
+        }
+
+
         return index;
     }
 
@@ -51,7 +65,7 @@ public class BankFormatter extends ScriptFormatter {
      */
     public Node makeEditor(ScriptEditorController controller, ScriptCommand command, int index) {
         ComboBox<Integer> comboBox = new ComboBox<>();
-        comboBox.setConverter(new AbstractStringConverter<>(getBank()::getName));
+        comboBox.setConverter(new AbstractStringConverter<>(this::numberToString));
         comboBox.setItems(FXCollections.observableArrayList(Utils.getIntegerList(getBank().size())));
         comboBox.setValue(command.getArguments()[index]);
         comboBox.getSelectionModel().select(command.getArguments()[index]);
@@ -64,6 +78,6 @@ public class BankFormatter extends ScriptFormatter {
     }
 
     private NameBank getBank() {
-        return getter.apply(GUIMain.EXE_CONFIG);
+        return GUIMain.EXE_CONFIG.getSoundBank();
     }
 }

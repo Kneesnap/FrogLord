@@ -99,7 +99,7 @@ public class MOFAnimationCels extends GameObject {
     public int getTransformID(int frame, MOFPart part) {
         MOFHolder holder = part.getParent().getHolder();
         boolean frameStartAtZero = (holder != null && holder.isAnimatedMOF() && holder.getAnimatedFile().isStartAtFrameZero());
-        int actualCel = celNumbers.get(frame % celNumbers.size()) - (frameStartAtZero ? 0 : 1);
+        int actualCel = Math.max(0, celNumbers.get(frame % celNumbers.size()) - (frameStartAtZero ? 0 : 1)); // This shouldn't be negative, but is for GEN_CHECKPOINT_X.XAR in Frogger build 4.
         int partCount = getParent().getStaticMOF().getParts().size();
         return indices.get((actualCel * partCount) + part.getPartID());
     }

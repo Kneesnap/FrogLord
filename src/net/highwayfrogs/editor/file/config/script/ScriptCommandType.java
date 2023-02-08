@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.config.script.format.BankFormatter;
 import net.highwayfrogs.editor.file.config.script.format.EnumFormatter;
 import net.highwayfrogs.editor.file.config.script.format.ScriptFormatter;
+import net.highwayfrogs.editor.file.config.script.format.SoundNameFormatter;
 
 /**
  * A registry of script command types.
@@ -15,13 +16,13 @@ public enum ScriptCommandType {
     WAIT_UNTIL_ACTION_FINISHED(),
     WAIT_UNTIL_PATH_END(),
     SET_ACTION((ScriptFormatter) null),
-    PLAY_SOUND(BankFormatter.SOUND_INSTANCE),
+    PLAY_SOUND(SoundNameFormatter.INSTANCE),
     RESTART(),
     END(),
     SET_TIMER(EnumFormatter.FORMAT_REGISTER_TOGGLE, null),
     DEVIATE(EnumFormatter.FORMAT_REGISTER_TOGGLE, EnumFormatter.FORMAT_DIRECTION, null, null, null),
     WAIT_DEVIATED(),
-    PLAY_RNDSOUND(BankFormatter.SOUND_INSTANCE, null), // sound, chance
+    PLAY_RNDSOUND(SoundNameFormatter.INSTANCE, null), // sound, chance
     SETLOOP(),
     ENDLOOP(),
     SCRIPT_IF(EnumFormatter.FORMAT_SCRIPT_OPTION, EnumFormatter.FORMAT_CONDITIONS, BankFormatter.SCRIPT_INSTANCE, null),
@@ -47,13 +48,13 @@ public enum ScriptCommandType {
     RETURN_DEVIATE(EnumFormatter.FORMAT_REGISTER_TOGGLE, EnumFormatter.FORMAT_DIRECTION, EnumFormatter.FORMAT_REGISTER_IDS),
     REGISTER_CALLBACK(EnumFormatter.FORMAT_CALLBACK_IDS, BankFormatter.SCRIPT_CALLBACK_INSTANCE, EnumFormatter.FORMAT_CONDITIONS, EnumFormatter.FORMAT_CALLBACK),
     SET_ENTITY_TYPE(EnumFormatter.FORMAT_ENTITY_TYPE),
-    PLAY_SOUND_DISTANCE(EnumFormatter.FORMAT_REGISTER_TOGGLE, null, BankFormatter.SOUND_INSTANCE, EnumFormatter.FORMAT_DIRECTION, null),
-    PLAY_MOVING_SOUND(BankFormatter.SOUND_INSTANCE, EnumFormatter.FORMAT_REGISTER_TOGGLE, null, null),
+    PLAY_SOUND_DISTANCE(EnumFormatter.FORMAT_REGISTER_TOGGLE, null, SoundNameFormatter.INSTANCE, EnumFormatter.FORMAT_DIRECTION, null),
+    PLAY_MOVING_SOUND(SoundNameFormatter.INSTANCE, EnumFormatter.FORMAT_REGISTER_TOGGLE, null, null),
     STOP(),
     MUTATE_MESH_COLOR(),
     NO_COLL_CHECKPOINT(),
     COLL_CHECKPOINT(),
-    KILL_SAFE_FROG(null, BankFormatter.SOUND_INSTANCE),
+    KILL_SAFE_FROG(null, SoundNameFormatter.INSTANCE),
     CHANGE_ENTITY_ANIM((ScriptFormatter) null),
     CREATE_3D_SPRITE((ScriptFormatter) null),
     PITCH_BEND_MOVING_SOUND(EnumFormatter.FORMAT_REGISTER_TOGGLE, null, null, null, null, null),

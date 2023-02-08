@@ -816,7 +816,10 @@ public class MAPFile extends GameFile {
             lastEntity.setInvalid(true);
 
             FormEntry formEntry = lastEntity.getFormEntry();
-            System.out.println("[INVALID/" + getFileEntry().getDisplayName() + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + "/" + lastEntity.getFormGridId() + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + (formEntry != null ? ", " + formEntry.getFormName() + ", " + formEntry.getEntityName() : ", " + lastEntity.getTypeName()));
+            if (!getMapConfig().isIslandPlaceholder()) // No need to print these errors on island placeholders.
+                System.out.println("[INVALID/" + getFileEntry().getDisplayName() + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + "/" + lastEntity.getFormGridId() + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + (formEntry != null ? ", " + formEntry.getFormName() + ", " + formEntry.getEntityName() : ", " + lastEntity.getTypeName()));
+
+            // Restore reader.
             if (realSize < 1024 && realSize >= 0) {
                 reader.jumpTemp(lastEntity.getLoadScriptDataPointer());
                 lastEntity.setRawData(reader.readBytes(realSize));

@@ -195,10 +195,12 @@ public class FroggerEXEInfo extends Config {
         Config defaultMapConfig = getChild("MapConfig");
         this.defaultMapConfig.load(defaultMapConfig, this.defaultMapConfig);
 
-        for (Config singleMapConfig : defaultMapConfig.getOrderedChildren()) {
+        // Read other configs, if there are any.
+        for (Config mapConfig : defaultMapConfig.getOrderedChildren()) {
             FroggerMapConfig newMapConfig = new FroggerMapConfig();
-            newMapConfig.load(singleMapConfig, this.defaultMapConfig);
-            this.mapConfigs.put(singleMapConfig.getName(), newMapConfig);
+            newMapConfig.load(mapConfig, this.defaultMapConfig);
+            for (String mapFileName : newMapConfig.getApplicableMaps())
+                this.mapConfigs.put(mapFileName, newMapConfig);
         }
     }
 
@@ -1011,10 +1013,17 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
-     * Test if this build is the windows alpha build from June 29 1997.
+     * Test if this build is the windows alpha build from June 29, 1997.
      */
     public boolean isWindowsAlpha() {
         return "pc-1997-06-29-alpha".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Test if this build is the windows beta build from July 21, 1997.
+     */
+    public boolean isWindowsBeta() {
+        return "pc-1997-07-21".equalsIgnoreCase(getInternalName());
     }
 
     /**
@@ -1060,7 +1069,7 @@ public class FroggerEXEInfo extends Config {
      * @return isBuildAtOrBeforeBuild20
      */
     public boolean isAtOrBeforeBuild20() {
-        return (this.build >= 0 && this.build <= 20) || isBeforeBuild1() || isWindowsAlpha();
+        return (this.build >= 0 && this.build <= 20) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
     }
 
     /**

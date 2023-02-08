@@ -208,6 +208,9 @@ public class Entity extends GameObject {
 
         PathInfo pathInfo = getPathInfo();
         if (pathInfo != null) { // Similar to ENTSTRUpdateMovingMOF
+            if (pathInfo.getPathId() >= map.getPaths().size())
+                return new float[6]; // Invalid path.
+
             Path path = map.getPaths().get(pathInfo.getPathId());
             PathResult result = path.evaluatePosition(pathInfo);
 
