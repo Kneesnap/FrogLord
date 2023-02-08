@@ -59,6 +59,7 @@ import java.util.Map.Entry;
  *   - I'm thinking it makes sense to pick our approach on a per file type basis. Eg: VLO may have few changes, whereas maps may have many, and different design choices for each.
  *   - Make the file formats shared between games more flexible.
  *   - Interfaces or abstract classes really seem to be the way to go when considering data modelling, etc. Allows different versions of roughly the same data.
+ *  - For new FrogLord map files, I think we should put all data in the map files, none hardcoded. That should make for flexible level editing.
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter

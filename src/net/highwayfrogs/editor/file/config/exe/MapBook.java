@@ -48,7 +48,7 @@ public abstract class MapBook extends ExeStruct {
 
         List<Short> remap = new ArrayList<>();
         short textureId;
-        while ((textureId = reader.readShort()) != REMAP_TERMINATOR)
+        while (canContinueReadingRemap(reader, textureId = reader.readShort()))
             remap.add(textureId);
 
         config.getRemapTable().put(config.getResourceEntry(resourceId), remap);
@@ -60,8 +60,23 @@ public abstract class MapBook extends ExeStruct {
             do {
                 getConfig().getIslandRemap().add(textureId);
                 textureId = reader.readShort();
-            } while (textureId != REMAP_TERMINATOR);
+            } while (canContinueReadingRemap(reader, textureId));
         }
+    }
+
+    private boolean canContinueReadingRemap(DataReader reader, short textureId) {
+        if (textureId == REMAP_TERMINATOR)
+            return false;
+
+        // Look for the data which comes after the remap table.
+        if (getConfig().isPSX() && textureId == 0x80) {
+            reader.jumpTemp(reader.getIndex());
+            long nextData = reader.readUnsignedIntAsLong();
+            reader.jumpReturn();
+            return nextData != 0x00100020L; // Confirmed end of data.
+        }
+
+        return true;
     }
 
     /**

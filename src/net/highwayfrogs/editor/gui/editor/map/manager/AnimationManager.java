@@ -57,7 +57,7 @@ public class AnimationManager extends MapManager {
                 return null;
             }
 
-            Short realTextureId = getMap().getRemapTable().get(textureId);
+            Short realTextureId = getMap().getRemapTable().size() > textureId ? getMap().getRemapTable().get(textureId) : null;
             if (realTextureId != null) {
                 GameImage gameImage = getMap().getVlo().getImageByTextureId(realTextureId);
                 if (gameImage != null)
