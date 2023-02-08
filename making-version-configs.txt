@@ -1,0 +1,36 @@
+Making Frogger Configs:
+
+General:
+ - The 0x80000000 part of a pointer is removed when storing an address in a config.
+ - Also, the 'ramOffset' value is the difference between the memory address in Ghidra, and in a hex editor.
+ - This is a little loose on details, because it's a complicated enough process that assumes you know a little about how Ghidra works first.
+ - My recommendation is to look at some already made configs, and compare them to their corresponding executable in order to fill in the gaps.
+ - This guide is primarily for PSX builds, since PC builds are rare. But the same ideas apply.
+ - I don't imagine anyone else is going to be making these configs so this document is largely just a list of things for me to remember. But, if for whatever reason someone needs to make one I hope this is helpful?
+
+#1) There is an array of pointers in memory to all texture instances in the game. This array is called 'bmp_pointers'.
+ - It's referenced in main(), by passing to a function which only accepts it as the argument.
+ - It has over a thousand pointers in the array.
+ - Set bmpPointerAddress to that.
+ 
+#2) Get the address for the first byte after bmp_pointers ends.
+ - Search for this address in the executable.
+ - The only occurance should be part of the Map_library. Scroll to the top (Look at PSXMapBook.java to ensure the data looks like what you expect), then mark mapLibrary= that address.
+ - After Map_library is Theme_library, which can be handled the same way.
+
+#3) Scripts is a pointer array, usually under the Entity_library. Can search for the bytes of scripts in other versions to make finding this easier.
+
+#4) One of the earliest function calls should be to InitialisePSX. Inside of InitialisePSX should be a function call which passes a string "FROGPSX.MWD".
+ - The memory address it passes to this function is the MWI.
+ - Note that to the config, and use a hex editor to determine when the MWI ends. Just look for the moment that data stops being a valid MWI. (Determine what a valid MWI looks like by looking at the FrogLord code which loads MWI files). File names are included as part of the MWI, if file names are included in the build.
+ 
+#5) Arcade level address is in a function called from main() which takes 0 parameters, under a function which takes 1 parameter, the number 2.
+ - The pointer is on the first decompiled line generally, before a loop.
+ 
+#6) Search for usages of the string "SKY LAND VERTICES".
+ - The function which uses this is "ResolveSkyLand", and there's one usage of bmp_pointers. The other pointer on the line which uses bmp_pointers is txl_sky_land. Configure it as such.
+ - The function which calls "ResolveSkyLand" is 'InitialiseMap'. In InitialiseMap, there will be an array access to Game_xa_tunes, or the music ID pointer, after the big block of function calls.
+ 
+#7) Pickup_data is a little complicated, but it's referenced by a function around index 10 in the entity library, which is identifiable by the groupings of 3 function pointers together, sometime after the Map_library data.
+ 
+#8) Scripts are the first thing after the Entity_library. The first entry is a null pointer.
