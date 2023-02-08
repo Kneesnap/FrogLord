@@ -26,6 +26,7 @@ public class PSXMatrix extends GameObject {
 
     private static final int DIMENSION = 3;
     public static final int BYTE_SIZE = (DIMENSION * DIMENSION * Constants.SHORT_SIZE) + (DIMENSION * Constants.INTEGER_SIZE);
+    public static final PSXMatrix IDENTITY = newIdentityMatrix();
 
     @Override
     public void load(DataReader reader) {
@@ -154,16 +155,25 @@ public class PSXMatrix extends GameObject {
         return output;
     }
 
+    /**
+     * Equivalent to MulMatrix2.
+     * @param a An input matrix.
+     * @param b Another input matrix, also the output storage.
+     */
+    public static void MRMulMatrixABB(PSXMatrix a, PSXMatrix b) {
+        MRMulMatrixABC(a, b, b);
+    }
+
 
     /**
      * Equivalent to MulMatrix0. (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0441.html?sidebar=outlines)
-     * @param input1 An input matrix.
-     * @param input2 Another input matrix.
-     * @param output Output matrix.
+     * @param a An input matrix.
+     * @param b Another input matrix.
+     * @param c Output matrix.
      */
-    public static void MRMulMatrixABC(PSXMatrix input1, PSXMatrix input2, PSXMatrix output) {
+    public static void MRMulMatrixABC(PSXMatrix a, PSXMatrix b, PSXMatrix c) {
         PSXMatrix tmpMtx = new PSXMatrix();
-        tmpMtx.setTransform(output.getTransform());
+        tmpMtx.setTransform(c.getTransform());
 
         // Clear matrix (IMPORTANT!)
         for (int i = 0; i < DIMENSION; i++)
@@ -174,11 +184,11 @@ public class PSXMatrix extends GameObject {
         for (int i = 0; i < DIMENSION; i++)
             for (int j = 0; j < DIMENSION; j++)
                 for (int k = 0; k < DIMENSION; k++)
-                    tmpMtx.matrix[i][j] += ((input2.matrix[k][j] * input1.matrix[i][k]) >> 12);
+                    tmpMtx.matrix[i][j] += ((b.matrix[k][j] * a.matrix[i][k]) >> 12);
 
         // Copy values across to output matrix
-        output.setTransform(tmpMtx.getTransform());
-        output.setMatrix(tmpMtx.getMatrix());
+        c.setTransform(tmpMtx.getTransform());
+        c.setMatrix(tmpMtx.getMatrix());
     }
 
     /**
@@ -210,5 +220,17 @@ public class PSXMatrix extends GameObject {
     @Override
     public String toString() {
         return "PsxMatrix Pos[" + getTransform()[0] + ", " + getTransform()[1] + ", " + getTransform()[2] + "] Yaw: " + getYawAngle() + ", Pitch: " + getPitchAngle() + ", Roll: " + getRollAngle();
+    }
+
+    /**
+     * Returns a new identity matrix, assuming 4.12 fixed point representation.
+     * @return identityMatrix
+     */
+    public static PSXMatrix newIdentityMatrix() {
+        PSXMatrix matrix = new PSXMatrix();
+        matrix.getMatrix()[0][0] = (short) 0x1000;
+        matrix.getMatrix()[1][1] = (short) 0x1000;
+        matrix.getMatrix()[2][2] = (short) 0x1000;
+        return matrix;
     }
 }

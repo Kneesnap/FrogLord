@@ -17,7 +17,7 @@ public enum TransformType {
     QUAT_BYTE((byte) 0x32, MR_QUATB_TRANS::new), // '2'
     QUAT((byte) 0x33, null), // '3'
     QUAT_SCALE_BYTE((byte) 0x34, null), // '4'
-    QUAT_SCALE((byte) 0x35, null); // '5'
+    QUAT_SCALE((byte) 0x35, MR_QUAT_SCALE::new); // '5'
 
     @Getter private final byte byteValue;
     private final Supplier<TransformObject> maker;
