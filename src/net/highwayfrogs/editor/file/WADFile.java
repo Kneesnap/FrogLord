@@ -20,6 +20,8 @@ import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.WADController;
+import net.highwayfrogs.editor.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -56,7 +58,8 @@ public class WADFile extends GameFile {
             int size = reader.readInt();
             reader.skipInt(); // Padding.
 
-            String fileName = getConfig().getResourceEntry(resourceId).getDisplayName();
+            FileEntry wadFileEntry = getConfig().getResourceEntry(resourceId);
+            String fileName = wadFileEntry.getDisplayName();
             CURRENT_FILE_NAME = fileName;
 
             // Decompress if compressed.
@@ -64,6 +67,10 @@ public class WADFile extends GameFile {
             boolean compressed = PP20Unpacker.isCompressed(data);
             if (compressed)
                 data = PP20Unpacker.unpackData(data);
+
+            // Calculate the SHA1 hash.
+            if (FroggerVersionComparison.isEnabled() && wadFileEntry.getSha1Hash() == null)
+                wadFileEntry.setSha1Hash(Utils.calculateSHA1Hash(data));
 
             GameFile file;
             if (Constants.ENABLE_WAD_FORMATS) {

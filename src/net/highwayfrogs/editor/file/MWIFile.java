@@ -117,6 +117,7 @@ public class MWIFile extends GameObject {
         private int packedSize;
         private int unpackedSize;
         private String filePath;
+        private String sha1Hash;
         private transient int resourceId;
         private transient FroggerEXEInfo config;
 

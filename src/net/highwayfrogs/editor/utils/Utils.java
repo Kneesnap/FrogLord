@@ -33,6 +33,8 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -1771,5 +1773,32 @@ public class Utils {
         graphics.drawImage(image, -x, -y, image.getWidth(), image.getHeight(), null);
         graphics.dispose();
         return croppedImage;
+    }
+
+    /**
+     * Calculate the SHA1 hash of the bytes.
+     * @param data The data to calculate the SHA1 hash of.
+     * @return sha1Hash
+     */
+    public static String calculateSHA1Hash(byte[] data) {
+        try {
+            MessageDigest crypt = MessageDigest.getInstance("SHA-1");
+            crypt.reset();
+            crypt.update(data);
+            return byteToHex(crypt.digest());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static String byteToHex(final byte[] hash) {
+        Formatter formatter = new Formatter();
+        for (byte b : hash)
+            formatter.format("%02x", b);
+
+        String result = formatter.toString();
+        formatter.close();
+        return result;
     }
 }

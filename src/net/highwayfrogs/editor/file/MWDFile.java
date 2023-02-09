@@ -26,6 +26,8 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -75,6 +77,10 @@ public class MWDFile extends GameObject {
             byte[] fileBytes = reader.readBytes(entry.getArchiveSize());
             if (entry.isCompressed())
                 fileBytes = PP20Unpacker.unpackData(fileBytes);
+
+            // Calculate the SHA1 hash.
+            if (FroggerVersionComparison.isEnabled() && entry.getSha1Hash() == null)
+                entry.setSha1Hash(Utils.calculateSHA1Hash(fileBytes));
 
             GameFile file = loadFile(fileBytes, entry, lastVB);
 

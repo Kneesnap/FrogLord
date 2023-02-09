@@ -30,6 +30,7 @@ import net.highwayfrogs.editor.gui.extra.DemoTableEditorController;
 import net.highwayfrogs.editor.gui.extra.FormEntryController;
 import net.highwayfrogs.editor.gui.extra.LevelInfoController;
 import net.highwayfrogs.editor.gui.extra.hash.HashPlaygroundController;
+import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -55,6 +56,7 @@ public class MainController implements Initializable {
     @FXML private MenuItem textureFinder;
     @FXML private MenuItem demoTableEditor;
     @FXML private MenuItem patchMenu;
+    @FXML private MenuItem differenceReport;
     private MWDFile mwdFile;
     private ListView<GameFile> currentFilesList;
 
@@ -105,6 +107,7 @@ public class MainController implements Initializable {
         formLibEditor.setDisable(config.getFullFormBook().isEmpty());
         scriptEditor.setDisable(config.getScripts().isEmpty());
         demoTableEditor.setDisable(config.getDemoTableEntries().isEmpty());
+        differenceReport.setDisable(!FroggerVersionComparison.isEnabled());
     }
 
     private void addFileList(int type, String name, Map<Integer, ObservableList<GameFile>> fileMap) {
@@ -194,6 +197,11 @@ public class MainController implements Initializable {
     @FXML
     private void actionMakeHeaders(ActionEvent evt) {
         GUIMain.EXE_CONFIG.exportCode(GUIMain.getWorkingDirectory());
+    }
+
+    @FXML
+    private void actionGenerateDifferenceReport(ActionEvent evt) {
+        FroggerVersionComparison.generateReport();
     }
 
     @FXML

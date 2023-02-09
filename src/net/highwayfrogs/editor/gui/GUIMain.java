@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
+import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -145,6 +146,9 @@ public class GUIMain extends Application {
     public void openFroggerFiles() throws IOException {
         boolean isLoadingAgain = (EXE_CONFIG != null); // Is this loading a second time? Ie is there already a loaded game?
 
+        // Setup version comparison.
+        FroggerVersionComparison.setup(getWorkingDirectory());
+
         // If this isn't a debug setup, prompt the user to select the files to load.
         File mwdFile = Utils.promptFileOpen("Please select a Frogger MWAD", "Millenium WAD", "MWD");
         if (mwdFile == null) {
@@ -160,6 +164,9 @@ public class GUIMain extends Application {
             return;
         }
 
-        resolveEXE(exeFile, () -> openGUI(MAIN_STAGE, mwdFile));
+        resolveEXE(exeFile, () -> {
+            openGUI(MAIN_STAGE, mwdFile);
+            FroggerVersionComparison.addNewVersionToConfig(EXE_CONFIG);
+        });
     }
 }
