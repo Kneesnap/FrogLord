@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 @Getter
 public class PSXClutColor extends GameObject {
-    @Setter private boolean stp; // stp -> "Semi Transparent" Flag.
+    @Setter private boolean stp; // stp -> "Semi Transparent" Flag. TODO: For new FrogLord, we should take the time to understand these things, instead of just saying "it looks like it works".
     private byte red;
     private byte green;
     private byte blue;

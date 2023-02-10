@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 
@@ -20,21 +22,39 @@ public class FroggerVersionComparison {
     private static final List<FroggerGameBuild> gameBuilds = new ArrayList<>();
     private static File versionConfigFile;
 
+    private static final Set<String> SKIPPED_FILE_LINKS = new HashSet<>(Arrays.asList("GEN_FROG.XMR", "GEN_FROG.XAR"));
+
     /**
      * Generates a report of the differences.
      */
     public static void generateReport() {
+        Map<String, String> linkedFiles = new HashMap<>();
+
+        // 1) Link files by name.
+        for (FroggerGameBuild build : gameBuilds) {
+            for (FroggerGameFileEntry entry : build.getFiles()) {
+                if (linkedFiles.containsKey(entry.getFullPath()) || SKIPPED_FILE_LINKS.contains(entry.getFileName()))
+                    continue; // Already been linked.
+
+                if (entry.getFullPath().endsWith(".XMR"))
+                    linkedFiles.put(entry.getFullPath().replace(".XMR", ".XAR"), entry.getFullPath());
+                if (entry.getFullPath().endsWith(".XAR"))
+                    linkedFiles.put(entry.getFullPath().replace(".XAR", ".XMR"), entry.getFullPath());
+            }
+        }
+
+        // 2) Link files from different builds to objects which represent the singular file.
         Map<String, FroggerFileTracker> trackerMap = new HashMap<>();
         List<FroggerFileTracker> fileTrackers = new ArrayList<>();
-
-        // TODO: Show build that file was removed from.
 
         for (FroggerGameBuild build : gameBuilds) {
             for (FroggerGameFileEntry entry : build.getFiles()) {
                 if (entry.getFullPath().endsWith(".WAD"))
                     continue; // Skip .WAD files, since we only care about the files inside the WAD, not the WAD itself.
 
-                FroggerFileTracker tracker = trackerMap.get(entry.getFullPath());
+                String linkedPath = linkedFiles.getOrDefault(entry.getFullPath(), entry.getFullPath());
+
+                FroggerFileTracker tracker = trackerMap.get(linkedPath);
                 if (tracker == null) {
                     trackerMap.put(entry.getFullPath(), tracker = new FroggerFileTracker(entry.getFullPath()));
                     fileTrackers.add(tracker);
@@ -44,63 +64,80 @@ public class FroggerVersionComparison {
             }
         }
 
-        StringBuilder builder = new StringBuilder();
+        StringBuilder buildByFile = new StringBuilder();
         Set<String> seenHashes = new HashSet<>();
         Map<FroggerGameFileEntry, FroggerGameFileEntry> filesWorthLookingAt = new HashMap<>();
         for (FroggerFileTracker tracker : fileTrackers) {
-            builder.append(tracker.getFileIdentifier()).append(":").append(Constants.NEWLINE);
+            buildByFile.append(tracker.getFileIdentifier()).append(":").append(Constants.NEWLINE);
 
             FroggerGameFileEntry lastFileEntry = null;
             for (FroggerGameFileEntry entry : tracker.getFiles()) {
 
-                boolean alreadySeen = !seenHashes.add(entry.getSha1Hash());
+                if (lastFileEntry != null && !lastFileEntry.getFullPath().equals(entry.getFullPath()))
+                    buildByFile.append(" - RENAMED: ").append(entry.getBuild().getBuildName()).append(", ").append(entry.getFullPath()).append(Constants.NEWLINE);
+
                 if (lastFileEntry != null) {
                     boolean didChange = (lastFileEntry.getFileSize() != entry.getFileSize()) || !lastFileEntry.getSha1Hash().equals(entry.getSha1Hash());
                     if (didChange) {
-                        builder.append(" - CHANGE:  ").append(entry.getBuild().getBuildName()).append(", Size: ").append(entry.getFileSize()).append(", SHA1: ").append(entry.getSha1Hash());
-                        if (alreadySeen)
-                            builder.append(" **ALREADY SEEN**");
-                        builder.append(Constants.NEWLINE);
+                        buildByFile.append(" - CHANGE:  ").append(entry.getBuild().getBuildName()).append(", Size: ").append(entry.getFileSize()).append(", SHA1: ").append(entry.getSha1Hash());
                         filesWorthLookingAt.put(entry, lastFileEntry);
+                    } else {
+                        lastFileEntry = entry;
+                        continue;
                     }
                 } else {
-                    builder.append(" - INITIAL: ").append(entry.getBuild().getBuildName()).append(", Size: ").append(entry.getFileSize()).append(", SHA1: ").append(entry.getSha1Hash()).append(Constants.NEWLINE);
+                    buildByFile.append(" - INITIAL: ").append(entry.getBuild().getBuildName()).append(", Size: ").append(entry.getFileSize()).append(",SHA1: ").append(entry.getSha1Hash());
                     filesWorthLookingAt.put(entry, entry);
                 }
+
+                if (!seenHashes.add(entry.getSha1Hash()))
+                    buildByFile.append(" **FILE ALREADY SEEN**");
+                buildByFile.append(Constants.NEWLINE);
 
                 lastFileEntry = entry;
             }
 
-            builder.append(Constants.NEWLINE);
+            FroggerGameFileEntry lastFile = tracker.getFiles().size() > 0 ? tracker.getFiles().get(tracker.getFiles().size() - 1) : null;
+            if (lastFile != null && !lastFile.getBuild().getBuildName().contains("retail"))
+                buildByFile.append(" - REMOVED: The last version this file was seen was ").append(lastFile.getBuild().getBuildName()).append(".").append(Constants.NEWLINE);
+
+            buildByFile.append(Constants.NEWLINE);
         }
 
-        builder.append(Constants.NEWLINE);
-        builder.append(Constants.NEWLINE);
-        builder.append("CHANGES PER BUILD:");
-        builder.append(Constants.NEWLINE);
-        builder.append(Constants.NEWLINE);
-
+        StringBuilder buildByVersion = new StringBuilder();
         for (FroggerGameBuild build : gameBuilds) {
-            builder.append(build.getBuildName()).append(":").append(Constants.NEWLINE);
+            buildByVersion.append(build.getBuildName()).append(":").append(Constants.NEWLINE);
 
+            int changeCount = 0;
             for (FroggerGameFileEntry entry : build.getFiles()) {
                 FroggerGameFileEntry changedFrom = filesWorthLookingAt.get(entry);
                 if (changedFrom == null)
                     continue;
 
-                builder.append(" - ").append(entry.getFileName());
+                changeCount++;
+                buildByVersion.append(" - ").append(entry.getFileName());
 
                 if (changedFrom == entry) {
-                    builder.append(" was seen for the first time.").append(Constants.NEWLINE);
+                    buildByVersion.append(" was seen for the first time.").append(Constants.NEWLINE);
                 } else {
-                    builder.append(" changed from ").append(changedFrom.getBuild().getBuildName()).append(".").append(Constants.NEWLINE);
+                    buildByVersion.append(" changed from ").append(changedFrom.getBuild().getBuildName()).append(".").append(Constants.NEWLINE);
                 }
             }
 
-            builder.append(Constants.NEWLINE);
+            buildByVersion.append("Results: ").append(changeCount).append("/").append(build.getFiles().size()).append(" files should be looked at.").append(Constants.NEWLINE);
+
+            buildByVersion.append(Constants.NEWLINE);
         }
 
-        System.out.println(builder);
+        try {
+            Files.write(new File(versionConfigFile.getParentFile(), "report-by-file.txt").toPath(), buildByFile.toString().getBytes(StandardCharsets.UTF_8));
+            Files.write(new File(versionConfigFile.getParentFile(), "report-by-version.txt").toPath(), buildByVersion.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            System.out.println("Failed to write report to file.");
+        }
+
+        System.out.println("Reports saved to text files.");
     }
 
     /**

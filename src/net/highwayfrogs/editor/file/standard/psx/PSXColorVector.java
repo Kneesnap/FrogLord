@@ -36,7 +36,7 @@ public class PSXColorVector extends GameObject {
     private byte red;
     private byte green;
     private byte blue;
-    private byte cd; // Might be alpha? Frogger seems to have 0xFF for all cases here, which would make sense.
+    private byte cd; // PSX documentation calls this "GPU code". Frogger seems to have 0xFF for all cases here, but this might just be the PC version. Some of the earlier PSX builds are confirmed not to.
 
     public static final int BYTE_LENGTH = 4 * Constants.BYTE_SIZE;
 
