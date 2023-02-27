@@ -155,7 +155,8 @@ public class FroggerVersionComparison {
 
         FroggerGameBuild newBuild = new FroggerGameBuild(versionToAdd.getInternalName());
         for (FileEntry entry : versionToAdd.getMWI().getEntries())
-            newBuild.getFiles().add(new FroggerGameFileEntry(newBuild, entry.getFullFilePath().replace('/', '\\'), entry.getUnpackedSize(), entry.getSha1Hash()));
+            if (entry != null && entry.getFullFilePath() != null)
+                newBuild.getFiles().add(new FroggerGameFileEntry(newBuild, entry.getFullFilePath().replace('/', '\\'), entry.getUnpackedSize(), entry.getSha1Hash()));
 
         // Store.
         gameBuilds.add(newBuild);
