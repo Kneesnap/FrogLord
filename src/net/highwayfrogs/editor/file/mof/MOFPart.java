@@ -331,7 +331,7 @@ public class MOFPart extends GameObject {
         incompletePart.collprim = this.collprim;
         incompletePart.matrix = this.matrix;
         incompletePart.flipbook = this.flipbook;
-        if (getParent().hasTextureAnimation() && !getConfig().isAtOrBeforeBuild30()) // TODO: Replace with some kind of warning system, where instead of throwing exceptions, we can have warnings per-file, etc.
+        if (getParent().hasTextureAnimation() && !getConfig().isAtOrBeforeBuild23()) // TODO: Replace with some kind of warning system, where instead of throwing exceptions, we can have warnings per-file, etc.
             throw new RuntimeException("Texture animation cannot be copied to an incomplete MOF right now!"); // It is believed this wouldn't work in the retail game either.
     }
 
