@@ -81,7 +81,21 @@ public class WADFile extends GameFile {
                         file = new VLOArchive();
                     }
                 } else if (fileType == MOFHolder.MOF_ID || fileType == MOFHolder.MAP_MOF_ID) {
-                    file = new MOFHolder(theme, lastCompleteMOF);
+                    MOFHolder completeMof = null;
+
+                    // Override lookup.
+                    String otherMofFile = getConfig().getMofParentOverrides().get(fileName);
+                    if (otherMofFile != null) {
+                        FileEntry replaceFileEntry = getConfig().getResourceEntry(otherMofFile);
+                        if (replaceFileEntry != null)
+                            completeMof = getConfig().getGameFile(replaceFileEntry.getResourceId());
+                        if (completeMof == null)
+                            System.out.println("MOF Parent Override for '" + otherMofFile + "' was not found. Entry: " + replaceFileEntry);
+                    } else {
+                        completeMof = lastCompleteMOF;
+                    }
+
+                    file = new MOFHolder(theme, completeMof);
                 } else if (fileType == DemoFile.TYPE_ID) {
                     file = new DemoFile();
                 } else {

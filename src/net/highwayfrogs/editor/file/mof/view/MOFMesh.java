@@ -95,6 +95,11 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
                 this.verticeCache.addAll(partcel.getVertices());
             }
         }
+
+        // Incomplete mofs (Primarily in prototypes) have a weird vertex
+        if (getMofHolder().isWeirdFrogMOF())
+            this.verticeCache.add(new SVector(0, 0, 0));
+
         return this.verticeCache;
     }
 

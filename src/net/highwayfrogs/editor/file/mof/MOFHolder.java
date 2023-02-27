@@ -317,4 +317,25 @@ public class MOFHolder extends GameFile {
     public boolean isAnimatedMOF() {
         return this.animatedFile != null;
     }
+
+    /**
+     * Many prototype builds contain froglets with models that are slightly broken.
+     * This lets us test if this model meets those conditions.
+     * New FrogLord should fully investigate what's actually going on, and develop a proper fix.
+     * GEN_FROG2.XMR/3/4 are also broken, but don't seem to be fixed with the froglet fix. Hmm.
+     */
+    public boolean isWeirdFrogMOF() {
+        if (getConfig().isAtOrBeforeBuild4() || getConfig().getBuild() >= 50)
+            return false; // Note: Build 5 may or may not be included. Build 50 is also probably not the correct build to test against here.
+
+        String name = getFileEntry().getDisplayName();
+        boolean isFroglet = "GEN_CHECKPOINT_1.XMR".equals(name)
+                || "GEN_CHECKPOINT_2.XMR".equals(name)
+                || "GEN_CHECKPOINT_3.XMR".equals(name)
+                || "GEN_CHECKPOINT_4.XMR".equals(name)
+                || "GEN_CHECKPOINT_5.XMR".equals(name);
+        boolean isGoldenFrog = "GEN_GOLD_FROG.XMR".equals(name);
+
+        return isFroglet || (isGoldenFrog && !getConfig().isAtOrBeforeBuild20());
+    }
 }

@@ -97,6 +97,7 @@ public class FroggerEXEInfo extends Config {
     private final FroggerMapConfig defaultMapConfig = new FroggerMapConfig();
     private final Map<String, int[]> hiddenPartIds = new HashMap<>();
     private final Map<String, String> mofRenderOverrides = new HashMap<>();
+    private final Map<String, String> mofParentOverrides = new HashMap<>();
 
     private DataReader reader;
     private byte[] exeBytes;
@@ -165,6 +166,7 @@ public class FroggerEXEInfo extends Config {
         readPickupData();
         readHiddenParts();
         readMofOverrides();
+        readMofParentOverrides();
         this.MWD = new MWDFile(getMWI());
     }
 
@@ -508,6 +510,16 @@ public class FroggerEXEInfo extends Config {
         Config mofOverridesCfg = getChild("MofOverride");
         for (String key : mofOverridesCfg.keySet())
             this.mofRenderOverrides.put(key, mofOverridesCfg.getString(key));
+    }
+
+    private void readMofParentOverrides() {
+        this.mofParentOverrides.clear();
+        if (!hasChild("MofParentOverride"))
+            return;
+
+        Config mofParentOverridesCfg = getChild("MofParentOverride");
+        for (String key : mofParentOverridesCfg.keySet())
+            this.mofParentOverrides.put(key, mofParentOverridesCfg.getString(key));
     }
 
     /**
