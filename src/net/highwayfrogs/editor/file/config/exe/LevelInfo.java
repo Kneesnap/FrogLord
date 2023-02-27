@@ -36,10 +36,11 @@ public class LevelInfo extends ExeStruct {
     public void load(DataReader reader) {
         this.level = reader.readInt();
         this.world = WorldId.values()[reader.readInt()];
-        if (!getConfig().isAtOrBeforeBuild20()) {
+        if (!getConfig().isAtOrBeforeBuild20()) // TODO: Flip these checks so they make more sense. Eg: "isAtLeastBuild21" or "isAfterBuild20".
             this.stackPosition = reader.readInt();
+        if (!getConfig().isAtOrBeforeBuild30()) // TODO: Not sure which build yet.
             this.theme = reader.readInt();
-        }
+
         this.localLevelId = reader.readInt();
         this.levelsInWorld = reader.readInt();
         this.worldImageSelectablePointer = reader.readUnsignedIntAsLong();
@@ -55,10 +56,10 @@ public class LevelInfo extends ExeStruct {
     public void save(DataWriter writer) {
         writer.writeInt(this.level);
         writer.writeInt(this.world.ordinal());
-        if (!getConfig().isAtOrBeforeBuild20()) {
+        if (!getConfig().isAtOrBeforeBuild20())
             writer.writeInt(this.stackPosition);
+        if (!getConfig().isAtOrBeforeBuild30()) // TODO: Not sure which build yet.
             writer.writeInt(this.theme);
-        }
         writer.writeInt(this.localLevelId);
         writer.writeInt(this.levelsInWorld);
         writer.writeUnsignedInt(this.worldImageSelectablePointer);

@@ -236,6 +236,9 @@ public class TextureMap {
                 MOFPolyTexture polyTex = (MOFPolyTexture) poly;
                 if (visitedTextures.add(polyTex.getImageId())) {
                     GameImage image = polyTex.getGameImage(this);
+                    if (image == null)
+                        continue;
+
                     id = image.makeIdentifier(this);
                     if (!texMap.containsKey(id))
                         texMap.put(id, image);
@@ -249,6 +252,9 @@ public class TextureMap {
                 for (MOFPartPolyAnimEntry entry : entryList.getEntries()) {
                     if (visitedTextures.add((short) entry.getImageId())) {
                         GameImage image = mof.getMWD().getImageByTextureId(entry.getImageId());
+                        if (image == null)
+                            continue;
+
                         BigInteger id = image.makeIdentifier(this);
                         if (!texMap.containsKey(id))
                             texMap.put(id, image);

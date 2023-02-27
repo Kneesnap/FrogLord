@@ -53,7 +53,7 @@ public abstract class MapBook extends ExeStruct {
 
         config.getRemapTable().put(config.getResourceEntry(resourceId), remap);
 
-        // Hack to read island remap
+        // Hack to read island remap. Build 20 is the last build with the remap present (it's also the last build with the unique textures present.)
         if ((!getConfig().isAtOrBeforeBuild1() && getConfig().isAtOrBeforeBuild20()) && getConfig().getResourceName(resourceId).equals("ARN1.MAP")) {
             while ((textureId = reader.readShort()) == REMAP_TERMINATOR) ;
 

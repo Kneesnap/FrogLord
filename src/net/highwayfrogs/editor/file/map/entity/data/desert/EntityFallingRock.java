@@ -42,7 +42,7 @@ public class EntityFallingRock extends MatrixData {
         this.bounceCount = reader.readUnsignedByteAsShort();
         reader.skipByte();
         this.flags = reader.readInt();
-        this.sound = getConfig().isAtOrBeforeBuild20() ? -1 : reader.readInt();
+        this.sound = getConfig().isAtOrBeforeBuild30() ? -1 : reader.readInt();
     }
 
     @Override
@@ -55,7 +55,7 @@ public class EntityFallingRock extends MatrixData {
         writer.writeUnsignedByte(this.bounceCount);
         writer.writeByte(Constants.NULL_BYTE);
         writer.writeInt(this.flags);
-        if (!getConfig().isAtOrBeforeBuild20())
+        if (!getConfig().isAtOrBeforeBuild30())
             writer.writeInt(this.sound);
     }
 
@@ -65,7 +65,7 @@ public class EntityFallingRock extends MatrixData {
         editor.addIntegerField("Delay", getDelay(), this::setDelay, null);
         editor.addShortField("Bounces", getBounceCount(), this::setBounceCount, null);
         editor.addIntegerField("Flags", getFlags(), this::setFlags, null);
-        if (!getConfig().isAtOrBeforeBuild20())
+        if (!getConfig().isAtOrBeforeBuild30())
             editor.addIntegerField("Sound", getSound(), this::setSound, null);
     }
 

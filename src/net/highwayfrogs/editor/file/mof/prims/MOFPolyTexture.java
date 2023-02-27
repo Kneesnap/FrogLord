@@ -113,11 +113,16 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     @Override
     public BufferedImage makeTexture(TextureMap map) {
         if (map.getMode() == ShaderMode.NO_SHADING) {
-            return getGameImage(map).toBufferedImage(map.getDisplaySettings());
+            GameImage image = getGameImage(map);
+            return image != null ? image.toBufferedImage(map.getDisplaySettings()) : null;
         } else if (map.getMode() == ShaderMode.OVERLAY_SHADING) {
             return makeShadeImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, false);
         } else {
-            BufferedImage texture = getGameImage(map).toBufferedImage(map.getDisplaySettings());
+            GameImage image = getGameImage(map);
+            if (image == null)
+                return null;
+
+            BufferedImage texture = image.toBufferedImage(map.getDisplaySettings());
             return MAPPolyTexture.makeShadedTexture(texture, makeShadeImage(texture.getWidth(), texture.getHeight(), true));
         }
     }

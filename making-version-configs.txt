@@ -15,12 +15,12 @@ General:
  
 #2) Get the address for the first byte after bmp_pointers ends.
  - Search for this address in the executable.
- - The only occurance should be part of the Map_library. Scroll to the top (Look at PSXMapBook.java to ensure the data looks like what you expect), then mark mapLibrary= that address.
+ - The only occurrence should be part of the Map_library. Scroll to the top (Look at PSXMapBook.java to ensure the data looks like what you expect), then mark mapLibrary= that address.
  - After Map_library is Theme_library, which can be handled the same way.
 
 #3) Scripts is a pointer array, usually under the Entity_library. Can search for the bytes of scripts in other versions to make finding this easier.
 
-#4) One of the earliest function calls should be to InitialisePSX. Inside of InitialisePSX should be a function call which passes a string "FROGPSX.MWD".
+#4) One of the earliest function calls should be to InitialisePSX. Inside InitialisePSX should be a function call which passes a string "FROGPSX.MWD".
  - The memory address it passes to this function is the MWI.
  - Note that to the config, and use a hex editor to determine when the MWI ends. Just look for the moment that data stops being a valid MWI. (Determine what a valid MWI looks like by looking at the FrogLord code which loads MWI files). File names are included as part of the MWI, if file names are included in the build.
  
