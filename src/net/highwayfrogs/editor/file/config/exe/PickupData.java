@@ -24,7 +24,7 @@ public class PickupData extends GameObject {
         this.unknown1 = reader.readInt();
         this.unknown2 = reader.readInt();
 
-        if (getConfig().isAtOrBeforeBuild30()) {
+        if (getConfig().isAtOrBeforeBuild24()) {
             // TODO: Properly support the format. (This doesn't work on PC...)
             long nextTexture = reader.readUnsignedIntAsLong();
             while (reader.hasMore() && !getConfig().getBmpTexturePointers().contains(nextTexture))
