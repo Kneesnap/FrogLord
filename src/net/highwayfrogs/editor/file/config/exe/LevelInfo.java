@@ -38,7 +38,7 @@ public class LevelInfo extends ExeStruct {
         this.world = WorldId.values()[reader.readInt()];
         if (!getConfig().isAtOrBeforeBuild20()) // TODO: Flip these checks so they make more sense. Eg: "isAtLeastBuild21" or "isAfterBuild20".
             this.stackPosition = reader.readInt();
-        if (!getConfig().isAtOrBeforeBuild30()) // TODO: Not sure which build yet.
+        if (!getConfig().isAtOrBeforeBuild21())
             this.theme = reader.readInt();
 
         this.localLevelId = reader.readInt();
@@ -58,7 +58,7 @@ public class LevelInfo extends ExeStruct {
         writer.writeInt(this.world.ordinal());
         if (!getConfig().isAtOrBeforeBuild20())
             writer.writeInt(this.stackPosition);
-        if (!getConfig().isAtOrBeforeBuild30()) // TODO: Not sure which build yet.
+        if (!getConfig().isAtOrBeforeBuild21())
             writer.writeInt(this.theme);
         writer.writeInt(this.localLevelId);
         writer.writeInt(this.levelsInWorld);

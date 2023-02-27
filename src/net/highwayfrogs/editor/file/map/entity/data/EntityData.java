@@ -27,6 +27,7 @@ import net.highwayfrogs.editor.file.map.entity.data.suburbia.EntityDog;
 import net.highwayfrogs.editor.file.map.entity.data.suburbia.EntityTurtle;
 import net.highwayfrogs.editor.file.map.entity.data.swamp.*;
 import net.highwayfrogs.editor.file.map.entity.data.volcano.EntityColorTrigger;
+import net.highwayfrogs.editor.file.map.entity.data.volcano.EntityTriggeredPlatform;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 import net.highwayfrogs.editor.system.Tuple2;
@@ -53,7 +54,7 @@ public abstract class EntityData extends GameObject {
             MatrixData.class, EntityRaceSnail.class, EntityColorTrigger.class, SwayingBranchEntity.class, EntityTurtle.class,
             EntityOutroPlinth.class, EntityHedgehog.class, FallingLeafEntity.class, EntityCrocodileHead.class, TriggerEntity.class,
             EntityFatFireFlyBuild1.class, EntityWeb.class, EntityTurtleOld.class, EntitySwanOld.class, EntityCrocodileOld.class,
-            EntitySpider.class);
+            EntitySpider.class, EntityTriggeredPlatform.class);
 
     /**
      * Add entity data to a table.

@@ -1078,6 +1078,15 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
+     * Tests if the build is at/before build 21.
+     * @return isBuildAtOrBeforeBuild21
+     */
+    public boolean isAtOrBeforeBuild21() {
+        return (this.build >= 0 && this.build <= 21) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+    }
+
+
+    /**
      * Tests if the build is at/before build 30.
      * @return isBuildAtOrBeforeBuild30
      */

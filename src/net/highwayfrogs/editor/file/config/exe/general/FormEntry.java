@@ -125,7 +125,7 @@ public class FormEntry extends GameObject {
         int wadIndex = getId();
         if (getTheme() == MAPTheme.GENERAL) {
             wadIndex -= getTheme().getFormOffset();
-            if ((getConfig().isPSX() || getConfig().isPrototype()) && (!getConfig().isAtOrBeforeBuild30() || getConfig().isWindowsAlpha()))
+            if ((getConfig().isPSX() || getConfig().isPrototype()) && (!getConfig().isAtOrBeforeBuild21() || getConfig().isWindowsAlpha()))
                 wadIndex++; // Some builds have GEN_VRAM.VLO in THEME_GEN.WAD, which requires this offset.
         }
 
