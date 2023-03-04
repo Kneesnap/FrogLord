@@ -66,7 +66,6 @@ public class FroggerVersionComparison {
 
         StringBuilder buildByFile = new StringBuilder();
         Set<String> seenHashes = new HashSet<>();
-        Map<FroggerGameFileEntry, FroggerGameFileEntry> filesWorthLookingAt = new HashMap<>();
         for (FroggerFileTracker tracker : fileTrackers) {
             buildByFile.append(tracker.getFileIdentifier()).append(":").append(Constants.NEWLINE);
 
@@ -80,14 +79,14 @@ public class FroggerVersionComparison {
                     boolean didChange = (lastFileEntry.getFileSize() != entry.getFileSize()) || !lastFileEntry.getSha1Hash().equals(entry.getSha1Hash());
                     if (didChange) {
                         buildByFile.append(" - CHANGE:  ").append(entry.getBuild().getBuildName()).append(", Size: ").append(entry.getFileSize()).append(", SHA1: ").append(entry.getSha1Hash());
-                        filesWorthLookingAt.put(entry, lastFileEntry);
+                        tracker.getUniqueFiles().add(entry);
                     } else {
                         lastFileEntry = entry;
                         continue;
                     }
                 } else {
                     buildByFile.append(" - INITIAL: ").append(entry.getBuild().getBuildName()).append(", Size: ").append(entry.getFileSize()).append(",SHA1: ").append(entry.getSha1Hash());
-                    filesWorthLookingAt.put(entry, entry);
+                    tracker.getUniqueFiles().add(entry);
                 }
 
                 if (!seenHashes.add(entry.getSha1Hash()))
@@ -104,29 +103,59 @@ public class FroggerVersionComparison {
             buildByFile.append(Constants.NEWLINE);
         }
 
+        FroggerGameBuild lastBuild = null;
         StringBuilder buildByVersion = new StringBuilder();
         for (FroggerGameBuild build : gameBuilds) {
             buildByVersion.append(build.getBuildName()).append(":").append(Constants.NEWLINE);
 
+            // Find changed files.
             int changeCount = 0;
             for (FroggerGameFileEntry entry : build.getFiles()) {
-                FroggerGameFileEntry changedFrom = filesWorthLookingAt.get(entry);
-                if (changedFrom == null)
-                    continue;
+                // Find tracker.
+                String linkedPath = linkedFiles.getOrDefault(entry.getFullPath(), entry.getFullPath());
+                FroggerFileTracker tracker = trackerMap.get(linkedPath);
+                if (tracker == null)
+                    continue; // Probably wad file.
+                if (!tracker.getUniqueFiles().contains(entry))
+                    continue; // Duplicate of another file.
 
                 changeCount++;
                 buildByVersion.append(" - ").append(entry.getFileName());
 
-                if (changedFrom == entry) {
+                int fullTrackerIndex = tracker.getFiles().indexOf(entry);
+                FroggerGameFileEntry changedFrom = fullTrackerIndex > 0 ? tracker.getFiles().get(fullTrackerIndex - 1) : null;
+                boolean wasSeenInLastBuild = (changedFrom != null) && (lastBuild == changedFrom.getBuild());
+
+                if (changedFrom == null) {
                     buildByVersion.append(" was seen for the first time.").append(Constants.NEWLINE);
-                } else {
+                } else if (wasSeenInLastBuild) {
                     buildByVersion.append(" changed from ").append(changedFrom.getBuild().getBuildName()).append(".").append(Constants.NEWLINE);
+                } else {
+                    buildByVersion.append(" was re-added.").append(Constants.NEWLINE);
                 }
             }
 
-            buildByVersion.append("Results: ").append(changeCount).append("/").append(build.getFiles().size()).append(" files should be looked at.").append(Constants.NEWLINE);
+            // Find removed files.
+            if (lastBuild != null) {
+                for (FroggerGameFileEntry entry : lastBuild.getFiles()) {
+                    String linkedPath = linkedFiles.getOrDefault(entry.getFullPath(), entry.getFullPath());
+                    FroggerFileTracker tracker = trackerMap.get(linkedPath);
+                    if (tracker == null)
+                        continue; // Probably wad file.
 
-            buildByVersion.append(Constants.NEWLINE);
+                    int index = tracker.getFiles().indexOf(entry);
+                    FroggerGameFileEntry nextEntry = index >= 0 && tracker.getFiles().size() > index + 1 ? tracker.getFiles().get(index + 1) : null;
+
+                    if (nextEntry == null || nextEntry.getBuild() != build)
+                        buildByVersion.append(" - ").append(entry.getFileName()).append(" was deleted.").append(Constants.NEWLINE);
+                }
+            }
+
+            buildByVersion.append("Results: ").append(changeCount).append("/").append(build.getFiles().size())
+                    .append(" files should be looked at.").append(Constants.NEWLINE).append(Constants.NEWLINE);
+
+            // Next build!
+            lastBuild = build;
         }
 
         try {
@@ -174,6 +203,7 @@ public class FroggerVersionComparison {
     private static class FroggerFileTracker {
         private final String fileIdentifier;
         private final List<FroggerGameFileEntry> files = new ArrayList<>();
+        private final List<FroggerGameFileEntry> uniqueFiles = new ArrayList<>();
 
         public FroggerFileTracker(String fileIdentifier) {
             this.fileIdentifier = fileIdentifier;
