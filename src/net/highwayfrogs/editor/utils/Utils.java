@@ -558,6 +558,33 @@ public class Utils {
     }
 
     /**
+     * Read bytes from an InputStream, and writes them to an output stream.
+     * @param input  The stream to read from.
+     * @param output The stream to write to.
+     */
+    public static void copyInputStreamData(InputStream input, OutputStream output, boolean closeInput) {
+        byte[] buffer = new byte[4096];
+
+        try {
+            int bytesRead;
+            while ((bytesRead = input.read(buffer)) != -1)
+                output.write(buffer, 0, bytesRead);
+        } catch (IOException ex) {
+            System.out.println("Failed to copy stream data from the input stream to the output stream!");
+            ex.printStackTrace();
+        }
+
+        if (closeInput) {
+            try {
+                input.close();
+            } catch (IOException ex) {
+                System.out.println("Failed to close the input stream.");
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    /**
      * Get the first file with this name that does not exist. Appends stuff like (1).
      * @param file The file to get.
      * @return nonexistantFile.
