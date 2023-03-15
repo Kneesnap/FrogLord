@@ -65,13 +65,14 @@ public class PSXVBFile extends AbstractVBFile<PSXVHFile> {
             super(null, vanillaTrackId, readLength);
         }
 
-        private byte[] toRawAudio() {
-            return VAGUtil.rawVagToWav(this.audioData, this.sampleRate);
+        @Override
+        public byte[] toRawAudio() {
+            return VAGUtil.rawVagToWav(this.audioData);
         }
 
         @Override
         public Clip toStandardAudio() throws LineUnavailableException {
-            byte[] byteData = VAGUtil.rawVagToWav(this.audioData);
+            byte[] byteData = toRawAudio();
             Clip result = AudioSystem.getClip();
             result.open(getAudioFormat(), byteData, 0, byteData.length);
             return result;
@@ -79,7 +80,7 @@ public class PSXVBFile extends AbstractVBFile<PSXVHFile> {
 
         @Override
         public void exportToFile(File saveTo) throws IOException {
-            Files.write(saveTo.toPath(), toRawAudio());
+            Files.write(saveTo.toPath(), VAGUtil.rawVagToWav(this.audioData, this.sampleRate));
         }
 
         @Override

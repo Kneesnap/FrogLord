@@ -22,9 +22,9 @@ import java.io.IOException;
  */
 @Getter
 public abstract class GameSound extends GameObject {
-    private AudioHeader header;
-    private int vanillaTrackId;
-    private int readLength;
+    private final AudioHeader header;
+    private final int vanillaTrackId;
+    private final int readLength;
 
     public GameSound(AudioHeader header, int vanillaTrackId, int readLength) {
         this.vanillaTrackId = vanillaTrackId;
@@ -40,6 +40,11 @@ public abstract class GameSound extends GameObject {
     public Clip getClip() {
         return toStandardAudio();
     }
+
+    /**
+     * Gets the raw PCM audio data.
+     */
+    public abstract byte[] toRawAudio();
 
     /**
      * Export this audio entry as a standard audio clip.

@@ -37,6 +37,11 @@ public class PrototypeVBFile extends PCVBFile {
         }
 
         @Override
+        public byte[] toRawAudio() {
+            return this.wavBytes; // TODO: This will have audio popping, because the .wav audio header is included here. To fix this, get the raw audio data from the wav header.
+        }
+
+        @Override
         public void load(DataReader reader) {
             if (reader.hasMore()) // The last entry is null in the prototype.
                 this.wavBytes = reader.readBytes(getReadLength());
