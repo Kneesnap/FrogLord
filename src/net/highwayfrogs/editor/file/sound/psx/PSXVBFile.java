@@ -71,7 +71,7 @@ public class PSXVBFile extends AbstractVBFile<PSXVHFile> {
 
         @Override
         public Clip toStandardAudio() throws LineUnavailableException {
-            byte[] byteData = toRawAudio();
+            byte[] byteData = VAGUtil.rawVagToWav(this.audioData);
             Clip result = AudioSystem.getClip();
             result.open(getAudioFormat(), byteData, 0, byteData.length);
             return result;

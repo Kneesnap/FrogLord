@@ -28,36 +28,50 @@ public class VAGUtil {
             {122D / 64D, -60D / 64D}};
 
     /**
+     * Converts a playstation VAG sound to raw PCM.
+     * @param vagAudioData The vag file to convert.
+     * @return rawPcmData
+     */
+    public static byte[] rawVagToWav(byte[] vagAudioData) {
+        return rawVagToWav(vagAudioData, -1);
+    }
+
+    /**
      * Converts a playstation VAG sound to .WAV
      * @param vagAudioData The vag file to convert.
+     * @param sampleRate   The sample rate of the audio. If value is <= 0, raw PCM will be returned, without the .wav header.
      * @return wavBytes
      */
     public static byte[] rawVagToWav(byte[] vagAudioData, int sampleRate) {
+        boolean includeWavHeader = (sampleRate > 0);
         double[] samples = new double[28];
         double s1 = 0;
         double s2 = 0;
 
         DataReader reader = new DataReader(new ArraySource(vagAudioData));
-        reader.skipBytes(16);
 
         ArrayReceiver dataReceiver = new ArrayReceiver();
         DataWriter writer = new DataWriter(dataReceiver);
 
         // Write wav.
-        writer.writeStringBytes(RIFF_SIGNATURE);
-        int fileSizeAddress = writer.writeNullPointer();
-        writer.writeStringBytes(WAV_SIGNATURE);
-        writer.writeStringBytes("fmt ");
-        writer.writeInt(16); // Write chunk 1 size.
-        writer.writeShort((short) 1); // Writes audio format. 1 = PCM.
-        writer.writeShort((short) 1); // Number of channels.
-        writer.writeInt(sampleRate);
-        writer.writeInt(sampleRate * 2); // (SampleRate * NumChannels * BitsPerSample/8). That would be 44100*1*(16/8), thus 88200.
-        writer.writeShort((short) 2); // Block align: (NumChannels * BitsPerSample/8), thus 2
-        writer.writeShort((short) 16); // 16 bits per sample.
+        int fileSizeAddress = -1;
+        int subChunk2SizeAddress = -1;
+        if (includeWavHeader) {
+            writer.writeStringBytes(RIFF_SIGNATURE);
+            fileSizeAddress = writer.writeNullPointer();
+            writer.writeStringBytes(WAV_SIGNATURE);
+            writer.writeStringBytes("fmt ");
+            writer.writeInt(16); // Write chunk 1 size.
+            writer.writeShort((short) 1); // Writes audio format. 1 = PCM.
+            writer.writeShort((short) 1); // Number of channels.
+            writer.writeInt(sampleRate);
+            writer.writeInt(sampleRate * 2); // (SampleRate * NumChannels * BitsPerSample/8). That would be 44100*1*(16/8), thus 88200.
+            writer.writeShort((short) 2); // Block align: (NumChannels * BitsPerSample/8), thus 2
+            writer.writeShort((short) 16); // 16 bits per sample.
 
-        writer.writeStringBytes(DATA_CHUNK_SIGNATURE);
-        int subChunk2SizeAddress = writer.writeNullPointer();
+            writer.writeStringBytes(DATA_CHUNK_SIGNATURE);
+            subChunk2SizeAddress = writer.writeNullPointer();
+        }
 
         while (reader.hasMore()) {
             byte predictNr = reader.readByte();
@@ -91,8 +105,10 @@ public class VAGUtil {
         }
 
         // Write sizes.
-        writer.writeAddressAt(fileSizeAddress, writer.getIndex() - (fileSizeAddress + Constants.INTEGER_SIZE)); // Write file size.
-        writer.writeAddressAt(subChunk2SizeAddress, writer.getIndex() - (subChunk2SizeAddress + Constants.INTEGER_SIZE)); // Write chunk size.
+        if (includeWavHeader) {
+            writer.writeAddressAt(fileSizeAddress, writer.getIndex() - (fileSizeAddress + Constants.INTEGER_SIZE)); // Write file size.
+            writer.writeAddressAt(subChunk2SizeAddress, writer.getIndex() - (subChunk2SizeAddress + Constants.INTEGER_SIZE)); // Write chunk size.
+        }
 
         writer.closeReceiver();
         return dataReceiver.toArray();
