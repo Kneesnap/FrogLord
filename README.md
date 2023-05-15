@@ -37,6 +37,15 @@ Yes! Pull requests are welcome.
 
 ### Using Maven
 
+**Requirements:**
+1. Maven:
+    - Download the latest version of [maven](https://maven.apache.org/download.cgi)
+    - Follow the [installation guide](https://maven.apache.org/install.html)
+2. Java JDK:
+    - Make an Oracle account (Unfortunately required for the next step)
+    - Download Java 8 [Java Development Kit](https://www.oracle.com/java/technologies/javase/javase8u211-later-archive-downloads.html)
+    - If you downloaded a bin file run that, otherwise install according to the instructions
+
 **Setup:**
 1. ``git clone https://github.com/Kneesnap/FrogLord.git``
 2. ``cd FrogLord``
