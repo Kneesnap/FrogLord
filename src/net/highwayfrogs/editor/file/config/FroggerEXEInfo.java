@@ -1110,6 +1110,14 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
+     * Tests if the build is at/before build 51
+     * @return isBuildAtOrBeforeBuild51
+     */
+    public boolean isAtOrBeforeBuild51() {
+        return (this.build >= 0 && this.build <= 51) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+    }
+
+    /**
      * Get the forced VLO file for a given string.
      * @param name The name to get the vlo for.
      * @return forcedVLO

@@ -23,7 +23,7 @@ public class EntityOutroEntity extends MatrixData {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.targets = new OutroTarget[getConfig().isRetail() ? 11 : 10];
+        this.targets = new OutroTarget[getConfig().isAtOrBeforeBuild51() ? 10 : 11];
         for (int i = 0; i < this.targets.length; i++) {
             OutroTarget newTarget = new OutroTarget();
             newTarget.load(reader);
