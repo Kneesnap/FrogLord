@@ -1032,6 +1032,20 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
+     * Test if this build is the September 3 PC build from Kao.
+     */
+    public boolean isKaosPrototype() {
+        return "pc-1997-09-03".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Test if this is the US PSX demo from September 1997.
+     */
+    public boolean isSeptemberUsDemo() {
+        return "psx-demo-ntsc".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
      * Tests if this is the sony presentation April 28th build.
      */
     public boolean isSonyPresentation() {
@@ -1114,7 +1128,8 @@ public class FroggerEXEInfo extends Config {
      * @return isBuildAtOrBeforeBuild51
      */
     public boolean isAtOrBeforeBuild51() {
-        return (this.build >= 0 && this.build <= 51) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+        return (this.build >= 0 && this.build <= 51) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta()
+                || isKaosPrototype() || isSeptemberUsDemo();
     }
 
     /**
