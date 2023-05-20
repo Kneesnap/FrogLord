@@ -207,11 +207,11 @@ public class FroggerEXEInfo extends Config {
     }
 
     private void loadBanks() {
-        this.soundBank = loadBank("soundList", "main", "sounds", "Sound", true);
+        this.soundBank = loadBank("soundList", null, "sounds", "Sound", true);
         this.animationBank = loadBank("animList", null, "anims", true, (bank, index) -> bank.size() <= 1 ? "Default Animation" : "Animation " + index);
-        this.formBank = loadBank("formList", "main", "forms", "Form", true);
-        this.entityBank = loadBank("entityList", "main", "entities", "Entity", true);
-        this.scriptBank = loadBank("scriptList", "main", "scripts", "Script", false);
+        this.formBank = loadBank("formList", "1997-09-12-psx-build57", "forms", "Form", true);
+        this.entityBank = loadBank("entityList", "1997-09-12-psx-build57", "entities", "Entity", true);
+        this.scriptBank = loadBank("scriptList", "1997-09-18-psx-build63", "scripts", "Script", false);
         this.scriptCallbackBank = this.scriptBank.getChildBank("CallbackNames");
     }
 
