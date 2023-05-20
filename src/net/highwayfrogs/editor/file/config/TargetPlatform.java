@@ -30,7 +30,7 @@ public enum TargetPlatform {
      * @return mapBook
      */
     public static MapBook makeNewMapBook(FroggerEXEInfo info) {
-        return info.isPrototype() ? PSX.getMapBookMaker().get() : info.getPlatform().getMapBookMaker().get();
+        return info.isAtLeastRetailWindows() ? info.getPlatform().getMapBookMaker().get() : PSX.getMapBookMaker().get();
     }
 
     /**
@@ -39,6 +39,6 @@ public enum TargetPlatform {
      * @return mapBook
      */
     public static ThemeBook makeNewThemeBook(FroggerEXEInfo info) {
-        return info.isPrototype() ? PSX.getThemeBookMaker().get() : info.getPlatform().getThemeBookMaker().get();
+        return info.isAtLeastRetailWindows() ? info.getPlatform().getThemeBookMaker().get() : PSX.getThemeBookMaker().get();
     }
 }

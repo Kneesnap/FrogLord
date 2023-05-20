@@ -162,8 +162,10 @@ public class MWDFile extends GameObject {
                 VHFile vhFile = new VHFile();
                 vhFile.setVB(lastVB);
                 file = vhFile;
+            } else if (getConfig().isAtLeastRetailWindows()) {
+                file = new RetailPCVBFile();
             } else {
-                file = getConfig().isPrototype() ? new PrototypeVBFile() : new RetailPCVBFile();
+                file = new PrototypeVBFile();
             }
         } else {
             file = new DummyFile(fileBytes.length);

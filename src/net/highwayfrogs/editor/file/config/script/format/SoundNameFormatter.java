@@ -26,7 +26,7 @@ public class SoundNameFormatter extends ScriptFormatter {
         if (bank == null)
             return super.numberToString(number);
 
-        if (GUIMain.EXE_CONFIG.isPSX() && GUIMain.EXE_CONFIG.isRetail()) { // PSX builds do lookup differently.
+        if (GUIMain.EXE_CONFIG.isPSX() && GUIMain.EXE_CONFIG.getBuild() == 71) { // PSX builds do lookup differently.
             NameBank childBank = bank.getChildBank("GENERIC");
             if (childBank != null && number >= childBank.size() + 5)
                 number -= 5; // The PSX version has a few duplicate entries which are here to
@@ -46,7 +46,7 @@ public class SoundNameFormatter extends ScriptFormatter {
         if (index == -1)
             throw new ScriptParseException("Could not find sound named '" + str + "'.");
 
-        if (GUIMain.EXE_CONFIG.isPSX() && GUIMain.EXE_CONFIG.isRetail()) { // PSX builds do lookup differently.
+        if (GUIMain.EXE_CONFIG.isPSX() && GUIMain.EXE_CONFIG.getBuild() == 71) { // PSX builds do lookup differently.
             NameBank childBank = bank.getChildBank("GENERIC");
             if (childBank != null && index >= childBank.size() + 5)
                 index += 5; // The PSX version has a few duplicate entries which are here to

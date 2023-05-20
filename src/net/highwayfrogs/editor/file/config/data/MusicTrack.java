@@ -50,7 +50,11 @@ public enum MusicTrack {
      */
     public byte getTrack(FroggerEXEInfo info) {
         if (info.getPlatform() == TargetPlatform.PC) {
-            return info.isPrototype() ? getPrototypeTrack() : getPcTrack();
+            if (info.isAtLeastRetailWindows()) {
+                return getPcTrack();
+            } else {
+                return getPrototypeTrack();
+            }
         } else if (info.getPlatform() == TargetPlatform.PSX) {
             return getPsxTrack();
         }

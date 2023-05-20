@@ -84,8 +84,6 @@ public class FroggerEXEInfo extends Config {
     private int pickupDataAddress;
     private int scriptArrayAddress;
     private int skyLandTextureAddress;
-    private boolean prototype;
-    private boolean demo;
     private TargetPlatform platform;
     private NameBank soundBank;
     private NameBank animationBank;
@@ -173,8 +171,6 @@ public class FroggerEXEInfo extends Config {
     private void readConfig() {
         this.name = getString(FIELD_NAME);
         this.build = getInt("build", -1);
-        this.demo = getBoolean("demo");
-        this.prototype = getBoolean("prototype");
         this.platform = getEnum("platform", TargetPlatform.class);
         this.MWIOffset = getInt("mwiOffset");
         this.MWILength = getInt("mwiLength");
@@ -989,14 +985,6 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
-     * Test if this is a retail version of the game.
-     * @return isRetail
-     */
-    public boolean isRetail() {
-        return !isDemo() && !isPrototype();
-    }
-
-    /**
      * Checks if this build is the PSX alpha build or not.
      */
     public boolean isPSXAlpha() {
@@ -1043,6 +1031,16 @@ public class FroggerEXEInfo extends Config {
      */
     public boolean isSeptemberUsDemo() {
         return "psx-demo-ntsc".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Test if the build is at/after the retail Windows build.
+     */
+    public boolean isAtLeastRetailWindows() {
+        return "pc-retail-v1.0".equalsIgnoreCase(getInternalName())
+                || "pc-retail-v3.0e".equalsIgnoreCase(getInternalName())
+                || "pc-retail-v3.0e-vogons".equalsIgnoreCase(getInternalName())
+                || "pc-demo".equalsIgnoreCase(getInternalName());
     }
 
     /**
