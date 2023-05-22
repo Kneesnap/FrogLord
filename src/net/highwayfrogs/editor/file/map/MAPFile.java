@@ -1205,4 +1205,18 @@ public class MAPFile extends GameFile {
         FroggerMapConfig mapConfig = getConfig().getMapConfigs().get(getFileEntry().getDisplayName());
         return this.cachedMapConfig = mapConfig != null ? mapConfig : getConfig().getDefaultMapConfig();
     }
+
+    /**
+     * Get a list of all unused vertices in the map.
+     * @return unusedVerticeList
+     */
+    public List<SVector> findUnusedVertices() {
+        List<SVector> vertices = new ArrayList<>(this.vertexes);
+        for (List<MAPPrimitive> primList : getPolygons().values())
+            for (MAPPrimitive prim : primList)
+                for (int i = 0; i < prim.getVerticeCount(); i++)
+                    vertices.set(prim.getVertices()[i], null);
+        vertices.removeIf(Objects::isNull);
+        return vertices;
+    }
 }

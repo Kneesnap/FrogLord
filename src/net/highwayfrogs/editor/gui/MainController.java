@@ -19,6 +19,7 @@ import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.sound.VHFile;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -57,6 +58,7 @@ public class MainController implements Initializable {
     @FXML private MenuItem demoTableEditor;
     @FXML private MenuItem patchMenu;
     @FXML private MenuItem differenceReport;
+    @FXML private MenuItem findUnusedVertices;
     private MWDFile mwdFile;
     private ListView<GameFile> currentFilesList;
 
@@ -202,6 +204,15 @@ public class MainController implements Initializable {
     @FXML
     private void actionGenerateDifferenceReport(ActionEvent evt) {
         FroggerVersionComparison.generateReport();
+    }
+
+    @FXML
+    private void actionFindUnusedVertices(ActionEvent evt) {
+        getMwdFile().getAllFiles(MAPFile.class).forEach(mapFile -> {
+            List<SVector> unusedVertices = mapFile.findUnusedVertices();
+            if (unusedVertices.size() > 1)
+                System.out.println(" - " + mapFile.getFileEntry().getDisplayName() + " has " + unusedVertices.size() + " unused vertices.");
+        });
     }
 
     @FXML

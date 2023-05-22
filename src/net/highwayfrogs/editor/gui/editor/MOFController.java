@@ -34,7 +34,7 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.mof.*;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
@@ -676,7 +676,7 @@ public class MOFController extends EditorController<MOFHolder> {
         @FXML private Label frameLabel;
 
         @FXML private TitledPane paneAnim;
-        @FXML private ComboBox<ShaderMode> shaderModeComboBox;
+        @FXML private ComboBox<ShadingMode> shadingModeComboBox;
         @FXML private CheckBox brightModeCheckbox;
         @FXML private CheckBox viewBoundingBoxesCheckbox;
 
@@ -739,11 +739,11 @@ public class MOFController extends EditorController<MOFHolder> {
                 }
             }));
 
-            // Shader stuff.
-            this.shaderModeComboBox.setItems(FXCollections.observableArrayList(ShaderMode.values()));
-            this.shaderModeComboBox.getSelectionModel().select(getMofMesh().getTextureMap().getMode());
-            this.shaderModeComboBox.setConverter(new AbstractStringConverter<>(ShaderMode::getName));
-            this.shaderModeComboBox.getSelectionModel().selectedItemProperty().addListener(((observable, oldValue, newValue) -> {
+            // Shading stuff.
+            this.shadingModeComboBox.setItems(FXCollections.observableArrayList(ShadingMode.values()));
+            this.shadingModeComboBox.getSelectionModel().select(getMofMesh().getTextureMap().getMode());
+            this.shadingModeComboBox.setConverter(new AbstractStringConverter<>(ShadingMode::getName));
+            this.shadingModeComboBox.getSelectionModel().selectedItemProperty().addListener(((observable, oldValue, newValue) -> {
                 getMofMesh().getTextureMap().updateModel(getHolder(), newValue);
                 getMofMesh().updateFrame();
             }));

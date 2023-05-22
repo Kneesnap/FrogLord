@@ -9,7 +9,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
@@ -333,10 +333,10 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
 
     @Override
     public boolean isOverlay(TextureMap map) {
-        if (map.getMode() == ShaderMode.OVERLAY_SHADING)
+        if (map.getMode() == ShadingMode.OVERLAY_SHADING)
             return true;
 
-        if (map.getMode() != ShaderMode.MIXED_SHADING)
+        if (map.getMode() != ShadingMode.MIXED_SHADING)
             return false;
 
         GameImage image = getGameImage(map);

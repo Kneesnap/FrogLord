@@ -23,7 +23,7 @@ import net.highwayfrogs.editor.file.map.FFSUtil;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
@@ -104,7 +104,7 @@ public class MAPController extends EditorController<MAPFile> {
 
         saveTextureButton.setOnAction(evt -> {
             try {
-                for (ShaderMode mode : ShaderMode.values()) {
+                for (ShadingMode mode : ShadingMode.values()) {
                     File file = new File(GUIMain.getWorkingDirectory(), getFile().getFileEntry().getDisplayName() + "-" + mode + ".png");
                     ImageIO.write(TextureMap.newTextureMap(getFile(), mode).getTextureTree().getImage(), "png", file);
                     System.out.println("Saved " + file.getName());
@@ -137,7 +137,7 @@ public class MAPController extends EditorController<MAPFile> {
             return;
         }
 
-        TextureMap textureMap = TextureMap.newTextureMap(getFile(), ShaderMode.NO_SHADING);
+        TextureMap textureMap = TextureMap.newTextureMap(getFile(), ShadingMode.NO_SHADING);
         setupMapViewer(GUIMain.MAIN_STAGE, new MapMesh(getFile(), textureMap), textureMap);
     }
 

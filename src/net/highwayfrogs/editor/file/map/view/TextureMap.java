@@ -47,7 +47,7 @@ public class TextureMap {
     private final List<Short> remapList;
     private PhongMaterial material;
     private final TextureTree textureTree;
-    @Setter private ShaderMode mode;
+    @Setter private ShadingMode mode;
     private final Map<Short, Set<BigInteger>> mapTextureList = new HashMap<>();
     private final ImageFilterSettings displaySettings = new ImageFilterSettings(ImageState.EXPORT).setAllowTransparency(true); // This is not static because we want it to be gc'd when the TextureMap is.
     private int width;
@@ -56,7 +56,7 @@ public class TextureMap {
 
     // The largest VLO is the SWP VLO, on the PS1. The texture map with the most used space is SUB1.
 
-    private TextureMap(VLOArchive vlo, List<Short> remapList, ShaderMode mode, int width, int height) {
+    private TextureMap(VLOArchive vlo, List<Short> remapList, ShadingMode mode, int width, int height) {
         this.vloArchive = vlo;
         this.remapList = remapList;
         this.textureTree = new TextureTree(this);
@@ -69,7 +69,7 @@ public class TextureMap {
      * Create a new texture map from an existing MOF.
      * @return newTextureMap
      */
-    public static TextureMap newTextureMap(MOFHolder mofHolder, ShaderMode mode) {
+    public static TextureMap newTextureMap(MOFHolder mofHolder, ShadingMode mode) {
         TextureMap newMap = new TextureMap(mofHolder.getVloFile(), null, mode, 0, 0);
         newMap.setUseModelTextureAnimation(true);
         newMap.updateModel(mofHolder, mode);
@@ -80,7 +80,7 @@ public class TextureMap {
      * Create a new texture map from an existing VLOArchive.
      * @return newTextureMap
      */
-    public static TextureMap newTextureMap(MAPFile mapFile, ShaderMode mode) {
+    public static TextureMap newTextureMap(MAPFile mapFile, ShadingMode mode) {
         TextureMap newMap = new TextureMap(mapFile.getVlo(), mapFile.getRemapTable(), mode, 1024, 1024);
         newMap.updateMap(mapFile, mode);
         return newMap;
@@ -135,7 +135,7 @@ public class TextureMap {
      * @param mapFile The map file to update for.
      * @param newMode The shading mode to use.
      */
-    public void updateMap(MAPFile mapFile, ShaderMode newMode) {
+    public void updateMap(MAPFile mapFile, ShadingMode newMode) {
         if (newMode != null)
             this.mode = newMode;
         updateTree(createSourceMap(mapFile));
@@ -146,7 +146,7 @@ public class TextureMap {
      * @param mof     The model to update for.
      * @param newMode The shading mode to use.
      */
-    public void updateModel(MOFHolder mof, ShaderMode newMode) {
+    public void updateModel(MOFHolder mof, ShadingMode newMode) {
         if (newMode != null)
             this.mode = newMode;
 
@@ -544,7 +544,7 @@ public class TextureMap {
 
     @Getter
     @AllArgsConstructor
-    public enum ShaderMode {
+    public enum ShadingMode {
         NO_SHADING("None", 1, 1),
         OVERLAY_SHADING("Overlay", 1, 1),
         MIXED_SHADING("Mixed", 2, 2), // Works to create a middle-ground between accurate and low quality.

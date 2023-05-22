@@ -6,18 +6,29 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Box;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
+import javafx.scene.transform.Translate;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.GridController;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.Utils;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -27,6 +38,11 @@ import java.util.function.Consumer;
  */
 @Getter
 public class GeometryManager extends MapManager {
+    private static final double VERTEX_BOX_SIZE = 1.5;
+    private static final PhongMaterial VERTEX_BOX_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final String UNUSED_VERTEX_DISPLAY_LIST = "unusedVertexBoxes";
+
+    private final List<Box> unusedVertexBoxes = new ArrayList<>();
     private GUIEditorGrid geometryEditor;
     private MeshData looseMeshData;
 
@@ -46,12 +62,12 @@ public class GeometryManager extends MapManager {
     public void onSetup() {
         super.onSetup();
 
-        getController().getShaderModeChoiceBox().setItems(FXCollections.observableArrayList(ShaderMode.values()));
-        getController().getShaderModeChoiceBox().setValue(getMesh().getTextureMap().getMode());
-        getController().getShaderModeChoiceBox().setConverter(new AbstractStringConverter<>(ShaderMode::getName));
-        getController().getShaderModeChoiceBox().valueProperty().addListener((observable, oldValue, newValue) -> {
+        getController().getShadingModeChoiceBox().setItems(FXCollections.observableArrayList(ShadingMode.values()));
+        getController().getShadingModeChoiceBox().setValue(getMesh().getTextureMap().getMode());
+        getController().getShadingModeChoiceBox().setConverter(new AbstractStringConverter<>(ShadingMode::getName));
+        getController().getShadingModeChoiceBox().valueProperty().addListener((observable, oldValue, newValue) -> {
             getMesh().getTextureMap().setMode(newValue);
-            getController().getEntityManager().setShaderMode(newValue);
+            getController().getEntityManager().setShadingMode(newValue);
             refreshView();
         });
 
@@ -71,6 +87,11 @@ public class GeometryManager extends MapManager {
             if (!isPolygonSelected() && this.hoverView == null)
                 setCursorPolygon(getMesh().getFacePolyMap().get(evt.getPickResult().getIntersectedFace()));
         });
+
+        // Setup unused vertex box rendering
+        getRenderManager().addMissingDisplayList(UNUSED_VERTEX_DISPLAY_LIST);
+        getController().getCheckBoxShowUnusedVertices().setOnAction(evt ->
+                updateUnusedVertexVisibility());
 
         mapScene.setOnMouseClicked(evt -> {
             MAPPolygon clickedPoly = getMesh().getFacePolyMap().get(evt.getPickResult().getIntersectedFace());
@@ -245,5 +266,47 @@ public class GeometryManager extends MapManager {
         getController().getMapMesh().getTextureMap().updateMap(getMap(), null);
         getMesh().updateData();
         renderCursor(getSelectedPolygon());
+        updateUnusedVertexVisibility();
+    }
+
+    private void updateUnusedVertexBoxes(List<SVector> newBoxes) {
+        // Add new boxes.
+        while (newBoxes.size() > this.unusedVertexBoxes.size()) {
+            Box box = new Box(VERTEX_BOX_SIZE, VERTEX_BOX_SIZE, VERTEX_BOX_SIZE);
+            box.setMaterial(VERTEX_BOX_MATERIAL);
+            box.setDrawMode(DrawMode.LINE);
+            box.setCullFace(CullFace.BACK);
+            box.getTransforms().addAll(new Translate(0, 0, 0));
+            box.setMouseTransparent(false);
+            this.unusedVertexBoxes.add(box);
+            getRenderManager().addNode(UNUSED_VERTEX_DISPLAY_LIST, box);
+        }
+
+        // Update existing boxes.
+        for (int i = 0; i < this.unusedVertexBoxes.size(); i++) {
+            Box box = this.unusedVertexBoxes.get(i);
+            boolean isUsed = i < newBoxes.size();
+            box.setVisible(isUsed);
+
+            if (isUsed) {
+                SVector vec = newBoxes.get(i);
+                Translate translate = (Translate) box.getTransforms().get(0);
+                translate.setX(vec.getFloatX()); // Update transform.
+                translate.setY(vec.getFloatY());
+                translate.setZ(vec.getFloatZ());
+                box.setMaterial(VERTEX_BOX_MATERIAL); // Update material.
+            }
+        }
+    }
+
+    /**
+     * Updates the vertex display.
+     */
+    public void updateUnusedVertexVisibility() {
+        if (getController().getCheckBoxShowUnusedVertices().isSelected()) {
+            updateUnusedVertexBoxes(getMap().findUnusedVertices());
+        } else {
+            updateUnusedVertexBoxes(Collections.emptyList());
+        }
     }
 }

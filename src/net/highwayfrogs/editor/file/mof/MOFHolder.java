@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
@@ -275,7 +275,7 @@ public class MOFHolder extends GameFile {
      * @return textureMap
      */
     public TextureMap makeTextureMap() {
-        return TextureMap.newTextureMap(this, ShaderMode.NO_SHADING);
+        return TextureMap.newTextureMap(this, ShadingMode.NO_SHADING);
     }
 
     /**

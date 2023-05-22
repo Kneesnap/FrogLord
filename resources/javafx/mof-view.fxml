@@ -40,7 +40,7 @@
                                       AnchorPane.topAnchor="196.0"/>
                             <Label layoutX="11.0" layoutY="148.0" text="Shading: " AnchorPane.leftAnchor="0.0"
                                    AnchorPane.topAnchor="160.0"/>
-                            <ComboBox fx:id="shaderModeComboBox" layoutX="61.0" layoutY="142.0" prefWidth="150.0"
+                            <ComboBox fx:id="shadingModeComboBox" layoutX="61.0" layoutY="142.0" prefWidth="150.0"
                                       AnchorPane.leftAnchor="50.0" AnchorPane.topAnchor="155.0"/>
                             <CheckBox fx:id="textureAnimationCheckbox" layoutX="88.0" layoutY="81.0"
                                       mnemonicParsing="false" text="Texture Animation" AnchorPane.leftAnchor="55.0"

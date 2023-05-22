@@ -26,7 +26,7 @@ import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -394,10 +394,10 @@ public class EntityManager extends MapManager {
     }
 
     /**
-     * Set the shader mode to use to display all of the entities.
-     * @param newMode The new shader mode to use.
+     * Set the shading mode to use to display all of the entities.
+     * @param newMode The new shading mode to use.
      */
-    public void setShaderMode(ShaderMode newMode) {
+    public void setShadingMode(ShadingMode newMode) {
         for (MOFMesh mesh : this.meshMap.values()) {
             TextureMap map = mesh.getTextureMap();
             if (map.getMode() != newMode) {
