@@ -18,8 +18,8 @@ import java.util.Stack;
 @Getter
 public class DataWriter {
     @Setter private ByteOrder endian = ByteOrder.LITTLE_ENDIAN;
-    private DataReceiver output;
-    private Stack<Integer> jumpStack = new Stack<>();
+    private final DataReceiver output;
+    private final Stack<Integer> jumpStack = new Stack<>();
 
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
     private static final ByteBuffer SHORT_BUFFER = ByteBuffer.allocate(Constants.SHORT_SIZE);
@@ -285,7 +285,8 @@ public class DataWriter {
      */
     public void writeTerminatedStringOfLength(String stringToWrite, int byteSize, byte terminator) {
         int pathEndIndex = (getIndex() + byteSize);
-        writeTerminatorString(stringToWrite); // Include the null byte after the string data before using 0xCD.
-        writeTo(pathEndIndex, terminator);
+        writeTerminatorString(stringToWrite, terminator); // Include the null byte after the string data before using 0xCD.
+        if (pathEndIndex != getIndex() - 1) // If the string reaches the end, it should be considered cut off because it was too long.
+            writeTo(pathEndIndex, terminator);
     }
 }

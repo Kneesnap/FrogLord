@@ -8,11 +8,15 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
-import net.highwayfrogs.editor.games.tgq.toc.*;
+import net.highwayfrogs.editor.games.tgq.toc.OTTChunk;
+import net.highwayfrogs.editor.games.tgq.toc.TGQChunk3DModel;
+import net.highwayfrogs.editor.games.tgq.toc.TOCChunk;
+import net.highwayfrogs.editor.games.tgq.toc.kcCResource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
 
 /**
@@ -26,8 +30,8 @@ import java.util.*;
 @Getter
 public class TGQBinFile extends GameObject {
     private List<String> globalPaths; // TODO: These are used to determine the full file path of a file. Figure out how to determine which files go in which path.
-    private List<TGQFile> files = new ArrayList<>();
-    private Map<Integer, TGQFile> nameMap = new HashMap<>();
+    private final List<TGQFile> files = new ArrayList<>();
+    private final Map<Integer, TGQFile> nameMap = new HashMap<>();
 
     private static final int NAME_SIZE = 0x108;
 
@@ -59,17 +63,7 @@ public class TGQBinFile extends GameObject {
                 continue;
 
             TGQChunkedFile chunkedFile = (TGQChunkedFile) file;
-            for (kcCResource chunk : chunkedFile.getChunks()) {
-                if (chunk instanceof TGQChunkTextureReference)
-                    applyFileName(((TGQChunkTextureReference) chunk).getPath());
-                if (chunk instanceof TGQChunk3DModel && ((TGQChunk3DModel) chunk).getFullReferenceName() != null) {
-                    applyFileName(((TGQChunk3DModel) chunk).getFullReferenceName());
-
-                    TGQFile tgqFile = getFileByName(((TGQChunk3DModel) chunk).getFullReferenceName());
-                    if (tgqFile instanceof TGQChunkedFile)
-                        ((TGQChunk3DModel) ((TGQChunkedFile) tgqFile).getChunks().get(0)).setEnvironmentFile(chunkedFile);
-                }
-            }
+            chunkedFile.getChunks().forEach(kcCResource::afterLoad);
         }
     }
 
@@ -311,9 +305,19 @@ public class TGQBinFile extends GameObject {
                 continue;
 
             TGQChunkedFile chunkedFile = (TGQChunkedFile) file;
-            for (kcCResource testChunk : chunkedFile.getChunks())
-                if (testChunk instanceof TGQChunk3DModel && testChunk.isRootChunk())
-                    ((TGQChunk3DModel) testChunk).saveToFile(new File(saveFolder, file.getExportName() + ".obj"));
+            for (kcCResource testChunk : chunkedFile.getChunks()) {
+                if (testChunk instanceof TGQChunk3DModel && testChunk.isRootChunk()) {
+                    TGQChunk3DModel model = ((TGQChunk3DModel) testChunk);
+                    try {
+                        model.getModel().saveToFile(saveFolder, file.getExportName());
+                    } catch (Throwable th) {
+                        if (model.getRawData() != null)
+                            Files.write(new File(saveFolder, file.getExportName() + ".dat").toPath(), model.getRawData());
+                        System.err.println("Failed to export '" + file.getExportName() + ".obj'.");
+                        th.printStackTrace();
+                    }
+                }
+            }
         }
     }
 
@@ -328,8 +332,18 @@ public class TGQBinFile extends GameObject {
 
         System.out.println("Exporting Everything Else...");
         for (TGQFile file : mainArchive.getFiles()) {
-            if (!(file instanceof TGQDummyFile))
+            if ((file instanceof TGQImageFile))
                 continue;
+
+            if (file instanceof TGQChunkedFile) {
+                TGQChunkedFile chunkedFile = (TGQChunkedFile) file;
+                if (chunkedFile.getChunks().isEmpty())
+                    continue;
+
+                kcCResource chunk = chunkedFile.getChunks().get(0);
+                if (chunk instanceof TGQChunk3DModel || chunk instanceof TOCChunk)
+                    continue; // Handled elsewhere.
+            }
 
             DataWriter writer = new DataWriter(new FileReceiver(new File(saveFolder, file.getExportName())));
             file.save(writer);

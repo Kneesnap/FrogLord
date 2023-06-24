@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 import net.highwayfrogs.editor.games.tgq.TGQFile;
 import net.highwayfrogs.editor.games.tgq.TGQImageFile;
-import net.highwayfrogs.editor.games.tgq.toc.TGQChunk3DModel.TGQMaterial;
+import net.highwayfrogs.editor.games.tgq.model.kcMaterial;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.system.Tuple3;
 import net.highwayfrogs.editor.utils.Utils;
@@ -25,8 +25,8 @@ import java.util.List;
  */
 @Getter
 public class OTTChunk extends kcCResource {
-    private List<OTTMesh> meshes = new ArrayList<>();
-    private List<TGQMaterial> materials = new ArrayList<>();
+    private final List<OTTMesh> meshes = new ArrayList<>();
+    private final List<kcMaterial> materials = new ArrayList<>();
     private byte[] bytes;
 
     public static final int NAME_SIZE = 32;
@@ -100,7 +100,7 @@ public class OTTChunk extends kcCResource {
         }
 
         for (int i = 0; i < materialCount; i++) {
-            TGQMaterial newMaterial = new TGQMaterial();
+            kcMaterial newMaterial = new kcMaterial();
             newMaterial.load(reader);
             this.materials.add(newMaterial);
         }
@@ -160,10 +160,10 @@ public class OTTChunk extends kcCResource {
         writer.close();
 
         PrintWriter mtlWriter = new PrintWriter(new File(folder, fileName + ".mtl"));
-        for (TGQMaterial material : getMaterials()) {
+        for (kcMaterial material : getMaterials()) {
             mtlWriter.write("newmtl Mat_" + material.getMaterialName().replace(' ', '_') + Constants.NEWLINE);
             mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE);
-            mtlWriter.write("map_Kd " + fileName + "/Textures/" + material.getTextureFile().replace(".img", "") + ".png" + Constants.NEWLINE);
+            mtlWriter.write("map_Kd " + fileName + "/Textures/" + material.getTextureFileName().replace(".img", "") + ".png" + Constants.NEWLINE);
             mtlWriter.write(Constants.NEWLINE);
         }
         mtlWriter.close();
@@ -189,11 +189,11 @@ public class OTTChunk extends kcCResource {
 
     @Getter
     public class OTTMesh {
-        private List<Tuple3<Float, Float, Float>> positions = new ArrayList<>();
-        private List<Tuple3<Float, Float, Float>> normals = new ArrayList<>();
-        private List<Tuple2<Float, Float>> texCoords = new ArrayList<>();
-        private int material;
-        private int count;
+        private final List<Tuple3<Float, Float, Float>> positions = new ArrayList<>();
+        private final List<Tuple3<Float, Float, Float>> normals = new ArrayList<>();
+        private final List<Tuple2<Float, Float>> texCoords = new ArrayList<>();
+        private final int material;
+        private final int count;
 
         public OTTMesh(int count, int material) {
             this.count = count;

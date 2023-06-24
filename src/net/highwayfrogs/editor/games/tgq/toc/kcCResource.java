@@ -13,9 +13,10 @@ import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
  */
 @Getter
 public abstract class kcCResource extends GameObject {
-    private KCResourceID chunkType;
+    private byte[] rawData;
+    private final KCResourceID chunkType;
     @Setter private String name;
-    private TGQChunkedFile parentFile;
+    @Setter private TGQChunkedFile parentFile;
 
     private static final int NAME_SIZE = 32;
 
@@ -24,9 +25,27 @@ public abstract class kcCResource extends GameObject {
         this.parentFile = parentFile;
     }
 
+    /**
+     * Reads raw data.
+     * @param reader The reader to read raw data from.
+     */
+    protected void readRawData(DataReader reader) {
+        reader.jumpTemp(reader.getIndex());
+        this.rawData = reader.readBytes(reader.getRemaining());
+        reader.jumpReturn();
+    }
+
     @Override
     public void load(DataReader reader) {
+        readRawData(reader);
         this.name = reader.readTerminatedStringOfLength(NAME_SIZE);
+    }
+
+    /**
+     * Called after all files have loaded.
+     */
+    public void afterLoad() {
+        // Do nothing.
     }
 
     @Override

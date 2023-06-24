@@ -13,7 +13,7 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 @Getter
 public abstract class TGQFile extends GameObject {
-    private TGQBinFile mainArchive;
+    private final TGQBinFile mainArchive;
     private String cleanName;
     private String rawName;
     private int nameHash;
@@ -31,7 +31,7 @@ public abstract class TGQFile extends GameObject {
     /**
      * Initialize the information about this file.
      * @param realName   This file's raw name. Can be null.
-     * @param compressed Whether or not this file is compressed.
+     * @param compressed Whether this file is compressed.
      */
     public void init(String realName, boolean compressed, int hash) {
         setRawName(realName);
