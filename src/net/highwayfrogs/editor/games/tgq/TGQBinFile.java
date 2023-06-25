@@ -310,6 +310,8 @@ public class TGQBinFile extends GameObject {
                     TGQChunk3DModel model = ((TGQChunk3DModel) testChunk);
                     try {
                         model.getModel().saveToFile(saveFolder, file.getExportName());
+                        if (model.getRawData() != null)
+                            Files.write(new File(saveFolder, file.getExportName() + ".dat").toPath(), model.getRawData());
                     } catch (Throwable th) {
                         if (model.getRawData() != null)
                             Files.write(new File(saveFolder, file.getExportName() + ".dat").toPath(), model.getRawData());

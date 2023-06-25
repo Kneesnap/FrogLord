@@ -26,19 +26,33 @@ public class kcModel extends GameObject {
     private kcVertexFormatComponent[] components;
     private int bonesPerPrimitive = 1;
 
-    // TODO: Do we allow calculating this from the FVF?
+    // FVF:
     // - _kcBlendMode blendMode;
     // - int bIndexBlend;
-    // FVF:
     // Bits (1, 2, 3)|0xE = blend settings, weird combinations seem to work except 0xC which is 'unsupported'
+    // Bit 0|0x1 = ? (kcGraphicsSetVertexShader)
     // Bit 12|0x1000 = Disable Blend
-    // Bit 14|0x4000 = Compression Enabled (kcVtxBufGetVertex)
-    // Max transforms always appears to be 6?
+
+    public static final int FVF_FLAG_NORMALS_HAVE_W = Constants.BIT_FLAG_4; // 0x10
+    public static final int FVF_FLAG_POSITIONS_HAVE_SIZE = Constants.BIT_FLAG_5; // 0x20
+    public static final int FVF_FLAG_DIFFUSE_RGBA255 = Constants.BIT_FLAG_6; // 0x40
+    public static final int FVF_FLAG_HAS_MATRIX = Constants.BIT_FLAG_12; // 0x1000, Also disables blend?
+    public static final int FVF_FLAG_PS2_COMPRESSED = Constants.BIT_FLAG_14; // 0x4000
+    public static final int FVF_MASK_WEIGHTS = 0b1110;
+    public static final int FVF_MASK_TEXTURE_START = 8;
+    public static final int FVF_MASK_TEXTURE = 0b1111 << FVF_MASK_TEXTURE_START;
+
+    /**
+     * Get the number of vertices in the model.
+     */
+    public long getVertexCount() {
+        return this.primitives.stream().mapToLong(kcModelPrim::getVertexCount).sum();
+    }
 
     @Override
     public void load(DataReader reader) {
         // 1. Read Header.
-        this.fvf = reader.readUnsignedIntAsLong(); // TODO: Let's figure out what every bit is.
+        this.fvf = reader.readUnsignedIntAsLong();
         int componentCount = reader.readInt();
         int materialCount = reader.readInt();
         int nodeCount = reader.readInt();
@@ -50,6 +64,7 @@ public class kcModel extends GameObject {
         this.components = new kcVertexFormatComponent[componentCount - 1];
         for (int i = 0; i < this.components.length; i++)
             this.components[i] = kcVertexFormatComponent.values()[reader.readInt()];
+
         int lastComponentId = reader.readInt();
         if (lastComponentId != kcVertexFormatComponent.NULL.ordinal())
             throw new RuntimeException("The last component ID was supposed to be null, but was " + lastComponentId + ".");
@@ -91,11 +106,34 @@ public class kcModel extends GameObject {
             reader.skipBytes(4 - (reader.getIndex() % 4)); // Pad.
 
         // 8. Read vertex buffers.
-        for (int i = 0; i < this.primitives.size(); i++)
-            vertexCount -= this.primitives.get(i).loadVertices(reader);
+        int configuredStride = calculateStride(this.components, this.fvf);
+        int realStrideRemainder = (reader.getRemaining() % vertexCount);
+        int realStride = (reader.getRemaining() / vertexCount);
 
-        if (reader.hasMore() || vertexCount != 0)
-            System.out.println("3D Model had unread data! (Remaining: " + reader.getRemaining() + ", Position: " + Integer.toHexString(reader.getIndex()) + ", Remaining Vertices: " + vertexCount + ")");
+        if (realStrideRemainder != 0 || realStride != configuredStride) {
+            System.out.println("3D model had " + vertexCount + " vertices with a stride calculated to be " + configuredStride + ", but the actual stride of remaining data was " + realStride + ". (Remainder: " + realStrideRemainder + ")");
+
+            if (this.components[this.components.length - 1] == kcVertexFormatComponent.WEIGHT1F && realStride == 24 && configuredStride == 26) {
+                // An example of an afflicted file, file 3594 on the PS2 PAL release.
+                // The current hypothesis for these files is that the game itself wouldn't even load them properly.
+                // TODO: This fix doesn't seem to give proper UV values. Investigate that once we fix PS2 texture exporting.
+
+                kcVertexFormatComponent[] newComponents = new kcVertexFormatComponent[this.components.length - 1];
+                System.arraycopy(this.components, 0, newComponents, 0, newComponents.length);
+                this.components = newComponents;
+                System.out.println(" - However, a hack was applied to fix the model.");
+            } else {
+                reader.skipBytes(reader.getRemaining());
+                return;
+            }
+        }
+
+        int loadedVertices = 0;
+        for (int i = 0; i < this.primitives.size(); i++)
+            loadedVertices += this.primitives.get(i).loadVertices(reader);
+
+        if (reader.hasMore() || vertexCount != loadedVertices)
+            System.out.println("3D Model had unread data! (Remaining: " + reader.getRemaining() + ", Position: " + Integer.toHexString(reader.getIndex()) + ", Vertices: " + loadedVertices + "/" + vertexCount + ")");
     }
 
     @Override
@@ -107,7 +145,7 @@ public class kcModel extends GameObject {
         writer.writeUnsignedInt(this.nodes.size());
         writer.writeUnsignedInt(this.primitives.size());
         writer.writeUnsignedInt(this.bonesPerPrimitive);
-        writer.writeUnsignedInt(this.primitives.stream().mapToLong(kcModelPrim::getVertexCount).sum());
+        writer.writeUnsignedInt(getVertexCount());
 
         // 2. Write vertex format components.
         if (this.components != null)
@@ -187,5 +225,81 @@ public class kcModel extends GameObject {
         DataWriter rawWriter = new DataWriter(new FileReceiver(rawFile));
         save(rawWriter);
         rawWriter.closeReceiver();*/
+    }
+
+    /**
+     * Calculate the components and order from an fvf value.
+     * This is a recreation of the function 'kcFVFVertexGetOrder' as found in the PS2 PAL version.
+     * @param fvf The fvf value to calculate from.
+     * @return orderedComponentList
+     */
+    public static kcVertexFormatComponent[] calculateOrder(long fvf) {
+        List<kcVertexFormatComponent> components = new ArrayList<>(8);
+
+        if ((fvf & FVF_FLAG_POSITIONS_HAVE_SIZE) == FVF_FLAG_POSITIONS_HAVE_SIZE) {
+            components.add(kcVertexFormatComponent.NORMAL_XYZF);
+            components.add(kcVertexFormatComponent.PSIZE);
+        } else {
+            components.add(kcVertexFormatComponent.NORMAL_XYZWF);
+        }
+
+        if ((fvf & FVF_FLAG_NORMALS_HAVE_W) == FVF_FLAG_NORMALS_HAVE_W)
+            components.add(kcVertexFormatComponent.NORMAL_XYZWF);
+
+        if ((fvf & FVF_FLAG_DIFFUSE_RGBA255) == FVF_FLAG_DIFFUSE_RGBA255)
+            components.add(kcVertexFormatComponent.DIFFUSE_RGBA255F);
+
+        long textureBits = (fvf & FVF_MASK_TEXTURE) >> FVF_MASK_TEXTURE_START;
+        if (textureBits == 1) {
+            components.add(kcVertexFormatComponent.TEX1_STQP);
+        } else if (textureBits == 2) {
+            components.add(kcVertexFormatComponent.TEX2F);
+        }
+
+        long weightBits = (fvf & FVF_MASK_WEIGHTS) >> 1;
+        if (weightBits == 0b110 || weightBits == 0b101 || weightBits == 0b100 || weightBits == 0b011)
+            components.add(kcVertexFormatComponent.WEIGHT4F);
+
+        if ((fvf & FVF_FLAG_HAS_MATRIX) == FVF_FLAG_HAS_MATRIX)
+            components.add(kcVertexFormatComponent.MATRIX_INDICES);
+
+        return components.toArray(new kcVertexFormatComponent[0]);
+    }
+
+    /**
+     * Calculates the stride of a vertex with the given FVF value.
+     * Functionality matches 'kcFVFVertexGetSizePS2' from the PS2 PAL version.
+     * @param fvf The fvf value to calculate the stride from.
+     * @return calculatedStride
+     */
+    public static int calculateStride(long fvf) {
+        boolean isCompressedPS2 = (fvf & FVF_FLAG_PS2_COMPRESSED) == FVF_FLAG_PS2_COMPRESSED;
+        return calculateStride(calculateOrder(fvf), isCompressedPS2);
+    }
+
+    /**
+     * Calculates the stride of a vertex with the given FVF value.
+     * Functionality matches 'kcFVFVertexGetSizePS2' from the PS2 PAL version.
+     * @param components The components to calculate the stride from.
+     * @param fvf        The fvf value to calculate the stride from.
+     * @return calculatedStride
+     */
+    public static int calculateStride(kcVertexFormatComponent[] components, long fvf) {
+        return calculateStride(components, (fvf & FVF_FLAG_PS2_COMPRESSED) == FVF_FLAG_PS2_COMPRESSED);
+    }
+
+    /**
+     * Calculates the stride of a vertex with the given FVF value.
+     * Functionality matches 'kcFVFVertexGetSizePS2' from the PS2 PAL version.
+     * @param components      The components to calculate the stride from.
+     * @param isCompressedPS2 If the values are "compressed PS2" values.
+     * @return calculatedStride
+     */
+    public static int calculateStride(kcVertexFormatComponent[] components, boolean isCompressedPS2) {
+        int stride = 0;
+        for (int i = 0; i < components.length; i++)
+            stride += isCompressedPS2 ? components[i].getPs2CompressedStride() : components[i].getStride();
+
+        return stride;
     }
 }

@@ -60,7 +60,7 @@ public class kcModelPrim extends GameObject {
 
         for (int i = 0; i < this.loadedVertexCount; i++) {
             kcVertex vertex = new kcVertex();
-            vertex.load(reader, this.model.getComponents());
+            vertex.load(reader, this.model.getComponents(), this.model.getFvf());
             this.vertices.add(vertex);
         }
 
@@ -74,6 +74,6 @@ public class kcModelPrim extends GameObject {
      */
     public void saveVertices(DataWriter writer) {
         for (int i = 0; i < this.vertices.size(); i++)
-            this.vertices.get(i).save(writer, this.model.getComponents());
+            this.vertices.get(i).save(writer, this.model.getComponents(), this.model.getFvf());
     }
 }
