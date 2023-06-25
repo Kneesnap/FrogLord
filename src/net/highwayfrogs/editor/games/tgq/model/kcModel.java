@@ -216,9 +216,8 @@ public class kcModel extends GameObject {
             mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE);
             mtlWriter.write("map_Kd " + "Textures/" + outputImageFileName + Constants.NEWLINE);
             mtlWriter.write(Constants.NEWLINE);
-
-            mtlWriter.close();
         }
+        mtlWriter.close();
 
         // Write a raw binary version of the model too.
         /*File rawFile = new File(outputFolder, fileName + ".dat");
