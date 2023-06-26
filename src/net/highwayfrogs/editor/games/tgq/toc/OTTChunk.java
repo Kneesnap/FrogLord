@@ -174,7 +174,7 @@ public class OTTChunk extends kcCResource {
                 imgFolder.mkdirs();
 
             for (TGQChunkTextureReference TGQChunkTextureReference : chunks) {
-                TGQFile file = getParentFile().getMainArchive().getFileByName(TGQChunkTextureReference.getPath());
+                TGQFile file = getFileByName(TGQChunkTextureReference.getPath());
                 if (file instanceof TGQImageFile)
                     ((TGQImageFile) file).saveImageToFile(new File(imgFolder, file.getExportName().replace(".img", "") + ".png"));
             }

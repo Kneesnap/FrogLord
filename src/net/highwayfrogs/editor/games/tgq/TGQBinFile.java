@@ -82,29 +82,30 @@ public class TGQBinFile extends GameObject {
         reader.jumpReturn();
 
         TGQFile readFile;
-        if (Utils.testSignature(fileBytes, TGQImageFile.SIGNATURE)) {
-            readFile = new TGQImageFile(this, true);
+        if (Utils.testSignature(fileBytes, TGQImageFile.SIGNATURE_STR)) {
+            readFile = new TGQImageFile(this);
         } else if (Utils.testSignature(fileBytes, "6YTV") || Utils.testSignature(fileBytes, "TOC\0")) { //TODO: Fix up.
             readFile = new TGQChunkedFile(this);
         } else if (this.files.size() > 100 && fileBytes.length > 30) {
-            readFile = new TGQImageFile(this, false);
+            readFile = new TGQImageFile(this);
         } else {
             readFile = new TGQDummyFile(this, fileBytes.length);
         }
 
-        // Read file.
+        // Setup file.
         readFile.init(name, isCompressed, crc);
+        this.files.add(readFile); // Add before loading, so it can find its ID.
+        if (readFile.getNameHash() != 0)
+            this.nameMap.put(readFile.getNameHash(), readFile);
 
+        // Read file.
         try {
             DataReader fileReader = new DataReader(new ArraySource(fileBytes));
             readFile.load(fileReader);
         } catch (Exception ex) {
-            throw new RuntimeException("There was a problem reading " + readFile.getClass().getSimpleName() + " [File " + this.files.size() + "]", ex);
+            throw new RuntimeException("There was a problem reading " + readFile.getClass().getSimpleName() + " [File " + (this.files.size() - 1) + "]", ex);
         }
 
-        this.files.add(readFile);
-        if (readFile.getNameHash() != 0)
-            this.nameMap.put(readFile.getNameHash(), readFile);
         return readFile;
     }
 
@@ -224,7 +225,25 @@ public class TGQBinFile extends GameObject {
             file.setRawName(filePath);
     }
 
-    public TGQFile getFileByName(String filePath) {
+    /**
+     * Searches for a file by its full file path, printing a message if the file is nto found.
+     * @param searchFrom The file to search from, so that we can print which file wanted the file if it wasn't found.
+     * @param filePath   Full file path.
+     * @return the found file, if there was one.
+     */
+    public TGQFile getFileByName(TGQFile searchFrom, String filePath) {
+        TGQFile file = getOptionalFileByName(filePath);
+        if (file == null)
+            System.out.println("Failed to find file " + filePath + (searchFrom != null ? " referenced in " + searchFrom.getExportName() : "") + ". (" + TGQUtils.getFileIdFromPath(filePath) + ")");
+        return file;
+    }
+
+    /**
+     * Searches for a file by its full file path.
+     * @param filePath Full file path.
+     * @return the found file, if there was one.
+     */
+    public TGQFile getOptionalFileByName(String filePath) {
         int hash = TGQUtils.hash(TGQUtils.getFileIdFromPath(filePath), true);
         TGQFile file = getNameMap().get(hash);
         if (file != null)
@@ -234,7 +253,6 @@ public class TGQBinFile extends GameObject {
             if (testFile.getRawName() != null && testFile.getRawName().toLowerCase().contains(filePath.toLowerCase()))
                 return testFile;
 
-        System.out.println("Failed to find " + filePath + " in " + getNameMap().size() + ". (" + TGQUtils.getFileIdFromPath(filePath) + ")");
         return null;
     }
 

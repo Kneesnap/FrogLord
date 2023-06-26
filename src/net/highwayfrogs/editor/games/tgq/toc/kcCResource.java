@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
+import net.highwayfrogs.editor.games.tgq.TGQFile;
 
 /**
  * Represents a resource in a TGQ file.
@@ -33,6 +34,24 @@ public abstract class kcCResource extends GameObject {
         reader.jumpTemp(reader.getIndex());
         this.rawData = reader.readBytes(reader.getRemaining());
         reader.jumpReturn();
+    }
+
+    /**
+     * Gets the file by its name.
+     * @param filePath The file path to load.
+     * @return fileByName
+     */
+    public TGQFile getFileByName(String filePath) {
+        return getParentFile() != null ? getParentFile().getMainArchive().getFileByName(getParentFile(), filePath) : null;
+    }
+
+    /**
+     * Gets the file by its name, returning null if the file was not found.
+     * @param filePath The file path to load.
+     * @return fileByName
+     */
+    public TGQFile getOptionalFileByName(String filePath) {
+        return getParentFile() != null ? getParentFile().getMainArchive().getOptionalFileByName(filePath) : null;
     }
 
     @Override

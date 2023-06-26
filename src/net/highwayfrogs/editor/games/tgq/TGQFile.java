@@ -71,8 +71,12 @@ public abstract class TGQFile extends GameObject {
      * @return exportName
      */
     public String getExportName() {
-        if (hasName() && Utils.isValidFileName(getCleanName()))
+        if (hasName() && Utils.isValidFileName(getCleanName())) {
+            if (this instanceof TGQDummyFile)
+                return getArchiveIndex() + "-" + getCleanName();
+
             return getCleanName();
+        }
 
         int index = getArchiveIndex();
         if (index == -1)

@@ -19,7 +19,6 @@ public enum KCResourceID {
     TEXTURE("TEX\0", TGQChunkTextureReference::new),
     OCTTREESCENEMGR("OTT\0", OTTChunk::new),
     MODEL("6YTV", TGQChunk3DModel::new), // TODO
-    IMAGE("IMGd", null),
     TRACK("fEAB", null),
     HIERARCHY("fEHB", null),
     ANIMSET("RAS\0", null),

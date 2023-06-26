@@ -37,7 +37,7 @@ public class TGQChunkTextureReference extends kcCResource {
             return;
 
         getParentFile().getMainArchive().applyFileName(this.path);
-        TGQFile tgqFile = getParentFile().getMainArchive().getFileByName(this.path);
+        TGQFile tgqFile = getFileByName(this.path);
         if (!(tgqFile instanceof TGQImageFile))
             return; // Not an image.
 

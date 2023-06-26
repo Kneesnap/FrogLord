@@ -72,7 +72,7 @@ public class TGQChunk3DModel extends kcCResource {
                         continue;
 
                     TGQChunkTextureReference texRef = (TGQChunkTextureReference) resource;
-                    TGQFile texRefFile = getParentFile().getMainArchive().getFileByName(texRef.getPath());
+                    TGQFile texRefFile = getOptionalFileByName(texRef.getPath());
                     if (texRefFile != null && texRefFile.getRawName() == null)
                         texRefFile.setRawName(texRef.getPath());
 

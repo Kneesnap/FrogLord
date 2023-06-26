@@ -1,13 +1,17 @@
 package net.highwayfrogs.editor.games.tgq;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.IndexColorModel;
 import java.io.File;
 import java.io.IOException;
 
@@ -21,107 +25,213 @@ import java.io.IOException;
  */
 @Getter
 public class TGQImageFile extends TGQFile {
+    private boolean hasHeader;
     private BufferedImage image;
-    private int bitsPerPixel = 32; // 32 - RGBA, 24 - BGR (Unused), 16 - RGBA16 (Unused), 8 - Palette (Used once)
-    private int unknown8 = 0; // 0 in all but three cases. If this is not 0, unknown9 also seems to not be zero.
-    private int unknown9 = 0; // May always be zero. 3 Cases where it is not. It seems to mirror 8 in two of those cases.
-    private int missingBytes; // It's unclear why this exists, but it likely serves a purpose, so we abide by it.
-    private transient boolean topHeader;
 
     private static final int HEADER_SIZE = 0x20;
+    private static final byte TYPE_CODE_HAS_COLOR_TABLE = (byte) 1;
+    private static final byte TYPE_CODE_NO_COLOR_TABLE = (byte) 2;
+    private static final byte TYPE_CODE_GRAYSCALE_TABLE = (byte) 3;
+    private static final int[] GRAYSCALE_COLOR_MODEL = new int[256];
 
-    public static final String SIGNATURE = "IMGd";
+    public static final int SIGNATURE = 0x64474D49; // 'IMGd'
+    public static final String SIGNATURE_STR = "IMGd"; // 'IMGd'
 
-    public TGQImageFile(TGQBinFile mainArchive, boolean topHeader) {
+    public TGQImageFile(TGQBinFile mainArchive) {
         super(mainArchive);
-        this.topHeader = topHeader;
+    }
+
+    /**
+     * Gets the format of the image.
+     */
+    public kcImageFormat getFormat() {
+        return kcImageFormat.getFormatFromBufferedImage(this.image);
+    }
+
+    /**
+     * Get the number of bits used by each pixel.
+     */
+    public int getBitsPerPixel() {
+        return getFormat().getBitsPerPixel();
     }
 
     @Override
     public void load(DataReader reader) {
-        int width = 0;
-        int height = 0;
-        if (this.topHeader) {
-            reader.verifyString(SIGNATURE);
+        int startIndex = reader.getIndex();
+        this.hasHeader = (reader.readInt() == SIGNATURE);
+        reader.skipInt(); // Skip read size.
 
-            int readSize = reader.readInt(); //TODO: Try making this a chunk again.
-            width = reader.readInt();
-            height = reader.readInt();
-            this.bitsPerPixel = reader.readInt();
-            this.missingBytes = (((width * height) * (this.bitsPerPixel / Constants.BITS_PER_BYTE)) - readSize);
+        if (this.hasHeader) {
+            int width = reader.readInt();
+            int height = reader.readInt();
+            int bitsPerPixel = reader.readInt();
+            // TODO: IF PC, SET BITS PER PIXEL TO 32.
+            bitsPerPixel = 32;
 
-            int unknownPossiblyTextureCount = reader.readInt(); // This is called 'mipLod'. Level of detail?
-            if (unknownPossiblyTextureCount != 1)
-                throw new RuntimeException("Value was expected to always be 1! (" + unknownPossiblyTextureCount + ")");
+            int mipLod = reader.readInt(); // Always 1?
+            if (mipLod != 1)
+                System.out.println("The image '" + getExportName() + "'was read with an LOD of " + mipLod + ", but 1 was expected!");
+
+            // Read extra data at end of the header that we don't fully understand yet.
+            int skipData = reader.getRemaining() - ((bitsPerPixel * width * height) / Constants.BITS_PER_BYTE);
+            if (skipData > 0x20)
+                System.out.println(" - The image " + getExportName() + " skipped " + skipData + " bytes...");
+
+            reader.skipBytes(skipData);
+
+            // Load image.
+            loadImage(reader, width, height, bitsPerPixel, null);
+        } else {
+            reader.setIndex(startIndex);
+            kcLoad8BitImageHeader(reader);
         }
 
+        if (reader.getRemaining() > 0) // Test we're not skipping any data.
+            System.out.println(" - The image '" + getExportName() + "' has " + reader.getRemaining() + " unread bytes.");
+    }
 
+    private void kcLoad8BitImageHeader(DataReader reader) {
         byte idSize = reader.readByte();
         byte colMapType = reader.readByte();
         byte typeCode = reader.readByte();
         byte[] colMap = reader.readBytes(5);
         short xOrigin = reader.readShort();
         short yOrigin = reader.readShort();
-        short headerWidth = reader.readShort();
-        short headerHeight = reader.readShort();
+        short width = reader.readShort();
+        short height = reader.readShort();
         byte bitsPerPixel = reader.readByte();
         byte descriptor = reader.readByte();
-        short padding = reader.readShort();
 
-        if (!this.topHeader) { // TODO: This is wrong lol.
-            int size = (int) Math.sqrt(reader.getRemaining() / 4D);
-            width = size;
-            height = size;
+        System.out.println("IMG [" + getExportName() + ", " + width + "x" + height + "]: idsize=" + idSize + ", colMapType=" + colMapType + ", typeCode=" + typeCode
+                + ", colMap=" + Utils.toByteString(colMap) + ", origin=[" + xOrigin + "," + yOrigin + "], bpp=" + bitsPerPixel + ", Descriptor=" + descriptor);
+
+        int paletteSizeInBytes = 0;
+        int imageSizeInBytes = (bitsPerPixel * width * height) / Constants.BITS_PER_BYTE;
+        if (typeCode == TYPE_CODE_HAS_COLOR_TABLE) {
+            if (colMap[4] == 24 && bitsPerPixel == 8) {
+                paletteSizeInBytes = 0x300;
+            } else if (colMap[4] == 32 && bitsPerPixel == 8) {
+                paletteSizeInBytes = 0x400;
+            } else {
+                throw new RuntimeException("Encountered situation for image '" + getExportName() + "' with unknown image parameters: " + colMap[4] + ", " + bitsPerPixel);
+            }
         }
 
-        System.out.println("IMG [" + width + "x" + height + "]: idsize=" + idSize + ", colMapType=" + colMapType + ", typeCode=" + typeCode
-                + ", colMap=" + Utils.toByteString(colMap) + ", origin=[" + xOrigin + "," + yOrigin + "], image dimensions=[" + headerWidth
-                + "x" + headerHeight + "]" + ", bpp=" + bitsPerPixel + "/" + this.bitsPerPixel + ", Descriptor=" + descriptor);
+        byte[] bitmapData = reader.readBytes(imageSizeInBytes + paletteSizeInBytes); // Aligned by 0x40?
 
+        int max = 0;
+        if (typeCode == TYPE_CODE_NO_COLOR_TABLE) {
+            // Each pixel has a color value, so apply the fix to all the remaining data.
+            max = imageSizeInBytes / (bitsPerPixel == 24 ? 3 : 4);
+        } else if (typeCode == TYPE_CODE_HAS_COLOR_TABLE) {
+            // Each pixel is an index into the palette / color lookup table, which is hardcoded as having 256 colors.
+            // Only read up til there.
+            max = 256;
+        }
 
-        /*this.unknown5 = reader.readShort(); //TODO: Could these be a hash? No.
-        this.unknown6 = reader.readShort();
+        if ((typeCode == TYPE_CODE_NO_COLOR_TABLE) && (bitsPerPixel == 32)) {
+            for (int index = 0, i = 0; i < max; i++, index += 4) {
+                byte temp = bitmapData[index];
+                bitmapData[index] = bitmapData[index + 2];
+                bitmapData[index + 2] = temp;
+                if (bitmapData[index + 3] != 0)
+                    bitmapData[index + 3] >>= 1;
+            }
+        } else {
+            int bytesPerPixel = 3;
+            if (typeCode != TYPE_CODE_NO_COLOR_TABLE && colMap[4] == 32)
+                bytesPerPixel = 4;
 
-        int unknown7AlwaysSeemsToBeZero = reader.readInt();
-        if (unknown7AlwaysSeemsToBeZero != 0)
-            throw new RuntimeException("Value was expected to always be 0! (" + unknown7AlwaysSeemsToBeZero + ")");
+            for (int index = 0, i = 0; i < max; i++, index += bytesPerPixel) {
+                byte temp = bitmapData[index];
+                bitmapData[index] = bitmapData[index + 2];
+                bitmapData[index + 2] = temp;
+            }
+        }
 
-        this.unknown8 = reader.readInt();
-        this.unknown9 = reader.readInt();
+        // Setup palette.
+        IndexColorModel colorPalette = null;
+        if (typeCode == TYPE_CODE_HAS_COLOR_TABLE) {
+            // Separate color lookup table from pixel data.
+            byte[] paletteBytes = new byte[paletteSizeInBytes];
+            System.arraycopy(bitmapData, 0, paletteBytes, 0, paletteBytes.length);
+            byte[] pixelData = new byte[bitmapData.length - paletteSizeInBytes];
+            System.arraycopy(bitmapData, paletteSizeInBytes, pixelData, 0, pixelData.length);
+            bitmapData = pixelData;
 
-        //TODO: TOSS (Maybe the unknowns are an offset to the file, where the next data is?)
-        System.out.println("5: " + this.unknown5 + ", 6: " + this.unknown6 + " (" + tempValue + "), 8: " + this.unknown8 + ", 9: " + this.unknown9 + ", W: " + width + ", H: " + height + ", A: " + (width * height) + ", ID: " + getMainArchive().getFiles().size());
-         */
+            // Setup palette.
+            colorPalette = new IndexColorModel(bitsPerPixel, 256, paletteBytes, 0, (colMap[4] == 32));
+        } else if (typeCode == TYPE_CODE_GRAYSCALE_TABLE) {
+            colorPalette = new IndexColorModel(bitsPerPixel, GRAYSCALE_COLOR_MODEL.length, GRAYSCALE_COLOR_MODEL, 0, false, -1, DataBuffer.TYPE_BYTE);
+        }
 
-        // Read Image.
-        this.image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < height; y++)
-            for (int x = 0; x < width; x++)
-                this.image.setRGB(x, height - y - 1, reader.hasMore() ? reader.readInt() : 0);
+        DataReader newDataReader = new DataReader(new ArraySource(bitmapData));
+        loadImage(newDataReader, width, height, bitsPerPixel, colorPalette);
+    }
 
-        // TODO: Skybox textures seem to have more data after this point, while most images have their data end here.
+    private void loadImage(DataReader reader, int width, int height, int bitsPerPixel, IndexColorModel colorModel) {
+        kcImageFormat format = kcImageFormat.getFormatFromBitsPerPixel(bitsPerPixel);
+
+        if (format == kcImageFormat.INDEXED8) {
+            if (colorModel == null)
+                throw new RuntimeException("The image format for " + getExportName() + "was " + format + ", but there was no color lookup table.");
+            this.image = new BufferedImage(width, height, format.getBufferedImageType(), colorModel);
+        } else {
+            if (colorModel != null)
+                throw new RuntimeException("The image format for " + getExportName() + "was " + format + ", but there was a color lookup table??");
+
+            this.image = new BufferedImage(width, height, format.getBufferedImageType());
+        }
+
+        switch (format) {
+            case A8R8G8B8:
+                for (int y = 0; y < height; y++)
+                    for (int x = 0; x < width; x++)
+                        this.image.setRGB(x, height - y - 1, reader.readInt());
+                break;
+            case R8G8B8:
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        byte red = reader.readByte();
+                        byte green = reader.readByte();
+                        byte blue = reader.readByte();
+                        this.image.setRGB(x, height - y - 1, Utils.toRGB(red, green, blue));
+                    }
+                }
+                break;
+            case INDEXED8:
+                for (int y = 0; y < height; y++)
+                    for (int x = 0; x < width; x++)
+                        this.image.setRGB(x, height - y - 1, colorModel.getRGB(reader.readByte()));
+                break;
+            default:
+                throw new RuntimeException("Cannot load unsupported from image format " + format + ".");
+        }
+
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeStringBytes(SIGNATURE);
-        writer.writeInt(((this.image.getWidth() * this.image.getHeight()) * (this.bitsPerPixel / Constants.BITS_PER_BYTE)) + HEADER_SIZE - this.missingBytes);
-        writer.writeInt(this.image.getWidth());
-        writer.writeInt(this.image.getHeight());
-        writer.writeInt(this.bitsPerPixel);
-        writer.writeInt(1); // Always 1.
-        writer.writeShort((short) 0); // TODO: BAD
-        writer.writeShort((short) 0);
-        writer.writeInt(0);
-        writer.writeInt(this.unknown8);
-        writer.writeInt(this.unknown9);
+        // TODO: Verify this method works.
+        int headerSizeAddress = -1;
 
-        // Write image.
-        int startSkip = (this.image.getWidth() - (this.missingBytes / (this.bitsPerPixel / Constants.BITS_PER_BYTE)));
-        for (int y = 0; y < this.image.getHeight(); y++)
-            for (int x = 0; x < this.image.getWidth(); x++)
-                if (y != this.image.getHeight() - 1 || (startSkip > x))
-                    this.image.setRGB(x, y, this.image.getRGB(x, this.image.getHeight() - y - 1));
+        if (this.hasHeader) {
+            writer.writeInt(SIGNATURE);
+            headerSizeAddress = writer.writeNullPointer();
+            writer.writeInt(this.image.getWidth());
+            writer.writeInt(this.image.getHeight());
+            writer.writeInt(getBitsPerPixel());
+            writer.writeInt(1); // Always 1.
+            // TODO: May need to write additional data.
+        } else {
+            // TODO: Write 8 bit header.
+            throw new RuntimeException("We don't yet support writing this kind of image for '" + getExportName() + "'.");
+        }
+
+        // TODO: Save image function call.
+
+        if (this.hasHeader)
+            writer.writeAddressAt(headerSizeAddress, writer.getIndex() - headerSizeAddress - Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -135,5 +245,63 @@ public class TGQImageFile extends TGQFile {
      */
     public void saveImageToFile(File saveTo) throws IOException {
         ImageIO.write(this.image, "png", saveTo);
+    }
+
+    /**
+     * Registry of the different supported image formats.
+     * Created from 'kcFormat', but only including supported image formats.
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum kcImageFormat {
+        R8G8B8((byte) 0x14, 24, BufferedImage.TYPE_INT_RGB),
+        A8R8G8B8((byte) 0x15, 32, BufferedImage.TYPE_INT_ARGB),
+        INDEXED8((byte) 0x67, 8, BufferedImage.TYPE_BYTE_INDEXED);
+
+        private final byte typeCode;
+        private final int bitsPerPixel;
+        private final int bufferedImageType;
+
+        /**
+         * Gets the format from the bits per pixel, as seen in 'kcTextureCreateFromImages' from the PS2 PAL version.
+         * @param bitsPerPixel The number of bits per pixel.
+         * @return imageFormat
+         */
+        public static kcImageFormat getFormatFromBitsPerPixel(int bitsPerPixel) {
+            switch (bitsPerPixel) {
+                case 32:
+                    return kcImageFormat.A8R8G8B8;
+                case 24:
+                    return kcImageFormat.R8G8B8;
+                case 8:
+                    return kcImageFormat.INDEXED8;
+                default:
+                    // PS2 PAL will also fail in these situations.
+                    throw new RuntimeException("Images with " + bitsPerPixel + " bits per pixel are not supported by kcGameSystem.");
+            }
+        }
+
+        /**
+         * Gets the kcImageFormat from the image's format.
+         * @param image The image to determine the format from.
+         * @return imageFormat
+         */
+        public static kcImageFormat getFormatFromBufferedImage(BufferedImage image) {
+            switch (image.getType()) {
+                case BufferedImage.TYPE_INT_ARGB:
+                    return kcImageFormat.A8R8G8B8;
+                case BufferedImage.TYPE_INT_RGB:
+                    return kcImageFormat.R8G8B8;
+                case BufferedImage.TYPE_BYTE_INDEXED:
+                    return kcImageFormat.INDEXED8;
+                default:
+                    throw new RuntimeException("Images of format type " + image.getType() + " do not have a corresponding/valid kcFormatImage type.");
+            }
+        }
+    }
+
+    static {
+        for (int i = 0; i < GRAYSCALE_COLOR_MODEL.length; i++)
+            GRAYSCALE_COLOR_MODEL[i] = (i << 16) | (i << 8) | i;
     }
 }

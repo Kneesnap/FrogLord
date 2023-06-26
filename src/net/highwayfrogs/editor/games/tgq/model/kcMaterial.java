@@ -17,9 +17,9 @@ import net.highwayfrogs.editor.utils.Utils;
 public class kcMaterial extends GameObject {
     private String materialName;
     private String textureFileName;
-    private int flags = 1; // TODO: The lower flags are cleared when the model is loaded. Presumably they are runtime only flags? Operation: value &= 0xfffffff7
+    private int flags = 1; // TODO: The lower flags are cleared when the model is loaded. Presumably they are runtime only flags? Operation: value &= 0xfffffff7 Seems 0x01 is whether a texture name should be resolved. (kcImportMaterialTexture)
     private float xpVal = 0F;
-    private float diffuseRed = 1F;
+    private float diffuseRed = 1F; // TODO: kcImportTextures seems to overwrite the values read from the file? Look into this later.
     private float diffuseGreen = 1F;
     private float diffuseBlue = 1F;
     private float diffuseAlpha = 1F;
