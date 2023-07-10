@@ -210,11 +210,14 @@ public class kcModel extends GameObject {
             File folder = new File(outputFolder, "Textures/");
             Utils.makeDirectory(folder);
 
-            String outputImageFileName = Utils.stripExtension(fileName) + "_" + Utils.stripExtension(material.getTextureFileName()) + ".png";
+            String outputImagePrefix = Utils.stripExtension(fileName) + "_";
+            String outputImageFileName = outputImagePrefix + Utils.stripExtension(material.getTextureFileName()) + ".png";
             material.getTexture().saveImageToFile(new File(folder, outputImageFileName));
-            mtlWriter.write("newmtl " + material.getMaterialName() + Constants.NEWLINE);
-            mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE);
-            mtlWriter.write("map_Kd " + "Textures/" + outputImageFileName + Constants.NEWLINE);
+
+            // Write material.
+            StringBuilder builder = new StringBuilder();
+            material.writeWavefrontObjMaterial(builder, "Textures/" + outputImagePrefix, true, true);
+            mtlWriter.write(builder.toString());
             mtlWriter.write(Constants.NEWLINE);
         }
         mtlWriter.close();

@@ -98,7 +98,7 @@ public class TGQUtils {
                         }
                         return fileId.append(fileName).toString();
                     }
-                    //return fileId.append(remaining).toString(); // PSX Mode.
+                    //return fileId.append(remaining).toString(); // PS2 Mode..?
                     return remaining;
                 }
                 return fileId.append(cutSepString).toString();
@@ -111,9 +111,18 @@ public class TGQUtils {
 
     /**
      * Calculates the checksum / hash of a string.
+     * @param str The hash to use.
+     * @return hash
+     */
+    public static int hash(String str) {
+        return hash(str, true);
+    }
+
+    /**
+     * Calculates the checksum / hash of a string.
      * This value is directly what is used in the Table of contents chunk.
      * @param str        The hash to use.
-     * @param ignoreCase Whether or not case should be considered when hashing. Usually true.
+     * @param ignoreCase Whether case should be considered when hashing. There is no known situation where this should be false..
      * @return hash
      */
     public static int hash(String str, boolean ignoreCase) { // Reverse engineered the "Hash" function, in the kcHash (Hash table) namespace.
@@ -126,11 +135,9 @@ public class TGQUtils {
             if (ignoreCase && (tempChar >= 'A') && (tempChar <= 'Z')) // If the letter is upper-case.
                 tempChar = Character.toLowerCase(tempChar);
 
-            //System.out.println((ignoreCase ? "Ignore Case " : "") + "Step #" + i + ": " + hash + "/" + Utils.toHexString(hash));
-            hash = ((hash << 4) ^ ((hash >> 0x1c) & 0x0F)) ^ (int) tempChar; // I'm pretty sure it's closer to the >>> behavior, but this works properly right now.
+            hash = ((hash << 4) | ((hash >> 28) & 0x0F)) ^ (int) tempChar; // I'm pretty sure it's closer to the >>> behavior, but this works properly right now.
         }
 
-        //System.out.println("Result: " + Utils.toHexString(hash));
         return hash;
     }
 }

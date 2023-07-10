@@ -1737,6 +1737,15 @@ public class Utils {
     }
 
     /**
+     * Returns a value as a hex string with leading 0s included.
+     * @param value The value to get as a hex string.
+     * @return hexString
+     */
+    public static String to0PrefixedHexString(int value) {
+        return padStringLeft(Integer.toHexString(value).toUpperCase(), 8, '0');
+    }
+
+    /**
      * A clamp method that clamps down on negative numbers, and up on positive numbers.
      * @param value The value to clamp.
      * @return clampedCeil
