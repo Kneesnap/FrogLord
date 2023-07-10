@@ -13,10 +13,7 @@ import java.util.List;
  */
 @Getter
 public class TOCChunk extends kcCResource {
-    private String name;
-    private List<Integer> hashes = new ArrayList<>();
-
-    private static final int NAME_SIZE = 32;
+    private final List<Integer> hashes = new ArrayList<>();
 
     public TOCChunk(TGQChunkedFile chunkedFile) {
         super(chunkedFile, KCResourceID.TOC);
@@ -24,14 +21,14 @@ public class TOCChunk extends kcCResource {
 
     @Override
     public void load(DataReader reader) {
-        this.name = reader.readTerminatedStringOfLength(NAME_SIZE);
+        super.load(reader);
         while (reader.hasMore())
             this.hashes.add(reader.readInt());
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeTerminatedStringOfLength(this.name, NAME_SIZE);
+        super.save(writer);
         for (int hash : getHashes())
             writer.writeInt(hash);
     }

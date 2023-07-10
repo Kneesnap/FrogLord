@@ -27,7 +27,6 @@ import java.util.List;
 public class OTTChunk extends kcCResource {
     private final List<OTTMesh> meshes = new ArrayList<>();
     private final List<kcMaterial> materials = new ArrayList<>();
-    private byte[] bytes;
 
     public static final int NAME_SIZE = 32;
 
@@ -37,10 +36,6 @@ public class OTTChunk extends kcCResource {
 
     @Override
     public void load(DataReader reader) {
-        reader.jumpTemp(reader.getIndex());
-        this.bytes = reader.readBytes(reader.getRemaining());
-        reader.jumpReturn();
-
         super.load(reader);
         int unknownPointer = reader.readInt();
         int unknownCount = reader.readInt();
@@ -183,8 +178,29 @@ public class OTTChunk extends kcCResource {
 
     @Override
     public void save(DataWriter writer) {
-        //TODO
-        writer.writeBytes(this.bytes);
+        writer.writeBytes(getRawData()); // TODO: REPLACE
+    }
+
+    @Override
+    public void afterLoad2() {
+        super.afterLoad2();
+        // Resolves textures. Waits until after afterLoad1() when file names are resolved.
+        kcMaterial.resolveMaterialTextures(getParentFile().getMainArchive(), this.materials);
+    }
+
+    /**
+     * Loads material textures by searching for textures in a chunked file.
+     * This should be called by texture references in the same chunk as a model reference, because it will overwrite any existing textures if a match is found.
+     * @param imageFile The chunk to search.
+     */
+    public void resolveMaterialTextures(TGQChunkTextureReference texRef, TGQImageFile imageFile) {
+        if (imageFile == null)
+            return;
+
+        String strippedName = Utils.stripExtension(texRef.getName());
+        for (kcMaterial material : this.materials)
+            if (Utils.stripExtension(material.getTextureFileName()).equals(strippedName))
+                material.setTexture(imageFile);
     }
 
     @Getter

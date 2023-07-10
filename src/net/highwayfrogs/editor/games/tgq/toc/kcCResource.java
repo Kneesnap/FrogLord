@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 import net.highwayfrogs.editor.games.tgq.TGQFile;
+import net.highwayfrogs.editor.games.tgq.TGQUtils;
 
 /**
  * Represents a resource in a TGQ file.
@@ -24,6 +25,13 @@ public abstract class kcCResource extends GameObject {
     public kcCResource(TGQChunkedFile parentFile, KCResourceID chunkType) {
         this.chunkType = chunkType;
         this.parentFile = parentFile;
+    }
+
+    /**
+     * Calculates the hash for this resource.
+     */
+    public int getHash() {
+        return this.name != null ? TGQUtils.hash(this.name) : 0;
     }
 
     /**
@@ -61,23 +69,22 @@ public abstract class kcCResource extends GameObject {
     }
 
     /**
-     * Called after all files have loaded.
+     * First method called after all files have loaded.
      */
-    public void afterLoad() {
+    public void afterLoad1() {
+        // Do nothing.
+    }
+
+    /**
+     * Second method called after all files have been loaded.
+     */
+    public void afterLoad2() {
         // Do nothing.
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeTerminatedStringOfLength(this.name, NAME_SIZE);
-    }
-
-    /**
-     * Test if this is the root chunk in the file.
-     * @return isRootChunk
-     */
-    public boolean isRootChunk() {
-        return getParentFile() == null || getParentFile().getChunks().size() == 0 || getParentFile().getChunks().get(0) == this;
     }
 
     /**

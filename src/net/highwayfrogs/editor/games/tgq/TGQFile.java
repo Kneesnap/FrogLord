@@ -14,8 +14,9 @@ import java.util.concurrent.ThreadLocalRandom;
 @Getter
 public abstract class TGQFile extends GameObject {
     private final TGQBinFile mainArchive;
-    private String cleanName;
-    private String rawName;
+    private byte[] rawData;
+    private String fileName;
+    private String filePath;
     private int nameHash;
     private boolean compressed;
 
@@ -29,25 +30,45 @@ public abstract class TGQFile extends GameObject {
     }
 
     /**
+     * The first method called after all files have been loaded.
+     */
+    public void afterLoad1() {
+        // Do nothing.
+    }
+
+    /**
+     * The second method called after all files have been loaded.
+     */
+    public void afterLoad2() {
+        // Do nothing.
+    }
+
+    /**
      * Initialize the information about this file.
      * @param realName   This file's raw name. Can be null.
      * @param compressed Whether this file is compressed.
      */
-    public void init(String realName, boolean compressed, int hash) {
-        setRawName(realName);
+    public void init(String realName, boolean compressed, int hash, byte[] rawBytes) {
+        setFilePath(realName);
         this.compressed = compressed;
         this.nameHash = hash;
+        this.rawData = rawBytes;
     }
 
     /**
      * Sets the raw file name of this file.
-     * @param rawName The raw file name. (Full path)
+     * @param filePath The raw file name. (Full path)
      */
-    public void setRawName(String rawName) {
-        this.rawName = rawName;
-        this.cleanName = rawName;
-        if (rawName != null && rawName.contains("\\")) // Remove path.
-            this.cleanName = rawName.substring(rawName.lastIndexOf("\\") + 1);
+    public void setFilePath(String filePath) {
+        if (this.filePath != null && !this.filePath.isEmpty() && !this.filePath.equalsIgnoreCase(filePath)) {
+            System.out.println("Attempted to replace file name '" + this.filePath + "' with '" + filePath + "'. Not sure how to handle.");
+            return;
+        }
+
+        this.filePath = filePath;
+        this.fileName = filePath;
+        if (filePath != null && filePath.contains("\\")) // Remove path.
+            this.fileName = filePath.substring(filePath.lastIndexOf("\\") + 1);
     }
 
     /**
@@ -63,7 +84,7 @@ public abstract class TGQFile extends GameObject {
      * @return hasFileName
      */
     public boolean hasName() {
-        return this.rawName != null;
+        return this.filePath != null;
     }
 
     /**
@@ -71,11 +92,11 @@ public abstract class TGQFile extends GameObject {
      * @return exportName
      */
     public String getExportName() {
-        if (hasName() && Utils.isValidFileName(getCleanName())) {
+        if (hasName() && Utils.isValidFileName(getFileName())) {
             if (this instanceof TGQDummyFile)
-                return getArchiveIndex() + "-" + getCleanName();
+                return getArchiveIndex() + "-" + getFileName();
 
-            return getCleanName();
+            return getFileName();
         }
 
         int index = getArchiveIndex();

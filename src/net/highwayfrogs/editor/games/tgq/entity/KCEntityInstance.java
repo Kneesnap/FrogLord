@@ -5,15 +5,19 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.tgq.toc.TGQChunk3DModel;
+import net.highwayfrogs.editor.games.tgq.model.kcModelWrapper;
 
 /**
  * Represents an entity instance.
  * Created by Kneesnap on 1/4/2021.
  */
 public abstract class KCEntityInstance extends GameObject {
-    @Getter @Setter private int size = 0xF0; // Useless on PC.
-    @Getter @Setter private TGQChunk3DModel model;
+    @Getter
+    @Setter
+    private int size = 0xF0; // Useless on PC.
+    @Getter
+    @Setter
+    private kcModelWrapper model;
     private int pDesc; // This seems to be a pointer left-over from when the file was built. It gets overwritten on load in the game.
     @Getter @Setter private int priority;
     @Getter @Setter private int group;

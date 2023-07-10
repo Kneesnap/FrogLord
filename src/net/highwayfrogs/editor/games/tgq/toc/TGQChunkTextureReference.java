@@ -31,22 +31,36 @@ public class TGQChunkTextureReference extends kcCResource {
     }
 
     @Override
-    public void afterLoad() {
-        super.afterLoad();
+    public void afterLoad1() {
+        super.afterLoad1();
+        // We must wait until afterLoad1() because the file object won't exist for files found later in the file if we don't.
+        // But, this must run before afterLoad2() because that's when we start doing lookups based on file paths.
+        if (getParentFile() != null)
+            getParentFile().getMainArchive().applyFileName(this.path);
+    }
+
+    @Override // Wait until after texture names are resolved to run.
+    public void afterLoad2() {
+        super.afterLoad2();
         if (getParentFile() == null)
             return;
 
-        getParentFile().getMainArchive().applyFileName(this.path);
-        TGQFile tgqFile = getFileByName(this.path);
-        if (!(tgqFile instanceof TGQImageFile))
+        TGQFile tgqFile = getOptionalFileByName(this.path);
+        if (!(tgqFile instanceof TGQImageFile)) {
+            System.out.println("The texture reference '" + getName() + "'/'" + this.path + "' did not resolve to an image. (Got: " + tgqFile + ")");
             return; // Not an image.
+        }
 
+        // When we load, any models in this same chunked file as the texture reference would likely always prefer to use the texture reference seen in the same chunk, in the case of conflicting texture file names.
+        // Haven't checked if this is what the actual game does, but I think this is a good idea.
         TGQImageFile imageFile = (TGQImageFile) tgqFile;
-        for (TGQFile file : getParentFile().getMainArchive().getFiles())
-            if (file instanceof TGQChunkedFile)
-                for (kcCResource chunk : ((TGQChunkedFile) file).getChunks())
-                    if (chunk instanceof TGQChunk3DModel)
-                        ((TGQChunk3DModel) chunk).load(this, imageFile);
+        for (kcCResource resource : getParentFile().getChunks()) {
+            if (resource instanceof kcCResourceModel)
+                ((kcCResourceModel) resource).resolveMaterialTextures(this, imageFile);
+            if (resource instanceof OTTChunk)
+                ((OTTChunk) resource).resolveMaterialTextures(this, imageFile);
+            // TODO: TriMesh?
+        }
     }
 
     @Override

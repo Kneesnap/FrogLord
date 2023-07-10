@@ -27,13 +27,14 @@ public class TGQRunners {
         mainFile.load(reader);
         System.out.println("Loaded.");
 
-        //TODO: Slight problem at the moment, which is that it doesn't save a 1:1 copy. We need to either get it so it saves each file correctly, so it produces a valid .bin. If we make every file a dummy file, this works.
-        // Equivalent to changing
+        // TODO: Slight problem at the moment, which is that it doesn't save a 1:1 copy. We need to either get it so it saves each file correctly, so it produces a valid .bin. If we make every file a dummy file, this works.
 
         // Switch the level hashes, so it loads it.
-        int levelHash = mainFile.getFiles().get(31).getNameHash();
-        mainFile.getFiles().get(31).init(null, mainFile.getFiles().get(31).isCompressed(), mainFile.getFiles().get(32).getNameHash());
-        mainFile.getFiles().get(32).init(null, mainFile.getFiles().get(32).isCompressed(), levelHash);
+        TGQFile theGoblinFort = mainFile.getFiles().get(31);
+        TGQFile ruinsOfJoyTown = mainFile.getFiles().get(32);
+        int goblinFortHash = theGoblinFort.getNameHash();
+        theGoblinFort.init(ruinsOfJoyTown.getFilePath(), theGoblinFort.isCompressed(), ruinsOfJoyTown.getNameHash(), theGoblinFort.getRawData());
+        ruinsOfJoyTown.init(theGoblinFort.getFilePath(), ruinsOfJoyTown.isCompressed(), goblinFortHash, ruinsOfJoyTown.getRawData());
 
         System.out.println("Saving.");
         DataWriter writer = new DataWriter(new FileReceiver(new File(binFile.getParentFile(), "export.bin"), 300 * (1024 * 1024)));

@@ -8,16 +8,24 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.games.tgq.model.kcModelWrapper;
+import net.highwayfrogs.editor.games.tgq.script.kcAction;
+import net.highwayfrogs.editor.games.tgq.script.kcCActionSequence;
+import net.highwayfrogs.editor.games.tgq.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.games.tgq.script.kcScriptList;
 import net.highwayfrogs.editor.games.tgq.toc.OTTChunk;
-import net.highwayfrogs.editor.games.tgq.toc.TGQChunk3DModel;
 import net.highwayfrogs.editor.games.tgq.toc.TOCChunk;
 import net.highwayfrogs.editor.games.tgq.toc.kcCResource;
+import net.highwayfrogs.editor.games.tgq.toc.kcCResourceNamedHash;
+import net.highwayfrogs.editor.games.tgq.toc.kcCResourceNamedHash.HashEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * Parses Frogger TGQ's main game data file.
@@ -49,22 +57,22 @@ public class TGQBinFile extends GameObject {
             this.globalPaths.add(reader.readTerminatedStringOfLength(NAME_SIZE));
         reader.jumpReturn();
 
+        Map<Integer, String> nameMap = new HashMap<>();
+        TGQUtils.addHardcodedFileNameHashesToMap(nameMap);
+
         // Read unnamed files.
-        for (int i = 0; i < unnamedFiles; i++)
-            readFile(reader, null, reader.readInt());
+        for (int i = 0; i < unnamedFiles; i++) {
+            int hash = reader.readInt();
+            readFile(reader, nameMap.get(hash), hash);
+        }
 
         // Read named files.
         for (int i = 0; i < namedFiles; i++)
             readFile(reader, reader.readTerminatedStringOfLength(NAME_SIZE), 0);
 
-        //TODO: Clean this up, maybe move it somewhere else.
-        for (TGQFile file : getFiles()) {
-            if (!(file instanceof TGQChunkedFile))
-                continue;
-
-            TGQChunkedFile chunkedFile = (TGQChunkedFile) file;
-            chunkedFile.getChunks().forEach(kcCResource::afterLoad);
-        }
+        // Handle post-load setup.
+        this.files.forEach(TGQFile::afterLoad1);
+        this.files.forEach(TGQFile::afterLoad2);
     }
 
     private TGQFile readFile(DataReader reader, String name, int crc) {
@@ -84,7 +92,9 @@ public class TGQBinFile extends GameObject {
         TGQFile readFile;
         if (Utils.testSignature(fileBytes, TGQImageFile.SIGNATURE_STR)) {
             readFile = new TGQImageFile(this);
-        } else if (Utils.testSignature(fileBytes, "6YTV") || Utils.testSignature(fileBytes, "TOC\0")) { //TODO: Fix up.
+        } else if (Utils.testSignature(fileBytes, kcModelWrapper.SIGNATURE_STR)) {
+            readFile = new kcModelWrapper(this);
+        } else if (Utils.testSignature(fileBytes, "TOC\0")) {
             readFile = new TGQChunkedFile(this);
         } else if (this.files.size() > 100 && fileBytes.length > 30) {
             readFile = new TGQImageFile(this);
@@ -93,7 +103,7 @@ public class TGQBinFile extends GameObject {
         }
 
         // Setup file.
-        readFile.init(name, isCompressed, crc);
+        readFile.init(name, isCompressed, crc, fileBytes);
         this.files.add(readFile); // Add before loading, so it can find its ID.
         if (readFile.getNameHash() != 0)
             this.nameMap.put(readFile.getNameHash(), readFile);
@@ -129,7 +139,7 @@ public class TGQBinFile extends GameObject {
         for (TGQFile file : getFiles()) {
             if (file.hasName()) {
                 int endIndex = (writer.getIndex() + NAME_SIZE);
-                writer.writeTerminatorString(file.getRawName());
+                writer.writeTerminatorString(file.getFilePath());
                 writer.writeTo(endIndex, (byte) 0xCD);
             } else {
                 writer.writeInt(file.getNameHash());
@@ -206,6 +216,7 @@ public class TGQBinFile extends GameObject {
         // Export.
         File exportDir = new File(binFile.getParentFile(), "Export");
         Utils.makeDirectory(exportDir);
+        exportFileList(exportDir, mainFile);
         exportImages(exportDir, mainFile);
         exportMaps(exportDir, mainFile);
         exportModels(exportDir, mainFile);
@@ -222,7 +233,7 @@ public class TGQBinFile extends GameObject {
         int hash = TGQUtils.hash(TGQUtils.getFileIdFromPath(filePath), true);
         TGQFile file = getNameMap().get(hash);
         if (file != null) // What causes a file to have its name put in, instead of the hash? It doesn't seem to be collisions. Could it be if it doesn't fall under the file path used for the given level?
-            file.setRawName(filePath);
+            file.setFilePath(filePath);
     }
 
     /**
@@ -250,10 +261,32 @@ public class TGQBinFile extends GameObject {
             return file;
 
         for (TGQFile testFile : getFiles())
-            if (testFile.getRawName() != null && testFile.getRawName().toLowerCase().contains(filePath.toLowerCase()))
+            if (testFile.getFilePath() != null && testFile.getFilePath().toLowerCase().contains(filePath.toLowerCase()))
                 return testFile;
 
         return null;
+    }
+
+    private static void exportFileList(File baseFolder, TGQBinFile mainArchive) throws IOException {
+        List<String> lines = new ArrayList<>();
+        long namedCount = mainArchive.getFiles().stream().filter(file -> file.getFilePath() != null).count();
+        lines.add("File List [" + mainArchive.getFiles().size() + ", " + namedCount + " named]:");
+
+        for (int i = 0; i < mainArchive.getFiles().size(); i++) {
+            TGQFile file = mainArchive.getFiles().get(i);
+
+            lines.add(" - File #" + Utils.padNumberString(i + 1, 4)
+                    + ": " + Utils.to0PrefixedHexString(file.getNameHash())
+                    + ", " + file.getClass().getSimpleName()
+                    + (file.getFilePath() != null ? ", " + file.getFilePath() + ", " + TGQUtils.getFileIdFromPath(file.getFilePath()) : ""));
+        }
+
+        lines.add("");
+        lines.add("Global Paths:");
+        for (String globalPath : mainArchive.getGlobalPaths())
+            lines.add(" - " + globalPath);
+
+        Files.write(new File(baseFolder, "file-list.txt").toPath(), lines);
     }
 
     private static void exportImages(File baseFolder, TGQBinFile mainArchive) throws IOException {
@@ -291,19 +324,86 @@ public class TGQBinFile extends GameObject {
 
             TGQChunkedFile tocFile = (TGQChunkedFile) file;
 
+            // Build the name map.
+            Map<Integer, String> nameMap = new HashMap<>();
+            for (kcCResource testChunk : tocFile.getChunks()) {
+                if (testChunk.getName() != null && testChunk.getName().length() > 0)
+                    nameMap.put(TGQUtils.hash(testChunk.getName(), true), testChunk.getName());
+
+                if (testChunk instanceof kcCResourceNamedHash) {
+                    kcCResourceNamedHash namedHashChunk = (kcCResourceNamedHash) testChunk;
+                    for (HashEntry entry : namedHashChunk.getEntries())
+                        nameMap.put(entry.getRawHash(), entry.getName());
+                }
+            }
+
+            TGQUtils.addDefaultHashesToMap(nameMap);
+            kcScriptDisplaySettings settings = new kcScriptDisplaySettings(nameMap, true, true);
+
+            // Main looking.
             OTTChunk chunk = null;
-            for (kcCResource testChunk : tocFile.getChunks())
+            StringBuilder sequenceBuilder = new StringBuilder();
+            StringBuilder scriptBuilder = new StringBuilder();
+            for (kcCResource testChunk : tocFile.getChunks()) {
                 if (testChunk instanceof OTTChunk)
                     chunk = (OTTChunk) testChunk;
+
+                if (testChunk instanceof kcCActionSequence) {
+                    kcCActionSequence sequence = (kcCActionSequence) testChunk;
+
+                    sequenceBuilder.append(sequence.getName()).append(":\n");
+                    for (kcAction command : sequence.getActions()) {
+                        sequenceBuilder.append(" - ");
+                        command.toString(sequenceBuilder, settings);
+                        sequenceBuilder.append('\n');
+                    }
+
+                    sequenceBuilder.append('\n');
+                } else if (testChunk instanceof kcScriptList) {
+                    kcScriptList script = (kcScriptList) testChunk;
+                    scriptBuilder.append("// Script List: '").append(script.getName()).append("'\n");
+                    script.toString(scriptBuilder, settings);
+                    scriptBuilder.append('\n');
+                }
+            }
 
             if (chunk != null)
                 chunk.exportAsObj(saveFolder, Utils.stripExtension(tocFile.getExportName()));
 
+            File subFolder = new File(saveFolder, Utils.stripExtension(tocFile.getExportName()) + "/");
+
+            // Save scripts to folder.
+            if (sequenceBuilder.length() > 0) {
+                Utils.makeDirectory(subFolder);
+                File sequenceFile = new File(subFolder, "sequences.txt");
+                Files.write(sequenceFile.toPath(), Arrays.asList(sequenceBuilder.toString().split("\n")));
+            }
+
+            // Save scripts to folder.
+            if (scriptBuilder.length() > 0) {
+                Utils.makeDirectory(subFolder);
+                File scriptFile = new File(subFolder, "script.txt");
+                Files.write(scriptFile.toPath(), Arrays.asList(scriptBuilder.toString().split("\n")));
+            }
+
             if (tocFile.getChunks().get(0) instanceof TOCChunk) {
-                tocFile.exportFileToDirectory(new File(saveFolder, Utils.stripExtension(tocFile.getExportName()) + "/"));
+                // Export to folder.
+                tocFile.exportFileToDirectory(subFolder);
                 DataWriter writer = new DataWriter(new FileReceiver(new File(saveFolder, tocFile.getExportName())));
                 tocFile.save(writer);
                 writer.closeReceiver();
+
+                // Save hashes to file.
+                if (nameMap.size() > 0) {
+                    File hashFile = new File(subFolder, "hashes.txt");
+
+                    List<String> lines = nameMap.entrySet().stream()
+                            .sorted(Comparator.comparingInt(Entry::getKey))
+                            .map(entry -> Utils.to0PrefixedHexString(entry.getKey()) + "=" + entry.getValue())
+                            .collect(Collectors.toList());
+
+                    Files.write(hashFile.toPath(), lines);
+                }
             }
         }
     }
@@ -319,24 +419,19 @@ public class TGQBinFile extends GameObject {
 
         System.out.println("Exporting Models...");
         for (TGQFile file : mainArchive.getFiles()) {
-            if (!(file instanceof TGQChunkedFile))
+            if (!(file instanceof kcModelWrapper))
                 continue;
 
-            TGQChunkedFile chunkedFile = (TGQChunkedFile) file;
-            for (kcCResource testChunk : chunkedFile.getChunks()) {
-                if (testChunk instanceof TGQChunk3DModel && testChunk.isRootChunk()) {
-                    TGQChunk3DModel model = ((TGQChunk3DModel) testChunk);
-                    try {
-                        model.getModel().saveToFile(saveFolder, file.getExportName());
-                        if (model.getRawData() != null)
-                            Files.write(new File(saveFolder, file.getExportName() + ".dat").toPath(), model.getRawData());
-                    } catch (Throwable th) {
-                        if (model.getRawData() != null)
-                            Files.write(new File(saveFolder, file.getExportName() + ".dat").toPath(), model.getRawData());
-                        System.err.println("Failed to export '" + file.getExportName() + ".obj'.");
-                        th.printStackTrace();
-                    }
-                }
+            kcModelWrapper model = (kcModelWrapper) file;
+            try {
+                model.getModel().saveToFile(saveFolder, file.getExportName());
+                if (model.getRawData() != null)
+                    Files.write(new File(saveFolder, file.getExportName()).toPath(), model.getRawData());
+            } catch (Throwable th) {
+                if (model.getRawData() != null)
+                    Files.write(new File(saveFolder, file.getExportName()).toPath(), model.getRawData());
+                System.err.println("Failed to export '" + file.getExportName() + ".obj'.");
+                th.printStackTrace();
             }
         }
     }
@@ -352,22 +447,19 @@ public class TGQBinFile extends GameObject {
 
         System.out.println("Exporting Everything Else...");
         for (TGQFile file : mainArchive.getFiles()) {
-            if ((file instanceof TGQImageFile))
+            if ((file instanceof TGQImageFile) || (file instanceof kcModelWrapper))
                 continue;
 
             if (file instanceof TGQChunkedFile) {
                 TGQChunkedFile chunkedFile = (TGQChunkedFile) file;
-                if (chunkedFile.getChunks().isEmpty())
-                    continue;
-
-                kcCResource chunk = chunkedFile.getChunks().get(0);
-                if (chunk instanceof TGQChunk3DModel || chunk instanceof TOCChunk)
-                    continue; // Handled elsewhere.
+                if (chunkedFile.getChunks().size() > 0) {
+                    kcCResource chunk = chunkedFile.getChunks().get(0);
+                    if (chunk instanceof TOCChunk)
+                        continue; // Handled elsewhere.
+                }
             }
 
-            DataWriter writer = new DataWriter(new FileReceiver(new File(saveFolder, file.getExportName())));
-            file.save(writer);
-            writer.closeReceiver();
+            Files.write(new File(saveFolder, file.getExportName()).toPath(), file.getRawData());
         }
     }
 }

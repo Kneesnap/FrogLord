@@ -11,8 +11,8 @@ import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
  */
 @Getter
 public class TGQDummyFileChunk extends kcCResource {
-    private byte[] data;
-    private String magic;
+    private final String magic;
+    private byte[] unhandledBytes;
 
     public TGQDummyFileChunk(TGQChunkedFile parentFile, String magic) {
         super(parentFile, KCResourceID.getByMagic(magic));
@@ -21,12 +21,15 @@ public class TGQDummyFileChunk extends kcCResource {
 
     @Override
     public void load(DataReader reader) {
-        this.data = reader.readBytes(reader.getSize());
+        super.load(reader);
+        this.unhandledBytes = reader.readBytes(reader.getRemaining());
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeBytes(this.data);
+        super.save(writer);
+        if (this.unhandledBytes != null && this.unhandledBytes.length > 0)
+            writer.writeBytes(this.unhandledBytes);
     }
 
     @Override
