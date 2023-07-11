@@ -98,8 +98,7 @@ public class TGQUtils {
                         }
                         return fileId.append(fileName).toString();
                     }
-                    //return fileId.append(remaining).toString(); // PS2 Mode..?
-                    return remaining;
+                    return fileId.append(remaining).toString();
                 }
                 return fileId.append(cutSepString).toString();
             }

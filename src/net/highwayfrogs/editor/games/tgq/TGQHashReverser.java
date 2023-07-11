@@ -101,6 +101,11 @@ public class TGQHashReverser {
                 System.out.println("Results [" + reverseHashes.size() + "]:");
                 for (String str : reverseHashes)
                     System.out.println(" - " + str);
+            } else if (value.startsWith("\\")) {
+                String hashFilePath = TGQUtils.getFileIdFromPath(value);
+                System.out.println("Full File Path: '" + value + "'");
+                System.out.println("Hash File Path: '" + hashFilePath + "'");
+                System.out.println("Hash: " + Utils.to0PrefixedHexString(TGQUtils.hash(hashFilePath)));
             } else {
                 System.out.println("Hash: " + Utils.to0PrefixedHexString(TGQUtils.hash(value)));
             }
@@ -114,7 +119,7 @@ public class TGQHashReverser {
      * @param str The string to calculate score from.
      * @return score
      */
-    @SuppressWarnings({"IntegerDivisionInFloatingPointContext", "StatementWithEmptyBody"})
+    @SuppressWarnings({"StatementWithEmptyBody"})
     private static double calculateScore(String str) {
         int readStart = 0;
 
@@ -157,12 +162,12 @@ public class TGQHashReverser {
                     // Definitely not supposed to happen.
                     score -= str.length();
                 } else {
-                    score += (str.length() / 4);
+                    score += .5;
                     squareBraceOpen = true;
                 }
             } else if (temp == ']') {
                 if (squareBraceOpen) {
-                    score += (str.length() / 4);
+                    score += .5;
                     squareBraceOpen = false;
                 } else {
                     // Definitely not good.
@@ -173,12 +178,12 @@ public class TGQHashReverser {
                     // Definitely not supposed to happen.
                     score -= str.length();
                 } else {
-                    score += (str.length() / 4);
+                    score += .5;
                     curlyBraceOpen = true;
                 }
             } else if (temp == '}') {
                 if (curlyBraceOpen) {
-                    score += (str.length() / 4);
+                    score += .5;
                     curlyBraceOpen = false;
                 } else {
                     // Definitely not good.
