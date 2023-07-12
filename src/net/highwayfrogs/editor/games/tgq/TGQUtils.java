@@ -3,6 +3,9 @@ package net.highwayfrogs.editor.games.tgq;
 import lombok.SneakyThrows;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
@@ -47,6 +50,9 @@ public class TGQUtils {
         return result;
     }
 
+    public static final String[] GAME_PATH_INDEX_PATTERNS = {"\\Game", "\\game", "\\GAME"};
+    private static final String[] LEVEL_PATH_INDEX_PATTERNS = {"\\Level", "\\level", "\\LEVEL"};
+
     /**
      * Creates a file ID from a file path.
      * Example File Path: \\Netapp1\PD\Frogger1\PC\KatWorking\GameSource\Level01RollingRapids\Props\WalTreGL\WALTREGL.VTX
@@ -60,21 +66,13 @@ public class TGQUtils {
      * @return fileId
      */
     public static String getFileIdFromPath(String filePath) { // Reversed from the 'Hash' function, in the global namespace. (To make it distinct from the other hash method)
-        int gameIndex = filePath.indexOf("\\Game");
-        if (gameIndex == -1)
-            gameIndex = filePath.indexOf("\\game");
-        if (gameIndex == -1)
-            gameIndex = filePath.indexOf("\\GAME");
+        int gameIndex = indexOfMultiple(filePath, GAME_PATH_INDEX_PATTERNS);
 
         StringBuilder fileId = new StringBuilder();
         if (gameIndex != -1) { // If it was found.
             String cutPath = filePath.substring(gameIndex + 6); // Cut out \\game and everything before it.
             fileId.append(filePath.charAt(gameIndex + 5));
-            int levelIndex = cutPath.indexOf("\\Level");
-            if (levelIndex == -1)
-                levelIndex = cutPath.indexOf("\\level");
-            if (levelIndex == -1)
-                levelIndex = cutPath.indexOf("\\LEVEL");
+            int levelIndex = indexOfMultiple(cutPath, LEVEL_PATH_INDEX_PATTERNS);
 
             if (levelIndex != -1) {
                 fileId.append(cutPath.charAt(levelIndex + 6));
@@ -147,5 +145,24 @@ public class TGQUtils {
         }
 
         return hash;
+    }
+
+    /**
+     * Find the index a string is found at, doing a case-insensitive search.
+     * @param input    The string to search.
+     * @param patterns The strings to find.
+     * @return indexOfString
+     */
+    public static int indexOfMultiple(String input, String... patterns) {
+        if (input == null || patterns == null || patterns.length == 0)
+            return -1;
+
+        for (int i = 0; i < patterns.length; i++) {
+            int index = input.indexOf(patterns[i]);
+            if (index != -1)
+                return index;
+        }
+
+        return -1;
     }
 }

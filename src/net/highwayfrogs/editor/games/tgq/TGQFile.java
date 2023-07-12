@@ -63,11 +63,22 @@ public abstract class TGQFile extends GameObject {
      * @param filePath The raw file name. (Full path)
      */
     public void setFilePath(String filePath) {
-        if (this.filePath != null && !this.filePath.isEmpty() && !this.filePath.equalsIgnoreCase(filePath) && !(this.filePath.startsWith("\\\\") && !filePath.startsWith("\\\\"))) {
+        // Cut off everything before the "\\Game" folder.
+        // Only files which have collision hashes have something before that (eg: "\\Netapp1\PD\.....").
+        // I've chosen to start counting game files at the "root folder of game data" instead of "root folder of network drive".
+        if (filePath != null) {
+            int startPos = TGQUtils.indexOfMultiple(filePath, TGQUtils.GAME_PATH_INDEX_PATTERNS);
+            if (startPos > 0)
+                filePath = filePath.substring(startPos);
+        }
+
+        // If we already have a path, we shouldn't be replacing it, and we should warn if the path differs.
+        if (this.filePath != null && !this.filePath.isEmpty() && !this.filePath.equalsIgnoreCase(filePath)) {
             System.out.println("Attempted to replace file name '" + this.filePath + "' with '" + filePath + "'. Not sure how to handle.");
             return;
         }
 
+        // Apply data.
         this.filePath = filePath;
         this.fileName = filePath;
         if (filePath != null && filePath.contains("\\")) // Remove path.
