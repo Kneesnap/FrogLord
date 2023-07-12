@@ -119,7 +119,7 @@ public class kcScriptList extends kcCResource {
                 throw new RuntimeException("Expected a script effect to be at least 32 bytes, but was " + storedSize + ".");
 
             this.scriptType = reader.readUnsignedIntAsLong();
-            this.action = kcActionID.values()[reader.readInt()];
+            this.action = kcActionID.getActionByOpcode(reader.readInt());
             this.destObjectHash = reader.readInt();
             for (int i = 0; i < this.parameters.length; i++)
                 this.parameters[i] = kcParam.readParam(reader);

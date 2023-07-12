@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.script.kcActionID.NamedArgument;
 
 /**
  * Created by Kneesnap on 6/26/2023.
@@ -15,14 +16,14 @@ public class kcAction extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        this.actionID = kcActionID.values()[reader.readInt() - 1];
+        this.actionID = kcActionID.getActionByOpcode(reader.readInt());
         for (int i = 0; i < this.params.length; i++)
             this.params[i] = kcParam.readParam(reader);
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeInt(this.actionID.ordinal());
+        writer.writeInt(this.actionID.getOpcode() & 0xFF);
         for (int i = 0; i < this.params.length; i++)
             writer.writeBytes(this.params[i].getBytes());
     }
@@ -53,9 +54,10 @@ public class kcAction extends GameObject {
     public static void writeAction(StringBuilder builder, kcActionID action, kcParam[] parameters, kcScriptDisplaySettings settings) {
         builder.append(action.name());
 
-        for (int i = 0; i < action.getParameterCount(); i++) {
-            String parameterName = action.getParameterNames()[i];
-            kcParamType parameterType = action.getParameterTypes()[i];
+        NamedArgument[] arguments = action.getParameters(parameters);
+        for (int i = 0; i < arguments.length; i++) {
+            String parameterName = arguments[i].getName();
+            kcParamType parameterType = arguments[i].getType();
 
             if (settings.isShowLabels()) {
                 builder.append(" /* ")
@@ -78,7 +80,7 @@ public class kcAction extends GameObject {
             return;
 
         boolean anyMissingData = false;
-        for (int i = action.getParameterCount(); i < parameters.length && !anyMissingData; i++)
+        for (int i = arguments.length; i < parameters.length && !anyMissingData; i++)
             if (parameters[i].getAsInteger() != 0)
                 anyMissingData = true;
 
@@ -86,7 +88,7 @@ public class kcAction extends GameObject {
             return;
 
         builder.append(" /* Unused: */");
-        for (int i = action.getParameterCount(); i < parameters.length; i++) {
+        for (int i = arguments.length; i < parameters.length; i++) {
             builder.append(' ');
             parameters[i].toString(builder, kcParamType.ANY, settings);
         }

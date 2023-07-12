@@ -128,6 +128,8 @@ public class kcParam {
             case PARTICLE:
                 builder.append(getAsInteger()); // TODO: Come up with particle names later.
                 break;
+            case ATTACH_ID:
+                builder.append(getEnum(kcAttachID.values()));
             default:
                 throw new RuntimeException("Could not convert kcParamType " + paramType + " toString for value " + Utils.toByteString(this.bytes) + ".");
         }
@@ -136,6 +138,13 @@ public class kcParam {
     private String getEnum(String[] values, String description) {
         int value = getAsInteger();
         return values == null || value < 0 || value >= values.length ? "<Invalid " + description + ": " + value + ">" : values[value];
+    }
+
+    private <E extends Enum<E>> String getEnum(E[] values) {
+        int value = getAsInteger();
+        return values == null || value < 0 || value >= values.length
+                ? "<Invalid " + (values[0] != null ? values[0].getClass().getSimpleName() : "Enum") + ": " + value + ">"
+                : values[value].name();
     }
 
     /**

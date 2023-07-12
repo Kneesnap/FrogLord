@@ -14,4 +14,5 @@ public enum kcParamType {
     HASH, // Unsigned int.
     INVENTORY_ITEM, // Unsigned int.
     PARTICLE, // Unsigned int.
+    ATTACH_ID, // Unsigned int.
 }
