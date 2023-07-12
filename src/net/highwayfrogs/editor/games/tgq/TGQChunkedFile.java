@@ -24,7 +24,6 @@ import java.util.Map;
 
 /**
  * Handles the Frogger TGQ TOC files. (They are maps, but may also have other data(?))
- * TODO: At some point it'd be nice to make it so the files sitting in the root aren't considered chunked files.
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
