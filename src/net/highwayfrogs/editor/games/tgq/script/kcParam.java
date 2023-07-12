@@ -130,6 +130,7 @@ public class kcParam {
                 break;
             case ATTACH_ID:
                 builder.append(getEnum(kcAttachID.values()));
+                break;
             default:
                 throw new RuntimeException("Could not convert kcParamType " + paramType + " toString for value " + Utils.toByteString(this.bytes) + ".");
         }
