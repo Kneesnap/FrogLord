@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  */
 @Getter
 public class TGQBinFile extends GameObject {
-    private List<String> globalPaths; // TODO: These are used to determine the full file path of a file. Figure out how to determine which files go in which path.
+    private List<String> globalPaths;
     private final List<TGQFile> files = new ArrayList<>();
     private final Map<Integer, TGQFile> nameMap = new HashMap<>();
     private final Map<Integer, List<TGQFile>> fileCollisions = new HashMap<>();
