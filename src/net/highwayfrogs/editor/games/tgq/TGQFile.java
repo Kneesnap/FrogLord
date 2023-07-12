@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.tgq;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -18,6 +19,7 @@ public abstract class TGQFile extends GameObject {
     private String fileName;
     private String filePath;
     private int nameHash;
+    private boolean collision; // This is true iff there are multiple files that share the hash.
     private boolean compressed;
 
     public TGQFile(TGQBinFile mainArchive) {
@@ -32,14 +34,14 @@ public abstract class TGQFile extends GameObject {
     /**
      * The first method called after all files have been loaded.
      */
-    public void afterLoad1() {
+    public void afterLoad1(kcLoadContext context) {
         // Do nothing.
     }
 
     /**
      * The second method called after all files have been loaded.
      */
-    public void afterLoad2() {
+    public void afterLoad2(kcLoadContext context) {
         // Do nothing.
     }
 
@@ -48,11 +50,12 @@ public abstract class TGQFile extends GameObject {
      * @param realName   This file's raw name. Can be null.
      * @param compressed Whether this file is compressed.
      */
-    public void init(String realName, boolean compressed, int hash, byte[] rawBytes) {
+    public void init(String realName, boolean compressed, int hash, byte[] rawBytes, boolean collision) {
         setFilePath(realName);
         this.compressed = compressed;
         this.nameHash = hash;
         this.rawData = rawBytes;
+        this.collision = collision;
     }
 
     /**
@@ -60,7 +63,7 @@ public abstract class TGQFile extends GameObject {
      * @param filePath The raw file name. (Full path)
      */
     public void setFilePath(String filePath) {
-        if (this.filePath != null && !this.filePath.isEmpty() && !this.filePath.equalsIgnoreCase(filePath)) {
+        if (this.filePath != null && !this.filePath.isEmpty() && !this.filePath.equalsIgnoreCase(filePath) && !(this.filePath.startsWith("\\\\") && !filePath.startsWith("\\\\"))) {
             System.out.println("Attempted to replace file name '" + this.filePath + "' with '" + filePath + "'. Not sure how to handle.");
             return;
         }
@@ -104,6 +107,17 @@ public abstract class TGQFile extends GameObject {
             index = ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE);
 
         return index + "." + getExtension();
+    }
+
+    /**
+     * Gets the file name shown in debug contexts. Trys to show as much detail as possible.
+     */
+    public String getDebugName() {
+        if (this.filePath != null)
+            return this.filePath;
+        if (this.fileName != null)
+            return this.fileName;
+        return getExportName();
     }
 
     /**

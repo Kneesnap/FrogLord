@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.tgq.script.kcScriptList;
 import net.highwayfrogs.editor.games.tgq.toc.KCResourceID;
 import net.highwayfrogs.editor.games.tgq.toc.TGQDummyFileChunk;
@@ -61,15 +62,17 @@ public class TGQChunkedFile extends TGQFile {
     }
 
     @Override
-    public void afterLoad1() {
-        super.afterLoad1();
-        this.chunks.forEach(kcCResource::afterLoad1);
+    public void afterLoad1(kcLoadContext context) {
+        super.afterLoad1(context);
+        for (int i = 0; i < this.chunks.size(); i++)
+            this.chunks.get(i).afterLoad1(context);
     }
 
     @Override
-    public void afterLoad2() {
-        super.afterLoad2();
-        this.chunks.forEach(kcCResource::afterLoad2);
+    public void afterLoad2(kcLoadContext context) {
+        super.afterLoad2(context);
+        for (int i = 0; i < this.chunks.size(); i++)
+            this.chunks.get(i).afterLoad2(context);
     }
 
     @Override

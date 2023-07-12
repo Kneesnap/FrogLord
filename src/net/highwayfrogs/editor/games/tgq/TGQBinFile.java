@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.tgq.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.tgq.script.kcAction;
 import net.highwayfrogs.editor.games.tgq.script.kcCActionSequence;
@@ -40,6 +41,7 @@ public class TGQBinFile extends GameObject {
     private List<String> globalPaths; // TODO: These are used to determine the full file path of a file. Figure out how to determine which files go in which path.
     private final List<TGQFile> files = new ArrayList<>();
     private final Map<Integer, TGQFile> nameMap = new HashMap<>();
+    private final Map<Integer, List<TGQFile>> fileCollisions = new HashMap<>();
 
     private static final int NAME_SIZE = 0x108;
 
@@ -63,19 +65,26 @@ public class TGQBinFile extends GameObject {
         // Read unnamed files.
         for (int i = 0; i < unnamedFiles; i++) {
             int hash = reader.readInt();
-            readFile(reader, nameMap.get(hash), hash);
+            readFile(reader, nameMap.get(hash), hash, false);
         }
 
-        // Read named files.
-        for (int i = 0; i < namedFiles; i++)
-            readFile(reader, reader.readTerminatedStringOfLength(NAME_SIZE), 0);
+        // Read named files. Files are named if they have a collision with other files.
+        for (int i = 0; i < namedFiles; i++) {
+            String fullFilePath = reader.readTerminatedStringOfLength(NAME_SIZE);
+            readFile(reader, fullFilePath, TGQUtils.hashFilePath(fullFilePath), true);
+        }
 
         // Handle post-load setup.
-        this.files.forEach(TGQFile::afterLoad1);
-        this.files.forEach(TGQFile::afterLoad2);
+        kcLoadContext context = new kcLoadContext(this);
+        for (int i = 0; i < this.files.size(); i++)
+            this.files.get(i).afterLoad1(context);
+        for (int i = 0; i < this.files.size(); i++)
+            this.files.get(i).afterLoad2(context);
+
+        context.onComplete();
     }
 
-    private TGQFile readFile(DataReader reader, String name, int crc) {
+    private TGQFile readFile(DataReader reader, String name, int crc, boolean hasCollision) {
         int size = reader.readInt();
         int zSize = reader.readInt();
         int offset = reader.readInt();
@@ -103,10 +112,13 @@ public class TGQBinFile extends GameObject {
         }
 
         // Setup file.
-        readFile.init(name, isCompressed, crc, fileBytes);
+        readFile.init(name, isCompressed, crc, fileBytes, hasCollision);
         this.files.add(readFile); // Add before loading, so it can find its ID.
-        if (readFile.getNameHash() != 0)
+        if (hasCollision) {
+            this.fileCollisions.computeIfAbsent(readFile.getNameHash(), key -> new ArrayList<>()).add(readFile);
+        } else {
             this.nameMap.put(readFile.getNameHash(), readFile);
+        }
 
         // Read file.
         try {
@@ -230,10 +242,13 @@ public class TGQBinFile extends GameObject {
      * @param filePath The path of a game file.
      */
     public void applyFileName(String filePath) {
-        int hash = TGQUtils.hash(TGQUtils.getFileIdFromPath(filePath), true);
-        TGQFile file = getNameMap().get(hash);
-        if (file != null) // What causes a file to have its name put in, instead of the hash? It doesn't seem to be collisions. Could it be if it doesn't fall under the file path used for the given level?
+        TGQFile file = getOptionalFileByName(filePath);
+        if (file != null) {
             file.setFilePath(filePath);
+        } else {
+            int hash = TGQUtils.hashFilePath(filePath);
+            System.out.println("Attempted to apply the file path '" + filePath + "', but no file matched the hash " + Utils.to0PrefixedHexString(hash) + ".");
+        }
     }
 
     /**
@@ -255,14 +270,24 @@ public class TGQBinFile extends GameObject {
      * @return the found file, if there was one.
      */
     public TGQFile getOptionalFileByName(String filePath) {
-        int hash = TGQUtils.hash(TGQUtils.getFileIdFromPath(filePath), true);
-        TGQFile file = getNameMap().get(hash);
+        // Create hash.
+        String abbreviatedFilePath = TGQUtils.getFileIdFromPath(filePath);
+        int hash = TGQUtils.hash(abbreviatedFilePath);
+
+        // Search for unique file without collisions.
+        TGQFile file = this.nameMap.get(hash);
         if (file != null)
             return file;
 
-        for (TGQFile testFile : getFiles())
-            if (testFile.getFilePath() != null && testFile.getFilePath().toLowerCase().contains(filePath.toLowerCase()))
-                return testFile;
+        // Search colliding files.
+        List<TGQFile> collidingFiles = this.fileCollisions.get(hash);
+        if (collidingFiles != null) {
+            for (int i = 0; i < collidingFiles.size(); i++) {
+                TGQFile collidedFile = collidingFiles.get(i);
+                if (TGQUtils.getFileIdFromPath(collidedFile.getFilePath()).equalsIgnoreCase(abbreviatedFilePath))
+                    return collidedFile;
+            }
+        }
 
         return null;
     }

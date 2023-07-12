@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 import net.highwayfrogs.editor.games.tgq.TGQFile;
-import net.highwayfrogs.editor.games.tgq.TGQImageFile;
+import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.tgq.model.kcModel;
 import net.highwayfrogs.editor.games.tgq.model.kcModelWrapper;
 
@@ -37,14 +37,22 @@ public class kcCResourceModel extends kcCResource {
     }
 
     @Override
-    public void afterLoad1() {
-        super.afterLoad1();
+    public void afterLoad1(kcLoadContext context) {
+        super.afterLoad1(context);
         // We must wait until afterLoad1() because the file object won't exist for files found later in the file if we don't.
         // But, this must run before afterLoad2() because that's when we start doing lookups based on file paths.
-        if (getParentFile() != null) {
+        if (getParentFile() != null)
             getParentFile().getMainArchive().applyFileName(this.fullPath);
-            getFileByName(this.fullPath); // Show file missing if it's not here.
-        }
+    }
+
+    @Override
+    public void afterLoad2(kcLoadContext context) {
+        super.afterLoad2(context);
+        // Now we'll resolve the textures for this model using the textures found in the chunked file.
+        // We don't need to print a warning if the model doesn't exist, because the applyFileName() call would have already caught it.
+        kcModelWrapper wrapper = getModelWrapper();
+        if (wrapper != null)
+            context.getMaterialLoadContext().resolveMaterialTexturesInChunk(getParentFile(), wrapper, wrapper.getModel().getMaterials());
     }
 
     /**
@@ -63,19 +71,5 @@ public class kcCResourceModel extends kcCResource {
     public kcModelWrapper getModelWrapper() {
         TGQFile file = getOptionalFileByName(this.fullPath);
         return (file instanceof kcModelWrapper) ? ((kcModelWrapper) file) : null;
-    }
-
-    /**
-     * Loads material textures by searching for textures in a chunked file.
-     * This should be called by texture references in the same chunk as a model reference, because it will overwrite any existing textures if a match is found.
-     * @param imageFile The chunk to search.
-     */
-    public void resolveMaterialTextures(TGQChunkTextureReference texRef, TGQImageFile imageFile) {
-        if (imageFile == null)
-            return;
-
-        kcModelWrapper wrapper = getModelWrapper();
-        if (wrapper != null)
-            wrapper.resolveMaterialTextures(texRef, imageFile);
     }
 }

@@ -118,6 +118,15 @@ public class TGQUtils {
     }
 
     /**
+     * Calculates the checksum / hash of a file path after it has been abbreviated.
+     * @param filePath The file path to abbreviate and hash..
+     * @return hash
+     */
+    public static int hashFilePath(String filePath) {
+        return hash(getFileIdFromPath(filePath), true);
+    }
+
+    /**
      * Calculates the checksum / hash of a string.
      * This value is directly what is used in the Table of contents chunk.
      * @param str        The hash to use.

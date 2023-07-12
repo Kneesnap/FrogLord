@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 import net.highwayfrogs.editor.games.tgq.TGQFile;
 import net.highwayfrogs.editor.games.tgq.TGQImageFile;
+import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.tgq.model.kcMaterial;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.system.Tuple3;
@@ -182,25 +183,10 @@ public class OTTChunk extends kcCResource {
     }
 
     @Override
-    public void afterLoad2() {
-        super.afterLoad2();
+    public void afterLoad2(kcLoadContext context) {
+        super.afterLoad2(context);
         // Resolves textures. Waits until after afterLoad1() when file names are resolved.
-        kcMaterial.resolveMaterialTextures(getParentFile().getMainArchive(), this.materials);
-    }
-
-    /**
-     * Loads material textures by searching for textures in a chunked file.
-     * This should be called by texture references in the same chunk as a model reference, because it will overwrite any existing textures if a match is found.
-     * @param imageFile The chunk to search.
-     */
-    public void resolveMaterialTextures(TGQChunkTextureReference texRef, TGQImageFile imageFile) {
-        if (imageFile == null)
-            return;
-
-        String strippedName = Utils.stripExtension(texRef.getName());
-        for (kcMaterial material : this.materials)
-            if (Utils.stripExtension(material.getTextureFileName()).equals(strippedName))
-                material.setTexture(imageFile);
+        context.getMaterialLoadContext().resolveMaterialTexturesInChunk(getParentFile(), this.materials);
     }
 
     @Getter

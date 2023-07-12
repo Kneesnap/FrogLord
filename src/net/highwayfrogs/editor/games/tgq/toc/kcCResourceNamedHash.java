@@ -42,7 +42,7 @@ public class kcCResourceNamedHash extends kcCResource {
 
         // Check nothing remains.
         if (reader.hasMore())
-            System.out.println("There are " + reader.getRemaining() + " unread bytes in " + getName() + "/" + getParentFile().getFilePath());
+            System.out.println("There are " + reader.getRemaining() + " unread bytes in " + getParentFile().getDebugName());
     }
 
     @Override

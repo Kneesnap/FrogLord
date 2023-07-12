@@ -33,8 +33,9 @@ public class TGQRunners {
         TGQFile theGoblinFort = mainFile.getFiles().get(31);
         TGQFile ruinsOfJoyTown = mainFile.getFiles().get(32);
         int goblinFortHash = theGoblinFort.getNameHash();
-        theGoblinFort.init(ruinsOfJoyTown.getFilePath(), theGoblinFort.isCompressed(), ruinsOfJoyTown.getNameHash(), theGoblinFort.getRawData());
-        ruinsOfJoyTown.init(theGoblinFort.getFilePath(), ruinsOfJoyTown.isCompressed(), goblinFortHash, ruinsOfJoyTown.getRawData());
+        boolean goblinFortCollision = theGoblinFort.isCollision();
+        theGoblinFort.init(ruinsOfJoyTown.getFilePath(), theGoblinFort.isCompressed(), ruinsOfJoyTown.getNameHash(), theGoblinFort.getRawData(), ruinsOfJoyTown.isCollision());
+        ruinsOfJoyTown.init(theGoblinFort.getFilePath(), ruinsOfJoyTown.isCompressed(), goblinFortHash, ruinsOfJoyTown.getRawData(), goblinFortCollision);
 
         System.out.println("Saving.");
         DataWriter writer = new DataWriter(new FileReceiver(new File(binFile.getParentFile(), "export.bin"), 300 * (1024 * 1024)));

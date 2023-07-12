@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 import net.highwayfrogs.editor.games.tgq.TGQFile;
 import net.highwayfrogs.editor.games.tgq.TGQUtils;
+import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 
 /**
  * Represents a resource in a TGQ file.
@@ -71,14 +72,14 @@ public abstract class kcCResource extends GameObject {
     /**
      * First method called after all files have loaded.
      */
-    public void afterLoad1() {
+    public void afterLoad1(kcLoadContext context) {
         // Do nothing.
     }
 
     /**
      * Second method called after all files have been loaded.
      */
-    public void afterLoad2() {
+    public void afterLoad2(kcLoadContext context) {
         // Do nothing.
     }
 

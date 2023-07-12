@@ -6,9 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQBinFile;
 import net.highwayfrogs.editor.games.tgq.TGQFile;
-import net.highwayfrogs.editor.games.tgq.TGQImageFile;
-import net.highwayfrogs.editor.games.tgq.toc.TGQChunkTextureReference;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 
 /**
  * Represents a file containing a kcModel.
@@ -51,29 +49,16 @@ public class kcModelWrapper extends TGQFile {
     }
 
     @Override
-    public void afterLoad2() {
-        super.afterLoad2();
+    public String getExtension() {
+        return "vtx";
+    }
+
+    @Override
+    public void afterLoad2(kcLoadContext context) {
+        super.afterLoad2(context);
 
         // Apply file names to all materials.
         // We need to do this both when a texture reference loads and when the model loads, so regardless of if this particular model loads before or after the texture it will still get the texture names.
-        kcMaterial.resolveMaterialTextures(getMainArchive(), this.model.getMaterials());
-    }
-
-    /**
-     * Loads material textures by searching for textures in a chunked file.
-     * This should be called by texture references in the same chunk as a model reference, because it will overwrite any existing textures if a match is found.
-     * @param imageFile The chunk to search.
-     */
-    public void resolveMaterialTextures(TGQChunkTextureReference texRef, TGQImageFile imageFile) {
-        if (imageFile == null)
-            return;
-
-        // Find material(s).
-        // We need to do this both when a texture reference loads and when the model loads, so regardless of if this particular model loads before or after the texture it will still get the texture names.
-        // Images are fully loaded before afterLoad() is called, so it's OK to skip
-        String strippedName = Utils.stripExtension(texRef.getName());
-        for (kcMaterial material : this.model.getMaterials())
-            if (Utils.stripExtension(material.getTextureFileName()).equals(strippedName))
-                material.setTexture(imageFile);
+        context.getMaterialLoadContext().resolveMaterialTexturesGlobally(this, this.model.getMaterials());
     }
 }
