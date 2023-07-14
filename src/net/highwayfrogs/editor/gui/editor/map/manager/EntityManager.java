@@ -51,7 +51,7 @@ public class EntityManager extends MapManager {
     private GUIEditorGrid entityEditor;
     private final List<MeshView> entityModelViews = new ArrayList<>();
     private final List<FormEntry> entityTypes = new ArrayList<>();
-    private final Set<Integer> entitiesToUpdate = new HashSet<>();
+    private final Set<Entity> entitiesToUpdate = new HashSet<>();
     private final Map<MOFHolder, MOFMesh> meshMap = new HashMap<>();
     @Getter private Group entityRenderGroup;
 
@@ -314,7 +314,7 @@ public class EntityManager extends MapManager {
         for (int i = 0; i < this.entityModelViews.size(); i++)
             this.entityModelViews.get(i).setVisible(entities.size() > i); // Update visibility.
 
-        entitiesToUpdate.clear();
+        this.entitiesToUpdate.clear();
     }
 
     /**
@@ -322,7 +322,7 @@ public class EntityManager extends MapManager {
      * @param entity The entity to update.
      */
     public void updateEntity(Entity entity) {
-        this.entitiesToUpdate.add(getEntities().indexOf(entity));
+        this.entitiesToUpdate.add(entity);
         updateEntities();
     }
 
@@ -332,7 +332,7 @@ public class EntityManager extends MapManager {
         FormEntry oldForm = this.entityTypes.get(entityIndex);
         FormEntry newForm = entity.getFormEntry();
 
-        if (oldForm == newForm && !entitiesToUpdate.contains(entityIndex) && !getMap().getMapConfig().isOldFormFormat())
+        if (oldForm == newForm && !this.entitiesToUpdate.remove(entity) && !getMap().getMapConfig().isOldFormFormat())
             return; // The entity form has not changed, so we shouldn't change the model.
 
         this.entityTypes.set(entityIndex, newForm);
@@ -352,9 +352,11 @@ public class EntityManager extends MapManager {
 
             // Update MeshView.
             MOFMesh modelMesh = this.meshMap.computeIfAbsent(holder, MOFHolder::makeMofMesh);
-            entityMesh.setMesh(modelMesh);
-            entityMesh.setMaterial(modelMesh.getTextureMap().getDiffuseMaterial());
-            return;
+            if (modelMesh.getFaceCount() > 0) {
+                entityMesh.setMesh(modelMesh);
+                entityMesh.setMaterial(modelMesh.getTextureMap().getDiffuseMaterial());
+                return;
+            }
         }
 
         // Couldn't find a model to use, so instead we'll display as a 2D sprite.
@@ -365,7 +367,7 @@ public class EntityManager extends MapManager {
         FroggerEXEInfo config = getMap().getConfig();
         if (config.getPickupData() != null) {
             FlyScoreType flyType = null;
-            if (entity.getEntityData() instanceof BonusFlyEntity) // TODO: Perhaps switch to implementing an interface which allows specifying a sprite to render.
+            if (entity.getEntityData() instanceof BonusFlyEntity) // TODO: Perhaps switch to implementing an interface which allows specifying a sprite to render. There are also some bugs that we're not rendering as sprites atm.
                 flyType = ((BonusFlyEntity) entity.getEntityData()).getFlyType();
             if (entity.getScriptData() instanceof ScriptButterflyData)
                 flyType = ((ScriptButterflyData) entity.getScriptData()).getType();
