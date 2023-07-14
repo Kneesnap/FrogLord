@@ -102,6 +102,9 @@ public class FormData extends GameObject {
 
         boolean right = false;
         for (GridSquareFlag flag : GridSquareFlag.values()) {
+            if (!flag.isFormData())
+                continue;
+
             CheckBox box = new CheckBox(Utils.capitalize(flag.name()));
             box.setSelected((getGridFlags()[selectedIndex.get()] & flag.getFlag()) == flag.getFlag());
             box.selectedProperty().addListener((listener, oldVal, newState) -> {

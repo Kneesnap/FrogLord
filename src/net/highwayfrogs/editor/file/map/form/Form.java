@@ -234,8 +234,11 @@ public class Form extends GameObject {
                     int flags = getData().getGridFlags()[index];
                     for (int i = 0; i < GridSquareFlag.values().length; i++) {
                         GridSquareFlag flag = GridSquareFlag.values()[i];
+                        if (!flag.isFormData() || flag.getUiColor() == null)
+                            continue;
+
                         if (width < 0 || height < 0)
-                            break; // Can't display any more.
+                            break; // Can't display anymore.
                         if ((flags & flag.getFlag()) != flag.getFlag())
                             continue; // Flag didn't match.
 

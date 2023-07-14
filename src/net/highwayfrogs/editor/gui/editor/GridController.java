@@ -441,6 +441,9 @@ public class GridController implements Initializable {
         int y = 0;
         flagTable.getChildren().clear();
         for (GridSquareFlag flag : GridSquareFlag.values()) {
+            if (!flag.isLandData())
+                continue;
+
             if (x == 2) {
                 x = 0;
                 y++;

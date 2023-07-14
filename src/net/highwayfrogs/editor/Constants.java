@@ -45,10 +45,13 @@ public class Constants {
     public static final int BIT_FLAG_10 = 1 << 10;
     public static final int BIT_FLAG_11 = 1 << 11;
     public static final int BIT_FLAG_12 = 1 << 12;
+    public static final int BIT_FLAG_13 = 1 << 13;
     public static final int BIT_FLAG_14 = 1 << 14;
     public static final int BIT_FLAG_15 = 1 << 15;
     public static final int BIT_FLAG_16 = 1 << 16;
     public static final int BIT_FLAG_17 = 1 << 17;
+    public static final int BIT_FLAG_18 = 1 << 18;
+    public static final int BIT_FLAG_19 = 1 << 19;
     public static final int BIT_FLAG_20 = 1 << 20;
 
     public static final Font SYSTEM_BOLD_FONT = new Font("System Bold", 12);
