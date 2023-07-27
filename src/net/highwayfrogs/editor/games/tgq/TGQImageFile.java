@@ -70,12 +70,18 @@ public class TGQImageFile extends TGQFile {
 
             int mipLod = reader.readInt(); // Always 1?
             if (mipLod != 1)
-                System.out.println("The image '" + getExportName() + "'was read with an LOD of " + mipLod + ", but 1 was expected!");
+                System.out.println("The image '" + getDebugName() + "'was read with an LOD of " + mipLod + ", but 1 was expected!");
+
+            // TODO: Is it always 8 or 16 bytes here? Let's read the code to figure this poop out.
 
             // Read extra data at end of the header that we don't fully understand yet.
-            int skipData = reader.getRemaining() - ((bitsPerPixel * width * height) / Constants.BITS_PER_BYTE);
-            if (skipData > 0x20)
-                System.out.println(" - The image " + getExportName() + " skipped " + skipData + " bytes...");
+            int imageBytes = ((bitsPerPixel * width * height) / Constants.BITS_PER_BYTE);
+            int skipData = reader.getRemaining() - imageBytes;
+            if (skipData != 16) {
+                System.out.println(" - The image " + getDebugName() + " skipped " + skipData + " bytes, with the image being " + imageBytes + " bytes...");
+                // TODO: On PC this seems to include two images. But, I suspect there's more to it, as skycloud.img doesn't look right.
+                // TODO: This only triggers for 26 bytes on PS2 version.
+            }
 
             reader.skipBytes(skipData);
 
@@ -87,7 +93,7 @@ public class TGQImageFile extends TGQFile {
         }
 
         if (reader.getRemaining() > 0) // Test we're not skipping any data.
-            System.out.println(" - The image '" + getExportName() + "' has " + reader.getRemaining() + " unread bytes.");
+            System.out.println(" - The image '" + getDebugName() + "' has " + reader.getRemaining() + " unread bytes.");
     }
 
     private void kcLoad8BitImageHeader(DataReader reader) {
@@ -102,8 +108,8 @@ public class TGQImageFile extends TGQFile {
         byte bitsPerPixel = reader.readByte();
         byte descriptor = reader.readByte();
 
-        System.out.println("IMG [" + getExportName() + ", " + width + "x" + height + "]: idsize=" + idSize + ", colMapType=" + colMapType + ", typeCode=" + typeCode
-                + ", colMap=" + Utils.toByteString(colMap) + ", origin=[" + xOrigin + "," + yOrigin + "], bpp=" + bitsPerPixel + ", Descriptor=" + descriptor);
+        /*System.out.println("IMG [" + getDebugName() + ", " + width + "x" + height + "]: idsize=" + idSize + ", colMapType=" + colMapType + ", typeCode=" + typeCode
+                + ", colMap=" + Utils.toByteString(colMap) + ", origin=[" + xOrigin + "," + yOrigin + "], bpp=" + bitsPerPixel + ", Descriptor=" + descriptor);*/
 
         int paletteSizeInBytes = 0;
         int imageSizeInBytes = (bitsPerPixel * width * height) / Constants.BITS_PER_BYTE;
@@ -113,7 +119,7 @@ public class TGQImageFile extends TGQFile {
             } else if (colMap[4] == 32 && bitsPerPixel == 8) {
                 paletteSizeInBytes = 0x400;
             } else {
-                throw new RuntimeException("Encountered situation for image '" + getExportName() + "' with unknown image parameters: " + colMap[4] + ", " + bitsPerPixel);
+                throw new RuntimeException("Encountered situation for image '" + getDebugName() + "' with unknown image parameters: " + colMap[4] + ", " + bitsPerPixel);
             }
         }
 
@@ -174,11 +180,11 @@ public class TGQImageFile extends TGQFile {
 
         if (format == kcImageFormat.INDEXED8) {
             if (colorModel == null)
-                throw new RuntimeException("The image format for " + getExportName() + "was " + format + ", but there was no color lookup table.");
+                throw new RuntimeException("The image format for " + getDebugName() + "was " + format + ", but there was no color lookup table.");
             this.image = new BufferedImage(width, height, format.getBufferedImageType(), colorModel);
         } else {
             if (colorModel != null)
-                throw new RuntimeException("The image format for " + getExportName() + "was " + format + ", but there was a color lookup table??");
+                throw new RuntimeException("The image format for " + getDebugName() + "was " + format + ", but there was a color lookup table??");
 
             this.image = new BufferedImage(width, height, format.getBufferedImageType());
         }
@@ -225,7 +231,7 @@ public class TGQImageFile extends TGQFile {
             // TODO: May need to write additional data.
         } else {
             // TODO: Write 8 bit header.
-            throw new RuntimeException("We don't yet support writing this kind of image for '" + getExportName() + "'.");
+            throw new RuntimeException("We don't yet support writing this kind of image for '" + getDebugName() + "'.");
         }
 
         // TODO: Save image function call.

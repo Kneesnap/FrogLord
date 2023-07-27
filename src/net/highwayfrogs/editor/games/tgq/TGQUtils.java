@@ -61,7 +61,6 @@ public class TGQUtils {
      * We may want to implement exceptions for this at a later date, even though the original game does not.
      * It also could stand to use some cleanup, but I want to keep this functionally identical for now.
      * Notes: The PC version is different from the PS2 version. This function was reversed from PS2, and modified for PC.
-     * TODO: In the future, allow an option for both PS2 and PC mode.
      * @param filePath The path to generate a file ID from.
      * @return fileId
      */

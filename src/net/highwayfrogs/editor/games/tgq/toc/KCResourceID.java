@@ -33,7 +33,7 @@ public enum KCResourceID {
     DUMMY(null, null);
 
     private final String signature;
-    private Function<TGQChunkedFile, kcCResource> maker;
+    private final Function<TGQChunkedFile, kcCResource> maker;
 
     /**
      * Gets the chunk type based on a magic number.

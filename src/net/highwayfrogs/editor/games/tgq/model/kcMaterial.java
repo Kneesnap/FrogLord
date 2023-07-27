@@ -17,9 +17,9 @@ import net.highwayfrogs.editor.utils.Utils;
 public class kcMaterial extends GameObject {
     private String materialName;
     private String textureFileName;
-    private int flags = 1; // TODO: The lower flags are cleared when the model is loaded. Presumably they are runtime only flags? Operation: value &= 0xfffffff7 Seems 0x01 is whether a texture name should be resolved. (kcImportMaterialTexture)
+    private int flags; // TODO: Let's document the different flags.
     private float xpVal = 0F;
-    private float diffuseRed = 1F; // TODO: kcImportTextures seems to overwrite the values read from the file? Look into this later.
+    private float diffuseRed = 1F;
     private float diffuseGreen = 1F;
     private float diffuseBlue = 1F;
     private float diffuseAlpha = 1F;
@@ -30,7 +30,7 @@ public class kcMaterial extends GameObject {
     private float specularRed;
     private float specularGreen;
     private float specularBlue;
-    private float specularAlpha;
+    private float specularAlpha = 1F;
     private float emissiveRed;
     private float emissiveGreen;
     private float emissiveBlue;
@@ -40,6 +40,16 @@ public class kcMaterial extends GameObject {
 
     private static final int NAME_SIZE = 32;
     private static final int FILENAME_SIZE = 32;
+
+    private static final int MATERIAL_FLAG_TEXTURED = Constants.BIT_FLAG_0; // 0x01: kcImportMaterialTexture(_kcMaterial*) will remove this flag if the texture is not found.
+    private static final int MATERIAL_FLAG_ENABLE_ALPHA_BLEND = Constants.BIT_FLAG_3; // 0x08, Confirmed via SetMaterial(_kcMaterial*). Ignored in maps, and also in kcModel if blendMode != KCBLEND_DISABLE.
+
+    /**
+     * Tests if there is a texture assigned to this material.
+     */
+    public boolean hasTexture() {
+        return (this.flags & MATERIAL_FLAG_TEXTURED) == MATERIAL_FLAG_TEXTURED;
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -65,9 +75,48 @@ public class kcMaterial extends GameObject {
         this.emissiveAlpha = reader.readFloat();
         this.power = reader.readFloat();
 
-        int runtimeTexturePtr = reader.readInt();
-        if (runtimeTexturePtr != 0) // Runtime value. TODO: This only seems to occur when loading map materials.
-            System.out.println("NON-ZERO MATERIAL PTR!! " + Utils.toHexString(runtimeTexturePtr) + ", " + this.materialName + ", " + this.textureFileName + ", " + reader.getRemaining()); // This does not appear to be a hash, this value seems to sometimes be shared between seemingly unrelated textures for example between 'mushbot2.img' and 'crtA_sA.img'.
+        // TODO: kcImportTextures(kcModel*) overwrites the material colors & power.
+
+        // The last value is a 32-bit integer: pTexture.
+        // I suspect that this value is a pointer into malloc'd data for the texture.
+        // In other words, this value only meant something to the program which wrote it.
+        // Neither FrogLord nor the actual game itself is capable of using this value for anything useful.
+        // kcCResourceModel::Load(char*) sets the texture path to be the folder containing the .vtx file, enabling textures to be resolved by their filename instead of this.
+        // The value is overwritten when kcImportMaterialTexture is called (Specifically, the call to kcImportTexture will overwrite the existing value, if it exists), which occurs when loading maps + models.
+        reader.skipInt();
+    }
+
+    /**
+     * For some reason, any materials on a kcModel* passed to kcImportTextures() will have a lot of their values overwritten.
+     * This function replicates that behavior.
+     */
+    public void applyModelMaterialInfo() {
+        // Apply default ambient color data.
+        this.ambientRed = 1F;
+        this.ambientGreen = 1F;
+        this.ambientBlue = 1F;
+        this.ambientAlpha = 1F;
+
+        // Apply default diffuse color data.
+        this.diffuseRed = 1F;
+        this.diffuseGreen = 1F;
+        this.diffuseBlue = 1F;
+        this.diffuseAlpha = 1F;
+
+        // Apply default specular color data.
+        this.specularRed = 0F;
+        this.specularGreen = 0F;
+        this.specularBlue = 0F;
+        this.specularAlpha = 1F;
+
+        // Apply emissive specular color data.
+        this.emissiveRed = 0F;
+        this.emissiveGreen = 0F;
+        this.emissiveBlue = 0F;
+        this.emissiveAlpha = 1F;
+
+        // Apply default power.
+        this.power = 0F;
     }
 
     @Override

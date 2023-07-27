@@ -94,10 +94,10 @@ public abstract class TGQFile extends GameObject {
     }
 
     /**
-     * Tests if this file has a filename assigned.
-     * @return hasFileName
+     * Tests if this file has a file path assigned.
+     * @return hasFilePath
      */
-    public boolean hasName() {
+    public boolean hasFilePath() {
         return this.filePath != null;
     }
 
@@ -106,7 +106,7 @@ public abstract class TGQFile extends GameObject {
      * @return exportName
      */
     public String getExportName() {
-        if (hasName() && Utils.isValidFileName(getFileName())) {
+        if (hasFilePath() && Utils.isValidFileName(getFileName())) {
             if (this instanceof TGQDummyFile)
                 return getArchiveIndex() + "-" + getFileName();
 

@@ -136,7 +136,7 @@ public class TGQBinFile extends GameObject {
         List<TGQFile> unnamedFiles = new ArrayList<>();
         List<TGQFile> namedFiles = new ArrayList<>();
         for (TGQFile file : getFiles())
-            (file.hasName() ? namedFiles : unnamedFiles).add(file);
+            (file.hasFilePath() ? namedFiles : unnamedFiles).add(file);
 
         // Start writing file.
         writer.writeInt(unnamedFiles.size());
@@ -149,7 +149,7 @@ public class TGQBinFile extends GameObject {
 
         // Write file headers:
         for (TGQFile file : getFiles()) {
-            if (file.hasName()) {
+            if (file.hasFilePath()) {
                 int endIndex = (writer.getIndex() + NAME_SIZE);
                 writer.writeTerminatorString(file.getFilePath());
                 writer.writeTo(endIndex, (byte) 0xCD);
@@ -241,14 +241,16 @@ public class TGQBinFile extends GameObject {
      * Activates the filename
      * @param filePath The path of a game file.
      */
-    public void applyFileName(String filePath) {
+    public TGQFile applyFileName(String filePath) {
         TGQFile file = getOptionalFileByName(filePath);
         if (file != null) {
             file.setFilePath(filePath);
-        } else {
-            int hash = TGQUtils.hashFilePath(filePath);
-            System.out.println("Attempted to apply the file path '" + filePath + "', but no file matched the hash " + Utils.to0PrefixedHexString(hash) + ".");
+            return file;
         }
+
+        int hash = TGQUtils.hashFilePath(filePath);
+        System.out.println("Attempted to apply the file path '" + filePath + "', but no file matched the hash " + Utils.to0PrefixedHexString(hash) + ".");
+        return null;
     }
 
     /**
@@ -300,7 +302,7 @@ public class TGQBinFile extends GameObject {
         for (int i = 0; i < mainArchive.getFiles().size(); i++) {
             TGQFile file = mainArchive.getFiles().get(i);
 
-            lines.add(" - File #" + Utils.padNumberString(i + 1, 4)
+            lines.add(" - File #" + Utils.padNumberString(i, 4)
                     + ": " + Utils.to0PrefixedHexString(file.getNameHash())
                     + ", " + file.getClass().getSimpleName()
                     + (file.getFilePath() != null ? ", " + file.getFilePath() + ", " + TGQUtils.getFileIdFromPath(file.getFilePath()) : ""));

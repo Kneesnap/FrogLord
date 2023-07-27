@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.tgq.toc;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.TGQBinFile;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 import net.highwayfrogs.editor.games.tgq.TGQFile;
 import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
@@ -41,8 +42,9 @@ public class kcCResourceModel extends kcCResource {
         super.afterLoad1(context);
         // We must wait until afterLoad1() because the file object won't exist for files found later in the file if we don't.
         // But, this must run before afterLoad2() because that's when we start doing lookups based on file paths.
-        if (getParentFile() != null)
-            getParentFile().getMainArchive().applyFileName(this.fullPath);
+        TGQBinFile mainArchive = getMainArchive();
+        if (mainArchive != null)
+            mainArchive.applyFileName(this.fullPath);
     }
 
     @Override

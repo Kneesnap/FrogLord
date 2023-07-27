@@ -24,6 +24,7 @@ import java.util.Map;
 
 /**
  * Handles the Frogger TGQ TOC files. (They are maps, but may also have other data(?))
+ * These files may appear sorted, but they are not. "\GameData\Level00Global\Text\globaltext.dat", "\GameData\Level07TreeKnowledge\Level\PS2_Level07.dat", and more contain proof that the sorting was just a convention, and not enforced by anything.
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
@@ -53,10 +54,19 @@ public class TGQChunkedFile extends TGQFile {
                 newChunk = new TGQDummyFileChunk(this, magic);
             }
 
-            newChunk.load(new DataReader(new ArraySource(readBytes)));
-            this.chunks.add(newChunk);
+            DataReader chunkReader = new DataReader(new ArraySource(readBytes));
+            try {
+                newChunk.load(chunkReader);
 
-            // TODO: Warning if it doesn't read the entire file.
+                // Warn if not all data is read.
+                if (chunkReader.hasMore())
+                    System.out.println("TGQ Chunk " + Utils.stripAlphanumeric(newChunk.getChunkMagic()) + "/'" + newChunk.getName() + "' in '" + getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
+            } catch (Throwable th) {
+                th.printStackTrace();
+                System.err.println("Failed to read " + newChunk.getChunkType() + " chunk from " + getDebugName() + ".");
+            }
+
+            this.chunks.add(newChunk);
         }
     }
 
@@ -76,8 +86,6 @@ public class TGQChunkedFile extends TGQFile {
 
     @Override
     public void save(DataWriter writer) {
-        //TODO: Sort chunks by chunk ids. (Maybe... not so sure after all, compare with files in game builds.)
-
         for (kcCResource chunk : getChunks()) {
             writer.writeStringBytes(chunk.getChunkMagic());
             int lengthAddress = writer.writeNullPointer();
@@ -102,7 +110,7 @@ public class TGQChunkedFile extends TGQFile {
         // Export Info.
         @Cleanup PrintWriter infoWriter = new PrintWriter(new File(directory, "info.txt"));
         infoWriter.write("Chunked File Dump" + Constants.NEWLINE);
-        if (hasName())
+        if (hasFilePath())
             infoWriter.write("Name: " + getFilePath() + Constants.NEWLINE);
 
         infoWriter.write("File ID: #" + getArchiveIndex() + Constants.NEWLINE);

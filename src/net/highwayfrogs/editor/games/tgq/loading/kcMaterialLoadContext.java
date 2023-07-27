@@ -116,18 +116,38 @@ public class kcMaterialLoadContext {
         // Find materials which didn't resolve.
         for (Entry<kcMaterial, TGQFile> entry : this.allMaterials.entrySet()) {
             kcMaterial material = entry.getKey();
-            if (material.getTexture() == null)
+            if (material.getTexture() == null && material.hasTexture())
                 System.out.println("No image file was identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + entry.getValue().getDebugName() + ".");
         }
 
         // Find materials which had multiple possibilities.
         for (Entry<kcMaterial, TGQFile> entry : this.multipleMatchMaterials.entrySet()) {
             kcMaterial material = entry.getKey();
+            TGQFile file = entry.getValue();
             List<TGQImageFile> foundImages = this.globalCachedImages.get(Utils.stripExtension(material.getTextureFileName()));
             int foundImageCount = foundImages != null ? foundImages.size() : 0;
 
+            // Attempt to search for images.
+            if (file.hasFilePath() && !material.getTextureFileName().isEmpty()) {
+                int lastDirectorySeparator = file.getFilePath().lastIndexOf('\\');
+                if (lastDirectorySeparator != -1) {
+                    String texturePath = file.getFilePath().substring(0, lastDirectorySeparator + 1)
+                            + Utils.stripExtension(material.getTextureFileName()) + ".img";
+
+                    TGQFile targetImageFile = this.mainArchive.applyFileName(texturePath);
+                    if (targetImageFile != null) {
+                        if (!(targetImageFile instanceof TGQImageFile))
+                            throw new RuntimeException("We found a file for material ref '" + texturePath + "', but it wasn't an image file! It was a(n) " + targetImageFile.getClass().getSimpleName() + ".");
+
+                        TGQImageFile imageFile = (TGQImageFile) targetImageFile;
+                        material.setTexture(imageFile);
+                        continue; // Skip.
+                    }
+                }
+            }
+
             // Print output.
-            System.out.println(foundImageCount + " image file(s) were identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + entry.getValue().getDebugName() + (foundImageCount > 0 ? ":" : "."));
+            System.out.println(foundImageCount + " image file(s) were identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + file.getDebugName() + (foundImageCount > 0 ? ":" : "."));
             if (foundImages != null && foundImageCount > 0)
                 for (TGQImageFile foundImage : foundImages)
                     System.out.println(" - " + foundImage.getDebugName());

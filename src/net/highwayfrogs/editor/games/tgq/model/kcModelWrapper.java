@@ -33,11 +33,11 @@ public class kcModelWrapper extends TGQFile {
         int size = reader.readInt();
 
         if (size != reader.getRemaining())
-            System.out.println("The model '" + getExportName() + "' was supposed to have " + size + " bytes, but actually has " + reader.getRemaining() + " bytes.");
+            System.out.println("The model '" + getDebugName() + "' was supposed to have " + size + " bytes, but actually has " + reader.getRemaining() + " bytes.");
 
         this.model.load(reader);
         if (reader.hasMore())
-            System.out.println("The model '" + getExportName() + "' has " + reader.getRemaining() + " unread bytes.");
+            System.out.println("The model '" + getDebugName() + "' has " + reader.getRemaining() + " unread bytes.");
     }
 
     @Override

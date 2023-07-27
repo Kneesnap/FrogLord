@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.TGQBinFile;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 import net.highwayfrogs.editor.games.tgq.TGQFile;
 import net.highwayfrogs.editor.games.tgq.TGQUtils;
@@ -96,5 +97,12 @@ public abstract class kcCResource extends GameObject {
         if (getChunkType().getSignature() == null)
             throw new UnsupportedOperationException("getSignature() was called on " + getChunkType() + ", which needs to be overwritten instead.");
         return getChunkType().getSignature();
+    }
+
+    /**
+     * Gets the main archive this file resides in.
+     */
+    public TGQBinFile getMainArchive() {
+        return this.parentFile != null ? this.parentFile.getMainArchive() : null;
     }
 }
