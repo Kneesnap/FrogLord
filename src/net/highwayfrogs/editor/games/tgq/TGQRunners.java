@@ -23,7 +23,7 @@ public class TGQRunners {
         // Load main bin.
         System.out.println("Loading file...");
         DataReader reader = new DataReader(new FileSource(binFile));
-        TGQBinFile mainFile = new TGQBinFile();
+        TGQBinFile mainFile = new TGQBinFile(kcPlatform.PC);
         mainFile.load(reader);
         System.out.println("Loaded.");
 

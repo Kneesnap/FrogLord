@@ -38,12 +38,17 @@ import java.util.stream.Collectors;
  */
 @Getter
 public class TGQBinFile extends GameObject {
+    private final kcPlatform platform;
     private List<String> globalPaths;
     private final List<TGQFile> files = new ArrayList<>();
     private final Map<Integer, TGQFile> nameMap = new HashMap<>();
     private final Map<Integer, List<TGQFile>> fileCollisions = new HashMap<>();
 
     private static final int NAME_SIZE = 0x108;
+
+    public TGQBinFile(kcPlatform platform) {
+        this.platform = platform;
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -219,10 +224,33 @@ public class TGQBinFile extends GameObject {
             return;
         }
 
+        kcPlatform platform = null;
+        if (fileName.contains("PC") || fileName.contains("Windows"))
+            platform = kcPlatform.PC;
+        if (fileName.contains("PS2") || fileName.contains("Play"))
+            platform = kcPlatform.PS2;
+
+        if (platform == null) {
+            System.out.print("Is this a PS2 build or a PC build?: ");
+            String platformName = scanner.nextLine();
+
+            try {
+                platform = kcPlatform.valueOf(platformName.toUpperCase());
+            } catch (Throwable th) {
+                // We don't care. This is some temporary development CLI mode for devs.
+            }
+        }
+
+        // Verify platform.
+        if (platform == null) {
+            System.out.println("That is not a valid platform.");
+            return;
+        }
+
         // Load main bin.
         System.out.println("Loading file...");
         DataReader reader = new DataReader(new FileSource(binFile));
-        TGQBinFile mainFile = new TGQBinFile();
+        TGQBinFile mainFile = new TGQBinFile(platform);
         mainFile.load(reader);
 
         // Export.

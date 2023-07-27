@@ -65,8 +65,8 @@ public class TGQImageFile extends TGQFile {
             int width = reader.readInt();
             int height = reader.readInt();
             int bitsPerPixel = reader.readInt();
-            // TODO: IF PC, SET BITS PER PIXEL TO 32.
-            bitsPerPixel = 32;
+            if (getMainArchive().getPlatform() == kcPlatform.PC) // TODO: Is this safe? Eg: If we do this, and then save files, will the game still load images?
+                bitsPerPixel = 32;
 
             int mipLod = reader.readInt(); // Always 1?
             if (mipLod != 1)
