@@ -29,7 +29,7 @@ import java.util.*;
 public class TGQHashReverser {
     // Characters outside of this set are not known to be used in Frogger TGQ hashes, even if they would technically work.
     // This set has been limited to reduce the number of garbage strings that the reverse hashing algorithm generates.
-    public static final String VALID_HASH_CHARACTER_STRING = " -\\_0123456789abcdefghijklmnopqrstuvwxyz{}[]";
+    public static final String VALID_HASH_CHARACTER_STRING = " -0123456789[\\]_abcdefghijklmnopqrstuvwxyz{}";
     public static final char[] VALID_HASH_CHARACTERS = VALID_HASH_CHARACTER_STRING.toCharArray();
     private static short[][] XOR_LOOKUP_TABLE;
     private static char[][] CHAR_NIBBLE_LOOKUP_TABLE;
