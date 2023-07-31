@@ -94,6 +94,7 @@ public class TGQHashReverser {
         System.out.println("Welcome to the Frogger Great Quest hash playground.");
         System.out.println("By default, what you type in will be hashed and you'll be shown the hash of the text.");
         System.out.println("Starting your input with '$<hash>,<template>' will find all strings which matches the hash by filling in the '*' characters in the template.");
+        System.out.println("Starting your input with '@<hash>,<template>' will perform searches on the template by replacing '*' with increasing numbers of asterisks.");
         System.out.println("Putting a '!' at the end will force non-repeat mode.");
         // Example Command: '$6AFA9D47,D00lILog*t' will find the letter 'o' for '*' making D00lILog*t.
 
@@ -124,17 +125,15 @@ public class TGQHashReverser {
                 allowDuplicateMode = false;
             }
 
-            int hash;
-            String template;
-            if (line.contains(",")) {
-                String[] split = line.split(",", 2);
-                hash = Integer.parseUnsignedInt(split[0], 16);
-                template = split[1];
-                System.out.println("Brute-forcing '" + template + "' to find strings that hash to '" + Utils.to0PrefixedHexString(hash) + "'.");
-            } else {
+            if (!line.contains(",")) {
                 System.out.println("There is no wildcard to search.");
                 return;
             }
+
+            String[] split = line.split(",", 2);
+            int hash = Integer.parseUnsignedInt(split[0], 16);
+            String template = split[1];
+            System.out.println("Brute-forcing '" + template + "' to find strings that hash to '" + Utils.to0PrefixedHexString(hash) + "'.");
 
             long hashStartTime = System.currentTimeMillis();
             List<String> reverseHashes = TGQHashReverser.reverseHash(template, hash, debugMode, allowDuplicateMode);
@@ -144,8 +143,30 @@ public class TGQHashReverser {
             System.out.println("Results:");
             for (String str : reverseHashes)
                 System.out.println(" - " + str);
-            System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms.");
+            System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms for " + Utils.to0PrefixedHexString(hash) + ".");
 
+        } else if (line.startsWith("@")) {
+            line = line.substring(1);
+
+            if (!line.contains(",")) {
+                System.out.println("There is no wildcard to search.");
+                return;
+            }
+
+            String[] split = line.split(",", 2);
+            int hash = Integer.parseUnsignedInt(split[0], 16);
+            String template = split[1];
+            System.out.println("Brute-forcing '" + template + "' to find strings that hash to '" + Utils.to0PrefixedHexString(hash) + "'.");
+
+            long hashStartTime = System.currentTimeMillis();
+            List<String> reverseHashes = TGQHashReverser.reverseHashRepeat(template, hash);
+            long hashEndTime = System.currentTimeMillis();
+
+            Collections.reverse(reverseHashes); // Show the most likely ones at the bottom to reduce scrolling.
+            System.out.println("Results:");
+            for (String str : reverseHashes)
+                System.out.println(" - " + str);
+            System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms for " + Utils.to0PrefixedHexString(hash) + ".");
         } else if (line.startsWith("\\")) {
             String hashFilePath = TGQUtils.getFileIdFromPath(line);
             System.out.println("Full File Path: '" + line + "'");
@@ -248,6 +269,41 @@ public class TGQHashReverser {
             score -= str.length();
 
         return score / str.length(); // Use the full length, not the abridged one.
+    }
+
+    /**
+     * Generates potential strings based on a template.
+     * @param template The template to search from. Asterisks are replaced with an arbitrary number of characters.
+     * @param hash     The hash value to reverse.
+     */
+    public static List<String> reverseHashRepeat(String template, int hash) {
+        int count = 0;
+        boolean lastCharAsterisk = false;
+        for (int i = 0; i < template.length(); i++) {
+            if (template.charAt(i) == '*') {
+                if (!lastCharAsterisk) {
+                    count++;
+                    lastCharAsterisk = true;
+                }
+            } else {
+                lastCharAsterisk = false;
+            }
+        }
+
+        boolean allowRepeatMode = (count > 1);
+        int charactersToAdd = allowRepeatMode ? NIBBLE_COUNT - 1 : NIBBLE_COUNT;
+        Set<String> results = new HashSet<>();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < charactersToAdd; i++) {
+            builder.append('*');
+            String testStr = template.replaceAll("(\\*+)", builder.toString());
+            System.out.println("Brute-forcing string '" + testStr + "'...");
+            results.addAll(reverseHashForTemplate(testStr, hash, false, allowRepeatMode));
+        }
+
+        List<String> sortedResults = new ArrayList<>(results);
+        sortedResults.sort(Comparator.comparingDouble(TGQHashReverser::calculateScore).reversed());
+        return sortedResults;
     }
 
     /**
