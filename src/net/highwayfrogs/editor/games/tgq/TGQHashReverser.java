@@ -185,7 +185,7 @@ public class TGQHashReverser {
             char nextChar = str.charAt(i + 1);
             boolean isDigit = Character.isDigit(temp);
             if ((temp >= 'a' && temp <= 'z') || (temp >= 'A' && temp <= 'Z')) {
-                if (isUpperCaseLetter(temp))
+                if (isUpperCaseLetter(temp)) // Must be lower-case to look up in likelihood map.
                     temp = Character.toLowerCase(temp);
 
                 if (i > 0) {
