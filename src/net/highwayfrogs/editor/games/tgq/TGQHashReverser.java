@@ -19,22 +19,41 @@ import java.util.*;
  * The first step is to create a special hash of the template string called the template hash.
  * By XORing this template hash against the hash we're trying to crack, we remove the operations of all of the known characters.
  * Thus, the number we are left with can be thought of as 8 nibbles (a nibble being 4 bits, and a 32 bit number / 4 bits = 8 nibbles).
+ * </p>
  * Each nibble is controlled by up to two string characters
  * We can look at which sets of characters could have generated the nibble value, and try all the different combinations.
  * But, we don't need to attempt all possible character permutations, we can use a lookup table to ensure we only try valid character combinations.
  * Once all the strings have been found, they are sorted by how likely they are to be valid filenames.
- * TODO: Let's upgrade the algorithm to support more than 8 wildcards.
+ * </p>
+ * The limit of 8 characters is a difficult one. Once a nibble has more than one unknown character pair, we reach an issue.
+ * For any character pair, there is another valid character pair that will create any Xor nibble value.
+ * In other words, any character pair becomes valid, making it no better than a bruteforce attempt of all permutations.
+ * The only way forward from this point is using patterns & knowledge about the original string to fill in missing data.
+ * </p>
+ * Rainbow tables were considered as a solution, but it became clear pretty quickly collisions were the real challenge.
+ * It is trivially easy to take a hash and create a random string that generates that hash here.
+ * The challenge is actually in the amount of strings which can be generated which match the hash.
+ * Because the amount of potential strings are high, instead an algorithm was designed to let the user tell the algorithm certain things about the string.
+ * These things include any known characters, length of the string, if any characters are duplicated, etc.
+ * Using this information, the algorithm will reduce the number of possible strings as much as possible.
+ * This means instead of generating an exponential number of strings, more than can be kept in memory, let alone sifted through by the user,
+ * we can restrict the strings displayed to ones that fit the criteria supplied by the user.
+ * TODO: Consider building the tree as a nibble xor value instead of a character pair. Would save a massive amount of memory, potentially allowing for eeking just a few more characters out.
  * Created by Kneesnap on 7/6/2023.
  */
 public class TGQHashReverser {
     // Characters outside of this set are not known to be used in Frogger TGQ hashes, even if they would technically work.
     // This set has been limited to reduce the number of garbage strings that the reverse hashing algorithm generates.
-    public static final String VALID_HASH_CHARACTER_STRING = " -0123456789[\\]_abcdefghijklmnopqrstuvwxyz{}";
+    public static final String VALID_HASH_CHARACTER_STRING = "\0 -0123456789[\\]_abcdefghijklmnopqrstuvwxyz{}";
     public static final char[] VALID_HASH_CHARACTERS = VALID_HASH_CHARACTER_STRING.toCharArray();
+    private static CharacterPairTreeBase[][] XOR_LOOKUP_TREES; // [height][xorNibble]
     private static short[][] XOR_LOOKUP_TABLE;
+    private static short[] CHARACTER_PAIRS;
     private static char[][] CHAR_NIBBLE_LOOKUP_TABLE;
     private static final int NIBBLE_COUNT = 8; // The number of nibbles in a hash. (32 bits / 4 bits per nibble = 8 nibbles)
     private static boolean UPPER_CASE_SUPPORTED;
+    private static final int MAXIMUM_UNKNOWN_CHARACTERS_PER_NIBBLE = 2; // 3 is probably feasible but will probably use > 10GB of RAM, and take several minutes to calculate.
+
     private static final Map<Character, String> LIKELIHOOD_MAP = new HashMap<Character, String>() { // Used for finding what strings look like english text.
         {
             put('a', "ajqoxhzwfykvueigdpmbscrnlt");
@@ -71,10 +90,11 @@ public class TGQHashReverser {
      */
     @SuppressWarnings("InfiniteLoopStatement")
     public static void runHashPlayground() {
+        initGlobalData();
         System.out.println("Welcome to the Frogger Great Quest hash playground.");
         System.out.println("By default, what you type in will be hashed and you'll be shown the hash of the text.");
         System.out.println("Starting your input with '$<hash>,<template>' will find all strings which matches the hash by filling in the '*' characters in the template.");
-        System.out.println("Using more than 8 wildcard characters in a template is not currently supported.");
+        System.out.println("Putting a '!' at the end will force non-repeat mode.");
         // Example Command: '$6AFA9D47,D00lILog*t' will find the letter 'o' for '*' making D00lILog*t.
 
         Scanner scanner = new Scanner(System.in);
@@ -82,33 +102,57 @@ public class TGQHashReverser {
         while (true) {
             System.out.print("> ");
             String value = scanner.nextLine();
-            if (value.startsWith("$") || value.startsWith("!")) {
-                String searchQuery = value.substring(1);
 
-                int hash;
-                String template;
-                if (value.contains(",")) {
-                    String[] split = searchQuery.split(",", 2);
-                    hash = Integer.parseUnsignedInt(split[0], 16);
-                    template = split[1];
-                    System.out.println("Brute-forcing '" + template + "' to find strings that hash to '" + Utils.to0PrefixedHexString(hash) + "'.");
-                } else {
-                    System.out.println("There is no wildcard to search.");
-                    continue;
-                }
-
-                List<String> reverseHashes = TGQHashReverser.reverseHash(template, hash, value.startsWith("!"));
-                System.out.println("Results [" + reverseHashes.size() + "]:");
-                for (String str : reverseHashes)
-                    System.out.println(" - " + str);
-            } else if (value.startsWith("\\")) {
-                String hashFilePath = TGQUtils.getFileIdFromPath(value);
-                System.out.println("Full File Path: '" + value + "'");
-                System.out.println("Hash File Path: '" + hashFilePath + "'");
-                System.out.println("Hash: " + Utils.to0PrefixedHexString(TGQUtils.hash(hashFilePath)));
-            } else {
-                System.out.println("Hash: " + Utils.to0PrefixedHexString(TGQUtils.hash(value)));
+            try {
+                handleCommand(value);
+            } catch (Throwable th) {
+                System.out.println();
+                System.out.println("An error occurred.");
+                th.printStackTrace();
             }
+        }
+    }
+
+    private static void handleCommand(String line) {
+        if (line.startsWith("$") || line.startsWith("!")) {
+            boolean debugMode = line.startsWith("!");
+            line = line.substring(1);
+
+            boolean allowDuplicateMode = true;
+            if (line.endsWith("!")) {
+                line = line.substring(0, line.length() - 1);
+                allowDuplicateMode = false;
+            }
+
+            int hash;
+            String template;
+            if (line.contains(",")) {
+                String[] split = line.split(",", 2);
+                hash = Integer.parseUnsignedInt(split[0], 16);
+                template = split[1];
+                System.out.println("Brute-forcing '" + template + "' to find strings that hash to '" + Utils.to0PrefixedHexString(hash) + "'.");
+            } else {
+                System.out.println("There is no wildcard to search.");
+                return;
+            }
+
+            long hashStartTime = System.currentTimeMillis();
+            List<String> reverseHashes = TGQHashReverser.reverseHash(template, hash, debugMode, allowDuplicateMode);
+            long hashEndTime = System.currentTimeMillis();
+
+            Collections.reverse(reverseHashes); // Show the most likely ones at the bottom to reduce scrolling.
+            System.out.println("Results:");
+            for (String str : reverseHashes)
+                System.out.println(" - " + str);
+            System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms.");
+
+        } else if (line.startsWith("\\")) {
+            String hashFilePath = TGQUtils.getFileIdFromPath(line);
+            System.out.println("Full File Path: '" + line + "'");
+            System.out.println("Hash File Path: '" + hashFilePath + "'");
+            System.out.println("Hash: " + Utils.to0PrefixedHexString(TGQUtils.hash(hashFilePath)));
+        } else {
+            System.out.println("Hash: " + Utils.to0PrefixedHexString(TGQUtils.hash(line)));
         }
     }
 
@@ -208,10 +252,12 @@ public class TGQHashReverser {
 
     /**
      * Generates potential strings for the hash.
-     * @param prefix The prefix to create strings with. Example: "D00lI" or "D00l" or "S00lIquit".
-     * @param hash   The hash value to reverse.
+     * @param prefix          The prefix to create strings with. Example: "D00lI" or "D00l" or "S00lIquit".
+     * @param hash            The hash value to reverse.
+     * @param debugMode       If debug information should be displayed.
+     * @param allowRepeatMode If "repeat mode" should be allowed.
      */
-    public static List<String> reverseHash(String prefix, int hash, boolean debugMode) {
+    public static List<String> reverseHash(String prefix, int hash, boolean debugMode, boolean allowRepeatMode) {
         if (!prefix.contains("*")) {
             if (TGQUtils.hash(prefix) == hash)
                 return Collections.singletonList(prefix);
@@ -219,7 +265,7 @@ public class TGQHashReverser {
             HashSet<String> results = new HashSet<>();
             for (int i = 0; i < NIBBLE_COUNT; i++) {
                 prefix += "*";
-                results.addAll(reverseHashForTemplate(prefix, hash, debugMode));
+                results.addAll(reverseHashForTemplate(prefix, hash, debugMode, false));
             }
 
             List<String> sortedResults = new ArrayList<>(results);
@@ -227,53 +273,99 @@ public class TGQHashReverser {
             return sortedResults;
         }
 
-        return reverseHashForTemplate(prefix, hash, debugMode);
+        return reverseHashForTemplate(prefix, hash, debugMode, allowRepeatMode);
     }
 
     /**
      * Generates potential strings for the hash using the aforementioned algorithm.
-     * @param template The template string. All characters are treated as literal except '*' which indicates the character should be tested.
-     * @param hash     The hash value to reverse.
+     * @param template        The template string. All characters are treated as literal except '*' which indicates the character should be tested.
+     * @param hash            The hash value to reverse.
+     * @param debugMode       If debug information should be displayed.
+     * @param allowRepeatMode If "repeat mode" should be allowed.
      */
-    public static List<String> reverseHashForTemplate(String template, int hash, boolean debugMode) {
+    public static List<String> reverseHashForTemplate(String template, int hash, boolean debugMode, boolean allowRepeatMode) {
         initGlobalData();
 
         char[] stringChars = template.toCharArray();
         int[] charsToReplace = getReplacementPositions(stringChars);
+
+        // Verify there is at least one character to replace.
         if (charsToReplace.length == 0)
             return (TGQUtils.hash(template) == hash) ? Collections.singletonList(template) : Collections.emptyList();
 
-        // Verify there aren't too many nibbles used.
-        if (charsToReplace.length > NIBBLE_COUNT)
-            throw new RuntimeException("The hash " + Utils.to0PrefixedHexString(hash) + " could not be found using template string '" + template + "', because only " + NIBBLE_COUNT + " wildcard characters are supported.");
-
-        // Verify there aren't two wildcard characters impacting the same nibble.
-        boolean[] nibblesAlreadySeen = new boolean[NIBBLE_COUNT];
-        for (int i = 0; i < charsToReplace.length; i++) {
-            int nibble = calculateNibbleId(template.length(), charsToReplace[i]);
-            if (nibblesAlreadySeen[nibble])
-                throw new RuntimeException("Wildcard character at index " + charsToReplace[i] + " impacts nibble " + nibble + ", which is already impacted by an earlier wildcard character.");
-
-            nibblesAlreadySeen[nibble] = true;
-        }
-
+        // XOR out the known characters, limiting the possible resulting characters.
         int templateHash = TGQUtils.hash(template.replace('*', '\0')); // '\0' is a character that will not modify the string when Xor'd.
         if (debugMode)
             System.out.println("Partial hash from template '" + template + "' is " + Utils.to0PrefixedHexString(templateHash) + ", XOR is " + Utils.to0PrefixedHexString(hash ^ templateHash) + ".");
 
+        // Test if it's in duplicate mode.
+        int sequenceLength = 0;
+        int sequenceCount = 1;
+        for (int i = 0; i < charsToReplace.length; i++) {
+            if (i > 0 && charsToReplace[i] > charsToReplace[i - 1] + 1) {
+                sequenceCount++;
+            } else if (sequenceCount == 1) {
+                sequenceLength++;
+            }
+        }
+
+        // Sequence Count > 2 will break canUseNode, and isn't a realistic use-case anyway.
+        boolean repeatMode = (allowRepeatMode && sequenceLength > 2 && sequenceCount == 2 && charsToReplace.length == sequenceLength * sequenceCount);
+        int repeatStart = repeatMode ? sequenceLength : -1;
+
+        if (debugMode)
+            System.out.println("Duplication Mode: " + repeatMode + " (" + repeatStart + ")");
+
         // Generate strings from the pairs.
-        TGQHashContext context = new TGQHashContext(template, stringChars, charsToReplace, templateHash, hash, debugMode);
-        return generateStringsFromNibblePairs(context);
+        TGQHashContext context = new TGQHashContext(template, stringChars, charsToReplace, templateHash, hash, repeatStart, debugMode);
+        return generateStrings(context);
     }
 
-    private static List<String> generateStringsFromNibblePairs(TGQHashContext context) {
+    private static CharacterPairTreeBase[] setupDefaultTreeArray(TGQHashContext context) {
+        // Calculate the number of characters per nibble.
+        int[] unknownCharactersPerNibble = new int[NIBBLE_COUNT];
+        int lastCharacter = Integer.MIN_VALUE;
+        for (int i = 0; i < context.getIndicesToReplace().length; i++) {
+            int strPos = context.getIndicesToReplace()[i];
+            unknownCharactersPerNibble[calculateNibbleId(context.getTargetLength(), strPos)]++;
+
+            // If this is the start of a sequence, the last nibble is impacted by this character in a way that needs to be tracked in the tree.
+            // If we didn't count it, the impact wouldn't be tracked.
+            if (strPos > lastCharacter + 1)
+                unknownCharactersPerNibble[calculateNibbleId(context.getTargetLength(), strPos - 1)]++;
+
+            lastCharacter = strPos;
+        }
+
+        // Verify the number of unknown characters per nibble is supported.
+        for (int i = 0; i < unknownCharactersPerNibble.length; i++)
+            if (unknownCharactersPerNibble[i] > MAXIMUM_UNKNOWN_CHARACTERS_PER_NIBBLE)
+                throw new RuntimeException("The replacement template '" + context.getTemplate() + "' has " + unknownCharactersPerNibble[i] + " unknown characters in nibble slot " + i + ", but only " + MAXIMUM_UNKNOWN_CHARACTERS_PER_NIBBLE + " unknown characters per nibble slot are configured. " + Arrays.toString(unknownCharactersPerNibble));
+
+        // Create array.
+        CharacterPairTreeBase[] trees = new CharacterPairTreeBase[NIBBLE_COUNT];
+        int strippedHash = context.getTargetHash() ^ context.getTemplateHash();
+        for (int i = 0; i < trees.length; i++) {
+            int targetXorValue = getNibble(strippedHash, i);
+            int characterCount = unknownCharactersPerNibble[i];
+            if (characterCount > 0)
+                trees[i] = XOR_LOOKUP_TREES[characterCount - 1][targetXorValue];
+            if (context.isDebugMode())
+                System.out.println("Nibble: " + i + " -> " + targetXorValue + "/" + characterCount);
+        }
+
+        return trees;
+    }
+
+    private static List<String> generateStrings(TGQHashContext context) {
+        // TODO: Consider doing this in parallel. In theory this should distribute very easily.
         // Generate possible strings.
         boolean debugMode = context.isDebugMode();
         List<String> results = new ArrayList<>();
-        List<TGQHashString> queue = new ArrayList<>(); // LIFO.
-        queue.add(new TGQHashString(context));
+        List<PartialHashString> queue = new ArrayList<>(); // LIFO.
+        queue.add(new PartialHashString(context));
         while (queue.size() > 0) {
-            TGQHashString temp = queue.remove(queue.size() - 1);
+            PartialHashString temp = queue.remove(queue.size() - 1);
 
             // The string is complete.
             if (temp.isDone()) {
@@ -291,7 +383,7 @@ public class TGQHashReverser {
                 continue;
             }
 
-            temp.queueGuessesAtNextCharacter(queue);
+            temp.guessNextCharacter(queue);
         }
 
         results.sort(Comparator.comparingDouble(TGQHashReverser::calculateScore).reversed());
@@ -299,21 +391,225 @@ public class TGQHashReverser {
     }
 
     @Getter
-    private static class TGQHashString {
+    private static class CharacterPairTreeBase {
+        // Sorted in ascending order with the first character as the primary key, and the second character as a tiebreaker.
+        private final List<CharacterPairTreeNode> children = new ArrayList<>();
+
+        /**
+         * Test if this is the root node.
+         */
+        public boolean isRoot() {
+            return true;
+        }
+
+        /**
+         * Test if this is a leaf node.
+         */
+        public boolean isLeaf() {
+            return this.children.isEmpty();
+        }
+
+        /**
+         * Attempts to add a child node.
+         * @param newNode The node to add.
+         * @return If the node was added successfully.
+         */
+        public boolean addChild(CharacterPairTreeNode newNode) {
+            if (newNode == null)
+                return false;
+
+            int binarySearchIndex = Collections.binarySearch(this.children, newNode);
+            if (binarySearchIndex >= 0) // Value was found already.
+                return false;
+
+            int insertPos = -(binarySearchIndex + 1);
+            this.children.add(insertPos, newNode);
+            return true;
+        }
+
+        /**
+         * Finds all child nodes whose first character matches the provided one.
+         * @param characterPair   The pair of characters encoded as a 16-bit number.
+         * @param createIfMissing If this is true and there is no child node found, it will be created.
+         * @return The child node corresponding to the provided characters, null if not found and not created.
+         */
+        public CharacterPairTreeNode getChild(short characterPair, boolean createIfMissing) {
+            return this.getChild((char) getPrimaryByteFromShort(characterPair), (char) getSecondaryByteFromShort(characterPair), createIfMissing);
+        }
+
+        /**
+         * Finds all child nodes whose first character matches the provided one.
+         * @param firstChar       The first char in the child node to find.
+         * @param secondChar      The second char in the child node to find.
+         * @param createIfMissing If this is true and there is no child node found, it will be created.
+         * @return The child node corresponding to the provided characters, null if not found and not created.
+         */
+        public CharacterPairTreeNode getChild(char firstChar, char secondChar, boolean createIfMissing) {
+            int left = 0, right = this.children.size() - 1;
+
+            while (left <= right) {
+                int midIndex = (left + right) / 2;
+                CharacterPairTreeNode midNode = this.children.get(midIndex);
+
+                if (firstChar == midNode.first && secondChar == midNode.second) {
+                    return midNode;
+                } else if (firstChar > midNode.first || (firstChar == midNode.first && secondChar > midNode.second)) {
+                    left = midIndex + 1;
+                } else {
+                    right = midIndex - 1;
+                }
+            }
+
+            if (createIfMissing) {
+                CharacterPairTreeNode newNode = new CharacterPairTreeNode(firstChar, secondChar);
+                if (!this.addChild(newNode)) // If this fails, something is wrong with the above search.
+                    throw new RuntimeException("Failed to add new node to tree, but it also wasn't found as a child node? [" + firstChar + secondChar + "]");
+
+                return newNode;
+            }
+
+            return null;
+        }
+
+        /**
+         * Finds all child nodes whose first character matches the provided one.
+         * @param searchChar The character to search for.
+         * @return childNodes, or null.
+         */
+        public List<CharacterPairTreeNode> getChildren(char searchChar) {
+            if (this.children.isEmpty())
+                return null;
+
+            int left = 0, right = this.children.size() - 1;
+
+            while (left <= right) {
+                int midIndex = (left + right) / 2;
+                CharacterPairTreeNode midNode = this.children.get(midIndex);
+                char midsFirstChar = midNode.first;
+
+                if (searchChar == midsFirstChar) {
+                    // Find all matching bytes to the left.
+                    int leftMin = left;
+                    for (left = midIndex; left > leftMin; left--) {
+                        if (this.children.get(left).first != searchChar) {
+                            left++;
+                            break;
+                        }
+                    }
+
+                    // Find all matching bytes to the right.
+                    int rightMax = right;
+                    for (right = midIndex; right < rightMax; right++) {
+                        if (this.children.get(right).first != searchChar) {
+                            right--;
+                            break;
+                        }
+                    }
+
+                    return this.children.subList(left, right + 1);
+                } else if (searchChar > midsFirstChar) {
+                    left = midIndex + 1;
+                } else {
+                    right = midIndex - 1;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Identifies the node in the root.
+         * @return identifier
+         */
+        protected String getIdentifier() {
+            return "TreeRoot";
+        }
+
+        /**
+         * Writes information about this node and any children to a StringBuilder.
+         * @param whitespace The whitespace to write with.
+         * @param builder    The builder to write information to.
+         */
+        public void toString(String whitespace, StringBuilder builder) {
+            builder.append(whitespace)
+                    .append(getIdentifier())
+                    .append(" [")
+                    .append(this.children.size())
+                    .append(" children]\n");
+
+            if (this.children.size() > 0) {
+                String newWhitespace = (whitespace + "  ").intern();
+                for (int i = 0; i < this.children.size(); i++)
+                    this.children.get(i).toString(newWhitespace, builder);
+            }
+        }
+    }
+
+    @Getter
+    private static class CharacterPairTreeNode extends CharacterPairTreeBase implements Comparable<CharacterPairTreeNode> {
+        private final char first;
+        private final char second;
+
+        public CharacterPairTreeNode(char first, char second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public boolean isRoot() {
+            return false;
+        }
+
+        @Override
+        protected String getIdentifier() {
+            return String.valueOf(this.first) + this.second;
+        }
+
+        @Override
+        public int hashCode() {
+            return makeShortFromBytes((byte) this.first, (byte) this.second);
+        }
+
+        @Override
+        public int compareTo(CharacterPairTreeNode other) {
+            if (other == null)
+                throw new NullPointerException("The other node was null.");
+
+            int firstCompare = Integer.compare(this.first, other.first);
+            if (firstCompare != 0)
+                return firstCompare;
+
+            return Integer.compare(this.second, other.second);
+        }
+    }
+
+    @Getter
+    private static class PartialHashString {
         private final TGQHashContext context;
         private final char[] characters;
+        private final CharacterPairTreeBase[] treeNodes;
         private final int position;
         private final int hash;
 
-        public TGQHashString(TGQHashContext context) {
-            this(context, new char[context.getIndicesToReplace().length], 0, context.getTemplateHash());
+        public PartialHashString(TGQHashContext context) {
+            this(context, new char[context.getIndicesToReplace().length], setupDefaultTreeArray(context), 0, context.getTemplateHash());
         }
 
-        private TGQHashString(TGQHashContext context, char[] characters, int position, int hash) {
+        private PartialHashString(TGQHashContext context, char[] characters, CharacterPairTreeBase[] treeNodes, int position, int hash) {
             this.context = context;
             this.characters = characters;
+            this.treeNodes = treeNodes;
             this.position = position;
             this.hash = hash;
+        }
+
+        /**
+         * Tests if this guess should have debug information printed.
+         * This method exists to allow modification when debugging so the specific strings we want to debug are shown.
+         * @return If debugging behavior should apply
+         */
+        public boolean isDebuggable() {
+            return this.context.isDebugMode();
         }
 
         /**
@@ -324,25 +620,14 @@ public class TGQHashReverser {
         }
 
         /**
-         * Gets the last applied character.
+         * Gets the index in the template string to the character this partial string will fill.
+         * @return templateIndex
          */
-        public char getLastCharacter() {
-            if (this.position <= 0)
-                throw new RuntimeException("Cannot get last character when no characters have been set.");
-            return this.characters[this.position - 1];
-        }
+        public int getTemplateIndex() {
+            if (isDone())
+                throw new RuntimeException("A completed string has no position in the template.");
 
-        /**
-         * Test if the previous nibble slot has been completed.
-         */
-        public boolean isPreviousNibbleComplete() {
-            int prevNibbleId = getPreviousNibbleId();
-            // Since a nibble is impacted by two characters, we should be checking for two different characters right?
-            // Well no, because we are guaranteed that the current object is one of those, and so the only other relevant nibble ID is the exact match.
-            for (int i = this.position + 1; i < this.characters.length; i++)
-                if (prevNibbleId == calculateNibbleId(this.context.getTargetLength(), this.context.getIndicesToReplace()[i]))
-                    return false;
-            return true;
+            return this.context.getIndicesToReplace()[this.position];
         }
 
         /**
@@ -360,26 +645,33 @@ public class TGQHashReverser {
         }
 
         /**
-         * Gets the nibble Xor value for the given nibble ID.
-         * @param nibbleId The nibble ID to get the xor value for.
-         * @return nibbleXorValue
+         * Choose the next character in the sequence.
+         * @param node The node selected in the tree representing the next character chosen.
+         * @return A new object with the slightly more completed string.
          */
-        public byte getNibbleXor(int nibbleId) {
-            return getNibble(this.hash ^ this.context.getTargetHash(), nibbleId);
+        public PartialHashString chooseNext(CharacterPairTreeNode node) {
+            return this.chooseNext(node, null);
         }
 
         /**
          * Choose the next character in the sequence.
-         * @param chosen The character to choose.
+         * @param node The node selected in the tree representing the next character chosen.
          * @return A new object with the slightly more completed string.
          */
-        public TGQHashString chooseNext(char chosen) {
+        public PartialHashString chooseNext(CharacterPairTreeNode node, CharacterPairTreeNode prevNibbleNode) {
             if (isDone())
                 throw new RuntimeException("Cannot add more characters to a completed string.");
 
             // Setup new string array.
+            char chosen = node.getFirst();
             char[] newCharacters = Arrays.copyOf(this.characters, this.characters.length);
             newCharacters[this.position] = chosen;
+
+            // Setup new node array.
+            CharacterPairTreeBase[] newNodes = Arrays.copyOf(this.treeNodes, this.treeNodes.length);
+            newNodes[getNibbleId()] = node;
+            if (prevNibbleNode != null)
+                newNodes[getPreviousNibbleId()] = prevNibbleNode;
 
             // For hash calculating purposes, treat it as lower case.
             if (!UPPER_CASE_SUPPORTED && isUpperCaseLetter(chosen))
@@ -391,237 +683,182 @@ public class TGQHashReverser {
             if (nibbleId == NIBBLE_COUNT - 1) // If we're at the highest bit, make sure to XOR the lowest one too.
                 newHash ^= getNibble(chosen, 1);
 
-            return new TGQHashString(this.context, newCharacters, this.position + 1, newHash);
+            return new PartialHashString(this.context, newCharacters, newNodes, this.position + 1, newHash);
+        }
+
+        private boolean canUseNode(CharacterPairTreeNode node, boolean isLastCharacterInSequence) {
+            boolean debugMode = isDebuggable();
+
+            // Perform duplicate mode checks.
+            if (this.context.isRepeatMode()) {
+                if (this.position >= this.context.getRepeatSequenceLength()) { // Test if we're past the first sequence.
+                    // Ensure we're only allowing the same characters as the first sequence.
+                    int relativePos = this.position % this.context.getRepeatSequenceLength();
+                    if (node.getFirst() != this.characters[relativePos]) {
+                        if (debugMode) {
+                            System.out.print(" - Denying '");
+                            System.out.print(node.getIdentifier());
+                            System.out.print("', because the duplicated character was '");
+                            System.out.print(this.characters[relativePos]);
+                            System.out.println("'.");
+                        }
+
+                        return false;
+                    }
+                } else {
+                    // Determine if any already applied characters impact the current nibble.
+                    int currentNibble = getNibbleId();
+                    for (int i = 0; i <= this.position; i++) {
+                        int futureStrIndex = this.context.getIndicesToReplace()[i + this.context.getRepeatSequenceLength()];
+                        int targetNibble = calculateNibbleId(this.context.getTargetLength(), futureStrIndex);
+                        if (targetNibble != currentNibble)
+                            continue;
+
+                        int actualStrIndex = this.context.getIndicesToReplace()[i];
+                        int actualNibble = calculateNibbleId(this.context.getTargetLength(), actualStrIndex);
+                        CharacterPairTreeBase futureBase = (i == this.position) ? node : this.treeNodes[actualNibble];
+                        if (futureBase.isRoot())
+                            continue;
+
+                        // Ensure that the node we're testing can use the .
+                        // This works even if this is the end of a sequence because end of sequence always has '\0' as the next character.
+                        CharacterPairTreeNode futureNode = (CharacterPairTreeNode) futureBase;
+                        if (node.getChild(futureNode.getFirst(), futureNode.getSecond(), false) == null) {
+                            if (debugMode) {
+                                System.out.print(" - Denying '");
+                                System.out.print(node.getIdentifier());
+                                System.out.println("', because it wasn't duplicable in the future.");
+                            }
+
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            // Normal checks.
+            if (node.getFirst() == '\0') {
+                if (debugMode) {
+                    System.out.print(" - Denying '");
+                    System.out.print(node.getFirst());
+                    System.out.println("'.");
+                }
+
+                return false;
+            } else if (isLastCharacterInSequence) {
+                // This runs at the last character in a sequence.
+                // The next character by definition of "end of sequence" was given to us in the template.
+                // Therefore, it was XOR'd out, and we're looking for a null character (no impact on XOR) as the secondary character.
+                if (node.getSecond() != '\0') {
+                    if (debugMode) {
+                        System.out.print(" - Denying '");
+                        System.out.print(node.getIdentifier());
+                        System.out.println("' because at the end of a sequence we need a NULL char.");
+                    }
+
+                    // Only null characters are allowed for the last character in a string.
+                    return false;
+                } else if (debugMode) {
+                    System.out.print(" - Approving '");
+                    System.out.print(node.getFirst());
+                    System.out.println("' for end of sequence.");
+                }
+            } else if (debugMode) {
+                System.out.print(" - Approving '");
+                System.out.print(node.getIdentifier());
+                System.out.println("'...");
+            }
+
+            return true;
         }
 
         /**
          * Generates possible next characters, and adds them to the provided queue.
-         * This function is a mess, I don't think it's worth the effort to clean up though...
          * @param queue The queue to add the guesses to.
          */
-        public void queueGuessesAtNextCharacter(List<TGQHashString> queue) {
+        public void guessNextCharacter(List<PartialHashString> queue) {
             if (isDone())
                 return; // Nothing to add.
 
-            boolean debugMode = this.context.isDebugMode();
+            boolean debugMode = isDebuggable();
             int[] charSlots = this.context.getIndicesToReplace();
+            int charTemplatePos = getTemplateIndex(); // The position of the character in the template we are guessing.
+            CharacterPairTreeBase currNode = this.treeNodes[getNibbleId()];
+            CharacterPairTreeBase prevNode = this.treeNodes[getPreviousNibbleId()];
             boolean isLastCharacterInString = (this.position >= this.characters.length - 1);
-            boolean isLastCharacterInSequence = isLastCharacterInString || (charSlots[this.position] + 1 != charSlots[this.position + 1]);
+            boolean isLastCharacterInSequence = isLastCharacterInString || (charTemplatePos + 1 != charSlots[this.position + 1]);
             boolean isFirstInSequence = (this.position == 0) // If we're beyond the first replacement character,
-                    || (charSlots[this.position] != charSlots[this.position - 1] + 1); // Check if the last character was part of the template (and subsequently was XOR'd out already.)
+                    || (charTemplatePos != charSlots[this.position - 1] + 1); // Check if the last character was part of the template (and subsequently was XOR'd out already.)
 
             if (debugMode) {
                 System.out.print("Current Chars: '");
                 System.out.print(this);
-                System.out.print("', isFirstInSequence: ");
+                System.out.print("', Nibble ID: ");
+                System.out.print(getNibbleId());
+                System.out.print(", isFirstInSequence: ");
                 System.out.print(isFirstInSequence);
-                System.out.print(", isLastCharacter: ");
-                System.out.print(isLastCharacterInString);
+                System.out.print(", isLastCharacterInSequence: ");
+                System.out.print(isLastCharacterInSequence);
+                System.out.print(", isLastCharacterInString: ");
+                System.out.println(isLastCharacterInString);
             }
 
             if (!isFirstInSequence) {
                 // Because we know we have at least one character came directly before this one (eg: it is not the first in a sequence),
                 // we can use it to determine a short list of potential characters which could belong here.
 
-                int lastNibbleId = getPreviousNibbleId();
-                int lastNibbleXor = getNibble(getNibbleXor(lastNibbleId) ^ getLastCharacter(), 0); // Undoes the last character so we can find the last character.
-                short[] charPairs = binarySearchXorTable(XOR_LOOKUP_TABLE[lastNibbleXor], (byte) getLastCharacter());
-                if (debugMode) {
-                    System.out.print(", Last Nibble: ");
-                    System.out.print(lastNibbleId);
-                    System.out.print(", XOR: ");
-                    System.out.println(lastNibbleXor);
-                }
-
-                if (charPairs == null || charPairs.length == 0)
+                // We know the previous one is not a root node because this isn't the first character in the sequence.
+                char lastCharacter = ((CharacterPairTreeNode) prevNode).getSecond();
+                List<CharacterPairTreeNode> newNodes = currNode.getChildren(lastCharacter);
+                if (newNodes == null || newNodes.isEmpty())
                     return; // Skip empty.
 
                 if (debugMode) {
                     System.out.print(" - Found ");
-                    System.out.print(charPairs.length);
-                    System.out.print(" character pairs: ");
-                    printShortArray(charPairs);
+                    System.out.print(newNodes.size());
+                    System.out.print(" character pair(s): ");
+                    printShortArray(newNodes);
                     System.out.println();
                 }
 
-                byte nibbleXor = getNibbleXor(getNibbleId());
-                if (isLastCharacterInString) {
-                    // Because this is the last character, it means the only bits to apply to the final nibble are from this character.
-                    // Therefore, we can have a check to confirm the validity of these characters.
-
-                    if (debugMode) {
-                        System.out.print(" - XOR Target: ");
-                        System.out.print(nibbleXor);
-                        System.out.println();
-                    }
-
-                    for (int i = 0; i < charPairs.length; i++) {
-                        short value = charPairs[i];
-                        byte nextByte = getSecondaryByteFromShort(value);
-                        boolean validChar = getNibble(nextByte, 0) == nibbleXor;
-
-                        if (debugMode) {
-                            System.out.print(" - ");
-                            System.out.print(validChar ? "Approving" : "Denying");
-                            System.out.print(" '");
-                            System.out.print((char) nextByte);
-                            System.out.print("' with XOR ");
-                            System.out.print(getNibble(nextByte, 0));
-                            System.out.println();
-                        }
-
-                        if (validChar)
-                            queue.add(chooseNext((char) nextByte));
-                    }
-                } else {
-                    // We know the bits from whatever character we choose will satisfy the last nibble since we operate under the assumption
-                    // that the last character was a valid choice, and on this execution path we chose another character as part of the same sequence as this one.
-                    // If we are the last character in the sequence, then we must verify the following nibble/character is compatible with our choice.
-                    // We do not need to verify if an upcoming nibble is complete, because we're directly testing if the seen character is compatible with the character we're looking to add, something independent of the xor state.
-
-                    // Add next characters.
-                    for (int i = 0; i < charPairs.length; i++) {
-                        short value = charPairs[i];
-                        byte nextByte = getSecondaryByteFromShort(value);
-
-                        if (isLastCharacterInSequence) {
-                            // As stated above, we need to check that the byte we've chosen is compatible.
-                            // We can test this by checking if the nibble xor matches the lower nibble of the character we're adding.
-                            // We don't need to include the other character because it was XOR'd out by nature of it being in the template.
-                            byte testXor = getNibble(nextByte, 0);
-
-                            boolean pass = (testXor == nibbleXor);
-                            if (debugMode) {
-                                System.out.print(" - ");
-                                System.out.print(pass ? "Approving" : "Denying");
-                                System.out.print(" '");
-                                System.out.print((char) nextByte);
-                                System.out.print("' with XOR ");
-                                System.out.print(testXor);
-                                System.out.println('.');
-                            }
-
-                            if (!pass)
-                                continue;
-                        }
-
-                        queue.add(chooseNext((char) nextByte));
-                    }
+                // Add next characters.
+                for (int i = 0; i < newNodes.size(); i++) {
+                    CharacterPairTreeNode newNode = newNodes.get(i);
+                    if (canUseNode(newNode, isLastCharacterInSequence))
+                        queue.add(chooseNext(newNode));
                 }
 
                 return;
             }
 
-            // We have the first character in a sequence.
+            // As the first character in a sequence, the previous nibble should have a null character.
+            // This is because its next impact is from the character we're about to select.
+            // We can use that to limit what nodes can come next though.
+            List<CharacterPairTreeNode> prevNodes = prevNode.getChildren('\0');
+            if (prevNodes == null || prevNodes.isEmpty())
+                return;
 
-            // All characters present in the template (& the string length) are cancelled out by XORing them.
-            // Due to this cancellation, the current nibble has no influences on it besides the lower nibble of the character at this spot.
-            // Therefore, we can just find all characters that have a lower nibble matching the current nibble XOR.
-            int xorValue = getNibbleXor(getNibbleId());
-            if (debugMode) {
-                System.out.print(", Nibble: ");
-                System.out.print(getNibbleId());
-                System.out.print(", XOR: ");
-                System.out.println(xorValue);
-            }
+            // Add new characters.
+            for (int i = 0; i < prevNodes.size(); i++) {
+                CharacterPairTreeNode keyNode = prevNodes.get(i);
 
-            if (isLastCharacterInSequence) {
-                // We've reached the last character in the string, so the final character we pick is on its own.
-                // We can select it by finding values that XOR to the desired value for the nibble, and make the previous nibble match.
-                // We do NOT need to care if another character impacts the previous nibble, because if we're at the end of a sequence, it's been XOR'd out, and if we're at the end of the string, there's no further character.
-
-                char[] validChars = CHAR_NIBBLE_LOOKUP_TABLE[xorValue];
-                int targetNibble = getNibbleXor(getPreviousNibbleId());
-                boolean prevNibbleComplete = isPreviousNibbleComplete(); // TODO: Right now, validChars[] can lookup with the wrong xorValue if the value can be updated from later characters.
-                if (debugMode) {
-                    System.out.print(" - Testing characters in '");
-                    System.out.print(new String(validChars));
-                    if (prevNibbleComplete) {
-                        System.out.print("' for those who have an upper nibble matching ");
-                        System.out.print(targetNibble);
-                        System.out.println(".");
-                    } else {
-                        System.out.println("'.");
-                    }
-                }
-
-                for (int i = 0; i < validChars.length; i++) {
-                    char nextChar = validChars[i];
-                    byte highNibble = getNibble(nextChar, 1);
-
-                    // Verify the data XOR'd into the previous nibble validates it.
-                    if (!prevNibbleComplete || targetNibble == highNibble) {
-                        if (debugMode)
-                            System.out.print(" - Approving '");
-                        queue.add(chooseNext(nextChar));
-                    } else if (debugMode) {
-                        System.out.print(" - Denying '");
-                    }
-
-                    if (debugMode) {
-                        System.out.print(nextChar);
-                        System.out.print("', highNibble: ");
-                        System.out.println(highNibble);
-                    }
-                }
-            } else {
-                // We're somewhere before the end of the string.
-                // Valid characters make the current nibble have the correct value.
-                // They also are checked against the next nibble to ensure the next value we select is good.
-                // Additionally, if the previous nibble is safe to test against, we will test against it.
-
-                short[] charPairs = XOR_LOOKUP_TABLE[xorValue];
-                if (charPairs == null || charPairs.length == 0)
-                    return; // Nothing found.
+                // Find the possible pairs we can assume
+                List<CharacterPairTreeNode> ourNodes = currNode.getChildren(keyNode.getSecond());
+                if (ourNodes == null || ourNodes.isEmpty())
+                    continue; // None.
 
                 if (debugMode) {
                     System.out.print(" - Found ");
-                    System.out.print(charPairs.length);
+                    System.out.print(ourNodes.size());
                     System.out.print(" character pairs: ");
-                    printShortArray(charPairs);
+                    printShortArray(ourNodes);
                     System.out.println();
                 }
 
-                // Add new characters.
-                int prevXorNibble = getNibbleXor(getPreviousNibbleId());
-                boolean prevNibbleComplete = isPreviousNibbleComplete();
-
-                byte lastPrimary = (byte) -1;
-                for (int i = 0; i < charPairs.length; i++) {
-                    byte primary = getPrimaryByteFromShort(charPairs[i]);
-                    if (primary == lastPrimary)
-                        continue;
-
-                    // If the previous nibble is complete, verify our selected character is compatible with it.
-                    if (prevNibbleComplete && prevXorNibble != getNibble(primary, 1)) {
-                        if (debugMode) {
-                            System.out.print(" - Denying '");
-                            System.out.print((char) primary);
-                            System.out.print("' from '");
-                            System.out.print((char) primary);
-                            System.out.print((char) getSecondaryByteFromShort(charPairs[i]));
-                            System.out.print("', because the character nibble needed to be ");
-                            System.out.print(prevXorNibble);
-                            System.out.print(", but was ");
-                            System.out.print(getNibble(primary, 1));
-                            System.out.println('.');
-                        }
-
-                        lastPrimary = primary; // Skip to the next primary value.
-                        continue;
-                    }
-
-                    // Add character.
-                    lastPrimary = primary;
-                    queue.add(chooseNext((char) primary));
-                    if (debugMode) {
-                        System.out.print(" - Approving character '");
-                        System.out.print((char) primary);
-                        System.out.print("' from '");
-                        System.out.print((char) primary);
-                        System.out.print((char) getSecondaryByteFromShort(charPairs[i]));
-                        System.out.println("'.");
-                    }
+                for (int j = 0; j < ourNodes.size(); j++) {
+                    CharacterPairTreeNode testNode = ourNodes.get(j);
+                    if (canUseNode(testNode, isLastCharacterInSequence))
+                        queue.add(chooseNext(testNode, keyNode));
                 }
             }
         }
@@ -662,7 +899,20 @@ public class TGQHashReverser {
         private final int[] indicesToReplace;
         private final int templateHash;
         private final int targetHash;
+        private final int repeatSequenceLength;
         private final boolean debugMode;
+
+        /**
+         * Tests if repeat mode is active.
+         * Repeat mode means all sequences are the same size as each other, and we assume the same characters are used in each.
+         * In other words, finding the characters in the first sequence will find the characters in all remaining sequences.
+         * This is useful for filenames like "S17ePBanqBnch\BanqBnchx" where the folder name & file name are the same / duplicated.
+         * When we search "$EE1DFE1A,S17ePB*******\B*******x", this search would likely take years through a normal approach.
+         * But, using repeat mode cuts it down to a few seconds.
+         */
+        public boolean isRepeatMode() {
+            return this.repeatSequenceLength >= 0;
+        }
 
         /**
          * Gets the length of the strings which can be created from this context.
@@ -681,43 +931,6 @@ public class TGQHashReverser {
 
     private static byte getNibble(int number, int nibbleId) {
         return (byte) ((number >> (nibbleId << 2)) & 0x0F);
-    }
-
-    private static short[] binarySearchXorTable(short[] xorTable, byte targetByte) {
-        int left = 0, right = xorTable.length - 1;
-
-        while (left <= right) {
-            int midIndex = (left + right) / 2;
-            byte primaryByte = getPrimaryByteFromShort(xorTable[midIndex]);
-
-            if (targetByte == primaryByte) {
-                // Find all matching bytes to the left.
-                int leftMin = left;
-                for (left = midIndex; left > leftMin; left--) {
-                    if (getPrimaryByteFromShort(xorTable[left]) != targetByte) {
-                        left++;
-                        break;
-                    }
-                }
-
-                // Find all matching bytes to the right.
-                int rightMax = right;
-                for (right = midIndex; right < rightMax; right++) {
-                    if (getPrimaryByteFromShort(xorTable[right]) != targetByte) {
-                        right--;
-                        break;
-                    }
-                }
-
-                return Arrays.copyOfRange(xorTable, left, right + 1);
-            } else if (targetByte > primaryByte) {
-                left = midIndex + 1;
-            } else {
-                right = midIndex - 1;
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -762,18 +975,22 @@ public class TGQHashReverser {
         return posArray;
     }
 
-    private static void printShortArray(short[] array) {
-        for (int j = 0; j < array.length; j++) {
+    private static void printShortArray(List<CharacterPairTreeNode> nodes) {
+        for (int j = 0; j < nodes.size(); j++) {
             if (j > 0)
                 System.out.print(' ');
-            System.out.print((char) getPrimaryByteFromShort(array[j]));
-            System.out.print((char) getSecondaryByteFromShort(array[j]));
+            System.out.print(nodes.get(j).getFirst());
+            System.out.print(nodes.get(j).getSecond());
         }
+    }
+
+    private static boolean isUpperCaseLetter(char value) {
+        return value >= 'A' && value <= 'Z';
     }
 
     @SuppressWarnings("unchecked")
     private static void initXorLookupTable() {
-        if (XOR_LOOKUP_TABLE != null)
+        if (XOR_LOOKUP_TABLE != null && CHARACTER_PAIRS != null)
             return;
 
         // Setup upper case test.
@@ -799,25 +1016,31 @@ public class TGQHashReverser {
             lookupTable[i] = new ArrayList<>();
 
         // Map xor nibbles to the character combinations that can create them.
+        int pairCount = 0;
         for (int i = 0; i < VALID_HASH_CHARACTERS.length; i++) {
             char primary = VALID_HASH_CHARACTERS[i];
             for (int j = 0; j < VALID_HASH_CHARACTERS.length; j++) {
                 char secondary = VALID_HASH_CHARACTERS[j];
                 byte xorValue = (byte) (getNibble(primary, 0) ^ getNibble(secondary, 1));
                 lookupTable[xorValue].add(makeShortFromBytes((byte) primary, (byte) secondary));
+                pairCount++;
             }
         }
 
         // Populate lookup table from list.
-        for (int i = 0; i < XOR_LOOKUP_TABLE.length; i++) {
+        CHARACTER_PAIRS = new short[pairCount];
+        for (int i = 0, pair = 0; i < XOR_LOOKUP_TABLE.length; i++) {
             List<Short> list = lookupTable[i];
             list.sort(Comparator.comparingInt(TGQHashReverser::getPrimaryByteFromShort)
                     .thenComparingInt(TGQHashReverser::getSecondaryByteFromShort));
 
             // Convert list to array.
             short[] newArray = new short[list.size()];
-            for (int j = 0; j < list.size(); j++)
-                newArray[j] = list.get(j);
+            for (int j = 0; j < list.size(); j++) {
+                short value = list.get(j);
+                newArray[j] = value;
+                CHARACTER_PAIRS[pair++] = value;
+            }
 
             XOR_LOOKUP_TABLE[i] = newArray;
         }
@@ -858,9 +1081,121 @@ public class TGQHashReverser {
     private static void initGlobalData() {
         initNibbleLookupTable();
         initXorLookupTable();
+        initLookupTree();
     }
 
-    private static boolean isUpperCaseLetter(char value) {
-        return value >= 'A' && value <= 'Z';
+    private static void initLookupTree() {
+        if (XOR_LOOKUP_TREES != null)
+            return;
+
+        initNibbleLookupTable(); // We need the character pair nibble lookup table setup.
+        long startTime = System.currentTimeMillis();
+        System.out.println("Setting up XOR lookup trees...");
+
+        // [height][xorNibble]
+        XOR_LOOKUP_TREES = new CharacterPairTreeBase[MAXIMUM_UNKNOWN_CHARACTERS_PER_NIBBLE][];
+        for (int i = 0; i < XOR_LOOKUP_TREES.length; i++) {
+            long treeStart = System.currentTimeMillis();
+            XOR_LOOKUP_TREES[i] = generateLookupTrees(i + 1);
+            long treeEnd = System.currentTimeMillis();
+            System.out.println("Generated XOR lookup tree of height " + (i + 1) + " in " + (treeEnd - treeStart) + " ms.");
+        }
+
+        // Done
+        long endTime = System.currentTimeMillis();
+        System.out.println("XOR lookup trees setup in " + (endTime - startTime) + " ms.");
     }
+
+    private static CharacterPairTreeBase[] generateLookupTrees(int unknownCharacterCount) {
+        CharacterPairTreeBase[] results = new CharacterPairTreeBase[16]; // A nibble has 16 possible values.
+        for (int i = 0; i < results.length; i++)
+            results[i] = new CharacterPairTreeBase();
+
+        // Generate permutations of all the character pairs.
+        int[] currentPairs = new int[unknownCharacterCount];
+        int[] currentXorValues = new int[unknownCharacterCount];
+        do {
+            // XOR the current character pairs.
+            int xorNibble = 0;
+            for (int i = 0; i < unknownCharacterCount; i++)
+                xorNibble ^= currentXorValues[i];
+
+            // Add children to tree.
+            CharacterPairTreeBase temp = results[xorNibble];
+            for (int i = 0; i < unknownCharacterCount; i++) {
+                short characterPair = XOR_LOOKUP_TABLE[currentXorValues[i]][currentPairs[i]];
+                temp = temp.getChild(characterPair, true);
+            }
+        } while (nextPermutation(currentPairs, currentXorValues, unknownCharacterCount - 1));
+
+        return results;
+    }
+
+    private static boolean nextPermutation(int[] currentPairs, int[] currentXorValues, int index) {
+        if (index < 0) // There are no more permutations.
+            return false;
+
+        int currentXor = currentXorValues[index];
+        int currentPair = currentPairs[index];
+        short[] characterPairs = XOR_LOOKUP_TABLE[currentXor];
+
+        // Move to the next character pair, if possible.
+        if (characterPairs.length > currentPair + 1) {
+            currentPairs[index]++;
+            return true;
+        }
+
+        // Move to the next character pair array, by increasing the XOR value.
+        if (XOR_LOOKUP_TABLE.length > currentXor + 1) {
+            currentPairs[index] = 0;
+            currentXorValues[index]++;
+            return true;
+        }
+
+        // We've gone through all combinations for this index, move to the next one.
+        currentPairs[index] = 0;
+        currentXorValues[index] = 0;
+        return nextPermutation(currentPairs, currentXorValues, index - 1);
+    }
+
+    // Tests:
+    /*
+
+    Basic Tests:
+    $4019FB66,S00lIFrogLog*g (Test single character)
+    $4019FB66,S00lIFrogLogo* (Test single character at end of string)
+    $4019FB66,S00lIFrogL**og (Test two characters)
+    $4019FB66,S00lIFrogLog** (Test two characters at end of string)
+    $4019FB66,S00lIFr*gL*gog (Test multiple sequences work)
+    $4019FB66,S00lIF**g**gog (Test multiple sequences work)
+    $4019FB66,S00lI***g**go* (Test multiple sequences work)
+
+    Long Tests:
+    $4019FB66,S00lIFr******* [7 Chars, Results: 180, 34 ms]
+    $4019FB66,S00lIF*******g [7 Chars, Results: 120, 2 ms]
+    $4019FB66,S00lIF******** [8 Chars, Results: 900, 30 ms]
+    $4019FB66,S00lI********g [8 Chars, Results: 900, 19 ms]
+    $4019FB66,S00lI********* [9 Chars, Results: 46080, 18195 ms]
+
+    Verify that duplicate character searching works:
+    $BABB13D8,S17ePB*******\B*******x (8192ms)
+    $BABB13D8,S17ePBr******\Br******x (953 ms)
+    $BABB13D8,S17ePBri*****\Bri*****x (563 ms)
+    $BABB13D8,S17ePBric****\Bric****x (116 ms)
+    $BABB13D8,S17ePBrick***\Brick***x (46 ms)
+    $BABB13D8,S17ePBrickP**\BrickP**x (11 ms)
+    $BABB13D8,S17ePBrickPc*\BrickPc*x (1 ms)
+
+    General Tests:
+    $846BF293,S17ePT***Flag\T***Flagx -> S17ePTowrFlag\TowrFlagx (No Repeat: 30 seconds, Repeat: 72 ms)
+    $8A47C99F,S17ePJoy***\Joy***x -> S17ePJoyPic\JoyPicx (No Repeat: 30 seconds, Repeat: 112 ms)
+    $7ECD534C,S17ePKnight**\Knight**x -> S17ePKnightSt\KnightStx (No Repeat: 70 ms)
+    $D69CBF6A,S17ePKit*****\Kit*****x -> S17ePKitShelf\KitShelfx (Repeat: 450 ms, No Repeat: Too Long)
+    $8B3C5ADC,S17ePKit***\Kit***x -> S17ePKitTop\KitTopx (No Repeat: 41 seconds, Repeat: 184 ms)
+    $EF67CCCA,S17ePBanq****\Banq****x -> S17ePBanqTble\BanqTblex (No Repeat: Too Long, Repeat: 142 ms)
+    $EE1DFE1A,S17ePBanq****\Banq****x -> S17ePBanqBnch\BanqBnchx (No Repeat: Too Long, Repeat: 103 ms)
+
+    Expected Failure:
+    !BABB13D8,S17ePBrickPc*\BrickPc*x (Only if we force duplicate mode.)
+     */
 }

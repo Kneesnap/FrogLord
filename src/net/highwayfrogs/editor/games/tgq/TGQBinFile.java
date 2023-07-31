@@ -218,6 +218,9 @@ public class TGQBinFile extends GameObject {
             fileName = scanner.nextLine();
         }
 
+        if (Utils.stripAlphanumeric(fileName).equalsIgnoreCase("hash"))
+            TGQHashReverser.runHashPlayground();
+
         File binFile = new File(fileName);
         if (!binFile.exists() || !binFile.isFile()) {
             System.out.println("That is not a valid file!");
@@ -263,7 +266,6 @@ public class TGQBinFile extends GameObject {
         exportDummyFiles(exportDir, mainFile);
         System.out.println("Done.");
     }
-
 
     /**
      * Activates the filename
