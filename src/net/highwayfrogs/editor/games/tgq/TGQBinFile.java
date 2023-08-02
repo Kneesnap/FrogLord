@@ -33,7 +33,8 @@ import java.util.stream.Collectors;
  * Notes: PS2 bin is way smaller than PC file. Support it eventually.
  * .SBR files contain sound headers. the SCK file seems to contain .wav files sequentially, likely using header data from the .SBR. TODO: Support exporting these to .wav
  * .PSS (PS2) are video files. Can be opened with VLC.
- * BUFFER.DAT files (PS2) are video files, and can be openned with VLC.
+ * BUFFER.DAT files (PS2) are video files, and can be opened with VLC.
+ * TODO: kcOpen() accesses a global flag that tells the game if it should read files from the filesystem or from a .bin file. We could consider a mod to the game to have it load from the file system.
  * Created by Kneesnap on 8/17/2019.
  */
 @Getter

@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
+import net.highwayfrogs.editor.games.tgq.map.kcEnvironment;
 import net.highwayfrogs.editor.games.tgq.script.kcScriptList;
 import net.highwayfrogs.editor.games.tgq.toc.KCResourceID;
 import net.highwayfrogs.editor.games.tgq.toc.TGQDummyFileChunk;
@@ -46,7 +47,9 @@ public class TGQChunkedFile extends TGQFile {
             KCResourceID readType = KCResourceID.getByMagic(magic);
 
             kcCResource newChunk;
-            if (readType == KCResourceID.RAW && Utils.testSignature(readBytes, kcScriptList.GLOBAL_SCRIPT_NAME)) {
+            if (readType == KCResourceID.RAW && Utils.testSignature(readBytes, kcEnvironment.ENVIRONMENT_NAME)) {
+                newChunk = new kcEnvironment(this);
+            } else if (readType == KCResourceID.RAW && Utils.testSignature(readBytes, kcScriptList.GLOBAL_SCRIPT_NAME)) {
                 newChunk = new kcScriptList(this);
             } else if (readType != null && readType.getMaker() != null) {
                 newChunk = readType.getMaker().apply(this);
@@ -118,6 +121,19 @@ public class TGQChunkedFile extends TGQFile {
         infoWriter.write("Has Compression: " + isCompressed() + Constants.NEWLINE);
 
         if (this.chunks.size() > 0) {
+            // Write environment info
+            for (kcCResource chunk : this.chunks) {
+                if (!(chunk instanceof kcEnvironment))
+                    continue;
+
+                infoWriter.write(Constants.NEWLINE);
+                infoWriter.write("kcEnvironment:");
+                infoWriter.write(Constants.NEWLINE);
+                StringBuilder builder = new StringBuilder();
+                ((kcEnvironment) chunk).writeInfo(builder, " ");
+                infoWriter.write(builder.toString());
+            }
+
             infoWriter.write(Constants.NEWLINE);
             infoWriter.write("Chunks (");
             infoWriter.write(String.valueOf(this.chunks.size()));

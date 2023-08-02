@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.games.tgq;
 
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
@@ -163,5 +165,27 @@ public class TGQUtils {
         }
 
         return -1;
+    }
+
+    /**
+     * Reads a boolean from the reader in the format Frogger TGQ stores them.
+     * TODO: When porting to MTF, make this an extension method for reading this kind of bool. readKcBool().
+     * @param reader The reader to read from.
+     * @return boolValue
+     */
+    public static boolean readTGQBoolean(DataReader reader) {
+        int boolNumber = reader.readInt();
+        if (boolNumber != 1 && boolNumber != 0)
+            throw new RuntimeException("The int32 value was expected to be a boolean, but was actually " + boolNumber + ".");
+        return boolNumber != 0;
+    }
+
+    /**
+     * Writes a boolean in the format Frogger TGQ stores them.
+     * @param writer The writer to write to.
+     * @param value  The boolean value to write.
+     */
+    public static void writeTGQBoolean(DataWriter writer, boolean value) {
+        writer.writeInt(value ? 1 : 0);
     }
 }
