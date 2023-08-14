@@ -28,6 +28,69 @@ public class kcMaterialLoadContext {
     }
 
     /**
+     * Apply texture file names.
+     * @param fullPath  The full file path to apply texture names from.
+     * @param materials The materials to apply texture file names from.
+     */
+    public void applyTextureFileNames(TGQFile sourceFile, String fullPath, List<kcMaterial> materials) {
+        if (fullPath == null || fullPath.isEmpty())
+            return;
+
+        // Test how many directories exist in the path, so we know how many directories we can check.
+        int folderCount = 0;
+        for (int i = 0; i < fullPath.length(); i++)
+            if (fullPath.charAt(i) == '\\')
+                folderCount++;
+
+        boolean allowParentDirectory = (folderCount > 4);
+        for (kcMaterial material : materials) {
+            if (material.getTextureFileName() == null)
+                continue;
+
+            boolean textureApplied = false;
+            String textureFileName = Utils.stripExtension(material.getTextureFileName());
+            if (textureFileName.isEmpty())
+                continue;
+
+            // Search for texture local to model folder.
+            int lastDirectorySeparator = fullPath.lastIndexOf('\\');
+            if (lastDirectorySeparator == -1)
+                continue;
+
+            String texturePath = fullPath.substring(0, lastDirectorySeparator + 1)
+                    + textureFileName + ".img";
+
+            TGQFile file = this.mainArchive.applyFileName(texturePath, false);
+
+            if (file instanceof TGQImageFile) {
+                material.setTexture((TGQImageFile) file);
+                this.allMaterials.put(material, sourceFile);
+                this.multipleMatchMaterials.remove(material); // We prefer the texture referenced in the same chunked file, so if that exists we don't consider there to be multiple files which could apply.
+                textureApplied = true;
+            }
+
+            if (!allowParentDirectory)
+                continue;
+
+            // Repeat but apply to the parent directory.
+            lastDirectorySeparator = texturePath.lastIndexOf('\\');
+            if (lastDirectorySeparator == -1)
+                continue;
+
+            texturePath = texturePath.substring(0, lastDirectorySeparator + 1)
+                    + textureFileName + ".img";
+
+            file = this.mainArchive.applyFileName(texturePath, false);
+
+            if (!textureApplied && file instanceof TGQImageFile) {
+                material.setTexture((TGQImageFile) file);
+                this.allMaterials.put(material, sourceFile);
+                this.multipleMatchMaterials.remove(material); // We prefer the texture referenced in the same chunked file, so if that exists we don't consider there to be multiple files which could apply.
+            }
+        }
+    }
+
+    /**
      * Resolve textures for all provided materials from the chunked file.
      * The file which the materials are considered to have come from is the chunked file.
      * @param chunkedFile The file to search for images to resolve from.
@@ -47,26 +110,15 @@ public class kcMaterialLoadContext {
         if (materials == null || materials.isEmpty())
             return;
 
-        Map<String, TGQImageFile> cachedImages = this.chunkedFileImageCache.get(chunkedFile);
-        if (cachedImages == null) {
-            this.chunkedFileImageCache.put(chunkedFile, cachedImages = new HashMap<>());
-            for (kcCResource resource : chunkedFile.getChunks()) {
-                if (!(resource instanceof TGQChunkTextureReference))
-                    continue;
-
-                TGQChunkTextureReference texRef = (TGQChunkTextureReference) resource;
-                TGQFile texRefFile = chunkedFile.getMainArchive().getFileByName(chunkedFile, texRef.getPath());
-                if (texRefFile instanceof TGQImageFile)
-                    cachedImages.put(Utils.stripExtension(texRefFile.getFileName()), (TGQImageFile) texRefFile);
-            }
-        }
-
         for (kcMaterial material : materials) {
-            TGQImageFile image = cachedImages.get(Utils.stripExtension(material.getTextureFileName()));
+            if (material.getTexture() != null)
+                continue;
+
+            TGQImageFile image = findLocalImageFile(chunkedFile, material.getTextureFileName());
             this.allMaterials.put(material, sourceFile);
             if (image != null) {
                 material.setTexture(image);
-                this.multipleMatchMaterials.remove(material); // We prefer the one in the same chunked file, so if that exists we don't consider there to be multiple files which could apply.
+                this.multipleMatchMaterials.remove(material); // We prefer the texture referenced in the same chunked file, so if that exists we don't consider there to be multiple files which could apply.
             }
         }
     }
@@ -90,7 +142,7 @@ public class kcMaterialLoadContext {
                 }
             }
 
-            // Sort the
+            // Sort the cache.
             this.globalCachedImages.values().forEach(list -> list.sort(Comparator.comparingInt(TGQFile::getArchiveIndex)));
         }
 
@@ -134,7 +186,7 @@ public class kcMaterialLoadContext {
                     String texturePath = file.getFilePath().substring(0, lastDirectorySeparator + 1)
                             + Utils.stripExtension(material.getTextureFileName()) + ".img";
 
-                    TGQFile targetImageFile = this.mainArchive.applyFileName(texturePath);
+                    TGQFile targetImageFile = this.mainArchive.applyFileName(texturePath, false);
                     if (targetImageFile != null) {
                         if (!(targetImageFile instanceof TGQImageFile))
                             throw new RuntimeException("We found a file for material ref '" + texturePath + "', but it wasn't an image file! It was a(n) " + targetImageFile.getClass().getSimpleName() + ".");
@@ -152,5 +204,33 @@ public class kcMaterialLoadContext {
                 for (TGQImageFile foundImage : foundImages)
                     System.out.println(" - " + foundImage.getDebugName());
         }
+    }
+
+    /**
+     * Find a texture local to the given chunked file.
+     * @param chunkedFile   The chunked file which the image is searched from.
+     * @param imageFileName The texture file name.
+     * @return localImageFile or null.
+     */
+    private TGQImageFile findLocalImageFile(TGQChunkedFile chunkedFile, String imageFileName) {
+        String strippedTextureFileName = Utils.stripExtension(imageFileName);
+
+        // Setup image cache.
+        Map<String, TGQImageFile> cachedImages = this.chunkedFileImageCache.get(chunkedFile);
+        if (cachedImages == null) {
+            this.chunkedFileImageCache.put(chunkedFile, cachedImages = new HashMap<>());
+            for (kcCResource resource : chunkedFile.getChunks()) {
+                if (!(resource instanceof TGQChunkTextureReference))
+                    continue;
+
+                TGQChunkTextureReference texRef = (TGQChunkTextureReference) resource;
+                TGQFile texRefFile = chunkedFile.getMainArchive().getFileByName(chunkedFile, texRef.getPath());
+                if (texRefFile instanceof TGQImageFile)
+                    cachedImages.put(strippedTextureFileName, (TGQImageFile) texRefFile);
+            }
+        }
+
+        // Get data from cache.
+        return cachedImages.get(imageFileName);
     }
 }

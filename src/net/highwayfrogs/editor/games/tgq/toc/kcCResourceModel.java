@@ -44,7 +44,12 @@ public class kcCResourceModel extends kcCResource {
         // But, this must run before afterLoad2() because that's when we start doing lookups based on file paths.
         TGQBinFile mainArchive = getMainArchive();
         if (mainArchive != null)
-            mainArchive.applyFileName(this.fullPath);
+            mainArchive.applyFileName(this.fullPath, true);
+
+        // Apply texture file names. This is done in afterLoad2() to wait for our own file path to be set.
+        kcModelWrapper wrapper = getModelWrapper();
+        if (wrapper != null)
+            context.getMaterialLoadContext().applyTextureFileNames(getParentFile(), this.fullPath, wrapper.getModel().getMaterials());
     }
 
     @Override

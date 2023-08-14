@@ -57,6 +57,9 @@ public class kcModelWrapper extends TGQFile {
     public void afterLoad2(kcLoadContext context) {
         super.afterLoad2(context);
 
+        // Generate texture file names. This is done in afterLoad2() to wait for our own file path to be set.
+        context.getMaterialLoadContext().applyTextureFileNames(this, getFilePath(), this.model.getMaterials());
+
         // Apply file names to all materials.
         // We need to do this both when a texture reference loads and when the model loads, so regardless of if this particular model loads before or after the texture it will still get the texture names.
         context.getMaterialLoadContext().resolveMaterialTexturesGlobally(this, this.model.getMaterials());

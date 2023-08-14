@@ -37,7 +37,7 @@ public class TGQChunkTextureReference extends kcCResource {
         // But, this must run before afterLoad2() because that's when we start doing lookups based on file paths.
         TGQBinFile mainArchive = getMainArchive();
         if (mainArchive != null)
-            mainArchive.applyFileName(this.path);
+            mainArchive.applyFileName(this.path, true);
     }
 
     @Override

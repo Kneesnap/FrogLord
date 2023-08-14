@@ -270,9 +270,10 @@ public class TGQBinFile extends GameObject {
 
     /**
      * Activates the filename
-     * @param filePath The path of a game file.
+     * @param filePath              The path of a game file.
+     * @param showMessageIfNotFound Specify if a warning should be displayed if the file is not found.
      */
-    public TGQFile applyFileName(String filePath) {
+    public TGQFile applyFileName(String filePath, boolean showMessageIfNotFound) {
         TGQFile file = getOptionalFileByName(filePath);
         if (file != null) {
             file.setFilePath(filePath);
@@ -280,7 +281,8 @@ public class TGQBinFile extends GameObject {
         }
 
         int hash = TGQUtils.hashFilePath(filePath);
-        System.out.println("Attempted to apply the file path '" + filePath + "', but no file matched the hash " + Utils.to0PrefixedHexString(hash) + ".");
+        if (showMessageIfNotFound)
+            System.out.println("Attempted to apply the file path '" + filePath + "', but no file matched the hash " + Utils.to0PrefixedHexString(hash) + ".");
         return null;
     }
 
