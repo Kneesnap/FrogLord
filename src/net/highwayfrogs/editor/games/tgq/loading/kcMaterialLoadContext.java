@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
 /**
  * Manages resolving of material textures during the file load process.
@@ -32,22 +33,47 @@ public class kcMaterialLoadContext {
      * @param fullPath  The full file path to apply texture names from.
      * @param materials The materials to apply texture file names from.
      */
+    public void applyLevelTextureFileNames(TGQFile sourceFile, String fullPath, List<kcMaterial> materials) {
+        if (fullPath == null || fullPath.isEmpty() || materials == null || materials.isEmpty())
+            return;
+
+        // The path provided could be a path to a model, or a chunked level file.
+        // If it's a path to a chunked level file, it will be in the \GameData\ folder, but the textures are going to be in \GameSource\ instead.
+        // So, we're going to switch directories.
+        if (fullPath.toLowerCase().startsWith("\\gamedata\\"))
+            fullPath = "\\GameSource\\" + fullPath.substring(10);
+
+        // Because this is a level, the texture may be either be in the shared level textures or in a model specific for the folder.
+        // For example, '\GameSource\Level13Catacombs\Props\cofflid2\COFFLID2.VTX' uses a texture 'wood1.img'.
+        // This texture is at '\GameSource\Level13Catacombs\Level\wood1.img', so we need to modify the path if we see it.
+        String[] splitPath = fullPath.split(Pattern.quote("\\"));
+        for (int i = 0; i < splitPath.length; i++) {
+            String name = splitPath[i];
+
+            if ("Props".equalsIgnoreCase(name) && splitPath.length == i + 3) {
+                String levelPath = String.join("\\", Arrays.copyOfRange(splitPath, 0, i)) + "\\Level\\";
+                this.applyTextureFileNames(sourceFile, levelPath, materials);
+            }
+        }
+
+        // Attempt to apply the texture to the folder we're in.
+        // We want to do this last since if it's found, it's correct.
+        this.applyTextureFileNames(sourceFile, fullPath, materials);
+    }
+
+    /**
+     * Apply texture file names.
+     * @param fullPath  The full file path to apply texture names from.
+     * @param materials The materials to apply texture file names from.
+     */
     public void applyTextureFileNames(TGQFile sourceFile, String fullPath, List<kcMaterial> materials) {
         if (fullPath == null || fullPath.isEmpty())
             return;
 
-        // Test how many directories exist in the path, so we know how many directories we can check.
-        int folderCount = 0;
-        for (int i = 0; i < fullPath.length(); i++)
-            if (fullPath.charAt(i) == '\\')
-                folderCount++;
-
-        boolean allowParentDirectory = (folderCount > 4);
         for (kcMaterial material : materials) {
             if (material.getTextureFileName() == null)
                 continue;
 
-            boolean textureApplied = false;
             String textureFileName = Utils.stripExtension(material.getTextureFileName());
             if (textureFileName.isEmpty())
                 continue;
@@ -63,26 +89,6 @@ public class kcMaterialLoadContext {
             TGQFile file = this.mainArchive.applyFileName(texturePath, false);
 
             if (file instanceof TGQImageFile) {
-                material.setTexture((TGQImageFile) file);
-                this.allMaterials.put(material, sourceFile);
-                this.multipleMatchMaterials.remove(material); // We prefer the texture referenced in the same chunked file, so if that exists we don't consider there to be multiple files which could apply.
-                textureApplied = true;
-            }
-
-            if (!allowParentDirectory)
-                continue;
-
-            // Repeat but apply to the parent directory.
-            lastDirectorySeparator = texturePath.lastIndexOf('\\');
-            if (lastDirectorySeparator == -1)
-                continue;
-
-            texturePath = texturePath.substring(0, lastDirectorySeparator + 1)
-                    + textureFileName + ".img";
-
-            file = this.mainArchive.applyFileName(texturePath, false);
-
-            if (!textureApplied && file instanceof TGQImageFile) {
                 material.setTexture((TGQImageFile) file);
                 this.allMaterials.put(material, sourceFile);
                 this.multipleMatchMaterials.remove(material); // We prefer the texture referenced in the same chunked file, so if that exists we don't consider there to be multiple files which could apply.
@@ -168,8 +174,20 @@ public class kcMaterialLoadContext {
         // Find materials which didn't resolve.
         for (Entry<kcMaterial, TGQFile> entry : this.allMaterials.entrySet()) {
             kcMaterial material = entry.getKey();
-            if (material.getTexture() == null && material.hasTexture())
-                System.out.println("No image file was identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + entry.getValue().getDebugName() + ".");
+            if (!material.hasTexture())
+                continue; // The material isn't supposed to have a texture.
+
+            // A few models such as '\GameSource\Level05MushroomValley\Props\Fosfshs2\Fosfshs2.vtx' have weird materials.
+            // The materials have the flag indicating a texture is included, but no name is actually there.
+            // I believe they just might be bad exports from their 3D modelling tools.
+            // It's probably unnecessary to warn about this.
+            if (Utils.isNullOrEmpty(material.getTextureFileName()) && Utils.isNullOrEmpty(material.getMaterialName()))
+                continue;
+
+            if (material.getTexture() != null)
+                continue; // A material has been set.
+
+            System.out.println("No image file was identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + entry.getValue().getDebugName() + ".");
         }
 
         // Find materials which had multiple possibilities.

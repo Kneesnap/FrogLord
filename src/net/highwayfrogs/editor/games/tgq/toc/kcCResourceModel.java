@@ -49,7 +49,7 @@ public class kcCResourceModel extends kcCResource {
         // Apply texture file names. This is done in afterLoad2() to wait for our own file path to be set.
         kcModelWrapper wrapper = getModelWrapper();
         if (wrapper != null)
-            context.getMaterialLoadContext().applyTextureFileNames(getParentFile(), this.fullPath, wrapper.getModel().getMaterials());
+            context.getMaterialLoadContext().applyLevelTextureFileNames(getParentFile(), this.fullPath, wrapper.getModel().getMaterials());
     }
 
     @Override

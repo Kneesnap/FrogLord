@@ -1837,4 +1837,13 @@ public class Utils {
         formatter.close();
         return result;
     }
+
+    /**
+     * Test if the input string is null or empty.
+     * @param input The string to test.
+     * @return True if the string is null or empty.
+     */
+    public static boolean isNullOrEmpty(String input) {
+        return input == null || input.isEmpty();
+    }
 }
