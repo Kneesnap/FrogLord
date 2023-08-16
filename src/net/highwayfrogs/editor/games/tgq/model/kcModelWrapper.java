@@ -4,16 +4,20 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.IFileExport;
 import net.highwayfrogs.editor.games.tgq.TGQBinFile;
 import net.highwayfrogs.editor.games.tgq.TGQFile;
 import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Represents a file containing a kcModel.
  * Created by Kneesnap on 6/28/2023.
  */
 @Getter
-public class kcModelWrapper extends TGQFile {
+public class kcModelWrapper extends TGQFile implements IFileExport {
     private final kcModel model;
 
     public static final String SIGNATURE_STR = "6YTV";
@@ -63,5 +67,18 @@ public class kcModelWrapper extends TGQFile {
         // Apply file names to all materials.
         // We need to do this both when a texture reference loads and when the model loads, so regardless of if this particular model loads before or after the texture it will still get the texture names.
         context.getMaterialLoadContext().resolveMaterialTexturesGlobally(this, this.model.getMaterials());
+    }
+
+    @Override
+    public String getDefaultFolderName() {
+        return "Models";
+    }
+
+    @Override
+    public void exportToFolder(File folder) throws IOException {
+        if (this.model == null)
+            return;
+
+        this.model.saveToFile(folder, getExportName());
     }
 }

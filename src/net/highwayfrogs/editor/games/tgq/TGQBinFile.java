@@ -7,26 +7,14 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.tgq.model.kcModelWrapper;
-import net.highwayfrogs.editor.games.tgq.script.kcAction;
-import net.highwayfrogs.editor.games.tgq.script.kcCActionSequence;
-import net.highwayfrogs.editor.games.tgq.script.kcScriptDisplaySettings;
-import net.highwayfrogs.editor.games.tgq.script.kcScriptList;
-import net.highwayfrogs.editor.games.tgq.toc.OTTChunk;
-import net.highwayfrogs.editor.games.tgq.toc.TOCChunk;
-import net.highwayfrogs.editor.games.tgq.toc.kcCResource;
-import net.highwayfrogs.editor.games.tgq.toc.kcCResourceNamedHash;
-import net.highwayfrogs.editor.games.tgq.toc.kcCResourceNamedHash.HashEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 /**
  * Parses Frogger TGQ's main game data file.
@@ -281,10 +269,9 @@ public class TGQBinFile extends GameObject {
         File exportDir = new File(binFile.getParentFile(), "Export");
         Utils.makeDirectory(exportDir);
         exportFileList(exportDir, mainFile);
-        exportImages(exportDir, mainFile);
-        exportMaps(exportDir, mainFile);
-        exportModels(exportDir, mainFile);
-        exportDummyFiles(exportDir, mainFile);
+        for (TGQFile file : mainFile.getFiles())
+            file.export(exportDir);
+
         System.out.println("Done.");
     }
 
@@ -367,179 +354,5 @@ public class TGQBinFile extends GameObject {
             lines.add(" - " + globalPath);
 
         Files.write(new File(baseFolder, "file-list.txt").toPath(), lines);
-    }
-
-    private static void exportImages(File baseFolder, TGQBinFile mainArchive) throws IOException {
-        File saveFolder = new File(baseFolder, "Textures");
-        if (saveFolder.exists()) {
-            System.out.println("Skipping Textures, they already exist.");
-            return;
-        }
-
-        System.out.println("Exporting Textures...");
-        Utils.makeDirectory(saveFolder);
-
-        for (TGQFile file : mainArchive.getFiles()) {
-            if (!(file instanceof TGQImageFile))
-                continue;
-
-            TGQImageFile imageFile = (TGQImageFile) file;
-            imageFile.saveImageToFile(new File(saveFolder, imageFile.getExportName() + ".png"));
-        }
-    }
-
-    private static void exportMaps(File baseFolder, TGQBinFile mainArchive) throws IOException {
-        File saveFolder = new File(baseFolder, "Maps");
-        if (saveFolder.exists()) {
-            System.out.println("Skipping maps, they already exist.");
-            return;
-        }
-
-        Utils.makeDirectory(saveFolder);
-
-        System.out.println("Exporting Maps...");
-        for (TGQFile file : mainArchive.getFiles()) {
-            if (!(file instanceof TGQChunkedFile))
-                continue;
-
-            TGQChunkedFile tocFile = (TGQChunkedFile) file;
-
-            // Build the name map.
-            Map<Integer, String> nameMap = new HashMap<>();
-            for (kcCResource testChunk : tocFile.getChunks()) {
-                if (testChunk.getName() != null && testChunk.getName().length() > 0)
-                    nameMap.put(TGQUtils.hash(testChunk.getName(), true), testChunk.getName());
-
-                if (testChunk instanceof kcCResourceNamedHash) {
-                    kcCResourceNamedHash namedHashChunk = (kcCResourceNamedHash) testChunk;
-                    for (HashEntry entry : namedHashChunk.getEntries())
-                        nameMap.put(entry.getRawHash(), entry.getName());
-                }
-            }
-
-            TGQUtils.addDefaultHashesToMap(nameMap);
-            kcScriptDisplaySettings settings = new kcScriptDisplaySettings(nameMap, true, true);
-
-            // Main looking.
-            OTTChunk chunk = null;
-            StringBuilder sequenceBuilder = new StringBuilder();
-            StringBuilder scriptBuilder = new StringBuilder();
-            for (kcCResource testChunk : tocFile.getChunks()) {
-                if (testChunk instanceof OTTChunk)
-                    chunk = (OTTChunk) testChunk;
-
-                if (testChunk instanceof kcCActionSequence) {
-                    kcCActionSequence sequence = (kcCActionSequence) testChunk;
-
-                    sequenceBuilder.append(sequence.getName()).append(":\n");
-                    for (kcAction command : sequence.getActions()) {
-                        sequenceBuilder.append(" - ");
-                        command.toString(sequenceBuilder, settings);
-                        sequenceBuilder.append('\n');
-                    }
-
-                    sequenceBuilder.append('\n');
-                } else if (testChunk instanceof kcScriptList) {
-                    kcScriptList script = (kcScriptList) testChunk;
-                    scriptBuilder.append("// Script List: '").append(script.getName()).append("'\n");
-                    script.toString(scriptBuilder, settings);
-                    scriptBuilder.append('\n');
-                }
-            }
-
-            if (chunk != null)
-                chunk.exportAsObj(saveFolder, Utils.stripExtension(tocFile.getExportName()));
-
-            File subFolder = new File(saveFolder, Utils.stripExtension(tocFile.getExportName()) + "/");
-
-            // Save scripts to folder.
-            if (sequenceBuilder.length() > 0) {
-                Utils.makeDirectory(subFolder);
-                File sequenceFile = new File(subFolder, "sequences.txt");
-                Files.write(sequenceFile.toPath(), Arrays.asList(sequenceBuilder.toString().split("\n")));
-            }
-
-            // Save scripts to folder.
-            if (scriptBuilder.length() > 0) {
-                Utils.makeDirectory(subFolder);
-                File scriptFile = new File(subFolder, "script.txt");
-                Files.write(scriptFile.toPath(), Arrays.asList(scriptBuilder.toString().split("\n")));
-            }
-
-            if (tocFile.getChunks().get(0) instanceof TOCChunk) {
-                // Export to folder.
-                tocFile.exportFileToDirectory(subFolder);
-                DataWriter writer = new DataWriter(new FileReceiver(new File(saveFolder, tocFile.getExportName())));
-                tocFile.save(writer);
-                writer.closeReceiver();
-
-                // Save hashes to file.
-                if (nameMap.size() > 0) {
-                    File hashFile = new File(subFolder, "hashes.txt");
-
-                    List<String> lines = nameMap.entrySet().stream()
-                            .sorted(Comparator.comparingInt(Entry::getKey))
-                            .map(entry -> Utils.to0PrefixedHexString(entry.getKey()) + "=" + entry.getValue())
-                            .collect(Collectors.toList());
-
-                    Files.write(hashFile.toPath(), lines);
-                }
-            }
-        }
-    }
-
-    private static void exportModels(File baseFolder, TGQBinFile mainArchive) throws IOException {
-        File saveFolder = new File(baseFolder, "Models");
-        if (saveFolder.exists()) {
-            System.out.println("Skipping models, they already exist.");
-            return;
-        }
-
-        Utils.makeDirectory(saveFolder);
-
-        System.out.println("Exporting Models...");
-        for (TGQFile file : mainArchive.getFiles()) {
-            if (!(file instanceof kcModelWrapper))
-                continue;
-
-            kcModelWrapper model = (kcModelWrapper) file;
-            try {
-                model.getModel().saveToFile(saveFolder, file.getExportName());
-                if (model.getRawData() != null)
-                    Files.write(new File(saveFolder, file.getExportName()).toPath(), model.getRawData());
-            } catch (Throwable th) {
-                if (model.getRawData() != null)
-                    Files.write(new File(saveFolder, file.getExportName()).toPath(), model.getRawData());
-                System.err.println("Failed to export '" + file.getExportName() + ".obj'.");
-                th.printStackTrace();
-            }
-        }
-    }
-
-    private static void exportDummyFiles(File baseFolder, TGQBinFile mainArchive) throws IOException {
-        File saveFolder = new File(baseFolder, "Dummy");
-        if (saveFolder.exists()) {
-            System.out.println("Skipping dummy files, they already exist.");
-            return;
-        }
-
-        Utils.makeDirectory(saveFolder);
-
-        System.out.println("Exporting Everything Else...");
-        for (TGQFile file : mainArchive.getFiles()) {
-            if ((file instanceof TGQImageFile) || (file instanceof kcModelWrapper))
-                continue;
-
-            if (file instanceof TGQChunkedFile) {
-                TGQChunkedFile chunkedFile = (TGQChunkedFile) file;
-                if (chunkedFile.getChunks().size() > 0) {
-                    kcCResource chunk = chunkedFile.getChunks().get(0);
-                    if (chunk instanceof TOCChunk)
-                        continue; // Handled elsewhere.
-                }
-            }
-
-            Files.write(new File(saveFolder, file.getExportName()).toPath(), file.getRawData());
-        }
     }
 }

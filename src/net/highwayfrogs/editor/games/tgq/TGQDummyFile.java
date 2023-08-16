@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 public class TGQDummyFile extends TGQFile {
     private byte[] data;
-    private int length;
+    private final int length;
 
     public TGQDummyFile(TGQBinFile mainArchive, int length) {
         super(mainArchive);
@@ -38,5 +38,10 @@ public class TGQDummyFile extends TGQFile {
         }
 
         return super.getExtension();
+    }
+
+    @Override
+    public String getDefaultFolderName() {
+        return "Dummy";
     }
 }

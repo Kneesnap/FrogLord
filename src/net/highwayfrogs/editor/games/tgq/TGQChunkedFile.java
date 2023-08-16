@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.tgq;
 
-import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
@@ -9,19 +8,20 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.tgq.map.kcEnvironment;
+import net.highwayfrogs.editor.games.tgq.script.kcAction;
+import net.highwayfrogs.editor.games.tgq.script.kcCActionSequence;
+import net.highwayfrogs.editor.games.tgq.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.tgq.script.kcScriptList;
-import net.highwayfrogs.editor.games.tgq.toc.KCResourceID;
-import net.highwayfrogs.editor.games.tgq.toc.TGQDummyFileChunk;
-import net.highwayfrogs.editor.games.tgq.toc.kcCResource;
+import net.highwayfrogs.editor.games.tgq.toc.*;
+import net.highwayfrogs.editor.games.tgq.toc.kcCResourceNamedHash.HashEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
-import java.io.PrintWriter;
+import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * Handles the Frogger TGQ TOC files. (They are maps, but may also have other data(?))
@@ -29,7 +29,7 @@ import java.util.Map;
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
-public class TGQChunkedFile extends TGQFile {
+public class TGQChunkedFile extends TGQFile implements IFileExport {
     private final List<kcCResource> chunks = new ArrayList<>();
 
     public TGQChunkedFile(TGQBinFile mainArchive) {
@@ -88,6 +88,11 @@ public class TGQChunkedFile extends TGQFile {
     }
 
     @Override
+    public String getDefaultFolderName() {
+        return "ChunkedDataFiles";
+    }
+
+    @Override
     public void save(DataWriter writer) {
         for (kcCResource chunk : getChunks()) {
             writer.writeStringBytes(chunk.getChunkMagic());
@@ -102,23 +107,111 @@ public class TGQChunkedFile extends TGQFile {
     }
 
     /**
-     * Exports this file and all of its chunks to the directory.
-     * This makes debugging easier.
-     * @param directory The folder to export chunks to.
+     * Create a map of hash numbers to corresponding strings from files present in the chunks.
+     * @return localHashes
      */
-    @SneakyThrows
-    public void exportFileToDirectory(File directory) {
-        Utils.makeDirectory(directory);
+    public Map<Integer, String> calculateLocalHashes() {
+        Map<Integer, String> nameMap = new HashMap<>();
+        for (kcCResource testChunk : this.chunks) {
+            if (testChunk.getName() != null && testChunk.getName().length() > 0)
+                nameMap.put(TGQUtils.hash(testChunk.getName(), true), testChunk.getName());
 
+            if (testChunk instanceof kcCResourceNamedHash) {
+                kcCResourceNamedHash namedHashChunk = (kcCResourceNamedHash) testChunk;
+                for (HashEntry entry : namedHashChunk.getEntries())
+                    nameMap.put(entry.getRawHash(), entry.getName());
+            }
+        }
+
+        return nameMap;
+    }
+
+    @Override
+    public String getExportFolderName() {
+        return Utils.stripExtension(getExportName());
+    }
+
+    @Override
+    public void exportToFolder(File folder) throws IOException {
+        // Build the name map.
+        Map<Integer, String> nameMap = calculateLocalHashes();
+
+        TGQUtils.addDefaultHashesToMap(nameMap);
+        kcScriptDisplaySettings settings = new kcScriptDisplaySettings(nameMap, true, true);
+
+        // Main looking.
+        kcCResOctTreeSceneMgr mainModel = null;
+        StringBuilder sequenceBuilder = new StringBuilder();
+        StringBuilder scriptBuilder = new StringBuilder();
+        for (kcCResource testChunk : this.chunks) {
+            if (testChunk instanceof kcCResOctTreeSceneMgr)
+                mainModel = (kcCResOctTreeSceneMgr) testChunk;
+
+            if (testChunk instanceof kcCActionSequence) {
+                kcCActionSequence sequence = (kcCActionSequence) testChunk;
+
+                sequenceBuilder.append(sequence.getName()).append(":\n");
+                for (kcAction command : sequence.getActions()) {
+                    sequenceBuilder.append(" - ");
+                    command.toString(sequenceBuilder, settings);
+                    sequenceBuilder.append('\n');
+                }
+
+                sequenceBuilder.append('\n');
+            } else if (testChunk instanceof kcScriptList) {
+                kcScriptList script = (kcScriptList) testChunk;
+                scriptBuilder.append("// Script List: '").append(script.getName()).append("'\n");
+                script.toString(scriptBuilder, settings);
+                scriptBuilder.append('\n');
+            }
+        }
+
+        // Ensure the map is exported as a 3D model.
+        if (mainModel != null)
+            mainModel.exportAsObj(folder, Utils.stripExtension(getExportName()));
+
+        // Save scripts to folder.
+        if (sequenceBuilder.length() > 0) {
+            File sequenceFile = new File(folder, "sequences.txt");
+            Files.write(sequenceFile.toPath(), Arrays.asList(sequenceBuilder.toString().split("\n")));
+        }
+
+        // Save scripts to folder.
+        if (scriptBuilder.length() > 0) {
+            File scriptFile = new File(folder, "script.txt");
+            Files.write(scriptFile.toPath(), Arrays.asList(scriptBuilder.toString().split("\n")));
+        }
+
+        exportChunksToDirectory(folder);
+        saveInfo(new File(folder, "info.txt"));
+
+        // Save hashes to file.
+        if (nameMap.size() > 0) {
+            File hashFile = new File(folder, "hashes.txt");
+
+            List<String> lines = nameMap.entrySet().stream()
+                    .sorted(Comparator.comparingInt(Entry::getKey))
+                    .map(entry -> Utils.to0PrefixedHexString(entry.getKey()) + "=" + entry.getValue())
+                    .collect(Collectors.toList());
+
+            Files.write(hashFile.toPath(), lines);
+        }
+    }
+
+    /**
+     * Saves information about the chunked file contents to a text file.
+     * @param textFile The file to save the information to.
+     */
+    public void saveInfo(File textFile) {
         // Export Info.
-        @Cleanup PrintWriter infoWriter = new PrintWriter(new File(directory, "info.txt"));
-        infoWriter.write("Chunked File Dump" + Constants.NEWLINE);
+        StringBuilder builder = new StringBuilder();
+        builder.append("Chunked File Dump").append(Constants.NEWLINE);
         if (hasFilePath())
-            infoWriter.write("Name: " + getFilePath() + Constants.NEWLINE);
+            builder.append("Name: ").append(getFilePath()).append(Constants.NEWLINE);
 
-        infoWriter.write("File ID: #" + getArchiveIndex() + Constants.NEWLINE);
-        infoWriter.write("Name Hash: " + Utils.to0PrefixedHexString(getNameHash()) + Constants.NEWLINE);
-        infoWriter.write("Has Compression: " + isCompressed() + Constants.NEWLINE);
+        builder.append("File ID: #").append(getArchiveIndex()).append(Constants.NEWLINE);
+        builder.append("Name Hash: ").append(Utils.to0PrefixedHexString(getNameHash())).append(Constants.NEWLINE);
+        builder.append("Has Compression: ").append(isCompressed()).append(Constants.NEWLINE);
 
         if (this.chunks.size() > 0) {
             // Write environment info
@@ -126,38 +219,47 @@ public class TGQChunkedFile extends TGQFile {
                 if (!(chunk instanceof kcEnvironment))
                     continue;
 
-                infoWriter.write(Constants.NEWLINE);
-                infoWriter.write("kcEnvironment:");
-                infoWriter.write(Constants.NEWLINE);
-                StringBuilder builder = new StringBuilder();
+                builder.append(Constants.NEWLINE);
+                builder.append("kcEnvironment:");
+                builder.append(Constants.NEWLINE);
                 ((kcEnvironment) chunk).writeInfo(builder, " ");
-                infoWriter.write(builder.toString());
             }
 
-            infoWriter.write(Constants.NEWLINE);
-            infoWriter.write("Chunks (");
-            infoWriter.write(String.valueOf(this.chunks.size()));
-            infoWriter.write("):");
-            infoWriter.write(Constants.NEWLINE);
+            builder.append(Constants.NEWLINE);
+            builder.append("Chunks (");
+            builder.append(this.chunks.size());
+            builder.append("):");
+            builder.append(Constants.NEWLINE);
             for (kcCResource chunk : this.chunks) {
-                infoWriter.write(" - [");
-                infoWriter.write(Utils.to0PrefixedHexString(chunk.getHash()));
-                infoWriter.write("|");
-                infoWriter.write(Utils.stripAlphanumeric(chunk.getChunkMagic()));
-                infoWriter.write("|");
-                infoWriter.write(chunk.getClass().getSimpleName());
-                infoWriter.write("]: '");
-                infoWriter.write(chunk.getName());
-                infoWriter.write("', ");
-                infoWriter.write(String.valueOf(chunk.getRawData() != null ? chunk.getRawData().length : 0));
-                infoWriter.write(" bytes");
-                infoWriter.write(Constants.NEWLINE);
+                builder.append(" - [");
+                builder.append(Utils.to0PrefixedHexString(chunk.getHash()));
+                builder.append("|");
+                builder.append(Utils.stripAlphanumeric(chunk.getChunkMagic()));
+                builder.append("|");
+                builder.append(chunk.getClass().getSimpleName());
+                builder.append("]: '");
+                builder.append(chunk.getName());
+                builder.append("', ");
+                builder.append(chunk.getRawData() != null ? chunk.getRawData().length : 0);
+                builder.append(" bytes");
+                builder.append(Constants.NEWLINE);
             }
         }
 
-        infoWriter.close(); // Close.
+        try {
+            Files.write(textFile.toPath(), Arrays.asList(builder.toString().split(Constants.NEWLINE)));
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to save chunked file information to '" + textFile + "'.", ex);
+        }
+    }
 
-        // Export Chunks.
+    /**
+     * Exports this file and all of its chunks to the directory.
+     * This makes debugging easier.
+     * @param directory The folder to export chunks to.
+     */
+    @SneakyThrows
+    public void exportChunksToDirectory(File directory) {
         Map<String, Integer> countMap = new HashMap<>();
         for (kcCResource chunk : this.chunks) {
             String signature = Utils.stripAlphanumeric(chunk.getChunkMagic());
@@ -171,9 +273,14 @@ public class TGQChunkedFile extends TGQFile {
                 continue;
             }
 
+            // Create sub-directory.
             File subDirectory = new File(directory, signature);
             Utils.makeDirectory(subDirectory);
-            Files.write(new File(subDirectory, fileName).toPath(), chunk.getRawData());
+
+            // Save file contents.
+            File outputFile = new File(subDirectory, fileName);
+            if (!outputFile.exists())
+                Files.write(outputFile.toPath(), chunk.getRawData());
         }
     }
 }

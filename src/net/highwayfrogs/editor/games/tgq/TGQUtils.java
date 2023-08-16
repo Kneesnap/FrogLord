@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
@@ -287,5 +288,37 @@ public class TGQUtils {
      */
     public static void writeTGQBoolean(DataWriter writer, boolean value) {
         writer.writeInt(value ? 1 : 0);
+    }
+
+    /**
+     * Gets a Java file representing the file path to export an internal game system file to.
+     * @param baseFolder The base folder to extract game files to.
+     * @param file       The file to export.
+     * @return exportFile
+     */
+    public static File getExportFile(File baseFolder, TGQFile file) {
+        File exportFolder;
+        String fileName = null;
+        if (file.hasFilePath()) {
+            String tempPath = file.getFilePath();
+            while (tempPath.startsWith("\\"))
+                tempPath = tempPath.substring(1);
+
+            int lastBackslash = tempPath.lastIndexOf('\\');
+            if (lastBackslash != -1) {
+                fileName = tempPath.substring(lastBackslash + 1);
+                tempPath = tempPath.substring(0, lastBackslash);
+            }
+
+            exportFolder = new File(baseFolder, tempPath);
+        } else {
+            exportFolder = new File(new File(baseFolder, "Unidentified Files/"), file.getDefaultFolderName() + "/");
+        }
+
+        if (Utils.isNullOrEmpty(fileName))
+            fileName = file.getExportName();
+
+        Utils.makeDirectory(exportFolder);
+        return new File(exportFolder, fileName);
     }
 }

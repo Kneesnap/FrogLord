@@ -6,6 +6,9 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -106,12 +109,8 @@ public abstract class TGQFile extends GameObject {
      * @return exportName
      */
     public String getExportName() {
-        if (hasFilePath() && Utils.isValidFileName(getFileName())) {
-            if (this instanceof TGQDummyFile)
-                return getArchiveIndex() + "-" + getFileName();
-
+        if (hasFilePath() && Utils.isValidFileName(getFileName()))
             return getFileName();
-        }
 
         int index = getArchiveIndex();
         if (index == -1)
@@ -136,5 +135,44 @@ public abstract class TGQFile extends GameObject {
      */
     public String getExtension() {
         return "dat";
+    }
+
+    /**
+     * Gets the folder the file gets exported to if the file path is unknown.
+     */
+    public abstract String getDefaultFolderName();
+
+    /**
+     * Gets the folder the file gets exported for any custom export.
+     */
+    public String getExportFolderName() {
+        return "Usable";
+    }
+
+    /**
+     * Exports the file to a folder.
+     * @param baseFolder The base folder that game assets are saved to.
+     */
+    public void export(File baseFolder) {
+        File targetFile = TGQUtils.getExportFile(baseFolder, this);
+        File targetFolder = targetFile.getParentFile();
+        if (this.rawData != null && (!targetFile.exists() || targetFile.length() != this.rawData.length)) {
+            try {
+                Files.write(targetFile.toPath(), this.rawData);
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to export file '" + targetFile + "'.", ex);
+            }
+        }
+
+        if (this instanceof IFileExport) {
+            File exportFolder = new File(targetFolder, getExportFolderName() + "/");
+            Utils.makeDirectory(exportFolder);
+
+            try {
+                ((IFileExport) this).exportToFolder(exportFolder);
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to export file '" + getDebugName() + "' to usable format.", ex);
+            }
+        }
     }
 }

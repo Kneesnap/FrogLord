@@ -24,7 +24,7 @@ import java.io.IOException;
  * Created by Kneesnap on 8/17/2019.
  */
 @Getter
-public class TGQImageFile extends TGQFile {
+public class TGQImageFile extends TGQFile implements IFileExport {
     private boolean hasHeader;
     private BufferedImage image;
 
@@ -251,6 +251,18 @@ public class TGQImageFile extends TGQFile {
      */
     public void saveImageToFile(File saveTo) throws IOException {
         ImageIO.write(this.image, "png", saveTo);
+    }
+
+    @Override
+    public String getDefaultFolderName() {
+        return "Images";
+    }
+
+    @Override
+    public void exportToFolder(File folder) throws IOException {
+        File imageFile = new File(folder, Utils.stripExtension(getExportName()) + ".png");
+        if (!imageFile.exists())
+            saveImageToFile(imageFile);
     }
 
     /**
