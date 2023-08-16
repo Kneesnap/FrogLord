@@ -208,6 +208,26 @@ public class TGQBinFile extends GameObject {
         }
     }
 
+    /**
+     * Print a list of all files to stdout.
+     */
+    @SuppressWarnings("unused")
+    public void printFileList() {
+        for (int i = 0; i < this.files.size(); i++) {
+            TGQFile file = this.files.get(i);
+            System.out.print(file.hasFilePath() ? file.getFilePath() : "UNKNOWN");
+            System.out.print(" # File ");
+            System.out.print(Utils.padNumberString(i, 4));
+            System.out.print(", Hash: ");
+            System.out.print(Utils.to0PrefixedHexString(file.getNameHash()));
+            if (file.isCollision())
+                System.out.print(" (Collision)");
+            if (file.isCompressed())
+                System.out.print(", Compressed");
+            System.out.println();
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         Scanner scanner = new Scanner(System.in);
 
