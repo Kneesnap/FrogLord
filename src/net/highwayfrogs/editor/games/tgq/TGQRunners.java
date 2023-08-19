@@ -197,7 +197,7 @@ public class TGQRunners {
         if (sckFile != null) {
             File chunkFolder = new File(exportFolder, Utils.stripExtension(sckFile.getName()));
             Utils.makeDirectory(chunkFolder);
-            AudioFormat sckAudioFormat = new AudioFormat(24000, 16, 1, true, false); // TODO: Is PS2 different?
+            AudioFormat sckAudioFormat = new AudioFormat(24000, 16, 1, true, false);
 
             DataReader sckReader = new DataReader(new FileSource(sckFile));
             for (int i = 0; i < idxFile.getIndexEntries().size(); i++) {
