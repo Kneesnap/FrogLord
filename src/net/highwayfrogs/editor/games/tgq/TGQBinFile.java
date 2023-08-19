@@ -19,7 +19,7 @@ import java.util.*;
 /**
  * Parses Frogger TGQ's main game data file.
  * Notes: PS2 bin is way smaller than PC file. Support it eventually.
- * .SBR files contain sound headers. the SCK file seems to contain .wav files sequentially, likely using header data from the .SBR. TODO: Support exporting these to .wav
+ * .SBR files contain sound effects. the SCK file contains only PCM data, with headers in the .IDX file.
  * .PSS (PS2) are video files. Can be opened with VLC.
  * BUFFER.DAT files (PS2) are video files, and can be opened with VLC.
  * TODO: kcOpen() accesses a global flag that tells the game if it should read files from the filesystem or from a .bin file. We could consider a mod to the game to have it load from the file system.
@@ -236,28 +236,10 @@ public class TGQBinFile extends GameObject {
             return;
         }
 
-        kcPlatform platform = null;
-        if (fileName.contains("PC") || fileName.contains("Windows"))
-            platform = kcPlatform.PC;
-        if (fileName.contains("PS2") || fileName.contains("Play"))
-            platform = kcPlatform.PS2;
-
-        if (platform == null) {
-            System.out.print("Is this a PS2 build or a PC build?: ");
-            String platformName = scanner.nextLine();
-
-            try {
-                platform = kcPlatform.valueOf(platformName.toUpperCase());
-            } catch (Throwable th) {
-                // We don't care. This is some temporary development CLI mode for devs.
-            }
-        }
-
-        // Verify platform.
-        if (platform == null) {
-            System.out.println("That is not a valid platform.");
+        // Determine platform.
+        kcPlatform platform = TGQRunners.getPlatform(binFile, scanner);
+        if (platform == null)
             return;
-        }
 
         // Load main bin.
         System.out.println("Loading file...");
