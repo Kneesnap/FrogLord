@@ -13,6 +13,8 @@ public enum kcParamType {
     AXIS, // integer -> 0 = X, 1 = Y, 2 = Z, others = INVALID.
     HASH, // Unsigned int.
     INVENTORY_ITEM, // Unsigned int.
-    PARTICLE, // Unsigned int.
+    GOAL_TYPE, // Unsigned int.
+    NUMBER_OPERATION,
+    CAMERA_PIVOT_PARAM,
     ATTACH_ID, // Unsigned int.
 }

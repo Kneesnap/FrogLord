@@ -1,17 +1,15 @@
 package net.highwayfrogs.editor.games.tgq.script;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
+import net.highwayfrogs.editor.games.tgq.script.interim.kcInterimScriptEffect;
+import net.highwayfrogs.editor.games.tgq.script.interim.kcScriptListInterim;
+import net.highwayfrogs.editor.games.tgq.script.interim.kcScriptTOC;
 import net.highwayfrogs.editor.games.tgq.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.tgq.toc.KCResourceID;
 import net.highwayfrogs.editor.games.tgq.toc.kcCResource;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,20 +59,21 @@ public class kcScriptList extends kcCResource {
 
         // Convert scripts to interim data.
         List<kcScriptTOC> entries = new ArrayList<>();
-        List<Long> statusData = new ArrayList<>();
-        List<kcScriptEffect> effects = new ArrayList<>();
+        List<Integer> statusData = new ArrayList<>();
+        List<kcInterimScriptEffect> effects = new ArrayList<>();
         for (int i = 0; i < this.scripts.size(); i++) {
             kcScript script = this.scripts.get(i);
 
-            // Create new entry. TODO: "hasScriptType" is not yet understood, and hardcoding 32 may not be a good long-term practice.
-            kcScriptTOC newEntry = new kcScriptTOC(32, statusData.size(), script.getFunctions().size(), script.getEffectCount());
+            // Create new entry.
+            kcScriptTOC newEntry = new kcScriptTOC(script.calculateCauseTypes(), statusData.size(), script.getFunctions().size(), script.getEffectCount());
             entries.add(newEntry);
 
             // Add 'cause' & 'effect' data.
             for (int j = 0; j < script.getFunctions().size(); j++) {
                 kcScriptFunction function = script.getFunctions().get(j);
-                function.saveCauseData(statusData, (long) effects.size() * kcScriptEffect.SIZE_IN_BYTES);
-                effects.addAll(function.getEffects());
+                function.saveCauseData(statusData, effects.size() * kcInterimScriptEffect.SIZE_IN_BYTES);
+                for (int k = 0; k < function.getEffects().size(); k++)
+                    effects.add(function.getEffects().get(k).toInterimScriptEffect());
             }
         }
 
@@ -97,114 +96,6 @@ public class kcScriptList extends kcCResource {
             builder.append("// Script #").append(i + 1).append(":\n");
             this.scripts.get(i).toString(builder, settings);
             builder.append('\n');
-        }
-    }
-
-    @Getter
-    public static class kcScriptEffect extends GameObject {
-        @Setter private transient long dataOffset;
-        private long scriptType;
-        private kcActionID action;
-        private int destObjectHash;
-        private final kcParam[] parameters = new kcParam[4];
-        private byte[] unhandledRawBytes;
-
-        public static final int SIZE_IN_BYTES = 0x20; // 32 bytes. This in theory could differ with other versions.
-
-        @Override
-        public void load(DataReader reader) {
-            int startIndex = reader.getIndex();
-            int storedSize = reader.readInt();
-            if (storedSize < 0x20)
-                throw new RuntimeException("Expected a script effect to be at least 32 bytes, but was " + storedSize + ".");
-
-            this.scriptType = reader.readUnsignedIntAsLong();
-            this.action = kcActionID.getActionByOpcode(reader.readInt());
-            this.destObjectHash = reader.readInt();
-            for (int i = 0; i < this.parameters.length; i++)
-                this.parameters[i] = kcParam.readParam(reader);
-
-            // Handle any remaining bytes.
-            int readSize = reader.getIndex() - startIndex;
-            if (readSize != storedSize) {
-                this.unhandledRawBytes = reader.readBytes(storedSize - readSize);
-                System.out.println("Script Effect [" + this + "] was loaded from " + readSize + " bytes, but " + storedSize + " were supposed to be read.");
-            } else {
-                this.unhandledRawBytes = null;
-            }
-        }
-
-        @Override
-        public void save(DataWriter writer) {
-            int startIndex = writer.writeNullPointer();
-            writer.writeUnsignedInt(this.scriptType);
-            writer.writeUnsignedInt(this.action.ordinal());
-            writer.writeInt(this.destObjectHash);
-            for (int i = 0; i < this.parameters.length; i++)
-                kcParam.writeParam(writer, this.parameters[i]);
-
-            if (this.unhandledRawBytes != null && this.unhandledRawBytes.length > 0)
-                writer.writeBytes(this.unhandledRawBytes);
-
-            // Write the length.
-            writer.writeAddressAt(startIndex, writer.getIndex() - startIndex);
-        }
-
-        /**
-         * Writes the script to a string builder.
-         * @param builder  The builder to write the script to.
-         * @param settings The settings for displaying the output.
-         */
-        public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
-
-
-            builder.append("[Script Type: ").append(this.scriptType).append(", Target: ");
-
-            String hashName;
-            if (settings != null && settings.getNamesByHash() != null && (hashName = settings.getNamesByHash().get(this.destObjectHash)) != null) {
-                builder.append('"').append(hashName.replace("\"", "\\\"")).append('"');
-            } else {
-                builder.append(Utils.toHexString(this.destObjectHash));
-            }
-
-            builder.append("] ");
-            kcAction.writeAction(builder, this.action, this.parameters, settings);
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            this.toString(builder, new kcScriptDisplaySettings(null, true, true));
-            return builder.toString();
-        }
-    }
-
-    /**
-     * Reimplementation of the 'kcScriptTOC' class.
-     */
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class kcScriptTOC extends GameObject {
-        private long hasScriptType; // TODO: Not sure. Seems to be a flag.
-        private long causeStartIndex;
-        private long causeCount;
-        private long effectCount;
-
-        @Override
-        public void load(DataReader reader) {
-            this.hasScriptType = reader.readUnsignedIntAsLong();
-            this.causeStartIndex = reader.readUnsignedIntAsLong();
-            this.causeCount = reader.readUnsignedIntAsLong();
-            this.effectCount = reader.readUnsignedIntAsLong();
-        }
-
-        @Override
-        public void save(DataWriter writer) {
-            writer.writeUnsignedInt(this.hasScriptType);
-            writer.writeUnsignedInt(this.causeStartIndex);
-            writer.writeUnsignedInt(this.causeCount);
-            writer.writeUnsignedInt(this.effectCount);
         }
     }
 }

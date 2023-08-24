@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
+import net.highwayfrogs.editor.games.tgq.script.action.kcAction;
 import net.highwayfrogs.editor.games.tgq.toc.KCResourceID;
 import net.highwayfrogs.editor.games.tgq.toc.kcCResource;
 
@@ -26,11 +27,8 @@ public class kcCActionSequence extends kcCResource {
     public void load(DataReader reader) {
         super.load(reader);
         this.actions.clear();
-        while (reader.hasMore()) {
-            kcAction newAction = new kcAction();
-            newAction.load(reader);
-            this.actions.add(newAction);
-        }
+        while (reader.hasMore())
+            this.actions.add(kcAction.readAction(reader));
     }
 
     @Override

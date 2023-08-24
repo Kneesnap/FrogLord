@@ -3,6 +3,9 @@ package net.highwayfrogs.editor.games.tgq.script;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.script.action.kcActionAISetGoal.kcGoalType;
+import net.highwayfrogs.editor.games.tgq.script.action.kcActionNumber.NumberOperation;
+import net.highwayfrogs.editor.games.tgq.script.effect.kcScriptEffectCamera.kcCameraPivotParam;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -30,6 +33,10 @@ public class kcParam {
             "ITEM_CROWN", "ITEM_GRIM_BITE",
             "ITEM_RUBY_SHARD", "ITEM_RUBY_SPHERE", "ITEM_RUBY_TEARDROP"
     };
+
+    public kcParam() {
+        this(new byte[4]);
+    }
 
     public kcParam(byte[] value) {
         Utils.verify(value != null && value.length == 4, "Invalid input array! (" + (value != null ? value.length : "null") + ")");
@@ -86,15 +93,7 @@ public class kcParam {
     public void toString(StringBuilder builder, kcParamType paramType, kcScriptDisplaySettings settings) {
         switch (paramType) {
             case ANY:
-                if (settings != null && settings.getNamesByHash() != null) {
-                    String name = settings.getNamesByHash().get(getAsInteger());
-                    if (name != null) {
-                        builder.append('"').append(name.replace("\"", "\\\"")).append('"');
-                        break;
-                    }
-                }
-
-                builder.append(Utils.toHexString(getAsInteger()));
+                builder.append(kcScriptDisplaySettings.getHashDisplay(settings, getAsInteger(), false));
                 break;
             case UNSIGNED_INT:
                 builder.append(getAsInteger() & 0xFFFFFFFFL);
@@ -112,21 +111,19 @@ public class kcParam {
                 builder.append(getEnum(AXIS_ENUM_VALUES, "Axis"));
                 break;
             case HASH:
-                if (settings != null && settings.getNamesByHash() != null) {
-                    String name = settings.getNamesByHash().get(getAsInteger());
-                    if (name != null) {
-                        builder.append('"').append(name.replace("\"", "\\\"")).append('"');
-                        break;
-                    }
-                }
-
-                builder.append('$').append(Integer.toHexString(getAsInteger()).toUpperCase());
+                builder.append(kcScriptDisplaySettings.getHashDisplay(settings, getAsInteger(), true));
                 break;
             case INVENTORY_ITEM:
                 builder.append(getEnum(INVENTORY_ITEM_ENUM_VALUES, "InventoryItem"));
                 break;
-            case PARTICLE:
-                builder.append(getAsInteger()); // TODO: Come up with particle names later.
+            case GOAL_TYPE:
+                builder.append(getEnum(kcGoalType.values()));
+                break;
+            case NUMBER_OPERATION:
+                builder.append(getEnum(NumberOperation.values()));
+                break;
+            case CAMERA_PIVOT_PARAM:
+                builder.append(getEnum(kcCameraPivotParam.values()));
                 break;
             case ATTACH_ID:
                 builder.append(getEnum(kcAttachID.values()));
@@ -143,9 +140,15 @@ public class kcParam {
 
     private <E extends Enum<E>> String getEnum(E[] values) {
         int value = getAsInteger();
-        return values == null || value < 0 || value >= values.length
-                ? "<Invalid " + (values[0] != null ? values[0].getClass().getSimpleName() : "Enum") + ": " + value + ">"
-                : values[value].name();
+
+        if (values == null || value < 0 || value >= values.length) {
+            String enumTypeName = (values != null && values.length > 0 && values[0] != null)
+                    ? values[0].getClass().getSimpleName() : "Enum";
+
+            return "<Invalid " + enumTypeName + ": " + value + ">";
+        }
+
+        return values[value].name();
     }
 
     /**

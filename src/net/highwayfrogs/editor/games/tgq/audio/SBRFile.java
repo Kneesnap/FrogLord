@@ -256,6 +256,7 @@ public class SBRFile extends GameObject {
 
         @Override
         public void saveADPCM(DataWriter writer) {
+            // TODO: We have an audio pop problem. Perhaps a few bytes need to be removed.
             if (this.ADPCMData != null)
                 writer.writeBytes(this.ADPCMData);
         }
@@ -368,7 +369,7 @@ public class SBRFile extends GameObject {
             writer.writeBytes(this.waveFormatEx);
             writer.writeStringBytes(DATA_CHUNK_SIGNATURE);
             writer.writeInt(this.ADPCMData.length);
-            writer.writeBytes(this.ADPCMData);
+            writer.writeBytes(this.ADPCMData); // TODO: We have an audio pop problem. Perhaps a few bytes need to be removed.
             writer.writeAddressAt(fileSizeAddress, writer.getIndex() - (fileSizeAddress + Constants.INTEGER_SIZE));
 
             writer.closeReceiver();

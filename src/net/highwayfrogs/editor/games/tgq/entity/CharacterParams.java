@@ -215,7 +215,7 @@ public class CharacterParams extends kcActorDesc {
         builder.append(padding).append("Ranged Attack Speed: ").append(this.rangedAttackSpeed).append(Constants.NEWLINE);
         builder.append(padding).append("Prefer Run: ").append(this.preferRanged).append(Constants.NEWLINE);
         builder.append(padding).append("Pad1: ").append(this.pad1).append(Constants.NEWLINE);
-        builder.append(padding).append("Activateion Range: ").append(this.activationRange).append(Constants.NEWLINE);
+        builder.append(padding).append("Activation Range: ").append(this.activationRange).append(Constants.NEWLINE);
     }
 
     public enum CharacterType {

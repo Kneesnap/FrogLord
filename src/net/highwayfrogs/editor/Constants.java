@@ -53,6 +53,17 @@ public class Constants {
     public static final int BIT_FLAG_18 = 1 << 18;
     public static final int BIT_FLAG_19 = 1 << 19;
     public static final int BIT_FLAG_20 = 1 << 20;
+    public static final int BIT_FLAG_21 = 1 << 21;
+    public static final int BIT_FLAG_22 = 1 << 22;
+    public static final int BIT_FLAG_23 = 1 << 23;
+    public static final int BIT_FLAG_24 = 1 << 24;
+    public static final int BIT_FLAG_25 = 1 << 25;
+    public static final int BIT_FLAG_26 = 1 << 26;
+    public static final int BIT_FLAG_27 = 1 << 27;
+    public static final int BIT_FLAG_28 = 1 << 28;
+    public static final int BIT_FLAG_29 = 1 << 29;
+    public static final int BIT_FLAG_30 = 1 << 30;
+    public static final int BIT_FLAG_31 = 1 << 31;
 
     public static final Font SYSTEM_BOLD_FONT = new Font("System Bold", 12);
     public static final String DUMMY_FILE_NAME = "NULL";

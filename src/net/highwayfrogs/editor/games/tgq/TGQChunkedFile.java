@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.games.tgq.generic.kcCResourcePath;
 import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.tgq.map.kcEnvironment;
 import net.highwayfrogs.editor.games.tgq.model.kcModelDesc;
-import net.highwayfrogs.editor.games.tgq.script.kcAction;
+import net.highwayfrogs.editor.games.tgq.script.action.kcAction;
 import net.highwayfrogs.editor.games.tgq.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.tgq.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.tgq.script.kcScriptList;
@@ -258,9 +258,9 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
         StringBuilder scriptBuilder = new StringBuilder();
         for (kcCResource testChunk : this.chunks) {
             if (testChunk instanceof kcScriptList) {
-                kcScriptList script = (kcScriptList) testChunk;
-                scriptBuilder.append("// Script List: '").append(script.getName()).append("'\n");
-                script.toString(scriptBuilder, settings);
+                kcScriptList scriptList = (kcScriptList) testChunk;
+                scriptBuilder.append("// Script List: '").append(scriptList.getName()).append("'\n");
+                scriptList.toString(scriptBuilder, settings);
                 scriptBuilder.append('\n');
             }
         }

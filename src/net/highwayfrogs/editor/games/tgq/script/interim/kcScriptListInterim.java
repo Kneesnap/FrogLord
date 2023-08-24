@@ -1,12 +1,11 @@
-package net.highwayfrogs.editor.games.tgq.script;
+package net.highwayfrogs.editor.games.tgq.script.interim;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.tgq.script.kcScriptList.kcScriptEffect;
-import net.highwayfrogs.editor.games.tgq.script.kcScriptList.kcScriptTOC;
+import net.highwayfrogs.editor.games.tgq.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -20,16 +19,16 @@ import java.util.List;
 @Getter
 public class kcScriptListInterim extends GameObject {
     private final List<kcScriptTOC> entries;
-    private final List<kcScriptEffect> effects;
-    private long[] causeData;
+    private final List<kcInterimScriptEffect> effects;
+    private int[] causeData;
     private int causeReadIndex = -1;
     private int causeMaxIndex = -1;
 
-    public kcScriptListInterim(List<kcScriptTOC> entries, List<Long> causeData, List<kcScriptEffect> effects) {
+    public kcScriptListInterim(List<kcScriptTOC> entries, List<Integer> causeData, List<kcInterimScriptEffect> effects) {
         this.entries = entries;
         this.effects = effects;
 
-        this.causeData = new long[causeData.size()];
+        this.causeData = new int[causeData.size()];
         for (int i = 0; i < causeData.size(); i++)
             this.causeData[i] = causeData.get(i);
     }
@@ -53,7 +52,7 @@ public class kcScriptListInterim extends GameObject {
      * Read the next 'cause' value.
      * @return nextCauseValue.
      */
-    public long readNextCauseValue() {
+    public int readNextCauseValue() {
         if (this.causeReadIndex < 0 || this.causeReadIndex >= this.causeMaxIndex)
             throw new RuntimeException("Cannot read the next cause value, it would go outside the range of valid data.");
         return this.causeData[this.causeReadIndex++];
@@ -77,7 +76,7 @@ public class kcScriptListInterim extends GameObject {
 
         while (left <= right) {
             int mid = (left + right) / 2;
-            kcScriptEffect midEffect = this.effects.get(mid);
+            kcInterimScriptEffect midEffect = this.effects.get(mid);
             if (midEffect.getDataOffset() == byteOffset) {
                 return mid;
             } else if (byteOffset > midEffect.getDataOffset()) {
@@ -102,19 +101,19 @@ public class kcScriptListInterim extends GameObject {
         }
 
         // 'Cause' Data
-        long causeDataSize = reader.readUnsignedIntAsLong();
-        this.causeData = new long[(int) causeDataSize];
+        int causeDataSize = reader.readInt();
+        this.causeData = new int[causeDataSize];
         for (int i = 0; i < causeDataSize; i++)
-            this.causeData[i] = reader.readUnsignedIntAsLong();
+            this.causeData[i] = reader.readInt();
 
         // 'Effect' data.
         this.effects.clear();
         int effectReadStart = reader.getIndex();
-        long effectBytes = reader.readUnsignedIntAsLong() * Constants.INTEGER_SIZE;
+        int effectBytes = reader.readInt() * Constants.INTEGER_SIZE;
 
         long firstEffectStart = reader.getIndex();
         while (effectReadStart + effectBytes > reader.getIndex()) {
-            kcScriptEffect effect = new kcScriptEffect();
+            kcInterimScriptEffect effect = new kcInterimScriptEffect();
             effect.setDataOffset(reader.getIndex() - firstEffectStart);
             effect.load(reader);
             this.effects.add(effect);
@@ -131,7 +130,7 @@ public class kcScriptListInterim extends GameObject {
         // 'Cause' Data
         writer.writeInt(this.causeData.length);
         for (int i = 0; i < this.causeData.length; i++)
-            writer.writeUnsignedInt(this.causeData[i]);
+            writer.writeInt(this.causeData[i]);
 
         // 'Effect' data.
         writer.writeInt(this.effects.size());
@@ -149,7 +148,7 @@ public class kcScriptListInterim extends GameObject {
             builder.append("// Objects [").append(this.entries.size()).append("]:\n");
             for (int i = 0; i < this.entries.size(); i++) {
                 kcScriptTOC toc = this.entries.get(i);
-                builder.append("// hasScriptType: ").append(toc.getHasScriptType())
+                builder.append("// Cause Types: ").append(Utils.toHexString(toc.getCauseTypes()))
                         .append(", ObjectCauseIndex: ").append(toc.getCauseStartIndex())
                         .append(", NumObjectCause: ").append(toc.getCauseCount())
                         .append(", NumObjectEffect: ").append(toc.getEffectCount())
