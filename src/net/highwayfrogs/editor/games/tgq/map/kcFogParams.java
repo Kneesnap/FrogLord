@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.tgq.TGQUtils;
 
 /**
@@ -18,9 +19,9 @@ import net.highwayfrogs.editor.games.tgq.TGQUtils;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class kcFogParams extends GameObject {
+public class kcFogParams extends GameObject implements IMultiLineInfoWriter {
     private kcFogMode mode;
-    private kcColor3 color;
+    private final kcColor3 color = new kcColor3();
     private float start;
     private float end;
     private float density;
@@ -28,9 +29,6 @@ public class kcFogParams extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        if (this.color == null)
-            this.color = new kcColor3();
-
         this.mode = kcFogMode.readFogMode(reader);
         this.color.load(reader);
         this.start = reader.readFloat();
@@ -54,13 +52,9 @@ public class kcFogParams extends GameObject {
      * @param builder The builder to write the information to.
      * @param padding The padding to apply to new lines.
      */
-    public void writeInfo(StringBuilder builder, String padding) {
+    public void writeMultiLineInfo(StringBuilder builder, String padding) {
         builder.append(padding).append("Fog Mode: ").append(this.mode).append(Constants.NEWLINE);
-        if (this.color != null) {
-            builder.append(padding).append("Color: ");
-            this.color.writeInfo(builder);
-            builder.append(Constants.NEWLINE);
-        }
+        this.color.writePrefixedInfoLine(builder, "Color", padding);
 
         builder.append(padding).append("Start: ").append(this.start).append(Constants.NEWLINE);
         builder.append(padding).append("End: ").append(this.end).append(Constants.NEWLINE);

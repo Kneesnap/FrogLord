@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.IInfoWriter.IMultiLineInfoWriter;
 
 /**
  * Represents the '_kcPerspective' struct.
@@ -17,7 +18,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class kcPerspective extends GameObject {
+public class kcPerspective extends GameObject implements IMultiLineInfoWriter {
     private float fovVert;
     private float aspect;
     private float zNear;
@@ -39,12 +40,8 @@ public class kcPerspective extends GameObject {
         writer.writeFloat(this.zFar);
     }
 
-    /**
-     * Writes information about this perspective.
-     * @param builder The builder to write the information to.
-     * @param padding The padding to apply to new lines.
-     */
-    public void writeInfo(StringBuilder builder, String padding) {
+    @Override
+    public void writeMultiLineInfo(StringBuilder builder, String padding) {
         builder.append(padding).append("FOV Vert: ").append(this.fovVert).append(Constants.NEWLINE);
         builder.append(padding).append("Aspect: ").append(this.aspect).append(Constants.NEWLINE);
         builder.append(padding).append("zNear: ").append(this.zNear).append(Constants.NEWLINE);

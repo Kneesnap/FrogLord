@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 import net.highwayfrogs.editor.games.tgq.TGQUtils;
 import net.highwayfrogs.editor.games.tgq.toc.KCResourceID;
@@ -17,13 +18,13 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 @Getter
 @Setter
-public class kcEnvironment extends kcCResource {
+public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
     private boolean lightingEnabled;
     private int ambientLightPackedColor; // uint
     private final kcLight[] directionalLights = new kcLight[3];
     private boolean fogEnabled;
-    private kcFogParams fog;
-    private kcPerspective perspective;
+    private final kcFogParams fog = new kcFogParams();
+    private final kcPerspective perspective = new kcPerspective();
 
     public static final String ENVIRONMENT_NAME = "_kcEnvironment";
 
@@ -59,23 +60,14 @@ public class kcEnvironment extends kcCResource {
         getPerspective().save(writer);
     }
 
-    /**
-     * Writes information about this environment.
-     * @param builder The builder to write the information to.
-     * @param padding The padding to apply to new lines.
-     */
-    public void writeInfo(StringBuilder builder, String padding) {
+    @Override
+    public void writeMultiLineInfo(StringBuilder builder, String padding) {
         String newPadding = padding + " ";
 
-        if (this.perspective != null) {
-            builder.append(padding).append("Perspective:").append(Constants.NEWLINE);
-            this.perspective.writeInfo(builder, newPadding);
-        }
+        this.perspective.writePrefixedMultiLineInfo(builder, "Perspective", padding, newPadding);
 
-        builder.append(padding).append("Fog: ").append(this.fogEnabled).append(Constants.NEWLINE);
-        builder.append(newPadding).append("Enabled: ").append(this.fogEnabled).append(Constants.NEWLINE);
-        if (this.fog != null)
-            this.fog.writeInfo(builder, newPadding);
+        builder.append(padding).append("Fog Enabled: ").append(this.fogEnabled).append(Constants.NEWLINE);
+        this.fog.writePrefixedMultiLineInfo(builder, "Fog", padding, newPadding);
 
         builder.append(padding).append("Lighting Enabled: ").append(this.lightingEnabled).append(Constants.NEWLINE);
         builder.append(padding).append("Ambient Light Color: ").append(Utils.to0PrefixedHexString(this.ambientLightPackedColor)).append(Constants.NEWLINE);
@@ -84,8 +76,8 @@ public class kcEnvironment extends kcCResource {
             if (this.directionalLights[i] == null)
                 continue;
 
-            builder.append(padding).append("Directional Light #").append((i + 1)).append(':').append(Constants.NEWLINE);
-            this.directionalLights[i].writeInfo(builder, newPadding);
+            builder.append(padding).append("Directional Light #").append(i + 1).append(':').append(Constants.NEWLINE);
+            this.directionalLights[i].writeMultiLineInfo(builder, newPadding);
         }
     }
 
@@ -111,24 +103,5 @@ public class kcEnvironment extends kcCResource {
             this.directionalLights[lightId] = light = new kcLight();
 
         return light;
-    }
-
-    /**
-     * Gets the kcFogParams applied to this environment, creating it if it does not exist.
-     * TODO: When we port to C#, we can remove these methods. When saving, we can do (this.fog ?? DEFAULT_FOG).save() instead.
-     */
-    public kcFogParams getFog() {
-        if (this.fog == null)
-            this.fog = new kcFogParams();
-        return this.fog;
-    }
-
-    /**
-     * Gets the kcPerspective applied to this environment, creating it if it does not exist.
-     */
-    public kcPerspective getPerspective() {
-        if (this.perspective == null)
-            this.perspective = new kcPerspective();
-        return this.perspective;
     }
 }

@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 @Getter
 @AllArgsConstructor
 public enum kcClassID {
-    // None / null = 0x65357b17.
+    // kcBaseClass = 0x65357b17.
     // From kcClassFactory::Create
     LIGHT("kcCLight", 0xD55AF1FA, 0x5, null), // TODO: MAYBE?
     SKELETON("kcCSkeleton", 0x5D3AFFCA, 0x7, null), //TODO: MAYBE?
@@ -46,7 +46,7 @@ public enum kcClassID {
     OBJ_MAP("CObjMap", 0x1594CB60, 0x8008, null),
     HONEY_POT("CHoneyPot", 0xE982E671, 0x8009, null),
     PROP("CProp", 0x00347480, 0x800A, null),
-    UNIQUE_ITEM("CUniqueItem", 0xE6333605, null); // No 'class ID'
+    UNIQUE_ITEM("CUniqueItem", 0xE6333605, null);
 
     @Getter private final String name;
     @Getter private final int classId; // This is a hash of the class name.

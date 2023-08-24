@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.tgq.toc;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
+import net.highwayfrogs.editor.games.tgq.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.tgq.script.kcCActionSequence;
 
 import java.util.function.Function;
@@ -20,12 +21,12 @@ public enum KCResourceID {
     TEXTURE("TEX\0", TGQChunkTextureReference::new),
     OCTTREESCENEMGR("OTT\0", OTTChunk::new),
     MODEL("6YTV", kcCResourceModel::new),
-    TRACK("fEAB", null),
-    HIERARCHY("fEHB", null),
-    ANIMSET("RAS\0", null),
+    TRACK("fEAB", null), // TODO
+    HIERARCHY("fEHB", null), // TODO
+    ANIMSET("RAS\0", null), // TODO
     ACTORDESC("RAD\0", null),
-    TRIMESH("RTM\0", null),
-    GENERIC("GEN\0", TGQChunkGeneric::new),
+    TRIMESH("RTM\0", null), // TODO
+    GENERIC("GEN\0", kcCResourceGeneric::new),
     TOC("TOC\0", TOCChunk::new),
     ACTIONSEQUENCE("ASQ\0", kcCActionSequence::new),
     NAMEDHASH("NHS\0", kcCResourceNamedHash::new),

@@ -10,6 +10,9 @@ import net.highwayfrogs.editor.games.tgq.entity.KCEntityInstance;
 
 /**
  * Recreation of the 'kcCResourceEntityInst' class from the PS2 version.
+ * TODO: Maybe belongs in entity folder?
+ * TODO: kcClassFactory::CreateDescription & CGreatQuestFactory::CreateDescription
+ * TODO: It appears the data here is the 'kcEntityInst' struct.
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
@@ -39,6 +42,8 @@ public class kcCResourceEntityInst extends kcCResource {
 
         //this.entity = classID.makeInstance();
         //this.entity.load(reader); // TODO
+
+        reader.skipBytes(reader.getRemaining()); // TODO: Finish implementing.
     }
 
     @Override

@@ -297,8 +297,11 @@ public class TGQHashReverser {
         for (int i = 0; i < charactersToAdd; i++) {
             builder.append('*');
             String testStr = template.replaceAll("(\\*+)", builder.toString());
-            System.out.println("Brute-forcing string '" + testStr + "'...");
-            results.addAll(reverseHashForTemplate(testStr, hash, false, allowRepeatMode));
+            System.out.print("Brute-forcing string '" + testStr + "'...");
+            List<String> searchResults = reverseHashForTemplate(testStr, hash, false, allowRepeatMode);
+            results.addAll(searchResults);
+            System.out.print(" Found: ");
+            System.out.println(searchResults.size());
         }
 
         List<String> sortedResults = new ArrayList<>(results);

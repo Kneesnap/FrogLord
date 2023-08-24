@@ -19,6 +19,7 @@ import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 public abstract class kcCResource extends GameObject {
     private byte[] rawData;
     private final KCResourceID chunkType;
+    @Setter private int hash; // The real hash comes from the TOC chunk.
     @Setter private String name;
     @Setter private TGQChunkedFile parentFile;
 
@@ -30,9 +31,9 @@ public abstract class kcCResource extends GameObject {
     }
 
     /**
-     * Calculates the hash for this resource.
+     * Calculates the hash from the name used for this resource.
      */
-    public int getHash() {
+    public int getNameHash() {
         return this.name != null ? TGQUtils.hash(this.name) : 0;
     }
 

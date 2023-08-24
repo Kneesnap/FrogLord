@@ -8,23 +8,21 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.IInfoWriter;
 
 /**
- * Represents the 'kcVector4' struct as defined in kcMath3D.h.
- * Created by Kneesnap on 7/12/2023.
+ * Represents the 'kcVector3' struct as defined in kcMath3D.h.
+ * Created by Kneesnap on 8/21/2023.
  */
 @Getter
 @Setter
-public class kcVector4 extends GameObject implements IInfoWriter {
+public class kcVector3 extends GameObject implements IInfoWriter {
     private float x;
     private float y;
     private float z;
-    private float w;
 
     @Override
     public void load(DataReader reader) {
         this.x = reader.readFloat();
         this.y = reader.readFloat();
         this.z = reader.readFloat();
-        this.w = reader.readFloat();
     }
 
     @Override
@@ -32,17 +30,17 @@ public class kcVector4 extends GameObject implements IInfoWriter {
         writer.writeFloat(this.x);
         writer.writeFloat(this.y);
         writer.writeFloat(this.z);
-        writer.writeFloat(this.w);
     }
 
-    @Override
+    /**
+     * Writes vector information to the builder.
+     * @param builder The builder to write information to.
+     */
     public void writeInfo(StringBuilder builder) {
         builder.append(this.x)
                 .append(", ")
                 .append(this.y)
                 .append(", ")
-                .append(this.z)
-                .append(", ")
-                .append(this.w);
+                .append(this.z);
     }
 }

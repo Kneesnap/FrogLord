@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.tgq.math.kcVector4;
 
 /**
@@ -16,13 +17,13 @@ import net.highwayfrogs.editor.games.tgq.math.kcVector4;
 @Getter
 @Setter
 @NoArgsConstructor
-public class kcLight extends GameObject {
+public class kcLight extends GameObject implements IMultiLineInfoWriter {
     private kcLightType lightType;
-    private kcColor4 diffuseColor;
-    private kcColor4 ambientColor;
-    private kcColor4 specularColor;
-    private kcVector4 position;
-    private kcVector4 direction;
+    private final kcColor4 diffuseColor = new kcColor4();
+    private final kcColor4 ambientColor = new kcColor4();
+    private final kcColor4 specularColor = new kcColor4();
+    private final kcVector4 position = new kcVector4();
+    private final kcVector4 direction = new kcVector4();
     private float range;
     private float falloff;
     private float atten0;
@@ -34,27 +35,11 @@ public class kcLight extends GameObject {
     @Override
     public void load(DataReader reader) {
         this.lightType = kcLightType.readLightType(reader);
-
-        if (this.diffuseColor == null)
-            this.diffuseColor = new kcColor4();
         this.diffuseColor.load(reader);
-
-        if (this.ambientColor == null)
-            this.ambientColor = new kcColor4();
         this.ambientColor.load(reader);
-
-        if (this.specularColor == null)
-            this.specularColor = new kcColor4();
         this.specularColor.load(reader);
-
-        if (this.position == null)
-            this.position = new kcVector4();
         this.position.load(reader);
-
-        if (this.direction == null)
-            this.direction = new kcVector4();
         this.direction.load(reader);
-
         this.range = reader.readFloat();
         this.falloff = reader.readFloat();
         this.atten0 = reader.readFloat();
@@ -81,42 +66,14 @@ public class kcLight extends GameObject {
         writer.writeFloat(this.phi);
     }
 
-    /**
-     * Writes information about this environment.
-     * @param builder The builder to write the information to.
-     * @param padding The padding to apply to new lines.
-     */
-    public void writeInfo(StringBuilder builder, String padding) {
+    @Override
+    public void writeMultiLineInfo(StringBuilder builder, String padding) {
         builder.append(padding).append("Light Type: ").append(this.lightType).append(Constants.NEWLINE);
-        if (this.diffuseColor != null) {
-            builder.append(padding).append("Diffuse Color: ");
-            this.diffuseColor.writeInfo(builder);
-            builder.append(Constants.NEWLINE);
-        }
-
-        if (this.ambientColor != null) {
-            builder.append(padding).append("Ambient Color: ");
-            this.ambientColor.writeInfo(builder);
-            builder.append(Constants.NEWLINE);
-        }
-
-        if (this.specularColor != null) {
-            builder.append(padding).append("Specular Color: ");
-            this.specularColor.writeInfo(builder);
-            builder.append(Constants.NEWLINE);
-        }
-
-        if (this.position != null) {
-            builder.append(padding).append("Position: ");
-            this.position.writeInfo(builder);
-            builder.append(Constants.NEWLINE);
-        }
-
-        if (this.direction != null) {
-            builder.append(padding).append("Direction: ");
-            this.direction.writeInfo(builder);
-            builder.append(Constants.NEWLINE);
-        }
+        this.diffuseColor.writePrefixedInfoLine(builder, "Diffuse Color", padding);
+        this.ambientColor.writePrefixedInfoLine(builder, "Ambient Color", padding);
+        this.specularColor.writePrefixedInfoLine(builder, "Specular Color", padding);
+        this.position.writePrefixedInfoLine(builder, "Position", padding);
+        this.direction.writePrefixedInfoLine(builder, "Direction", padding);
 
         builder.append(padding).append("Range: ").append(this.range).append(Constants.NEWLINE);
         builder.append(padding).append("Falloff: ").append(this.falloff).append(Constants.NEWLINE);

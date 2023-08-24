@@ -63,6 +63,17 @@ public class kcCResourceModel extends kcCResource {
     }
 
     /**
+     * Gets the file name without the full path.
+     */
+    public String getFileName() {
+        int lastBackslash = this.fullPath.lastIndexOf('\\');
+        if (lastBackslash == -1)
+            return this.fullPath;
+
+        return this.fullPath.substring(lastBackslash + 1);
+    }
+
+    /**
      * Gets the 3D this model stands in for.
      * @return model
      */

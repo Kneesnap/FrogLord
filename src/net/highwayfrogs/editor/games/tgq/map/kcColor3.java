@@ -7,6 +7,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.tgq.IInfoWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -20,7 +21,7 @@ import java.text.DecimalFormat;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class kcColor3 extends GameObject {
+public class kcColor3 extends GameObject implements IInfoWriter {
     private static final DecimalFormat DISPLAY_FORMAT = new DecimalFormat("0.###");
     private float red;
     private float green;
@@ -50,10 +51,7 @@ public class kcColor3 extends GameObject {
         return new Color(clampedRed, clampedGreen, clampedBlue);
     }
 
-    /**
-     * Writes color data to the string builder.
-     * @param builder The builder to write the color data to.
-     */
+    @Override
     public void writeInfo(StringBuilder builder) {
         int rgbColor = toColor().getRGB() & 0xFFFFFF;
         builder.append("kcColor3[RGB=")
