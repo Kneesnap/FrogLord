@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.tgq.entity;
+package net.highwayfrogs.editor.games.tgq.proxy;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQUtils;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.tgq.entity.kcBaseDesc;
 
 /**
  * Implements the 'kcProxyDesc' struct.
@@ -49,7 +49,7 @@ public class kcProxyDesc extends kcBaseDesc {
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Hash: ").append(Utils.to0PrefixedHexString(this.hash)).append(Constants.NEWLINE);
+        // No need to display the hash, if we need to know that we can look at the resource containing this data.
         builder.append(padding).append("Reaction: ").append(this.reaction).append(Constants.NEWLINE); // TODO: Enum?
         builder.append(padding).append("Collision Group: ").append(this.collisionGroup).append(Constants.NEWLINE);
         builder.append(padding).append("Collide With: ").append(this.collideWith).append(Constants.NEWLINE);

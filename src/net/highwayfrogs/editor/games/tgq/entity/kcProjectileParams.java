@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.games.tgq.proxy.ProxyReact;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -72,26 +73,5 @@ public class kcProjectileParams extends GameObject implements IMultiLineInfoWrit
         builder.append(padding).append("Mass: ").append(this.mass).append(", Gravity: ").append(this.gravity).append(Constants.NEWLINE);
         builder.append(padding).append("Retain Bounce: ").append(this.retainBounce)
                 .append(", Retain Slide: ").append(this.retainSlide).append(Constants.NEWLINE);
-    }
-
-    public enum ProxyReact {
-        PENETRATE, NOTIFY, HALT, SLIDE;
-
-        /**
-         * Gets the ProxyReact corresponding to the provided value.
-         * @param value     The value to lookup.
-         * @param allowNull If null is allowed.
-         * @return proxyReact
-         */
-        public static ProxyReact getReaction(int value, boolean allowNull) {
-            if (value < 0 || value >= values().length) {
-                if (allowNull)
-                    return null;
-
-                throw new RuntimeException("Couldn't determine the proxy reaction type from value " + value + ".");
-            }
-
-            return values()[value];
-        }
     }
 }

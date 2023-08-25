@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.tgq.entity;
+package net.highwayfrogs.editor.games.tgq.proxy;
 
 import lombok.Getter;
 import lombok.Setter;
