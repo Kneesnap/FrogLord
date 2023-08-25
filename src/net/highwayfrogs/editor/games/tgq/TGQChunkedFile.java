@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -162,6 +163,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
         saveScripts(new File(folder, "scripts.txt"), settings);
 
         saveGenericText(new File(folder, "strings.txt"));
+        saveEntities(new File(folder, "entity-instances.txt"));
         saveGenericEntityDescriptions(new File(folder, "entity-descriptions.txt"));
         saveGenericProxyInfo(new File(folder, "proxy-descriptions.txt"));
         saveGenericEmitterInfo(new File(folder, "launchers.txt"));
@@ -225,8 +227,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
         }
 
         // Save scripts to folder.
-        if (sequenceBuilder.length() > 0)
-            saveExport(file, sequenceBuilder);
+        saveExport(file, sequenceBuilder);
     }
 
     /**
@@ -250,6 +251,26 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
     }
 
     /**
+     * Saves all the entity instances to a file.
+     * @param file The file to save to.
+     */
+    public void saveEntities(File file) {
+        StringBuilder builder = new StringBuilder();
+        for (kcCResource testChunk : this.chunks) {
+            if (!(testChunk instanceof kcCResourceEntityInst))
+                continue;
+
+            kcCResourceEntityInst entityResource = (kcCResourceEntityInst) testChunk;
+            writeData(builder, entityResource, entityResource.getEntity());
+            builder.append(Constants.NEWLINE);
+        }
+
+        // Save scripts to folder.
+        saveExport(file, builder);
+    }
+
+
+    /**
      * Saves all the scripts to a file.
      * @param file     The file to save to.
      * @param settings The settings to print the scripts with.
@@ -266,8 +287,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
         }
 
         // Save scripts to folder.
-        if (scriptBuilder.length() > 0)
-            saveExport(file, scriptBuilder);
+        saveExport(file, scriptBuilder);
     }
 
     /**
@@ -289,8 +309,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
                     .append(generic.getAsString()).append(Constants.NEWLINE);
         }
 
-        if (builder.length() > 0)
-            saveExport(file, builder);
+        saveExport(file, builder);
     }
 
     private void writeData(StringBuilder builder, kcCResource resource, IMultiLineInfoWriter data) {
@@ -345,8 +364,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
             infoBuilder.append(Constants.NEWLINE);
         }
 
-        if (infoBuilder.length() > 0)
-            saveExport(file, infoBuilder);
+        saveExport(file, infoBuilder);
     }
 
     /**
@@ -377,8 +395,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
             builder.append(Constants.NEWLINE);
         }
 
-        if (builder.length() > 0)
-            saveExport(file, builder);
+        saveExport(file, builder);
     }
 
     /**
@@ -399,8 +416,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
             builder.append(Constants.NEWLINE);
         }
 
-        if (builder.length() > 0)
-            saveExport(file, builder);
+        saveExport(file, builder);
     }
 
     /**
@@ -421,8 +437,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
             builder.append(Constants.NEWLINE);
         }
 
-        if (builder.length() > 0)
-            saveExport(file, builder);
+        saveExport(file, builder);
     }
 
     /**
@@ -445,8 +460,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
                     .append(Utils.to0PrefixedHexString(resourcePath.getFileHash())).append(Constants.NEWLINE);
         }
 
-        if (builder.length() > 0)
-            saveExport(file, builder);
+        saveExport(file, builder);
     }
 
     /**
@@ -469,8 +483,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
             builder.append(Constants.NEWLINE);
         }
 
-        if (builder.length() > 0)
-            saveExport(file, builder);
+        saveExport(file, builder);
     }
 
     /**
@@ -530,6 +543,9 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
     }
 
     private static void saveExport(File target, StringBuilder builder) {
+        if (builder == null || builder.length() == 0)
+            return;
+
         try {
             Files.write(target.toPath(), Arrays.asList(builder.toString().split(Constants.NEWLINE)));
         } catch (IOException ex) {
@@ -566,5 +582,43 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
             if (!outputFile.exists())
                 Files.write(outputFile.toPath(), chunk.getRawData());
         }
+    }
+
+    /**
+     * Write the asset name to the builder to a single line.
+     * @param file         The chunked file to search for assets from.
+     * @param builder      The builder to write to.
+     * @param padding      The line padding data.
+     * @param prefix       The prefix to write.
+     * @param resourceHash The hash value to lookup.
+     */
+    public static StringBuilder writeAssetLine(TGQChunkedFile file, StringBuilder builder, String padding, String prefix, int resourceHash) {
+        return writeAssetInfo(file, builder, padding, prefix, resourceHash, kcCResource::getName).append(Constants.NEWLINE);
+    }
+
+    /**
+     * Write asset information to the builder. The information written is specified via the function.
+     * If the asset isn't found, the hash is written instead.
+     * @param file         The chunked file to search for assets from.
+     * @param builder      The builder to write to.
+     * @param padding      The line padding data.
+     * @param prefix       The prefix to write.
+     * @param resourceHash The hash value to lookup.
+     * @param getter       The function to turn the resource into a string.
+     * @param <TResource>  The resource type to lookup.
+     */
+    public static <TResource extends kcCResource> StringBuilder writeAssetInfo(TGQChunkedFile file, StringBuilder builder, String padding, String prefix, int resourceHash, Function<TResource, String> getter) {
+        builder.append(padding).append(prefix).append(": ");
+
+        TResource resource = file != null ? file.getResourceByHash(resourceHash) : null;
+        if (resource != null) {
+            builder.append(getter.apply(resource));
+        } else if (resourceHash != 0 && resourceHash != -1) {
+            builder.append(Utils.to0PrefixedHexString(resourceHash));
+        } else {
+            builder.append("None");
+        }
+
+        return builder;
     }
 }

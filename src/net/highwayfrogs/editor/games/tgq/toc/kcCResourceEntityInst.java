@@ -2,23 +2,21 @@ package net.highwayfrogs.editor.games.tgq.toc;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
-import net.highwayfrogs.editor.games.tgq.entity.KCEntityInstance;
+import net.highwayfrogs.editor.games.tgq.entity.kcEntity3DInst;
+import net.highwayfrogs.editor.games.tgq.entity.kcEntityInst;
 
 /**
  * Recreation of the 'kcCResourceEntityInst' class from the PS2 version.
  * TODO: Maybe belongs in entity folder?
- * TODO: kcClassFactory::CreateDescription & CGreatQuestFactory::CreateDescription
- * TODO: It appears the data here is the 'kcEntityInst' struct.
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
 @Setter
 public class kcCResourceEntityInst extends kcCResource {
-    private KCEntityInstance entity;
+    private kcEntityInst entity;
 
     public kcCResourceEntityInst(TGQChunkedFile parentFile) {
         super(parentFile, KCResourceID.ENTITYINST);
@@ -28,27 +26,28 @@ public class kcCResourceEntityInst extends kcCResource {
     public void load(DataReader reader) {
         super.load(reader);
 
-        int size = reader.readInt(); // Remaining bytecount from this point.
-        int calculatedSize = reader.getRemaining() + Constants.INTEGER_SIZE;
-        if (size != calculatedSize)
-            throw new RuntimeException("The expected amount of entity data (" + size + " bytes) different from the actual amount (" + calculatedSize + " bytes).");
+        reader.jumpTemp(reader.getIndex());
+        int sizeInBytes = reader.readInt(); // Number of bytes used for entity data.
+        reader.jumpReturn();
 
-        int hDesc = reader.readInt(); // Model Hash...? TODO: This hash seems to be for a resource.
-        reader.skipInt(); // This is data is for the class created from 'hDesc' at runtime. It seems to contain uninitialized data otherwise.
+        int calculatedSize = reader.getRemaining(); // We've returned to before the size integer was read.
+        if (sizeInBytes != calculatedSize)
+            throw new RuntimeException("The expected amount of entity data (" + sizeInBytes + " bytes) different from the actual amount (" + calculatedSize + " bytes).");
 
+        if (sizeInBytes == kcEntity3DInst.SIZE_IN_BYTES) {
+            this.entity = new kcEntity3DInst(this);
+        } else if (sizeInBytes == kcEntityInst.SIZE_IN_BYTES) {
+            this.entity = new kcEntityInst(this);
+        } else {
+            throw new RuntimeException("Couldn't identify the entity type for '" + getName() + "' from the byte size of " + sizeInBytes + ".");
+        }
 
-        // TODO: kcBaseDesc pointer? (Pointer to the generic resource described by hDesc I think)
-
-
-        //this.entity = classID.makeInstance();
-        //this.entity.load(reader); // TODO
-
-        reader.skipBytes(reader.getRemaining()); // TODO: Finish implementing.
+        this.entity.load(reader);
     }
 
     @Override
     public void save(DataWriter writer) {
         super.save(writer);
-        //this.entity.save(writer);
+        this.entity.save(writer);
     }
 }
