@@ -3,15 +3,20 @@ package net.highwayfrogs.editor.games.tgq.script;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.tgq.TGQChunkedFile;
 import net.highwayfrogs.editor.games.tgq.script.cause.kcScriptCause;
 import net.highwayfrogs.editor.games.tgq.script.cause.kcScriptCauseType;
 import net.highwayfrogs.editor.games.tgq.script.effect.kcScriptEffect;
 import net.highwayfrogs.editor.games.tgq.script.interim.kcScriptListInterim;
 import net.highwayfrogs.editor.games.tgq.script.interim.kcScriptTOC;
+import net.highwayfrogs.editor.games.tgq.toc.kcCResource;
+import net.highwayfrogs.editor.games.tgq.toc.kcCResourceEntityInst;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,15 +57,63 @@ public class kcScript {
     }
 
     /**
+     * Gets a list of all attached entities.
+     * @param level The chunked file containing level data.
+     * @return attachedEntities
+     */
+    public List<kcCResourceEntityInst> getAttachedEntities(TGQChunkedFile level) {
+        if (level == null)
+            return Collections.emptyList();
+
+        List<kcCResourceEntityInst> entities = new ArrayList<>();
+        kcScriptList scriptList = level.getScriptList();
+        for (int i = 0; i < level.getChunks().size(); i++) {
+            kcCResource resource = level.getChunks().get(i);
+            if (!(resource instanceof kcCResourceEntityInst))
+                continue;
+
+            kcCResourceEntityInst entity = (kcCResourceEntityInst) resource;
+            if (entity.getEntity() == null || entity.getEntity().getScriptIndex() < 0)
+                continue;
+
+            kcScript script = scriptList.getScripts().get(entity.getEntity().getScriptIndex());
+            if (script == this)
+                entities.add(entity);
+        }
+
+        return entities;
+    }
+
+    /**
      * Writes the script to a string builder.
+     * @param level    The level file to search for entity data from. Can be null
      * @param builder  The builder to write the script to.
      * @param settings The settings for displaying the output.
      */
-    public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
+    public void toString(TGQChunkedFile level, StringBuilder builder, kcScriptDisplaySettings settings) {
+        // Write attached entities.
+        if (level != null) {
+            builder.append("/// Attached Entities: ");
+
+            List<kcCResourceEntityInst> entities = getAttachedEntities(level);
+            if (entities.size() > 0) {
+                for (int i = 0; i < entities.size(); i++) {
+                    kcCResourceEntityInst entityInst = entities.get(i);
+                    if (i > 0)
+                        builder.append(", ");
+                    builder.append('"').append(entityInst.getName()).append('"');
+                }
+            } else {
+                builder.append("None");
+            }
+
+            builder.append("\n\n");
+        }
+
         for (int i = 0; i < this.functions.size(); i++) {
             builder.append("// Function #").append(i + 1).append(":\n");
             this.functions.get(i).toString(builder, settings);
-            if (this.functions.get(i).effects.size() > 0)
+            if (this.functions.get(i).getEffects().size() > 0)
                 builder.append('\n');
         }
     }
@@ -172,7 +225,6 @@ public class kcScript {
          * @param settings The settings for how to display the output.
          */
         public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
-            // TODO: Let's give a list of all the entities with this as the active script index.
             builder.append("/// Cause: ");
             this.cause.toString(builder, settings);
             builder.append('\n');

@@ -126,7 +126,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
 
     /**
      * Create a map of hash numbers to corresponding strings from files present in the chunks.
-     =     * @return localHashes
+     * @return localHashes
      */
     public Map<Integer, String> calculateLocalHashes() {
         Map<Integer, String> nameMap = new HashMap<>();
@@ -154,7 +154,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
         // Build the name map.
         Map<Integer, String> nameMap = calculateLocalHashes();
 
-        saveMapObj(folder);
+        saveMapObj(folder); // TODO: Here's the slowdown.
         exportChunksToDirectory(folder);
 
         TGQUtils.addDefaultHashesToMap(nameMap);
@@ -226,7 +226,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
             }
         }
 
-        // Save scripts to folder.
+        // Save sequences to folder.
         saveExport(file, sequenceBuilder);
     }
 
@@ -265,7 +265,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
             builder.append(Constants.NEWLINE);
         }
 
-        // Save scripts to folder.
+        // Save to folder.
         saveExport(file, builder);
     }
 
@@ -281,13 +281,29 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
             if (testChunk instanceof kcScriptList) {
                 kcScriptList scriptList = (kcScriptList) testChunk;
                 scriptBuilder.append("// Script List: '").append(scriptList.getName()).append("'\n");
-                scriptList.toString(scriptBuilder, settings);
+                scriptList.toString(this, scriptBuilder, settings);
                 scriptBuilder.append('\n');
             }
         }
 
         // Save scripts to folder.
         saveExport(file, scriptBuilder);
+    }
+
+    /**
+     * Gets the script list in this chunked file, if there is one.
+     */
+    public kcScriptList getScriptList() {
+        kcScriptList scriptList = null;
+        for (kcCResource testChunk : this.chunks) {
+            if (testChunk instanceof kcScriptList) {
+                if (scriptList != null)
+                    throw new RuntimeException("There are multiple script lists in the level! ('" + scriptList.getName() + "', '" + testChunk.getName() + "')");
+                scriptList = (kcScriptList) testChunk;
+            }
+        }
+
+        return scriptList;
     }
 
     /**

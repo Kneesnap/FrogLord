@@ -88,13 +88,14 @@ public class kcScriptList extends kcCResource {
 
     /**
      * Writes the script list to a string builder.
+     * @param level    The level to lookup any extra data from.
      * @param builder  The builder to write the script to.
      * @param settings The settings used to build the output.
      */
-    public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
+    public void toString(TGQChunkedFile level, StringBuilder builder, kcScriptDisplaySettings settings) {
         for (int i = 0; i < this.scripts.size(); i++) {
             builder.append("// Script #").append(i + 1).append(":\n");
-            this.scripts.get(i).toString(builder, settings);
+            this.scripts.get(i).toString(level, builder, settings);
             builder.append('\n');
         }
     }
