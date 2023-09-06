@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.sound.VHFile;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -31,6 +32,8 @@ import net.highwayfrogs.editor.gui.editor.*;
 import net.highwayfrogs.editor.gui.extra.DemoTableEditorController;
 import net.highwayfrogs.editor.gui.extra.FormEntryController;
 import net.highwayfrogs.editor.gui.extra.LevelInfoController;
+import net.highwayfrogs.editor.gui.extra.hash.HashPlaygroundController;
+import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -56,6 +59,8 @@ public class MainController implements Initializable {
     @FXML private MenuItem textureFinder;
     @FXML private MenuItem demoTableEditor;
     @FXML private MenuItem patchMenu;
+    @FXML private MenuItem differenceReport;
+    @FXML private MenuItem findUnusedVertices;
     private MWDFile mwdFile;
     private ListView<GameFile> currentFilesList;
 
@@ -109,6 +114,7 @@ public class MainController implements Initializable {
         formLibEditor.setDisable(config.getFullFormBook().isEmpty());
         scriptEditor.setDisable(config.getScripts().isEmpty());
         demoTableEditor.setDisable(config.getDemoTableEntries().isEmpty());
+        differenceReport.setDisable(!FroggerVersionComparison.isEnabled());
     }
 
     private void addFileList(int type, String name, Map<Integer, ObservableList<GameFile>> fileMap) {
@@ -201,6 +207,20 @@ public class MainController implements Initializable {
     }
 
     @FXML
+    private void actionGenerateDifferenceReport(ActionEvent evt) {
+        FroggerVersionComparison.generateReport();
+    }
+
+    @FXML
+    private void actionFindUnusedVertices(ActionEvent evt) {
+        getMwdFile().getAllFiles(MAPFile.class).forEach(mapFile -> {
+            List<SVector> unusedVertices = mapFile.findUnusedVertices();
+            if (unusedVertices.size() > 1)
+                System.out.println(" - " + mapFile.getFileEntry().getDisplayName() + " has " + unusedVertices.size() + " unused vertices.");
+        });
+    }
+
+    @FXML
     private void editLevelInfo(ActionEvent evt) {
         LevelInfoController.openEditor(GUIMain.EXE_CONFIG);
     }
@@ -226,6 +246,11 @@ public class MainController implements Initializable {
     }
 
     @FXML
+    private void actionHashPlayground(ActionEvent evt) {
+        HashPlaygroundController.openEditor();
+    }
+
+    @FXML
     private void actionSearchForTexture(ActionEvent evt) {
         InputMenu.promptInput("Please enter the texture id to lookup.", str -> {
             if (!Utils.isInteger(str)) {
@@ -234,13 +259,16 @@ public class MainController implements Initializable {
             }
 
             int texId = Integer.parseInt(str);
-            GameImage image = getMwdFile().getImageByTextureId(texId);
-            if (image == null) {
+            List<GameImage> images = getMwdFile().getImagesByTextureId(texId);
+            if (images.isEmpty()) {
                 Utils.makePopUp("Could not find an image with the id " + texId + ".", AlertType.WARNING);
                 return;
             }
 
-            System.out.println("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + Utils.stripExtension(image.getParent().getFileEntry().getDisplayName()) + ".");
+            for (GameImage image : images)
+                System.out.println("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + Utils.stripExtension(image.getParent().getFileEntry().getDisplayName()) + ".");
+
+            GameImage image = images.get(0);
             openEditor(this.currentFilesList, image.getParent());
             ((VLOController) getCurrentController()).selectImage(image, true);
         });
@@ -344,7 +372,7 @@ public class MainController implements Initializable {
 
     @AllArgsConstructor
     private static class AttachmentListCell extends ListCell<GameFile> {
-        private MWDFile mwdFile;
+        private final MWDFile mwdFile;
 
         @Override
         public void updateItem(GameFile file, boolean empty) {
@@ -357,14 +385,18 @@ public class MainController implements Initializable {
 
             FileEntry entry = mwdFile.getEntryMap().get(file);
             setGraphic(new ImageView(file.getIcon()));
-            setText(entry.getDisplayName() + " [" + entry.getLoadedId() + "]");
+
+            // Update text.
+            boolean isIslandPlaceholder = file instanceof MAPFile && ((MAPFile) file).getMapConfig().isIslandPlaceholder();
+            setStyle(isIslandPlaceholder ? "-fx-text-fill: red;" : null);
+            setText(entry.getDisplayName() + " [" + entry.getResourceId() + "]");
         }
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         MAIN_WINDOW = this;
-        System.out.println("Hello from FrogLord.");
+        System.out.println("Hello! FrogLord is loading config '" + GUIMain.EXE_CONFIG.getInternalName() + "'.");
         menuBar.prefWidthProperty().bind(rootAnchor.widthProperty());
     }
 }

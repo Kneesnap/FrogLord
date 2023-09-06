@@ -29,6 +29,7 @@ import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -48,27 +49,29 @@ public class FroggerEXEInfo extends Config {
     private MWDFile MWD;
     private MWIFile MWI;
     private ThemeBook[] themeLibrary;
-    private List<MapBook> mapLibrary = new ArrayList<>();
-    private Map<FileEntry, List<Short>> remapTable = new HashMap<>();
-    private List<MusicTrack> musicTracks = new ArrayList<>();
-    private List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
-    private List<LevelInfo> raceLevelInfo = new ArrayList<>();
-    private List<LevelInfo> allLevelInfo = new ArrayList<>();
-    private Map<MAPLevel, LevelInfo> levelInfoMap = new HashMap<>();
-    private List<DemoTableEntry> demoTableEntries = new ArrayList<>();
-    private List<Long> bmpTexturePointers = new ArrayList<>();
-    private List<FormEntry> fullFormBook = new ArrayList<>();
-    private List<FroggerScript> scripts = new ArrayList<>();
-    private short[] cosEntries = new short[ACOSTABLE_ENTRIES];
-    private short[] sinEntries = new short[ACOSTABLE_ENTRIES];
+    private final List<MapBook> mapLibrary = new ArrayList<>();
+    private final Map<FileEntry, List<Short>> remapTable = new HashMap<>();
+    private final List<MusicTrack> musicTracks = new ArrayList<>();
+    private final List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
+    private final List<LevelInfo> raceLevelInfo = new ArrayList<>();
+    private final List<LevelInfo> allLevelInfo = new ArrayList<>();
+    private final Map<MAPLevel, LevelInfo> levelInfoMap = new HashMap<>();
+    private final List<DemoTableEntry> demoTableEntries = new ArrayList<>();
+    private final List<Long> bmpTexturePointers = new ArrayList<>();
+    private final List<FormEntry> fullFormBook = new ArrayList<>();
+    private final List<FroggerScript> scripts = new ArrayList<>();
+    private final short[] cosEntries = new short[ACOSTABLE_ENTRIES];
+    private final short[] sinEntries = new short[ACOSTABLE_ENTRIES];
     private PickupData[] pickupData;
-    private String internalName;
+    private final String internalName;
     private boolean hasConfigIdentifier;
-    private Map<MAPLevel, Image> levelImageMap = new HashMap<>();
-    private Map<MAPTheme, FormEntry[]> allowedForms = new HashMap<>();
+    private final Map<MAPLevel, Image> levelImageMap = new HashMap<>();
+    private final Map<MAPTheme, FormEntry[]> allowedForms = new HashMap<>();
+    private final List<Short> islandRemap = new ArrayList<>();
 
 
     private String name;
+    private int build;
     private long ramPointerOffset;
     private int MWIOffset;
     private int MWILength;
@@ -81,8 +84,6 @@ public class FroggerEXEInfo extends Config {
     private int pickupDataAddress;
     private int scriptArrayAddress;
     private int skyLandTextureAddress;
-    private boolean prototype;
-    private boolean demo;
     private boolean postMediEvil; // MWIs after MediEvil have a checksum.
     private TargetPlatform platform;
     private NameBank soundBank;
@@ -90,11 +91,17 @@ public class FroggerEXEInfo extends Config {
     private NameBank formBank;
     private NameBank entityBank;
     private NameBank scriptBank; // Name of scripts.
+    private NameBank scriptCallbackBank; // Name of scripts.
+    private final Map<String, FroggerMapConfig> mapConfigs = new HashMap<>();
+    private final FroggerMapConfig defaultMapConfig = new FroggerMapConfig();
+    private final Map<String, int[]> hiddenPartIds = new HashMap<>();
+    private final Map<String, String> mofRenderOverrides = new HashMap<>();
+    private final Map<String, String> mofParentOverrides = new HashMap<>();
 
     private DataReader reader;
     private byte[] exeBytes;
-    private File folder;
-    private File inputFile;
+    private final File folder;
+    private final File inputFile;
     private List<String> fallbackFileNames;
 
     private static final int ACOSTABLE_ENTRIES = 4096;
@@ -104,7 +111,7 @@ public class FroggerEXEInfo extends Config {
 
     private static final String CHILD_RESTORE_MAP_BOOK = "MapBookRestore";
     private static final String CHILD_RESTORE_THEME_BOOK = "ThemeBookRestore";
-    private static final String CHILD_IMAGE_NAMES = "ImageNames";
+    public static final String CHILD_IMAGE_NAMES = "ImageNames";
     private static final String CHILD_MOF_FORCE_VLO = "ForceVLO";
 
     public FroggerEXEInfo(File inputExe, InputStream inputStream, String internalName, boolean hasConfigIdentifier) {
@@ -144,9 +151,9 @@ public class FroggerEXEInfo extends Config {
     public void setup() {
         loadBanks();
         readConfig();
+        readMapConfigs();
         readMWI();
         readCosTable();
-        //readPickupData();
         //readThemeLibrary();
         //readDemoTable();
         //readMapLibrary();
@@ -155,44 +162,67 @@ public class FroggerEXEInfo extends Config {
         //readMusicData();
         //readLevelData();
         readBmpPointerData();
+        readPickupData();
+        readHiddenParts();
+        readMofOverrides();
+        readMofParentOverrides();
         this.MWD = new MWDFile(getMWI());
     }
 
     private void readConfig() {
         this.name = getString(FIELD_NAME);
-        this.demo = getBoolean("demo");
-        this.prototype = getBoolean("prototype");
+        this.build = getInt("build", -1);
         this.platform = getEnum("platform", TargetPlatform.class);
         this.MWIOffset = getInt("mwiOffset");
         this.MWILength = getInt("mwiLength");
         this.postMediEvil = getBoolean("postMediEvil");
-        this.themeBookAddress = getInt("themeBook");
-        this.mapBookAddress = getInt("mapBook");
+        this.themeBookAddress = getInt("themeBook", -1);
+        this.mapBookAddress = getInt("mapBook", -1);
         this.demoTableAddress = getInt("demoTable", -1);
         this.ramPointerOffset = getLong("ramOffset"); // If I have an offset in a file, adding this number will give its pointer.
         this.arcadeLevelAddress = getInt("arcadeLevelAddress", 0);
-        this.musicAddress = getInt("musicAddress"); // Music is generally always the same data, so you can find it with a search.
+        this.musicAddress = getInt("musicAddress", -1); // Music is generally always the same data, so you can find it with a search.
         this.bmpPointerAddress = getInt("bmpPointerAddress", 0); // Gives output to assist in finding.
         this.pickupDataAddress = getInt("pickupData", 0); // Pointer to Pickup_data[] in ent_gen. If this is not set, bugs will not have textures in the viewer. On PSX, search for 63 63 63 00 then after this entries image pointers, there's Pickup_data.
         this.scriptArrayAddress = getInt("scripts", 0); // Get this by searching for "07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1e 00 00 00 03 00 00 00 01 00 00 00 07 00 00 00". Search for the pointer that points to this (Don't forget to include ramOffset)
         this.skyLandTextureAddress = getInt("txl_sky_land", 0); // Get this by searching for the hex texture ids of sky images as shorts. The textures in the PSX US Demo are textures #98, #97, #96. -> 1723, 1722, 1753 -> "BB 06 BA 06 D9 06".
     }
 
+    private void readMapConfigs() {
+        if (!hasChild("MapConfig"))
+            return;
+
+        Config defaultMapConfig = getChild("MapConfig");
+        this.defaultMapConfig.load(defaultMapConfig, this.defaultMapConfig);
+
+        // Read other configs, if there are any.
+        for (Config mapConfig : defaultMapConfig.getOrderedChildren()) {
+            FroggerMapConfig newMapConfig = new FroggerMapConfig();
+            newMapConfig.load(mapConfig, this.defaultMapConfig);
+            for (String mapFileName : newMapConfig.getApplicableMaps())
+                this.mapConfigs.put(mapFileName, newMapConfig);
+        }
+    }
+
     private void loadBanks() {
-        this.soundBank = loadBank("soundList", "main", "sounds", "Sound");
-        this.animationBank = loadBank("animList", "main-pc", "anims", (bank, index) -> bank.size() <= 1 ? "Default Animation" : "Animation " + index);
-        this.formBank = loadBank("formList", "main", "forms", "Form");
-        this.entityBank = loadBank("entityList", "main", "entities", "Entity");
-        this.scriptBank = loadBank("scriptList", "main", "scripts", "Script");
+        this.soundBank = loadBank("soundList", null, "sounds", "Sound", true);
+        this.animationBank = loadBank("animList", null, "anims", true, (bank, index) -> bank.size() <= 1 ? "Default Animation" : "Animation " + index);
+        this.formBank = loadBank("formList", "1997-09-12-psx-build57", "forms", "Form", true);
+        this.entityBank = loadBank("entityList", "1997-09-12-psx-build57", "entities", "Entity", true);
+        this.scriptBank = loadBank("scriptList", "1997-09-18-psx-build63", "scripts", "Script", false);
+        this.scriptCallbackBank = this.scriptBank.getChildBank("CallbackNames");
     }
 
-    private NameBank loadBank(String configKey, String defaultBank, String bankName, String unknownName) {
-        return loadBank(configKey, defaultBank, bankName, (bank, index) -> "Unknown " + unknownName + " [" + index + "]");
+    private NameBank loadBank(String configKey, String defaultBank, String bankName, String unknownName, boolean addChildrenToMainBank) {
+        return loadBank(configKey, defaultBank, bankName, addChildrenToMainBank, (bank, index) -> "Unknown " + unknownName + " [" + index + "]");
     }
 
-    private NameBank loadBank(String configKey, String defaultBank, String bankName, BiFunction<NameBank, Integer, String> nameHandler) {
+    private NameBank loadBank(String configKey, String defaultBank, String bankName, boolean addChildrenToMainBank, BiFunction<NameBank, Integer, String> nameHandler) {
         String animBankName = getString(configKey, defaultBank);
-        return NameBank.readBank(bankName, animBankName, nameHandler);
+        if (animBankName == null)
+            return null;
+
+        return NameBank.readBank(bankName, animBankName, addChildrenToMainBank, nameHandler);
     }
 
     private void readPickupData() {
@@ -238,28 +268,27 @@ public class FroggerEXEInfo extends Config {
     private void readThemeLibrary() {
         themeLibrary = new ThemeBook[MAPTheme.values().length];
 
-        DataReader reader = getReader();
-        reader.setIndex(getThemeBookAddress());
+        if (getThemeBookAddress() >= 0) {
+            DataReader reader = getReader();
+            reader.setIndex(getThemeBookAddress());
 
-        for (int i = 0; i < themeLibrary.length; i++) {
-            ThemeBook book = TargetPlatform.makeNewThemeBook(this);
-            book.setTheme(MAPTheme.values()[i]);
-            book.load(reader);
-            themeLibrary[i] = book;
-            Constants.logExeInfo(book);
-        }
+            for (int i = 0; i < themeLibrary.length; i++) {
+                ThemeBook book = TargetPlatform.makeNewThemeBook(this);
+                book.setTheme(MAPTheme.values()[i]);
+                book.load(reader);
+                themeLibrary[i] = book;
+                Constants.logExeInfo(book);
+            }
 
-        if (!hasChild(CHILD_RESTORE_THEME_BOOK)) {
-            readFormLibrary();
-            return;
-        }
+            if (hasChild(CHILD_RESTORE_THEME_BOOK)) {
+                Config themeBookRestore = getChild(CHILD_RESTORE_THEME_BOOK);
 
-        Config themeBookRestore = getChild(CHILD_RESTORE_THEME_BOOK);
-
-        for (String key : themeBookRestore.keySet()) {
-            MAPTheme theme = MAPTheme.getTheme(key);
-            Utils.verify(theme != null, "Unknown theme: '%s'", key);
-            getThemeBook(theme).handleCorrection(themeBookRestore.getString(key));
+                for (String key : themeBookRestore.keySet()) {
+                    MAPTheme theme = MAPTheme.getTheme(key);
+                    Utils.verify(theme != null, "Unknown theme: '%s'", key);
+                    getThemeBook(theme).handleCorrection(themeBookRestore.getString(key));
+                }
+            }
         }
 
         readFormLibrary();
@@ -272,17 +301,27 @@ public class FroggerEXEInfo extends Config {
 
             ThemeBook lastBook = getThemeBook(lastTheme);
             ThemeBook currentBook = getThemeBook(currentTheme);
-            if (currentBook.getFormLibraryPointer() == 0)
+            if (currentBook == null || currentBook.getFormLibraryPointer() == 0)
                 continue;
 
-            lastBook.loadFormLibrary(this, (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / FormEntry.BYTE_SIZE);
+            // Determine number of form entries and compare with name bank.
+            int nameCount = getFormBank().getChildBank(lastTheme.name()) != null ? getFormBank().getChildBank(lastTheme.name()).size() : 0;
+            int byteSize = isAtOrBeforeBuild4() ? FormEntry.OLD_BYTE_SIZE : FormEntry.BYTE_SIZE;
+            int entryCount = (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / byteSize;
+            if (entryCount != nameCount)
+                System.out.println(lastTheme + " has " + nameCount + " configured form names but " + entryCount + " calculated form entries in the form library.");
+
+            // Load form library.
+            lastBook.loadFormLibrary(this, nameCount);
             lastTheme = currentTheme;
         }
 
         // Load the last theme, which we use the number of names for to determine size.
         ThemeBook lastBook = getThemeBook(lastTheme);
-        int nameCount = getFormBank().getChildBank(lastTheme.name()).size();
-        lastBook.loadFormLibrary(this, nameCount);
+        if (lastBook != null) {
+            int nameCount = getFormBank().getChildBank(lastTheme.name()).size();
+            lastBook.loadFormLibrary(this, nameCount);
+        }
     }
 
     private void readDemoTable() {
@@ -292,7 +331,7 @@ public class FroggerEXEInfo extends Config {
                 return; // Couldn't find a demo by this name, so... skip.
 
             byte[] levelId = Utils.toByteArray(MAPLevel.SUBURBIA1.ordinal());
-            byte[] demoId = Utils.toByteArray(demoEntry.getLoadedId());
+            byte[] demoId = Utils.toByteArray(demoEntry.getResourceId());
 
             byte[] searchFor = new byte[levelId.length + demoId.length];
             System.arraycopy(levelId, 0, searchFor, 0, levelId.length);
@@ -324,12 +363,17 @@ public class FroggerEXEInfo extends Config {
         DataReader reader = getReader();
         reader.setIndex(getMapBookAddress());
 
-        int themeAddress = getThemeBookAddress();
-        while (themeAddress > reader.getIndex()) {
-            MapBook book = TargetPlatform.makeNewMapBook(this);
-            book.load(reader);
-            this.mapLibrary.add(book);
-            Constants.logExeInfo(book);
+        int themeAddress = isSonyPresentation() ? Integer.MAX_VALUE : getThemeBookAddress();
+        if (themeAddress >= 0) {
+            while (themeAddress > reader.getIndex()) {
+                MapBook book = TargetPlatform.makeNewMapBook(this);
+                book.load(reader);
+                this.mapLibrary.add(book);
+                Constants.logExeInfo(book);
+
+                if (isSonyPresentation())
+                    break; // There's only one map.
+            }
         }
 
         if (!hasChild(CHILD_RESTORE_MAP_BOOK))
@@ -359,8 +403,20 @@ public class FroggerEXEInfo extends Config {
             getReader().jumpTemp((int) (address - getRamPointerOffset()));
             FroggerScript newScript = new FroggerScript();
             getScripts().add(newScript); // Adds before loading so getName() can be accessed.
-            newScript.load(getReader());
-            getReader().jumpReturn();
+            try {
+                newScript.load(getReader());
+            } catch (Throwable th) {
+                System.out.println("Failed to load script '" + getScriptBank().getName(i) + "'");
+                th.printStackTrace();
+
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException ex) {
+                    // Do nothing.
+                }
+            } finally {
+                getReader().jumpReturn();
+            }
         }
     }
 
@@ -369,6 +425,9 @@ public class FroggerEXEInfo extends Config {
     }
 
     private void readMusicData() {
+        if (getMusicAddress() < 0)
+            return;
+
         getReader().setIndex(getMusicAddress());
 
         byte readByte;
@@ -380,6 +439,7 @@ public class FroggerEXEInfo extends Config {
         if (getArcadeLevelAddress() == 0)
             return; // No level select is present.
 
+        GUIMain.EXE_CONFIG = this; // Fixes logging of the below things.
         getReader().setIndex(getArcadeLevelAddress());
         LevelInfo level = null;
         while (level == null || !level.isTerminator()) {
@@ -425,6 +485,39 @@ public class FroggerEXEInfo extends Config {
         int totalCount = (stopReading - getBmpPointerAddress()) / Constants.POINTER_SIZE;
         for (int i = 0; i < totalCount; i++)
             bmpTexturePointers.add(getReader().readUnsignedIntAsLong());
+    }
+
+    private void readHiddenParts() {
+        this.hiddenPartIds.clear();
+        if (!hasChild("HiddenParts"))
+            return;
+
+        Config hiddenPartsCfg = getChild("HiddenParts");
+        for (String key : hiddenPartsCfg.keySet()) {
+            int[] hiddenParts = hiddenPartsCfg.getIntArray(key);
+            Arrays.sort(hiddenParts);
+            this.hiddenPartIds.put(key, hiddenParts);
+        }
+    }
+
+    private void readMofOverrides() {
+        this.mofRenderOverrides.clear();
+        if (!hasChild("MofOverride"))
+            return;
+
+        Config mofOverridesCfg = getChild("MofOverride");
+        for (String key : mofOverridesCfg.keySet())
+            this.mofRenderOverrides.put(key, mofOverridesCfg.getString(key));
+    }
+
+    private void readMofParentOverrides() {
+        this.mofParentOverrides.clear();
+        if (!hasChild("MofParentOverride"))
+            return;
+
+        Config mofParentOverridesCfg = getChild("MofParentOverride");
+        for (String key : mofParentOverridesCfg.keySet())
+            this.mofParentOverrides.put(key, mofParentOverridesCfg.getString(key));
     }
 
     /**
@@ -621,12 +714,34 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
+     * Gets the resource entry from a given name.
+     * @param name The name to lookup.
+     * @return foundEntry, if any.
+     */
+    public FileEntry getResourceEntry(String name) {
+        if (name == null || name.isEmpty())
+            return null;
+
+        for (int i = 0; i < getMWI().getEntries().size(); i++) {
+            FileEntry entry = getMWI().getEntries().get(i);
+            if (name.equalsIgnoreCase(entry.getDisplayName()))
+                return entry;
+        }
+
+        return null;
+    }
+
+    /**
      * Get the FileEntry name for a given resource id.
      * @param resourceId The resource id.
      * @return fileEntryName
      */
     public String getResourceName(int resourceId) {
-        return getResourceEntry(resourceId).getDisplayName();
+        FileEntry entry = getResourceEntry(resourceId);
+        if (entry == null)
+            return "NULL/" + resourceId;
+
+        return entry.getDisplayName();
     }
 
     /**
@@ -753,26 +868,30 @@ public class FroggerEXEInfo extends Config {
         vramCWriter.write(Constants.NEWLINE);
         vramHWriter.write(Constants.NEWLINE);
         for (String imageName : imageNames) {
+            if (imageName == null)
+                continue;
             vramCWriter.write("MR_TEXTURE " + imageName + " = {0};" + Constants.NEWLINE);
             vramHWriter.write("extern MR_TEXTURE " + imageName + ";" + Constants.NEWLINE);
         }
 
         // Unsure where this goes, or where to read it from.
-        vramCWriter.write(Constants.NEWLINE);
-        vramHWriter.write(Constants.NEWLINE);
-        vramCWriter.write("MR_USHORT txl_sky_land[] = {");
+        if (getMWD().getSkyLand().getSkyLandTextures() != null && getMWD().getSkyLand().getSkyLandTextures().length > 0) {
+            vramCWriter.write(Constants.NEWLINE);
+            vramHWriter.write(Constants.NEWLINE);
+            vramCWriter.write("MR_USHORT txl_sky_land[] = {");
 
-        short[] skyTxlData = getMWD().getSkyLand().getSkyLandTextures();
-        if (skyTxlData != null) {
-            for (int i = 0; i < skyTxlData.length; i++) {
-                if (i > 0)
-                    vramCWriter.write(", ");
-                vramCWriter.write(String.valueOf(skyTxlData[i]));
+            short[] skyTxlData = getMWD().getSkyLand().getSkyLandTextures();
+            if (skyTxlData != null) {
+                for (int i = 0; i < skyTxlData.length; i++) {
+                    if (i > 0)
+                        vramCWriter.write(", ");
+                    vramCWriter.write(String.valueOf(skyTxlData[i]));
+                }
             }
-        }
 
-        vramCWriter.write("};" + Constants.NEWLINE);
-        vramHWriter.write("extern MR_USHORT txl_sky_land[];" + Constants.NEWLINE);
+            vramCWriter.write("};" + Constants.NEWLINE);
+            vramHWriter.write("extern MR_USHORT txl_sky_land[];" + Constants.NEWLINE);
+        }
 
         vramHWriter.write("#endif" + Constants.NEWLINE);
     }
@@ -836,7 +955,14 @@ public class FroggerEXEInfo extends Config {
     public FormEntry getMapFormEntry(MAPTheme mapTheme, int formBookId) {
         if ((formBookId & FormEntry.FLAG_GENERAL) == FormEntry.FLAG_GENERAL)
             mapTheme = MAPTheme.GENERAL;
-        return getThemeBook(mapTheme).getFormBook().get(formBookId & (FormEntry.FLAG_GENERAL - 1));
+
+        ThemeBook themeBook = getThemeBook(mapTheme);
+        if (themeBook == null)
+            return null;
+
+        int formIndex = formBookId & (FormEntry.FLAG_GENERAL - 1);
+        List<FormEntry> formBook = themeBook.getFormBook();
+        return formBook != null && formBook.size() > formIndex ? formBook.get(formIndex) : null;
     }
 
     /**
@@ -861,11 +987,149 @@ public class FroggerEXEInfo extends Config {
     }
 
     /**
-     * Test if this is a retail version of the game.
-     * @return isRetail
+     * Checks if this build is the PSX alpha build or not.
      */
-    public boolean isRetail() {
-        return !isDemo() && !isPrototype();
+    public boolean isPSXAlpha() {
+        return "psx-1997-06-02-alpha".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Checks if this build is the first E3 build or not.
+     */
+    public boolean isE3Build1() {
+        return "psx-1997-06-12-e3".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Checks if this build is the second E3 build or not.
+     */
+    public boolean isE3Build2() {
+        return "psx-1997-06-13-e3".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Test if this build is the windows alpha build from June 29, 1997.
+     */
+    public boolean isWindowsAlpha() {
+        return "pc-1997-06-29-alpha".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Test if this build is the windows beta build from July 21, 1997.
+     */
+    public boolean isWindowsBeta() {
+        return "pc-1997-07-21".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Test if this build is the September 3 PC build from Kao.
+     */
+    public boolean isKaosPrototype() {
+        return "pc-1997-09-03".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Test if this is the US PSX demo from September 1997.
+     */
+    public boolean isSeptemberUsDemo() {
+        return "psx-demo-ntsc".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Test if the build is at/after the retail Windows build.
+     */
+    public boolean isAtLeastRetailWindows() {
+        return "pc-retail-v1.0".equalsIgnoreCase(getInternalName())
+                || "pc-retail-v3.0e".equalsIgnoreCase(getInternalName())
+                || "pc-retail-v3.0e-vogons".equalsIgnoreCase(getInternalName())
+                || "pc-demo".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Tests if this is the sony presentation April 28th build.
+     */
+    public boolean isSonyPresentation() {
+        return "psx-1997-04-28-sony".equalsIgnoreCase(getInternalName());
+    }
+
+    /**
+     * Test if the configuration is for a build before build 01.
+     */
+    public boolean isBeforeBuild1() {
+        return isSonyPresentation() || isPSXAlpha() || isE3Build1() || isE3Build2();
+    }
+
+    /**
+     * Tests if the build is at/before build 1.
+     * @return isBuildAtOrBeforeBuild1
+     */
+    public boolean isAtOrBeforeBuild1() {
+        return this.build == 1 || isBeforeBuild1();
+    }
+
+    /**
+     * Tests if the build is at/before build 4.
+     * @return isBuildAtOrBeforeBuild4
+     */
+    public boolean isAtOrBeforeBuild4() {
+        return (this.build > 0 && this.build <= 4) || isBeforeBuild1() || isWindowsAlpha();
+    }
+
+    /**
+     * Tests if the build is at/before build 11.
+     * @return isBuildAtOrBeforeBuild11
+     */
+    public boolean isAtOrBeforeBuild11() {
+        return (this.build >= 0 && this.build <= 11) || isBeforeBuild1();
+    }
+
+    /**
+     * Tests if the build is at/before build 20.
+     * @return isBuildAtOrBeforeBuild20
+     */
+    public boolean isAtOrBeforeBuild20() {
+        return (this.build >= 0 && this.build <= 20) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+    }
+
+    /**
+     * Tests if the build is at/before build 21.
+     * @return isBuildAtOrBeforeBuild21
+     */
+    public boolean isAtOrBeforeBuild21() {
+        return (this.build >= 0 && this.build <= 21) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+    }
+
+    /**
+     * Tests if the build is at/before build 23.
+     * @return isBuildAtOrBeforeBuild23
+     */
+    public boolean isAtOrBeforeBuild23() {
+        return (this.build >= 0 && this.build <= 23) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+    }
+
+    /**
+     * Tests if the build is at/before build 24.
+     * @return isBuildAtOrBeforeBuild24
+     */
+    public boolean isAtOrBeforeBuild24() {
+        return (this.build >= 0 && this.build <= 24) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+    }
+
+    /**
+     * Tests if the build is at/before build 38
+     * @return isBuildAtOrBeforeBuild38
+     */
+    public boolean isAtOrBeforeBuild38() {
+        return (this.build >= 0 && this.build <= 38) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+    }
+
+    /**
+     * Tests if the build is at/before build 51
+     * @return isBuildAtOrBeforeBuild51
+     */
+    public boolean isAtOrBeforeBuild51() {
+        return (this.build >= 0 && this.build <= 51) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta()
+                || isKaosPrototype() || isSeptemberUsDemo();
     }
 
     /**
@@ -892,9 +1156,17 @@ public class FroggerEXEInfo extends Config {
      */
     public FormEntry[] getAllowedForms(MAPTheme theme) {
         return allowedForms.computeIfAbsent(theme, safeTheme -> {
-            List<FormEntry> formType = new ArrayList<>(getThemeLibrary()[MAPTheme.GENERAL.ordinal()].getFormBook());
-            if (safeTheme != null && safeTheme != MAPTheme.GENERAL)
-                formType.addAll(getThemeLibrary()[safeTheme.ordinal()].getFormBook());
+            ThemeBook themeBook = getThemeLibrary()[MAPTheme.GENERAL.ordinal()];
+            if (themeBook == null)
+                return new FormEntry[0];
+
+            List<FormEntry> formType = new ArrayList<>(themeBook.getFormBook());
+            if (safeTheme != null && safeTheme != MAPTheme.GENERAL) {
+                ThemeBook mapBook = getThemeLibrary()[safeTheme.ordinal()];
+                if (mapBook != null)
+                    formType.addAll(mapBook.getFormBook());
+            }
+
             return formType.toArray(new FormEntry[0]);
         });
     }

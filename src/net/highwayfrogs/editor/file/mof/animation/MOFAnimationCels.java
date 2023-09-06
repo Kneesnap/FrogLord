@@ -19,11 +19,11 @@ import java.util.List;
  */
 @Getter
 public class MOFAnimationCels extends GameObject {
-    private List<Integer> celNumbers = new ArrayList<>(); // Entry for each frame. Starts at 0, counts up for each frame, unless there is a duplicate frame, where it won't count. Index into indice list.
-    private List<Short> indices = new ArrayList<>(); // All of the transform ids used. Each frame has indices for each part, seemingly in order from start to end of animation.
+    private final List<Integer> celNumbers = new ArrayList<>(); // Entry for each frame. Starts at 0, counts up for each frame, unless there is a duplicate frame, where it won't count. Index into indice list.
+    private final List<Short> indices = new ArrayList<>(); // All of the transform ids used. Each frame has indices for each part, seemingly in order from start to end of animation.
     @Setter private boolean interpolationEnabled;
 
-    private transient MOFAnimation parent;
+    private final transient MOFAnimation parent;
     private transient int tempCelNumberPointer;
     private transient int tempIndicePointer;
 
@@ -39,7 +39,11 @@ public class MOFAnimationCels extends GameObject {
         int celCount = reader.readUnsignedShortAsInt();
         int partCount = reader.readUnsignedShortAsInt();
         int virtualCelCount = reader.readUnsignedShortAsInt();
-        this.interpolationEnabled = (reader.readUnsignedShortAsInt() == FLAG_VIRTUAL_INTERPOLATION);
+
+        int flags = reader.readUnsignedShortAsInt();
+        this.interpolationEnabled = (flags == FLAG_VIRTUAL_INTERPOLATION);
+        if (getConfig().isFrogger() && !getConfig().isAtOrBeforeBuild4()) // Seems this was indeed used for flags at one point.
+            Utils.verify(flags == FLAG_VIRTUAL_STANDARD, "Model cel-set had unsupported flags! (%s)", Utils.toHexString(flags)); // We don't support this mode as of now.
 
         int celNumberPointer = reader.readInt();
         int indicePointer = reader.readInt();
@@ -96,7 +100,9 @@ public class MOFAnimationCels extends GameObject {
      * @return transformId
      */
     public int getTransformID(int frame, MOFPart part) {
-        int actualCel = celNumbers.get(frame % celNumbers.size()) - (getParent().isStartAtFrameZero() ? 0 : 1);
+        MOFHolder holder = part.getParent().getHolder();
+        boolean frameStartAtZero = (holder != null && holder.isAnimatedMOF() && holder.getAnimatedFile().isStartAtFrameZero());
+        int actualCel = Math.max(0, celNumbers.get(frame % celNumbers.size()) - (frameStartAtZero ? 0 : 1)); // This shouldn't be negative, but is for GEN_CHECKPOINT_X.XAR in Frogger build 4.
         int partCount = getParent().getStaticMOF().getParts().size();
         return indices.get((actualCel * partCount) + part.getPartID());
     }

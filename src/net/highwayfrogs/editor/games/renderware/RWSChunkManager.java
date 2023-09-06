@@ -1,6 +1,9 @@
 package net.highwayfrogs.editor.games.renderware;
 
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.games.renderware.chunks.RWImageChunk;
+import net.highwayfrogs.editor.games.renderware.chunks.RWPlatformIndependentTextureDictionaryChunk;
+import net.highwayfrogs.editor.games.renderware.chunks.RWStructChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RWUnsupportedChunk;
 
 import java.util.HashMap;
@@ -12,7 +15,15 @@ import java.util.function.BiFunction;
  * Created by Kneesnap on 6/9/2020.
  */
 public class RWSChunkManager {
-    private static Map<Integer, BiFunction<Integer, RWSChunk, RWSChunk>> supportedChunks = new HashMap<>();
+    private static final Map<Integer, BiFunction<Integer, RWSChunk, RWSChunk>> supportedChunks = new HashMap<>();
+
+    /**
+     * Registers a chunk type.
+     * @param chunkCreator The constructor to create a chunk.
+     */
+    public static void registerChunkType(BiFunction<Integer, RWSChunk, RWSChunk> chunkCreator) {
+        supportedChunks.put(chunkCreator.apply(0, null).getTypeId(), chunkCreator);
+    }
 
     /**
      * Registers a chunk type.
@@ -53,6 +64,10 @@ public class RWSChunkManager {
     static {
         // Register chunks.
         //TODO
+
+        registerChunkType(RWStructChunk::new);
+        registerChunkType(RWImageChunk::new);
+        registerChunkType(RWPlatformIndependentTextureDictionaryChunk::new);
 
         // First, Table of Contents - 0x24.
         // Platform Independent Texture Dictionary, 0x23.

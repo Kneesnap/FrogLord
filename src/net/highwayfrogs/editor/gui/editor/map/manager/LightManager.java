@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.gui.editor.map.manager;
 
 import javafx.scene.AmbientLight;
+import javafx.scene.Group;
 import javafx.scene.LightBase;
-import javafx.scene.Node;
 import javafx.scene.PointLight;
 import javafx.scene.paint.Color;
 import net.highwayfrogs.editor.file.map.light.APILightType;
@@ -20,9 +20,9 @@ import java.util.List;
  */
 public class LightManager extends MapManager {
     private GUIEditorGrid lightEditor;
-    private static final String LIGHT_LIST = "lightList";
-    private List<LightBase> lights = new ArrayList<>();
-    private LightBase mainLight;
+    private final List<LightBase> lights = new ArrayList<>();
+    private AmbientLight mainLight;
+    private static final String LIGHTING_LIST = "lightingList";
 
     public LightManager(MapUIController controller) {
         super(controller);
@@ -31,11 +31,12 @@ public class LightManager extends MapManager {
     @Override
     public void onSetup() {
         super.onSetup();
-        getRenderManager().addMissingDisplayList(LIGHT_LIST);
         getController().getApplyLightsCheckBox().setOnAction(evt -> updateEntityLighting());
 
+        // There is no lighting on terrain.
         this.mainLight = new AmbientLight(Color.WHITE);
         this.mainLight.getScope().add(getController().getMeshView());
+        getRenderManager().addNode(this.mainLight);
     }
 
     @Override
@@ -64,40 +65,26 @@ public class LightManager extends MapManager {
         }, APILightType.values(), APILightType.AMBIENT);
     }
 
-    /**
-     * Update the lighting applied to a node.
-     * @param node The node to update lighting for.
-     */
-    public void updateLightsForNode(Node node) {
-        if (getController().getApplyLightsCheckBox().isSelected()) {
-            this.mainLight.getScope().remove(node);
-            for (LightBase light : this.lights)
-                light.getScope().remove(node);
-            this.mainLight.setVisible(!this.mainLight.getScope().isEmpty());
-        } else { // We're not applying the lighting that the game will, instead we're going to apply white light to make it visible.
-            this.mainLight.getScope().add(node);
-            this.mainLight.setVisible(true);
-        }
-    }
-
-    private void updateEntityLightingDisplay() {
-        getController().getEntityManager().getEntityRenderGroup().getChildren().forEach(this::updateLightsForNode);
+    private Group getEntityGroup() {
+        return getController().getEntityManager().getEntityRenderGroup();
     }
 
     /**
      * Applies the current lighting setup to the level.
      */
     public void updateEntityLighting() {
-        getRenderManager().clearDisplayList(LIGHT_LIST);
+        getRenderManager().addMissingDisplayList(LIGHTING_LIST);
+        getRenderManager().clearDisplayList(LIGHTING_LIST);
+        getEntityGroup().getChildren().removeAll(this.lights);
+        this.mainLight.getScope().remove(getEntityGroup());
         this.lights.clear();
 
         if (!getController().getApplyLightsCheckBox().isSelected()) {
-            updateEntityLightingDisplay();
-            return; // Don't lights if they're disabled.
+            this.mainLight.getScope().add(getEntityGroup());
+            return; // Don't update lights if they're disabled.
         }
 
-
-        // Iterate through each light and apply the the root scene graph node
+        // Iterate through each light and apply the root scene graph node
         for (Light light : getMap().getLights()) {
 
             LightBase lightBase = null;
@@ -132,10 +119,9 @@ public class LightManager extends MapManager {
 
             if (lightBase != null) {
                 this.lights.add(lightBase);
-                getRenderManager().addNode(LIGHT_LIST, lightBase);
+                lightBase.getScope().add(getEntityGroup());
+                getRenderManager().addNode(LIGHTING_LIST, lightBase);
             }
         }
-
-        updateEntityLightingDisplay();
     }
 }

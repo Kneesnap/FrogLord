@@ -24,6 +24,8 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -80,14 +82,19 @@ public class MWDFile extends GameObject {
                 System.out.println("ERROR: File is compressed, but not using PowerPacker (PP20) compression.");
             }
 
+            // Calculate the SHA1 hash.
+            if (FroggerVersionComparison.isEnabled() && entry.getSha1Hash() == null)
+                entry.setSha1Hash(Utils.calculateSHA1Hash(fileBytes));
+
             GameFile file = loadFile(fileBytes, entry, lastVB);
 
             try {
                 file.load(new DataReader(new ArraySource(fileBytes)));
             } catch (Exception ex) {
-                System.out.println("ERROR LOADING " + entry.getDisplayName() + "(" + entry.getLoadedId() + ")");
+                System.out.println("Failed to load " + entry.getDisplayName() + " (" + entry.getResourceId() + ")");
                 ex.printStackTrace();
-                // throw new RuntimeException("Failed to load " + entry.getDisplayName() + ", " + entry.getLoadedId(), ex);
+
+                //throw new RuntimeException("Failed to load " + entry.getDisplayName() + ", " + entry.getResourceId(), ex);
             }
 
             files.add(file);
@@ -157,17 +164,28 @@ public class MWDFile extends GameObject {
             file = new WADFile();
         } else if (entry.getSpoofedTypeId() == MOFHolder.MOF_ID) {
             file = new DummyFile(fileBytes.length); //TODO: Enable this. (Needs support for multiple models.)
-        } else if (entry.getSpoofedTypeId() == DemoFile.TYPE_ID) {
+        } else if (entry.getSpoofedTypeId() == DemoFile.TYPE_ID  && getConfig().isFrogger()) {
             file = new DemoFile();
+        } else if (entry.getTypeId() == PALFile.TYPE_ID && getConfig().isFrogger()) {
+            file = new PALFile();
         } else if (entry.getSpoofedTypeId() == PLTFile.FILE_TYPE) {
             file = new PLTFile();
-        } else if (entry.getSpoofedTypeId() == VHFile.TYPE_ID) { // PSX support is disabled until it is complete.
-            if (lastVH == null) {
-                file = new VHFile();
+        } else if (entry.getTypeId() == VHFile.TYPE_ID) { // PSX support is disabled until it is complete.
+            if (getConfig().isPSX()) {
+                if (lastVB != null) {
+                    file = new PSXVHFile();
+                    ((PSXVHFile) file).setVB((PSXVBFile) lastVB);
+                } else {
+                    file = new PSXVBFile();
+                }
+            } else if (lastVB != null) {
+                VHFile vhFile = new VHFile();
+                vhFile.setVB(lastVB);
+                file = vhFile;
+            } else if (getConfig().isAtLeastRetailWindows()) {
+                file = new RetailPCVBFile();
             } else {
-                AbstractVBFile vb = getConfig().isPrototype() ? new PrototypeVBFile() : new RetailPCVBFile();
-                file = vb;
-                vb.setHeader(lastVH);
+                file = new PrototypeVBFile();
             }
         } else {
             System.out.println("File Type: " + entry.getSpoofedTypeId());
@@ -368,19 +386,31 @@ public class MWDFile extends GameObject {
      * @return gameImage
      */
     public GameImage getImageByTextureId(int textureId) {
+        if (textureId < 0)
+            textureId = 0; // This is a hack to allow for loading maps without remaps on build 20. In new FrogLord, this should be null / return blank texture.
+
         for (VLOArchive vlo : getAllFiles(VLOArchive.class))
             for (GameImage testImage : vlo.getImages())
                 if (testImage.getTextureId() == textureId)
                     return testImage;
 
-        // Search wad files for any vlos.
-        for (WADFile wadFile : getAllFiles(WADFile.class))
-            for (WADEntry entry : wadFile.getFiles())
-                if (entry.getFile() instanceof VLOArchive)
-                    for (GameImage testImage : ((VLOArchive) entry.getFile()).getImages())
-                        if (testImage.getTextureId() == textureId)
-                            return testImage;
         return null;
+    }
+
+    /**
+     * Gets an image by the given texture ID.
+     * @param textureId The texture ID to get.
+     * @return gameImage
+     */
+    public List<GameImage> getImagesByTextureId(int textureId) {
+        List<GameImage> results = new ArrayList<>();
+
+        for (VLOArchive vlo : getAllFiles(VLOArchive.class))
+            for (GameImage testImage : vlo.getImages())
+                if (testImage.getTextureId() == textureId)
+                    results.add(testImage);
+
+        return results;
     }
 
     /**

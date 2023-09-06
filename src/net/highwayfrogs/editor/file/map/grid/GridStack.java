@@ -3,8 +3,11 @@ package net.highwayfrogs.editor.file.map.grid;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,5 +62,28 @@ public class GridStack extends GameObject {
     public void loadSquares(List<GridSquare> loadedGridSquares) {
         for (int i = 0; i < getLoadedSquareCount(); i++)
             gridSquares.add(loadedGridSquares.get(getTempIndex() + i));
+    }
+
+    /**
+     * Calculates the world height of this stack.
+     * @param map The map which this stack belongs to.
+     * @return worldHeight
+     */
+    public float calculateWorldHeight(MAPFile map) {
+        for (int i = this.gridSquares.size() - 1; i >= 0; i--) {
+            GridSquare square = this.gridSquares.get(i);
+
+            MAPPrimitive polygon = square.getPolygon();
+            if (polygon != null) {
+                float heightSum = 0;
+                for (int j = 0; j < polygon.getVerticeCount(); j++)
+                    heightSum += map.getVertexes().get(polygon.getVertices()[j]).getFloatY();
+
+                return heightSum / polygon.getVerticeCount();
+            }
+        }
+
+        // No usable grid squares.
+        return -Utils.fixedPointIntToFloat4Bit(getHeight());
     }
 }

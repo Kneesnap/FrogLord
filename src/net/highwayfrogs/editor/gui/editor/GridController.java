@@ -35,10 +35,7 @@ import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -75,9 +72,9 @@ public class GridController implements Initializable {
     @FXML private GridPane flagGrid;
     @FXML private Button hideZoneButton;
 
-    private Stage stage;
-    private GeometryManager manager;
-    private MAPFile map;
+    private final Stage stage;
+    private final GeometryManager manager;
+    private final MAPFile map;
 
     private RegionEditState editState = RegionEditState.NONE_SELECTED;
     private Zone selectedZone;
@@ -88,7 +85,7 @@ public class GridController implements Initializable {
     private int selectedLayer;
     private double tileWidth;
     private double tileHeight;
-    private CheckBox[] zoneFlagMap = new CheckBox[CameraZoneFlag.values().length];
+    private final CheckBox[] zoneFlagMap = new CheckBox[CameraZoneFlag.values().length];
 
     private static final int DEFAULT_REGION_ID = 0;
     private static final int DEFAULT_ZONE_ID = 0;
@@ -112,6 +109,9 @@ public class GridController implements Initializable {
             int gridX = (int) (evt.getSceneX() / getTileWidth());
             int gridZ = (int) (evt.getSceneY() / getTileHeight());
             GridStack stack = getMap().getGridStack(gridX, getMap().getGridZCount() - gridZ - 1);
+            if (stack == null)
+                return;
+
             if (this.selectedStacks != null && this.selectedStacks.size() > 0) {
                 if (evt.isControlDown()) { // Toggle grid stacks one at a time.
                     if (!this.selectedStacks.remove(stack))
@@ -251,25 +251,32 @@ public class GridController implements Initializable {
                 double xPos = getTileWidth() * x;
                 double yPos = getTileHeight() * (getMap().getGridZCount() - z - 1);
 
+                Color fillColor = null;
                 if (this.selectedStacks != null && this.selectedStacks.contains(stack)) {
-                    graphics.setFill(Color.AQUA);
-                    graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
+                    fillColor = Color.AQUA;
                 } else if (currentRegion != null && currentRegion.contains(x, z)) {
-                    graphics.setFill(Color.MAGENTA);
-                    if (zoneEditorCheckBox.isSelected() && currentRegion.isCorner(x, z)) {
-                        graphics.setFill(Color.YELLOW);
-                        if (editState.getTester().apply(currentRegion, x, z))
-                            graphics.setFill(Color.RED);
-                    }
-
-                    graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
+                    fillColor = Color.MAGENTA;
+                    if (zoneEditorCheckBox.isSelected() && currentRegion.isCorner(x, z))
+                        fillColor = this.editState.getTester().apply(currentRegion, x, z) ? Color.RED : Color.YELLOW;
                 } else if (stack.getGridSquares().size() > 0) {
-                    GridSquare square = stack.getGridSquares().get(stack.getGridSquares().size() - 1);
-                    TextureTreeNode entry = square.getPolygon().getTreeNode(texMap);
-                    graphics.drawImage(fxTextureImage, entry.getX(), entry.getY(), entry.getWidth(), entry.getHeight(), xPos, yPos, getTileWidth(), getTileHeight());
+                    fillColor = Color.DARKGRAY;
+
+                    // Find best square.
+                    for (int i = stack.getGridSquares().size() - 1; i >= 0 && fillColor != null; i++) {
+                        GridSquare square = stack.getGridSquares().get(i);
+                        if (square.getPolygon() != null) {
+                            fillColor = null;
+                            TextureTreeNode entry = square.getPolygon().getTreeNode(texMap);
+                            graphics.drawImage(fxTextureImage, entry.getX(), entry.getY(), entry.getWidth(), entry.getHeight(), xPos, yPos, getTileWidth(), getTileHeight());
+                        }
+                    }
                 } else {
-                    graphics.setFill(Color.GRAY);
-                    graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
+                    fillColor = Color.GRAY;
+                }
+
+                if (fillColor != null) {
+                    this.graphics.setFill(fillColor);
+                    this.graphics.fillRect(xPos, yPos, getTileWidth(), getTileHeight());
                 }
             }
         }
@@ -291,7 +298,8 @@ public class GridController implements Initializable {
 
         for (GridStack stack : getMap().getGridStacks())
             for (GridSquare square : stack.getGridSquares())
-                getManager().getController().renderOverPolygon(square.getPolygon(), MapMesh.GRID_COLOR);
+                if (square.getPolygon() != null)
+                    getManager().getController().renderOverPolygon(square.getPolygon(), MapMesh.GRID_COLOR);
         MeshData data = getManager().getMesh().getManager().addMesh();
 
         getManager().getController().getGeometryManager().selectPolygon(poly -> {
@@ -422,13 +430,18 @@ public class GridController implements Initializable {
         TextureMap texMap = getManager().getMesh().getTextureMap();
         GridStack stack = stacks.iterator().next();
         GridSquare square = stack.getGridSquares().get(layer);
-        TextureTreeNode entry = square.getPolygon().getTreeNode(texMap);
-        selectedImage.setImage(sameLayerTypes(stacks, layer) ? Utils.toFXImage(entry.getImage(), false) : null);
+        if (square.getPolygon() != null) {
+            TextureTreeNode entry = square.getPolygon().getTreeNode(texMap);
+            selectedImage.setImage(sameLayerTypes(stacks, layer) ? Utils.toFXImage(entry.getImage(), false) : null);
+        } else {
+            selectedImage.setImage(null);
+        }
+
         int x = 1;
         int y = 0;
         flagTable.getChildren().clear();
-        for(GridSquareFlag flag : GridSquareFlag.values()) {
-            if(x == 2) {
+        for (GridSquareFlag flag : GridSquareFlag.values()) {
+            if (x == 2) {
                 x = 0;
                 y++;
             }
@@ -522,7 +535,9 @@ public class GridController implements Initializable {
 
     private static boolean sameLayerTypes(Collection<GridStack> stacks, int layer) {
         return stacks.stream()
-                .map(stack -> stack.getGridSquares().get(layer).getPolygon().getType())
+                .map(stack -> stack.getGridSquares().get(layer).getPolygon())
+                .filter(Objects::nonNull)
+                .map(MAPPolygon::getType)
                 .distinct().count() == 1;
     }
 

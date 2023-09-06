@@ -4,8 +4,9 @@ import javafx.scene.paint.Color;
 import net.highwayfrogs.editor.file.map.view.FrogMesh;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
@@ -29,8 +30,9 @@ public class MAPPolyGT extends MAPPolyTexture {
 
     @Override
     public BufferedImage makeTexture(TextureMap map) {
-        if (map.getMode() == ShaderMode.NO_SHADING) {
-            return getGameImage(map).toBufferedImage(map.getDisplaySettings());
+        if (map.getMode() == ShadingMode.NO_SHADING) {
+            GameImage image = getGameImage(map);
+            return image != null ? image.toBufferedImage(map.getDisplaySettings()) : null;
         } else if (isOverlay(map)) {
             return makeShadeImage(map, false);
         } else {
@@ -40,7 +42,7 @@ public class MAPPolyGT extends MAPPolyTexture {
 
     @Override
     public BigInteger makeIdentifier(TextureMap map) {
-        if (map.getMode() == ShaderMode.NO_SHADING) {
+        if (map.getMode() == ShadingMode.NO_SHADING) {
             return makeIdentifier(0x7E8BA5E, getTextureId());
         } else {
             int[] colors = new int[getColors().length + 2];

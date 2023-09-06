@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * MediEvil Wad Index: Holds information about the MWD file.
- * Located in game executable.
+ * Located in game executable (Such as frogger.exe)
  * This should always export exactly the same size as the original MWI, as this gets pasted directly in the executable.
  * Created by Kneesnap on 8/10/2018.
  */
@@ -123,7 +123,8 @@ public class MWIFile extends GameObject {
         private int packedSize;
         private int unpackedSize;
         private String filePath;
-        private transient int loadedId;
+        private String sha1Hash;
+        private transient int resourceId;
         private transient FroggerEXEInfo config;
 
         public static final int FLAG_SINGLE_ACCESS = Constants.BIT_FLAG_0; // I assume this is for files loaded individually, by themselves.
@@ -133,8 +134,8 @@ public class MWIFile extends GameObject {
         public static final int FLAG_AUTOMATIC_COMPRESSION = Constants.BIT_FLAG_4;
         public static final int FLAG_MANUAL_COMPRESSION = Constants.BIT_FLAG_5;
 
-        public FileEntry(FroggerEXEInfo config, int loadedId) {
-            this.loadedId = loadedId;
+        public FileEntry(FroggerEXEInfo config, int resourceId) {
+            this.resourceId = resourceId;
             this.config = config;
         }
 
@@ -202,20 +203,31 @@ public class MWIFile extends GameObject {
         }
 
         /**
+         * Gets the full file path of the file.
+         * @return fullFilePath
+         */
+        public String getFullFilePath() {
+            if (hasFilePath()) {
+                return getFilePath();
+            } else if (getConfig().getFileNames().size() > this.resourceId) {
+                return getConfig().getFileNames().get(this.resourceId);
+            } else {
+                return null;
+            }
+        }
+
+        /**
          * Get the display name of this file entry.
          * @return displayName
          */
         public String getDisplayName() {
-            if (hasFilePath()) {
-                String file = getFilePath().substring(getFilePath().lastIndexOf("\\") + 1); // Remove \ paths.
-                file = file.substring(file.lastIndexOf("/") + 1); // Remove / paths.
-                return file;
-            }
+            String fileName = getFullFilePath();
+            if (fileName == null)
+                return "File " + this.resourceId;
 
-            if (getConfig().getFileNames().size() > this.loadedId)
-                return getConfig().getFileNames().get(this.loadedId);
-
-            return "File " + this.loadedId;
+            fileName = fileName.substring(fileName.lastIndexOf("\\") + 1); // Remove \ paths.
+            fileName = fileName.substring(fileName.lastIndexOf("/") + 1); // Remove / paths.
+            return fileName;
         }
 
         /**
@@ -238,7 +250,18 @@ public class MWIFile extends GameObject {
          */
         public MapBook getMapBook() {
             for (MapBook book : getConfig().getMapLibrary())
-                if (book.isEntry(this))
+                if (book != null && book.isEntry(this))
+                    return book;
+            return null;
+        }
+
+        /**
+         * Get the book which holds this FileEntry.
+         * @return book
+         */
+        public ThemeBook getThemeBook() { // TODO: TOSS?
+            for (ThemeBook book : getConfig().getThemeLibrary())
+                if (book != null && book.isEntry(this))
                     return book;
             return null;
         }

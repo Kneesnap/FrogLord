@@ -9,7 +9,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
@@ -51,6 +51,37 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
     public void load(DataReader reader) {
         super.load(reader);
 
+        if (getMapFile().getMapConfig().isOldMapTexturedPolyFormat()) {
+            readEarlyVersion(reader);
+        } else {
+            readFinalVersion(reader);
+        }
+    }
+
+    private void readEarlyVersion(DataReader reader) {
+        for (int i = 0; i < this.colors.length; i++) {
+            PSXColorVector vector = new PSXColorVector();
+            vector.load(reader);
+            this.colors[i] = vector;
+        }
+
+        this.textureId = reader.readShort();
+        this.flags = reader.readShort();
+
+        loadUV(0, reader);
+        loadUV(1, reader);
+        if (this.uvs.length == 3) {
+            loadUV(2, reader);
+            reader.skipShort(); // Padding.
+        } else if (this.uvs.length == 4) {
+            loadUV(3, reader); // Read out of order.
+            loadUV(2, reader);
+        } else {
+            throw new RuntimeException("Cannot handle " + this.uvs.length + " uvs.");
+        }
+    }
+
+    private void readFinalVersion(DataReader reader) {
         this.flags = reader.readShort();
         reader.skipShort(); // Padding
 
@@ -80,6 +111,34 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
     public void save(DataWriter writer) {
         super.save(writer);
 
+        if (getMapFile().getMapConfig().isOldMapTexturedPolyFormat()) {
+            writeEarlyVersion(writer);
+        } else {
+            writeFinalVersion(writer);
+        }
+    }
+
+    private void writeEarlyVersion(DataWriter writer) {
+        for (int i = 0; i < this.colors.length; i++)
+            this.colors[i].save(writer);
+
+        writer.writeShort(this.textureId);
+        writer.writeShort(this.flags);
+        this.uvs[0].save(writer);
+        this.uvs[1].save(writer);
+
+        if (this.uvs.length == 3) {
+            this.uvs[2].save(writer);
+            writer.writeShort((short) 0); // Padding.
+        } else if (this.uvs.length == 4) {
+            this.uvs[3].save(writer);
+            this.uvs[2].save(writer);
+        } else {
+            throw new RuntimeException("Cannot handle " + this.uvs.length + " uvs.");
+        }
+    }
+
+    private void writeFinalVersion(DataWriter writer) {
         writer.writeShort(this.flags);
         writer.writeNull(Constants.SHORT_SIZE);
         this.uvs[0].save(writer);
@@ -254,20 +313,35 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
 
     @Override
     public GameImage getGameImage(TextureMap map) {
-        return map.getVloArchive().getImageByTextureId(map.getRemap(getTextureId()));
+        short globalTextureId = map.getRemap(getTextureId());
+        GameImage image = map.getVloArchive() != null ? map.getVloArchive().getImageByTextureId(globalTextureId, false) : null;
+        if (image == null) { // This is probably not going to give a useful texture generally. It was added for build 20 compatibility.
+            image = getConfig().getMWD().getImageByTextureId(globalTextureId);
+            for (int i = 0; i < 100 && image == null; i++) {
+                image = getConfig().getMWD().getImageByTextureId(globalTextureId + i);
+                if (image == null && i > 0)
+                    image = getConfig().getMWD().getImageByTextureId(globalTextureId - i);
+            }
+
+            if (image == null)
+                return getConfig().getMWD().getAllFiles(VLOArchive.class).get(0).getImages().get(0);
+        }
+        if (image == null) // New froglord = we want to just use a "unknown texture" placeholder.
+            throw new RuntimeException("Could not find a texture with the id: " + getTextureId() + "/" + globalTextureId + ".");
+        return image;
     }
 
     @Override
     public boolean isOverlay(TextureMap map) {
-        if (map.getMode() == ShaderMode.OVERLAY_SHADING)
+        if (map.getMode() == ShadingMode.OVERLAY_SHADING)
             return true;
 
-        if (map.getMode() != ShaderMode.MIXED_SHADING)
+        if (map.getMode() != ShadingMode.MIXED_SHADING)
             return false;
 
         GameImage image = getGameImage(map);
         long combinedArea = map.getMapTextureList().get(getTextureId()).size() * (image.getFullWidth() * image.getFullHeight());
-        return combinedArea >= (map.getWidth() * map.getHeight() / 8); // Test if it's too frequent.
+        return combinedArea >= ((long) map.getWidth() * map.getHeight() / 8); // Test if it's too frequent.
     }
 
     /**

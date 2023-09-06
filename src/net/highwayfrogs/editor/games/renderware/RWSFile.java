@@ -20,7 +20,7 @@ import java.util.List;
  */
 @Getter
 public class RWSFile extends GameObject {
-    private List<RWSChunk> chunks = new ArrayList<>();
+    private final List<RWSChunk> chunks = new ArrayList<>();
 
     @Override
     public void load(DataReader reader) {

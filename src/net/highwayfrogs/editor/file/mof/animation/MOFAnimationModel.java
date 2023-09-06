@@ -19,7 +19,7 @@ public class MOFAnimationModel extends GameObject {
     // Bounding Box Set is unused.
     // Constraint is unused.
 
-    private transient MOFAnimationModelSet parent;
+    private final transient MOFAnimationModelSet parent;
     private transient int tempCelsetPointerAddress;
 
     public enum ModelBoundingBoxMode {
@@ -38,7 +38,8 @@ public class MOFAnimationModel extends GameObject {
         int animationType = reader.readUnsignedShortAsInt();
         Utils.verify(animationType == DEFAULT_ANIMATION_TYPE, "Unknown animation type: %d.", animationType);
 
-        this.mode = ModelBoundingBoxMode.values()[reader.readUnsignedShortAsInt()];
+        int flags = reader.readUnsignedShortAsInt();
+        this.mode = ModelBoundingBoxMode.values()[flags];
 
         int partCount = reader.readUnsignedShortAsInt(); // Does not always match real one.
         int staticModelId = reader.readUnsignedShortAsInt();

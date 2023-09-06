@@ -89,14 +89,14 @@ public class PCThemeBook extends ThemeBook {
 
     @Override
     public boolean isEntry(FileEntry test) {
-        return lowWadId == test.getLoadedId()
-                || lowVloId == test.getLoadedId()
-                || highWadId == test.getLoadedId()
-                || highVloId == test.getLoadedId()
-                || lowMultiplayerWadId == test.getLoadedId()
-                || lowMultiplayerVloId == test.getLoadedId()
-                || highMultiplayerWadId == test.getLoadedId()
-                || highMultiplayerVloId == test.getLoadedId();
+        return lowWadId == test.getResourceId()
+                || lowVloId == test.getResourceId()
+                || highWadId == test.getResourceId()
+                || highVloId == test.getResourceId()
+                || lowMultiplayerWadId == test.getResourceId()
+                || lowMultiplayerVloId == test.getResourceId()
+                || highMultiplayerWadId == test.getResourceId()
+                || highMultiplayerVloId == test.getResourceId();
     }
 
     @Override

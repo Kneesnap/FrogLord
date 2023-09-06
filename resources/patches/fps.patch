@@ -1,7 +1,7 @@
 Name=Change Game Speed
 Description=Changes the FPS. This will not be accurate down to the number of frames. # It's as close as it can be though.
 Author=Kneesnap
-Versions=30e,30e-music,kaos-prototype,10,pc-demo
+Versions=pc-retail-v1.0,pc-retail-v3.0e,pc-retail-v3.0e-vogons,kaos-prototype
 
 # Note from Kneesnap
 #  On 3/15/2020 I tried to support decoupling the game logic from the FPS, because I saw two counters which I believed controlled each separately.
@@ -19,20 +19,17 @@ Versions=30e,30e-music,kaos-prototype,10,pc-demo
 [Args]
 int,fps,Frames Per Second,25,1,1000
 
-[30e]
+[pc-retail-v1.0]
+updateDelayAddress=0x257C
+
+[pc-retail-v3.0e]
 updateDelayAddress=0x228EC
 
-[30e-music]
+[pc-retail-v3.0e-vogons]
 updateDelayAddress=0x228EC
 
 [kaos-prototype]
 updateDelayAddress=0x1542
-
-[10]
-updateDelayAddress=0x257C
-
-[pc-demo]
-updateDelayAddress=0x16F4
 
 [ArgsCode]
 readb millis updateDelayAddress

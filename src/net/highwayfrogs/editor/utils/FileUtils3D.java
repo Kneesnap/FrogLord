@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyGouraud;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.mof.*;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
@@ -76,7 +76,7 @@ public class FileUtils3D {
         @Cleanup PrintWriter objWriter = new PrintWriter(new File(folder, cleanName + ".obj"));
 
         objWriter.write("# FrogLord MOF Export" + Constants.NEWLINE);
-        objWriter.write("# Exported: " + Calendar.getInstance().getTime().toString() + Constants.NEWLINE);
+        objWriter.write("# Exported: " + Calendar.getInstance().getTime() + Constants.NEWLINE);
         objWriter.write("# MOF Name: " + mofName + Constants.NEWLINE);
         objWriter.write(Constants.NEWLINE);
 
@@ -197,7 +197,7 @@ public class FileUtils3D {
 
         FileEntry entry = map.getFileEntry();
         VLOArchive vloArchive = map.getVlo();
-        TextureMap textureMap = TextureMap.newTextureMap(map, ShaderMode.NO_SHADING);
+        TextureMap textureMap = TextureMap.newTextureMap(map, ShadingMode.NO_SHADING);
         String cleanName = Utils.getRawFileName(entry.getDisplayName());
         boolean exportTextures = vloArchive != null;
 
@@ -207,7 +207,7 @@ public class FileUtils3D {
         @Cleanup PrintWriter objWriter = new PrintWriter(new File(directory, cleanName + ".obj"));
 
         objWriter.write("# FrogLord Map Export" + Constants.NEWLINE);
-        objWriter.write("# Exported: " + Calendar.getInstance().getTime().toString() + Constants.NEWLINE);
+        objWriter.write("# Exported: " + Calendar.getInstance().getTime() + Constants.NEWLINE);
         objWriter.write("# Map Name: " + entry.getDisplayName() + Constants.NEWLINE);
         objWriter.write(Constants.NEWLINE);
 
@@ -305,7 +305,7 @@ public class FileUtils3D {
                 if (exportTextures)
                     builder.append("/").append(count);
             }
-            objWriter.write(builder.toString() + Constants.NEWLINE);
+            objWriter.write(builder + Constants.NEWLINE);
         }
 
         // Write MTL file and textures.

@@ -14,7 +14,7 @@ import java.util.List;
  * Created by Kneesnap on 8/1/2019.
  */
 public class FroggerScript extends GameObject {
-    @Getter private List<ScriptCommand> commands = new ArrayList<>();
+    @Getter private final List<ScriptCommand> commands = new ArrayList<>();
     private int maxSize;
     public static final FroggerScript EMPTY_SCRIPT = new FroggerScript();
 
@@ -22,6 +22,14 @@ public class FroggerScript extends GameObject {
     public void load(DataReader reader) {
         ScriptCommand lastCommand = null;
         while (lastCommand == null || !lastCommand.getCommandType().isFinalCommand()) {
+            reader.jumpTemp(reader.getIndex());
+            int scriptCommandId = reader.readInt();
+            reader.jumpReturn();
+            if (scriptCommandId < 0 || scriptCommandId >= ScriptCommandType.values().length) {
+                System.out.println("Reached unexpected end of script in '" + getName() + "'.");
+                break;
+            }
+
             lastCommand = new ScriptCommand();
             lastCommand.load(reader);
             getCommands().add(lastCommand);

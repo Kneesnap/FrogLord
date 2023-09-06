@@ -20,10 +20,11 @@ import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.gui.editor.map.manager.*;
 import net.highwayfrogs.editor.gui.editor.map.manager.PathManager.PathDisplaySetting;
@@ -34,6 +35,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
@@ -47,7 +49,7 @@ public class MapUIController implements Initializable {
     public static final double MAP_VIEW_FOV = 60.0;
 
     private static final int VERTEX_SPEED = 3;
-    @Getter private static IntegerProperty propertyVertexSpeed = new SimpleIntegerProperty(3);
+    @Getter private static final IntegerProperty propertyVertexSpeed = new SimpleIntegerProperty(3);
 
     public static final float ENTITY_ICON_SIZE = 16.0f;
 
@@ -63,9 +65,10 @@ public class MapUIController implements Initializable {
     @FXML private CheckBox checkBoxShowMesh;
     @FXML private ChoiceBox<PathDisplaySetting> pathDisplayOption;
     @FXML private CheckBox checkBoxFaceRemoveMode;
+    @FXML private CheckBox checkBoxShowUnusedVertices;
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
     @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
-    @FXML private ChoiceBox<ShaderMode> shaderModeChoiceBox;
+    @FXML private ChoiceBox<ShadingMode> shadingModeChoiceBox;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldCamMoveSpeed;
     @FXML private Button btnResetCamMoveSpeed;
@@ -116,7 +119,7 @@ public class MapUIController implements Initializable {
     @FXML private GridPane pathGridPane;
 
     // Managers:
-    private List<MapManager> managers = new ArrayList<>();
+    private final List<MapManager> managers = new ArrayList<>();
     private PathManager pathManager;
     private LightManager lightManager;
     private EntityManager entityManager;
@@ -126,9 +129,9 @@ public class MapUIController implements Initializable {
     private GeneralManager generalManager; // Should be last, so things like cancelling polygon selection happen last.
 
     // Map Data:
-    private CameraFPS cameraFPS = new CameraFPS();
+    private final CameraFPS cameraFPS = new CameraFPS();
     private MapMesh mapMesh;
-    private RenderManager renderManager = new RenderManager();
+    private final RenderManager renderManager = new RenderManager();
     private Group root3D;
     private Scene mapScene;
     private MeshView meshView;
@@ -194,17 +197,27 @@ public class MapUIController implements Initializable {
                 cameraFPS.stopThreadProcessing();
                 renderManager.removeAllDisplayLists();
                 Utils.setSceneKeepPosition(this.overwrittenStage, this.defaultScene);
+            } else if (event.getCode() == KeyCode.F10) {
+                Utils.takeScreenshot(this.subScene, getMapScene(), Utils.stripExtension(getMap().getFileEntry().getDisplayName()));
             }
         });
 
         // Set the initial camera position based on start position and in-game camera offset.
         MAPFile map = getMap();
         SVector startPos = map.getCameraSourceOffset();
+
+        GridStack startStack = map.getGridStack(map.getStartXTile(), map.getStartZTile());
         float gridX = Utils.fixedPointIntToFloat4Bit(map.getWorldX(map.getStartXTile(), true));
-        float baseY = -Utils.fixedPointIntToFloat4Bit(map.getGridStack(map.getStartXTile(), map.getStartZTile()).getHeight());
+        float baseY = startStack != null ? startStack.calculateWorldHeight(map) : 0;
         float gridZ = Utils.fixedPointIntToFloat4Bit(map.getWorldZ(map.getStartZTile(), true));
-        cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + startPos.getFloatY(), gridZ + startPos.getFloatZ());
-        cameraFPS.setCameraLookAt(gridX, baseY, gridZ); // Set the camera to look at the start position, too.
+
+        // Make sure the start position is off the ground.
+        float yOffset = startPos.getFloatY();
+        if (Math.abs(yOffset) <= .0001)
+            yOffset = -100f;
+
+        cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + yOffset, gridZ + startPos.getFloatZ());
+        cameraFPS.setCameraLookAt(gridX, baseY, gridZ + 1); // Set the camera to look at the start position, too. The -1 is necessary to fix some near-zero math. It fixes it for QB.MAP for example.
 
         setupBindings(controller, subScene3D, meshView); // Setup UI.
     }
@@ -274,8 +287,19 @@ public class MapUIController implements Initializable {
         comboBoxMeshCullFace.valueProperty().bindBidirectional(meshView.cullFaceProperty());
 
         // Must be called after MAPController is passed.
-        getManagers().forEach(MapManager::onSetup); // Setup all of the managers.
-        getManagers().forEach(MapManager::setupEditor); // Setup all of the managers editors.
+        runForEachManager(MapManager::onSetup, "onSetup"); // Setup all of the managers.
+        runForEachManager(MapManager::setupEditor, "setupEditor"); // Setup all of the managers editors.
+    }
+
+    private void runForEachManager(Consumer<MapManager> execution, String name) {
+        for (MapManager manager : getManagers()) {
+            try {
+                execution.accept(manager);
+            } catch (Throwable th) {
+                System.out.println("Failed to run '" + name + "' for the map manager '" + manager.getClass().getSimpleName() + "'.");
+                th.printStackTrace();
+            }
+        }
     }
 
     /**

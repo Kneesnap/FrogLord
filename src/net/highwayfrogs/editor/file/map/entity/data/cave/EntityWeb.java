@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
+ * Represents a spider web entity.
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter

@@ -6,10 +6,12 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.GameSound;
 import net.highwayfrogs.editor.file.sound.psx.PSXVBFile.PSXSound;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -30,7 +32,7 @@ public class PSXVHFile extends GameFile {
     private short attr1;
     private short attr2;
     private long reserved1;
-    private VABProgram[] programs = new VABProgram[128];
+    private final VABProgram[] programs = new VABProgram[128];
     private VABTone[] tones;
     @Setter private transient PSXVBFile VB;
     private transient int[] loadedSampleAddresses;
@@ -126,6 +128,11 @@ public class PSXVHFile extends GameFile {
     public Node makeEditor() {
         Utils.verify(getVB() != null, "VB sound is null.");
         return getVB().makeEditor(); // Build the editor for the right file.
+    }
+
+    @Override
+    public void handleWadEdit(WADFile parent) {
+        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), this);
     }
 
     @Getter

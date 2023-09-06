@@ -2,16 +2,18 @@ package net.highwayfrogs.editor.file.map.group;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.MWDFile;
+import net.highwayfrogs.editor.file.config.FroggerMapConfig;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitiveType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,46 +24,48 @@ import java.util.Map;
  */
 @Getter
 public class MAPGroup extends GameObject {
-    private Map<MAPPrimitiveType, List<MAPPrimitive>> polygonMap = new HashMap<>();
+    private final FroggerMapConfig mapConfig;
+    private final Map<MAPPrimitiveType, List<MAPPrimitive>> polygonMap = new HashMap<>();
 
-    private transient Map<MAPPrimitiveType, Short> loadPolygonCountMap = new HashMap<>();
-    private transient Map<MAPPrimitiveType, Integer> loadPolygonPointerMap = new HashMap<>();
+    private final transient Map<MAPPrimitiveType, Short> loadPolygonCountMap = new HashMap<>();
+    private final transient Map<MAPPrimitiveType, Integer> loadPolygonPointerMap = new HashMap<>();
     private transient int savePointerLocation;
-    private transient boolean isQB;
 
-    private static final int NULL_POINTERS = 6; // 1 unused. 5 runtime pointers.
-    private static final int QB_NULL_POINTERS = 8;
-
-    public MAPGroup(boolean isQB) {
-        this.isQB = isQB;
-        for (MAPPrimitiveType type : MAPFile.getTypes(isQB))
-            polygonMap.put(type, new LinkedList<>());
+    public MAPGroup(FroggerMapConfig mapConfig) {
+        this.mapConfig = mapConfig;
+        for (MAPPrimitiveType type : MAPFile.getTypes(mapConfig))
+            polygonMap.put(type, new ArrayList<>());
     }
 
     @Override
     public void load(DataReader reader) {
-        List<MAPPrimitiveType> types = MAPFile.getTypes(isQB);
+        List<MAPPrimitiveType> types = MAPFile.getTypes(this.mapConfig);
         for (MAPPrimitiveType type : types)
             loadPolygonCountMap.put(type, reader.readUnsignedByteAsShort());
 
-        if (!isQB)
-            reader.skipBytes(3);
+        int offsetAmount = (reader.getIndex() % Constants.INTEGER_SIZE);
+        if (offsetAmount != 0)
+            reader.skipBytes(Constants.INTEGER_SIZE - offsetAmount);
 
         for (MAPPrimitiveType type : types)
             loadPolygonPointerMap.put(type, reader.readInt());
 
-        reader.skipBytes((isQB ? QB_NULL_POINTERS : NULL_POINTERS) * Constants.POINTER_SIZE);
+        reader.skipBytes(this.mapConfig.getGroupPaddingAmount() * Constants.POINTER_SIZE); // There's actually some data here, but it's not used by the game.
     }
 
     @Override
     public void save(DataWriter writer) {
-        for (MAPPrimitiveType type : MAPFile.PRIMITIVE_TYPES)
-            writer.writeUnsignedByte((short) polygonMap.get(type).size());
+        List<MAPPrimitiveType> types = MAPFile.getTypes(this.mapConfig);
+        for (MAPPrimitiveType type : types)
+            writer.writeUnsignedByte((short) this.polygonMap.get(type).size());
 
-        writer.writeNull(3);
+        int offsetAmount = (writer.getIndex() % Constants.INTEGER_SIZE);
+        if (offsetAmount != 0)
+            writer.writeNull(Constants.INTEGER_SIZE - offsetAmount);
+
         this.savePointerLocation = writer.getIndex();
-        writer.writeNull(MAPFile.PRIMITIVE_TYPES.size() * Constants.POINTER_SIZE); // Save this pointer later, after polygons are saved.
-        writer.writeNull(NULL_POINTERS * Constants.POINTER_SIZE);
+        writer.writeNull(types.size() * Constants.POINTER_SIZE); // Save this pointer later, after polygons are saved.
+        writer.writeNull(this.mapConfig.getGroupPaddingAmount() * Constants.POINTER_SIZE);
     }
 
     /**
@@ -93,15 +97,27 @@ public class MAPGroup extends GameObject {
      */
     public void setupPolygonData(MAPFile map, Map<MAPPrimitiveType, List<MAPPrimitive>> group) {
         Utils.verify(this.loadPolygonCountMap.size() > 0, "Cannot setup polygon data twice.");
+        if (map.getMapConfig().isOldFormFormat())
+            return; // The groups data looks correct, but it doesn't seem to align with the expected data format.
 
-        for (MAPPrimitiveType type : MAPFile.getTypes(isQB)) {
+        for (MAPPrimitiveType type : group.keySet()) {
             List<MAPPrimitive> from = group.get(type);
-            int count = loadPolygonCountMap.get(type);
+            if (from == null || from.isEmpty())
+                continue;
 
-            if (count > 0 && from != null) {
-                int index = from.indexOf(map.getLoadPointerPolygonMap().get(loadPolygonPointerMap.get(type)));
+            int count = loadPolygonCountMap.get(type);
+            if (count > 0) {
+                int polyPtr = loadPolygonPointerMap.get(type);
+                MAPPrimitive mapPrimitive = map.getLoadPointerPolygonMap().get(polyPtr);
+                int primIndex = from.indexOf(mapPrimitive);
+
+                if (primIndex == -1) {
+                    System.out.println("Failed to setup MAP_GROUP in " + MWDFile.CURRENT_FILE_NAME + " for polygon: " + type + ", " + count + ", " + polyPtr + ", " + mapPrimitive);
+                    continue;
+                }
+
                 for (int i = 0; i < count; i++)
-                    from.get(index + i).setAllowDisplay(true);
+                    from.get(primIndex + i).setAllowDisplay(true);
             }
         }
 

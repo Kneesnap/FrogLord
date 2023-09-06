@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import lombok.Getter;
+import lombok.Setter;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
@@ -16,16 +18,18 @@ import net.highwayfrogs.editor.gui.editor.MapUIController;
  */
 @Getter
 public abstract class MAPPolygon extends MAPPrimitive implements TextureSource {
-    protected static final String[] SINGLE_COLOR_NAME = {"Color"};
-    private static final String[] TRI_COLOR_NAMES = {"Corner 1", "Corner 2", "Corner 3"};
-    private static final String[] QUAD_COLOR_NAMES = {"Top Left", "Top Right", "Bottom Right", "Bottom Left"};
-    protected static final String[][] COLOR_BANK = {SINGLE_COLOR_NAME, null, TRI_COLOR_NAMES, QUAD_COLOR_NAMES};
+    @Setter private MAPFile mapFile;
     private short padding;
+
     public static final int TRI_SIZE = 3;
     public static final int QUAD_SIZE = 4;
     public static final int REQUIRES_VERTEX_PADDING = TRI_SIZE;
     public static final int REQUIRES_VERTEX_SWAPPING = QUAD_SIZE;
 
+    protected static final String[] SINGLE_COLOR_NAME = {"Color"};
+    private static final String[] TRI_COLOR_NAMES = {"Corner 1", "Corner 2", "Corner 3"};
+    private static final String[] QUAD_COLOR_NAMES = {"Top Left", "Top Right", "Bottom Right", "Bottom Left"};
+    protected static final String[][] COLOR_BANK = {SINGLE_COLOR_NAME, null, TRI_COLOR_NAMES, QUAD_COLOR_NAMES};
 
     public MAPPolygon(MAPPolygonType type, int verticeCount) {
         super(type, verticeCount);

@@ -46,13 +46,37 @@ public abstract class MapBook extends ExeStruct {
         int fileAddress = (int) (remapAddress - config.getRamPointerOffset());
         reader.setIndex(fileAddress);
 
-        List<Short> shortList = new ArrayList<>();
+        List<Short> remap = new ArrayList<>();
+        short textureId;
+        while (canContinueReadingRemap(reader, textureId = reader.readShort()))
+            remap.add(textureId);
 
-        short tempShort;
-        while ((tempShort = reader.readShort()) != REMAP_TERMINATOR)
-            shortList.add(tempShort);
+        config.getRemapTable().put(config.getResourceEntry(resourceId), remap);
 
-        config.getRemapTable().put(config.getResourceEntry(resourceId), shortList);
+        // Hack to read island remap. Build 20 is the last build with the remap present (it's also the last build with the unique textures present.)
+        if ((!getConfig().isAtOrBeforeBuild1() && getConfig().isAtOrBeforeBuild20()) && getConfig().getResourceName(resourceId).equals("ARN1.MAP")) {
+            while ((textureId = reader.readShort()) == REMAP_TERMINATOR) ;
+
+            do {
+                getConfig().getIslandRemap().add(textureId);
+                textureId = reader.readShort();
+            } while (canContinueReadingRemap(reader, textureId));
+        }
+    }
+
+    private boolean canContinueReadingRemap(DataReader reader, short textureId) {
+        if (textureId == REMAP_TERMINATOR)
+            return false;
+
+        // Look for the data which comes after the remap table.
+        if (getConfig().isPSX() && textureId == 0x80) {
+            reader.jumpTemp(reader.getIndex());
+            long nextData = reader.readUnsignedIntAsLong();
+            reader.jumpReturn();
+            return nextData != 0x00100020L; // Confirmed end of data.
+        }
+
+        return true;
     }
 
     /**

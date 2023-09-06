@@ -43,12 +43,12 @@ import java.util.*;
  */
 @Getter
 public class TextureMap {
-    private VLOArchive vloArchive;
-    private List<Short> remapList;
+    private final VLOArchive vloArchive;
+    private final List<Short> remapList;
     private PhongMaterial material;
-    private TextureTree textureTree;
-    @Setter private ShaderMode mode;
-    private Map<Short, Set<BigInteger>> mapTextureList = new HashMap<>();
+    private final TextureTree textureTree;
+    @Setter private ShadingMode mode;
+    private final Map<Short, Set<BigInteger>> mapTextureList = new HashMap<>();
     private final ImageFilterSettings displaySettings = new ImageFilterSettings(ImageState.EXPORT).setAllowTransparency(true); // This is not static because we want it to be gc'd when the TextureMap is.
     private int width;
     private int height;
@@ -56,7 +56,7 @@ public class TextureMap {
 
     // The largest VLO is the SWP VLO, on the PS1. The texture map with the most used space is SUB1.
 
-    private TextureMap(VLOArchive vlo, List<Short> remapList, ShaderMode mode, int width, int height) {
+    private TextureMap(VLOArchive vlo, List<Short> remapList, ShadingMode mode, int width, int height) {
         this.vloArchive = vlo;
         this.remapList = remapList;
         this.textureTree = new TextureTree(this);
@@ -69,7 +69,7 @@ public class TextureMap {
      * Create a new texture map from an existing MOF.
      * @return newTextureMap
      */
-    public static TextureMap newTextureMap(MOFHolder mofHolder, ShaderMode mode) {
+    public static TextureMap newTextureMap(MOFHolder mofHolder, ShadingMode mode) {
         TextureMap newMap = new TextureMap(mofHolder.getVloFile(), null, mode, 0, 0);
         newMap.setUseModelTextureAnimation(true);
         newMap.updateModel(mofHolder, mode);
@@ -80,7 +80,7 @@ public class TextureMap {
      * Create a new texture map from an existing VLOArchive.
      * @return newTextureMap
      */
-    public static TextureMap newTextureMap(MAPFile mapFile, ShaderMode mode) {
+    public static TextureMap newTextureMap(MAPFile mapFile, ShadingMode mode) {
         TextureMap newMap = new TextureMap(mapFile.getVlo(), mapFile.getRemapTable(), mode, 1024, 1024);
         newMap.updateMap(mapFile, mode);
         return newMap;
@@ -103,7 +103,7 @@ public class TextureMap {
      * @return remap
      */
     public Short getRemap(short index) {
-        return this.remapList != null ? this.remapList.get(index) : index;
+        return this.remapList != null && this.remapList.size() > index && index >= 0 ? this.remapList.get(index) : index;
     }
 
     /**
@@ -135,7 +135,7 @@ public class TextureMap {
      * @param mapFile The map file to update for.
      * @param newMode The shading mode to use.
      */
-    public void updateMap(MAPFile mapFile, ShaderMode newMode) {
+    public void updateMap(MAPFile mapFile, ShadingMode newMode) {
         if (newMode != null)
             this.mode = newMode;
         updateTree(createSourceMap(mapFile));
@@ -146,7 +146,7 @@ public class TextureMap {
      * @param mof     The model to update for.
      * @param newMode The shading mode to use.
      */
-    public void updateModel(MOFHolder mof, ShaderMode newMode) {
+    public void updateModel(MOFHolder mof, ShadingMode newMode) {
         if (newMode != null)
             this.mode = newMode;
 
@@ -236,6 +236,9 @@ public class TextureMap {
                 MOFPolyTexture polyTex = (MOFPolyTexture) poly;
                 if (visitedTextures.add(polyTex.getImageId())) {
                     GameImage image = polyTex.getGameImage(this);
+                    if (image == null)
+                        continue;
+
                     id = image.makeIdentifier(this);
                     if (!texMap.containsKey(id))
                         texMap.put(id, image);
@@ -249,6 +252,9 @@ public class TextureMap {
                 for (MOFPartPolyAnimEntry entry : entryList.getEntries()) {
                     if (visitedTextures.add((short) entry.getImageId())) {
                         GameImage image = mof.getMWD().getImageByTextureId(entry.getImageId());
+                        if (image == null)
+                            continue;
+
                         BigInteger id = image.makeIdentifier(this);
                         if (!texMap.containsKey(id))
                             texMap.put(id, image);
@@ -275,7 +281,7 @@ public class TextureMap {
 
     @Getter
     public static class TextureTree {
-        private TextureMap parentMap;
+        private final TextureMap parentMap;
         private final Map<BigInteger, TextureTreeNode> accessMap;
         private int width; // Width of tree.
         private int height; // Height of tree.
@@ -310,6 +316,9 @@ public class TextureMap {
                 TextureSource source = sourceMap.get(key);
 
                 BufferedImage image = source.makeTexture(getParentMap());
+                if (image == null)
+                    continue;
+
                 if (source.isOverlay(getParentMap())) {
                     this.accessMap.put(key, TextureTreeNode.newNode(this, x, y, image.getWidth(), image.getHeight(), image));
 
@@ -536,7 +545,7 @@ public class TextureMap {
 
     @Getter
     @AllArgsConstructor
-    public enum ShaderMode {
+    public enum ShadingMode {
         NO_SHADING("None", 1, 1),
         OVERLAY_SHADING("Overlay", 1, 1),
         MIXED_SHADING("Mixed", 2, 2), // Works to create a middle-ground between accurate and low quality.
@@ -555,19 +564,19 @@ public class TextureMap {
         /**
          * Creates the texture which should be put into the texture map.
          */
-        public BufferedImage makeTexture(TextureMap map);
+        BufferedImage makeTexture(TextureMap map);
 
         /**
          * Tests if the source creates an overlay texture, or an actual texture.
          */
-        public boolean isOverlay(TextureMap map);
+        boolean isOverlay(TextureMap map);
 
         /**
          * Creates a hash code identifier which should match other textures that would look exactly the same, but not match others.
          */
-        public BigInteger makeIdentifier(TextureMap map);
+        BigInteger makeIdentifier(TextureMap map);
 
-        public default BigInteger makeIdentifier(int... colors) {
+        default BigInteger makeIdentifier(int... colors) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < colors.length; i++)
                 sb.append(Utils.padStringLeft(Integer.toHexString(colors[i]).toUpperCase(), Constants.INTEGER_SIZE, '0'));
@@ -578,12 +587,12 @@ public class TextureMap {
         /**
          * Gets the GameImage this source represents, if it represents one.
          */
-        public GameImage getGameImage(TextureMap map);
+        GameImage getGameImage(TextureMap map);
 
         /**
          * Called when a mesh using this TextureSource is setup.
          */
-        public default void onMeshSetup(FrogMesh mesh) {
+        default void onMeshSetup(FrogMesh mesh) {
             // Do nothing, by default.
         }
 
@@ -591,7 +600,7 @@ public class TextureMap {
          * Get the node associated with this source, if it exists.
          * @param map The map to get the node from.
          */
-        public default TextureTreeNode getTreeNode(TextureMap map) {
+        default TextureTreeNode getTreeNode(TextureMap map) {
             return map.getNode(this);
         }
     }

@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file.map.poly.polygon;
 import net.highwayfrogs.editor.file.map.view.FrogMesh;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -27,7 +27,7 @@ public class MAPPolyFT extends MAPPolyTexture {
 
     @Override
     public BufferedImage makeTexture(TextureMap map) {
-        if (map.getMode() == ShaderMode.NO_SHADING) {
+        if (map.getMode() == ShadingMode.NO_SHADING) {
             return getGameImage(map).toBufferedImage(map.getDisplaySettings());
         } else if (isOverlay(map)) {
             return makeShadeImage(map, false);
@@ -38,7 +38,7 @@ public class MAPPolyFT extends MAPPolyTexture {
 
     @Override
     public BigInteger makeIdentifier(TextureMap map) {
-        if (map.getMode() == ShaderMode.NO_SHADING) {
+        if (map.getMode() == ShadingMode.NO_SHADING) {
             return makeIdentifier(0x7E8BA5E, getTextureId());
         } else {
             return makeIdentifier(0xF1A77E8, getTextureId(), getColors()[0].toRGB());

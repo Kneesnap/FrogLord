@@ -85,10 +85,10 @@ public class PCMapBook extends MapBook {
 
     @Override
     public boolean isEntry(FileEntry test) {
-        return this.lowMapId == test.getLoadedId()
-                || this.lowWadId == test.getLoadedId()
-                || this.highMapId == test.getLoadedId()
-                || this.highWadId == test.getLoadedId();
+        return this.lowMapId == test.getResourceId()
+                || this.lowWadId == test.getResourceId()
+                || this.highMapId == test.getResourceId()
+                || this.highWadId == test.getResourceId();
     }
 
     @Override
@@ -98,10 +98,10 @@ public class PCMapBook extends MapBook {
 
     @Override
     public WADFile getWad(MAPFile map) {
-        if (this.lowMapId == map.getFileEntry().getLoadedId())
+        if (this.lowMapId == map.getFileEntry().getResourceId())
             return getConfig().getGameFile(this.lowWadId);
 
-        if (this.highMapId == map.getFileEntry().getLoadedId())
+        if (this.highMapId == map.getFileEntry().getResourceId())
             return getConfig().getGameFile(this.highWadId);
 
         return null;

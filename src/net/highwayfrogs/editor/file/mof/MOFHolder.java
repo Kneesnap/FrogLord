@@ -10,12 +10,13 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameFile;
+import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimationCels;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
@@ -143,15 +144,18 @@ public class MOFHolder extends GameFile {
         if (!isDummy()) {
             MOFFile staticMof = asStaticFile();
             list.add(new Tuple2<>("Parts", String.valueOf(staticMof.getParts().size())));
+            list.add(new Tuple2<>("Animations", String.valueOf(getAnimationCount())));
             list.add(new Tuple2<>("Texture Animation", String.valueOf(staticMof.hasTextureAnimation())));
             list.add(new Tuple2<>("Hilites", String.valueOf(staticMof.getHiliteCount())));
             list.add(new Tuple2<>("Collprims", String.valueOf(staticMof.getCollprimCount())));
             if (isAnimatedMOF()) {
-                list.add(new Tuple2<>("MOF Count", String.valueOf(getAnimatedFile().getMofCount())));
-                list.add(new Tuple2<>("Model Set Count", String.valueOf(getAnimatedFile().getModelSetCount())));
-                list.add(new Tuple2<>("Animation Count", String.valueOf(getAnimatedFile().getModelSet().getCelSet().getCels().size())));
-                list.add(new Tuple2<>("Interpolation Enabled", String.valueOf(getAnimatedFile().getModelSet().getCelSet().getCels().stream().filter(MOFAnimationCels::isInterpolationEnabled).count())));
-                list.add(new Tuple2<>("Translation Type", getAnimatedFile().getTransformType().name()));
+                MOFAnimation animMof = getAnimatedFile();
+                list.add(new Tuple2<>("MOF Count", String.valueOf(animMof.getMofCount())));
+                list.add(new Tuple2<>("Model Set Count", String.valueOf(animMof.getModelSetCount())));
+                list.add(new Tuple2<>("Animation Count", String.valueOf(animMof.getModelSet().getCelSet().getCels().size())));
+                list.add(new Tuple2<>("Interpolation Enabled", String.valueOf(animMof.getModelSet().getCelSet().getCels().stream().filter(MOFAnimationCels::isInterpolationEnabled).count())));
+                list.add(new Tuple2<>("Translation Type", animMof.getTransformType().name()));
+                list.add(new Tuple2<>("Start at Frame Zero?", String.valueOf(animMof.isStartAtFrameZero())));
             }
         }
 
@@ -185,10 +189,12 @@ public class MOFHolder extends GameFile {
     }
 
     /**
+     * Gets the number of animations in this mof. (Does not include texture animation).
+     * Also
      * Get the maximum animation action id.
      * @return maxAnimation
      */
-    public int getMaxAnimation() {
+    public int getAnimationCount() {
         if (isAnimatedMOF())
             return getAnimatedFile().getAnimationCount();
 
@@ -247,9 +253,13 @@ public class MOFHolder extends GameFile {
         if (animationId == -1)
             return asStaticFile().hasTextureAnimation() ? "Texture Animation" : "No Animation";
 
+        NameBank bank = getConfig().getAnimationBank();
+        if (bank == null)
+            return (animationId != 0) ? "Animation " + animationId : "Default Animation";
+
         String bankName = Utils.stripWin95(Utils.stripExtension(getFileEntry().getDisplayName()));
-        NameBank childBank = getConfig().getAnimationBank().getChildBank(bankName);
-        return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getMaxAnimation());
+        NameBank childBank = bank.getChildBank(bankName);
+        return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getAnimationCount());
     }
 
     /**
@@ -282,7 +292,25 @@ public class MOFHolder extends GameFile {
      * @return textureMap
      */
     public TextureMap makeTextureMap() {
-        return TextureMap.newTextureMap(this, ShaderMode.NO_SHADING);
+        return TextureMap.newTextureMap(this, ShadingMode.NO_SHADING);
+    }
+
+    /**
+     * Gets the override of this MOFHolder, if there is one.
+     * @return override
+     */
+    public MOFHolder getOverride() {
+        String mofOverride = getConfig().getMofRenderOverrides().get(getFileEntry().getDisplayName());
+        if (mofOverride != null) {
+            FileEntry entry = getConfig().getResourceEntry(mofOverride);
+            if (entry != null) {
+                GameFile file = getConfig().getGameFile(entry.getResourceId());
+                if (file instanceof MOFHolder)
+                    return (MOFHolder) file;
+            }
+        }
+
+        return this;
     }
 
     /**
@@ -301,9 +329,30 @@ public class MOFHolder extends GameFile {
     }
 
     /**
-     * Get whether or not this is an animated (XAR) MOF.
+     * Get whether this is an animated (XAR) MOF.
      */
     public boolean isAnimatedMOF() {
         return this.animatedFile != null;
+    }
+
+    /**
+     * Many prototype builds contain froglets with models that are slightly broken.
+     * This lets us test if this model meets those conditions.
+     * New FrogLord should fully investigate what's actually going on, and develop a proper fix.
+     * GEN_FROG2.XMR/3/4 are also broken, but don't seem to be fixed with the froglet fix. Hmm.
+     */
+    public boolean isWeirdFrogMOF() {
+        if (getConfig().isAtOrBeforeBuild4() || getConfig().getBuild() >= 50)
+            return false; // Note: Build 5 may or may not be included. Build 50 is also probably not the correct build to test against here.
+
+        String name = getFileEntry().getDisplayName();
+        boolean isFroglet = "GEN_CHECKPOINT_1.XMR".equals(name)
+                || "GEN_CHECKPOINT_2.XMR".equals(name)
+                || "GEN_CHECKPOINT_3.XMR".equals(name)
+                || "GEN_CHECKPOINT_4.XMR".equals(name)
+                || "GEN_CHECKPOINT_5.XMR".equals(name);
+        boolean isGoldenFrog = "GEN_GOLD_FROG.XMR".equals(name);
+
+        return isFroglet || (isGoldenFrog && !getConfig().isAtOrBeforeBuild20());
     }
 }

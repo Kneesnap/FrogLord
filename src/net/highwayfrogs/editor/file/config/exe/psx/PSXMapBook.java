@@ -22,16 +22,20 @@ public class PSXMapBook extends MapBook {
     private int mapId;
     private long remapPointer;
     private boolean useCaveLights;
-    private long environmentTexturePointer;
-    private int wadId;
+    private long environmentTexturePointer = -1;
+    private int wadId = -1;
 
     @Override
     public void load(DataReader reader) {
         this.mapId = reader.readInt();
         this.remapPointer = reader.readUnsignedIntAsLong();
         this.useCaveLights = (reader.readInt() == 1);
-        this.environmentTexturePointer = reader.readUnsignedIntAsLong();
-        this.wadId = reader.readInt();
+
+        if (!getConfig().isBeforeBuild1())
+            this.environmentTexturePointer = reader.readUnsignedIntAsLong();
+
+        if (!getConfig().isAtOrBeforeBuild4())
+            this.wadId = reader.readInt();
     }
 
     @Override
@@ -39,8 +43,10 @@ public class PSXMapBook extends MapBook {
         writer.writeInt(this.mapId);
         writer.writeUnsignedInt(this.remapPointer);
         writer.writeInt(this.useCaveLights ? 1 : 0);
-        writer.writeUnsignedInt(this.environmentTexturePointer);
-        writer.writeInt(this.wadId);
+        if (!getConfig().isBeforeBuild1())
+            writer.writeUnsignedInt(this.environmentTexturePointer);
+        if (!getConfig().isAtOrBeforeBuild4())
+            writer.writeInt(this.wadId);
     }
 
     @Override
@@ -55,7 +61,7 @@ public class PSXMapBook extends MapBook {
 
     @Override
     public boolean isEntry(FileEntry test) {
-        return this.mapId == test.getLoadedId() || this.wadId == test.getLoadedId();
+        return this.mapId == test.getResourceId() || this.wadId == test.getResourceId();
     }
 
     @Override
@@ -70,7 +76,11 @@ public class PSXMapBook extends MapBook {
 
     @Override
     public WADFile getWad(MAPFile map) {
-        return getConfig().getGameFile(this.wadId);
+        int wadId = this.wadId;
+        if (wadId < 0) // Determine the WAD ID from the map theme if necessary.
+            wadId = ((PSXThemeBook) getConfig().getThemeBook(map.getTheme())).getWadId();
+
+        return getConfig().getGameFile(wadId);
     }
 
     @Override

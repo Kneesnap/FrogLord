@@ -7,9 +7,7 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.entity.Entity;
-import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFly;
-import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFrogLight;
-import net.highwayfrogs.editor.file.map.entity.data.cave.EntityRaceSnail;
+import net.highwayfrogs.editor.file.map.entity.data.cave.*;
 import net.highwayfrogs.editor.file.map.entity.data.desert.EntityCrack;
 import net.highwayfrogs.editor.file.map.entity.data.desert.EntityCrocodileHead;
 import net.highwayfrogs.editor.file.map.entity.data.desert.EntityFallingRock;
@@ -22,10 +20,14 @@ import net.highwayfrogs.editor.file.map.entity.data.jungle.*;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntityBabyFrog;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntityBeaver;
 import net.highwayfrogs.editor.file.map.entity.data.retro.EntitySnake;
+import net.highwayfrogs.editor.file.map.entity.data.rushedmap.EntityCrocodileOld;
+import net.highwayfrogs.editor.file.map.entity.data.rushedmap.EntitySwanOld;
+import net.highwayfrogs.editor.file.map.entity.data.rushedmap.EntityTurtleOld;
 import net.highwayfrogs.editor.file.map.entity.data.suburbia.EntityDog;
 import net.highwayfrogs.editor.file.map.entity.data.suburbia.EntityTurtle;
 import net.highwayfrogs.editor.file.map.entity.data.swamp.*;
 import net.highwayfrogs.editor.file.map.entity.data.volcano.EntityColorTrigger;
+import net.highwayfrogs.editor.file.map.entity.data.volcano.EntityTriggeredPlatform;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 import net.highwayfrogs.editor.system.Tuple2;
@@ -50,8 +52,9 @@ public abstract class EntityData extends GameObject {
             EntityPress.class, EntityEvilPlant.class, EntityCrack.class, EntityFatFireFly.class, EntityThermal.class, CheckpointEntity.class,
             EntityBeaver.class, EntitySquirrel.class, PathData.class, EntitySnake.class, BonusFlyEntity.class, EntityPlinthFrog.class,
             MatrixData.class, EntityRaceSnail.class, EntityColorTrigger.class, SwayingBranchEntity.class, EntityTurtle.class,
-            EntityOutroPlinth.class, EntityHedgehog.class, FallingLeafEntity.class, EntityCrocodileHead.class, TriggerEntity.class);
-
+            EntityOutroPlinth.class, EntityHedgehog.class, FallingLeafEntity.class, EntityCrocodileHead.class, TriggerEntity.class,
+            EntityFatFireFlyBuild1.class, EntityWeb.class, EntityTurtleOld.class, EntitySwanOld.class, EntityCrocodileOld.class,
+            EntitySpider.class, EntityTriggeredPlatform.class);
 
     /**
      * Add entity data to a table.
@@ -71,20 +74,20 @@ public abstract class EntityData extends GameObject {
     /**
      * Make entity data for the given form.
      * @param config The config to read from.
-     * @param form   The form.
+     * @param entity The entity to make data for.
      * @return entityData
      */
     @SneakyThrows
-    public static EntityData makeData(FroggerEXEInfo config, FormEntry form, Entity entityOwner) {
-        if (form == null)
+    public static EntityData makeData(FroggerEXEInfo config, Entity entity, Entity entityOwner) {
+        if (entity == null)
             return null;
 
-        String dataClassName = config.getEntityBank().getConfig().getString(form.getEntityName(), null);
+        String dataClassName = config.getEntityBank().getConfig().getString(entity.getTypeName(), null);
         if (dataClassName == null)
             return null;
 
         if (!CACHE_MAP.containsKey(dataClassName))
-            throw new RuntimeException("Failed to find entity class for the type: " + form.getEntityName() + ", " + dataClassName);
+            throw new RuntimeException("Failed to find entity class for the type: " + entity.getTypeName() + ", " + dataClassName);
         EntityData newData = CACHE_MAP.get(dataClassName).getB().newInstance();
         newData.setParentEntity(entityOwner);
         return newData;

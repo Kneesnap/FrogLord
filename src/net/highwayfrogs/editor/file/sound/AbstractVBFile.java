@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.VABController;
 
 import java.util.ArrayList;
@@ -17,7 +19,7 @@ import java.util.List;
  * Created by Kneesnap on 2/13/2019.
  */
 public abstract class AbstractVBFile<T extends GameObject> extends GameFile {
-    @Getter private List<GameSound> audioEntries = new ArrayList<>();
+    @Getter private final List<GameSound> audioEntries = new ArrayList<>();
     protected transient DataReader cachedReader;
     @Setter @Getter private transient T header;
 
@@ -38,5 +40,10 @@ public abstract class AbstractVBFile<T extends GameObject> extends GameFile {
     @Override
     public Node makeEditor() {
         return loadEditor(new VABController(), "vb", this);
+    }
+
+    @Override
+    public void handleWadEdit(WADFile parent) {
+        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), this);
     }
 }

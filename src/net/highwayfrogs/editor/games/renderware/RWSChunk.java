@@ -18,6 +18,7 @@ public abstract class RWSChunk extends GameObject {
     private int typeId;
     private int renderwareVersion;
     private RWSChunk parentChunk;
+    private transient int readSize;
 
     public RWSChunk(int typeId, int renderwareVersion, RWSChunk parentChunk) {
         this.typeId = typeId;
@@ -27,8 +28,15 @@ public abstract class RWSChunk extends GameObject {
 
     @Override
     public final void load(DataReader reader) {
-        int readSize = reader.readInt();
+        int readSize = this.readSize = reader.readInt();
         this.renderwareVersion = reader.readInt();
+        System.out.println("Reading " + getClass().getSimpleName() + " (Type ID: " + this.typeId + ", Size: " + readSize + ").");
+
+        if (this.parentChunk != null && this.parentChunk.getReadSize() == this.readSize) {
+            loadChunkData(reader);
+            return;
+        }
+
         byte[] chunkData = reader.readBytes(readSize);
         DataReader chunkReader = new DataReader(new ArraySource(chunkData));
         loadChunkData(chunkReader);
@@ -48,6 +56,7 @@ public abstract class RWSChunk extends GameObject {
 
     /**
      * Reads data specific to this chunk type.
+     * TODO: When porting to ModToolFramework, just pass the normal data reader with the parameters of data size. It may seem simpler how it's currently done, but it's not.
      * @param reader The reader to read data from.
      */
     public abstract void loadChunkData(DataReader reader);

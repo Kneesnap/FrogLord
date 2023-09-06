@@ -119,20 +119,19 @@ public class VABController extends EditorController<AbstractVBFile<?>> {
         if (this.currentClip == null)
             return;
 
-        this.currentClip.setMicrosecondPosition(0); // Reset play position.
-
         if (this.currentClip.isActive()) {
             this.currentClip.stop();
+            this.currentClip.setMicrosecondPosition(0); // Reset play position.
         } else {
             toggleComponents(true);
+            this.playButton.setText("Stop");
 
+            this.currentClip.setMicrosecondPosition(0); // Reset play position.
             if (this.repeatCheckBox.isSelected()) {
                 this.currentClip.loop(Clip.LOOP_CONTINUOUSLY);
             } else {
                 this.currentClip.start();
             }
-
-            this.playButton.setText("Stop");
         }
     }
 
@@ -183,16 +182,28 @@ public class VABController extends EditorController<AbstractVBFile<?>> {
     public void updateSound() {
         closeClip();
 
-        this.currentClip = this.selectedSound.getClip();
-        this.currentClip.addLineListener(e -> {
-            if (e.getType() != Type.STOP)
-                return;
+        if (this.currentClip != null) {
+            byte[] pcmData = this.selectedSound.toRawAudio();
 
-            Platform.runLater(() -> {
-                this.playButton.setText("Play");
-                toggleComponents(false);
+            try {
+                this.currentClip.open(this.selectedSound.getAudioFormat(), pcmData, 0, pcmData.length);
+            } catch (LineUnavailableException exception) {
+                System.out.println("Could not load audio data from file.");
+                exception.printStackTrace();
+            }
+        } else {
+            this.currentClip = this.selectedSound.getClip();
+
+            this.currentClip.addLineListener(e -> {
+                if (e.getType() != Type.STOP)
+                    return;
+
+                Platform.runLater(() -> {
+                    this.playButton.setText("Play");
+                    toggleComponents(false);
+                });
             });
-        });
+        }
     }
 
     private void toggleComponents(boolean newState) {

@@ -20,8 +20,8 @@ import java.util.function.Function;
 public class PSXThemeBook extends ThemeBook {
     private int wadId;
     private int vloId;
-    private int multiplayerWadId;
-    private int multiplayerVloId;
+    private int multiplayerWadId = -1;
+    private int multiplayerVloId = -1;
     private long formLibraryPointer;
     private int deathHeight;
 
@@ -31,8 +31,11 @@ public class PSXThemeBook extends ThemeBook {
         this.formLibraryPointer = reader.readUnsignedIntAsLong();
         this.vloId = reader.readInt();
         this.deathHeight = reader.readInt();
-        this.multiplayerWadId = reader.readInt();
-        this.multiplayerVloId = reader.readInt();
+
+        if (!getConfig().isAtOrBeforeBuild1()) {
+            this.multiplayerWadId = reader.readInt();
+            this.multiplayerVloId = reader.readInt();
+        }
     }
 
     @Override
@@ -42,8 +45,11 @@ public class PSXThemeBook extends ThemeBook {
         writer.writeUnsignedInt(this.formLibraryPointer);
         writer.writeInt(this.vloId);
         writer.writeInt(this.deathHeight);
-        writer.writeInt(this.multiplayerWadId);
-        writer.writeInt(this.multiplayerVloId);
+
+        if (!getConfig().isAtOrBeforeBuild1()) {
+            writer.writeInt(this.multiplayerWadId);
+            writer.writeInt(this.multiplayerVloId);
+        }
     }
 
     @Override
@@ -79,8 +85,8 @@ public class PSXThemeBook extends ThemeBook {
 
     @Override
     public boolean isEntry(FileEntry test) {
-        return wadId == test.getLoadedId() || multiplayerWadId == test.getLoadedId()
-                || vloId == test.getLoadedId() || multiplayerVloId == test.getLoadedId();
+        return wadId == test.getResourceId() || multiplayerWadId == test.getResourceId()
+                || vloId == test.getResourceId() || multiplayerVloId == test.getResourceId();
     }
 
     @Override

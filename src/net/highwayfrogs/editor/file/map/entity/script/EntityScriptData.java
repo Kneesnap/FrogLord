@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
+import net.highwayfrogs.editor.file.map.entity.script.jungle.ScriptFloatingTreeData;
 import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptBalloonData;
 import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptHeliumBalloon;
 import net.highwayfrogs.editor.file.map.entity.script.swamp.ScriptBobbingWasteData;
@@ -30,7 +31,8 @@ public abstract class EntityScriptData extends GameObject {
     private static final Map<String, Tuple2<Class<? extends EntityScriptData>, Constructor<? extends EntityScriptData>>> CACHE_MAP = new HashMap<>();
     private static final List<Class<? extends EntityScriptData>> REGISTERED_SCRIPT_TYPES = Arrays.asList(ScriptBobbingWasteData.class, ScriptPlatform2Data.class,
             ScriptNoiseData.class, ScriptButterflyData.class, ScriptNuclearBarrelData.class, ScriptHelicopterData.class,
-            ScriptHawkData.class, ScriptMechanismData.class, ScriptHeliumBalloon.class, ScriptBalloonData.class, ScriptSpecialWaterNoiseData.class);
+            ScriptHawkData.class, ScriptMechanismData.class, ScriptHeliumBalloon.class, ScriptBalloonData.class, ScriptSpecialWaterNoiseData.class,
+            ScriptFloatingTreeData.class);
 
 
     /**

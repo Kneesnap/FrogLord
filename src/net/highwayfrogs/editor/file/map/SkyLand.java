@@ -28,7 +28,7 @@ import java.util.List;
 public class SkyLand extends GameFile {
     private int xLength;
     private int yLength;
-    private List<SkyLandTile> skyData = new ArrayList<>();
+    private final List<SkyLandTile> skyData = new ArrayList<>();
 
     @Override
     public Image getIcon() {
@@ -112,9 +112,6 @@ public class SkyLand extends GameFile {
                 width = image.getIngameWidth();
                 height = image.getIngameHeight();
             }
-
-            if (width != image.getIngameWidth() || height != image.getIngameHeight())
-                throw new RuntimeException("Not all of the sky images matched width and height! [" + width + ", " + height + "] -> [" + image.getIngameWidth() + ", " + image.getIngameHeight() + "]");
         }
 
         BufferedImage finalImage = new BufferedImage(width * this.xLength, height * this.yLength, BufferedImage.TYPE_INT_ARGB);
@@ -132,8 +129,8 @@ public class SkyLand extends GameFile {
 
     @Getter
     public static final class SkyLandTile {
-        private short id;
-        private SkyLandRotation rotation;
+        private final short id;
+        private final SkyLandRotation rotation;
 
         public SkyLandTile(short readShort) {
             this.id = (short) (readShort & 0x3FFF);

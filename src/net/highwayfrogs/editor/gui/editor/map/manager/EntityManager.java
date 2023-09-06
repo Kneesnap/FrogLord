@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
+import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.entity.Entity.EntityFlag;
@@ -19,12 +20,13 @@ import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
 import net.highwayfrogs.editor.file.map.entity.data.cave.EntityFatFireFly;
 import net.highwayfrogs.editor.file.map.entity.data.general.BonusFlyEntity;
 import net.highwayfrogs.editor.file.map.entity.script.ScriptButterflyData;
+import net.highwayfrogs.editor.file.map.form.OldForm;
 import net.highwayfrogs.editor.file.map.grid.GridSquare;
 import net.highwayfrogs.editor.file.map.grid.GridStack;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShaderMode;
+import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -47,10 +49,10 @@ import java.util.*;
  */
 public class EntityManager extends MapManager {
     private GUIEditorGrid entityEditor;
-    private List<MeshView> entityModelViews = new ArrayList<>();
-    private List<FormEntry> entityTypes = new ArrayList<>();
-    private Set<Integer> entitiesToUpdate = new HashSet<>();
-    private Map<MOFHolder, MOFMesh> meshMap = new HashMap<>();
+    private final List<MeshView> entityModelViews = new ArrayList<>();
+    private final List<FormEntry> entityTypes = new ArrayList<>();
+    private final Set<Integer> entitiesToUpdate = new HashSet<>();
+    private final Map<MOFHolder, MOFMesh> meshMap = new HashMap<>();
     @Getter private Group entityRenderGroup;
 
     private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
@@ -97,8 +99,9 @@ public class EntityManager extends MapManager {
         entityEditor.clearEditor();
         if (entity == null) {
             entityEditor.addBoldLabel("There is no entity selected.");
-            entityEditor.addButtonWithEnumSelection("Add Entity", this::addNewEntity, entries, entries[0])
-                    .setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
+            if (entries.length > 0)
+                entityEditor.addButtonWithEnumSelection("Add Entity", this::addNewEntity, entries, entries[0])
+                        .setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
             return;
         }
 
@@ -106,22 +109,30 @@ public class EntityManager extends MapManager {
                 .setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
 
         entityEditor.addBoldLabel("General Information:");
-        entityEditor.addLabel("Entity Type", entity.getFormEntry().getEntityName());
+        if (entity.getFormEntry() != null) {
+            entityEditor.addLabel("Entity Type", entity.getTypeName());
 
-        entityEditor.addEnumSelector("Form Type", entity.getFormEntry(), entries, false, newEntry -> {
-            entity.setFormEntry(newEntry);
-            showEntityInfo(entity);
-            updateEntities();
-        }).setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
+            entityEditor.addEnumSelector("Form Type", entity.getFormEntry(), entries, false, newEntry -> {
+                entity.setFormEntry(newEntry);
+                showEntityInfo(entity);
+                updateEntities();
+            }).setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
+        } else if (entity.getOldFormEntry() != null) {
+            OldForm oldFormEntry = entity.getOldFormEntry();
+            entityEditor.addLabel("Entity Type", entity.getTypeName());
+            entityEditor.addLabel("MOF Index", String.valueOf(oldFormEntry.getMofId()));
+        } else {
+            entityEditor.addLabel("Entity Type", "Unknown");
+        }
 
         entityEditor.addIntegerField("Entity ID", entity.getUniqueId(), entity::setUniqueId, null);
 
         if (entity.getFormGridId() >= 0 && getMap().getForms().size() > entity.getFormGridId()) {
-            entityEditor.addSelectionBox("Form", getMap().getForms().get(entity.getFormGridId()), getMap().getForms(),
-                    newForm -> entity.setFormGridId(getMap().getForms().indexOf(newForm)))
+            entityEditor.addSelectionBox("Form Grid", getMap().getForms().get(entity.getFormGridId()), getMap().getForms(),
+                            newForm -> entity.setFormGridId(getMap().getForms().indexOf(newForm)))
                     .setConverter(new AbstractIndexStringConverter<>(getMap().getForms(), (index, form) -> "Form #" + index + " (" + form.getXGridSquareCount() + "," + form.getZGridSquareCount() + ")"));
         } else { // This form is invalid, so show this as a text box.
-            entityEditor.addIntegerField("Form ID", entity.getFormGridId(), entity::setFormGridId, null);
+            entityEditor.addIntegerField("Form Grid ID", entity.getFormGridId(), entity::setFormGridId, null);
         }
 
         entityEditor.addBoldLabel("Flags:");
@@ -142,6 +153,10 @@ public class EntityManager extends MapManager {
             entity.getScriptData().addData(this.entityEditor);
         }
 
+        // Add raw data.
+        if (entity.getRawData() != null)
+            this.entityEditor.addTextField("Raw Data", Utils.toByteString(entity.getRawData()));
+
         this.entityEditor.addSeparator(25);
         this.entityEditor.addButton("Remove Entity", () -> {
             getMap().getEntities().remove(entity);
@@ -158,7 +173,8 @@ public class EntityManager extends MapManager {
         if (newEntity.getMatrixInfo() != null) { // Lets you select a polygon to place the new entity on.
             for (GridStack stack : getMap().getGridStacks())
                 for (GridSquare square : stack.getGridSquares())
-                    getController().renderOverPolygon(square.getPolygon(), MapMesh.GENERAL_SELECTION);
+                    if (square.getPolygon() != null)
+                        getController().renderOverPolygon(square.getPolygon(), MapMesh.GENERAL_SELECTION);
             MeshData data = getMesh().getManager().addMesh();
 
             getController().getGeometryManager().selectPolygon(poly -> {
@@ -316,19 +332,22 @@ public class EntityManager extends MapManager {
         FormEntry oldForm = this.entityTypes.get(entityIndex);
         FormEntry newForm = entity.getFormEntry();
 
-        if (oldForm == newForm && !entitiesToUpdate.contains(entityIndex))
+        if (oldForm == newForm && !entitiesToUpdate.contains(entityIndex) && !getMap().getMapConfig().isOldFormFormat())
             return; // The entity form has not changed, so we shouldn't change the model.
 
         this.entityTypes.set(entityIndex, newForm);
 
-        WADEntry modelEntry = entity.getFormEntry().getModel(getMap());
+        WADEntry modelEntry = entity.getEntityModel(getMap());
         if (modelEntry != null) {
-            MOFHolder holder = (MOFHolder) modelEntry.getFile();
+            MOFHolder holder = ((MOFHolder) modelEntry.getFile()).getOverride();
 
             // Setup VLO.
             VLOArchive vlo = getMap().getConfig().getForcedVLO(modelEntry.getDisplayName());
-            if (vlo == null)
-                vlo = newForm.getConfig().getThemeBook(newForm.getTheme()).getVLO(getMap());
+            if (vlo == null && newForm != null) {
+                ThemeBook themeBook = newForm.getConfig().getThemeBook(newForm.getTheme());
+                if (themeBook != null)
+                    vlo = themeBook.getVLO(getMap());
+            }
             holder.setVloFile(vlo);
 
             // Update MeshView.
@@ -346,8 +365,8 @@ public class EntityManager extends MapManager {
         FroggerEXEInfo config = getMap().getConfig();
         if (config.getPickupData() != null) {
             FlyScoreType flyType = null;
-            if (entity.getEntityData() instanceof BonusFlyEntity)
-                flyType = ((BonusFlyEntity) entity.getEntityData()).getType();
+            if (entity.getEntityData() instanceof BonusFlyEntity) // TODO: Perhaps switch to implementing an interface which allows specifying a sprite to render.
+                flyType = ((BonusFlyEntity) entity.getEntityData()).getFlyType();
             if (entity.getScriptData() instanceof ScriptButterflyData)
                 flyType = ((ScriptButterflyData) entity.getScriptData()).getType();
             if (entity.getEntityData() instanceof EntityFatFireFly)
@@ -375,10 +394,10 @@ public class EntityManager extends MapManager {
     }
 
     /**
-     * Set the shader mode to use to display all of the entities.
-     * @param newMode The new shader mode to use.
+     * Set the shading mode to use to display all of the entities.
+     * @param newMode The new shading mode to use.
      */
-    public void setShaderMode(ShaderMode newMode) {
+    public void setShadingMode(ShadingMode newMode) {
         for (MOFMesh mesh : this.meshMap.values()) {
             TextureMap map = mesh.getTextureMap();
             if (map.getMode() != newMode) {

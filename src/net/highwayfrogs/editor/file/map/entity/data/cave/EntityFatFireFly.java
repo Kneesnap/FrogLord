@@ -7,9 +7,11 @@ import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 
 /**
- * Completely lights up the cave.
+ * Holds data for the cave bug which completely lights up the cave.
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
@@ -32,5 +34,15 @@ public class EntityFatFireFly extends MatrixData {
         writer.writeUnsignedShort(this.type.ordinal());
         writer.writeUnsignedShort(0);
         this.target.saveWithPadding(writer);
+    }
+
+    @Override
+    public void addData(EntityManager manager, GUIEditorGrid editor) {
+        super.addData(manager, editor);
+        editor.addEnumSelector("Fly Type", this.type, FlyScoreType.values(), false, newType -> {
+            this.type = newType;
+            manager.updateEntity(getParentEntity());
+        });
+        editor.addFloatSVector("Target", this.target, manager.getController());
     }
 }

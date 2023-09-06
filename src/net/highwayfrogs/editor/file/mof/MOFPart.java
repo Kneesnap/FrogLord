@@ -15,10 +15,7 @@ import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Represents the MR_PART struct.
@@ -334,7 +331,7 @@ public class MOFPart extends GameObject {
         incompletePart.collprim = this.collprim;
         incompletePart.matrix = this.matrix;
         incompletePart.flipbook = this.flipbook;
-        if (getParent().hasTextureAnimation())
+        if (getParent().hasTextureAnimation() && !getConfig().isAtOrBeforeBuild23()) // TODO: Replace with some kind of warning system, where instead of throwing exceptions, we can have warnings per-file, etc.
             throw new RuntimeException("Texture animation cannot be copied to an incomplete MOF right now!"); // It is believed this wouldn't work in the retail game either.
     }
 
@@ -392,7 +389,7 @@ public class MOFPart extends GameObject {
      * @return shouldHide
      */
     public boolean shouldHide() {
-        return "GEN_FROG.XAR".equals(getParent().getFileEntry().getDisplayName()) && getPartID() == 15
-                || ("DAN.XAR".equals(getParent().getFileEntry().getDisplayName()) && (getPartID() > 14));
+        int[] hiddenParts = getConfig().getHiddenPartIds().get(getParent().getFileEntry().getDisplayName());
+        return hiddenParts != null && Arrays.binarySearch(hiddenParts, getPartID()) >= 0;
     }
 }

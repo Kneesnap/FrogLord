@@ -4,10 +4,6 @@ package net.highwayfrogs.editor.utils;
  * Math related utility functions.
  * Created by AndyEder on 2/14/2019.
  */
-
-// TODO: Grow this math library over time.
-// TODO: Potentially move other math-related utility functions into this class?
-
 public class MathUtils {
 
     /**
@@ -62,6 +58,6 @@ public class MathUtils {
      * @return int
      */
     public static double clamp(double valueIn, double minVal, double maxVal) {
-        return (valueIn < minVal) ? minVal : (valueIn > maxVal) ? maxVal : valueIn;
+        return Math.max(minVal, Math.min(valueIn, maxVal));
     }
 }

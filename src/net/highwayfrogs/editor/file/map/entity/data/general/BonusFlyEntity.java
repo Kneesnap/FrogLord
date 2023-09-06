@@ -10,32 +10,46 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 
 /**
- * Data for a entity.
+ * Includes the identifier which identifies a fly.
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
 @Setter
 public class BonusFlyEntity extends MatrixData {
-    private FlyScoreType type = FlyScoreType.SCORE_10;
+    private int flyTypeId;
 
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.type = FlyScoreType.values()[reader.readInt()];
+        this.flyTypeId = reader.readInt();
     }
 
     @Override
     public void save(DataWriter writer) {
         super.save(writer);
-        writer.writeInt(this.type.ordinal());
+        writer.writeInt(this.flyTypeId);
+    }
+
+    public FlyScoreType getFlyType() {
+        return (this.flyTypeId >= 0 && this.flyTypeId < FlyScoreType.values().length)
+                ? FlyScoreType.values()[this.flyTypeId] : null;
     }
 
     @Override
     public void addData(EntityManager manager, GUIEditorGrid editor) {
         super.addData(manager, editor);
-        editor.addEnumSelector("Fly Type", getType(), FlyScoreType.values(), false, newType -> {
-            this.type = newType;
-            manager.updateEntity(getParentEntity());
-        });
+
+        FlyScoreType flyType = getFlyType();
+        if (flyType != null) {
+            editor.addEnumSelector("Fly Type", flyType, FlyScoreType.values(), false, newType -> {
+                this.flyTypeId = newType.ordinal();
+                manager.updateEntity(getParentEntity());
+            });
+        } else {
+            editor.addIntegerField("Fly Type ID", this.flyTypeId, newTypeId -> {
+                this.flyTypeId = newTypeId;
+                manager.updateEntity(getParentEntity());
+            }, null);
+        }
     }
 }

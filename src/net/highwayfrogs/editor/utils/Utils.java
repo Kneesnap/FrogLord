@@ -6,12 +6,14 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.SubScene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
@@ -23,6 +25,7 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.gui.GUIMain;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -30,6 +33,8 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -550,6 +555,33 @@ public class Utils {
         }
 
         return output;
+    }
+
+    /**
+     * Read bytes from an InputStream, and writes them to an output stream.
+     * @param input  The stream to read from.
+     * @param output The stream to write to.
+     */
+    public static void copyInputStreamData(InputStream input, OutputStream output, boolean closeInput) {
+        byte[] buffer = new byte[4096];
+
+        try {
+            int bytesRead;
+            while ((bytesRead = input.read(buffer)) != -1)
+                output.write(buffer, 0, bytesRead);
+        } catch (IOException ex) {
+            System.out.println("Failed to copy stream data from the input stream to the output stream!");
+            ex.printStackTrace();
+        }
+
+        if (closeInput) {
+            try {
+                input.close();
+            } catch (IOException ex) {
+                System.out.println("Failed to close the input stream.");
+                ex.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -1143,6 +1175,21 @@ public class Utils {
     }
 
     /**
+     * Swaps the red/blue value in ARGB or ABGR.
+     * @param color The color to turn into rgb.
+     * @return rgbInt
+     */
+    public static int swapRedBlue(int color) {
+        int oldBlue = (color & 0xFF);
+        int oldRed = ((color >> 16) & 0xFF);
+
+        int result = color & 0xFF00FF00;
+        result |= oldRed;
+        result |= ((oldBlue << 16) & 0xFF0000);
+        return result;
+    }
+
+    /**
      * Get a integer from a color object.
      * @param color The color to turn into rgb.
      * @return rgbInt
@@ -1238,7 +1285,7 @@ public class Utils {
 
     private static class TextureCache {
         private long lastUpdate;
-        private Image fxImage;
+        private final Image fxImage;
 
         public TextureCache(Image fxImage) {
             this.fxImage = fxImage;
@@ -1549,7 +1596,7 @@ public class Utils {
      * @return cleanStr
      */
     public static String removeDuplicateSpaces(String toRemove) {
-        return replaceDouble(toRemove, ' ').replaceAll(" $", ""); // Removes trailing space.
+        return replaceDouble(toRemove, ' ').replaceAll("(\\s+)$", ""); // Removes trailing space.
     }
 
     /**
@@ -1666,7 +1713,7 @@ public class Utils {
      * @return paddedString
      */
     public static String padNumberString(int number, int digits) {
-        int usedDigits = (int) Math.log10(number) + 1;
+        int usedDigits = (number == 0) ? 1 : (int) Math.log10(number) + 1;
 
         StringBuilder prependStr = new StringBuilder();
         for (int i = 0; i < (digits - usedDigits); i++)
@@ -1686,7 +1733,7 @@ public class Utils {
         while (targetLength > prependStr.length() + baseStr.length())
             prependStr.append(toAdd);
 
-        return prependStr.toString() + baseStr;
+        return prependStr + baseStr;
     }
 
     /**
@@ -1714,5 +1761,71 @@ public class Utils {
                 output.append(temp);
         }
         return output.toString();
+    }
+
+    /**
+     * Takes a screenshot of a given SubScene.
+     * @param subScene   The subScene to take a screenshot of.
+     * @param namePrefix The file name prefix to save the image as.
+     */
+    public static void takeScreenshot(SubScene subScene, Scene scene, String namePrefix) {
+        WritableImage image = scene.snapshot(null);
+        BufferedImage sceneImage = SwingFXUtils.fromFXImage(image, null);
+        BufferedImage croppedImage = cropImage(sceneImage, (int) subScene.getLayoutX(), (int) subScene.getLayoutY(), (int) subScene.getWidth(), (int) subScene.getHeight());
+
+        // Write to file.
+        int id = -1;
+        while (id++ < 1000) {
+            File testFile = new File(GUIMain.getWorkingDirectory(), (namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "") + Utils.padStringLeft(Integer.toString(id), 4, '0') + ".png");
+            if (!testFile.exists()) {
+                try {
+                    ImageIO.write(croppedImage, "png", testFile);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+
+                break;
+            }
+        }
+    }
+
+    /**
+     * Crop an image.
+     * @param image The image to trim.
+     * @return croppedImage
+     */
+    public static BufferedImage cropImage(BufferedImage image, int x, int y, int width, int height) {
+        BufferedImage croppedImage = new BufferedImage(width, height, image.getType());
+        Graphics2D graphics = croppedImage.createGraphics();
+        graphics.drawImage(image, -x, -y, image.getWidth(), image.getHeight(), null);
+        graphics.dispose();
+        return croppedImage;
+    }
+
+    /**
+     * Calculate the SHA1 hash of the bytes.
+     * @param data The data to calculate the SHA1 hash of.
+     * @return sha1Hash
+     */
+    public static String calculateSHA1Hash(byte[] data) {
+        try {
+            MessageDigest crypt = MessageDigest.getInstance("SHA-1");
+            crypt.reset();
+            crypt.update(data);
+            return byteToHex(crypt.digest());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static String byteToHex(final byte[] hash) {
+        Formatter formatter = new Formatter();
+        for (byte b : hash)
+            formatter.format("%02x", b);
+
+        String result = formatter.toString();
+        formatter.close();
+        return result;
     }
 }

@@ -32,7 +32,7 @@ public class CameraFPS extends Parent {
     private boolean camMoveForward, camMoveBackward, camMoveUp, camMoveDown, camStrafeLeft, camStrafeRight;
 
     private final double CAM_MOVE_SPEED = 100.0;
-    @Getter private DoubleProperty camMoveSpeedProperty = new SimpleDoubleProperty(CAM_MOVE_SPEED);
+    @Getter private final DoubleProperty camMoveSpeedProperty = new SimpleDoubleProperty(CAM_MOVE_SPEED);
 
     private double mouseX, mouseY;
     private double mouseOldX, mouseOldY;
@@ -41,13 +41,13 @@ public class CameraFPS extends Parent {
     private boolean isControlDown, isAltDown;
 
     private final double CAM_MOUSE_SPEED = 0.2;
-    @Getter private DoubleProperty camMouseSpeedProperty = new SimpleDoubleProperty(CAM_MOUSE_SPEED);
+    @Getter private final DoubleProperty camMouseSpeedProperty = new SimpleDoubleProperty(CAM_MOUSE_SPEED);
 
     private final double CAM_SPEED_DOWN_MULTIPLIER = 0.25;
-    @Getter private DoubleProperty camSpeedDownMultiplierProperty = new SimpleDoubleProperty(CAM_SPEED_DOWN_MULTIPLIER);
+    @Getter private final DoubleProperty camSpeedDownMultiplierProperty = new SimpleDoubleProperty(CAM_SPEED_DOWN_MULTIPLIER);
 
     private final double CAM_SPEED_UP_MULTIPLIER = 4.0;
-    @Getter private DoubleProperty camSpeedUpMultiplierProperty = new SimpleDoubleProperty(CAM_SPEED_UP_MULTIPLIER);
+    @Getter private final DoubleProperty camSpeedUpMultiplierProperty = new SimpleDoubleProperty(CAM_SPEED_UP_MULTIPLIER);
 
     private final double CAM_MIN_YAW_ANGLE_DEGREES = -360.0;
     private final double CAM_MAX_YAW_ANGLE_DEGREES = 360.0;
@@ -76,15 +76,15 @@ public class CameraFPS extends Parent {
         return camera.getReadOnlyProperty();
     }
 
-    @Getter private DoubleProperty camPosXProperty = new SimpleDoubleProperty();
-    @Getter private DoubleProperty camPosYProperty = new SimpleDoubleProperty();
-    @Getter private DoubleProperty camPosZProperty = new SimpleDoubleProperty();
+    @Getter private final DoubleProperty camPosXProperty = new SimpleDoubleProperty();
+    @Getter private final DoubleProperty camPosYProperty = new SimpleDoubleProperty();
+    @Getter private final DoubleProperty camPosZProperty = new SimpleDoubleProperty();
 
-    @Getter private DoubleProperty camYawProperty = new SimpleDoubleProperty();
-    @Getter private DoubleProperty camPitchProperty = new SimpleDoubleProperty();
-    @Getter private DoubleProperty camRollProperty = new SimpleDoubleProperty();
+    @Getter private final DoubleProperty camYawProperty = new SimpleDoubleProperty();
+    @Getter private final DoubleProperty camPitchProperty = new SimpleDoubleProperty();
+    @Getter private final DoubleProperty camRollProperty = new SimpleDoubleProperty();
 
-    @Getter private BooleanProperty camYInvertProperty = new SimpleBooleanProperty();
+    @Getter private final BooleanProperty camYInvertProperty = new SimpleBooleanProperty();
 
     //>>
 
@@ -464,14 +464,6 @@ public class CameraFPS extends Parent {
         affineXform.setTx(xPos);
         affineXform.setTy(yPos);
         affineXform.setTz(zPos);
-    }
-
-    /**
-     * Set the camera's position by directly manipulating the affine transform translation component.
-     * @param newPos The desired position.
-     */
-    public void setPos(Point3D newPos) {
-        setPos(newPos.getX(), newPos.getY(), newPos.getZ());
     }
 
     /**

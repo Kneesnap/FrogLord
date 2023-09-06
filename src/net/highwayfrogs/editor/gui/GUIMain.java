@@ -8,7 +8,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
@@ -19,11 +18,11 @@ import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
+import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +44,6 @@ public class GUIMain extends Application {
         INSTANCE = this;
         MAIN_STAGE = primaryStage;
         SystemOutputReplacement.activateReplacement();
-        // checkForNewVersion();
 
         long availableMemory = Runtime.getRuntime().maxMemory();
         long minMemory = DataSizeUnit.GIGABYTE.getIncrement();
@@ -148,6 +146,9 @@ public class GUIMain extends Application {
     public void openFroggerFiles() throws IOException {
         boolean isLoadingAgain = (EXE_CONFIG != null); // Is this loading a second time? Ie is there already a loaded game?
 
+        // Setup version comparison.
+        FroggerVersionComparison.setup(getWorkingDirectory());
+
         // If this isn't a debug setup, prompt the user to select the files to load.
         File mwdFile = Utils.promptFileOpen("Please select a Millennium WAD", "Millennium WAD", "MWD");
         if (mwdFile == null) {
@@ -163,69 +164,9 @@ public class GUIMain extends Application {
             return;
         }
 
-        resolveEXE(exeFile, () -> openGUI(MAIN_STAGE, mwdFile));
-    }
-
-    /**
-     * Checks if there is an
-     */
-    private static void checkForNewVersion() {
-        new Thread(() -> { // Too lazy to setup any kind of thread pooling atm. It'll work
-            FrogLordVersion versionInfo = null;
-            try {
-                URL url = new URL("http://api.highwayfrogs.net/FrogLord/version");
-                HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-                httpConn.setRequestMethod("GET");
-                httpConn.setDoInput(true);
-                httpConn.setInstanceFollowRedirects(true);
-                httpConn.setConnectTimeout(60000);
-                httpConn.setReadTimeout(60000);
-                int responseCode = httpConn.getResponseCode();
-                if (responseCode == 200) {
-                    ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(httpConn.getInputStream()));
-                    versionInfo = (FrogLordVersion) ois.readObject();
-                    ois.close();
-                }
-                httpConn.disconnect();
-            } catch (Throwable th) {
-                // There is no case where we want to handle this (besides debugging).
-            }
-
-            if (versionInfo != null && versionInfo.isAfterThisVersion())
-                Platform.runLater(versionInfo::displayVersionInfo); // If there's a new version, display it.
-        }).start();
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public static class FrogLordVersion implements Serializable {
-        private final String versionNumber; // The version displayed to the user.
-        private final String updateURL;
-        private final String releaseNotes; // Wondering if there's a more sensible way to store this. Works for now.
-        private final int versionId; // This is a really simple way to check whether a version is newer than the current one.
-
-        /**
-         * Checks if this update is newer than the version of FrogLord currently being urn.
-         */
-        public boolean isAfterThisVersion() {
-            return this.versionId > Constants.UPDATE_VERSION;
-        }
-
-        /**
-         * Displays a popup with information about this version.
-         */
-        public void displayVersionInfo() {
-            NewVersionController.openMenu(this);
-        }
-
-        /**
-         * Saves the version data.
-         */
-        @SuppressWarnings("unused")
-        public void saveToFile(File file) throws IOException {
-            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
-            oos.writeObject(this);
-            oos.close();
-        }
+        resolveEXE(exeFile, () -> {
+            openGUI(MAIN_STAGE, mwdFile);
+            FroggerVersionComparison.addNewVersionToConfig(EXE_CONFIG);
+        });
     }
 }

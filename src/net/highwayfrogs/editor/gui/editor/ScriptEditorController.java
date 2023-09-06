@@ -4,7 +4,6 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
@@ -22,6 +21,7 @@ import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.config.script.ScriptCommand;
 import net.highwayfrogs.editor.file.config.script.ScriptCommandType;
+import net.highwayfrogs.editor.file.config.script.format.BankFormatter;
 import net.highwayfrogs.editor.file.config.script.format.ScriptFormatter;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
@@ -40,10 +40,10 @@ public class ScriptEditorController implements Initializable {
     @FXML private TextFlow codeArea;
     @FXML private Button doneButton;
     @FXML private Label warningLabel;
-    @FXML private Button printUsagesButton;
-    private int baseHeight;
+    @FXML private Label usagesLabel;
+    private final int baseHeight;
 
-    private Stage stage;
+    private final Stage stage;
     private FroggerScript openScript;
 
     private static final Font DISPLAY_FONT = Font.font("Consolas");
@@ -75,23 +75,57 @@ public class ScriptEditorController implements Initializable {
 
         // Setup Buttons.
         doneButton.setOnAction(evt -> stage.close());
-        printUsagesButton.setDisable(GUIMain.EXE_CONFIG.getFullFormBook().isEmpty()); // Disable searching if the form table isn't loaded.
-        printUsagesButton.setOnAction(evt -> {
-            FroggerScript script = this.scriptSelector.getValue();
-            int id = GUIMain.EXE_CONFIG.getScripts().indexOf(script);
-
-            StringBuilder results = new StringBuilder("Usages of ").append(script.getName())
-                    .append(" (").append(id).append("):").append(Constants.NEWLINE);
-            for (FormEntry entry : GUIMain.EXE_CONFIG.getFullFormBook())
-                if (entry.getScriptId() == id)
-                    results.append(" - ").append(entry.getFormName()).append(Constants.NEWLINE);
-
-            System.out.println(results.toString());
-            Utils.makePopUp(results.toString(), AlertType.INFORMATION);
-        });
+        this.usagesLabel.setText(getUsagesOfScriptDescription());
 
         Utils.closeOnEscapeKey(stage, null);
         updateCodeDisplay();
+    }
+
+    private String getUsagesOfScriptDescription() {
+        FroggerScript script = this.scriptSelector.getValue();
+        int id = GUIMain.EXE_CONFIG.getScripts().indexOf(script);
+        if (id <= 0) // The first script is SCRIPT_NONE.
+            return "";
+
+        StringBuilder results = new StringBuilder("Forms: ");
+
+        // Find usages in form library.
+        boolean foundAny = false;
+        for (FormEntry entry : GUIMain.EXE_CONFIG.getFullFormBook()) {
+            if (entry.getScriptId() != id)
+                continue;
+
+            if (foundAny)
+                results.append(", ");
+            results.append(entry.getFormName());
+            foundAny = true;
+        }
+
+        if (!foundAny)
+            results.append("None");
+
+        results.append(Constants.NEWLINE).append("Called by: ");
+
+        // Find usages in other scripts.
+        foundAny = false;
+        for (FroggerScript otherScript : GUIMain.EXE_CONFIG.getScripts()) {
+            for (ScriptCommand command : otherScript.getCommands()) {
+                for (int i = 0; i < command.getCommandType().getFormatters().length; i++) {
+                    ScriptFormatter formatter = command.getCommandType().getFormatters()[i];
+                    if (formatter == BankFormatter.SCRIPT_INSTANCE && id == command.getArguments()[i]) {
+                        if (foundAny)
+                            results.append(", ");
+                        results.append(otherScript.getName());
+                        foundAny = true;
+                    }
+                }
+            }
+        }
+
+        if (!foundAny)
+            results.append("None");
+
+        return results.toString();
     }
 
     /**
@@ -102,6 +136,7 @@ public class ScriptEditorController implements Initializable {
         commandEditors.getChildren().clear();
         codeArea.getChildren().clear();
         this.warningLabel.setVisible(false);
+        this.usagesLabel.setText(getUsagesOfScriptDescription());
         FroggerScript currentScript = this.scriptSelector.getValue();
         if (currentScript == null)
             return;

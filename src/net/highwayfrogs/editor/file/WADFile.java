@@ -7,6 +7,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.PLTFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
@@ -19,6 +21,8 @@ import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.WADController;
+import net.highwayfrogs.editor.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -54,7 +58,9 @@ public class WADFile extends GameFile {
             int size = reader.readInt();
             reader.skipInt(); // Padding.
 
-            CURRENT_FILE_NAME = getConfig().getResourceEntry(resourceId).getDisplayName();
+            FileEntry wadFileEntry = getConfig().getResourceEntry(resourceId);
+            String fileName = wadFileEntry.getDisplayName();
+            CURRENT_FILE_NAME = fileName;
 
             // Decompress if compressed.
             byte[] data = reader.readBytes(size);
@@ -65,37 +71,47 @@ public class WADFile extends GameFile {
             if (compressed)
                 data = PP20Unpacker.unpackData(data);
 
+            // Calculate the SHA1 hash.
+            if (FroggerVersionComparison.isEnabled() && wadFileEntry.getSha1Hash() == null)
+                wadFileEntry.setSha1Hash(Utils.calculateSHA1Hash(data));
+
             GameFile file;
             if (Constants.ENABLE_WAD_FORMATS) {
-                if ((fileType == VLOArchive.WAD_TYPE || fileType == 1) && data[0] == (byte) '2') {
-                    file = new VLOArchive();
-                } else if (fileType == MOFHolder.MOF_ID || fileType == 2) {
-                    file = new MOFHolder(theme, lastCompleteMOF);
-                    if (data[0] == (byte) 'G') // Rolling Demo.
-                        file = new DummyFile(data.length);
-                } else if (fileType == PLTFile.FILE_TYPE) {
-                    file = new PLTFile();
-                } else {
-                    if (fileType == 0) {
-                        getConfig().getResourceEntry(resourceId).setFilePath(getConfig().getResourceEntry(resourceId).getDisplayName() + "-UNK_TYPE" + fileType);
-                    } else if (fileType == 4) {
-                        getConfig().getResourceEntry(resourceId).setFilePath(getConfig().getResourceEntry(resourceId).getDisplayName() + "-QTREE");
-                    } else if (fileType == 5) {
-                        getConfig().getResourceEntry(resourceId).setFilePath(getConfig().getResourceEntry(resourceId).getDisplayName() + "-GRID");
-                    } else if (fileType == 6) {
-                        getConfig().getResourceEntry(resourceId).setFilePath(getConfig().getResourceEntry(resourceId).getDisplayName() + "-MAP_RELATED" + fileType);
+                if (fileType == VLOArchive.WAD_TYPE || fileType == 1) {
+                    if (fileName != null && fileName.endsWith(".MAP") && getConfig().isFrogger()) {
+                        file = new MAPFile();
                     } else {
-                        System.out.println("Unexpected WAD file-type: " + fileType + ".");
+                        file = new VLOArchive();
                     }
+                } else if (fileType == PLTFile.FILE_TYPE && getConfig().isMediEvil()) {
+                    file = new PLTFile();
+                } else if (fileType == MOFHolder.MOF_ID || (getConfig().isFrogger() && fileType == MOFHolder.MAP_MOF_ID) || (getConfig().isMediEvil() && fileType == 2)) {
+                    MOFHolder completeMof = null;
+
+                    // Override lookup.
+                    String otherMofFile = getConfig().getMofParentOverrides().get(fileName);
+                    if (otherMofFile != null) {
+                        FileEntry replaceFileEntry = getConfig().getResourceEntry(otherMofFile);
+                        if (replaceFileEntry != null)
+                            completeMof = getConfig().getGameFile(replaceFileEntry.getResourceId());
+                        if (completeMof == null)
+                            System.out.println("MOF Parent Override for '" + otherMofFile + "' was not found. Entry: " + replaceFileEntry);
+                    } else {
+                        completeMof = lastCompleteMOF;
+                    }
+
+                    file = new MOFHolder(theme, completeMof);
+                } else if (getConfig().isFrogger() && fileType == DemoFile.TYPE_ID) {
+                    file = new DemoFile();
+                } else {
+                    getConfig().getResourceEntry(resourceId).setFilePath(getConfig().getResourceEntry(resourceId).getDisplayName() + "-" + fileType);
                     file = new DummyFile(data.length);
+                    System.out.println("File '" + fileName + "' was of an unknown file type. (" + fileType + ")");
                 }
             }
 
+            WADEntry newEntry = new WADEntry(resourceId, fileType, compressed, null, mwiTable);
             try {
-                WADEntry newEntry = new WADEntry(resourceId, fileType, compressed, null, mwiTable);
-                newEntry.setFile(file);
-                files.add(newEntry);
-
                 file.load(new DataReader(new ArraySource(data)));
 
                 if (file instanceof MOFHolder) {
@@ -104,10 +120,16 @@ public class WADFile extends GameFile {
                         lastCompleteMOF = newHolder;
                 }
             } catch (Exception ex) {
-                System.out.println("Failed to load WAD File " + CURRENT_FILE_NAME + ". (" + resourceId + ")");
+                System.out.println("Failed to load " + CURRENT_FILE_NAME + ". (" + resourceId + ")");
                 ex.printStackTrace();
-                //throw new RuntimeException("Failed to load " + CURRENT_FILE_NAME + ".", ex);
+
+                // Make it a dummy file instead since it failed.
+                file = new DummyFile(data.length);
+                file.load(new DataReader(new ArraySource(data)));
             }
+
+            newEntry.setFile(file);
+            this.files.add(newEntry);
         }
 
         CURRENT_FILE_NAME = null;

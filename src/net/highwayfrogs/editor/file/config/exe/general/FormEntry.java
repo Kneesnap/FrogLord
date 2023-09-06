@@ -40,6 +40,7 @@ public class FormEntry extends GameObject {
 
     public static final int FLAG_GENERAL = 0x8000;
     public static final int BYTE_SIZE = (8 * Constants.INTEGER_SIZE);
+    public static final int OLD_BYTE_SIZE = (7 * Constants.INTEGER_SIZE);
 
     public FormEntry(FroggerEXEInfo config, MAPTheme theme, int formId, int globalFormId) {
         this.config = config;
@@ -57,8 +58,10 @@ public class FormEntry extends GameObject {
         this.flags = reader.readInt();
         this.collisionReactFunction = reader.readUnsignedIntAsLong();
         this.radiusSquared = reader.readInt();
-        this.deathType = FormDeathType.values()[reader.readInt()];
-        this.bonusCallbackFunction = reader.readUnsignedIntAsLong();
+        int deathTypeId = reader.readInt();
+        this.deathType = deathTypeId >= 0 && deathTypeId < FormDeathType.values().length ? FormDeathType.values()[deathTypeId] : null;
+        if (!getConfig().isAtOrBeforeBuild4())
+            this.bonusCallbackFunction = reader.readUnsignedIntAsLong();
     }
 
     @Override
@@ -70,7 +73,8 @@ public class FormEntry extends GameObject {
         writer.writeUnsignedInt(this.collisionReactFunction);
         writer.writeInt(this.radiusSquared);
         writer.writeInt(this.deathType.ordinal());
-        writer.writeUnsignedInt(this.bonusCallbackFunction);
+        if (!getConfig().isAtOrBeforeBuild4())
+            writer.writeUnsignedInt(this.bonusCallbackFunction);
     }
 
     /**
@@ -121,8 +125,8 @@ public class FormEntry extends GameObject {
         int wadIndex = getId();
         if (getTheme() == MAPTheme.GENERAL) {
             wadIndex -= getTheme().getFormOffset();
-            if (getConfig().isPSX() || getConfig().isPrototype())
-                wadIndex++;
+            if (!getConfig().isAtLeastRetailWindows() && (!getConfig().isAtOrBeforeBuild21() || getConfig().isWindowsAlpha()))
+                wadIndex++; // Some builds have GEN_VRAM.VLO in THEME_GEN.WAD, which requires this offset.
         }
 
         return wadIndex;
@@ -162,11 +166,11 @@ public class FormEntry extends GameObject {
             return null;
 
         boolean isGeneralTheme = getTheme() == MAPTheme.GENERAL;
-        ThemeBook themeBook = getConfig().getThemeBook(getTheme());
 
         WADFile wadFile = null;
         if (isGeneralTheme) {
-            wadFile = themeBook.getWAD(mapFile);
+            ThemeBook themeBook = getConfig().getThemeBook(getTheme());
+            wadFile = themeBook != null ? themeBook.getWAD(mapFile) : null;
         } else {
             MapBook mapBook = mapFile.getFileEntry().getMapBook();
             if (mapBook != null)

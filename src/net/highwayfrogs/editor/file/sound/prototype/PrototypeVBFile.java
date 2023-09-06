@@ -9,10 +9,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.*;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.Arrays;
 
@@ -31,9 +28,34 @@ public class PrototypeVBFile extends PCVBFile {
     public static class PrototypeSound extends GameSound {
         private AudioFormat cachedFormat;
         private byte[] wavBytes;
+        private byte[] cachedRawAudio;
 
         public PrototypeSound(AudioHeader header, int vanillaTrackId, int readLength) {
             super(header, vanillaTrackId, readLength);
+        }
+
+        @Override
+        public byte[] toRawAudio() {
+            if (this.cachedRawAudio != null)
+                return this.cachedRawAudio;
+
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(this.wavBytes);
+            AudioInputStream audioInputStream;
+            AudioInputStream convertedInputStream;
+
+            try {
+                audioInputStream = AudioSystem.getAudioInputStream(inputStream);
+                convertedInputStream = AudioSystem.getAudioInputStream(getAudioFormat(), audioInputStream);
+                audioInputStream.close();
+            } catch (UnsupportedAudioFileException | IOException ex) {
+                System.out.println("Couldn't read the audio data. The audio will still play, but it will have a pop.");
+                ex.printStackTrace();
+                return this.wavBytes;
+            }
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(65536);
+            Utils.copyInputStreamData(convertedInputStream, baos, true);
+            return this.cachedRawAudio = baos.toByteArray();
         }
 
         @Override
@@ -50,7 +72,8 @@ public class PrototypeVBFile extends PCVBFile {
         @Override
         public Clip toStandardAudio() throws LineUnavailableException {
             Clip result = AudioSystem.getClip();
-            result.open(getAudioFormat(), wavBytes, 0, wavBytes.length);
+            byte[] pcmData = toRawAudio();
+            result.open(getAudioFormat(), pcmData, 0, pcmData.length);
             return result;
         }
 

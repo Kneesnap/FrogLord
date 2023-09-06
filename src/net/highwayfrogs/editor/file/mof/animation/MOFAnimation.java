@@ -44,7 +44,8 @@ public class MOFAnimation extends MOFBase {
 
     @Override
     public void onLoad(DataReader reader, byte[] signature) {
-        this.startAtFrameZero = (signature[0] == MR_ANIM_FILE_START_FRAME_AT_ZERO);
+        boolean forceFrameZero = (getConfig().getBuild() == 1);
+        this.startAtFrameZero = forceFrameZero || (signature[0] == MR_ANIM_FILE_START_FRAME_AT_ZERO); // '1'
         this.transformType = TransformType.getType(signature[1]);
 
         int modelSetCount = reader.readUnsignedShortAsInt();
@@ -157,7 +158,7 @@ public class MOFAnimation extends MOFBase {
         float testZ = Float.MAX_VALUE;
 
         for (MOFPart part : getStaticMOF().getParts()) {
-            for (int action = 0; action < getHolder().getMaxAnimation(); action++) {
+            for (int action = 0; action < getHolder().getAnimationCount(); action++) {
                 for (int frame = 0; frame < getHolder().getFrameCount(action); frame++) {
                     MOFPartcel partcel = part.getCel(action, frame);
                     TransformObject transform = getTransform(part, action, frame);
@@ -201,6 +202,7 @@ public class MOFAnimation extends MOFBase {
 
     @Override
     public String makeSignature() {
-        return (isStartAtFrameZero() ? "1" : "\0") + (char) getTransformType().getByteValue() + "ax";
+        // TODO: medievil may want \0 instead of "0" anyways..?
+        return (getConfig().isAtOrBeforeBuild20() ? "\0" : (isStartAtFrameZero() ? "1" : "0")) + (char) getTransformType().getByteValue() + "ax";
     }
 }

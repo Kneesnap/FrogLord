@@ -30,10 +30,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public class MOFMesh extends FrogMesh<MOFPolygon> {
-    private MOFHolder mofHolder;
+    private final MOFHolder mofHolder;
     private int animationId;
     private int frameCount;
-    private List<Vector> verticeCache = new ArrayList<>();
+    private final List<Vector> verticeCache = new ArrayList<>();
     @Setter private boolean showOverlay;
 
     public MOFMesh(MOFHolder holder) {
@@ -89,12 +89,18 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
             if (getMofHolder().isAnimatedMOF() && hasEnabledAnimation()) {
                 boolean useInterpolation = getMofHolder().getAnimatedFile().getAnimationById(getAction()).isInterpolationEnabled();
                 TransformObject transform = getMofHolder().getAnimatedFile().getTransform(part, getAction(), getFrame());
+                PSXMatrix partTransform = transform.calculatePartTransform(useInterpolation);
                 for (SVector vertex : partcel.getVertices())
-                    this.verticeCache.add(PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(useInterpolation), vertex, new IVector()));
+                    this.verticeCache.add(PSXMatrix.MRApplyMatrix(partTransform, vertex, new IVector()));
             } else {
                 this.verticeCache.addAll(partcel.getVertices());
             }
         }
+
+        // Incomplete mofs (Primarily in prototypes) have a weird vertex
+        if (getMofHolder().isWeirdFrogMOF())
+            this.verticeCache.add(new SVector(0, 0, 0));
+
         return this.verticeCache;
     }
 
@@ -150,7 +156,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
             if (part.getFlipbook() != null && part.getFlipbook().getActions().size() <= actionId)
                 return;
 
-        if (actionId >= getMofHolder().getMaxAnimation())
+        if (actionId >= getMofHolder().getAnimationCount())
             return;
 
         this.animationId = actionId;

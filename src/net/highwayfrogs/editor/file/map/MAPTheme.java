@@ -16,7 +16,7 @@ public enum MAPTheme {
     FOREST("FOR", 0),
     JUNGLE("JUN", 8),
     ORIGINAL("ORG", 0),
-    RUINED("ARN", 0),
+    RUINS("ARN", 0),
     SWAMP("SWP", 0),
     SKY("SKY", 0),
     SUBURBIA("SUB", 0),

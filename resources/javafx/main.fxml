@@ -69,6 +69,14 @@
                                   text="Find Texture"/>
                         <MenuItem fx:id="patchMenu" mnemonicParsing="false" onAction="#actionOpenPatchMenu"
                                   text="Patches"/>
+                        <MenuItem mnemonicParsing="false" onAction="#actionHashPlayground"
+                                  text="Hash Playground"/>
+                        <MenuItem fx:id="differenceReport" mnemonicParsing="false"
+                                  onAction="#actionGenerateDifferenceReport"
+                                  text="Make Difference Report"/>
+                        <MenuItem fx:id="findUnusedVertices" mnemonicParsing="false"
+                                  onAction="#actionFindUnusedVertices"
+                                  text="Find Unused Map Vertices"/>
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">

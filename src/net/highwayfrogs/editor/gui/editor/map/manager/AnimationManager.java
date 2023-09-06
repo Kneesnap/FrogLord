@@ -44,12 +44,24 @@ public class AnimationManager extends MapManager {
         });
         box.setConverter(new AbstractStringConverter<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim)));
         box.setCellFactory(param -> new AttachmentListCell<>(anim -> "Animation #" + getMap().getMapAnimations().indexOf(anim), anim -> {
-            if(anim.getTextures().size() > 0) {
-                return getMap().getVlo().getImageByTextureId(getMap().getRemapTable().get(anim.getTextures().get(0))).toFXImage(MWDFile.VLO_ICON_SETTING);
+            if (getMap().getRemapTable() == null)
+                return null;
+
+            Short textureId;
+            if (anim.getTextures().size() > 0) {
+                textureId = anim.getTextures().get(0);
             } else if (anim.getMapUVs().size() > 0) {
-                int uvTexture = ((MAPPolyTexture) anim.getMapUVs().get(0).getPolygon()).getTextureId();
-                GameImage gameImage = getMap().getVlo().getImageByTextureId(getMap().getRemapTable().get(uvTexture));
-                return gameImage.toFXImage(MWDFile.VLO_ICON_SETTING.setTrimEdges(true));
+                textureId = ((MAPPolyTexture) anim.getMapUVs().get(0).getPolygon()).getTextureId();
+            } else {
+                // TODO: New froglord should have different textures returned. One for if there's no remap, one for if it's not in the remap, etc.
+                return null;
+            }
+
+            Short realTextureId = getMap().getRemapTable().size() > textureId ? getMap().getRemapTable().get(textureId) : null;
+            if (realTextureId != null) {
+                GameImage gameImage = getMap().getVlo().getImageByTextureId(realTextureId);
+                if (gameImage != null)
+                    return gameImage.toFXImage(MWDFile.VLO_ICON_SETTING.setTrimEdges(true));
             }
 
             return null;

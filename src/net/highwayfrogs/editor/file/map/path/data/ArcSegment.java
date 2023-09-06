@@ -132,8 +132,9 @@ public class ArcSegment extends PathSegment {
      */
     public int getRadius() {
         double xDiff = (start.getFloatX() - center.getFloatX());
+        double yDiff = (start.getFloatY() - center.getFloatY());
         double zDiff = (start.getFloatZ() - center.getFloatZ());
-        return Utils.floatToFixedPointInt4Bit((float) Math.sqrt((xDiff * xDiff) + (zDiff * zDiff)));
+        return Utils.floatToFixedPointInt4Bit((float) Math.sqrt((xDiff * xDiff) + (zDiff * zDiff) + (yDiff * yDiff)));
     }
 
     @Override

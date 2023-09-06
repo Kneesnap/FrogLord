@@ -50,10 +50,7 @@ public class RetailPCVBFile extends PCVBFile {
                 writer.writeNumber(toWrite, getHeader().getByteWidth());
         }
 
-        /**
-         * Return the audio as a raw audio byte array.
-         * @return byteData
-         */
+        @Override
         public byte[] toRawAudio() {
             ArrayReceiver receiver = new ArrayReceiver();
             DataWriter writer = new DataWriter(receiver);
