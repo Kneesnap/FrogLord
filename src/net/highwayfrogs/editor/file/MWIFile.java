@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
+import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -58,9 +59,8 @@ public class MWIFile extends GameObject {
             entry.setPackedSize(reader.readInt());
             entry.unpackedSize = reader.readInt(); // Set the raw value, not through the setter.
 
-            if (exe.isPostMediEvil()) { // Discard checksum from post-MediEvil MWIs.
+            if (exe.getGameType().isMwiHasChecksum()) // Discard checksum from post-MediEvil MWIs.
                 reader.skipInt();
-            }
 
             getEntries().add(entry);
         }
@@ -250,6 +250,20 @@ public class MWIFile extends GameObject {
          */
         public MapBook getMapBook() {
             for (MapBook book : getConfig().getMapLibrary())
+                if (book != null && book.isEntry(this))
+                    return book;
+            return null;
+        }
+
+        /**
+         * Get the book which holds this FileEntry.
+         * @return book
+         */
+        public ThemeBook getThemeBook() {
+            if (!getConfig().isFrogger())
+                return null;
+
+            for (ThemeBook book : getConfig().getThemeLibrary())
                 if (book != null && book.isEntry(this))
                     return book;
             return null;

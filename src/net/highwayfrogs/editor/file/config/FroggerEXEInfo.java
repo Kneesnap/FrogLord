@@ -86,7 +86,6 @@ public class FroggerEXEInfo extends Config {
     private int pickupDataAddress;
     private int scriptArrayAddress;
     private int skyLandTextureAddress;
-    private boolean postMediEvil; // MWIs after MediEvil have a checksum.
     private TargetPlatform platform;
     private NameBank soundBank;
     private NameBank animationBank;
@@ -183,7 +182,6 @@ public class FroggerEXEInfo extends Config {
         this.platform = getEnum("platform", TargetPlatform.class);
         this.MWIOffset = getInt("mwiOffset");
         this.MWILength = getInt("mwiLength");
-        this.postMediEvil = getBoolean("postMediEvil");
         this.themeBookAddress = getInt("themeBook", -1);
         this.mapBookAddress = getInt("mapBook", -1);
         this.demoTableAddress = getInt("demoTable", -1);
@@ -999,6 +997,13 @@ public class FroggerEXEInfo extends Config {
      */
     public boolean isFrogger() {
         return this.gameType == SonyCambridgeGameType.FROGGER;
+    }
+
+    /**
+     * Tests if the game currently being read is Beast Wars.
+     */
+    public boolean isBeastWars() {
+        return this.gameType == SonyCambridgeGameType.BEAST_WARS;
     }
 
     /**

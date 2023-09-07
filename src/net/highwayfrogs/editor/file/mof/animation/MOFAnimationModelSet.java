@@ -43,7 +43,10 @@ public class MOFAnimationModelSet extends GameObject {
         Utils.verify(bboxCount == 0, "The ModelSet has a non-zero BBOX count. (%d, %d)", bboxCount, bboxPointer);
         if (modelCount != FORCED_MODEL_COUNT)
             getParent().getFileEntry().setFilePath(getParent().getFileEntry().getDisplayName() + "-FORCED_MODELS");
-//        Utils.verify(modelCount == FORCED_MODEL_COUNT, "FrogLord does not currently support MOFs with more than one model! (%d)", modelCount); // TODO: Medievil.
+
+        if (!getConfig().isMediEvil())
+            Utils.verify(modelCount == FORCED_MODEL_COUNT, "FrogLord does not currently support MOFs with more than one model! (%d)", modelCount);
+
         Utils.verify(celsetCount == CEL_SET_COUNT, "FrogLord does not support MOFs with more than one cel-set! (%d)", celsetCount);
 
         // Read Celset.

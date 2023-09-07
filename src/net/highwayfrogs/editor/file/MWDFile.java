@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.PLTFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
+import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.SkyLand;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
@@ -73,15 +74,15 @@ public class MWDFile extends GameObject {
                 continue; // This file is part of a WAD archive, and isn't a file entry in the MWD, so we can't load it here.
 
             reader.setIndex(entry.getArchiveOffset());
-            System.out.println("Entry #" + index + " at offset: " + entry.getArchiveOffset() + " (dec) of size " + entry.getArchiveSize() + " (dec).");
 
             // Read the file. Decompress if it is PP20 compression.
             byte[] fileBytes = reader.readBytes(entry.getArchiveSize());
-            if (entry.isCompressed() && PP20Unpacker.isCompressed(fileBytes)) {
-                fileBytes = PP20Unpacker.unpackData(fileBytes);
-            }
-            else if (entry.isCompressed()) {
-                System.out.println("ERROR: File is compressed, but not using PowerPacker (PP20) compression.");
+            if (entry.isCompressed()) {
+                if (PP20Unpacker.isCompressed(fileBytes)) {
+                    fileBytes = PP20Unpacker.unpackData(fileBytes);
+                } else {
+                    System.out.println("ERROR: File is compressed, but not using PowerPacker (PP20) compression.");
+                }
             }
 
             // Calculate the SHA1 hash.
@@ -99,8 +100,11 @@ public class MWDFile extends GameObject {
                 //throw new RuntimeException("Failed to load " + entry.getDisplayName() + ", " + entry.getResourceId(), ex);
             }
 
-            files.add(file);
+            this.files.add(file);
             lastVB = file instanceof AbstractVBFile ? (AbstractVBFile<?>) file : null;
+            if (file instanceof VHFile)
+                lastVB = ((VHFile) file).getVB();
+
             index++;
         }
     }
@@ -120,6 +124,9 @@ public class MWDFile extends GameObject {
             newFile = (T) new MOFHolder(oldHolder.getTheme(), oldHolder.getCompleteMOF());
         } else {
             AbstractVBFile<?> lastVB = (oldFile instanceof AbstractVBFile) ? ((AbstractVBFile<?>) oldFile) : null;
+            if (oldFile instanceof VHFile)
+                lastVB = ((VHFile) oldFile).getVB();
+
             newFile = this.loadFile(fileBytes, entry, lastVB);
         }
 
@@ -162,15 +169,19 @@ public class MWDFile extends GameObject {
 
         if (entry.getSpoofedTypeId() == VLOArchive.TYPE_ID) {
             file = new VLOArchive();
+        } else if (getConfig().isFrogger() && entry.getTypeId() == MAPFile.TYPE_ID) {
+            if (entry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX)) { // These maps are entered as a map, even though it is not. It should be loaded as a DummyFile for now.
+                file = new SkyLand();
+            } else {
+                file = new MAPFile();
+            }
         } else if (entry.getSpoofedTypeId() == WADFile.TYPE_ID) {
             file = new WADFile();
-        } else if (entry.getSpoofedTypeId() == MOFHolder.MOF_ID) {
-            file = new DummyFile(fileBytes.length); //TODO: Enable this. (Needs support for multiple models.)
-        } else if (entry.getSpoofedTypeId() == DemoFile.TYPE_ID  && getConfig().isFrogger()) {
+        } else if (entry.getSpoofedTypeId() == DemoFile.TYPE_ID && getConfig().isFrogger()) {
             file = new DemoFile();
         } else if (entry.getTypeId() == PALFile.TYPE_ID && getConfig().isFrogger()) {
             file = new PALFile();
-        } else if (entry.getSpoofedTypeId() == PLTFile.FILE_TYPE) {
+        } else if (entry.getSpoofedTypeId() == PLTFile.FILE_TYPE && getConfig().isBeastWars()) {
             file = new PLTFile();
         } else if (entry.getTypeId() == VHFile.TYPE_ID) { // PSX support is disabled until it is complete.
             if (getConfig().isPSX()) {
@@ -190,7 +201,6 @@ public class MWDFile extends GameObject {
                 file = new PrototypeVBFile();
             }
         } else {
-            System.out.println("File Type: " + entry.getSpoofedTypeId());
             file = new DummyFile(fileBytes.length);
         }
 
@@ -247,16 +257,15 @@ public class MWDFile extends GameObject {
     }
 
     /**
-     * Grab a VLO.
-     * @return The VLO.
+     * Grabs the first VLO we can find.
      */
-    public VLOArchive getVLO() {
+    public VLOArchive findFirstVLO() {
         List<VLOArchive> allVLOs = getFiles().stream()
                 .filter(VLOArchive.class::isInstance)
                 .map(VLOArchive.class::cast)
                 .collect(Collectors.toList());
 
-        return allVLOs.get(0);
+        return allVLOs.size() > 0 ? allVLOs.get(0) : null;
     }
 
     /**

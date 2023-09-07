@@ -42,7 +42,10 @@ public class MOFHilite extends GameObject {
     public void load(DataReader reader) {
         int readType = reader.readUnsignedByteAsShort();
 
-        this.type = readType >= 0 && readType < HiliteType.values().length ? HiliteType.values()[readType] : HiliteType.values()[0];
+        this.type = readType >= 0 && readType < HiliteType.values().length ? HiliteType.values()[readType] : null;
+        if (this.type == null)
+            throw new RuntimeException("Unrecognized Hilite Attach Type: " + readType);
+
         this.attachType = HiliteAttachType.values()[reader.readUnsignedByteAsShort()];
 
         int readIndex = reader.readUnsignedShortAsInt();

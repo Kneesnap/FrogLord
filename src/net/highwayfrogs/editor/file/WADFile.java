@@ -44,7 +44,8 @@ public class WADFile extends GameFile {
 
     @Override
     public void load(DataReader reader) {
-        this.theme = null;
+        ThemeBook themeBook = getFileEntry().getThemeBook();
+        this.theme = themeBook != null ? themeBook.getTheme() : MAPTheme.getTheme(getFileEntry().getDisplayName());
 
         MWIFile mwiTable = getConfig().getMWI();
 
@@ -83,7 +84,7 @@ public class WADFile extends GameFile {
                     } else {
                         file = new VLOArchive();
                     }
-                } else if (fileType == PLTFile.FILE_TYPE && getConfig().isMediEvil()) {
+                } else if (fileType == PLTFile.FILE_TYPE && getConfig().isBeastWars()) {
                     file = new PLTFile();
                 } else if (fileType == MOFHolder.MOF_ID || (getConfig().isFrogger() && fileType == MOFHolder.MAP_MOF_ID) || (getConfig().isMediEvil() && fileType == 2)) {
                     MOFHolder completeMof = null;
@@ -111,6 +112,9 @@ public class WADFile extends GameFile {
             }
 
             WADEntry newEntry = new WADEntry(resourceId, fileType, compressed, null, mwiTable);
+            this.files.add(newEntry);
+            newEntry.setFile(file);
+
             try {
                 file.load(new DataReader(new ArraySource(data)));
 
@@ -125,11 +129,9 @@ public class WADFile extends GameFile {
 
                 // Make it a dummy file instead since it failed.
                 file = new DummyFile(data.length);
+                newEntry.setFile(file);
                 file.load(new DataReader(new ArraySource(data)));
             }
-
-            newEntry.setFile(file);
-            this.files.add(newEntry);
         }
 
         CURRENT_FILE_NAME = null;
@@ -244,6 +246,11 @@ public class WADFile extends GameFile {
          * @param newFile The new file
          */
         public void setFile(GameFile newFile) {
+            if (this.file != null) {
+                this.file.getMWD().getEntryMap().remove(this.file, getFileEntry());
+                this.file.getMWD().getEntryFileMap().remove(getFileEntry(), this.file);
+            }
+
             this.file = newFile;
             newFile.getMWD().getEntryMap().put(newFile, getFileEntry());
             newFile.getMWD().getEntryFileMap().put(getFileEntry(), newFile);

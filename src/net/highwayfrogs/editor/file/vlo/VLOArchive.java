@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.function.Consumer;
 
 /**
@@ -187,29 +186,7 @@ public class VLOArchive extends GameFile {
      * @return gameImage
      */
     public GameImage getImageByTextureId(int textureId) {
-        GameImage image = getImageByTextureId(textureId, false);
-        if (image == null) {
-            image = new GameImage(this);
-            image.setVramX((short) 0);
-            image.setVramY((short) 0);
-            image.setFullWidth((short) 10);
-            image.setFullHeight((short) 10);
-            image.setTextureId((short) textureId);
-            image.setIngameWidth((short) 10);
-            image.setIngameHeight((short) 10);
-            image.setClutId(getImages().get(new Random().nextInt(getImages().size())).getClutId());
-            image.setClutMode(ImageClutMode.MODE_15BIT_NO_CLUT);
-            getImages().add(image);
-
-            BufferedImage colorImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D graphics = colorImage.createGraphics();
-            graphics.setColor(Color.MAGENTA);
-            graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
-            graphics.dispose();
-            image.replaceImage(colorImage);
-        }
-
-        return image;
+        return getImageByTextureId(textureId, false);
     }
 
     /**

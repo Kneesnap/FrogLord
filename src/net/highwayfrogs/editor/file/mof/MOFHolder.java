@@ -172,12 +172,11 @@ public class MOFHolder extends GameFile {
         }
 
         // Just grab the first VLO.
-        try {
-            setVloFile(getMWD().getVLO());
+        VLOArchive firstVLO = getMWD().findFirstVLO();
+        if (firstVLO != null) {
+            setVloFile(firstVLO);
             MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
-        }
-        // Guess that was a bad idea, let's just show the VLO selection prompt.
-        catch(Exception e) {
+        } else {
             getMWD().promptVLOSelection(getTheme(), vlo -> {
                 setVloFile(vlo);
                 MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
