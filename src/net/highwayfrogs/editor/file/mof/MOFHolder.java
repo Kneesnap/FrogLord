@@ -92,9 +92,6 @@ public class MOFHolder extends GameFile {
         } else {
             resolveStaticMOF(reader);
         }
-
-        if (getMaxAnimation() > 1) //TODO: TOSS
-            System.out.println(getFileEntry().getDisplayName() + ": " + getMaxAnimation());
     }
 
     @Override

@@ -156,16 +156,6 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
-     * Equivalent to MulMatrix2.
-     * @param a An input matrix.
-     * @param b Another input matrix, also the output storage.
-     */
-    public static void MRMulMatrixABB(PSXMatrix a, PSXMatrix b) {
-        MRMulMatrixABC(a, b, b);
-    }
-
-
-    /**
      * Equivalent to MulMatrix0. (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0441.html?sidebar=outlines)
      * @param a An input matrix.
      * @param b Another input matrix.
@@ -208,6 +198,7 @@ public class PSXMatrix extends GameObject {
      * @param output The output matrix.
      */
     public static void MRMulMatrixABB(PSXMatrix input, PSXMatrix output) {
+        // Equivalent to MRMulMatrixABC(a, b, b);
         int i11 = input.getMatrix()[0][0];
         int i12 = input.getMatrix()[0][1];
         int i13 = input.getMatrix()[0][2];

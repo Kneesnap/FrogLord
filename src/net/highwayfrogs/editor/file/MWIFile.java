@@ -254,16 +254,5 @@ public class MWIFile extends GameObject {
                     return book;
             return null;
         }
-
-        /**
-         * Get the book which holds this FileEntry.
-         * @return book
-         */
-        public ThemeBook getThemeBook() { // TODO: TOSS?
-            for (ThemeBook book : getConfig().getThemeLibrary())
-                if (book != null && book.isEntry(this))
-                    return book;
-            return null;
-        }
     }
 }

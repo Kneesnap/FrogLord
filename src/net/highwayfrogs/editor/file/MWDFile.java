@@ -16,6 +16,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.AbstractVBFile;
 import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.sound.prototype.PrototypeVBFile;
+import net.highwayfrogs.editor.file.sound.psx.PSXVBFile;
+import net.highwayfrogs.editor.file.sound.psx.PSXVHFile;
 import net.highwayfrogs.editor.file.sound.retail.RetailPCVBFile;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -63,7 +65,7 @@ public class MWDFile extends GameObject {
     public void load(DataReader reader) {
         reader.verifyString(MARKER);
 
-        VHFile lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
+        AbstractVBFile<?> lastVB = null; // VBs are indexed before VHs, but need to be loaded after VH. This allows us to do that.
         int index = 1;
 
         for (FileEntry entry : wadIndexTable.getEntries()) {
@@ -98,7 +100,7 @@ public class MWDFile extends GameObject {
             }
 
             files.add(file);
-            lastVB = file instanceof VHFile ? (VHFile) file : null;
+            lastVB = file instanceof AbstractVBFile ? (AbstractVBFile<?>) file : null;
             index++;
         }
     }
@@ -117,7 +119,7 @@ public class MWDFile extends GameObject {
             MOFHolder oldHolder = (MOFHolder) oldFile;
             newFile = (T) new MOFHolder(oldHolder.getTheme(), oldHolder.getCompleteMOF());
         } else {
-            VHFile lastVB = (oldFile instanceof VHFile) ? ((VHFile) oldFile) : null;
+            AbstractVBFile<?> lastVB = (oldFile instanceof AbstractVBFile) ? ((AbstractVBFile<?>) oldFile) : null;
             newFile = this.loadFile(fileBytes, entry, lastVB);
         }
 
@@ -133,11 +135,11 @@ public class MWDFile extends GameObject {
      * Create a GameFile instance.
      * @param fileBytes The data to read
      * @param entry     The file entry being loaded.
-     * @param lastVH    The lastVB value.
+     * @param lastVB    The last VB file loaded/seen.
      * @return loadedFile
      */
     @SuppressWarnings("unchecked")
-    public <T extends GameFile> T loadFile(byte[] fileBytes, FileEntry entry, VHFile lastVH) {
+    public <T extends GameFile> T loadFile(byte[] fileBytes, FileEntry entry, AbstractVBFile<?> lastVB) {
         // Turn the byte data into the appropriate game-file.
         GameFile file;
 

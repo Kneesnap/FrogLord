@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.SonyCambridgeGameType;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.data.MusicTrack;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
@@ -71,6 +72,7 @@ public class FroggerEXEInfo extends Config {
 
 
     private String name;
+    private SonyCambridgeGameType gameType;
     private int build;
     private long ramPointerOffset;
     private int MWIOffset;
@@ -154,13 +156,18 @@ public class FroggerEXEInfo extends Config {
         readMapConfigs();
         readMWI();
         readCosTable();
-        //readThemeLibrary();
-        //readDemoTable();
-        //readMapLibrary();
-        //readScripts();
+        if (isFrogger()) {
+            readThemeLibrary();
+            readDemoTable();
+            readMapLibrary();
+            readScripts();
+        }
+
         readRemapData();
-        //readMusicData();
-        //readLevelData();
+        if (isFrogger()) {
+            readMusicData();
+            readLevelData();
+        }
         readBmpPointerData();
         readPickupData();
         readHiddenParts();
@@ -170,6 +177,7 @@ public class FroggerEXEInfo extends Config {
     }
 
     private void readConfig() {
+        this.gameType = getEnum("game", SonyCambridgeGameType.FROGGER);
         this.name = getString(FIELD_NAME);
         this.build = getInt("build", -1);
         this.platform = getEnum("platform", TargetPlatform.class);
@@ -984,6 +992,20 @@ public class FroggerEXEInfo extends Config {
             if (info.getLevel() == level)
                 return info;
         return null;
+    }
+
+    /**
+     * Tests if the game currently being read is Frogger.
+     */
+    public boolean isFrogger() {
+        return this.gameType == SonyCambridgeGameType.FROGGER;
+    }
+
+    /**
+     * Tests if the game currently being read is MediEvil.
+     */
+    public boolean isMediEvil() {
+        return this.gameType == SonyCambridgeGameType.MEDIEVIL;
     }
 
     /**
