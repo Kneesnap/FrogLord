@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.config.data.WorldId;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 /**
  * Holds information about each level.
@@ -31,6 +32,10 @@ public class LevelInfo extends ExeStruct {
 
     private static final int RUNTIME_DATA_SIZE = 44;
     private static final int TERMINATOR_LEVEL_ID = -1;
+
+    public LevelInfo(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

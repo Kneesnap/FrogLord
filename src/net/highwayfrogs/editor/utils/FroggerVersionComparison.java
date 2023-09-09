@@ -5,7 +5,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 import java.io.File;
 import java.io.IOException;
@@ -173,17 +173,17 @@ public class FroggerVersionComparison {
      * Adds a new version of the game to the version config.
      * @param versionToAdd The version of the game to add.
      */
-    public static void addNewVersionToConfig(FroggerEXEInfo versionToAdd) {
+    public static void addNewVersionToConfig(FroggerGameInstance versionToAdd) {
         if (!isEnabled())
             return;
 
-        if (gameBuildsByName.containsKey(versionToAdd.getInternalName())) {
+        if (gameBuildsByName.containsKey(versionToAdd.getConfig().getInternalName())) {
             System.out.println("This build is already tracked in the version cache.");
             return;
         }
 
-        FroggerGameBuild newBuild = new FroggerGameBuild(versionToAdd.getInternalName());
-        for (FileEntry entry : versionToAdd.getMWI().getEntries())
+        FroggerGameBuild newBuild = new FroggerGameBuild(versionToAdd.getConfig().getInternalName());
+        for (FileEntry entry : versionToAdd.getArchiveIndex().getEntries())
             if (entry != null && entry.getFullFilePath() != null)
                 newBuild.getFiles().add(new FroggerGameFileEntry(newBuild, entry.getFullFilePath().replace('/', '\\'), entry.getUnpackedSize(), entry.getSha1Hash()));
 

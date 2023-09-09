@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
@@ -23,6 +22,9 @@ import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Objects;
@@ -34,7 +36,7 @@ import java.util.Objects;
  */
 @Getter
 @Setter
-public class Entity extends GameObject {
+public class Entity extends SCGameData<FroggerGameInstance> {
     private int formGridId = -1; // Default (CHANGE THIS!)
     private int uniqueId = -1; // Default (CHANGE THIS!)
     private FormEntry formEntry;
@@ -53,12 +55,18 @@ public class Entity extends GameObject {
     private static final IVector GAME_Y_AXIS_POS = new IVector(0, 0x1000, 0);
 
     public Entity(MAPFile parentMap) {
+        super(parentMap.getGameInstance());
         this.map = parentMap;
     }
 
     public Entity(MAPFile file, FormEntry formEntry) {
         this(file);
         setFormBook(formEntry);
+    }
+
+    @Override
+    public FroggerConfig getConfig() {
+        return (FroggerConfig) super.getConfig();
     }
 
     @Override
@@ -73,7 +81,7 @@ public class Entity extends GameObject {
             reader.skipInt(); // Skip runtime pointer.
         } else {
             formId = reader.readUnsignedShortAsInt();
-            this.formEntry = getConfig().getMapFormEntry(map.getTheme(), formId);
+            this.formEntry = getGameInstance().getMapFormEntry(map.getTheme(), formId);
             this.flags = reader.readUnsignedShortAsInt();
             reader.skipBytes(RUNTIME_POINTERS * Constants.POINTER_SIZE);
         }
@@ -81,17 +89,17 @@ public class Entity extends GameObject {
         this.loadScriptDataPointer = reader.getIndex();
 
         if (this.formEntry == null && this.oldFormEntry == null) {
-            this.entityData = new MatrixData();
+            this.entityData = new MatrixData(getGameInstance());
             System.out.println("Failed to find form for entity " + this.uniqueId + "/Form: " + formId + "/" + this.formGridId + " in " + MWDFile.CURRENT_FILE_NAME + ".");
             return; // Can't read more data. Ideally this doesn't happen, but this is a good failsafe. It's most likely to happen in early builds, and it does happen in Build 01.
         }
 
         try {
-            this.entityData = EntityData.makeData(getConfig(), this, this);
+            this.entityData = EntityData.makeData(getGameInstance(), this, this);
             if (this.entityData != null)
                 this.entityData.load(reader);
 
-            this.scriptData = EntityScriptData.makeData(getConfig(), getFormEntry());
+            this.scriptData = EntityScriptData.makeData(getGameInstance(), getFormEntry());
             if (this.scriptData != null)
                 scriptData.load(reader);
         } catch (Throwable th) {
@@ -138,8 +146,8 @@ public class Entity extends GameObject {
             return this.formEntry.getModel(file);
         } else if (this.oldFormEntry != null && getConfig().isSonyPresentation()) {
             // TODO: New FrogLord should have a way to configure this probably. Perhaps we have a way to say "use the WAD which the map file is saved in."
-            int resourceId = getConfig().getResourceEntry("MAP_RUSHED.WAD").getResourceId();
-            WADFile wadFile = getConfig().getGameFile(resourceId);
+            int resourceId = getGameInstance().getResourceEntryByName("MAP_RUSHED.WAD").getResourceId();
+            WADFile wadFile = getGameInstance().getGameFile(resourceId);
             return wadFile.getFiles().get(1 + this.oldFormEntry.getMofId());
         } else {
             return null;
@@ -240,17 +248,17 @@ public class Entity extends GameObject {
      * @param newEntry This entities new form book.
      */
     public void setFormBook(FormEntry newEntry) {
-        Class<?> oldScriptClass = EntityScriptData.getScriptDataClass(getConfig(), this.formEntry);
-        Class<?> newScriptClass = EntityScriptData.getScriptDataClass(getConfig(), newEntry);
+        Class<?> oldScriptClass = EntityScriptData.getScriptDataClass(getGameInstance(), this.formEntry);
+        Class<?> newScriptClass = EntityScriptData.getScriptDataClass(getGameInstance(), newEntry);
         if (this.formEntry == null || !Objects.equals(newScriptClass, oldScriptClass))
-            this.scriptData = EntityScriptData.makeData(getConfig(), newEntry);
+            this.scriptData = EntityScriptData.makeData(getGameInstance(), newEntry);
 
-        Class<?> oldEntityDataClass = EntityData.getEntityClass(getConfig(), this.formEntry);
-        Class<?> newEntityDataClass = EntityData.getEntityClass(getConfig(), newEntry);
+        Class<?> oldEntityDataClass = EntityData.getEntityClass(getGameInstance(), this.formEntry);
+        Class<?> newEntityDataClass = EntityData.getEntityClass(getGameInstance(), newEntry);
         if (this.formEntry == null || !Objects.equals(newEntityDataClass, oldEntityDataClass)) {
             PSXMatrix oldMatrix = getMatrixInfo(); // Call before setting entityData to null.
             PathInfo oldPath = getPathInfo();
-            this.entityData = EntityData.makeData(getConfig(), this, this);
+            this.entityData = EntityData.makeData(getGameInstance(), this, this);
 
             if (this.entityData instanceof MatrixData && oldMatrix != null)
                 ((MatrixData) this.entityData).setMatrix(oldMatrix);

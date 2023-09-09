@@ -9,6 +9,8 @@ import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.editor.PaletteController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -24,10 +26,9 @@ import java.util.List;
  * Created by Kneesnap on 8/14/2018.
  */
 @Getter
-public class PALFile extends GameFile {
-    private List<Color> colors = new ArrayList<>();
+public class PALFile extends SCSharedGameFile {
+    private final List<Color> colors = new ArrayList<>();
 
-    public static final int TYPE_ID = 7;
     public static final Image ICON = loadIcon("palette");
     private static final String RIFF_SIGNATURE = "RIFF";
     private static final String PAL_SIGNATURE = "PAL ";
@@ -35,6 +36,10 @@ public class PALFile extends GameFile {
     private static final short PAL_VERSION = 0x300;
     private static final byte FLAG = 0x00;
     private static final int COLOR_SIZE = 4;
+
+    public PALFile(SCGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -91,7 +96,7 @@ public class PALFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new PaletteController(), "pal", this);
+        return loadEditor(new PaletteController(getGameInstance()), "pal", this);
     }
 
     /**

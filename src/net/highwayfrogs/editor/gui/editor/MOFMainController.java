@@ -9,6 +9,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.system.Tuple2;
@@ -20,11 +22,15 @@ import java.util.List;
  * Manages the mof display on the main menu.
  * Created by Kneesnap on 5/23/2020.
  */
-public class MOFMainController extends EditorController<MOFHolder> {
+public class MOFMainController extends EditorController<MOFHolder, SCGameInstance, SCGameConfig> {
     @FXML private TableView<NameValuePair> mofPropertyTable;
     @FXML private TableColumn<Object, Object> tableColumnFileDataName;
     @FXML private TableColumn<Object, Object> tableColumnFileDataValue;
     @FXML private Label vloNameLabel;
+
+    public MOFMainController(SCGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void loadFile(MOFHolder mof) {
@@ -46,26 +52,26 @@ public class MOFMainController extends EditorController<MOFHolder> {
         }
 
         if (getFile().getVloFile() != null) {
-            MainController.MAIN_WINDOW.openEditor(new MOFController(), getFile());
+            MainController.MAIN_WINDOW.openEditor(new MOFController(getGameInstance()), getFile());
             return;
         }
 
-        getFile().getMWD().promptVLOSelection(getFile().getTheme(), vlo -> {
+        getFile().getArchive().promptVLOSelection(getFile().getTheme(), vlo -> {
             getFile().setVloFile(vlo);
             updateVLO();
-            MainController.MAIN_WINDOW.openEditor(new MOFController(), getFile());
+            MainController.MAIN_WINDOW.openEditor(new MOFController(getGameInstance()), getFile());
         }, false);
     }
 
     @FXML
     private void onChangeVLO(ActionEvent evt) {
-        getFile().getMWD().promptVLOSelection(getFile().getTheme(), vlo -> {
+        getFile().getArchive().promptVLOSelection(getFile().getTheme(), vlo -> {
             getFile().setVloFile(vlo);
             updateVLO();
         }, false);
     }
 
     private void updateVLO() {
-        this.vloNameLabel.setText(getFile().getVloFile() != null ? getFile().getVloFile().getFileEntry().getDisplayName() : "None");
+        this.vloNameLabel.setText(getFile().getVloFile() != null ? getFile().getVloFile().getIndexEntry().getDisplayName() : "None");
     }
 }

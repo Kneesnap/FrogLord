@@ -49,6 +49,8 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
@@ -73,7 +75,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 2/13/2019.
  */
 @Getter
-public class MOFController extends EditorController<MOFHolder> {
+public class MOFController extends EditorController<MOFHolder, SCGameInstance, SCGameConfig> {
     private double oldMouseX;
     private double oldMouseY;
     private double mouseX;
@@ -112,6 +114,10 @@ public class MOFController extends EditorController<MOFHolder> {
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(java.awt.Color.MAGENTA, java.awt.Color.BLACK);
     public static final CursorVertexColor CANT_APPLY_COLOR = new CursorVertexColor(java.awt.Color.RED, java.awt.Color.BLACK);
     public static final CursorVertexColor HILITE_COLOR = new CursorVertexColor(Utils.toAWTColor(Color.PURPLE), java.awt.Color.BLACK);
+
+    public MOFController(SCGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -187,12 +193,12 @@ public class MOFController extends EditorController<MOFHolder> {
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
                 return;
             } else if (event.getCode() == KeyCode.F10) {
-                Utils.takeScreenshot(subScene3D, getMofScene(), Utils.stripExtension(getFile().getFileEntry().getDisplayName()));
+                Utils.takeScreenshot(subScene3D, getMofScene(), Utils.stripExtension(getFile().getIndexEntry().getDisplayName()));
             }
 
             if (event.getCode() == KeyCode.S && event.isControlDown()) { // Save the texture map.
                 try {
-                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + Utils.stripExtension(getMofMesh().getMofHolder().getFileEntry().getDisplayName()) + ".png"));
+                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + Utils.stripExtension(getMofMesh().getMofHolder().getIndexEntry().getDisplayName()) + ".png"));
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
@@ -537,7 +543,7 @@ public class MOFController extends EditorController<MOFHolder> {
         List<Node> toDisable = new ArrayList<>();
         if (entryList.getEntries().size() > 0) {
             List<MOFPartPolyAnimEntry> entries = entryList.getEntries();
-            MWDFile mwd = entryList.getMWD();
+            MWDFile mwd = getArchive();
 
             grid.addBoldLabel("Preview:");
             AtomicBoolean isAnimating = new AtomicBoolean(false);
@@ -548,7 +554,7 @@ public class MOFController extends EditorController<MOFHolder> {
                     imagePreview.setImage(mwd.getImageByTextureId(entries.get(newFrame).getImageId()).toFXImage(MAPAnimation.PREVIEW_SETTINGS)), 0, maxValidFrame);
 
             toDisable.add(frameSlider);
-            double millisInterval = (1000D / mwd.getFPS());
+            double millisInterval = (1000D / getGameInstance().getFPS());
             Timeline animationTimeline = new Timeline(new KeyFrame(Duration.millis(millisInterval), evt -> {
                 if (framesWaited.getAndIncrement() == entries.get((int) frameSlider.getValue()).getDuration()) {
                     framesWaited.set(0);
@@ -582,7 +588,7 @@ public class MOFController extends EditorController<MOFHolder> {
         for (int i = 0; i < entryList.getEntries().size(); i++) {
             final int tempIndex = i;
             MOFPartPolyAnimEntry entry = entryList.getEntries().get(i);
-            GameImage image = entryList.getMWD().getImageByTextureId(entry.getImageId());
+            GameImage image = getArchive().getImageByTextureId(entry.getImageId());
             Image scaledImage = Utils.toFXImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), true);
             ImageView view = new ImageView(scaledImage);
             view.setFitWidth(20);
@@ -901,7 +907,7 @@ public class MOFController extends EditorController<MOFHolder> {
                 node.setDisable(disableState); // Disable playing non-existing animation.
 
             updateTempUI();
-            modelName.setText(getHolder().getFileEntry().getDisplayName());
+            modelName.setText(getHolder().getIndexEntry().getDisplayName());
             updateTextureList();
             this.animationListChoiceBox.getSelectionModel().selectFirst();
         }

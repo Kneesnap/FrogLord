@@ -6,12 +6,13 @@ import javafx.scene.shape.Shape3D;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
@@ -26,7 +27,7 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 @Getter
 @Setter
-public class MOFCollprim extends GameObject {
+public class MOFCollprim extends SCSharedGameData {
     private int flags; // Seems to always be two.
     private SVector offset = new SVector();
     private int radius2; // For cylinder base or sphere. It seems like we can safely ignore this value, leaving it as is.
@@ -42,13 +43,14 @@ public class MOFCollprim extends GameObject {
     public static final int FLAG_COLLISION_DISABLED = Constants.BIT_FLAG_8; // Completely unused. Seems like maybe this was used to disable something without deleting it, for testing purposes.
 
     public MOFCollprim(MOFPart parent) {
+        super(parent.getParent().getGameInstance());
         this.parent = parent;
     }
 
     @Override
     public void load(DataReader reader) {
         CollprimType type = CollprimType.values()[reader.readUnsignedShortAsInt()];
-        if (type != CollprimType.CUBOID && type != CollprimType.SPHERE && (!getConfig().isFrogger() || !getConfig().isSonyPresentation()))
+        if (type != CollprimType.CUBOID && type != CollprimType.SPHERE && (!getGameInstance().isFrogger() || !((FroggerConfig) getConfig()).isSonyPresentation()))
             throw new RuntimeException("MOFCollprim was type " + type + ", which is not supported. (" + WADFile.CURRENT_FILE_NAME + ")");
 
         this.flags = reader.readUnsignedShortAsInt();

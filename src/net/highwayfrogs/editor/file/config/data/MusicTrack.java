@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.file.config.data;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
-import net.highwayfrogs.editor.file.config.TargetPlatform;
+import net.highwayfrogs.editor.games.sony.SCGamePlatform;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 /**
  * A registry of all music tracks in the game.
@@ -45,33 +45,33 @@ public enum MusicTrack {
 
     /**
      * Gets the track based on the platform.
-     * @param info The config this track is used on.
+     * @param instance The instance to determine music ids from.
      * @return trackId
      */
-    public byte getTrack(FroggerEXEInfo info) {
-        if (info.getPlatform() == TargetPlatform.PC) {
-            if (info.isAtLeastRetailWindows()) {
+    public byte getTrack(FroggerGameInstance instance) {
+        if (instance.getPlatform() == SCGamePlatform.WINDOWS) {
+            if (instance.getConfig().isAtLeastRetailWindows()) {
                 return getPcTrack();
             } else {
                 return getPrototypeTrack();
             }
-        } else if (info.getPlatform() == TargetPlatform.PSX) {
+        } else if (instance.getPlatform() == SCGamePlatform.PLAYSTATION) {
             return getPsxTrack();
         }
 
-        throw new RuntimeException("Cannot get track id for platform-type: " + info.getName() + ".");
+        throw new RuntimeException("Cannot get track id for platform-type: " + instance.getPlatform() + ".");
     }
 
     /**
      * Gets a music track by its id.
-     * @param info The config to determine music ids from.
-     * @param id   The id to get.
+     * @param instance The instance to determine music ids from.
+     * @param id       The id to get.
      * @return track
      */
-    public static MusicTrack getTrackById(FroggerEXEInfo info, byte id) {
+    public static MusicTrack getTrackById(FroggerGameInstance instance, byte id) {
         for (MusicTrack test : values())
-            if (test.getTrack(info) == id)
+            if (test.getTrack(instance) == id)
                 return test;
-        throw new RuntimeException("Cannot get track id " + id + " from platform-type: " + info.getName() + ".");
+        throw new RuntimeException("Cannot get track id " + id + " from " + instance.getConfig().getInternalName() + ".");
     }
 }

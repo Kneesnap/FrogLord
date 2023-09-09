@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
@@ -27,7 +28,8 @@ public class EntityFallingRock extends MatrixData {
     public static final int ROCK_TARGET_COUNT = 12;
     public static final int FLAG_TARGETS_RESOLVED = Constants.BIT_FLAG_0; // Believed to be a run-time flag.
 
-    public EntityFallingRock() {
+    public EntityFallingRock(FroggerGameInstance instance) {
+        super(instance);
         for (int i = 0; i < targets.length; i++)
             targets[i] = new FallingRockTarget();
     }

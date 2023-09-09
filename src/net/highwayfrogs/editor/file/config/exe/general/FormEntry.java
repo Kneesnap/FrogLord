@@ -4,11 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -16,6 +14,9 @@ import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 /**
  * Represents an entry in a form book.
@@ -23,7 +24,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 @Setter
-public class FormEntry extends GameObject {
+public class FormEntry extends SCGameData<FroggerGameInstance> {
     private int entityType; // Index into global entity book.
     private int id; // Index into theme wad.
     private int scriptId;
@@ -34,7 +35,6 @@ public class FormEntry extends GameObject {
     private long bonusCallbackFunction; // Eaten.
 
     private transient final MAPTheme theme;
-    private transient final FroggerEXEInfo config;
     private transient final int globalFormId;
     private transient final int localFormId;
 
@@ -42,12 +42,19 @@ public class FormEntry extends GameObject {
     public static final int BYTE_SIZE = (8 * Constants.INTEGER_SIZE);
     public static final int OLD_BYTE_SIZE = (7 * Constants.INTEGER_SIZE);
 
-    public FormEntry(FroggerEXEInfo config, MAPTheme theme, int formId, int globalFormId) {
-        this.config = config;
+    public FormEntry(FroggerGameInstance instance, MAPTheme theme, int formId, int globalFormId) {
+        super(instance);
         this.theme = theme;
         this.localFormId = formId;
         this.id = formId;
         this.globalFormId = globalFormId;
+    }
+
+    /**
+     * Gets the frogger game config.
+     */
+    public FroggerConfig getConfig() {
+        return getGameInstance().getConfig();
     }
 
     @Override
@@ -169,10 +176,10 @@ public class FormEntry extends GameObject {
 
         WADFile wadFile = null;
         if (isGeneralTheme) {
-            ThemeBook themeBook = getConfig().getThemeBook(getTheme());
+            ThemeBook themeBook = getGameInstance().getThemeBook(getTheme());
             wadFile = themeBook != null ? themeBook.getWAD(mapFile) : null;
         } else {
-            MapBook mapBook = mapFile.getFileEntry().getMapBook();
+            MapBook mapBook = mapFile.getIndexEntry().getMapBook();
             if (mapBook != null)
                 wadFile = mapBook.getWad(mapFile);
         }

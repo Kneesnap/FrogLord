@@ -5,10 +5,11 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -19,13 +20,16 @@ import java.util.List;
  * Created by rdrpenguin04 on 8/22/2018.
  */
 @Getter
-public class VHFile extends GameFile {
-    private List<AudioHeader> entries = new ArrayList<>();
-    @Setter private transient AbstractVBFile VB;
+public class VHFile extends SCSharedGameFile {
+    private final List<AudioHeader> entries = new ArrayList<>();
+    @Setter private transient AbstractVBFile<?> VB;
 
-    public static final int TYPE_ID = 2;
     public static final Image ICON = loadIcon("sound");
     public static final int CHANNEL_COUNT = 1;
+
+    public VHFile(SCGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -35,7 +39,6 @@ public class VHFile extends GameFile {
             entry.load(reader);
             getEntries().add(entry);
         }
-
     }
 
     @Override

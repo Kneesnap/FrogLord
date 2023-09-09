@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.file.map.entity.script;
 
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.entity.script.jungle.ScriptFloatingTreeData;
 import net.highwayfrogs.editor.file.map.entity.script.sky.ScriptBalloonData;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptHawkData;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptHelicopterData;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptMechanismData;
 import net.highwayfrogs.editor.file.map.entity.script.volcano.ScriptPlatform2Data;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.Tuple2;
 
@@ -43,16 +43,16 @@ public abstract class EntityScriptData extends GameObject {
 
     /**
      * Make script data for the given form.
-     * @param config The config to read from.
-     * @param entry  The form.
+     * @param instance The game instance to make data for.
+     * @param entry    The form.
      * @return entityData
      */
     @SneakyThrows
-    public static EntityScriptData makeData(FroggerEXEInfo config, FormEntry entry) {
+    public static EntityScriptData makeData(FroggerGameInstance instance, FormEntry entry) {
         if (entry == null)
             return null;
 
-        String dataClassName = config.getFormBank().getConfig().getString(entry.getFormName(), null);
+        String dataClassName = instance.getConfig().getFormBank().getConfig().getString(entry.getFormName(), null);
         if (dataClassName == null)
             return null;
 
@@ -63,15 +63,15 @@ public abstract class EntityScriptData extends GameObject {
 
     /**
      * Get the script class for the given form.
-     * @param config The config to read from.
-     * @param entry  The form to get.
+     * @param instance The game instance to find the script data class for.
+     * @param entry    The form to get.
      * @return entityData
      */
-    public static Class<? extends EntityScriptData> getScriptDataClass(FroggerEXEInfo config, FormEntry entry) {
+    public static Class<? extends EntityScriptData> getScriptDataClass(FroggerGameInstance instance, FormEntry entry) {
         if (entry == null)
             return null;
 
-        String dataClassName = config.getFormBank().getConfig().getString(entry.getFormName(), null);
+        String dataClassName = instance.getConfig().getFormBank().getConfig().getString(entry.getFormName(), null);
         if (dataClassName == null)
             return null;
 

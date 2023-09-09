@@ -14,13 +14,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.PLTFile;
-import net.highwayfrogs.editor.file.*;
+import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -28,6 +25,10 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.editor.*;
 import net.highwayfrogs.editor.gui.extra.DemoTableEditorController;
 import net.highwayfrogs.editor.gui.extra.FormEntryController;
@@ -40,10 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 
 @Getter
 public class MainController implements Initializable {
@@ -61,13 +59,27 @@ public class MainController implements Initializable {
     @FXML private MenuItem patchMenu;
     @FXML private MenuItem differenceReport;
     @FXML private MenuItem findUnusedVertices;
-    private MWDFile mwdFile;
-    private ListView<GameFile> currentFilesList;
+    private ListView<SCGameFile<?>> currentFilesList;
+    @Getter private SCGameInstance gameInstance;
 
     public static MainController MAIN_WINDOW;
     @Getter
     @Setter
-    private static EditorController<?> currentController;
+    private static EditorController<?, ?, ?> currentController;
+
+    /**
+     * Gets the game configuration.
+     */
+    public SCGameConfig getConfig() {
+        return this.gameInstance != null ? this.gameInstance.getConfig() : null;
+    }
+
+    /**
+     * Gets the main file archive.
+     */
+    public MWDFile getArchive() {
+        return this.gameInstance != null ? this.gameInstance.getMainArchive() : null;
+    }
 
     /**
      * Print a message to the console window.
@@ -78,56 +90,60 @@ public class MainController implements Initializable {
             consoleText.appendText(message + System.lineSeparator());
     }
 
+    @Getter
+    @AllArgsConstructor
+    public static class SCDisplayedFileType {
+        private final int id;
+        private final String name;
+    }
+
     /**
      * Load a MWDFile as the active MWD being used.
-     * @param file The MWD file to load.
      */
-    public void loadMWD(MWDFile file) {
-        this.mwdFile = file;
+    public void loadMWD(SCGameInstance instance) {
+        System.out.println("Hello! FrogLord is loading config '" + instance.getConfig().getInternalName() + "'.");
+        this.gameInstance = instance;
 
-        Map<Integer, ObservableList<GameFile>> gameFileRegistry = new HashMap<>();
-
-        for (GameFile gameFile : mwdFile.getFiles()) {
-            // Grab corresponding file entry information for the game file
-            FileEntry fileEntry = mwdFile.getEntryMap().get(gameFile);
-            int type = fileEntry.getSpoofedTypeId();
-
-            if (!gameFileRegistry.containsKey(type))
-                gameFileRegistry.put(type, FXCollections.observableArrayList());
-
-            gameFileRegistry.get(type).add(gameFile);
+        Map<Integer, ObservableList<SCGameFile<?>>> gameFileRegistry = new HashMap<>();
+        for (SCGameFile<?> gameFile : getArchive().getFiles()) {
+            FileEntry fileEntry = gameFile.getIndexEntry();
+            gameFileRegistry.computeIfAbsent(fileEntry.getTypeId(), key -> FXCollections.observableArrayList())
+                    .add(gameFile);
         }
 
-        addFileList(VLOArchive.TYPE_ID, "VLO", gameFileRegistry);
-        addFileList(DemoFile.TYPE_ID, "DAT", gameFileRegistry);
-        addFileList(MAPFile.TYPE_ID, "MAP", gameFileRegistry);
+        List<SCDisplayedFileType> displayedFileTypes = new ArrayList<>();
+        instance.setupFileTypes(displayedFileTypes);
+        for (SCDisplayedFileType displayedFileType : displayedFileTypes)
+            addFileList(displayedFileType.getId(), displayedFileType.getName(), gameFileRegistry);
+
+
+        // Manually tracked data.
         addFileList(WADFile.TYPE_ID, "WAD", gameFileRegistry);
-        addFileList(PALFile.TYPE_ID, "PAL", gameFileRegistry);
-        addFileList(VHFile.TYPE_ID, "VB/VH", gameFileRegistry);
-        addFileList(PLTFile.FILE_TYPE, "PLT", gameFileRegistry);
-        addFileList(MOFHolder.MOF_ID, "Models", gameFileRegistry);
-        addFileList(8, "TIM Image", gameFileRegistry);
+        addFileList(0, "Various Files", gameFileRegistry);
+        for (Integer id : new ArrayList<>(gameFileRegistry.keySet()))
+            addFileList(id, "Unknown (" + id + ")", gameFileRegistry);
 
         // Setup!
-        FroggerEXEInfo config = mwdFile.getConfig();
-        levelInfoEditor.setDisable(config.getArcadeLevelAddress() == 0);
-        formLibEditor.setDisable(config.getFullFormBook().isEmpty());
-        scriptEditor.setDisable(config.getScripts().isEmpty());
-        demoTableEditor.setDisable(config.getDemoTableEntries().isEmpty());
+        FroggerGameInstance frogger = getGameInstance().isFrogger() ? (FroggerGameInstance) getGameInstance() : null;
+        levelInfoEditor.setDisable(frogger == null || frogger.getArcadeLevelInfo().isEmpty());
+        formLibEditor.setDisable(frogger == null || frogger.getFullFormBook().isEmpty());
+        scriptEditor.setDisable(frogger == null || frogger.getScripts().isEmpty());
+        demoTableEditor.setDisable(frogger == null || frogger.getDemoTableEntries().isEmpty());
         differenceReport.setDisable(!FroggerVersionComparison.isEnabled());
     }
 
-    private void addFileList(int type, String name, Map<Integer, ObservableList<GameFile>> fileMap) {
-        if (!fileMap.containsKey(type))
+    public void addFileList(int type, String name, Map<Integer, ObservableList<SCGameFile<?>>> fileMap) {
+        ObservableList<SCGameFile<?>> files = fileMap.remove(type);
+        if (files == null)
             return; // There are no files of this type.
 
         TitledPane pane = new TitledPane();
         pane.setPrefSize(200, 180);
         pane.setAnimated(false);
 
-        ListView<GameFile> listView = new ListView<>(fileMap.get(type));
-        listView.setCellFactory(param -> new AttachmentListCell(mwdFile));
-        listView.setItems(fileMap.get(type));
+        ListView<SCGameFile<?>> listView = new ListView<>(files);
+        listView.setCellFactory(param -> new AttachmentListCell());
+        listView.setItems(files);
 
         pane.setContent(listView);
         pane.setText(name + " Files (" + listView.getItems().size() + " items)");
@@ -135,8 +151,8 @@ public class MainController implements Initializable {
 
         listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openEditor(listView, newValue));
 
-        // Expand VLO.
-        if (type == VLOArchive.TYPE_ID) {
+        // Expand first pane.
+        if (accordionMain.getPanes().size() <= 1) {
             listView.getSelectionModel().selectFirst();
             pane.setExpanded(true);
         }
@@ -146,7 +162,7 @@ public class MainController implements Initializable {
      * Get the current file.
      * @return currentFile
      */
-    public GameFile getCurrentFile() {
+    public SCGameFile<?> getCurrentFile() {
         return getCurrentFilesList().getSelectionModel().getSelectedItem();
     }
 
@@ -155,7 +171,7 @@ public class MainController implements Initializable {
      * @return fileEntry
      */
     public FileEntry getFileEntry() {
-        return mwdFile.getEntryMap().get(getCurrentFile());
+        return getArchive().getEntryMap().get(getCurrentFile());
     }
 
     @FXML
@@ -169,7 +185,7 @@ public class MainController implements Initializable {
 
     @FXML
     private void actionSaveMWD(ActionEvent evt) {
-        SaveController.saveFiles(GUIMain.EXE_CONFIG, getMwdFile());
+        SaveController.saveFiles(getGameInstance());
     }
 
     @FXML
@@ -180,7 +196,7 @@ public class MainController implements Initializable {
 
         Utils.deleteFile(selectedFile); // Don't merge files, create a new one.
         DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
-        getMwdFile().getConfig().getMWI().save(writer);
+        getGameInstance().getArchiveIndex().save(writer);
         writer.closeReceiver();
 
         System.out.println("Exported MWI.");
@@ -203,7 +219,8 @@ public class MainController implements Initializable {
 
     @FXML
     private void actionMakeHeaders(ActionEvent evt) {
-        GUIMain.EXE_CONFIG.exportCode(GUIMain.getWorkingDirectory());
+        if (getGameInstance().isFrogger())
+            ((FroggerGameInstance) getGameInstance()).exportCode(GUIMain.getWorkingDirectory());
     }
 
     @FXML
@@ -213,36 +230,41 @@ public class MainController implements Initializable {
 
     @FXML
     private void actionFindUnusedVertices(ActionEvent evt) {
-        getMwdFile().getAllFiles(MAPFile.class).forEach(mapFile -> {
+        getGameInstance().getMainArchive().getAllFiles(MAPFile.class).forEach(mapFile -> {
             List<SVector> unusedVertices = mapFile.findUnusedVertices();
             if (unusedVertices.size() > 1)
-                System.out.println(" - " + mapFile.getFileEntry().getDisplayName() + " has " + unusedVertices.size() + " unused vertices.");
+                System.out.println(" - " + mapFile.getIndexEntry().getDisplayName() + " has " + unusedVertices.size() + " unused vertices.");
         });
     }
 
     @FXML
     private void editLevelInfo(ActionEvent evt) {
-        LevelInfoController.openEditor(GUIMain.EXE_CONFIG);
+        if (getGameInstance().isFrogger())
+            LevelInfoController.openEditor((FroggerGameInstance) getGameInstance());
     }
 
     @FXML
     private void editFormBook(ActionEvent evt) {
-        FormEntryController.openEditor(GUIMain.EXE_CONFIG);
+        if (getGameInstance().isFrogger())
+            FormEntryController.openEditor((FroggerGameInstance) getGameInstance());
     }
 
     @FXML
     private void editScript(ActionEvent evt) {
-        ScriptEditorController.openEditor();
+        if (getGameInstance().isFrogger())
+            ScriptEditorController.openEditor((FroggerGameInstance) getGameInstance());
     }
 
     @FXML
     private void editDemoTable(ActionEvent evt) {
-        DemoTableEditorController.openEditor();
+        if (getGameInstance().isFrogger())
+            DemoTableEditorController.openEditor((FroggerGameInstance) getGameInstance());
     }
 
     @FXML
     private void actionOpenPatchMenu(ActionEvent evt) {
-        PatchController.openMenu();
+        if (getGameInstance().isFrogger())
+            PatchController.openMenu((FroggerGameInstance) getGameInstance());
     }
 
     @FXML
@@ -259,14 +281,14 @@ public class MainController implements Initializable {
             }
 
             int texId = Integer.parseInt(str);
-            List<GameImage> images = getMwdFile().getImagesByTextureId(texId);
+            List<GameImage> images = getArchive().getImagesByTextureId(texId);
             if (images.isEmpty()) {
                 Utils.makePopUp("Could not find an image with the id " + texId + ".", AlertType.WARNING);
                 return;
             }
 
             for (GameImage image : images)
-                System.out.println("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + Utils.stripExtension(image.getParent().getFileEntry().getDisplayName()) + ".");
+                System.out.println("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + Utils.stripExtension(image.getParent().getIndexEntry().getDisplayName()) + ".");
 
             GameImage image = images.get(0);
             openEditor(this.currentFilesList, image.getParent());
@@ -284,9 +306,9 @@ public class MainController implements Initializable {
         File targetFolder = Utils.promptChooseDirectory("Choose the directory to save all textures to.", false);
 
         ImageFilterSettings exportSettings = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(false).setAllowTransparency(true);
-        List<VLOArchive> allVlos = getMwdFile().getAllFiles(VLOArchive.class);
+        List<VLOArchive> allVlos = getArchive().getAllFiles(VLOArchive.class);
         for (VLOArchive saveVLO : allVlos) {
-            File vloFolder = new File(targetFolder, Utils.stripExtension(saveVLO.getFileEntry().getDisplayName()));
+            File vloFolder = new File(targetFolder, Utils.stripExtension(saveVLO.getIndexEntry().getDisplayName()));
             Utils.makeDirectory(vloFolder);
             saveVLO.exportAllImages(vloFolder, exportSettings);
         }
@@ -302,9 +324,9 @@ public class MainController implements Initializable {
             return; // Cancelled.
 
         byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
-        GameFile oldFile = getCurrentFile();
-        GameFile newFile = mwdFile.replaceFile(fileBytes, getFileEntry(), oldFile);
-        this.mwdFile.getFiles().set(this.mwdFile.getFiles().indexOf(oldFile), newFile);
+        SCGameFile<?> oldFile = getCurrentFile();
+        SCGameFile<?> newFile = getArchive().replaceFile(fileBytes, getFileEntry(), oldFile);
+        getArchive().getFiles().set(getArchive().getFiles().indexOf(oldFile), newFile);
         getCurrentFilesList().getItems().set(getCurrentFilesList().getItems().indexOf(oldFile), newFile);
 
         newFile.onImport(oldFile, getFileEntry().getDisplayName(), selectedFile.getName());
@@ -317,7 +339,7 @@ public class MainController implements Initializable {
      */
     @SneakyThrows
     public void exportFile() {
-        GameFile currentFile = getCurrentFile();
+        SCGameFile<?> currentFile = getCurrentFile();
         FileEntry entry = getFileEntry();
 
         File selectedFile = Utils.promptFileSave("Specify the file to export this data as...", entry.getDisplayName(), "All Files", "*");
@@ -337,7 +359,7 @@ public class MainController implements Initializable {
      * @param file The file to open the editor for.
      */
     @SneakyThrows
-    public void openEditor(ListView<GameFile> activeList, GameFile file) {
+    public void openEditor(ListView<SCGameFile<?>> activeList, SCGameFile<?> file) {
         if (getCurrentController() != null)
             getCurrentController().onClose(editorPane);
         setCurrentController(null);
@@ -357,7 +379,7 @@ public class MainController implements Initializable {
      * Open an editor for a given file.
      */
     @SneakyThrows
-    public <T extends GameFile> void openEditor(EditorController<T> editor, T file) {
+    public <T extends SCGameFile<?>> void openEditor(EditorController<T, ?, ?> editor, T file) {
         if (getCurrentController() != null)
             getCurrentController().onClose(editorPane);
         setCurrentController(editor);
@@ -371,11 +393,10 @@ public class MainController implements Initializable {
 
 
     @AllArgsConstructor
-    private static class AttachmentListCell extends ListCell<GameFile> {
-        private final MWDFile mwdFile;
+    private static class AttachmentListCell extends ListCell<SCGameFile<?>> {
 
         @Override
-        public void updateItem(GameFile file, boolean empty) {
+        public void updateItem(SCGameFile<?> file, boolean empty) {
             super.updateItem(file, empty);
             if (empty) {
                 setGraphic(null);
@@ -383,7 +404,7 @@ public class MainController implements Initializable {
                 return;
             }
 
-            FileEntry entry = mwdFile.getEntryMap().get(file);
+            FileEntry entry = file.getIndexEntry();
             setGraphic(new ImageView(file.getIcon()));
 
             // Update text.
@@ -396,7 +417,6 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         MAIN_WINDOW = this;
-        System.out.println("Hello! FrogLord is loading config '" + GUIMain.EXE_CONFIG.getInternalName() + "'.");
         menuBar.prefWidthProperty().bind(rootAnchor.widthProperty());
     }
 }

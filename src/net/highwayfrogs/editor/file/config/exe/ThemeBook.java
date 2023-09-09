@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file.config.exe;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
@@ -12,6 +11,7 @@ import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,20 +27,29 @@ public abstract class ThemeBook extends ExeStruct {
     @Setter private transient MAPTheme theme;
     private final List<FormEntry> formBook = new ArrayList<>();
 
-    public void loadFormLibrary(FroggerEXEInfo config, int toRead) {
-        DataReader reader = config.getReader();
-        int globalFormId = config.getFullFormBook().size();
-        reader.jumpTemp((int) (getFormLibraryPointer() - config.getRamPointerOffset()));
+    public ThemeBook(FroggerGameInstance instance) {
+        super(instance);
+    }
+
+    /**
+     * Load form library data from the game executable.
+     * @param instance The frogger instance to load the form library for.
+     * @param toRead   The number of form libraries to read.
+     */
+    public void loadFormLibrary(FroggerGameInstance instance, int toRead) {
+        DataReader reader = instance.getExecutableReader();
+        int globalFormId = instance.getFullFormBook().size();
+        reader.jumpTemp((int) (getFormLibraryPointer() - instance.getConfig().getRamPointerOffset()));
 
         int localFormId = 0;
         for (int i = 0; i < toRead; i++) {
-            FormEntry formEntry = new FormEntry(config, getTheme(), localFormId++, globalFormId++);
+            FormEntry formEntry = new FormEntry(instance, getTheme(), localFormId++, globalFormId++);
             formEntry.load(reader);
             this.formBook.add(formEntry);
         }
         reader.jumpReturn();
 
-        config.getFullFormBook().addAll(this.formBook);
+        instance.getFullFormBook().addAll(this.formBook);
     }
 
     /**
@@ -101,18 +110,18 @@ public abstract class ThemeBook extends ExeStruct {
     public void forEachVLO(Consumer<VLOArchive> handler) {
         execute(pc -> {
             if (pc.getHighVloId() != 0)
-                handler.accept(getConfig().getGameFile(pc.getHighVloId()));
+                handler.accept(getGameInstance().getGameFile(pc.getHighVloId()));
             if (pc.getLowVloId() != 0)
-                handler.accept(getConfig().getGameFile(pc.getLowVloId()));
+                handler.accept(getGameInstance().getGameFile(pc.getLowVloId()));
             if (pc.getHighMultiplayerVloId() != 0)
-                handler.accept(getConfig().getGameFile(pc.getHighMultiplayerVloId()));
+                handler.accept(getGameInstance().getGameFile(pc.getHighMultiplayerVloId()));
             if (pc.getLowMultiplayerVloId() != 0)
-                handler.accept(getConfig().getGameFile(pc.getLowMultiplayerVloId()));
+                handler.accept(getGameInstance().getGameFile(pc.getLowMultiplayerVloId()));
         }, psx -> {
             if (psx.getVloId() != 0)
-                handler.accept(getConfig().getGameFile(psx.getVloId()));
+                handler.accept(getGameInstance().getGameFile(psx.getVloId()));
             if (psx.getMultiplayerVloId() != 0)
-                handler.accept(getConfig().getGameFile(psx.getMultiplayerVloId()));
+                handler.accept(getGameInstance().getGameFile(psx.getMultiplayerVloId()));
         });
     }
 

@@ -8,9 +8,7 @@ import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
@@ -33,6 +31,8 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.AbstractGUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
@@ -55,7 +55,7 @@ public class EntityManager extends MapManager {
     private final Map<MOFHolder, MOFMesh> meshMap = new HashMap<>();
     @Getter private Group entityRenderGroup;
 
-    private static final Image ENTITY_ICON_IMAGE = GameFile.loadIcon("entity");
+    private static final Image ENTITY_ICON_IMAGE = SCGameFile.loadIcon("entity");
     private static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
 
     public EntityManager(MapUIController controller) {
@@ -88,9 +88,9 @@ public class EntityManager extends MapManager {
      * @param entity The entity to show information for.
      */
     public void showEntityInfo(Entity entity) {
-        FormEntry[] entries = getMap().getConfig().getAllowedForms(getMap().getTheme());
+        FormEntry[] entries = getMap().getGameInstance().getAllowedForms(getMap().getTheme());
         if (entity != null && !Utils.contains(entries, entity.getFormEntry())) // This wasn't found in this
-            entries = getMap().getConfig().getFullFormBook().toArray(new FormEntry[0]);
+            entries = getMap().getGameInstance().getFullFormBook().toArray(new FormEntry[0]);
 
         // Setup Editor:
         if (this.entityEditor == null)
@@ -342,9 +342,9 @@ public class EntityManager extends MapManager {
             MOFHolder holder = ((MOFHolder) modelEntry.getFile()).getOverride();
 
             // Setup VLO.
-            VLOArchive vlo = getMap().getConfig().getForcedVLO(modelEntry.getDisplayName());
+            VLOArchive vlo = getMap().getConfig().getForcedVLO(getMap().getGameInstance(), modelEntry.getDisplayName());
             if (vlo == null && newForm != null) {
-                ThemeBook themeBook = newForm.getConfig().getThemeBook(newForm.getTheme());
+                ThemeBook themeBook = newForm.getGameInstance().getThemeBook(newForm.getTheme());
                 if (themeBook != null)
                     vlo = themeBook.getVLO(getMap());
             }
@@ -362,7 +362,7 @@ public class EntityManager extends MapManager {
 
         // Attempt to apply 2d textures, instead of the default texture.
         PhongMaterial material = MATERIAL_ENTITY_ICON;
-        FroggerEXEInfo config = getMap().getConfig();
+        FroggerGameInstance config = getMap().getGameInstance();
         if (config.getPickupData() != null) {
             FlyScoreType flyType = null;
             if (entity.getEntityData() instanceof BonusFlyEntity) // TODO: Perhaps switch to implementing an interface which allows specifying a sprite to render.

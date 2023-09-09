@@ -4,13 +4,14 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.GameSound;
 import net.highwayfrogs.editor.file.sound.psx.PSXVBFile.PSXSound;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -20,7 +21,7 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 11/30/2019.
  */
 @Getter
-public class PSXVHFile extends GameFile {
+public class PSXVHFile extends SCSharedGameFile {
     private int fileVersion = 7;
     private int vabBankId;
     private int reserved0;
@@ -41,11 +42,15 @@ public class PSXVHFile extends GameFile {
     public static final int TYPE_ID = 2;
     public static final Image ICON = loadIcon("sound");
     public static final int CHANNEL_COUNT = 1;
-    private static final String SIGNATURE = "pBAV"; // VABp
+    public static final String PSX_SIGNATURE = "pBAV"; // VABp
+
+    public PSXVHFile(SCGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {
-        reader.verifyString(SIGNATURE);
+        reader.verifyString(PSX_SIGNATURE);
         this.fileVersion = reader.readInt();
         if (this.fileVersion != 7 && this.fileVersion != 6)
             throw new RuntimeException("Unknown Vab Header Version: " + this.fileVersion + "!");
@@ -88,7 +93,7 @@ public class PSXVHFile extends GameFile {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeStringBytes(SIGNATURE);
+        writer.writeStringBytes(PSX_SIGNATURE);
         writer.writeInt(this.fileVersion);
         writer.writeInt(this.vabBankId);
         int sizeAddress = writer.writeNullPointer();

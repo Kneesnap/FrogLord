@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 import java.util.function.Function;
 
@@ -24,6 +25,10 @@ public class PSXThemeBook extends ThemeBook {
     private int multiplayerVloId = -1;
     private long formLibraryPointer;
     private int deathHeight;
+
+    public PSXThemeBook(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -54,12 +59,12 @@ public class PSXThemeBook extends ThemeBook {
 
     @Override
     public VLOArchive getVLO(MAPFile map) {
-        return isValid() ? getConfig().getGameFile(map.isMultiplayer() ? getMultiplayerVloId() : getVloId()) : null;
+        return isValid() ? getGameInstance().getGameFile(map.isMultiplayer() ? getMultiplayerVloId() : getVloId()) : null;
     }
 
     @Override
     public WADFile getWAD(MAPFile map) {
-        return isValid() ? getConfig().getGameFile(map.isMultiplayer() ? getMultiplayerWadId() : getWadId()) : null;
+        return isValid() ? getGameInstance().getGameFile(map.isMultiplayer() ? getMultiplayerWadId() : getWadId()) : null;
     }
 
     @Override
@@ -91,10 +96,10 @@ public class PSXThemeBook extends ThemeBook {
 
     @Override
     public String toString() {
-        return "WAD = " + getConfig().getResourceName(wadId)
-                + ", VLO = " + getConfig().getResourceName(vloId)
-                + ", mWAD = " + getConfig().getResourceName(multiplayerWadId)
-                + ", mVLO = " + getConfig().getResourceName(multiplayerVloId)
+        return "WAD = " + getGameInstance().getResourceName(wadId)
+                + ", VLO = " + getGameInstance().getResourceName(vloId)
+                + ", mWAD = " + getGameInstance().getResourceName(multiplayerWadId)
+                + ", mVLO = " + getGameInstance().getResourceName(multiplayerVloId)
                 + ", Death Height: " + deathHeight;
     }
 

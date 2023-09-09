@@ -2,14 +2,14 @@ package net.highwayfrogs.editor.file.patch;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.patch.commands.PatchCommand;
 import net.highwayfrogs.editor.file.patch.commands.PatchCommandManager;
 import net.highwayfrogs.editor.file.patch.reference.PatchTextReference;
 import net.highwayfrogs.editor.file.patch.reference.PatchValueReference;
 import net.highwayfrogs.editor.file.patch.reference.PatchWrapperValue;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -22,15 +22,15 @@ import java.util.Map;
  * Created by Kneesnap on 1/15/2020.
  */
 @Getter
-public class PatchRuntime {
-    private FroggerEXEInfo exeInfo = GUIMain.EXE_CONFIG;
+public class PatchRuntime extends SCSharedGameObject {
     private DataWriter exeWriter;
-    private GamePatch patch;
+    private final GamePatch patch;
     @Setter private int executionLevel = 0;
-    private Map<String, PatchValue> variables = new HashMap<>();
+    private final Map<String, PatchValue> variables = new HashMap<>();
     private boolean hadError = false;
 
-    public PatchRuntime(GamePatch patch) {
+    public PatchRuntime(SCGameInstance instance, GamePatch patch) {
+        super(instance);
         this.patch = patch;
     }
 
@@ -50,7 +50,7 @@ public class PatchRuntime {
      */
     public PatchValue getVariable(String varName, boolean allowNull) {
         if (varName.equalsIgnoreCase("$VERSION"))
-            return new PatchValue(PatchArgumentType.STRING, exeInfo.getInternalName());
+            return new PatchValue(PatchArgumentType.STRING, getConfig().getInternalName());
 
         if (!allowNull && !this.variables.containsKey(varName))
             throw new RuntimeException("Cannot get value of unknown variable '" + varName + "'.");
@@ -182,7 +182,7 @@ public class PatchRuntime {
             this.variables.put(argument.getName(), new PatchValue(argument.getType(), argument.getDefaultValue()));
 
         // Use version-specific variables.
-        Map<String, PatchValue> versionValues = getPatch().getVersionSpecificVariables().get(getExeInfo().getInternalName());
+        Map<String, PatchValue> versionValues = getPatch().getVersionSpecificVariables().get(getConfig().getInternalName());
         if (versionValues != null)
             versionValues.forEach(this.variables::put);
     }
@@ -200,7 +200,7 @@ public class PatchRuntime {
      */
     public DataWriter getExeWriter() {
         if (this.exeWriter == null)
-            this.exeWriter = getExeInfo().getWriter();
+            this.exeWriter = getGameInstance().createExecutableWriter();
         return this.exeWriter;
     }
 }

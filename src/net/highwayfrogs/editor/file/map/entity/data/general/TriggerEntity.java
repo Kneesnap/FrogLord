@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
@@ -22,6 +23,10 @@ public class TriggerEntity extends MatrixData {
 
     public static final int ENTITY_TYPE_TRIGGER_MAX_IDS = 10;
     public static final int BYTE_SIZE = PSXMatrix.BYTE_SIZE + (10 * Constants.SHORT_SIZE) + (2 * Constants.INTEGER_SIZE);
+
+    public TriggerEntity(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

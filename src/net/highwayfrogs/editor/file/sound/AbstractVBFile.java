@@ -3,10 +3,10 @@ package net.highwayfrogs.editor.file.sound;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameFile;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.VABController;
 import net.highwayfrogs.editor.utils.Utils;
@@ -18,10 +18,14 @@ import java.util.List;
  * Represents a general VBFile.
  * Created by Kneesnap on 2/13/2019.
  */
-public abstract class AbstractVBFile<T extends GameObject> extends GameFile {
+public abstract class AbstractVBFile<T extends SCSharedGameFile> extends SCSharedGameFile {
     @Getter private final List<GameSound> audioEntries = new ArrayList<>();
     protected transient DataReader cachedReader;
     @Getter private transient T header;
+
+    public AbstractVBFile(SCGameInstance instance) {
+        super(instance);
+    }
 
     /**
      * Load the VB file, with the mandatory VH file.
@@ -41,7 +45,7 @@ public abstract class AbstractVBFile<T extends GameObject> extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new VABController(), "vb", this);
+        return loadEditor(new VABController(getGameInstance()), "vb", this);
     }
 
     @Override

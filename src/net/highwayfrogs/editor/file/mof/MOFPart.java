@@ -13,6 +13,9 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
@@ -331,7 +334,8 @@ public class MOFPart extends GameObject {
         incompletePart.collprim = this.collprim;
         incompletePart.matrix = this.matrix;
         incompletePart.flipbook = this.flipbook;
-        if (getParent().hasTextureAnimation() && !getConfig().isAtOrBeforeBuild23()) // TODO: Replace with some kind of warning system, where instead of throwing exceptions, we can have warnings per-file, etc.
+        SCGameInstance instance = getParent().getGameInstance();
+        if (getParent().hasTextureAnimation() && (!instance.isFrogger() || !((FroggerConfig) instance.getConfig()).isAtOrBeforeBuild23())) // TODO: Replace with some kind of warning system, where instead of throwing exceptions, we can have warnings per-file, etc.
             throw new RuntimeException("Texture animation cannot be copied to an incomplete MOF right now!"); // It is believed this wouldn't work in the retail game either.
     }
 
@@ -389,7 +393,8 @@ public class MOFPart extends GameObject {
      * @return shouldHide
      */
     public boolean shouldHide() {
-        int[] hiddenParts = getConfig().getHiddenPartIds().get(getParent().getFileEntry().getDisplayName());
+        SCGameConfig config = getParent().getConfig();
+        int[] hiddenParts = config.getHiddenPartIds().get(getParent().getFileEntry().getDisplayName());
         return hiddenParts != null && Arrays.binarySearch(hiddenParts, getPartID()) >= 0;
     }
 }

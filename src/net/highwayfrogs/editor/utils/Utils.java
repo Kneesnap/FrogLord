@@ -23,6 +23,7 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
 
 import javax.imageio.ImageIO;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -951,6 +953,18 @@ public class Utils {
     }
 
     /**
+     * Load a FXML template as a new window.
+     * WARNING: This method is blocking.
+     * @param template   The name of the template to load. Should not be user-controllable, as there is no path sanitization.
+     * @param title      The title of the window to show.
+     * @param controller Makes the window controller.
+     */
+    @SneakyThrows
+    public static <T> void loadFXMLTemplate(FroggerGameInstance instance, String template, String title, BiFunction<FroggerGameInstance, Stage, T> controller) {
+        loadFXMLTemplate(instance, template, title, controller, null);
+    }
+
+    /**
      * Gets the FXMLLoader by its name.
      * @param template The template name.
      * @return loader
@@ -982,6 +996,36 @@ public class Utils {
 
         if (consumer != null)
             consumer.accept(newStage, controllerObject);
+
+        newStage.initModality(Modality.WINDOW_MODAL);
+        newStage.initOwner(GUIMain.MAIN_STAGE);
+        newStage.getIcons().add(GUIMain.NORMAL_ICON);
+        newStage.showAndWait();
+    }
+
+    /**
+     * Load a FXML template as a new window.
+     * WARNING: This method is blocking.
+     * @param template   The name of the template to load. Should not be user-controllable, as there is no path sanitization.
+     * @param title      The title of the window to show.
+     * @param controller Makes the window controller.
+     */
+    @SneakyThrows
+    public static <T> void loadFXMLTemplate(FroggerGameInstance instance, String template, String title, BiFunction<FroggerGameInstance, Stage, T> controller, TriConsumer<FroggerGameInstance, Stage, T> consumer) {
+        FXMLLoader loader = getFXMLLoader(template);
+
+        Stage newStage = new Stage();
+        newStage.setTitle(title);
+
+        T controllerObject = controller.apply(instance, newStage);
+        loader.setController(controllerObject);
+
+        Parent rootNode = loader.load();
+        newStage.setScene(new Scene(rootNode));
+        newStage.setResizable(false);
+
+        if (consumer != null)
+            consumer.accept(instance, newStage, controllerObject);
 
         newStage.initModality(Modality.WINDOW_MODAL);
         newStage.initOwner(GUIMain.MAIN_STAGE);
@@ -1408,7 +1452,7 @@ public class Utils {
      * @return hasSignature
      */
     public static boolean testSignature(byte[] data, int startIndex, byte[] test) {
-        if (test.length > data.length)
+        if (data == null || test.length > data.length)
             return false;
 
         for (int i = 0; i < test.length; i++)

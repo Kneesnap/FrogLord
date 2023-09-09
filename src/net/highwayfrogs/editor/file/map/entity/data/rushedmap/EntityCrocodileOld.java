@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
@@ -13,6 +14,10 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Getter
 public class EntityCrocodileOld extends PathData {
     private int openMouthDelay;
+
+    public EntityCrocodileOld(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

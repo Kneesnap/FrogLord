@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.EntityData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
@@ -19,6 +20,10 @@ public class EntityEarthquake extends EntityData {
     private int[] pauseList = new int[MAX_ENTITY_UNPAUSED_BY_QUAKE];
 
     private static final int MAX_ENTITY_UNPAUSED_BY_QUAKE = 10;
+
+    public EntityEarthquake(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

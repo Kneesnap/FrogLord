@@ -154,7 +154,7 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
 
     @Override
     public GameImage getGameImage(TextureMap map) {
-        return map.getVloArchive().getMWD().getImageByTextureId(getUseTextureId(map));
+        return map.getVloArchive().getArchive().getImageByTextureId(getUseTextureId(map));
     }
 
     @Override

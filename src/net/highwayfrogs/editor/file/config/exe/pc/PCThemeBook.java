@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 import java.util.function.Function;
 
@@ -28,6 +29,10 @@ public class PCThemeBook extends ThemeBook {
     private int highMultiplayerVloId;
     private long formLibraryPointer;
     private int deathHeight; // Frog drowns under this height.
+
+    public PCThemeBook(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -64,9 +69,9 @@ public class PCThemeBook extends ThemeBook {
             return null;
 
         if (map.isMultiplayer()) {
-            return getConfig().getGameFile(map.isLowPolyMode() ? getLowMultiplayerVloId() : getHighMultiplayerVloId());
+            return getGameInstance().getGameFile(map.isLowPolyMode() ? getLowMultiplayerVloId() : getHighMultiplayerVloId());
         } else {
-            return getConfig().getGameFile(map.isLowPolyMode() ? getLowVloId() : getHighVloId());
+            return getGameInstance().getGameFile(map.isLowPolyMode() ? getLowVloId() : getHighVloId());
         }
     }
 
@@ -76,9 +81,9 @@ public class PCThemeBook extends ThemeBook {
             return null;
 
         if (map.isMultiplayer()) {
-            return getConfig().getGameFile(map.isLowPolyMode() ? getLowMultiplayerWadId() : getHighMultiplayerWadId());
+            return getGameInstance().getGameFile(map.isLowPolyMode() ? getLowMultiplayerWadId() : getHighMultiplayerWadId());
         } else {
-            return getConfig().getGameFile(map.isLowPolyMode() ? getLowWadId() : getHighWadId());
+            return getGameInstance().getGameFile(map.isLowPolyMode() ? getLowWadId() : getHighWadId());
         }
     }
 
@@ -101,10 +106,10 @@ public class PCThemeBook extends ThemeBook {
 
     @Override
     public String toString() {
-        return "WAD[Hi: " + getConfig().getResourceName(highWadId) + ",Lo: " + getConfig().getResourceName(lowWadId)
-                + "] VLO[Hi: " + getConfig().getResourceName(highVloId) + ",Lo: " + getConfig().getResourceName(lowVloId)
-                + "] mWAD[Hi: " + getConfig().getResourceName(highMultiplayerWadId) + ",Lo: " + getConfig().getResourceName(lowMultiplayerWadId)
-                + "] mVLO[Hi: " + getConfig().getResourceName(highMultiplayerVloId) + ",Lo: " + getConfig().getResourceName(lowMultiplayerVloId)
+        return "WAD[Hi: " + getGameInstance().getResourceName(highWadId) + ",Lo: " + getGameInstance().getResourceName(lowWadId)
+                + "] VLO[Hi: " + getGameInstance().getResourceName(highVloId) + ",Lo: " + getGameInstance().getResourceName(lowVloId)
+                + "] mWAD[Hi: " + getGameInstance().getResourceName(highMultiplayerWadId) + ",Lo: " + getGameInstance().getResourceName(lowMultiplayerWadId)
+                + "] mVLO[Hi: " + getGameInstance().getResourceName(highMultiplayerVloId) + ",Lo: " + getGameInstance().getResourceName(lowMultiplayerVloId)
                 + "] Death Height: " + deathHeight;
     }
 

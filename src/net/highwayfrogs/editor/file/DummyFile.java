@@ -3,9 +3,10 @@ package net.highwayfrogs.editor.file;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 
 import java.nio.ByteBuffer;
 
@@ -14,13 +15,14 @@ import java.nio.ByteBuffer;
  * Created by Kneesnap on 8/11/2018.
  */
 @Getter
-public class DummyFile extends GameFile {
-    private int length;
-    private ByteBuffer buffer;
+public class DummyFile extends SCSharedGameFile {
+    private final int length;
+    private final ByteBuffer buffer;
 
     public static final Image ICON = loadIcon("unknown");
 
-    public DummyFile(int length) {
+    public DummyFile(SCGameInstance instance, int length) {
+        super(instance);
         this.length = length;
         this.buffer = ByteBuffer.allocate(length);
     }
@@ -40,17 +42,6 @@ public class DummyFile extends GameFile {
      */
     public byte[] getArray() {
         return this.buffer.array();
-    }
-
-    /**
-     * Get a dummy file from a byte array.
-     * @param source The byte array to read from.
-     * @return dummyFile
-     */
-    public static DummyFile read(byte[] source) {
-        DummyFile file = new DummyFile(source.length);
-        file.load(new DataReader(new ArraySource(source)));
-        return file;
     }
 
     @Override

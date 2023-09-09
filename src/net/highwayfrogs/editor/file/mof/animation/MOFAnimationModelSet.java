@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents the MR_ANIM_MODEL_SET struct.
  * Created by Kneesnap on 8/25/2018.
  */
-public class MOFAnimationModelSet extends GameObject {
+public class MOFAnimationModelSet extends SCSharedGameData {
     private final MOFAnimationModel model;
     @Getter private final MOFAnimationCelSet celSet;
     @Getter private final transient MOFAnimation parent;
@@ -20,7 +21,8 @@ public class MOFAnimationModelSet extends GameObject {
     private static final int FORCED_MODEL_COUNT = 1;
     private static final int DEFAULT_TYPE = 0;
 
-    public MOFAnimationModelSet(MOFAnimation parent) {
+    public MOFAnimationModelSet(SCGameInstance instance, MOFAnimation parent) {
+        super(instance);
         this.parent = parent;
         this.model = new MOFAnimationModel(this);
         this.celSet = new MOFAnimationCelSet(parent);
@@ -44,7 +46,7 @@ public class MOFAnimationModelSet extends GameObject {
         if (modelCount != FORCED_MODEL_COUNT)
             getParent().getFileEntry().setFilePath(getParent().getFileEntry().getDisplayName() + "-FORCED_MODELS");
 
-        if (!getConfig().isMediEvil())
+        if (!getGameInstance().isMediEvil())
             Utils.verify(modelCount == FORCED_MODEL_COUNT, "FrogLord does not currently support MOFs with more than one model! (%d)", modelCount);
 
         Utils.verify(celsetCount == CEL_SET_COUNT, "FrogLord does not support MOFs with more than one cel-set! (%d)", celsetCount);

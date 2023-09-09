@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.file.config.exe;
 
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,30 +20,34 @@ public abstract class MapBook extends ExeStruct {
 
     public static final short REMAP_TERMINATOR = (short) 0;
 
+    public MapBook(FroggerGameInstance instance) {
+        super(instance);
+    }
+
     /**
      * Reads remap data into a config.
      */
-    public abstract void readRemapData(FroggerEXEInfo config);
+    public abstract void readRemapData(FroggerGameInstance instance);
 
     /**
      * Save remap data into the exe.
-     * @param writer The writer to save data to.
-     * @param config the config to save it from.
+     * @param writer   The writer to save data to.
+     * @param instance The game instance to save data to..
      */
-    public abstract void saveRemapData(DataWriter writer, FroggerEXEInfo config);
+    public abstract void saveRemapData(DataWriter writer, FroggerGameInstance instance);
 
     /**
      * Read a remap.
-     * @param config       The config to keep the results in.
+     * @param instance     The game instead to read from.
      * @param resourceId   The map's resource id.
      * @param remapAddress The address the remap starts at.
      */
-    protected void readRemap(FroggerEXEInfo config, int resourceId, long remapAddress) {
+    protected void readRemap(FroggerGameInstance instance, int resourceId, long remapAddress) {
         if (remapAddress == 0 || resourceId == 0)
             return; // Dummied out book.
 
-        DataReader reader = config.getReader();
-        int fileAddress = (int) (remapAddress - config.getRamPointerOffset());
+        DataReader reader = instance.getExecutableReader();
+        int fileAddress = (int) (remapAddress - getConfig().getRamPointerOffset());
         reader.setIndex(fileAddress);
 
         List<Short> remap = new ArrayList<>();
@@ -51,10 +55,10 @@ public abstract class MapBook extends ExeStruct {
         while (canContinueReadingRemap(reader, textureId = reader.readShort()))
             remap.add(textureId);
 
-        config.getRemapTable().put(config.getResourceEntry(resourceId), remap);
+        getGameInstance().setRemap(getGameInstance().getResourceEntryByID(resourceId), remap);
 
         // Hack to read island remap. Build 20 is the last build with the remap present (it's also the last build with the unique textures present.)
-        if ((!getConfig().isAtOrBeforeBuild1() && getConfig().isAtOrBeforeBuild20()) && getConfig().getResourceName(resourceId).equals("ARN1.MAP")) {
+        if ((!getConfig().isAtOrBeforeBuild1() && getConfig().isAtOrBeforeBuild20()) && getGameInstance().getResourceName(resourceId).equals("ARN1.MAP")) {
             while ((textureId = reader.readShort()) == REMAP_TERMINATOR) ;
 
             do {
@@ -69,7 +73,7 @@ public abstract class MapBook extends ExeStruct {
             return false;
 
         // Look for the data which comes after the remap table.
-        if (getConfig().isPSX() && textureId == 0x80) {
+        if (getGameInstance().isPSX() && textureId == 0x80) {
             reader.jumpTemp(reader.getIndex());
             long nextData = reader.readUnsignedIntAsLong();
             reader.jumpReturn();
@@ -81,18 +85,18 @@ public abstract class MapBook extends ExeStruct {
 
     /**
      * Save a remap.
-     * @param config       The config to keep the results in.
+     * @param instance     The game instance to save to.
      * @param resourceId   The map's resource id.
      * @param remapAddress The address the remap starts at.
      */
-    protected void saveRemap(DataWriter writer, FroggerEXEInfo config, int resourceId, long remapAddress) {
+    protected void saveRemap(DataWriter writer, FroggerGameInstance instance, int resourceId, long remapAddress) {
         if (remapAddress == 0 || resourceId == 0)
             return; // Dummied out book.
 
-        int fileAddress = (int) (remapAddress - config.getRamPointerOffset());
+        int fileAddress = (int) (remapAddress - instance.getConfig().getRamPointerOffset());
         writer.setIndex(fileAddress);
 
-        List<Short> entries = config.getRemapTable(config.getResourceEntry(resourceId));
+        List<Short> entries = instance.getRemapTable(instance.getResourceEntryByID(resourceId));
         entries.forEach(writer::writeShort);
         writer.writeShort(REMAP_TERMINATOR);
     }

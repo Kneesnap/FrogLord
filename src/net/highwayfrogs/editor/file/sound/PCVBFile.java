@@ -3,12 +3,17 @@ package net.highwayfrogs.editor.file.sound;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 
 /**
  * Represents a VB file with PC VH headers.
  * Created by Kneesnap on 2/13/2019.
  */
 public abstract class PCVBFile extends AbstractVBFile<VHFile> {
+    public PCVBFile(SCGameInstance instance) {
+        super(instance);
+    }
+
     @Override
     public void load(DataReader reader) {
         if (getHeader() == null) {

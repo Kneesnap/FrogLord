@@ -9,7 +9,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
@@ -18,6 +17,9 @@ import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.system.Tuple2;
@@ -33,12 +35,16 @@ import java.util.List;
  * A temporary WAD Controller. This is temporary.
  * Created by Kneesnap on 9/30/2018.
  */
-public class WADController extends EditorController<WADFile> {
+public class WADController extends EditorController<WADFile, SCGameInstance, SCGameConfig> {
     @FXML private TableView<NameValuePair> tableFileData;
     @FXML private TableColumn<Object, Object> tableColumnFileDataName;
     @FXML private TableColumn<Object, Object> tableColumnFileDataValue;
     @FXML private ListView<WADEntry> entryList;
     private WADEntry selectedEntry;
+
+    public WADController(SCGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void loadFile(WADFile file) {
@@ -74,7 +80,7 @@ public class WADController extends EditorController<WADFile> {
      * Silently fails if the file is not found.
      * @param file the file to select.
      */
-    public void selectFile(GameFile file) {
+    public void selectFile(SCGameFile<?> file) {
         int entryIndex = -1;
         for (int i = 0; i < getFile().getFiles().size(); i++)
             if (file == getFile().getFiles().get(i).getFile())
@@ -97,7 +103,7 @@ public class WADController extends EditorController<WADFile> {
         byte[] newBytes = Files.readAllBytes(selectedFile.toPath());
 
         if (fileName.endsWith(".mm3d")) {
-            GameFile selectFile = this.selectedEntry.getFile();
+            SCGameFile<?> selectFile = this.selectedEntry.getFile();
             if (!(selectFile instanceof MOFHolder)) {
                 Utils.makePopUp("You cannot import a model over a " + (selectFile != null ? selectFile.getClass().getSimpleName() : "null") + ".", AlertType.ERROR);
                 return;
@@ -122,7 +128,7 @@ public class WADController extends EditorController<WADFile> {
             }
         } else if (fileName.endsWith(".vlo") || fileName.endsWith(".xar") || fileName.endsWith(".xmr")) {
             WADFile.CURRENT_FILE_NAME = selectedEntry.getFileEntry().getDisplayName();
-            this.selectedEntry.setFile(getFile().getMWD().replaceFile(newBytes, selectedEntry.getFileEntry(), selectedEntry.getFile()));
+            this.selectedEntry.setFile(getFile().getArchive().replaceFile(newBytes, selectedEntry.getFileEntry(), selectedEntry.getFile()));
             WADFile.CURRENT_FILE_NAME = null;
         } else {
             Utils.makePopUp("Don't know how to import this file type. Aborted.", AlertType.WARNING);

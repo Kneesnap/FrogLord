@@ -20,7 +20,7 @@ import java.util.List;
  */
 @Getter
 public class HFSFile extends GameObject {
-    private List<List<DummyFile>> hfsFiles = new ArrayList<>();
+    private final List<List<DummyFile>> hfsFiles = new ArrayList<>();
     private static final String MAGIC = "hfs\n";
 
     @Override
@@ -42,7 +42,7 @@ public class HFSFile extends GameObject {
                 int dataLength = reader.readInt();
 
                 reader.jumpTemp(startAddress + (cdSector * Constants.CD_SECTOR_SIZE)); // Jumps to the CD sector.
-                DummyFile newFile = new DummyFile(dataLength);
+                DummyFile newFile = new DummyFile(null, dataLength);
                 newFile.load(reader);
                 fileData.add(newFile);
                 reader.jumpReturn();
@@ -131,7 +131,7 @@ public class HFSFile extends GameObject {
             for (int i = 0; i < entryCount; i++) {
                 int cdSector = (reader.readInt() & 0xFEFFFFFF); // Remove bit 24.
                 int dataLength = reader.readInt();
-                fileData.add(new DummyFile(dataLength));
+                fileData.add(new DummyFile(null, dataLength));
             }
 
             tableFile.hfsFiles.add(fileData);

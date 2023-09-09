@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.sound.GameSound;
 import net.highwayfrogs.editor.file.sound.PCVBFile;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.*;
@@ -20,9 +21,13 @@ import java.util.Arrays;
 public class PrototypeVBFile extends PCVBFile {
     private static final byte[] RIFF_SIGNATURE = {0x52, 0x49, 0x46, 0x46};
 
+    public PrototypeVBFile(SCGameInstance instance) {
+        super(instance);
+    }
+
     @Override
     public GameSound makeSound(AudioHeader entry, int id, int readLength) {
-        return new PrototypeSound(entry, id, readLength);
+        return new PrototypeSound(getGameInstance(), entry, id, readLength);
     }
 
     public static class PrototypeSound extends GameSound {
@@ -30,8 +35,8 @@ public class PrototypeVBFile extends PCVBFile {
         private byte[] wavBytes;
         private byte[] cachedRawAudio;
 
-        public PrototypeSound(AudioHeader header, int vanillaTrackId, int readLength) {
-            super(header, vanillaTrackId, readLength);
+        public PrototypeSound(SCGameInstance instance, AudioHeader header, int vanillaTrackId, int readLength) {
+            super(instance, header, vanillaTrackId, readLength);
         }
 
         @Override

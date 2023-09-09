@@ -8,8 +8,9 @@ import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * The two Frogger target platforms.
@@ -21,24 +22,32 @@ public enum TargetPlatform {
     PSX(PSXMapBook::new, PSXThemeBook::new),
     PC(PCMapBook::new, PCThemeBook::new);
 
-    private final Supplier<MapBook> mapBookMaker;
-    private final Supplier<ThemeBook> themeBookMaker;
+    private final Function<FroggerGameInstance, MapBook> mapBookMaker;
+    private final Function<FroggerGameInstance, ThemeBook> themeBookMaker;
 
     /**
-     * Create a new MapBook from a FroggerExeInfo.
-     * @param info The info to make the MapBook from.
+     * Create a new MapBook from a frogger instance.
+     * @param instance The instance to use to determine the theme book type to create.
      * @return mapBook
      */
-    public static MapBook makeNewMapBook(FroggerEXEInfo info) {
-        return info.isAtLeastRetailWindows() ? info.getPlatform().getMapBookMaker().get() : PSX.getMapBookMaker().get();
+    public static MapBook makeNewMapBook(FroggerGameInstance instance) {
+        if (instance.getConfig().isAtLeastRetailWindows()) {
+            return PC.getMapBookMaker().apply(instance);
+        } else {
+            return PSX.getMapBookMaker().apply(instance);
+        }
     }
 
     /**
-     * Create a new ThemeBook from a FroggerExeInfo.
-     * @param info The info to make the ThemeBook from.
+     * Create a new ThemeBook from a frogger instance.
+     * @param instance The instance to use to determine the theme book type to create.
      * @return mapBook
      */
-    public static ThemeBook makeNewThemeBook(FroggerEXEInfo info) {
-        return info.isAtLeastRetailWindows() ? info.getPlatform().getThemeBookMaker().get() : PSX.getThemeBookMaker().get();
+    public static ThemeBook makeNewThemeBook(FroggerGameInstance instance) {
+        if (instance.getConfig().isAtLeastRetailWindows()) {
+            return PC.getThemeBookMaker().apply(instance);
+        } else {
+            return PSX.getThemeBookMaker().apply(instance);
+        }
     }
 }

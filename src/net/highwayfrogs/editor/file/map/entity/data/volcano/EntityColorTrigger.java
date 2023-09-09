@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.map.entity.TriggerType;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
@@ -20,6 +21,10 @@ public class EntityColorTrigger extends MatrixData {
     private short[] uniqueIds = new short[COLOR_TRIGGER_MAX_IDS];
 
     private static final int COLOR_TRIGGER_MAX_IDS = 10;
+
+    public EntityColorTrigger(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

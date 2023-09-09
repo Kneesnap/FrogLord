@@ -19,7 +19,8 @@ import net.highwayfrogs.editor.file.patch.GamePatch;
 import net.highwayfrogs.editor.file.patch.PatchArgument;
 import net.highwayfrogs.editor.file.patch.PatchRuntime;
 import net.highwayfrogs.editor.file.patch.PatchValue;
-import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.games.sony.SCGameObject;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -33,7 +34,7 @@ import java.util.ResourceBundle;
  * Manages the script editor.
  * Created by Kneesnap on 8/1/2019.
  */
-public class PatchController implements Initializable {
+public class PatchController extends SCGameObject<FroggerGameInstance> implements Initializable {
     @FXML private ChoiceBox<GamePatch> patchSelector;
     @FXML private VBox patchConfigEditors;
     @FXML private Button loadExternalButton;
@@ -49,7 +50,8 @@ public class PatchController implements Initializable {
 
     @Getter private static final List<GamePatch> patches = new ArrayList<>();
 
-    public PatchController(Stage stage) {
+    public PatchController(FroggerGameInstance instance, Stage stage) {
+        super(instance);
         this.stage = stage;
         this.baseHeight = 100;
     }
@@ -60,7 +62,7 @@ public class PatchController implements Initializable {
         this.patchSelector.setConverter(new AbstractStringConverter<>(GamePatch::getName));
         this.patchSelector.setItems(FXCollections.observableArrayList(getPatches()));
         this.patchSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
-            this.selectedPatchRuntime = newValue != null ? new PatchRuntime(newValue) : null;
+            this.selectedPatchRuntime = newValue != null ? new PatchRuntime(getGameInstance(), newValue) : null;
             if (this.selectedPatchRuntime != null && !this.selectedPatchRuntime.runSetup()) {
                 this.stage.close();
                 return;
@@ -91,7 +93,7 @@ public class PatchController implements Initializable {
 
             GamePatch loadPatch = new GamePatch();
             loadPatch.loadPatchFromConfig(new Config(Utils.readLinesFromFile(patchFile)));
-            this.selectedPatchRuntime = new PatchRuntime(loadPatch);
+            this.selectedPatchRuntime = new PatchRuntime(getGameInstance(), loadPatch);
             if (this.selectedPatchRuntime.runSetup()) { // Setup success.
                 updatePatchDisplay();
             } else { // Setup failure.
@@ -118,7 +120,7 @@ public class PatchController implements Initializable {
      */
     public void updatePatchDisplay() {
         this.patchConfigEditors.getChildren().clear();
-        this.applyButton.setDisable(this.selectedPatchRuntime == null || !this.selectedPatchRuntime.getPatch().isCompatibleWithVersion(GUIMain.EXE_CONFIG.getInternalName()));
+        this.applyButton.setDisable(this.selectedPatchRuntime == null || !this.selectedPatchRuntime.getPatch().isCompatibleWithVersion(getConfig().getInternalName()));
 
         // Return if there is no patch to update a display for.
         if (this.selectedPatchRuntime == null) {
@@ -174,7 +176,7 @@ public class PatchController implements Initializable {
     }
 
     private String getWarning() {
-        if (!this.selectedPatchRuntime.getPatch().isCompatibleWithVersion(GUIMain.EXE_CONFIG.getInternalName()))
+        if (!this.selectedPatchRuntime.getPatch().isCompatibleWithVersion(getConfig().getInternalName()))
             return "This patch is not compatible with the loaded Frogger version.";
 
         return null;
@@ -183,11 +185,11 @@ public class PatchController implements Initializable {
     /**
      * Opens the Patch Menu.
      */
-    public static void openMenu() {
+    public static void openMenu(FroggerGameInstance instance) {
         if (getPatches().isEmpty())
             loadPatches();
 
-        Utils.loadFXMLTemplate("patch-menu", "Patch Menu", PatchController::new);
+        Utils.loadFXMLTemplate(instance, "patch-menu", "Patch Menu", PatchController::new);
     }
 
     /**

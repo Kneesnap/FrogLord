@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
@@ -27,6 +26,10 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.gui.editor.MOFMainController;
@@ -47,26 +50,24 @@ import java.util.Objects;
  */
 @Getter
 @Setter
-public class MOFHolder extends GameFile {
+public class MOFHolder extends SCSharedGameFile {
     private boolean dummy; // Is this dummied data?
     private boolean incomplete; // Some mofs are changed at run-time to share information. This attempts to handle that.
 
     private MOFFile staticFile;
     private MOFAnimation animatedFile;
 
-    private transient MAPTheme theme;
+    private transient MAPTheme theme; // TODO: We may want to change how we track this to instead maybe know the parent WAD file and calculate it from that. This is in the interest of supporting other games.
     private transient VLOArchive vloFile;
     private MOFHolder completeMOF; // This is the last MOF which was not incomplete.
-
-    public static final int MOF_ID = 3;
-    public static final int MAP_MOF_ID = 4;
 
     public static final int FLAG_ANIMATION_FILE = Constants.BIT_FLAG_3; // This is an animation MOF file.
 
     private static final Image ICON = loadIcon("model");
     public static final byte[] DUMMY_DATA = "DUMY".getBytes();
 
-    public MOFHolder(MAPTheme theme, MOFHolder lastCompleteMOF) {
+    public MOFHolder(SCGameInstance instance, MAPTheme theme, MOFHolder lastCompleteMOF) {
+        super(instance);
         this.theme = theme;
         this.completeMOF = lastCompleteMOF;
     }
@@ -110,14 +111,14 @@ public class MOFHolder extends GameFile {
     }
 
     private void resolveStaticMOF(DataReader reader) {
-        this.staticFile = new MOFFile(this);
+        this.staticFile = new MOFFile(getGameInstance(), this);
         this.staticFile.load(reader);
         if (!isIncomplete()) // We're not incomplete, we don't need to hold onto this value.
             this.completeMOF = null;
     }
 
     private void resolveAnimatedMOF(DataReader reader) {
-        this.animatedFile = new MOFAnimation(this);
+        this.animatedFile = new MOFAnimation(getGameInstance(), this);
         this.animatedFile.load(reader);
         if (!isIncomplete()) // We're not incomplete, we don't need to hold onto this value.
             this.completeMOF = null;
@@ -130,7 +131,7 @@ public class MOFHolder extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new MOFMainController(), "mofmain", this);
+        return loadEditor(new MOFMainController(getGameInstance()), "mofmain", this);
     }
 
     @Override
@@ -167,19 +168,19 @@ public class MOFHolder extends GameFile {
         }
 
         if (getVloFile() != null) {
-            MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
+            MainController.MAIN_WINDOW.openEditor(new MOFController(getGameInstance()), this);
             return;
         }
 
         // Just grab the first VLO.
-        VLOArchive firstVLO = getMWD().findFirstVLO();
+        VLOArchive firstVLO = getArchive().findFirstVLO();
         if (firstVLO != null) {
             setVloFile(firstVLO);
-            MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
+            MainController.MAIN_WINDOW.openEditor(new MOFController(getGameInstance()), this);
         } else {
-            getMWD().promptVLOSelection(getTheme(), vlo -> {
+            getArchive().promptVLOSelection(getTheme(), vlo -> {
                 setVloFile(vlo);
-                MainController.MAIN_WINDOW.openEditor(new MOFController(), this);
+                MainController.MAIN_WINDOW.openEditor(new MOFController(getGameInstance()), this);
             }, false);
         }
     }
@@ -253,7 +254,7 @@ public class MOFHolder extends GameFile {
         if (bank == null)
             return (animationId != 0) ? "Animation " + animationId : "Default Animation";
 
-        String bankName = Utils.stripWin95(Utils.stripExtension(getFileEntry().getDisplayName()));
+        String bankName = Utils.stripWin95(Utils.stripExtension(getIndexEntry().getDisplayName()));
         NameBank childBank = bank.getChildBank(bankName);
         return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getAnimationCount());
     }
@@ -274,7 +275,7 @@ public class MOFHolder extends GameFile {
         FileUtils3D.exportMofToObj(asStaticFile(), folder, vlo);
 
         // Export mm3d too.
-        File saveTo = new File(folder, Utils.stripExtension(getFileEntry().getDisplayName()) + ".mm3d");
+        File saveTo = new File(folder, Utils.stripExtension(getIndexEntry().getDisplayName()) + ".mm3d");
         Utils.deleteFile(saveTo);
 
         MisfitModel3DObject model = FileUtils3D.convertMofToMisfitModel(this);
@@ -296,11 +297,11 @@ public class MOFHolder extends GameFile {
      * @return override
      */
     public MOFHolder getOverride() {
-        String mofOverride = getConfig().getMofRenderOverrides().get(getFileEntry().getDisplayName());
+        String mofOverride = getConfig().getMofRenderOverrides().get(getIndexEntry().getDisplayName());
         if (mofOverride != null) {
-            FileEntry entry = getConfig().getResourceEntry(mofOverride);
+            FileEntry entry = getGameInstance().getResourceEntryByName(mofOverride);
             if (entry != null) {
-                GameFile file = getConfig().getGameFile(entry.getResourceId());
+                SCGameFile<?> file = getGameInstance().getGameFile(entry);
                 if (file instanceof MOFHolder)
                     return (MOFHolder) file;
             }
@@ -336,12 +337,17 @@ public class MOFHolder extends GameFile {
      * This lets us test if this model meets those conditions.
      * New FrogLord should fully investigate what's actually going on, and develop a proper fix.
      * GEN_FROG2.XMR/3/4 are also broken, but don't seem to be fixed with the froglet fix. Hmm.
+     * TODO: REVIEW THIS
      */
     public boolean isWeirdFrogMOF() {
-        if (getConfig().isAtOrBeforeBuild4() || getConfig().getBuild() >= 50)
+        if (!getGameInstance().isFrogger())
+            return false;
+
+        FroggerGameInstance frogger = (FroggerGameInstance) getGameInstance();
+        if (frogger.getConfig().isAtOrBeforeBuild4() || frogger.getConfig().getBuild() >= 50)
             return false; // Note: Build 5 may or may not be included. Build 50 is also probably not the correct build to test against here.
 
-        String name = getFileEntry().getDisplayName();
+        String name = getIndexEntry().getDisplayName();
         boolean isFroglet = "GEN_CHECKPOINT_1.XMR".equals(name)
                 || "GEN_CHECKPOINT_2.XMR".equals(name)
                 || "GEN_CHECKPOINT_3.XMR".equals(name)
@@ -349,6 +355,6 @@ public class MOFHolder extends GameFile {
                 || "GEN_CHECKPOINT_5.XMR".equals(name);
         boolean isGoldenFrog = "GEN_GOLD_FROG.XMR".equals(name);
 
-        return isFroglet || (isGoldenFrog && !getConfig().isAtOrBeforeBuild20());
+        return isFroglet || (isGoldenFrog && !frogger.getConfig().isAtOrBeforeBuild20());
     }
 }

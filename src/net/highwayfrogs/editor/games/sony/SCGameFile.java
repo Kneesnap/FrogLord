@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file;
+package net.highwayfrogs.editor.games.sony;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -6,6 +6,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.EditorController;
@@ -17,22 +18,35 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Represents a game file.
- * Created by Kneesnap on 8/11/2018.
+ * Represents a file (data corresponding to MWI entry or contents of a filesystem entity) for a particul
+ * @param <TGameInstance> The type of game instance this file can be used in.
+ *                        Created by Kneesnap on 9/8/2023.
  */
-public abstract class GameFile extends GameObject {
+public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends SCGameData<TGameInstance> {
+    public SCGameFile(TGameInstance instance) {
+        super(instance);
+    }
 
     /**
-     * Get the icon which will appear for this file in the file list.
-     * @return icon
+     * Get the icon which should appear for this file in the file list.
      */
     public abstract Image getIcon();
 
     /**
-     * Makes an editor for this file.
+     * Makes a JavaFX UI Node which will be put into the preview pane for this file. Commonly used for editing.
      * @return editor
      */
     public abstract Node makeEditor();
+
+    /**
+     * WAD files are capable of containing any file.
+     * This method is called when this file has the "Edit" button pressed from inside a WAD file.
+     * Examples of how this can be used include: Opening a new UI area (Such as for viewing a 3D model) or replacing the WAD UI with the normal UI of the file created by makeEditor().
+     * @param parent The wad file this is edited from.
+     */
+    public void handleWadEdit(WADFile parent) {
+
+    }
 
     /**
      * Called when this file is imported.
@@ -40,18 +54,9 @@ public abstract class GameFile extends GameObject {
      * @param oldFileName      The old file's name.
      * @param importedFileName The name of the file just imported.
      */
-    public void onImport(GameFile oldFile, String oldFileName, String importedFileName) {
+    public void onImport(SCGameFile<?> oldFile, String oldFileName, String importedFileName) {
 
     }
-
-    /**
-     * Handle when it's time to be edited.
-     * @param parent The wad parent.
-     */
-    public void handleWadEdit(WADFile parent) {
-
-    }
-
 
     /**
      * Gets a list of properties to show if this file is displayed in a WAD.
@@ -64,11 +69,20 @@ public abstract class GameFile extends GameObject {
     }
 
     /**
-     * Gets this file's MWI FileEntry.
+     * Gets the file entry of this file from the MWI.
+     * This is designed to always work, even during the load process.
      * @return fileEntry
      */
-    public FileEntry getFileEntry() {
-        return getMWD().getEntryMap().get(this);
+    public FileEntry getIndexEntry() {
+        TGameInstance instance = getGameInstance();
+        if (instance == null)
+            throw new RuntimeException("The game instance is null.");
+
+        FileEntry entry = instance.getFileEntriesByFileObjects().get(this);
+        if (entry == null) // Shouldn't occur.
+            throw new RuntimeException("The SCGameFile was not registered in the MWI entry mapping.");
+
+        return entry;
     }
 
     /**
@@ -104,7 +118,7 @@ public abstract class GameFile extends GameObject {
      * @param editFile   The file to edit.
      * @return guiNode
      */
-    public static <T extends GameFile> Node loadEditor(EditorController<T> controller, String template, T editFile) {
+    public static <T extends SCGameFile<?>> Node loadEditor(EditorController<T, ?, ?> controller, String template, T editFile) {
         try {
             FXMLLoader loader = Utils.getFXMLLoader(template);
             loader.setController(controller);
@@ -114,7 +128,16 @@ public abstract class GameFile extends GameObject {
 
             return node;
         } catch (IOException ex) {
-            throw new RuntimeException("Failed to setup file editor.", ex);
+            throw new RuntimeException("Failed to setup file editor for '" + template + "'.", ex);
+        }
+    }
+
+    /**
+     * Represents an SCGameFile which can be used by any SCGameInstance.
+     */
+    public static abstract class SCSharedGameFile extends SCGameFile<SCGameInstance> {
+        public SCSharedGameFile(SCGameInstance instance) {
+            super(instance);
         }
     }
 }

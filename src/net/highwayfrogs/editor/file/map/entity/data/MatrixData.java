@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 
@@ -16,6 +17,10 @@ import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 @Setter
 public class MatrixData extends EntityData {
     private PSXMatrix matrix = new PSXMatrix();
+
+    public MatrixData(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

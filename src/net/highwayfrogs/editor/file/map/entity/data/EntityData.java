@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.file.map.entity.data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.map.entity.Entity;
 import net.highwayfrogs.editor.file.map.entity.data.cave.*;
@@ -28,6 +26,9 @@ import net.highwayfrogs.editor.file.map.entity.data.suburbia.EntityTurtle;
 import net.highwayfrogs.editor.file.map.entity.data.swamp.*;
 import net.highwayfrogs.editor.file.map.entity.data.volcano.EntityColorTrigger;
 import net.highwayfrogs.editor.file.map.entity.data.volcano.EntityTriggeredPlatform;
+import net.highwayfrogs.editor.games.sony.SCGameData;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 import net.highwayfrogs.editor.system.Tuple2;
@@ -43,7 +44,7 @@ import java.util.Map;
  * Created by Kneesnap on 1/20/2019.
  */
 @Getter
-public abstract class EntityData extends GameObject {
+public abstract class EntityData extends SCGameData<FroggerGameInstance> {
     @Setter private Entity parentEntity;
     private static final Map<String, Tuple2<Class<? extends EntityData>, Constructor<? extends EntityData>>> CACHE_MAP = new HashMap<>();
     private static final List<Class<? extends EntityData>> REGISTERED_ENTITY_TYPES = Arrays.asList(EntityRopeBridge.class,
@@ -55,6 +56,15 @@ public abstract class EntityData extends GameObject {
             EntityOutroPlinth.class, EntityHedgehog.class, FallingLeafEntity.class, EntityCrocodileHead.class, TriggerEntity.class,
             EntityFatFireFlyBuild1.class, EntityWeb.class, EntityTurtleOld.class, EntitySwanOld.class, EntityCrocodileOld.class,
             EntitySpider.class, EntityTriggeredPlatform.class);
+
+    public EntityData(FroggerGameInstance instance) {
+        super(instance);
+    }
+
+    @Override
+    public FroggerConfig getConfig() {
+        return (FroggerConfig) super.getConfig();
+    }
 
     /**
      * Add entity data to a table.
@@ -73,37 +83,37 @@ public abstract class EntityData extends GameObject {
 
     /**
      * Make entity data for the given form.
-     * @param config The config to read from.
-     * @param entity The entity to make data for.
+     * @param instance The game instance to create data for.
+     * @param entity   The entity to make data for.
      * @return entityData
      */
     @SneakyThrows
-    public static EntityData makeData(FroggerEXEInfo config, Entity entity, Entity entityOwner) {
+    public static EntityData makeData(FroggerGameInstance instance, Entity entity, Entity entityOwner) {
         if (entity == null)
             return null;
 
-        String dataClassName = config.getEntityBank().getConfig().getString(entity.getTypeName(), null);
+        String dataClassName = instance.getConfig().getEntityBank().getConfig().getString(entity.getTypeName(), null);
         if (dataClassName == null)
             return null;
 
         if (!CACHE_MAP.containsKey(dataClassName))
             throw new RuntimeException("Failed to find entity class for the type: " + entity.getTypeName() + ", " + dataClassName);
-        EntityData newData = CACHE_MAP.get(dataClassName).getB().newInstance();
+        EntityData newData = CACHE_MAP.get(dataClassName).getB().newInstance(instance);
         newData.setParentEntity(entityOwner);
         return newData;
     }
 
     /**
      * Make entity data for the given form.
-     * @param config The config to read from.
-     * @param form   The form.
+     * @param instance The game instance to create data for.
+     * @param form     The form.
      * @return entityData
      */
-    public static Class<? extends EntityData> getEntityClass(FroggerEXEInfo config, FormEntry form) {
+    public static Class<? extends EntityData> getEntityClass(FroggerGameInstance instance, FormEntry form) {
         if (form == null)
             return null;
 
-        String dataClassName = config.getEntityBank().getConfig().getString(form.getEntityName(), null);
+        String dataClassName = instance.getConfig().getEntityBank().getConfig().getString(form.getEntityName(), null);
         if (dataClassName == null)
             return null;
 
@@ -115,7 +125,7 @@ public abstract class EntityData extends GameObject {
     static {
         for (Class<? extends EntityData> dataClass : REGISTERED_ENTITY_TYPES) {
             try {
-                CACHE_MAP.put(dataClass.getSimpleName(), new Tuple2<>(dataClass, dataClass.getConstructor()));
+                CACHE_MAP.put(dataClass.getSimpleName(), new Tuple2<>(dataClass, dataClass.getConstructor(FroggerGameInstance.class)));
             } catch (NoSuchMethodException e) {
                 System.out.println(dataClass.getSimpleName() + " probably does not have a no-args constructor.");
             }

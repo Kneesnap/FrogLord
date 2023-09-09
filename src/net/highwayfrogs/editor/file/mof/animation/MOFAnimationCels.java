@@ -3,11 +3,12 @@ package net.highwayfrogs.editor.file.mof.animation;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import java.util.List;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public class MOFAnimationCels extends GameObject {
+public class MOFAnimationCels extends SCSharedGameData {
     private final List<Integer> celNumbers = new ArrayList<>(); // Entry for each frame. Starts at 0, counts up for each frame, unless there is a duplicate frame, where it won't count. Index into indice list.
     private final List<Short> indices = new ArrayList<>(); // All of the transform ids used. Each frame has indices for each part, seemingly in order from start to end of animation.
     @Setter private boolean interpolationEnabled;
@@ -32,6 +33,7 @@ public class MOFAnimationCels extends GameObject {
     public static final int FLAG_VIRTUAL_INTERPOLATION = Constants.BIT_FLAG_1;
 
     public MOFAnimationCels(MOFAnimation parent) {
+        super(parent.getGameInstance());
         this.parent = parent;
     }
 
@@ -43,7 +45,7 @@ public class MOFAnimationCels extends GameObject {
 
         int flags = reader.readUnsignedShortAsInt();
         this.interpolationEnabled = (flags == FLAG_VIRTUAL_INTERPOLATION);
-        if (getConfig().isFrogger() && !getConfig().isAtOrBeforeBuild4()) // Seems this was indeed used for flags at one point.
+        if (getGameInstance().isFrogger() && !((FroggerConfig) getConfig()).isAtOrBeforeBuild4()) // Seems this was indeed used for flags at one point.
             Utils.verify(flags == FLAG_VIRTUAL_STANDARD, "Model cel-set had unsupported flags! (%s)", Utils.toHexString(flags)); // We don't support this mode as of now.
 
         int celNumberPointer = reader.readInt();

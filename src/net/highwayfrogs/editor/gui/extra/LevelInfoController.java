@@ -9,12 +9,13 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.data.MusicTrack;
 import net.highwayfrogs.editor.file.config.data.WorldId;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.map.MAPTheme;
+import net.highwayfrogs.editor.games.sony.SCGameObject;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
@@ -28,7 +29,7 @@ import java.util.ResourceBundle;
  * Created by Kneesnap on 3/15/2019.
  */
 @Getter
-public class LevelInfoController implements Initializable {
+public class LevelInfoController extends SCGameObject<FroggerGameInstance> implements Initializable {
     @FXML private ComboBox<MAPLevel> levelSelector;
     @FXML private ComboBox<MAPLevel> mapFileSelector;
     @FXML private ComboBox<MAPTheme> themeSelector;
@@ -37,15 +38,14 @@ public class LevelInfoController implements Initializable {
     @FXML private TextField stackPosField;
     @FXML private TextField localLevelField;
     @FXML private TextField worldLevelField;
-    private Stage stage;
-    private FroggerEXEInfo config;
+    private final Stage stage;
     private LevelInfo selectedLevel;
 
     private List<Node> disableFields;
 
-    private LevelInfoController(Stage stage, FroggerEXEInfo config) {
+    private LevelInfoController(FroggerGameInstance instance, Stage stage) {
+        super(instance);
         this.stage = stage;
-        this.config = config;
     }
 
     @Override
@@ -53,7 +53,7 @@ public class LevelInfoController implements Initializable {
         this.disableFields = Arrays.asList(themeSelector, worldSelector, musicSelector, stackPosField, localLevelField, worldLevelField, mapFileSelector);
 
         List<MAPLevel> levelInfo = new ArrayList<>();
-        for (LevelInfo info : getConfig().getAllLevelInfo())
+        for (LevelInfo info : getGameInstance().getAllLevelInfo())
             if (info.getLevel() != null)
                 levelInfo.add(info.getLevel());
 
@@ -68,7 +68,7 @@ public class LevelInfoController implements Initializable {
         mapFileSelector.valueProperty().addListener((listener, oldVal, newVal) -> getSelectedLevel().setLevel(newVal.ordinal()));
         worldSelector.valueProperty().addListener((observable, oldValue, newValue) -> getSelectedLevel().setWorld(newValue));
         themeSelector.valueProperty().addListener((observable, oldValue, newValue) -> getSelectedLevel().setTheme(newValue));
-        musicSelector.valueProperty().addListener((observable, oldValue, newValue) -> getConfig().getMusicTracks().set(getSelectedLevel().getLevel().ordinal(), newValue));
+        musicSelector.valueProperty().addListener((observable, oldValue, newValue) -> getGameInstance().getMusicTracks().set(getSelectedLevel().getLevel().ordinal(), newValue));
 
         Utils.setHandleTestKeyPress(stackPosField, Utils::isInteger, newValue -> getSelectedLevel().setStackPosition(Integer.parseInt(newValue)));
         Utils.setHandleTestKeyPress(localLevelField, Utils::isInteger, newValue -> getSelectedLevel().setLocalLevelId(Integer.parseInt(newValue)));
@@ -78,7 +78,7 @@ public class LevelInfoController implements Initializable {
     }
 
     private void setLevel(MAPLevel newLevel) {
-        this.selectedLevel = config.getLevel(newLevel);
+        this.selectedLevel = getGameInstance().getLevel(newLevel);
 
         boolean hasLevelInfo = (this.selectedLevel != null);
 
@@ -94,7 +94,7 @@ public class LevelInfoController implements Initializable {
         themeSelector.getSelectionModel().select(getSelectedLevel().getTheme());
         worldSelector.getSelectionModel().select(getSelectedLevel().getWorld());
 
-        MusicTrack selectedTrack = getConfig().getMusic(newLevel);
+        MusicTrack selectedTrack = getGameInstance().getMusic(newLevel);
         if (selectedTrack != null) {
             musicSelector.getSelectionModel().select(selectedTrack); // Select the current track.
         } else {
@@ -110,7 +110,7 @@ public class LevelInfoController implements Initializable {
     /**
      * Open the level info controller.
      */
-    public static void openEditor(FroggerEXEInfo info) {
-        Utils.loadFXMLTemplate("level-info", "Level Stack Editor", newStage -> new LevelInfoController(newStage, info));
+    public static void openEditor(FroggerGameInstance instance) {
+        Utils.loadFXMLTemplate(instance, "level-info", "Level Stack Editor", LevelInfoController::new);
     }
 }

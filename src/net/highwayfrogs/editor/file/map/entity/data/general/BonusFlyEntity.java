@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 
@@ -17,6 +18,10 @@ import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 @Setter
 public class BonusFlyEntity extends MatrixData {
     private int flyTypeId;
+
+    public BonusFlyEntity(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

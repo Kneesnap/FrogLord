@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -24,13 +25,14 @@ public class MOFFile extends MOFBase {
     private final List<MOFPart> parts = new ArrayList<>();
     private int unknownValue; // As far as I can tell, this value is unused. It might be a checksum of some kind, really I have no information to go off. Keeping it at zero should be fine for most purposes.
 
+    public static final String SIGNATURE = "\2FOM";
     private static final int INCOMPLETE_TEST_ADDRESS = 0x1C;
     private static final int INCOMPLETE_TEST_VALUE = 0x40;
     public static final ImageFilterSettings MOF_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
             .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);
 
-    public MOFFile(MOFHolder holder) {
-        super(holder);
+    public MOFFile(SCGameInstance instance, MOFHolder holder) {
+        super(instance, holder);
     }
 
     @Override
@@ -47,7 +49,7 @@ public class MOFFile extends MOFBase {
             this.bytes = reader.readBytes(reader.getRemaining());
             reader.jumpReturn();
 
-            String oldName = Utils.stripExtensionWin95(getHolder().getCompleteMOF().getFileEntry().getDisplayName());
+            String oldName = Utils.stripExtensionWin95(getHolder().getCompleteMOF().getIndexEntry().getDisplayName());
             String newName = Utils.stripExtensionWin95(getFileEntry().getDisplayName());
             getConfig().getAnimationBank().linkChildBank(oldName, newName); // Link animation names.
         }
@@ -147,6 +149,6 @@ public class MOFFile extends MOFBase {
 
     @Override
     public String makeSignature() {
-        return "\2FOM"; // Seems to be constant.
+        return SIGNATURE; // Seems to be constant.
     }
 }

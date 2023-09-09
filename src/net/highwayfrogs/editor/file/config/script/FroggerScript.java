@@ -2,9 +2,11 @@ package net.highwayfrogs.editor.file.config.script;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +15,19 @@ import java.util.List;
  * A frogger script.
  * Created by Kneesnap on 8/1/2019.
  */
-public class FroggerScript extends GameObject {
+public class FroggerScript extends SCGameData<FroggerGameInstance> {
     @Getter private final List<ScriptCommand> commands = new ArrayList<>();
     private int maxSize;
-    public static final FroggerScript EMPTY_SCRIPT = new FroggerScript();
+    public static final FroggerScript EMPTY_SCRIPT = new FroggerScript(null);
+
+    public FroggerScript(FroggerGameInstance instance) {
+        super(instance);
+    }
+
+    @Override
+    public FroggerConfig getConfig() {
+        return (FroggerConfig) super.getConfig();
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -30,7 +41,7 @@ public class FroggerScript extends GameObject {
                 break;
             }
 
-            lastCommand = new ScriptCommand();
+            lastCommand = new ScriptCommand(getGameInstance());
             lastCommand.load(reader);
             getCommands().add(lastCommand);
         }
@@ -57,7 +68,7 @@ public class FroggerScript extends GameObject {
      * @return name
      */
     public String getName() {
-        int index = getConfig().getScripts().indexOf(this);
+        int index = getGameInstance().getScripts().indexOf(this);
         return index != -1 ? getConfig().getScriptBank().getName(index) : "Unnamed Script";
     }
 

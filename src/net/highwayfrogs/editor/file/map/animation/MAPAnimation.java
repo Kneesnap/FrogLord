@@ -14,7 +14,6 @@ import javafx.util.Duration;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -23,6 +22,8 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.map.manager.AnimationManager;
 import net.highwayfrogs.editor.utils.Utils;
@@ -37,7 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Getter
 @Setter
-public class MAPAnimation extends GameObject {
+public class MAPAnimation extends SCGameData<FroggerGameInstance> {
     private MAPAnimationType type = MAPAnimationType.UV;
     private short uChange; // Delta U (Each frame)
     private short vChange;
@@ -55,6 +56,7 @@ public class MAPAnimation extends GameObject {
     public static final int BYTE_SIZE = 2 + (7 * Constants.SHORT_SIZE) + (4 * Constants.INTEGER_SIZE);
 
     public MAPAnimation(MAPFile mapFile) {
+        super(mapFile.getGameInstance());
         this.parentMap = mapFile;
     }
 
@@ -248,7 +250,7 @@ public class MAPAnimation extends GameObject {
                 }
             }, 0, usedMax);
 
-            double millisInterval = 1000D / getMWD().getFPS();
+            double millisInterval = 1000D / getGameInstance().getFPS();
             if (isTexture)
                 millisInterval *= getTexFrameDuration(); // Apply the duration of each texture.
 

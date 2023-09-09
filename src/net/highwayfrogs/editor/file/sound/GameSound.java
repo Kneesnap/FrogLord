@@ -4,8 +4,9 @@ import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.AudioFormat;
@@ -21,12 +22,13 @@ import java.io.IOException;
  * Created by Kneesnap on 9/24/2018.
  */
 @Getter
-public abstract class GameSound extends GameObject {
+public abstract class GameSound extends SCSharedGameData {
     private final AudioHeader header;
     private final int vanillaTrackId;
     private final int readLength;
 
-    public GameSound(AudioHeader header, int vanillaTrackId, int readLength) {
+    public GameSound(SCGameInstance instance, AudioHeader header, int vanillaTrackId, int readLength) {
+        super(instance);
         this.vanillaTrackId = vanillaTrackId;
         this.header = header;
         this.readLength = readLength;
