@@ -17,6 +17,10 @@ import java.util.List;
 public class BeastWarsInstance extends SCGameInstance {
     // MAP is four4
     // TEX (REMAP???) is 5
+    public static final int FILE_TYPE_VLO = 1;
+    public static final int FILE_TYPE_MOF = 3;
+    public static final int FILE_TYPE_MAP = 4;
+    public static final int FILE_TYPE_TEX = 5;
     public static final int FILE_TYPE_TIM = 8;
     public static final int FILE_TYPE_PLT = 9;
 
@@ -49,6 +53,7 @@ public class BeastWarsInstance extends SCGameInstance {
 
     @Override
     public void setupFileTypes(List<SCDisplayedFileType> fileTypes) {
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_VLO, "VLO"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_TIM, "TIM"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_PLT, "PLT"));
     }

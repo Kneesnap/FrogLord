@@ -4,7 +4,7 @@ package net.highwayfrogs.editor.file.mof.hilite;
  * Represents the different hilite types.
  * Created by Kneesnap on 1/8/2019.
  */
-public enum HiliteType {
+public enum FroggerHiliteType {
     COLLISION, // Special. Only present on models of playable frogs. This isn't for show, but instead it seems to be used in order to test collision with other model collprims, which is why frogger has it.
     SPRITE3D_SPLASH, // 3D Sprite - Water texture animation. Completely unused, but seemingly functional.
     SPRITE3D_WAKE, // 3D Sprite - Water texture animation. Completely unused, but seemingly functional.

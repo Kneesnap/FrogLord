@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.utils.Utils;
@@ -25,7 +25,7 @@ import java.util.*;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public class MOFPart extends GameObject {
+public class MOFPart extends SCSharedGameData {
     private final Map<MOFPrimType, List<MOFPolygon>> mofPolygons = new HashMap<>();
     private List<MOFPartcel> partcels = new ArrayList<>();
     private List<MOFHilite> hilites = new ArrayList<>();
@@ -50,6 +50,11 @@ public class MOFPart extends GameObject {
     @Setter private transient int tempVertexStart;
 
     public MOFPart(MOFFile parent) {
+        this(parent.getGameInstance(), parent);
+    }
+
+    public MOFPart(SCGameInstance instance, MOFFile parent) {
+        super(instance);
         this.parent = parent;
     }
 

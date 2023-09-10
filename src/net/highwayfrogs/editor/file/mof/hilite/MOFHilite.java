@@ -2,13 +2,13 @@ package net.highwayfrogs.editor.file.mof.hilite;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
 import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
@@ -22,14 +22,15 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class MOFHilite extends GameObject {
+public class MOFHilite extends SCSharedGameData {
+    private short hiliteType;
     private HiliteAttachType attachType = HiliteAttachType.NONE;
-    private HiliteType type = HiliteType.values()[0];
     private SVector vertex;
     private MOFPolygon polygon;
     private transient MOFPart parent;
 
     public MOFHilite(MOFPart parent) {
+        super(parent.getGameInstance());
         this.parent = parent;
     }
 
@@ -40,12 +41,7 @@ public class MOFHilite extends GameObject {
 
     @Override
     public void load(DataReader reader) {
-        int readType = reader.readUnsignedByteAsShort();
-
-        this.type = readType >= 0 && readType < HiliteType.values().length ? HiliteType.values()[readType] : null;
-        if (this.type == null)
-            throw new RuntimeException("Unrecognized Hilite Attach Type: " + readType);
-
+        this.hiliteType = reader.readUnsignedByteAsShort();
         this.attachType = HiliteAttachType.values()[reader.readUnsignedByteAsShort()];
 
         int readIndex = reader.readUnsignedShortAsInt();
@@ -62,6 +58,16 @@ public class MOFHilite extends GameObject {
         reader.skipInt(); // Runtime.
     }
 
+    public FroggerHiliteType getFroggerHiliteType() {
+        if (!getGameInstance().isFrogger())
+            return null;
+
+        if (this.hiliteType < 0 || this.hiliteType >= FroggerHiliteType.values().length)
+            throw new RuntimeException("Unrecognized Frogger Hilite Attach Type: " + this.hiliteType);
+
+        return FroggerHiliteType.values()[this.hiliteType];
+    }
+
     /**
      * Sets up the editor for this hilite.
      * @param controller The controller to setup under.
@@ -71,7 +77,14 @@ public class MOFHilite extends GameObject {
         RenderManager manager = controller.getRenderManager();
         grid.clearEditor();
 
-        grid.addEnumSelector("Hilite Type", getType(), HiliteType.values(), false, newType -> this.type = newType);
+        FroggerHiliteType froggerHiliteType = getFroggerHiliteType();
+
+        if (froggerHiliteType != null) {
+            grid.addEnumSelector("Hilite Type", froggerHiliteType, FroggerHiliteType.values(), false, newType -> this.hiliteType = (short) newType.ordinal());
+        } else {
+            grid.addShortField("Hilite Type", this.hiliteType, this::setHiliteType, value -> value >= 0 && value <= 255);
+        }
+
 
         grid.addButton("Remove Hilite", () -> {
             getParent().getHilites().remove(this);
@@ -85,7 +98,7 @@ public class MOFHilite extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedByte((short) type.ordinal());
+        writer.writeUnsignedByte(this.hiliteType);
         writer.writeUnsignedByte((short) this.attachType.ordinal());
 
         int saveId = -1;
