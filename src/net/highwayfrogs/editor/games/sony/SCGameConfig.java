@@ -85,7 +85,7 @@ public class SCGameConfig {
     protected NameBank loadBank(Config config, String configKey, String defaultBank, String bankName, boolean addChildrenToMainBank, BiFunction<NameBank, Integer, String> nameHandler) {
         String animBankName = config.getString(configKey, defaultBank);
         if (animBankName == null)
-            return null;
+            return NameBank.EMPTY_BANK;
 
         return NameBank.readBank(bankName, animBankName, addChildrenToMainBank, nameHandler);
     }

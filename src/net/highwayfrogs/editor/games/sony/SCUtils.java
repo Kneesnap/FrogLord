@@ -5,7 +5,8 @@ import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
-import net.highwayfrogs.editor.file.sound.AbstractVBFile;
+import net.highwayfrogs.editor.file.sound.VBAudioBody;
+import net.highwayfrogs.editor.file.sound.VHAudioHeader;
 import net.highwayfrogs.editor.file.sound.VHFile;
 import net.highwayfrogs.editor.file.sound.prototype.PrototypeVBFile;
 import net.highwayfrogs.editor.file.sound.psx.PSXVBFile;
@@ -130,26 +131,32 @@ public class SCUtils {
     public static SCGameFile<?> makeSound(FileEntry fileEntry, byte[] fileData) {
         SCGameInstance instance = fileEntry.getGameInstance();
         SCGameFile<?> lastFile = instance.getGameFile(fileEntry.getResourceId() - 1);
+        FileEntry lastEntry = lastFile != null ? lastFile.getIndexEntry() : null;
+        boolean doFileNamesMatch = (lastFile != null) && ((!lastEntry.hasFullFilePath() || !fileEntry.hasFullFilePath())
+                || Utils.stripExtension(fileEntry.getDisplayName()).equalsIgnoreCase(Utils.stripExtension(lastEntry.getDisplayName())));
 
-        AbstractVBFile<?> lastVB = lastFile instanceof AbstractVBFile<?> ? (AbstractVBFile<?>) lastFile : null;
+        VHAudioHeader lastVH = lastFile instanceof VHAudioHeader ? (VHAudioHeader) lastFile : null;
+        VBAudioBody<?> lastVB = lastFile instanceof VBAudioBody<?> ? (VBAudioBody<?>) lastFile : null;
         if (lastVB != null || fileEntry.hasExtension("vh") || (instance.isPSX() && Utils.testSignature(fileData, PSXVHFile.PSX_SIGNATURE))) {
+            VHAudioHeader newHeader = instance.isPSX() ? new PSXVHFile(fileEntry.getGameInstance()) : new VHFile(fileEntry.getGameInstance());
+            if (lastVB != null && doFileNamesMatch)
+                newHeader.setVbFile(lastVB);
+
+            return newHeader;
+        } else if (lastVH != null || fileEntry.hasExtension("vb")) {
+            VBAudioBody<?> newBody;
             if (instance.isPSX()) {
-                PSXVHFile newFile = new PSXVHFile(fileEntry.getGameInstance());
-                newFile.setVB((PSXVBFile) lastVB);
-                return newFile;
-            } else {
-                VHFile vhFile = new VHFile(fileEntry.getGameInstance());
-                vhFile.setVB(lastVB);
-                return vhFile;
-            }
-        } else if (lastFile instanceof VHFile || lastFile instanceof PSXVHFile || fileEntry.hasExtension("vb")) {
-            if (instance.isPSX()) {
-                return new PSXVBFile(fileEntry.getGameInstance());
+                newBody = new PSXVBFile(fileEntry.getGameInstance());
             } else if (instance.isFrogger() && !((FroggerGameInstance) instance).getConfig().isAtLeastRetailWindows()) {
-                return new PrototypeVBFile(fileEntry.getGameInstance());
+                newBody = new PrototypeVBFile(fileEntry.getGameInstance());
             } else {
-                return new RetailPCVBFile(fileEntry.getGameInstance());
+                newBody = new RetailPCVBFile(fileEntry.getGameInstance());
             }
+
+            if (lastVH != null && doFileNamesMatch)
+                newBody.setHeader(lastVH);
+
+            return newBody;
         }
 
         return null;

@@ -1,19 +1,15 @@
 package net.highwayfrogs.editor.file.sound.psx;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.GameSound;
+import net.highwayfrogs.editor.file.sound.VHAudioHeader;
 import net.highwayfrogs.editor.file.sound.psx.PSXVBFile.PSXSound;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.gui.MainController;
-import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Reads a PSX vab header file.
@@ -21,7 +17,7 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 11/30/2019.
  */
 @Getter
-public class PSXVHFile extends SCSharedGameFile {
+public class PSXVHFile extends VHAudioHeader {
     private int fileVersion = 7;
     private int vabBankId;
     private int reserved0;
@@ -35,7 +31,6 @@ public class PSXVHFile extends SCSharedGameFile {
     private long reserved1;
     private final VABProgram[] programs = new VABProgram[128];
     private VABTone[] tones;
-    @Setter private transient PSXVBFile VB;
     private transient int[] loadedSampleAddresses;
 
     private static final int TONES_PER_PROGRAM = 16;
@@ -52,7 +47,7 @@ public class PSXVHFile extends SCSharedGameFile {
     public void load(DataReader reader) {
         reader.verifyString(PSX_SIGNATURE);
         this.fileVersion = reader.readInt();
-        if (this.fileVersion != 7 && this.fileVersion != 6)
+        if (this.fileVersion != 7 && this.fileVersion != 6 && this.fileVersion != 5)
             throw new RuntimeException("Unknown Vab Header Version: " + this.fileVersion + "!");
 
         this.vabBankId = reader.readInt();
@@ -86,9 +81,8 @@ public class PSXVHFile extends SCSharedGameFile {
         for (int i = 0; i < this.loadedSampleAddresses.length; i++)
             this.loadedSampleAddresses[i] = (reader.readUnsignedShortAsInt() << 3);
 
-        if (getVB() != null)
-            getVB().load(this);
-        this.loadedSampleAddresses = null;
+        if (getVbFile() != null)
+            getVbFile().setHeader(this);
     }
 
     @Override
@@ -116,30 +110,14 @@ public class PSXVHFile extends SCSharedGameFile {
             tone.save(writer);
 
         // Write Sample Addresses.
-        for (GameSound sound : getVB().getAudioEntries())
+        for (GameSound sound : getVbFile().getAudioEntries())
             writer.writeUnsignedShort(((PSXSound) sound).getAddressWrittenTo() >> 3);
 
         // Write the final size.
         int headerSize = writer.getIndex();
         writer.jumpTemp(sizeAddress);
-        writer.writeInt(headerSize + getVB().getSavedTotalSize());
+        writer.writeInt(headerSize + ((PSXVBFile) getVbFile()).getSavedTotalSize());
         writer.jumpReturn();
-    }
-
-    @Override
-    public Image getIcon() {
-        return ICON;
-    }
-
-    @Override
-    public Node makeEditor() {
-        Utils.verify(getVB() != null, "VB sound is null.");
-        return getVB().makeEditor(); // Build the editor for the right file.
-    }
-
-    @Override
-    public void handleWadEdit(WADFile parent) {
-        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), this);
     }
 
     @Getter

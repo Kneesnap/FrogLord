@@ -12,8 +12,8 @@ import java.util.Stack;
  * Created by Kneesnap on 8/10/2018.
  */
 public class DataReader {
-    private DataSource source;
-    private Stack<Integer> jumpStack = new Stack<>();
+    private final DataSource source;
+    private final Stack<Integer> jumpStack = new Stack<>();
 
     public DataReader(DataSource source) {
         this.source = source;
@@ -264,7 +264,7 @@ public class DataReader {
         try {
             return source.readBytes(amount);
         } catch (Exception ex) {
-            throw new RuntimeException("Error while reading " + amount + " bytes.", ex);
+            throw new RuntimeException("Error while reading " + amount + " bytes. (Remaining: " + getRemaining() + ")", ex);
         }
     }
 
@@ -276,7 +276,7 @@ public class DataReader {
         try {
             source.skip(amount);
         } catch (Exception ex) {
-            throw new RuntimeException("Error while skipping " + amount + " bytes.", ex);
+            throw new RuntimeException("Error while skipping " + amount + " bytes. (Remaining: " + getRemaining() + ")", ex);
         }
     }
 

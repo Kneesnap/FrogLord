@@ -119,9 +119,9 @@ public class MainController implements Initializable {
 
         // Manually tracked data.
         addFileList(WADFile.TYPE_ID, "WAD", gameFileRegistry);
-        addFileList(0, "Various Files", gameFileRegistry);
+        addFileList(0, "Uncategorized", gameFileRegistry);
         for (Integer id : new ArrayList<>(gameFileRegistry.keySet()))
-            addFileList(id, "Unknown (" + id + ")", gameFileRegistry);
+            addFileList(id, "Unknown (ID: " + id + ")", gameFileRegistry);
 
         // Setup!
         FroggerGameInstance frogger = getGameInstance().isFrogger() ? (FroggerGameInstance) getGameInstance() : null;
@@ -171,7 +171,7 @@ public class MainController implements Initializable {
      * @return fileEntry
      */
     public FileEntry getFileEntry() {
-        return getArchive().getEntryMap().get(getCurrentFile());
+        return getCurrentFile().getIndexEntry();
     }
 
     @FXML
@@ -410,7 +410,7 @@ public class MainController implements Initializable {
             // Update text.
             boolean isIslandPlaceholder = file instanceof MAPFile && ((MAPFile) file).getMapConfig().isIslandPlaceholder();
             setStyle(isIslandPlaceholder ? "-fx-text-fill: red;" : null);
-            setText(entry.getDisplayName() + " [" + entry.getResourceId() + "]");
+            setText(entry.getDisplayName() + " [" + entry.getResourceId() + ", " + entry.getTypeId() + "]");
         }
     }
 

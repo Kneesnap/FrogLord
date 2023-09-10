@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.sound.AbstractVBFile;
 import net.highwayfrogs.editor.file.sound.GameSound;
+import net.highwayfrogs.editor.file.sound.VBAudioBody;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -23,7 +23,7 @@ import java.nio.file.Files;
  * Created by Kneesnap on 2/17/2020.
  */
 @Getter
-public class PSXVBFile extends AbstractVBFile<PSXVHFile> {
+public class PSXVBFile extends VBAudioBody<PSXVHFile> {
     private transient int savedTotalSize;
 
     public PSXVBFile(SCGameInstance instance) {
@@ -31,21 +31,20 @@ public class PSXVBFile extends AbstractVBFile<PSXVHFile> {
     }
 
     @Override
-    public void load(DataReader reader) {
-        if (this.cachedReader == null) {
-            this.cachedReader = reader;
-            return;
-        }
-
-        int[] addresses = getHeader().getLoadedSampleAddresses();
+    public void load(DataReader reader, PSXVHFile header) {
+        int[] addresses = header.getLoadedSampleAddresses();
         for (int i = 0; i < addresses.length; i++) {
-            int nextAddress = (addresses.length > i + 1 ? addresses[i + 1] : 0);
-            int audioSize = nextAddress > 0 ? nextAddress : reader.getSize() - reader.getIndex(); // Where the reading ends.
+            int audioSize = i >= addresses.length - 1 ? reader.getRemaining() : addresses[i + 1]; // Where the reading ends.
             if (audioSize == 0)
                 break;
 
-            NameBank bank = getConfig().getSoundBank().getChildBank(Utils.stripExtension(getIndexEntry().getDisplayName()));
-            PSXSound newSound = new PSXSound(getGameInstance(), bank != null ? getConfig().getSoundBank().getNames().indexOf(bank.getName(i)) : -1, audioSize);
+            String name = String.valueOf(i);
+            String bankName = Utils.stripExtension(getIndexEntry().getDisplayName());
+            NameBank bank = getConfig().getSoundBank().getChildBank(bankName);
+            if (bank != null)
+                name = bank.getName(i);
+
+            PSXSound newSound = new PSXSound(getGameInstance(), bank != null ? getConfig().getSoundBank().getNames().indexOf(name) : i, audioSize);
             newSound.load(reader);
             getAudioEntries().add(newSound);
         }

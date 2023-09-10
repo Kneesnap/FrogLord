@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.sound;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +7,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -20,9 +18,8 @@ import java.util.List;
  * Created by rdrpenguin04 on 8/22/2018.
  */
 @Getter
-public class VHFile extends SCSharedGameFile {
+public class VHFile extends VHAudioHeader {
     private final List<AudioHeader> entries = new ArrayList<>();
-    @Setter private transient AbstractVBFile<?> VB;
 
     public static final Image ICON = loadIcon("sound");
     public static final int CHANNEL_COUNT = 1;
@@ -39,6 +36,9 @@ public class VHFile extends SCSharedGameFile {
             entry.load(reader);
             getEntries().add(entry);
         }
+
+        if (getVbFile() != null)
+            getVbFile().setHeader(this);
     }
 
     @Override
@@ -52,16 +52,6 @@ public class VHFile extends SCSharedGameFile {
             if (entry.isAudioPresent())
                 offset += entry.getDataSize();
         }
-    }
-
-    @Override
-    public Image getIcon() {
-        return ICON;
-    }
-
-    @Override
-    public Node makeEditor() {
-        return null; // Build the editor for the right file.
     }
 
     @Setter

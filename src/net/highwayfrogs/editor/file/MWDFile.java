@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 @Getter
 public class MWDFile extends SCSharedGameData {
     private final List<SCGameFile<?>> files = new ArrayList<>();
-    private final Map<SCGameFile<?>, FileEntry> entryMap = new HashMap<>();
     @Setter private BiConsumer<FileEntry, SCGameFile<?>> saveCallback;
 
     private final transient Map<MAPTheme, VLOArchive> vloThemeCache = new HashMap<>();
