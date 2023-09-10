@@ -39,7 +39,6 @@ import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -136,7 +135,7 @@ public class MOFHolder extends SCSharedGameFile {
 
     @Override
     public List<Tuple2<String, String>> showWadProperties(WADFile wadFile, WADEntry wadEntry) {
-        List<Tuple2<String, String>> list = new ArrayList<>();
+        List<Tuple2<String, String>> list = super.showWadProperties(wadFile, wadEntry);
         list.add(new Tuple2<>("Type", isDummy() ? "Dummy" : (isIncomplete() ? "Incomplete" : (isAnimatedMOF() ? "Animated" : "Static"))));
 
         if (!isDummy()) {

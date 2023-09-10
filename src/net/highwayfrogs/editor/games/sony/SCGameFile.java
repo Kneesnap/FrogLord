@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -65,7 +66,13 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      * @return wadProperties, can be null.
      */
     public List<Tuple2<String, String>> showWadProperties(WADFile parent, WADEntry entry) {
-        return null;
+        List<Tuple2<String, String>> list = new ArrayList<>();
+        FileEntry fileEntry = getIndexEntry();
+        list.add(new Tuple2<>("File Type ID", String.valueOf(fileEntry.getTypeId())));
+        if (fileEntry.hasFilePath()) // Show path from MWI, not faked one.
+            list.add(new Tuple2<>("File Path", fileEntry.getFilePath()));
+
+        return list;
     }
 
     /**

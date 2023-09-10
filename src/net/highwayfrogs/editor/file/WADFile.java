@@ -81,7 +81,6 @@ public class WADFile extends SCSharedGameFile {
             if (Constants.ENABLE_WAD_FORMATS) {
                 file = getGameInstance().createFile(wadFileEntry, data);
                 if (file == null) {
-                    wadFileEntry.setFilePath(wadFileEntry.getDisplayName() + "-" + fileType);
                     file = new DummyFile(getGameInstance(), data.length);
                     System.out.println("File '" + fileName + "' was of an unknown file type. (" + fileType + ")");
                 }

@@ -59,12 +59,12 @@ public class MOFAnimation extends MOFBase {
 
         this.modelSetCount = modelSetCount;
         //Utils.verify(modelSetCount == 1, "Multiple model sets are not supported by FrogLord. (%d)", modelSetCount); // TODO: Medievil.
-        if (modelSetCount != 1)
+        if (modelSetCount != 1 && !getFileEntry().getDisplayName().contains("-MODELSETS"))
             getFileEntry().setFilePath(getFileEntry().getDisplayName() + "-MODELSETS");
 
         this.mofCount = staticFileCount;
         //Utils.verify(staticFileCount == 1, "FrogLord only supports one MOF per animation. (%d)", staticFileCount); // TODO: Medievil.
-        if (staticFileCount != 1)
+        if (staticFileCount != 1 && !getFileEntry().getDisplayName().contains("-MULTIPLEMOF"))
             getFileEntry().setFilePath(getFileEntry().getDisplayName() + "-MULTIPLEMOF");
 
         // Read model sets.

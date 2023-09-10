@@ -43,7 +43,7 @@ public class MOFAnimationModelSet extends SCSharedGameData {
         int bboxPointer = reader.readInt();
 
         Utils.verify(bboxCount == 0, "The ModelSet has a non-zero BBOX count. (%d, %d)", bboxCount, bboxPointer);
-        if (modelCount != FORCED_MODEL_COUNT)
+        if (modelCount != FORCED_MODEL_COUNT && !getParent().getFileEntry().getDisplayName().contains("-FORCED_MODELS"))
             getParent().getFileEntry().setFilePath(getParent().getFileEntry().getDisplayName() + "-FORCED_MODELS");
 
         if (!getGameInstance().isMediEvil())

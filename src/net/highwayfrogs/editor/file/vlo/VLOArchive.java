@@ -167,7 +167,7 @@ public class VLOArchive extends SCSharedGameFile {
 
     @Override
     public List<Tuple2<String, String>> showWadProperties(WADFile wadFile, WADEntry wadEntry) {
-        List<Tuple2<String, String>> list = new ArrayList<>();
+        List<Tuple2<String, String>> list = super.showWadProperties(wadFile, wadEntry);
         list.add(new Tuple2<>("Images", String.valueOf(getImages().size())));
         list.add(new Tuple2<>("PS1 VLO", String.valueOf(isPsxMode())));
         return list;
