@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony;
 
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.PSXTIMFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
@@ -81,6 +82,10 @@ public class SCUtils {
 
         if (fileEntry.getTypeId() == WADFile.TYPE_ID)
             return new WADFile(instance); // I think this is consistent across different games.
+
+        // This should be one of the final checks because it is prone to false-positives and being slower than most checks.
+        if (PSXTIMFile.isTIMFile(instance, fileData))
+            return new PSXTIMFile(instance);
 
         return null;
     }

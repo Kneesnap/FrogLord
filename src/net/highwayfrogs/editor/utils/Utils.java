@@ -1254,6 +1254,18 @@ public class Utils {
     }
 
     /**
+     * Get a integer from color bytes.
+     * @return rgbInt
+     */
+    public static int toARGB(byte red, byte green, byte blue, byte alpha) {
+        int result = byteToUnsignedShort(alpha);
+        result = (result << 8) + byteToUnsignedShort(red);
+        result = (result << 8) + byteToUnsignedShort(green);
+        result = (result << 8) + byteToUnsignedShort(blue);
+        return result;
+    }
+
+    /**
      * Get a integer from a color object.
      * @param color The color to turn into bgr.
      * @return rgbInt
@@ -1262,6 +1274,18 @@ public class Utils {
         int result = (int) (color.getBlue() * 0xFF);
         result = (result << 8) + (int) (color.getGreen() * 0xFF);
         result = (result << 8) + (int) (color.getRed() * 0xFF);
+        return result;
+    }
+
+    /**
+     * Get a integer from color bytes.
+     * @return rgbInt
+     */
+    public static int toABGR(byte red, byte green, byte blue, byte alpha) {
+        int result = byteToUnsignedShort(alpha);
+        result = (result << 8) + byteToUnsignedShort(blue);
+        result = (result << 8) + byteToUnsignedShort(green);
+        result = (result << 8) + byteToUnsignedShort(red);
         return result;
     }
 

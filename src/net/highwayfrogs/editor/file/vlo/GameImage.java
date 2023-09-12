@@ -113,7 +113,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
 
             if (getClutMode() == ImageClutMode.MODE_15BIT_NO_CLUT) { // Used in PS1 demo. Example: Frogger's eye, VOL@35 (The fireball texture)
                 for (int i = 0; i < pixelCount; i++)
-                    buffer.putInt(PSXClutColor.readColorFromShort(reader.readShort()));
+                    buffer.putInt(PSXClutColor.readBGRAColorFromShort(reader.readShort(), false));
             } else if (getClutMode() == ImageClutMode.MODE_8BIT) { // Used in PS1 release. Example: STARTNTSC.VLO
                 ClutEntry clut = getClut();
                 for (int i = 0; i < pixelCount; i++)
