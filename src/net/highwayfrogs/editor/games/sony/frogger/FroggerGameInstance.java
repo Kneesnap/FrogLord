@@ -119,13 +119,13 @@ public class FroggerGameInstance extends SCGameInstance {
 
     @Override
     public void setupFileTypes(List<SCDisplayedFileType> fileTypes) {
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_VLO, "VLO"));
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_SOUND, "VB/VH"));
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_VLO, "VLO Texture Bank"));
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_SOUND, "VB/VH Sound Bank"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_MOF, "Models"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_MAPMOF, "Models"));
         // 5
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_DEMO_DATA, "DAT"));
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_PAL, "PAL"));
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_DEMO_DATA, "DAT (Recorded Demo)"));
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_PAL, "PAL (Unused Palette)"));
     }
 
     /**

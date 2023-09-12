@@ -32,8 +32,8 @@ import java.util.Map;
  */
 public abstract class SCGameInstance {
     @Getter private final SCGameType gameType;
-    @Getter private final Map<SCGameFile<?>, FileEntry> fileEntriesByFileObjects; // TODO: Populate
-    @Getter private final Map<FileEntry, SCGameFile<?>> fileObjectsByFileEntries; // TODO: Populate.
+    @Getter private final Map<SCGameFile<?>, FileEntry> fileEntriesByFileObjects;
+    @Getter private final Map<FileEntry, SCGameFile<?>> fileObjectsByFileEntries;
     @Getter private SCGameConfig config;
     @Getter private MWDFile mainArchive;
     @Getter private MWIFile archiveIndex;
@@ -51,6 +51,22 @@ public abstract class SCGameInstance {
         this.gameType = gameType;
         this.fileEntriesByFileObjects = new HashMap<>();
         this.fileObjectsByFileEntries = new HashMap<>();
+    }
+
+    /**
+     * Associate a new object with a FileEntry.
+     * @param entry   The entry to associate the file with.
+     * @param newFile The file to associate with the entry.
+     * @return The old file associated with the entry.
+     */
+    public SCGameFile<?> trackFile(FileEntry entry, SCGameFile<?> newFile) {
+        SCGameFile<?> oldFile = this.fileObjectsByFileEntries.remove(entry);
+        if (oldFile != null)
+            this.fileEntriesByFileObjects.remove(oldFile, entry);
+
+        this.fileObjectsByFileEntries.put(entry, newFile);
+        this.fileEntriesByFileObjects.put(newFile, entry);
+        return oldFile;
     }
 
     /**

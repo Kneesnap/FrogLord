@@ -36,9 +36,6 @@
                                                 <Font name="System Bold" size="14.0"/>
                                             </font>
                                         </Label>
-                                        <Button fx:id="backButton" layoutX="124.0" layoutY="8.0" mnemonicParsing="false"
-                                                onAction="#returnToWad" text="Back" visible="false"
-                                                AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="8.0"/>
                                         <Button fx:id="viewModelBtn" layoutX="198.0" layoutY="8.0"
                                                 mnemonicParsing="false" onAction="#onView" text="View"/>
                                     </children>
@@ -64,7 +61,7 @@
                 </AnchorPane>
                 <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0"
                            HBox.hgrow="NEVER"/>
-                <AnchorPane fx:id="mofPropertyTable" HBox.hgrow="ALWAYS">
+                <AnchorPane HBox.hgrow="ALWAYS">
                     <children>
                         <TableView fx:id="mofPropertyTable" prefHeight="180.0" prefWidth="180.0"
                                    AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="8.0"

@@ -48,11 +48,11 @@ public class MedievilGameInstance extends SCGameInstance {
 
     @Override
     public void setupFileTypes(List<SCDisplayedFileType> fileTypes) {
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_VLO, "VLO"));
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_VLO, "VLO Texture Bank"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_MOF, "Models"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_MAPMOF, "Models"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_MAP, "Maps"));
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_QTR, "QTR Quad Tree"));
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_PGD, "PGD Collision Grid"));
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_QTR, "QTR (Quad Tree)"));
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_PGD, "PGD (Collision Grid)"));
     }
 }

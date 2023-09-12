@@ -195,13 +195,13 @@ public class WADController extends EditorController<WADFile, SCGameInstance, SCG
         if (!hasEntry)
             return;
 
-        tableFileData.getItems().clear();
-        tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
+        this.tableFileData.getItems().clear();
+        this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
 
         List<Tuple2<String, String>> properties = this.selectedEntry.getFile().showWadProperties(getFile(), this.selectedEntry);
         if (properties != null && properties.size() > 0)
             for (Tuple2<String, String> pair : properties)
-                tableFileData.getItems().add(new NameValuePair(pair.getA(), pair.getB()));
+                this.tableFileData.getItems().add(new NameValuePair(pair.getA(), pair.getB()));
     }
 }

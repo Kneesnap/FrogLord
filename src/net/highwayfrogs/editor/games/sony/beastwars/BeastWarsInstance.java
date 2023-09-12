@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony.beastwars;
 import net.highwayfrogs.editor.PLTFile;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.PSXTIMFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.*;
@@ -12,6 +13,9 @@ import java.util.List;
 
 /**
  * Represents a loaded instance of the Beast Wars: Transformers game files.
+ * TODO: Many animated mofs have broken animations.
+ * TODO: SFX on PC plays very poorly. PSX is fine.
+ * TODO: .BPP, .DAT, .TEX,
  * Created by Kneesnap on 9/8/2023.
  */
 public class BeastWarsInstance extends SCGameInstance {
@@ -35,6 +39,8 @@ public class BeastWarsInstance extends SCGameInstance {
 
     @Override
     public SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData) {
+        if (fileEntry.getTypeId() == FILE_TYPE_TIM || fileEntry.hasExtension("tim"))
+            return new PSXTIMFile(this);
         if (fileEntry.getTypeId() == FILE_TYPE_PLT || fileEntry.hasExtension("plt"))
             return new PLTFile(this);
 
@@ -53,8 +59,9 @@ public class BeastWarsInstance extends SCGameInstance {
 
     @Override
     public void setupFileTypes(List<SCDisplayedFileType> fileTypes) {
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_VLO, "VLO"));
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_TIM, "TIM"));
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_PLT, "PLT"));
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_VLO, "VLO Texture Bank"));
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_MOF, "Models"));
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_TIM, "TIM (PSX Image)"));
+        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_PLT, "PLT (Palette)"));
     }
 }

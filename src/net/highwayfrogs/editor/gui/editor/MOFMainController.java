@@ -8,6 +8,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -37,10 +38,13 @@ public class MOFMainController extends EditorController<MOFHolder, SCGameInstanc
         super.loadFile(mof);
 
         this.mofPropertyTable.getItems().clear();
+        this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
         List<Tuple2<String, String>> properties = mof.showWadProperties(null, null);
         if (properties != null && properties.size() > 0)
             for (Tuple2<String, String> pair : properties)
                 this.mofPropertyTable.getItems().add(new NameValuePair(pair.getA(), pair.getB()));
+
         updateVLO();
     }
 
