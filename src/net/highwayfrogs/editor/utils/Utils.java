@@ -6,6 +6,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.SubScene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -16,6 +17,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.paint.PhongMaterial;
 import javafx.stage.*;
 import javafx.stage.Window;
@@ -1836,19 +1838,38 @@ public class Utils {
      * @param subScene   The subScene to take a screenshot of.
      * @param namePrefix The file name prefix to save the image as.
      */
-    public static void takeScreenshot(SubScene subScene, Scene scene, String namePrefix) {
-        WritableImage image = scene.snapshot(null);
-        BufferedImage sceneImage = SwingFXUtils.fromFXImage(image, null);
-        BufferedImage croppedImage = cropImage(sceneImage, (int) subScene.getLayoutX(), (int) subScene.getLayoutY(), (int) subScene.getWidth(), (int) subScene.getHeight());
+    public static void takeScreenshot(SubScene subScene, Scene scene, String namePrefix, boolean isMOF) {
+        Paint subSceneColor = subScene.getFill();
+
+        if (isMOF)
+            subScene.setFill(Color.TRANSPARENT);
+
+        SnapshotParameters snapshotParameters = new SnapshotParameters();
+        snapshotParameters.setFill(Color.TRANSPARENT);
+
+        WritableImage wImage = new WritableImage((int)subScene.getWidth(), (int)subScene.getHeight());
+        BufferedImage sceneImage = SwingFXUtils.fromFXImage(subScene.snapshot(snapshotParameters, wImage), null);
+
+        if (isMOF)
+            subScene.setFill(subSceneColor);
 
         // Write to file.
         int id = -1;
         while (id++ < 1000) {
-            File testFile = new File(GUIMain.getWorkingDirectory(), (namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "") + Utils.padStringLeft(Integer.toString(id), 4, '0') + ".png");
+            String fileName = namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "";
+            File testFile = new File(GUIMain.getWorkingDirectory(), fileName + Utils.padStringLeft(Integer.toString(id), 4, '0') + ".png");
             if (!testFile.exists()) {
                 try {
-                    ImageIO.write(croppedImage, "png", testFile);
+                    ImageIO.write(sceneImage, "png", testFile);
                 } catch (IOException ex) {
+                    try {
+                        // Let user pick a directory (in case current working directory is not writeable)
+                        Utils.promptChooseDirectory("Save Screenshot", true);
+                        testFile = new File(GUIMain.getWorkingDirectory(), fileName + Utils.padStringLeft(Integer.toString(id), 4, '0') + ".png");
+                        ImageIO.write(sceneImage, "png", testFile);
+                    } catch(IOException ex2) {
+                        throw new RuntimeException(ex);
+                    }
                     throw new RuntimeException(ex);
                 }
 

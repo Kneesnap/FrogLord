@@ -65,7 +65,7 @@
                     <Label layoutX="17.0" layoutY="266.0" text="Controls:" underline="true"
                            AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="310.0"/>
                     <Label layoutX="19.6" layoutY="264.6" prefHeight="90.0" prefWidth="220.0"
-                           text="Left Arrow Key: Previous Frame&#13;Right Arrow Key: Next Frame&#13;X: Toggle Wireframe Mode&#13;Ctrl + S: Save Texture Map&#13;Escape: Exit Viewer"
+                           text="Left Arrow Key: Previous Frame&#13;Right Arrow Key: Next Frame&#13;X: Toggle Wireframe Mode&#13;Ctrl + S: Save Texture Map&#13;F10: Take Screenshot&#13;Escape: Exit Viewer"
                            wrapText="true" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="330.0"/>
                 </AnchorPane>
             </TitledPane>

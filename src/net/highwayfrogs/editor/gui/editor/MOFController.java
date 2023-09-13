@@ -193,7 +193,7 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
                 return;
             } else if (event.getCode() == KeyCode.F10) {
-                Utils.takeScreenshot(subScene3D, getMofScene(), Utils.stripExtension(getFile().getIndexEntry().getDisplayName()));
+                Utils.takeScreenshot(subScene3D, getMofScene(), Utils.stripExtension(getFile().getIndexEntry().getDisplayName()), true);
             }
 
             if (event.getCode() == KeyCode.S && event.isControlDown()) { // Save the texture map.
