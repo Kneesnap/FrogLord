@@ -702,6 +702,7 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
 
         @FXML private Label modelName;
         @FXML private ComboBox<Integer> animationSelector;
+        @FXML private ComboBox<Integer> partHideSelector;
         @FXML private ColorPicker colorPicker;
         @FXML private Button playButton;
         @FXML private CheckBox repeatCheckbox;
@@ -834,7 +835,7 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
             this.collprimEditorGrid = new GUIEditorGrid(getCollprimEditPane());
             this.hiliteEditorGrid = new GUIEditorGrid(getHiliteEditPane());
 
-            toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, frameSlider, textureAnimationCheckbox));
+            toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, frameSlider, textureAnimationCheckbox, partHideSelector));
             playNodes.addAll(Arrays.asList(playButton, frameSlider, frameLabel));
 
             playButton.setOnAction(evt -> {
@@ -902,6 +903,18 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
 
             animationSelector.getSelectionModel().select(0); // Automatically selects no animation.
 
+            List<Integer> parts = new ArrayList<>(Utils.getIntegerList(holder.asStaticFile().getParts().size()));
+            parts.add(0, -1);
+            parts.add(0, -2);
+            partHideSelector.setItems(FXCollections.observableArrayList(parts));
+            partHideSelector.setConverter((new AbstractStringConverter<>(holder::getPartName)));
+            partHideSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
+                if (newValue != null)
+                    hidePart(newValue);
+            }));
+
+            partHideSelector.getSelectionModel().select(0); // Select hide some parts.
+
             boolean disableState = !getHolder().asStaticFile().hasTextureAnimation();
             for (Node node : playNodes)
                 node.setDisable(disableState); // Disable playing non-existing animation.
@@ -914,6 +927,28 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
 
         private boolean shouldPreventFrameChange() {
             return getController().isSelectingVertex() || isAnimationPlaying();
+        }
+
+        /**
+         * Hides the specified MOF part.
+         * @param partToHide The part to hide.
+         */
+        public void hidePart(int partToHide) {
+
+            List<MOFPart> parts = getController().getFile().asStaticFile().getParts();
+
+            if (partToHide == -2)
+                for (MOFPart part : parts)
+                    part.setIsHidden(part.shouldHide());
+            else if (partToHide == -1)
+                for (MOFPart part : parts)
+                    part.setIsHidden(false);
+            else {
+                MOFPart part = parts.get(partToHide);
+                part.setIsHidden(!part.getIsHidden());
+            }
+
+            controller.getMofMesh().resetFrame();
         }
 
         /**

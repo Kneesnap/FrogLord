@@ -47,7 +47,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
         AtomicInteger texId = new AtomicInteger();
 
         for (MOFPart part : getMofHolder().asStaticFile().getParts()) {
-            if (part.shouldHide())
+            if (part.getIsHidden())
                 continue;
 
             part.getMofPolygons().values().forEach(list -> list.forEach(poly -> addPolygon(poly, texId)));
@@ -82,7 +82,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     public List<Vector> getVertices() {
         this.verticeCache.clear();
         for (MOFPart part : getMofHolder().asStaticFile().getParts()) {
-            if (part.shouldHide())
+            if (part.getIsHidden())
                 continue;
 
             MOFPartcel partcel = hasEnabledAnimation() ? part.getCel(getAction(), getFrame()) : part.getStaticPartcel();

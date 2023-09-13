@@ -20,7 +20,7 @@ public class MMTriangleFaceHolder extends MMDataBlockHeader<MMTriangleFaceBlock>
      * @param mofPolygon mofPolygon
      */
     public void addMofPolygon(MOFPolygon mofPolygon) {
-        short flags = mofPolygon.getParentPart().shouldHide() ? MMTriangleFaceBlock.FLAG_HIDDEN : 0;
+        short flags = mofPolygon.getParentPart().getIsHidden() ? MMTriangleFaceBlock.FLAG_HIDDEN : 0;
         if (mofPolygon.isQuadFace()) {
             addRectangle(mofPolygon.getVertexStart(), mofPolygon.getVertices(), flags);
         } else if (mofPolygon.isTriFace()) {

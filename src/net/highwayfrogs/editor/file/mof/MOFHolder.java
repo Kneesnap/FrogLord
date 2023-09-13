@@ -258,6 +258,14 @@ public class MOFHolder extends SCSharedGameFile {
         return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getAnimationCount());
     }
 
+    public String getPartName(int partId) {
+        if (partId == -2)
+            return "Default";
+        if (partId == -1)
+            return "Show All Parts";
+        return String.valueOf(partId);
+    }
+
     /**
      * Export this model to .obj
      * @param folder The folder to export to.

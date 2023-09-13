@@ -34,6 +34,7 @@ public class MOFPart extends SCSharedGameData {
     private final List<MOFPartPolyAnim> partPolyAnims = new ArrayList<>();
     private final List<MOFPartPolyAnimEntryList> partPolyAnimLists = new ArrayList<>();
     @Setter private MOFFlipbook flipbook;
+    @Setter private Boolean isHidden = false;
 
     private final transient MOFFile parent;
     private final transient Map<Integer, MOFPartPolyAnimEntryList> loadAnimEntryListMap = new HashMap<>();
