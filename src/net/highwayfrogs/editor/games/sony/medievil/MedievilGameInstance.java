@@ -3,12 +3,9 @@ package net.highwayfrogs.editor.games.sony.medievil;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.sound.psx.PSXVBFile;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
