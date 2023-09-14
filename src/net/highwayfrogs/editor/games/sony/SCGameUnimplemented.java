@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a game which support hasn't been added for yet.
@@ -39,6 +40,11 @@ public class SCGameUnimplemented extends SCGameInstance {
 
     @Override
     public void setupFileTypes(List<SCDisplayedFileType> fileTypes) {
+
+    }
+
+    @Override
+    public void setupUncategorizedFileTypes(Map<String, String> uncategorizedFileTypes) {
 
     }
 }

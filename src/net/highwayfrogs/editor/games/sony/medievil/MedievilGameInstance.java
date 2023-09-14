@@ -3,11 +3,14 @@ package net.highwayfrogs.editor.games.sony.medievil;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.sound.psx.PSXVBFile;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents an instance of MediEvil game files.
@@ -54,5 +57,13 @@ public class MedievilGameInstance extends SCGameInstance {
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_MAP, "Maps"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_QTR, "QTR (Quad Tree)"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_PGD, "PGD (Collision Grid)"));
+    }
+
+    @Override
+    public void setupUncategorizedFileTypes(Map<String, String> uncategorizedFileTypes) {
+        uncategorizedFileTypes.clear();
+        uncategorizedFileTypes.put("PSXTIMFile", "TIM");
+        uncategorizedFileTypes.put("PSXVBFile", "VB/VH Sound Bank");
+        uncategorizedFileTypes.put("PSXVHFile", "VB/VH Sound Bank");
     }
 }

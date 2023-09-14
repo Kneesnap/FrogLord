@@ -71,7 +71,6 @@ public class FroggerGameInstance extends SCGameInstance {
     private static final int FILE_TYPE_DEMO_DATA = 6;
     public static final int FILE_TYPE_PAL = 7;
 
-
     public FroggerGameInstance() {
         super(SCGameType.FROGGER);
     }
@@ -126,6 +125,12 @@ public class FroggerGameInstance extends SCGameInstance {
         // 5
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_DEMO_DATA, "DAT (Recorded Demo)"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_PAL, "PAL (Unused Palette)"));
+    }
+
+    @Override
+    public void setupUncategorizedFileTypes(Map<String, String> uncategorizedFileTypes) {
+        uncategorizedFileTypes.clear();
+        uncategorizedFileTypes.put("MAPFile", "MAP");
     }
 
     /**

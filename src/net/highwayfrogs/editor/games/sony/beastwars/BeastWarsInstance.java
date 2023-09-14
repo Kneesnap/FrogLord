@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a loaded instance of the Beast Wars: Transformers game files.
@@ -63,5 +64,10 @@ public class BeastWarsInstance extends SCGameInstance {
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_MOF, "Models"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_TIM, "TIM (PSX Image)"));
         fileTypes.add(new SCDisplayedFileType(FILE_TYPE_PLT, "PLT (Palette)"));
+    }
+
+    @Override
+    public void setupUncategorizedFileTypes(Map<String, String> uncategorizedFileTypes) {
+
     }
 }
