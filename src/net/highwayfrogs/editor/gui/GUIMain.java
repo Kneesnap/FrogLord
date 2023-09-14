@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 
 public class GUIMain extends Application {
@@ -100,10 +101,13 @@ public class GUIMain extends Application {
         }
 
         System.out.println("Executable CRC32: " + crcHash); // There was no configuration found, so display the CRC32, in-case we want to make a configuration.
+
+        TreeMap<String, String> sortedConfigDisplayNames = new TreeMap<>(configDisplayName);
+
         SelectionMenu.promptSelection("Select a configuration.", resourcePath -> {
             SCGameInstance instance = makeGameInstance(exeFile, mwdFile, resourcePath.getKey());
             onConfigLoad.accept(instance);
-        }, configDisplayName.entrySet(), Entry::getValue, null);
+        }, sortedConfigDisplayNames.entrySet(), Entry::getValue, null);
     }
 
     private SCGameInstance makeGameInstance(File inputExe, File inputMwd, String configName) {
