@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
-import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
@@ -50,8 +49,8 @@ public class MOFCollprim extends SCSharedGameData {
     @Override
     public void load(DataReader reader) {
         CollprimType type = CollprimType.values()[reader.readUnsignedShortAsInt()];
-        if (type != CollprimType.CUBOID && type != CollprimType.SPHERE && (!getGameInstance().isFrogger() || !((FroggerConfig) getConfig()).isSonyPresentation()))
-            throw new RuntimeException("MOFCollprim was type " + type + ", which is not supported. (" + WADFile.CURRENT_FILE_NAME + ")");
+        if (type != CollprimType.CUBOID && type != CollprimType.SPHERE)
+            System.out.println("MOFCollprim was type " + type + ", which is not supported. (" + WADFile.CURRENT_FILE_NAME + ")");
 
         this.flags = reader.readUnsignedShortAsInt();
         reader.skipInt(); // Run-time.

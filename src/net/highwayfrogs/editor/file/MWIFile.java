@@ -68,29 +68,39 @@ public class MWIFile extends SCSharedGameData {
 
         int loadingId = 0;
         while (reader.hasMore() && (nameStartAddress == null || nameStartAddress.get() > reader.getIndex())) { // Read entries until we reach file-names.
-            int nameOffset = reader.readInt();
-
             FileEntry entry = new FileEntry(getGameInstance(), loadingId++);
 
-            if (nameOffset != CODE_NO_FILE_NAME) { // If the file name is present, read the file name. (File-names are present on the PC version, but not the PSX version.)
-                if (nameStartAddress == null) // Use the first name address as the address which starts the name table.
-                    nameStartAddress = new AtomicInteger(nameOffset);
+            if (getGameInstance().isOldFrogger()) {
+                entry.setFilePath(reader.readTerminatedStringOfLength(40));
 
-                reader.jumpTemp(nameOffset);
-                entry.setFilePath(reader.readNullTerminatedString());
-                reader.jumpReturn();
-            }
-
-            entry.setFlags(reader.readInt());
-            entry.setTypeId(reader.readInt());
-            entry.setSectorOffset(reader.readInt());
-            reader.skipInt(); // Should always be 0. This is used by the frogger.exe to locate where in RAM the file is located.
-            reader.skipInt(); // Should always be 0. This is used by frogger.exe to locate where in RAM the file is depacked at.
-            entry.setPackedSize(reader.readInt());
-            entry.unpackedSize = reader.readInt(); // Set the raw value, not through the setter.
-
-            if (getGameInstance().getGameType().doesMwiHaveChecksum()) // Discard checksum from post-MediEvil MWIs.
+                entry.setFlags(reader.readInt());
+                entry.setTypeId(reader.readInt());
+                entry.setSectorOffset(reader.readInt());
                 reader.skipInt();
+                entry.unpackedSize = reader.readInt();
+                reader.skipInt();
+            } else {
+                int nameOffset = reader.readInt();
+                if (nameOffset != CODE_NO_FILE_NAME) { // If the file name is present, read the file name. (File-names are present on the PC version, but not the PSX version.)
+                    if (nameStartAddress == null) // Use the first name address as the address which starts the name table.
+                        nameStartAddress = new AtomicInteger(nameOffset);
+
+                    reader.jumpTemp(nameOffset);
+                    entry.setFilePath(reader.readNullTerminatedString());
+                    reader.jumpReturn();
+                }
+
+                entry.setFlags(reader.readInt());
+                entry.setTypeId(reader.readInt());
+                entry.setSectorOffset(reader.readInt());
+                reader.skipInt(); // Should always be 0. This is used by the frogger.exe to locate where in RAM the file is located.
+                reader.skipInt(); // Should always be 0. This is used by frogger.exe to locate where in RAM the file is depacked at.
+                entry.setPackedSize(reader.readInt());
+                entry.unpackedSize = reader.readInt(); // Set the raw value, not through the setter.
+
+                if (getGameInstance().getGameType().doesMwiHaveChecksum()) // Discard checksum from post-MediEvil MWIs.
+                    reader.skipInt();
+            }
 
             getEntries().add(entry);
         }

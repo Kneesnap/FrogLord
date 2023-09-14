@@ -204,10 +204,7 @@ public class MWDFile extends SCSharedGameData {
      * @param allowNull Are null VLOs allowed?
      */
     public void promptVLOSelection(MAPTheme theme, Consumer<VLOArchive> handler, boolean allowNull) {
-        List<VLOArchive> allVLOs = getFiles().stream()
-                .filter(VLOArchive.class::isInstance)
-                .map(VLOArchive.class::cast)
-                .collect(Collectors.toList());
+        List<VLOArchive> allVLOs = getAllFiles(VLOArchive.class);
 
         if (allowNull)
             allVLOs.add(0, null);
@@ -215,7 +212,7 @@ public class MWDFile extends SCSharedGameData {
         if (theme != null) {
             List<VLOArchive> movedVLOs = allVLOs.stream()
                     .filter(vlo -> {
-                        FileEntry entry = vlo.getIndexEntry();
+                        FileEntry entry = vlo != null ? vlo.getIndexEntry() : null;
                         return entry != null && entry.getDisplayName().startsWith(theme.getInternalName());
                     })
                     .collect(Collectors.toList());

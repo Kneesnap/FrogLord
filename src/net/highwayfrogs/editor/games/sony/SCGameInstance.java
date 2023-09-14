@@ -300,6 +300,13 @@ public abstract class SCGameInstance {
     /**
      * Tests if the game currently being read is Frogger.
      */
+    public boolean isOldFrogger() {
+        return this.gameType == SCGameType.OLD_FROGGER;
+    }
+
+    /**
+     * Tests if the game currently being read is Frogger.
+     */
     public boolean isFrogger() {
         return this.gameType == SCGameType.FROGGER;
     }
