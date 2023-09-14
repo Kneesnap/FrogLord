@@ -98,6 +98,9 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
 
     @Setter private Vector showPosition;
 
+    private static final int SELECTION_SHOW_DEFAULT = -2;
+    private static final int SELECTION_SHOW_ALL = -1;
+
     private static final String LIGHTING_LIST = "extraLighting";
     private static final String HILITE_LIST = "hiliteBoxes";
     private static final String BBOX_LIST = "boundingBoxes";
@@ -835,7 +838,7 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
             this.collprimEditorGrid = new GUIEditorGrid(getCollprimEditPane());
             this.hiliteEditorGrid = new GUIEditorGrid(getHiliteEditPane());
 
-            toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, frameSlider, textureAnimationCheckbox, partHideSelector));
+            toggleNodes.addAll(Arrays.asList(repeatCheckbox, animationSelector, fpsField, frameLabel, frameSlider, textureAnimationCheckbox));
             playNodes.addAll(Arrays.asList(playButton, frameSlider, frameLabel));
 
             playButton.setOnAction(evt -> {
@@ -904,14 +907,12 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
             animationSelector.getSelectionModel().select(0); // Automatically selects no animation.
 
             List<Integer> parts = new ArrayList<>(Utils.getIntegerList(holder.asStaticFile().getParts().size()));
-            parts.add(0, -1);
-            parts.add(0, -2);
+            parts.add(0, SELECTION_SHOW_ALL);
+            parts.add(0, SELECTION_SHOW_DEFAULT);
+
             partHideSelector.setItems(FXCollections.observableArrayList(parts));
-            partHideSelector.setConverter((new AbstractStringConverter<>(holder::getPartName)));
-            partHideSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
-                if (newValue != null)
-                    hidePart(newValue);
-            }));
+            partHideSelector.setConverter(new AbstractStringConverter<>(this::getPartUIName));
+            partHideSelector.valueProperty().addListener(((observable, oldValue, newValue) -> onUISelectPart(newValue)));
 
             partHideSelector.getSelectionModel().select(0); // Select hide some parts.
 
@@ -929,26 +930,39 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
             return getController().isSelectingVertex() || isAnimationPlaying();
         }
 
+        private String getPartUIName(int partId) {
+            if (partId == SELECTION_SHOW_DEFAULT)
+                return "Default";
+            if (partId == SELECTION_SHOW_ALL)
+                return "Show All Parts";
+
+            return "Part #" + partId;
+        }
+
         /**
-         * Hides the specified MOF part.
-         * @param partToHide The part to hide.
+         * Updates the MOF display when the UI selects a new option.
+         * @param partId The part ID to display.
          */
-        public void hidePart(int partToHide) {
+        private void onUISelectPart(int partId) {
+            MOFMesh mesh = this.controller.getMofMesh();
+            MOFFile file = this.controller.getFile().asStaticFile();
 
-            List<MOFPart> parts = getController().getFile().asStaticFile().getParts();
-
-            if (partToHide == -2)
-                for (MOFPart part : parts)
-                    part.setIsHidden(part.shouldHide());
-            else if (partToHide == -1)
-                for (MOFPart part : parts)
-                    part.setIsHidden(false);
-            else {
-                MOFPart part = parts.get(partToHide);
-                part.setIsHidden(!part.getIsHidden());
+            if (partId == SELECTION_SHOW_DEFAULT) {
+                mesh.getHiddenParts().clear();
+                for (MOFPart part : file.getParts())
+                    if (part.isHiddenByConfiguration())
+                        mesh.getHiddenParts().add(part);
+            } else if (partId == SELECTION_SHOW_ALL) {
+                mesh.getHiddenParts().clear();
+            } else if (partId >= 0 && partId < file.getParts().size()) {
+                MOFPart part = file.getParts().get(partId);
+                if (!mesh.getHiddenParts().remove(part))
+                    mesh.getHiddenParts().add(part);
+            } else {
+                throw new RuntimeException("UI Error, Unexpected MOF Part ID: " + partId);
             }
 
-            controller.getMofMesh().resetFrame();
+            mesh.resetFrame();
         }
 
         /**

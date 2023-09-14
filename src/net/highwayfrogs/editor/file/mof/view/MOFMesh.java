@@ -21,7 +21,9 @@ import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -35,6 +37,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     private int frameCount;
     private final List<Vector> verticeCache = new ArrayList<>();
     @Setter private boolean showOverlay;
+    private final Set<MOFPart> hiddenParts = new HashSet<>();
 
     public MOFMesh(MOFHolder holder) {
         super(holder.makeTextureMap(), VertexFormat.POINT_TEXCOORD);
@@ -47,7 +50,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
         AtomicInteger texId = new AtomicInteger();
 
         for (MOFPart part : getMofHolder().asStaticFile().getParts()) {
-            if (part.getIsHidden())
+            if (this.hiddenParts.contains(part))
                 continue;
 
             part.getMofPolygons().values().forEach(list -> list.forEach(poly -> addPolygon(poly, texId)));
@@ -82,7 +85,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     public List<Vector> getVertices() {
         this.verticeCache.clear();
         for (MOFPart part : getMofHolder().asStaticFile().getParts()) {
-            if (part.getIsHidden())
+            if (this.hiddenParts.contains(part))
                 continue;
 
             MOFPartcel partcel = hasEnabledAnimation() ? part.getCel(getAction(), getFrame()) : part.getStaticPartcel();

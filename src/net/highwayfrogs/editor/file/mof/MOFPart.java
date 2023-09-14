@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
@@ -34,7 +33,6 @@ public class MOFPart extends SCSharedGameData {
     private final List<MOFPartPolyAnim> partPolyAnims = new ArrayList<>();
     private final List<MOFPartPolyAnimEntryList> partPolyAnimLists = new ArrayList<>();
     @Setter private MOFFlipbook flipbook;
-    @Setter private Boolean isHidden = false;
 
     private final transient MOFFile parent;
     private final transient Map<Integer, MOFPartPolyAnimEntryList> loadAnimEntryListMap = new HashMap<>();
@@ -395,12 +393,10 @@ public class MOFPart extends SCSharedGameData {
     }
 
     /**
-     * Tests if this part should be hidden.
-     * @return shouldHide
+     * Tests if this part is hidden by default by the configuration.
      */
-    public boolean shouldHide() {
-        SCGameConfig config = getParent().getConfig();
-        int[] hiddenParts = config.getHiddenPartIds().get(getParent().getFileEntry().getDisplayName());
+    public boolean isHiddenByConfiguration() {
+        int[] hiddenParts = getParent().getConfiguredPartsHiddenByDefault();
         return hiddenParts != null && Arrays.binarySearch(hiddenParts, getPartID()) >= 0;
     }
 }

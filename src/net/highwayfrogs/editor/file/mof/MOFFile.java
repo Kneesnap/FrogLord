@@ -151,4 +151,12 @@ public class MOFFile extends MOFBase {
     public String makeSignature() {
         return SIGNATURE; // Seems to be constant.
     }
+
+    /**
+     * Gets an array of parts configured to be hidden by default.
+     * If there are none configured, null is returned.
+     */
+    public int[] getConfiguredPartsHiddenByDefault() {
+        return getConfig().getHiddenPartIds().get(getFileEntry().getDisplayName());
+    }
 }
