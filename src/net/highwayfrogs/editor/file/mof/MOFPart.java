@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.shared.MRCollprim;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
@@ -28,8 +29,8 @@ public class MOFPart extends SCSharedGameData {
     private final Map<MOFPrimType, List<MOFPolygon>> mofPolygons = new HashMap<>();
     private List<MOFPartcel> partcels = new ArrayList<>();
     private List<MOFHilite> hilites = new ArrayList<>();
-    @Setter private PSXMatrix matrix; // Seems to usually be null. JUN_PLANT is the only model that uses this, to add a slight roll rotation.
-    @Setter private MOFCollprim collprim;
+    private List<PSXMatrix> matrices = new ArrayList<>();
+    private List<MOFCollprim> collprims = new ArrayList<>();
     private final List<MOFPartPolyAnim> partPolyAnims = new ArrayList<>();
     private final List<MOFPartPolyAnimEntryList> partPolyAnimLists = new ArrayList<>();
     @Setter private MOFFlipbook flipbook;
@@ -90,19 +91,58 @@ public class MOFPart extends SCSharedGameData {
             reader.jumpReturn();
         }
 
-        // Read matrix.
+        // Read matrix. (Must be read before collprim in-case the collprim wants to use the matrix).
         if (matrixPointer > 0 && !incompleteMOF) {
+            // Calculate the next section after the matrix one, so we can read all the matrices.
+            int startOfSectionAfterMatrixPtr = Integer.MAX_VALUE;
+            if (animatedTexturesPointer > matrixPointer)
+                startOfSectionAfterMatrixPtr = animatedTexturesPointer;
+            if (flipbookPointer > matrixPointer && flipbookPointer < startOfSectionAfterMatrixPtr)
+                startOfSectionAfterMatrixPtr = flipbookPointer;
+            if (primitivePointer > matrixPointer && primitivePointer < startOfSectionAfterMatrixPtr)
+                startOfSectionAfterMatrixPtr = primitivePointer;
+
+            if (startOfSectionAfterMatrixPtr == Integer.MAX_VALUE)
+                throw new RuntimeException("Failed to calculate the end of MOF Part Matrix Data. (No data section found afterwards.)");
+
+            // Verify alignment to new section.
+            int remainderBytes = ((startOfSectionAfterMatrixPtr - matrixPointer) % PSXMatrix.BYTE_SIZE);
+            if (remainderBytes != 0) {
+                if (remainderBytes == 4) { // This is seen in Beast Wars PC.
+                    reader.jumpTemp(startOfSectionAfterMatrixPtr - 4);
+                    int endValue = reader.readInt();
+                    reader.jumpReturn();
+
+                    if (endValue != 0)
+                        throw new RuntimeException("Didn't properly calculate the end of matrix data. (Start: " + Utils.toHexString(matrixPointer) + ", End: " + Utils.toHexString(startOfSectionAfterMatrixPtr) + ", Remainder: " + remainderBytes + ", End Value: " + endValue + ")");
+                } else {
+                    throw new RuntimeException("Didn't properly calculate the end of matrix data. (Start: " + Utils.toHexString(matrixPointer) + ", End: " + Utils.toHexString(startOfSectionAfterMatrixPtr) + ", Remainder: " + remainderBytes + ")");
+                }
+            }
+
+
+            // Read matrix data.
             reader.jumpTemp(matrixPointer);
-            this.matrix = new PSXMatrix();
-            this.matrix.load(reader);
+            while (startOfSectionAfterMatrixPtr > reader.getIndex()) {
+                PSXMatrix matrix = new PSXMatrix();
+                matrix.load(reader);
+                this.matrices.add(matrix);
+            }
+
             reader.jumpReturn();
         }
 
-        // Read collprim.
+        // Read collprim(s).
         if (collprimPointer > 0 && !incompleteMOF) {
             reader.jumpTemp(collprimPointer);
-            this.collprim = new MOFCollprim(this);
-            this.collprim.load(reader);
+
+            MOFCollprim collprim;
+            do {
+                collprim = new MOFCollprim(this);
+                collprim.load(reader);
+                this.collprims.add(collprim);
+            } while (!collprim.testFlag(MRCollprim.FLAG_LAST_IN_LIST));
+
             reader.jumpReturn();
         }
 
@@ -221,17 +261,20 @@ public class MOFPart extends SCSharedGameData {
         }
 
         // Write collprim.
-        if (getCollprim() != null) {
+        if (this.collprims.size() > 0) {
             writer.writeAddressTo(getTempCollPrimPointer());
-            getCollprim().save(writer);
+            for (int i = 0; i < this.collprims.size(); i++)
+                this.collprims.get(i).save(writer);
         }
 
-        // Write Matrix.
-        if (getMatrix() != null) {
+        // Write collprim matrices.
+        if (this.matrices != null) {
             writer.writeAddressTo(getTempMatrixPointer());
-            getMatrix().save(writer);
+            for (int i = 0; i < this.matrices.size(); i++)
+                this.matrices.get(i).save(writer);
         }
 
+        // Write texture animations.
         if (getPartPolyAnims().size() > 0) {
             writer.writeAddressTo(getTempAnimatedTexturesPointer());
             writer.writeInt(getPartPolyAnims().size());
@@ -240,6 +283,7 @@ public class MOFPart extends SCSharedGameData {
             getPartPolyAnims().forEach(mofPartPolyAnim -> mofPartPolyAnim.saveExtra(writer));
         }
 
+        // Write flipbook animations.
         if (getFlipbook() != null) {
             writer.writeAddressTo(getTempFlipbookPointer());
             getFlipbook().save(writer);
@@ -335,8 +379,8 @@ public class MOFPart extends SCSharedGameData {
     public void copyToIncompletePart(MOFPart incompletePart) {
         incompletePart.partcels = this.partcels;
         incompletePart.hilites = this.hilites;
-        incompletePart.collprim = this.collprim;
-        incompletePart.matrix = this.matrix;
+        incompletePart.collprims = this.collprims;
+        incompletePart.matrices = this.matrices;
         incompletePart.flipbook = this.flipbook;
         SCGameInstance instance = getParent().getGameInstance();
         if (getParent().hasTextureAnimation() && (!instance.isFrogger() || !((FroggerConfig) instance.getConfig()).isAtOrBeforeBuild23())) // TODO: Replace with some kind of warning system, where instead of throwing exceptions, we can have warnings per-file, etc.

@@ -52,7 +52,7 @@ public class DemoTableEditorController extends SCGameObject<FroggerGameInstance>
         fileSelector.setItems(FXCollections.observableArrayList(demoFiles));
         unlockSelector.setItems(FXCollections.observableArrayList(MAPLevel.values()));
 
-        fileSelector.setConverter(new AbstractIndexStringConverter<>(demoFiles, (index, entry) -> Utils.stripExtension(entry.getIndexEntry().getDisplayName())));
+        fileSelector.setConverter(new AbstractIndexStringConverter<>(demoFiles, (index, entry) -> Utils.stripExtension(entry.getFileDisplayName())));
 
         levelSelector.valueProperty().addListener(((observable, oldValue, newValue) -> this.selectedEntry.setLevel(newValue)));
         fileSelector.valueProperty().addListener(((observable, oldValue, newValue) -> this.selectedEntry.setDemoResourceFile(newValue.getIndexEntry().getResourceId())));

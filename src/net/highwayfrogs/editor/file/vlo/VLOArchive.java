@@ -8,7 +8,6 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -166,8 +165,8 @@ public class VLOArchive extends SCSharedGameFile {
     }
 
     @Override
-    public List<Tuple2<String, String>> showWadProperties(WADFile wadFile, WADEntry wadEntry) {
-        List<Tuple2<String, String>> list = super.showWadProperties(wadFile, wadEntry);
+    public List<Tuple2<String, String>> createPropertyList() {
+        List<Tuple2<String, String>> list = super.createPropertyList();
         list.add(new Tuple2<>("Images", String.valueOf(getImages().size())));
         list.add(new Tuple2<>("PS1 VLO", String.valueOf(isPsxMode())));
         return list;

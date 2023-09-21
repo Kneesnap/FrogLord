@@ -176,6 +176,12 @@ public class WADController extends EditorController<WADFile, SCGameInstance, SCG
     }
 
     @FXML
+    @SneakyThrows
+    private void exportAlternate(ActionEvent event) {
+        this.selectedEntry.getFile().exportAlternateFormat(this.selectedEntry.getFileEntry());
+    }
+
+    @FXML
     private void editSelectedFile(ActionEvent event) {
         this.editFile();
     }
@@ -199,7 +205,7 @@ public class WADController extends EditorController<WADFile, SCGameInstance, SCG
         this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        List<Tuple2<String, String>> properties = this.selectedEntry.getFile().showWadProperties(getFile(), this.selectedEntry);
+        List<Tuple2<String, String>> properties = this.selectedEntry.getFile().createPropertyList();
         if (properties != null && properties.size() > 0)
             for (Tuple2<String, String> pair : properties)
                 this.tableFileData.getItems().add(new NameValuePair(pair.getA(), pair.getB()));

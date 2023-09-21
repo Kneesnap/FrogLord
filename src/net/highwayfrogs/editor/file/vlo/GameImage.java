@@ -137,7 +137,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
 
         reader.jumpReturn();
         if (readU != getU() || readV != getV())
-            System.out.println(getParent().getIndexEntry().getDisplayName() + "@" + getParent().getImages().size() + " UV Mismatch! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "]");
+            System.out.println(getParent().getFileDisplayName() + "@" + getParent().getImages().size() + " UV Mismatch! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "]");
     }
 
     @Override

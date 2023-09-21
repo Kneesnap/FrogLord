@@ -4,8 +4,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
 import javafx.scene.shape.DrawMode;
+import javafx.scene.shape.Shape3D;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
@@ -180,8 +180,8 @@ public class GeneralManager extends MapManager {
      * Updates the marker to display at the given position.
      * If null is supplied, it'll get removed.
      */
-    public void updateMarker(Vector vec, int bits, Vector origin, Box updateBox) {
-        if (updateBox == null) {
+    public void updateMarker(Vector vec, int bits, Vector origin, Shape3D visualRepresentative) {
+        if (visualRepresentative == null) {
             getRenderManager().addMissingDisplayList(GENERIC_POS_LIST);
             getRenderManager().clearDisplayList(GENERIC_POS_LIST);
         }
@@ -198,9 +198,9 @@ public class GeneralManager extends MapManager {
                 baseZ += origin.getFloatZ();
             }
 
-            if (updateBox != null) {
-                if (updateBox.getTransforms() != null)
-                    for (Transform transform : updateBox.getTransforms()) {
+            if (visualRepresentative != null) {
+                if (visualRepresentative.getTransforms() != null)
+                    for (Transform transform : visualRepresentative.getTransforms()) {
                         if (!(transform instanceof Translate))
                             continue;
 

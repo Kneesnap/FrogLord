@@ -233,7 +233,7 @@ public class MainController implements Initializable {
         getGameInstance().getMainArchive().getAllFiles(MAPFile.class).forEach(mapFile -> {
             List<SVector> unusedVertices = mapFile.findUnusedVertices();
             if (unusedVertices.size() > 1)
-                System.out.println(" - " + mapFile.getIndexEntry().getDisplayName() + " has " + unusedVertices.size() + " unused vertices.");
+                System.out.println(" - " + mapFile.getFileDisplayName() + " has " + unusedVertices.size() + " unused vertices.");
         });
     }
 
@@ -288,7 +288,7 @@ public class MainController implements Initializable {
             }
 
             for (GameImage image : images)
-                System.out.println("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + Utils.stripExtension(image.getParent().getIndexEntry().getDisplayName()) + ".");
+                System.out.println("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + Utils.stripExtension(image.getParent().getFileDisplayName()) + ".");
 
             GameImage image = images.get(0);
             openEditor(this.currentFilesList, image.getParent());
@@ -308,7 +308,7 @@ public class MainController implements Initializable {
         ImageFilterSettings exportSettings = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(false).setAllowTransparency(true);
         List<VLOArchive> allVlos = getArchive().getAllFiles(VLOArchive.class);
         for (VLOArchive saveVLO : allVlos) {
-            File vloFolder = new File(targetFolder, Utils.stripExtension(saveVLO.getIndexEntry().getDisplayName()));
+            File vloFolder = new File(targetFolder, Utils.stripExtension(saveVLO.getFileDisplayName()));
             Utils.makeDirectory(vloFolder);
             saveVLO.exportAllImages(vloFolder, exportSettings);
         }

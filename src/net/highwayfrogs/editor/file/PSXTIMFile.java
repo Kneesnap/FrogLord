@@ -5,7 +5,6 @@ import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
@@ -83,7 +82,7 @@ public class PSXTIMFile extends SCSharedGameFile {
             // Ensure the reader position is in the expected spot.
             int clutEndPos = clutStartPos + clutSize;
             if (reader.getIndex() != clutEndPos) {
-                System.out.println("CLUT Position Mismatch for " + getIndexEntry().getDisplayName() + ", expected " + Utils.toHexString(clutEndPos) + ", but got " + Utils.toHexString(reader.getIndex()) + ".");
+                System.out.println("CLUT Position Mismatch for " + getFileDisplayName() + ", expected " + Utils.toHexString(clutEndPos) + ", but got " + Utils.toHexString(reader.getIndex()) + ".");
                 reader.setIndex(clutEndPos);
             }
         }
@@ -399,8 +398,8 @@ public class PSXTIMFile extends SCSharedGameFile {
     }
 
     @Override
-    public List<Tuple2<String, String>> showWadProperties(WADFile parent, WADEntry entry) {
-        List<Tuple2<String, String>> list = super.showWadProperties(parent, entry);
+    public List<Tuple2<String, String>> createPropertyList() {
+        List<Tuple2<String, String>> list = super.createPropertyList();
         list.add(new Tuple2<>("Flags", Utils.toHexString(this.flags)));
         list.add(new Tuple2<>("Palette Count", String.valueOf(this.palettes != null ? this.palettes.length : 0)));
         list.add(new Tuple2<>("Image Dimensions", getImageWidth() + "x" + getImageHeight()));

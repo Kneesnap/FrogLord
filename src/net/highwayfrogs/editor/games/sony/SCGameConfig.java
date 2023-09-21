@@ -170,7 +170,7 @@ public class SCGameConfig {
             return null;
 
         String vloName = childConfig.getString(name);
-        return instance.getMainArchive().resolveForEachFile(VLOArchive.class, vlo -> vlo.getIndexEntry().getDisplayName().startsWith(vloName) ? vlo : null);
+        return instance.getMainArchive().resolveForEachFile(VLOArchive.class, vlo -> vlo.getFileDisplayName().startsWith(vloName) ? vlo : null);
     }
 
     /**

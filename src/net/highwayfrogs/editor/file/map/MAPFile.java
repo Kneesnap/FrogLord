@@ -359,7 +359,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
                 entities.add(entity);
                 lastEntity = entity;
             } catch (Throwable th) {
-                System.out.println("Failed to load an entity which was part of " + getIndexEntry().getDisplayName());
+                System.out.println("Failed to load an entity which was part of " + getFileDisplayName());
                 th.printStackTrace();
                 lastEntity = null;
             }
@@ -791,7 +791,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
 
     @Override
     public Image getIcon() {
-        MAPLevel level = MAPLevel.getByName(getIndexEntry().getDisplayName());
+        MAPLevel level = MAPLevel.getByName(getFileDisplayName());
 
         if (level != null) {
             getGameInstance().getLevelImageMap().computeIfAbsent(level, key -> {
@@ -828,7 +828,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
 
             FormEntry formEntry = lastEntity.getFormEntry();
             if (!getMapConfig().isIslandPlaceholder()) // No need to print these errors on island placeholders.
-                System.out.println("[INVALID/" + getIndexEntry().getDisplayName() + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + "/" + lastEntity.getFormGridId() + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + (formEntry != null ? ", " + formEntry.getFormName() + ", " + formEntry.getEntityName() : ", " + lastEntity.getTypeName()));
+                System.out.println("[INVALID/" + getFileDisplayName() + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + "/" + lastEntity.getFormGridId() + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + (formEntry != null ? ", " + formEntry.getFormName() + ", " + formEntry.getEntityName() : ", " + lastEntity.getTypeName()));
 
             // Restore reader.
             if (realSize < 1024 && realSize >= 0) {
@@ -1046,7 +1046,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
      * @return isMultiplayer
      */
     public boolean isMultiplayer() {
-        return getIndexEntry().getDisplayName().startsWith(getTheme().getInternalName() + "M");
+        return getFileDisplayName().startsWith(getTheme().getInternalName() + "M");
     }
 
     /**
@@ -1055,7 +1055,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
      * @return isLowPolyMode
      */
     public boolean isLowPolyMode() {
-        return getIndexEntry().getDisplayName().contains("_WIN95");
+        return getFileDisplayName().contains("_WIN95");
     }
 
     /**
@@ -1184,7 +1184,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
         setGroupXCount((short) (1 + (xTileCount / (getGroupXSize() / getGridXSize()))));
         setGroupZCount((short) (1 + (zTileCount / (getGroupZSize() / getGridZSize()))));
 
-        System.out.println("Scrambled " + getIndexEntry().getDisplayName());
+        System.out.println("Scrambled " + getFileDisplayName());
     }
 
     /**
@@ -1192,7 +1192,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
      * @return remapTable
      */
     public List<Short> getRemapTable() {
-        if (getConfig().getIslandRemap().size() > 0 && getIndexEntry().getDisplayName().contains("ISLAND.MAP"))
+        if (getConfig().getIslandRemap().size() > 0 && getFileDisplayName().contains("ISLAND.MAP"))
             return getConfig().getIslandRemap();
 
         return getGameInstance().getRemapTable(getIndexEntry());
@@ -1215,7 +1215,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
         if (this.cachedMapConfig != null)
             return this.cachedMapConfig;
 
-        FroggerMapConfig mapConfig = getConfig().getMapConfigs().get(getIndexEntry().getDisplayName());
+        FroggerMapConfig mapConfig = getConfig().getMapConfigs().get(getFileDisplayName());
         return this.cachedMapConfig = mapConfig != null ? mapConfig : getConfig().getDefaultMapConfig();
     }
 

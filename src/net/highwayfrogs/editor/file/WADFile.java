@@ -49,7 +49,7 @@ public class WADFile extends SCSharedGameFile {
     @Override
     public void load(DataReader reader) {
         ThemeBook themeBook = getIndexEntry().getThemeBook();
-        this.theme = themeBook != null ? themeBook.getTheme() : MAPTheme.getTheme(getIndexEntry().getDisplayName());
+        this.theme = themeBook != null ? themeBook.getTheme() : MAPTheme.getTheme(getFileDisplayName());
 
         while (true) {
             int resourceId = reader.readInt();

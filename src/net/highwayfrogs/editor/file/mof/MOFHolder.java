@@ -73,6 +73,10 @@ public class MOFHolder extends SCSharedGameFile {
 
     @Override
     public void load(DataReader reader) {
+        reader.jumpTemp(reader.getIndex()); // TODO: TOSS
+        this.rawBytes = reader.readBytes(reader.getRemaining());
+        reader.jumpReturn();
+
         reader.jumpTemp(reader.getIndex());
         byte[] temp = reader.readBytes(DUMMY_DATA.length);
         reader.jumpReturn();
@@ -134,8 +138,8 @@ public class MOFHolder extends SCSharedGameFile {
     }
 
     @Override
-    public List<Tuple2<String, String>> showWadProperties(WADFile wadFile, WADEntry wadEntry) {
-        List<Tuple2<String, String>> list = super.showWadProperties(wadFile, wadEntry);
+    public List<Tuple2<String, String>> createPropertyList() {
+        List<Tuple2<String, String>> list = super.createPropertyList();
         list.add(new Tuple2<>("Type", isDummy() ? "Dummy" : (isIncomplete() ? "Incomplete" : (isAnimatedMOF() ? "Animated" : "Static"))));
 
         if (!isDummy()) {
@@ -253,7 +257,7 @@ public class MOFHolder extends SCSharedGameFile {
         if (bank == null)
             return (animationId != 0) ? "Animation " + animationId : "Default Animation";
 
-        String bankName = Utils.stripWin95(Utils.stripExtension(getIndexEntry().getDisplayName()));
+        String bankName = Utils.stripWin95(Utils.stripExtension(getFileDisplayName()));
         NameBank childBank = bank.getChildBank(bankName);
         return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getAnimationCount());
     }
@@ -274,7 +278,7 @@ public class MOFHolder extends SCSharedGameFile {
         FileUtils3D.exportMofToObj(asStaticFile(), folder, vlo);
 
         // Export mm3d too.
-        File saveTo = new File(folder, Utils.stripExtension(getIndexEntry().getDisplayName()) + ".mm3d");
+        File saveTo = new File(folder, Utils.stripExtension(getFileDisplayName()) + ".mm3d");
         Utils.deleteFile(saveTo);
 
         MisfitModel3DObject model = FileUtils3D.convertMofToMisfitModel(this);
@@ -296,7 +300,7 @@ public class MOFHolder extends SCSharedGameFile {
      * @return override
      */
     public MOFHolder getOverride() {
-        String mofOverride = getConfig().getMofRenderOverrides().get(getIndexEntry().getDisplayName());
+        String mofOverride = getConfig().getMofRenderOverrides().get(getFileDisplayName());
         if (mofOverride != null) {
             FileEntry entry = getGameInstance().getResourceEntryByName(mofOverride);
             if (entry != null) {
@@ -346,7 +350,7 @@ public class MOFHolder extends SCSharedGameFile {
         if (frogger.getConfig().isAtOrBeforeBuild4() || frogger.getConfig().getBuild() >= 50)
             return false; // Note: Build 5 may or may not be included. Build 50 is also probably not the correct build to test against here.
 
-        String name = getIndexEntry().getDisplayName();
+        String name = getFileDisplayName();
         boolean isFroglet = "GEN_CHECKPOINT_1.XMR".equals(name)
                 || "GEN_CHECKPOINT_2.XMR".equals(name)
                 || "GEN_CHECKPOINT_3.XMR".equals(name)

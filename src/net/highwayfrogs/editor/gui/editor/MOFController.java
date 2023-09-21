@@ -19,10 +19,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
-import javafx.scene.shape.CullFace;
-import javafx.scene.shape.DrawMode;
-import javafx.scene.shape.MeshView;
+import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
@@ -51,6 +48,8 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.MRCollprim;
+import net.highwayfrogs.editor.games.sony.shared.MRCollprim.CollprimShapeAdapter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
@@ -196,12 +195,12 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
                 return;
             } else if (event.getCode() == KeyCode.F10) {
-                Utils.takeScreenshot(subScene3D, getMofScene(), Utils.stripExtension(getFile().getIndexEntry().getDisplayName()), true);
+                Utils.takeScreenshot(subScene3D, getMofScene(), Utils.stripExtension(getFile().getFileDisplayName()), true);
             }
 
             if (event.getCode() == KeyCode.S && event.isControlDown()) { // Save the texture map.
                 try {
-                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + Utils.stripExtension(getMofMesh().getMofHolder().getIndexEntry().getDisplayName()) + ".png"));
+                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + Utils.stripExtension(getMofMesh().getMofHolder().getFileDisplayName()) + ".png"));
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
@@ -411,15 +410,15 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
 
         getUiController().getViewCollprimCheckbox().setText("Show Collprim(s) [" + collprimCount + "]");
         getUiController().getViewCollprimCheckbox().setDisable(!foundAny);
-        getUiController().getAddCollprimButton().setDisable(foundAny || getFile().asStaticFile().getParts().isEmpty());
-        updateCollprimBoxes(foundAny && display);
+        getUiController().getAddCollprimButton().setDisable(getFile().asStaticFile().getParts().isEmpty());
+        updateCollprimBoxes(foundAny && display, null);
     }
 
     /**
      * Update collprim boxes.
      * @param showCollprim Should show collprim boxes.
      */
-    public void updateCollprimBoxes(boolean showCollprim) {
+    public void updateCollprimBoxes(boolean showCollprim, MRCollprim displayUI) {
         getRenderManager().addMissingDisplayList(COLLPRIM_BOX_LIST);
         getRenderManager().clearDisplayList(COLLPRIM_BOX_LIST);
         if (!showCollprim) {
@@ -428,9 +427,15 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
         }
 
         for (MOFPart part : getFile().asStaticFile().getParts()) {
-            MOFCollprim collprim = part.getCollprim();
-            if (collprim != null)
-                applyRotation(collprim.addDisplay(this, getRenderManager(), COLLPRIM_BOX_LIST, COLLPRIM_MATERIAL));
+            for (MOFCollprim collprim : part.getCollprims()) {
+                if (collprim == null)
+                    continue;
+
+                CollprimShapeAdapter<?> adapter = collprim.addDisplay(this, getRenderManager(), COLLPRIM_BOX_LIST, COLLPRIM_MATERIAL, removedCollprim -> part.getCollprims().remove(collprim));
+                applyRotation(adapter.getShape());
+                if (displayUI == collprim)
+                    collprim.setupEditor(this, adapter, removedCollprim -> part.getCollprims().remove(collprim));
+            }
         }
     }
 
@@ -509,6 +514,7 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
             return;
         }
 
+        // Get translation.
         double translateX = node.getTranslateX();
         double translateY = node.getTranslateY();
         double translateZ = node.getTranslateZ();
@@ -523,6 +529,7 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
             translateZ += translate.getZ();
         }
 
+        // Update pivots.
         lightRotateX.setPivotY(-translateY);
         lightRotateX.setPivotZ(-translateZ); // Depth <Closest, Furthest>
         lightRotateY.setPivotX(-translateX); // <Left, Right>
@@ -756,7 +763,7 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
             this.colorPicker.setOnAction(e -> getController().subScene3D.setFill(colorPicker.getValue()));
             this.brightModeCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateLighting(newValue)));
             this.viewHilitesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateHiliteBoxes(newValue)));
-            this.viewCollprimCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateCollprimBoxes(newValue)));
+            this.viewCollprimCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateCollprimBoxes(newValue, null)));
             this.viewBoundingBoxesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateBoundingBoxes(newValue)));
 
             // Allow toggling texture animations.
@@ -790,7 +797,8 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
             }));
 
             this.addCollprimButton.setOnAction(evt -> {
-                getHolder().asStaticFile().getParts().get(0).setCollprim(new MOFCollprim(getHolder().asStaticFile().getParts().get(0)));
+                MOFPart part = getHolder().asStaticFile().getParts().get(0); // TODO: Allow choosing the part instead.
+                part.getCollprims().add(new MOFCollprim(part));
                 controller.updateCollprimBoxes();
             });
 
@@ -921,7 +929,7 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
                 node.setDisable(disableState); // Disable playing non-existing animation.
 
             updateTempUI();
-            modelName.setText(getHolder().getIndexEntry().getDisplayName());
+            modelName.setText(getHolder().getFileDisplayName());
             updateTextureList();
             this.animationListChoiceBox.getSelectionModel().selectFirst();
         }
@@ -1050,8 +1058,8 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
      * Updates the marker to display at the given position.
      * If null is supplied, it'll get removed.
      */
-    public void updateMarker(Vector vec, int bits, Vector origin, Box updateBox) {
-        if (updateBox == null) {
+    public void updateMarker(Vector vec, int bits, Vector origin, Shape3D shape) {
+        if (shape == null) {
             getRenderManager().addMissingDisplayList(GENERIC_POS_LIST);
             getRenderManager().clearDisplayList(GENERIC_POS_LIST);
         }
@@ -1068,9 +1076,9 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
                 baseZ += origin.getFloatZ();
             }
 
-            if (updateBox != null) {
-                if (updateBox.getTransforms() != null)
-                    for (Transform transform : updateBox.getTransforms()) {
+            if (shape != null) {
+                if (shape.getTransforms() != null)
+                    for (Transform transform : shape.getTransforms()) {
                         if (!(transform instanceof Translate))
                             continue;
 

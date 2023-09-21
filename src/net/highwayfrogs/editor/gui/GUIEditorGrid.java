@@ -11,7 +11,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Box;
+import javafx.scene.shape.Shape3D;
 import javafx.util.StringConverter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -371,8 +371,8 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller, int bits, Vector origin, Box moveBox) {
-        if (controller != null && moveBox == null) {
+    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller, int bits, Vector origin, Shape3D visualRepresentative) {
+        if (controller != null && visualRepresentative == null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
                     () -> controller.getGeneralManager().updateMarker(controller.getGeneralManager().getShowPosition() == null || !Objects.equals(vector, controller.getGeneralManager().getShowPosition()) ? vector : null, bits, origin, null));
         } else {
@@ -381,7 +381,7 @@ public class GUIEditorGrid {
 
         Runnable onPass = () -> {
             if (controller != null)
-                controller.getGeneralManager().updateMarker(vector, bits, origin, moveBox);
+                controller.getGeneralManager().updateMarker(vector, bits, origin, visualRepresentative);
 
             if (update != null)
                 update.run();
@@ -498,8 +498,8 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatVector(String text, Vector vector, Runnable update, MOFController controller, int bits, Vector origin, Box moveBox) {
-        if (controller != null && moveBox == null) {
+    public void addFloatVector(String text, Vector vector, Runnable update, MOFController controller, int bits, Vector origin, Shape3D visualRepresentative) {
+        if (controller != null && visualRepresentative == null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
                     () -> controller.updateMarker(controller.getShowPosition() == null || !Objects.equals(vector, controller.getShowPosition()) ? vector : null, bits, origin, null));
         } else {
@@ -508,7 +508,7 @@ public class GUIEditorGrid {
 
         Runnable onPass = () -> {
             if (controller != null)
-                controller.updateMarker(vector, bits, origin, moveBox);
+                controller.updateMarker(vector, bits, origin, visualRepresentative);
 
             if (update != null)
                 update.run();
@@ -799,6 +799,25 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Add a PSXMatrix to the editor grid.
+     * @param matrix           The rotation matrix to add data for.
+     * @param onPositionUpdate Behavior to apply when the position is updated.
+     */
+    public void addMofMatrix(PSXMatrix matrix, MOFController controller, Runnable onPositionUpdate) {
+        IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
+
+        addFloatVector("Position", vec, () -> {
+            matrix.getTransform()[0] = vec.getX();
+            matrix.getTransform()[1] = vec.getY();
+            matrix.getTransform()[2] = vec.getZ();
+            if (onPositionUpdate != null)
+                onPositionUpdate.run(); // Run position hook.
+        }, controller, 4, null, null);
+
+        addRotationMatrix(matrix, null);
+    }
+
+    /**
      * Add PSXMatrix rotation data to the edit grid.
      * @param matrix   The rotation matrix to add data for.
      * @param onUpdate Behavior to apply when the rotation is updated.
@@ -877,6 +896,13 @@ public class GUIEditorGrid {
         RowConstraints newRow = new RowConstraints(height + 1);
         gridPane.getRowConstraints().add(newRow);
         this.rowIndex++;
+    }
+
+    /**
+     * Add a horizontal separator.
+     */
+    public void addSeparator() {
+        addSeparator(25);
     }
 
     /**

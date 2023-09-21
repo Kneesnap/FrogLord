@@ -229,7 +229,7 @@ public class MWDFile extends SCSharedGameData {
                         this.vloThemeCache.put(theme, vlo);
                     handler.accept(vlo);
                 }, allVLOs,
-                vlo -> vlo != null ? vlo.getIndexEntry().getDisplayName() : "No Textures",
+                vlo -> vlo != null ? vlo.getFileDisplayName() : "No Textures",
                 vlo -> vlo.getImages().get(0).toFXImage(VLO_ICON_SETTING));
     }
 

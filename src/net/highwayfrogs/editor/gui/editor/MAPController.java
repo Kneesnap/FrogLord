@@ -77,7 +77,7 @@ public class MAPController extends EditorController<MAPFile, FroggerGameInstance
         previewImage.setImage(null);
         nameImage.setImage(null);
 
-        MAPLevel level = MAPLevel.getByName(mapFile.getIndexEntry().getDisplayName());
+        MAPLevel level = MAPLevel.getByName(mapFile.getFileDisplayName());
         if (level != null && !mapFile.getGameInstance().getLevelInfoMap().isEmpty()) {
             LevelInfo info = mapFile.getGameInstance().getLevelInfoMap().get(level);
             if (info != null) {
@@ -111,7 +111,7 @@ public class MAPController extends EditorController<MAPFile, FroggerGameInstance
         saveTextureButton.setOnAction(evt -> {
             try {
                 for (ShadingMode mode : ShadingMode.values()) {
-                    File file = new File(GUIMain.getWorkingDirectory(), getFile().getIndexEntry().getDisplayName() + "-" + mode + ".png");
+                    File file = new File(GUIMain.getWorkingDirectory(), getFile().getFileDisplayName() + "-" + mode + ".png");
                     ImageIO.write(TextureMap.newTextureMap(getFile(), mode).getTextureTree().getImage(), "png", file);
                     System.out.println("Saved " + file.getName());
                 }

@@ -66,7 +66,7 @@ public class TIMController extends EditorController<PSXTIMFile, SCGameInstance, 
         this.tableFileData.getItems().clear();
         this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-        List<Tuple2<String, String>> properties = getFile().showWadProperties(null, null);
+        List<Tuple2<String, String>> properties = getFile().createPropertyList();
         if (properties != null && properties.size() > 0)
             for (Tuple2<String, String> pair : properties)
                 this.tableFileData.getItems().add(new NameValuePair(pair.getA(), pair.getB()));

@@ -198,7 +198,7 @@ public class MapUIController implements Initializable {
                 renderManager.removeAllDisplayLists();
                 Utils.setSceneKeepPosition(this.overwrittenStage, this.defaultScene);
             } else if (event.getCode() == KeyCode.F10) {
-                Utils.takeScreenshot(this.subScene, getMapScene(), Utils.stripExtension(getMap().getIndexEntry().getDisplayName()), false);
+                Utils.takeScreenshot(this.subScene, getMapScene(), Utils.stripExtension(getMap().getFileDisplayName()), false);
             }
         });
 

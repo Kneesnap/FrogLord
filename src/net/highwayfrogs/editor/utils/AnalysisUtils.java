@@ -99,7 +99,7 @@ public class AnalysisUtils {
                     for (GameImage image : vloArchive.getImages()) {
                         Short textureId = image.getTextureId();
                         if (!textureIds.contains(textureId) && loggedIds.add(textureId))
-                            System.out.println(vloArchive.getIndexEntry().getDisplayName() + ": " + image.getLocalImageID() + " / " + textureId);
+                            System.out.println(vloArchive.getFileDisplayName() + ": " + image.getLocalImageID() + " / " + textureId);
                     }
                 });
             }

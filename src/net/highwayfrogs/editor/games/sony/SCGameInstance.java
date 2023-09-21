@@ -28,6 +28,7 @@ import java.util.Map;
 /**
  * Represents an instance of a game created by Sony Cambridge / Millennium Interactive.
  * TODO: Let's add a logger object to this one, and start to use it for logging.
+ * TODO: Let's add a function to resolve what VLO should be used for a particular file (generally map, mof, or wad). This differs per-game so it could be great to have it here.
  * Created by Kneesnap on 9/7/2023.
  */
 public abstract class SCGameInstance {

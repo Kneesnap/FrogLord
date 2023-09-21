@@ -142,6 +142,28 @@ public class SCUtils {
 
         VHAudioHeader lastVH = lastFile instanceof VHAudioHeader ? (VHAudioHeader) lastFile : null;
         VBAudioBody<?> lastVB = lastFile instanceof VBAudioBody<?> ? (VBAudioBody<?>) lastFile : null;
+
+        // Ensure we find lastVH if we didn't find it before.
+        if (lastVH == null && fileEntry.hasExtension("vb")) {
+            FileEntry vhEntry = fileEntry.getGameInstance().getResourceEntryByName(Utils.stripExtension(fileEntry.getDisplayName()) + ".vh");
+            if (vhEntry != null) {
+                SCGameFile<?> vhFile = fileEntry.getGameInstance().getGameFile(vhEntry);
+                if (vhFile instanceof VHAudioHeader)
+                    lastVH = (VHAudioHeader) vhFile;
+            }
+        }
+
+        // Ensure we find lastVB if we didn't find it before.
+        if (lastVB == null && fileEntry.hasExtension("vh")) {
+            FileEntry vbEntry = fileEntry.getGameInstance().getResourceEntryByName(Utils.stripExtension(fileEntry.getDisplayName()) + ".vb");
+            if (vbEntry != null) {
+                SCGameFile<?> vbFile = fileEntry.getGameInstance().getGameFile(vbEntry);
+                if (vbFile instanceof VBAudioBody<?>)
+                    lastVB = (VBAudioBody<?>) vbFile;
+            }
+        }
+
+        // Create new object.
         if (lastVB != null || fileEntry.hasExtension("vh") || (instance.isPSX() && Utils.testSignature(fileData, PSXVHFile.PSX_SIGNATURE))) {
             VHAudioHeader newHeader = instance.isPSX() ? new PSXVHFile(fileEntry.getGameInstance()) : new VHFile(fileEntry.getGameInstance());
             if (lastVB != null && doFileNamesMatch)

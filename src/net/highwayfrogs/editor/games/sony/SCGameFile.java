@@ -7,7 +7,6 @@ import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.EditorController;
 import net.highwayfrogs.editor.system.Tuple2;
@@ -60,12 +59,10 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
     }
 
     /**
-     * Gets a list of properties to show if this file is displayed in a WAD.
-     * @param parent The WADFile which owns this file.
-     * @param entry  The entry which owns this file.
+     * Gets a list of properties to show in contexts where a file has information shown.
      * @return wadProperties, can be null.
      */
-    public List<Tuple2<String, String>> showWadProperties(WADFile parent, WADEntry entry) {
+    public List<Tuple2<String, String>> createPropertyList() {
         List<Tuple2<String, String>> list = new ArrayList<>();
         FileEntry fileEntry = getIndexEntry();
         list.add(new Tuple2<>("File Type ID", String.valueOf(fileEntry.getTypeId())));
@@ -90,6 +87,13 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
             throw new RuntimeException("The SCGameFile was not registered in the MWI entry mapping.");
 
         return entry;
+    }
+
+    /**
+     * Gets the display name of this file.
+     */
+    public String getFileDisplayName() {
+        return getIndexEntry().getDisplayName();
     }
 
     /**

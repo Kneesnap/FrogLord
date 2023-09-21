@@ -49,7 +49,7 @@ public class MOFFile extends MOFBase {
             this.bytes = reader.readBytes(reader.getRemaining());
             reader.jumpReturn();
 
-            String oldName = Utils.stripExtensionWin95(getHolder().getCompleteMOF().getIndexEntry().getDisplayName());
+            String oldName = Utils.stripExtensionWin95(getHolder().getCompleteMOF().getFileDisplayName());
             String newName = Utils.stripExtensionWin95(getFileEntry().getDisplayName());
             getConfig().getAnimationBank().linkChildBank(oldName, newName); // Link animation names.
         }
@@ -130,11 +130,11 @@ public class MOFFile extends MOFBase {
      * @return collprimCount
      */
     public int getCollprimCount() {
-        int totalCollprim = 0;
+        int totalCollprims = 0;
         for (int i = 0; i < getParts().size(); i++)
-            if (getParts().get(i).getCollprim() != null)
-                totalCollprim++;
-        return totalCollprim;
+            totalCollprims += getParts().get(i).getCollprims().size();
+
+        return totalCollprims;
     }
 
     @Override

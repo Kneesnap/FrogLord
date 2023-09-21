@@ -39,7 +39,7 @@ public class PSXVBFile extends VBAudioBody<PSXVHFile> {
                 break;
 
             String name = String.valueOf(i);
-            String bankName = Utils.stripExtension(getIndexEntry().getDisplayName());
+            String bankName = Utils.stripExtension(getFileDisplayName());
             NameBank bank = getConfig().getSoundBank().getChildBank(bankName);
             if (bank != null)
                 name = bank.getName(i);

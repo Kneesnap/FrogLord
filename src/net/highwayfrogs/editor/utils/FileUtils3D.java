@@ -335,7 +335,7 @@ public class FileUtils3D {
         MisfitModel3DObject model = new MisfitModel3DObject();
         MOFFile staticMof = holder.asStaticFile();
         VLOArchive vloTable = holder.getVloFile();
-        Utils.verify(vloTable != null, "Unknown VLO Table for %s!", holder.getIndexEntry().getDisplayName());
+        Utils.verify(vloTable != null, "Unknown VLO Table for %s!", holder.getFileDisplayName());
 
         // Add TransformType.
         if (holder.isAnimatedMOF())
@@ -805,13 +805,14 @@ public class FileUtils3D {
 
             // Port data which isn't supposed to be overwritten by an import.
             if (oldPart != null) {
-                if (oldPart.getMatrix() != null) // Transition matrix.
-                    part.setMatrix(oldPart.getMatrix());
+                if (oldPart.getMatrices().size() > 0) // Transition matrix.
+                    part.getMatrices().addAll(oldPart.getMatrices());
 
-                if (oldPart.getCollprim() != null) { // Transition collprim.
-                    MOFCollprim oldCollprim = oldPart.getCollprim();
-                    oldCollprim.setParent(part);
-                    part.setCollprim(oldCollprim);
+                if (oldPart.getCollprims() != null) { // Transition collprim.
+                    for (MOFCollprim oldCollprim : oldPart.getCollprims()) {
+                        oldCollprim.setParentPart(part);
+                        part.getCollprims().add(oldCollprim);
+                    }
                 }
 
                 for (MOFHilite oldHilite : oldPart.getHilites()) { // Transition Hilites.

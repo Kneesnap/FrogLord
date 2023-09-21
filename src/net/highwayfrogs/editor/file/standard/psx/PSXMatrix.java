@@ -25,7 +25,7 @@ public class PSXMatrix extends GameObject {
     private int[] transform = new int[DIMENSION]; // Transform vector.
 
     private static final int DIMENSION = 3;
-    public static final int BYTE_SIZE = (DIMENSION * DIMENSION * Constants.SHORT_SIZE) + (DIMENSION * Constants.INTEGER_SIZE);
+    public static final int BYTE_SIZE = (DIMENSION * DIMENSION * Constants.SHORT_SIZE) + (DIMENSION * Constants.INTEGER_SIZE) + Constants.SHORT_SIZE;
     public static final PSXMatrix IDENTITY = newIdentityMatrix();
 
     @Override

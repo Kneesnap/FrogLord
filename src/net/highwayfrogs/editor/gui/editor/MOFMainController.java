@@ -40,7 +40,7 @@ public class MOFMainController extends EditorController<MOFHolder, SCGameInstanc
         this.mofPropertyTable.getItems().clear();
         this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-        List<Tuple2<String, String>> properties = mof.showWadProperties(null, null);
+        List<Tuple2<String, String>> properties = mof.createPropertyList();
         if (properties != null && properties.size() > 0)
             for (Tuple2<String, String> pair : properties)
                 this.mofPropertyTable.getItems().add(new NameValuePair(pair.getA(), pair.getB()));
@@ -76,6 +76,6 @@ public class MOFMainController extends EditorController<MOFHolder, SCGameInstanc
     }
 
     private void updateVLO() {
-        this.vloNameLabel.setText(getFile().getVloFile() != null ? getFile().getVloFile().getIndexEntry().getDisplayName() : "None");
+        this.vloNameLabel.setText(getFile().getVloFile() != null ? getFile().getVloFile().getFileDisplayName() : "None");
     }
 }
