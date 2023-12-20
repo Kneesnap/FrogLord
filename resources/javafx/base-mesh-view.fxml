@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0"
+            xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <Accordion fx:id="accordionLeft" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                   AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <panes>
+                <TitledPane fx:id="viewSettings" animated="false" text="View Settings">
+                    <content>
+                        <ScrollPane fitToWidth="true">
+                            <content>
+                                <AnchorPane>
+                                    <children>
+                                        <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                                              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                            <children>
+                                                <GridPane prefWidth="232.0" fx:id="viewSettingsPane">
+                                                    <columnConstraints>
+                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"
+                                                                           prefWidth="100.0"/>
+                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"
+                                                                           prefWidth="100.0"/>
+                                                    </columnConstraints>
+                                                    <rowConstraints>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                    </rowConstraints>
+                                                    <children>
+                                                        <Label text="Show Axis:"/>
+                                                        <Label text="Show Mesh:" GridPane.rowIndex="1"/>
+                                                        <Label text="Draw Mode:" GridPane.rowIndex="2"/>
+                                                        <Label text="Face Culling:" GridPane.rowIndex="3"/>
+                                                        <Label text="Background: " GridPane.rowIndex="4"/>
+                                                        <Label text="Shader Mode:" GridPane.rowIndex="5"/>
+                                                        <CheckBox fx:id="checkBoxShowAxis" mnemonicParsing="false"
+                                                                  nodeOrientation="LEFT_TO_RIGHT" selected="true"
+                                                                  GridPane.columnIndex="1"/>
+                                                        <CheckBox fx:id="checkBoxShowMesh" mnemonicParsing="false"
+                                                                  nodeOrientation="RIGHT_TO_LEFT" selected="true"
+                                                                  GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                                        <ComboBox fx:id="comboBoxMeshDrawMode" prefWidth="150.0"
+                                                                  GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                                        <ComboBox fx:id="comboBoxMeshCullFace" prefWidth="150.0"
+                                                                  GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                                        <ColorPicker fx:id="colorPickerLevelBackground"
+                                                                     GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                                                        <ChoiceBox fx:id="shadingModeChoiceBox" prefWidth="150.0"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                                                    </children>
+                                                </GridPane>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </AnchorPane>
+                            </content>
+                            <padding>
+                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                            </padding>
+                        </ScrollPane>
+                    </content>
+                </TitledPane>
+                <TitledPane fx:id="cameraSettings" animated="false" text="Camera/Control Settings">
+                    <content>
+                        <ScrollPane fitToWidth="true">
+                            <content>
+                                <AnchorPane>
+                                    <children>
+                                        <VBox spacing="8.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                                              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                            <children>
+                                                <GridPane fx:id="cameraSettingsPane">
+                                                    <columnConstraints>
+                                                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity"
+                                                                           minWidth="10.0" prefWidth="80.0"/>
+                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"
+                                                                           prefWidth="100.0"/>
+                                                    </columnConstraints>
+                                                    <rowConstraints>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0"
+                                                                        vgrow="SOMETIMES"/>
+
+                                                    </rowConstraints>
+                                                    <children>
+                                                        <Label text="Camera Dynamics:" GridPane.columnSpan="2">
+                                                            <font>
+                                                                <Font name="System Bold" size="12.0"/>
+                                                            </font>
+                                                        </Label>
+                                                        <Label text="Move Speed:" GridPane.rowIndex="1"/>
+                                                        <HBox alignment="CENTER" spacing="2.0" GridPane.columnIndex="1"
+                                                              GridPane.rowIndex="1">
+                                                            <children>
+                                                                <TextField fx:id="textFieldCamMoveSpeed"
+                                                                           alignment="CENTER_RIGHT"
+                                                                           onAction="#onActionClearFocus"/>
+                                                                <Button fx:id="btnResetCamMoveSpeed"
+                                                                        mnemonicParsing="false" text="R">
+                                                                    <font>
+                                                                        <Font size="8.0"/>
+                                                                    </font>
+                                                                </Button>
+                                                            </children>
+                                                        </HBox>
+                                                        <Label text="CTRL xSpeed:" GridPane.rowIndex="2"/>
+                                                        <HBox alignment="CENTER" spacing="2.0" GridPane.columnIndex="1"
+                                                              GridPane.rowIndex="2">
+                                                            <children>
+                                                                <TextField fx:id="textFieldCamSpeedDownMultiplier"
+                                                                           alignment="CENTER_RIGHT"
+                                                                           onAction="#onActionClearFocus"/>
+                                                                <Button fx:id="btnResetCamSpeedDownMultiplier"
+                                                                        mnemonicParsing="false" text="R">
+                                                                    <font>
+                                                                        <Font size="8.0"/>
+                                                                    </font>
+                                                                </Button>
+                                                            </children>
+                                                        </HBox>
+                                                        <Label text="ALT xSpeed:" GridPane.rowIndex="3"/>
+                                                        <CheckBox fx:id="checkBoxYInvert" mnemonicParsing="false"
+                                                                  nodeOrientation="RIGHT_TO_LEFT"
+                                                                  GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                                                        <Label text="Mouse Speed:" GridPane.rowIndex="4"/>
+                                                        <HBox alignment="CENTER" spacing="2.0" GridPane.columnIndex="1"
+                                                              GridPane.rowIndex="4">
+                                                            <children>
+                                                                <TextField fx:id="textFieldCamMouseSpeed"
+                                                                           alignment="CENTER_RIGHT"
+                                                                           onAction="#onActionClearFocus"/>
+                                                                <Button fx:id="btnResetCamMouseSpeed"
+                                                                        mnemonicParsing="false" text="R">
+                                                                    <font>
+                                                                        <Font size="8.0"/>
+                                                                    </font>
+                                                                </Button>
+                                                            </children>
+                                                        </HBox>
+                                                        <Label text="Y-Invert:" GridPane.rowIndex="5"/>
+                                                        <HBox alignment="CENTER" spacing="2.0" GridPane.columnIndex="1"
+                                                              GridPane.rowIndex="3">
+                                                            <children>
+                                                                <TextField fx:id="textFieldCamSpeedUpMultiplier"
+                                                                           alignment="CENTER_RIGHT"
+                                                                           onAction="#onActionClearFocus"/>
+                                                                <Button fx:id="btnResetCamSpeedUpMultiplier"
+                                                                        mnemonicParsing="false" text="R">
+                                                                    <font>
+                                                                        <Font size="8.0"/>
+                                                                    </font>
+                                                                </Button>
+                                                            </children>
+                                                        </HBox>
+                                                        <Label text="Camera Clip Planes and FoV:"
+                                                               GridPane.columnSpan="2" GridPane.rowIndex="6">
+                                                            <font>
+                                                                <Font name="System Bold" size="12.0"/>
+                                                            </font>
+                                                        </Label>
+                                                        <Label text="Near Clip:" GridPane.rowIndex="7"/>
+                                                        <TextField fx:id="textFieldCamNearClip" alignment="CENTER_RIGHT"
+                                                                   onAction="#onActionClearFocus"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+                                                        <Label text="Far Clip:" GridPane.rowIndex="8"/>
+                                                        <TextField fx:id="textFieldCamFarClip" alignment="CENTER_RIGHT"
+                                                                   onAction="#onActionClearFocus"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="8"/>
+                                                        <Label text="FoV:" GridPane.rowIndex="9"/>
+                                                        <TextField fx:id="textFieldCamFoV" alignment="CENTER_RIGHT"
+                                                                   onAction="#onActionClearFocus"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="9"/>
+
+                                                        <Label text="Camera Position:" GridPane.columnSpan="2"
+                                                               GridPane.rowIndex="10">
+                                                            <font>
+                                                                <Font name="System Bold" size="12.0"/>
+                                                            </font>
+                                                        </Label>
+                                                        <Label text="X:" GridPane.rowIndex="11"/>
+                                                        <TextField fx:id="textFieldCamPosX" alignment="CENTER_RIGHT"
+                                                                   onAction="#onActionClearFocus"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="11"/>
+                                                        <Label text="Y:" GridPane.rowIndex="12"/>
+                                                        <TextField fx:id="textFieldCamPosY" alignment="CENTER_RIGHT"
+                                                                   onAction="#onActionClearFocus"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="12"/>
+                                                        <Label text="Z:" GridPane.rowIndex="13"/>
+                                                        <TextField fx:id="textFieldCamPosZ" alignment="CENTER_RIGHT"
+                                                                   onAction="#onActionClearFocus"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="13"/>
+                                                        <Label text="Camera Rotation:" GridPane.columnSpan="2"
+                                                               GridPane.rowIndex="14">
+                                                            <font>
+                                                                <Font name="System Bold" size="12.0"/>
+                                                            </font>
+                                                        </Label>
+                                                        <Label text="Yaw:" GridPane.rowIndex="15"/>
+                                                        <TextField fx:id="textFieldCamYaw" alignment="CENTER_RIGHT"
+                                                                   editable="false"
+                                                                   style="-fx-background-color: #ff00001f;"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="15"/>
+                                                        <Label text="Pitch:" GridPane.rowIndex="16"/>
+                                                        <TextField fx:id="textFieldCamPitch" alignment="CENTER_RIGHT"
+                                                                   editable="false"
+                                                                   style="-fx-background-color: #ff00001f;"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="16"/>
+                                                        <Label text="Roll:" GridPane.rowIndex="17"/>
+                                                        <TextField fx:id="textFieldCamRoll" alignment="CENTER_RIGHT"
+                                                                   editable="false"
+                                                                   style="-fx-background-color: #ff00001f;"
+                                                                   GridPane.columnIndex="1" GridPane.rowIndex="17"/>
+                                                    </children>
+                                                </GridPane>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </AnchorPane>
+                            </content>
+                            <padding>
+                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                            </padding>
+                        </ScrollPane>
+                    </content>
+                </TitledPane>
+            </panes>
+        </Accordion>
+    </children>
+</AnchorPane>

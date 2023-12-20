@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Manages the mof display on the main menu.
@@ -40,10 +41,10 @@ public class MOFMainController extends EditorController<MOFHolder, SCGameInstanc
         this.mofPropertyTable.getItems().clear();
         this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-        List<Tuple2<String, String>> properties = mof.createPropertyList();
+        List<Tuple2<String, Object>> properties = mof.createPropertyList();
         if (properties != null && properties.size() > 0)
-            for (Tuple2<String, String> pair : properties)
-                this.mofPropertyTable.getItems().add(new NameValuePair(pair.getA(), pair.getB()));
+            for (Tuple2<String, Object> pair : properties)
+                this.mofPropertyTable.getItems().add(new NameValuePair(pair.getA(), Objects.toString(pair.getB())));
 
         updateVLO();
     }

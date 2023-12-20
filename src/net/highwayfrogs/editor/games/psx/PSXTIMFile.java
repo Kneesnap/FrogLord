@@ -1,10 +1,11 @@
-package net.highwayfrogs.editor.file;
+package net.highwayfrogs.editor.games.psx;
 
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
@@ -398,10 +399,10 @@ public class PSXTIMFile extends SCSharedGameFile {
     }
 
     @Override
-    public List<Tuple2<String, String>> createPropertyList() {
-        List<Tuple2<String, String>> list = super.createPropertyList();
+    public List<Tuple2<String, Object>> createPropertyList() {
+        List<Tuple2<String, Object>> list = super.createPropertyList();
         list.add(new Tuple2<>("Flags", Utils.toHexString(this.flags)));
-        list.add(new Tuple2<>("Palette Count", String.valueOf(this.palettes != null ? this.palettes.length : 0)));
+        list.add(new Tuple2<>("Palette Count", this.palettes != null ? this.palettes.length : 0));
         list.add(new Tuple2<>("Image Dimensions", getImageWidth() + "x" + getImageHeight()));
         list.add(new Tuple2<>("Image Position", "X: " + this.imageX + ", Y: " + this.imageHeight));
         if (hasClut()) {

@@ -62,10 +62,10 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      * Gets a list of properties to show in contexts where a file has information shown.
      * @return wadProperties, can be null.
      */
-    public List<Tuple2<String, String>> createPropertyList() {
-        List<Tuple2<String, String>> list = new ArrayList<>();
+    public List<Tuple2<String, Object>> createPropertyList() {
+        List<Tuple2<String, Object>> list = new ArrayList<>();
         FileEntry fileEntry = getIndexEntry();
-        list.add(new Tuple2<>("File Type ID", String.valueOf(fileEntry.getTypeId())));
+        list.add(new Tuple2<>("File Type ID", fileEntry.getTypeId()));
         if (fileEntry.hasFilePath()) // Show path from MWI, not faked one.
             list.add(new Tuple2<>("File Path", fileEntry.getFilePath()));
 

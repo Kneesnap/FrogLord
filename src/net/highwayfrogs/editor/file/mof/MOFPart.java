@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
-import net.highwayfrogs.editor.games.sony.shared.MRCollprim;
+import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;

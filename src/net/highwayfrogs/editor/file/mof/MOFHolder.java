@@ -11,7 +11,6 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
@@ -30,6 +29,7 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.gui.editor.MOFMainController;
@@ -39,6 +39,7 @@ import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -50,6 +51,7 @@ import java.util.Objects;
 @Getter
 @Setter
 public class MOFHolder extends SCSharedGameFile {
+    private byte[] rawBytes; // Raw file data. // TODO: TOSS
     private boolean dummy; // Is this dummied data?
     private boolean incomplete; // Some mofs are changed at run-time to share information. This attempts to handle that.
 
@@ -69,6 +71,15 @@ public class MOFHolder extends SCSharedGameFile {
         super(instance);
         this.theme = theme;
         this.completeMOF = lastCompleteMOF;
+    }
+
+    @Override
+    @SneakyThrows
+    public void exportAlternateFormat(FileEntry entry) {
+        // TODO: TOSS
+        File outputFile = new File(GUIMain.getWorkingDirectory(), entry.getDisplayName());
+        if (this.rawBytes != null)
+            Files.write(outputFile.toPath(), this.rawBytes);
     }
 
     @Override
@@ -138,25 +149,25 @@ public class MOFHolder extends SCSharedGameFile {
     }
 
     @Override
-    public List<Tuple2<String, String>> createPropertyList() {
-        List<Tuple2<String, String>> list = super.createPropertyList();
+    public List<Tuple2<String, Object>> createPropertyList() {
+        List<Tuple2<String, Object>> list = super.createPropertyList();
         list.add(new Tuple2<>("Type", isDummy() ? "Dummy" : (isIncomplete() ? "Incomplete" : (isAnimatedMOF() ? "Animated" : "Static"))));
 
         if (!isDummy()) {
             MOFFile staticMof = asStaticFile();
-            list.add(new Tuple2<>("Parts", String.valueOf(staticMof.getParts().size())));
-            list.add(new Tuple2<>("Animations", String.valueOf(getAnimationCount())));
-            list.add(new Tuple2<>("Texture Animation", String.valueOf(staticMof.hasTextureAnimation())));
-            list.add(new Tuple2<>("Hilites", String.valueOf(staticMof.getHiliteCount())));
-            list.add(new Tuple2<>("Collprims", String.valueOf(staticMof.getCollprimCount())));
+            list.add(new Tuple2<>("Parts", staticMof.getParts().size()));
+            list.add(new Tuple2<>("Animations", getAnimationCount()));
+            list.add(new Tuple2<>("Texture Animation", staticMof.hasTextureAnimation()));
+            list.add(new Tuple2<>("Hilites", staticMof.getHiliteCount()));
+            list.add(new Tuple2<>("Collprims", staticMof.getCollprimCount()));
             if (isAnimatedMOF()) {
                 MOFAnimation animMof = getAnimatedFile();
-                list.add(new Tuple2<>("MOF Count", String.valueOf(animMof.getMofCount())));
-                list.add(new Tuple2<>("Model Set Count", String.valueOf(animMof.getModelSetCount())));
-                list.add(new Tuple2<>("Animation Count", String.valueOf(animMof.getModelSet().getCelSet().getCels().size())));
-                list.add(new Tuple2<>("Interpolation Enabled", String.valueOf(animMof.getModelSet().getCelSet().getCels().stream().filter(MOFAnimationCels::isInterpolationEnabled).count())));
-                list.add(new Tuple2<>("Translation Type", animMof.getTransformType().name()));
-                list.add(new Tuple2<>("Start at Frame Zero?", String.valueOf(animMof.isStartAtFrameZero())));
+                list.add(new Tuple2<>("MOF Count", animMof.getMofCount()));
+                list.add(new Tuple2<>("Model Set Count", animMof.getModelSetCount()));
+                list.add(new Tuple2<>("Animation Count", animMof.getModelSet().getCelSet().getCels().size()));
+                list.add(new Tuple2<>("Interpolation Enabled", animMof.getModelSet().getCelSet().getCels().stream().filter(MOFAnimationCels::isInterpolationEnabled).count()));
+                list.add(new Tuple2<>("Translation Type", animMof.getTransformType()));
+                list.add(new Tuple2<>("Start at Frame Zero?", animMof.isStartAtFrameZero()));
             }
         }
 

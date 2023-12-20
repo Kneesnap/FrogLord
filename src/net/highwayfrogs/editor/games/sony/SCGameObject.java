@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.file.MWDFile;
 /**
  * Represents an object used by a Sony Cambridge / Millennium Interactive game.
  * @param <TGameInstance> The type of game instance this object corresponds to.
- *                        Created by Kneesnap on 9/8/2023.
+ * Created by Kneesnap on 9/8/2023.
  */
 @Getter
 public abstract class SCGameObject<TGameInstance extends SCGameInstance> {

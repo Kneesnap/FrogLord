@@ -158,7 +158,7 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     }
 
     @Override
-    public void onMeshSetup(FrogMesh mesh) {
+    public void onMeshSetup(FrogMesh<?> mesh) {
         if (mesh instanceof MOFMesh && isOverlay(mesh.getTextureMap()))
             ((MOFMesh) mesh).renderOverPolygon(this, this);
     }

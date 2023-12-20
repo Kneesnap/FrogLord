@@ -1,13 +1,11 @@
-package net.highwayfrogs.editor.games.sony.shared;
+package net.highwayfrogs.editor.games.sony.shared.collprim;
 
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.Cylinder;
-import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -18,7 +16,9 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MOFController;
+import net.highwayfrogs.editor.gui.editor.MeshUIManager;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -33,11 +33,11 @@ import java.util.function.Consumer;
 public abstract class MRCollprim extends SCSharedGameData {
     private CollprimType type = CollprimType.CUBOID;
     private int flags;
-    private SVector offset = new SVector();
-    private float radiusSquared; // For cylinder base or sphere. It seems like we can safely ignore this value, leaving it as is.
-    private float xLength = 1F;
-    private float yLength = 1F;
-    private float zLength = 1F;
+    private final SVector offset = new SVector();
+    private float radiusSquared = 10F; // For cylinder base or sphere. It seems like we can safely ignore this value, leaving it as is.
+    private float xLength = 3F;
+    private float yLength = 3F;
+    private float zLength = 3F;
     private int userData;
 
     public static final int SIZE_IN_BYTES = 36;
@@ -122,6 +122,14 @@ public abstract class MRCollprim extends SCSharedGameData {
      */
     protected abstract void setupMatrixCreator(MOFController controller, CollprimShapeAdapter<?> adapter, GUIEditorGrid grid);
 
+    /**
+     * Sets up the UI to allow for choosing or creating a matrix.
+     * @param manager The mesh UI manager to setup this for.
+     * @param adapter The adapter shape to setup for.
+     * @param grid    The grid to setup under.
+     */
+    protected abstract <TManager extends MeshUIManager<?> & ICollprimEditorUI> void setupMatrixCreator(TManager manager, CollprimShapeAdapter<?> adapter, GUIEditorGrid grid);
+
     @Override
     public String toString() {
         return "<MRCollprim[" + this.type + "] Flags=" + this.flags + " Offset=[" + this.offset.toFloatString()
@@ -151,6 +159,99 @@ public abstract class MRCollprim extends SCSharedGameData {
             this.flags |= flagMask;
 
         return wereFlagsSet;
+    }
+
+    /**
+     * Setup the editor to display collprim information.
+     * @param editor  The editor to build the UI in.
+     * @param adapter The shape adapter which editing should update.
+     */
+    public <TController extends MeshUIManager<?> & ICollprimEditorUI> void setupEditor(TController editor, CollprimShapeAdapter<?> adapter) {
+        GUIEditorGrid grid = editor.getCollprimEditorGrid();
+        grid.clearEditor();
+
+        // Primitive Type
+        grid.addEnumSelector("Type", this.type, CollprimType.values(), false, newType -> {
+            CollprimType oldType = this.type;
+            this.type = newType;
+            editor.onCollprimChangeType(this, adapter, oldType, newType); // Update the 3D shape display and UI.
+        });
+
+        if (this.type == CollprimType.CYLINDER_X || this.type == CollprimType.CYLINDER_Z)
+            grid.addNormalLabel("FrogLord is not currently capable of rotating cylinders properly.");
+
+        // Flags
+        grid.addSeparator();
+        Label flagLabel = grid.addLabel("Flags", Utils.toHexString(this.flags));
+        grid.addCheckBox("Disable Collision", testFlag(FLAG_COLLISION_DISABLED), newValue -> {
+            setFlag(FLAG_COLLISION_DISABLED, newValue);
+            flagLabel.setText(Utils.toHexString(updateFlags()));
+        });
+
+        // Shape data
+        grid.addSeparator();
+
+        // Radius
+        TextField radiusSquaredField = grid.addFloatField("Radius Squared", this.radiusSquared, newRadiusSq -> {
+            this.radiusSquared = newRadiusSq;
+            adapter.onRadiusSquaredUpdate(newRadiusSq);
+        }, newRadiusSq -> newRadiusSq >= 0 && !Float.isNaN(newRadiusSq) && Float.isFinite(newRadiusSq));
+
+        // Position
+        grid.addFloatVector("Position", getOffset(), () -> editor.updateCollprimPosition(this, adapter), editor.getController(), getOffset().defaultBits(), null, adapter.getShape());
+
+        // Lengths
+        TextField xLengthField = grid.addFloatField("xLength", getXLength(), newVal -> {
+            this.xLength = newVal;
+            adapter.onLengthXUpdate(newVal);
+        }, null);
+
+        TextField yLengthField = grid.addFloatField("yLength", getYLength(), newVal -> {
+            this.yLength = newVal;
+            adapter.onLengthYUpdate(newVal);
+        }, null);
+
+        TextField zLengthField = grid.addFloatField("zLength", getZLength(), newVal -> {
+            this.zLength = newVal;
+            adapter.onLengthZUpdate(newVal);
+        }, null);
+
+        PSXMatrix matrix = getMatrix();
+        if (matrix != null) {
+            grid.addBoldLabel("Matrix:");
+            grid.addMeshMatrix(matrix, editor.getController(), () -> editor.updateCollprimPosition(this, adapter));
+            grid.addButton("Remove Matrix", () -> {
+                removeMatrix();
+                editor.updateCollprimPosition(this, adapter); // Update the model display.
+                editor.updateEditor(); // Refresh UI.
+            });
+        } else {
+            setupMatrixCreator(editor, adapter, grid);
+        }
+
+        // Edit user data.
+        if (getGameInstance().isFrogger()) {
+            grid.addEnumSelector("Reaction", getFroggerReaction(), FroggerCollprimReactionType.values(), false, newReaction -> this.userData = newReaction.ordinal());
+        } else {
+            grid.addIntegerField("User Data", this.userData, newValue -> this.userData = newValue, newValue -> newValue >= 0 && newValue <= 0xFFFF);
+        }
+
+        // Add a button to remove the collprim if possible.
+        grid.addButton("Remove Collprim", () -> {
+            editor.getController().getMarkerManager().updateMarker(null, 4, null, null); // Hide the active position display.
+            grid.clearEditor();
+            editor.onCollprimRemove(this, adapter);
+        });
+
+        // Set which fields can be edited, dependent on the type.
+        boolean isCuboid = (this.type == CollprimType.CUBOID);
+        boolean isCylinderX = (this.type == CollprimType.CYLINDER_X);
+        boolean isCylinderY = (this.type == CollprimType.CYLINDER_Y);
+        boolean isCylinderZ = (this.type == CollprimType.CYLINDER_Z);
+        radiusSquaredField.setDisable(isCuboid);
+        xLengthField.setDisable(!isCylinderX && !isCuboid);
+        yLengthField.setDisable(!isCylinderY && !isCuboid);
+        zLengthField.setDisable(!isCylinderZ && !isCuboid);
     }
 
     /**
@@ -185,7 +286,7 @@ public abstract class MRCollprim extends SCSharedGameData {
         TextField radiusSquaredField = grid.addFloatField("Radius Squared", this.radiusSquared, newRadiusSq -> {
             this.radiusSquared = newRadiusSq;
             adapter.onRadiusSquaredUpdate(newRadiusSq);
-        }, newRadiusSq -> newRadiusSq >= 0 && !Float.isNaN(newRadiusSq) && Float.isFinite(newRadiusSq));
+        }, newRadiusSq -> newRadiusSq >= 0 && Float.isFinite(newRadiusSq));
 
         // Position
         grid.addFloatVector("Position", getOffset(), () -> controller.updateRotation(adapter.getShape()), controller, getOffset().defaultBits(), null, adapter.getShape());
@@ -301,6 +402,58 @@ public abstract class MRCollprim extends SCSharedGameData {
         return adapter;
     }
 
+    /**
+     * Add this collprim to the 3D display.
+     * @param manager     The manager to update the display in.
+     * @param displayList The list of collprims to add to.
+     * @param material    The collprim material.
+     * @return display
+     */
+    public <TManager extends MeshUIManager<?> & ICollprimEditorUI> CollprimShapeAdapter<?> addDisplay(TManager manager, DisplayList displayList, PhongMaterial material) {
+        float x = getOffset().getFloatX();
+        float y = getOffset().getFloatY();
+        float z = getOffset().getFloatZ();
+
+        CollprimShapeAdapter<?> adapter;
+        switch (this.type) {
+            case CUBOID:
+                Box box = displayList.addBoundingBoxCenteredWithDimensions(x, y, z, this.xLength * 2, this.yLength * 2, this.zLength * 2, material, true);
+                adapter = new CuboidCollprimShapeAdapter(this, box);
+                break;
+            case SPHERE:
+                Sphere sphere = displayList.addSphere(x, y, z, 1, material, true);
+                adapter = new SphereCollprimShapeAdapter(this, sphere);
+                break;
+            case CYLINDER_X:
+            case CYLINDER_Y:
+            case CYLINDER_Z:
+                // CYLINDER_Z indicates that the cylinder is aligned to the Z axis, conceptualized as an infinitely large line.
+                // zLength thus indicates the height.
+                // TODO: Unfortunately, FrogLord java does not align/rotate CYLINDER_X and CYLINDER_Z correctly.
+                //  This is because JavaFX uses XYZ angles for rotations, instead of matrices. So, when we rotate the model to orient with mouse movement, we need to do a secondary rotation, something you need matrices for.
+                //  In theory we could get matrix math code working for FrogLord java, but I think this is more effort than it is worth since matrix math is actually written for new FrogLord.
+                Cylinder cylinder = displayList.addCylinder(x, y, z, 1, 2, material, true);
+                adapter = new CylinderCollprimShapeAdapter(this, cylinder);
+                break;
+            default:
+                throw new RuntimeException("Unsupported Collprim type " + this.type + ", cannot create display for " + toString() + ".");
+        }
+
+        adapter.getShape().setOnMouseClicked(evt -> setupEditor(manager, adapter));
+        adapter.getShape().setMouseTransparent(false);
+        adapter.onLengthXUpdate(this.xLength);
+        adapter.onLengthYUpdate(this.yLength);
+        adapter.onLengthZUpdate(this.zLength);
+        adapter.onRadiusSquaredUpdate(this.radiusSquared);
+
+        // TODO: Unfortunately, FrogLord java does not align/rotate the matrix (if it exists).
+        //  This is because JavaFX uses XYZ angles for rotations, instead of matrices. This is fine for rotation based on the mouse, but the problem happens when we need to combine rotations.
+        //  We need matrix math for this, which in theory we could write, but I don't particularly want to spend the time on this since new FrogLord will solve this anyways.
+        //  In theory we could get matrix math code working for FrogLord java, but I think this is more effort than it is worth since matrix math is actually written for new FrogLord.
+
+        return adapter;
+    }
+
     public enum CollprimType {
         CUBOID,
         CYLINDER_X, // Seen in Old Frogger
@@ -328,118 +481,6 @@ public abstract class MRCollprim extends SCSharedGameData {
         DEADLY, // Kills Frogger
         BOUNCY, // Unused.
         FORM, // Form callback.
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public static abstract class CollprimShapeAdapter<TShape extends Shape3D> {
-        private final MRCollprim collprim;
-        private final TShape shape;
-
-        /**
-         * Called when the xLength value is updated.
-         * @param newX The new xLength value
-         */
-        public abstract void onLengthXUpdate(float newX);
-
-        /**
-         * Called when the yLength value is updated.
-         * @param newY The new yLength value
-         */
-        public abstract void onLengthYUpdate(float newY);
-
-        /**
-         * Called when the z Length value is updated.
-         * @param newZ The new zLength value
-         */
-        public abstract void onLengthZUpdate(float newZ);
-
-        /**
-         * Called when the radius squared value is updated.
-         * @param newRadiusSquared The new radius squared value.
-         */
-        public abstract void onRadiusSquaredUpdate(float newRadiusSquared);
-    }
-
-    private static class CuboidCollprimShapeAdapter extends CollprimShapeAdapter<Box> {
-        public CuboidCollprimShapeAdapter(MRCollprim collprim, Box box) {
-            super(collprim, box);
-        }
-
-        @Override
-        public void onLengthXUpdate(float newX) {
-            getShape().setWidth(newX * 2);
-        }
-
-        @Override
-        public void onLengthYUpdate(float newY) {
-            getShape().setHeight(newY * 2);
-        }
-
-        @Override
-        public void onLengthZUpdate(float newZ) {
-            getShape().setDepth(newZ * 2);
-        }
-
-        @Override
-        public void onRadiusSquaredUpdate(float newRadiusSquared) {
-            // Do nothing, this field does not impact cuboids.
-        }
-    }
-
-    private static class SphereCollprimShapeAdapter extends CollprimShapeAdapter<Sphere> {
-        public SphereCollprimShapeAdapter(MRCollprim collprim, Sphere sphere) {
-            super(collprim, sphere);
-        }
-
-        @Override
-        public void onLengthXUpdate(float newX) {
-            // Do nothing, this field does not impact spheres.
-        }
-
-        @Override
-        public void onLengthYUpdate(float newY) {
-            // Do nothing, this field does not impact spheres.
-        }
-
-        @Override
-        public void onLengthZUpdate(float newZ) {
-            // Do nothing, this field does not impact spheres.
-        }
-
-        @Override
-        public void onRadiusSquaredUpdate(float newRadiusSquared) {
-            getShape().setRadius(Math.max(0.05, Math.sqrt(newRadiusSquared)));
-        }
-    }
-
-    private static class CylinderCollprimShapeAdapter extends CollprimShapeAdapter<Cylinder> {
-        public CylinderCollprimShapeAdapter(MRCollprim collprim, Cylinder cylinder) {
-            super(collprim, cylinder);
-        }
-
-        @Override
-        public void onLengthXUpdate(float newX) {
-            if (getCollprim().getType() == CollprimType.CYLINDER_X)
-                getShape().setHeight(Math.max(0.05, newX * 2));
-        }
-
-        @Override
-        public void onLengthYUpdate(float newY) {
-            if (getCollprim().getType() == CollprimType.CYLINDER_Y)
-                getShape().setHeight(Math.max(0.05, newY * 2));
-        }
-
-        @Override
-        public void onLengthZUpdate(float newZ) {
-            if (getCollprim().getType() == CollprimType.CYLINDER_Z)
-                getShape().setHeight(Math.max(0.05, newZ * 2));
-        }
-
-        @Override
-        public void onRadiusSquaredUpdate(float newRadiusSquared) {
-            getShape().setRadius(Math.max(0.05, Math.sqrt(newRadiusSquared)));
-        }
     }
 
     // Down here contains information I found by looking at the data found in various different games.

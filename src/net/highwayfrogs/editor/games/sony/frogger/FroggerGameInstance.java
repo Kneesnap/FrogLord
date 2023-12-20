@@ -20,7 +20,6 @@ import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
-import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.MAPTheme;
@@ -33,6 +32,7 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.*;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -60,6 +60,7 @@ public class FroggerGameInstance extends SCGameInstance {
     private final Map<MAPTheme, FormEntry[]> allowedForms = new HashMap<>();
     private final ThemeBook[] themeLibrary = new ThemeBook[MAPTheme.values().length];
     private final PickupData[] pickupData = new PickupData[FlyScoreType.values().length];
+    private final TextureRemapArray skyLandTextureRemap;
 
     private static final String CHILD_RESTORE_MAP_BOOK = "MapBookRestore";
     private static final String CHILD_RESTORE_THEME_BOOK = "ThemeBookRestore";
@@ -74,6 +75,7 @@ public class FroggerGameInstance extends SCGameInstance {
 
     public FroggerGameInstance() {
         super(SCGameType.FROGGER);
+        this.skyLandTextureRemap = new TextureRemapArray(this, "txl_sky_land");
     }
 
     @Override
@@ -108,13 +110,62 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    protected void readTextureRemapData(DataReader exeReader, MWIFile mwiFile) {
-        this.mapLibrary.forEach(book -> book.readRemapData(this));
+    protected void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile) {
+        // Add sky land.
+        if (getConfig().getSkyLandTextureAddress() > 0) {
+            this.skyLandTextureRemap.setFileOffset(getConfig().getSkyLandTextureAddress());
+            addRemap(this.skyLandTextureRemap);
+        }
+
+        // ISLAND.MAP is read by piggybacking on the location of ARN1.MAP (for builds which includes the txl_island remap)
+        // txl_for3 is read in a similar manner as well.
+        // This occurs when those remaps are read.
+
+        // Add remaps for individual levels.
+        this.mapLibrary.forEach(book -> book.addTextureRemaps(this));
     }
 
     @Override
-    protected void writeTextureRemapData(DataWriter exeWriter) {
-        this.mapLibrary.forEach(book -> book.saveRemapData(exeWriter, this));
+    protected void onRemapRead(TextureRemapArray remap, DataReader reader) {
+        super.onRemapRead(remap, reader);
+
+        // Hack to read island remap. Build 20 is the last build with the remap present (it's also the last build with the unique textures present.)
+        if (remap instanceof FroggerTextureRemap) {
+            FileEntry fileEntry = ((FroggerTextureRemap) remap).getFileEntry();
+
+            if ((!getConfig().isBeforeBuild1() && getConfig().isAtOrBeforeBuild20()) && fileEntry.getDisplayName().equals("ARN1.MAP")) {
+                FileEntry islandMap = getResourceEntryByName("ISLAND.MAP");
+
+                // Register island remap
+                if (islandMap != null) {
+                    FroggerTextureRemap islandRemap = new FroggerTextureRemap(this, islandMap, "txl_island");
+                    islandRemap.setFileOffset(reader.getIndex());
+                    addRemap(islandRemap);
+                }
+            }
+
+            // Hack to read txl_for3 remap.
+            if (!getConfig().isAtLeastRetailWindows() && !getConfig().isAtOrBeforeBuild23() && fileEntry.getDisplayName().equals("FOR2.MAP")) {
+                TextureRemapArray forestRemap = new TextureRemapArray(this, "txl_for3");
+                forestRemap.setFileOffset(reader.getIndex());
+                addRemap(forestRemap);
+            }
+        }
+    }
+
+    @Override
+    protected boolean isEndOfRemap(TextureRemapArray current, TextureRemapArray next, DataReader reader, short value) {
+        // Look for the data which comes after the remap table.
+        if (next == null && isPSX() && value == 0x80) {
+            reader.jumpTemp(reader.getIndex());
+            long nextData = reader.readUnsignedIntAsLong();
+            reader.jumpReturn();
+
+            if (nextData == 0x00100020L)
+                return true; // 'FRInput_default_map' comes after texture remaps, which seems to start with this.
+        }
+
+        return super.isEndOfRemap(current, next, reader, value);
     }
 
     @Override
@@ -167,6 +218,11 @@ public class FroggerGameInstance extends SCGameInstance {
             return;
         }
 
+        // Save MWI.
+        DataWriter writer = new DataWriter(new FileReceiver(new File(folder, "FROGPSX.MWI")));
+        getArchiveIndex().save(writer);
+        writer.closeReceiver();
+
         @Cleanup PrintWriter frogpsxHWriter = new PrintWriter(new File(folder, "frogpsx.h"));
         saveFrogPSX(frogpsxHWriter);
 
@@ -174,10 +230,8 @@ public class FroggerGameInstance extends SCGameInstance {
         @Cleanup PrintWriter vramCWriter = new PrintWriter(new File(folder, "frogvram.c"));
         saveFrogVRAM(vramHWriter, vramCWriter);
 
-        // Save MWI.
-        DataWriter writer = new DataWriter(new FileReceiver(new File(folder, "FROGPSX.MWI")));
-        getArchiveIndex().save(writer);
-        writer.closeReceiver();
+        @Cleanup PrintWriter textureCfgWriter = new PrintWriter(new File(folder, "texture-config.txt"));
+        saveTextureCfg(textureCfgWriter);
 
         System.out.println("Generated source files.");
     }
@@ -199,60 +253,65 @@ public class FroggerGameInstance extends SCGameInstance {
             for (Entry<Short, String> imageEntry : getConfig().getImageNames().entrySet())
                 imageNames[imageEntry.getKey()] = imageEntry.getValue();
 
+        // Write start of .H file.
         vramHWriter.write("#ifndef __FROGVRAM_H" + Constants.NEWLINE);
-        vramHWriter.write("#define __FROGVRAM_H" + Constants.NEWLINE + Constants.NEWLINE);
+        vramHWriter.write("#define __FROGVRAM_H" + Constants.NEWLINE);
+        vramHWriter.write("#include \"texmacro.h\"" + Constants.NEWLINE + Constants.NEWLINE);
         vramHWriter.write("extern MR_TEXTURE* bmp_pointers[];" + Constants.NEWLINE + Constants.NEWLINE);
 
+        // Write start of .c file.
+        vramCWriter.write(Constants.NEWLINE);
+        vramCWriter.write("// frogvram.c - FrogLord Export " + getConfig().getDisplayName() + " (" + getConfig().getInternalName() + ")" + Constants.NEWLINE);
+        vramCWriter.write("// This file contains texture definitions generated from the game. Must be accompanied by texmacro.h generated from the ghidra script." + Constants.NEWLINE);
+        vramCWriter.write(Constants.NEWLINE);
+
+        // Write bmp_pointers.
         vramCWriter.write("#include \"frogvram.h\"" + Constants.NEWLINE + Constants.NEWLINE);
-        vramCWriter.write("MR_TEXTURE* bmp_pointers[] = {" + Constants.NEWLINE + "\t");
-        for (int i = 0; i < imageNames.length; i++)
-            vramCWriter.write("&" + imageNames[i] + "," + (((i % 10) == 0 && i > 0) ? Constants.NEWLINE + "\t" : " "));
+        vramCWriter.write("MR_TEXTURE* bmp_pointers[] = {");
+        for (int i = 0; i < imageNames.length; i++) {
+            if ((i % 16) == 0) {
+                vramCWriter.write(Constants.NEWLINE + "\t");
+            } else {
+                vramCWriter.write(' ');
+            }
+
+            vramCWriter.write("&" + imageNames[i] + ",");
+        }
         vramCWriter.write(Constants.NEWLINE + "};" + Constants.NEWLINE + Constants.NEWLINE);
 
-        for (MapBook mapBook : this.mapLibrary) {
-            if (mapBook.isDummy())
+        // Write texture remaps.
+        for (int i = 0; i < getTextureRemaps().size(); i++) {
+            TextureRemapArray remap = getTextureRemaps().get(i);
+            if (remap.getName() == null)
                 continue;
 
-            FileEntry mapEntry = ((PSXMapBook) mapBook).getMapEntry();
-            String txlName = "txl_" + Utils.stripExtension(mapEntry.getDisplayName()).toLowerCase();
+            // Write start.
+            //String txlName = "txl_" + Utils.stripExtension(mapEntry.getDisplayName()).toLowerCase();
+            vramHWriter.write("extern MR_USHORT " + remap.getName() + "[];" + Constants.NEWLINE);
+            vramCWriter.write("MR_USHORT " + remap.getName() + "[] = {" + Constants.NEWLINE + "\t");
 
-            vramHWriter.write("extern MR_USHORT " + txlName + "[];" + Constants.NEWLINE);
-            vramCWriter.write("MR_USHORT " + txlName + "[] = {");
-            for (short remapVal : getRemapTable(mapEntry))
-                vramCWriter.write(remapVal + ", ");
-            vramCWriter.write(MapBook.REMAP_TERMINATOR + "};" + Constants.NEWLINE);
+            // Write remap texture ids.
+            for (int j = 0; j < remap.getTextureIds().size(); j++) {
+                vramCWriter.write(remap.getTextureIds().get(j) + ", ");
+                if (((j + 1) % 32) == 0 && remap.getTextureIds().size() > j + 3)
+                    vramCWriter.write(Constants.NEWLINE + "\t");
+            }
+
+            vramCWriter.write(Constants.NEWLINE + "};" + Constants.NEWLINE + Constants.NEWLINE);
         }
 
-        vramHWriter.write("extern MR_USHORT txl_for3[];" + Constants.NEWLINE); // Apparently this remap might be in an executable.
-        vramCWriter.write("MR_USHORT txl_for3[] = {};" + Constants.NEWLINE);
-
+        // Write image definitions.
         vramCWriter.write(Constants.NEWLINE);
         vramHWriter.write(Constants.NEWLINE);
         for (String imageName : imageNames) {
             if (imageName == null)
                 continue;
-            vramCWriter.write("MR_TEXTURE " + imageName + " = {0};" + Constants.NEWLINE);
+
+            vramCWriter.write("MR_TEXTURE " + imageName + ";" + Constants.NEWLINE);
             vramHWriter.write("extern MR_TEXTURE " + imageName + ";" + Constants.NEWLINE);
         }
 
-        // Unsure where this goes, or where to read it from.
-        SkyLand skyLand = getSkyLand();
-        short[] skyLandTextures = skyLand != null ? skyLand.getSkyLandTextures() : null;
-        if (skyLandTextures != null && skyLandTextures.length > 0) {
-            vramCWriter.write(Constants.NEWLINE);
-            vramHWriter.write(Constants.NEWLINE);
-            vramCWriter.write("MR_USHORT txl_sky_land[] = {");
-
-            for (int i = 0; i < skyLandTextures.length; i++) {
-                if (i > 0)
-                    vramCWriter.write(", ");
-                vramCWriter.write(String.valueOf(skyLandTextures[i]));
-            }
-
-            vramCWriter.write("};" + Constants.NEWLINE);
-            vramHWriter.write("extern MR_USHORT txl_sky_land[];" + Constants.NEWLINE);
-        }
-
+        // End
         vramHWriter.write("#endif" + Constants.NEWLINE);
     }
 
@@ -260,7 +319,7 @@ public class FroggerGameInstance extends SCGameInstance {
         writer.write("#ifndef __FROGPSX_H" + Constants.NEWLINE);
         writer.write("#define __FROGPSX_H" + Constants.NEWLINE + Constants.NEWLINE);
 
-        writer.write("#define RES_FROGPSX_DIRECTORY \"E:\\\\Frogger\\\\\"" + Constants.NEWLINE);
+        writer.write("#define RES_FROGPSX_DIRECTORY \"L:\\\\FROGGER\\\\\"" + Constants.NEWLINE);
         writer.write("#define RES_NUMBER_OF_RESOURCES " + getArchiveIndex().getEntries().size() + Constants.NEWLINE + Constants.NEWLINE);
 
         writer.write("enum {\n" +
@@ -287,6 +346,12 @@ public class FroggerGameInstance extends SCGameInstance {
         // Must happen last.
         writer.write("#endif" + Constants.NEWLINE);
     }
+
+    private void saveTextureCfg(PrintWriter writer) {
+        for (Entry<Short, String> entry : getConfig().getImageNames().entrySet())
+            writer.append(String.valueOf(entry.getKey())).append("=").append(entry.getValue()).append(Constants.NEWLINE);
+    }
+
 
     /**
      * Get the form book for the given formBookId and MapTheme.

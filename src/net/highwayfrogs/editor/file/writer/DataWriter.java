@@ -18,8 +18,8 @@ import java.util.Stack;
 @Getter
 public class DataWriter {
     @Setter private ByteOrder endian = ByteOrder.LITTLE_ENDIAN;
-    private DataReceiver output;
-    private Stack<Integer> jumpStack = new Stack<>();
+    private final DataReceiver output;
+    private final Stack<Integer> jumpStack = new Stack<>();
 
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
     private static final ByteBuffer SHORT_BUFFER = ByteBuffer.allocate(Constants.SHORT_SIZE);
@@ -34,6 +34,27 @@ public class DataWriter {
      */
     public void writeNull(int amount) {
         writeBytes(new byte[amount]);
+    }
+
+    /**
+     * Skip bytes to align to the given byte boundary.
+     * @param alignment The number of bytes the index should have an increment of.
+     */
+    public void align(int alignment) {
+        align(alignment, Constants.NULL_BYTE);
+    }
+
+    /**
+     * Skip bytes to align to the given byte boundary.
+     * @param alignment The number of bytes the index should have an increment of.
+     * @param padding   The padding byte
+     */
+    public void align(int alignment, byte padding) {
+        int index = getIndex();
+        int offsetAmount = (index % alignment);
+        if (offsetAmount != 0)
+            for (int i = 0; i < alignment - offsetAmount; i++)
+                writeByte(padding); // Alignment.
     }
 
     /**
@@ -97,6 +118,14 @@ public class DataWriter {
         } catch (IOException ex) {
             throw new RuntimeException("Failed to set writer index.", ex);
         }
+    }
+
+    /**
+     * Move a given number of bytes ahead.
+     * @param amount The amount of bytes to move.
+     */
+    public void skipBytes(int amount) {
+        setIndex(getIndex() + amount);
     }
 
     /**

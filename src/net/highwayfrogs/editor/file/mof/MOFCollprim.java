@@ -4,9 +4,12 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.games.sony.shared.MRCollprim;
+import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
+import net.highwayfrogs.editor.games.sony.shared.collprim.ICollprimEditorUI;
+import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MOFController;
+import net.highwayfrogs.editor.gui.editor.MeshUIManager;
 
 /**
  * Represents MR_COLLPRIM.
@@ -70,6 +73,16 @@ public class MOFCollprim extends MRCollprim {
             this.matrixIndex = this.parentPart.getMatrices().size();
             this.parentPart.getMatrices().add(new PSXMatrix());
             controller.updateCollprimBoxes(true, this); // Update the model display and UI.
+        }).setDisable(this.parentPart == null || this.parentPart.getMatrices() == null);
+    }
+
+    @Override
+    protected <TManager extends MeshUIManager<?> & ICollprimEditorUI> void setupMatrixCreator(TManager manager, CollprimShapeAdapter<?> adapter, GUIEditorGrid grid) {
+        grid.addButton("Create Matrix", () -> {
+            this.matrixIndex = this.parentPart.getMatrices().size();
+            this.parentPart.getMatrices().add(new PSXMatrix());
+            manager.updateCollprimPosition(this, adapter); // Update the model display.
+            manager.updateEditor(); // Refresh UI.
         }).setDisable(this.parentPart == null || this.parentPart.getMatrices() == null);
     }
 }

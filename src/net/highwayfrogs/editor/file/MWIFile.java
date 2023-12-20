@@ -254,7 +254,6 @@ public class MWIFile extends SCSharedGameData {
 
         /**
          * Test if this has a full file path.
-         * @return
          */
         public boolean hasFullFilePath() {
             return getFullFilePath() != null;

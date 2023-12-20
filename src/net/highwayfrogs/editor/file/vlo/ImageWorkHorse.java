@@ -34,6 +34,47 @@ public class ImageWorkHorse {
     }
 
     /**
+     * Trim the padding off of this image.
+     * @param image     The image to trim.
+     * @param upTrim    The amount of pixels to cut from the top.
+     * @param downTrim  The amount of pixels to cut from the bottom.
+     * @param leftTrim  The amount of pixels to cut from the left.
+     * @param rightTrim The amount of pixels to cut from the right.
+     * @return trimmedImage
+     */
+    public static BufferedImage trimEdges(BufferedImage image, int upTrim, int downTrim, int leftTrim, int rightTrim) {
+        if (image == null)
+            throw new NullPointerException("Cannot trim a null image!");
+        if (upTrim < 0)
+            throw new IllegalArgumentException("Cannot trim " + upTrim + " pixels from the top of the image.");
+        if (downTrim < 0)
+            throw new IllegalArgumentException("Cannot trim " + downTrim + " pixels from the bottom of the image.");
+        if (leftTrim < 0)
+            throw new IllegalArgumentException("Cannot trim " + leftTrim + " pixels from the left boundary of the image.");
+        if (rightTrim < 0)
+            throw new IllegalArgumentException("Cannot trim " + rightTrim + " pixels from the right boundary of the image.");
+
+        // Don't need to trim.
+        if (upTrim == 0 && downTrim == 0 && leftTrim == 0 && rightTrim == 0)
+            return image;
+
+        // Calculate new width / height.
+        int newWidth = image.getWidth() - leftTrim - rightTrim;
+        int newHeight = image.getHeight() - downTrim - upTrim;
+        if (newWidth < 0)
+            throw new IllegalArgumentException("The amount of pixels we tried to trim was more than the amount of pixels available to trim! (Left: " + leftTrim + ", Right: " + rightTrim + ", Image Width: " + image.getWidth() + ")");
+        if (newHeight < 0)
+            throw new IllegalArgumentException("The amount of pixels we tried to trim was more than the amount of pixels available to trim! (Up: " + upTrim + ", Down: " + downTrim + ", Image Height: " + image.getHeight() + ")");
+
+        // Create new image.
+        BufferedImage trimImage = new BufferedImage(newWidth, newHeight, image.getType());
+        Graphics2D graphics = trimImage.createGraphics();
+        graphics.drawImage(image, -leftTrim, -upTrim, image.getWidth(), image.getHeight(), null);
+        graphics.dispose();
+        return trimImage;
+    }
+
+    /**
      * Scale an image by its width.
      * @param image       The image to scale.
      * @param scaleFactor The factor to scale the image horizontally by.

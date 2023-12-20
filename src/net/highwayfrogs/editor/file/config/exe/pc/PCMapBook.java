@@ -60,15 +60,9 @@ public class PCMapBook extends MapBook {
     }
 
     @Override
-    public void readRemapData(FroggerGameInstance instance) {
-        this.readRemap(instance, this.highMapId, this.highRemapPointer);
-        this.readRemap(instance, this.lowMapId, this.lowRemapPointer);
-    }
-
-    @Override
-    public void saveRemapData(DataWriter writer, FroggerGameInstance instance) {
-        this.saveRemap(writer, instance, this.highMapId, this.highRemapPointer);
-        this.saveRemap(writer, instance, this.lowMapId, this.lowRemapPointer);
+    public void addTextureRemaps(FroggerGameInstance instance) {
+        addRemap(instance, this.highMapId, this.highRemapPointer, false);
+        addRemap(instance, this.lowMapId, this.lowRemapPointer, true);
     }
 
     /**

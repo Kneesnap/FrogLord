@@ -61,7 +61,6 @@ public class FroggerConfig extends SCGameConfig {
         // Music is generally always the same data, so you can find it with a search.
         this.musicAddress = config.getInt("musicAddress", -1);
         this.arcadeLevelAddress = config.getInt("arcadeLevelAddress", 0);
-
     }
 
     private void readMapConfigs(Config config) {

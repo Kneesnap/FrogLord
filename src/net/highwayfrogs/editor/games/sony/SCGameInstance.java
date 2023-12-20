@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
@@ -13,6 +14,8 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
+import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -20,15 +23,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Represents an instance of a game created by Sony Cambridge / Millennium Interactive.
  * TODO: Let's add a logger object to this one, and start to use it for logging.
  * TODO: Let's add a function to resolve what VLO should be used for a particular file (generally map, mof, or wad). This differs per-game so it could be great to have it here.
+ * TODO: Let's fix the MOF UI to rotate collision boxes and collprim boxes with the part rotation.
+ * TODO: https://docs.oracle.com/javase/8/javafx/graphics-tutorial/sampleapp3d.htm#CJAHFAF shows how to show a unit axis. this gives me an idea, perhaps we can use this for 3D position and rotation widgets.
+ * TODO: Mess around with JavaFX TriangleMesh.getFaceSmoothingGroups(). This might have something to do with the reason stuff looks bad from a far? It's not currently clear. We may consider using POINT_NORMAL_TEXCOORD to disable it, with calculated (or dummy?) vertices.
  * Created by Kneesnap on 9/7/2023.
  */
 public abstract class SCGameInstance {
@@ -42,7 +45,9 @@ public abstract class SCGameInstance {
     @Getter private File exeFile;
 
     // Instance data read from game files:
-    private final Map<FileEntry, List<Short>> remapTable = new HashMap<>();
+    private boolean loadingAllRemaps;
+    @Getter private final List<TextureRemapArray> textureRemaps = new ArrayList<>();
+    private final Map<FileEntry, LinkedTextureRemap<?>> linkedTextureMaps = new HashMap<>();
     @Getter private final List<Long> bmpTexturePointers = new ArrayList<>();
 
     private byte[] cachedExecutableBytes;
@@ -108,8 +113,7 @@ public abstract class SCGameInstance {
      * @param mwiFile The mwi file which loaded.
      */
     protected void onMWILoad(MWIFile mwiFile) {
-        readTextureRemapData(getExecutableReader(), mwiFile);
-        // Do nothing. (Overrides will do stuff probably)
+        readTextureRemaps();
     }
 
     /**
@@ -134,17 +138,192 @@ public abstract class SCGameInstance {
     public abstract SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData);
 
     /**
-     * Reads texture remap data from the reader.
+     * Finds and configures texture remap data.
      * @param exeReader The reader to read texture remap data from.
      * @param mwiFile   The index to use for file access.
      */
-    protected abstract void readTextureRemapData(DataReader exeReader, MWIFile mwiFile);
+    protected abstract void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile);
 
     /**
-     * Writes texture remap data to the target data writer.
-     * @param exeWriter The writer to write texture remap data to.
+     * Reads texture remap data.
      */
-    protected abstract void writeTextureRemapData(DataWriter exeWriter);
+    public final void readTextureRemaps() {
+        // Reset all texture remaps.
+        this.textureRemaps.clear();
+        this.linkedTextureMaps.clear();
+
+        // Add & load all texture remaps.
+        try {
+            this.loadingAllRemaps = true;
+            setupTextureRemaps(getExecutableReader(), getArchiveIndex());
+
+            // Read remap data.
+            DataReader reader = getExecutableReader();
+            for (int i = 0; i < this.textureRemaps.size(); i++)
+                this.updateRemap(reader, i);
+        } catch (Throwable th) {
+            this.textureRemaps.clear();
+            this.linkedTextureMaps.clear();
+            throw new RuntimeException("Failed to read texture remaps.", th);
+        } finally {
+            // Mark it as okay to update individual remaps when they are added now.
+            this.loadingAllRemaps = false;
+        }
+    }
+
+    /**
+     * Get the remap table for a particular file.
+     * @param file the file which has an associated remap to lookup.
+     * @return remapTable
+     */
+    public LinkedTextureRemap<?> getLinkedTextureRemap(FileEntry file) {
+        return this.linkedTextureMaps.get(file);
+    }
+
+    /**
+     * Check if the end of a remap has been reached.
+     * @param current The current remap.
+     * @param next    The remap located after this one, if one exists.
+     * @param reader  The reader at the position to test.
+     * @param value   The texture id value read.
+     * @return Has the end of the remap been reached?
+     */
+    protected boolean isEndOfRemap(TextureRemapArray current, TextureRemapArray next, DataReader reader, short value) {
+        if ((value == 0) || (next != null && (reader.getIndex() - Constants.SHORT_SIZE) >= next.getReaderIndex()))
+            return true;
+
+        // Look a pointer beyond the end of the remap table.
+        if (next == null && isPSX()) {
+            reader.jumpTemp(reader.getIndex());
+            long nextValue = reader.readUnsignedIntAsLong();
+            reader.jumpReturn();
+
+            if (SCUtils.isValidLookingPointer(SCGamePlatform.PLAYSTATION, nextValue))
+                return true; // If the next value is a pointer, abort!
+        }
+
+        // Doesn't look like the end of a remap.
+        return false;
+    }
+
+    /**
+     * Writes texture remap data.
+     * @param writer The writer to write texture remap data to.
+     */
+    public final void writeTextureRemaps(DataWriter writer) {
+        for (int i = 0; i < this.textureRemaps.size(); i++) {
+            TextureRemapArray textureRemap = this.textureRemaps.get(i);
+            TextureRemapArray nextTextureRemap = this.textureRemaps.size() > i + 1 ? this.textureRemaps.get(i + 1) : null;
+
+            // Verify there is enough space.
+            if (nextTextureRemap != null) {
+                int availableSlots = (nextTextureRemap.getLoadAddress() - textureRemap.getLoadAddress()) / Constants.SHORT_SIZE;
+                if (textureRemap.getTextureIds().size() > availableSlots) {
+                    System.out.println("WARNING: '" + textureRemap.getDebugName() + "' has been skipped because it has " + textureRemap.getTextureIds().size() + "texture ids, but there is only room for " + availableSlots + ".");
+                    continue;
+                }
+            }
+
+            writer.jumpTemp(textureRemap.getReaderIndex());
+            for (int j = 0; j < textureRemap.getTextureIds().size(); j++)
+                writer.writeShort(textureRemap.getTextureIds().get(j));
+            writer.jumpReturn();
+        }
+    }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    private void updateRemap(DataReader reader, int index) {
+        TextureRemapArray textureRemap = this.textureRemaps.get(index);
+        TextureRemapArray nextTextureRemap = this.textureRemaps.size() > index + 1 ? this.textureRemaps.get(index + 1) : null;
+
+        // Clear texture ids.
+        textureRemap.getTextureIds().clear();
+
+        // Read new texture ids.
+        short value = 0;
+        reader.jumpTemp(textureRemap.getReaderIndex());
+        while (reader.hasMore() && !isEndOfRemap(textureRemap, nextTextureRemap, reader, value = reader.readShort()))
+            textureRemap.getTextureIds().add(value);
+
+        // The position we want to pass to the hook is the position the remap ends. '0' is included implicitly as padding by the compiler if it's not aligned.
+        // So, if the value is 0 we can stay put, but if it wasn't zero, we read further remap data and should go back.
+        if (value != 0) {
+            if (textureRemap.getTextureIds().size() > 0)
+                reader.setIndex(reader.getIndex() - Constants.SHORT_SIZE);
+        } else {
+            int endIndex = nextTextureRemap != null ? nextTextureRemap.getReaderIndex() : reader.getSize();
+
+            // Value is 0, keep reading until we hit something which isn't 0 (Or we hit another remap)
+            while (endIndex >= reader.getIndex() && reader.readShort() == 0) ;
+            reader.setIndex(reader.getIndex() - Constants.SHORT_SIZE);
+        }
+
+        // Run hook (Allows adding new remaps after this one, but NOT before)
+        onRemapRead(textureRemap, reader);
+
+        // Check there aren't any gaps in data.
+        nextTextureRemap = this.textureRemaps.size() > index + 1 ? this.textureRemaps.get(index + 1) : null;
+        int extraBytes = nextTextureRemap != null ? nextTextureRemap.getReaderIndex() - reader.getIndex() : 0;
+        if (extraBytes != 0)
+            System.out.println(textureRemap + " has " + extraBytes + " unread bytes between it and " + nextTextureRemap + ".");
+
+        // Return, but only after calling hook.
+        reader.jumpReturn();
+    }
+
+    /**
+     * Registers a texture remap to the game instance.
+     * @param remap The remap to register
+     * @return If the remap was added successfully. If a remap exists at this position, it will return false.
+     */
+    public boolean addRemap(TextureRemapArray remap) {
+        if (remap == null)
+            throw new IllegalArgumentException("Cannot add a null remap.");
+
+        // Ensure remap isn't already registered.
+        int index = Collections.binarySearch(this.textureRemaps, remap, Comparator.comparingInt(TextureRemapArray::getLoadAddress));
+        if (index >= 0)
+            return false;
+
+        // Register remap.
+        index = -(index + 1);
+        this.textureRemaps.add(index, remap);
+        onRemapRegistered(remap);
+
+        // Update remap tracking.
+        if (!this.loadingAllRemaps) {
+            // Read contents of current remap
+            updateRemap(getExecutableReader(), index);
+
+            // Update the previous remap to ensure it ends at the proper spot.
+            if (index > 0)
+                updateRemap(getExecutableReader(), index - 1);
+        }
+
+        return true;
+    }
+
+    /**
+     * Called when a remap is registered.
+     * @param remap The remap in question.
+     */
+    protected void onRemapRegistered(TextureRemapArray remap) {
+        if (remap instanceof LinkedTextureRemap<?>) {
+            LinkedTextureRemap<?> linkedRemap = (LinkedTextureRemap<?>) remap;
+            LinkedTextureRemap<?> oldLinkedRemap = this.linkedTextureMaps.put(linkedRemap.getFileEntry(), linkedRemap);
+            if (oldLinkedRemap != null)
+                System.out.println("WARNING: A remap (" + oldLinkedRemap + ") that was previously linked to '" + linkedRemap.getFileEntry().getDisplayName() + "' has been overwritten by " + linkedRemap + ".");
+        }
+    }
+
+    /**
+     * Called when a remap is read.
+     * @param remap  The remap in question.
+     * @param reader The reader it was read from.
+     */
+    protected void onRemapRead(TextureRemapArray remap, DataReader reader) {
+
+    }
 
     /**
      * Setup a list of supported file types.
@@ -239,32 +418,6 @@ public abstract class SCGameInstance {
             throw new RuntimeException("The MWD was not loaded, so we cannot yet search.");
 
         return this.mainArchive.getImageByTextureId(getTextureIdFromPointer(pointer));
-    }
-
-    /**
-     * Get the remap table for a particular file.
-     * @param file the file which has an associated remap to lookup.
-     * @return remapTable
-     */
-    public List<Short> getRemapTable(FileEntry file) {
-        return this.remapTable.get(file);
-    }
-
-    /**
-     * Override remap data in the exe.
-     * @param mapEntry    The FileEntry belonging to the map to replace.
-     * @param remapImages The new image remap array.
-     */
-    public void setRemap(FileEntry mapEntry, List<Short> remapImages) {
-        List<Short> realRemap = this.remapTable.get(mapEntry);
-        if (realRemap == null) {
-            this.remapTable.put(mapEntry, remapImages);
-            return;
-        }
-
-        Utils.verify(realRemap.size() >= remapImages.size(), "New remap table cannot be larger than the old remap table.");
-        for (int i = 0; i < remapImages.size(); i++)
-            realRemap.set(i, remapImages.get(i));
     }
 
     /**
@@ -438,7 +591,7 @@ public abstract class SCGameInstance {
         mwiWriter.closeReceiver();
 
         // Verify MWI size ok.
-        int bytesWritten = writer.getIndex() - this.config.getMWIOffset();
+        int bytesWritten = mwiWriter.getIndex();
         Utils.verify(bytesWritten == this.config.getMWILength(), "Saving the MWI failed. The size of the written MWI does not match the correct MWI size! [%d/%d]", bytesWritten, this.config.getMWILength());
 
         // Write MWI to the provided writer.
@@ -513,6 +666,6 @@ public abstract class SCGameInstance {
             this.writeMWI(writer, mwiFile);
 
         this.writeBmpPointerData(writer);
-        writeTextureRemapData(writer);
+        this.writeTextureRemaps(writer);
     }
 }

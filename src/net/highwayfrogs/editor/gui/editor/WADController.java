@@ -30,6 +30,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A temporary WAD Controller. This is temporary.
@@ -205,9 +206,9 @@ public class WADController extends EditorController<WADFile, SCGameInstance, SCG
         this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        List<Tuple2<String, String>> properties = this.selectedEntry.getFile().createPropertyList();
+        List<Tuple2<String, Object>> properties = this.selectedEntry.getFile().createPropertyList();
         if (properties != null && properties.size() > 0)
-            for (Tuple2<String, String> pair : properties)
-                this.tableFileData.getItems().add(new NameValuePair(pair.getA(), pair.getB()));
+            for (Tuple2<String, Object> pair : properties)
+                this.tableFileData.getItems().add(new NameValuePair(pair.getA(), Objects.toString(pair.getB())));
     }
 }

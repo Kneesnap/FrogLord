@@ -9,8 +9,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.PSXTIMFile;
 import net.highwayfrogs.editor.file.WADFile;
+import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.MainController;
@@ -24,6 +24,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Controls the screen for viewing TIM files.
@@ -66,10 +67,10 @@ public class TIMController extends EditorController<PSXTIMFile, SCGameInstance, 
         this.tableFileData.getItems().clear();
         this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-        List<Tuple2<String, String>> properties = getFile().createPropertyList();
+        List<Tuple2<String, Object>> properties = getFile().createPropertyList();
         if (properties != null && properties.size() > 0)
-            for (Tuple2<String, String> pair : properties)
-                this.tableFileData.getItems().add(new NameValuePair(pair.getA(), pair.getB()));
+            for (Tuple2<String, Object> pair : properties)
+                this.tableFileData.getItems().add(new NameValuePair(pair.getA(), Objects.toString(pair.getB())));
     }
 
     private void updatePalette() {

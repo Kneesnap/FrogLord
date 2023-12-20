@@ -65,6 +65,18 @@ public class Utils {
     private static final Map<Integer, List<Integer>> integerLists = new HashMap<>();
 
     /**
+     * Creates an integer identifier from a string.
+     * @param text The text to convert
+     * @return identifier string
+     */
+    public static int makeIdentifier(String text) {
+        if (text == null || text.length() != 4)
+            throw new RuntimeException("Cannot make signature from '" + text + "'.");
+
+        return (text.charAt(3) << 24) | (text.charAt(2) << 16) | (text.charAt(1) << 8) | text.charAt(0);
+    }
+
+    /**
      * Convert a byte array to a number.
      * @param data The data to turn into a number.
      * @return intValue
@@ -153,6 +165,38 @@ public class Utils {
         if (str.length() == 1)
             str = "0" + str;
         return str;
+    }
+
+    /**
+     * Writes a byte as a text value to the string builder.
+     * @param builder The builder to write to.
+     * @param value   The value to write.
+     */
+    public static void writeByteAsText(StringBuilder builder, byte value) {
+        if (value == 0x0A) {
+            builder.append("\\n");
+        } else if (value == 0x0D) {
+            builder.append("\\r");
+        } else if (value == 0x5C) {
+            builder.append("\\\\"); // Write an escaped backslash to avoid confusion.
+        } else if (value >= 0x20 && value <= 0x7E) {
+            builder.append((char) value);
+        } else {
+            builder.append('\\').append(toByteString(value));
+        }
+    }
+
+    /**
+     * Gets the integer value interpreted as a magic string.
+     * @param value The value to convert
+     * @return magicString
+     */
+    public static String toMagicString(int value) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < Constants.INTEGER_SIZE; i++)
+            writeByteAsText(builder, (byte) (value >> (i * Constants.BITS_PER_BYTE)));
+
+        return builder.toString();
     }
 
     /**
@@ -280,7 +324,7 @@ public class Utils {
      * @return byteValue
      */
     public static byte floatToByte(float floatValue) {
-        short small = (short) (floatValue * 0xFF);
+        short small = (short) Math.round(floatValue * 0xFF);
         return small > 0x7F ? ((byte) -(0x100 - small)) : (byte) small;
     }
 
@@ -747,6 +791,15 @@ public class Utils {
         }
 
         return true;
+    }
+
+    /**
+     * Parse a hex integer string into a 32 bit signed integer.
+     * @param str The string to parse.
+     * @return parsedNumber
+     */
+    public static int parseHexInteger(String str) {
+        return str.startsWith("0x") ? Integer.parseInt(str.substring(2), 16) : Integer.parseInt(str);
     }
 
     /**
@@ -1413,12 +1466,32 @@ public class Utils {
             KeyCode code = evt.getCode();
             if (field.getStyle().isEmpty() && (code.isLetterKey() || code.isDigitKey() || code == KeyCode.BACK_SPACE)) {
                 field.setStyle("-fx-text-inner-color: darkgreen;");
+            } else if (code == KeyCode.ESCAPE) {
+                if (field.getParent() != null)
+                    field.getParent().requestFocus();
+                evt.consume(); // Don't pass further, eg: we don't want to exit the UI we're in.
             } else if (code == KeyCode.ENTER) {
-                boolean pass = setter.apply(field.getText());
-                if (pass && onPass != null)
-                    onPass.run();
+                boolean successfullyHandled = false;
 
-                field.setStyle(pass ? null : "-fx-text-inner-color: red;");
+                try {
+                    successfullyHandled = setter == null || setter.apply(field.getText());
+                } catch (Throwable th) {
+                    Utils.makeErrorPopUp("An error occurred applying the text '" + field.getText() + "'.", th, true);
+                }
+
+                // Run completion hook. If it doesn't pass, return false. If it errors. warn and set it red.
+                if (successfullyHandled) {
+                    try {
+                        if (onPass != null)
+                            onPass.run();
+                        field.setStyle(null); // Disable any red / green styling.
+                        return;
+                    } catch (Throwable th) {
+                        Utils.makeErrorPopUp("An error occurred handling the text '" + field.getText() + "'.", th, true);
+                    }
+                }
+
+                field.setStyle("-fx-text-inner-color: red;");
             }
         });
     }
@@ -1638,7 +1711,7 @@ public class Utils {
      * @param message The message to display.
      * @param ex      The exception which caused the error.
      */
-    public static void makeErrorPopUp(String message, Exception ex, boolean printException) {
+    public static void makeErrorPopUp(String message, Throwable ex, boolean printException) {
         if (printException)
             ex.printStackTrace();
         new Alert(AlertType.ERROR, (message != null && message.length() > 0 ? message + Constants.NEWLINE : "") + "Error: " + ex.getMessage(), ButtonType.OK).showAndWait();
@@ -1838,42 +1911,43 @@ public class Utils {
      * @param subScene   The subScene to take a screenshot of.
      * @param namePrefix The file name prefix to save the image as.
      */
-    public static void takeScreenshot(SubScene subScene, Scene scene, String namePrefix, boolean isMOF) {
+    public static void takeScreenshot(SubScene subScene, Scene scene, String namePrefix, boolean transparentBackground) {
         Paint subSceneColor = subScene.getFill();
 
-        if (isMOF)
+        if (transparentBackground)
             subScene.setFill(Color.TRANSPARENT);
 
         SnapshotParameters snapshotParameters = new SnapshotParameters();
         snapshotParameters.setFill(Color.TRANSPARENT);
 
-        WritableImage wImage = new WritableImage((int)subScene.getWidth(), (int)subScene.getHeight());
+        WritableImage wImage = new WritableImage((int) subScene.getWidth(), (int) subScene.getHeight());
         BufferedImage sceneImage = SwingFXUtils.fromFXImage(subScene.snapshot(snapshotParameters, wImage), null);
 
-        if (isMOF)
+        if (transparentBackground)
             subScene.setFill(subSceneColor);
 
         // Write to file.
         int id = -1;
-        while (id++ < 1000) {
-            String fileName = namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "";
-            File testFile = new File(GUIMain.getWorkingDirectory(), fileName + Utils.padStringLeft(Integer.toString(id), 4, '0') + ".png");
+        while (id++ < 10000) {
+            String fileName = (namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "")
+                    + Utils.padStringLeft(Integer.toString(id), 4, '0') + ".png";
+
+            File testFile = new File(GUIMain.getWorkingDirectory(), fileName);
             if (!testFile.exists()) {
                 try {
                     ImageIO.write(sceneImage, "png", testFile);
+                    break;
                 } catch (IOException ex) {
                     try {
                         // Let user pick a directory (in case current working directory is not writeable)
-                        Utils.promptChooseDirectory("Save Screenshot", true);
-                        testFile = new File(GUIMain.getWorkingDirectory(), fileName + Utils.padStringLeft(Integer.toString(id), 4, '0') + ".png");
-                        ImageIO.write(sceneImage, "png", testFile);
-                    } catch(IOException ex2) {
-                        throw new RuntimeException(ex);
+                        File targetDirectory = Utils.promptChooseDirectory("Save Screenshot", true);
+                        ImageIO.write(sceneImage, "png", new File(targetDirectory, fileName));
+                        break;
+                    } catch (IOException ex2) {
+                        ex.printStackTrace();
+                        throw new RuntimeException("Failed to write screenshot. (No permissions to write here?)", ex2);
                     }
-                    throw new RuntimeException(ex);
                 }
-
-                break;
             }
         }
     }
@@ -1916,5 +1990,23 @@ public class Utils {
         String result = formatter.toString();
         formatter.close();
         return result;
+    }
+
+    /**
+     * Gets the simple class name for a particular object.
+     * @param clazz The class to get the class name from.
+     * @return className
+     */
+    public static String getSimpleName(Class<?> clazz) {
+        return clazz != null ? clazz.getSimpleName() : "NULL CLASS";
+    }
+
+    /**
+     * Gets the simple class name for a particular object.
+     * @param obj The object to get the class name for.
+     * @return className
+     */
+    public static String getSimpleName(Object obj) {
+        return obj != null ? obj.getClass().getSimpleName() : "NULL OBJECT (Unknown class)";
     }
 }

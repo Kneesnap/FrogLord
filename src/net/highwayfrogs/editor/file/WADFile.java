@@ -66,8 +66,7 @@ public class WADFile extends SCSharedGameFile {
 
             // Decompress if compressed.
             byte[] data = reader.readBytes(size);
-            if (reader.getIndex() % 4 != 0)
-                reader.skipBytes(4 - (reader.getIndex() % 4)); // Alignment.
+            reader.align(4);
 
             boolean compressed = PP20Unpacker.isCompressed(data);
             if (compressed)

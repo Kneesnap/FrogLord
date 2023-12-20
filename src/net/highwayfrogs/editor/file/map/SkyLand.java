@@ -83,16 +83,13 @@ public class SkyLand extends SCGameFile<FroggerGameInstance> {
      * Gets the ids of textures used by sky land.
      */
     public short[] getSkyLandTextures() {
-        int address = getConfig().getSkyLandTextureAddress();
-        if (address <= 0)
+        if (getGameInstance().getSkyLandTextureRemap().getTextureIds().isEmpty())
             return null; // None, configuration was not set.
 
-        DataReader reader = getGameInstance().getExecutableReader();
-        reader.setIndex(address);
-
-        short[] result = new short[getMaxIndex() + 1];
+        // Convert from a list to an array.
+        short[] result = new short[getGameInstance().getSkyLandTextureRemap().getTextureIds().size()];
         for (int i = 0; i < result.length; i++)
-            result[i] = reader.readShort();
+            result[i] = getGameInstance().getSkyLandTextureRemap().getTextureIds().get(i);
         return result;
     }
 

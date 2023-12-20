@@ -165,10 +165,10 @@ public class VLOArchive extends SCSharedGameFile {
     }
 
     @Override
-    public List<Tuple2<String, String>> createPropertyList() {
-        List<Tuple2<String, String>> list = super.createPropertyList();
-        list.add(new Tuple2<>("Images", String.valueOf(getImages().size())));
-        list.add(new Tuple2<>("PS1 VLO", String.valueOf(isPsxMode())));
+    public List<Tuple2<String, Object>> createPropertyList() {
+        List<Tuple2<String, Object>> list = super.createPropertyList();
+        list.add(new Tuple2<>("Images", getImages().size()));
+        list.add(new Tuple2<>("PS1 VLO", isPsxMode()));
         return list;
     }
 

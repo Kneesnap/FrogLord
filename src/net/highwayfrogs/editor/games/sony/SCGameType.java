@@ -5,6 +5,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.MedievilGameInstance;
+import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 
 import java.util.function.Supplier;
 
@@ -16,7 +17,7 @@ import java.util.function.Supplier;
 @AllArgsConstructor
 public enum SCGameType {
     //HEADRUSH(null), // Aka Brains In Planes
-    OLD_FROGGER(null),
+    OLD_FROGGER(OldFroggerGameInstance::new),
     BEAST_WARS(BeastWarsInstance::new),
     FROGGER(FroggerGameInstance::new),
     //TAX_MAN(null),

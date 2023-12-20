@@ -51,7 +51,7 @@
                 </Menu>
                 <Menu mnemonicParsing="false" text="Edit">
                     <items>
-                        <MenuItem mnemonicParsing="false" onAction="#actionMakeHeaders" text="Generate .H Files">
+                        <MenuItem mnemonicParsing="false" onAction="#actionMakeHeaders" text="Generate Source Files">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="X" control="DOWN" meta="UP" shift="UP"
                                                     shortcut="UP"/>

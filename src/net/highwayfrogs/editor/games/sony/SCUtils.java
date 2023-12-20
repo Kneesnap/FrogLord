@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony;
 
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.PSXTIMFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
@@ -14,7 +13,10 @@ import net.highwayfrogs.editor.file.sound.psx.PSXVBFile;
 import net.highwayfrogs.editor.file.sound.psx.PSXVHFile;
 import net.highwayfrogs.editor.file.sound.retail.RetailPCVBFile;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -187,5 +189,31 @@ public class SCUtils {
         }
 
         return null;
+    }
+
+    /**
+     * Add textures to the atlas used by model files, texture remaps, etc.
+     * @param atlas      The texture atlas to add these textures to.
+     * @param vloArchive The VLO to add textures from.
+     */
+    public static void addAtlasTextures(TextureAtlas atlas, VLOArchive vloArchive) {
+        if (vloArchive == null)
+            return;
+
+        for (int i = 0; i < vloArchive.getImages().size(); i++)
+            atlas.addTexture(vloArchive.getImages().get(i));
+    }
+
+    /**
+     * Add textures to the atlas used by model files, texture remaps, etc.
+     * @param atlas        The texture atlas to add these textures to.
+     * @param wadFile      An optional WAD file to scan for models to add VLOs from.
+     * @param textureRemap An optional texture remap to add VLOs from.
+     */
+    public static void addAtlasTextures(TextureAtlas atlas, VLOArchive mainVlo, WADFile wadFile, TextureRemapArray textureRemap) {
+        if (mainVlo != null)
+            addAtlasTextures(atlas, mainVlo);
+
+        // TODO: Finish this once we've got stuff figured out.
     }
 }

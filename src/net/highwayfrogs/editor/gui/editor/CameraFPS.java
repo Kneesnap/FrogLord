@@ -11,6 +11,7 @@ import javafx.scene.transform.Affine;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import lombok.Getter;
 import net.highwayfrogs.editor.utils.MathUtils;
@@ -21,7 +22,7 @@ import net.highwayfrogs.editor.utils.MathUtils;
  */
 public class CameraFPS extends Parent {
     // Constants / variables used for frame delta calculations
-    private final double NANOSEC_IN_SECONDS = 1.0 / 1000000000.0;
+    private static final double NANOSEC_IN_SECONDS = 1.0 / 1000000000.0;
     private long lastFrameUpdate = 0;
     private long totalFrameCount = 0;
     private double currFrameUpdate;
@@ -31,8 +32,8 @@ public class CameraFPS extends Parent {
     // For handling user input controls, camera movement and dynamics
     private boolean camMoveForward, camMoveBackward, camMoveUp, camMoveDown, camStrafeLeft, camStrafeRight;
 
-    private final double CAM_MOVE_SPEED = 100.0;
-    @Getter private final DoubleProperty camMoveSpeedProperty = new SimpleDoubleProperty(CAM_MOVE_SPEED);
+    private double defaultMoveSpeed = 100.0;
+    @Getter private final DoubleProperty camMoveSpeedProperty = new SimpleDoubleProperty(this.defaultMoveSpeed);
 
     private double mouseX, mouseY;
     private double mouseOldX, mouseOldY;
@@ -40,19 +41,19 @@ public class CameraFPS extends Parent {
 
     private boolean isControlDown, isAltDown;
 
-    private final double CAM_MOUSE_SPEED = 0.2;
+    private static final double CAM_MOUSE_SPEED = 0.2;
     @Getter private final DoubleProperty camMouseSpeedProperty = new SimpleDoubleProperty(CAM_MOUSE_SPEED);
 
-    private final double CAM_SPEED_DOWN_MULTIPLIER = 0.25;
+    private static final double CAM_SPEED_DOWN_MULTIPLIER = 0.25;
     @Getter private final DoubleProperty camSpeedDownMultiplierProperty = new SimpleDoubleProperty(CAM_SPEED_DOWN_MULTIPLIER);
 
-    private final double CAM_SPEED_UP_MULTIPLIER = 4.0;
+    private static final double CAM_SPEED_UP_MULTIPLIER = 4.0;
     @Getter private final DoubleProperty camSpeedUpMultiplierProperty = new SimpleDoubleProperty(CAM_SPEED_UP_MULTIPLIER);
 
-    private final double CAM_MIN_YAW_ANGLE_DEGREES = -360.0;
-    private final double CAM_MAX_YAW_ANGLE_DEGREES = 360.0;
-    private final double CAM_MIN_PITCH_ANGLE_DEGREES = -85.0;
-    private final double CAM_MAX_PITCH_ANGLE_DEGREES = 85.0;
+    private static final double CAM_MIN_YAW_ANGLE_DEGREES = -360.0;
+    private static final double CAM_MAX_YAW_ANGLE_DEGREES = 360.0;
+    private static final double CAM_MIN_PITCH_ANGLE_DEGREES = -85.0;
+    private static final double CAM_MAX_PITCH_ANGLE_DEGREES = 85.0;
 
     // Camera processing thread
     AnimationTimer camUpdateThread;
@@ -232,9 +233,15 @@ public class CameraFPS extends Parent {
      * Assign (setup) the control event handlers on the supplied scene object.
      * @param scene The subscene to receive and process the keyboard and mouse events, etc.
      */
-    public void assignSceneControls(Scene scene) {
+    public void assignSceneControls(Stage stage, Scene scene) {
         scene.addEventHandler(KeyEvent.ANY, this::processKeyEvents);
         scene.addEventHandler(MouseEvent.ANY, this::processMouseEvents);
+
+        // Reset keys when focus is lost.
+        stage.focusedProperty().addListener((ov, hidden, shown) -> {
+            if (hidden || !shown)
+                resetKeys();
+        });
     }
 
     /**
@@ -526,7 +533,7 @@ public class CameraFPS extends Parent {
      * Reset the camera's default property values for move speed, mouse speed, etc.
      */
     public void resetDefaultCamMoveSpeed() {
-        camMoveSpeedProperty.set(CAM_MOVE_SPEED);
+        camMoveSpeedProperty.set(this.defaultMoveSpeed);
     }
 
     public void resetDefaultCamMouseSpeed() {
@@ -579,5 +586,15 @@ public class CameraFPS extends Parent {
 
     private Point3D getCamURow() {
         return CAM_U_ROW.call(getLocalToSceneTransform());
+    }
+
+    /**
+     * Sets the new default camera movement speed.
+     * @param newMoveSpeed The new camera movement speed.
+     */
+    public void setDefaultMoveSpeed(double newMoveSpeed) {
+        if (Math.abs(this.camMoveSpeedProperty.get() - this.defaultMoveSpeed) <= .001)
+            this.camMoveSpeedProperty.set(newMoveSpeed);
+        this.defaultMoveSpeed = newMoveSpeed;
     }
 }

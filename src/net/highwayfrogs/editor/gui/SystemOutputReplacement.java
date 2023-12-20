@@ -1,7 +1,5 @@
 package net.highwayfrogs.editor.gui;
 
-import javafx.application.Platform;
-
 import java.io.OutputStream;
 import java.io.PrintStream;
 
@@ -10,8 +8,8 @@ import java.io.PrintStream;
  * Created by Kneesnap on 9/17/2018.
  */
 public class SystemOutputReplacement extends OutputStream {
-    private PrintStream originalStream;
-    private StringBuffer buffer = new StringBuffer();
+    private final PrintStream originalStream;
+    private final StringBuffer buffer = new StringBuffer();
     private static final String LINE_SEPARATOR = System.lineSeparator();
 
     public SystemOutputReplacement() {
@@ -28,19 +26,9 @@ public class SystemOutputReplacement extends OutputStream {
             String s = buffer.toString();
             if (s.contains(LINE_SEPARATOR)) { // The whole separator string is written
                 buffer.setLength(0);
-                printMessage(s.substring(0, s.length() - LINE_SEPARATOR.length()));
+                MainController.addMessage(s.substring(0, s.length() - LINE_SEPARATOR.length()));
             }
         }
-    }
-
-    private void printMessage(String message) {
-        if (!Platform.isFxApplicationThread()) {
-            Platform.runLater(() -> printMessage(message));
-            return;
-        }
-
-        if (MainController.MAIN_WINDOW != null)
-            MainController.MAIN_WINDOW.printMessage(message);
     }
 
     /**

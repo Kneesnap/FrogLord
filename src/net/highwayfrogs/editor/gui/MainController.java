@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -66,6 +67,7 @@ public class MainController implements Initializable {
     @Getter
     @Setter
     private static EditorController<?, ?, ?> currentController;
+    private static final List<String> queuedMessages = new ArrayList<>();
 
     /**
      * Gets the game configuration.
@@ -79,15 +81,6 @@ public class MainController implements Initializable {
      */
     public MWDFile getArchive() {
         return this.gameInstance != null ? this.gameInstance.getMainArchive() : null;
-    }
-
-    /**
-     * Print a message to the console window.
-     * @param message The message to print.
-     */
-    public void printMessage(String message) {
-        if (consoleText != null)
-            consoleText.appendText(message + System.lineSeparator());
     }
 
     @Getter
@@ -115,7 +108,6 @@ public class MainController implements Initializable {
         instance.setupFileTypes(displayedFileTypes);
         for (SCDisplayedFileType displayedFileType : displayedFileTypes)
             addFileList(displayedFileType.getId(), displayedFileType.getName(), gameFileRegistry);
-
 
         // Manually tracked data.
         addFileList(WADFile.TYPE_ID, "WAD", gameFileRegistry);
@@ -190,7 +182,7 @@ public class MainController implements Initializable {
 
     @FXML
     private void actionSaveMWI(ActionEvent evt) {
-        File selectedFile = Utils.promptFileSave("Specify the file to export the MWI as...", "FROGPSX", "Millenium WAD Index", "MWI");
+        File selectedFile = Utils.promptFileSave("Specify the file to export the MWI as...", "FROGPSX", "Millennium WAD Index", "MWI");
         if (selectedFile == null)
             return; // Cancel.
 
@@ -418,5 +410,37 @@ public class MainController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         MAIN_WINDOW = this;
         menuBar.prefWidthProperty().bind(rootAnchor.widthProperty());
+    }
+
+    /**
+     * Print a message to the console window.
+     * @param message The message to print.
+     */
+    public static void addMessage(String message) {
+        if (MAIN_WINDOW != null && MAIN_WINDOW.consoleText != null && Platform.isFxApplicationThread()) {
+            MAIN_WINDOW.consoleText.appendText(message + System.lineSeparator());
+        } else {
+            // Queue the message for later.
+            synchronized (queuedMessages) {
+                if (queuedMessages.isEmpty())
+                    Platform.runLater(MainController::showQueuedMessages);
+                queuedMessages.add(message);
+            }
+        }
+    }
+
+    private static void showQueuedMessages() {
+        // Test if it's possible to add messages now. If it's not, push it down the road again.
+        if (MAIN_WINDOW == null || MAIN_WINDOW.consoleText == null || !Platform.isFxApplicationThread()) {
+            Platform.runLater(MainController::showQueuedMessages);
+            return;
+        }
+
+        // Show the messages.
+        synchronized (queuedMessages) {
+            for (int i = 0; i < queuedMessages.size(); i++)
+                MAIN_WINDOW.consoleText.appendText(queuedMessages.get(i) + System.lineSeparator());
+            queuedMessages.clear();
+        }
     }
 }

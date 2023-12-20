@@ -1,19 +1,15 @@
 package net.highwayfrogs.editor.file.map.path.data;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.path.*;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.shared.MRBezierCurve;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
-
-import java.util.function.Function;
 
 /**
  * Holds Spline segment data.
@@ -173,7 +169,7 @@ public class SplineSegment extends PathSegment {
 
         SVector endPoint = convertToBezierCurve().getEnd();
         for (int testLength = 0; testLength < maxLength; testLength++) {
-            this.setLength(testLength);
+            // ? this.setLength(testLength);
             SVector point = calculateSplinePoint(testLength);
             double distanceSq = point.distanceSquared(endPoint);
             if (distanceSq < bestDistance) {
@@ -196,7 +192,7 @@ public class SplineSegment extends PathSegment {
     public void setupEditor(MapUIController controller, GUIEditorGrid editor) {
         super.setupEditor(controller, editor);
 
-        BezierCurve curve = convertToBezierCurve();
+        MRBezierCurve curve = convertToBezierCurve();
         editor.addFloatVector("Start", curve.getStart(), () -> loadFromCurve(curve, controller), controller);
         editor.addFloatVector("Control 1", curve.getControl1(), () -> loadFromCurve(curve, controller), controller);
         editor.addFloatVector("Control 2", curve.getControl2(), () -> loadFromCurve(curve, controller), controller);
@@ -231,7 +227,7 @@ public class SplineSegment extends PathSegment {
         SVector cp1 = new SVector(start).add(new SVector(400, 0, 400));
         SVector cp2 = new SVector(start).add(new SVector(-400, 0, 400));
         SVector end = new SVector(start).add(new SVector(0, 0, 800));
-        loadFromCurve(new BezierCurve(start, cp1, cp2, end), null);
+        loadFromCurve(new MRBezierCurve(null, start, cp1, cp2, end), null);
         loadSmoothT(new float[]{.25F, .5F, .75F, 1F});
         //TODO: Make Smooth C. Calculate length too.
     }
@@ -262,7 +258,7 @@ public class SplineSegment extends PathSegment {
      * Loads curve data from a bezier curve.
      * @param curve The curve to load data from.
      */
-    public void loadFromCurve(BezierCurve curve, MapUIController controller) {
+    public void loadFromCurve(MRBezierCurve curve, MapUIController controller) {
         short uX = (short) (curve.getStart().getX() >> SPLINE_WORLD_SHIFT);
         short uY = (short) (curve.getStart().getY() >> SPLINE_WORLD_SHIFT);
         short uZ = (short) (curve.getStart().getZ() >> SPLINE_WORLD_SHIFT);
@@ -301,8 +297,8 @@ public class SplineSegment extends PathSegment {
      * Generate this as a bezier curve.
      * @return bezierCurve
      */
-    public BezierCurve convertToBezierCurve() {
-        BezierCurve bezier = new BezierCurve();
+    public MRBezierCurve convertToBezierCurve() {
+        MRBezierCurve bezier = new MRBezierCurve(null);
 
         int[][] m = this.splineMatrix;
         SVector start = bezier.getStart();
@@ -355,65 +351,6 @@ public class SplineSegment extends PathSegment {
                 loadSmoothT(smoothingT);
                 onUpdate(controller);
             }, newValue -> newValue >= 0F && newValue <= 1.1F);
-        }
-    }
-
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class BezierCurve {
-        private SVector start = new SVector();
-        private SVector control1 = new SVector();
-        private SVector control2 = new SVector();
-        private SVector end = new SVector();
-
-        /**
-         * Calculate the length of this bezier curve. Doesn't seem very accurate.
-         * Nabbed from http://steve.hollasch.net/cgindex/curves/cbezarclen.html
-         * @return splineLength
-         */
-        public double calculateLength() {
-            SVector k1 = new SVector(this.end).subtract(this.start).add(this.control1.clone().subtract(this.control2).multiply(3));
-            SVector k2 = new SVector(this.start).add(this.control2).multiply(3).subtract(this.control1.clone().multiply(6)); // 3 * (p0 + p2) - 6 * p1;
-            SVector k3 = new SVector(this.control1).subtract(this.start).multiply(3);
-
-            double q1 = 9.0 * ((k1.getFloatX() * k1.getFloatX()) + (k1.getFloatY() * k1.getFloatY()));
-            double q2 = 12.0 * (k1.getFloatX() * k2.getFloatX() + k1.getFloatY() * k2.getFloatY());
-            double q3 = 3.0 * (k1.getFloatX() * k3.getFloatX() + k1.getFloatY() * k3.getFloatY()) + 4.0 * ((k2.getFloatX() * k2.getFloatX()) + (k2.getFloatY() * k2.getFloatY()));
-            double q4 = 4.0 * (k2.getFloatX() * k3.getFloatX() + k2.getFloatY() * k3.getFloatY());
-            double q5 = (k3.getFloatX() * k3.getFloatX()) + (k3.getFloatY() * k3.getFloatY());
-
-            return simpson(t -> Math.sqrt(q5 + t * (q4 + t * (q3 + t * (q2 + t * q1)))), 0, 1, 4096, .001);
-        }
-
-        private double simpson(Function<Double, Double> balf, double a, double b, int nLimit, double tolerance) {
-            int n = 1;
-            double multiplier = (b - a) / 6.0;
-            double endsum = balf.apply(a) + balf.apply(b);
-            double interval = (b - a) / 2.0;
-            double asum = 0;
-            double bsum = balf.apply(a + interval);
-            double est1 = multiplier * (endsum + 2 * asum + 4 * bsum);
-            double est0 = 2 * est1;
-
-            while (n < nLimit && (Math.abs(est1) > 0 && Math.abs((est1 - est0) / est1) > tolerance)) {
-                n *= 2;
-                multiplier /= 2;
-                interval /= 2;
-                asum += bsum;
-                bsum = 0;
-                est0 = est1;
-                double interval_div_2n = interval / (2.0 * n);
-
-                for (int i = 1; i < 2 * n; i += 2) {
-                    double t = a + i * interval_div_2n;
-                    bsum += balf.apply(t);
-                }
-
-                est1 = multiplier * (endsum + 2 * asum + 4 * bsum);
-            }
-
-            return est1;
         }
     }
 }

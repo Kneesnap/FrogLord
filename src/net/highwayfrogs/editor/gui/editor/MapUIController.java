@@ -39,6 +39,7 @@ import java.util.function.Consumer;
 
 /**
  * Manages the UI which is displayed when viewing Frogger maps.
+ * TODO: Let's render SKY LAND underneath sky levels. We can apply shading, etc. I think this could work good.
  * Created by AndyEder on 1/4/2019.
  */
 @Getter
@@ -163,9 +164,9 @@ public class MapUIController implements Initializable {
 
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group(meshView);
-        SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
+        SubScene subScene3D = new SubScene(this.root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
         subScene3D.setFill(Color.BLACK);
-        subScene3D.setCamera(cameraFPS.getCamera());
+        subScene3D.setCamera(this.cameraFPS.getCamera());
 
         // Ensure that the render manager has access to the root node
         this.renderManager.setRenderRoot(this.root3D);
@@ -176,18 +177,18 @@ public class MapUIController implements Initializable {
         uiPane.setCenter(subScene3D);
 
         // Create and set the scene.
-        mapScene = new Scene(uiPane);
-        this.defaultScene = Utils.setSceneKeepPosition(stageToOverride, mapScene);
+        this.mapScene = new Scene(uiPane);
+        this.defaultScene = Utils.setSceneKeepPosition(stageToOverride, this.mapScene);
 
         // Handle scaling of SubScene on stage resizing.
-        mapScene.widthProperty().addListener((observable, old, newVal) -> subScene3D.setWidth(newVal.doubleValue() - uiRootPaneWidth()));
-        subScene3D.heightProperty().bind(mapScene.heightProperty());
+        this.mapScene.widthProperty().addListener((observable, old, newVal) -> subScene3D.setWidth(newVal.doubleValue() - uiRootPaneWidth()));
+        subScene3D.heightProperty().bind(this.mapScene.heightProperty());
 
         // Associate camera controls with the scene.
-        cameraFPS.assignSceneControls(mapScene);
-        cameraFPS.startThreadProcessing();
+        this.cameraFPS.assignSceneControls(stageToOverride, this.mapScene);
+        this.cameraFPS.startThreadProcessing();
 
-        mapScene.setOnKeyPressed(event -> {
+        this.mapScene.setOnKeyPressed(event -> {
             if (onKeyPress(event))
                 return; // Handled by the other controller.
 
@@ -216,8 +217,8 @@ public class MapUIController implements Initializable {
         if (Math.abs(yOffset) <= .0001)
             yOffset = -100f;
 
-        cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + yOffset, gridZ + startPos.getFloatZ());
-        cameraFPS.setCameraLookAt(gridX, baseY, gridZ + 1); // Set the camera to look at the start position, too. The -1 is necessary to fix some near-zero math. It fixes it for QB.MAP for example.
+        this.cameraFPS.setPos(gridX + startPos.getFloatX(), baseY + yOffset, gridZ + startPos.getFloatZ());
+        this.cameraFPS.setCameraLookAt(gridX, baseY, gridZ + 1); // Set the camera to look at the start position, too. The -1 is necessary to fix some near-zero math. It fixes it for QB.MAP for example.
 
         setupBindings(controller, subScene3D, meshView); // Setup UI.
     }
@@ -226,14 +227,14 @@ public class MapUIController implements Initializable {
      * Get the root pane width.
      */
     public double uiRootPaneWidth() {
-        return anchorPaneUIRoot.getPrefWidth();
+        return this.anchorPaneUIRoot.getPrefWidth();
     }
 
     /**
      * Get the root pane height.
      */
     public double uiRootPaneHeight() {
-        return anchorPaneUIRoot.getPrefHeight();
+        return this.anchorPaneUIRoot.getPrefHeight();
     }
 
     /**
@@ -243,48 +244,48 @@ public class MapUIController implements Initializable {
         this.controller = controller;
         this.subScene = subScene3D;
 
-        PerspectiveCamera camera = cameraFPS.getCamera();
+        PerspectiveCamera camera = this.cameraFPS.getCamera();
 
         camera.setNearClip(MAP_VIEW_NEAR_CLIP);
         camera.setFarClip(MAP_VIEW_FAR_CLIP);
         camera.setFieldOfView(MAP_VIEW_FOV);
 
         // Set informational bindings and editor bindings
-        colorPickerLevelBackground.setValue((Color) this.subScene.getFill());
-        this.subScene.fillProperty().bind(colorPickerLevelBackground.valueProperty());
+        this.colorPickerLevelBackground.setValue((Color) this.subScene.getFill());
+        this.subScene.fillProperty().bind(this.colorPickerLevelBackground.valueProperty());
 
-        textFieldCamMoveSpeed.textProperty().bindBidirectional(cameraFPS.getCamMoveSpeedProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamMouseSpeed.textProperty().bindBidirectional(cameraFPS.getCamMouseSpeedProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamSpeedDownMultiplier.textProperty().bindBidirectional(cameraFPS.getCamSpeedDownMultiplierProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamSpeedUpMultiplier.textProperty().bindBidirectional(cameraFPS.getCamSpeedUpMultiplierProperty(), NUM_TO_STRING_CONVERTER);
-        checkBoxYInvert.selectedProperty().bindBidirectional(cameraFPS.getCamYInvertProperty());
+        this.textFieldCamMoveSpeed.textProperty().bindBidirectional(this.cameraFPS.getCamMoveSpeedProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamMouseSpeed.textProperty().bindBidirectional(this.cameraFPS.getCamMouseSpeedProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamSpeedDownMultiplier.textProperty().bindBidirectional(this.cameraFPS.getCamSpeedDownMultiplierProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamSpeedUpMultiplier.textProperty().bindBidirectional(this.cameraFPS.getCamSpeedUpMultiplierProperty(), NUM_TO_STRING_CONVERTER);
+        this.checkBoxYInvert.selectedProperty().bindBidirectional(this.cameraFPS.getCamYInvertProperty());
 
-        btnResetCamMoveSpeed.setOnAction(e -> cameraFPS.resetDefaultCamMoveSpeed());
-        btnResetCamMouseSpeed.setOnAction(e -> cameraFPS.resetDefaultCamMouseSpeed());
-        btnResetCamSpeedDownMultiplier.setOnAction(e -> cameraFPS.resetDefaultCamSpeedDownMultiplier());
-        btnResetCamSpeedUpMultiplier.setOnAction(e -> cameraFPS.resetDefaultCamSpeedUpMultiplier());
+        this.btnResetCamMoveSpeed.setOnAction(e -> this.cameraFPS.resetDefaultCamMoveSpeed());
+        this.btnResetCamMouseSpeed.setOnAction(e -> this.cameraFPS.resetDefaultCamMouseSpeed());
+        this.btnResetCamSpeedDownMultiplier.setOnAction(e -> this.cameraFPS.resetDefaultCamSpeedDownMultiplier());
+        this.btnResetCamSpeedUpMultiplier.setOnAction(e -> this.cameraFPS.resetDefaultCamSpeedUpMultiplier());
 
         // Set camera bindings
-        textFieldCamNearClip.textProperty().bindBidirectional(camera.nearClipProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamFarClip.textProperty().bindBidirectional(camera.farClipProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamFoV.textProperty().bindBidirectional(camera.fieldOfViewProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamNearClip.textProperty().bindBidirectional(camera.nearClipProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamFarClip.textProperty().bindBidirectional(camera.farClipProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamFoV.textProperty().bindBidirectional(camera.fieldOfViewProperty(), NUM_TO_STRING_CONVERTER);
 
-        textFieldCamPosX.textProperty().bindBidirectional(cameraFPS.getCamPosXProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamPosY.textProperty().bindBidirectional(cameraFPS.getCamPosYProperty(), NUM_TO_STRING_CONVERTER);
-        textFieldCamPosZ.textProperty().bindBidirectional(cameraFPS.getCamPosZProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamPosX.textProperty().bindBidirectional(this.cameraFPS.getCamPosXProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamPosY.textProperty().bindBidirectional(this.cameraFPS.getCamPosYProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamPosZ.textProperty().bindBidirectional(this.cameraFPS.getCamPosZProperty(), NUM_TO_STRING_CONVERTER);
 
-        textFieldCamYaw.textProperty().bind(cameraFPS.getCamYawProperty().asString("%.6f"));
-        textFieldCamPitch.textProperty().bind(cameraFPS.getCamPitchProperty().asString("%.6f"));
-        textFieldCamRoll.textProperty().bind(cameraFPS.getCamRollProperty().asString("%.6f"));
+        this.textFieldCamYaw.textProperty().bind(this.cameraFPS.getCamYawProperty().asString("%.6f"));
+        this.textFieldCamPitch.textProperty().bind(this.cameraFPS.getCamPitchProperty().asString("%.6f"));
+        this.textFieldCamRoll.textProperty().bind(this.cameraFPS.getCamRollProperty().asString("%.6f"));
 
         // Set mesh view bindings
-        checkBoxShowMesh.selectedProperty().bindBidirectional(meshView.visibleProperty());
+        this.checkBoxShowMesh.selectedProperty().bindBidirectional(meshView.visibleProperty());
 
-        comboBoxMeshDrawMode.getItems().setAll(DrawMode.values());
-        comboBoxMeshDrawMode.valueProperty().bindBidirectional(meshView.drawModeProperty());
+        this.comboBoxMeshDrawMode.getItems().setAll(DrawMode.values());
+        this.comboBoxMeshDrawMode.valueProperty().bindBidirectional(meshView.drawModeProperty());
 
-        comboBoxMeshCullFace.getItems().setAll(CullFace.values());
-        comboBoxMeshCullFace.valueProperty().bindBidirectional(meshView.cullFaceProperty());
+        this.comboBoxMeshCullFace.getItems().setAll(CullFace.values());
+        this.comboBoxMeshCullFace.valueProperty().bindBidirectional(meshView.cullFaceProperty());
 
         // Must be called after MAPController is passed.
         runForEachManager(MapManager::onSetup, "onSetup"); // Setup all of the managers.

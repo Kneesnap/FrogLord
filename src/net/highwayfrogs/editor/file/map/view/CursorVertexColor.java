@@ -4,19 +4,23 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.gui.texture.ITextureSource;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * The texture for the cursor.
  * Created by Kneesnap on 12/4/2018.
  */
 @Getter
-public class CursorVertexColor implements TextureSource {
-    private Color bodyColor;
-    private Color outlineColor;
+public class CursorVertexColor implements TextureSource, ITextureSource {
+    private final Color bodyColor;
+    private final Color outlineColor;
 
     public CursorVertexColor(Color bodyColor, Color outlineColor) {
         this.bodyColor = bodyColor;
@@ -25,17 +29,7 @@ public class CursorVertexColor implements TextureSource {
 
     @Override
     public BufferedImage makeTexture(TextureMap map) {
-        BufferedImage image = new BufferedImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphics = image.createGraphics();
-
-        graphics.setColor(getBodyColor());
-        graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
-
-        graphics.setColor(getOutlineColor());
-        graphics.drawRect(0, 0, image.getWidth() - 1, image.getHeight() - 1);
-
-        graphics.dispose();
-        return image;
+        return makeImage();
     }
 
     @Override
@@ -51,5 +45,60 @@ public class CursorVertexColor implements TextureSource {
     @Override
     public GameImage getGameImage(TextureMap map) {
         return null;
+    }
+
+    @Override
+    public List<Consumer<BufferedImage>> getImageChangeListeners() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public BufferedImage makeImage() {
+        BufferedImage image = new BufferedImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = image.createGraphics();
+
+        graphics.setColor(getBodyColor());
+        graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+
+        graphics.setColor(getOutlineColor());
+        graphics.drawRect(0, 0, image.getWidth() - 1, image.getHeight() - 1);
+
+        graphics.dispose();
+        return image;
+    }
+
+    @Override
+    public int getWidth() {
+        return MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+    }
+
+    @Override
+    public int getHeight() {
+        return MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+    }
+
+    @Override
+    public int getUpPadding() {
+        return 0;
+    }
+
+    @Override
+    public int getDownPadding() {
+        return 0;
+    }
+
+    @Override
+    public int getLeftPadding() {
+        return 0;
+    }
+
+    @Override
+    public int getRightPadding() {
+        return 0;
+    }
+
+    @Override
+    public void fireChangeEvent(BufferedImage newImage) {
+        // Do nothing, this doesn't change. (For now...?)
     }
 }

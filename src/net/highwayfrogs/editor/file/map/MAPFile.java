@@ -41,6 +41,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 import net.highwayfrogs.editor.utils.Utils;
@@ -50,6 +51,7 @@ import java.util.Map.Entry;
 
 /**
  * Parses Frogger MAP files.
+ * TODO: Let's try to export vertex colors from Frogger. I think MeshLab can render them.
  * TODO: When we port this to new FrogLord,
  *  - Each part should be broken off into a separate class, one interface for loading / saving, and one for holding the data.
  *  - The loading / saving part should be able to perform diagnostics. Eg: Allow previewing byte data in some kind of debug viewer.
@@ -1060,6 +1062,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
 
     /**
      * This method fixes this MAP (If it is ISLAND.MAP) so it will load properly.
+     * TODO: TOSS
      */
     public void fixAsIslandMap() {
         List<Short> newRemap = new ArrayList<>();
@@ -1072,7 +1075,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
                 newRemap.add((short) (int) value);
         }
 
-        getGameInstance().setRemap(getIndexEntry(), newRemap);
+        //getGameInstance().setRemap(getIndexEntry(), newRemap);
     }
 
     /**
@@ -1195,7 +1198,8 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
         if (getConfig().getIslandRemap().size() > 0 && getFileDisplayName().contains("ISLAND.MAP"))
             return getConfig().getIslandRemap();
 
-        return getGameInstance().getRemapTable(getIndexEntry());
+        LinkedTextureRemap<?> textureRemap = getGameInstance().getLinkedTextureRemap(getIndexEntry());
+        return textureRemap != null ? textureRemap.getTextureIds() : null;
     }
 
     /**

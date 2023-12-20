@@ -43,10 +43,7 @@ public class MAPGroup extends GameObject {
         for (MAPPrimitiveType type : types)
             loadPolygonCountMap.put(type, reader.readUnsignedByteAsShort());
 
-        int offsetAmount = (reader.getIndex() % Constants.INTEGER_SIZE);
-        if (offsetAmount != 0)
-            reader.skipBytes(Constants.INTEGER_SIZE - offsetAmount);
-
+        reader.align(Constants.INTEGER_SIZE);
         for (MAPPrimitiveType type : types)
             loadPolygonPointerMap.put(type, reader.readInt());
 

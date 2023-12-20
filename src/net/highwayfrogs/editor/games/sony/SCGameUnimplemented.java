@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.sony;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
 
 import java.util.List;
@@ -28,12 +27,7 @@ public class SCGameUnimplemented extends SCGameInstance {
     }
 
     @Override
-    protected void readTextureRemapData(DataReader exeReader, MWIFile mwiFile) {
-
-    }
-
-    @Override
-    protected void writeTextureRemapData(DataWriter exeWriter) {
+    protected void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile) {
 
     }
 

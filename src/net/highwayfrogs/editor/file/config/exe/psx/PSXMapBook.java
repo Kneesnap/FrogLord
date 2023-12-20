@@ -54,13 +54,8 @@ public class PSXMapBook extends MapBook {
     }
 
     @Override
-    public void readRemapData(FroggerGameInstance instance) {
-        this.readRemap(instance, this.mapId, this.remapPointer);
-    }
-
-    @Override
-    public void saveRemapData(DataWriter writer, FroggerGameInstance instance) {
-        this.saveRemap(writer, instance, this.mapId, this.remapPointer);
+    public void addTextureRemaps(FroggerGameInstance instance) {
+        addRemap(instance, this.mapId, (int) this.remapPointer, false);
     }
 
     @Override
@@ -70,7 +65,7 @@ public class PSXMapBook extends MapBook {
 
     @Override
     public boolean isDummy() {
-        return this.remapPointer == 0;
+        return this.remapPointer <= 0;
     }
 
     @Override
@@ -100,14 +95,6 @@ public class PSXMapBook extends MapBook {
      */
     public int getFileRemapPointer() {
         return (int) (getRemapPointer() - getConfig().getRamPointerOffset());
-    }
-
-    /**
-     * Gets the map's file entry.
-     * @return mapFileEntry
-     */
-    public FileEntry getMapEntry() {
-        return getGameInstance().getResourceEntryByID(this.mapId);
     }
 
     @Override

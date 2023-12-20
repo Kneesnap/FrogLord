@@ -213,7 +213,7 @@ public class TextureMap extends SCSharedGameObject {
             }
         }
 
-        texMap.put(UnknownTextureSource.INSTANCE.makeIdentifier(this), UnknownTextureSource.INSTANCE);
+        texMap.put(UnknownTextureSource.MAGENTA_INSTANCE.makeIdentifier(this), UnknownTextureSource.MAGENTA_INSTANCE);
         texMap.put(MapMesh.CURSOR_COLOR.makeIdentifier(this), MapMesh.CURSOR_COLOR);
         texMap.put(MapMesh.ANIMATION_COLOR.makeIdentifier(this), MapMesh.ANIMATION_COLOR);
         texMap.put(MapMesh.INVISIBLE_COLOR.makeIdentifier(this), MapMesh.INVISIBLE_COLOR);
@@ -266,7 +266,7 @@ public class TextureMap extends SCSharedGameObject {
             }
         }
 
-        texMap.put(UnknownTextureSource.INSTANCE.makeIdentifier(this), UnknownTextureSource.INSTANCE);
+        texMap.put(UnknownTextureSource.MAGENTA_INSTANCE.makeIdentifier(this), UnknownTextureSource.MAGENTA_INSTANCE);
         texMap.put(MOFController.ANIMATION_COLOR.makeIdentifier(this), MOFController.ANIMATION_COLOR);
         texMap.put(MOFController.CANT_APPLY_COLOR.makeIdentifier(this), MOFController.CANT_APPLY_COLOR);
         texMap.put(MOFController.HILITE_COLOR.makeIdentifier(this), MOFController.HILITE_COLOR);
@@ -523,7 +523,7 @@ public class TextureMap extends SCSharedGameObject {
          * @param mesh      The mesh to apply this entry to.
          * @param vertCount The amount of vertices to add.
          */
-        public void applyMesh(FrogMesh mesh, int vertCount) {
+        public void applyMesh(FrogMesh<?> mesh, int vertCount) {
             mesh.getTexCoords().addAll(getMinU(), getMinV());
             mesh.getTexCoords().addAll(getMinU(), getMaxV());
             mesh.getTexCoords().addAll(getMaxU(), getMinV());
@@ -595,7 +595,7 @@ public class TextureMap extends SCSharedGameObject {
         /**
          * Called when a mesh using this TextureSource is setup.
          */
-        default void onMeshSetup(FrogMesh mesh) {
+        default void onMeshSetup(FrogMesh<?> mesh) {
             // Do nothing, by default.
         }
 

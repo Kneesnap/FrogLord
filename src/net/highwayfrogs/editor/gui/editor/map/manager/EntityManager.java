@@ -56,7 +56,7 @@ public class EntityManager extends MapManager {
     @Getter private Group entityRenderGroup;
 
     private static final Image ENTITY_ICON_IMAGE = SCGameFile.loadIcon("entity");
-    private static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
+    public static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
 
     public EntityManager(MapUIController controller) {
         super(controller);
@@ -255,6 +255,7 @@ public class EntityManager extends MapManager {
             MeshView newView = new MeshView();
             newView.setCullFace(CullFace.NONE);
             newView.setDrawMode(DrawMode.FILL);
+            this.entitiesToUpdate.add(this.entityModelViews.size());
             this.entityModelViews.add(newView);
             getController().getGeometryManager().setupView(newView);
             getEntityRenderGroup().getChildren().add(newView);
@@ -374,10 +375,12 @@ public class EntityManager extends MapManager {
 
             if (flyType != null) {
                 PickupData pickupData = config.getPickupData()[flyType.ordinal()];
-                GameImage flyImage = config.getImageFromPointer(pickupData.getImagePointers().get(0));
-                if (flyImage != null) { // This can be null in the EU PS1 demo. (It may not have properly been setup when compiled.)
-                    material = Utils.makeSpecialMaterial(flyImage.toFXImage());
-                    entityIconSize /= 2;
+                if (pickupData != null) {
+                    GameImage flyImage = config.getImageFromPointer(pickupData.getImagePointers().get(0));
+                    if (flyImage != null) { // This can be null in the EU PS1 demo. (It may not have properly been setup when compiled.)
+                        material = Utils.makeSpecialMaterial(flyImage.toFXImage());
+                        entityIconSize /= 2;
+                    }
                 }
             }
         }

@@ -68,6 +68,9 @@ public class FroggerScript extends SCGameData<FroggerGameInstance> {
      * @return name
      */
     public String getName() {
+        if (getGameInstance() == null)
+            return "SCRIPT_NONE";
+
         int index = getGameInstance().getScripts().indexOf(this);
         return index != -1 ? getConfig().getScriptBank().getName(index) : "Unnamed Script";
     }

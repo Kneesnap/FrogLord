@@ -281,6 +281,49 @@ public class DataReader {
     }
 
     /**
+     * Skip bytes, requiring the bytes skipped be 0.
+     * @param amount The number of bytes to skip.
+     */
+    public void skipBytesRequireEmpty(int amount) {
+        int index = getIndex();
+
+        if (amount == 0)
+            return;
+
+        if (amount < 0)
+            throw new RuntimeException("Tried to skip " + amount + " bytes.");
+
+        // Skip bytes.
+        for (int i = 0; i < amount; i++) {
+            byte nextByte = readByte();
+            if (nextByte != 0)
+                throw new RuntimeException("Reader wanted to skip " + amount + " bytes to reach " + Utils.toHexString(index + amount) + ", but got 0x" + Utils.toByteString(nextByte) + " at " + Utils.toHexString(index + i) + ".");
+        }
+    }
+
+    /**
+     * Skip bytes to align to the given byte boundary.
+     * @param alignment The number of bytes the index should have an increment of.
+     */
+    public void align(int alignment) {
+        int index = getIndex();
+        int offsetAmount = (index % alignment);
+        if (offsetAmount != 0)
+            skipBytes(alignment - offsetAmount); // Alignment.
+    }
+
+    /**
+     * Skip bytes to align to the given byte boundary, requiring the bytes skipped be 0.
+     * @param alignment The number of bytes the index should have an increment of.
+     */
+    public void alignRequireEmpty(int alignment) {
+        int index = getIndex();
+        int offsetAmount = (index % alignment);
+        if (offsetAmount != 0)
+            skipBytesRequireEmpty(alignment - offsetAmount);
+    }
+
+    /**
      * Skip the amount of bytes an pointer takes up.
      */
     public void skipPointer() {

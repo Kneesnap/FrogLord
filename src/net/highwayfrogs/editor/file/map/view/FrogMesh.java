@@ -125,7 +125,7 @@ public abstract class FrogMesh<T extends PSXGPUPrimitive & TextureSource> extend
         if (entry == null) {
             GameImage searchImage = poly.getGameImage(getTextureMap());
             System.out.println("There was a texture on this " + getClass().getSimpleName() + " which was not found in the TextureMap! (ID: " + (searchImage != null ? searchImage.getTextureId() : "null") + ")");
-            entry = textureMap.getNode(UnknownTextureSource.INSTANCE);
+            entry = textureMap.getNode(UnknownTextureSource.MAGENTA_INSTANCE);
             if (entry == null)
                 throw new RuntimeException("The default unknown texture was not found in the TextureMap.");
         }
