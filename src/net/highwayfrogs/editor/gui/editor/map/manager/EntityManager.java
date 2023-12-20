@@ -255,7 +255,6 @@ public class EntityManager extends MapManager {
             MeshView newView = new MeshView();
             newView.setCullFace(CullFace.NONE);
             newView.setDrawMode(DrawMode.FILL);
-            this.entitiesToUpdate.add(this.entityModelViews.size());
             this.entityModelViews.add(newView);
             getController().getGeometryManager().setupView(newView);
             getEntityRenderGroup().getChildren().add(newView);

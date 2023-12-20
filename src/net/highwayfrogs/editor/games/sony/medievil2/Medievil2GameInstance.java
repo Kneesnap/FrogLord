@@ -2,12 +2,10 @@ package net.highwayfrogs.editor.games.sony.medievil2;
 
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.gui.MainController;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Represents an instance of MediEvil 2 game files.
@@ -32,23 +30,13 @@ public class Medievil2GameInstance extends SCGameInstance {
     }
 
     @Override
-    protected void readTextureRemapData(DataReader exeReader, MWIFile mwiFile) {
+    protected void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile) {
         // TODO: IMPLEMENT.
-    }
-
-    @Override
-    protected void writeTextureRemapData(DataWriter exeWriter) {
-        // TODO: Implement.
     }
 
     @Override
     public void setupFileTypes(List<MainController.SCDisplayedFileType> fileTypes) {
         fileTypes.add(new MainController.SCDisplayedFileType(FILE_TYPE_VLO, "VLO Texture Bank"));
-    }
-
-    @Override
-    public void setupUncategorizedFileTypes(Map<String, String> uncategorizedFileTypes) {
-        uncategorizedFileTypes.clear();
-        uncategorizedFileTypes.put("PSXTIMFile", "TIM");
+        // TODO: Create category for .TIM file.
     }
 }

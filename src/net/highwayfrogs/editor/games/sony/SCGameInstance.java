@@ -332,11 +332,6 @@ public abstract class SCGameInstance {
     public abstract void setupFileTypes(List<SCDisplayedFileType> fileTypes);
 
     /**
-     * Setup a map of uncategorized id 0 files.
-     */
-    public abstract void setupUncategorizedFileTypes(Map<String, String> uncategorizedFileTypes);
-
-    /**
      * Tests if a given unsigned 32 bit number passed as a long looks like a valid pointer to memory present in the executable.
      * @param testPointer The pointer to test.
      * @return If it looks good or not.

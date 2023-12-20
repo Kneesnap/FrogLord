@@ -104,6 +104,7 @@ public class MainController implements Initializable {
                     .add(gameFile);
         }
 
+        // TODO: This is temporary. I'd like to come up with a system which is a bit more flexible, controlled by the game instance. The game instance should be able to create categories, and specify which category a file belongs in. Then, we can build the list from that.
         List<SCDisplayedFileType> displayedFileTypes = new ArrayList<>();
         instance.setupFileTypes(displayedFileTypes);
         for (SCDisplayedFileType displayedFileType : displayedFileTypes)
@@ -111,11 +112,7 @@ public class MainController implements Initializable {
 
         // Manually tracked data.
         getAndAddFileList(WADFile.TYPE_ID, "WAD", gameFileRegistry);
-
-        Map<String, String> uncategorizedFileTypes = new HashMap<>();
-        instance.setupUncategorizedFileTypes(uncategorizedFileTypes);
-        resolveUncategorizedFiles(uncategorizedFileTypes, gameFileRegistry);
-
+        getAndAddFileList(0, "Uncategorized", gameFileRegistry);
         for (Integer id : new ArrayList<>(gameFileRegistry.keySet()))
             getAndAddFileList(id, "Unknown (ID: " + id + ")", gameFileRegistry);
 
@@ -126,33 +123,6 @@ public class MainController implements Initializable {
         scriptEditor.setDisable(frogger == null || frogger.getScripts().isEmpty());
         demoTableEditor.setDisable(frogger == null || frogger.getDemoTableEntries().isEmpty());
         differenceReport.setDisable(!FroggerVersionComparison.isEnabled());
-    }
-
-    /**
-     * Sorts all id 0 files (if we know what they are).
-     * @param uncategorizedTypes Known uncategorized types for the current game instance.
-     * @param fileMap Id 0 files.
-     */
-    public void resolveUncategorizedFiles(Map<String, String> uncategorizedTypes, Map<Integer, ObservableList<SCGameFile<?>>> fileMap) {
-        ObservableList<SCGameFile<?>> files = fileMap.remove(0);
-        Map<String, ObservableList<SCGameFile<?>>> categorizedFiles = new HashMap<>();
-
-        for (SCGameFile<?> file : files) {
-            String fileType = "Uncategorized";
-            for (String type : uncategorizedTypes.keySet()) {
-                // Figure out category based on file class and known uncategorized types in game instance.
-                if (file.getClass().getSimpleName().equals(type)) {
-                    fileType = uncategorizedTypes.get(type);
-                    break;
-                }
-            }
-            categorizedFiles.computeIfAbsent(fileType, key -> FXCollections.observableArrayList())
-                    .add(file);
-        }
-
-        for (String key : categorizedFiles.keySet()) {
-            addFileList(key, categorizedFiles.get(key));
-        }
     }
 
     public void getAndAddFileList(int type, String name, Map<Integer, ObservableList<SCGameFile<?>>> fileMap) {
