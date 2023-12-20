@@ -38,13 +38,6 @@ public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapP
         for (OldFroggerMapGrid grid : getMap().getGridPacket().getGrids())
             for (OldFroggerMapPolygon polygon : grid.getPolygons())
                 this.setupFaces(polygon);
-
-        /*for (OldFroggerMapPolygon polygon : getMap().getQuadPacket().getPolygons())
-            this.add(polygon);
-
-        for (OldFroggerMapPolygon polygon : getMap().getQuadPacket().getPolygons())
-            this.setupFaces(polygon);*/
-
     }
 
     @Override

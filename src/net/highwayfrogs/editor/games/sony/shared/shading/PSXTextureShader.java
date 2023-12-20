@@ -81,20 +81,20 @@ public class PSXTextureShader {
     public static BufferedImage makeGouraudShadedImage(int width, int height, CVector[] colors) {
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
+        int startX = PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
+        int startY = PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
+        int endX = width - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1;
+        int endY = height - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1;
+
         PSXTextureShader instance = getInstance();
         TextureCoordinate[] coordinates = instance.getTriangleCoordinates();
         if (colors.length == 3) {
-            coordinates[0].setXY(PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
-            coordinates[1].setXY(PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS, height - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1);
-            coordinates[2].setXY(width - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
+            coordinates[0].setXY(startX, startY);
+            coordinates[1].setXY(startX, endY);
+            coordinates[2].setXY(endX, startY);
             shadeTriangle(null, image, colors, coordinates, true, true);
         } else if (colors.length == 4) {
             CVector[] triangleColors = instance.getTriangleColors();
-
-            int startX = PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
-            int startY = PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
-            int endX = width - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1;
-            int endY = height - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1;
 
             // Left triangle.
             triangleColors[0].copyFrom(colors[0]);
@@ -132,14 +132,19 @@ public class PSXTextureShader {
         int paddedWidth = originalImage.getWidth();
         int paddedHeight = originalImage.getHeight();
 
+        int startX = PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
+        int startY = PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
+        int endX = paddedWidth - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1;
+        int endY = paddedHeight - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1;
+
         PSXTextureShader instance = getInstance();
         TextureCoordinate[] coordinates = instance.getTriangleCoordinates();
         if (colors.length == 3) {
             // TODO: Make coordinates based on UVs.
             // TODO: Ensure out of bounds filling works good.
-            coordinates[0].setXY(PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
-            coordinates[1].setXY(PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS, paddedHeight - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1);
-            coordinates[2].setXY(paddedWidth - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
+            coordinates[0].setXY(startX, startY);
+            coordinates[1].setXY(startX, endY);
+            coordinates[2].setXY(endX, startY);
             shadeTriangle(originalImage, image, colors, coordinates, true, true);
         } else if (colors.length == 4) {
             // TODO: Make coordinates based on UVs.
@@ -150,18 +155,18 @@ public class PSXTextureShader {
             triangleColors[0].copyFrom(colors[0]);
             triangleColors[1].copyFrom(colors[1]);
             triangleColors[2].copyFrom(colors[2]);
-            coordinates[0].setXY(PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
-            coordinates[1].setXY(PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS, paddedHeight - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1);
-            coordinates[2].setXY(paddedWidth - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
+            coordinates[0].setXY(startX, endY);
+            coordinates[1].setXY(endX, endY);
+            coordinates[2].setXY(startX, startY);
             shadeTriangle(originalImage, image, triangleColors, coordinates, true, false);
 
             // Right triangle.
-            triangleColors[0].copyFrom(colors[2]);
-            triangleColors[1].copyFrom(colors[1]);
-            triangleColors[2].copyFrom(colors[3]);
-            coordinates[0].setXY(paddedWidth - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
-            coordinates[1].setXY(PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS, paddedHeight - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1);
-            coordinates[2].setXY(paddedWidth - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
+            triangleColors[0].copyFrom(colors[3]);
+            triangleColors[1].copyFrom(colors[2]);
+            triangleColors[2].copyFrom(colors[1]);
+            coordinates[0].setXY(endX, startY);
+            coordinates[1].setXY(startX, startY);
+            coordinates[2].setXY(endX, endY);
             shadeTriangle(originalImage, image, triangleColors, coordinates, false, true);
         } else {
             throw new RuntimeException("Can't create gouraud shaded image with " + colors.length + " colors.");
@@ -271,42 +276,66 @@ public class PSXTextureShader {
 
                 // Write texture.
                 CVector pixelColor = interpolateCVector(leftLineColor, rightLineColor, xLerpFactor, instance.getTempColorVector3());
-                if (sourceImage != null) {
-                    int textureColor = sourceImage.getRGB(x, y);
-                    byte alpha = Utils.getAlpha(textureColor);
-                    // If the value exceeds the max, clamp it to the max. Or at least that's what https://psx-spx.consoledev.net/graphicsprocessingunitgpu/ says.
-                    short red = (short) Math.min(255, (((double) pixelColor.getRedShort() / 127D) * Utils.getRedInt(textureColor)));
-                    short green = (short) Math.min(255, (((double) pixelColor.getGreenShort() / 127D) * Utils.getGreenInt(textureColor)));
-                    short blue = (short) Math.min(255, (((double) pixelColor.getBlueShort() / 127D) * Utils.getBlueInt(textureColor)));
-                    targetImage.setRGB(x, y, Utils.toARGB(Utils.unsignedShortToByte(red), Utils.unsignedShortToByte(green), Utils.unsignedShortToByte(blue), alpha));
-                } else {
-                    targetImage.setRGB(x, y, pixelColor.toARGB());
-                }
+                shadePixel(sourceImage, targetImage, x, y, pixelColor);
             }
 
-            // Fill out of bounds colors to the left. (TODO: Texture shading support)
-            if (fillOutOfBoundsLeft) {
+            // Fill out of bounds colors to the left.
+            if (fillOutOfBoundsLeft)
                 for (int x = 0; x < leftLineX; x++)
-                    targetImage.setRGB(x, y, leftLineColor.toARGB());
-            }
+                    shadePixel(sourceImage, targetImage, x, y, leftLineColor);
 
-            // Fill out of bounds colors to the right. (TODO: Texture shading support)
-            if (fillOutOfBoundsRight) {
+            // Fill out of bounds colors to the right.
+            if (fillOutOfBoundsRight)
                 for (int x = rightLineX + 1; x < targetImage.getWidth(); x++)
-                    targetImage.setRGB(x, y, rightLineColor.toARGB());
-            }
+                    shadePixel(sourceImage, targetImage, x, y, rightLineColor);
         }
 
+        // Step 3) Fill in padding pixels.
+        // Fill in any padding pixels by extending the pixels with color.
         if (fillOutOfBoundsLeft) {
-            for (int y = 0; y < minTriangleY; y++) {
-                // TODO: Implement.
+            for (int x = 0; x < targetImage.getWidth(); x++) {
+                for (int y = targetImage.getHeight() - 1; y >= 0; y--) {
+                    int pixelColor = targetImage.getRGB(x, y);
+                    if (pixelColor == 0)
+                        continue; // Skip untouched pixels.
+
+                    // Copy the pixels.
+                    while (targetImage.getHeight() > ++y)
+                        targetImage.setRGB(x, y, pixelColor);
+
+                    break;
+                }
             }
         }
 
         if (fillOutOfBoundsRight) {
-            for (int y = maxTriangleY + 1; y < minTriangleY; y++) {
-                // TODO: Implement.
+            for (int x = 0; x < targetImage.getWidth(); x++) {
+                for (int y = 0; y < targetImage.getHeight(); y++) {
+                    int pixelColor = targetImage.getRGB(x, y);
+                    if (pixelColor == 0)
+                        continue; // Skip untouched pixels.
+
+                    // Copy the pixels.
+                    while (y-- > 0)
+                        targetImage.setRGB(x, y, pixelColor);
+
+                    break;
+                }
             }
+        }
+    }
+
+    private static void shadePixel(BufferedImage sourceImage, BufferedImage targetImage, int x, int y, CVector shadeColor) {
+        if (sourceImage != null) {
+            int textureColor = sourceImage.getRGB(x, y);
+            byte alpha = Utils.getAlpha(textureColor);
+            // If the value exceeds the max, clamp it to the max. Or at least that's what https://psx-spx.consoledev.net/graphicsprocessingunitgpu/ says.
+            short red = (short) Math.min(255, (((double) shadeColor.getRedShort() / 127D) * Utils.getRedInt(textureColor)));
+            short green = (short) Math.min(255, (((double) shadeColor.getGreenShort() / 127D) * Utils.getGreenInt(textureColor)));
+            short blue = (short) Math.min(255, (((double) shadeColor.getBlueShort() / 127D) * Utils.getBlueInt(textureColor)));
+            targetImage.setRGB(x, y, Utils.toARGB(Utils.unsignedShortToByte(red), Utils.unsignedShortToByte(green), Utils.unsignedShortToByte(blue), alpha));
+        } else {
+            targetImage.setRGB(x, y, shadeColor.toARGB());
         }
     }
 
