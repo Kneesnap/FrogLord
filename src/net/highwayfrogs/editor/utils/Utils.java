@@ -1181,6 +1181,15 @@ public class Utils {
     }
 
     /**
+     * Get the alpha value from an int value.
+     * @param rgb The int value to get the color from.
+     * @return colorValue
+     */
+    public static int getAlphaInt(int rgb) {
+        return getAlpha(rgb) & 0xFF;
+    }
+
+    /**
      * Get the red value from an int value.
      * @param rgb The int value to get the color from.
      * @return colorValue

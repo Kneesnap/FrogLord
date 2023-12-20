@@ -1,13 +1,10 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh;
 
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapGridHeaderPacket.OldFroggerMapGrid;
-import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
+import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.system.math.Vector2f;
 
@@ -64,49 +61,34 @@ public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapP
             entry.addVertexValue(vertexPos.getFloatX(), vertexPos.getFloatY(), vertexPos.getFloatZ());
         }
 
+        ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(data);
+        Texture texture = getMesh().getTextureAtlas().getNullTextureFromSource(textureSource);
+
+        /*// TODO: Once this is deemed reliable, we can just check the shaded texture manager.
+        ITextureSource textureSource;
         Texture texture;
         if (data.getPolygonType().isTextured()) {
-            OldFroggerLevelTableEntry levelTableEntry = getMap().getLevelTableEntry();
-            VLOArchive mainArchive = levelTableEntry != null ? levelTableEntry.getMainVLOArchive() : null;
-            TextureRemapArray textureRemap = levelTableEntry != null ? levelTableEntry.getTextureRemap() : null;
-            Short globalTextureId = textureRemap != null ? textureRemap.getRemappedTextureId((int) data.getTextureId()) : null;
-
-            // Lookup image source.
-            GameImage imageSource = null;
-            if (globalTextureId != null) {
-                imageSource = mainArchive != null ? mainArchive.getImageByTextureId(globalTextureId) : null;
-                if (imageSource == null)
-                    imageSource = getMap().getArchive().getImageByTextureId(globalTextureId);
-            }
+            GameImage imageSource = data.getTexture(getMap().getLevelTableEntry());
 
             // Lookup texture from image source.
             texture = imageSource != null ? getMesh().getTextureAtlas().getNullTextureFromSource(imageSource) : null;
+        } else if ((textureSource = getMesh().getShadedTextureManager().getShadedTexture(data)) != null) {
+            texture = getMesh().getTextureAtlas().getNullTextureFromSource(textureSource);
         } else if (data.getPolygonType().isGouraud()) {
             texture = getMesh().getGouarudPlaceholderTexture();
         } else {
             texture = getMesh().getFlatPlaceholderTexture();
-        }
+        }*/
 
         // Use fallback texture if none found.
         if (texture == null)
             texture = getMesh().getTextureAtlas().getFallbackTexture();
 
-        // Add texture UV.
-        /*Vector2f uvBottomLeft = getMesh().getTextureAtlas().getUV(texture, Vector2f.UNIT_Y); // 0F, 1F
-        Vector2f uvBottomRight = getMesh().getTextureAtlas().getUV(texture, Vector2f.ONE); // 1F, 1F
-        Vector2f uvTopLeft = getMesh().getTextureAtlas().getUV(texture, Vector2f.ZERO); // 0F, 0F
-        Vector2f uvTopRight = getMesh().getTextureAtlas().getUV(texture, Vector2f.UNIT_X); // 1F, 0F
-        entry.addTexCoordValue(uvBottomLeft);
-        entry.addTexCoordValue(uvBottomRight);
-        entry.addTexCoordValue(uvTopLeft);
-        entry.addTexCoordValue(uvTopRight);
-         */
-
-        // TODO: These names are incorrect, let's get them right.
-        entry.addTexCoordValue(getTextureCoordinate(data, texture, 0, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
-        entry.addTexCoordValue(getTextureCoordinate(data, texture, 1, Vector2f.ONE)); // uvBottomRight, 1F, 1F
-        entry.addTexCoordValue(getTextureCoordinate(data, texture, 2, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
-        entry.addTexCoordValue(getTextureCoordinate(data, texture, 3, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F
+        // Add texture UVs.
+        entry.addTexCoordValue(getTextureCoordinate(data, texture, 0, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
+        entry.addTexCoordValue(getTextureCoordinate(data, texture, 1, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F
+        entry.addTexCoordValue(getTextureCoordinate(data, texture, 2, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
+        entry.addTexCoordValue(getTextureCoordinate(data, texture, 3, Vector2f.ONE)); // uvBottomRight, 1F, 1F
 
         return entry;
     }
@@ -126,21 +108,20 @@ public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapP
         DynamicMeshTypedDataEntry entry = getDataEntry(polygon);
 
         // Determine UV Indices.
-        int uvIndex0 = entry.getTexCoordStartIndex();
-        int uvIndex1 = entry.getTexCoordStartIndex() + 1;
-        int uvIndex2 = entry.getTexCoordStartIndex() + 2;
-        int uvIndex3 = entry.getTexCoordStartIndex() + 3;
+        int uvIndex1 = entry.getTexCoordStartIndex();
+        int uvIndex2 = entry.getTexCoordStartIndex() + 1;
+        int uvIndex3 = entry.getTexCoordStartIndex() + 2;
+        int uvIndex4 = entry.getTexCoordStartIndex() + 3;
 
         // Calculate vertices.
-        int vtxIndex0 = entry.getVertexStartIndex();
-        int vtxIndex1 = vtxIndex0 + 1;
-        int vtxIndex2 = vtxIndex0 + 2;
-        int vtxIndex3 = vtxIndex0 + 3;
+        int vtxIndex1 = entry.getVertexStartIndex();
+        int vtxIndex2 = vtxIndex1 + 1;
+        int vtxIndex3 = vtxIndex1 + 2;
+        int vtxIndex4 = vtxIndex1 + 3;
 
         // JavaFX uses counter-clockwise winding order.
-        //entry.addFace(vtxIndex2, uvIndex2, vtxIndex3, uvIndex3, vtxIndex0, uvIndex0);
-        entry.addFace(vtxIndex2, uvIndex2, vtxIndex3, uvIndex3, vtxIndex0, uvIndex0);
-        entry.addFace(vtxIndex3, uvIndex3, vtxIndex1, uvIndex1, vtxIndex0, uvIndex0);
+        entry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
+        entry.addFace(vtxIndex3, uvIndex3, vtxIndex4, uvIndex4, vtxIndex2, uvIndex2);
     }
 
     @Override

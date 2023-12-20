@@ -5,12 +5,14 @@ import javafx.scene.SubScene;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerFormUIManager;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapVertexManager;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerPathManager;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
+import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.utils.Utils;
@@ -22,9 +24,13 @@ import net.highwayfrogs.editor.utils.Utils;
 public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMapMesh> {
     private static final double DEFAULT_FAR_CLIP = 5000;
     private static final double DEFAULT_MOVEMENT_SPEED = 400;
+    private DisplayList vertexDisplayList;
 
 
     private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.LIME);
+    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_RED = Utils.makeSpecialMaterial(Color.RED);
+    private static final PhongMaterial MATERIAL_BLUE = Utils.makeSpecialMaterial(Color.BLUE);
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
@@ -36,6 +42,8 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
         mainLight.getScope().add(getMeshView());
         mainLight.getScope().addAll(getAxisDisplayList().getNodes());
         getRenderManager().createDisplayList().add(mainLight);
+
+        this.vertexDisplayList = getRenderManager().createDisplayList();
 
         // TODO: Put into separate controller.
         /*if (getMap().getCameraHeightFieldPacket() != null) {
@@ -66,6 +74,17 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
             } else {
                 System.out.println("Not Textured");
             }
+
+            // TODO: TOSS
+            this.vertexDisplayList.clear();
+            SVector vertex0 = getMap().getVertexPacket().getVertices().get(polygon.getVertices()[0]);
+            SVector vertex1 = getMap().getVertexPacket().getVertices().get(polygon.getVertices()[1]);
+            SVector vertex2 = getMap().getVertexPacket().getVertices().get(polygon.getVertices()[2]);
+            SVector vertex3 = getMap().getVertexPacket().getVertices().get(polygon.getVertices()[3]);
+            this.vertexDisplayList.addSphere(vertex0.getFloatX(), vertex0.getFloatY(), vertex0.getFloatZ(), 1, MATERIAL_YELLOW, false);
+            this.vertexDisplayList.addSphere(vertex1.getFloatX(), vertex1.getFloatY(), vertex1.getFloatZ(), 1, MATERIAL_GREEN, false);
+            this.vertexDisplayList.addSphere(vertex2.getFloatX(), vertex2.getFloatY(), vertex2.getFloatZ(), 1, MATERIAL_RED, false);
+            this.vertexDisplayList.addSphere(vertex3.getFloatX(), vertex3.getFloatY(), vertex3.getFloatZ(), 1, MATERIAL_BLUE, false);
         });
     }
 

@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapVersion;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapGridHeaderPacket.OldFroggerMapGrid;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
@@ -22,6 +23,7 @@ import java.awt.*;
 public class OldFroggerMapMesh extends DynamicMesh {
     private final OldFroggerMapFile map;
     private final OldFroggerMapMeshNode mainNode;
+    private final OldFroggerShadedTextureManager shadedTextureManager;
     private AtlasTexture flatPlaceholderTexture;
     private AtlasTexture gouarudPlaceholderTexture;
 
@@ -34,6 +36,7 @@ public class OldFroggerMapMesh extends DynamicMesh {
     public OldFroggerMapMesh(OldFroggerMapFile mapFile) {
         super(new SequentialTextureAtlas(64, 64, true));
         this.map = mapFile;
+        this.shadedTextureManager = new OldFroggerShadedTextureManager(this);
 
         // Add textures.
         getTextureAtlas().startBulkOperations();
@@ -74,6 +77,9 @@ public class OldFroggerMapMesh extends DynamicMesh {
         VLOArchive mainArchive = levelEntry.getMainVLOArchive();
         SCUtils.addAtlasTextures(getTextureAtlas(), mainArchive, levelEntry.getWadFile(), levelEntry.getTextureRemap());
 
-        // TODO: Add properly flat & gouraud shaded textures.
+        // Add gouraud shaded stuff.
+        for (OldFroggerMapGrid grid : getMap().getGridPacket().getGrids())
+            for (OldFroggerMapPolygon polygon : grid.getPolygons())
+                this.shadedTextureManager.addPolygon(polygon);
     }
 }

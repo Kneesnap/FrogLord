@@ -21,10 +21,13 @@ import javafx.util.converter.NumberStringConverter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Utils;
 
+import javax.imageio.ImageIO;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -271,6 +274,14 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 Utils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
                 Utils.takeScreenshot(this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), true);
+            } else if (event.getCode() == KeyCode.F12) {
+                System.out.println("Saving main mesh texture sheet to 'texture-sheet.png'...");
+
+                try {
+                    ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet.png"));
+                } catch (IOException ex) {
+                    Utils.makeErrorPopUp("Failed to save 'texture-sheet.png'.", ex, true);
+                }
             } else if ((event.isControlDown() && event.getCode() == KeyCode.ENTER)) { // Toggle full-screen.
                 this.overwrittenStage.setFullScreen(!this.overwrittenStage.isFullScreen());
             } else if (event.getCode() == KeyCode.X) { // Toggle wireframe.

@@ -83,6 +83,68 @@ public class CVector implements IBinarySerializable {
     }
 
     /**
+     * Gets the red color value between 0 and 255 as a short (since byte is signed)
+     * @return redAsShort
+     */
+    public short getRedShort() {
+        return Utils.byteToUnsignedShort(this.red);
+    }
+
+    /**
+     * Sets the red color value from a short to a byte.
+     * @param newRed the new value of red between 0 and 255.
+     */
+    public void setRedShort(short newRed) {
+        this.red = Utils.unsignedShortToByte(newRed);
+    }
+
+    /**
+     * Gets the green color value between 0 and 255 as a short (since byte is signed)
+     * @return greenAsShort
+     */
+    public short getGreenShort() {
+        return Utils.byteToUnsignedShort(this.green);
+    }
+
+    /**
+     * Sets the green color value from a short to a byte.
+     * @param newGreen the new value of green between 0 and 255.
+     */
+    public void setGreenShort(short newGreen) {
+        this.green = Utils.unsignedShortToByte(newGreen);
+    }
+
+    /**
+     * Gets the blue color value between 0 and 255 as a short (since byte is signed)
+     * @return blueShort
+     */
+    public short getBlueShort() {
+        return Utils.byteToUnsignedShort(this.blue);
+    }
+
+    /**
+     * Sets the blue color value from a short to a byte.
+     * @param newBlue the new value of blue between 0 and 255.
+     */
+    public void setBlueShort(short newBlue) {
+        this.blue = Utils.unsignedShortToByte(newBlue);
+    }
+
+    /**
+     * Copy the contents of another CVector to this one.
+     * @param other The other vector to copy from.
+     */
+    public void copyFrom(CVector other) {
+        if (other == null)
+            throw new NullPointerException("other");
+
+        this.red = other.red;
+        this.green = other.green;
+        this.blue = other.blue;
+        this.code = other.code;
+    }
+
+    /**
      * Get this color as a Java color.
      * @return javaColor
      */
@@ -95,7 +157,7 @@ public class CVector implements IBinarySerializable {
      * @return javaColor
      */
     public Color toColor(byte alpha) {
-        return new Color(Utils.byteToUnsignedShort(getRed()), Utils.byteToUnsignedShort(getGreen()), Utils.byteToUnsignedShort(getBlue()), (alpha & 0xFF));
+        return new Color(getRedShort(), getGreenShort(), getBlueShort(), (alpha & 0xFF));
     }
 
     /**
@@ -104,6 +166,14 @@ public class CVector implements IBinarySerializable {
      */
     public int toRGB() {
         return Utils.toRGB(getRed(), getGreen(), getBlue());
+    }
+
+    /**
+     * Turn this color into an ARGB integer.
+     * @return argbValue
+     */
+    public int toARGB() {
+        return Utils.toARGB(getRed(), getGreen(), getBlue(), (byte) 0xFF);
     }
 
     /**
