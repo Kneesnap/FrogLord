@@ -194,7 +194,7 @@ public class PSXTextureShader {
         if (sourceImage != null && (sourceImage.getWidth() != targetImage.getWidth() || sourceImage.getHeight() != targetImage.getHeight()))
             throw new RuntimeException("The source image had dimensions of " + sourceImage.getWidth() + "x" + sourceImage.getHeight() + ", but the target image was " + targetImage.getWidth() + "x" + targetImage.getHeight() + ".");
 
-        // BufferedImage has an origin at the top left corner. (Ie: X = 0, Y = 0 is the top left corner)
+        // BufferedImage's origin is the top left corner. (Ie: X = 0, Y = 0 is the top left corner)
         // Step 1) Find the scanline bounds.
         int topIndex = -1;
         int leftIndex = -1;
@@ -241,13 +241,12 @@ public class PSXTextureShader {
             int leftLineX;
             if (y < leftPos.getY()) { // Interpolate between top vertex and left vertex.
                 int yOffset = (y - minTriangleY);
-
                 leftLineColor = interpolateCVector(colors[topIndex], colors[leftIndex], (float) yOffset / topToLeftHeight, instance.getTempColorVector1());
-                leftLineX = topPos.getX() + Math.round(inverseLeftSlope * yOffset); // TODO: There's an inaccuracy causing it to try writing outside the size of the image. (It may or may not impact this line)
+                leftLineX = topPos.getX() + (int) (inverseLeftSlope * yOffset);
             } else if (y > leftPos.getY()) { // Interpolate between left vertex and right vertex.
                 int yOffset = (y - leftPos.getY());
                 leftLineColor = interpolateCVector(colors[leftIndex], colors[rightIndex], (float) yOffset / leftToRightHeight, instance.getTempColorVector1());
-                leftLineX = leftPos.getX() + Math.round(inverseLeftRightSlope * yOffset); // TODO: There's an inaccuracy causing it to try writing outside the size of the image. (It may or may not impact this line)
+                leftLineX = leftPos.getX() + (int) (inverseLeftRightSlope * yOffset);
             } else { // Use data directly from the vertex since it's on this scanline.
                 leftLineColor = colors[leftIndex];
                 leftLineX = leftPos.getX();
@@ -258,21 +257,15 @@ public class PSXTextureShader {
             if (y < rightPos.getY()) { // Interpolate between top vertex and right vertex.
                 int yOffset = (y - minTriangleY);
                 rightLineColor = interpolateCVector(colors[topIndex], colors[rightIndex], (float) yOffset / topToRightHeight, instance.getTempColorVector2());
-                rightLineX = topPos.getX() + Math.round(inverseRightSlope * yOffset); // TODO: There's an inaccuracy causing it to try writing outside the size of the image. (It may or may not impact this line)
+                rightLineX = topPos.getX() + (int) (inverseRightSlope * yOffset);
             } else if (y > rightPos.getY()) { // Interpolate between right vertex and left vertex.
                 int yOffset = (y - rightPos.getY());
                 rightLineColor = interpolateCVector(colors[rightIndex], colors[leftIndex], (float) yOffset / rightToLeftHeight, instance.getTempColorVector2());
-                rightLineX = rightPos.getX() - Math.round(inverseLeftRightSlope * yOffset); // TODO: There's an inaccuracy causing it to try writing outside the size of the image.
+                rightLineX = rightPos.getX() - (int) (inverseLeftRightSlope * yOffset);
             } else { // Use data directly from the vertex since it's on this scanline.
                 rightLineColor = colors[rightIndex];
                 rightLineX = rightPos.getX();
             }
-
-            // TODO: Temporary fix to the out of bounds writing.
-            if (leftLineX < 0)
-                leftLineX = 0;
-            if (rightLineX >= targetImage.getWidth())
-                rightLineX = targetImage.getWidth() - 1;
 
             // Fill a scanline.
             for (int x = leftLineX; x <= rightLineX; x++) {
