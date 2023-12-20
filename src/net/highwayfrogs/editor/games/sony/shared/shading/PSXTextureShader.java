@@ -91,22 +91,27 @@ public class PSXTextureShader {
         } else if (colors.length == 4) {
             CVector[] triangleColors = instance.getTriangleColors();
 
+            int startX = PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
+            int startY = PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
+            int endX = width - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1;
+            int endY = height - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1;
+
             // Left triangle.
             triangleColors[0].copyFrom(colors[0]);
             triangleColors[1].copyFrom(colors[1]);
             triangleColors[2].copyFrom(colors[2]);
-            coordinates[0].setXY(PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
-            coordinates[1].setXY(PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS, height - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1);
-            coordinates[2].setXY(width - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
+            coordinates[0].setXY(startX, endY);
+            coordinates[1].setXY(endX, endY);
+            coordinates[2].setXY(startX, startY);
             shadeTriangle(null, image, triangleColors, coordinates, true, false);
 
             // Right triangle.
-            triangleColors[0].copyFrom(colors[2]);
-            triangleColors[1].copyFrom(colors[1]);
-            triangleColors[2].copyFrom(colors[3]);
-            coordinates[0].setXY(width - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
-            coordinates[1].setXY(PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS, height - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1);
-            coordinates[2].setXY(width - PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS - 1, PSXShadeTextureDefinition.UNTEXTURED_IMAGE_PADDING_DIMENSIONS);
+            triangleColors[0].copyFrom(colors[3]);
+            triangleColors[1].copyFrom(colors[2]);
+            triangleColors[2].copyFrom(colors[1]);
+            coordinates[0].setXY(endX, startY);
+            coordinates[1].setXY(startX, startY);
+            coordinates[2].setXY(endX, endY);
             shadeTriangle(null, image, triangleColors, coordinates, false, true);
         } else {
             throw new RuntimeException("Can't create gouraud shaded image with " + colors.length + " colors.");

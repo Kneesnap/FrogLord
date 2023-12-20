@@ -100,7 +100,10 @@ public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapP
 
             return getMesh().getTextureAtlas().getUV(texture, localUv);
         } else {
-            return getMesh().getTextureAtlas().getUV(texture, fallback);
+            Vector2f localUv = this.tempVector.setXY(fallback);
+            localUv.setY(1F - localUv.getY()); // UVs are flipped for generated shader textures too, in order to stay consistent.
+
+            return getMesh().getTextureAtlas().getUV(texture, localUv);
         }
     }
 

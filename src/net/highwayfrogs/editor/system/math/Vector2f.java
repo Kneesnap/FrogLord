@@ -142,6 +142,30 @@ public class Vector2f {
         return this;
     }
 
+    /**
+     * Sets both the x and y scalar components of the vector.
+     * @param x The new x value
+     * @param y The new y value
+     */
+    public Vector2f setXY(float x, float y) {
+        this.x = x;
+        this.y = y;
+        return this;
+    }
+
+    /**
+     * Copies the values of another vector to this one.
+     * @param other The vector to copy values from
+     */
+    public Vector2f setXY(Vector2f other) {
+        if (other == null)
+            throw new NullPointerException("other");
+
+        this.x = other.x;
+        this.y = other.y;
+        return this;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof Vector2f))
