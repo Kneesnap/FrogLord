@@ -26,9 +26,9 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     private Consumer<BufferedImage> onTextureSourceUpdate;
     private BufferedImage cachedImage;
 
-    public static final int UNTEXTURED_IMAGE_FLAT_DIMENSIONS = 8;
-    public static final int UNTEXTURED_IMAGE_GOURAUD_DIMENSIONS = 16;
-    public static final int UNTEXTURED_IMAGE_PADDING_DIMENSIONS = 1;
+    public static final int UNTEXTURED_FLAT_SIZE = 8;
+    public static final int UNTEXTURED_GOURAUD_SIZE = 16;
+    public static final int UNTEXTURED_PADDING_SIZE = 1;
 
     public PSXShadeTextureDefinition(PSXPolygonType polygonType, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUVs) {
         this.polygonType = polygonType;
@@ -145,10 +145,10 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         switch (this.polygonType) {
             case POLY_F3:
             case POLY_F4:
-                return UNTEXTURED_IMAGE_FLAT_DIMENSIONS;
+                return UNTEXTURED_FLAT_SIZE;
             case POLY_G3:
             case POLY_G4:
-                return UNTEXTURED_IMAGE_GOURAUD_DIMENSIONS;
+                return UNTEXTURED_GOURAUD_SIZE;
             case POLY_FT3:
             case POLY_FT4:
             case POLY_GT3:
@@ -164,10 +164,10 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         switch (this.polygonType) {
             case POLY_F3:
             case POLY_F4:
-                return UNTEXTURED_IMAGE_FLAT_DIMENSIONS;
+                return UNTEXTURED_FLAT_SIZE;
             case POLY_G3:
             case POLY_G4:
-                return UNTEXTURED_IMAGE_GOURAUD_DIMENSIONS;
+                return UNTEXTURED_GOURAUD_SIZE;
             case POLY_FT3:
             case POLY_FT4:
             case POLY_GT3:
@@ -185,7 +185,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
             case POLY_F4:
             case POLY_G3:
             case POLY_G4:
-                return UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
+                return UNTEXTURED_PADDING_SIZE;
             case POLY_FT3:
             case POLY_FT4:
             case POLY_GT3:
@@ -203,7 +203,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
             case POLY_F4:
             case POLY_G3:
             case POLY_G4:
-                return UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
+                return UNTEXTURED_PADDING_SIZE;
             case POLY_FT3:
             case POLY_FT4:
             case POLY_GT3:
@@ -221,7 +221,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
             case POLY_F4:
             case POLY_G3:
             case POLY_G4:
-                return UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
+                return UNTEXTURED_PADDING_SIZE;
             case POLY_FT3:
             case POLY_FT4:
             case POLY_GT3:
@@ -239,7 +239,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
             case POLY_F4:
             case POLY_G3:
             case POLY_G4:
-                return UNTEXTURED_IMAGE_PADDING_DIMENSIONS;
+                return UNTEXTURED_PADDING_SIZE;
             case POLY_FT3:
             case POLY_FT4:
             case POLY_GT3:
