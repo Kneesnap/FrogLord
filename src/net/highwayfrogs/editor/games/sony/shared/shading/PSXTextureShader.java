@@ -261,7 +261,7 @@ public class PSXTextureShader {
             } else if (y > rightPos.getY()) { // Interpolate between right vertex and left vertex.
                 int yOffset = (y - rightPos.getY());
                 rightLineColor = interpolateCVector(colors[rightIndex], colors[leftIndex], (float) yOffset / rightToLeftHeight, instance.getTempColorVector2());
-                rightLineX = rightPos.getX() - (int) (inverseLeftRightSlope * yOffset);
+                rightLineX = rightPos.getX() + (int) (inverseLeftRightSlope * yOffset);
             } else { // Use data directly from the vertex since it's on this scanline.
                 rightLineColor = colors[rightIndex];
                 rightLineX = rightPos.getX();
