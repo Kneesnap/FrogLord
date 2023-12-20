@@ -43,6 +43,11 @@ public class kcParam {
         this.bytes = value;
     }
 
+    public kcParam(int number) {
+        this();
+        setValue(number);
+    }
+
     /**
      * Gets the value as an integer.
      */

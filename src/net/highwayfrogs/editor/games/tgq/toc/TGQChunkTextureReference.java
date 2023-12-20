@@ -43,6 +43,6 @@ public class TGQChunkTextureReference extends kcCResource {
     @Override
     public void save(DataWriter writer) {
         super.save(writer);
-        writer.writeTerminatedStringOfLength(this.path, PATH_SIZE, PATH_TERMINATOR);
+        writer.writeTerminatedStringOfLength(this.path, PATH_SIZE);
     }
 }

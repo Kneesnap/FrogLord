@@ -15,6 +15,14 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 public class kcCResourceString extends GameObject {
     private String value;
 
+    public kcCResourceString() {
+        this(null);
+    }
+
+    public kcCResourceString(String value) {
+        this.value = value;
+    }
+
     @Override
     public void load(DataReader reader) {
         this.value = reader.readNullTerminatedString();

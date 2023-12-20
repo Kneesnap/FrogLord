@@ -19,7 +19,7 @@ public enum KCResourceID {
     NONE("NON\0", null),
     RAW("RAW\0", null),
     TEXTURE("TEX\0", TGQChunkTextureReference::new),
-    OCTTREESCENEMGR("OTT\0", OTTChunk::new),
+    OCTTREESCENEMGR("OTT\0", kcCResOctTreeSceneMgr::new),
     MODEL("6YTV", kcCResourceModel::new),
     TRACK("fEAB", null), // TODO
     HIERARCHY("fEHB", null), // TODO

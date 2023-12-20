@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.tgq.script.effect;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.games.tgq.script.action.kcAction;
 import net.highwayfrogs.editor.games.tgq.script.action.kcActionID;
 import net.highwayfrogs.editor.games.tgq.script.interim.kcParamReader;
@@ -12,11 +13,18 @@ import net.highwayfrogs.editor.games.tgq.script.kcScriptEffectType;
  * Created by Kneesnap on 8/24/2023.
  */
 @Getter
+@Setter
 public class kcScriptEffectActor extends kcScriptEffectAction {
     private kcAction action;
 
     public kcScriptEffectActor(int effectID) {
         super(kcScriptEffectType.ACTOR, effectID);
+    }
+
+    public kcScriptEffectActor(kcAction action, int targetEntity) {
+        super(kcScriptEffectType.ACTOR, action.getActionID().getOpcode());
+        this.action = action;
+        setTargetEntityHash(targetEntity);
     }
 
     @Override

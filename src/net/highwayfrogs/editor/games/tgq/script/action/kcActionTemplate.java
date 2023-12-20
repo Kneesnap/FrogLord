@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.tgq.script.action;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.games.tgq.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.tgq.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.tgq.script.kcArgument;
@@ -12,6 +13,7 @@ import java.util.List;
  * A basic template kcAction.
  * Created by Kneesnap on 8/24/2023.
  */
+@Getter
 public abstract class kcActionTemplate extends kcAction {
     private final List<kcParam> arguments = new ArrayList<>();
 

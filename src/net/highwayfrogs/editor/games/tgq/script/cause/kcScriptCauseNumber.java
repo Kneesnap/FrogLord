@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.tgq.script.cause;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.games.tgq.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -13,12 +14,20 @@ import java.util.List;
  * NOTE: UNLIKE MOST OTHER kcScriptCauses, THE subCauseType is USED TO SPECIFY WHAT OPERATION SHOULD RUN, NOT CORRECTNESS.
  * Created by Kneesnap on 8/18/2023.
  */
+@Setter
+@Getter
 public class kcScriptCauseNumber extends kcScriptCause {
     private kcScriptCauseNumberOperation operation;
     private int value;
 
     public kcScriptCauseNumber() {
         super(kcScriptCauseType.NUMBER, 1);
+    }
+
+    public kcScriptCauseNumber(kcScriptCauseNumberOperation operation, int number) {
+        this();
+        this.operation = operation;
+        this.value = number;
     }
 
     @Override

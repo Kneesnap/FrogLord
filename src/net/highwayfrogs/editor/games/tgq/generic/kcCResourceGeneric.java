@@ -31,9 +31,16 @@ import java.util.function.Function;
 public class kcCResourceGeneric extends kcCResource {
     private int tag;
     private byte[] bytes;
+    private GameObject cachedObject;
 
     public kcCResourceGeneric(TGQChunkedFile parentFile) {
         super(parentFile, KCResourceID.GENERIC);
+    }
+
+    public kcCResourceGeneric(TGQChunkedFile parentFile, kcCResourceGenericType resourceType, GameObject resource) {
+        this(parentFile);
+        this.tag = resourceType.getTag();
+        this.cachedObject = resource;
     }
 
     @Override
@@ -188,23 +195,27 @@ public class kcCResourceGeneric extends kcCResource {
         if (genericType != desiredType)
             throw new RuntimeException("Expected the generic resource type to be " + desiredType + ", but was " + genericType + " instead.");
 
+        if (this.cachedObject != null)
+            return (T) this.cachedObject;
+
         DataReader reader = new DataReader(new ArraySource(this.bytes));
         reader.jumpTemp(reader.getIndex());
         int classID = reader.getRemaining() >= Constants.INTEGER_SIZE ? reader.readInt() : 0;
         reader.jumpReturn();
 
-        T params = maker.apply(classID);
-        if (params == null)
+        T newObject = maker.apply(classID);
+        if (newObject == null)
             return null;
 
-        if (params instanceof kcBaseDesc)
-            ((kcBaseDesc) params).setParentFile(getParentFile());
+        if (newObject instanceof kcBaseDesc)
+            ((kcBaseDesc) newObject).setParentFile(getParentFile());
 
-        params.load(reader);
+        newObject.load(reader);
+        this.cachedObject = newObject;
         if (reader.hasMore())
             System.out.println("Resource '" + getName() + "'/" + genericType + " read only " + reader.getIndex() + " bytes, leaving " + reader.getRemaining() + " unread.");
 
-        return params;
+        return newObject;
     }
 
     @Override
@@ -213,8 +224,11 @@ public class kcCResourceGeneric extends kcCResource {
         writer.writeInt(this.tag);
         writer.writeInt(this.bytes != null ? this.bytes.length : 0);
         writer.writeInt(0); // Pointer
-        if (this.bytes != null)
+        if (this.cachedObject != null) {
+            this.cachedObject.save(writer);
+        } else if (this.bytes != null) {
             writer.writeBytes(this.bytes);
+        }
     }
 
     @Getter

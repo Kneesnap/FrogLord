@@ -231,6 +231,19 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
     }
 
     /**
+     * Gets the first TOC chunk in the file.
+     */
+    public TOCChunk getFirstTOCChunk() {
+        for (int i = 0; i < this.chunks.size(); i++) {
+            kcCResource resource = this.chunks.get(i);
+            if (resource instanceof TOCChunk)
+                return (TOCChunk) resource;
+        }
+
+        return null;
+    }
+
+    /**
      * Gets a resource by its hash.
      * @param hash        The hash to lookup.
      * @param <TResource> The type of resource to return.

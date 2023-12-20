@@ -139,6 +139,7 @@ public class TGQUtils {
             outputStream.write(buffer, 0, count);
         }
         outputStream.close();
+        deflater.end();
         return outputStream.toByteArray();
     }
 

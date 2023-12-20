@@ -45,8 +45,8 @@ public class kcVertex {
      * @param component The component describing the vertex data to load.
      */
     public void load(DataReader reader, kcVertexFormatComponent component, long fvf) {
-        if ((fvf & kcModel.FVF_FLAG_PS2_COMPRESSED) == kcModel.FVF_FLAG_PS2_COMPRESSED) {
-            loadCompressedPS2(reader, component);
+        if ((fvf & kcModel.FVF_FLAG_COMPRESSED) == kcModel.FVF_FLAG_COMPRESSED) {
+            loadCompressed(reader, component);
         } else {
             loadNormal(reader, component);
         }
@@ -98,6 +98,8 @@ public class kcVertex {
                 this.diffuse = (((int) (red * 255F)) << 16) | (((int) (green * 255F)) << 8) | (int) (blue * 255F);
                 break;
             case DIFFUSE_RGBAF: // 16
+                // Note: The PC version may keep the ALPHA in the lowest bits of the diffuse color at runtime, though Ghidra may be showing bad decompiler output, and I don't care enough to dive deep enough to answer it.
+                // It shouldn't matter for us since it's runtime only, and the actual stored byte order should be correct.
                 red = reader.readFloat();
                 green = reader.readFloat();
                 blue = reader.readFloat();
@@ -178,25 +180,26 @@ public class kcVertex {
         }
     }
 
-    private static final int PS2_FIXED_PT_MAIN_UNIT = 4096;
-    private static final int PS2_FIXED_PT_OTHER_UNIT = 16;
-    private static final float PS2_MAIN_MULTIPLIER = 1F / PS2_FIXED_PT_MAIN_UNIT;
-    private static final float PS2_OTHER_MULTIPLIER = 1F / PS2_FIXED_PT_OTHER_UNIT;
+    private static final int COMPRESSION_FIXED_PT_MAIN_UNIT = 4096;
+    private static final int COMPRESSION_FIXED_PT_OTHER_UNIT = 16;
+    private static final float COMPRESSION_MAIN_MULTIPLIER = 1F / COMPRESSION_FIXED_PT_MAIN_UNIT;
+    private static final float COMPRESSION_OTHER_MULTIPLIER = 1F / COMPRESSION_FIXED_PT_OTHER_UNIT;
 
-    private static float readPs2Float(DataReader reader) {
-        return readPs2Float(reader, PS2_MAIN_MULTIPLIER);
+    private static float readCompressedFloat(DataReader reader) {
+        return readCompressedFloat(reader, COMPRESSION_MAIN_MULTIPLIER);
     }
 
-    private static float readPs2Float(DataReader reader, float multiplier) {
+    private static float readCompressedFloat(DataReader reader, float multiplier) {
         return reader.readShort() * multiplier;
     }
 
     /**
      * Loads vertex data from the reader for the given components.
+     * This method has been verified against both the PS2 PAL and PC versions.
      * @param reader    The reader to load vertex data from.
      * @param component The component describing the vertex data to load.
      */
-    public void loadCompressedPS2(DataReader reader, kcVertexFormatComponent component) {
+    public void loadCompressed(DataReader reader, kcVertexFormatComponent component) {
         short red;
         short green;
         short blue;
@@ -204,36 +207,32 @@ public class kcVertex {
 
         switch (component) {
             case POSITION_XYZF: // 6
-                this.x = readPs2Float(reader, PS2_OTHER_MULTIPLIER);
-                this.y = readPs2Float(reader, PS2_OTHER_MULTIPLIER);
-                this.z = readPs2Float(reader, PS2_OTHER_MULTIPLIER);
+                this.x = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
+                this.y = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
+                this.z = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
                 this.w = 1F;
                 break;
             case POSITION_XYZWF: // 8
-                this.x = readPs2Float(reader, PS2_OTHER_MULTIPLIER);
-                this.y = readPs2Float(reader, PS2_OTHER_MULTIPLIER);
-                this.z = readPs2Float(reader, PS2_OTHER_MULTIPLIER);
-                this.w = readPs2Float(reader, PS2_OTHER_MULTIPLIER);
+                this.x = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
+                this.y = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
+                this.z = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
+                this.w = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
                 break;
             case NORMAL_XYZF: // 6
-                this.normalX = readPs2Float(reader);
-                this.normalY = readPs2Float(reader);
-                this.normalZ = readPs2Float(reader);
+                this.normalX = readCompressedFloat(reader);
+                this.normalY = readCompressedFloat(reader);
+                this.normalZ = readCompressedFloat(reader);
                 break;
             case NORMAL_XYZWF: // 8
-                this.normalX = readPs2Float(reader);
-                this.normalY = readPs2Float(reader);
-                this.normalZ = readPs2Float(reader);
-                readPs2Float(reader); // Unused, there is no "normalW" value.
+                this.normalX = readCompressedFloat(reader);
+                this.normalY = readCompressedFloat(reader);
+                this.normalZ = readCompressedFloat(reader);
+                readCompressedFloat(reader); // Unused, there is no "normalW" value.
                 break;
             case DIFFUSE_RGBAF: // 8
-                // Honestly... I don't think this works. The code I see in the game doesn't look like it works. Perhaps it's just bad ghidra decompiler output.
-                red = (short) (reader.readShort() & 0xFF);
-                green = (short) (reader.readShort() & 0xFF);
-                blue = (short) (reader.readShort() & 0xFF);
-                alpha = (short) (reader.readShort() & 0xFF);
-                this.diffuse = ((alpha * 255L) << 24) | ((red * 255L) << 16) | ((green * 255L) << 8) | (blue * 255L);
-                break;
+                // Honestly... I don't think this works on the PS2 version. Perhaps it's just bad ghidra decompiler output, but the PS2 PAL version doesn't seem to handle values right.
+                // The PC version is also confusing.
+                // We follow the next code since it seems that might be what should happen here.
             case DIFFUSE_RGBA255F: // 8
                 red = (short) (reader.readShort() & 0xFF);
                 green = (short) (reader.readShort() & 0xFF);
@@ -250,71 +249,71 @@ public class kcVertex {
                 // The actual code in the PS2 PAL version skips this.
                 // It prints an error message, but continues reading, assuming the stride is calculable, so it can skip.
                 // It is unknown if the PC version uses this yet.
-                reader.skipBytes(component.getPs2CompressedStride());
+                reader.skipBytes(component.getCompressedStride());
                 throw new RuntimeException("Cannot read unsupported vertex format " + component + ".");
             case WEIGHT1F: // 2
                 if (this.weight == null || this.weight.length != 1)
                     this.weight = new float[1];
-                this.weight[0] = readPs2Float(reader);
+                this.weight[0] = readCompressedFloat(reader);
                 break;
             case WEIGHT2F: // 4
                 if (this.weight == null || this.weight.length != 2)
                     this.weight = new float[2];
-                this.weight[0] = readPs2Float(reader);
-                this.weight[1] = readPs2Float(reader);
+                this.weight[0] = readCompressedFloat(reader);
+                this.weight[1] = readCompressedFloat(reader);
                 break;
             case TEX1F: // 4
-                this.u0 = readPs2Float(reader);
-                this.v0 = readPs2Float(reader);
+                this.u0 = readCompressedFloat(reader);
+                this.v0 = readCompressedFloat(reader);
                 break;
             case TEX2F: // 8
-                this.u0 = readPs2Float(reader);
-                this.v0 = readPs2Float(reader);
-                this.u1 = readPs2Float(reader);
-                this.v1 = readPs2Float(reader);
+                this.u0 = readCompressedFloat(reader);
+                this.v0 = readCompressedFloat(reader);
+                this.u1 = readCompressedFloat(reader);
+                this.v1 = readCompressedFloat(reader);
                 break;
             case TEX1_STQP: // 8
-                this.u0 = readPs2Float(reader);
-                this.v0 = readPs2Float(reader);
-                reader.skipBytes(4); // Not sure why we skip it, but that's what the PS2 PAL version does.
+                this.u0 = readCompressedFloat(reader);
+                this.v0 = readCompressedFloat(reader);
+                reader.skipBytes(4); // Not sure why we skip it, but that's what the PS2 PAL & PC versions do.
                 break;
             case WEIGHT3F: // 6
                 if (this.weight == null || this.weight.length != 3)
                     this.weight = new float[3];
 
-                this.weight[0] = readPs2Float(reader);
-                this.weight[1] = readPs2Float(reader);
-                this.weight[2] = readPs2Float(reader);
+                this.weight[0] = readCompressedFloat(reader);
+                this.weight[1] = readCompressedFloat(reader);
+                this.weight[2] = readCompressedFloat(reader);
                 break;
             case WEIGHT4F: // 8
                 if (this.weight == null || this.weight.length != 4)
                     this.weight = new float[4];
 
-                this.weight[0] = readPs2Float(reader);
-                this.weight[1] = readPs2Float(reader);
-                this.weight[2] = readPs2Float(reader);
-                this.weight[3] = readPs2Float(reader);
+                this.weight[0] = readCompressedFloat(reader);
+                this.weight[1] = readCompressedFloat(reader);
+                this.weight[2] = readCompressedFloat(reader);
+                this.weight[3] = readCompressedFloat(reader);
                 break;
             case MATRIX_INDICES: // 8
-                // Unused / unimplemented. This behavior matches PS2 PAL.
+                // Unused / unimplemented. This behavior matches PS2 PAL & PC.
                 reader.skipBytes(8);
                 break;
             case PSIZE: // 2
-                this.psize = readPs2Float(reader, PS2_OTHER_MULTIPLIER);
+                this.psize = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
                 break;
             default:
-                throw new RuntimeException("Cannot read vertex data due to unsupported kcVertexFormatComponent " + component);
+                throw new RuntimeException("Cannot read compressed vertex data due to unsupported kcVertexFormatComponent " + component);
         }
     }
 
-    private static void writePs2Float(DataWriter writer, float value) {
-        writePs2Float(writer, value, PS2_FIXED_PT_MAIN_UNIT);
+    private static void writeCompressedFloat(DataWriter writer, float value) {
+        writeCompressedFloat(writer, value, COMPRESSION_FIXED_PT_MAIN_UNIT);
     }
 
-    private static void writePs2Float(DataWriter writer, float value, int unit) {
+    private static void writeCompressedFloat(DataWriter writer, float value, int unit) {
         int temp = (int) Math.round((double) value * unit);
         if (temp > Short.MAX_VALUE || temp < Short.MIN_VALUE)
-            throw new RuntimeException("Cannot save the value '" + value + "' while PS2 compression is enabled for the model, because this coordinate is too extreme to represent. in a 16 bit number. (" + temp + ")");
+            throw new RuntimeException("Cannot save the value '" + value + "' while compression is enabled for the model, because this coordinate is too extreme to represent. in a 16 bit number. (" + temp + ")");
 
         writer.writeShort((short) temp);
     }
@@ -338,8 +337,8 @@ public class kcVertex {
      * @param component The component describing the vertex data to write.
      */
     public void save(DataWriter writer, kcVertexFormatComponent component, long fvf) {
-        if ((fvf & kcModel.FVF_FLAG_PS2_COMPRESSED) == kcModel.FVF_FLAG_PS2_COMPRESSED) {
-            savePs2Compressed(writer, component);
+        if ((fvf & kcModel.FVF_FLAG_COMPRESSED) == kcModel.FVF_FLAG_COMPRESSED) {
+            saveCompressed(writer, component);
         } else {
             saveNormal(writer, component);
         }
@@ -464,31 +463,32 @@ public class kcVertex {
      * @param writer    The writer to write vertex data from.
      * @param component The component describing the vertex data to write.
      */
-    public void savePs2Compressed(DataWriter writer, kcVertexFormatComponent component) {
+    public void saveCompressed(DataWriter writer, kcVertexFormatComponent component) {
         switch (component) {
             case POSITION_XYZF: // 6
-                writePs2Float(writer, this.x, PS2_FIXED_PT_OTHER_UNIT);
-                writePs2Float(writer, this.y, PS2_FIXED_PT_OTHER_UNIT);
-                writePs2Float(writer, this.z, PS2_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.x, COMPRESSION_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.y, COMPRESSION_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.z, COMPRESSION_FIXED_PT_OTHER_UNIT);
                 break;
             case POSITION_XYZWF: // 8
-                writePs2Float(writer, this.x, PS2_FIXED_PT_OTHER_UNIT);
-                writePs2Float(writer, this.y, PS2_FIXED_PT_OTHER_UNIT);
-                writePs2Float(writer, this.z, PS2_FIXED_PT_OTHER_UNIT);
-                writePs2Float(writer, this.w, PS2_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.x, COMPRESSION_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.y, COMPRESSION_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.z, COMPRESSION_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.w, COMPRESSION_FIXED_PT_OTHER_UNIT);
                 break;
             case NORMAL_XYZF: // 6
-                writePs2Float(writer, this.normalX);
-                writePs2Float(writer, this.normalY);
-                writePs2Float(writer, this.normalZ);
+                writeCompressedFloat(writer, this.normalX);
+                writeCompressedFloat(writer, this.normalY);
+                writeCompressedFloat(writer, this.normalZ);
                 break;
             case NORMAL_XYZWF: // 8
-                writePs2Float(writer, this.normalX);
-                writePs2Float(writer, this.normalY);
-                writePs2Float(writer, this.normalZ);
-                writePs2Float(writer, 1F); // Unused value for 'W'.
+                writeCompressedFloat(writer, this.normalX);
+                writeCompressedFloat(writer, this.normalY);
+                writeCompressedFloat(writer, this.normalZ);
+                writeCompressedFloat(writer, 1F); // Unused value for 'W'.
                 break;
             case DIFFUSE_RGBAF: // 8
+                // May not be valid.
                 writer.writeFloat((short) getDiffuseRed());
                 writer.writeFloat((short) getDiffuseGreen());
                 writer.writeFloat((short) getDiffuseBlue());
@@ -509,58 +509,58 @@ public class kcVertex {
                 // The actual code in the PS2 PAL version skips this.
                 // It prints an error message, but continues reading, assuming the stride is calculable, so it can skip.
                 // It is unknown if the PC version uses this yet.
-                writer.writeNull(component.getPs2CompressedStride());
+                writer.writeNull(component.getCompressedStride());
                 throw new RuntimeException("Cannot write unsupported vertex format " + component + ".");
             case WEIGHT1F: // 2
                 if (this.weight == null || this.weight.length != 1)
                     this.weight = new float[1];
-                writePs2Float(writer, this.weight[0]);
+                writeCompressedFloat(writer, this.weight[0]);
                 break;
             case WEIGHT2F: // 4
                 if (this.weight == null || this.weight.length != 2)
                     this.weight = new float[2];
-                writePs2Float(writer, this.weight[0]);
-                writePs2Float(writer, this.weight[1]);
+                writeCompressedFloat(writer, this.weight[0]);
+                writeCompressedFloat(writer, this.weight[1]);
                 break;
             case TEX1F: // 4
-                writePs2Float(writer, this.u0);
-                writePs2Float(writer, this.v0);
+                writeCompressedFloat(writer, this.u0);
+                writeCompressedFloat(writer, this.v0);
                 break;
             case TEX2F: // 8
-                writePs2Float(writer, this.u0);
-                writePs2Float(writer, this.v0);
-                writePs2Float(writer, this.u1);
-                writePs2Float(writer, this.v1);
+                writeCompressedFloat(writer, this.u0);
+                writeCompressedFloat(writer, this.v0);
+                writeCompressedFloat(writer, this.u1);
+                writeCompressedFloat(writer, this.v1);
                 break;
             case TEX1_STQP: // 8
-                writePs2Float(writer, this.u0);
-                writePs2Float(writer, this.v0);
-                writePs2Float(writer, 1F); // Unused
-                writePs2Float(writer, 1F); // Unused
+                writeCompressedFloat(writer, this.u0);
+                writeCompressedFloat(writer, this.v0);
+                writeCompressedFloat(writer, 1F); // Unused
+                writeCompressedFloat(writer, 1F); // Unused
                 break;
             case WEIGHT3F: // 6
                 if (this.weight == null || this.weight.length != 3)
                     this.weight = new float[3];
 
-                writePs2Float(writer, this.weight[0]);
-                writePs2Float(writer, this.weight[1]);
-                writePs2Float(writer, this.weight[2]);
+                writeCompressedFloat(writer, this.weight[0]);
+                writeCompressedFloat(writer, this.weight[1]);
+                writeCompressedFloat(writer, this.weight[2]);
                 break;
             case WEIGHT4F: // 8
                 if (this.weight == null || this.weight.length != 4)
                     this.weight = new float[4];
 
-                writePs2Float(writer, this.weight[0]);
-                writePs2Float(writer, this.weight[1]);
-                writePs2Float(writer, this.weight[2]);
-                writePs2Float(writer, this.weight[3]);
+                writeCompressedFloat(writer, this.weight[0]);
+                writeCompressedFloat(writer, this.weight[1]);
+                writeCompressedFloat(writer, this.weight[2]);
+                writeCompressedFloat(writer, this.weight[3]);
                 break;
             case MATRIX_INDICES: // 8
                 // Unused / unimplemented. This behavior matches PS2 PAL.
                 writer.writeNull(8);
                 break;
             case PSIZE: // 2
-                writePs2Float(writer, this.psize, PS2_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.psize, COMPRESSION_FIXED_PT_OTHER_UNIT);
                 break;
             default:
                 throw new RuntimeException("Cannot read vertex data due to unsupported kcVertexFormatComponent " + component);

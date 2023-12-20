@@ -7,8 +7,21 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
+import net.highwayfrogs.editor.games.tgq.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.tgq.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.tgq.generic.kcCResourceString;
 import net.highwayfrogs.editor.games.tgq.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.tgq.model.kcModelWrapper;
+import net.highwayfrogs.editor.games.tgq.script.action.kcActionFlag;
+import net.highwayfrogs.editor.games.tgq.script.action.kcActionID;
+import net.highwayfrogs.editor.games.tgq.script.action.kcActionTemplate;
+import net.highwayfrogs.editor.games.tgq.script.cause.kcScriptCauseNumber;
+import net.highwayfrogs.editor.games.tgq.script.cause.kcScriptCauseNumber.kcScriptCauseNumberOperation;
+import net.highwayfrogs.editor.games.tgq.script.effect.kcScriptEffectActor;
+import net.highwayfrogs.editor.games.tgq.script.kcParam;
+import net.highwayfrogs.editor.games.tgq.script.kcScript;
+import net.highwayfrogs.editor.games.tgq.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -130,7 +143,7 @@ public class TGQBinFile extends GameObject {
         List<TGQFile> unnamedFiles = new ArrayList<>();
         List<TGQFile> namedFiles = new ArrayList<>();
         for (TGQFile file : getFiles())
-            (file.hasFilePath() ? namedFiles : unnamedFiles).add(file);
+            (file.hasFilePath() && file.isCollision() ? namedFiles : unnamedFiles).add(file);
 
         // Start writing file.
         writer.writeInt(unnamedFiles.size());
@@ -143,7 +156,7 @@ public class TGQBinFile extends GameObject {
 
         // Write file headers:
         for (TGQFile file : getFiles()) {
-            if (file.hasFilePath()) {
+            if (file.hasFilePath() && file.isCollision()) {
                 int endIndex = (writer.getIndex() + NAME_SIZE);
                 writer.writeTerminatorString(file.getFilePath());
                 writer.writeTo(endIndex, (byte) 0xCD);
@@ -163,10 +176,20 @@ public class TGQBinFile extends GameObject {
         // Write files:
         for (TGQFile file : getFiles()) {
             writer.writeAddressTo(fileOffsetTable.get(file));
+            System.out.println("Writing " + file.getFilePath());
 
-            ArrayReceiver receiver = new ArrayReceiver();
-            file.save(new DataWriter(receiver));
-            byte[] rawBytes = receiver.toArray();
+            byte[] rawBytes; // TODO :TOSS
+            if (!(file instanceof TGQChunkedFile) && file.getRawData() != null) {
+                // TODO: Seems both models and images are busted.
+                // TODO: We're missing nearly 100MB of texture data when we let textures save themselves.
+                rawBytes = file.getRawData();
+                System.out.println(rawBytes.length + " raw bytes.");
+            } else {
+                ArrayReceiver receiver = new ArrayReceiver();
+                file.save(new DataWriter(receiver));
+                rawBytes = receiver.toArray();
+                System.out.println(rawBytes.length + " written data.");
+            }
 
             // Write size.
             writer.jumpTemp(fileSizeTable.get(file));
@@ -253,6 +276,80 @@ public class TGQBinFile extends GameObject {
         exportFileList(exportDir, mainFile);
         for (TGQFile file : mainFile.getFiles())
             file.export(exportDir);
+
+        // Modify script in rolling rapids creek.
+        TGQChunkedFile rollingRapidsCreek = (TGQChunkedFile) mainFile.files.get(16);
+        kcScript script = rollingRapidsCreek.getScriptList().getScripts().get(33);
+
+        int injectAfter = 1;
+
+        int executionStartNumber = 1337;
+        int executionNumber = executionStartNumber;
+        for (int i = 0; i < 32; i++) {
+            if (i == 0)
+                continue; // Skip
+
+            // Create clear flag function.
+            kcScriptCauseNumber clearFlagDialogCause = new kcScriptCauseNumber(kcScriptCauseNumberOperation.EQUALS, executionNumber++);
+            kcScriptFunction clearFlagFunc = new kcScriptFunction(clearFlagDialogCause);
+
+            // Add dialog resource.
+            kcCResourceGeneric clearFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString("Knee Flag Clear Test: " + i));
+            clearFlagDialog.setName("FgClr" + Utils.padNumberString(i, 2));
+            int clearFlagDialogHash = TGQUtils.hash(clearFlagDialog.getName());
+            clearFlagDialog.setHash(clearFlagDialogHash);
+            rollingRapidsCreek.getChunks().add(clearFlagDialog);
+            rollingRapidsCreek.getFirstTOCChunk().getHashes().add(clearFlagDialogHash);
+
+            // Add dialog action.
+            kcActionTemplate actionClearFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance();
+            actionClearFlagDialog.getArguments().add(new kcParam(clearFlagDialogHash));
+            clearFlagFunc.getEffects().add(new kcScriptEffectActor(actionClearFlagDialog, 0x68FF0A2));
+
+            // Add clear action.
+            kcActionFlag actionClearFlag = new kcActionFlag(kcActionID.SET_FLAGS);
+            actionClearFlag.getArguments().add(new kcParam(1 << i));
+            clearFlagFunc.getEffects().add(new kcScriptEffectActor(actionClearFlag, 0x68FF0A2));
+
+            // Add increment function.
+            // TODO
+
+            // Created set flag function
+            kcScriptCauseNumber setFlagDialogCause = new kcScriptCauseNumber(kcScriptCauseNumberOperation.EQUALS, executionNumber++);
+            kcScriptFunction setFlagFunc = new kcScriptFunction(setFlagDialogCause);
+
+            // Add dialog resource.
+            kcCResourceGeneric setFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString("Knee Flag Set: " + i));
+            setFlagDialog.setName("FgSet" + Utils.padNumberString(i, 2));
+            int setFlagDialogHash = TGQUtils.hash(setFlagDialog.getName());
+            setFlagDialog.setHash(setFlagDialogHash);
+            rollingRapidsCreek.getChunks().add(setFlagDialog);
+            rollingRapidsCreek.getFirstTOCChunk().getHashes().add(setFlagDialogHash);
+
+            // Add dialog action.
+            kcActionTemplate actionSetFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance();
+            actionSetFlagDialog.getArguments().add(new kcParam(setFlagDialogHash));
+            setFlagFunc.getEffects().add(new kcScriptEffectActor(actionSetFlagDialog, 0x68FF0A2));
+
+            // Add set flag action.
+            kcActionFlag actionSetFlag = new kcActionFlag(kcActionID.SET_FLAGS);
+            actionSetFlag.getArguments().add(new kcParam(1 << i));
+            setFlagFunc.getEffects().add(new kcScriptEffectActor(actionSetFlag, 0x68FF0A2));
+
+            // Add increment function.
+            // TODO
+
+            // TODO: If last one, set variable to normal trigger.
+
+            // Register functions.
+            script.getFunctions().add(injectAfter++, setFlagFunc);
+            script.getFunctions().add(injectAfter++, clearFlagFunc);
+        }
+
+        File outputFile = new File(binFile.getParent(), "Playable\\data.bin");
+        DataWriter writer = new DataWriter(new LargeFileReceiver(outputFile));
+        mainFile.save(writer);
+        writer.closeReceiver();
 
         System.out.println("Done.");
     }

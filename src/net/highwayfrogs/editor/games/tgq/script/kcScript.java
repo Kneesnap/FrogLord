@@ -195,8 +195,12 @@ public class kcScript {
     @Getter
     @AllArgsConstructor
     public static class kcScriptFunction {
-        private kcScriptCause cause;
+        @Setter private kcScriptCause cause;
         private final List<kcScriptEffect> effects;
+
+        public kcScriptFunction(kcScriptCause cause) {
+            this(cause, new ArrayList<>());
+        }
 
         /**
          * Save the 'cause' data from this function to a list.

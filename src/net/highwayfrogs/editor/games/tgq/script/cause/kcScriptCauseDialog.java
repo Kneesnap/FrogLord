@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.tgq.script.cause;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.games.tgq.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
  * Created by Kneesnap on 8/16/2023.
  */
 @Getter
+@Setter
 public class kcScriptCauseDialog extends kcScriptCause {
     private kcScriptDialogStage stage;
     private int dialogHash;

@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.games.tgq.entity.kcEntityInst;
 @Setter
 public class kcCResourceEntityInst extends kcCResource {
     private kcEntityInst entity;
+    private byte[] dummyBytes;
 
     public kcCResourceEntityInst(TGQChunkedFile parentFile) {
         super(parentFile, KCResourceID.ENTITYINST);
@@ -36,18 +37,24 @@ public class kcCResourceEntityInst extends kcCResource {
 
         if (sizeInBytes == kcEntity3DInst.SIZE_IN_BYTES) {
             this.entity = new kcEntity3DInst(this);
+            this.entity.load(reader);
         } else if (sizeInBytes == kcEntityInst.SIZE_IN_BYTES) {
             this.entity = new kcEntityInst(this);
+            this.entity.load(reader);
         } else {
-            throw new RuntimeException("Couldn't identify the entity type for '" + getName() + "' from the byte size of " + sizeInBytes + ".");
+            // TODO: Let's reverse engineer this.
+            System.err.println("Couldn't identify the entity type for '" + getName() + "' from the byte size of " + sizeInBytes + ".");
+            this.dummyBytes = reader.readBytes(sizeInBytes);
         }
-
-        this.entity.load(reader);
     }
 
     @Override
     public void save(DataWriter writer) {
         super.save(writer);
-        this.entity.save(writer);
+        if (this.entity != null) {
+            this.entity.save(writer);
+        } else if (this.dummyBytes != null) {
+            writer.writeBytes(this.dummyBytes);
+        }
     }
 }

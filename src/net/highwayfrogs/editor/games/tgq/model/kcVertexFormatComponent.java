@@ -34,5 +34,5 @@ public enum kcVertexFormatComponent {
     PSIZE(4, 2); // 21|15
 
     private final int stride;
-    private final int ps2CompressedStride;
+    private final int compressedStride;
 }

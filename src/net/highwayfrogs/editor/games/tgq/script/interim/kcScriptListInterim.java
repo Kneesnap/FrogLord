@@ -133,7 +133,8 @@ public class kcScriptListInterim extends GameObject {
             writer.writeInt(this.causeData[i]);
 
         // 'Effect' data.
-        writer.writeInt(this.effects.size());
+        final int valuesPerEffect = (kcInterimScriptEffect.SIZE_IN_BYTES / Constants.INTEGER_SIZE);
+        writer.writeInt(this.effects.size() * valuesPerEffect); // Number of 32bit integers comprising the effects.
         for (int i = 0; i < this.effects.size(); i++)
             this.effects.get(i).save(writer);
     }
