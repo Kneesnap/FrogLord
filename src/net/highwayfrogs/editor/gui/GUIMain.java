@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 
 public class GUIMain extends Application {
@@ -101,9 +102,10 @@ public class GUIMain extends Application {
             configDisplayName.put(configName, loadedConfig.getString(SCGameConfig.CFG_DISPLAY_NAME));
         }
 
+        System.out.println("Executable CRC32: " + crcHash); // There was no configuration found, so display the CRC32, in-case we want to make a configuration.
         List<Entry<String, String>> internalToDisplayNames = new ArrayList<>(configDisplayName.entrySet());
         internalToDisplayNames.sort(Entry.comparingByKey());
-        System.out.println("Executable CRC32: " + crcHash); // There was no configuration found, so display the CRC32, in-case we want to make a configuration.
+
         SelectionMenu.promptSelection("Select a configuration.", resourcePath -> {
             SCGameInstance instance = makeGameInstance(exeFile, mwdFile, resourcePath.getKey());
             onConfigLoad.accept(instance);

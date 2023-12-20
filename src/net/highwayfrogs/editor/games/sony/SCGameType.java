@@ -5,6 +5,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.MedievilGameInstance;
+import net.highwayfrogs.editor.games.sony.medievil2.Medievil2GameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 
 import java.util.function.Supplier;
@@ -24,7 +25,7 @@ public enum SCGameType {
     MEDIEVIL(MedievilGameInstance::new),
     //COMMON_TALES(null),
     MOONWARRIOR(null),
-    MEDIEVIL2(null),
+    MEDIEVIL2(Medievil2GameInstance::new),
     C12(null);
 
     private final Supplier<SCGameInstance> instanceMaker;
