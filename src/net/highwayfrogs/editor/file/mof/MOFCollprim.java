@@ -1,163 +1,88 @@
 package net.highwayfrogs.editor.file.mof;
 
-import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
-import javafx.scene.shape.Shape3D;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
+import net.highwayfrogs.editor.games.sony.shared.collprim.ICollprimEditorUI;
+import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MOFController;
-import net.highwayfrogs.editor.gui.editor.RenderManager;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.gui.editor.MeshUIManager;
 
 /**
  * Represents MR_COLLPRIM.
- * The way this works is, Frogger has a collision hilite.
+ * The way this works is in Frogger, Frogger has a collision hilite.
  * When testing collision, it will check if any of Frogger's collision hilites are inside the collprim, or bbox. If a collprim exists, it will check the collprim, otherwise it will check the bbox.
- * If the collprim is the last one on the model (the vanilla game only ever has 1 collprim per model, though it's not necessarily that way always), use the last in list flag.
+ * If the collprim is the last one on the model (the release builds of Frogger only have 1 collprim per model, though it's not necessarily that way always), use the last in list flag.
  * Created by Kneesnap on 1/8/2019.
  */
 @Getter
 @Setter
-public class MOFCollprim extends GameObject {
-    private int flags; // Seems to always be two.
-    private SVector offset = new SVector();
-    private int radius2; // For cylinder base or sphere. It seems like we can safely ignore this value, leaving it as is.
-    private float xLength = 1F;
-    private float yLength = 1F;
-    private float zLength = 1F;
-    private CollprimReactionType reaction = CollprimReactionType.DEADLY;
-    private PSXMatrix matrix; // Only present in JUN_PLANT.
-    private transient MOFPart parent;
+public class MOFCollprim extends MRCollprim {
+    private MOFPart parentPart;
+    private int matrixIndex; // This value is always zero in Frogger. It has been seen as non-zero in Old Frogger and Beast Wars.
 
-    public static final int FLAG_STATIC = Constants.BIT_FLAG_0; // Unused. I don't know either.
-    public static final int FLAG_LAST_IN_LIST = Constants.BIT_FLAG_1;
-    public static final int FLAG_COLLISION_DISABLED = Constants.BIT_FLAG_8; // Completely unused. Seems like maybe this was used to disable something without deleting it, for testing purposes.
-
-    public MOFCollprim(MOFPart parent) {
-        this.parent = parent;
+    public MOFCollprim(MOFPart parentPart) {
+        super(parentPart.getGameInstance());
+        this.parentPart = parentPart;
     }
 
     @Override
-    public void load(DataReader reader) {
-        CollprimType type = CollprimType.values()[reader.readUnsignedShortAsInt()];
-        if (type != CollprimType.CUBOID && !getConfig().isSonyPresentation())
-            throw new RuntimeException("MOFCollprim was type " + type + ", which is not supported. (" + WADFile.CURRENT_FILE_NAME + ")");
+    public int updateFlags() {
+        // Set the flag based on if this is the last one in the collprim.
+        // But only set it in a situation where we can know if it's actually the last collprim or not.
+        if (this.parentPart != null && this.parentPart.getCollprims().size() > 0)
+            setFlag(FLAG_LAST_IN_LIST, this == this.parentPart.getCollprims().get(this.parentPart.getCollprims().size() - 1));
 
-        this.flags = reader.readUnsignedShortAsInt();
-        reader.skipInt(); // Run-time.
-        reader.skipInt(); // Run-time.
-        this.offset.loadWithPadding(reader);
-        this.radius2 = reader.readInt();
-        this.xLength = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
-        this.yLength = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
-        this.zLength = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
-        this.reaction = CollprimReactionType.values()[reader.readUnsignedShortAsInt()];
-
-        int matrixAddress = reader.readInt();
-        if (matrixAddress != -1) {
-            reader.skipBytes(matrixAddress);
-            this.matrix = new PSXMatrix();
-            this.matrix.load(reader);
-        }
-
-        Utils.verify((this.flags & FLAG_LAST_IN_LIST) == FLAG_LAST_IN_LIST, "There were multiple collprims specified, but FrogLord only supports one!");
+        return getFlags();
     }
 
     @Override
-    public void save(DataWriter writer) {
-        writer.writeUnsignedShort(CollprimType.CUBOID.ordinal());
-        writer.writeUnsignedShort(this.flags | FLAG_LAST_IN_LIST);
-        writer.writeInt(0); // Run-time.
-        writer.writeInt(0); // Run-time.
-        this.offset.saveWithPadding(writer);
-        writer.writeInt(this.radius2);
-        writer.writeUnsignedShort(Utils.floatToFixedPointInt4Bit(this.xLength));
-        writer.writeUnsignedShort(Utils.floatToFixedPointInt4Bit(this.yLength));
-        writer.writeUnsignedShort(Utils.floatToFixedPointInt4Bit(this.zLength));
-        writer.writeUnsignedShort(this.reaction.ordinal());
-
-        boolean hasMatrix = (this.matrix != null);
-        writer.writeInt(hasMatrix ? 0 : -1);
-        if (hasMatrix)
-            this.matrix.save(writer);
+    public int getRawMatrixValue() {
+        return this.matrixIndex;
     }
 
     @Override
-    public String toString() {
-        return "<MOFCollprim Flags=" + this.flags + " Offset=[" + this.offset.toFloatString()
-                + "] Len=[" + this.xLength + "," + this.yLength + "," + this.zLength + "] Radius2=" + this.radius2 + ">";
+    public void setRawMatrixValue(DataReader reader, int rawMatrixValue) {
+        if (rawMatrixValue < -1)
+            throw new RuntimeException("Unexpected rawMatrixValue " + rawMatrixValue);
+
+        this.matrixIndex = rawMatrixValue;
     }
 
-    /**
-     * Setup the editor to display collprim information.
-     * @param controller The controller controlling the model.
-     */
-    public void setupEditor(MOFController controller, Box box) {
-        GUIEditorGrid grid = controller.getUiController().getCollprimEditorGrid();
-        grid.clearEditor();
-
-        grid.addFloatVector("Position", getOffset(), () -> controller.updateRotation(box), controller, getOffset().defaultBits(), null, box);
-        grid.addFloatField("xLength", getXLength(), newVal -> {
-            this.xLength = newVal;
-            box.setWidth(this.xLength * 2);
-        }, null);
-
-        grid.addFloatField("yLength", getYLength(), newVal -> {
-            this.yLength = newVal;
-            box.setHeight(this.yLength * 2);
-        }, null);
-
-        grid.addFloatField("zLength", getZLength(), newVal -> {
-            this.zLength = newVal;
-            box.setDepth(this.zLength * 2);
-        }, null);
-
-        grid.addEnumSelector("Reaction", getReaction(), CollprimReactionType.values(), false, newReaction -> this.reaction = newReaction);
-
-        grid.addButton("Remove Collprim", () -> {
-            getParent().setCollprim(null);
-            grid.clearEditor();
-            controller.updateMarker(null, 4, null, null); // Hide the active position display.
-            controller.updateCollprimBoxes();
-        });
-
-        controller.getUiController().getCollprimPane().setExpanded(true);
+    @Override
+    public PSXMatrix getMatrix() {
+        return this.matrixIndex >= 0 && this.parentPart != null && this.parentPart.getMatrices().size() > this.matrixIndex
+                ? this.parentPart.getMatrices().get(this.matrixIndex) : null;
     }
 
-    /**
-     * Add this collprim to the 3D display.
-     * @param manager  The render manager to add the display to.
-     * @param listID   The list of collprims to add to.
-     * @param material The collprim material.
-     * @return display
-     */
-    public Shape3D addDisplay(MOFController controller, RenderManager manager, String listID, PhongMaterial material) {
-        Box box = manager.addBoundingBoxCenteredWithDimensions(listID, getOffset().getFloatX(), getOffset().getFloatY(), getOffset().getFloatZ(), this.xLength * 2, this.yLength * 2, this.zLength * 2, material, true);
-        box.setOnMouseClicked(evt -> setupEditor(controller, box));
-        box.setMouseTransparent(false);
-        return box;
+    @Override
+    public void removeMatrix() {
+        PSXMatrix oldMatrix = getMatrix();
+        if (oldMatrix != null)
+            this.parentPart.getMatrices().remove(oldMatrix);
+
+        this.matrixIndex = -1;
     }
 
-    public enum CollprimType {
-        CUBOID,
-        CYLINDER_X,
-        CYLINDER_Y,
-        CYLINDER_Z,
-        SPHERE,
+    @Override
+    protected void setupMatrixCreator(MOFController controller, CollprimShapeAdapter<?> adapter, GUIEditorGrid grid) {
+        grid.addButton("Create Matrix", () -> {
+            this.matrixIndex = this.parentPart.getMatrices().size();
+            this.parentPart.getMatrices().add(new PSXMatrix());
+            controller.updateCollprimBoxes(true, this); // Update the model display and UI.
+        }).setDisable(this.parentPart == null || this.parentPart.getMatrices() == null);
     }
 
-    public enum CollprimReactionType {
-        SAFE, // Unused
-        DEADLY, // Kills Frogger
-        BOUNCY, // Unused.
-        FORM, // Form callback.
+    @Override
+    protected <TManager extends MeshUIManager<?> & ICollprimEditorUI> void setupMatrixCreator(TManager manager, CollprimShapeAdapter<?> adapter, GUIEditorGrid grid) {
+        grid.addButton("Create Matrix", () -> {
+            this.matrixIndex = this.parentPart.getMatrices().size();
+            this.parentPart.getMatrices().add(new PSXMatrix());
+            manager.updateCollprimPosition(this, adapter); // Update the model display.
+            manager.updateEditor(); // Refresh UI.
+        }).setDisable(this.parentPart == null || this.parentPart.getMatrices() == null);
     }
 }

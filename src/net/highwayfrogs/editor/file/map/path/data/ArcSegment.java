@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCMath;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
@@ -83,8 +84,8 @@ public class ArcSegment extends PathSegment {
         final int t = (segmentDistance << 12) / c;
         final int a = ((segmentDistance << 18) - (t * c)) / (radius * 0x192);
 
-        int cos = getConfig().rcos(a);
-        int sin = getConfig().rsin(a);
+        int cos = SCMath.rcos(a);
+        int sin = SCMath.rsin(a);
         svec.setX((short) ((cos * radius) >> 12));
         svec.setY((short) ((-getPitch() * segmentDistance) / getLength()));
         svec.setZ((short) ((sin * radius) >> 12));

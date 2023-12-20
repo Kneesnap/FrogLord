@@ -175,6 +175,17 @@ public class SVector extends GameObject implements Vector {
         return vector;
     }
 
+    /**
+     * Load a SVector without padding from a DataReader.
+     * @param reader The data reader to read from.
+     * @return vector
+     */
+    public static SVector readWithoutPadding(DataReader reader) {
+        SVector vector = new SVector();
+        vector.load(reader);
+        return vector;
+    }
+
     @Override
     public int hashCode() {
         return (this.x & 0xF800) + (this.z & 0x7C0) + (this.y & 0x3F);

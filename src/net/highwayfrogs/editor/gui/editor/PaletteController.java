@@ -7,6 +7,8 @@ import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import net.highwayfrogs.editor.file.PALFile;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -14,7 +16,7 @@ import net.highwayfrogs.editor.utils.Utils;
  * Allows changing palette files.
  * Created by Kneesnap on 3/4/2019.
  */
-public class PaletteController extends EditorController<PALFile> {
+public class PaletteController extends EditorController<PALFile, SCGameInstance, SCGameConfig> {
     @FXML private ColorPicker colorPicker;
     @FXML private ListView<Color> colorList;
     @FXML private ImageView paletteImageView;
@@ -22,6 +24,10 @@ public class PaletteController extends EditorController<PALFile> {
 
     private static final int IMAGE_SIZE = 256;
     private static final int COLOR_SIZE = 16;
+
+    public PaletteController(SCGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void loadFile(PALFile file) {

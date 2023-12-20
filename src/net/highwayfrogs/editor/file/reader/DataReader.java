@@ -12,8 +12,8 @@ import java.util.Stack;
  * Created by Kneesnap on 8/10/2018.
  */
 public class DataReader {
-    private DataSource source;
-    private Stack<Integer> jumpStack = new Stack<>();
+    private final DataSource source;
+    private final Stack<Integer> jumpStack = new Stack<>();
 
     public DataReader(DataSource source) {
         this.source = source;
@@ -264,7 +264,7 @@ public class DataReader {
         try {
             return source.readBytes(amount);
         } catch (Exception ex) {
-            throw new RuntimeException("Error while reading " + amount + " bytes.", ex);
+            throw new RuntimeException("Error while reading " + amount + " bytes. (Remaining: " + getRemaining() + ")", ex);
         }
     }
 
@@ -276,8 +276,51 @@ public class DataReader {
         try {
             source.skip(amount);
         } catch (Exception ex) {
-            throw new RuntimeException("Error while skipping " + amount + " bytes.", ex);
+            throw new RuntimeException("Error while skipping " + amount + " bytes. (Remaining: " + getRemaining() + ")", ex);
         }
+    }
+
+    /**
+     * Skip bytes, requiring the bytes skipped be 0.
+     * @param amount The number of bytes to skip.
+     */
+    public void skipBytesRequireEmpty(int amount) {
+        int index = getIndex();
+
+        if (amount == 0)
+            return;
+
+        if (amount < 0)
+            throw new RuntimeException("Tried to skip " + amount + " bytes.");
+
+        // Skip bytes.
+        for (int i = 0; i < amount; i++) {
+            byte nextByte = readByte();
+            if (nextByte != 0)
+                throw new RuntimeException("Reader wanted to skip " + amount + " bytes to reach " + Utils.toHexString(index + amount) + ", but got 0x" + Utils.toByteString(nextByte) + " at " + Utils.toHexString(index + i) + ".");
+        }
+    }
+
+    /**
+     * Skip bytes to align to the given byte boundary.
+     * @param alignment The number of bytes the index should have an increment of.
+     */
+    public void align(int alignment) {
+        int index = getIndex();
+        int offsetAmount = (index % alignment);
+        if (offsetAmount != 0)
+            skipBytes(alignment - offsetAmount); // Alignment.
+    }
+
+    /**
+     * Skip bytes to align to the given byte boundary, requiring the bytes skipped be 0.
+     * @param alignment The number of bytes the index should have an increment of.
+     */
+    public void alignRequireEmpty(int alignment) {
+        int index = getIndex();
+        int offsetAmount = (index % alignment);
+        if (offsetAmount != 0)
+            skipBytesRequireEmpty(alignment - offsetAmount);
     }
 
     /**

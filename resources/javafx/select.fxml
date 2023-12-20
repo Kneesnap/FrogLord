@@ -5,8 +5,8 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="320.0"
-            prefWidth="240.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="420.0"
+            prefWidth="340.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1">
     <children>
       <VBox prefHeight="320.0" prefWidth="240.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -26,7 +26,7 @@
             </AnchorPane>
             <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="40.0" prefWidth="200.0" VBox.vgrow="NEVER">
                <children>
-                    <Button fx:id="accept" layoutX="84.0" layoutY="8.0" mnemonicParsing="false" onAction="#onAccept" prefHeight="25.0" prefWidth="72.0" text="Ok" />
+                    <Button fx:id="accept" layoutX="138.0" layoutY="8.0" mnemonicParsing="false" onAction="#onAccept" prefHeight="25.0" prefWidth="72.0" text="Ok" />
                </children>
             </AnchorPane>
          </children>

@@ -8,6 +8,9 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.editor.DemoController;
 
 import java.util.ArrayList;
@@ -19,16 +22,24 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class DemoFile extends GameFile {
+public class DemoFile extends SCGameFile<FroggerGameInstance> {
     private DemoFrame[] frames = new DemoFrame[MAX_DEMO_FRAMES];
     private int frameCount;
     private int startX;
     private int startZ;
 
-    public static final int TYPE_ID = 6;
     private static final Image ICON = loadIcon("demo");
     private static final int MAX_DEMO_FRAMES = 30 * 60;
     private static final int FILE_SIZE = MAX_DEMO_FRAMES + (3 * Constants.INTEGER_SIZE);
+
+    public DemoFile(FroggerGameInstance instance) {
+        super(instance);
+    }
+
+    @Override
+    public FroggerConfig getConfig() {
+        return (FroggerConfig) super.getConfig();
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -55,7 +66,7 @@ public class DemoFile extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new DemoController(), "demo", this);
+        return loadEditor(new DemoController(getGameInstance()), "demo", this);
     }
 
     @AllArgsConstructor

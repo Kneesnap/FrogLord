@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.sound.PCVBFile;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 
 import javax.sound.sampled.AudioFileFormat.Type;
 import javax.sound.sampled.*;
@@ -23,18 +24,21 @@ import java.util.List;
  */
 @Getter
 public class RetailPCVBFile extends PCVBFile {
+    public RetailPCVBFile(SCGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public GameSound makeSound(AudioHeader entry, int id, int readLength) {
-        return new PCSound(entry, id, readLength);
+        return new PCSound(getGameInstance(), entry, id, readLength);
     }
 
     @Getter
     public static class PCSound extends GameSound {
         private int[] audioData;
 
-        public PCSound(AudioHeader vhEntry, int vanillaTrackId, int readLength) {
-            super(vhEntry, vanillaTrackId, readLength / vhEntry.getByteWidth());
+        public PCSound(SCGameInstance instance, AudioHeader vhEntry, int vanillaTrackId, int readLength) {
+            super(instance, vhEntry, vanillaTrackId, readLength / vhEntry.getByteWidth());
         }
 
         @Override

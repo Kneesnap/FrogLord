@@ -3,12 +3,12 @@ package net.highwayfrogs.editor.file.config.exe.pc;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Function;
@@ -28,6 +28,10 @@ public class PCMapBook extends MapBook {
     private int highWadId;
     private int lowWadId;
     private int paletteId;
+
+    public PCMapBook(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -56,15 +60,9 @@ public class PCMapBook extends MapBook {
     }
 
     @Override
-    public void readRemapData(FroggerEXEInfo config) {
-        this.readRemap(config, this.highMapId, this.highRemapPointer);
-        this.readRemap(config, this.lowMapId, this.lowRemapPointer);
-    }
-
-    @Override
-    public void saveRemapData(DataWriter writer, FroggerEXEInfo config) {
-        this.saveRemap(writer, config, this.highMapId, this.highRemapPointer);
-        this.saveRemap(writer, config, this.lowMapId, this.lowRemapPointer);
+    public void addTextureRemaps(FroggerGameInstance instance) {
+        addRemap(instance, this.highMapId, this.highRemapPointer, false);
+        addRemap(instance, this.lowMapId, this.lowRemapPointer, true);
     }
 
     /**
@@ -98,11 +96,11 @@ public class PCMapBook extends MapBook {
 
     @Override
     public WADFile getWad(MAPFile map) {
-        if (this.lowMapId == map.getFileEntry().getResourceId())
-            return getConfig().getGameFile(this.lowWadId);
+        if (this.lowMapId == map.getIndexEntry().getResourceId())
+            return getGameInstance().getGameFile(this.lowWadId);
 
-        if (this.highMapId == map.getFileEntry().getResourceId())
-            return getConfig().getGameFile(this.highWadId);
+        if (this.highMapId == map.getIndexEntry().getResourceId())
+            return getGameInstance().getGameFile(this.highWadId);
 
         return null;
     }
@@ -114,10 +112,10 @@ public class PCMapBook extends MapBook {
 
     @Override
     public String toString() {
-        return "MAP[Hi: " + getConfig().getResourceName(highMapId) + ",Lo: " + getConfig().getResourceName(lowMapId)
+        return "MAP[Hi: " + getGameInstance().getResourceName(highMapId) + ",Lo: " + getGameInstance().getResourceName(lowMapId)
                 + "] Remap[Hi: " + Utils.toHexString(getFileHighRemapPointer()) + ",Lo: " + Utils.toHexString(getFileLowRemapPointer())
-                + "] WAD[Hi: " + getConfig().getResourceName(highWadId) + ",Lo: " + getConfig().getResourceName(lowWadId)
-                + "] PAL: " + getConfig().getResourceName(paletteId)
-                + " ENV: " + getConfig().getTextureIdFromPointer(this.environmentTexturePointer);
+                + "] WAD[Hi: " + getGameInstance().getResourceName(highWadId) + ",Lo: " + getGameInstance().getResourceName(lowWadId)
+                + "] PAL: " + getGameInstance().getResourceName(paletteId)
+                + " ENV: " + getGameInstance().getTextureIdFromPointer(this.environmentTexturePointer);
     }
 }

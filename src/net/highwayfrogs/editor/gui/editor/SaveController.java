@@ -12,10 +12,9 @@ import javafx.stage.Stage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.MWDFile;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.system.AbstractService;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -34,7 +33,7 @@ public class SaveController implements Initializable {
     @FXML private Label progressLabel;
     @FXML private Label statusLabel;
     @FXML private ProgressBar progressBar;
-    private Stage stage;
+    private final Stage stage;
 
     public SaveController(Stage stage) {
         this.stage = stage;
@@ -47,31 +46,28 @@ public class SaveController implements Initializable {
 
     /**
      * Start saving the MWD File.
-     * @param mwdToSave  The loaded MWD file to save.
-     * @param froggerEXE The executable to save data to.
-     * @param folder     The folder to output the mwds.
+     * @param instance The executable to save data to.
+     * @param folder   The folder to output the mwds.
      */
-    public void startSaving(MWDFile mwdToSave, FroggerEXEInfo froggerEXE, File folder) {
-        AbstractService.runAbstractTask(() -> new SaveTask(mwdToSave, froggerEXE, new File(folder, "FROGPSX.MWD"), new File(folder, "frogger.exe"), this));
+    public void startSaving(SCGameInstance instance, File folder) {
+        AbstractService.runAbstractTask(() -> new SaveTask(instance, new File(folder, "FROGPSX.MWD"), new File(folder, "frogger.exe"), this));
     }
 
     /**
      * Start saving a MWD.
-     * @param froggerEXE The executable config.
-     * @param loadedMWD  The MWD to save.
+     * @param instance The executable config.
      */
-    public static void saveFiles(FroggerEXEInfo froggerEXE, MWDFile loadedMWD) {
+    public static void saveFiles(SCGameInstance instance) {
         Utils.loadFXMLTemplate("save", "Saving MWD", SaveController::new,
-                (stage, controller) -> controller.startSaving(loadedMWD, froggerEXE, froggerEXE.getFolder()));
+                (stage, controller) -> controller.startSaving(instance, instance.getExeFile().getParentFile()));
     }
 
     @AllArgsConstructor
     private static final class SaveTask extends Task<Void> {
-        private MWDFile mwdToSave;
-        private FroggerEXEInfo inputConfig;
-        private File outputMWD;
-        private File outputEXE;
-        private SaveController saveController;
+        private final SCGameInstance instance;
+        private final File outputMWD;
+        private final File outputEXE;
+        private final SaveController saveController;
 
         @Override
         protected Void call() {
@@ -88,14 +84,14 @@ public class SaveController implements Initializable {
 
             DataWriter mwdWriter = new DataWriter(new FileReceiver(outputMWD));
 
-            mwdToSave.setSaveCallback((entry, file) -> {
+            this.instance.getMainArchive().setSaveCallback((entry, file) -> {
                 currentFile.incrementAndGet();
                 if (alreadyScheduledUpdate.getAndSet(true))
                     return; // Return after incrementing currentFile. This check prevents us from
 
                 Platform.runLater(() -> {
                     int saveCount = currentFile.get();
-                    int fileCount = mwdToSave.getFiles().size();
+                    int fileCount = this.instance.getMainArchive().getFiles().size();
 
                     double progress = (double) saveCount / (double) fileCount;
                     saveController.getProgressBar().setProgress(progress);
@@ -106,9 +102,9 @@ public class SaveController implements Initializable {
             });
 
             try {
-                mwdToSave.save(mwdWriter);
+                this.instance.getMainArchive().save(mwdWriter);
                 mwdWriter.closeReceiver();
-                mwdToSave.setSaveCallback(null);
+                this.instance.getMainArchive().setSaveCallback(null);
             } catch (Exception ex) {
                 Platform.runLater(() -> {
                     saveController.getStage().close();
@@ -117,8 +113,7 @@ public class SaveController implements Initializable {
             }
 
             try {
-                inputConfig.patchEXE();
-                inputConfig.saveExecutable(outputEXE);
+                this.instance.saveExecutable(this.outputEXE, true);
                 Platform.runLater(saveController.getStage()::close);
             } catch (Exception ex) {
                 Platform.runLater(() -> {

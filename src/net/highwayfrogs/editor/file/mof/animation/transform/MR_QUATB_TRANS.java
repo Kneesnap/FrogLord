@@ -104,6 +104,22 @@ public class MR_QUATB_TRANS extends TransformObject {
     }
 
     @Override
+    public PSXMatrix createInterpolatedResult() { //TODO: Move,. https://github.com/Kneesnap/Frogger/blob/a81c28bceea2f8696f9e399ee260180ae00dc7a8/source/API.SRC/MR_ANIM.C is how this is calculated. and https://github.com/Kneesnap/Frogger/blob/master/source/API.SRC/MR_QUAT.C
+        // index_ptr	= cels_ptr->ac_cel_numbers + (params->ac_cel * 3);
+        //
+        //				// index_ptr points to a group of 3 MR_USHORTs (prev actual cel index, next actual cel index, interpolation param)
+        //				quatb_prev 	= (MR_QUATB_TRANS*)(((MR_UBYTE*)env->ae_header->ah_common_data->ac_transforms) + ((cels_ptr->ac_transforms.ac_indices[(index_ptr[0] * parts) + part]) * tsize));
+        //				quatb_next 	= (MR_QUATB_TRANS*)(((MR_UBYTE*)env->ae_header->ah_common_data->ac_transforms) + ((cels_ptr->ac_transforms.ac_indices[(index_ptr[1] * parts) + part]) * tsize));
+        //				t			= index_ptr[2];
+        //				MR_INTERPOLATE_QUATB_TO_MAT(&quatb_prev->q, &quatb_next->q, (MR_MAT*)&MRTemp_matrix, t);
+
+        // ((MR_MAT34*)&MRTemp_matrix)->t[0]	= ((quatb_prev->t[0] * (0x1000 - t)) + (quatb_next->t[0] * t)) >> 12;
+        //				((MR_MAT34*)&MRTemp_matrix)->t[1]	= ((quatb_prev->t[1] * (0x1000 - t)) + (quatb_next->t[1] * t)) >> 12;
+        //				((MR_MAT34*)&MRTemp_matrix)->t[2]	= ((quatb_prev->t[2] * (0x1000 - t)) + (quatb_next->t[2] * t)) >> 12;
+        return createMatrix();
+    }
+
+    @Override
     public PSXMatrix createMatrix() {
         PSXMatrix matrix = new PSXMatrix();
         matrix.getTransform()[0] = getTransform()[0];

@@ -1,12 +1,13 @@
 package net.highwayfrogs.editor.file.mof.animation;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -18,17 +19,20 @@ import java.util.List;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public class MOFAnimationCels extends GameObject {
+public class MOFAnimationCels extends SCSharedGameData {
     private final List<Integer> celNumbers = new ArrayList<>(); // Entry for each frame. Starts at 0, counts up for each frame, unless there is a duplicate frame, where it won't count. Index into indice list.
     private final List<Short> indices = new ArrayList<>(); // All of the transform ids used. Each frame has indices for each part, seemingly in order from start to end of animation.
+    @Setter private boolean interpolationEnabled;
 
     private final transient MOFAnimation parent;
     private transient int tempCelNumberPointer;
     private transient int tempIndicePointer;
 
     public static final int FLAG_VIRTUAL_STANDARD = Constants.BIT_FLAG_0;
+    public static final int FLAG_VIRTUAL_INTERPOLATION = Constants.BIT_FLAG_1;
 
     public MOFAnimationCels(MOFAnimation parent) {
+        super(parent.getGameInstance());
         this.parent = parent;
     }
 
@@ -39,8 +43,9 @@ public class MOFAnimationCels extends GameObject {
         int virtualCelCount = reader.readUnsignedShortAsInt();
 
         int flags = reader.readUnsignedShortAsInt();
-        if (!getConfig().isAtOrBeforeBuild4()) // Seems this was indeed used for flags at one point.
-            Utils.verify(flags == FLAG_VIRTUAL_STANDARD, "Model cel-set had unsupported flags! (%s)", Utils.toHexString(flags)); // We don't support this mode as of now.
+        this.interpolationEnabled = (flags == FLAG_VIRTUAL_INTERPOLATION);
+        if (flags > (FLAG_VIRTUAL_INTERPOLATION | FLAG_VIRTUAL_STANDARD))
+            System.out.println("Model cel-set for " + getParent().getFileEntry().getDisplayName() + " has unsupported flags (" + Utils.toHexString(flags) + ")");
 
         int celNumberPointer = reader.readInt();
         int indicePointer = reader.readInt();
@@ -63,7 +68,7 @@ public class MOFAnimationCels extends GameObject {
         writer.writeUnsignedShort(this.celNumbers.size()); // This may need to have 1 subtracted if 1 is added while loading.
         writer.writeUnsignedShort(partCount);
         writer.writeUnsignedShort(this.indices.size() / partCount);
-        writer.writeUnsignedShort(FLAG_VIRTUAL_STANDARD);
+        writer.writeUnsignedShort(this.interpolationEnabled ? FLAG_VIRTUAL_INTERPOLATION : FLAG_VIRTUAL_STANDARD);
         this.tempCelNumberPointer = writer.writeNullPointer();
         this.tempIndicePointer = writer.writeNullPointer();
     }

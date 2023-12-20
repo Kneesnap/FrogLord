@@ -21,7 +21,7 @@ import java.util.Map;
 @Getter
 public class RenderManager {
     private Group root = null;
-    private Map<String, List<Node>> displayListCache = new HashMap<>();
+    private final Map<String, List<Node>> displayListCache = new HashMap<>();
 
     //>>
 
@@ -313,6 +313,35 @@ public class RenderManager {
         } else {
             throw new RuntimeException("RenderManager::addSphere() - " + listID + " does not exist!");
         }
+    }
+
+    /**
+     * Adds a cylinder.
+     * @param listID       The display list ID.
+     * @param x            The x-coordinate defining the center of the cylinder.
+     * @param y            The y-coordinate defining the center of the cylinder.
+     * @param z            The z-coordinate defining the center of the cylinder.
+     * @param radius       The radius of the cylinder.
+     * @param height       The height of the cylinder.
+     * @param material     The material used to render the cylinder.
+     * @param useWireframe Whether or not to display the cylinder as a wireframe.
+     * @return The newly created/added cylinder
+     */
+    public Cylinder addCylinder(String listID, double x, double y, double z, double radius, double height, PhongMaterial material, boolean useWireframe) {
+        List<Node> displayList = this.displayListCache.get(listID);
+        if (displayList == null)
+            throw new RuntimeException("RenderManager::addSphere() - " + listID + " does not exist!");
+
+        Cylinder cylinder = new Cylinder(radius, height);
+        cylinder.setMaterial(material);
+        cylinder.setDrawMode(useWireframe ? DrawMode.LINE : DrawMode.FILL);
+        cylinder.setCullFace(CullFace.BACK);
+        cylinder.setMouseTransparent(useWireframe);
+        cylinder.getTransforms().addAll(new Translate(x, y, z));
+
+        displayList.add(cylinder);
+        this.root.getChildren().add(cylinder);
+        return cylinder;
     }
 
     /**

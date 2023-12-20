@@ -59,7 +59,7 @@ public class FFSUtil {
             return;
         }
 
-        @Cleanup PrintWriter pw = new PrintWriter(new File(outputDir, Utils.stripExtension(map.getFileEntry().getDisplayName()) + ".ffs"));
+        @Cleanup PrintWriter pw = new PrintWriter(new File(outputDir, Utils.stripExtension(map.getFileDisplayName()) + ".ffs"));
 
         // Export textures.
         if (map.getVlo() != null) {
@@ -207,7 +207,7 @@ public class FFSUtil {
 
         // Close the file stream.
         pw.close();
-        System.out.println("Exported " + map.getFileEntry().getDisplayName() + " to " + outputDir.getName() + File.separator + ".");
+        System.out.println("Exported " + map.getFileDisplayName() + " to " + outputDir.getName() + File.separator + ".");
     }
 
     /**
@@ -372,6 +372,6 @@ public class FFSUtil {
                 fullPolygonList.add(newPolygon);
             }
         }
-        System.out.println("Imported " + inputFile.getName() + " as " + map.getFileEntry().getDisplayName() + ".");
+        System.out.println("Imported " + inputFile.getName() + " as " + map.getFileDisplayName() + ".");
     }
 }

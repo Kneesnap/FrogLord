@@ -11,6 +11,8 @@ import javafx.scene.layout.VBox;
 import net.highwayfrogs.editor.file.DemoFile;
 import net.highwayfrogs.editor.file.DemoFile.DemoAction;
 import net.highwayfrogs.editor.file.DemoFile.DemoFrame;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -24,15 +26,19 @@ import java.util.Map.Entry;
  * This is functional, but not great. The best option would be hooking into Frogger's process and reading input as it happened, so instead of doing things blind, you can edit stuff.
  * Created by Kneesnap on 3/3/2019.
  */
-public class DemoController extends EditorController<DemoFile> {
+public class DemoController extends EditorController<DemoFile, FroggerGameInstance, FroggerConfig> {
     @FXML private ListView<DemoFrame> entryList;
     @FXML private ChoiceBox<DemoAction> basicSelector;
     @FXML private VBox actionBox;
     @FXML private TextField xField;
     @FXML private TextField zField;
     @FXML private TextField frameField;
-    private Map<DemoAction, CheckBox> checkBoxMap = new HashMap<>();
+    private final Map<DemoAction, CheckBox> checkBoxMap = new HashMap<>();
     private DemoFrame selectedFrame;
+
+    public DemoController(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void loadFile(DemoFile file) {

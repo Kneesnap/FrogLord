@@ -37,6 +37,27 @@ public class DataWriter {
     }
 
     /**
+     * Skip bytes to align to the given byte boundary.
+     * @param alignment The number of bytes the index should have an increment of.
+     */
+    public void align(int alignment) {
+        align(alignment, Constants.NULL_BYTE);
+    }
+
+    /**
+     * Skip bytes to align to the given byte boundary.
+     * @param alignment The number of bytes the index should have an increment of.
+     * @param padding   The padding byte
+     */
+    public void align(int alignment, byte padding) {
+        int index = getIndex();
+        int offsetAmount = (index % alignment);
+        if (offsetAmount != 0)
+            for (int i = 0; i < alignment - offsetAmount; i++)
+                writeByte(padding); // Alignment.
+    }
+
+    /**
      * Jump to a given write offset, leaving null-bytes in between.
      * @param address The address to jump to.
      */
@@ -97,6 +118,14 @@ public class DataWriter {
         } catch (IOException ex) {
             throw new RuntimeException("Failed to set writer index.", ex);
         }
+    }
+
+    /**
+     * Move a given number of bytes ahead.
+     * @param amount The amount of bytes to move.
+     */
+    public void skipBytes(int amount) {
+        setIndex(getIndex() + amount);
     }
 
     /**

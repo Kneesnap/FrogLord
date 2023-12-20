@@ -6,6 +6,8 @@ import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import net.highwayfrogs.editor.file.map.SkyLand;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -17,10 +19,14 @@ import java.io.IOException;
  * Controls the UI for viewing sky land.
  * Created by Kneesnap on 12/26/2019.
  */
-public class SkyLandController extends EditorController<SkyLand> {
+public class SkyLandController extends EditorController<SkyLand, FroggerGameInstance, FroggerConfig> {
     @FXML private ImageView previewImage;
     @FXML private Button exportButton;
     private BufferedImage image;
+
+    public SkyLandController(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -42,4 +48,3 @@ public class SkyLandController extends EditorController<SkyLand> {
     }
 
 }
-

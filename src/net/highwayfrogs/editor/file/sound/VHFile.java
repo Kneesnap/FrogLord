@@ -1,15 +1,14 @@
 package net.highwayfrogs.editor.file.sound;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
-import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,13 +18,15 @@ import java.util.List;
  * Created by rdrpenguin04 on 8/22/2018.
  */
 @Getter
-public class VHFile extends GameFile {
-    private List<AudioHeader> entries = new ArrayList<>();
-    @Setter private transient AbstractVBFile VB;
+public class VHFile extends VHAudioHeader {
+    private final List<AudioHeader> entries = new ArrayList<>();
 
-    public static final int TYPE_ID = 2;
     public static final Image ICON = loadIcon("sound");
     public static final int CHANNEL_COUNT = 1;
+
+    public VHFile(SCGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -36,7 +37,8 @@ public class VHFile extends GameFile {
             getEntries().add(entry);
         }
 
-        getVB().load(this); // Load the linked body file.
+        if (getVbFile() != null)
+            getVbFile().setHeader(this);
     }
 
     @Override
@@ -50,17 +52,6 @@ public class VHFile extends GameFile {
             if (entry.isAudioPresent())
                 offset += entry.getDataSize();
         }
-    }
-
-    @Override
-    public Image getIcon() {
-        return ICON;
-    }
-
-    @Override
-    public Node makeEditor() {
-        Utils.verify(getVB() != null, "VB sound is null.");
-        return getVB().makeEditor(); // Build the editor for the right file.
     }
 
     @Setter
@@ -80,8 +71,11 @@ public class VHFile extends GameFile {
             this.audioPresent = (reader.readInt() == HAS_AUDIO);
             this.dataStartOffset = reader.readInt();
             this.dataSize = reader.readInt();
-            Utils.verify(reader.readInt() == UNKNOWN_VALUE, "Unknown Value #1 was not correct.");
-            Utils.verify(reader.readInt() == UNKNOWN_VALUE, "Unknown Value #2 was not correct.");
+
+            int unk1 = reader.readInt();
+            Utils.verify(unk1 == UNKNOWN_VALUE, "Unknown Value #1 was not correct. (%d)", unk1);
+            int unk2 = reader.readInt();
+            Utils.verify(unk2 == UNKNOWN_VALUE, "Unknown Value #2 was not correct. (%d)", unk2);
             this.sampleRate = reader.readInt();
             this.bitWidth = reader.readInt();
         }

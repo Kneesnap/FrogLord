@@ -9,11 +9,12 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.general.FormDeathType;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry.FormLibFlag;
-import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.games.sony.SCGameObject;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.editor.ScriptEditorController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -28,7 +29,7 @@ import java.util.ResourceBundle;
  * Created by Kneesnap on 3/15/2019.
  */
 @Getter
-public class FormEntryController implements Initializable {
+public class FormEntryController extends SCGameObject<FroggerGameInstance> implements Initializable {
     @FXML private ComboBox<FormEntry> formSelector;
     @FXML private ComboBox<Integer> entitySelector;
     @FXML private ComboBox<FormDeathType> deathSelector;
@@ -41,16 +42,20 @@ public class FormEntryController implements Initializable {
     @FXML private Button editButton;
     @FXML private ComboBox<Integer> scriptSelector;
     @FXML private Label scriptIdLabel;
-    private Stage stage;
-    private FroggerEXEInfo config;
+    private final Stage stage;
     private FormEntry selectedEntry;
 
     private List<Node> disableNodes;
-    private CheckBox[] flagToggleMap = new CheckBox[FormLibFlag.values().length];
+    private final CheckBox[] flagToggleMap = new CheckBox[FormLibFlag.values().length];
 
-    private FormEntryController(Stage stage, FroggerEXEInfo config) {
+    private FormEntryController(FroggerGameInstance instance, Stage stage) {
+        super(instance);
         this.stage = stage;
-        this.config = config;
+    }
+
+    @Override
+    public FroggerConfig getConfig() {
+        return (FroggerConfig) super.getConfig();
     }
 
     @Override
@@ -58,20 +63,20 @@ public class FormEntryController implements Initializable {
         this.disableNodes = Arrays.asList(entitySelector, deathSelector, wadIndexField, scriptIdField, flagGrid, themeLabel, localLabel, globalLabel);
 
         // Setup UI based on whether or not script names are set.
-        boolean useNames = GUIMain.EXE_CONFIG.getScripts().size() > 0;
+        boolean useNames = getGameInstance().getScripts().size() > 0;
         editButton.setVisible(useNames);
         scriptSelector.setVisible(useNames);
         scriptIdField.setVisible(!useNames);
         scriptIdLabel.setText(useNames ? "Script: " : "Script ID: ");
 
         // Setup:
-        formSelector.setItems(FXCollections.observableArrayList(getConfig().getFullFormBook()));
+        formSelector.setItems(FXCollections.observableArrayList(getGameInstance().getFullFormBook()));
         formSelector.setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
         entitySelector.setItems(FXCollections.observableArrayList(Utils.getIntegerList(getConfig().getEntityBank().size())));
         entitySelector.setConverter(new AbstractStringConverter<>(getConfig().getEntityBank()::getName));
         deathSelector.setItems(FXCollections.observableArrayList(FormDeathType.values()));
-        scriptSelector.setItems(FXCollections.observableArrayList(Utils.getIntegerList(GUIMain.EXE_CONFIG.getScripts().size())));
-        scriptSelector.setConverter(new AbstractStringConverter<>(GUIMain.EXE_CONFIG.getScriptBank()::getName));
+        scriptSelector.setItems(FXCollections.observableArrayList(Utils.getIntegerList(getGameInstance().getScripts().size())));
+        scriptSelector.setConverter(new AbstractStringConverter<>(getConfig().getScriptBank()::getName));
 
         // Handlers:
         formSelector.valueProperty().addListener((listener, oldVal, newVal) -> setEntry(newVal));
@@ -80,7 +85,7 @@ public class FormEntryController implements Initializable {
         scriptSelector.valueProperty().addListener(((observable, oldValue, newValue) -> getSelectedEntry().setScriptId(newValue)));
         Utils.setHandleTestKeyPress(wadIndexField, Utils::isInteger, newValue -> getSelectedEntry().setId(Integer.parseInt(newValue)));
         Utils.setHandleTestKeyPress(scriptIdField, Utils::isInteger, newValue -> getSelectedEntry().setScriptId(Integer.parseInt(newValue)));
-        editButton.setOnAction(evt -> ScriptEditorController.openEditor(GUIMain.EXE_CONFIG.getScripts().get(this.scriptSelector.getValue())));
+        editButton.setOnAction(evt -> ScriptEditorController.openEditor(getGameInstance(), getGameInstance().getScripts().get(this.scriptSelector.getValue())));
 
         for (int i = 0; i < FormLibFlag.values().length; i++) {
             FormLibFlag lib = FormLibFlag.values()[i];
@@ -131,7 +136,7 @@ public class FormEntryController implements Initializable {
     /**
      * Open the level info controller.
      */
-    public static void openEditor(FroggerEXEInfo info) {
-        Utils.loadFXMLTemplate("form-entry", "Form Library Editor", newStage -> new FormEntryController(newStage, info));
+    public static void openEditor(FroggerGameInstance instance) {
+        Utils.loadFXMLTemplate(instance, "form-entry", "Form Library Editor", FormEntryController::new);
     }
 }

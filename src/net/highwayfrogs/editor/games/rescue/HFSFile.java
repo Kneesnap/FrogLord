@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Getter
 public class HFSFile extends GameObject {
-    private List<DummyFile> fileData = new ArrayList<>();
+    private final List<DummyFile> fileData = new ArrayList<>();
     private static final String MAGIC = "hfs\7";
 
     @Override
@@ -37,7 +37,7 @@ public class HFSFile extends GameObject {
             int dataLength = reader.readInt();
 
             reader.jumpTemp(cdSector * Constants.CD_SECTOR_SIZE); // Jumps to the CD sector.
-            DummyFile newFile = new DummyFile(dataLength);
+            DummyFile newFile = new DummyFile(null, dataLength);
             newFile.load(reader);
             this.fileData.add(newFile);
             reader.jumpReturn();

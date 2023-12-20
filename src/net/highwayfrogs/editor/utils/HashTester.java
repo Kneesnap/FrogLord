@@ -10,14 +10,41 @@ import java.util.Scanner;
  */
 public class HashTester {
 
+    @SuppressWarnings("InfiniteLoopStatement")
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+        SCHashPermuter.findLinkerHashes();
 
-        do {
+        Scanner scanner = new Scanner(System.in);
+        int targetHash = -1;
+        while (true) {
             System.out.print("Please enter the string to hash: ");
-            String str = scanner.nextLine();
-            System.out.println("Linker    Hash: " + FroggerHashUtil.getLinkerHash(str) + "\t\t\tFull: " + FroggerHashUtil.getFullLinkerHash(str));
-            System.out.println("Assembler Hash: " + FroggerHashUtil.getAssemblerHash(str) + "\t\t\tFull: " + FroggerHashUtil.getFullAssemblerHash(str));
-        } while (true);
+            String line = scanner.nextLine();
+            if (line.startsWith("!")) {
+                try {
+                    targetHash = Integer.parseInt(line.substring(1));
+                    System.out.println("Updated target.");
+                } catch (NumberFormatException ex) {
+                    System.out.println("Couldn't read '" + line + "' as a number.");
+                }
+                continue;
+            }
+
+            print(line, targetHash);
+        }
+    }
+
+    private static void print(String input, int targetHash) {
+        System.out.print("Input '");
+        System.out.print(input);
+        System.out.print("', Linker Hash: ");
+        System.out.print(FroggerHashUtil.getLinkerHash(input));
+        System.out.print(", Assembler Hash: ");
+        System.out.print(FroggerHashUtil.getAssemblerHash(input));
+        if (targetHash >= 0) {
+            System.out.print(", Target Offset: ");
+            System.out.print(((FroggerHashUtil.LINKER_HASH_TABLE_SIZE + targetHash) - FroggerHashUtil.getLinkerHash(input)) % FroggerHashUtil.LINKER_HASH_TABLE_SIZE);
+        }
+
+        System.out.println();
     }
 }

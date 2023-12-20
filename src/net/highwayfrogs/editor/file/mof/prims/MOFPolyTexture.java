@@ -154,11 +154,11 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
 
     @Override
     public GameImage getGameImage(TextureMap map) {
-        return map.getVloArchive().getMWD().getImageByTextureId(getUseTextureId(map));
+        return map.getVloArchive().getArchive().getImageByTextureId(getUseTextureId(map));
     }
 
     @Override
-    public void onMeshSetup(FrogMesh mesh) {
+    public void onMeshSetup(FrogMesh<?> mesh) {
         if (mesh instanceof MOFMesh && isOverlay(mesh.getTextureMap()))
             ((MOFMesh) mesh).renderOverPolygon(this, this);
     }

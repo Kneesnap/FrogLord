@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
@@ -20,6 +21,10 @@ public class EntityTurtle extends PathData {
 
     private static final int TYPE_DIVING = 0;
     private static final int TYPE_NOT_DIVING = 1;
+
+    public EntityTurtle(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

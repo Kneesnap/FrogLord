@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
@@ -16,6 +17,10 @@ public class FallingLeafEntity extends MatrixData {
     private int fallSpeed;
     private int swayDuration;
     private int swayAngle;
+
+    public FallingLeafEntity(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

@@ -3,12 +3,12 @@ package net.highwayfrogs.editor.file.config.exe.psx;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Function;
@@ -24,6 +24,10 @@ public class PSXMapBook extends MapBook {
     private boolean useCaveLights;
     private long environmentTexturePointer = -1;
     private int wadId = -1;
+
+    public PSXMapBook(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -50,13 +54,8 @@ public class PSXMapBook extends MapBook {
     }
 
     @Override
-    public void readRemapData(FroggerEXEInfo config) {
-        this.readRemap(config, this.mapId, this.remapPointer);
-    }
-
-    @Override
-    public void saveRemapData(DataWriter writer, FroggerEXEInfo config) {
-        this.saveRemap(writer, config, this.mapId, this.remapPointer);
+    public void addTextureRemaps(FroggerGameInstance instance) {
+        addRemap(instance, this.mapId, (int) this.remapPointer, false);
     }
 
     @Override
@@ -66,7 +65,7 @@ public class PSXMapBook extends MapBook {
 
     @Override
     public boolean isDummy() {
-        return this.remapPointer == 0;
+        return this.remapPointer <= 0;
     }
 
     @Override
@@ -78,9 +77,9 @@ public class PSXMapBook extends MapBook {
     public WADFile getWad(MAPFile map) {
         int wadId = this.wadId;
         if (wadId < 0) // Determine the WAD ID from the map theme if necessary.
-            wadId = ((PSXThemeBook) getConfig().getThemeBook(map.getTheme())).getWadId();
+            wadId = ((PSXThemeBook) getGameInstance().getThemeBook(map.getTheme())).getWadId();
 
-        return getConfig().getGameFile(wadId);
+        return getGameInstance().getGameFile(wadId);
     }
 
     @Override
@@ -98,19 +97,11 @@ public class PSXMapBook extends MapBook {
         return (int) (getRemapPointer() - getConfig().getRamPointerOffset());
     }
 
-    /**
-     * Gets the map's file entry.
-     * @return mapFileEntry
-     */
-    public FileEntry getMapEntry() {
-        return getConfig().getResourceEntry(this.mapId);
-    }
-
     @Override
     public String toString() {
-        return "MAP[" + getConfig().getResourceName(mapId)
+        return "MAP[" + getGameInstance().getResourceName(mapId)
                 + "] Remap[" + Utils.toHexString(getFileRemapPointer())
-                + "] WAD[" + getConfig().getResourceName(wadId)
-                + "] ENV[" + getConfig().getTextureIdFromPointer(this.environmentTexturePointer) + "]";
+                + "] WAD[" + getGameInstance().getResourceName(wadId)
+                + "] ENV[" + getGameInstance().getTextureIdFromPointer(this.environmentTexturePointer) + "]";
     }
 }

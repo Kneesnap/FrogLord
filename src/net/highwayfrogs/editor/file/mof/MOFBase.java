@@ -1,10 +1,12 @@
 package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -12,10 +14,11 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 2/25/2019.
  */
 @Getter
-public abstract class MOFBase extends GameObject {
+public abstract class MOFBase extends SCSharedGameData {
     private final transient MOFHolder holder;
 
-    public MOFBase(MOFHolder holder) {
+    public MOFBase(SCGameInstance instance, MOFHolder holder) {
+        super(instance);
         this.holder = holder;
     }
 
@@ -24,7 +27,7 @@ public abstract class MOFBase extends GameObject {
      * @return fileEntry
      */
     public FileEntry getFileEntry() {
-        return getHolder().getFileEntry();
+        return getHolder().getIndexEntry();
     }
 
     @Override
@@ -37,8 +40,8 @@ public abstract class MOFBase extends GameObject {
         // This is done after the file is read, because to generate flags we must know the contents of the file first.
         if (flags != buildFlags())
             throw new RuntimeException("Generated Flags (" + buildFlags() + ") do not match read flags (" + flags + ") in " + getFileEntry().getDisplayName());
-        if (!makeSignature().equals(new String(signature)) && !getConfig().isAtOrBeforeBuild1()) // Build 1 seems to skip on the signature.
-            throw new RuntimeException("Generated Signature (" + makeSignature() + ") does not match read signature (" + new String(signature) + "/" + Utils.toByteString(signature) + ") in " + getFileEntry().getDisplayName());
+        if (!makeSignature().equals(new String(signature)) && (getGameInstance().isFrogger() && !((FroggerConfig) getConfig()).isAtOrBeforeBuild1())) // Build 1 seems to skip on the signature.
+            throw new RuntimeException("Generated Signature (" + makeSignature() + ") does not match read signature (" + new String(signature) + ") in " + getFileEntry().getDisplayName() + " (Real Signature Bytes: " + Utils.toByteString(signature) + ")");
     }
 
     @Override

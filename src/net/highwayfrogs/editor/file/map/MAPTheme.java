@@ -22,8 +22,8 @@ public enum MAPTheme {
     SUBURBIA("SUB", 0),
     VOLCANO("VOL", 8); // Also sometimes called Industrial or IND.
 
-    private String internalName;
-    private int formOffset;
+    private final String internalName;
+    private final int formOffset;
 
     /**
      * Gets the theme from a file name.

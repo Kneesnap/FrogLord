@@ -29,10 +29,18 @@ public abstract class TransformObject extends GameObject {
     public abstract PSXMatrix createMatrix();
 
     /**
+     * Creates an interpolated result.
+     * @return interpolatedResult
+     */
+    public PSXMatrix createInterpolatedResult() {
+        return createMatrix();
+    }
+
+    /**
      * Generates a PSXMatrix with the part transform.
      * @return matrix
      */
-    public PSXMatrix calculatePartTransform() {
-        return createMatrix();
+    public PSXMatrix calculatePartTransform(boolean useInterpolation) {
+        return useInterpolation ? createInterpolatedResult() : createMatrix();
     }
 }

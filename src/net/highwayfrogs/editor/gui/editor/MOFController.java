@@ -19,10 +19,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
-import javafx.scene.shape.CullFace;
-import javafx.scene.shape.DrawMode;
-import javafx.scene.shape.MeshView;
+import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
@@ -38,6 +35,7 @@ import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.mof.*;
 import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
+import net.highwayfrogs.editor.file.mof.hilite.MOFHilite.HiliteAttachType;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntryList;
@@ -48,6 +46,10 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
+import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
@@ -72,7 +74,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 2/13/2019.
  */
 @Getter
-public class MOFController extends EditorController<MOFHolder> {
+public class MOFController extends EditorController<MOFHolder, SCGameInstance, SCGameConfig> {
     private double oldMouseX;
     private double oldMouseY;
     private double mouseX;
@@ -81,6 +83,7 @@ public class MOFController extends EditorController<MOFHolder> {
     private MOFUIController uiController;
     private PerspectiveCamera camera;
     private Scene mofScene;
+    private SubScene subScene3D;
     private MOFMesh mofMesh;
     private Group root3D;
     private Rotate rotX;
@@ -90,8 +93,12 @@ public class MOFController extends EditorController<MOFHolder> {
     private boolean selectingVertex;
     private boolean selectingPart;
     private MeshData textureOverlay;
+    private MeshData hiliteOverlay;
 
     @Setter private Vector showPosition;
+
+    private static final int SELECTION_SHOW_DEFAULT = -2;
+    private static final int SELECTION_SHOW_ALL = -1;
 
     private static final String LIGHTING_LIST = "extraLighting";
     private static final String HILITE_LIST = "hiliteBoxes";
@@ -108,6 +115,11 @@ public class MOFController extends EditorController<MOFHolder> {
     private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(java.awt.Color.MAGENTA, java.awt.Color.BLACK);
     public static final CursorVertexColor CANT_APPLY_COLOR = new CursorVertexColor(java.awt.Color.RED, java.awt.Color.BLACK);
+    public static final CursorVertexColor HILITE_COLOR = new CursorVertexColor(Utils.toAWTColor(Color.PURPLE), java.awt.Color.BLACK);
+
+    public MOFController(SCGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void onInit(AnchorPane editorRoot) {
@@ -140,7 +152,7 @@ public class MOFController extends EditorController<MOFHolder> {
 
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group(this.camera, meshView);
-        SubScene subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - uiController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
+        subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - uiController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
         camera.setFarClip(MapUIController.MAP_VIEW_FAR_CLIP);
         subScene3D.setFill(Color.GRAY);
         subScene3D.setCamera(camera);
@@ -183,12 +195,12 @@ public class MOFController extends EditorController<MOFHolder> {
                 Utils.setSceneKeepPosition(stageToOverride, defaultScene);
                 return;
             } else if (event.getCode() == KeyCode.F10) {
-                Utils.takeScreenshot(subScene3D, getMofScene(), Utils.stripExtension(getFile().getFileEntry().getDisplayName()));
+                Utils.takeScreenshot(subScene3D, getMofScene(), Utils.stripExtension(getFile().getFileDisplayName()), true);
             }
 
             if (event.getCode() == KeyCode.S && event.isControlDown()) { // Save the texture map.
                 try {
-                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + Utils.stripExtension(getMofMesh().getMofHolder().getFileEntry().getDisplayName()) + ".png"));
+                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + Utils.stripExtension(getMofMesh().getMofHolder().getFileDisplayName()) + ".png"));
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
@@ -224,6 +236,17 @@ public class MOFController extends EditorController<MOFHolder> {
                 this.selectingPart = false;
                 updateTexture3D();
                 return;
+            }
+
+            if (this.hiliteOverlay != null && this.getUiController().getViewHilitesCheckbox().isSelected()) {
+                for (MOFPart part : getFile().asStaticFile().getParts()) {
+                    for (MOFHilite hilite : part.getHilites()) {
+                        if (hilite.getAttachType() == HiliteAttachType.PRIM && hilite.getPolygon() == clickedPoly) {
+                            hilite.setupEditor(this);
+                            return;
+                        }
+                    }
+                }
             }
 
             if (!(clickedPoly instanceof MOFPolyTexture) || getUiController().getSelectedList() == null)
@@ -348,19 +371,33 @@ public class MOFController extends EditorController<MOFHolder> {
     public void updateHiliteBoxes(boolean showBoxes) {
         getRenderManager().addMissingDisplayList(HILITE_LIST);
         getRenderManager().clearDisplayList(HILITE_LIST);
+        if (this.hiliteOverlay != null) {
+            getMofMesh().getManager().removeMesh(this.hiliteOverlay);
+            this.hiliteOverlay = null;
+        }
 
         if (!showBoxes)
             return;
 
+        boolean renderOver = false;
         for (MOFPart part : getFile().asStaticFile().getParts()) {
             for (MOFHilite hilite : part.getHilites()) {
-                SVector vertex = hilite.getVertex();
-                Box hiliteBox = getRenderManager().addBoundingBoxCenteredWithDimensions(HILITE_LIST, vertex.getFloatX(), vertex.getFloatY(), vertex.getFloatZ(), 1, 1, 1, HILITE_MATERIAL, true);
-                applyRotation(hiliteBox);
-                hiliteBox.setOnMouseClicked(evt -> hilite.setupEditor(this));
-                hiliteBox.setMouseTransparent(false);
+                if (hilite.getAttachType() == HiliteAttachType.PRIM) {
+                    MOFPolygon poly = hilite.getPolygon();
+                    renderOverPolygon(poly, MOFController.HILITE_COLOR);
+                    renderOver = true;
+                } else if (hilite.getAttachType() == HiliteAttachType.VERTEX) {
+                    SVector vertex = hilite.getVertex();
+                    Box hiliteBox = getRenderManager().addBoundingBoxCenteredWithDimensions(HILITE_LIST, vertex.getFloatX(), vertex.getFloatY(), vertex.getFloatZ(), 1, 1, 1, HILITE_MATERIAL, true);
+                    applyRotation(hiliteBox);
+                    hiliteBox.setOnMouseClicked(evt -> hilite.setupEditor(this));
+                    hiliteBox.setMouseTransparent(false);
+                }
             }
         }
+
+        if (renderOver)
+            this.hiliteOverlay = getMofMesh().getManager().addMesh();
     }
 
     /**
@@ -373,15 +410,15 @@ public class MOFController extends EditorController<MOFHolder> {
 
         getUiController().getViewCollprimCheckbox().setText("Show Collprim(s) [" + collprimCount + "]");
         getUiController().getViewCollprimCheckbox().setDisable(!foundAny);
-        getUiController().getAddCollprimButton().setDisable(foundAny || getFile().asStaticFile().getParts().isEmpty());
-        updateCollprimBoxes(foundAny && display);
+        getUiController().getAddCollprimButton().setDisable(getFile().asStaticFile().getParts().isEmpty());
+        updateCollprimBoxes(foundAny && display, null);
     }
 
     /**
      * Update collprim boxes.
      * @param showCollprim Should show collprim boxes.
      */
-    public void updateCollprimBoxes(boolean showCollprim) {
+    public void updateCollprimBoxes(boolean showCollprim, MRCollprim displayUI) {
         getRenderManager().addMissingDisplayList(COLLPRIM_BOX_LIST);
         getRenderManager().clearDisplayList(COLLPRIM_BOX_LIST);
         if (!showCollprim) {
@@ -390,9 +427,15 @@ public class MOFController extends EditorController<MOFHolder> {
         }
 
         for (MOFPart part : getFile().asStaticFile().getParts()) {
-            MOFCollprim collprim = part.getCollprim();
-            if (collprim != null)
-                applyRotation(collprim.addDisplay(this, getRenderManager(), COLLPRIM_BOX_LIST, COLLPRIM_MATERIAL));
+            for (MOFCollprim collprim : part.getCollprims()) {
+                if (collprim == null)
+                    continue;
+
+                CollprimShapeAdapter<?> adapter = collprim.addDisplay(this, getRenderManager(), COLLPRIM_BOX_LIST, COLLPRIM_MATERIAL, removedCollprim -> part.getCollprims().remove(collprim));
+                applyRotation(adapter.getShape());
+                if (displayUI == collprim)
+                    collprim.setupEditor(this, adapter, removedCollprim -> part.getCollprims().remove(collprim));
+            }
         }
     }
 
@@ -471,6 +514,7 @@ public class MOFController extends EditorController<MOFHolder> {
             return;
         }
 
+        // Get translation.
         double translateX = node.getTranslateX();
         double translateY = node.getTranslateY();
         double translateZ = node.getTranslateZ();
@@ -485,6 +529,7 @@ public class MOFController extends EditorController<MOFHolder> {
             translateZ += translate.getZ();
         }
 
+        // Update pivots.
         lightRotateX.setPivotY(-translateY);
         lightRotateX.setPivotZ(-translateZ); // Depth <Closest, Furthest>
         lightRotateY.setPivotX(-translateX); // <Left, Right>
@@ -508,7 +553,7 @@ public class MOFController extends EditorController<MOFHolder> {
         List<Node> toDisable = new ArrayList<>();
         if (entryList.getEntries().size() > 0) {
             List<MOFPartPolyAnimEntry> entries = entryList.getEntries();
-            MWDFile mwd = entryList.getMWD();
+            MWDFile mwd = getArchive();
 
             grid.addBoldLabel("Preview:");
             AtomicBoolean isAnimating = new AtomicBoolean(false);
@@ -519,7 +564,7 @@ public class MOFController extends EditorController<MOFHolder> {
                     imagePreview.setImage(mwd.getImageByTextureId(entries.get(newFrame).getImageId()).toFXImage(MAPAnimation.PREVIEW_SETTINGS)), 0, maxValidFrame);
 
             toDisable.add(frameSlider);
-            double millisInterval = (1000D / mwd.getFPS());
+            double millisInterval = (1000D / getGameInstance().getFPS());
             Timeline animationTimeline = new Timeline(new KeyFrame(Duration.millis(millisInterval), evt -> {
                 if (framesWaited.getAndIncrement() == entries.get((int) frameSlider.getValue()).getDuration()) {
                     framesWaited.set(0);
@@ -553,7 +598,7 @@ public class MOFController extends EditorController<MOFHolder> {
         for (int i = 0; i < entryList.getEntries().size(); i++) {
             final int tempIndex = i;
             MOFPartPolyAnimEntry entry = entryList.getEntries().get(i);
-            GameImage image = entryList.getMWD().getImageByTextureId(entry.getImageId());
+            GameImage image = getArchive().getImageByTextureId(entry.getImageId());
             Image scaledImage = Utils.toFXImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), true);
             ImageView view = new ImageView(scaledImage);
             view.setFitWidth(20);
@@ -667,6 +712,8 @@ public class MOFController extends EditorController<MOFHolder> {
 
         @FXML private Label modelName;
         @FXML private ComboBox<Integer> animationSelector;
+        @FXML private ComboBox<Integer> partHideSelector;
+        @FXML private ColorPicker colorPicker;
         @FXML private Button playButton;
         @FXML private CheckBox repeatCheckbox;
         @FXML private CheckBox textureAnimationCheckbox;
@@ -713,9 +760,10 @@ public class MOFController extends EditorController<MOFHolder> {
 
         @Override
         public void initialize(URL location, ResourceBundle resources) {
+            this.colorPicker.setOnAction(e -> getController().subScene3D.setFill(colorPicker.getValue()));
             this.brightModeCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateLighting(newValue)));
             this.viewHilitesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateHiliteBoxes(newValue)));
-            this.viewCollprimCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateCollprimBoxes(newValue)));
+            this.viewCollprimCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateCollprimBoxes(newValue, null)));
             this.viewBoundingBoxesCheckbox.selectedProperty().addListener(((observable, oldValue, newValue) -> getController().updateBoundingBoxes(newValue)));
 
             // Allow toggling texture animations.
@@ -749,7 +797,8 @@ public class MOFController extends EditorController<MOFHolder> {
             }));
 
             this.addCollprimButton.setOnAction(evt -> {
-                getHolder().asStaticFile().getParts().get(0).setCollprim(new MOFCollprim(getHolder().asStaticFile().getParts().get(0)));
+                MOFPart part = getHolder().asStaticFile().getParts().get(0); // TODO: Allow choosing the part instead.
+                part.getCollprims().add(new MOFCollprim(part));
                 controller.updateCollprimBoxes();
             });
 
@@ -865,18 +914,63 @@ public class MOFController extends EditorController<MOFHolder> {
 
             animationSelector.getSelectionModel().select(0); // Automatically selects no animation.
 
+            List<Integer> parts = new ArrayList<>(Utils.getIntegerList(holder.asStaticFile().getParts().size()));
+            parts.add(0, SELECTION_SHOW_ALL);
+            parts.add(0, SELECTION_SHOW_DEFAULT);
+
+            partHideSelector.setItems(FXCollections.observableArrayList(parts));
+            partHideSelector.setConverter(new AbstractStringConverter<>(this::getPartUIName));
+            partHideSelector.valueProperty().addListener(((observable, oldValue, newValue) -> onUISelectPart(newValue)));
+
+            partHideSelector.getSelectionModel().select(0); // Select hide some parts.
+
             boolean disableState = !getHolder().asStaticFile().hasTextureAnimation();
             for (Node node : playNodes)
                 node.setDisable(disableState); // Disable playing non-existing animation.
 
             updateTempUI();
-            modelName.setText(getHolder().getFileEntry().getDisplayName());
+            modelName.setText(getHolder().getFileDisplayName());
             updateTextureList();
             this.animationListChoiceBox.getSelectionModel().selectFirst();
         }
 
         private boolean shouldPreventFrameChange() {
             return getController().isSelectingVertex() || isAnimationPlaying();
+        }
+
+        private String getPartUIName(int partId) {
+            if (partId == SELECTION_SHOW_DEFAULT)
+                return "Default";
+            if (partId == SELECTION_SHOW_ALL)
+                return "Show All Parts";
+
+            return "Part #" + partId;
+        }
+
+        /**
+         * Updates the MOF display when the UI selects a new option.
+         * @param partId The part ID to display.
+         */
+        private void onUISelectPart(int partId) {
+            MOFMesh mesh = this.controller.getMofMesh();
+            MOFFile file = this.controller.getFile().asStaticFile();
+
+            if (partId == SELECTION_SHOW_DEFAULT) {
+                mesh.getHiddenParts().clear();
+                for (MOFPart part : file.getParts())
+                    if (part.isHiddenByConfiguration())
+                        mesh.getHiddenParts().add(part);
+            } else if (partId == SELECTION_SHOW_ALL) {
+                mesh.getHiddenParts().clear();
+            } else if (partId >= 0 && partId < file.getParts().size()) {
+                MOFPart part = file.getParts().get(partId);
+                if (!mesh.getHiddenParts().remove(part))
+                    mesh.getHiddenParts().add(part);
+            } else {
+                throw new RuntimeException("UI Error, Unexpected MOF Part ID: " + partId);
+            }
+
+            mesh.resetFrame();
         }
 
         /**
@@ -964,8 +1058,8 @@ public class MOFController extends EditorController<MOFHolder> {
      * Updates the marker to display at the given position.
      * If null is supplied, it'll get removed.
      */
-    public void updateMarker(Vector vec, int bits, Vector origin, Box updateBox) {
-        if (updateBox == null) {
+    public void updateMarker(Vector vec, int bits, Vector origin, Shape3D shape) {
+        if (shape == null) {
             getRenderManager().addMissingDisplayList(GENERIC_POS_LIST);
             getRenderManager().clearDisplayList(GENERIC_POS_LIST);
         }
@@ -982,9 +1076,9 @@ public class MOFController extends EditorController<MOFHolder> {
                 baseZ += origin.getFloatZ();
             }
 
-            if (updateBox != null) {
-                if (updateBox.getTransforms() != null)
-                    for (Transform transform : updateBox.getTransforms()) {
+            if (shape != null) {
+                if (shape.getTransforms() != null)
+                    for (Transform transform : shape.getTransforms()) {
                         if (!(transform instanceof Translate))
                             continue;
 

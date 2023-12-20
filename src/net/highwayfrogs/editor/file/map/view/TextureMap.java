@@ -19,6 +19,8 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
 import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -42,7 +44,7 @@ import java.util.*;
  * Created by Kneesnap on 11/28/2018.
  */
 @Getter
-public class TextureMap {
+public class TextureMap extends SCSharedGameObject {
     private final VLOArchive vloArchive;
     private final List<Short> remapList;
     private PhongMaterial material;
@@ -56,7 +58,8 @@ public class TextureMap {
 
     // The largest VLO is the SWP VLO, on the PS1. The texture map with the most used space is SUB1.
 
-    private TextureMap(VLOArchive vlo, List<Short> remapList, ShadingMode mode, int width, int height) {
+    private TextureMap(SCGameInstance instance, VLOArchive vlo, List<Short> remapList, ShadingMode mode, int width, int height) {
+        super(instance);
         this.vloArchive = vlo;
         this.remapList = remapList;
         this.textureTree = new TextureTree(this);
@@ -70,7 +73,7 @@ public class TextureMap {
      * @return newTextureMap
      */
     public static TextureMap newTextureMap(MOFHolder mofHolder, ShadingMode mode) {
-        TextureMap newMap = new TextureMap(mofHolder.getVloFile(), null, mode, 0, 0);
+        TextureMap newMap = new TextureMap(mofHolder.getGameInstance(), mofHolder.getVloFile(), null, mode, 0, 0);
         newMap.setUseModelTextureAnimation(true);
         newMap.updateModel(mofHolder, mode);
         return newMap;
@@ -81,7 +84,7 @@ public class TextureMap {
      * @return newTextureMap
      */
     public static TextureMap newTextureMap(MAPFile mapFile, ShadingMode mode) {
-        TextureMap newMap = new TextureMap(mapFile.getVlo(), mapFile.getRemapTable(), mode, 1024, 1024);
+        TextureMap newMap = new TextureMap(mapFile.getGameInstance(), mapFile.getVlo(), mapFile.getRemapTable(), mode, 1024, 1024);
         newMap.updateMap(mapFile, mode);
         return newMap;
     }
@@ -210,7 +213,7 @@ public class TextureMap {
             }
         }
 
-        texMap.put(UnknownTextureSource.INSTANCE.makeIdentifier(this), UnknownTextureSource.INSTANCE);
+        texMap.put(UnknownTextureSource.MAGENTA_INSTANCE.makeIdentifier(this), UnknownTextureSource.MAGENTA_INSTANCE);
         texMap.put(MapMesh.CURSOR_COLOR.makeIdentifier(this), MapMesh.CURSOR_COLOR);
         texMap.put(MapMesh.ANIMATION_COLOR.makeIdentifier(this), MapMesh.ANIMATION_COLOR);
         texMap.put(MapMesh.INVISIBLE_COLOR.makeIdentifier(this), MapMesh.INVISIBLE_COLOR);
@@ -251,7 +254,7 @@ public class TextureMap {
             for (MOFPartPolyAnimEntryList entryList : part.getPartPolyAnimLists()) {
                 for (MOFPartPolyAnimEntry entry : entryList.getEntries()) {
                     if (visitedTextures.add((short) entry.getImageId())) {
-                        GameImage image = mof.getMWD().getImageByTextureId(entry.getImageId());
+                        GameImage image = mof.getArchive().getImageByTextureId(entry.getImageId());
                         if (image == null)
                             continue;
 
@@ -263,9 +266,10 @@ public class TextureMap {
             }
         }
 
-        texMap.put(UnknownTextureSource.INSTANCE.makeIdentifier(this), UnknownTextureSource.INSTANCE);
+        texMap.put(UnknownTextureSource.MAGENTA_INSTANCE.makeIdentifier(this), UnknownTextureSource.MAGENTA_INSTANCE);
         texMap.put(MOFController.ANIMATION_COLOR.makeIdentifier(this), MOFController.ANIMATION_COLOR);
         texMap.put(MOFController.CANT_APPLY_COLOR.makeIdentifier(this), MOFController.CANT_APPLY_COLOR);
+        texMap.put(MOFController.HILITE_COLOR.makeIdentifier(this), MOFController.HILITE_COLOR);
         return texMap;
     }
 
@@ -361,9 +365,9 @@ public class TextureMap {
         @Getter
         @AllArgsConstructor
         private static class TextureEntry {
-            private BigInteger id;
-            private TextureSource source;
-            private BufferedImage image;
+            private final BigInteger id;
+            private final TextureSource source;
+            private final BufferedImage image;
         }
 
         private TextureTreeNode insert(GameImage image) {
@@ -519,7 +523,7 @@ public class TextureMap {
          * @param mesh      The mesh to apply this entry to.
          * @param vertCount The amount of vertices to add.
          */
-        public void applyMesh(FrogMesh mesh, int vertCount) {
+        public void applyMesh(FrogMesh<?> mesh, int vertCount) {
             mesh.getTexCoords().addAll(getMinU(), getMinV());
             mesh.getTexCoords().addAll(getMinU(), getMaxV());
             mesh.getTexCoords().addAll(getMaxU(), getMinV());
@@ -591,7 +595,7 @@ public class TextureMap {
         /**
          * Called when a mesh using this TextureSource is setup.
          */
-        default void onMeshSetup(FrogMesh mesh) {
+        default void onMeshSetup(FrogMesh<?> mesh) {
             // Do nothing, by default.
         }
 

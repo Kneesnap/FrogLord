@@ -25,6 +25,8 @@ import net.highwayfrogs.editor.file.map.view.MapMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
@@ -42,7 +44,7 @@ import java.util.List;
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter
-public class MAPController extends EditorController<MAPFile> {
+public class MAPController extends EditorController<MAPFile, FroggerGameInstance, FroggerConfig> {
     @FXML private ListView<Short> remapList;
     @FXML private ImageView previewImage;
     @FXML private ImageView nameImage;
@@ -53,6 +55,10 @@ public class MAPController extends EditorController<MAPFile> {
     @FXML private Button loadFromFFS;
     @FXML private Button saveToFFS;
     @FXML private Button saveToObj;
+
+    public MAPController(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void loadFile(MAPFile mapFile) {
@@ -71,12 +77,12 @@ public class MAPController extends EditorController<MAPFile> {
         previewImage.setImage(null);
         nameImage.setImage(null);
 
-        MAPLevel level = MAPLevel.getByName(mapFile.getFileEntry().getDisplayName());
-        if (level != null && !mapFile.getConfig().getLevelInfoMap().isEmpty()) {
-            LevelInfo info = mapFile.getConfig().getLevelInfoMap().get(level);
+        MAPLevel level = MAPLevel.getByName(mapFile.getFileDisplayName());
+        if (level != null && !mapFile.getGameInstance().getLevelInfoMap().isEmpty()) {
+            LevelInfo info = mapFile.getGameInstance().getLevelInfoMap().get(level);
             if (info != null) {
-                previewImage.setImage(mapFile.getConfig().getImageFromPointer(info.getLevelTexturePointer()).toFXImage());
-                nameImage.setImage(mapFile.getConfig().getImageFromPointer(info.getLevelNameTexturePointer()).toFXImage());
+                previewImage.setImage(mapFile.getGameInstance().getImageFromPointer(info.getLevelTexturePointer()).toFXImage());
+                nameImage.setImage(mapFile.getGameInstance().getImageFromPointer(info.getLevelNameTexturePointer()).toFXImage());
             }
         }
 
@@ -85,7 +91,7 @@ public class MAPController extends EditorController<MAPFile> {
         this.remapList.setCellFactory(param -> new AttachmentListCell<>(num -> "#" + num, num -> {
             GameImage temp = getFile().getVlo() != null ? getFile().getVlo().getImageByTextureId(num, false) : null;
             if (temp == null)
-                temp = getFile().getMWD().getImageByTextureId(num);
+                temp = getFile().getArchive().getImageByTextureId(num);
 
             return temp != null ? temp.toFXImage(MWDFile.VLO_ICON_SETTING) : null;
         }));
@@ -96,7 +102,7 @@ public class MAPController extends EditorController<MAPFile> {
 
             GameImage temp = getFile().getVlo() != null ? getFile().getVlo().getImageByTextureId(newValue, false) : null;
             if (temp == null)
-                temp = getFile().getMWD().getImageByTextureId(newValue);
+                temp = getFile().getArchive().getImageByTextureId(newValue);
             if (temp != null)
                 this.remapImage.setImage(temp.toFXImage(MWDFile.VLO_ICON_SETTING));
         });
@@ -105,7 +111,7 @@ public class MAPController extends EditorController<MAPFile> {
         saveTextureButton.setOnAction(evt -> {
             try {
                 for (ShadingMode mode : ShadingMode.values()) {
-                    File file = new File(GUIMain.getWorkingDirectory(), getFile().getFileEntry().getDisplayName() + "-" + mode + ".png");
+                    File file = new File(GUIMain.getWorkingDirectory(), getFile().getFileDisplayName() + "-" + mode + ".png");
                     ImageIO.write(TextureMap.newTextureMap(getFile(), mode).getTextureTree().getImage(), "png", file);
                     System.out.println("Saved " + file.getName());
                 }

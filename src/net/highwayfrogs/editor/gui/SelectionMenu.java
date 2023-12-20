@@ -14,10 +14,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import lombok.AllArgsConstructor;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
@@ -42,11 +42,11 @@ public class SelectionMenu {
 
     /**
      * Allow selecting a theme.
-     * @param config    The config to use.
-     * @param handler   The handler to
+     * @param instance  The game instance to load.
+     * @param handler   The handler to fire to handle selecting the theme.
      * @param allowNull Allow selecting null theme.
      */
-    public static void promptThemeSelection(FroggerEXEInfo config, Consumer<MAPTheme> handler, boolean allowNull) {
+    public static void promptThemeSelection(FroggerGameInstance instance, Consumer<MAPTheme> handler, boolean allowNull) {
         List<MAPTheme> themes = new ArrayList<>(MAPTheme.values().length + (allowNull ? 1 : 0));
         if (allowNull)
             themes.add(null);
@@ -56,18 +56,16 @@ public class SelectionMenu {
             if (theme == null)
                 return null;
 
-            for (LevelInfo levelInfo : config.getArcadeLevelInfo()) {
+            for (LevelInfo levelInfo : instance.getArcadeLevelInfo()) {
                 if (levelInfo.getTheme() != theme)
                     continue;
 
-                GameImage image = config.getImageFromPointer(levelInfo.getWorldImageSelectablePointer());
+                GameImage image = instance.getImageFromPointer(levelInfo.getWorldImageSelectablePointer());
                 return image != null ? image.toFXImage() : null; // There are many reasons why we might not find the image, including there might not be one, or this is the PS1 version which has these images in wads.
             }
 
             return null;
         });
-
-
     }
 
     public static class SelectionController<T> implements Initializable {
@@ -75,12 +73,12 @@ public class SelectionMenu {
         @FXML private ListView<T> optionList;
         @FXML private Button accept;
 
-        private String prompt;
-        private Consumer<T> handler;
-        private Stage stage;
-        private Collection<T> values;
-        private Function<T, String> nameFunction;
-        private Function<T, Image> imageFunction;
+        private final String prompt;
+        private final Consumer<T> handler;
+        private final Stage stage;
+        private final Collection<T> values;
+        private final Function<T, String> nameFunction;
+        private final Function<T, Image> imageFunction;
 
         public SelectionController(Stage stage, String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction) {
             this.values = values;
@@ -115,8 +113,8 @@ public class SelectionMenu {
 
     @AllArgsConstructor
     public static class AttachmentListCell<T> extends ListCell<T> {
-        private Function<T, String> nameFunction;
-        private Function<T, Image> imageFunction;
+        private final Function<T, String> nameFunction;
+        private final Function<T, Image> imageFunction;
 
         @Override
         public void updateItem(T selection, boolean empty) {

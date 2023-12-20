@@ -5,13 +5,15 @@ import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.DummyFile;
-import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.editor.SkyLandController;
 
 import java.awt.*;
@@ -25,10 +27,19 @@ import java.util.List;
  * Created by Kneesnap on 2/15/2019.
  */
 @Getter
-public class SkyLand extends GameFile {
+public class SkyLand extends SCGameFile<FroggerGameInstance> {
     private int xLength;
     private int yLength;
     private final List<SkyLandTile> skyData = new ArrayList<>();
+
+    public SkyLand(FroggerGameInstance instance) {
+        super(instance);
+    }
+
+    @Override
+    public FroggerConfig getConfig() {
+        return (FroggerConfig) super.getConfig();
+    }
 
     @Override
     public Image getIcon() {
@@ -37,7 +48,7 @@ public class SkyLand extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new SkyLandController(), "skyland", this);
+        return loadEditor(new SkyLandController(getGameInstance()), "skyland", this);
     }
 
     @Override
@@ -72,16 +83,13 @@ public class SkyLand extends GameFile {
      * Gets the ids of textures used by sky land.
      */
     public short[] getSkyLandTextures() {
-        int address = getConfig().getSkyLandTextureAddress();
-        if (address <= 0)
+        if (getGameInstance().getSkyLandTextureRemap().getTextureIds().isEmpty())
             return null; // None, configuration was not set.
 
-        DataReader reader = getConfig().getReader();
-        reader.setIndex(address);
-
-        short[] result = new short[getMaxIndex() + 1];
+        // Convert from a list to an array.
+        short[] result = new short[getGameInstance().getSkyLandTextureRemap().getTextureIds().size()];
         for (int i = 0; i < result.length; i++)
-            result[i] = reader.readShort();
+            result[i] = getGameInstance().getSkyLandTextureRemap().getTextureIds().get(i);
         return result;
     }
 
@@ -98,7 +106,7 @@ public class SkyLand extends GameFile {
         BufferedImage[][] images = new BufferedImage[textures.length][];
         ImageFilterSettings settings = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true).setAllowTransparency(false);
         for (int i = 0; i < textures.length; i++) {
-            GameImage image = getMWD().getImageByTextureId(textures[i]);
+            GameImage image = getArchive().getImageByTextureId(textures[i]);
             if (image == null)
                 throw new RuntimeException("Failed to get image by texture id " + textures[i] + ".");
             BufferedImage base = image.toBufferedImage(settings);

@@ -23,7 +23,8 @@ import net.highwayfrogs.editor.file.config.script.ScriptCommand;
 import net.highwayfrogs.editor.file.config.script.ScriptCommandType;
 import net.highwayfrogs.editor.file.config.script.format.BankFormatter;
 import net.highwayfrogs.editor.file.config.script.format.ScriptFormatter;
-import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.games.sony.SCGameObject;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -34,7 +35,7 @@ import java.util.ResourceBundle;
  * Manages the script editor.
  * Created by Kneesnap on 8/1/2019.
  */
-public class ScriptEditorController implements Initializable {
+public class ScriptEditorController extends SCGameObject<FroggerGameInstance> implements Initializable {
     @FXML private ChoiceBox<FroggerScript> scriptSelector;
     @FXML private VBox commandEditors;
     @FXML private TextFlow codeArea;
@@ -49,13 +50,14 @@ public class ScriptEditorController implements Initializable {
     private static final Font DISPLAY_FONT = Font.font("Consolas");
     private static final String COMMAND_TYPE_STYLE = "-fx-fill: #4F8A10;-fx-font-weight:bold;";
 
-    public ScriptEditorController(Stage stage) {
+    public ScriptEditorController(FroggerGameInstance instance, Stage stage) {
+        super(instance);
         this.stage = stage;
         this.baseHeight = 100;
     }
 
-    public ScriptEditorController(Stage stage, FroggerScript openScript) {
-        this(stage);
+    public ScriptEditorController(FroggerGameInstance instance, Stage stage, FroggerScript openScript) {
+        this(instance, stage);
         this.openScript = openScript;
     }
 
@@ -63,7 +65,7 @@ public class ScriptEditorController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         // Setup Selector.
         scriptSelector.setConverter(new AbstractStringConverter<>(FroggerScript::getName));
-        scriptSelector.setItems(FXCollections.observableArrayList(GUIMain.EXE_CONFIG.getScripts()));
+        scriptSelector.setItems(FXCollections.observableArrayList(getGameInstance().getScripts()));
         scriptSelector.valueProperty().addListener(((observable, oldValue, newValue) -> updateCodeDisplay()));
         if (this.openScript != null) {
             scriptSelector.setValue(this.openScript);
@@ -83,7 +85,7 @@ public class ScriptEditorController implements Initializable {
 
     private String getUsagesOfScriptDescription() {
         FroggerScript script = this.scriptSelector.getValue();
-        int id = GUIMain.EXE_CONFIG.getScripts().indexOf(script);
+        int id = getGameInstance().getScripts().indexOf(script);
         if (id <= 0) // The first script is SCRIPT_NONE.
             return "";
 
@@ -91,7 +93,7 @@ public class ScriptEditorController implements Initializable {
 
         // Find usages in form library.
         boolean foundAny = false;
-        for (FormEntry entry : GUIMain.EXE_CONFIG.getFullFormBook()) {
+        for (FormEntry entry : getGameInstance().getFullFormBook()) {
             if (entry.getScriptId() != id)
                 continue;
 
@@ -108,7 +110,7 @@ public class ScriptEditorController implements Initializable {
 
         // Find usages in other scripts.
         foundAny = false;
-        for (FroggerScript otherScript : GUIMain.EXE_CONFIG.getScripts()) {
+        for (FroggerScript otherScript : getGameInstance().getScripts()) {
             for (ScriptCommand command : otherScript.getCommands()) {
                 for (int i = 0; i < command.getCommandType().getFormatters().length; i++) {
                     ScriptFormatter formatter = command.getCommandType().getFormatters()[i];
@@ -171,7 +173,7 @@ public class ScriptEditorController implements Initializable {
                         updateCodeDisplay();
                     }));
                 } else {
-                    node = command.getCommandType().getFormatters()[i - 1].makeEditor(this, command, i - 1);
+                    node = command.getCommandType().getFormatters()[i - 1].makeEditor(getGameInstance(), this, command, i - 1);
                 }
 
                 pane.addColumn(i, node);
@@ -192,7 +194,7 @@ public class ScriptEditorController implements Initializable {
             for (int i = 0; i < command.getArguments().length; i++) {
                 codeArea.getChildren().add(new Text(" "));
                 ScriptFormatter formatter = command.getCommandType().getFormatters()[i];
-                Text toAdd = new Text(formatter.numberToString(command.getArguments()[i]));
+                Text toAdd = new Text(formatter.numberToString(getGameInstance(), command.getArguments()[i]));
                 toAdd.setStyle(formatter.getTextStyle());
                 toAdd.setFont(DISPLAY_FONT);
                 codeArea.getChildren().add(toAdd);
@@ -218,14 +220,14 @@ public class ScriptEditorController implements Initializable {
     /**
      * Opens the Script Editor.
      */
-    public static void openEditor() {
-        Utils.loadFXMLTemplate("script", "Script Editor", ScriptEditorController::new);
+    public static void openEditor(FroggerGameInstance instance) {
+        Utils.loadFXMLTemplate(instance, "script", "Script Editor", ScriptEditorController::new);
     }
 
     /**
      * Opens the Script Editor and view a given script.
      */
-    public static void openEditor(FroggerScript script) {
-        Utils.loadFXMLTemplate("script", "Script Editor", stage -> new ScriptEditorController(stage, script));
+    public static void openEditor(FroggerGameInstance instance, FroggerScript script) {
+        Utils.loadFXMLTemplate(instance, "script", "Script Editor", (safeInstance, stage) -> new ScriptEditorController(safeInstance, stage, script));
     }
 }

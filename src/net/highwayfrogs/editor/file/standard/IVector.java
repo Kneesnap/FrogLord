@@ -39,7 +39,7 @@ public class IVector extends GameObject implements Vector {
      */
     public void loadWithPadding(DataReader reader) {
         this.load(reader);
-        reader.skipInt();
+        reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE);
     }
 
     @Override

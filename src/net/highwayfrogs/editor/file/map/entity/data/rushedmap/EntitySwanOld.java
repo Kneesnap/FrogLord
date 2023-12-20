@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.data.PathData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
@@ -16,6 +17,10 @@ public class EntitySwanOld extends PathData {
     private short swimmingTime;
     private short flapThinkTime;
     private short flappingTime;
+
+    public EntitySwanOld(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

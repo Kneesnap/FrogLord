@@ -3,21 +3,21 @@ package net.highwayfrogs.editor.file.sound;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.VHFile.AudioHeader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 
 /**
  * Represents a VB file with PC VH headers.
  * Created by Kneesnap on 2/13/2019.
  */
-public abstract class PCVBFile extends AbstractVBFile<VHFile> {
-    @Override
-    public void load(DataReader reader) {
-        if (getHeader() == null) {
-            this.cachedReader = reader;
-            return;
-        }
+public abstract class PCVBFile extends VBAudioBody<VHFile> {
+    public PCVBFile(SCGameInstance instance) {
+        super(instance);
+    }
 
-        for (int id = 0; id < getHeader().getEntries().size(); id++) {
-            AudioHeader vhEntry = getHeader().getEntries().get(id);
+    @Override
+    public void load(DataReader reader, VHFile header) {
+        for (int id = 0; id < header.getEntries().size(); id++) {
+            AudioHeader vhEntry = header.getEntries().get(id);
             if (!vhEntry.isAudioPresent()) { // If we don't have the audio for this entry...
                 if (getAudioEntries().isEmpty()) {
                     continue; // and we haven't loaded any entries yet, keep going.

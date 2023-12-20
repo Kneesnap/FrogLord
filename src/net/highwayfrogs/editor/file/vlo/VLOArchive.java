@@ -6,13 +6,13 @@ import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.SelectionMenu;
@@ -36,23 +36,25 @@ import java.util.function.Consumer;
  * Created by Kneesnap on 8/17/2018.
  */
 @Getter
-public class VLOArchive extends GameFile {
-    private List<GameImage> images = new ArrayList<>();
-    private List<ClutEntry> clutEntries = new ArrayList<>();
+public class VLOArchive extends SCSharedGameFile {
+    private final List<GameImage> images = new ArrayList<>();
+    private final List<ClutEntry> clutEntries = new ArrayList<>();
     private boolean psxMode;
 
-    private static final String PC_SIGNATURE = "2GRP";
-    private static final String PSX_SIGNATURE = "2GRV";
+    public static final String PC_SIGNATURE = "2GRP";
+    public static final String PSX_SIGNATURE = "2GRV";
     private static final int SIGNATURE_LENGTH = 4;
 
     private static final int IMAGE_INFO_BYTES = 24;
     private static final int HEADER_SIZE = SIGNATURE_LENGTH + (2 * Constants.INTEGER_SIZE);
     private static final int PSX_HEADER_SIZE = HEADER_SIZE + (2 * Constants.INTEGER_SIZE);
-    public static final int TYPE_ID = 1;
-    public static final int WAD_TYPE = 0;
     public static final Image ICON = loadIcon("image");
     public static final ImageFilterSettings ICON_EXPORT = new ImageFilterSettings(ImageState.EXPORT);
     public static final ImageFilterSettings VRAM_EXPORT_NO_SCRUNCH = new ImageFilterSettings(ImageState.EXPORT);
+
+    public VLOArchive(SCGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -138,7 +140,7 @@ public class VLOArchive extends GameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new VLOController(), "vlo", this);
+        return loadEditor(new VLOController(getGameInstance()), "vlo", this);
     }
 
     @Override
@@ -163,10 +165,10 @@ public class VLOArchive extends GameFile {
     }
 
     @Override
-    public List<Tuple2<String, String>> showWadProperties(WADFile wadFile, WADEntry wadEntry) {
-        List<Tuple2<String, String>> list = new ArrayList<>();
-        list.add(new Tuple2<>("Images", String.valueOf(getImages().size())));
-        list.add(new Tuple2<>("PS1 VLO", String.valueOf(isPsxMode())));
+    public List<Tuple2<String, Object>> createPropertyList() {
+        List<Tuple2<String, Object>> list = super.createPropertyList();
+        list.add(new Tuple2<>("Images", getImages().size()));
+        list.add(new Tuple2<>("PS1 VLO", isPsxMode()));
         return list;
     }
 
@@ -186,7 +188,7 @@ public class VLOArchive extends GameFile {
      * @return gameImage
      */
     public GameImage getImageByTextureId(int textureId) {
-        return getImageByTextureId(textureId, true);
+        return getImageByTextureId(textureId, false);
     }
 
     /**
@@ -210,7 +212,7 @@ public class VLOArchive extends GameFile {
      */
     public GameImage getGlobalTexture(int textureId) {
         GameImage foundImage = getImageByTextureId(textureId, false);
-        return foundImage != null ? foundImage : getMWD().getImageByTextureId(textureId);
+        return foundImage != null ? foundImage : getArchive().getImageByTextureId(textureId);
     }
 
     /**

@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
@@ -16,6 +17,10 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 public class EntityBabyFrog extends MatrixData {
     private short logId; // The id of the log this frog will stand on.
     private short awardedPoints; // The points awarded when collected.
+
+    public EntityBabyFrog(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

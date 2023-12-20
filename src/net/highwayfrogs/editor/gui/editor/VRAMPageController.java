@@ -49,18 +49,18 @@ public class VRAMPageController implements Initializable {
     // Editor data.
     private BufferedImage fullImage;
     private BufferedImage[] splitImages;
-    private HashSet<Short> changedPages = new HashSet<>(); // A set of pages which need updating.
-    private ImageView[] splitImageViews = new ImageView[GameImage.TOTAL_PAGES]; // A set of pages which need updating.
-    private HBox[] splitHBoxes = new HBox[splitImageViews.length];
+    private final HashSet<Short> changedPages = new HashSet<>(); // A set of pages which need updating.
+    private final ImageView[] splitImageViews = new ImageView[GameImage.TOTAL_PAGES]; // A set of pages which need updating.
+    private final HBox[] splitHBoxes = new HBox[splitImageViews.length];
     private boolean[][] overlapGrid; // Used to test if textures overlap.
     private int selectedPage;
 
     // Configuration:
-    private Stage stage;
-    private VLOArchive vloArchive;
-    private VLOController controller;
+    private final Stage stage;
+    private final VLOArchive vloArchive;
+    private final VLOController controller;
     private GameImage selectedImage;
-    private Map<GameImage, Tuple2<Short, Short>> originalState = new HashMap<>();
+    private final Map<GameImage, Tuple2<Short, Short>> originalState = new HashMap<>();
 
     public VRAMPageController(Stage stage, VLOController controller) {
         this.stage = stage;
@@ -307,6 +307,7 @@ public class VRAMPageController implements Initializable {
         boolean multiPageTest = false;
         for (GameImage image : vloArchive.getImages()) {
             if (image.getMultiplierPage() != image.getEndPage()) {
+                // TODO: It seems this may not actually cause issues. Perhaps it's a problem if it goes between 3+ pages? Not sure.
                 warning.append("WARNING: Texture exceeds size of page ").append(image.getMultiplierPage()).append(".").append(Constants.NEWLINE);
                 multiPageTest = true;
                 break;

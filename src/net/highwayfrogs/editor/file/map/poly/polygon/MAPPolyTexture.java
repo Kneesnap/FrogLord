@@ -316,15 +316,15 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
         short globalTextureId = map.getRemap(getTextureId());
         GameImage image = map.getVloArchive() != null ? map.getVloArchive().getImageByTextureId(globalTextureId, false) : null;
         if (image == null) { // This is probably not going to give a useful texture generally. It was added for build 20 compatibility.
-            image = getConfig().getMWD().getImageByTextureId(globalTextureId);
+            image = map.getArchive().getImageByTextureId(globalTextureId);
             for (int i = 0; i < 100 && image == null; i++) {
-                image = getConfig().getMWD().getImageByTextureId(globalTextureId + i);
+                image = map.getArchive().getImageByTextureId(globalTextureId + i);
                 if (image == null && i > 0)
-                    image = getConfig().getMWD().getImageByTextureId(globalTextureId - i);
+                    image = map.getArchive().getImageByTextureId(globalTextureId - i);
             }
 
             if (image == null)
-                return getConfig().getMWD().getAllFiles(VLOArchive.class).get(0).getImages().get(0);
+                return map.getArchive().getAllFiles(VLOArchive.class).get(0).getImages().get(0);
         }
         if (image == null) // New froglord = we want to just use a "unknown texture" placeholder.
             throw new RuntimeException("Could not find a texture with the id: " + getTextureId() + "/" + globalTextureId + ".");

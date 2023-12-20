@@ -6,7 +6,6 @@ import javafx.scene.paint.Color;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameFile;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.FroggerMapConfig;
@@ -39,6 +38,10 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.editor.MAPController;
 import net.highwayfrogs.editor.utils.Utils;
@@ -48,6 +51,7 @@ import java.util.Map.Entry;
 
 /**
  * Parses Frogger MAP files.
+ * TODO: Let's try to export vertex colors from Frogger. I think MeshLab can render them.
  * TODO: When we port this to new FrogLord,
  *  - Each part should be broken off into a separate class, one interface for loading / saving, and one for holding the data.
  *  - The loading / saving part should be able to perform diagnostics. Eg: Allow previewing byte data in some kind of debug viewer.
@@ -63,7 +67,7 @@ import java.util.Map.Entry;
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
-public class MAPFile extends GameFile {
+public class MAPFile extends SCGameFile<FroggerGameInstance> {
     @Setter private short startXTile;
     @Setter private short startZTile;
     @Setter private StartRotation startRotation;
@@ -102,8 +106,7 @@ public class MAPFile extends GameFile {
     private final transient Map<Integer, MAPPrimitive> savePointerPolygonMap = new HashMap<>();
     private transient FroggerMapConfig cachedMapConfig;
 
-    public static final int TYPE_ID = 0;
-    private static final String SIGNATURE = "FROG";
+    public static final String SIGNATURE = "FROG";
     private static final String VERSION = "2.00";
     private static final String COMMENT = "Maybe this time it'll all work fine...";
     private static final int COMMENT_BYTES = 64;
@@ -144,6 +147,15 @@ public class MAPFile extends GameFile {
     static {
         PRIMITIVE_TYPES.addAll(POLYGON_TYPES);
         PRIMITIVE_TYPES.add(MAPLineType.G2);
+    }
+
+    public MAPFile(FroggerGameInstance instance) {
+        super(instance);
+    }
+
+    @Override
+    public FroggerConfig getConfig() {
+        return (FroggerConfig) super.getConfig();
     }
 
     /**
@@ -349,7 +361,7 @@ public class MAPFile extends GameFile {
                 entities.add(entity);
                 lastEntity = entity;
             } catch (Throwable th) {
-                System.out.println("Failed to load an entity which was part of " + getFileEntry().getDisplayName());
+                System.out.println("Failed to load an entity which was part of " + getFileDisplayName());
                 th.printStackTrace();
                 lastEntity = null;
             }
@@ -498,7 +510,7 @@ public class MAPFile extends GameFile {
             }
         }
 
-        ThemeBook themeBook = getConfig().getThemeBook(getTheme());
+        ThemeBook themeBook = getGameInstance().getThemeBook(getTheme());
         if (themeBook != null)
             this.vlo = themeBook.getVLO(this);
     }
@@ -781,26 +793,26 @@ public class MAPFile extends GameFile {
 
     @Override
     public Image getIcon() {
-        MAPLevel level = MAPLevel.getByName(getFileEntry().getDisplayName());
+        MAPLevel level = MAPLevel.getByName(getFileDisplayName());
 
         if (level != null) {
-            getConfig().getLevelImageMap().computeIfAbsent(level, key -> {
-                if (getConfig().getLevelInfoMap().isEmpty())
+            getGameInstance().getLevelImageMap().computeIfAbsent(level, key -> {
+                if (getGameInstance().getLevelInfoMap().isEmpty())
                     return null;
 
-                LevelInfo info = getConfig().getLevelInfoMap().get(key);
+                LevelInfo info = getGameInstance().getLevelInfoMap().get(key);
                 if (info != null)
-                    return Utils.toFXImage(Utils.resizeImage(getConfig().getImageFromPointer(info.getLevelTexturePointer()).toBufferedImage(), 35, 35), false);
+                    return Utils.toFXImage(Utils.resizeImage(getGameInstance().getImageFromPointer(info.getLevelTexturePointer()).toBufferedImage(), 35, 35), false);
                 return null;
             });
         }
 
-        return getConfig().getLevelImageMap().getOrDefault(level, ICON);
+        return getGameInstance().getLevelImageMap().getOrDefault(level, ICON);
     }
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new MAPController(), "map", this);
+        return loadEditor(new MAPController(getGameInstance()), "map", this);
     }
 
     @Override
@@ -818,7 +830,7 @@ public class MAPFile extends GameFile {
 
             FormEntry formEntry = lastEntity.getFormEntry();
             if (!getMapConfig().isIslandPlaceholder()) // No need to print these errors on island placeholders.
-                System.out.println("[INVALID/" + getFileEntry().getDisplayName() + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + "/" + lastEntity.getFormGridId() + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + (formEntry != null ? ", " + formEntry.getFormName() + ", " + formEntry.getEntityName() : ", " + lastEntity.getTypeName()));
+                System.out.println("[INVALID/" + getFileDisplayName() + "] Entity " + getEntities().indexOf(lastEntity) + "/" + Integer.toHexString(lastEntity.getLoadScriptDataPointer()) + "/" + lastEntity.getFormGridId() + " REAL: " + realSize + ", READ: " + lastEntity.getLoadReadLength() + (formEntry != null ? ", " + formEntry.getFormName() + ", " + formEntry.getEntityName() : ", " + lastEntity.getTypeName()));
 
             // Restore reader.
             if (realSize < 1024 && realSize >= 0) {
@@ -1036,7 +1048,7 @@ public class MAPFile extends GameFile {
      * @return isMultiplayer
      */
     public boolean isMultiplayer() {
-        return getFileEntry().getDisplayName().startsWith(getTheme().getInternalName() + "M");
+        return getFileDisplayName().startsWith(getTheme().getInternalName() + "M");
     }
 
     /**
@@ -1045,21 +1057,25 @@ public class MAPFile extends GameFile {
      * @return isLowPolyMode
      */
     public boolean isLowPolyMode() {
-        return getFileEntry().getDisplayName().contains("_WIN95");
+        return getFileDisplayName().contains("_WIN95");
     }
 
     /**
      * This method fixes this MAP (If it is ISLAND.MAP) so it will load properly.
+     * TODO: TOSS
      */
     public void fixAsIslandMap() {
-        List<Integer> remap = getConfig().isPC() ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP;
+        List<Short> newRemap = new ArrayList<>();
+
         if (getConfig().getIslandRemap() != null && getConfig().getIslandRemap().size() > 0) {
-            remap = new ArrayList<>();
-            for (Short value : getConfig().getIslandRemap()) // Read island remap.
-                remap.add((int) (short) value);
+            newRemap.addAll(getConfig().getIslandRemap()); // Read island remap.
+        } else {
+            List<Integer> copyRemap = getGameInstance().isPC() ? Constants.PC_ISLAND_REMAP : Constants.PSX_ISLAND_REMAP;
+            for (Integer value : copyRemap) // Read island remap.
+                newRemap.add((short) (int) value);
         }
 
-        getConfig().changeRemap(getFileEntry(), remap);
+        //getGameInstance().setRemap(getIndexEntry(), newRemap);
     }
 
     /**
@@ -1171,7 +1187,7 @@ public class MAPFile extends GameFile {
         setGroupXCount((short) (1 + (xTileCount / (getGroupXSize() / getGridXSize()))));
         setGroupZCount((short) (1 + (zTileCount / (getGroupZSize() / getGridZSize()))));
 
-        System.out.println("Scrambled " + getFileEntry().getDisplayName());
+        System.out.println("Scrambled " + getFileDisplayName());
     }
 
     /**
@@ -1179,10 +1195,11 @@ public class MAPFile extends GameFile {
      * @return remapTable
      */
     public List<Short> getRemapTable() {
-        if (getConfig().getIslandRemap().size() > 0 && getFileEntry().getDisplayName().contains("ISLAND.MAP"))
+        if (getConfig().getIslandRemap().size() > 0 && getFileDisplayName().contains("ISLAND.MAP"))
             return getConfig().getIslandRemap();
 
-        return getConfig().getRemapTable(getFileEntry());
+        LinkedTextureRemap<?> textureRemap = getGameInstance().getLinkedTextureRemap(getIndexEntry());
+        return textureRemap != null ? textureRemap.getTextureIds() : null;
     }
 
     /**
@@ -1202,7 +1219,7 @@ public class MAPFile extends GameFile {
         if (this.cachedMapConfig != null)
             return this.cachedMapConfig;
 
-        FroggerMapConfig mapConfig = getConfig().getMapConfigs().get(getFileEntry().getDisplayName());
+        FroggerMapConfig mapConfig = getConfig().getMapConfigs().get(getFileDisplayName());
         return this.cachedMapConfig = mapConfig != null ? mapConfig : getConfig().getDefaultMapConfig();
     }
 

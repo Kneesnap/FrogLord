@@ -22,7 +22,7 @@ public class MAPPolyGT extends MAPPolyTexture {
     }
 
     @Override
-    public void onMeshSetup(FrogMesh mesh) {
+    public void onMeshSetup(FrogMesh<?> mesh) {
         TextureMap map = mesh.getTextureMap();
         if (mesh instanceof MapMesh && isOverlay(map))
             ((MapMesh) mesh).renderOverPolygon(this, getTreeNode(mesh.getTextureMap()));

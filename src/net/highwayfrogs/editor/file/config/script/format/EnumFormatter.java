@@ -6,6 +6,7 @@ import javafx.scene.control.ComboBox;
 import net.highwayfrogs.editor.file.config.script.ScriptCommand;
 import net.highwayfrogs.editor.file.config.script.ScriptParseException;
 import net.highwayfrogs.editor.file.config.script.constants.*;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.editor.ScriptEditorController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -15,7 +16,7 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 8/1/2019.
  */
 public class EnumFormatter<E extends Enum<E>> extends ScriptFormatter {
-    private E[] enumContents;
+    private final E[] enumContents;
 
     public static final EnumFormatter<ScriptConstantRegister> FORMAT_REGISTER_IDS = new EnumFormatter<>(ScriptConstantRegister.values());
     public static final EnumFormatter<ScriptConstantRegisterToggle> FORMAT_REGISTER_TOGGLE = new EnumFormatter<>(ScriptConstantRegisterToggle.values());
@@ -31,14 +32,14 @@ public class EnumFormatter<E extends Enum<E>> extends ScriptFormatter {
     }
 
     @Override
-    public String numberToString(int number) {
-        return (number >= 0 && number < enumContents.length) ? enumContents[number].name() : super.numberToString(number);
+    public String numberToString(FroggerGameInstance instance, int number) {
+        return (number >= 0 && number < enumContents.length) ? enumContents[number].name() : super.numberToString(instance, number);
     }
 
     @Override
-    public int stringToNumber(String str) {
+    public int stringToNumber(FroggerGameInstance instance, String str) {
         if (Utils.isInteger(str))
-            return super.stringToNumber(str);
+            return super.stringToNumber(instance, str);
 
         for (E value : enumContents)
             if (value.name().equalsIgnoreCase(str))
@@ -46,16 +47,11 @@ public class EnumFormatter<E extends Enum<E>> extends ScriptFormatter {
         throw new ScriptParseException("Unknown value '" + str + "'.");
     }
 
-    /**
-     * Creates an editor node for this formatter.
-     * @param command The command.
-     * @param index   The argument index.
-     * @return editorNode
-     */
-    public Node makeEditor(ScriptEditorController controller, ScriptCommand command, int index) {
+    @Override
+    public Node makeEditor(FroggerGameInstance instance, ScriptEditorController controller, ScriptCommand command, int index) {
         int value = command.getArguments()[index];
         if (value < 0 || value >= enumContents.length)
-            return super.makeEditor(controller, command, index);
+            return super.makeEditor(instance, controller, command, index);
 
         ComboBox<E> comboBox = new ComboBox<>();
         comboBox.setConverter(new AbstractStringConverter<>(E::name));

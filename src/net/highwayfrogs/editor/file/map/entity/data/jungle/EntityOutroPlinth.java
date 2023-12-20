@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
@@ -15,6 +16,10 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Setter
 public class EntityOutroPlinth extends MatrixData {
     private int id;
+
+    public EntityOutroPlinth(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

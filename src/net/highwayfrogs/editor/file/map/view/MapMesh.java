@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 public class MapMesh extends FrogMesh<MAPPolygon> {
-    private MAPFile map;
+    private final MAPFile map;
 
     public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.ORANGE, Color.BLACK);
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(Color.YELLOW, Color.BLACK);

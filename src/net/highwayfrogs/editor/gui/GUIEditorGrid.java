@@ -7,11 +7,9 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.RowConstraints;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Box;
+import javafx.scene.shape.Shape3D;
 import javafx.util.StringConverter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,8 +21,10 @@ import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,6 +43,7 @@ public class GUIEditorGrid {
     private final GridPane gridPane;
     private int rowIndex;
 
+    private static final DecimalFormat FORMAT = new DecimalFormat("#.#######");
     private static final Image GRAY_IMAGE_XZ = Utils.makeColorImageNoCache(Color.GRAY, 60, 60);
     private static final Image GRAY_IMAGE_Y = Utils.makeColorImageNoCache(Color.GRAY, 15, 60);
     private static final StringConverter<Double> SLIDER_DEGREE_CONVERTER = new StringConverter<Double>() {
@@ -295,10 +296,12 @@ public class GUIEditorGrid {
                 Utils.comboBoxScrollToValue(box);
         });
 
-        box.valueProperty().addListener((listener, oldVal, newVal) -> {
-            setter.accept(newVal);
-            onChange();
-        });
+        if (setter != null) {
+            box.valueProperty().addListener((listener, oldVal, newVal) -> {
+                setter.accept(newVal);
+                onChange();
+            });
+        }
 
         addRow(25);
         return box;
@@ -349,12 +352,39 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Add a float SVector for editing.
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     */
+    public void addFloatSVector(String text, SVector vector, MeshViewController<?> controller) {
+        addFloatVector(text, vector, null, controller, vector.defaultBits());
+    }
+
+    /**
+     * Add a float Vector for editing.
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     */
+    public void addFloatVector(String text, Vector vector, Runnable update, MeshViewController<?> controller) {
+        addFloatVector(text, vector, update, controller, vector.defaultBits());
+    }
+
+    /**
      * Add a float Vector for editing.
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
     public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller) {
         addFloatVector(text, vector, update, controller, vector.defaultBits());
+    }
+
+    /**
+     * Add a float SVector for editing.
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     */
+    public void addFloatVector(String text, Vector vector, Runnable update, MeshViewController<?> controller, int bits) {
+        addFloatVector(text, vector, update, controller, bits, null, null);
     }
 
     /**
@@ -371,17 +401,17 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller, int bits, Vector origin, Box moveBox) {
-        if (controller != null && moveBox == null) {
+    public void addFloatVector(String text, Vector vector, Runnable update, MeshViewController<?> controller, int bits, Vector origin, Shape3D visualRepresentative) {
+        if (controller != null && visualRepresentative == null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
-                    () -> controller.getGeneralManager().updateMarker(controller.getGeneralManager().getShowPosition() == null || !Objects.equals(vector, controller.getGeneralManager().getShowPosition()) ? vector : null, bits, origin, null));
+                    () -> controller.getMarkerManager().updateMarker(controller.getMarkerManager().getShowPosition() == null || !Objects.equals(vector, controller.getMarkerManager().getShowPosition()) ? vector : null, bits, origin, null));
         } else {
             addBoldLabel(text + ":");
         }
 
         Runnable onPass = () -> {
             if (controller != null)
-                controller.getGeneralManager().updateMarker(vector, bits, origin, moveBox);
+                controller.getMarkerManager().updateMarker(vector, bits, origin, visualRepresentative);
 
             if (update != null)
                 update.run();
@@ -498,8 +528,135 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatVector(String text, Vector vector, Runnable update, MOFController controller, int bits, Vector origin, Box moveBox) {
-        if (controller != null && moveBox == null) {
+    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller, int bits, Vector origin, Shape3D visualRepresentative) {
+        if (controller != null && visualRepresentative == null) {
+            addBoldLabelButton(text + ":", "Toggle Display", 25,
+                    () -> controller.getGeneralManager().updateMarker(controller.getGeneralManager().getShowPosition() == null || !Objects.equals(vector, controller.getGeneralManager().getShowPosition()) ? vector : null, bits, origin, null));
+        } else {
+            addBoldLabel(text + ":");
+        }
+
+        Runnable onPass = () -> {
+            if (controller != null)
+                controller.getGeneralManager().updateMarker(vector, bits, origin, visualRepresentative);
+
+            if (update != null)
+                update.run();
+            onChange();
+        };
+
+        GridPane vecPane = new GridPane();
+        vecPane.addRow(0);
+
+        // Label:
+        VBox labelBox = new VBox();
+        labelBox.getChildren().add(new Label("X:"));
+        labelBox.getChildren().add(new Label("Y:"));
+        labelBox.getChildren().add(new Label("Z:"));
+        labelBox.setSpacing(10);
+        vecPane.addColumn(0, labelBox);
+
+        // XYZ:
+        VBox posBox = new VBox();
+        TextField xField = new TextField(String.valueOf(vector.getFloatX(bits)));
+        TextField yField = new TextField(String.valueOf(vector.getFloatY(bits)));
+        TextField zField = new TextField(String.valueOf(vector.getFloatZ(bits)));
+        xField.setPrefWidth(60);
+        yField.setPrefWidth(60);
+        zField.setPrefWidth(60);
+        Utils.setHandleKeyPress(xField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            vector.setFloatX(Float.parseFloat(str), bits);
+            return true;
+        }, onPass);
+        Utils.setHandleKeyPress(yField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            vector.setFloatY(Float.parseFloat(str), bits);
+            return true;
+        }, onPass);
+        Utils.setHandleKeyPress(zField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            vector.setFloatZ(Float.parseFloat(str), bits);
+            return true;
+        }, onPass);
+
+        posBox.getChildren().add(xField);
+        posBox.getChildren().add(yField);
+        posBox.getChildren().add(zField);
+        posBox.setSpacing(2);
+        vecPane.addColumn(1, posBox);
+
+        // XZ Move.
+        ImageView xzView = new ImageView(GRAY_IMAGE_XZ);
+        vecPane.addColumn(2, xzView);
+
+        DragPos[] xzLastDrag = new DragPos[1];
+        xzView.setOnMouseClicked(evt -> xzLastDrag[0] = new DragPos(evt.getX(), evt.getY()));
+        xzView.setOnMouseDragged(evt -> {
+            DragPos lastDrag = xzLastDrag[0];
+            if (lastDrag == null) { // Set it up if it's not present.
+                xzLastDrag[0] = new DragPos(evt.getX(), evt.getY());
+                return;
+            }
+
+            double xDiff = -(lastDrag.getX() - evt.getX()) / 10;
+            double zDiff = (lastDrag.getY() - evt.getY()) / 10;
+            double angle = controller != null ? -Math.toRadians(controller.getCameraFPS().getCamYawProperty().doubleValue()) : Math.PI / 2;
+
+            vector.setFloatX((float) (vector.getFloatX(bits) + (xDiff * Math.cos(angle)) - (zDiff * Math.sin(angle))), bits);
+            vector.setFloatZ((float) (vector.getFloatZ(bits) + (xDiff * Math.sin(angle)) + (zDiff * Math.cos(angle))), bits);
+            xField.setText(String.valueOf(vector.getFloatX(bits)));
+            zField.setText(String.valueOf(vector.getFloatZ(bits)));
+
+            onPass.run();
+
+            lastDrag.setX(evt.getX());
+            lastDrag.setY(evt.getY());
+        });
+        xzView.setOnMouseReleased(evt -> xzLastDrag[0] = null);
+
+        // Y Move.
+        ImageView yView = new ImageView(GRAY_IMAGE_Y);
+        vecPane.addColumn(3, yView);
+
+        DragPos[] yLastDrag = new DragPos[1];
+        yView.setOnMouseClicked(evt -> yLastDrag[0] = new DragPos(evt.getX(), evt.getY()));
+        yView.setOnMouseDragged(evt -> {
+            DragPos lastDrag = yLastDrag[0];
+            if (lastDrag == null) { // Set it up if it's not present.
+                yLastDrag[0] = new DragPos(evt.getX(), evt.getY());
+                return;
+            }
+
+            double yDiff = -(lastDrag.getY() - evt.getY()) / 10;
+            vector.setFloatY((float) (vector.getFloatY(bits) + yDiff), bits);
+            yField.setText(String.valueOf(vector.getFloatY(bits)));
+            onPass.run();
+
+            lastDrag.setX(evt.getX());
+            lastDrag.setY(evt.getY());
+        });
+        yView.setOnMouseReleased(evt -> yLastDrag[0] = null);
+
+        vecPane.setHgap(10);
+        GridPane.setColumnSpan(vecPane, 2); // Make it take up the full space in the grid it will be added to.
+        setupNode(vecPane); // Setup this in the new area.
+        addRow(75);
+    }
+
+    /**
+     * Add a float SVector for editing.
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     */
+    public void addFloatVector(String text, Vector vector, Runnable update, MOFController controller, int bits, Vector origin, Shape3D visualRepresentative) {
+        if (controller != null && visualRepresentative == null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
                     () -> controller.updateMarker(controller.getShowPosition() == null || !Objects.equals(vector, controller.getShowPosition()) ? vector : null, bits, origin, null));
         } else {
@@ -508,7 +665,7 @@ public class GUIEditorGrid {
 
         Runnable onPass = () -> {
             if (controller != null)
-                controller.updateMarker(vector, bits, origin, moveBox);
+                controller.updateMarker(vector, bits, origin, visualRepresentative);
 
             if (update != null)
                 update.run();
@@ -647,6 +804,165 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Add a fixed point short decimal value.
+     * @param text             The text to add.
+     * @param value            The short value.
+     * @param handler          The setter handler.
+     * @param interval         The interval it takes for a single full integer to be read.
+     * @param allowNegativeOne If -1 is allowed and valid.
+     */
+    public void addFixedShort(String text, short value, Consumer<Short> handler, int interval, boolean allowNegativeOne) {
+        addFixedShort(text, value, handler, interval, allowNegativeOne ? -1 : 0, Short.MAX_VALUE);
+    }
+
+    /**
+     * Add a fixed point short decimal value.
+     * @param text     The text to add.
+     * @param value    The short value.
+     * @param handler  The setter handler.
+     * @param interval The interval it takes for a single full integer to be read.
+     * @param minValue The minimum value (IN INTEGER FORM).
+     * @param maxValue The maximum value (IN INTEGER FORM).
+     */
+    public void addFixedShort(String text, short value, Consumer<Short> handler, int interval, int minValue, int maxValue) {
+        boolean isNegativeOneSpecial = (minValue == -1 && maxValue > 0);
+        String displayStr = (isNegativeOneSpecial && value == -1) ? "-1" : FORMAT.format((double) value / interval);
+
+        addTextField(text, displayStr, newText -> {
+            double parsedValue;
+
+            try {
+                parsedValue = Double.parseDouble(newText);
+            } catch (NumberFormatException nfe) {
+                return false;
+            }
+
+            if (!Double.isFinite(parsedValue))
+                return false;
+
+            short newShortValue;
+            if (isNegativeOneSpecial && parsedValue == -1) {
+                newShortValue = (short) -1;
+            } else {
+                // Convert to short and do bounds check.
+                long convertedValue = Math.round(parsedValue * interval);
+                if (convertedValue < Short.MIN_VALUE || convertedValue < minValue)
+                    return false;
+                if (convertedValue > Short.MAX_VALUE || convertedValue > maxValue)
+                    return false;
+
+                newShortValue = (short) convertedValue;
+            }
+
+            if (handler != null)
+                handler.accept(newShortValue);
+            onChange();
+            return true;
+        });
+    }
+
+    /**
+     * Add a fixed point integer decimal value.
+     * @param text     The text to add.
+     * @param value    The integer value.
+     * @param handler  The setter handler.
+     * @param interval The interval it takes for a single full integer to be read.
+     * @param minValue The minimum value (IN INTEGER FORM).
+     * @param maxValue The maximum value (IN INTEGER FORM).
+     */
+    public void addFixedInt(String text, int value, Consumer<Integer> handler, int interval, int minValue, int maxValue) {
+        boolean isNegativeOneSpecial = (minValue == -1 && maxValue > 0);
+        String displayStr = (isNegativeOneSpecial && value == -1) ? "-1" : FORMAT.format((double) value / interval);
+
+        addTextField(text, displayStr, newText -> {
+            double parsedValue;
+
+            try {
+                parsedValue = Double.parseDouble(newText);
+            } catch (NumberFormatException nfe) {
+                return false;
+            }
+
+            if (!Double.isFinite(parsedValue))
+                return false;
+
+            int newValue;
+            if (isNegativeOneSpecial && parsedValue == -1) {
+                newValue = -1;
+            } else {
+                // Convert to short and do bounds check.
+                long convertedValue = Math.round(parsedValue * interval);
+                if (convertedValue < minValue || convertedValue > maxValue)
+                    return false;
+
+                newValue = (int) convertedValue;
+            }
+
+            if (handler != null)
+                handler.accept(newValue);
+            onChange();
+            return true;
+        });
+    }
+
+    /**
+     * Add an unsigned fixed point short decimal value.
+     * @param text     The text to add.
+     * @param value    The short value.
+     * @param handler  The setter handler.
+     * @param interval The interval it takes for a single full integer to be read.
+     */
+    public void addUnsignedFixedShort(String text, int value, Consumer<Integer> handler, int interval) {
+        addUnsignedFixedShort(text, value, handler, interval, 0x0000, 0xFFFF);
+    }
+
+    /**
+     * Add an unsigned fixed point short decimal value.
+     * @param text     The text to add.
+     * @param value    The short value.
+     * @param handler  The setter handler.
+     * @param interval The interval it takes for a single full integer to be read.
+     * @param minValue The minimum value (IN INTEGER FORM).
+     * @param maxValue The maximum value (IN INTEGER FORM).
+     */
+    public void addUnsignedFixedShort(String text, int value, Consumer<Integer> handler, int interval, int minValue, int maxValue) {
+        boolean isNegativeOneMax = ((minValue == -1 || minValue == 0) && maxValue == 0xFFFF);
+        String displayStr = (isNegativeOneMax && value == 0xFFFF) ? "-1" : FORMAT.format((double) value / interval);
+
+        addTextField(text, displayStr, newText -> {
+            double parsedValue;
+
+            try {
+                parsedValue = Double.parseDouble(newText);
+            } catch (NumberFormatException nfe) {
+                return false;
+            }
+
+            if (!Double.isFinite(parsedValue))
+                return false;
+
+            int newShortValue;
+            if (isNegativeOneMax && parsedValue == -1) {
+                newShortValue = 0xFFFF;
+            } else {
+                // Convert to short and do bounds check.
+                long convertedValue = Math.round(parsedValue * interval);
+                if (convertedValue < 0x0000 || convertedValue < minValue)
+                    return false;
+                if (convertedValue > 0xFFFF || convertedValue > maxValue)
+                    return false;
+
+                newShortValue = (int) convertedValue;
+            }
+
+            if (handler != null)
+                handler.accept(newShortValue);
+            onChange();
+            return true;
+        });
+    }
+
+    /**
      * Allow selecting a color.
      * @param text    The description of the color.
      * @param color   The starting color.
@@ -739,6 +1055,16 @@ public class GUIEditorGrid {
      * @param buttonText The text on the button.
      * @param onPress    What to do when the button is pressed.
      */
+    public Button addBoldLabelButton(String labelText, String buttonText, Runnable onPress) {
+        return addBoldLabelButton(labelText, buttonText, 25, onPress);
+    }
+
+    /**
+     * Add a bold label and button.
+     * @param labelText  The text on the label.
+     * @param buttonText The text on the button.
+     * @param onPress    What to do when the button is pressed.
+     */
     public Button addBoldLabelButton(String labelText, String buttonText, double height, Runnable onPress) {
         Label bold = addLabel(labelText);
         bold.setFont(Constants.SYSTEM_BOLD_FONT);
@@ -794,6 +1120,44 @@ public class GUIEditorGrid {
             if (onPositionUpdate != null)
                 onPositionUpdate.run(); // Run position hook.
         }, controller, 4);
+
+        addRotationMatrix(matrix, null);
+    }
+
+    /**
+     * Add a PSXMatrix to the editor grid.
+     * @param matrix           The rotation matrix to add data for.
+     * @param onPositionUpdate Behavior to apply when the position is updated.
+     */
+    public void addMeshMatrix(PSXMatrix matrix, MeshViewController<?> controller, Runnable onPositionUpdate) {
+        IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
+
+        addFloatVector("Position", vec, () -> {
+            matrix.getTransform()[0] = vec.getX();
+            matrix.getTransform()[1] = vec.getY();
+            matrix.getTransform()[2] = vec.getZ();
+            if (onPositionUpdate != null)
+                onPositionUpdate.run(); // Run position hook.
+        }, controller, 4, null, null);
+
+        addRotationMatrix(matrix, null);
+    }
+
+    /**
+     * Add a PSXMatrix to the editor grid.
+     * @param matrix           The rotation matrix to add data for.
+     * @param onPositionUpdate Behavior to apply when the position is updated.
+     */
+    public void addMofMatrix(PSXMatrix matrix, MOFController controller, Runnable onPositionUpdate) {
+        IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
+
+        addFloatVector("Position", vec, () -> {
+            matrix.getTransform()[0] = vec.getX();
+            matrix.getTransform()[1] = vec.getY();
+            matrix.getTransform()[2] = vec.getZ();
+            if (onPositionUpdate != null)
+                onPositionUpdate.run(); // Run position hook.
+        }, controller, 4, null, null);
 
         addRotationMatrix(matrix, null);
     }
@@ -861,6 +1225,13 @@ public class GUIEditorGrid {
 
     /**
      * Add height to reach the next row.
+     */
+    public void addRow() {
+        addRow(25);
+    }
+
+    /**
+     * Add height to reach the next row.
      * @param height The height to add.
      */
     public void addRow(double height) {
@@ -877,6 +1248,13 @@ public class GUIEditorGrid {
         RowConstraints newRow = new RowConstraints(height + 1);
         gridPane.getRowConstraints().add(newRow);
         this.rowIndex++;
+    }
+
+    /**
+     * Add a horizontal separator.
+     */
+    public void addSeparator() {
+        addSeparator(25);
     }
 
     /**
@@ -967,5 +1345,16 @@ public class GUIEditorGrid {
         slider.setBlockIncrement(1);
         addRow(40);
         return slider;
+    }
+
+    /**
+     * Creates a GridPane usable in this grid.
+     * @return gridPane
+     */
+    public static GridPane createDefaultPane() {
+        GridPane newPane = new GridPane();
+        newPane.getColumnConstraints().add(new ColumnConstraints(10, 100, Region.USE_PREF_SIZE, Priority.SOMETIMES, null, true));
+        newPane.getColumnConstraints().add(new ColumnConstraints(10, 100, Region.USE_PREF_SIZE, Priority.SOMETIMES, null, false));
+        return newPane;
     }
 }

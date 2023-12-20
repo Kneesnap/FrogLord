@@ -15,7 +15,7 @@ import java.util.function.BiConsumer;
  * Created by Kneesnap on 1/15/2020.
  */
 public class PatchCommandRead extends PatchCommand {
-    private BiConsumer<DataReader, PatchValue> reader;
+    private final BiConsumer<DataReader, PatchValue> reader;
 
     public PatchCommandRead(String name, BiConsumer<DataReader, PatchValue> reader) {
         super(name);
@@ -24,7 +24,7 @@ public class PatchCommandRead extends PatchCommand {
 
     @Override
     public void execute(PatchRuntime runtime, List<PatchValueReference> args) {
-        DataReader reader = runtime.getExeInfo().getReader();
+        DataReader reader = runtime.getGameInstance().getExecutableReader();
         PatchValue value = getValue(runtime, args, 0);
         if (value == null) { // Create a new variable.
             value = new PatchValue(PatchArgumentType.BOOLEAN, false);

@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
@@ -19,6 +20,10 @@ public class EntityCrocodileHead extends MatrixData {
     private int pauseDelay;
     private int snapOrNot;
     private int submergedDelay;
+
+    public EntityCrocodileHead(FroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

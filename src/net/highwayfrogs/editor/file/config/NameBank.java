@@ -17,7 +17,8 @@ public class NameBank {
     private BiFunction<NameBank, Integer, String> unknownMaker;
     private int spoofSize;
 
-    private static final NameBank EMPTY_BANK = new NameBank(null, new ArrayList<>(), null);
+    public static final NameBank EMPTY_BANK = new NameBank(null, new ArrayList<>(), null);
+    private static final NameBank EMPTY_MODIFIABLE_BANK = new NameBank(null, new ArrayList<>(), null);
 
     private NameBank(Config config, Collection<String> loadValues, BiFunction<NameBank, Integer, String> unknownMaker) {
         this.config = config;
@@ -40,7 +41,7 @@ public class NameBank {
      * @return defaultName
      */
     public String getDefaultNameFor(int id) {
-        return unknownMaker != null ? unknownMaker.apply(this, id) : "????????";
+        return unknownMaker != null ? unknownMaker.apply(this, id) : "???? (Entry #" + id + " is not configured)";
     }
 
     /**
@@ -49,9 +50,9 @@ public class NameBank {
      * @return defaultName
      */
     public String getEmptyChildNameFor(int id, int size) {
-        EMPTY_BANK.unknownMaker = unknownMaker;
-        EMPTY_BANK.spoofSize = size;
-        return EMPTY_BANK.getDefaultNameFor(id);
+        EMPTY_MODIFIABLE_BANK.unknownMaker = unknownMaker;
+        EMPTY_MODIFIABLE_BANK.spoofSize = size;
+        return EMPTY_MODIFIABLE_BANK.getDefaultNameFor(id);
     }
 
     /**
@@ -95,7 +96,7 @@ public class NameBank {
     }
 
     private boolean isEmpty() {
-        return this == EMPTY_BANK;
+        return this == EMPTY_BANK || this == EMPTY_MODIFIABLE_BANK;
     }
 
     /**

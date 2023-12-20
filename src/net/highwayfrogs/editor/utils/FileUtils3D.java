@@ -195,7 +195,7 @@ public class FileUtils3D {
         if (directory == null)
             return;
 
-        FileEntry entry = map.getFileEntry();
+        FileEntry entry = map.getIndexEntry();
         VLOArchive vloArchive = map.getVlo();
         TextureMap textureMap = TextureMap.newTextureMap(map, ShadingMode.NO_SHADING);
         String cleanName = Utils.getRawFileName(entry.getDisplayName());
@@ -335,7 +335,7 @@ public class FileUtils3D {
         MisfitModel3DObject model = new MisfitModel3DObject();
         MOFFile staticMof = holder.asStaticFile();
         VLOArchive vloTable = holder.getVloFile();
-        Utils.verify(vloTable != null, "Unknown VLO Table for %s!", holder.getFileEntry().getDisplayName());
+        Utils.verify(vloTable != null, "Unknown VLO Table for %s!", holder.getFileDisplayName());
 
         // Add TransformType.
         if (holder.isAnimatedMOF())
@@ -386,7 +386,7 @@ public class FileUtils3D {
                 MMFrameAnimationsBlock animation = model.getFrameAnimations().getBody(action);
                 if (animation == null) {
                     animation = model.getFrameAnimations().addNewElement();
-                    animation.setFramesPerSecond(holder.getMWD().getFPS());
+                    animation.setFramesPerSecond(holder.getGameInstance().getFPS());
                     animation.setName(holder.getName(action));
                 }
 
@@ -411,7 +411,7 @@ public class FileUtils3D {
 
                 MMSkeletalAnimationBlock skeletalAnimation = model.getSkeletalAnimations().addNewElement();
                 skeletalAnimation.setName(holder.getName(action));
-                skeletalAnimation.setFps(holder.getMWD().getFPS());
+                skeletalAnimation.setFps(holder.getGameInstance().getFPS());
 
                 for (int frame = 0; frame < celAction.getFrameCount(); frame++) {
                     List<MMSkeletalAnimationFrame> keyframes = new ArrayList<>();
@@ -542,7 +542,7 @@ public class FileUtils3D {
     @Getter
     @AllArgsConstructor
     private static class ColorKey {
-        private short imageId;
+        private final short imageId;
         private final PSXColorVector color;
 
         @Override
@@ -559,10 +559,10 @@ public class FileUtils3D {
     @Getter
     @AllArgsConstructor
     private static final class MOFTextureData {
-        private GameImage image;
-        private long externalTextureIndex;
-        private MMTriangleGroupsBlock group;
-        private MMMaterialsBlock material;
+        private final GameImage image;
+        private final long externalTextureIndex;
+        private final MMTriangleGroupsBlock group;
+        private final MMMaterialsBlock material;
     }
 
     // Other TODOs:
@@ -590,8 +590,8 @@ public class FileUtils3D {
         if (model.getFrameAnimationPoints().size() > 0)
             Utils.makePopUp("Frame Point animations are not supported. " + model.getFrameAnimationPoints().size() + " frame point animations will be skipped.", AlertType.WARNING);
 
-        MOFFile staticMof = holder.isDummy() ? new MOFFile(holder) : holder.asStaticFile();
-        MOFAnimation animatedMof = isReplacementAnimated ? new MOFAnimation(holder, staticMof) : null;
+        MOFFile staticMof = holder.isDummy() ? new MOFFile(holder.getGameInstance(), holder) : holder.asStaticFile();
+        MOFAnimation animatedMof = isReplacementAnimated ? new MOFAnimation(holder.getGameInstance(), holder, staticMof) : null;
 
         // Pre-Build Data Maps.
         int newPartCount = model.getJoints().size();
@@ -653,7 +653,7 @@ public class FileUtils3D {
 
         // Figure out which textures are allowed. (All of them) Maybe later we can put extra restrictions to figure out which ones are loaded when the model is loaded.
         Set<Short> allowedTextureIds = new HashSet<>();
-        for (VLOArchive vloArchive : holder.getMWD().getAllFiles(VLOArchive.class))
+        for (VLOArchive vloArchive : holder.getArchive().getAllFiles(VLOArchive.class))
             for (GameImage gameImage : vloArchive.getImages())
                 allowedTextureIds.add(gameImage.getTextureId());
 
@@ -805,13 +805,14 @@ public class FileUtils3D {
 
             // Port data which isn't supposed to be overwritten by an import.
             if (oldPart != null) {
-                if (oldPart.getMatrix() != null) // Transition matrix.
-                    part.setMatrix(oldPart.getMatrix());
+                if (oldPart.getMatrices().size() > 0) // Transition matrix.
+                    part.getMatrices().addAll(oldPart.getMatrices());
 
-                if (oldPart.getCollprim() != null) { // Transition collprim.
-                    MOFCollprim oldCollprim = oldPart.getCollprim();
-                    oldCollprim.setParent(part);
-                    part.setCollprim(oldCollprim);
+                if (oldPart.getCollprims() != null) { // Transition collprim.
+                    for (MOFCollprim oldCollprim : oldPart.getCollprims()) {
+                        oldCollprim.setParentPart(part);
+                        part.getCollprims().add(oldCollprim);
+                    }
                 }
 
                 for (MOFHilite oldHilite : oldPart.getHilites()) { // Transition Hilites.

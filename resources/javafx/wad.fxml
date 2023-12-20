@@ -44,9 +44,14 @@
                            <children>
                               <HBox alignment="CENTER" prefHeight="100.0" prefWidth="236.0" spacing="2.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                  <children>
-                                      <Button mnemonicParsing="false" onAction="#importEntry" prefHeight="25.0" prefWidth="72.0" text="Import" />
-                                      <Button mnemonicParsing="false" onAction="#exportEntry" prefHeight="25.0" prefWidth="72.0" text="Export" />
-                                      <Button mnemonicParsing="false" onAction="#exportAll" prefHeight="25.0" prefWidth="72.0" text="Export All" />
+                                     <Button mnemonicParsing="false" onAction="#importEntry" prefHeight="25.0"
+                                             prefWidth="54.0" text="Import"/>
+                                     <Button mnemonicParsing="false" onAction="#exportEntry" prefHeight="25.0"
+                                             prefWidth="54.0" text="Export"/>
+                                     <Button mnemonicParsing="false" onAction="#exportAll" prefHeight="25.0"
+                                             prefWidth="54.0" text="Exp All"/>
+                                     <Button mnemonicParsing="false" onAction="#exportAlternate" prefHeight="25.0"
+                                             prefWidth="54.0" text="Exp Alt"/>
                                  </children>
                               </HBox>
                            </children>

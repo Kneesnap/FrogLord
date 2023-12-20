@@ -12,7 +12,9 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 /**
  * Represents the MR_ANIM_HEADER struct.
@@ -26,24 +28,27 @@ public class MOFAnimation extends MOFBase {
     private final MOFAnimCommonData commonData;
     @Setter private boolean startAtFrameZero = true;
     @Setter private TransformType transformType = TransformType.QUAT_BYTE;
+    private int mofCount;
+    private int modelSetCount;
 
     private static final int STATIC_MOF_COUNT = 1;
+    private static final byte MR_ANIM_FILE_START_FRAME_AT_ZERO = (byte) 0x31; // '1'
 
-    public MOFAnimation(MOFHolder holder) {
-        this(holder, new MOFFile(holder));
+    public MOFAnimation(SCGameInstance instance, MOFHolder holder) {
+        this(instance, holder, new MOFFile(instance, holder));
     }
 
-    public MOFAnimation(MOFHolder holder, MOFFile staticMOF) {
-        super(holder);
-        this.modelSet = new MOFAnimationModelSet(this);
+    public MOFAnimation(SCGameInstance instance, MOFHolder holder, MOFFile staticMOF) {
+        super(instance, holder);
+        this.modelSet = new MOFAnimationModelSet(instance, this);
         this.commonData = new MOFAnimCommonData(this);
         this.staticMOF = staticMOF;
     }
 
     @Override
     public void onLoad(DataReader reader, byte[] signature) {
-        boolean forceFrameZero = (getConfig().getBuild() == 1);
-        this.startAtFrameZero = forceFrameZero || (signature[0] == (byte) 0x31); // '1'
+        boolean forceFrameZero = (getGameInstance().isFrogger() && ((FroggerGameInstance) getGameInstance()).getConfig().getBuild() == 1);
+        this.startAtFrameZero = forceFrameZero || (signature[0] == MR_ANIM_FILE_START_FRAME_AT_ZERO); // '1'
         this.transformType = TransformType.getType(signature[1]);
 
         int modelSetCount = reader.readUnsignedShortAsInt();
@@ -52,8 +57,15 @@ public class MOFAnimation extends MOFBase {
         int commonDataPointer = reader.readInt(); // Right after model set data.
         int staticFilePointer = reader.readInt(); // After common data pointer.
 
-        Utils.verify(modelSetCount == 1, "Multiple model sets are not supported by FrogLord. (%d)", modelSetCount);
-        Utils.verify(staticFileCount == 1, "FrogLord only supports one MOF. (%d)", staticFileCount);
+        this.modelSetCount = modelSetCount;
+        //Utils.verify(modelSetCount == 1, "Multiple model sets are not supported by FrogLord. (%d)", modelSetCount); // TODO: Medievil.
+        if (modelSetCount != 1 && !getFileEntry().getDisplayName().contains("-MODELSETS"))
+            getFileEntry().setFilePath(getFileEntry().getDisplayName() + "-MODELSETS");
+
+        this.mofCount = staticFileCount;
+        //Utils.verify(staticFileCount == 1, "FrogLord only supports one MOF per animation. (%d)", staticFileCount); // TODO: Medievil.
+        if (staticFileCount != 1 && !getFileEntry().getDisplayName().contains("-MULTIPLEMOF"))
+            getFileEntry().setFilePath(getFileEntry().getDisplayName() + "-MULTIPLEMOF");
 
         // Read model sets.
         reader.jumpTemp(modelSetPointer);
@@ -155,7 +167,7 @@ public class MOFAnimation extends MOFBase {
                     TransformObject transform = getTransform(part, action, frame);
 
                     for (SVector sVec : partcel.getVertices()) {
-                        IVector vertex = PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(), sVec, new IVector());
+                        IVector vertex = PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(getAnimationById(action).isInterpolationEnabled()), sVec, new IVector());
 
                         minX = Math.min(minX, vertex.getFloatX());
                         minY = Math.min(minY, vertex.getFloatY());
@@ -193,6 +205,29 @@ public class MOFAnimation extends MOFBase {
 
     @Override
     public String makeSignature() {
-        return (getConfig().isAtOrBeforeBuild20() ? "\0" : (isStartAtFrameZero() ? "1" : "0")) + (char) getTransformType().getByteValue() + "ax";
+        String firstChar;
+        if (getGameInstance().isFrogger() && ((FroggerConfig) getConfig()).isAtOrBeforeBuild20()) {
+            firstChar = "\0";
+        } else if (isStartAtFrameZero()) {
+            firstChar = "1";
+        } else {
+            firstChar = "0";
+        }
+
+        // TODO: medievil may want \0 instead of "0" anyways..?
+        return firstChar + (char) getTransformType().getByteValue() + "ax";
+    }
+
+    /**
+     * Test if a signature is a valid MOF animation.
+     * @param data The file data to check.
+     * @return isSignatureValid
+     */
+    public static boolean testSignature(byte[] data) {
+        if (data == null || data.length < 4)
+            return false;
+
+        return (data[0] == '\0' || data[0] == '0' || data[0] == '1') && (data[1] >= '0' && data[1] <= '9')
+                && data[2] == 'a' && data[3] == 'x';
     }
 }

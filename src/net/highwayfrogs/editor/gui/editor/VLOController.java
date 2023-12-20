@@ -12,12 +12,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
@@ -34,7 +34,7 @@ import java.util.Map.Entry;
  * Controls the VLO edit screen.
  * Created by Kneesnap on 9/18/2018.
  */
-public class VLOController extends EditorController<VLOArchive> {
+public class VLOController extends EditorController<VLOArchive, SCGameInstance, SCGameConfig> {
     @FXML private CheckBox paddingCheckBox;
     @FXML private CheckBox transparencyCheckBox;
     @FXML private ChoiceBox<ImageControllerViewSetting> sizeChoiceBox;
@@ -54,6 +54,10 @@ public class VLOController extends EditorController<VLOArchive> {
 
     private static final int SCALE_DIMENSION = 256;
 
+    public VLOController(SCGameInstance instance) {
+        super(instance);
+    }
+
     @Override
     public void loadFile(VLOArchive vlo) {
         super.loadFile(vlo);
@@ -63,16 +67,7 @@ public class VLOController extends EditorController<VLOArchive> {
             if (image == null)
                 return null;
 
-            String imageName = "";
-
-            Config config = getFile().getMWD().getConfig();
-            if (config.hasChild(FroggerEXEInfo.CHILD_IMAGE_NAMES)) {
-                Config childSection = config.getChild(FroggerEXEInfo.CHILD_IMAGE_NAMES);
-                String imageKey = String.valueOf(image.getTextureId());
-                if (childSection.has(imageKey))
-                    imageName = childSection.getString(imageKey);
-            }
-
+            String imageName = getConfig().getImageNames().getOrDefault(image.getTextureId(), "");
             return index + ": " + imageName + " [" + image.getFullWidth() + ", " + image.getFullHeight() + "] (ID: " + image.getTextureId() + ")";
         }));
 
@@ -100,7 +95,7 @@ public class VLOController extends EditorController<VLOArchive> {
         this.updateFlags();
 
         Button cloneButton = new Button("Clone Image");
-        cloneButton.setOnAction(evt -> getFile().getMWD().promptVLOSelection(null, this::promptCloneVlo, false));
+        cloneButton.setOnAction(evt -> getFile().getArchive().promptVLOSelection(null, this::promptCloneVlo, false));
         flagBox.getChildren().add(cloneButton);
     }
 

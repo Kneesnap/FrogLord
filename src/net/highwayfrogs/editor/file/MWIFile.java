@@ -3,71 +3,107 @@ package net.highwayfrogs.editor.file;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.config.FroggerEXEInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Medieval Wad Index: Holds information about the MWD file.
- * Located in frogger.exe
+ * Millennium Wad Index: Holds information about all game files, usually in a MWD.
+ * Located in game executable (Such as frogger.exe)
  * This should always export exactly the same size as the original MWI, as this gets pasted directly in the executable.
  * Created by Kneesnap on 8/10/2018.
  */
 @Getter
-public class MWIFile extends GameObject {
+public class MWIFile extends SCSharedGameData {
     private final List<FileEntry> entries = new ArrayList<>();
-    private int fileSize;
 
     private static final int ENTRY_LENGTH = 32;
     private static final int STR_TERMINATOR = 4;
     private static final int CODE_NO_FILE_NAME = 0xFFFFFFFF;
 
+    public MWIFile(SCGameInstance instance) {
+        super(instance);
+    }
+
+    /**
+     * Get the FileEntry for a given resource id.
+     * @param resourceId The resource id.
+     * @return fileEntry
+     */
+    public FileEntry getResourceEntryByID(int resourceId) {
+        return resourceId >= 0 && resourceId < this.entries.size() ? this.entries.get(resourceId) : null;
+    }
+
+    /**
+     * Gets the resource entry from a given name.
+     * @param name The name to lookup.
+     * @return foundEntry, if any.
+     */
+    public FileEntry getResourceEntryByName(String name) {
+        if (name == null || name.isEmpty())
+            return null;
+
+        for (int i = 0; i < this.entries.size(); i++) {
+            FileEntry entry = this.entries.get(i);
+            if (name.equalsIgnoreCase(entry.getDisplayName()))
+                return entry;
+        }
+
+        return null;
+    }
+
     @Override
     public void load(DataReader reader) {
-        this.fileSize = reader.getSize();
         AtomicInteger nameStartAddress = null;
 
         int loadingId = 0;
         while (reader.hasMore() && (nameStartAddress == null || nameStartAddress.get() > reader.getIndex())) { // Read entries until we reach file-names.
-            int nameOffset = reader.readInt();
-            FileEntry entry = new FileEntry(getConfig(), loadingId++);
+            FileEntry entry = new FileEntry(getGameInstance(), loadingId++);
 
-            if (nameOffset != CODE_NO_FILE_NAME) { // If the file name is present, read the file name. (File-names are present on the PC version, but not the PSX version.)
-                if (nameStartAddress == null) // Use the first name address as the address which starts the name table.
-                    nameStartAddress = new AtomicInteger(nameOffset);
+            if (getGameInstance().isOldFrogger()) {
+                entry.setFilePath(reader.readTerminatedStringOfLength(40));
 
-                reader.jumpTemp(nameOffset);
-                entry.setFilePath(reader.readNullTerminatedString());
-                reader.jumpReturn();
+                entry.setFlags(reader.readInt());
+                entry.setTypeId(reader.readInt());
+                entry.setSectorOffset(reader.readInt());
+                reader.skipInt();
+                entry.unpackedSize = reader.readInt();
+                reader.skipInt();
+            } else {
+                int nameOffset = reader.readInt();
+                if (nameOffset != CODE_NO_FILE_NAME) { // If the file name is present, read the file name. (File-names are present on the PC version, but not the PSX version.)
+                    if (nameStartAddress == null) // Use the first name address as the address which starts the name table.
+                        nameStartAddress = new AtomicInteger(nameOffset);
+
+                    reader.jumpTemp(nameOffset);
+                    entry.setFilePath(reader.readNullTerminatedString());
+                    reader.jumpReturn();
+                }
+
+                entry.setFlags(reader.readInt());
+                entry.setTypeId(reader.readInt());
+                entry.setSectorOffset(reader.readInt());
+                reader.skipInt(); // Should always be 0. This is used by the frogger.exe to locate where in RAM the file is located.
+                reader.skipInt(); // Should always be 0. This is used by frogger.exe to locate where in RAM the file is depacked at.
+                entry.setPackedSize(reader.readInt());
+                entry.unpackedSize = reader.readInt(); // Set the raw value, not through the setter.
+
+                if (getGameInstance().getGameType().doesMwiHaveChecksum()) // Discard checksum from post-MediEvil MWIs.
+                    reader.skipInt();
             }
 
-            entry.setFlags(reader.readInt());
-            entry.setTypeId(reader.readInt());
-            entry.setSectorOffset(reader.readInt());
-            reader.skipInt(); // Should always be 0. This is used by the frogger.exe to locate where in RAM the file is located.
-            reader.skipInt(); // Should always be 0. This is used by frogger.exe to locate where in RAM the file is depacked at.
-            entry.setPackedSize(reader.readInt());
-            entry.unpackedSize = reader.readInt(); // Set the raw value, not through the setter.
             getEntries().add(entry);
         }
-
-        // 84 WADS. All have Type ID -1, Flag: 20 (Automatic compression and is group) Type = STD, Manual handling.
-        // 82 MAPS. All have Type ID 0, Flags: 33 (Manual Compression with single access)
-        // 44 VLOS. All have Type ID 1, Flag: 17 (Automatic compression and is group)
-        // 20 VB/VH All have Type ID 2, Flag: 1 (Single Access)
-        // 90 ENTITY All are Type ID 3, Flag: 2 (Group Access) MAP_MOF?
-        // 344 ENTITY_WIN95  Type ID 4, Flag: 2 (Group Access) MAP_ANIM_MOF?
-        // Type ID 5 doesn't exist. According to the code, it was a SPU file, which appears to have been a sound file type.
-        // 42  DAT. All have Type ID 6, Flag: 1 (Single Access)
-        // 40  PAL. All have Type ID 7, Flag: 1 (Single Access)
     }
 
     @Override
@@ -110,7 +146,7 @@ public class MWIFile extends GameObject {
 
     @Setter
     @Getter
-    public static class FileEntry {
+    public static class FileEntry extends SCSharedGameObject {
         private int flags; // Is a group? In a group? Compressed?
         private int typeId; //
         private int sectorOffset; // The file's starting address in the MWD.
@@ -119,7 +155,6 @@ public class MWIFile extends GameObject {
         private String filePath;
         private String sha1Hash;
         private transient int resourceId;
-        private transient FroggerEXEInfo config;
 
         public static final int FLAG_SINGLE_ACCESS = Constants.BIT_FLAG_0; // I assume this is for files loaded individually, by themselves.
         public static final int FLAG_GROUP_ACCESS = Constants.BIT_FLAG_1; // Cannot be loaded individually / by itself. Presumably this is for files in child-WADs.
@@ -128,20 +163,29 @@ public class MWIFile extends GameObject {
         public static final int FLAG_AUTOMATIC_COMPRESSION = Constants.BIT_FLAG_4;
         public static final int FLAG_MANUAL_COMPRESSION = Constants.BIT_FLAG_5;
 
-        public FileEntry(FroggerEXEInfo config, int resourceId) {
+        public FileEntry(SCGameInstance instance, int resourceId) {
+            super(instance);
             this.resourceId = resourceId;
-            this.config = config;
         }
 
         /**
-         * Gets the type id, but allow changing the type id in case it's wrong.
-         * @return spoofedTypeId
+         * Get the config active for the game instance.
          */
-        public int getSpoofedTypeId() {
-            int id = this.typeId;
-            if (id == MAPFile.TYPE_ID && getDisplayName().startsWith("LS_ALL")) // LS_ALL is masked as a MAP, when it is a VLO.
-                id = VLOArchive.TYPE_ID;
-            return id;
+        public SCGameConfig getConfig() {
+            return getGameInstance().getConfig();
+        }
+
+        /**
+         * Test if the file ends with a particular extension.
+         * @param extension The extension to test.
+         * @return If the file has an extension.
+         */
+        public boolean hasExtension(String extension) {
+            String fullFilePath = getFullFilePath();
+            if (fullFilePath == null)
+                return false;
+
+            return fullFilePath.toLowerCase(Locale.ROOT).endsWith("." + extension.toLowerCase(Locale.ROOT));
         }
 
         /**
@@ -201,11 +245,18 @@ public class MWIFile extends GameObject {
         public String getFullFilePath() {
             if (hasFilePath()) {
                 return getFilePath();
-            } else if (getConfig().getFileNames().size() > this.resourceId) {
-                return getConfig().getFileNames().get(this.resourceId);
+            } else if (getConfig().getFallbackFileNames().size() > this.resourceId) {
+                return getConfig().getFallbackFileNames().get(this.resourceId);
             } else {
                 return null;
             }
+        }
+
+        /**
+         * Test if this has a full file path.
+         */
+        public boolean hasFullFilePath() {
+            return getFullFilePath() != null;
         }
 
         /**
@@ -241,7 +292,10 @@ public class MWIFile extends GameObject {
          * @return book, Can be null if not found.
          */
         public MapBook getMapBook() {
-            for (MapBook book : getConfig().getMapLibrary())
+            if (!getGameInstance().isFrogger())
+                return null;
+
+            for (MapBook book : ((FroggerGameInstance) getGameInstance()).getMapLibrary())
                 if (book != null && book.isEntry(this))
                     return book;
             return null;
@@ -252,7 +306,10 @@ public class MWIFile extends GameObject {
          * @return book
          */
         public ThemeBook getThemeBook() {
-            for (ThemeBook book : getConfig().getThemeLibrary())
+            if (!getGameInstance().isFrogger())
+                return null;
+
+            for (ThemeBook book : ((FroggerGameInstance) getGameInstance()).getThemeLibrary())
                 if (book != null && book.isEntry(this))
                     return book;
             return null;

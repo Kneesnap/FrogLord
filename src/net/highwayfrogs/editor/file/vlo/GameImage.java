@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.vlo;
 
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,6 +12,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.BlackFilter;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -21,8 +21,11 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * A singular game image. MR_TXSETUP struct.
@@ -31,8 +34,9 @@ import java.util.Comparator;
 @Getter
 @Setter
 @SuppressWarnings("unused")
-public class GameImage extends GameObject implements Cloneable, TextureSource {
-    private VLOArchive parent;
+public class GameImage extends GameObject implements Cloneable, TextureSource, ITextureSource {
+    private final List<Consumer<BufferedImage>> imageChangeListeners;
+    private final VLOArchive parent;
     private short vramX;
     private short vramY;
     private short fullWidth;
@@ -69,6 +73,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
     public static final int FLAG_2D_SPRITE = Constants.BIT_FLAG_15;
 
     public GameImage(VLOArchive parent) {
+        this.imageChangeListeners = new ArrayList<>();
         this.parent = parent;
     }
 
@@ -113,7 +118,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
 
             if (getClutMode() == ImageClutMode.MODE_15BIT_NO_CLUT) { // Used in PS1 demo. Example: Frogger's eye, VOL@35 (The fireball texture)
                 for (int i = 0; i < pixelCount; i++)
-                    buffer.putInt(PSXClutColor.readColorFromShort(reader.readShort()));
+                    buffer.putInt(PSXClutColor.readBGRAColorFromShort(reader.readShort(), false));
             } else if (getClutMode() == ImageClutMode.MODE_8BIT) { // Used in PS1 release. Example: STARTNTSC.VLO
                 ClutEntry clut = getClut();
                 for (int i = 0; i < pixelCount; i++)
@@ -137,7 +142,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
 
         reader.jumpReturn();
         if (readU != getU() || readV != getV())
-            System.out.println(getParent().getFileEntry().getDisplayName() + "@" + getParent().getImages().size() + " UV Mismatch! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "]");
+            System.out.println(getParent().getFileDisplayName() + "@" + getParent().getImages().size() + " UV Mismatch! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "]");
     }
 
     @Override
@@ -149,7 +154,11 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
         writer.writeShort(this.fullHeight);
         this.tempSaveImageDataPointer = writer.writeNullPointer();
         writer.writeShort(this.textureId);
+
+        short oldVramX = this.vramX;
+        this.vramX /= getWidthMultiplier();
         writer.writeShort(getTexturePageShort());
+        this.vramX = oldVramX;
 
         if (getParent().isPsxMode()) {
             writer.writeShort(this.clutId);
@@ -240,7 +249,6 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
         return getPage(getVramX() / getWidthMultiplier() + ((getFullWidth() - 1) / getWidthMultiplier()), getVramY() + getFullHeight() - 1);
     }
 
-
     private short getPage(int vramX, int vramY) {
         return getParent().isPsxMode()
                 ? (short) (((vramY / PSX_PAGE_HEIGHT) * PSX_X_PAGES) + (vramX / PSX_PAGE_WIDTH))
@@ -272,7 +280,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
         short u = (short) (getVramX() % (getParent().isPsxMode() ? PSX_PAGE_WIDTH * getWidthMultiplier() : PC_PAGE_WIDTH));
 
         if (getParent().isPsxMode()) { // PS1 logic.
-            if (getFullHeight() != getIngameHeight())
+            if (getFullHeight() != getIngameHeight()) // TODO: This is broken sometimes, when and why?
                 u++;
             return u;
         }
@@ -343,11 +351,11 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
         short imageHeight = (short) image.getHeight();
         Utils.verify(imageWidth <= MAX_DIMENSION && imageHeight <= MAX_DIMENSION, "The imported image is too big. Frogger's engine only supports up to %dx%d.", MAX_DIMENSION, MAX_DIMENSION);
 
-        if ((imageWidth / getWidthMultiplier()) + getVramX() > MAX_DIMENSION)
+        /*if ((imageWidth / getWidthMultiplier()) + getVramX() > MAX_DIMENSION)
             Utils.makePopUp("This image does not fit horizontally in VRAM. Use the VRAM editor to make it fit.", AlertType.WARNING);
 
         if (imageWidth > getFullWidth() || imageHeight > getFullHeight())
-            Utils.makePopUp("The image you have imported is larger than the image it replaced.\nThis may cause problems if it overlaps with another texture. Click on the 'VRAM' option to make sure the texture is ok.", AlertType.WARNING);
+            Utils.makePopUp("The image you have imported is larger than the image it replaced.\nThis may cause problems if it overlaps with another texture. Click on the 'VRAM' option to make sure the texture is ok.", AlertType.WARNING);*/
 
         if (getFullWidth() != imageWidth || getFullHeight() != imageHeight) {
             this.fullWidth = imageWidth;
@@ -392,28 +400,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
         if (this.cachedImage != null)
             return this.cachedImage;
 
-        int height = getFullHeight();
-        int width = getFullWidth();
-
-        byte[] cloneBytes = Arrays.copyOf(getImageBytes(), getImageBytes().length); // We don't want to make changes to the original array.
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-
-        //ABGR -> BGRA
-        for (int temp = 0; temp < cloneBytes.length; temp += PC_BYTES_PER_PIXEL) {
-            byte alpha = cloneBytes[temp];
-            int alphaIndex = temp + PC_BYTES_PER_PIXEL - 1;
-            System.arraycopy(cloneBytes, temp + 1, cloneBytes, temp, alphaIndex - temp);
-            cloneBytes[alphaIndex] = (byte) (0xFF - alpha); // Alpha needs to be flipped.
-        }
-
-        IntBuffer buffer = ByteBuffer.wrap(cloneBytes)
-                .order(ByteOrder.LITTLE_ENDIAN)
-                .asIntBuffer();
-
-        int[] array = new int[buffer.remaining()];
-        buffer.get(array);
-        image.setRGB(0, 0, image.getWidth(), image.getHeight(), array, 0, image.getWidth());
-        return this.cachedImage = image;
+        return this.cachedImage = makeImage();
     }
 
     /**
@@ -535,5 +522,67 @@ public class GameImage extends GameObject implements Cloneable, TextureSource {
     @Override
     public GameImage getGameImage(TextureMap map) {
         return this;
+    }
+
+    @Override
+    public BufferedImage makeImage() {
+        int height = getFullHeight();
+        int width = getFullWidth();
+
+        byte[] cloneBytes = Arrays.copyOf(getImageBytes(), getImageBytes().length); // We don't want to make changes to the original array.
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+        //ABGR -> BGRA
+        for (int temp = 0; temp < cloneBytes.length; temp += PC_BYTES_PER_PIXEL) {
+            byte alpha = cloneBytes[temp];
+            int alphaIndex = temp + PC_BYTES_PER_PIXEL - 1;
+            System.arraycopy(cloneBytes, temp + 1, cloneBytes, temp, alphaIndex - temp);
+            cloneBytes[alphaIndex] = (byte) (0xFF - alpha); // Alpha needs to be flipped.
+        }
+
+        IntBuffer buffer = ByteBuffer.wrap(cloneBytes)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .asIntBuffer();
+
+        int[] array = new int[buffer.remaining()];
+        buffer.get(array);
+        image.setRGB(0, 0, image.getWidth(), image.getHeight(), array, 0, image.getWidth());
+        return image;
+    }
+
+    @Override
+    public int getWidth() {
+        return getFullWidth();
+    }
+
+    @Override
+    public int getHeight() {
+        return getFullHeight();
+    }
+
+    @Override
+    public int getUpPadding() {
+        return (getFullHeight() - getIngameHeight()) / 2;
+    }
+
+    @Override
+    public int getDownPadding() {
+        return (getFullHeight() - getIngameHeight()) / 2;
+    }
+
+    @Override
+    public int getLeftPadding() {
+        return (getFullWidth() - getIngameWidth()) / 2;
+    }
+
+    @Override
+    public int getRightPadding() {
+        return (getFullWidth() - getIngameWidth()) / 2;
+    }
+
+    @Override
+    public void fireChangeEvent(BufferedImage newImage) {
+        invalidateCache();
+        fireChangeEvent0(newImage);
     }
 }

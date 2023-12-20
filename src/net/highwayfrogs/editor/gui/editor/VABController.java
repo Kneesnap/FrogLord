@@ -9,8 +9,10 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.sound.AbstractVBFile;
 import net.highwayfrogs.editor.file.sound.GameSound;
+import net.highwayfrogs.editor.file.sound.VBAudioBody;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.Clip;
@@ -24,7 +26,7 @@ import java.io.IOException;
  * Controls the VAB sound screen.
  * Created by Kneesnap on 9/18/2018.
  */
-public class VABController extends EditorController<AbstractVBFile<?>> {
+public class VABController extends EditorController<VBAudioBody<?>, SCGameInstance, SCGameConfig> {
     @FXML private ListView<GameSound> soundList;
     @FXML private Button playButton;
     @FXML private Label label1;
@@ -35,8 +37,12 @@ public class VABController extends EditorController<AbstractVBFile<?>> {
     private GameSound selectedSound;
     private Clip currentClip;
 
+    public VABController(SCGameInstance instance) {
+        super(instance);
+    }
+
     @Override
-    public void loadFile(AbstractVBFile<?> vbFile) {
+    public void loadFile(VBAudioBody<?> vbFile) {
         super.loadFile(vbFile);
 
         sliderSampleRate.valueProperty().addListener((observable, oldValue, newValue) -> {
