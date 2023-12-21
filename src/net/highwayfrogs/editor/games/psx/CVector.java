@@ -186,6 +186,11 @@ public class CVector implements IBinarySerializable {
         this.blue = Utils.unsignedShortToByte((short) (rgbValue & 0xFF));
     }
 
+    @Override
+    public String toString() {
+        return "CVector<red=" + getRedShort() + ",green=" + getGreenShort() + ",blue=" + getBlueShort() + ",code=" + Utils.byteToUnsignedShort(this.code) + ">";
+    }
+
     /**
      * Create a CVector from an RGB value.
      * @param rgbValue The rgb color value.

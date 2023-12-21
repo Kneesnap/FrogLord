@@ -88,8 +88,8 @@ public class SCByteTextureUV implements IBinarySerializable {
      * Creates a new ByteUV object which has the same properties as this one.
      */
     @SuppressWarnings("MethodDoesntCallSuperMethod")
-    public net.highwayfrogs.editor.file.standard.psx.ByteUV clone() {
-        return new net.highwayfrogs.editor.file.standard.psx.ByteUV(this.u, this.v);
+    public SCByteTextureUV clone() {
+        return new SCByteTextureUV(this.u, this.v);
     }
 
     /**

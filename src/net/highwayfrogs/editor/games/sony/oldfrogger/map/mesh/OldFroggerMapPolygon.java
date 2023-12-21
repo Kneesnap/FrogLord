@@ -119,9 +119,23 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
      * @param levelTableEntry The level table entry necessary for looking up texture remap data.
      */
     public PSXShadeTextureDefinition createPolygonShadeDefinition(OldFroggerLevelTableEntry levelTableEntry) {
-        SCByteTextureUV[] uvs = this.polygonType.isTextured() ? this.textureUvs : null;
+        SCByteTextureUV[] uvs = null;
+        if (this.polygonType.isTextured()) {
+            uvs = new SCByteTextureUV[this.textureUvs.length];
+            for (int i = 0; i < uvs.length; i++)
+                uvs[i] = this.textureUvs[i].clone();
+        }
+
+        // Clone colors.
+        CVector[] colors = null;
+        if (this.colors != null) {
+            colors = new CVector[this.colors.length];
+            for (int i = 0; i < colors.length; i++)
+                colors[i] = this.colors[i].clone();
+        }
+
         ITextureSource textureSource = this.polygonType.isTextured() ? getTexture(levelTableEntry) : null;
-        return new PSXShadeTextureDefinition(this.polygonType, textureSource, this.colors, uvs);
+        return new PSXShadeTextureDefinition(this.polygonType, textureSource, colors, uvs);
     }
 
     /**

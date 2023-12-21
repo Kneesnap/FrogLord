@@ -65,15 +65,16 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
                 return;
 
             OldFroggerMapPolygon polygon = entry.getDataSource();
+            System.out.println("Polygon: " + polygon.getPolygonType());
             if (polygon.getPolygonType().isTextured()) {
                 System.out.println("Texture ID: " + polygon.getTextureId());
                 System.out.println("UV-0: " + getUVDisplay(polygon.getTextureUvs()[0]));
                 System.out.println("UV-1: " + getUVDisplay(polygon.getTextureUvs()[1]));
                 System.out.println("UV-2: " + getUVDisplay(polygon.getTextureUvs()[2]));
                 System.out.println("UV-3: " + getUVDisplay(polygon.getTextureUvs()[3]));
-            } else {
-                System.out.println("Not Textured");
             }
+            for (int i = 0; i < polygon.getColors().length; i++)
+                System.out.println("Color " + i + ": " + polygon.getColors()[i].toString());
 
             // TODO: TOSS
             this.vertexDisplayList.clear();
