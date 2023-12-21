@@ -59,6 +59,18 @@ public class PSXTextureShader {
             this.x = x;
             this.y = y;
         }
+
+        /**
+         * Load the texture coordinates from a texture UV.
+         * @param width  The padded width of the texture.
+         * @param height The padded height of the texture.
+         * @param uv     The uv to load coordinates from.
+         */
+        public void loadUV(int width, int height, SCByteTextureUV uv) {
+            // It looks more accurate with rounding.
+            this.x = Math.round(uv.getFloatU() * (width - 1));
+            this.y = Math.round((1F - uv.getFloatV()) * (height - 1)); // It might be wise to invert this on save / load in the frogger map polygon instead of changing it everywhere else.
+        }
     }
 
     /**
@@ -138,46 +150,40 @@ public class PSXTextureShader {
         int paddedWidth = originalImage.getWidth();
         int paddedHeight = originalImage.getHeight();
 
-        int startX = PSXShadeTextureDefinition.UNTEXTURED_PADDING_SIZE;
-        int startY = PSXShadeTextureDefinition.UNTEXTURED_PADDING_SIZE;
-        int endX = paddedWidth - PSXShadeTextureDefinition.UNTEXTURED_PADDING_SIZE - 1;
-        int endY = paddedHeight - PSXShadeTextureDefinition.UNTEXTURED_PADDING_SIZE - 1;
-
         PSXTextureShader instance = getInstance();
         TextureCoordinate[] coordinates = instance.getTriangleCoordinates();
         if (colors.length == 3) {
-            // TODO: Make coordinates based on UVs.
-            // TODO: Ensure out of bounds filling works good.
-            coordinates[0].setXY(startX, startY);
-            coordinates[1].setXY(startX, endY);
-            coordinates[2].setXY(endX, startY);
+            coordinates[0].loadUV(paddedWidth, paddedHeight, textureUvs[0]);
+            coordinates[1].loadUV(paddedWidth, paddedHeight, textureUvs[1]);
+            coordinates[2].loadUV(paddedWidth, paddedHeight, textureUvs[2]);
             shadeTriangle(originalImage, image, colors, coordinates, true, true);
         } else if (colors.length == 4) {
-            // TODO: Make coordinates based on UVs.
-            // TODO: Ensure out of bounds filling works good.
             CVector[] triangleColors = instance.getTriangleColors();
 
             // Left triangle.
             triangleColors[0].copyFrom(colors[0]);
             triangleColors[1].copyFrom(colors[1]);
             triangleColors[2].copyFrom(colors[2]);
-            coordinates[0].setXY(startX, endY);
-            coordinates[1].setXY(endX, endY);
-            coordinates[2].setXY(startX, startY);
-            shadeTriangle(originalImage, image, triangleColors, coordinates, true, false);
+            coordinates[0].loadUV(paddedWidth, paddedHeight, textureUvs[0]);
+            coordinates[1].loadUV(paddedWidth, paddedHeight, textureUvs[1]);
+            coordinates[2].loadUV(paddedWidth, paddedHeight, textureUvs[2]);
+            shadeTriangle(originalImage, image, triangleColors, coordinates, false, false);
 
             // Right triangle.
             triangleColors[0].copyFrom(colors[3]);
             triangleColors[1].copyFrom(colors[2]);
             triangleColors[2].copyFrom(colors[1]);
-            coordinates[0].setXY(endX, startY);
-            coordinates[1].setXY(startX, startY);
-            coordinates[2].setXY(endX, endY);
-            shadeTriangle(originalImage, image, triangleColors, coordinates, false, true);
+            coordinates[0].loadUV(paddedWidth, paddedHeight, textureUvs[3]);
+            coordinates[1].loadUV(paddedWidth, paddedHeight, textureUvs[2]);
+            coordinates[2].loadUV(paddedWidth, paddedHeight, textureUvs[1]);
+            shadeTriangle(originalImage, image, triangleColors, coordinates, false, false);
         } else {
             throw new RuntimeException("Can't create gouraud shaded image with " + colors.length + " colors.");
         }
 
+        // Unlike the other gouraud image, it's easier to fill in padding afterwards due
+        fillHorizontalPadding(image, true, true);
+        fillVerticalPadding(image, true, true);
         return image;
     }
 
@@ -290,8 +296,47 @@ public class PSXTextureShader {
         }
 
         // Step 3) Fill in padding pixels.
+        fillVerticalPadding(targetImage, fillOutOfBoundsRight, fillOutOfBoundsLeft);
+    }
+
+    private static void fillHorizontalPadding(BufferedImage targetImage, boolean fillLeftPadding, boolean fillRightPadding) {
         // Fill in any padding pixels by extending the pixels with color.
-        if (fillOutOfBoundsLeft) {
+        if (fillRightPadding) {
+            for (int y = 0; y < targetImage.getHeight(); y++) {
+                for (int x = targetImage.getWidth() - 1; x >= 0; x--) {
+                    int pixelColor = targetImage.getRGB(x, y);
+                    if (pixelColor == 0)
+                        continue; // Skip untouched pixels.
+
+                    // Copy the pixels.
+                    while (targetImage.getWidth() > ++x)
+                        targetImage.setRGB(x, y, pixelColor);
+
+                    break;
+                }
+            }
+        }
+
+        if (fillLeftPadding) {
+            for (int y = 0; y < targetImage.getHeight(); y++) {
+                for (int x = 0; x < targetImage.getWidth(); x++) {
+                    int pixelColor = targetImage.getRGB(x, y);
+                    if (pixelColor == 0)
+                        continue; // Skip untouched pixels.
+
+                    // Copy the pixels.
+                    while (x-- > 0)
+                        targetImage.setRGB(x, y, pixelColor);
+
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void fillVerticalPadding(BufferedImage targetImage, boolean fillUpPadding, boolean fillDownPadding) {
+        // Fill in any padding pixels by extending the pixels with color.
+        if (fillDownPadding) {
             for (int x = 0; x < targetImage.getWidth(); x++) {
                 for (int y = targetImage.getHeight() - 1; y >= 0; y--) {
                     int pixelColor = targetImage.getRGB(x, y);
@@ -307,7 +352,7 @@ public class PSXTextureShader {
             }
         }
 
-        if (fillOutOfBoundsRight) {
+        if (fillUpPadding) {
             for (int x = 0; x < targetImage.getWidth(); x++) {
                 for (int y = 0; y < targetImage.getHeight(); y++) {
                     int pixelColor = targetImage.getRGB(x, y);
