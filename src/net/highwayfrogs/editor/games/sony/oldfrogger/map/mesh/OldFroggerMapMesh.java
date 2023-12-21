@@ -78,8 +78,9 @@ public class OldFroggerMapMesh extends DynamicMesh {
         SCUtils.addAtlasTextures(getTextureAtlas(), mainArchive, levelEntry.getWadFile(), levelEntry.getTextureRemap());
 
         // Add gouraud shaded stuff.
-        for (OldFroggerMapGrid grid : getMap().getGridPacket().getGrids())
-            for (OldFroggerMapPolygon polygon : grid.getPolygons())
-                this.shadedTextureManager.addPolygon(polygon);
+        if (getMap().getFormatVersion() == OldFroggerMapVersion.MILESTONE3)
+            for (OldFroggerMapGrid grid : getMap().getGridPacket().getGrids())
+                for (OldFroggerMapPolygon polygon : grid.getPolygons())
+                    this.shadedTextureManager.addPolygon(polygon);
     }
 }

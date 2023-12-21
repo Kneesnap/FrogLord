@@ -31,7 +31,6 @@ import java.util.List;
  */
 @Getter
 public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
-    private final OldFroggerMapVersion formatVersion;
     private final OldFroggerMapHeaderPacket headerPacket;
     private final OldFroggerMapLevelSpecificPacket levelSpecificDataPacket;
     private final OldFroggerMapPathPacket pathPacket;
@@ -50,9 +49,8 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
     // Random stuff
     private transient OldFroggerMapConfig cachedMapConfig;
 
-    public OldFroggerMapFile(OldFroggerGameInstance instance, OldFroggerMapVersion formatVersion) {
+    public OldFroggerMapFile(OldFroggerGameInstance instance) {
         super(instance, false);
-        this.formatVersion = formatVersion;
         addFilePacket(this.headerPacket = new OldFroggerMapHeaderPacket(this));
         addFilePacket(this.levelSpecificDataPacket = new OldFroggerMapLevelSpecificPacket(this));
         addFilePacket(this.pathPacket = new OldFroggerMapPathPacket(this));
@@ -147,5 +145,12 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
 
         OldFroggerMapConfig mapConfig = getConfig().getMapConfigs().get(getFileDisplayName());
         return this.cachedMapConfig = mapConfig != null ? mapConfig : getConfig().getDefaultMapConfig();
+    }
+
+    /**
+     * Get the format version which this map was loaded from.
+     */
+    public OldFroggerMapVersion getFormatVersion() {
+        return getMapConfig().getVersion();
     }
 }

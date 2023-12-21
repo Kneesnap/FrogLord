@@ -39,7 +39,9 @@ public abstract class PSXShadedTextureManager<TPolygon> {
         if (this.shadedTexturesByPolygon.containsKey(polygon))
             throw new RuntimeException("The provided polygon is already tracked.");
 
-        addPolygon(polygon, createShadedTexture(polygon));
+        PSXShadeTextureDefinition newDefinition = createShadedTexture(polygon);
+        if (isValid(newDefinition, polygon))
+            addPolygon(polygon, newDefinition);
     }
 
     /**
@@ -110,6 +112,16 @@ public abstract class PSXShadedTextureManager<TPolygon> {
      * @return newShadedTexture
      */
     protected abstract PSXShadeTextureDefinition createShadedTexture(TPolygon polygon);
+
+    /**
+     * Test if a definition is valid.
+     * @param definition The definition to test validity of
+     * @param polygon    The polygon it belongs to.
+     * @return isValid
+     */
+    protected boolean isValid(PSXShadeTextureDefinition definition, TPolygon polygon) {
+        return definition != null && (!definition.isTextured() || definition.getTextureSource() != null);
+    }
 
     /**
      * Called when a shaded texture is added.

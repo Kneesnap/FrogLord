@@ -9,7 +9,6 @@ import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerConfig;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapVersion;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapEntityMarkerPacket;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
@@ -56,7 +55,7 @@ public class OldFroggerGameInstance extends SCGameInstance {
     @Override
     public SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData) {
         if (fileEntry.getTypeId() == FILE_TYPE_MAP)
-            return new OldFroggerMapFile(this, OldFroggerMapVersion.MILESTONE3);
+            return new OldFroggerMapFile(this);
 
         return SCUtils.createSharedGameFile(fileEntry, fileData);
     }
