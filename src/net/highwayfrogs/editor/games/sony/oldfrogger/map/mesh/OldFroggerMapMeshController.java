@@ -7,10 +7,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerFormUIManager;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapVertexManager;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerPathManager;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.*;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -95,10 +92,12 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
 
     @Override
     protected void setupManagers() {
-        addManager(new OldFroggerEntityManager(this));
+        addManager(new OldFroggerMapZoneManager(this));
+        addManager(new OldFroggerMapVertexManager(this));
         addManager(new OldFroggerPathManager(this));
         addManager(new OldFroggerFormUIManager(this));
-        addManager(new OldFroggerMapVertexManager(this));
+        addManager(new OldFroggerEntityManager(this));
+        addManager(new OldFroggerGeneralDataManager(this));
         // TODO: Add managers
     }
 

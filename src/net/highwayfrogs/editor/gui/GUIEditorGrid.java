@@ -863,6 +863,16 @@ public class GUIEditorGrid {
 
     /**
      * Add a fixed point integer decimal value.
+     * @param text    The text to add.
+     * @param value   The integer value.
+     * @param handler The setter handler.
+     */
+    public TextField addFixedInt(String text, int value, Consumer<Integer> handler) {
+        return addFixedInt(text, value, handler, 1 << 4, Integer.MIN_VALUE, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Add a fixed point integer decimal value.
      * @param text     The text to add.
      * @param value    The integer value.
      * @param handler  The setter handler.
@@ -870,11 +880,11 @@ public class GUIEditorGrid {
      * @param minValue The minimum value (IN INTEGER FORM).
      * @param maxValue The maximum value (IN INTEGER FORM).
      */
-    public void addFixedInt(String text, int value, Consumer<Integer> handler, int interval, int minValue, int maxValue) {
+    public TextField addFixedInt(String text, int value, Consumer<Integer> handler, int interval, int minValue, int maxValue) {
         boolean isNegativeOneSpecial = (minValue == -1 && maxValue > 0);
         String displayStr = (isNegativeOneSpecial && value == -1) ? "-1" : FORMAT.format((double) value / interval);
 
-        addTextField(text, displayStr, newText -> {
+        return addTextField(text, displayStr, newText -> {
             double parsedValue;
 
             try {
@@ -1353,8 +1363,9 @@ public class GUIEditorGrid {
      */
     public static GridPane createDefaultPane() {
         GridPane newPane = new GridPane();
-        newPane.getColumnConstraints().add(new ColumnConstraints(10, 100, Region.USE_PREF_SIZE, Priority.SOMETIMES, null, true));
-        newPane.getColumnConstraints().add(new ColumnConstraints(10, 100, Region.USE_PREF_SIZE, Priority.SOMETIMES, null, false));
+        newPane.setPrefWidth(250);
+        newPane.getColumnConstraints().add(new ColumnConstraints(10, 130, Region.USE_PREF_SIZE, Priority.SOMETIMES, null, true));
+        newPane.getColumnConstraints().add(new ColumnConstraints(10, 120, Region.USE_PREF_SIZE, Priority.SOMETIMES, null, false));
         return newPane;
     }
 }

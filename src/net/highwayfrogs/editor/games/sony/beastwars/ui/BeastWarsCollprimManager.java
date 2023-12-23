@@ -72,7 +72,6 @@ public class BeastWarsCollprimManager extends BeastWarsMapListManager<BeastWarsM
     protected CollprimShapeAdapter<?> setupDisplay(BeastWarsMapCollprim collprim) {
         boolean isSelected = (collprim == getValueSelectionBox().getValue());
         CollprimShapeAdapter<?> adapter = collprim.addDisplay(this, this.collprimDisplayList, isSelected ? MATERIAL_YELLOW : MATERIAL_GREEN);
-        adapter.getShape().setVisible(getShowValuesCheckBox().isSelected());
         adapter.getShape().setDrawMode(this.wireframePreviewCheckBox.isSelected() ? DrawMode.LINE : DrawMode.FILL);
         adapter.getShape().setOnMouseClicked(event -> getValueSelectionBox().getSelectionModel().select(collprim));
 
@@ -86,7 +85,13 @@ public class BeastWarsCollprimManager extends BeastWarsMapListManager<BeastWarsM
 
     @Override
     protected void setValuesVisible(boolean showCollprims) {
+        super.setValuesVisible(showCollprims);
         this.collprimDisplayList.setVisible(showCollprims);
+    }
+
+    @Override
+    protected void setVisible(BeastWarsMapCollprim beastWarsMapCollprim, CollprimShapeAdapter<?> collprimShapeAdapter, boolean visible) {
+        collprimShapeAdapter.getShape().setVisible(visible);
     }
 
     @Override

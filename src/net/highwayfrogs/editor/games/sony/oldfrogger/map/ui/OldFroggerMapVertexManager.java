@@ -69,7 +69,13 @@ public class OldFroggerMapVertexManager extends OldFroggerMapListManager<SVector
 
     @Override
     protected void setValuesVisible(boolean valuesVisible) {
+        super.setValuesVisible(valuesVisible);
         this.verticeDisplayList.setVisible(valuesVisible);
+    }
+
+    @Override
+    protected void setVisible(SVector sVector, Sphere sphere, boolean visible) {
+        sphere.setVisible(visible);
     }
 
     @Override

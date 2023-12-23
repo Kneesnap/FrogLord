@@ -9,8 +9,6 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
-import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerFormConfig;
-import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerFormConfig.OldFroggerFormConfigEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
@@ -20,7 +18,6 @@ import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +66,8 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
     @Override
     protected void setupMainGridEditor(VBox editorBox) {
         super.setupMainGridEditor(editorBox);
-        getShowValuesCheckBox().selectedProperty().set(true);
+        getValueDisplaySetting().setValue(ListDisplayType.ALL);
+        getValueDisplaySetting().setDisable(true);
     }
 
     @Override
@@ -177,33 +175,7 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
 
     @Override
     protected void updateEditor(OldFroggerMapEntity entity) {
-        getEditorGrid().addLabel("Form ID ", String.valueOf(entity.getFormTypeId()));
-        getEditorGrid().addLabel("Entity ID", String.valueOf(entity.getEntityId()));
-
-        OldFroggerMapForm form = entity.getForm();
-        if (form != null && form.getMofFile() != null)
-            getEditorGrid().addLabel("MOF / Model", form.getMofFile().getFileDisplayName());
-
-        OldFroggerFormConfig formConfig = getMap().getFormConfig();
-        OldFroggerFormConfigEntry formConfigEntry = formConfig != null ? formConfig.getFormByType(entity.getFormTypeId()) : null;
-        if (formConfigEntry != null)
-            getEditorGrid().addLabel("Form Name", formConfigEntry.getDisplayName());
-
-        getEditorGrid().addLabel("Difficulty", Utils.toHexString(entity.getDifficulty()));
-
-        if (entity.getEntityData() != null) {
-            getEditorGrid().addSeparator();
-            try {
-                entity.getEntityData().setupEditor(this, getEditorGrid());
-            } catch (Throwable th) {
-                getEditorGrid().addNormalLabel("Encountered an error setting up the editor.");
-                th.printStackTrace();
-            }
-        }
-
-        // TODO: The "Remove" button likely belongs next to the "Add" button. Consider centering them.
-
-        // TODO: Cleanup this mess.
+        entity.setupEditor(this, getEditorGrid());
     }
 
     @Override
@@ -217,6 +189,11 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
     @Override
     protected void setValuesVisible(boolean valuesVisible) {
         this.entityDisplayList.setVisible(valuesVisible);
+    }
+
+    @Override
+    protected void setVisible(OldFroggerMapEntity oldFroggerMapEntity, MeshView meshView, boolean visible) {
+        meshView.setVisible(visible);
     }
 
     @Override

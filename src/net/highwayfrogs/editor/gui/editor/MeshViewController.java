@@ -151,11 +151,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
      * @return editorGrid
      */
     public GUIEditorGrid makeEditorGrid(Pane holder) {
-        GridPane gridPane = new GridPane();
-        gridPane.setPrefWidth(250);
-        gridPane.getColumnConstraints().add(new ColumnConstraints(10, 100, 110, Priority.ALWAYS, null, false));
-        gridPane.getColumnConstraints().add(new ColumnConstraints(10, 140, 140, Priority.ALWAYS, null, false));
-
+        GridPane gridPane = GUIEditorGrid.createDefaultPane();
         holder.getChildren().add(gridPane);
         return new GUIEditorGrid(gridPane);
     }

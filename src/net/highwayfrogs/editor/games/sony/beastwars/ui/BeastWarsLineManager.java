@@ -53,7 +53,6 @@ public class BeastWarsLineManager extends BeastWarsMapListManager<BeastWarsMapLi
 
             PhongMaterial material = isSelected ? MATERIAL_YELLOW : MATERIAL_WHITE;
             Cylinder cylinder = newLineList.addLine(lastPos.getFloatX(), lastPos.getFloatY(), lastPos.getFloatZ(), currPos.getFloatX(), currPos.getFloatY(), currPos.getFloatZ(), 5, material);
-            cylinder.setVisible(getShowValuesCheckBox().isSelected());
             cylinder.setOnMouseClicked(event -> getValueSelectionBox().getSelectionModel().select(line));
         }
 
@@ -79,8 +78,8 @@ public class BeastWarsLineManager extends BeastWarsMapListManager<BeastWarsMapLi
     }
 
     @Override
-    protected void setValuesVisible(boolean valuesVisible) {
-        getDelegatesByValue().values().forEach(displayList -> displayList.setVisible(valuesVisible));
+    protected void setVisible(BeastWarsMapLine beastWarsMapLine, DisplayList displayList, boolean visible) {
+        displayList.setVisible(visible);
     }
 
     @Override

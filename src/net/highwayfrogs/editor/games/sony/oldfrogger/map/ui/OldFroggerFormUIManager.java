@@ -39,7 +39,8 @@ public class OldFroggerFormUIManager extends OldFroggerMapListManager<OldFrogger
         super.setupMainGridEditor(editorBox);
 
         // Setup stuff.
-        getShowValuesCheckBox().setDisable(true); // Forms cannot be previewed.
+        getValueDisplaySetting().setValue(ListDisplayType.NONE); // Forms cannot be previewed.
+        getValueDisplaySetting().setDisable(true); // Forms cannot be previewed.
 
         // Allow changing form.
         OldFroggerMapFormInstancePacket formPacket = getMap().getFormInstancePacket();
@@ -81,6 +82,11 @@ public class OldFroggerFormUIManager extends OldFroggerMapListManager<OldFrogger
     @Override
     protected void setValuesVisible(boolean valuesVisible) {
         // No 3D Representation, don't need to do anything.
+    }
+
+    @Override
+    protected void setVisible(OldFroggerMapForm oldFroggerMapForm, Void unused, boolean visible) {
+        // No 3D representation, don't need to do anything.
     }
 
     @Override

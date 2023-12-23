@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerFormConfig
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerFormConfig.OldFroggerFormConfigEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEditorUtils;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerFormUIManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
@@ -273,15 +274,11 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
 
         /**
          * Setup editor UI for this form data entry.
-         * @param manager The manager to setup the editor UI for.
-         * @param editor  The editor to setup the editor UI using.
+         * @param manager The manager to set up the editor UI for.
+         * @param editor  The editor to set up the editor UI using.
          */
         public void setupEditor(OldFroggerFormUIManager manager, GUIEditorGrid editor) {
-            editor.addEnumSelector("Reaction", this.reaction, OldFroggerReactionType.values(), false, newValue -> this.reaction = newValue);
-            for (int i = 0; i < this.reactionData.length; i++) {
-                final int index = i;
-                editor.addUnsignedFixedShort("Reaction Data " + (i + 1), this.reactionData[i], newValue -> this.reactionData[index] = newValue, 1);
-            }
+            OldFroggerEditorUtils.setupReactionEditor(editor, this.reaction, this.reactionData, newValue -> this.reaction = newValue);
 
             // TODO: HRMM.
             editor.addUnsignedFixedShort("Number of Heights", this.numberOfHeights, newValue -> this.numberOfHeights = (short) (int) newValue, 1); //  TODO: Replace this once we support heights.

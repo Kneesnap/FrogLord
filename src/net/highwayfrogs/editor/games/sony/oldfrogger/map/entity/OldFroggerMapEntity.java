@@ -12,6 +12,9 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerFormConfig
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerEntityData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerEntityData.OldFroggerEntityDataFactory;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEditorUtils;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -74,16 +77,43 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
     }
 
     /**
+     * Setup the editor UI for the entity.
+     * @param manager The manager for editing entities.
+     * @param editor  The editor used to create the UI.
+     */
+    public void setupEditor(OldFroggerEntityManager manager, GUIEditorGrid editor) {
+        editor.addLabel("Form ID ", String.valueOf(this.formTypeId));
+        editor.addLabel("Entity ID", String.valueOf(this.entityId));
+
+        OldFroggerMapForm form = getForm();
+        if (form != null && form.getMofFile() != null)
+            editor.addLabel("MOF / Model", form.getMofFile().getFileDisplayName());
+
+        OldFroggerFormConfig formConfig = getMap().getFormConfig();
+        OldFroggerFormConfigEntry formConfigEntry = formConfig != null ? formConfig.getFormByType(this.formTypeId) : null;
+        if (formConfigEntry != null)
+            editor.addLabel("Form Name", formConfigEntry.getDisplayName());
+
+        OldFroggerEditorUtils.addDifficultyEditor(editor, this.difficulty, newValue -> this.difficulty = newValue);
+
+        if (this.entityData != null) {
+            editor.addSeparator();
+            try {
+                this.entityData.setupEditor(manager, editor);
+            } catch (Throwable th) {
+                editor.addNormalLabel("Encountered an error setting up the editor.");
+                th.printStackTrace();
+            }
+        }
+    }
+
+    /**
      * Test if a difficulty level is enabled.
      * @param level The level to test. (0 indexed)
      * @return If the difficulty level is enabled.
      */
     public boolean isDifficultyLevelEnabled(int level) {
-        if (level < 0 || level >= OldFroggerGameInstance.DIFFICULTY_LEVELS)
-            return false;
-
-        int mask = (1 << level);
-        return (this.difficulty & mask) == mask;
+        return OldFroggerEditorUtils.isDifficultyLevelEnabled(this.difficulty, level);
     }
 
     /**
@@ -92,15 +122,7 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
      * @param newState The new state of this difficulty level.
      */
     public void setDifficultyLevelEnabled(int level, boolean newState) {
-        if (level < 0 || level >= OldFroggerGameInstance.DIFFICULTY_LEVELS)
-            throw new IllegalArgumentException("Invalid difficulty level: " + level);
-
-        int mask = (1 << level);
-        if (newState) {
-            this.difficulty |= mask;
-        } else {
-            this.difficulty &= ~mask;
-        }
+        this.difficulty = OldFroggerEditorUtils.setDifficultyLevelEnabled(this.difficulty, level, newState);
     }
 
     /**

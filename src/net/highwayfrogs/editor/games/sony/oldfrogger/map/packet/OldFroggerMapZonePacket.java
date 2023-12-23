@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -8,6 +9,11 @@ import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerReactionType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEditorUtils;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapZoneManager.ZonePreview3D;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapZoneManager.ZoneRegionEditor;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapZoneManager.ZoneRegionPreview3D;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +78,6 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
     @Getter
     public static class OldFroggerMapZone extends SCGameData<OldFroggerGameInstance> {
         private short planeY; // world height of this zone
-        private int state; // whether zone is active or not (i.e paused)
         private int objBoundAX1; // Object Aligned Bounding Box
         private int objBoundAZ1; //	(World Coords)
         private int objBoundAX2;
@@ -90,7 +95,7 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
         @Override
         public void load(DataReader reader) {
             this.planeY = reader.readShort();
-            this.state = reader.readUnsignedShortAsInt();
+            reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Zone state. (Seems to always be zero)
             this.objBoundAX1 = reader.readInt();
             this.objBoundAZ1 = reader.readInt();
             this.objBoundAX2 = reader.readInt();
@@ -116,7 +121,7 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
         @Override
         public void save(DataWriter writer) {
             writer.writeShort(this.planeY);
-            writer.writeUnsignedShort(this.state);
+            writer.writeUnsignedShort(0); // State (Always Zero)
             writer.writeInt(this.objBoundAX1);
             writer.writeInt(this.objBoundAZ1);
             writer.writeInt(this.objBoundAX2);
@@ -133,12 +138,57 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
             for (int i = 0; i < this.regions.size(); i++)
                 this.regions.get(i).save(writer);
         }
+
+        /**
+         * Creates an editor UI for this zone.
+         * @param editor      The editor to create the UI with.
+         * @param zonePreview The 3D zone preview to update.
+         */
+        public void setupEditor(GUIEditorGrid editor, ZonePreview3D zonePreview) {
+            // Position Updates
+            editor.addFixedInt("Min X", this.objBoundAX1, newValue -> {
+                this.objBoundAX1 = newValue;
+                zonePreview.updateBoxPosition(this);
+            });
+            editor.addFixedInt("Min Z", this.objBoundAZ1, newValue -> {
+                this.objBoundAZ1 = newValue;
+                zonePreview.updateBoxPosition(this);
+            });
+            editor.addFixedInt("Max X", this.objBoundAX2, newValue -> {
+                this.objBoundAX2 = newValue;
+                zonePreview.updateBoxPosition(this);
+            });
+            editor.addFixedInt("Max Z", this.objBoundAZ2, newValue -> {
+                this.objBoundAZ2 = newValue;
+                zonePreview.updateBoxPosition(this);
+            });
+            editor.addFixedShort("Y", this.planeY, newValue -> {
+                this.planeY = newValue;
+                zonePreview.updateBoxPosition(this);
+
+                // Update the Y position of the lines
+                for (int i = 0; i < zonePreview.getRegionPreviews().size(); i++)
+                    zonePreview.getRegionPreviews().get(i).updateRegionLineHeight(this);
+            }, 1 << 4, Short.MIN_VALUE, Short.MAX_VALUE);
+
+            // Basic Data
+            OldFroggerEditorUtils.addDifficultyEditor(editor, this.difficulty, newValue -> this.difficulty = newValue);
+            editor.addEnumSelector("Zone Type", this.zoneType, OldFroggerMapZoneType.values(), false, newValue -> this.zoneType = newValue);
+            OldFroggerEditorUtils.setupReactionEditor(editor, this.reactionType, this.reactionData, newValue -> this.reactionType = newValue);
+
+            // Region
+            editor.addSeparator();
+            OldFroggerMapZoneRegion firstRegion = this.regions.size() > 0 ? this.regions.get(0) : null;
+            ZoneRegionPreview3D regionPreview = zonePreview.getPreviewsByRegion().get(firstRegion);
+            new ZoneRegionEditor(this, zonePreview, firstRegion).setupEditor(editor, firstRegion, regionPreview);
+        }
     }
 
     /**
      * Represents a single zone region in an old Frogger map.
      */
     @Getter
+    @Setter
     public static class OldFroggerMapZoneRegion extends SCGameData<OldFroggerGameInstance> {
         private int worldX; // x offset for this line
         private int worldZ1; // lower Z coord

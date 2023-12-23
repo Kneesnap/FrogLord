@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapVersion;
@@ -72,10 +70,6 @@ public class OldFroggerMapMesh extends DynamicMesh {
             System.out.println("No level table entry was found for " + getMap().getFileDisplayName() + ", ");
             return;
         }
-
-        // Register textures from 3D models, and the texture remap.
-        VLOArchive mainArchive = levelEntry.getMainVLOArchive();
-        SCUtils.addAtlasTextures(getTextureAtlas(), mainArchive, levelEntry.getWadFile(), levelEntry.getTextureRemap());
 
         // Add gouraud shaded stuff.
         if (getMap().getFormatVersion() == OldFroggerMapVersion.MILESTONE3)

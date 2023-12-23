@@ -132,8 +132,8 @@ public class OldFroggerPathManager extends OldFroggerMapListManager<OldFroggerMa
     }
 
     @Override
-    protected void setValuesVisible(boolean valuesVisible) {
-        getDelegatesByValue().values().forEach(delegate -> delegate.setVisible(valuesVisible));
+    protected void setVisible(OldFroggerMapPath oldFroggerMapPath, DisplayList displayList, boolean visible) {
+        displayList.setVisible(visible);
     }
 
     @Override

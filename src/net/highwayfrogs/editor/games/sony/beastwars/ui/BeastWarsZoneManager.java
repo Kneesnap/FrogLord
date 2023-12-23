@@ -44,9 +44,7 @@ public class BeastWarsZoneManager extends BeastWarsMapListManager<BeastWarsMapZo
 
     @Override
     protected ZoneVisualPreview setupDisplay(BeastWarsMapZone beastWarsMapZone) {
-        ZoneVisualPreview newPreview = new ZoneVisualPreview(this, beastWarsMapZone);
-        newPreview.setVisible(getShowValuesCheckBox().isSelected());
-        return newPreview;
+        return new ZoneVisualPreview(this, beastWarsMapZone);
         // TODO: When highlighted face is clicked, attempt to select the corresponding region, or just select no region but display everything.
     }
 
@@ -90,6 +88,11 @@ public class BeastWarsZoneManager extends BeastWarsMapListManager<BeastWarsMapZo
     @Override
     protected void setValuesVisible(boolean visible) {
         getDelegatesByValue().values().forEach(visualPreview -> visualPreview.setVisible(visible));
+    }
+
+    @Override
+    protected void setVisible(BeastWarsMapZone beastWarsMapZone, ZoneVisualPreview zoneVisualPreview, boolean visible) {
+        zoneVisualPreview.setVisible(visible);
     }
 
     @Override
