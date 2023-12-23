@@ -382,8 +382,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.comboBoxMeshCullFace.valueProperty().bindBidirectional(meshView.cullFaceProperty());
 
         // Must be called after MAPController is passed.
-        runForEachManager(MeshUIManager::onSetup, "onSetup"); // Setup all of the managers.
-        runForEachManager(MeshUIManager::updateEditor, "setupEditor"); // Setup all of the managers editors.
+        runForEachManager(MeshUIManager::onSetup, "onSetup"); // Setup all the managers.
+        runForEachManager(MeshUIManager::updateEditor, "updateEditor"); // Setup all the managers editors.
     }
 
     private void setupAxis() {

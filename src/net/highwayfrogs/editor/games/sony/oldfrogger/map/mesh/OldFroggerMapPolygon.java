@@ -28,6 +28,7 @@ import java.util.Arrays;
  * | / |
  * |/  |
  * 3---4
+ * This order matches how the PSX GPU processes a quad, first using vertices 1-2-3, then 2-3-4, according to <a href="https://psx-spx.consoledev.net/graphicsprocessingunitgpu/">this link</a>.
  * UVs are based on a different corner though. UVs start from the bottom left corner, instead of the top corner. Meaning 0, 0 (Origin) is the bottom left corner.
  * To counteract this, we can do 1.0 - v to get the texture coordinates relative to the top left corner.
  * Created by Kneesnap on 12/9/2023.

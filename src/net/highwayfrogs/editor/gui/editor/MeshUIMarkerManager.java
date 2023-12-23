@@ -8,6 +8,7 @@ import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.Vector;
+import net.highwayfrogs.editor.games.sony.shared.fxobject.Arrow3D;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -19,6 +20,7 @@ import net.highwayfrogs.editor.utils.Utils;
 public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManager<TMesh> {
     private final DisplayList markerList;
     private Box boxVisualizer;
+    private Arrow3D arrowVisualizer;
     private Vector showPosition;
 
     private static final double GENERIC_POS_SIZE = 3;
@@ -73,5 +75,24 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
         } else {
             this.boxVisualizer = this.markerList.addBoundingBoxFromMinMax(baseX - GENERIC_POS_SIZE, baseY - GENERIC_POS_SIZE, baseZ - GENERIC_POS_SIZE, baseX + GENERIC_POS_SIZE, baseY + GENERIC_POS_SIZE, baseZ + GENERIC_POS_SIZE, GENERIC_POS_MATERIAL, true);
         }
+    }
+
+    /**
+     * Updates the marker to display at the given position.
+     * If null is supplied, it'll get removed.
+     */
+    public void updateArrow(Vector startPos, Vector offset, int bits) {
+        if (this.arrowVisualizer == null) {
+            this.arrowVisualizer = new Arrow3D();
+            this.markerList.add(this.arrowVisualizer);
+        }
+
+        this.arrowVisualizer.getStartPosition().setX(startPos.getFloatX(bits));
+        this.arrowVisualizer.getStartPosition().setY(startPos.getFloatY(bits));
+        this.arrowVisualizer.getStartPosition().setZ(startPos.getFloatZ(bits));
+        this.arrowVisualizer.getEndPosition().setX(startPos.getFloatX(bits) + offset.getFloatX(bits));
+        this.arrowVisualizer.getEndPosition().setY(startPos.getFloatY(bits) + offset.getFloatY(bits));
+        this.arrowVisualizer.getEndPosition().setZ(startPos.getFloatZ(bits) + offset.getFloatZ(bits));
+        this.arrowVisualizer.updatePositionAndRotation();
     }
 }

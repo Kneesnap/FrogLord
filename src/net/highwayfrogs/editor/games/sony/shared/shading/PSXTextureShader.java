@@ -22,6 +22,7 @@ import java.awt.image.BufferedImage;
  * | / |
  * |/  |
  * 3---4
+ * This order matches how the PSX GPU processes a quad, first using vertices 1-2-3, then 2-3-4, according to <a href="https://psx-spx.consoledev.net/graphicsprocessingunitgpu/">this link</a>.
  * Created by Kneesnap on 12/19/2023.
  */
 @Getter

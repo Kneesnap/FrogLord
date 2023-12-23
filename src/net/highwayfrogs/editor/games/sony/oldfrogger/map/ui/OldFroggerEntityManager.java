@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.ui;
 
-import javafx.scene.AmbientLight;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
@@ -14,7 +12,6 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEnt
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapUIManager.OldFroggerMapListManager;
-import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
@@ -30,8 +27,6 @@ import java.util.Map;
 public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFroggerMapEntity, MeshView> {
     private final float[] posCache = new float[6];
     private final Map<MOFHolder, MOFMesh> meshCache = new HashMap<>();
-    private DisplayList entityDisplayList;
-    private AmbientLight mainLight;
 
     public OldFroggerEntityManager(MeshViewController<OldFroggerMapMesh> controller) {
         super(controller);
@@ -53,17 +48,6 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
     }
 
     @Override
-    public void onSetup() {
-        this.entityDisplayList = getRenderManager().createDisplayList();
-
-        // Temporary lighting for entities. TODO: Hm.
-        this.mainLight = new AmbientLight(Color.WHITE);
-        this.entityDisplayList.add(this.mainLight);
-
-        super.onSetup();
-    }
-
-    @Override
     protected void setupMainGridEditor(VBox editorBox) {
         super.setupMainGridEditor(editorBox);
         getValueDisplaySetting().setValue(ListDisplayType.ALL);
@@ -77,8 +61,7 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
         newView.setDrawMode(DrawMode.FILL);
         updateEntityMesh(entity, newView);
         updateEntityPositionRotation(entity, newView);
-        this.mainLight.getScope().add(newView);
-        this.entityDisplayList.add(newView);
+        getController().getLightManager().getLightingGroup().getChildren().add(newView);
 
         newView.setOnMouseClicked(evt -> getValueSelectionBox().getSelectionModel().select(entity));
         return newView;
@@ -180,15 +163,8 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
 
     @Override
     protected void onDelegateRemoved(OldFroggerMapEntity removedEntity, MeshView oldMeshView) {
-        if (oldMeshView != null) {
-            this.entityDisplayList.remove(oldMeshView);
-            this.mainLight.getScope().remove(oldMeshView);
-        }
-    }
-
-    @Override
-    protected void setValuesVisible(boolean valuesVisible) {
-        this.entityDisplayList.setVisible(valuesVisible);
+        if (oldMeshView != null)
+            getController().getLightManager().getLightingGroup().getChildren().remove(oldMeshView);
     }
 
     @Override
@@ -198,7 +174,7 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
 
     @Override
     protected void onSelectedValueChange(OldFroggerMapEntity oldEntity, MeshView oldMeshView, OldFroggerMapEntity newEntity, MeshView newMeshView) {
-        // TODO: Maybe?
+        // TODO: Maybe highlight?
     }
 
     @Override

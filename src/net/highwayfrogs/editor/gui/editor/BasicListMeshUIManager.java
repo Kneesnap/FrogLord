@@ -170,12 +170,11 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         });
     }
 
-
     /**
      * Creates the 3D display for a value.
      * @param value The value to create a 3D delegate for.
      */
-    protected T3DDelegate createDisplay(TValue value) {
+    public T3DDelegate createDisplay(TValue value) {
         T3DDelegate newDelegate = setupDisplay(value);
         T3DDelegate oldDelegate = getDelegatesByValue().put(value, newDelegate);
         if (oldDelegate != null)
@@ -250,8 +249,14 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         this.editorGrid.clearEditor();
         TValue selectedValue = this.valueSelectionBox.getValue();
         this.removeValueButton.setDisable(selectedValue == null);
-        if (selectedValue != null)
-            updateEditor(selectedValue);
+        if (selectedValue != null) {
+            try {
+                updateEditor(selectedValue);
+            } catch (Throwable th) {
+                th.printStackTrace();
+                this.editorGrid.addBoldLabel("An error occurred while setting up the UI.");
+            }
+        }
     }
 
     /**

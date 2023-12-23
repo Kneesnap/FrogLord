@@ -7,7 +7,8 @@ import net.highwayfrogs.editor.Constants;
 /**
  * Represents types of MR_LIGHT.
  * Based on the lighting options Maya had https://www.expertrating.com/courseware/mayacourse/MAYA-Cameras-Lighting-2.asp
- * Frogger was built with Maya.
+ * Frogger was built with OpenInventor, but also Alias Wavefront (what became Maya).
+ * After this class was created, it was determined that OpenInventor is actually what we should base our lights on, not Maya.
  * Created by Kneesnap on 1/20/2019.
  */
 @Getter

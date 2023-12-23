@@ -13,9 +13,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.shared.shading.PSXTextureShader;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.utils.IBinarySerializable;
@@ -47,7 +48,7 @@ public class CVector implements IBinarySerializable {
     // Bit 4:    gouraud / flat shading
     // Bit 5-7:  polygon render (always 001, if not 001, then this isn't a command to render a polygon. Read the GP0 command list for more info)
     // This value is ignored for all colors after the first one.
-    private byte code;
+    private byte code = (byte) 0xFF; // Frogger has these as 0xFF by default, but other games might not do that.
 
     public static final int BYTE_LENGTH = 4 * Constants.BYTE_SIZE;
 
@@ -146,6 +147,7 @@ public class CVector implements IBinarySerializable {
 
     /**
      * Get this color as a Java color.
+     * This method assumes that modulation is disabled, since modulation makes the CVector more than just a color.
      * @return javaColor
      */
     public Color toColor() {
@@ -154,6 +156,7 @@ public class CVector implements IBinarySerializable {
 
     /**
      * Get this color as a Java color.
+     * This method assumes that modulation is disabled, since modulation makes the CVector more than just a color.
      * @return javaColor
      */
     public Color toColor(byte alpha) {
@@ -204,12 +207,10 @@ public class CVector implements IBinarySerializable {
 
     /**
      * Adds a color vector to the editor.
-     * TODO: Let's revisit this and see if we can improve it.
-     * This is not for picking a color, rather it's for the PSX gouraud shading settings.
+     * This is for picking / editing a color.
      */
-    public void setupEditor(GUIEditorGrid grid, String label, BufferedImage previewImage, Runnable onUpdate, boolean fullRange) {
+    public void setupUnmodulatedEditor(GUIEditorGrid grid, String label, BufferedImage texture, Runnable onUpdate) {
         HBox box = new HBox();
-
         Runnable[] imageUpdate = new Runnable[1];
         javafx.scene.text.Font useFont = javafx.scene.text.Font.font(javafx.scene.text.Font.getDefault().getSize() * .75D);
         VBox previewBox = new VBox();
@@ -217,67 +218,53 @@ public class CVector implements IBinarySerializable {
         VBox greenBox = new VBox();
         VBox blueBox = new VBox();
 
-        Slider redSlider = new Slider(0D, fullRange ? 255D : 127D, Utils.byteToUnsignedShort(getRed()));
+        Label redLabel = labelFont("Red (" + getRedShort() + ")", useFont);
+        Label greenLabel = labelFont("Green (" + getGreenShort() + ")", useFont);
+        Label blueLabel = labelFont("Blue (" + getBlueShort() + ")", useFont);
+
+        // Downscale the texture, so it's a lot faster to update the color.
+        final BufferedImage scaledTexture = texture != null ? ImageWorkHorse.resizeImage(texture, 45, 45, false) : null;
+
+        Slider redSlider = new Slider(0D, 255D, getRedShort());
         redSlider.setBlockIncrement(1);
         redSlider.setMinorTickCount(1);
         redSlider.setSnapToTicks(true);
         redSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
-            if (fullRange) {
-                setRed(Utils.unsignedShortToByte((short) (double) newValue));
-            } else {
-                setRed((byte) (int) (double) newValue);
-            }
+            setRedShort((short) (double) newValue);
+            redLabel.setText("Red (" + getRedShort() + ")");
             imageUpdate[0].run();
             if (onUpdate != null)
                 onUpdate.run();
         }));
 
-        Slider greenSlider = new Slider(0D, fullRange ? 255D : 127D, Utils.byteToUnsignedShort(getGreen()));
+        Slider greenSlider = new Slider(0D, 255D, getGreenShort());
         greenSlider.setBlockIncrement(1);
         greenSlider.setMinorTickCount(1);
         greenSlider.setSnapToTicks(true);
         greenSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
-            if (fullRange) {
-                setGreen(Utils.unsignedShortToByte((short) (double) newValue));
-            } else {
-                setGreen((byte) (int) (double) newValue);
-            }
+            setGreenShort((short) (double) newValue);
+            greenLabel.setText("Green (" + getGreenShort() + ")");
             imageUpdate[0].run();
             if (onUpdate != null)
                 onUpdate.run();
         }));
 
-        Slider blueSlider = new Slider(0D, fullRange ? 255D : 127D, Utils.byteToUnsignedShort(getBlue()));
+        Slider blueSlider = new Slider(0D, 255D, getBlueShort());
         blueSlider.setBlockIncrement(1);
         blueSlider.setMinorTickCount(1);
         blueSlider.setSnapToTicks(true);
         blueSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
-            if (fullRange) {
-                setBlue(Utils.unsignedShortToByte((short) (double) newValue));
-            } else {
-                setBlue((byte) (int) (double) newValue);
-            }
-
+            setBlueShort((short) (double) newValue);
+            redLabel.setText("Blue (" + getBlueShort() + ")");
             imageUpdate[0].run();
             if (onUpdate != null)
                 onUpdate.run();
         }));
 
-        // Create the base preview image.
-        BufferedImage applyImage;
-        if (previewImage != null) {
-            applyImage = Utils.resizeImage(previewImage, 45, 45);
-        } else {
-            applyImage = new BufferedImage(45, 45, BufferedImage.TYPE_INT_ARGB);
-            Graphics graphics = applyImage.createGraphics();
-            graphics.setColor(Color.WHITE);
-            graphics.fillRect(0, 0, applyImage.getWidth(), applyImage.getHeight());
-            graphics.dispose();
-        }
-
-        ImageView preview = new ImageView(Utils.toFXImage(applyImage, false));
+        // Color Preview
+        ImageView preview = new ImageView(scaledTexture != null ? Utils.toFXImage(scaledTexture, false) : null);
         preview.setOnMouseClicked(evt ->
-                InputMenu.promptInput("Please enter the color value you'd like to use.", Integer.toHexString(toRGB()), newText -> {
+                InputMenu.promptInput("Please enter the color value you'd like to use.", Integer.toHexString(toRGB()).toUpperCase(), newText -> {
                     int colorRGB;
                     try {
                         colorRGB = Integer.parseInt(newText, 16);
@@ -287,22 +274,32 @@ public class CVector implements IBinarySerializable {
                     }
 
                     fromRGB(colorRGB);
-                    redSlider.setValue(Utils.byteToUnsignedShort(getRed()));
-                    greenSlider.setValue(Utils.byteToUnsignedShort(getGreen()));
-                    blueSlider.setValue(Utils.byteToUnsignedShort(getBlue()));
+                    redSlider.setValue(getRedShort());
+                    greenSlider.setValue(getGreenShort());
+                    blueSlider.setValue(getBlueShort());
+                    redLabel.setText("Red (" + getRedShort() + ")");
+                    greenLabel.setText("Green (" + getGreenShort() + ")");
+                    blueLabel.setText("Blue (" + getBlueShort() + ")");
                     imageUpdate[0].run();
                     if (onUpdate != null)
                         onUpdate.run();
                 }));
 
-        imageUpdate[0] = () ->
-                preview.setImage(Utils.toFXImage(MAPPolyTexture.makeFlatShadedTexture(applyImage, Utils.fromRGB(toRGB()), fullRange), false));
+        imageUpdate[0] = () -> {
+            BufferedImage newImage;
+            if (scaledTexture != null) {
+                newImage = PSXTextureShader.makeTexturedFlatShadedImage(scaledTexture, this);
+            } else {
+                newImage = PSXTextureShader.makeFlatShadedImage(45, 45, this);
+            }
+            preview.setImage(Utils.toFXImage(newImage, false));
+        };
         imageUpdate[0].run();
 
         previewBox.getChildren().addAll(labelFont(label, useFont), preview);
-        redBox.getChildren().addAll(labelFont("Red", useFont), redSlider);
-        greenBox.getChildren().addAll(labelFont("Green", useFont), greenSlider);
-        blueBox.getChildren().addAll(labelFont("Blue", useFont), blueSlider);
+        redBox.getChildren().addAll(redLabel, redSlider);
+        greenBox.getChildren().addAll(greenLabel, greenSlider);
+        blueBox.getChildren().addAll(blueLabel, blueSlider);
 
         // Center VBox Children
         previewBox.setAlignment(Pos.CENTER);
@@ -316,11 +313,104 @@ public class CVector implements IBinarySerializable {
         grid.addRow(60);
     }
 
+    /**
+     * Adds a color vector to the editor.
+     * This is not for picking a color, rather it's for the PSX gouraud shading settings.
+     */
+    public void setupModulatedEditor(GUIEditorGrid grid, Runnable onUpdate) {
+        HBox box = new HBox();
+
+        javafx.scene.text.Font useFont = javafx.scene.text.Font.font(javafx.scene.text.Font.getDefault().getSize() * .75D);
+        VBox redBox = new VBox();
+        VBox greenBox = new VBox();
+        VBox blueBox = new VBox();
+
+        // Setup first line elements.
+
+        // Setup color previews.
+        BufferedImage redColorImage = new BufferedImage(35, 10, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage greenColorImage = new BufferedImage(35, 10, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage blueColorImage = new BufferedImage(35, 10, BufferedImage.TYPE_INT_ARGB);
+        ImageView redColorView = new ImageView();
+        ImageView greenColorView = new ImageView();
+        ImageView blueColorView = new ImageView();
+
+        // Setup color labels.
+        Label redLabel = labelFont("Red (" + getRedShort() + ")", useFont);
+        Label greenLabel = labelFont("Green (" + getGreenShort() + ")", useFont);
+        Label blueLabel = labelFont("Blue (" + getBlueShort() + ")", useFont);
+
+        Slider redSlider = new Slider(0D, 255D, getRedShort());
+        redSlider.setBlockIncrement(1);
+        redSlider.setMinorTickCount(1);
+        redSlider.setSnapToTicks(true);
+        redSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
+            setRedShort((short) (double) newValue);
+            redLabel.setText("Red (" + getRedShort() + ")");
+            updateColorImage(redColorView, redColorImage, getRedShort(), 0, 0);
+            if (onUpdate != null)
+                onUpdate.run();
+        }));
+
+        Slider greenSlider = new Slider(0D, 255D, getGreenShort());
+        greenSlider.setBlockIncrement(1);
+        greenSlider.setMinorTickCount(1);
+        greenSlider.setSnapToTicks(true);
+        greenSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
+            setGreenShort((short) (double) newValue);
+            greenLabel.setText("Green (" + getGreenShort() + ")");
+            updateColorImage(greenColorView, greenColorImage, 0, getGreenShort(), 0);
+            if (onUpdate != null)
+                onUpdate.run();
+        }));
+
+        Slider blueSlider = new Slider(0D, 255D, getBlueShort());
+        blueSlider.setBlockIncrement(1);
+        blueSlider.setMinorTickCount(1);
+        blueSlider.setSnapToTicks(true);
+        blueSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
+            setBlueShort((short) (double) newValue);
+            blueLabel.setText("Blue (" + getBlueShort() + ")");
+            updateColorImage(blueColorView, blueColorImage, 0, 0, getBlueShort());
+            if (onUpdate != null)
+                onUpdate.run();
+        }));
+
+        redBox.getChildren().addAll(redLabel, redSlider, redColorView);
+        greenBox.getChildren().addAll(greenLabel, greenSlider, greenColorView);
+        blueBox.getChildren().addAll(blueLabel, blueSlider, blueColorView);
+
+        // Center VBox Children
+        redBox.setAlignment(Pos.CENTER);
+        greenBox.setAlignment(Pos.CENTER);
+        blueBox.setAlignment(Pos.CENTER);
+
+        box.setSpacing(1);
+        box.getChildren().addAll(redBox, greenBox, blueBox);
+        grid.setupSecondNode(box, true);
+        grid.addRow(60);
+    }
+
     private static javafx.scene.control.Label labelFont(String text, Font font) {
         javafx.scene.control.Label label = new Label(text);
         label.setFont(font);
         label.setWrapText(true);
         return label;
+    }
+
+    private static void updateColorImage(ImageView view, BufferedImage image, int newRed, int newGreen, int newBlue) {
+        Graphics2D graphics = image.createGraphics();
+
+        // Clamp modulated color value. This preview's purpose is to make it clear that 127 is the brightest color value in the editor.
+        int red = (int) Math.min((255D * newRed) / 127D, 255);
+        int green = (int) Math.min((255D * newGreen) / 127D, 255);
+        int blue = (int) Math.min((255D * newBlue) / 127D, 255);
+
+        graphics.setColor(new Color(red, green, blue, 255));
+        graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+        graphics.dispose();
+
+        view.setImage(Utils.toFXImage(image, false));
     }
 
     /**

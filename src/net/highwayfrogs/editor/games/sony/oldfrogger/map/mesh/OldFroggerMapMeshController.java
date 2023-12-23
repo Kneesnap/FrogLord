@@ -5,6 +5,7 @@ import javafx.scene.SubScene;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
+import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.*;
@@ -22,6 +23,7 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
     private static final double DEFAULT_FAR_CLIP = 5000;
     private static final double DEFAULT_MOVEMENT_SPEED = 400;
     private DisplayList vertexDisplayList;
+    @Getter private OldFroggerMapLightManager lightManager;
 
 
     private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.LIME);
@@ -94,6 +96,7 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
     protected void setupManagers() {
         addManager(new OldFroggerMapZoneManager(this));
         addManager(new OldFroggerMapVertexManager(this));
+        addManager(this.lightManager = new OldFroggerMapLightManager(this));
         addManager(new OldFroggerPathManager(this));
         addManager(new OldFroggerFormUIManager(this));
         addManager(new OldFroggerEntityManager(this));
