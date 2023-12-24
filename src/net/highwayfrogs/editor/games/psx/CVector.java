@@ -255,7 +255,7 @@ public class CVector implements IBinarySerializable {
         blueSlider.setSnapToTicks(true);
         blueSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
             setBlueShort((short) (double) newValue);
-            redLabel.setText("Blue (" + getBlueShort() + ")");
+            redLabel.setText("Red (" + getBlueShort() + ")");
             imageUpdate[0].run();
             if (onUpdate != null)
                 onUpdate.run();
