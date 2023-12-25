@@ -805,6 +805,16 @@ public class GUIEditorGrid {
 
     /**
      * Add a fixed point short decimal value.
+     * @param text    The text to add.
+     * @param value   The short value.
+     * @param handler The setter handler.
+     */
+    public void addFixedShort(String text, short value, Consumer<Short> handler) {
+        addFixedShort(text, value, handler, 1 << 4, Short.MIN_VALUE, Short.MAX_VALUE);
+    }
+
+    /**
+     * Add a fixed point short decimal value.
      * @param text             The text to add.
      * @param value            The short value.
      * @param handler          The setter handler.

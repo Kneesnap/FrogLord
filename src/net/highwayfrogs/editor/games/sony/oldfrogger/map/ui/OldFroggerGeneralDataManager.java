@@ -37,5 +37,11 @@ public class OldFroggerGeneralDataManager extends OldFroggerMapUIManager {
         // Setup basics.
         this.editorGrid.clearEditor();
         getMap().getLevelSpecificDataPacket().setupEditor(getController(), this.editorGrid);
+        this.editorGrid.addSeparator();
+
+        if (getMap().getStandardPacket() != null) {
+            this.editorGrid.addBoldLabel("\"Standard\" Map Data:");
+            getMap().getStandardPacket().setupEditor(this, this.editorGrid);
+        }
     }
 }
