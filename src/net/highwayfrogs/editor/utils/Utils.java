@@ -41,6 +41,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -1471,6 +1472,7 @@ public class Utils {
      * @param onPass Called if not null and the setter passed.
      */
     public static void setHandleKeyPress(TextField field, Function<String, Boolean> setter, Runnable onPass) {
+        AtomicReference<String> resetTextRef = new AtomicReference<>(field.getText());
         field.setOnKeyPressed(evt -> {
             KeyCode code = evt.getCode();
             if (field.getStyle().isEmpty() && (code.isLetterKey() || code.isDigitKey() || code == KeyCode.BACK_SPACE)) {
@@ -1479,13 +1481,15 @@ public class Utils {
                 if (field.getParent() != null)
                     field.getParent().requestFocus();
                 evt.consume(); // Don't pass further, eg: we don't want to exit the UI we're in.
+                field.setText(resetTextRef.get());
             } else if (code == KeyCode.ENTER) {
                 boolean successfullyHandled = false;
+                String newText = field.getText();
 
                 try {
-                    successfullyHandled = setter == null || setter.apply(field.getText());
+                    successfullyHandled = setter == null || setter.apply(newText);
                 } catch (Throwable th) {
-                    Utils.makeErrorPopUp("An error occurred applying the text '" + field.getText() + "'.", th, true);
+                    Utils.makeErrorPopUp("An error occurred applying the text '" + newText + "'.", th, true);
                 }
 
                 // Run completion hook. If it doesn't pass, return false. If it errors. warn and set it red.
@@ -1494,9 +1498,10 @@ public class Utils {
                         if (onPass != null)
                             onPass.run();
                         field.setStyle(null); // Disable any red / green styling.
+                        resetTextRef.set(newText);
                         return;
                     } catch (Throwable th) {
-                        Utils.makeErrorPopUp("An error occurred handling the text '" + field.getText() + "'.", th, true);
+                        Utils.makeErrorPopUp("An error occurred handling the text '" + newText + "'.", th, true);
                     }
                 }
 

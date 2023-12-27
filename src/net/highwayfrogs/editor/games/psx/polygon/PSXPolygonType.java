@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.psx.polygon;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -8,7 +7,6 @@ import lombok.Getter;
  * Created by Kneesnap on 12/9/2023.
  */
 @Getter
-@AllArgsConstructor
 public enum PSXPolygonType {
     POLY_F3(false, false, 3),
     POLY_FT3(false, true, 3),
@@ -22,6 +20,14 @@ public enum PSXPolygonType {
     private final boolean gouraud;
     private final boolean textured;
     private final int verticeCount;
+    private final String name;
+
+    PSXPolygonType(boolean gouraud, boolean textured, int verticeCount) {
+        this.gouraud = gouraud;
+        this.textured = textured;
+        this.verticeCount = verticeCount;
+        this.name = name().substring("POLY_".length());
+    }
 
     /**
      * Test if flat shading is enabled.

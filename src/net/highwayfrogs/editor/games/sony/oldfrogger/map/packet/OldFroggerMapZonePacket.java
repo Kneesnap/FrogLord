@@ -10,9 +10,9 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerReactionType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEditorUtils;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapZoneManager.ZonePreview3D;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapZoneManager.ZoneRegionEditor;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapZoneManager.ZoneRegionPreview3D;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerZoneManager.ZonePreview3D;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerZoneManager.ZoneRegionEditor;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerZoneManager.ZoneRegionPreview3D;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 import java.util.ArrayList;

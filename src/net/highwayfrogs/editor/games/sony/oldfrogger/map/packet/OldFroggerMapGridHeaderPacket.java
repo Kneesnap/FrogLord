@@ -10,6 +10,8 @@ import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolygon;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerGridManager;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
@@ -25,9 +27,9 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
     private final List<Integer> entityPointerList1 = new ArrayList<>(); // TODO: Figure this one out better.
     private final List<Integer> entityPointerList2 = new ArrayList<>(); // TODO: Figure this one out better.
 
-    private OldFroggerGridType type; // type of grid (?) 0 = FIXED, 1 = DEFORMED
-    private long xSize; // Size of grids (x)
-    private long zSize; // Size of grids (z)
+    private OldFroggerGridType type = OldFroggerGridType.DEFORMED; // type of grid (?) 0 = FIXED, 1 = DEFORMED
+    private int xSize; // Size of grids (x)
+    private int zSize; // Size of grids (z)
     private int xCount; // Number of grids in X
     private int zCount; // Number of grids in Z
     private final SVector basePoint = new SVector(); // Bottom left position of map
@@ -41,8 +43,8 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
         this.type = OldFroggerGridType.values()[reader.readByte()];
         byte padding = reader.readByte();
         int gridCount = reader.readUnsignedShortAsInt();
-        this.xSize = reader.readUnsignedIntAsLong(); // Size of grids (x)
-        this.zSize = reader.readUnsignedIntAsLong(); // Size of grids (z)
+        this.xSize = reader.readInt(); // Size of grids (x)
+        this.zSize = reader.readInt(); // Size of grids (z)
         this.xCount = reader.readUnsignedShortAsInt(); // Number of grids in X
         this.zCount = reader.readUnsignedShortAsInt(); // Number of grids in Z
         this.basePoint.loadWithPadding(reader);
@@ -60,8 +62,6 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
             throw new RuntimeException("Grid Padding byte was not zero! (Was: " + padding + ")");
         if (gridDataStartAddress != reader.getIndex())
             throw new RuntimeException("The address where grid data starts was not at the expected location. (Expected: " + Utils.toHexString(reader.getIndex()) + ", Provided: " + Utils.toHexString(gridDataStartAddress) + ")");
-
-        // TODO: System.out.println("GRID HEADER!!! [" + this.type + ", " + gridCount + ", " + this.xSize + ", " + this.zSize + ", " + this.xCount + ", " + this.zCount + ", " + this.basePoint.toFloatString() + ", " + staticCount + ", " + pathIdCount + ", " + entityListPointer + ", " + pathEntityPointer);
 
         // Read grid data.
         this.grids.clear();
@@ -100,6 +100,25 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
     }
 
     /**
+     * Setup the editor for grid packet data.
+     * @param manager The UI manager
+     * @param editor  The editor context to build upon.
+     */
+    public void setupEditor(OldFroggerGridManager manager, GUIEditorGrid editor) {
+        editor.addLabel("Entity List #1", String.valueOf(this.entityPointerList1.size()));
+        editor.addLabel("Entity List #2", String.valueOf(this.entityPointerList2.size()));
+
+        // Disable this since I don't think the other type is supported.
+        // And if it is, I don't know what data changes might be required.
+        editor.addEnumSelector("Type", this.type, OldFroggerGridType.values(), false, newValue -> this.type = newValue).setDisable(true);
+        editor.addIntegerField("Grid X Size", this.xSize, newValue -> this.xSize = newValue, null);
+        editor.addIntegerField("Grid Z Size", this.zSize, newValue -> this.zSize = newValue, null);
+        editor.addUnsignedFixedShort("Grid X Count", this.xCount, newValue -> this.xCount = newValue, 1);
+        editor.addUnsignedFixedShort("Grid Z Count", this.zCount, newValue -> this.zCount = newValue, 1);
+        editor.addFloatSVector("Base Position", this.basePoint, manager.getController());
+    }
+
+    /**
      * Represents a frogger map grid.
      */
     @Getter
@@ -135,12 +154,12 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
             int ptrCeilingFT4 = reader.readInt();
             int ptrCeilingG4 = reader.readInt();
             int ptrCeilingGT4 = reader.readInt();
-            reader.skipBytes(8 * Constants.INTEGER_SIZE); // Runtime pointers.
+            reader.skipBytesRequireEmpty(8 * Constants.INTEGER_SIZE); // Runtime pointers.
             int finalValue1 = reader.readInt(); // TODO: POINTER
             int finalValue2 = reader.readInt(); // TODO: Probably also pointer.
 
             /*if (debug) {
-                System.out.println("ITS FKING GRID TIME! [" + Utils.toHexString(this.unknown1) + "]:");
+                System.out.println("ITS GRID TIME! [" + Utils.toHexString(this.unknown1) + "]:");
                 System.out.println("- Floor Polys:   " + Utils.toHexString(ptrFloorF4) + "/" + numFloorF4 + ", " + Utils.toHexString(ptrFloorFT4) + "/" + numFloorFT4 + ", " + Utils.toHexString(ptrFloorG4) + "/" + numFloorG4 + ", " + Utils.toHexString(ptrFloorGT4) + "/" + numFloorGT4);
                 System.out.println("- Ceiling Polys: " + Utils.toHexString(ptrCeilingF4) + "/" + numCeilingF4 + ", " + Utils.toHexString(ptrCeilingFT4) + "/" + numCeilingFT4 + ", " + Utils.toHexString(ptrCeilingG4) + "/" + numCeilingG4 + ", " + Utils.toHexString(ptrCeilingGT4) + "/" + numCeilingGT4);
                 System.out.println("- " + Utils.toHexString(finalValue1) + ", " + Utils.toHexString(finalValue2));
@@ -205,6 +224,27 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
 
             // The polygons are written by the QUAD chunk.
             // TODO: Implement making it write them.
+        }
+
+        /**
+         * Setup the editor for this grid entry.
+         * @param manager The manager to setup the UI for.
+         * @param editor  The editor to use to create the UI.
+         */
+        public void setupEditor(OldFroggerGridManager manager, GUIEditorGrid editor) {
+            editor.addIntegerField("Unknown 1", this.unknown1, newValue -> this.unknown1 = newValue, null); // TODO: What is this?
+            editor.addLabel("All Polygons", String.valueOf(this.polygons.size()));
+            for (PSXPolygonType polygonType : POLYGON_TYPE_ORDER) {
+                List<OldFroggerMapPolygon> polygons = this.floorPolygonsByType.get(polygonType);
+                editor.addLabel("Floor " + polygonType.getName() + "s", String.valueOf(polygons != null ? polygons.size() : 0));
+            }
+
+            for (PSXPolygonType polygonType : POLYGON_TYPE_ORDER) {
+                List<OldFroggerMapPolygon> polygons = this.ceilingPolygonsByType.get(polygonType);
+                editor.addLabel("Ceiling " + polygonType.getName() + "s", String.valueOf(polygons != null ? polygons.size() : 0));
+            }
+
+            // TODO: Allow showing polygons (And adding / removing them by clicking on them)
         }
     }
 

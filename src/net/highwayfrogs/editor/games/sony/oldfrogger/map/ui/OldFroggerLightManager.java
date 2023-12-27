@@ -19,12 +19,12 @@ import java.util.List;
  * Created by Kneesnap on 12/23/2023.
  */
 @Getter
-public class OldFroggerMapLightManager extends OldFroggerMapListManager<OldFroggerMapLight, LightBase> {
+public class OldFroggerLightManager extends OldFroggerMapListManager<OldFroggerMapLight, LightBase> {
     private final Group lightingGroup = new Group(); // This is the group of things impacted by lighting.
     private AmbientLight mainLight;
     private DisplayList lightList;
 
-    public OldFroggerMapLightManager(MeshViewController<OldFroggerMapMesh> controller) {
+    public OldFroggerLightManager(MeshViewController<OldFroggerMapMesh> controller) {
         super(controller);
     }
 

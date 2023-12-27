@@ -21,7 +21,7 @@ public class OldFroggerFormUIManager extends OldFroggerMapListManager<OldFrogger
 
     @Override
     public String getTitle() {
-        return "Map Forms";
+        return "Form Entity Definitions";
     }
 
     @Override

@@ -109,6 +109,16 @@ public abstract class TextureAtlas extends SimpleTexture {
     public abstract AtlasTexture getNullTextureFromSource(ITextureSource textureSource);
 
     /**
+     * Gets a texture from its source, returning the fallback texture if no such texture is tracked.
+     * @param textureSource The texture source to get the texture from.
+     * @return The texture, if it is found. If the source does not have anything tracked, the fallback texture is provided.
+     */
+    public Texture getTextureFromSourceOrFallback(ITextureSource textureSource) {
+        AtlasTexture texture = getNullTextureFromSource(textureSource);
+        return texture != null ? texture : getFallbackTexture();
+    }
+
+    /**
      * Marks texture sizes as dirty, potentially causing an update.
      * Events will be fired.
      */

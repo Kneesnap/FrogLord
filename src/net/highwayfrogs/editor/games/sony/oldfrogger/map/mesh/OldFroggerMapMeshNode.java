@@ -6,17 +6,20 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapGridHeaderPacket.OldFroggerMapGrid;
 import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
+import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.system.math.Vector2f;
 
+import java.util.List;
+
 /**
  * Represents a node in a map mesh for pre-recode frogger.
- * TODO: Vertices should be shared. UVs can probably be per-face.
  * Created by Kneesnap on 12/8/2023.
  */
 public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapPolygon> {
     private final Vector2f tempVector = new Vector2f();
+    private DynamicMeshDataEntry vertexEntry;
 
     public OldFroggerMapMeshNode(OldFroggerMapMesh mesh) {
         super(mesh);
@@ -29,45 +32,53 @@ public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapP
 
     @Override
     protected void onAddedToMesh() {
-        super.onAddedToMesh();
+        // Setup vertices.
+        this.vertexEntry = new DynamicMeshDataEntry(getMesh());
+        List<SVector> vertices = getMap().getVertexPacket().getVertices();
+        for (int i = 0; i < vertices.size(); i++) {
+            SVector vertex = vertices.get(i);
+            this.vertexEntry.addVertexValue(vertex.getFloatX(), vertex.getFloatY(), vertex.getFloatZ());
+        }
+        addUnlinkedEntry(this.vertexEntry);
 
+        // Setup polygons.
         for (OldFroggerMapGrid grid : getMap().getGridPacket().getGrids())
             for (OldFroggerMapPolygon polygon : grid.getPolygons())
                 this.add(polygon);
 
-        for (OldFroggerMapGrid grid : getMap().getGridPacket().getGrids())
-            for (OldFroggerMapPolygon polygon : grid.getPolygons())
-                this.setupFaces(polygon);
+        // Update last.
+        super.onAddedToMesh();
     }
 
     @Override
-    protected void onRemovedFromMesh() {
-        super.onRemovedFromMesh();
-        // TODO: Let's automatically remove all data in the super method, just by having a method for it to get all of the entries.
+    public void clear() {
+        super.clear();
+        this.vertexEntry = null;
     }
 
     @Override
     protected DynamicMeshTypedDataEntry writeValuesToArrayAndCreateEntry(OldFroggerMapPolygon data) {
         DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), data);
 
-        // TODO: Vertices should be shared across all. (Debate different options ranging from putting all vertices in the first entry to making there always be one entry owned by the class, and not a specific node, to just having free-form management)
-        for (int i = 0; i < data.getVertices().length; i++) {
-            SVector vertexPos = getMap().getVertexPacket().getVertices().get(data.getVertices()[i]);
-            entry.addVertexValue(vertexPos.getFloatX(), vertexPos.getFloatY(), vertexPos.getFloatZ());
-        }
-
+        // Resolve texture.
         ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(data);
-        Texture texture = getMesh().getTextureAtlas().getNullTextureFromSource(textureSource);
-
-        // Use fallback texture if none found.
-        if (texture == null)
-            texture = getMesh().getTextureAtlas().getFallbackTexture();
+        Texture texture = getMesh().getTextureAtlas().getTextureFromSourceOrFallback(textureSource);
 
         // Add texture UVs.
-        entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 0, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
-        entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 1, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F
-        entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 2, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
-        entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 3, Vector2f.ONE)); // uvBottomRight, 1F, 1F
+        int uvIndex1 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 0, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
+        int uvIndex2 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 1, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F
+        int uvIndex3 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 2, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
+        int uvIndex4 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 3, Vector2f.ONE)); // uvBottomRight, 1F, 1F
+
+        // Vertice IDs are the same IDs seen in the map data.
+        int vtxIndex1 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[0];
+        int vtxIndex2 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[1];
+        int vtxIndex3 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[2];
+        int vtxIndex4 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[3];
+
+        // JavaFX uses counter-clockwise winding order.
+        entry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
+        entry.addFace(vtxIndex3, uvIndex3, vtxIndex4, uvIndex4, vtxIndex2, uvIndex2);
 
         return entry;
     }
@@ -109,43 +120,41 @@ public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapP
         return getMesh().getTextureAtlas().getUV(texture, localUv);
     }
 
-    private void setupFaces(OldFroggerMapPolygon polygon) {
-        DynamicMeshTypedDataEntry entry = getDataEntry(polygon);
-
-        // Determine UV Indices.
-        int uvIndex1 = entry.getTexCoordStartIndex();
-        int uvIndex2 = entry.getTexCoordStartIndex() + 1;
-        int uvIndex3 = entry.getTexCoordStartIndex() + 2;
-        int uvIndex4 = entry.getTexCoordStartIndex() + 3;
-
-        // Calculate vertices.
-        int vtxIndex1 = entry.getVertexStartIndex();
-        int vtxIndex2 = vtxIndex1 + 1;
-        int vtxIndex3 = vtxIndex1 + 2;
-        int vtxIndex4 = vtxIndex1 + 3;
-
-        // JavaFX uses counter-clockwise winding order.
-        entry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
-        entry.addFace(vtxIndex3, uvIndex3, vtxIndex4, uvIndex4, vtxIndex2, uvIndex2);
-    }
-
     @Override
     public void updateVertex(DynamicMeshTypedDataEntry entry, int localVertexIndex) {
-        OldFroggerMapPolygon vertex = entry.getDataSource();
-        int vertexIndex = vertex.getVertices()[localVertexIndex];
-        SVector vertexPos = getMap().getVertexPacket().getVertices().get(vertexIndex);
-        entry.writeVertexXYZ(localVertexIndex, vertexPos.getFloatX(), vertexPos.getFloatY(), vertexPos.getFloatZ());
+        if (this.vertexEntry == entry) {
+            SVector vertexPos = getMap().getVertexPacket().getVertices().get(localVertexIndex);
+            entry.writeVertexXYZ(localVertexIndex, vertexPos.getFloatX(), vertexPos.getFloatY(), vertexPos.getFloatZ());
+        }
+
+        // Do nothing else, no other entries are given vertices.
     }
 
     @Override
     public void updateTexCoord(DynamicMeshTypedDataEntry entry, int localTexCoordIndex) {
-        OldFroggerMapPolygon vertex = entry.getDataSource();
-        if (localTexCoordIndex == 0) {
-            // TODO: FINISH
-        } else if (localTexCoordIndex == 1) {
-            // TODO: FINISH
+        OldFroggerMapPolygon polygon = entry.getDataSource();
+        ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(polygon);
+        Texture texture = getMesh().getTextureAtlas().getTextureFromSourceOrFallback(textureSource);
+
+        Vector2f uv;
+        switch (localTexCoordIndex) {
+            case 0:
+                uv = getTextureCoordinate(polygon, textureSource, texture, 0, Vector2f.ZERO); // uvTopLeft, 0F, 0F
+                break;
+            case 1:
+                uv = getTextureCoordinate(polygon, textureSource, texture, 1, Vector2f.UNIT_X); // uvTopRight, 1F, 0F
+                break;
+            case 2:
+                uv = getTextureCoordinate(polygon, textureSource, texture, 2, Vector2f.UNIT_Y); // uvBottomLeft, 0F, 1F
+                break;
+            case 3:
+                uv = getTextureCoordinate(polygon, textureSource, texture, 3, Vector2f.ONE); // uvBottomRight, 1F, 1F
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported local texCoordIndex " + localTexCoordIndex);
         }
-        // TODO: !
+
+        entry.writeTexCoordValue(localTexCoordIndex, uv);
     }
 
     /**

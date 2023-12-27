@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapLightManager;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerLightManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -112,7 +112,7 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
          * @param manager The manager to create the UI for.
          * @param editor  The editor to use to create the UI.
          */
-        public void setupEditor(OldFroggerMapLightManager manager, GUIEditorGrid editor) {
+        public void setupEditor(OldFroggerLightManager manager, GUIEditorGrid editor) {
             editor.addEnumSelector("Light Type", this.type, OldFroggerMapLightType.values(), false, newValue -> this.type = newValue).setDisable(true); // Disabled since there's no reason to change this.
             editor.addShortField("Priority:", this.priority, newPriority -> this.priority = newPriority, newPriority -> newPriority >= 0 && newPriority <= 0xFF);
             editor.addUnsignedFixedShort("Parent ID", this.parentId, newValue -> this.parentId = newValue, 1);

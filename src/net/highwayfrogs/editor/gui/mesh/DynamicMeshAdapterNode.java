@@ -3,20 +3,17 @@ package net.highwayfrogs.editor.gui.mesh;
 import lombok.Getter;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * This represents an individual component which supports creating mesh data from a single kind of value.
- * Many different values of this type can be tracked in this one single object.
+ * Many values of this type can be tracked in this one single object.
  * Created by Kneesnap on 9/25/2023.
  */
 public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNode {
     @Getter private final DynamicMesh mesh;
     private final Map<TDataSource, DynamicMeshTypedDataEntry> entriesByDataSource = new HashMap<>();
-    private final List<DynamicMeshTypedDataEntry> dataEntries = new ArrayList<>();
 
     public DynamicMeshAdapterNode(DynamicMesh mesh) {
         super(mesh);
@@ -26,18 +23,39 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
         this.mesh = mesh;
     }
 
+    @Override
+    public void clear() {
+        super.clear();
+        this.entriesByDataSource.clear();
+    }
+
     /**
-     * Gets the tracked data entry corresponding to the provided data source index.
-     * @param index The index of the data entry.
+     * Gets the tracked typed data entry corresponding to the provided face index.
+     * @param index The index of the face.
      * @return typedDataEntry, or null.
      */
-    public DynamicMeshTypedDataEntry getDataEntry(int index) {
-        return index >= 0 && index < this.dataEntries.size() ? this.dataEntries.get(index) : null;
+    @SuppressWarnings("unchecked") // This warning seems to be a bug.
+    public DynamicMeshTypedDataEntry getTypedDataEntryByFaceIndex(int index) {
+        DynamicMeshDataEntry dataEntry = getDataEntryByFaceIndex(index);
+        if (!(dataEntry instanceof DynamicMeshAdapterNode.DynamicMeshTypedDataEntry))
+            return null;
+
+        return (DynamicMeshTypedDataEntry) dataEntry;
+    }
+
+    /**
+     * Gets the tracked typed data source corresponding to the provided face index.
+     * @param index The index of the face.
+     * @return typedDataSource, or null.
+     */
+    public TDataSource getDataSourceByFaceIndex(int index) {
+        DynamicMeshTypedDataEntry typedDataEntry = getTypedDataEntryByFaceIndex(index);
+        return typedDataEntry != null ? typedDataEntry.getDataSource() : null;
     }
 
     /**
      * Gets the tracked data entry corresponding to the provided data source, if there is one.
-     * @param source The source to lookup the data entry from.
+     * @param source The source to look up the data entry from.
      * @return typedDataEntry, or null.
      */
     public DynamicMeshTypedDataEntry getDataEntry(TDataSource source) {
@@ -48,23 +66,24 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
      * Adds a data source to the mesh.
      * @param source The source to add.
      */
-    public final void add(TDataSource source) {
-        if (source == null)
-            return; // Can't add null.
-
-        if (!this.mesh.isActive(this))
-            throw new RuntimeException("Cannot add mesh data to an inactive node.");
-
-        if (this.entriesByDataSource.containsKey(source))
-            throw new RuntimeException("This data source (" + Utils.getSimpleName(source) + ") is already part of the " + Utils.getSimpleName(this) + ".");
-
+    public final boolean add(TDataSource source) {
         DynamicMeshTypedDataEntry newEntry = this.writeValuesToArrayAndCreateEntry(source);
         if (newEntry == null)
             throw new IllegalStateException(Utils.getSimpleName(this) + " returned null from writeValuesToArrayAndCreateEntry(TDataSource).");
 
-        this.entriesByDataSource.put(source, newEntry);
-        this.dataEntries.add(newEntry);
-        this.onEntryAdded(newEntry);
+        DynamicMeshTypedDataEntry oldEntry = this.entriesByDataSource.put(source, newEntry);
+        boolean addSuccess = addUnlinkedEntry(newEntry);
+
+        // Add failure, restore the source to how it was before.
+        if (!addSuccess) {
+            if (oldEntry != null) {
+                this.entriesByDataSource.put(source, oldEntry);
+            } else {
+                this.entriesByDataSource.remove(source, newEntry);
+            }
+        }
+
+        return addSuccess;
     }
 
     /**
@@ -80,36 +99,29 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
      * @return If the data was removed successfully.
      */
     public final boolean remove(TDataSource source) {
-        if (source == null)
-            return false; // No data to remove.
-
-        if (!this.mesh.isActive(this))
-            throw new RuntimeException("Cannot add remove data from an inactive node.");
-
         DynamicMeshTypedDataEntry entry = this.entriesByDataSource.remove(source);
         if (entry == null)
             return false; // No entry removed.
 
-        // Remove entry from other tracking.
-        this.dataEntries.remove(entry);
+        boolean removeSuccess = removeUnlinkedEntry(entry);
+        if (!removeSuccess)
+            this.entriesByDataSource.put(source, entry);
 
-        // Remove hook.
-        this.onEntryRemoved(entry);
+        return removeSuccess;
+    }
 
-        // Remove Vertices
-        // TODO
-
-        // Remove Tex Coords
-        // TODO
-
-        // Remove Faces
-        // TODO...?
-
-        return true;
+    @Override
+    @SuppressWarnings("unchecked")
+    protected void onEntryRemoved(DynamicMeshDataEntry entry) {
+        super.onEntryRemoved(entry);
+        if (entry instanceof DynamicMeshAdapterNode.DynamicMeshTypedDataEntry) {
+            DynamicMeshTypedDataEntry typedDataEntry = (DynamicMeshTypedDataEntry) entry;
+            this.entriesByDataSource.remove(typedDataEntry.getDataSource(), typedDataEntry);
+        }
     }
 
     /**
-     * Update all of the vertex position values stored for a particular data source.
+     * Update all the vertex position values stored for a particular data source.
      * @param source The source to update vertices for.
      */
     public void updateVertices(TDataSource source) {
@@ -120,8 +132,10 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
         if (entry == null)
             throw new RuntimeException("Cannot update vertices for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
 
+        this.mesh.getEditableVertices().startBulkRemovals();
         for (int i = 0; i < entry.getVertexCount(); i++)
             this.updateVertex(entry, i);
+        this.mesh.getEditableVertices().endBulkRemovals();
     }
 
     /**
@@ -155,7 +169,7 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
     public abstract void updateVertex(DynamicMeshTypedDataEntry entry, int localVertexIndex);
 
     /**
-     * Update all of the texture coordinate values stored for a particular data source.
+     * Update all the texture coordinate values stored for a particular data source.
      * @param source The source to update texture coordinates for.
      */
     public void updateTexCoords(TDataSource source) {
@@ -166,8 +180,10 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
         if (entry == null)
             throw new RuntimeException("Cannot update texture coordinates for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
 
+        this.mesh.getEditableTexCoords().startBulkRemovals();
         for (int i = 0; i < entry.getTexCoordCount(); i++)
             this.updateTexCoord(entry, i);
+        this.mesh.getEditableTexCoords().endBulkRemovals();
     }
 
     /**

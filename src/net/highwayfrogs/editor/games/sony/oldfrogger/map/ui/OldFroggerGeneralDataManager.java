@@ -23,7 +23,7 @@ public class OldFroggerGeneralDataManager extends OldFroggerMapUIManager {
         super.onSetup();
 
         // UI Pane
-        VBox editorBox = this.getController().makeAccordionMenu("Level Settings");
+        VBox editorBox = this.getController().makeAccordionMenu("General Level Settings");
 
         // Separator, and grid setup.
         editorBox.getChildren().add(new Separator(Orientation.HORIZONTAL));

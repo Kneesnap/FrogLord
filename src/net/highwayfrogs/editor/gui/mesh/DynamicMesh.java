@@ -15,18 +15,17 @@ import java.util.List;
 
 /**
  * This represents a triangle mesh which has functionality to dynamically setup, update, and change mesh data.
- * TODO: System for bulking changes to arrays.
- * TODO: Once things are functional, consider ways of optimizing.
- * - Removals and additions may be bulked together for index updates and fast adding / removal.
- * - But overall all changes (including in-place ones like updating values) should operate on a wrapped array. If setAll() is the fastest way to update things in JavaFX, we'll probably go exclusively that route. I think we need to figure out what the fastest ways of updating things are though.
  * Created by Kneesnap on 9/24/2023.
  */
 @Getter
 public abstract class DynamicMesh extends TriangleMesh {
     private final TextureAtlas textureAtlas;
+    private final FXIntArray editableFaces = new FXIntArray();
+    private final FXFloatArray editableTexCoords = new FXFloatArray();
+    private final FXFloatArray editableVertices = new FXFloatArray();
     private final List<DynamicMeshNode> nodes = new ArrayList<>();
     private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
-    private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all of the views which can view this mesh.
+    private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which can view this mesh.
     private PhongMaterial material;
 
     public DynamicMesh(TextureAtlas atlas) {
@@ -38,6 +37,41 @@ public abstract class DynamicMesh extends TriangleMesh {
         this.textureAtlas = atlas;
         this.textureAtlas.getImageChangeListeners().add(this::onTextureChange);
         updateMaterial(atlas.getImage());
+    }
+
+    /**
+     * Updates mesh arrays with our data.
+     */
+    public void updateMeshArrays() {
+        if (!this.editableFaces.isBulkRemovalEnabled())
+            this.editableFaces.apply(getFaces());
+        if (!this.editableTexCoords.isBulkRemovalEnabled())
+            this.editableTexCoords.apply(getTexCoords());
+        if (!this.editableVertices.isBulkRemovalEnabled())
+            this.editableVertices.apply(getPoints());
+    }
+
+    /**
+     * Enable bulk removals for all mesh array wrappers.
+     */
+    public void pushBulkRemovals() {
+        this.editableVertices.startBulkRemovals();
+        this.editableTexCoords.startBulkRemovals();
+        this.editableFaces.startBulkRemovals();
+    }
+
+    /**
+     * Disable bulk removals for all mesh array wrappers.
+     * Attempts to update the wrapped FX arrays for any array wrapper which has an empty bulk removal stack count.
+     */
+    public void popBulkRemovals() {
+        // End bulk removals.
+        this.editableVertices.endBulkRemovals();
+        this.editableTexCoords.endBulkRemovals();
+        this.editableFaces.endBulkRemovals();
+
+        // Update mesh.
+        updateMeshArrays();
     }
 
     /**

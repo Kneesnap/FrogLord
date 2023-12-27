@@ -19,7 +19,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapZonePacket.OldFroggerMapZone;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapZonePacket.OldFroggerMapZoneRegion;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapUIManager.OldFroggerMapListManager;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapZoneManager.ZonePreview3D;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerZoneManager.ZonePreview3D;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -35,7 +35,7 @@ import java.util.Map;
  * Manages the UI which allows editing zones.
  * Created by Kneesnap on 12/20/2023.
  */
-public class OldFroggerMapZoneManager extends OldFroggerMapListManager<OldFroggerMapZone, ZonePreview3D> {
+public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMapZone, ZonePreview3D> {
     private DisplayList boxDisplayList;
 
     private static final PhongMaterial DEFAULT_MATERIAL = Utils.makeSpecialMaterial(Color.LIME);
@@ -43,7 +43,7 @@ public class OldFroggerMapZoneManager extends OldFroggerMapListManager<OldFrogge
     private static final PhongMaterial WHITE_MATERIAL = Utils.makeSpecialMaterial(Color.WHITE);
     private static final PhongMaterial BLUE_MATERIAL = Utils.makeSpecialMaterial(Color.LIGHTBLUE);
 
-    public OldFroggerMapZoneManager(MeshViewController<OldFroggerMapMesh> controller) {
+    public OldFroggerZoneManager(MeshViewController<OldFroggerMapMesh> controller) {
         super(controller);
     }
 
@@ -55,7 +55,7 @@ public class OldFroggerMapZoneManager extends OldFroggerMapListManager<OldFrogge
 
     @Override
     public String getTitle() {
-        return "Map Zones";
+        return "Zones";
     }
 
     @Override

@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.*;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -23,7 +22,7 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
     private static final double DEFAULT_FAR_CLIP = 5000;
     private static final double DEFAULT_MOVEMENT_SPEED = 400;
     private DisplayList vertexDisplayList;
-    @Getter private OldFroggerMapLightManager lightManager;
+    @Getter private OldFroggerLightManager lightManager;
 
 
     private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.LIME);
@@ -44,26 +43,16 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
 
         this.vertexDisplayList = getRenderManager().createDisplayList();
 
-        // TODO: Put into separate controller.
-        /*if (getMap().getCameraHeightFieldPacket() != null) {
-            DisplayList heightFieldVertices = getRenderManager().createDisplayList();
-            for (int z = 0; z < getMap().getCameraHeightFieldPacket().getHeightMap().length; z++)
-                for (int x = 0; x < getMap().getCameraHeightFieldPacket().getHeightMap()[z].length; x++)
-                    heightFieldVertices.addSphere(x, Utils.fixedPointIntToFloat4Bit(getMap().getCameraHeightFieldPacket().getHeightMap()[z][x]), z, 1, MATERIAL_GREEN, false);
-        }*/
-
         // TODO: !
         getMeshScene().setOnMouseClicked(evt -> {
             int intersectedFace = evt.getPickResult().getIntersectedFace();
             if (intersectedFace < 0)
                 return;
 
-            // TODO: In the future let's track which faces go to which entries, so we can do a much easier lookup. Eg: We track vertices and faces, instead of just doing math here.
-            DynamicMeshAdapterNode<OldFroggerMapPolygon>.DynamicMeshTypedDataEntry entry = getMesh().getMainNode().getDataEntry(intersectedFace / 2);
-            if (entry == null)
+            OldFroggerMapPolygon polygon = getMesh().getMainNode().getDataSourceByFaceIndex(intersectedFace);
+            if (polygon == null)
                 return;
 
-            OldFroggerMapPolygon polygon = entry.getDataSource();
             System.out.println("Polygon: " + polygon.getPolygonType());
             if (polygon.getPolygonType().isTextured()) {
                 System.out.println("Texture ID: " + polygon.getTextureId());
@@ -94,12 +83,14 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
 
     @Override
     protected void setupManagers() {
-        addManager(new OldFroggerMapZoneManager(this));
-        addManager(new OldFroggerMapVertexManager(this));
-        addManager(this.lightManager = new OldFroggerMapLightManager(this));
-        addManager(new OldFroggerPathManager(this));
+        addManager(new OldFroggerZoneManager(this));
+        addManager(new OldFroggerVertexManager(this));
+        addManager(new OldFroggerGridManager(this));
+        addManager(this.lightManager = new OldFroggerLightManager(this));
         addManager(new OldFroggerFormUIManager(this));
+        addManager(new OldFroggerPathManager(this));
         addManager(new OldFroggerEntityManager(this));
+        addManager(new OldFroggerCameraHeightFieldManager(this));
         addManager(new OldFroggerGeneralDataManager(this));
         // TODO: Add managers
     }

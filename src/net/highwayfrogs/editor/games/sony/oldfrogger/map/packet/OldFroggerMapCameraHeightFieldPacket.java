@@ -4,6 +4,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerCameraHeightFieldManager;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * A field which stores a camera heightfield.
@@ -69,5 +71,19 @@ public class OldFroggerMapCameraHeightFieldPacket extends OldFroggerMapPacket {
     public int getKnownStartAddress() {
         OldFroggerMapGraphicalHeaderPacket graphicalPacket = getParentFile().getGraphicalHeaderPacket();
         return graphicalPacket != null ? graphicalPacket.getCameraHeightFieldChunkAddress() : -1;
+    }
+
+    /**
+     * Setup the UI for the height-field data.
+     * @param manager The UI manager
+     * @param editor  The editing context to build upon
+     */
+    public void setupEditor(OldFroggerCameraHeightFieldManager manager, GUIEditorGrid editor) {
+        editor.addShortField("X Size", this.xSize, newValue -> this.xSize = newValue, null);
+        editor.addShortField("Z Size", this.zSize, newValue -> this.zSize = newValue, null);
+        editor.addShortField("Unknown 1", this.unknown1, newValue -> this.unknown1 = newValue, null);
+        editor.addShortField("Unknown 2", this.unknown2, newValue -> this.unknown2 = newValue, null);
+        editor.addShortField("Unknown 3", this.unknown3, newValue -> this.unknown3 = newValue, null);
+        editor.addShortField("Unknown 4", this.unknown4, newValue -> this.unknown4 = newValue, null);
     }
 }

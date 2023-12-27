@@ -21,13 +21,13 @@ import java.util.List;
  * TODO: This probably should not be an extension of list manager when we flesh it out. A list manager is really for selecting one item from a list, while vertices are a little more complex.
  * Created by Kneesnap on 12/12/2023.
  */
-public class OldFroggerMapVertexManager extends OldFroggerMapListManager<SVector, Sphere> {
+public class OldFroggerVertexManager extends OldFroggerMapListManager<SVector, Sphere> {
     private DisplayList verticeDisplayList;
 
     private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
     private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.LIME);
 
-    public OldFroggerMapVertexManager(MeshViewController<OldFroggerMapMesh> controller) {
+    public OldFroggerVertexManager(MeshViewController<OldFroggerMapMesh> controller) {
         super(controller);
     }
 
@@ -39,7 +39,7 @@ public class OldFroggerMapVertexManager extends OldFroggerMapListManager<SVector
 
     @Override
     public String getTitle() {
-        return "Map Vertices";
+        return "Vertices";
     }
 
     @Override
