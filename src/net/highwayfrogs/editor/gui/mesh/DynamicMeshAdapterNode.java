@@ -132,10 +132,9 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
         if (entry == null)
             throw new RuntimeException("Cannot update vertices for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
 
-        this.mesh.getEditableVertices().startBulkRemovals();
-        for (int i = 0; i < entry.getVertexCount(); i++)
+        // Update each vertex.
+        for (int i = 0; i < entry.getWrittenVertexCount(); i++)
             this.updateVertex(entry, i);
-        this.mesh.getEditableVertices().endBulkRemovals();
     }
 
     /**
@@ -151,11 +150,11 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
         if (entry == null)
             throw new RuntimeException("Cannot update vertices for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
 
-        if (localVertexIndex < 0 || localVertexIndex >= entry.getVertexCount()) {
-            if (entry.getVertexCount() == 0)
+        if (localVertexIndex < 0 || localVertexIndex >= entry.getWrittenVertexCount()) {
+            if (entry.getWrittenVertexCount() == 0)
                 throw new RuntimeException("Cannot update local vertex index " + localVertexIndex + ", since there are no vertices tracked for the " + Utils.getSimpleName(source));
 
-            throw new RuntimeException("Cannot update local vertex index " + localVertexIndex + ", since it was not in the local vertex ID range [0, " + entry.getVertexCount() + ") tracked for the " + Utils.getSimpleName(source));
+            throw new RuntimeException("Cannot update local vertex index " + localVertexIndex + ", since it was not in the local vertex ID range [0, " + entry.getWrittenVertexCount() + ") tracked for the " + Utils.getSimpleName(source));
         }
 
         this.updateVertex(entry, localVertexIndex);
@@ -180,10 +179,9 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
         if (entry == null)
             throw new RuntimeException("Cannot update texture coordinates for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
 
-        this.mesh.getEditableTexCoords().startBulkRemovals();
-        for (int i = 0; i < entry.getTexCoordCount(); i++)
+        // Update each tex coord.
+        for (int i = 0; i < entry.getWrittenTexCoordCount(); i++)
             this.updateTexCoord(entry, i);
-        this.mesh.getEditableTexCoords().endBulkRemovals();
     }
 
     /**
@@ -199,11 +197,11 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
         if (entry == null)
             throw new RuntimeException("Cannot update texture coordinates for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
 
-        if (localTexCoordIndex < 0 || localTexCoordIndex >= entry.getVertexCount()) {
-            if (entry.getTexCoordCount() == 0)
+        if (localTexCoordIndex < 0 || localTexCoordIndex >= entry.getWrittenTexCoordCount()) {
+            if (entry.getWrittenTexCoordCount() == 0)
                 throw new RuntimeException("Cannot update local texture coordinate index " + localTexCoordIndex + ", since there are no texture coordinates tracked for the " + Utils.getSimpleName(source));
 
-            throw new RuntimeException("Cannot update local texture coordinate index " + localTexCoordIndex + ", since it was not in the texture coordinate range [0, " + entry.getTexCoordCount() + ") tracked for the " + Utils.getSimpleName(source));
+            throw new RuntimeException("Cannot update local texture coordinate index " + localTexCoordIndex + ", since it was not in the texture coordinate range [0, " + entry.getWrittenTexCoordCount() + ") tracked for the " + Utils.getSimpleName(source));
         }
 
         this.updateVertex(entry, localTexCoordIndex);

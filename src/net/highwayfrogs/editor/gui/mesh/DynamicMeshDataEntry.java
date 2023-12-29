@@ -12,12 +12,16 @@ import net.highwayfrogs.editor.system.math.Vector2f;
 @Getter
 public class DynamicMeshDataEntry {
     private final DynamicMesh mesh;
+    private boolean active = true;
     private int vertexStartIndex = -1;
-    private int vertexCount;
+    private int pendingVertexCount;
+    private int writtenVertexCount;
     private int texCoordStartIndex = -1;
-    private int texCoordCount;
+    private int pendingTexCoordCount;
+    private int writtenTexCoordCount;
     private int faceStartIndex = -1;
-    private int faceCount;
+    private int pendingFaceCount;
+    private int writtenFaceCount;
 
     private static final float[] TEMP_POSITION_ARRAY = new float[3];
     private static final float[] TEMP_TEXCOORD_ARRAY = new float[2];
@@ -32,23 +36,45 @@ public class DynamicMeshDataEntry {
             throw new NullPointerException("mesh");
 
         this.mesh = mesh;
-        this.vertexCount = vertexCount;
-        this.texCoordCount = texCoordCount;
-        this.faceCount = faceCount;
+        this.pendingVertexCount = vertexCount;
+        this.writtenVertexCount = vertexCount;
+        this.pendingTexCoordCount = texCoordCount;
+        this.writtenTexCoordCount = texCoordCount;
+        this.pendingFaceCount = faceCount;
+        this.writtenFaceCount = faceCount;
+    }
+
+    /**
+     * Update the indices in the array which data located.
+     * These values contain the actual positions in the array data, not the hypothetical ones.
+     * @param faceStartIndex     index where face data for this entry starts
+     * @param texCoordStartIndex index where texCoord data for this entry starts
+     * @param vertexStartIndex   index where vertex data for this entry starts
+     */
+    protected void updateStartIndices(int faceStartIndex, int texCoordStartIndex, int vertexStartIndex) {
+        this.faceStartIndex = faceStartIndex;
+        this.texCoordStartIndex = texCoordStartIndex;
+        this.vertexStartIndex = vertexStartIndex;
+        this.writtenFaceCount = this.pendingFaceCount;
+        this.writtenTexCoordCount = this.pendingTexCoordCount;
+        this.writtenVertexCount = this.pendingVertexCount;
     }
 
     /**
      * Called when the entry is added to a node.
      */
     protected void onAddedToNode() {
+        // Mark as active.
+        this.active = true;
+
         // All of these values are assigned either when the first value is written, or when this is added to the node.
         // This is to ensure we keep the order sorted between entries, allowing binary searches to be possible.
         // This allows for example, looking up a face by the ID which JavaFX reported getting clicked.
-        if (this.vertexCount == 0)
+        if (this.pendingVertexCount == 0)
             this.vertexStartIndex = this.mesh.getEditableVertices().size() / this.mesh.getPointElementSize();
-        if (this.texCoordCount == 0)
+        if (this.pendingTexCoordCount == 0)
             this.texCoordStartIndex = this.mesh.getEditableTexCoords().size() / this.mesh.getTexCoordElementSize();
-        if (this.faceCount == 0)
+        if (this.pendingFaceCount == 0)
             this.faceStartIndex = this.mesh.getEditableFaces().size() / this.mesh.getFaceElementSize();
     }
 
@@ -58,68 +84,92 @@ public class DynamicMeshDataEntry {
     protected void onRemovedFromNode() {
         // Remove Faces
         // Should run first, so any vertices/texCoords defined here used by this face won't trigger the detector for faces using data we're deleting.
-        if (this.faceCount != 0) {
-            this.mesh.getEditableFaces().startBulkRemovals();
-            for (int i = 0; i < this.faceCount; i++)
+        if (this.writtenFaceCount != 0) {
+            this.mesh.getEditableFaces().startBatchRemoval();
+            for (int i = 0; i < this.writtenFaceCount; i++)
                 removeFace(i);
 
             // Done
             this.faceStartIndex = -1;
-            this.mesh.getEditableFaces().endBulkRemovals();
+            this.mesh.getEditableFaces().endBatchRemoval();
         }
 
         // Remove Vertices
-        if (this.vertexCount != 0) {
-            this.mesh.getEditableVertices().startBulkRemovals();
-            for (int i = 0; i < this.vertexCount; i++)
+        if (this.writtenVertexCount != 0) {
+            this.mesh.getEditableVertices().startBatchRemoval();
+            for (int i = 0; i < this.writtenVertexCount; i++)
                 removeVertexValue(i);
 
             // Done
             this.vertexStartIndex = -1;
-            this.mesh.getEditableVertices().endBulkRemovals();
+            this.mesh.getEditableVertices().endBatchRemoval();
         }
 
         // Remove Tex Coords
-        if (this.texCoordCount != 0) {
-            this.mesh.getEditableTexCoords().startBulkRemovals();
-            for (int i = 0; i < this.texCoordCount; i++)
+        if (this.writtenTexCoordCount != 0) {
+            this.mesh.getEditableTexCoords().startBatchRemoval();
+            for (int i = 0; i < this.writtenTexCoordCount; i++)
                 removeTexCoordValue(i);
 
             // Done
             this.texCoordStartIndex = -1;
-            this.mesh.getEditableTexCoords().endBulkRemovals();
+            this.mesh.getEditableTexCoords().endBatchRemoval();
         }
+
+        // Mark this entry as no longer active.
+        this.active = false;
     }
 
     /**
      * Adds a new vertex position.
-     * TODO: Allow specifying the index to add this at.
      * @param x The x coordinate.
      * @param y The y coordinate.
      * @param z The z coordinate.
      * @return the index into the mesh vertex array which the vertex data starts.
      */
     public int addVertexValue(float x, float y, float z) {
-        if (this.vertexCount == 0) {
+        return insertVertexValue(this.pendingVertexCount, x, y, z);
+    }
+
+    /**
+     * Adds a new vertex position.
+     * @param localIndex The local index to insert the index at.
+     * @param x          The x coordinate.
+     * @param y          The y coordinate.
+     * @param z          The z coordinate.
+     * @return the index into the mesh vertex array which the vertex data starts.
+     */
+    public int insertVertexValue(int localIndex, float x, float y, float z) {
+        if (!this.active)
+            throw new IllegalStateException("Cannot insert a new vertex while the entry is not active.");
+        if (localIndex < 0 || localIndex > this.pendingVertexCount)
+            throw new IllegalArgumentException("The local vertex index " + localIndex + " is not a valid index to insert a new vertex value.");
+
+        // If applicable, save the start index.
+        if (this.vertexStartIndex == -1)
             this.vertexStartIndex = this.mesh.getEditableVertices().size() / this.mesh.getPointElementSize();
-        } else { // TODO: Toss this once proper array handling is added.
-            int expectedVertexPos = (this.vertexStartIndex + this.vertexCount) * this.mesh.getPointElementSize();
-            if (this.mesh.getEditableVertices().size() != expectedVertexPos)
-                throw new RuntimeException("Adding vertex values out of order is not currently supported, but should be before this code is shipped to users."); // TODO
-        }
+
+        int entryVertexEndPos = (this.vertexStartIndex + this.writtenVertexCount) * this.mesh.getPointElementSize();
+        boolean atEndOfArray = (this.mesh.getEditableVertices().size() == entryVertexEndPos);
 
         // Writes values to the array.
         TEMP_POSITION_ARRAY[0] = x;
         TEMP_POSITION_ARRAY[1] = y;
         TEMP_POSITION_ARRAY[2] = z;
-        this.mesh.getEditableVertices().addAll(TEMP_POSITION_ARRAY);
 
-        // Update Face References:
-        // TODO: Update all the faces which reference a value that comes later to increment their index.
-        // TODO: Perhaps we should bulk these changes.
+        if (atEndOfArray) {
+            // Write values to the end of the array, now.
+            this.mesh.getEditableVertices().addAll(TEMP_POSITION_ARRAY);
+            this.writtenVertexCount++;
+        } else {
+            // Write potentially batched data.
+            int insertPos = ((this.vertexStartIndex + localIndex) * this.mesh.getPointElementSize());
+            if (this.mesh.getEditableVertices().addAll(insertPos, TEMP_POSITION_ARRAY))
+                this.writtenVertexCount++;
+        }
 
         // Return position data was written to.
-        return this.vertexStartIndex + (this.vertexCount++);
+        return this.vertexStartIndex + (this.pendingVertexCount++);
     }
 
     /**
@@ -128,6 +178,11 @@ public class DynamicMeshDataEntry {
      * @param x             The x coordinate to write.
      */
     public void writeVertexX(int localVtxIndex, float x) {
+        if (!this.active)
+            throw new IllegalStateException("Cannot write vertex data while the entry is not active.");
+        if (localVtxIndex < 0 || localVtxIndex >= this.pendingVertexCount)
+            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not valid, and thus we cannot write data to it.");
+
         this.mesh.getEditableVertices().set(((this.vertexStartIndex + localVtxIndex) * this.mesh.getPointElementSize()), x);
     }
 
@@ -137,6 +192,11 @@ public class DynamicMeshDataEntry {
      * @param y             The y coordinate to write.
      */
     public void writeVertexY(int localVtxIndex, float y) {
+        if (!this.active)
+            throw new IllegalStateException("Cannot write vertex data while the entry is not active.");
+        if (localVtxIndex < 0 || localVtxIndex >= this.pendingVertexCount)
+            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not valid, and thus we cannot write data to it.");
+
         this.mesh.getEditableVertices().set(((this.vertexStartIndex + localVtxIndex) * this.mesh.getPointElementSize()) + 1, y);
     }
 
@@ -146,6 +206,11 @@ public class DynamicMeshDataEntry {
      * @param z             The z coordinate to write.
      */
     public void writeVertexZ(int localVtxIndex, float z) {
+        if (!this.active)
+            throw new IllegalStateException("Cannot write vertex data while the entry is not active.");
+        if (localVtxIndex < 0 || localVtxIndex >= this.pendingVertexCount)
+            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not valid, and thus we cannot write data to it.");
+
         this.mesh.getEditableVertices().set(((this.vertexStartIndex + localVtxIndex) * this.mesh.getPointElementSize()) + 2, z);
     }
 
@@ -157,6 +222,11 @@ public class DynamicMeshDataEntry {
      * @param z             The z coordinate to write.
      */
     public void writeVertexXYZ(int localVtxIndex, float x, float y, float z) {
+        if (!this.active)
+            throw new IllegalStateException("Cannot write vertex data while the entry is not active.");
+        if (localVtxIndex < 0 || localVtxIndex >= this.pendingVertexCount)
+            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not valid, and thus we cannot write data to it.");
+
         TEMP_POSITION_ARRAY[0] = x;
         TEMP_POSITION_ARRAY[1] = y;
         TEMP_POSITION_ARRAY[2] = z;
@@ -171,54 +241,87 @@ public class DynamicMeshDataEntry {
      * @param localVtxIndex The local index of the position to remove.
      */
     public void removeVertexValue(int localVtxIndex) {
-        if (localVtxIndex < 0 || localVtxIndex >= this.vertexCount)
-            throw new IndexOutOfBoundsException("There is no vertex corresponding to local vertex ID " + localVtxIndex + ". Valid Range: [0, " + this.vertexCount + ").");
+        if (!this.active)
+            throw new IllegalStateException("Cannot remove vertex data while the entry is not active.");
+        if (localVtxIndex < 0 || localVtxIndex >= this.writtenVertexCount)
+            throw new IndexOutOfBoundsException("There is no written vertex corresponding to local vertex ID " + localVtxIndex + ". Valid Range: [0, " + this.writtenVertexCount + ").");
 
         int vertexElementSize = this.mesh.getPointElementSize(); // 3
         int vertexArrayStartIndex = (this.vertexStartIndex + localVtxIndex) * vertexElementSize;
-        this.mesh.getEditableVertices().remove(vertexArrayStartIndex, vertexElementSize);
-        // TODO: Update all the faces which reference a value that comes later to decrement index. For any face that uses this vertex, throw an exception.
-        // TODO: Perhaps we should bulk these changes.
-        this.vertexCount--;
+
+        // Remove vertex.
+        if (this.mesh.getEditableVertices().remove(vertexArrayStartIndex, vertexElementSize))
+            this.writtenVertexCount--;
+
+        this.pendingVertexCount--;
     }
 
     /**
      * Adds a new texture coordinate value.
-     * TODO: Allow specifying the index to add this at.
-     * @param u The U (horizontal) texture coordinate.
-     * @param v The V (vertical) texture coordinate.
-     * @return the index into the mesh array which the tex coord data starts.
-     */
-    public int addTexCoordValue(float u, float v) {
-        if (this.texCoordCount == 0) {
-            this.texCoordStartIndex = this.mesh.getEditableTexCoords().size() / this.mesh.getTexCoordElementSize();
-        } else { // TODO: Toss this once proper array handling is added.
-            int expectedPos = (this.texCoordStartIndex + this.texCoordCount) * this.mesh.getTexCoordElementSize();
-            if (this.mesh.getEditableTexCoords().size() != expectedPos)
-                throw new RuntimeException("Adding tex coord values out of order is not currently supported, but should be before this code is shipped to users."); // TODO
-        }
-
-        // Write values to array.
-        TEMP_TEXCOORD_ARRAY[0] = u;
-        TEMP_TEXCOORD_ARRAY[1] = v;
-        this.mesh.getEditableTexCoords().addAll(TEMP_TEXCOORD_ARRAY);
-
-        // Update Face References:
-        // TODO: Update all the faces which reference a value that comes later to increment their index (to account for the offset of this new one).
-        // TODO: Perhaps we should bulk these changes.
-
-        // Return position data was written to.
-        return this.texCoordStartIndex + (this.texCoordCount++);
-    }
-
-    /**
-     * Adds a new texture coordinate value.
-     * TODO: Allow specifying the index to add this at.
      * @param uv The vector containing uv values.
      * @return the index into the mesh array which the tex coord data starts.
      */
     public int addTexCoordValue(Vector2f uv) {
         return addTexCoordValue(uv.getX(), uv.getY());
+    }
+
+    /**
+     * Adds a new texture coordinate value.
+     * @param u The U (horizontal) texture coordinate.
+     * @param v The V (vertical) texture coordinate.
+     * @return the index into the mesh array which the tex coord data starts.
+     */
+    public int addTexCoordValue(float u, float v) {
+        return insertTexCoordValue(this.pendingTexCoordCount, u, v);
+    }
+
+    /**
+     * Adds a new texture coordinate value.
+     * @param localIndex The local index
+     * @param uv         The vector containing uv values.
+     * @return the index into the mesh array which the tex coord data starts.
+     */
+    public int insertTexCoordValue(int localIndex, Vector2f uv) {
+        return insertTexCoordValue(localIndex, uv.getX(), uv.getY());
+    }
+
+    /**
+     * Adds a new texture coordinate value.
+     * @param localIndex The local index
+     * @param u          The U (horizontal) texture coordinate.
+     * @param v          The V (vertical) texture coordinate.
+     * @return the index into the mesh array which the tex coord data starts.
+     */
+    public int insertTexCoordValue(int localIndex, float u, float v) {
+        if (!this.active)
+            throw new IllegalStateException("Cannot insert new texCoord data while the entry is not active.");
+        if (localIndex < 0 || localIndex > this.pendingTexCoordCount)
+            throw new IllegalArgumentException("The local texCoord index " + localIndex + " is not a valid index to insert a new texCoord value.");
+
+        // If applicable, save the start index.
+        if (this.texCoordStartIndex == -1)
+            this.texCoordStartIndex = this.mesh.getEditableTexCoords().size() / this.mesh.getTexCoordElementSize();
+
+        // Write values to array.
+        TEMP_TEXCOORD_ARRAY[0] = u;
+        TEMP_TEXCOORD_ARRAY[1] = v;
+
+        // Determine array position.
+        int entryTexCoordEndPos = (this.texCoordStartIndex + this.writtenTexCoordCount) * this.mesh.getTexCoordElementSize();
+        boolean atEndOfArray = (this.mesh.getEditableTexCoords().size() == entryTexCoordEndPos);
+        if (atEndOfArray) {
+            // Write values to the end of the array, now.
+            this.mesh.getEditableTexCoords().addAll(TEMP_TEXCOORD_ARRAY);
+            this.writtenTexCoordCount++;
+        } else {
+            // Write potentially batched data.
+            int insertPos = ((this.texCoordStartIndex + localIndex) * this.mesh.getTexCoordElementSize());
+            if (this.mesh.getEditableTexCoords().addAll(insertPos, TEMP_TEXCOORD_ARRAY))
+                this.writtenTexCoordCount++;
+        }
+
+        // Return position data was written to.
+        return this.texCoordStartIndex + (this.pendingTexCoordCount++);
     }
 
     /**
@@ -228,6 +331,11 @@ public class DynamicMeshDataEntry {
      * @param v                  The V (vertical) texture coordinate to write.
      */
     public void writeTexCoordValue(int localTexCoordIndex, float u, float v) {
+        if (!this.active)
+            throw new IllegalStateException("Cannot write texCoord data while the entry is not active.");
+        if (localTexCoordIndex < 0 || localTexCoordIndex >= this.pendingTexCoordCount)
+            throw new IllegalArgumentException("The local texCoord index " + localTexCoordIndex + " is not valid, and thus we cannot write data to it.");
+
         TEMP_TEXCOORD_ARRAY[0] = u;
         TEMP_TEXCOORD_ARRAY[1] = v;
 
@@ -250,20 +358,23 @@ public class DynamicMeshDataEntry {
      * @param localTexCoordIndex The local index of the tex coord to remove.
      */
     public void removeTexCoordValue(int localTexCoordIndex) {
-        if (localTexCoordIndex < 0 || localTexCoordIndex >= this.texCoordCount)
-            throw new IndexOutOfBoundsException("There is no texCoord corresponding to local texCoord ID " + localTexCoordIndex + ". Range: [0, " + this.texCoordCount + ").");
+        if (!this.active)
+            throw new IllegalStateException("Cannot remove texCoord data while the entry is not active.");
+        if (localTexCoordIndex < 0 || localTexCoordIndex >= this.pendingTexCoordCount)
+            throw new IllegalArgumentException("The local texCoord index " + localTexCoordIndex + " is not valid, and thus we cannot remove it. Range: [0, " + this.writtenTexCoordCount + ").");
 
         int texCoordElementSize = this.mesh.getTexCoordElementSize(); // 2
         int texCoordArrayStartIndex = (this.texCoordStartIndex + localTexCoordIndex) * texCoordElementSize;
-        this.mesh.getEditableTexCoords().remove(texCoordArrayStartIndex, texCoordElementSize);
-        // TODO: Update all the faces which reference a value that comes later to decrement the reference indices.
-        // TODO: Perhaps we should bulk these changes.
-        this.texCoordCount--;
+
+        // Remove from array.
+        if (this.mesh.getEditableTexCoords().remove(texCoordArrayStartIndex, texCoordElementSize))
+            this.writtenTexCoordCount--;
+
+        this.pendingTexCoordCount--;
     }
 
     /**
      * Adds a new face referencing existing
-     * TODO: Allow specifying the index to add this at.
      * @param meshVertex1   The index to the position of the first vertex.
      * @param meshTexCoord1 The index to the position of the first texture coordinate.
      * @param meshVertex2   The index to the position of the second vertex.
@@ -273,13 +384,29 @@ public class DynamicMeshDataEntry {
      * @return the index into the mesh array which the face data starts.
      */
     public int addFace(int meshVertex1, int meshTexCoord1, int meshVertex2, int meshTexCoord2, int meshVertex3, int meshTexCoord3) {
-        if (this.faceCount == 0) {
+        return insertFace(this.pendingFaceCount, meshVertex1, meshTexCoord1, meshVertex2, meshTexCoord2, meshVertex3, meshTexCoord3);
+    }
+
+    /**
+     * Adds a new face referencing existing
+     * @param localIndex    The local index to insert the face
+     * @param meshVertex1   The index to the position of the first vertex.
+     * @param meshTexCoord1 The index to the position of the first texture coordinate.
+     * @param meshVertex2   The index to the position of the second vertex.
+     * @param meshTexCoord2 The index to the position of the second texture coordinate.
+     * @param meshVertex3   The index to the position of the third vertex.
+     * @param meshTexCoord3 The index to the position of the third texture coordinate.
+     * @return the index into the mesh array which the face data starts.
+     */
+    public int insertFace(int localIndex, int meshVertex1, int meshTexCoord1, int meshVertex2, int meshTexCoord2, int meshVertex3, int meshTexCoord3) {
+        if (!this.active)
+            throw new IllegalStateException("Cannot insert polygon face data while the entry is not active.");
+        if (localIndex < 0 || localIndex > this.pendingFaceCount)
+            throw new IllegalArgumentException("The local face index " + localIndex + " is not a valid index to insert a new face.");
+
+        // If applicable, save the start index.
+        if (this.faceStartIndex == -1)
             this.faceStartIndex = this.mesh.getEditableFaces().size() / this.mesh.getFaceElementSize();
-        } else { // TODO: Toss this once proper array handling is added.
-            int expectedPos = (this.faceStartIndex + this.faceCount) * this.mesh.getFaceElementSize();
-            if (this.mesh.getEditableFaces().size() != expectedPos)
-                throw new RuntimeException("Adding face values out of order is not currently supported, but should be before this code is shipped to users."); // TODO
-        }
 
         // Write values to array.
         TEMP_FACE_ARRAY[0] = meshVertex1;
@@ -288,40 +415,62 @@ public class DynamicMeshDataEntry {
         TEMP_FACE_ARRAY[3] = meshTexCoord2;
         TEMP_FACE_ARRAY[4] = meshVertex3;
         TEMP_FACE_ARRAY[5] = meshTexCoord3;
-        this.mesh.getEditableFaces().addAll(TEMP_FACE_ARRAY);
+
+        int entryFaceEndPos = (this.faceStartIndex + this.writtenFaceCount) * this.mesh.getFaceElementSize();
+        boolean atEndOfArray = (this.mesh.getEditableFaces().size() == entryFaceEndPos);
+        if (atEndOfArray) {
+            // Write values to the end of the array, now.
+            this.mesh.getEditableFaces().addAll(TEMP_FACE_ARRAY);
+            this.writtenFaceCount++;
+        } else {
+            // Write potentially batched data.
+            int insertPos = ((this.faceStartIndex + localIndex) * this.mesh.getFaceElementSize());
+            if (this.mesh.getEditableFaces().addAll(insertPos, TEMP_FACE_ARRAY))
+                this.writtenFaceCount++;
+        }
 
         // Return position data was written to.
-        return this.faceStartIndex + (this.faceCount++);
+        return this.faceStartIndex + (this.pendingFaceCount++);
     }
 
     /**
      * Writes tex coord data to the tex coord array.
-     * @param localFaceIndex The index of the face to update.
-     * @param newMeshVertexIndex The vertex position index to apply to the face.
+     * @param localFaceIndex       The index of the face to update.
+     * @param newMeshVertexIndex   The vertex position index to apply to the face.
      * @param newMeshTexCoordIndex The texture coordinate index to apply to the face.
      */
-    /*public void writeFace(int localFaceIndex, int newMeshVertexIndex, int newMeshTexCoordIndex) {
-        // TODO: This is OK and probably doesn't need bulking. (If bulking is on when this occurs sure it'll get bulked, but overall bulking isn't important here.)
+    public void writeFace(int localFaceIndex, int faceVertexIndex, int newMeshVertexIndex, int newMeshTexCoordIndex) {
+        if (!this.active)
+            throw new IllegalStateException("Cannot write polygon face data while the entry is not active.");
+        if (localFaceIndex < 0 || localFaceIndex >= this.pendingFaceCount)
+            throw new IllegalArgumentException("The local face index " + localFaceIndex + " has no face, and thus we cannot write polygon face data to it.");
+        if (faceVertexIndex < 0 || faceVertexIndex >= 3)
+            throw new IllegalArgumentException("The provided face vertex ID was " + faceVertexIndex + ", but there are only 3 vertices per face.");
+
         TEMP_FACE_ARRAY[0] = newMeshVertexIndex;
         TEMP_FACE_ARRAY[1] = newMeshTexCoordIndex;
 
-        int rawArrayStartIndex = (this.faceStartIndex + localFaceIndex) * this.mesh.getFaceElementSize();
+        int rawArrayStartIndex = (this.faceStartIndex + localFaceIndex) * this.mesh.getFaceElementSize() + (faceVertexIndex * this.mesh.getVertexFormat().getVertexIndexSize());
         this.mesh.getEditableFaces().set(rawArrayStartIndex, TEMP_FACE_ARRAY, 0, 2);
-    }*/ // TODO: This fails because there are 6 values to write, not 2.
+    }
 
     /**
      * Removes a face from the array.
      * @param localFaceIndex The local index of the face to remove.
      */
     public void removeFace(int localFaceIndex) {
-        if (localFaceIndex < 0 || localFaceIndex >= this.faceCount)
-            throw new IndexOutOfBoundsException("There is no face corresponding to local face ID " + localFaceIndex + ". Valid Range: [0, " + this.faceCount + ").");
+        if (!this.active)
+            throw new IllegalStateException("Cannot remove face data while the entry is not active.");
+        if (localFaceIndex < 0 || localFaceIndex >= this.writtenFaceCount)
+            throw new IndexOutOfBoundsException("There is no written face corresponding to local face ID " + localFaceIndex + ", thus we cannot remove it. Valid Range: [0, " + this.writtenFaceCount + ").");
 
         int faceElementSize = this.mesh.getFaceElementSize(); // 6 = 3 vertices * (1 vertex ID + 1 texture coordinate)
-        int faceArrayStartIndex = (this.texCoordStartIndex + localFaceIndex) * faceElementSize;
-        this.mesh.getEditableFaces().remove(faceArrayStartIndex, faceElementSize);
-        // TODO: Update all the faces which reference a value that comes later to decrement the reference indices.
-        // TODO: Perhaps we should bulk these changes.
-        this.faceCount--;
+        int faceArrayStartIndex = (this.faceStartIndex + localFaceIndex) * faceElementSize;
+
+        // Remove face data.
+        if (this.mesh.getEditableFaces().remove(faceArrayStartIndex, faceElementSize))
+            this.writtenFaceCount--;
+
+        this.pendingFaceCount--;
     }
 }

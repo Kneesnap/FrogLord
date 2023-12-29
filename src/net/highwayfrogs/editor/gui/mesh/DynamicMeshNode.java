@@ -37,7 +37,7 @@ public class DynamicMeshNode {
      */
     public void clear() {
         // Enable bulk removals.
-        this.mesh.pushBulkRemovals();
+        this.mesh.pushBatchOperations();
 
         // Remove all data entries.
         for (int i = 0; i < this.dataEntries.size(); i++) {
@@ -50,7 +50,7 @@ public class DynamicMeshNode {
         this.dataEntries.clear();
 
         // Update mesh.
-        this.mesh.popBulkRemovals();
+        this.mesh.popBatchOperations();
     }
 
     /**
@@ -66,7 +66,7 @@ public class DynamicMeshNode {
             int mid = (left + right) / 2;
             DynamicMeshDataEntry midEntry = this.dataEntries.get(mid);
 
-            if (faceIndex >= midEntry.getFaceStartIndex() && faceIndex < midEntry.getFaceStartIndex() + midEntry.getFaceCount()) {
+            if (faceIndex >= midEntry.getFaceStartIndex() && faceIndex < midEntry.getFaceStartIndex() + midEntry.getWrittenFaceCount()) {
                 return midEntry;
             } else if (midEntry.getFaceStartIndex() > faceIndex) {
                 right = mid - 1;
@@ -93,8 +93,12 @@ public class DynamicMeshNode {
         if (this.dataEntries.contains(entry))
             return false; // Already registered.
 
+        if (getMesh().getDataEntries().contains(entry))
+            throw new IllegalArgumentException("The provided entry is registered to the mesh via another node.");
+
         // Register the entry.
         this.dataEntries.add(entry);
+        getMesh().getDataEntries().add(entry);
         this.onEntryAdded(entry);
         entry.onAddedToNode();
         return true;
@@ -118,6 +122,7 @@ public class DynamicMeshNode {
             return false;
 
         // Remove hook.
+        getMesh().getDataEntries().remove(entry);
         this.onEntryRemoved(entry);
         entry.onRemovedFromNode();
         return true;

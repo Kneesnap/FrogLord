@@ -20,7 +20,7 @@ public class DynamicMeshOverlayNode extends DynamicMeshAdapterNode<OverlayTarget
     @Override
     protected DynamicMeshTypedDataEntry writeValuesToArrayAndCreateEntry(OverlayTarget data) {
         DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), data);
-        if (data.getOverlayEntry().getFaceCount() == 0)
+        if (data.getOverlayEntry().getWrittenFaceCount() == 0)
             return entry;
 
         TextureAtlas atlas = getMesh().getTextureAtlas();
@@ -32,14 +32,14 @@ public class DynamicMeshOverlayNode extends DynamicMeshAdapterNode<OverlayTarget
         int valuesPerVertex = getMesh().getVertexFormat().getVertexIndexSize();
 
         // For each face/polygon in the target entry:
-        for (int i = 0; i < data.getOverlayEntry().getFaceCount(); i++) {
+        for (int i = 0; i < data.getOverlayEntry().getWrittenFaceCount(); i++) {
             // Calculate the absolute face index of the target polygon.
             int startFaceIndex = (data.getOverlayEntry().getFaceStartIndex() + i) * getMesh().getFaceElementSize();
 
             // Each vertex is spaced in between the tex coord index, because the faces array includes a value for both texcoord and normal.
-            int meshVertex1 = getMesh().getEditableFaces().get(startFaceIndex);
-            int meshVertex2 = getMesh().getEditableFaces().get(startFaceIndex + valuesPerVertex);
-            int meshVertex3 = getMesh().getEditableFaces().get(startFaceIndex + (2 * valuesPerVertex));
+            int meshVertex1 = getMesh().getEditableFaces().getArray().get(startFaceIndex);
+            int meshVertex2 = getMesh().getEditableFaces().getArray().get(startFaceIndex + valuesPerVertex);
+            int meshVertex3 = getMesh().getEditableFaces().getArray().get(startFaceIndex + (2 * valuesPerVertex));
 
             // Add a new face which uses those vertices. (Test that Z-Fighting isn't an issue, we might need to change this up slightly if it is.)
             entry.addFace(meshVertex1, texCoord1, meshVertex2, texCoord2, meshVertex3, texCoord3);

@@ -267,6 +267,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                     th.printStackTrace();
                 }
 
+                getMesh().removeView(getMeshView()); // Remove view from mesh.
                 Utils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
                 Utils.takeScreenshot(this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), true);

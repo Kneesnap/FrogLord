@@ -1,37 +1,34 @@
-package net.highwayfrogs.editor.gui.mesh;
+package net.highwayfrogs.editor.utils.fx.wrapper;
 
-import javafx.collections.ObservableFloatArray;
+import javafx.collections.ObservableIntegerArray;
 import net.highwayfrogs.editor.utils.IndexBitArray;
+import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.Arrays;
 
 /**
- * Represents an array of floating point values wrapped around a JavaFX ObservableFloatArray.
+ * Represents an array of integer values wrapped around a JavaFX ObservableIntegerArray.
  * The purpose is to allow array operations that are not possible in the original.
- * It also enables bulking changes together before updating JavaFX.
- * ObservableFloatArray documentation says that optimal performance is obtained with the fewest number of method calls possible, so this also yields better performance.
- * This class is mostly a copy of ObservableFloatArrayImpl (Licensed under GPL) enhanced with techniques developed for ModToolFramework.
+ * This class is mostly a copy of ObservableIntegerArrayImpl (Licensed under GPL) enhanced with techniques developed for ModToolFramework.
  * This file's code is likewise licensed under GPLv2, however I was unable to find the GPLv2 license in the original JavaFX code. The JavaFX website states that it is licensed under GPLv2.
  * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
  * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  * Created by Kneesnap on 12/26/2023.
  */
-public class FXFloatArray {
+public class FXIntArray {
     private int length;
-    private float[] array;
-    private IndexBitArray bulkRemovedIndices;
-    private int bulkRemovalStackCount;
+    private int[] array;
 
-    private static final float[] EMPTY_ARRAY = new float[0];
+    private static final int[] EMPTY_ARRAY = new int[0];
 
-    public FXFloatArray() {
+    public FXIntArray() {
         this.length = 0;
         this.array = EMPTY_ARRAY;
     }
 
-    public FXFloatArray(ObservableFloatArray array) {
+    public FXIntArray(ObservableIntegerArray array) {
         this.length = array != null ? array.size() : 0;
-        this.array = this.length > 0 ? new float[this.length] : EMPTY_ARRAY;
+        this.array = this.length > 0 ? new int[this.length] : EMPTY_ARRAY;
         if (array != null)
             this.array = array.toArray(this.array);
     }
@@ -40,22 +37,19 @@ public class FXFloatArray {
      * Applies the array contents to an ObservableFXArray
      * @param array The array to apply the contents to.
      */
-    public void apply(ObservableFloatArray array) {
-        if (isBulkRemovalEnabled())
-            throw new IllegalStateException("Cannot apply to ObservableArray while bulk removal mode is enabled.");
-
+    public void apply(ObservableIntegerArray array) {
         array.setAll(this.array, 0, this.length);
     }
 
     /**
-     * Get the number of floats currently tracked in the array.
+     * Get the number of integers currently tracked in the array.
      */
     public int getLength() {
         return this.length;
     }
 
     /**
-     * Get the number of floats currently tracked in the array.
+     * Get the number of integers currently tracked in the array.
      */
     public int size() {
         return this.length;
@@ -122,7 +116,7 @@ public class FXFloatArray {
         if (this.array.length == this.length)
             return; // Capacity matches usage.
 
-        float[] newArray = new float[this.length];
+        int[] newArray = new int[this.length];
         System.arraycopy(this.array, 0, newArray, 0, this.length);
         this.array = newArray;
     }
@@ -133,11 +127,6 @@ public class FXFloatArray {
      */
     public void clear() {
         this.length = 0;
-        if (this.bulkRemovedIndices != null)
-            this.bulkRemovedIndices.clear();
-
-        if (this.bulkRemovalStackCount != 0)
-            throw new IllegalStateException("Cleared the array while bulk removal mode was enabled! (" + this.bulkRemovalStackCount + ")");
     }
 
     /**
@@ -149,7 +138,7 @@ public class FXFloatArray {
      * @param destIndex starting position in destination array
      * @param length    length of portion to copy
      */
-    public void copyTo(int srcIndex, float[] dest, int destIndex, int length) {
+    public void copyTo(int srcIndex, int[] dest, int destIndex, int length) {
         rangeCheck(srcIndex + length); // While the array may contain these elements, it should not be possible to access them to avoid bugs.
         System.arraycopy(this.array, srcIndex, dest, destIndex, length);
     }
@@ -163,7 +152,7 @@ public class FXFloatArray {
      * @param destIndex starting position in destination observable array
      * @param length    length of portion to copy
      */
-    public void copyTo(int srcIndex, ObservableFloatArray dest, int destIndex, int length) {
+    public void copyTo(int srcIndex, ObservableIntegerArray dest, int destIndex, int length) {
         rangeCheck(srcIndex + length);
         dest.set(destIndex, this.array, srcIndex, length);
     }
@@ -175,21 +164,21 @@ public class FXFloatArray {
      * @return value at the given index
      * @throws ArrayIndexOutOfBoundsException if {@code index} is outside array bounds
      */
-    public float get(int index) {
+    public int get(int index) {
         rangeCheck(index + 1);
         return this.array[index];
     }
 
     /**
      * Sets a single value in the array. Avoid using this method if many values
-     * are updated, use {@linkplain #set(int, float[], int, int)} update method
+     * are updated, use {@linkplain #set(int, int[], int, int)} update method
      * instead with as minimum number of invocations as possible.
      * @param index index of the value to set
      * @param value new value for the given index
      * @throws ArrayIndexOutOfBoundsException if {@code index} is outside
      *                                        array bounds
      */
-    public void set(int index, float value) {
+    public void set(int index, int value) {
         if (index == this.length) {
             this.add(value);
         } else {
@@ -203,7 +192,7 @@ public class FXFloatArray {
      * Functions regardless of batching state.
      * @param value new value to append to the array
      */
-    public void add(float value) {
+    public void add(int value) {
         growCapacityIfNecessary(1);
         this.array[this.length++] = value;
     }
@@ -213,7 +202,7 @@ public class FXFloatArray {
      * @param index index of the value to insert
      * @param value new value to append to the array
      */
-    public void add(int index, float value) {
+    public void add(int index, int value) {
         growCapacityIfNecessary(1);
         rangeCheck(index);
 
@@ -226,68 +215,27 @@ public class FXFloatArray {
     }
 
     /**
-     * Returns whether bulk removal mode is currently enabled.
-     */
-    public boolean isBulkRemovalEnabled() {
-        return this.bulkRemovalStackCount > 0;
-    }
-
-    /**
-     * Enables a performance boost to removals by bulking them together in a single remove.
-     */
-    public void startBulkRemovals() {
-        this.bulkRemovalStackCount++;
-    }
-
-    /**
-     * Completes bulked removal operations
-     */
-    public void endBulkRemovals() {
-        if (--this.bulkRemovalStackCount == 0) {
-            // Perform bulk removals.
-            if (this.bulkRemovedIndices != null) {
-                removeIndices(this.bulkRemovedIndices);
-                this.bulkRemovedIndices.clear();
-            }
-        } else if (this.bulkRemovalStackCount < 0) {
-            this.bulkRemovalStackCount = 0;
-            throw new IllegalStateException("startBulkRemovals() was called fewer times than endBulkRemovals() was called.");
-        }
-    }
-
-    /**
      * Removes a single value from the provided index.
-     * If bulk removal is enabled, these will be skipped.
      * @param index index of the value to remove
      * @return removed value
      */
-    public float remove(int index) {
+    public int remove(int index) {
         if (index < 0 || index >= this.length)
             throw new ArrayIndexOutOfBoundsException("Cannot remove invalid index " + index + ", valid indices are within the range [0, " + this.length + ").");
 
-        float removedValue = this.array[index];
+        int removedValue = this.array[index];
 
-        if (isBulkRemovalEnabled()) {
-            if (this.bulkRemovedIndices == null)
-                this.bulkRemovedIndices = new IndexBitArray();
+        // Shift all elements.
+        int shiftedElements = Math.max(0, this.length - index - 1);
+        if (shiftedElements > 0)
+            System.arraycopy(this.array, index + 1, this.array, index, shiftedElements);
 
-            // Mark the index for removal.
-            this.bulkRemovedIndices.setBit(index, true);
-        } else {
-            // Shift all elements.
-            int shiftedElements = Math.max(0, this.length - index - 1);
-            if (shiftedElements > 0)
-                System.arraycopy(this.array, index + 1, this.array, index, shiftedElements);
-
-            this.length--;
-        }
-
+        this.length--;
         return removedValue;
     }
 
     /**
      * Remove a number of values starting at the provided index.
-     * If bulk removal mode is enabled, the removal will be queued.
      * @param startIndex index to remove values from
      * @param amount     amount of elements to remove
      */
@@ -299,15 +247,6 @@ public class FXFloatArray {
             return; // Nothing to remove.
         }
 
-        // Track bulk removal instead.
-        if (isBulkRemovalEnabled()) {
-            if (this.bulkRemovedIndices == null)
-                this.bulkRemovedIndices = new IndexBitArray();
-
-            this.bulkRemovedIndices.setBits(startIndex, amount, true);
-            return;
-        }
-
         // Shift all elements to make room for the inserted ones.
         int shiftedElements = Math.max(0, this.length - amount);
         if (shiftedElements > 0)
@@ -315,6 +254,53 @@ public class FXFloatArray {
 
         // Reduce the length of the array.
         this.length -= amount;
+    }
+
+    /**
+     * Inserts values into the array.
+     * @param indices A sorted array of integer indices.
+     * @param values  An array of values, the size should match.
+     */
+    public void insertValues(FXIntArray indices, FXIntArray values) {
+        // Ensure the number of values matches the number of indices.
+        if (indices.size() != values.size())
+            throw new InvalidStateException("There were " + indices.size() + " indices corresponding to " + values.size() + " values.");
+
+        // Abort if there aren't any values to add.
+        int valueCount = values.size();
+        if (valueCount == 0)
+            return;
+
+        // Ensure the index array is sorted.
+        int lastIndex = -1;
+        for (int i = 0; i < indices.size(); i++) {
+            int currentIndex = indices.get(i);
+            if (currentIndex < lastIndex)
+                throw new IllegalArgumentException("The indices array was not sorted! [" + Arrays.toString(indices.toArray(null)) + "]");
+        }
+
+        // Ensure enough room exists for the inserted values.
+        growCapacityIfNecessary(valueCount);
+
+        // Shift the array elements and add in the new values to their slots.
+        int lastInsertionIndex = this.length;
+        for (int i = indices.size() - 1; i >= 0; i--) {
+            int insertionIndex = indices.get(i);
+
+            // Shift old values.
+            int copyAmount = (lastInsertionIndex - insertionIndex);
+            if (copyAmount > 0)
+                System.arraycopy(this.array, insertionIndex, this.array, insertionIndex + i + 1, copyAmount);
+
+            // Write inserted value
+            this.array[insertionIndex + i] = values.get(i);
+
+            // Prepare for next.
+            lastInsertionIndex = insertionIndex;
+        }
+
+        // Increase size of array.
+        this.length += valueCount;
     }
 
     /**
@@ -330,13 +316,13 @@ public class FXFloatArray {
         int removedGroups = 0;
         int currentIndex = indices.getFirstBitIndex();
         for (int i = 0; i < totalIndexCount; i++) {
-            int nextIndex = ((totalIndexCount > i + 1) ? indices.getNextBitIndex(currentIndex) : this.length - 1) - removedGroups;
-            int removeIndex = currentIndex - removedGroups; // This works because TestRemovals is sorted.
-            int copyLength = (nextIndex - removeIndex);
+            int nextIndex = ((totalIndexCount > i + 1) ? indices.getNextBitIndex(currentIndex) : this.length - 1);
+            int copyLength = (nextIndex - currentIndex);
 
             // If copy length is 0, that means there is a duplicate index (impossible), and we can just safely skip it.
             if (copyLength > 0) {
                 removedGroups++;
+                int removeIndex = currentIndex - removedGroups; // This works because TestRemovals is sorted.
                 System.arraycopy(this.array, removeIndex + removedGroups, this.array, removeIndex, copyLength);
             } else if (i == totalIndexCount - 1) { // Edge-case, if we're at the end of the array, copyLength can be zero because there would be nothing to copy. This should still be counted as a removal.
                 removedGroups++;
@@ -348,7 +334,7 @@ public class FXFloatArray {
         this.length -= totalIndexCount;
     }
 
-    private void addAllInternal(int destIndex, float[] src, int srcIndex, int length) {
+    private void addAllInternal(int destIndex, int[] src, int srcIndex, int length) {
         growCapacityIfNecessary(length);
 
         // Shift all elements to make room for the inserted ones.
@@ -365,7 +351,7 @@ public class FXFloatArray {
      * if necessary to match the new size of the data.
      * @param elements elements to append
      */
-    public void addAll(float... elements) {
+    public void addAll(int... elements) {
         addAllInternal(this.length, elements, 0, elements.length);
     }
 
@@ -375,7 +361,7 @@ public class FXFloatArray {
      * @param destIndex index of the elements to insert
      * @param elements  elements to insert
      */
-    public void addAll(int destIndex, float... elements) {
+    public void addAll(int destIndex, int... elements) {
         rangeCheck(destIndex);
         addAllInternal(destIndex, elements, 0, elements.length);
     }
@@ -387,7 +373,7 @@ public class FXFloatArray {
      * @param srcIndex starting position in source array
      * @param length   length of portion to append
      */
-    public void addAll(float[] src, int srcIndex, int length) {
+    public void addAll(int[] src, int srcIndex, int length) {
         rangeCheck(src, srcIndex, length);
         addAllInternal(this.length, src, srcIndex, length);
     }
@@ -400,7 +386,7 @@ public class FXFloatArray {
      * @param srcIndex  starting position in source array
      * @param length    length of portion to append
      */
-    public void addAll(int destIndex, float[] src, int srcIndex, int length) {
+    public void addAll(int destIndex, int[] src, int srcIndex, int length) {
         rangeCheck(destIndex);
         rangeCheck(src, srcIndex, length);
         addAllInternal(destIndex, src, srcIndex, length);
@@ -415,7 +401,7 @@ public class FXFloatArray {
      * @param srcIndex  starting position in source array
      * @param length    length of portion to copy
      */
-    public void set(int destIndex, float[] src, int srcIndex, int length) {
+    public void set(int destIndex, int[] src, int srcIndex, int length) {
         rangeCheck(destIndex + length);
         System.arraycopy(src, srcIndex, array, destIndex, length);
     }
@@ -425,13 +411,13 @@ public class FXFloatArray {
      * If the observable array fits in the specified array, it is copied therein.
      * Otherwise, a new array is allocated with the size of the observable array.
      * @param dest the array into which the observable array to be copied,
-     *             if it is big enough; otherwise, a new float array is allocated.
+     *             if it is big enough; otherwise, a new int array is allocated.
      *             Ignored, if null.
-     * @return a float array containing the copy of the observable array
+     * @return an int array containing the copy of the observable array
      */
-    public float[] toArray(float[] dest) {
+    public int[] toArray(int[] dest) {
         if ((dest == null) || (this.length > dest.length))
-            dest = new float[this.length];
+            dest = new int[this.length];
 
         System.arraycopy(this.array, 0, dest, 0, this.length);
         return dest;
@@ -444,26 +430,57 @@ public class FXFloatArray {
      * @param srcIndex starting position in the observable array
      * @param dest     the array into which specified portion of the observable array
      *                 to be copied, if it is big enough;
-     *                 otherwise, a new float array is allocated.
+     *                 otherwise, a new int array is allocated.
      *                 Ignored, if null.
      * @param length   length of portion to copy
-     * @return a float array containing the copy of specified portion the observable array
+     * @return an int array containing the copy of specified portion the observable array
      */
-    public float[] toArray(int srcIndex, float[] dest, int length) {
+    public int[] toArray(int srcIndex, int[] dest, int length) {
         rangeCheck(srcIndex + length);
         if ((dest == null) || (length > dest.length))
-            dest = new float[length];
+            dest = new int[length];
 
         System.arraycopy(this.array, srcIndex, dest, 0, length);
         return dest;
     }
 
-    private void rangeCheck(int size) {
-        if (size > this.length)
-            throw new ArrayIndexOutOfBoundsException("Cannot access elements after the end of the FXFloatArray. (Length: " + this.length + ", Accessed: " + size + ")");
+    /**
+     * Performs a binary search to find the key.
+     * This method assumes the array is sorted lowest to highest.
+     * @param key The key to search for.
+     * @return the index of the value, or -(insertion point + 1) for the index to insert the key.
+     */
+    public int binarySearch(int key) {
+        return Arrays.binarySearch(this.array, 0, this.length, key);
     }
 
-    private void rangeCheck(float[] src, int srcIndex, int length) {
+    /**
+     * Gets the position which a value should be inserted, if this array is sorted.
+     * @param value value to calculate an insertion point from
+     * @return insertionIndex
+     */
+    public int getInsertionPoint(int value) {
+        int searchIndex = this.binarySearch(value);
+
+        if (searchIndex >= 0) {
+            int insertionIndex = searchIndex + 1;
+
+            // We want to calculate the insertion index that places the element at the end of the sequence of values that share the same index.
+            while (this.length > insertionIndex && this.array[insertionIndex] == value)
+                insertionIndex++;
+
+            return insertionIndex;
+        } else { // Negative (Insertion index can be obtained from math)
+            return -(searchIndex + 1);
+        }
+    }
+
+    private void rangeCheck(int size) {
+        if (size > this.length)
+            throw new ArrayIndexOutOfBoundsException("Cannot access elements after the end of the FXIntArray. (Length: " + this.length + ", Accessed: " + size + ")");
+    }
+
+    private void rangeCheck(int[] src, int srcIndex, int length) {
         if (src == null)
             throw new NullPointerException("The source array is null");
 

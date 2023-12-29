@@ -8,6 +8,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArray;
+import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArrayBatcher;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -19,14 +21,14 @@ import java.util.List;
  */
 @Getter
 public abstract class DynamicMesh extends TriangleMesh {
-    private final TextureAtlas textureAtlas;
-    private final FXIntArray editableFaces = new FXIntArray();
-    private final FXFloatArray editableTexCoords = new FXFloatArray();
-    private final FXFloatArray editableVertices = new FXFloatArray();
-    private final List<DynamicMeshNode> nodes = new ArrayList<>();
-    private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
-    private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which can view this mesh.
-    private PhongMaterial material;
+    @Getter private final TextureAtlas textureAtlas;
+    @Getter private final FXIntArrayBatcher editableFaces;
+    @Getter private final DynamicMeshFloatArray editableTexCoords;
+    @Getter private final DynamicMeshFloatArray editableVertices;
+    @Getter private final List<DynamicMeshNode> nodes = new ArrayList<>();
+    @Getter private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
+    @Getter private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which are viewing this mesh.
+    @Getter private PhongMaterial material;
 
     public DynamicMesh(TextureAtlas atlas) {
         this(atlas, VertexFormat.POINT_TEXCOORD);
@@ -37,41 +39,92 @@ public abstract class DynamicMesh extends TriangleMesh {
         this.textureAtlas = atlas;
         this.textureAtlas.getImageChangeListeners().add(this::onTextureChange);
         updateMaterial(atlas.getImage());
+
+        // Setup editable array batches.
+        this.editableFaces = new FXIntArrayBatcher(new FXIntArray(), getFaces());
+        this.editableTexCoords = new DynamicMeshFloatArray(this, getTexCoords(), format.getTexCoordIndexOffset());
+        this.editableVertices = new DynamicMeshFloatArray(this, getPoints(), format.getPointIndexOffset());
     }
 
     /**
-     * Updates mesh arrays with our data.
+     * Updates entry start indices.
+     */
+    public void updateEntryStartIndices() {
+        int faceStartIndex = 0;
+        int texCoordStartIndex = 0;
+        int vertexStartIndex = 0;
+        for (int i = 0; i < this.dataEntries.size(); i++) {
+            DynamicMeshDataEntry entry = this.dataEntries.get(i);
+            entry.updateStartIndices(faceStartIndex, texCoordStartIndex, vertexStartIndex);
+
+            faceStartIndex += entry.getWrittenFaceCount();
+            texCoordStartIndex += entry.getWrittenTexCoordCount();
+            vertexStartIndex += entry.getWrittenVertexCount();
+        }
+    }
+
+    /**
+     * Update the mesh arrays.
      */
     public void updateMeshArrays() {
-        if (!this.editableFaces.isBulkRemovalEnabled())
-            this.editableFaces.apply(getFaces());
-        if (!this.editableTexCoords.isBulkRemovalEnabled())
-            this.editableTexCoords.apply(getTexCoords());
-        if (!this.editableVertices.isBulkRemovalEnabled())
-            this.editableVertices.apply(getPoints());
+        this.editableFaces.applyToFxArrayIfReady();
+        this.editableTexCoords.applyToFxArrayIfReady();
+        this.editableVertices.applyToFxArrayIfReady();
     }
 
     /**
-     * Enable bulk removals for all mesh array wrappers.
+     * Enable batch operations for all mesh array wrappers.
      */
-    public void pushBulkRemovals() {
-        this.editableVertices.startBulkRemovals();
-        this.editableTexCoords.startBulkRemovals();
-        this.editableFaces.startBulkRemovals();
+    public void pushBatchOperations() {
+        pushBatchRemovals();
+        pushBatchInsertions();
     }
 
     /**
-     * Disable bulk removals for all mesh array wrappers.
-     * Attempts to update the wrapped FX arrays for any array wrapper which has an empty bulk removal stack count.
+     * Enable batch insertion for all mesh array wrappers.
      */
-    public void popBulkRemovals() {
-        // End bulk removals.
-        this.editableVertices.endBulkRemovals();
-        this.editableTexCoords.endBulkRemovals();
-        this.editableFaces.endBulkRemovals();
+    public void pushBatchInsertions() {
+        this.editableFaces.startBatchInsertion();
+        this.editableTexCoords.startBatchInsertion();
+        this.editableVertices.startBatchInsertion();
+    }
 
-        // Update mesh.
-        updateMeshArrays();
+    /**
+     * Enable batch removals for all mesh array wrappers.
+     */
+    public void pushBatchRemovals() {
+        this.editableFaces.startBatchRemoval();
+        this.editableTexCoords.startBatchRemoval();
+        this.editableVertices.startBatchRemoval();
+    }
+
+    /**
+     * Disable batch operations for all mesh array wrappers.
+     * Updates the mesh arrays if necessary.
+     */
+    public void popBatchOperations() {
+        popBatchRemovals();
+        popBatchInsertions();
+    }
+
+    /**
+     * Disable batch insertions for all mesh array wrappers.
+     * Updates the mesh arrays if necessary.
+     */
+    public void popBatchInsertions() {
+        this.editableVertices.endBatchInsertion();
+        this.editableTexCoords.endBatchInsertion();
+        this.editableFaces.endBatchInsertion();
+    }
+
+    /**
+     * Disable batch removals for all mesh array wrappers.
+     * Updates the mesh arrays if necessary.
+     */
+    public void popBatchRemovals() {
+        this.editableVertices.endBatchRemoval();
+        this.editableTexCoords.endBatchRemoval();
+        this.editableFaces.endBatchRemoval();
     }
 
     /**
