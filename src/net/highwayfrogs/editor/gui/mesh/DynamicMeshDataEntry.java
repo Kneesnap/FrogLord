@@ -244,7 +244,7 @@ public class DynamicMeshDataEntry {
         if (!this.active)
             throw new IllegalStateException("Cannot remove vertex data while the entry is not active.");
         if (localVtxIndex < 0 || localVtxIndex >= this.writtenVertexCount)
-            throw new IndexOutOfBoundsException("There is no written vertex corresponding to local vertex ID " + localVtxIndex + ". Valid Range: [0, " + this.writtenVertexCount + ").");
+            throw new IndexOutOfBoundsException("There is no written vertex corresponding to local vertex ID " + localVtxIndex + ". Valid Range: [0, " + this.pendingVertexCount + "/" + this.writtenVertexCount + ").");
 
         int vertexElementSize = this.mesh.getPointElementSize(); // 3
         int vertexArrayStartIndex = (this.vertexStartIndex + localVtxIndex) * vertexElementSize;
@@ -360,8 +360,8 @@ public class DynamicMeshDataEntry {
     public void removeTexCoordValue(int localTexCoordIndex) {
         if (!this.active)
             throw new IllegalStateException("Cannot remove texCoord data while the entry is not active.");
-        if (localTexCoordIndex < 0 || localTexCoordIndex >= this.pendingTexCoordCount)
-            throw new IllegalArgumentException("The local texCoord index " + localTexCoordIndex + " is not valid, and thus we cannot remove it. Range: [0, " + this.writtenTexCoordCount + ").");
+        if (localTexCoordIndex < 0 || localTexCoordIndex >= this.writtenTexCoordCount)
+            throw new IllegalArgumentException("The local texCoord index " + localTexCoordIndex + " is not valid, and thus we cannot remove it. Range: [0, " + this.pendingTexCoordCount + "/" + this.writtenTexCoordCount + ").");
 
         int texCoordElementSize = this.mesh.getTexCoordElementSize(); // 2
         int texCoordArrayStartIndex = (this.texCoordStartIndex + localTexCoordIndex) * texCoordElementSize;
@@ -462,7 +462,7 @@ public class DynamicMeshDataEntry {
         if (!this.active)
             throw new IllegalStateException("Cannot remove face data while the entry is not active.");
         if (localFaceIndex < 0 || localFaceIndex >= this.writtenFaceCount)
-            throw new IndexOutOfBoundsException("There is no written face corresponding to local face ID " + localFaceIndex + ", thus we cannot remove it. Valid Range: [0, " + this.writtenFaceCount + ").");
+            throw new IndexOutOfBoundsException("There is no written face corresponding to local face ID " + localFaceIndex + ", thus we cannot remove it. Valid Range: [0, " + this.pendingFaceCount + "/" + this.writtenFaceCount + ").");
 
         int faceElementSize = this.mesh.getFaceElementSize(); // 6 = 3 vertices * (1 vertex ID + 1 texture coordinate)
         int faceArrayStartIndex = (this.faceStartIndex + localFaceIndex) * faceElementSize;

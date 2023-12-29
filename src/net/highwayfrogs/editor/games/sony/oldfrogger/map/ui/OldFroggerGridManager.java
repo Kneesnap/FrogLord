@@ -1,9 +1,13 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.ui;
 
 import javafx.scene.layout.VBox;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMeshController;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapGridHeaderPacket.OldFroggerMapGrid;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapUIManager.OldFroggerMapListManager;
+import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
+import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode.OverlayTarget;
 
 import java.util.List;
 
@@ -13,7 +17,7 @@ import java.util.List;
  * TODO: should this manage the polygon highlighting from the grid editors?
  * Created by Kneesnap on 12/24/2023.
  */
-public class OldFroggerGridManager extends OldFroggerMapListManager<OldFroggerMapGrid, Void> {
+public class OldFroggerGridManager extends OldFroggerMapListManager<OldFroggerMapGrid, DynamicMeshOverlayNode> {
     public OldFroggerGridManager(OldFroggerMapMeshController controller) {
         super(controller);
     }
@@ -42,9 +46,10 @@ public class OldFroggerGridManager extends OldFroggerMapListManager<OldFroggerMa
     }
 
     @Override
-    protected Void setupDisplay(OldFroggerMapGrid grid) {
-        // TODO: IMPLEMENT.
-        return null;
+    protected DynamicMeshOverlayNode setupDisplay(OldFroggerMapGrid grid) {
+        DynamicMeshOverlayNode overlay = new DynamicMeshOverlayNode(getMesh());
+        getMesh().getNodes().add(overlay);
+        return overlay;
     }
 
     @Override
@@ -53,12 +58,25 @@ public class OldFroggerGridManager extends OldFroggerMapListManager<OldFroggerMa
     }
 
     @Override
-    protected void setVisible(OldFroggerMapGrid oldFroggerMapGrid, Void unused, boolean visible) {
-        // TODO: Implement.
+    protected void setVisible(OldFroggerMapGrid grid, DynamicMeshOverlayNode overlay, boolean visible) {
+        boolean wasVisible = overlay.getDataEntries().size() > 0;
+        if (wasVisible == visible)
+            return; // Already correct state.
+
+        if (visible) {
+            for (int i = 0; i < grid.getPolygons().size(); i++) {
+                OldFroggerMapPolygon polygon = grid.getPolygons().get(i);
+                overlay.add(new OverlayTarget(getMesh().getMainNode().getDataEntry(polygon), OldFroggerMapMesh.YELLOW_COLOR));
+            }
+
+            getMesh().updateMeshArrays(); // TODO: This is necessary otherwise the grids won't show
+        } else {
+            overlay.clear();
+        }
     }
 
     @Override
-    protected void onSelectedValueChange(OldFroggerMapGrid oldValue, Void oldDelegate, OldFroggerMapGrid newValue, Void newDelegate) {
+    protected void onSelectedValueChange(OldFroggerMapGrid oldValue, DynamicMeshOverlayNode oldOverlay, OldFroggerMapGrid newValue, DynamicMeshOverlayNode newOverlay) {
         // TODO: Implement.
     }
 
@@ -68,7 +86,8 @@ public class OldFroggerGridManager extends OldFroggerMapListManager<OldFroggerMa
     }
 
     @Override
-    protected void onDelegateRemoved(OldFroggerMapGrid oldFroggerMapGrid, Void unused) {
-        // TODO: Implement.
+    protected void onDelegateRemoved(OldFroggerMapGrid oldFroggerMapGrid, DynamicMeshOverlayNode overlay) {
+        if (overlay != null)
+            getMesh().removeNode(overlay);
     }
 }

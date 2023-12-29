@@ -31,7 +31,7 @@ public class OldFroggerShadedTextureManager extends PSXShadedTextureAtlasManager
     }
 
     private boolean isCaveLightingEnabled(CVector[] colors) {
-        if (!getMapMesh().getMap().getFileDisplayName().endsWith("CAVES.MAP"))
+        if (!getMapMesh().getMap().getMapConfig().isCaveLightingEnabled())
             return false; // Only the cave map has cave lighting.
 
         for (int i = 0; i < colors.length; i++) {

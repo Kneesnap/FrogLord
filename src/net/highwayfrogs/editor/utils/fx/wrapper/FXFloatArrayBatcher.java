@@ -43,8 +43,10 @@ public class FXFloatArrayBatcher {
      * Apply to the wrapped JavaFX array.
      */
     public void applyToFxArrayIfReady() {
-        if (!isAnyBatchModeEnabled())
+        if (!isAnyBatchModeEnabled()) {
+            System.out.println("Updating FLOAT " + this.fxArray.size() + " -> " + this.array.size()); // TODO: TOSS
             this.array.apply(this.fxArray);
+        }
     }
 
     /**

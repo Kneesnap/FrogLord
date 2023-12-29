@@ -16,6 +16,7 @@ import java.util.Set;
 @Getter
 public class OldFroggerMapConfig {
     private String name; // The name of the map config.
+    private boolean caveLightingEnabled;
     private OldFroggerFormConfig formConfig;
     private OldFroggerMapVersion version = OldFroggerMapVersion.MILESTONE3; // The amount of padding bytes in a form.
     private final Set<String> applicableMaps = new HashSet<>(); // A list of the names of maps which this config applies to.
@@ -31,6 +32,7 @@ public class OldFroggerMapConfig {
         boolean isDefaultConfig = (defaultConfig == this);
         this.name = config.getName();
         this.version = config.getEnum("version", defaultConfig.getVersion());
+        this.caveLightingEnabled = config.getBoolean("caveLighting", defaultConfig.isCaveLightingEnabled());
 
         // Load base form config.
         String formConfigName = config.getString("forms", defaultConfig == this ? "1997-03-19-psx-milestone3" : null);

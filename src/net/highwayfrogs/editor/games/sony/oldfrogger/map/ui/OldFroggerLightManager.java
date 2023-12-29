@@ -63,7 +63,11 @@ public class OldFroggerLightManager extends OldFroggerMapListManager<OldFroggerM
     @Override
     protected void setupMainGridEditor(VBox editorBox) {
         super.setupMainGridEditor(editorBox);
-        getValueDisplaySetting().setValue(ListDisplayType.ALL); // All lights should show by default.
+        if (getMap().getMapConfig().isCaveLightingEnabled()) {
+            getValueDisplaySetting().setValue(ListDisplayType.NONE); // Disable lighting by default, because it's pitch black.
+        } else {
+            getValueDisplaySetting().setValue(ListDisplayType.ALL); // All lights should show by default.
+        }
     }
 
     @Override
