@@ -13,8 +13,7 @@ import java.util.List;
 
 /**
  * Manages the UI for editing grid map data in old Frogger.
- * TODO: Go over global grid header data
- * TODO: should this manage the polygon highlighting from the grid editors?
+ * TODO: Finish todos in grid header packet.
  * Created by Kneesnap on 12/24/2023.
  */
 public class OldFroggerGridManager extends OldFroggerMapListManager<OldFroggerMapGrid, DynamicMeshOverlayNode> {
@@ -69,7 +68,8 @@ public class OldFroggerGridManager extends OldFroggerMapListManager<OldFroggerMa
                 overlay.add(new OverlayTarget(getMesh().getMainNode().getDataEntry(polygon), OldFroggerMapMesh.YELLOW_COLOR));
             }
 
-            getMesh().updateMeshArrays(); // TODO: This is necessary otherwise the grids won't show
+            // Without this, the grids will not show.
+            getMesh().updateMeshArrays();
         } else {
             overlay.clear();
         }
@@ -77,7 +77,7 @@ public class OldFroggerGridManager extends OldFroggerMapListManager<OldFroggerMa
 
     @Override
     protected void onSelectedValueChange(OldFroggerMapGrid oldValue, DynamicMeshOverlayNode oldOverlay, OldFroggerMapGrid newValue, DynamicMeshOverlayNode newOverlay) {
-        // TODO: Implement.
+        // Do nothing.
     }
 
     @Override
