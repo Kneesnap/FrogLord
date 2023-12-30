@@ -6,6 +6,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.*;
@@ -43,7 +44,7 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
 
         this.vertexDisplayList = getRenderManager().createDisplayList();
 
-        // TODO: !
+        // TODO: Improve this.
         getMeshScene().setOnMouseClicked(evt -> {
             int intersectedFace = evt.getPickResult().getIntersectedFace();
             if (intersectedFace < 0)
@@ -64,7 +65,6 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
             for (int i = 0; i < polygon.getColors().length; i++)
                 System.out.println("Color " + i + ": " + polygon.getColors()[i].toString());
 
-            // TODO: TOSS
             this.vertexDisplayList.clear();
             SVector vertex0 = getMap().getVertexPacket().getVertices().get(polygon.getVertices()[0]);
             SVector vertex1 = getMap().getVertexPacket().getVertices().get(polygon.getVertices()[1]);
@@ -92,7 +92,6 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
         addManager(new OldFroggerEntityManager(this));
         addManager(new OldFroggerCameraHeightFieldManager(this));
         addManager(new OldFroggerGeneralDataManager(this));
-        // TODO: Add managers
     }
 
     @Override
@@ -102,9 +101,10 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
 
     @Override
     protected void setDefaultCameraPosition() {
-        // TODO
-        //getCameraFPS().setPos();
-        //getCameraFPS().setCameraLookAt();
+        IVector froggerPos = getMap().getLevelSpecificDataPacket().getFroggerStartPosition();
+        SVector cameraOffset = getMap().getStandardPacket().getCameraOffset();
+        getCameraFPS().setPos(froggerPos.getFloatX() + cameraOffset.getFloatX(), froggerPos.getFloatY() + cameraOffset.getFloatY(), froggerPos.getFloatZ() + cameraOffset.getFloatZ());
+        getCameraFPS().setCameraLookAt(froggerPos.getFloatX(), froggerPos.getFloatY(), froggerPos.getFloatZ());
     }
 
     /**

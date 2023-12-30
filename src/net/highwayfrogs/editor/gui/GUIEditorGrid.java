@@ -1160,6 +1160,15 @@ public class GUIEditorGrid {
      * @param onPositionUpdate Behavior to apply when the position is updated.
      */
     public void addMeshMatrix(PSXMatrix matrix, MeshViewController<?> controller, Runnable onPositionUpdate) {
+        addMeshMatrix(matrix, controller, onPositionUpdate, false);
+    }
+
+    /**
+     * Add a PSXMatrix to the editor grid.
+     * @param matrix           The rotation matrix to add data for.
+     * @param onPositionUpdate Behavior to apply when the position is updated.
+     */
+    public void addMeshMatrix(PSXMatrix matrix, MeshViewController<?> controller, Runnable onPositionUpdate, boolean rotationUpdates) {
         IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
 
         addFloatVector("Position", vec, () -> {
@@ -1170,7 +1179,7 @@ public class GUIEditorGrid {
                 onPositionUpdate.run(); // Run position hook.
         }, controller, 4, null, null);
 
-        addRotationMatrix(matrix, null);
+        addRotationMatrix(matrix, rotationUpdates ? onPositionUpdate : null);
     }
 
     /**

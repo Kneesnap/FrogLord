@@ -37,7 +37,7 @@ public class MatrixEntityData<TDifficultyData extends OldFroggerDifficultyData> 
 
     @Override
     public void setupMainEntityDataEditor(OldFroggerEntityManager manager, GUIEditorGrid editor) {
-        editor.addMeshMatrix(this.matrix, manager.getController(), () -> manager.updateEntityPositionRotation(getEntity()));
+        editor.addMeshMatrix(this.matrix, manager.getController(), () -> manager.updateEntityPositionRotation(getEntity()), true);
     }
 
     @Override
