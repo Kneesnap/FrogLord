@@ -104,19 +104,19 @@ public abstract class OldFroggerEntityData<TDifficultyData extends OldFroggerDif
     /**
      * A factory which can create entity data.
      */
-    public static interface OldFroggerEntityDataFactory {
+    public interface OldFroggerEntityDataFactory {
         /**
          * Get the name of this factory.
          * @return factoryName
          */
-        public String getName();
+        String getName();
 
         /**
          * Creates entity data for the given entity.
          * @param entity The entity to create data for.
          * @return entityData
          */
-        public OldFroggerEntityData<?> createEntityData(OldFroggerMapEntity entity);
+        OldFroggerEntityData<?> createEntityData(OldFroggerMapEntity entity);
     }
 
     @Getter
@@ -198,7 +198,7 @@ public abstract class OldFroggerEntityData<TDifficultyData extends OldFroggerDif
         registerDataTemplate(HedgehogEntityData.class);
         registerDataTemplate(SpiderEntityData.class);
         registerDataTemplate(RockFallFloorEntityData.class);
-        registerDataTemplate(SlimeEntityData.class); // TODO: What data is this?
+        registerDataTemplate(SlimeEntityData.class);
         registerDataTemplate(SnailEntityData.class);
         registerDataTemplate(CobwebEntityData.class);
         registerDataTemplate(LightBugEntityData.class);
@@ -212,7 +212,7 @@ public abstract class OldFroggerEntityData<TDifficultyData extends OldFroggerDif
         registerDataTemplate(SwayingBranchEntityData.class);
         registerDataTemplate(BreakingBranchEntityData.class);
         registerDataTemplate(SquirrelEntityData.class);
-        registerDataTemplate(SwarmEntityData.class); // TODO: What data is this?
+        registerDataTemplate(SwarmEntityData.class);
 
         // Sky:
         registerDataTemplate(JetEntityData.class);

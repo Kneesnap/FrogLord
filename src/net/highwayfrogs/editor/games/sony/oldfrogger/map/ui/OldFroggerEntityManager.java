@@ -67,6 +67,16 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
         return newView;
     }
 
+    /**
+     * Update the mesh displayed for the given entity.
+     * @param entity The entity to update the mesh for.
+     */
+    public void updateEntityMesh(OldFroggerMapEntity entity) {
+        MeshView entityMesh = getDelegatesByValue().get(entity);
+        if (entityMesh != null)
+            updateEntityMesh(entity, entityMesh);
+    }
+
     private void updateEntityMesh(OldFroggerMapEntity entity, MeshView entityMesh) {
         OldFroggerMapForm form = entity.getForm();
         MOFHolder holder = form.getMofFile();

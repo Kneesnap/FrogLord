@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerFormConfig
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEditorUtils;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerFormUIManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
@@ -63,6 +64,9 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
         for (int i = 0; i < formEntryCount; i++) {
             int formEntryDataStartAddress = reader.readInt();
             OldFroggerMapFormDataEntry newEntry = new OldFroggerMapFormDataEntry(getGameInstance());
+
+            if (i > 0 && endPointer != formEntryDataStartAddress)
+                System.out.println("[Warning] Form " + i + " in " + getMap().getFileDisplayName() + " starts at " + Utils.toHexString(formEntryDataStartAddress) + ", but the form ended at " + Utils.toHexString(endPointer));
 
             reader.jumpTemp(formEntryDataStartAddress);
             newEntry.load(reader);
@@ -169,7 +173,13 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
             wadEntries.removeIf(entry -> !entry.getFileEntry().hasExtension("XMR"));
             editor.addSelectionBox("Model", currentWadEntry, wadEntries, newWadEntry -> {
                 this.mofId = wadFile.getFiles().indexOf(newWadEntry);
-                // TODO: Update Entity Viewer
+
+                // Update the MeshViews of all entities using this form.
+                OldFroggerEntityManager entityManager = manager.getController().getManager(OldFroggerEntityManager.class);
+                if (entityManager != null)
+                    for (OldFroggerMapEntity entity : entityManager.getValues())
+                        if (entity.getFormTypeId() == this.formType)
+                            entityManager.updateEntityMesh(entity);
             }).setConverter(new AbstractIndexStringConverter<>(wadEntries, (index, entry) -> Utils.stripExtension(entry.getDisplayName())));
         } else {
             editor.addUnsignedFixedShort("WAD File Index", this.mofId, newValue -> this.mofId = newValue, 1);
@@ -245,8 +255,6 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
         private OldFroggerReactionType reaction = OldFroggerReactionType.Nothing;
         private final int[] reactionData = new int[3];
         private short numberOfHeights;
-        // TODO: Ideas, Reaction Type, some method of identifying what entity this is (probably hopefully?)
-        // TODO: Potentially other enums seen in ENTITIES.TXT
 
         public OldFroggerMapFormDataEntry(OldFroggerGameInstance instance) {
             super(instance);
@@ -258,7 +266,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
             for (int i = 0; i < this.reactionData.length; i++)
                 this.reactionData[i] = reader.readUnsignedShortAsInt();
 
-            this.numberOfHeights = reader.readUnsignedByteAsShort(); // TODO: READ HEIGHTS, NOT JUST THEIR COUNT. IS THIS EVER NON-ZERO? MULTIPLAYER1.MAP
+            this.numberOfHeights = reader.readUnsignedByteAsShort();
             reader.alignRequireEmpty(4);
         }
 
@@ -279,9 +287,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
          */
         public void setupEditor(OldFroggerFormUIManager manager, GUIEditorGrid editor) {
             OldFroggerEditorUtils.setupReactionEditor(editor, this.reaction, this.reactionData, newValue -> this.reaction = newValue);
-
-            // TODO: HRMM.
-            editor.addUnsignedFixedShort("Number of Heights", this.numberOfHeights, newValue -> this.numberOfHeights = (short) (int) newValue, 1); //  TODO: Replace this once we support heights.
+            editor.addUnsignedFixedShort("Number of Heights", this.numberOfHeights, newValue -> this.numberOfHeights = (short) (int) newValue, 1);
         }
     }
 }

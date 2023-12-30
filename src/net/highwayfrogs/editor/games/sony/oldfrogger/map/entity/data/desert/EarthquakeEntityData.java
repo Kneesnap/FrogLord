@@ -21,7 +21,6 @@ public class EarthquakeEntityData extends MatrixEntityData<EarthquakeDifficultyD
 
     @Getter
     public static class EarthquakeDifficultyData extends OldFroggerDifficultyData {
-        // TODO: ? BITMASK MR_SHORT "Unit Flag" TimeBits 1
         private int unitFlag = 1; // Seems to always be one. Some kind of bit flag. I don't really know.
         private int rampUp = 100;
         private int maxExtent = 100;
@@ -60,7 +59,6 @@ public class EarthquakeEntityData extends MatrixEntityData<EarthquakeDifficultyD
 
         @Override
         public void setupEditor(OldFroggerEntityManager manager, GUIEditorGrid editor) {
-            // TODO: BITMASK MR_SHORT "Unit Flag" TimeBits 1;
             editor.addUnsignedFixedShort("UnitFlag", this.unitFlag, newValue -> this.rampUp = newValue, 1);
             editor.addUnsignedFixedShort("Ramp Up", this.rampUp, newValue -> this.rampUp = newValue, 100);
             editor.addUnsignedFixedShort("Max Extent", this.maxExtent, newValue -> this.maxExtent = newValue, 100);

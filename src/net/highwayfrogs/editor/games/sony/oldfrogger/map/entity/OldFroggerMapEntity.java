@@ -24,7 +24,7 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
     private final OldFroggerMapFile map;
-    private int formTypeId; // TODO: This can have flag 0x8000, or at least the game checks for it. Do we ever see it?
+    private int formTypeId;
     private int difficulty; // TODO: Flag 0x2000 (1 << 13) is seen in DES_STAT_BALLCACTUS in DESERT.MAP, 0x8000 (1 << 15) is seen in CAVES.MAP on CAV_SLIME.XMR
     private short entityId;
     private OldFroggerEntityData<?> entityData;
