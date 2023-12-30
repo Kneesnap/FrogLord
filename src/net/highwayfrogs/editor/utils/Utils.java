@@ -1482,6 +1482,7 @@ public class Utils {
                     field.getParent().requestFocus();
                 evt.consume(); // Don't pass further, eg: we don't want to exit the UI we're in.
                 field.setText(resetTextRef.get());
+                field.setStyle(null);
             } else if (code == KeyCode.ENTER) {
                 boolean successfullyHandled = false;
                 String newText = field.getText();
@@ -1499,6 +1500,8 @@ public class Utils {
                             onPass.run();
                         field.setStyle(null); // Disable any red / green styling.
                         resetTextRef.set(newText);
+                        if (field.getParent() != null) // Remove field focus after success.
+                            field.getParent().requestFocus();
                         return;
                     } catch (Throwable th) {
                         Utils.makeErrorPopUp("An error occurred handling the text '" + newText + "'.", th, true);

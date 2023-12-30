@@ -15,6 +15,7 @@ import java.util.function.Function;
 
 /**
  * Represents old frogger entity data with a static matrix holding position/rotation.
+ * TODO: Rotations are displaying wrong. Look at the static dead trees at the start of the swamp level, or the gates in the Retro level.
  * Created by Kneesnap on 12/11/2023.
  */
 @Getter

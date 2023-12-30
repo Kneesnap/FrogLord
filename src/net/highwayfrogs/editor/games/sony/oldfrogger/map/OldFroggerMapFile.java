@@ -19,6 +19,7 @@ import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.Pack
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
 
@@ -106,10 +107,9 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
         list.add(new Tuple2<>("UV Animations", this.animPacket.getUvAnimations().size()));
 
         if (this.cameraHeightFieldPacket != null) {
-            // TODO: Finish camera stuff.
-            list.add(new Tuple2<>("Camera Height Field Size", this.cameraHeightFieldPacket.getXSize() + " x " + this.cameraHeightFieldPacket.getZSize()));
-            list.add(new Tuple2<>("Camera Height Unknown1", this.cameraHeightFieldPacket.getUnknown1() + " x " + this.cameraHeightFieldPacket.getUnknown2()));
-            list.add(new Tuple2<>("Camera Height Unknown2", this.cameraHeightFieldPacket.getUnknown3() + " x " + this.cameraHeightFieldPacket.getUnknown4()));
+            list.add(new Tuple2<>("Camera Height Grid Dimensions", this.cameraHeightFieldPacket.getXSquareCount() + " x " + this.cameraHeightFieldPacket.getZSquareCount()));
+            list.add(new Tuple2<>("Camera Height Grid Square Size", Utils.fixedPointShortToFloatNBits(this.cameraHeightFieldPacket.getXSquareSize(), 8) + " x " + Utils.fixedPointShortToFloatNBits(this.cameraHeightFieldPacket.getZSquareSize(), 8)));
+            list.add(new Tuple2<>("Camera Height Grid Start Pos", this.cameraHeightFieldPacket.getStartXAsFloat() + ", " + this.cameraHeightFieldPacket.getStartZAsFloat()));
         }
 
         return list;

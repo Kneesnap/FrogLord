@@ -70,10 +70,10 @@ public class OldFroggerMapStandardPacket extends OldFroggerMapPacket {
      * @param editor  Creating the editor
      */
     public void setupEditor(OldFroggerGeneralDataManager manager, GUIEditorGrid editor) {
-        editor.addFloatSVector("Camera Offset", this.cameraOffset, manager.getController());
+        editor.addFloatSVector("Camera Offset", this.cameraOffset, manager.getController()); // TODO: This should show offset to the frogger start position.
         editor.addFixedShort("Half Height", this.halfHeight, newValue -> this.halfHeight = newValue);
         editor.addFixedShort("Camera Max Left", this.cameraMaximumLeft, newValue -> this.cameraMaximumLeft = newValue);
-        editor.addFixedShort("Camera Max Bottom", this.cameraMaximumBottom, newValue -> this.cameraMaximumBottom = newValue);
+        editor.addFixedShort("Camera Max Bottom", this.cameraMaximumBottom, newValue -> this.cameraMaximumBottom = newValue); // 95.5625, -2.6875, -592.0
         editor.addFixedShort("Camera Max Right", this.cameraMaximumRight, newValue -> this.cameraMaximumRight = newValue);
         editor.addFixedShort("Camera Max Top", this.cameraMaximumTop, newValue -> this.cameraMaximumTop = newValue);
         editor.addFixedShort("Front Clip Plane", this.frontClipPlane, newValue -> this.frontClipPlane = newValue);

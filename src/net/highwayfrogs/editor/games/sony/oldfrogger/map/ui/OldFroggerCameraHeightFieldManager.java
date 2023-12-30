@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.utils.Utils;
 /**
  * Manages editing of camera height-field data.
  * TODO: It'd be nice to have a connected mesh for editing. It would make it a lot easier to visualize. Yeah, once mesh editing is possible, let's make this a mesh.
+ * TODO: It'd be nice to have a mode which forces the camera to the height shown in-game. Eg: allow WASD, but only for preview.
  * Created by Kneesnap on 12/25/2023.
  */
 public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
@@ -23,6 +24,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
     private DisplayList verticeDisplayList;
 
     private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.LIMEGREEN);
+    private static final PhongMaterial MATERIAL_RED = Utils.makeSpecialMaterial(Color.RED);
 
     public OldFroggerCameraHeightFieldManager(MeshViewController<OldFroggerMapMesh> controller) {
         super(controller);
@@ -44,12 +46,15 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         editorBox.getChildren().add(new Separator(Orientation.HORIZONTAL));
         this.editorGrid = this.getController().makeEditorGrid(editorBox);
 
-        // Add the vertices. TODO: These should be offset from the basePoint I think. This does position it right.
-        int xCenterOffset = (heightFieldPacket.getXSize() / 2);
-        int zCenterOffset = (heightFieldPacket.getZSize() / 2);
-        for (int z = 0; z < heightFieldPacket.getHeightMap().length; z++)
-            for (int x = 0; x < heightFieldPacket.getHeightMap()[z].length; x++)
-                this.verticeDisplayList.addSphere((x - xCenterOffset) << 4, Utils.fixedPointIntToFloat4Bit(heightFieldPacket.getHeightMap()[z][x]), (z - zCenterOffset) << 4, 1, MATERIAL_GREEN, false);
+        // Add the vertices.
+        for (int z = 0; z < heightFieldPacket.getHeightMap().length; z++) {
+            float zPos = Utils.fixedPointIntToFloat4Bit(heightFieldPacket.getStartPositionZ() + (z * heightFieldPacket.getZSquareSize()));
+            for (int x = 0; x < heightFieldPacket.getHeightMap()[z].length; x++) {
+                float xPos = Utils.fixedPointIntToFloat4Bit(heightFieldPacket.getStartPositionX() + (x * heightFieldPacket.getXSquareSize()));
+                float yPos = Utils.fixedPointIntToFloat4Bit(heightFieldPacket.getHeightMap()[z][x]);
+                this.verticeDisplayList.addSphere(xPos, yPos, zPos, 1, MATERIAL_RED, false);
+            }
+        }
 
         this.verticeDisplayList.setVisible(false);
     }
@@ -59,6 +64,6 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         super.updateEditor();
         this.editorGrid.clearEditor();
 
-        // TODO: Show selected heightfield editor.
+        // TODO: Implement editor.
     }
 }

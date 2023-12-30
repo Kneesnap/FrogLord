@@ -138,10 +138,10 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
         // Disable this since I don't think the other type is supported.
         // And if it is, I don't know what data changes might be required.
         editor.addEnumSelector("Type", this.type, OldFroggerGridType.values(), false, newValue -> this.type = newValue).setDisable(true);
-        editor.addIntegerField("Grid X Size", this.xSize, newValue -> this.xSize = newValue, null);
-        editor.addIntegerField("Grid Z Size", this.zSize, newValue -> this.zSize = newValue, null);
-        editor.addUnsignedFixedShort("Grid X Count", this.xCount, newValue -> this.xCount = newValue, 1);
-        editor.addUnsignedFixedShort("Grid Z Count", this.zCount, newValue -> this.zCount = newValue, 1);
+        editor.addFixedInt("Square X Size", this.xSize, newValue -> this.xSize = newValue, 256, 0, Integer.MAX_VALUE);
+        editor.addFixedInt("Square Z Size", this.zSize, newValue -> this.zSize = newValue, 256, 0, Integer.MAX_VALUE);
+        editor.addUnsignedFixedShort("Square X Count", this.xCount, newValue -> this.xCount = newValue, 1);
+        editor.addUnsignedFixedShort("Square Z Count", this.zCount, newValue -> this.zCount = newValue, 1);
         editor.addFloatSVector("Base Position", this.basePoint, manager.getController());
     }
 
