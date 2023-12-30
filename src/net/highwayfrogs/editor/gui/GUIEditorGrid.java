@@ -1061,6 +1061,16 @@ public class GUIEditorGrid {
      * @param buttonText The text on the button.
      * @param onPress    What to do when the button is pressed.
      */
+    public Button addLabelButton(String labelText, String buttonText, Runnable onPress) {
+        return addLabelButton(labelText, buttonText, 25, onPress);
+    }
+
+    /**
+     * Add a label and button.
+     * @param labelText  The text on the label.
+     * @param buttonText The text on the button.
+     * @param onPress    What to do when the button is pressed.
+     */
     public Button addLabelButton(String labelText, String buttonText, double height, Runnable onPress) {
         addLabel(labelText);
         Button button = setupSecondNode(new Button(buttonText), false);

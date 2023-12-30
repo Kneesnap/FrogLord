@@ -22,12 +22,48 @@ import java.util.Map.Entry;
 public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
     public static final String IDENTIFIER = "EMTP";
     private final List<OldFroggerMapEntity> entities = new ArrayList<>();
+    private final Map<Integer, OldFroggerMapEntity> entitiesByFileOffsets = new HashMap<>();
+    private final Map<OldFroggerMapEntity, Integer> entityFileOffsets = new HashMap<>();
 
     public static final boolean ENABLE_FORM_GENERATOR = false;
     public static final Map<Integer, Set<FileEntry>> formIdsByMof = new HashMap<>();
 
     public OldFroggerMapEntityMarkerPacket(OldFroggerMapFile parentFile) {
         super(parentFile, IDENTIFIER);
+    }
+
+    /**
+     * Gets an entity reference from the provided file offset.
+     * @param fileOffset The file offset to lookup.
+     * @return entity, or null if no entity exists at this offset.
+     */
+    public OldFroggerMapEntity getEntityByFileOffset(int fileOffset) {
+        OldFroggerMapEntity entity = this.entitiesByFileOffsets.get(fileOffset);
+        if (entity == null)
+            System.out.println("Couldn't find map entity at " + Utils.toHexString(fileOffset) + " in " + getParentFile().getFileDisplayName() + ".");
+        return entity;
+    }
+
+    /**
+     * Gets the file offset which an entity was located.
+     * @param entity the entity to find the file offset from.
+     * @return The entity file offset, or -1 if one does not exist.
+     */
+    public int getEntityFileOffset(OldFroggerMapEntity entity) {
+        Integer fileOffset = this.entityFileOffsets.get(entity);
+        if (fileOffset == null) {
+            System.out.println("Couldn't find map entity file offset for entity in " + getParentFile().getFileDisplayName() + ".");
+            return -1;
+        }
+
+        return fileOffset;
+    }
+
+    @Override
+    public void clearReadWriteData() {
+        super.clearReadWriteData();
+        this.entitiesByFileOffsets.clear();
+        this.entityFileOffsets.clear();
     }
 
     @Override
@@ -47,6 +83,8 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
             // Read entity.
             reader.jumpTemp(entityAddress);
             OldFroggerMapEntity newEntity = new OldFroggerMapEntity(getParentFile());
+            this.entitiesByFileOffsets.put(entityAddress, newEntity);
+            this.entityFileOffsets.put(newEntity, entityAddress);
             newEntity.load(reader);
             lastDataStart = entityAddress;
             lastDataEnd = reader.getIndex();
@@ -87,7 +125,10 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
         // Write entity data & update table.
         for (int i = 0; i < this.entities.size(); i++) {
             writer.writeAddressTo(entityPointerStartIndex + (i * Constants.INTEGER_SIZE));
-            this.entities.get(i).save(writer);
+            OldFroggerMapEntity entity = this.entities.get(i);
+            this.entitiesByFileOffsets.put(writer.getIndex(), entity);
+            this.entityFileOffsets.put(entity, writer.getIndex());
+            entity.save(writer);
         }
     }
 
@@ -135,7 +176,7 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
                 builder.append(Utils.stripExtension(fileEntry.getDisplayName()));
             }
 
-            System.out.println(builder.toString());
+            System.out.println(builder);
             builder.setLength(0);
         }
 

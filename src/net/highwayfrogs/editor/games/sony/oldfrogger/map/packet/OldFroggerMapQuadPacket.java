@@ -3,12 +3,15 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolygon;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapGridHeaderPacket.OldFroggerMapGrid;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Holds information about quad polygons.
@@ -23,10 +26,37 @@ public class OldFroggerMapQuadPacket extends OldFroggerMapPacket {
     private int xCount;
     private int zCount;
     private int textureCount;
-    private final List<OldFroggerMapPolygon> polygons = new ArrayList<>();
+
+    private final Map<OldFroggerMapPolygon, Integer> polygonFileOffsets = new HashMap<>();
+    private final Map<OldFroggerMapGrid, Map<PSXPolygonType, Integer>> gridPolygonFileOffsets = new HashMap<>();
 
     public OldFroggerMapQuadPacket(OldFroggerMapFile parentFile) {
         super(parentFile, IDENTIFIER, PacketSizeType.NO_SIZE);
+    }
+
+    /**
+     * Gets the pointer which polygon data begins for the specific grid & polygon type.
+     * @param grid        the grid to get the start pointer for
+     * @param polygonType the polygon type to get the start pointer for
+     * @return polygonStartPointer
+     */
+    public int getPolygonStartPointer(OldFroggerMapGrid grid, PSXPolygonType polygonType) {
+        Map<PSXPolygonType, Integer> typeMap = this.gridPolygonFileOffsets.get(grid);
+        if (typeMap == null)
+            throw new IllegalStateException("Failed to lookup grid polygon pointers for a grid entry.");
+
+        Integer value = typeMap.get(polygonType);
+        if (value == null)
+            throw new IllegalStateException("Failed to lookup grid polygon pointer for the grid entry.");
+
+        return value;
+    }
+
+    @Override
+    public void clearReadWriteData() {
+        super.clearReadWriteData();
+        this.polygonFileOffsets.clear();
+        this.gridPolygonFileOffsets.clear();
     }
 
     @Override
@@ -35,22 +65,15 @@ public class OldFroggerMapQuadPacket extends OldFroggerMapPacket {
         this.zSize = reader.readUnsignedShortAsInt();
         this.xCount = reader.readUnsignedShortAsInt();
         this.zCount = reader.readUnsignedShortAsInt();
-        int quadCount = reader.readUnsignedShortAsInt();
+        reader.skipShort(); // ushort quadCount?
         this.textureCount = reader.readUnsignedShortAsInt();
         int quadDataStartAddress = reader.readInt();
 
         if (quadDataStartAddress != reader.getIndex())
             throw new RuntimeException("The address where quad data starts was not at the expected location. (Expected: " + Utils.toHexString(reader.getIndex()) + ", Provided: " + Utils.toHexString(quadDataStartAddress) + ")");
 
-        // TODO: This packet is where Polygons are written, not where they are used from.,
-        this.polygons.clear(); // TODO: Not all the polygons are GT4... How does the game know? Could it be the 'code' part? Nope.
-        /*for (int i = 0; i < quadCount; i++) {
-            OldFroggerMapPolygon polygon = new OldFroggerMapPolygon(getParentFile().getGameInstance(), PSXPolygonType.POLY_GT4);
-            polygon.load(reader);
-            this.polygons.add(polygon);
-        }*/
-
         // This ensures that we end up at the end of this section.
+        // This packet doesn't have the information necessary to read the data, but it is responsible for writing it.
         reader.setIndex(getParentFile().getGraphicalHeaderPacket().getVertexChunkAddress());
     }
 
@@ -60,14 +83,58 @@ public class OldFroggerMapQuadPacket extends OldFroggerMapPacket {
         writer.writeUnsignedShort(this.zSize);
         writer.writeUnsignedShort(this.xCount);
         writer.writeUnsignedShort(this.zCount);
-        writer.writeUnsignedShort(this.polygons.size());
+        writer.writeUnsignedShort(getParentFile().getGridPacket().getPolygonCount());
         writer.writeUnsignedShort(this.textureCount);
         int quadDataStartAddress = writer.writeNullPointer();
 
         // Write quads.
         writer.writeAddressTo(quadDataStartAddress);
-        for (int i = 0; i < this.polygons.size(); i++)
-            this.polygons.get(i).save(writer);
+        OldFroggerMapGridHeaderPacket gridPacket = getParentFile().getGridPacket();
+        List<PSXPolygonType> polygonOrder = OldFroggerMapGrid.POLYGON_TYPE_ORDER;
+
+        // Write floor polygons.
+        for (int i = 0; i < polygonOrder.size(); i++) {
+            PSXPolygonType polygonType = polygonOrder.get(i);
+
+            for (int j = 0; j < gridPacket.getGrids().size(); j++) {
+                OldFroggerMapGrid grid = gridPacket.getGrids().get(j);
+                List<OldFroggerMapPolygon> polygons = grid.getFloorPolygons(polygonType);
+                if (polygons == null || polygons.isEmpty())
+                    continue;
+
+                this.gridPolygonFileOffsets.computeIfAbsent(grid, key -> new HashMap<>())
+                        .put(polygonType, writer.getIndex());
+
+                // Write polygon data.
+                for (int k = 0; k < polygons.size(); k++) {
+                    OldFroggerMapPolygon polygon = polygons.get(k);
+                    this.polygonFileOffsets.put(polygon, writer.getIndex());
+                    polygon.save(writer);
+                }
+            }
+        }
+
+        // Write ceiling polygons.
+        for (int i = 0; i < polygonOrder.size(); i++) {
+            PSXPolygonType polygonType = polygonOrder.get(i);
+
+            for (int j = 0; j < gridPacket.getGrids().size(); j++) {
+                OldFroggerMapGrid grid = gridPacket.getGrids().get(j);
+                List<OldFroggerMapPolygon> polygons = grid.getCeilingPolygons(polygonType);
+                if (polygons == null || polygons.isEmpty())
+                    continue;
+
+                this.gridPolygonFileOffsets.computeIfAbsent(grid, key -> new HashMap<>())
+                        .put(polygonType, writer.getIndex());
+
+                // Write polygon data.
+                for (int k = 0; k < polygons.size(); k++) {
+                    OldFroggerMapPolygon polygon = polygons.get(k);
+                    this.polygonFileOffsets.put(polygon, writer.getIndex());
+                    polygon.save(writer);
+                }
+            }
+        }
     }
 
     @Override

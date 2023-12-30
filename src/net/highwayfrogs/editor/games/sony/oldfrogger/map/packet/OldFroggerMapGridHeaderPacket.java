@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
+import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -9,9 +10,11 @@ import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerGridManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
@@ -24,9 +27,6 @@ import java.util.*;
 public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
     public static final String IDENTIFIER = "GRID";
     private final List<OldFroggerMapGrid> grids = new ArrayList<>();
-    private final List<Integer> entityPointerList1 = new ArrayList<>(); // TODO: Figure this one out better.
-    private final List<Integer> entityPointerList2 = new ArrayList<>(); // TODO: Figure this one out better.
-
     private OldFroggerGridType type = OldFroggerGridType.DEFORMED; // type of grid (?) 0 = FIXED, 1 = DEFORMED
     private int xSize; // Size of grids (x)
     private int zSize; // Size of grids (z)
@@ -41,7 +41,7 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
         this.type = OldFroggerGridType.values()[reader.readByte()];
-        byte padding = reader.readByte();
+        reader.skipBytesRequireEmpty(1);
         int gridCount = reader.readUnsignedShortAsInt();
         this.xSize = reader.readInt(); // Size of grids (x)
         this.zSize = reader.readInt(); // Size of grids (z)
@@ -49,48 +49,78 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
         this.zCount = reader.readUnsignedShortAsInt(); // Number of grids in Z
         this.basePoint.loadWithPadding(reader);
         int gridDataStartAddress = reader.readInt(); // ptr to first of many grids
-        int staticCount = reader.readUnsignedShortAsInt();
-        int pathIdCount = reader.readUnsignedShortAsInt();
-
-        // TODO: This pointer here points to the end of the 'GRID' section, where there's an array of pointers.
-        // TODO: This array of pointers seems to be a pointer to EMTP entries.
-        int entityListPointer = reader.readInt();
-        int pathEntityPointer = reader.readInt();
+        int quadCount = reader.readUnsignedShortAsInt();
+        int staticEntityCount = reader.readUnsignedShortAsInt();
+        int quadPointer = reader.readInt();
+        int staticEntityPointer = reader.readInt();
 
         // Verify header data is okay before continuing.
-        if (padding != 0)
-            throw new RuntimeException("Grid Padding byte was not zero! (Was: " + padding + ")");
         if (gridDataStartAddress != reader.getIndex())
             throw new RuntimeException("The address where grid data starts was not at the expected location. (Expected: " + Utils.toHexString(reader.getIndex()) + ", Provided: " + Utils.toHexString(gridDataStartAddress) + ")");
 
-        // Read grid data.
+        // Read grid data. (Needs entity info)
+        reader.setIndex(gridDataStartAddress);
         this.grids.clear();
         for (int i = 0; i < gridCount; i++) {
-            OldFroggerMapGrid newGrid = new OldFroggerMapGrid(getParentFile().getGameInstance());
+            OldFroggerMapGrid newGrid = new OldFroggerMapGrid(getParentFile());
             newGrid.load(reader);
             this.grids.add(newGrid);
         }
 
-        // Read entity list.
-        if (entityListPointer != reader.getIndex())
-            throw new RuntimeException("The address where the first grid entity list starts starts was not at the expected location. (Expected: " + Utils.toHexString(reader.getIndex()) + ", Provided: " + Utils.toHexString(entityListPointer) + ")");
+        // Ensure we ended at the right spot.
+        if (quadPointer != reader.getIndex())
+            throw new RuntimeException("The address where the quad list starts was not at the expected location. (Expected: " + Utils.toHexString(reader.getIndex()) + ", Provided: " + Utils.toHexString(quadPointer) + ")");
 
-        this.entityPointerList1.clear();
-        for (int i = 0; i < staticCount; i++)
-            this.entityPointerList1.add(reader.readInt());
+        // Read quad data.
+        // (Do nothing)
 
-        // Read other list.
-        if (pathEntityPointer != reader.getIndex())
-            throw new RuntimeException("The address where the second grid entity list starts starts was not at the expected location. (Expected: " + Utils.toHexString(reader.getIndex()) + ", Provided: " + Utils.toHexString(pathEntityPointer) + ")");
+        // Ensure quad data ended at the expected position.
+        if (staticEntityPointer != reader.getIndex())
+            throw new RuntimeException("The address where the static entity list starts was not at the expected location. (Expected: " + Utils.toHexString(reader.getIndex()) + ", Provided: " + Utils.toHexString(staticEntityPointer) + ", Quad Count: " + quadCount + ")");
 
-        this.entityPointerList2.clear();
-        for (int i = 0; i < pathIdCount; i++)
-            this.entityPointerList2.add(reader.readInt());
+        // Skip entity list.
+        reader.skipBytes(staticEntityCount * Constants.INTEGER_SIZE);
     }
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
-        // TODO: IMPLEMENTO
+        writer.writeUnsignedByte((short) (this.type != null ? this.type.ordinal() : 0));
+        writer.writeNull(1);
+        writer.writeUnsignedShort(this.grids.size());
+        writer.writeInt(this.xSize);
+        writer.writeInt(this.zSize);
+        writer.writeUnsignedShort(this.xCount);
+        writer.writeUnsignedShort(this.zCount);
+        this.basePoint.saveWithPadding(writer);
+        int gridDataStartAddress = writer.writeNullPointer();
+        writer.writeUnsignedShort(getPolygonCount());
+        writer.writeUnsignedShort(getStaticEntityCount());
+        int quadPointer = writer.writeNullPointer();
+        int staticEntityPointer = writer.writeNullPointer();
+
+        // Write grid data.
+        writer.writeAddressTo(gridDataStartAddress);
+        for (int i = 0; i < this.grids.size(); i++)
+            this.grids.get(i).save(writer);
+
+        // Write quad data. (Currently unimplemented)
+        writer.writeAddressTo(quadPointer);
+
+        // Write entity list.
+        writer.writeAddressTo(staticEntityPointer);
+        for (int i = 0; i < this.grids.size(); i++) {
+            OldFroggerMapGrid grid = this.grids.get(i);
+            grid.saveEntityListAddress(writer, writer.getIndex());
+            for (int j = 0; j < grid.getStaticEntities().size(); j++)
+                writer.writeInt(getParentFile().getEntityMarkerPacket().getEntityFileOffset(grid.getStaticEntities().get(j)));
+        }
+    }
+
+    @Override
+    protected void saveBodySecondPass(DataWriter writer, long fileSizeInBytes) {
+        super.saveBodySecondPass(writer, fileSizeInBytes);
+        for (int i = 0; i < this.grids.size(); i++)
+            this.grids.get(i).savePolygonAddresses(writer);
     }
 
     @Override
@@ -105,9 +135,6 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
      * @param editor  The editor context to build upon.
      */
     public void setupEditor(OldFroggerGridManager manager, GUIEditorGrid editor) {
-        editor.addLabel("Entity List #1", String.valueOf(this.entityPointerList1.size()));
-        editor.addLabel("Entity List #2", String.valueOf(this.entityPointerList2.size()));
-
         // Disable this since I don't think the other type is supported.
         // And if it is, I don't know what data changes might be required.
         editor.addEnumSelector("Type", this.type, OldFroggerGridType.values(), false, newValue -> this.type = newValue).setDisable(true);
@@ -119,23 +146,67 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
     }
 
     /**
+     * Returns the total number of polygons tracked by this packet.
+     */
+    public int getPolygonCount() {
+        int count = 0;
+        for (int i = 0; i < this.grids.size(); i++)
+            count += this.grids.get(i).getPolygons().size();
+
+        return count;
+    }
+
+    /**
+     * Returns the total number of static entities tracked by this packet.
+     */
+    public int getStaticEntityCount() {
+        int count = 0;
+        for (int i = 0; i < this.grids.size(); i++)
+            count += this.grids.get(i).getStaticEntities().size();
+
+        return count;
+    }
+
+    /**
      * Represents a frogger map grid.
      */
-    @Getter
     public static class OldFroggerMapGrid extends SCGameData<OldFroggerGameInstance> {
-        private int unknown1; // TODO: Seems to differ from documentation.
-        private final List<OldFroggerMapPolygon> polygons = new ArrayList<>();
+        @Getter private final OldFroggerMapFile map;
+        @Getter private final List<OldFroggerMapPolygon> polygons = new ArrayList<>();
+        @Getter private final List<OldFroggerMapEntity> staticEntities = new ArrayList<>();
         private final Map<PSXPolygonType, List<OldFroggerMapPolygon>> floorPolygonsByType = new HashMap<>();
         private final Map<PSXPolygonType, List<OldFroggerMapPolygon>> ceilingPolygonsByType = new HashMap<>();
+        private transient int writtenDataOffset = -1;
 
         public static final List<PSXPolygonType> POLYGON_TYPE_ORDER = Arrays.asList(PSXPolygonType.POLY_F4, PSXPolygonType.POLY_FT4, PSXPolygonType.POLY_G4, PSXPolygonType.POLY_GT4);
 
-        public OldFroggerMapGrid(OldFroggerGameInstance instance) {
-            super(instance);
+        public OldFroggerMapGrid(OldFroggerMapFile map) {
+            super(map.getGameInstance());
+            this.map = map;
         }
 
+        /**
+         * Gets the ceiling polygons of a given type.
+         * @param polygonType The type of polygon to get.
+         * @return ceilingPolygonsOfType, or null if they don't exist.
+         */
+        public List<OldFroggerMapPolygon> getCeilingPolygons(PSXPolygonType polygonType) {
+            return this.ceilingPolygonsByType.get(polygonType);
+        }
+
+        /**
+         * Gets the floor polygons of a given type.
+         * @param polygonType The type of polygon to get.
+         * @return floorPolygonsOfType, or null if they don't exist.
+         */
+        public List<OldFroggerMapPolygon> getFloorPolygons(PSXPolygonType polygonType) {
+            return this.floorPolygonsByType.get(polygonType);
+        }
+
+        @Override
         public void load(DataReader reader) {
-            this.unknown1 = reader.readInt();
+            short entityCount = reader.readUnsignedByteAsShort();
+            reader.skipBytesRequireEmpty(3);
 
             int numFloorF4 = reader.readUnsignedByteAsShort();
             int numFloorFT4 = reader.readUnsignedByteAsShort();
@@ -155,17 +226,20 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
             int ptrCeilingG4 = reader.readInt();
             int ptrCeilingGT4 = reader.readInt();
             reader.skipBytesRequireEmpty(8 * Constants.INTEGER_SIZE); // Runtime pointers.
-            int finalValue1 = reader.readInt(); // TODO: POINTER
-            int finalValue2 = reader.readInt(); // TODO: Probably also pointer.
+            int staticEntityListPointer = reader.readInt();
+            reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE); // Seems to be some pointer.
 
-            /*if (debug) {
-                System.out.println("ITS GRID TIME! [" + Utils.toHexString(this.unknown1) + "]:");
-                System.out.println("- Floor Polys:   " + Utils.toHexString(ptrFloorF4) + "/" + numFloorF4 + ", " + Utils.toHexString(ptrFloorFT4) + "/" + numFloorFT4 + ", " + Utils.toHexString(ptrFloorG4) + "/" + numFloorG4 + ", " + Utils.toHexString(ptrFloorGT4) + "/" + numFloorGT4);
-                System.out.println("- Ceiling Polys: " + Utils.toHexString(ptrCeilingF4) + "/" + numCeilingF4 + ", " + Utils.toHexString(ptrCeilingFT4) + "/" + numCeilingFT4 + ", " + Utils.toHexString(ptrCeilingG4) + "/" + numCeilingG4 + ", " + Utils.toHexString(ptrCeilingGT4) + "/" + numCeilingGT4);
-                System.out.println("- " + Utils.toHexString(finalValue1) + ", " + Utils.toHexString(finalValue2));
-            }*/
+            // Read entities.
+            reader.jumpTemp(staticEntityListPointer);
+            this.staticEntities.clear();
+            for (int i = 0; i < entityCount; i++) {
+                OldFroggerMapEntity entity = this.map.getEntityMarkerPacket().getEntityByFileOffset(reader.readInt());
+                if (entity != null)
+                    this.staticEntities.add(entity);
+            }
+            reader.jumpReturn();
 
-
+            // Read polygons.
             this.polygons.clear();
             readPolygons(reader, this.floorPolygonsByType, ptrFloorF4, numFloorF4, PSXPolygonType.POLY_F4);
             readPolygons(reader, this.floorPolygonsByType, ptrFloorFT4, numFloorFT4, PSXPolygonType.POLY_FT4);
@@ -194,8 +268,8 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
 
         @Override
         public void save(DataWriter writer) {
-            writer.writeInt(this.unknown1);
-
+            writer.writeUnsignedByte((short) this.staticEntities.size());
+            writer.writeNull(3);
             writer.writeUnsignedByte((short) this.floorPolygonsByType.get(PSXPolygonType.POLY_F4).size()); // numFloorF4
             writer.writeUnsignedByte((short) this.floorPolygonsByType.get(PSXPolygonType.POLY_FT4).size()); // numFloorFT4
             writer.writeUnsignedByte((short) this.floorPolygonsByType.get(PSXPolygonType.POLY_G4).size()); // numFloorG4
@@ -205,25 +279,41 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
             writer.writeUnsignedByte((short) this.ceilingPolygonsByType.get(PSXPolygonType.POLY_G4).size()); // numCeilingG4
             writer.writeUnsignedByte((short) this.ceilingPolygonsByType.get(PSXPolygonType.POLY_GT4).size()); // numCeilingGT4
 
-            // TODO: We can calculate these pointers, but we need to track counts and/or positions of previously written pointers.
-            /*int ptrFloorF4 = reader.readInt();
-            int ptrFloorFT4 = reader.readInt();
-            int ptrFloorG4 = reader.readInt();
-            int ptrFloorGT4 = reader.readInt();
-            int ptrCeilingF4 = reader.readInt();
-            int ptrCeilingFT4 = reader.readInt();
-            int ptrCeilingG4 = reader.readInt();
-            int ptrCeilingGT4 = reader.readInt();*/
-
-            // Runtime pointers
-            for (int i = 0; i < 8; i++)
-                writer.writeNullPointer();
-
-            // TODO: int finalValue1 = reader.readInt(); // TODO: POINTER
-            // TODO: int finalValue2 = reader.readInt(); // TODO: Probably also pointer.
+            this.writtenDataOffset = writer.getIndex();
+            writer.writeNull(8 * Constants.INTEGER_SIZE); // Pointers to polygon data. (Overwritten to not be null later)
+            writer.writeNull(8 * Constants.INTEGER_SIZE); // Runtime pointers.
+            writer.writeNullPointer(); // Entity list pointer (overwritten later)
+            writer.writeNullPointer(); // Seems to be some pointer.
 
             // The polygons are written by the QUAD chunk.
-            // TODO: Implement making it write them.
+        }
+
+
+        private void saveEntityListAddress(DataWriter writer, int entityListAddress) {
+            writer.jumpTemp(this.writtenDataOffset);
+            writer.skipBytes(8 * Constants.INTEGER_SIZE); // Skip polygon pointers.
+            writer.skipBytes(8 * Constants.INTEGER_SIZE); // Runtime pointers.
+            writer.writeInt(entityListAddress); // Entity list address.
+            writer.jumpReturn();
+        }
+
+        private void savePolygonAddresses(DataWriter writer) {
+            writer.jumpTemp(this.writtenDataOffset);
+            this.writtenDataOffset = -1;
+
+            // Write floor polygon pointers.
+            for (int i = 0; i < POLYGON_TYPE_ORDER.size(); i++) {
+                PSXPolygonType polygonType = POLYGON_TYPE_ORDER.get(i);
+                writer.writeInt(getMap().getQuadPacket().getPolygonStartPointer(this, polygonType));
+            }
+
+            // Write ceiling polygon pointers.
+            for (int i = 0; i < POLYGON_TYPE_ORDER.size(); i++) {
+                PSXPolygonType polygonType = POLYGON_TYPE_ORDER.get(i);
+                writer.writeInt(getMap().getQuadPacket().getPolygonStartPointer(this, polygonType));
+            }
+
+            writer.jumpReturn();
         }
 
         /**
@@ -232,7 +322,6 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
          * @param editor  The editor to use to create the UI.
          */
         public void setupEditor(OldFroggerGridManager manager, GUIEditorGrid editor) {
-            editor.addIntegerField("Unknown 1", this.unknown1, newValue -> this.unknown1 = newValue, null); // TODO: What is this?
             editor.addLabel("All Polygons", String.valueOf(this.polygons.size()));
             for (PSXPolygonType polygonType : POLYGON_TYPE_ORDER) {
                 List<OldFroggerMapPolygon> polygons = this.floorPolygonsByType.get(polygonType);
@@ -244,7 +333,42 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
                 editor.addLabel("Ceiling " + polygonType.getName() + "s", String.valueOf(polygons != null ? polygons.size() : 0));
             }
 
-            // TODO: Allow showing polygons (And adding / removing them by clicking on them)
+            // Entity List
+            editor.addBoldLabel("Entities (" + this.staticEntities.size() + "):");
+            for (int i = 0; i < this.staticEntities.size(); i++) {
+                OldFroggerMapEntity entity = this.staticEntities.get(i);
+                editor.addLabelButton(entity.getEntityId() + "/" + entity.getDebugName(), "Remove", () -> {
+                    this.staticEntities.remove(entity);
+                    manager.updateEditor(); // Update the editor to remove this from the display.
+                });
+            }
+
+            // Add Entity Button
+            editor.addButton("Add Entity", () -> {
+                InputMenu.promptInput("Please enter the ID of the entity to add.", str -> {
+                    if (!Utils.isInteger(str)) {
+                        Utils.makePopUp("'" + str + "' is not a valid number.", AlertType.WARNING);
+                        return;
+                    }
+
+                    int entityId = Integer.parseInt(str);
+                    OldFroggerMapEntity foundEntity = null;
+                    for (OldFroggerMapEntity testEntity : getMap().getEntityMarkerPacket().getEntities()) {
+                        if (testEntity.getEntityId() == entityId) {
+                            foundEntity = testEntity;
+                            break;
+                        }
+                    }
+
+                    if (foundEntity == null) {
+                        Utils.makePopUp("No entity was found with ID " + entityId, AlertType.WARNING);
+                        return;
+                    }
+
+                    this.staticEntities.add(foundEntity); // Add the entity.
+                    manager.updateEditor(); // Update the UI.
+                });
+            });
         }
     }
 

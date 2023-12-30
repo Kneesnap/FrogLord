@@ -13,7 +13,6 @@ import java.util.List;
 
 /**
  * Manages the UI for editing grid map data in old Frogger.
- * TODO: Finish todos in grid header packet.
  * Created by Kneesnap on 12/24/2023.
  */
 public class OldFroggerGridManager extends OldFroggerMapListManager<OldFroggerMapGrid, DynamicMeshOverlayNode> {
@@ -82,7 +81,7 @@ public class OldFroggerGridManager extends OldFroggerMapListManager<OldFroggerMa
 
     @Override
     protected OldFroggerMapGrid createNewValue() {
-        return new OldFroggerMapGrid(getMap().getGameInstance());
+        return new OldFroggerMapGrid(getMap());
     }
 
     @Override
