@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.system.math;
 
+import javafx.geometry.Point3D;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -180,6 +181,20 @@ public class Vector3f {
         this.x = other.x;
         this.y = other.y;
         this.z = other.z;
+        return this;
+    }
+
+    /**
+     * Copies the values of another vector to this one.
+     * @param other The vector to copy values from
+     */
+    public Vector3f setXYZ(Point3D other) {
+        if (other == null)
+            throw new NullPointerException("other");
+
+        this.x = (float) other.getX();
+        this.y = (float) other.getY();
+        this.z = (float) other.getZ();
         return this;
     }
 

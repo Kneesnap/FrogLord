@@ -17,12 +17,14 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
     private final DynamicMesh mesh;
     private final int vertexSize;
     private final int vertexOffset;
+    private final int elementSize;
 
-    public DynamicMeshFloatArray(DynamicMesh mesh, ObservableFloatArray meshArray, int vertexOffset) {
+    public DynamicMeshFloatArray(DynamicMesh mesh, ObservableFloatArray meshArray, int vertexOffset, int elementSize) {
         super(new FXFloatArray(), meshArray);
         this.mesh = mesh;
         this.vertexSize = mesh.getVertexFormat().getVertexIndexSize();
         this.vertexOffset = vertexOffset;
+        this.elementSize = elementSize;
     }
 
     @Override
@@ -32,7 +34,7 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
         // Update faces to use updated indices.
         FXIntArrayBatcher faceData = this.mesh.getEditableFaces();
         for (int i = this.vertexOffset; i < faceData.size(); i += this.vertexSize) {
-            int oldElement = faceData.getArray().get(i);
+            int oldElement = faceData.get(i);
 
             // Increase the index value, to offset the newly inserted values.
             if (oldElement >= startIndex)
@@ -49,7 +51,7 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
         // Update faces to use updated indices.
         FXIntArrayBatcher faceData = this.mesh.getEditableFaces();
         for (int i = this.vertexOffset; i < faceData.size(); i += this.vertexSize) {
-            int oldElement = faceData.getArray().get(i);
+            int oldElement = faceData.get(i);
             int insertedValues = indices.getInsertionPoint(oldElement);
 
             // Save new value.
@@ -67,7 +69,7 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
         // Update faces to use updated indices.
         FXIntArrayBatcher faceData = this.mesh.getEditableFaces();
         for (int i = this.vertexOffset; i < faceData.size(); i += this.vertexSize) {
-            int oldElement = faceData.getArray().get(i);
+            int oldElement = faceData.get(i);
 
             // Reduce the element index value by the amount which was removed, assuming it is impacted by the removed values.
             if (oldElement >= startIndex)
@@ -83,10 +85,19 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
 
         // Update faces to use updated indices.
         FXIntArrayBatcher faceData = this.mesh.getEditableFaces();
+        int errorCount = 0;
         for (int i = this.vertexOffset; i < faceData.size(); i += this.vertexSize) {
-            int oldElement = faceData.getArray().get(i);
-            if (indices.getBit(oldElement))
-                System.out.println("[Warning] Face Element " + i + " referenced index " + oldElement + ", which was just removed. This will probably create visual corruption.");
+            int oldElement = faceData.get(i);
+
+            // Show warnings if the face array is seen to be using data that was just removed.
+            if (indices.getBit(oldElement * this.elementSize)) {
+                errorCount++;
+                if (errorCount == 10) {
+                    System.out.println("[Warning] Omitting remaining batch removal warnings.");
+                } else if (errorCount < 10) {
+                    System.out.println("[Warning] Face Element " + i + " referenced index " + oldElement + ", which was just removed. This will probably create visual corruption.");
+                }
+            }
 
             // Calculate the number of indices removed at/before the current index.
             int removedElements = 0;
@@ -98,6 +109,9 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
             if (removedElements > 0)
                 faceData.set(i, oldElement - removedElements);
         }
+
+        if (errorCount > 10)
+            System.out.println("[Warning] " + errorCount + " face elements referenced newly removed indices. This will probably create visual corruption.");
 
         getMesh().updateEntryStartIndices();
     }

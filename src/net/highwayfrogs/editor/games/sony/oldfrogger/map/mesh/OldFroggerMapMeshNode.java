@@ -32,6 +32,8 @@ public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapP
 
     @Override
     protected void onAddedToMesh() {
+        super.onAddedToMesh();
+
         // Setup vertices.
         this.vertexEntry = new DynamicMeshDataEntry(getMesh());
         List<SVector> vertices = getMap().getVertexPacket().getVertices();
@@ -45,9 +47,6 @@ public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapP
         for (OldFroggerMapGrid grid : getMap().getGridPacket().getGrids())
             for (OldFroggerMapPolygon polygon : grid.getPolygons())
                 this.add(polygon);
-
-        // Update last.
-        super.onAddedToMesh();
     }
 
     @Override

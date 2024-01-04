@@ -28,6 +28,13 @@ public class MeshUIManager<TMesh extends DynamicMesh> {
     }
 
     /**
+     * Called when the manager is shutdown.
+     */
+    public void onRemove() {
+        // Do nothing, this is for overriding.
+    }
+
+    /**
      * Sets up and/or refreshes the 2D editor UI.
      */
     public void updateEditor() {

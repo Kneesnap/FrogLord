@@ -78,7 +78,6 @@ public class OldFroggerMapHeaderPacket extends OldFroggerMapPacket {
         writer.skipBytes(COMMENT_LENGTH);
 
         // Write values.
-        // TODO: What happens if a packet is not included?
         writer.writeUnsignedInt(getParentFile().getLevelSpecificDataPacket().getLastValidReadHeaderAddress());
         writer.writeUnsignedInt(getParentFile().getGraphicalHeaderPacket().getLastValidReadHeaderAddress());
         writer.skipBytes(Constants.INTEGER_SIZE); // mofsAddr

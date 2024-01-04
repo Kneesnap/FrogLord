@@ -7,6 +7,7 @@ import java.util.function.Function;
 
 /**
  * Represents a texture which comes directly from a <see cref="IVorkTextureSource"/> without modification.
+ * TODO: We need to sort out how texture padding works. I don't think the ITextureSource uses it the same way this does.
  * Created by Kneesnap on 9/23/2023.
  */
 public class SimpleTexture extends Texture {

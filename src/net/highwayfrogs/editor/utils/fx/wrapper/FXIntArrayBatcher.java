@@ -16,15 +16,18 @@ import sun.plugin.dom.exception.InvalidStateException;
 public class FXIntArrayBatcher {
     @Getter private final FXIntArray array;
     @Getter private final ObservableIntegerArray fxArray;
+    private final IntegerCounter batchedUpdates;
     private final IntegerCounter batchedInsertion;
     private final FXIntArray queuedInsertionValues;
     private final FXIntArray queuedInsertionIndices;
     private final IntegerCounter batchedRemovals;
     private final IndexBitArray queuedIndexRemovals;
+    private boolean updateOnBatchCompletion;
 
     public FXIntArrayBatcher(FXIntArray array, ObservableIntegerArray fxArray) {
         this.array = array;
         this.fxArray = fxArray;
+        this.batchedUpdates = new IntegerCounter();
         this.batchedInsertion = new IntegerCounter();
         this.queuedInsertionValues = new FXIntArray();
         this.queuedInsertionIndices = new FXIntArray();
@@ -36,15 +39,25 @@ public class FXIntArrayBatcher {
      * Test if any batch mode is enabled.
      */
     public boolean isAnyBatchModeEnabled() {
-        return isBatchRemovalActive() || isBatchInsertionActive();
+        return isBatchRemovalActive() || isBatchInsertionActive() || isBatchingUpdatesActive();
     }
 
     /**
      * Apply to the wrapped JavaFX array.
+     * If operations are currently batched, the update will occur once batched operations are finished.
      */
-    public void applyToFxArrayIfReady() {
-        if (!isAnyBatchModeEnabled())
+    public void applyToFxArray() {
+        if (isAnyBatchModeEnabled()) {
+            this.updateOnBatchCompletion = true;
+        } else {
             this.array.apply(this.fxArray);
+            this.updateOnBatchCompletion = false;
+        }
+    }
+
+    private void applyToFxArrayIfNecessary() {
+        if (this.updateOnBatchCompletion)
+            applyToFxArray();
     }
 
     /**
@@ -54,11 +67,41 @@ public class FXIntArrayBatcher {
         this.queuedInsertionIndices.clear();
         this.queuedInsertionValues.clear();
         this.queuedIndexRemovals.clear();
+        this.updateOnBatchCompletion = false;
 
+        if (this.batchedUpdates.isActive())
+            throw new IllegalStateException("Cleared the array while batch update mode was enabled! (" + this.batchedUpdates.getCounter() + ")");
         if (this.batchedInsertion.isActive())
             throw new IllegalStateException("Cleared the array while batch insertion mode was enabled! (" + this.batchedInsertion.getCounter() + ")");
         if (this.batchedRemovals.isActive())
             throw new IllegalStateException("Cleared the array while batch removal mode was enabled! (" + this.batchedRemovals.getCounter() + ")");
+    }
+
+    /**
+     * Check if the batching of updates is currently enabled.
+     * This will not delay any operations applying to the array, but it will delay updates to the FX array.
+     */
+    public boolean isBatchingUpdatesActive() {
+        return this.batchedUpdates.isActive();
+    }
+
+    /**
+     * Indicate the start of batching updates, increasing performance by updating fewer times.
+     */
+    public void startBatchingUpdates() {
+        this.batchedUpdates.increment();
+    }
+
+    /**
+     * Indicate the end of batching array updates, updating the mesh array if values have changed.
+     */
+    public void endBatchingUpdates() {
+        // Check if batch updates are still active.
+        if (!this.batchedUpdates.decrement())
+            return;
+
+        // Don't update the mesh array unless an update was queued.
+        applyToFxArrayIfNecessary();
     }
 
     /**
@@ -89,8 +132,10 @@ public class FXIntArrayBatcher {
 
         // Abort if there aren't any values to insert.
         int valueCount = this.queuedInsertionValues.size();
-        if (valueCount == 0)
+        if (valueCount == 0) {
+            applyToFxArrayIfNecessary(); // We've exited a batch mode, so ensure the array gets updated if necessary.
             return;
+        }
 
         // Shift the array elements and insert in the new values to their slots.
         // This relies upon the array being sorted.
@@ -103,10 +148,8 @@ public class FXIntArrayBatcher {
         this.queuedInsertionValues.clear();
         this.queuedInsertionIndices.clear();
 
-        // Don't update the mesh array if batch removals are active.
-        // We still update if there aren't any removals queued, since we want to ensure an update occurs.
-        if (!this.batchedRemovals.isActive() || this.queuedIndexRemovals.getBitCount() == 0)
-            this.array.apply(this.fxArray);
+        // Ensure the array is updated, whether now or later.
+        applyToFxArray();
     }
 
     /**
@@ -120,7 +163,7 @@ public class FXIntArrayBatcher {
         int removeIndex = this.queuedIndexRemovals.getLastBitIndex();
         for (int i = this.queuedIndexRemovals.getBitCount(); i > 0; i--) {
             // Stop accounting for insertions which we've passed.
-            while (remainingInsertions > 0 && this.queuedInsertionIndices.get(remainingInsertions - 1) > removeIndex)
+            while (remainingInsertions > 0 && indices.get(remainingInsertions - 1) > removeIndex)
                 remainingInsertions--;
 
             if (remainingInsertions == 0)
@@ -181,8 +224,10 @@ public class FXIntArrayBatcher {
 
         // Abort if there aren't any values to remove.
         int removalCount = this.queuedIndexRemovals.getBitCount();
-        if (removalCount == 0)
+        if (removalCount == 0) {
+            applyToFxArrayIfNecessary(); // We've exited a batch mode, so ensure the array gets updated if necessary.
             return;
+        }
 
         // Remove the values from the array.
         this.array.removeIndices(this.queuedIndexRemovals);
@@ -193,10 +238,8 @@ public class FXIntArrayBatcher {
         // Clear future.
         this.queuedIndexRemovals.clear();
 
-        // Don't update the mesh array if batch insertion is still active.
-        // We still update if there aren't any insertions queued, since we want to ensure an update occurs.
-        if (!this.batchedInsertion.isActive() || this.queuedInsertionIndices.size() == 0)
-            this.array.apply(this.fxArray);
+        // Ensure the array is updated, whether now or later.
+        applyToFxArray();
     }
 
     /**
@@ -206,14 +249,14 @@ public class FXIntArrayBatcher {
     protected void onBatchRemovalComplete(IndexBitArray indices) {
         // Update the queued insertions. (Assumes the insertion indices are sorted lowest to highest)
         int indexOffset = 0;
-        int nextRemovalIndex = this.queuedIndexRemovals.getFirstBitIndex();
+        int nextRemovalIndex = indices.getFirstBitIndex();
         for (int i = 0; i < this.queuedInsertionIndices.size(); i++) {
             int insertionIndex = this.queuedInsertionIndices.get(i);
 
             // Any removals that have occurred before this index impact the index change.
             while (insertionIndex > nextRemovalIndex && nextRemovalIndex >= 0) {
                 indexOffset++;
-                nextRemovalIndex = this.queuedIndexRemovals.getNextBitIndex(nextRemovalIndex);
+                nextRemovalIndex = indices.getNextBitIndex(nextRemovalIndex);
             }
 
             this.queuedInsertionIndices.set(i, insertionIndex - indexOffset);
@@ -277,7 +320,7 @@ public class FXIntArrayBatcher {
      */
     public boolean insert(int index, int value) {
         if (isBatchInsertionActive()) {
-            int insertionIndex = this.queuedInsertionIndices.binarySearch(index);
+            int insertionIndex = this.queuedInsertionIndices.getInsertionPoint(index);
             this.queuedInsertionIndices.add(insertionIndex, index);
             this.queuedInsertionValues.add(insertionIndex, value);
             return false;

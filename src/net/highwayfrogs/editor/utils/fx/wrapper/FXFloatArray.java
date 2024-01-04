@@ -207,7 +207,7 @@ public class FXFloatArray {
         rangeCheck(index);
 
         // Shift all elements to make room for the inserted ones.
-        int shiftedElements = Math.max(0, this.length - 1);
+        int shiftedElements = Math.max(0, this.length - index - 1);
         if (shiftedElements > 0)
             System.arraycopy(this.array, index, this.array, index + 1, shiftedElements);
 
@@ -476,6 +476,8 @@ public class FXFloatArray {
     }
 
     private void rangeCheck(int size) {
+        if (size < 0)
+            throw new ArrayIndexOutOfBoundsException("Cannot access elements before the start of the FXFloatArray. (Index: " + size + ")");
         if (size > this.length)
             throw new ArrayIndexOutOfBoundsException("Cannot access elements after the end of the FXFloatArray. (Length: " + this.length + ", Accessed: " + size + ")");
     }

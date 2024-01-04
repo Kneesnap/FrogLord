@@ -180,8 +180,8 @@ public class DynamicMeshDataEntry {
     public void writeVertexX(int localVtxIndex, float x) {
         if (!this.active)
             throw new IllegalStateException("Cannot write vertex data while the entry is not active.");
-        if (localVtxIndex < 0 || localVtxIndex >= this.pendingVertexCount)
-            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not valid, and thus we cannot write data to it.");
+        if (localVtxIndex < 0 || localVtxIndex >= this.writtenVertexCount)
+            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not available to write, and thus we cannot write data to it. (Pending: " + this.pendingVertexCount + ", Written: " + this.writtenVertexCount + ")");
 
         this.mesh.getEditableVertices().set(((this.vertexStartIndex + localVtxIndex) * this.mesh.getPointElementSize()), x);
     }
@@ -194,8 +194,8 @@ public class DynamicMeshDataEntry {
     public void writeVertexY(int localVtxIndex, float y) {
         if (!this.active)
             throw new IllegalStateException("Cannot write vertex data while the entry is not active.");
-        if (localVtxIndex < 0 || localVtxIndex >= this.pendingVertexCount)
-            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not valid, and thus we cannot write data to it.");
+        if (localVtxIndex < 0 || localVtxIndex >= this.writtenVertexCount)
+            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not available to write, and thus we cannot write data to it. (Pending: " + this.pendingVertexCount + ", Written: " + this.writtenVertexCount + ")");
 
         this.mesh.getEditableVertices().set(((this.vertexStartIndex + localVtxIndex) * this.mesh.getPointElementSize()) + 1, y);
     }
@@ -208,8 +208,8 @@ public class DynamicMeshDataEntry {
     public void writeVertexZ(int localVtxIndex, float z) {
         if (!this.active)
             throw new IllegalStateException("Cannot write vertex data while the entry is not active.");
-        if (localVtxIndex < 0 || localVtxIndex >= this.pendingVertexCount)
-            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not valid, and thus we cannot write data to it.");
+        if (localVtxIndex < 0 || localVtxIndex >= this.writtenVertexCount)
+            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not available to write, and thus we cannot write data to it. (Pending: " + this.pendingVertexCount + ", Written: " + this.writtenVertexCount + ")");
 
         this.mesh.getEditableVertices().set(((this.vertexStartIndex + localVtxIndex) * this.mesh.getPointElementSize()) + 2, z);
     }
@@ -224,8 +224,8 @@ public class DynamicMeshDataEntry {
     public void writeVertexXYZ(int localVtxIndex, float x, float y, float z) {
         if (!this.active)
             throw new IllegalStateException("Cannot write vertex data while the entry is not active.");
-        if (localVtxIndex < 0 || localVtxIndex >= this.pendingVertexCount)
-            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not valid, and thus we cannot write data to it.");
+        if (localVtxIndex < 0 || localVtxIndex >= this.writtenVertexCount)
+            throw new IllegalArgumentException("The local vertex index " + localVtxIndex + " is not available to write, and thus we cannot write data to it. (Pending: " + this.pendingVertexCount + ", Written: " + this.writtenVertexCount + ")");
 
         TEMP_POSITION_ARRAY[0] = x;
         TEMP_POSITION_ARRAY[1] = y;
@@ -333,7 +333,7 @@ public class DynamicMeshDataEntry {
     public void writeTexCoordValue(int localTexCoordIndex, float u, float v) {
         if (!this.active)
             throw new IllegalStateException("Cannot write texCoord data while the entry is not active.");
-        if (localTexCoordIndex < 0 || localTexCoordIndex >= this.pendingTexCoordCount)
+        if (localTexCoordIndex < 0 || localTexCoordIndex >= this.writtenTexCoordCount)
             throw new IllegalArgumentException("The local texCoord index " + localTexCoordIndex + " is not valid, and thus we cannot write data to it.");
 
         TEMP_TEXCOORD_ARRAY[0] = u;
@@ -374,7 +374,7 @@ public class DynamicMeshDataEntry {
     }
 
     /**
-     * Adds a new face referencing existing
+     * Adds a new face referencing existing vertex and texCoord data.
      * @param meshVertex1   The index to the position of the first vertex.
      * @param meshTexCoord1 The index to the position of the first texture coordinate.
      * @param meshVertex2   The index to the position of the second vertex.
@@ -388,7 +388,7 @@ public class DynamicMeshDataEntry {
     }
 
     /**
-     * Adds a new face referencing existing
+     * Inserts a new face referencing existing vertex and texCoord data.
      * @param localIndex    The local index to insert the face
      * @param meshVertex1   The index to the position of the first vertex.
      * @param meshTexCoord1 The index to the position of the first texture coordinate.
@@ -434,6 +434,36 @@ public class DynamicMeshDataEntry {
     }
 
     /**
+     * Overwrites a face-data referencing vertex and texCoord arrays.
+     * @param localFaceIndex The local index to insert the face
+     * @param meshVertex1    The index to the position of the first vertex.
+     * @param meshTexCoord1  The index to the position of the first texture coordinate.
+     * @param meshVertex2    The index to the position of the second vertex.
+     * @param meshTexCoord2  The index to the position of the second texture coordinate.
+     * @param meshVertex3    The index to the position of the third vertex.
+     * @param meshTexCoord3  The index to the position of the third texture coordinate.
+     */
+    public void writeFace(int localFaceIndex, int meshVertex1, int meshTexCoord1, int meshVertex2, int meshTexCoord2, int meshVertex3, int meshTexCoord3) {
+        if (!this.active)
+            throw new IllegalStateException("Cannot write polygon face data while the entry is not active.");
+        if (localFaceIndex < 0 || localFaceIndex >= this.writtenFaceCount)
+            throw new IllegalArgumentException("The local face index " + localFaceIndex + " is not a valid index to overwrite face data.");
+
+        // Write values to array.
+        TEMP_FACE_ARRAY[0] = meshVertex1;
+        TEMP_FACE_ARRAY[1] = meshTexCoord1;
+        TEMP_FACE_ARRAY[2] = meshVertex2;
+        TEMP_FACE_ARRAY[3] = meshTexCoord2;
+        TEMP_FACE_ARRAY[4] = meshVertex3;
+        TEMP_FACE_ARRAY[5] = meshTexCoord3;
+
+        // Write face data.
+        int faceElementSize = this.mesh.getFaceElementSize(); // 6
+        int faceArrayStartIndex = (this.faceStartIndex + localFaceIndex) * faceElementSize;
+        this.mesh.getEditableFaces().set(faceArrayStartIndex, TEMP_FACE_ARRAY, 0, faceElementSize);
+    }
+
+    /**
      * Writes tex coord data to the tex coord array.
      * @param localFaceIndex       The index of the face to update.
      * @param newMeshVertexIndex   The vertex position index to apply to the face.
@@ -442,7 +472,7 @@ public class DynamicMeshDataEntry {
     public void writeFace(int localFaceIndex, int faceVertexIndex, int newMeshVertexIndex, int newMeshTexCoordIndex) {
         if (!this.active)
             throw new IllegalStateException("Cannot write polygon face data while the entry is not active.");
-        if (localFaceIndex < 0 || localFaceIndex >= this.pendingFaceCount)
+        if (localFaceIndex < 0 || localFaceIndex >= this.writtenFaceCount)
             throw new IllegalArgumentException("The local face index " + localFaceIndex + " has no face, and thus we cannot write polygon face data to it.");
         if (faceVertexIndex < 0 || faceVertexIndex >= 3)
             throw new IllegalArgumentException("The provided face vertex ID was " + faceVertexIndex + ", but there are only 3 vertices per face.");

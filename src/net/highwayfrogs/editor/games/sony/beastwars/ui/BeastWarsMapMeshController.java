@@ -21,8 +21,8 @@ public class BeastWarsMapMeshController extends MeshViewController<BeastWarsMapM
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         super.setupBindings(subScene3D, meshView);
-        getCameraFPS().getCamera().setFarClip(DEFAULT_FAR_CLIP);
-        getCameraFPS().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
+        getFirstPersonCamera().getCamera().setFarClip(DEFAULT_FAR_CLIP);
+        getFirstPersonCamera().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
 
         AmbientLight mainLight = new AmbientLight(Color.WHITE);
         mainLight.getScope().add(getMeshView());
@@ -46,8 +46,8 @@ public class BeastWarsMapMeshController extends MeshViewController<BeastWarsMapM
     @Override
     protected void setDefaultCameraPosition() {
         // TODO
-        //getCameraFPS().setPos();
-        //getCameraFPS().setCameraLookAt();
+        //getFirstPersonCamera().setPos();
+        //getFirstPersonCamera().setCameraLookAt();
     }
 
     /**

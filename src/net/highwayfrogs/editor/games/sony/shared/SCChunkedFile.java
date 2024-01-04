@@ -256,6 +256,10 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             this.lastValidReadHeaderAddress = reader.getIndex();
             reader.verifyString(this.identifierString);
 
+            int knownStartAddress = getKnownStartAddress();
+            if (knownStartAddress >= 0 && knownStartAddress != this.lastValidReadHeaderAddress)
+                throw new RuntimeException(Utils.getSimpleName(this) + ".getKnownStartAddress() returned " + Utils.toHexString(knownStartAddress) + ", but the address reading actually started from was " + Utils.toHexString(this.lastValidReadHeaderAddress) + ".");
+
             // Read the data size, if size is set.
             if (hasSize()) {
                 this.lastValidReadSize = reader.readInt();

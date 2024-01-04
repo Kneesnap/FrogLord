@@ -480,7 +480,7 @@ public class GUIEditorGrid {
 
             double xDiff = -(lastDrag.getX() - evt.getX()) / 10;
             double zDiff = (lastDrag.getY() - evt.getY()) / 10;
-            double angle = controller != null ? -Math.toRadians(controller.getCameraFPS().getCamYawProperty().doubleValue()) : Math.PI / 2;
+            double angle = controller != null ? -Math.toRadians(controller.getFirstPersonCamera().getCamYawProperty().doubleValue()) : Math.PI / 2;
 
             vector.setFloatX((float) (vector.getFloatX(bits) + (xDiff * Math.cos(angle)) - (zDiff * Math.sin(angle))), bits);
             vector.setFloatZ((float) (vector.getFloatZ(bits) + (xDiff * Math.sin(angle)) + (zDiff * Math.cos(angle))), bits);
@@ -607,7 +607,7 @@ public class GUIEditorGrid {
 
             double xDiff = -(lastDrag.getX() - evt.getX()) / 10;
             double zDiff = (lastDrag.getY() - evt.getY()) / 10;
-            double angle = controller != null ? -Math.toRadians(controller.getCameraFPS().getCamYawProperty().doubleValue()) : Math.PI / 2;
+            double angle = controller != null ? -Math.toRadians(controller.getFirstPersonCamera().getCamYawProperty().doubleValue()) : Math.PI / 2;
 
             vector.setFloatX((float) (vector.getFloatX(bits) + (xDiff * Math.cos(angle)) - (zDiff * Math.sin(angle))), bits);
             vector.setFloatZ((float) (vector.getFloatZ(bits) + (xDiff * Math.sin(angle)) + (zDiff * Math.cos(angle))), bits);

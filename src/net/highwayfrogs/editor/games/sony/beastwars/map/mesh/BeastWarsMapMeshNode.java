@@ -22,6 +22,8 @@ public class BeastWarsMapMeshNode extends DynamicMeshAdapterNode<BeastWarsMapVer
 
     @Override
     protected void onAddedToMesh() {
+        super.onAddedToMesh();
+
         for (int z = 0; z < getMap().getHeightMapZLength(); z++)
             for (int x = 0; x < getMap().getHeightMapXLength(); x++)
                 this.add(getMap().getVertex(x, z));
@@ -29,15 +31,6 @@ public class BeastWarsMapMeshNode extends DynamicMeshAdapterNode<BeastWarsMapVer
         for (int z = 0; z < getMap().getHeightMapZLength(); z++)
             for (int x = 0; x < getMap().getHeightMapXLength(); x++)
                 this.setupFaces(getMap().getVertex(x, z));
-
-        // Do last to use the recently configured mesh data.
-        super.onAddedToMesh();
-    }
-
-    @Override
-    protected void onRemovedFromMesh() {
-        super.onRemovedFromMesh();
-        // TODO: Let's automatically remove all data in the super method, just by having a method for it to get all of the entries.
     }
 
     @Override

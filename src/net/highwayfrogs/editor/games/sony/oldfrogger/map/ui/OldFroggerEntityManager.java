@@ -51,7 +51,6 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
     protected void setupMainGridEditor(VBox editorBox) {
         super.setupMainGridEditor(editorBox);
         getValueDisplaySetting().setValue(ListDisplayType.ALL);
-        getValueDisplaySetting().setDisable(true);
     }
 
     @Override

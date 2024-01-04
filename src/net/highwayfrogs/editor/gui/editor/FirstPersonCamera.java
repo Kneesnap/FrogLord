@@ -3,9 +3,11 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.animation.AnimationTimer;
 import javafx.beans.property.*;
 import javafx.geometry.Point3D;
-import javafx.scene.*;
-import javafx.scene.input.GestureEvent;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.Group;
+import javafx.scene.Parent;
+import javafx.scene.PerspectiveCamera;
+import javafx.scene.Scene;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Rotate;
@@ -14,32 +16,24 @@ import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import lombok.Getter;
+import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.utils.MathUtils;
 
 /**
  * Specialized camera class to allow FPS-like movement within the map editor.
  * Created by AndyEder on 2/14/2019.
  */
-public class CameraFPS extends Parent {
+public class FirstPersonCamera extends Parent {
     // Constants / variables used for frame delta calculations
     private static final double NANOSEC_IN_SECONDS = 1.0 / 1000000000.0;
+    private final InputManager inputManager;
     private long lastFrameUpdate = 0;
-    private long totalFrameCount = 0;
     private double currFrameUpdate;
     private double frameDeltaInSecs = 0.0;
     private final double updatePeriod = 2.0;
 
-    // For handling user input controls, camera movement and dynamics
-    private boolean camMoveForward, camMoveBackward, camMoveUp, camMoveDown, camStrafeLeft, camStrafeRight;
-
     private double defaultMoveSpeed = 100.0;
     @Getter private final DoubleProperty camMoveSpeedProperty = new SimpleDoubleProperty(this.defaultMoveSpeed);
-
-    private double mouseX, mouseY;
-    private double mouseOldX, mouseOldY;
-    private double mouseDeltaX, mouseDeltaY;
-
-    private boolean isControlDown, isAltDown;
 
     private static final double CAM_MOUSE_SPEED = 0.2;
     @Getter private final DoubleProperty camMouseSpeedProperty = new SimpleDoubleProperty(CAM_MOUSE_SPEED);
@@ -73,10 +67,6 @@ public class CameraFPS extends Parent {
         return camera.get();
     }
 
-    public ReadOnlyObjectProperty cameraProperty() {
-        return camera.getReadOnlyProperty();
-    }
-
     @Getter private final DoubleProperty camPosXProperty = new SimpleDoubleProperty();
     @Getter private final DoubleProperty camPosYProperty = new SimpleDoubleProperty();
     @Getter private final DoubleProperty camPosZProperty = new SimpleDoubleProperty();
@@ -90,9 +80,10 @@ public class CameraFPS extends Parent {
     //>>
 
     /**
-     * Constructor for the CameraFPS.
+     * Constructor for the FirstPersonCamera.
      */
-    public CameraFPS() {
+    public FirstPersonCamera(InputManager inputManager) {
+        this.inputManager = inputManager;
         setupAndInitialise();
     }
 
@@ -101,37 +92,38 @@ public class CameraFPS extends Parent {
      */
     private void setupAndInitialise() {
         // Add this camera instance as a child of the root
-        getChildren().add(rootGrp);
+        getChildren().add(this.rootGrp);
 
         // Bind properties
-        affineXform.txProperty().bindBidirectional(camPosXProperty);
-        affineXform.tyProperty().bindBidirectional(camPosYProperty);
-        affineXform.tzProperty().bindBidirectional(camPosZProperty);
+        this.affineXform.txProperty().bindBidirectional(this.camPosXProperty);
+        this.affineXform.tyProperty().bindBidirectional(this.camPosYProperty);
+        this.affineXform.tzProperty().bindBidirectional(this.camPosZProperty);
 
-        rotateYaw.angleProperty().bindBidirectional(camYawProperty);
-        rotatePitch.angleProperty().bindBidirectional(camPitchProperty);
-        rotateRoll.angleProperty().bindBidirectional(camRollProperty);
+        this.rotateYaw.angleProperty().bindBidirectional(this.camYawProperty);
+        this.rotatePitch.angleProperty().bindBidirectional(this.camPitchProperty);
+        this.rotateRoll.angleProperty().bindBidirectional(this.camRollProperty);
 
         // Add out affine transformation (we manually update this per frame to produce the desired camera behaviour)
-        getTransforms().add(affineXform);
+        getTransforms().add(this.affineXform);
 
-        // Ensure the camera is setup with default values and kick-off the camera update thread
+        // Ensure the camera is set up with default values and kick-off the camera update thread
         setupAndInitialiseCamera();
         setupCameraUpdateThread();
     }
 
     /**
-     * Setup camera and provide sensible initial / default values.
+     * Set up the camera and provide sensible initial / default values.
      */
     private void setupAndInitialiseCamera() {
-        rootGrp.getChildren().add(getCamera());
+        this.rootGrp.getChildren().add(getCamera());
+        this.inputManager.setFinalMouseHandler(this::updateCameraViewFromMouseMovement);
     }
 
     /**
-     * Setup the camera update thread that will be responsible for handling the camera updates.
+     * Set up the camera update thread that will be responsible for handling the camera updates.
      */
     private void setupCameraUpdateThread() {
-        camUpdateThread = new AnimationTimer() {
+        this.camUpdateThread = new AnimationTimer() {
             @Override
             public void handle(long timestamp) {
                 updateCamera(timestamp);
@@ -139,17 +131,22 @@ public class CameraFPS extends Parent {
         };
     }
 
+    /**
+     * Start processing user controls for the camera.
+     */
     public void startThreadProcessing() {
-        if (camUpdateThread != null) {
-            lastFrameUpdate = 0;
-            camUpdateThread.start();
+        if (this.camUpdateThread != null) {
+            this.lastFrameUpdate = 0;
+            this.camUpdateThread.start();
         }
     }
 
+    /**
+     * Stop processing user controls for the camera.
+     */
     public void stopThreadProcessing() {
-        if (camUpdateThread != null) {
-            camUpdateThread.stop();
-        }
+        if (this.camUpdateThread != null)
+            this.camUpdateThread.stop();
     }
 
     /**
@@ -157,32 +154,24 @@ public class CameraFPS extends Parent {
      * @param timestamp The system time stamp in nanoseconds.
      */
     private void updateCamera(long timestamp) {
-        // If this is the first update then skip a single frame so we can initialise our last update variable
-        if (lastFrameUpdate == 0) {
+        // If this is the first update then skip a single frame, so we can initialise our last update variable
+        if (this.lastFrameUpdate == 0) {
             // Grab the current system timestamp (in nanoseconds), then early out
-            lastFrameUpdate = System.nanoTime();
-            totalFrameCount = 0;
+            this.lastFrameUpdate = System.nanoTime();
             return;
         }
 
         // Calculate frame time (delta) in seconds
-        frameDeltaInSecs = (timestamp - lastFrameUpdate) * NANOSEC_IN_SECONDS;
-        lastFrameUpdate = timestamp;
+        this.frameDeltaInSecs = (timestamp - this.lastFrameUpdate) * NANOSEC_IN_SECONDS;
+        this.lastFrameUpdate = timestamp;
 
         // This next block is only really needed for test / debugging right now but is useful to have around!
-        currFrameUpdate += frameDeltaInSecs;
-        if (currFrameUpdate > updatePeriod) {
-            currFrameUpdate -= updatePeriod;
-            //System.out.println("totalFrameCount: " + totalFrameCount);
-            //System.out.println("rotateYaw: " + rotateYaw.getAngle());
-            //System.out.println("rotatePitch: " + rotatePitch.getAngle());
-        }
+        this.currFrameUpdate += this.frameDeltaInSecs;
+        if (this.currFrameUpdate > this.updatePeriod)
+            this.currFrameUpdate -= this.updatePeriod;
 
         // Handle the camera controls (user input)
         updateCameraControls();
-
-        // Update the frame counter (potentially a useful metric to have around)
-        ++totalFrameCount;
     }
 
     /**
@@ -190,43 +179,28 @@ public class CameraFPS extends Parent {
      */
     private void updateCameraControls() {
         // Check for forwards or backwards camera movement (along 'view' vector)
-        if (camMoveForward && !camMoveBackward) {
+        boolean camMoveForward = this.inputManager.isKeyPressed(KeyCode.W);
+        boolean camMoveBackward = this.inputManager.isKeyPressed(KeyCode.S);
+        if (camMoveForward && !camMoveBackward)
             moveCameraForward();
-        }
-        if (camMoveBackward && !camMoveForward) {
+        if (camMoveBackward && !camMoveForward)
             moveCameraBackward();
-        }
 
         // Check for up or down camera movement (along 'up' vector)
-        if (camMoveUp && !camMoveDown) {
+        boolean camMoveUp = this.inputManager.isKeyPressed(KeyCode.Q) || this.inputManager.isKeyPressed(KeyCode.PAGE_UP);
+        boolean camMoveDown = this.inputManager.isKeyPressed(KeyCode.E) || this.inputManager.isKeyPressed(KeyCode.PAGE_DOWN);
+        if (camMoveUp && !camMoveDown)
             moveCameraUp();
-        }
-        if (camMoveDown && !camMoveUp) {
+        if (camMoveDown && !camMoveUp)
             moveCameraDown();
-        }
 
         // Check for strafe left or right camera movement (along 'right' vector)
-        if (camStrafeLeft && !camStrafeRight) {
+        boolean camStrafeLeft = this.inputManager.isKeyPressed(KeyCode.A);
+        boolean camStrafeRight = this.inputManager.isKeyPressed(KeyCode.D);
+        if (camStrafeLeft && !camStrafeRight)
             strafeCameraLeft();
-        }
-        if (camStrafeRight && !camStrafeLeft) {
+        if (camStrafeRight && !camStrafeLeft)
             strafeCameraRight();
-        }
-    }
-
-    /**
-     * Assign (setup) the control event handlers on the supplied subscene object.
-     * @param subScene The subscene to receive and process the keyboard and mouse events, etc.
-     */
-    public void assignSubSceneControls(SubScene subScene) {
-        sceneProperty().addListener(listener ->
-        {
-            if (getScene() != null) {
-                getScene().addEventHandler(KeyEvent.ANY, this::processKeyEvents);
-            }
-        });
-
-        subScene.addEventHandler(MouseEvent.ANY, this::processMouseEvents);
     }
 
     /**
@@ -234,172 +208,93 @@ public class CameraFPS extends Parent {
      * @param scene The subscene to receive and process the keyboard and mouse events, etc.
      */
     public void assignSceneControls(Stage stage, Scene scene) {
-        scene.addEventHandler(KeyEvent.ANY, this::processKeyEvents);
-        scene.addEventHandler(MouseEvent.ANY, this::processMouseEvents);
-
-        // Reset keys when focus is lost.
-        stage.focusedProperty().addListener((ov, hidden, shown) -> {
-            if (hidden || !shown)
-                resetKeys();
-        });
-    }
-
-    /**
-     * Function to process key input events.
-     */
-    private void processKeyEvents(KeyEvent evt) {
-        evt.consume();
-        if (evt.getEventType() != KeyEvent.KEY_PRESSED && evt.getEventType() != KeyEvent.KEY_RELEASED)
-            return;
-
-        boolean keyState = (evt.getEventType() == KeyEvent.KEY_PRESSED);
-        switch (evt.getCode()) {
-            // Modifiers
-            case CONTROL:
-                isControlDown = keyState;
-                break;
-            case ALT:
-                isAltDown = keyState;
-                break;
-            case TAB:
-                if (isAltDown) // If alt tab.
-                    resetKeys();
-                break;
-
-            // Forwards + backwards
-            case W:
-                camMoveForward = keyState;
-                break;
-            case S:
-                camMoveBackward = keyState;
-                break;
-
-            // Strafe left + right
-            case A:
-                camStrafeLeft = keyState;
-                break;
-            case D:
-                camStrafeRight = keyState;
-                break;
-
-            // Up + down
-            case Q:
-            case PAGE_UP:
-                camMoveUp = keyState;
-                break;
-            case E:
-            case PAGE_DOWN:
-                camMoveDown = keyState;
-                break;
-        }
-    }
-
-    private void resetKeys() {
-        isAltDown = false;
-        isControlDown = false;
-        camMoveForward = false;
-        camMoveBackward = false;
-        camStrafeLeft = false;
-        camStrafeRight = false;
-        camMoveUp = false;
-        camMoveDown = false;
+        this.inputManager.assignSceneControls(stage, scene);
     }
 
     /**
      * Function to process mouse input events.
      */
-    private void processMouseEvents(MouseEvent evt) {
-        if (evt.getEventType().equals(MouseEvent.MOUSE_PRESSED)) {
-            mouseX = mouseOldX = evt.getSceneX();
-            mouseY = mouseOldY = evt.getSceneY();
-        } else if (evt.getEventType().equals(MouseEvent.MOUSE_DRAGGED)) {
-            mouseOldX = mouseX;
-            mouseOldY = mouseY;
-            mouseX = evt.getSceneX();
-            mouseY = evt.getSceneY();
-            mouseDeltaX = (mouseX - mouseOldX);
-            mouseDeltaY = (mouseY - mouseOldY);
+    private void updateCameraViewFromMouseMovement(InputManager manager, MouseEvent evt, double mouseDeltaX, double mouseDeltaY) {
+        if (!evt.getEventType().equals(MouseEvent.MOUSE_DRAGGED) || !evt.isPrimaryButtonDown() || manager.isKeyPressed(KeyCode.SHIFT))
+            return;
 
-            if (evt.isPrimaryButtonDown()) {
-                // Check mouse y-inversion state
-                double yInvert = (camYInvertProperty.get()) ? -1 : 1;
+        // Check mouse y-inversion state
+        double yInvert = (this.camYInvertProperty.get()) ? -1 : 1;
 
-                // Set translation component (direct from camera's transformation matrix)
-                translate.setX(getPos().getX());
-                translate.setY(getPos().getY());
-                translate.setZ(getPos().getZ());
+        // Set translation component (direct from camera's transformation matrix)
+        this.translate.setX(getPos().getX());
+        this.translate.setY(getPos().getY());
+        this.translate.setZ(getPos().getZ());
 
-                // IMPORTANT: reset affine transform to identity each time!
-                affineXform.setToIdentity();
+        // IMPORTANT: reset affine transform to identity each time!
+        this.affineXform.setToIdentity();
 
-                // Calculate yaw, pitch angles
-                rotateYaw.setAngle(MathUtils.clamp(((rotateYaw.getAngle() + (mouseDeltaX * camMouseSpeedProperty.get())) % 360 + 540) % 360 - 180, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
-                rotatePitch.setAngle(MathUtils.clamp(rotatePitch.getAngle() - (yInvert * mouseDeltaY * camMouseSpeedProperty.get()), CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
+        // Calculate yaw, pitch angles
+        this.rotateYaw.setAngle(MathUtils.clamp(((this.rotateYaw.getAngle() + (mouseDeltaX * this.camMouseSpeedProperty.get())) % 360 + 540) % 360 - 180, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
+        this.rotatePitch.setAngle(MathUtils.clamp(this.rotatePitch.getAngle() - (yInvert * mouseDeltaY * this.camMouseSpeedProperty.get()), CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
 
-                // Dynamically generate the affine transform from the concatenated translation and rotation components
-                affineXform.prepend(translate.createConcatenation(rotateYaw.createConcatenation(rotatePitch)));
-            }
-        }
+        // Dynamically generate the affine transform from the concatenated translation and rotation components
+        this.affineXform.prepend(this.translate.createConcatenation(this.rotateYaw.createConcatenation(this.rotatePitch)));
     }
 
     /**
      * Moves the camera forwards along the current view vector (+ve z).
      */
     private void moveCameraForward() {
-        final double moveDelta = frameDeltaInSecs * getSpeedModifier(isControlDown, isAltDown, camMoveSpeedProperty.get());
-        affineXform.setTx(getPos().getX() + (moveDelta * getCamNRow().getX()));
-        affineXform.setTy(getPos().getY() + (moveDelta * getCamNRow().getY()));
-        affineXform.setTz(getPos().getZ() + (moveDelta * getCamNRow().getZ()));
+        final double moveDelta = this.frameDeltaInSecs * getSpeedModifier(this.camMoveSpeedProperty.get());
+        this.affineXform.setTx(getPos().getX() + (moveDelta * getCamNRow().getX()));
+        this.affineXform.setTy(getPos().getY() + (moveDelta * getCamNRow().getY()));
+        this.affineXform.setTz(getPos().getZ() + (moveDelta * getCamNRow().getZ()));
     }
 
     /**
      * Moves the camera backwards along the current 'view' vector (-ve z).
      */
     private void moveCameraBackward() {
-        final double moveDelta = frameDeltaInSecs * getSpeedModifier(isControlDown, isAltDown, camMoveSpeedProperty.get());
-        affineXform.setTx(getPos().getX() + (moveDelta * -getCamNRow().getX()));
-        affineXform.setTy(getPos().getY() + (moveDelta * -getCamNRow().getY()));
-        affineXform.setTz(getPos().getZ() + (moveDelta * -getCamNRow().getZ()));
+        final double moveDelta = this.frameDeltaInSecs * getSpeedModifier(this.camMoveSpeedProperty.get());
+        this.affineXform.setTx(getPos().getX() + (moveDelta * -getCamNRow().getX()));
+        this.affineXform.setTy(getPos().getY() + (moveDelta * -getCamNRow().getY()));
+        this.affineXform.setTz(getPos().getZ() + (moveDelta * -getCamNRow().getZ()));
     }
 
     /**
      * Moves the camera up along the current 'up' vector (-ve y).
      */
     private void moveCameraUp() {
-        final double moveDelta = frameDeltaInSecs * getSpeedModifier(isControlDown, isAltDown, camMoveSpeedProperty.get());
-        affineXform.setTx(getPos().getX() + (moveDelta * -getCamVRow().getX()));
-        affineXform.setTy(getPos().getY() + (moveDelta * -getCamVRow().getY()));
-        affineXform.setTz(getPos().getZ() + (moveDelta * -getCamVRow().getZ()));
+        final double moveDelta = this.frameDeltaInSecs * getSpeedModifier(this.camMoveSpeedProperty.get());
+        this.affineXform.setTx(getPos().getX() + (moveDelta * -getCamVRow().getX()));
+        this.affineXform.setTy(getPos().getY() + (moveDelta * -getCamVRow().getY()));
+        this.affineXform.setTz(getPos().getZ() + (moveDelta * -getCamVRow().getZ()));
     }
 
     /**
      * Moves the camera down along the current 'up' vector (+ve y).
      */
     private void moveCameraDown() {
-        final double moveDelta = frameDeltaInSecs * getSpeedModifier(isControlDown, isAltDown, camMoveSpeedProperty.get());
-        affineXform.setTx(getPos().getX() + (moveDelta * getCamVRow().getX()));
-        affineXform.setTy(getPos().getY() + (moveDelta * getCamVRow().getY()));
-        affineXform.setTz(getPos().getZ() + (moveDelta * getCamVRow().getZ()));
+        final double moveDelta = this.frameDeltaInSecs * getSpeedModifier(this.camMoveSpeedProperty.get());
+        this.affineXform.setTx(getPos().getX() + (moveDelta * getCamVRow().getX()));
+        this.affineXform.setTy(getPos().getY() + (moveDelta * getCamVRow().getY()));
+        this.affineXform.setTz(getPos().getZ() + (moveDelta * getCamVRow().getZ()));
     }
 
     /**
      * Strafes the camera left along the current 'right' vector (-ve x).
      */
     private void strafeCameraLeft() {
-        final double moveDelta = frameDeltaInSecs * getSpeedModifier(isControlDown, isAltDown, camMoveSpeedProperty.get());
-        affineXform.setTx(getPos().getX() + (moveDelta * -getCamURow().getX()));
-        affineXform.setTy(getPos().getY() + (moveDelta * -getCamURow().getY()));
-        affineXform.setTz(getPos().getZ() + (moveDelta * -getCamURow().getZ()));
+        final double moveDelta = this.frameDeltaInSecs * getSpeedModifier(this.camMoveSpeedProperty.get());
+        this.affineXform.setTx(getPos().getX() + (moveDelta * -getCamURow().getX()));
+        this.affineXform.setTy(getPos().getY() + (moveDelta * -getCamURow().getY()));
+        this.affineXform.setTz(getPos().getZ() + (moveDelta * -getCamURow().getZ()));
     }
 
     /**
      * Strafes the camera right along the current 'right' vector (+ve x).
      */
     private void strafeCameraRight() {
-        final double moveDelta = frameDeltaInSecs * getSpeedModifier(isControlDown, isAltDown, camMoveSpeedProperty.get());
-        affineXform.setTx(getPos().getX() + (moveDelta * getCamURow().getX()));
-        affineXform.setTy(getPos().getY() + (moveDelta * getCamURow().getY()));
-        affineXform.setTz(getPos().getZ() + (moveDelta * getCamURow().getZ()));
+        final double moveDelta = this.frameDeltaInSecs * getSpeedModifier(this.camMoveSpeedProperty.get());
+        this.affineXform.setTx(getPos().getX() + (moveDelta * getCamURow().getX()));
+        this.affineXform.setTy(getPos().getY() + (moveDelta * getCamURow().getY()));
+        this.affineXform.setTz(getPos().getZ() + (moveDelta * getCamURow().getZ()));
     }
 
     /**
@@ -435,16 +330,16 @@ public class CameraFPS extends Parent {
         Point3D yVec = zVec.crossProduct(xVec).normalize();
 
         // Update the affine transformation to point the camera towards the target point
-        affineXform.setToTransform(xVec.getX(), yVec.getX(), zVec.getX(), getPos().getX(),
+        this.affineXform.setToTransform(xVec.getX(), yVec.getX(), zVec.getX(), getPos().getX(),
                 xVec.getY(), yVec.getY(), zVec.getY(), getPos().getY(),
                 xVec.getZ(), yVec.getZ(), zVec.getZ(), getPos().getZ());
 
         // Extract camera orientation angles from the affine transformation into the camera's internal yaw, pitch, roll (not currently used).
-        double yaw = Math.toDegrees(Math.atan2(-affineXform.getMzx(), affineXform.getMzz()));
-        double pitch = Math.toDegrees(Math.asin(affineXform.getMzy()));
+        double yaw = Math.toDegrees(Math.atan2(-this.affineXform.getMzx(), this.affineXform.getMzz()));
+        double pitch = Math.toDegrees(Math.asin(this.affineXform.getMzy()));
 
-        rotateYaw.setAngle(MathUtils.clamp(yaw, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
-        rotatePitch.setAngle(MathUtils.clamp(pitch, CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
+        this.rotateYaw.setAngle(MathUtils.clamp(yaw, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
+        this.rotatePitch.setAngle(MathUtils.clamp(pitch, CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
     }
 
     /**
@@ -468,9 +363,9 @@ public class CameraFPS extends Parent {
      * @param zPos The desired z-coordinate.
      */
     public void setPos(double xPos, double yPos, double zPos) {
-        affineXform.setTx(xPos);
-        affineXform.setTy(yPos);
-        affineXform.setTz(zPos);
+        this.affineXform.setTx(xPos);
+        this.affineXform.setTy(yPos);
+        this.affineXform.setTz(zPos);
     }
 
     /**
@@ -478,7 +373,7 @@ public class CameraFPS extends Parent {
      * @param angle The desired yaw.
      */
     public void setYaw(double angle) {
-        rotateYaw.setAngle(MathUtils.clamp(angle, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
+        this.rotateYaw.setAngle(MathUtils.clamp(angle, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
         // TODO: figure out how to update affine transform here without performing forced update
     }
 
@@ -487,7 +382,7 @@ public class CameraFPS extends Parent {
      * @param angle The desired pitch.
      */
     public void setPitch(double angle) {
-        rotatePitch.setAngle(MathUtils.clamp(angle, CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
+        this.rotatePitch.setAngle(MathUtils.clamp(angle, CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
         // TODO: figure out how to update affine transform here without performing forced update
     }
 
@@ -496,34 +391,29 @@ public class CameraFPS extends Parent {
      * @param angle The desired roll.
      */
     public void setRoll(double angle) {
-        rotateRoll.setAngle(angle);
+        this.rotateRoll.setAngle(angle);
         // TODO: figure out how to update affine transform here without performing forced update
     }
 
     /**
      * Utility function affording the user different levels of speed control through multipliers.
      */
-    public double getSpeedModifier(GestureEvent event, Property<Number> property) {
-        return getSpeedModifier(event.isControlDown(), event.isAltDown(), property.getValue().doubleValue());
+    public double getSpeedModifier(double defaultValue) {
+        boolean isControlDown = this.inputManager.isKeyPressed(KeyCode.CONTROL);
+        boolean isAltDown = this.inputManager.isKeyPressed(KeyCode.ALT);
+        return getSpeedModifier(isControlDown, isAltDown, defaultValue);
     }
 
     /**
      * Utility function affording the user different levels of speed control through multipliers.
      */
-    public double getSpeedModifier(MouseEvent event, Property<Number> property) {
-        return getSpeedModifier(event.isControlDown(), event.isAltDown(), property.getValue().doubleValue());
-    }
-
-    /**
-     * Utility function affording the user different levels of speed control through multipliers.
-     */
-    public double getSpeedModifier(Boolean isCtrlDown, Boolean isAltDown, double defaultValue) {
+    public double getSpeedModifier(boolean isCtrlDown, boolean isAltDown, double defaultValue) {
         double multiplier = 1;
 
         if (isCtrlDown) {
-            multiplier = camSpeedDownMultiplierProperty.get();
+            multiplier = this.camSpeedDownMultiplierProperty.get();
         } else if (isAltDown) {
-            multiplier = camSpeedUpMultiplierProperty.get();
+            multiplier = this.camSpeedUpMultiplierProperty.get();
         }
 
         return defaultValue * multiplier;
@@ -533,19 +423,19 @@ public class CameraFPS extends Parent {
      * Reset the camera's default property values for move speed, mouse speed, etc.
      */
     public void resetDefaultCamMoveSpeed() {
-        camMoveSpeedProperty.set(this.defaultMoveSpeed);
+        this.camMoveSpeedProperty.set(this.defaultMoveSpeed);
     }
 
     public void resetDefaultCamMouseSpeed() {
-        camMouseSpeedProperty.set(CAM_MOUSE_SPEED);
+        this.camMouseSpeedProperty.set(CAM_MOUSE_SPEED);
     }
 
     public void resetDefaultCamSpeedDownMultiplier() {
-        camSpeedDownMultiplierProperty.set(CAM_SPEED_DOWN_MULTIPLIER);
+        this.camSpeedDownMultiplierProperty.set(CAM_SPEED_DOWN_MULTIPLIER);
     }
 
     public void resetDefaultCamSpeedUpMultiplier() {
-        camSpeedUpMultiplierProperty.set(CAM_SPEED_UP_MULTIPLIER);
+        this.camSpeedUpMultiplierProperty.set(CAM_SPEED_UP_MULTIPLIER);
     }
 
     /**

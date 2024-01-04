@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Utils;
@@ -91,7 +92,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private final Map<Class<? extends MeshUIManager<TMesh>>, MeshUIManager<TMesh>> managersByType = new HashMap<>();
     private final List<MeshUISelector<TMesh, ?>> selectors = new ArrayList<>();
     private final RenderListManager renderManager = new RenderListManager();
-    private final CameraFPS cameraFPS = new CameraFPS();
+    private final InputManager inputManager = new InputManager();
+    private final FirstPersonCamera firstPersonCamera = new FirstPersonCamera(this.inputManager);
 
     // Instance Data:
     private TMesh mesh;
@@ -224,7 +226,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.root3D = new Group(this.meshView);
         SubScene subScene3D = new SubScene(this.root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
         subScene3D.setFill(Color.BLACK);
-        subScene3D.setCamera(cameraFPS.getCamera());
+        subScene3D.setCamera(firstPersonCamera.getCamera());
 
         // Ensure that the render manager has access to the root node
         this.renderManager.setRoot(this.root3D);
@@ -243,8 +245,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         subScene3D.heightProperty().bind(this.meshScene.heightProperty());
 
         // Associate camera controls with the scene.
-        this.cameraFPS.assignSceneControls(stageToOverride, this.meshScene);
-        this.cameraFPS.startThreadProcessing();
+        this.firstPersonCamera.assignSceneControls(stageToOverride, this.meshScene);
+        this.firstPersonCamera.startThreadProcessing();
 
         this.meshScene.setOnKeyPressed(event -> {
             if (onKeyPress(event))
@@ -252,7 +254,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
             if (event.getCode() == KeyCode.ESCAPE) { // Exit the viewer.
                 // Stop camera processing and clear up the render manager
-                this.cameraFPS.stopThreadProcessing();
+                this.firstPersonCamera.stopThreadProcessing();
                 this.renderManager.removeAllDisplayLists();
 
                 // Clear selectors
@@ -303,7 +305,16 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
      * Called when the mesh view shuts down / exits.
      */
     protected void onShutdown() {
-        // Do nothing.
+        // Run shutdown hooks.
+        for (int i = 0; i < this.managers.size(); i++) {
+            MeshUIManager<TMesh> manager = this.managers.get(i);
+            try {
+                manager.onRemove();
+            } catch (Throwable th) {
+                System.out.println(Utils.getSimpleName(manager) + " encountered an error while running onRemove().");
+                th.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -331,7 +342,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     }
 
     /**
-     * Primary function (entry point) for setting up data / control bindings, etc. (May be broken out and tidied up later in development).
+     * Primary function (entry point) for setting up data / control bindings, etc.
      */
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         this.subScene = subScene3D;
@@ -340,7 +351,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         setupAxis();
 
         // Setup camera.
-        PerspectiveCamera camera = cameraFPS.getCamera();
+        PerspectiveCamera camera = this.firstPersonCamera.getCamera();
         camera.setNearClip(MAP_VIEW_NEAR_CLIP);
         camera.setFarClip(MAP_VIEW_FAR_CLIP);
         camera.setFieldOfView(MAP_VIEW_FOV);
@@ -349,29 +360,29 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.colorPickerLevelBackground.setValue((Color) this.subScene.getFill());
         this.subScene.fillProperty().bind(this.colorPickerLevelBackground.valueProperty());
 
-        this.textFieldCamMoveSpeed.textProperty().bindBidirectional(this.cameraFPS.getCamMoveSpeedProperty(), NUM_TO_STRING_CONVERTER);
-        this.textFieldCamMouseSpeed.textProperty().bindBidirectional(this.cameraFPS.getCamMouseSpeedProperty(), NUM_TO_STRING_CONVERTER);
-        this.textFieldCamSpeedDownMultiplier.textProperty().bindBidirectional(this.cameraFPS.getCamSpeedDownMultiplierProperty(), NUM_TO_STRING_CONVERTER);
-        this.textFieldCamSpeedUpMultiplier.textProperty().bindBidirectional(this.cameraFPS.getCamSpeedUpMultiplierProperty(), NUM_TO_STRING_CONVERTER);
-        this.checkBoxYInvert.selectedProperty().bindBidirectional(this.cameraFPS.getCamYInvertProperty());
+        this.textFieldCamMoveSpeed.textProperty().bindBidirectional(this.firstPersonCamera.getCamMoveSpeedProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamMouseSpeed.textProperty().bindBidirectional(this.firstPersonCamera.getCamMouseSpeedProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamSpeedDownMultiplier.textProperty().bindBidirectional(this.firstPersonCamera.getCamSpeedDownMultiplierProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamSpeedUpMultiplier.textProperty().bindBidirectional(this.firstPersonCamera.getCamSpeedUpMultiplierProperty(), NUM_TO_STRING_CONVERTER);
+        this.checkBoxYInvert.selectedProperty().bindBidirectional(this.firstPersonCamera.getCamYInvertProperty());
 
-        this.btnResetCamMoveSpeed.setOnAction(e -> this.cameraFPS.resetDefaultCamMoveSpeed());
-        this.btnResetCamMouseSpeed.setOnAction(e -> this.cameraFPS.resetDefaultCamMouseSpeed());
-        this.btnResetCamSpeedDownMultiplier.setOnAction(e -> this.cameraFPS.resetDefaultCamSpeedDownMultiplier());
-        this.btnResetCamSpeedUpMultiplier.setOnAction(e -> this.cameraFPS.resetDefaultCamSpeedUpMultiplier());
+        this.btnResetCamMoveSpeed.setOnAction(e -> this.firstPersonCamera.resetDefaultCamMoveSpeed());
+        this.btnResetCamMouseSpeed.setOnAction(e -> this.firstPersonCamera.resetDefaultCamMouseSpeed());
+        this.btnResetCamSpeedDownMultiplier.setOnAction(e -> this.firstPersonCamera.resetDefaultCamSpeedDownMultiplier());
+        this.btnResetCamSpeedUpMultiplier.setOnAction(e -> this.firstPersonCamera.resetDefaultCamSpeedUpMultiplier());
 
         // Set camera bindings
         this.textFieldCamNearClip.textProperty().bindBidirectional(camera.nearClipProperty(), NUM_TO_STRING_CONVERTER);
         this.textFieldCamFarClip.textProperty().bindBidirectional(camera.farClipProperty(), NUM_TO_STRING_CONVERTER);
         this.textFieldCamFoV.textProperty().bindBidirectional(camera.fieldOfViewProperty(), NUM_TO_STRING_CONVERTER);
 
-        this.textFieldCamPosX.textProperty().bindBidirectional(this.cameraFPS.getCamPosXProperty(), NUM_TO_STRING_CONVERTER);
-        this.textFieldCamPosY.textProperty().bindBidirectional(this.cameraFPS.getCamPosYProperty(), NUM_TO_STRING_CONVERTER);
-        this.textFieldCamPosZ.textProperty().bindBidirectional(this.cameraFPS.getCamPosZProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamPosX.textProperty().bindBidirectional(this.firstPersonCamera.getCamPosXProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamPosY.textProperty().bindBidirectional(this.firstPersonCamera.getCamPosYProperty(), NUM_TO_STRING_CONVERTER);
+        this.textFieldCamPosZ.textProperty().bindBidirectional(this.firstPersonCamera.getCamPosZProperty(), NUM_TO_STRING_CONVERTER);
 
-        this.textFieldCamYaw.textProperty().bind(this.cameraFPS.getCamYawProperty().asString("%.6f"));
-        this.textFieldCamPitch.textProperty().bind(this.cameraFPS.getCamPitchProperty().asString("%.6f"));
-        this.textFieldCamRoll.textProperty().bind(this.cameraFPS.getCamRollProperty().asString("%.6f"));
+        this.textFieldCamYaw.textProperty().bind(this.firstPersonCamera.getCamYawProperty().asString("%.6f"));
+        this.textFieldCamPitch.textProperty().bind(this.firstPersonCamera.getCamPitchProperty().asString("%.6f"));
+        this.textFieldCamRoll.textProperty().bind(this.firstPersonCamera.getCamRollProperty().asString("%.6f"));
 
         // Set mesh view bindings
         this.checkBoxShowMesh.selectedProperty().bindBidirectional(meshView.visibleProperty());
@@ -476,7 +487,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         return controller;
     }
 
-    @Getter
+    @Getter // TODO: I think this needs to be deleted at some point.
     @AllArgsConstructor
     public enum ShadingMode {
         NO_SHADING("None", 1, 1),

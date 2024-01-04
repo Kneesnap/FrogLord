@@ -19,14 +19,11 @@ import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.Pack
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Tuple2;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
 
 /**
  * Represents a map file in pre-recode frogger.
- * TODO: Both pre-recode frogger and normal frogger contain sections which are accessible via pointer. Perhaps we should allow chunks to have a method to get their start position, and check it matches the position on read (showing warning if it doesn't).
- * TODO: Then, we can use that as the next place to read when we'd otherwise not have the ability to continue to the next one.
  * TODO: Support early format.
  * Created by Kneesnap on 12/8/2023.
  */
@@ -108,7 +105,7 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
 
         if (this.cameraHeightFieldPacket != null) {
             list.add(new Tuple2<>("Camera Height Grid Dimensions", this.cameraHeightFieldPacket.getXSquareCount() + " x " + this.cameraHeightFieldPacket.getZSquareCount()));
-            list.add(new Tuple2<>("Camera Height Grid Square Size", Utils.fixedPointShortToFloatNBits(this.cameraHeightFieldPacket.getXSquareSize(), 8) + " x " + Utils.fixedPointShortToFloatNBits(this.cameraHeightFieldPacket.getZSquareSize(), 8)));
+            list.add(new Tuple2<>("Camera Height Grid Square Size", this.cameraHeightFieldPacket.getSquareXSizeAsFloat() + " x " + this.cameraHeightFieldPacket.getSquareZSizeAsFloat()));
             list.add(new Tuple2<>("Camera Height Grid Start Pos", this.cameraHeightFieldPacket.getStartXAsFloat() + ", " + this.cameraHeightFieldPacket.getStartZAsFloat()));
         }
 

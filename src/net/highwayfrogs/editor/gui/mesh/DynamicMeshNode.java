@@ -22,7 +22,7 @@ public class DynamicMeshNode {
      * Called when this node is added to the mesh.
      */
     protected void onAddedToMesh() {
-        getMesh().updateMeshArrays();
+        // Do nothing.
     }
 
     /**

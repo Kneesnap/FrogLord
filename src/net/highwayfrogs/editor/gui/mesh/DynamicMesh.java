@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This represents a triangle mesh which has functionality to dynamically setup, update, and change mesh data.
+ * This represents a triangle mesh which has functionality to dynamically create, update, and change mesh data.
  * Created by Kneesnap on 9/24/2023.
  */
 @Getter
@@ -42,8 +42,8 @@ public abstract class DynamicMesh extends TriangleMesh {
 
         // Setup editable array batches.
         this.editableFaces = new FXIntArrayBatcher(new FXIntArray(), getFaces());
-        this.editableTexCoords = new DynamicMeshFloatArray(this, getTexCoords(), format.getTexCoordIndexOffset());
-        this.editableVertices = new DynamicMeshFloatArray(this, getPoints(), format.getPointIndexOffset());
+        this.editableTexCoords = new DynamicMeshFloatArray(this, getTexCoords(), format.getTexCoordIndexOffset(), getTexCoordElementSize());
+        this.editableVertices = new DynamicMeshFloatArray(this, getPoints(), format.getPointIndexOffset(), getPointElementSize());
     }
 
     /**
@@ -67,17 +67,27 @@ public abstract class DynamicMesh extends TriangleMesh {
      * Update the mesh arrays.
      */
     public void updateMeshArrays() {
-        this.editableFaces.applyToFxArrayIfReady();
-        this.editableTexCoords.applyToFxArrayIfReady();
-        this.editableVertices.applyToFxArrayIfReady();
+        this.editableFaces.applyToFxArray();
+        this.editableTexCoords.applyToFxArray();
+        this.editableVertices.applyToFxArray();
     }
 
     /**
      * Enable batch operations for all mesh array wrappers.
      */
     public void pushBatchOperations() {
+        pushBatchUpdates();
         pushBatchRemovals();
         pushBatchInsertions();
+    }
+
+    /**
+     * Enable batch array updates for all mesh array wrappers.
+     */
+    public void pushBatchUpdates() {
+        this.editableFaces.startBatchingUpdates();
+        this.editableTexCoords.startBatchingUpdates();
+        this.editableVertices.startBatchingUpdates();
     }
 
     /**
@@ -103,8 +113,19 @@ public abstract class DynamicMesh extends TriangleMesh {
      * Updates the mesh arrays if necessary.
      */
     public void popBatchOperations() {
+        popBatchUpdates();
         popBatchRemovals();
         popBatchInsertions();
+    }
+
+    /**
+     * Disable batch array updates for all mesh array wrappers.
+     * Performs a single update for each array that needs an update.
+     */
+    public void popBatchUpdates() {
+        this.editableVertices.endBatchingUpdates();
+        this.editableTexCoords.endBatchingUpdates();
+        this.editableFaces.endBatchingUpdates();
     }
 
     /**
@@ -147,6 +168,7 @@ public abstract class DynamicMesh extends TriangleMesh {
 
         this.nodes.add(node);
         node.onAddedToMesh();
+        updateMeshArrays(); // Update mesh data.
         return true;
     }
 

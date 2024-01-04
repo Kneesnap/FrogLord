@@ -37,9 +37,9 @@ public class DynamicMeshOverlayNode extends DynamicMeshAdapterNode<OverlayTarget
             int startFaceIndex = (data.getOverlayEntry().getFaceStartIndex() + i) * getMesh().getFaceElementSize();
 
             // Each vertex is spaced in between the tex coord index, because the faces array includes a value for both texcoord and normal.
-            int meshVertex1 = getMesh().getEditableFaces().getArray().get(startFaceIndex);
-            int meshVertex2 = getMesh().getEditableFaces().getArray().get(startFaceIndex + valuesPerVertex);
-            int meshVertex3 = getMesh().getEditableFaces().getArray().get(startFaceIndex + (2 * valuesPerVertex));
+            int meshVertex1 = getMesh().getEditableFaces().get(startFaceIndex);
+            int meshVertex2 = getMesh().getEditableFaces().get(startFaceIndex + valuesPerVertex);
+            int meshVertex3 = getMesh().getEditableFaces().get(startFaceIndex + (2 * valuesPerVertex));
 
             // Add a new face which uses those vertices. (Test that Z-Fighting isn't an issue, we might need to change this up slightly if it is.)
             entry.addFace(meshVertex1, texCoord1, meshVertex2, texCoord2, meshVertex3, texCoord3);

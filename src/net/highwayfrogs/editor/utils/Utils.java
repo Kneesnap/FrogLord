@@ -1666,7 +1666,26 @@ public class Utils {
      * Calculate interpolated color value based on 't' between source and target colours.
      * @param colorSrc The source color.
      * @param colorTgt The target color.
-     * @param t The desired delta (from 0.0 to 1.0 inclusive).
+     * @param t        The desired delta (from 0.0 to 1.0 inclusive).
+     * @return Color
+     */
+    public static int calculateInterpolatedColourARGB(final java.awt.Color colorSrc, final java.awt.Color colorTgt, float t) {
+        t = Math.min(t, 1.0f);
+        t = Math.max(t, 0.0f);
+
+        short red = (short) Math.min(255, colorSrc.getRed() + (int) ((colorTgt.getRed() - colorSrc.getRed()) * t));
+        short green = (short) Math.min(255, colorSrc.getGreen() + (int) ((colorTgt.getGreen() - colorSrc.getGreen()) * t));
+        short blue = (short) Math.min(255, colorSrc.getBlue() + (int) ((colorTgt.getBlue() - colorSrc.getBlue()) * t));
+        short alpha = (short) Math.min(255, colorSrc.getAlpha() + (int) ((colorTgt.getAlpha() - colorSrc.getAlpha()) * t));
+
+        return toARGB(unsignedShortToByte(red), unsignedShortToByte(green), unsignedShortToByte(blue), unsignedShortToByte(alpha));
+    }
+
+    /**
+     * Calculate interpolated color value based on 't' between source and target colours.
+     * @param colorSrc The source color.
+     * @param colorTgt The target color.
+     * @param t        The desired delta (from 0.0 to 1.0 inclusive).
      * @return Color
      */
     public static Color calculateInterpolatedColour(final Color colorSrc, final Color colorTgt, float t) {

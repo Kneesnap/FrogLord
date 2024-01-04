@@ -43,6 +43,14 @@ public class DisplayList {
     }
 
     /**
+     * Check if there are any nodes in this list.
+     * @return true if there are no nodes in this display list, false otherwise.
+     */
+    public boolean isEmpty() {
+        return this.nodes.isEmpty();
+    }
+
+    /**
      * Clears the contents of all nodes in this list.
      */
     public void clear() {

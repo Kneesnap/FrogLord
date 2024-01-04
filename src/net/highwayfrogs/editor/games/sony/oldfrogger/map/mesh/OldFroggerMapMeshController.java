@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh;
 
 import javafx.scene.AmbientLight;
 import javafx.scene.SubScene;
+import javafx.scene.input.PickResult;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
@@ -34,8 +35,8 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         super.setupBindings(subScene3D, meshView);
-        getCameraFPS().getCamera().setFarClip(DEFAULT_FAR_CLIP);
-        getCameraFPS().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
+        getFirstPersonCamera().getCamera().setFarClip(DEFAULT_FAR_CLIP);
+        getFirstPersonCamera().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
 
         AmbientLight mainLight = new AmbientLight(Color.WHITE);
         mainLight.getScope().add(getMeshView());
@@ -46,7 +47,11 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
 
         // TODO: Improve this.
         getMeshScene().setOnMouseClicked(evt -> {
-            int intersectedFace = evt.getPickResult().getIntersectedFace();
+            PickResult result = evt.getPickResult();
+            if (result == null || result.getIntersectedNode() != getMeshView())
+                return; // No pick result, or the thing that was clicked was not the main mesh.
+
+            int intersectedFace = result.getIntersectedFace();
             if (intersectedFace < 0)
                 return;
 
@@ -103,8 +108,8 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
     protected void setDefaultCameraPosition() {
         IVector froggerPos = getMap().getLevelSpecificDataPacket().getFroggerStartPosition();
         SVector cameraOffset = getMap().getStandardPacket().getCameraOffset();
-        getCameraFPS().setPos(froggerPos.getFloatX() + cameraOffset.getFloatX(), froggerPos.getFloatY() + cameraOffset.getFloatY(), froggerPos.getFloatZ() + cameraOffset.getFloatZ());
-        getCameraFPS().setCameraLookAt(froggerPos.getFloatX(), froggerPos.getFloatY(), froggerPos.getFloatZ());
+        getFirstPersonCamera().setPos(froggerPos.getFloatX() + cameraOffset.getFloatX(), froggerPos.getFloatY() + cameraOffset.getFloatY(), froggerPos.getFloatZ() + cameraOffset.getFloatZ());
+        getFirstPersonCamera().setCameraLookAt(froggerPos.getFloatX(), froggerPos.getFloatY(), froggerPos.getFloatZ());
     }
 
     /**

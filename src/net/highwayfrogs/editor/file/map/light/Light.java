@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Holds lighting data, or the "LIGHT" struct in mapdisp.H
+ * TODO: JavaFX 17 has SpotLight & 18 adds DirectionalLight. Should be able to improve our lighting if we upgrade. (Make sure to update lights in old Frogger, camera height-field in old Frogger, lights in Beast Wars, and any other games.)
  * Created by Kneesnap on 8/24/2018.
  */
 @Getter
