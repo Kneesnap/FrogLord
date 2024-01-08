@@ -38,6 +38,7 @@ public class AtlasBuilderTextureSource implements ITextureSource {
 
         // Draw each image.
         try {
+            this.atlas.prepareImageGeneration();
             SortedList<? extends AtlasTexture> sortedTextures = this.atlas.getSortedTextureList();
             for (int i = 0; i < sortedTextures.size(); i++) {
                 AtlasTexture texture = sortedTextures.get(i);

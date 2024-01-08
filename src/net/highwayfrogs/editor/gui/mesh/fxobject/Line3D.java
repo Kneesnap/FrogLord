@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.sony.shared.fxobject;
+package net.highwayfrogs.editor.gui.mesh.fxobject;
 
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
@@ -16,12 +16,11 @@ import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
- * Represents a 3D arrow.
- * TODO: Add a top to the arrow.
+ * Represents a line between a start and a stop position.
  * Created by Kneesnap on 12/23/2023.
  */
 @Getter
-public class Arrow3D extends Group {
+public class Line3D extends Group {
     private final double thickness;
     private final Vector3f startPosition;
     private final Vector3f endPosition;
@@ -31,19 +30,19 @@ public class Arrow3D extends Group {
     private static final PhongMaterial DEFAULT_MATERIAL = Utils.makeSpecialMaterial(Color.RED);
     private static final Point3D Y_AXIS = new Point3D(0f, 1f, 0f);
 
-    public Arrow3D() {
+    public Line3D() {
         this(DEFAULT_THICKNESS);
     }
 
-    public Arrow3D(double thickness) {
+    public Line3D(double thickness) {
         this(thickness, new Vector3f(), new Vector3f());
     }
 
-    public Arrow3D(Vector3f startPosition, Vector3f endPosition) {
+    public Line3D(Vector3f startPosition, Vector3f endPosition) {
         this(DEFAULT_THICKNESS, startPosition, endPosition);
     }
 
-    public Arrow3D(double thickness, Vector3f startPosition, Vector3f endPosition) {
+    public Line3D(double thickness, Vector3f startPosition, Vector3f endPosition) {
         this.thickness = thickness;
         this.startPosition = startPosition;
         this.endPosition = endPosition;

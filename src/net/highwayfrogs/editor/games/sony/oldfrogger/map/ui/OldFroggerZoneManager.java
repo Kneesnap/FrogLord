@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -254,12 +255,12 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
             float newX = Utils.fixedPointIntToFloat4Bit(region.getWorldX());
             float newZ1 = Utils.fixedPointIntToFloat4Bit(region.getWorldZ1());
             float newZ2 = Utils.fixedPointIntToFloat4Bit(region.getWorldZ2());
-            OldFroggerEditorUtils.get3DTransform(this.startSphere).setX(newX);
-            OldFroggerEditorUtils.get3DTransform(this.startSphere).setZ(newZ1);
-            OldFroggerEditorUtils.get3DTransform(this.endSphere).setX(newX);
-            OldFroggerEditorUtils.get3DTransform(this.endSphere).setZ(newZ2);
-            OldFroggerEditorUtils.get3DTransform(this.line).setX(newX);
-            OldFroggerEditorUtils.get3DTransform(this.line).setZ((newZ1 + newZ2) / 2);
+            Scene3DUtils.get3DTranslation(this.startSphere).setX(newX);
+            Scene3DUtils.get3DTranslation(this.startSphere).setZ(newZ1);
+            Scene3DUtils.get3DTranslation(this.endSphere).setX(newX);
+            Scene3DUtils.get3DTranslation(this.endSphere).setZ(newZ2);
+            Scene3DUtils.get3DTranslation(this.line).setX(newX);
+            Scene3DUtils.get3DTranslation(this.line).setZ((newZ1 + newZ2) / 2);
             this.line.setHeight(Math.abs(newZ2 - newZ1)); // delta x and delta y are both zero, so it's just sqrt(delta z * delta z)
         }
 
@@ -269,9 +270,9 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
          */
         public void updateRegionLineHeight(OldFroggerMapZone zone) {
             float newY = Utils.fixedPointIntToFloat4Bit(zone.getPlaneY()) - 10;
-            OldFroggerEditorUtils.get3DTransform(this.startSphere).setY(newY);
-            OldFroggerEditorUtils.get3DTransform(this.endSphere).setY(newY);
-            OldFroggerEditorUtils.get3DTransform(this.line).setY(newY);
+            Scene3DUtils.get3DTranslation(this.startSphere).setY(newY);
+            Scene3DUtils.get3DTranslation(this.endSphere).setY(newY);
+            Scene3DUtils.get3DTranslation(this.line).setY(newY);
         }
     }
 

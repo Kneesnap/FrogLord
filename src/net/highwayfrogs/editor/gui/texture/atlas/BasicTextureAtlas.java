@@ -175,7 +175,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
     /**
      * Removes a texture from this atlas.
      * @param texture The texture to remove.
-     * @return Whether or not the texture was removed.
+     * @return Whether the texture was removed.
      */
     @Override
     @SuppressWarnings("SuspiciousMethodCalls")
@@ -228,6 +228,15 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
         if (shouldDisableUpdates())
             return;
 
+        // Update image.
+        prepareImageGeneration();
+        super.update(newImage);
+    }
+
+    /**
+     * Prepares the data for image generation.
+     */
+    public void prepareImageGeneration() {
         boolean cachedTextureSizesInvalid = this.cachedTextureSizesInvalid;
 
         // Update texture sizes.
@@ -242,9 +251,6 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
             this.rebuildTexturePositions();
             this.markImageDirty();
         }
-
-        // Update image.
-        super.update(newImage);
     }
 
     @Override

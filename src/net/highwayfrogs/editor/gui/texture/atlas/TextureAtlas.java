@@ -150,4 +150,9 @@ public abstract class TextureAtlas extends SimpleTexture {
      * Rebuilds the atlas according to the implemented algorithm.
      */
     public abstract void rebuild();
+
+    /**
+     * Prepares the data for image generation.
+     */
+    public abstract void prepareImageGeneration();
 }

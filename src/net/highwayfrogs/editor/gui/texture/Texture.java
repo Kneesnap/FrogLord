@@ -30,7 +30,7 @@ public abstract class Texture {
     @Getter private int rightPadding;
 
     /**
-     * Whether or not bulk mode is enabled.
+     * Whether bulk mode is enabled.
      * If bulk mode is enabled, updates should not occur until it is disabled.
      * This is to prevent unnecessary updates (causing slowdown) when doing many operations in bulk.
      */
@@ -43,7 +43,7 @@ public abstract class Texture {
     @Getter private boolean hasAnyTransparentPixels;
 
     /**
-     * Whether or not updates should be disabled for now.
+     * Whether updates should be disabled for now.
      */
     public final boolean shouldDisableUpdates() {
         return this.bulkMode || this.disableUpdateCount > 0;

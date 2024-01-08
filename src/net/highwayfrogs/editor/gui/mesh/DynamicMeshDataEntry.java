@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui.mesh;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.system.math.Vector2f;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * This represents a unit of vertex positions, texture coordinate values, and face values which are conceptually grouped together.
@@ -12,6 +13,7 @@ import net.highwayfrogs.editor.system.math.Vector2f;
 @Getter
 public class DynamicMeshDataEntry {
     private final DynamicMesh mesh;
+    private DynamicMeshNode meshNode;
     private boolean active = true;
     private int vertexStartIndex = -1;
     private int pendingVertexCount;
@@ -63,25 +65,28 @@ public class DynamicMeshDataEntry {
     /**
      * Called when the entry is added to a node.
      */
-    protected void onAddedToNode() {
+    protected void onAddedToNode(DynamicMeshNode node) {
         // Mark as active.
         this.active = true;
+        this.meshNode = node;
 
         // All of these values are assigned either when the first value is written, or when this is added to the node.
         // This is to ensure we keep the order sorted between entries, allowing binary searches to be possible.
         // This allows for example, looking up a face by the ID which JavaFX reported getting clicked.
-        if (this.pendingVertexCount == 0)
-            this.vertexStartIndex = this.mesh.getEditableVertices().size() / this.mesh.getPointElementSize();
-        if (this.pendingTexCoordCount == 0)
-            this.texCoordStartIndex = this.mesh.getEditableTexCoords().size() / this.mesh.getTexCoordElementSize();
-        if (this.pendingFaceCount == 0)
-            this.faceStartIndex = this.mesh.getEditableFaces().size() / this.mesh.getFaceElementSize();
+        if (this.pendingVertexCount == 0 && this.vertexStartIndex == -1)
+            this.vertexStartIndex = this.mesh.getEditableVertices().pendingSize() / this.mesh.getPointElementSize();
+        if (this.pendingTexCoordCount == 0 && this.texCoordStartIndex == -1)
+            this.texCoordStartIndex = this.mesh.getEditableTexCoords().pendingSize() / this.mesh.getTexCoordElementSize();
+        if (this.pendingFaceCount == 0 && this.faceStartIndex == -1)
+            this.faceStartIndex = this.mesh.getEditableFaces().pendingSize() / this.mesh.getFaceElementSize();
     }
 
     /**
      * Called when the entry is added to a node.
      */
     protected void onRemovedFromNode() {
+        this.meshNode = null;
+
         // Remove Faces
         // Should run first, so any vertices/texCoords defined here used by this face won't trigger the detector for faces using data we're deleting.
         if (this.writtenFaceCount != 0) {
@@ -147,10 +152,11 @@ public class DynamicMeshDataEntry {
 
         // If applicable, save the start index.
         if (this.vertexStartIndex == -1)
-            this.vertexStartIndex = this.mesh.getEditableVertices().size() / this.mesh.getPointElementSize();
+            this.vertexStartIndex = this.mesh.getEditableVertices().pendingSize() / this.mesh.getPointElementSize();
 
-        int entryVertexEndPos = (this.vertexStartIndex + this.writtenVertexCount) * this.mesh.getPointElementSize();
-        boolean atEndOfArray = (this.mesh.getEditableVertices().size() == entryVertexEndPos);
+        // Determine insertion position, and if we're at the end of the array.
+        int insertPos = (this.vertexStartIndex + localIndex) * this.mesh.getPointElementSize();
+        boolean atEndOfArray = (this.mesh.getEditableVertices().pendingSize() == insertPos);
 
         // Writes values to the array.
         TEMP_POSITION_ARRAY[0] = x;
@@ -163,7 +169,6 @@ public class DynamicMeshDataEntry {
             this.writtenVertexCount++;
         } else {
             // Write potentially batched data.
-            int insertPos = ((this.vertexStartIndex + localIndex) * this.mesh.getPointElementSize());
             if (this.mesh.getEditableVertices().addAll(insertPos, TEMP_POSITION_ARRAY))
                 this.writtenVertexCount++;
         }
@@ -300,22 +305,21 @@ public class DynamicMeshDataEntry {
 
         // If applicable, save the start index.
         if (this.texCoordStartIndex == -1)
-            this.texCoordStartIndex = this.mesh.getEditableTexCoords().size() / this.mesh.getTexCoordElementSize();
+            this.texCoordStartIndex = this.mesh.getEditableTexCoords().pendingSize() / this.mesh.getTexCoordElementSize();
 
         // Write values to array.
         TEMP_TEXCOORD_ARRAY[0] = u;
         TEMP_TEXCOORD_ARRAY[1] = v;
 
         // Determine array position.
-        int entryTexCoordEndPos = (this.texCoordStartIndex + this.writtenTexCoordCount) * this.mesh.getTexCoordElementSize();
-        boolean atEndOfArray = (this.mesh.getEditableTexCoords().size() == entryTexCoordEndPos);
+        int insertPos = (this.texCoordStartIndex + localIndex) * this.mesh.getTexCoordElementSize();
+        boolean atEndOfArray = (this.mesh.getEditableTexCoords().pendingSize() == insertPos);
         if (atEndOfArray) {
             // Write values to the end of the array, now.
             this.mesh.getEditableTexCoords().addAll(TEMP_TEXCOORD_ARRAY);
             this.writtenTexCoordCount++;
         } else {
             // Write potentially batched data.
-            int insertPos = ((this.texCoordStartIndex + localIndex) * this.mesh.getTexCoordElementSize());
             if (this.mesh.getEditableTexCoords().addAll(insertPos, TEMP_TEXCOORD_ARRAY))
                 this.writtenTexCoordCount++;
         }
@@ -351,6 +355,28 @@ public class DynamicMeshDataEntry {
      */
     public void writeTexCoordValue(int localTexCoordIndex, Vector2f uv) {
         writeTexCoordValue(localTexCoordIndex, uv.getX(), uv.getY());
+    }
+
+    /**
+     * Update all faces using the given texCoordUvIndex to use the new one.
+     * @param oldTextureUvIndex the old uv texCoord index to replace
+     * @param newTextureUvIndex the new replacement uv texCoord index
+     */
+    public void updateTextureIndex(int oldTextureUvIndex, int newTextureUvIndex) {
+        if (oldTextureUvIndex < 0 || newTextureUvIndex < 0)
+            return; // Invalid textures, so skip em.
+
+        this.mesh.getEditableFaces().startBatchingUpdates();
+        for (int i = 0; i < this.writtenFaceCount; i++) {
+            int texCoordBaseIndex = (this.faceStartIndex + i) * this.mesh.getFaceElementSize() + this.mesh.getVertexFormat().getTexCoordIndexOffset();
+            for (int j = 0; j < 3; j++) {
+                int localTexCoordVtxIndex = texCoordBaseIndex + (j * this.mesh.getVertexFormat().getVertexIndexSize());
+                if (this.mesh.getEditableFaces().get(localTexCoordVtxIndex) == oldTextureUvIndex)
+                    this.mesh.getEditableFaces().set(localTexCoordVtxIndex, newTextureUvIndex);
+            }
+        }
+        this.mesh.getEditableFaces().applyToFxArray();
+        this.mesh.getEditableFaces().endBatchingUpdates();
     }
 
     /**
@@ -406,7 +432,7 @@ public class DynamicMeshDataEntry {
 
         // If applicable, save the start index.
         if (this.faceStartIndex == -1)
-            this.faceStartIndex = this.mesh.getEditableFaces().size() / this.mesh.getFaceElementSize();
+            this.faceStartIndex = this.mesh.getEditableFaces().pendingSize() / this.mesh.getFaceElementSize();
 
         // Write values to array.
         TEMP_FACE_ARRAY[0] = meshVertex1;
@@ -416,15 +442,14 @@ public class DynamicMeshDataEntry {
         TEMP_FACE_ARRAY[4] = meshVertex3;
         TEMP_FACE_ARRAY[5] = meshTexCoord3;
 
-        int entryFaceEndPos = (this.faceStartIndex + this.writtenFaceCount) * this.mesh.getFaceElementSize();
-        boolean atEndOfArray = (this.mesh.getEditableFaces().size() == entryFaceEndPos);
+        int insertPos = (this.faceStartIndex + localIndex) * this.mesh.getFaceElementSize();
+        boolean atEndOfArray = (this.mesh.getEditableFaces().pendingSize() == insertPos);
         if (atEndOfArray) {
             // Write values to the end of the array, now.
             this.mesh.getEditableFaces().addAll(TEMP_FACE_ARRAY);
             this.writtenFaceCount++;
         } else {
             // Write potentially batched data.
-            int insertPos = ((this.faceStartIndex + localIndex) * this.mesh.getFaceElementSize());
             if (this.mesh.getEditableFaces().addAll(insertPos, TEMP_FACE_ARRAY))
                 this.writtenFaceCount++;
         }
@@ -502,5 +527,19 @@ public class DynamicMeshDataEntry {
             this.writtenFaceCount--;
 
         this.pendingFaceCount--;
+    }
+
+    /**
+     * Print debug information about this entry.
+     */
+    @SuppressWarnings("unused")
+    public void printDebugInformation() {
+        System.out.println("Mesh Entry (" + Utils.getSimpleName(this) + " for " + Utils.getSimpleName(this.mesh) + "):");
+        System.out.println(" - Faces [Start: " + this.faceStartIndex + ", Written: " + this.writtenFaceCount + ", Pending: " + this.pendingFaceCount
+                + ", Array Size: " + this.mesh.getEditableFaces().size() + "/" + this.mesh.getEditableFaces().pendingSize() + "/" + this.mesh.getFaces().size() + "]");
+        System.out.println(" - TexCoords [Start: " + this.texCoordStartIndex + ", Written: " + this.writtenTexCoordCount + ", Pending: " + this.pendingTexCoordCount
+                + ", Array Size: " + this.mesh.getEditableTexCoords().size() + "/" + this.mesh.getEditableTexCoords().pendingSize() + "/" + this.mesh.getTexCoords().size() + "]");
+        System.out.println(" - Vertex [Start: " + this.vertexStartIndex + ", Written: " + this.writtenVertexCount + ", Pending: " + this.pendingVertexCount
+                + ", Array Size: " + this.mesh.getEditableVertices().size() + "/" + this.mesh.getEditableVertices().pendingSize() + "/" + this.mesh.getPoints().size() + "]");
     }
 }

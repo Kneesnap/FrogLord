@@ -1,8 +1,5 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.ui;
 
-import javafx.scene.Node;
-import javafx.scene.transform.Transform;
-import javafx.scene.transform.Translate;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerReactionType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -14,7 +11,6 @@ import java.util.function.Consumer;
  * Created by Kneesnap on 12/22/2023.
  */
 public class OldFroggerEditorUtils {
-
     /**
      * Sets up an editor for reaction data.
      * @param editor             The editor UI to add reaction data to.
@@ -70,41 +66,5 @@ public class OldFroggerEditorUtils {
         } else {
             return difficulty & ~mask;
         }
-    }
-
-    /**
-     * Gets (or creates) the translation of a node in 3D space.
-     * @param node The node to update the position of.
-     */
-    public static Translate get3DTransform(Node node) {
-        for (Transform transform : node.getTransforms())
-            if (transform instanceof Translate)
-                return (Translate) transform;
-
-        Translate newTranslate = new Translate();
-        node.getTransforms().add(newTranslate);
-        return newTranslate;
-    }
-
-    /**
-     * Set the position of a node in 3D space.
-     * @param node The node to update the position of.
-     * @param x    The x coordinate value,
-     * @param y    The y coordinate value.
-     * @param z    The z coordinate value.
-     */
-    public static void setNodePosition(Node node, double x, double y, double z) {
-        for (Transform transform : node.getTransforms()) {
-            if (!(transform instanceof Translate))
-                continue;
-
-            Translate translate = (Translate) transform;
-            translate.setX(x);
-            translate.setY(y);
-            translate.setZ(z);
-            return;
-        }
-
-        node.getTransforms().add(new Translate(x, y, z));
     }
 }

@@ -20,15 +20,15 @@ import java.util.List;
  * Created by Kneesnap on 9/24/2023.
  */
 @Getter
-public abstract class DynamicMesh extends TriangleMesh {
-    @Getter private final TextureAtlas textureAtlas;
-    @Getter private final FXIntArrayBatcher editableFaces;
-    @Getter private final DynamicMeshFloatArray editableTexCoords;
-    @Getter private final DynamicMeshFloatArray editableVertices;
-    @Getter private final List<DynamicMeshNode> nodes = new ArrayList<>();
-    @Getter private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
-    @Getter private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which are viewing this mesh.
-    @Getter private PhongMaterial material;
+public abstract class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
+    private final TextureAtlas textureAtlas;
+    private final FXIntArrayBatcher editableFaces;
+    private final DynamicMeshFloatArray editableTexCoords;
+    private final DynamicMeshFloatArray editableVertices;
+    private final List<DynamicMeshNode> nodes = new ArrayList<>();
+    private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
+    private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which are viewing this mesh.
+    private PhongMaterial material;
 
     public DynamicMesh(TextureAtlas atlas) {
         this(atlas, VertexFormat.POINT_TEXCOORD);
@@ -42,8 +42,13 @@ public abstract class DynamicMesh extends TriangleMesh {
 
         // Setup editable array batches.
         this.editableFaces = new FXIntArrayBatcher(new FXIntArray(), getFaces());
-        this.editableTexCoords = new DynamicMeshFloatArray(this, getTexCoords(), format.getTexCoordIndexOffset(), getTexCoordElementSize());
-        this.editableVertices = new DynamicMeshFloatArray(this, getPoints(), format.getPointIndexOffset(), getPointElementSize());
+        this.editableTexCoords = new DynamicMeshFloatArray(this, "texCoord", getTexCoords(), format.getTexCoordIndexOffset(), getTexCoordElementSize());
+        this.editableVertices = new DynamicMeshFloatArray(this, "vertex", getPoints(), format.getPointIndexOffset(), getPointElementSize());
+    }
+
+    @Override
+    public DynamicMesh getMesh() {
+        return this;
     }
 
     /**

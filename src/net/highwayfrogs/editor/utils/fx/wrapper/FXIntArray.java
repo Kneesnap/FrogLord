@@ -342,7 +342,7 @@ public class FXIntArray {
         if (shiftedElements > 0)
             System.arraycopy(this.array, destIndex, this.array, destIndex + length, shiftedElements);
 
-        System.arraycopy(src, srcIndex, this.array, this.length, length);
+        System.arraycopy(src, srcIndex, this.array, destIndex, length);
         this.length += length;
     }
 

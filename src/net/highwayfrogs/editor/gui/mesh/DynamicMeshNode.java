@@ -10,7 +10,7 @@ import java.util.List;
  * Created by Kneesnap on 9/25/2023.
  */
 @Getter
-public class DynamicMeshNode {
+public class DynamicMeshNode implements IDynamicMeshHelper {
     private final DynamicMesh mesh;
     private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
 
@@ -54,31 +54,6 @@ public class DynamicMeshNode {
     }
 
     /**
-     * Gets the tracked data entry corresponding to the provided face index.
-     * @param faceIndex The index of the face.
-     * @return dataEntry, or null.
-     */
-    public DynamicMeshDataEntry getDataEntryByFaceIndex(int faceIndex) {
-        int left = 0;
-        int right = this.dataEntries.size() - 1;
-
-        while (left <= right) {
-            int mid = (left + right) / 2;
-            DynamicMeshDataEntry midEntry = this.dataEntries.get(mid);
-
-            if (faceIndex >= midEntry.getFaceStartIndex() && faceIndex < midEntry.getFaceStartIndex() + midEntry.getWrittenFaceCount()) {
-                return midEntry;
-            } else if (midEntry.getFaceStartIndex() > faceIndex) {
-                right = mid - 1;
-            } else {
-                left = mid + 1;
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Adds an unlinked data entry to the mesh.
      * Unlinked data entries are not tied to a TDataSource, and are expected to be managed by the extension class.
      * @param entry The entry to add.
@@ -100,7 +75,9 @@ public class DynamicMeshNode {
         this.dataEntries.add(entry);
         getMesh().getDataEntries().add(entry);
         this.onEntryAdded(entry);
-        entry.onAddedToNode();
+        entry.onAddedToNode(this);
+        if (this.mesh.isActive(this))
+            getMesh().updateMeshArrays();
         return true;
     }
 

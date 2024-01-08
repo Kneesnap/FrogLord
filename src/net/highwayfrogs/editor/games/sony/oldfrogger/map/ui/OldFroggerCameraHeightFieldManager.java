@@ -23,6 +23,7 @@ import net.highwayfrogs.editor.gui.InputManager.MouseInputState;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -402,7 +403,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
                 float xPos = packet.getWorldX(x);
                 float yPos = packet.getWorldY(x, z);
                 float zPos = packet.getWorldZ(z);
-                OldFroggerEditorUtils.setNodePosition(display, xPos, yPos, zPos);
+                Scene3DUtils.setNodePosition(display, xPos, yPos, zPos);
             }
         }
     }
@@ -557,9 +558,9 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         // Update visual displays.
         this.vertexDisplays[replacedZ][replacedX] = selectedDisplay;
         this.vertexDisplays[z][x] = replacedDisplay;
-        OldFroggerEditorUtils.setNodePosition(selectedDisplay, packet.getWorldX(replacedX), packet.getWorldY(replacedX, replacedZ), packet.getWorldZ(replacedZ));
+        Scene3DUtils.setNodePosition(selectedDisplay, packet.getWorldX(replacedX), packet.getWorldY(replacedX, replacedZ), packet.getWorldZ(replacedZ));
         if (replacedDisplay != null)
-            OldFroggerEditorUtils.setNodePosition(replacedDisplay, packet.getWorldX(x), packet.getWorldY(x, z), packet.getWorldZ(z));
+            Scene3DUtils.setNodePosition(replacedDisplay, packet.getWorldX(x), packet.getWorldY(x, z), packet.getWorldZ(z));
 
         // Update display data. (Should run only after updating selection)
         this.mesh.getMainNode().updateTexCoord(x, z);

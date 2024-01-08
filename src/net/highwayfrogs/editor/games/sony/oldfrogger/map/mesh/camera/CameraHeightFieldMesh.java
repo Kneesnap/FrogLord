@@ -28,7 +28,7 @@ public class CameraHeightFieldMesh extends DynamicMesh {
     public static final CursorVertexColor UNSELECTED_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
 
     public CameraHeightFieldMesh(OldFroggerCameraHeightFieldManager manager) {
-        super(new SequentialTextureAtlas(32, 32, true));
+        super(new SequentialTextureAtlas(32, 32, false));
         this.map = manager.getMap();
         this.manager = manager;
 

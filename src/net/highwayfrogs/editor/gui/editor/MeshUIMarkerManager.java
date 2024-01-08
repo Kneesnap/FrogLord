@@ -8,8 +8,8 @@ import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.Vector;
-import net.highwayfrogs.editor.games.sony.shared.fxobject.Arrow3D;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.gui.mesh.fxobject.Arrow3D;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**

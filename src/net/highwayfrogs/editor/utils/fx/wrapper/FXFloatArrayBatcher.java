@@ -308,8 +308,9 @@ public class FXFloatArrayBatcher {
      */
     public void add(float value) {
         // Not batched since adding values to the end of an array doesn't have any performance benefit from batching.
+        int insertionIndex = this.array.size();
         this.array.add(value);
-        onRangeInsertionComplete(this.array.getLength() - 1, 1);
+        onRangeInsertionComplete(insertionIndex, 1);
     }
 
     /**
@@ -388,8 +389,12 @@ public class FXFloatArrayBatcher {
      */
     public boolean addAll(int destIndex, float... elements) {
         if (isBatchInsertionActive()) {
-            for (int i = 0; i < elements.length; i++)
-                insert(destIndex + i, elements[i]);
+            int insertionIndex = this.queuedInsertionIndices.getInsertionPoint(destIndex);
+            for (int i = 0; i < elements.length; i++) {
+                this.queuedInsertionIndices.add(insertionIndex + i, destIndex);
+                this.queuedInsertionValues.add(insertionIndex + i, elements[i]);
+            }
+
             return false;
         } else {
             this.array.addAll(destIndex, elements);
@@ -424,8 +429,12 @@ public class FXFloatArrayBatcher {
      */
     public boolean addAll(int destIndex, float[] src, int srcIndex, int length) {
         if (isBatchInsertionActive()) {
-            for (int i = 0; i < length; i++)
-                insert(destIndex + i, src[srcIndex + i]);
+            int insertionIndex = this.queuedInsertionIndices.getInsertionPoint(destIndex);
+            for (int i = 0; i < length; i++) {
+                this.queuedInsertionIndices.add(insertionIndex + i, destIndex);
+                this.queuedInsertionValues.add(insertionIndex + i, src[srcIndex + i]);
+            }
+
             return false;
         } else {
             this.array.addAll(destIndex, src, srcIndex, length);
@@ -452,5 +461,12 @@ public class FXFloatArrayBatcher {
      */
     public int size() {
         return this.array.size();
+    }
+
+    /**
+     * Get the number of elements that will be in the array after the queued batch operations complete.
+     */
+    public int pendingSize() {
+        return this.array.size() + this.queuedInsertionIndices.size() - this.queuedIndexRemovals.getBitCount();
     }
 }
