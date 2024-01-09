@@ -34,6 +34,7 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 /**
  * Manages the UI which is displayed when a mesh is viewed.
@@ -47,6 +48,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     public static final double MAP_VIEW_FOV = 60.0;
 
     private SubScene subScene;
+    private Group subScene2DElements;
+    private Logger cachedLogger;
 
     // Baseline UI components
     @FXML private AnchorPane anchorPaneUIRoot;
@@ -105,12 +108,24 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private Scene meshScene;
     private Scene originalScene;
     private Stage overwrittenStage;
+    private final Group lightingGroup = new Group();
+    private AmbientLight mainLight;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         this.shadingModeChoiceBox.setDisable(true); // TODO: Enable this as we implement the new shading system.
+    }
+
+    /**
+     * Get the logger for this controller.
+     */
+    public Logger getLogger() {
+        if (this.cachedLogger != null)
+            return this.cachedLogger;
+
+        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
     }
 
     /**
@@ -226,7 +241,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.root3D = new Group(this.meshView);
         SubScene subScene3D = new SubScene(this.root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
         subScene3D.setFill(Color.BLACK);
-        subScene3D.setCamera(firstPersonCamera.getCamera());
+        subScene3D.setCamera(this.firstPersonCamera.getCamera());
 
         // Ensure that the render manager has access to the root node
         this.renderManager.setRoot(this.root3D);
@@ -234,7 +249,9 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         // Setup the UI layout.
         BorderPane uiPane = new BorderPane();
         uiPane.setLeft(loadRoot);
-        uiPane.setCenter(subScene3D);
+        this.subScene2DElements = new Group();
+        this.subScene2DElements.getChildren().add(subScene3D);
+        uiPane.setCenter(this.subScene2DElements);
 
         // Create and set the scene.
         this.meshScene = new Scene(uiPane);
@@ -265,8 +282,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 try {
                     onShutdown();
                 } catch (Throwable th) {
-                    System.out.println("Encountered error in MeshViewController shutdown hook.");
-                    th.printStackTrace();
+                    String errorMessage = "Encountered error in MeshViewController shutdown hook.";
+                    getLogger().throwing("MeshViewController", null, new RuntimeException(errorMessage, th));
                 }
 
                 getMesh().removeView(getMeshView()); // Remove view from mesh.
@@ -274,7 +291,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
                 Utils.takeScreenshot(this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), true);
             } else if (event.getCode() == KeyCode.F12) {
-                System.out.println("Saving main mesh texture sheet to 'texture-sheet.png'...");
+                getLogger().info("Saving main mesh texture sheet to 'texture-sheet.png'...");
 
                 try {
                     ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet.png"));
@@ -299,6 +316,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
         setDefaultCameraPosition();
         setupBindings(subScene3D, this.meshView); // Setup UI.
+        setupBasicLighting();
     }
 
     /**
@@ -311,8 +329,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             try {
                 manager.onRemove();
             } catch (Throwable th) {
-                System.out.println(Utils.getSimpleName(manager) + " encountered an error while running onRemove().");
-                th.printStackTrace();
+                String errorMessage = "Encountered an error while running onRemove().";
+                getLogger().throwing("MeshViewController", "onShutdown", new RuntimeException(errorMessage, th));
             }
         }
     }
@@ -398,6 +416,18 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         runForEachManager(MeshUIManager::updateEditor, "updateEditor"); // Setup all the managers editors.
     }
 
+    private void setupBasicLighting() {
+        // There is no lighting on terrain, equivalent to a fully white ambient light.
+        this.mainLight = new AmbientLight(Color.WHITE);
+        getRenderManager().getRoot().getChildren().add(this.mainLight);
+
+        // Add lighting group.
+        getRenderManager().getRoot().getChildren().add(this.lightingGroup);
+
+        // Add scope.
+        this.mainLight.getScope().add(this.lightingGroup);
+    }
+
     private void setupAxis() {
         final int axisLength = 10;
         final int lineSize = 3;
@@ -416,8 +446,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             try {
                 execution.accept(manager);
             } catch (Throwable th) {
-                System.out.println("Failed to run '" + name + "' for the mesh manager '" + Utils.getSimpleName(manager) + "'.");
-                th.printStackTrace();
+                manager.getLogger().throwing(null, null, new RuntimeException("Failed to run '" + name + "'.", th));
             }
         }
     }

@@ -59,16 +59,16 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
             if (polygon == null)
                 return;
 
-            System.out.println("Polygon: " + polygon.getPolygonType());
+            getLogger().info("Polygon: " + polygon.getPolygonType());
             if (polygon.getPolygonType().isTextured()) {
-                System.out.println("Texture ID: " + polygon.getTextureId());
-                System.out.println("UV-0: " + getUVDisplay(polygon.getTextureUvs()[0]));
-                System.out.println("UV-1: " + getUVDisplay(polygon.getTextureUvs()[1]));
-                System.out.println("UV-2: " + getUVDisplay(polygon.getTextureUvs()[2]));
-                System.out.println("UV-3: " + getUVDisplay(polygon.getTextureUvs()[3]));
+                getLogger().info("Texture ID: " + polygon.getTextureId());
+                getLogger().info("UV-0: " + getUVDisplay(polygon.getTextureUvs()[0]));
+                getLogger().info("UV-1: " + getUVDisplay(polygon.getTextureUvs()[1]));
+                getLogger().info("UV-2: " + getUVDisplay(polygon.getTextureUvs()[2]));
+                getLogger().info("UV-3: " + getUVDisplay(polygon.getTextureUvs()[3]));
             }
             for (int i = 0; i < polygon.getColors().length; i++)
-                System.out.println("Color " + i + ": " + polygon.getColors()[i].toString());
+                getLogger().info("Color " + i + ": " + polygon.getColors()[i].toString());
 
             this.vertexDisplayList.clear();
             SVector vertex0 = getMap().getVertexPacket().getVertices().get(polygon.getVertices()[0]);

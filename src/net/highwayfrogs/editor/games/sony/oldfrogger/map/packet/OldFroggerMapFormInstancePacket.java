@@ -53,12 +53,12 @@ public class OldFroggerMapFormInstancePacket extends OldFroggerMapPacket {
 
             // Check forms are sorted.
             if (lastFormTypeId >= newForm.getFormType())
-                System.out.println("[Warning/" + getParentFile().getFileDisplayName() + "] Form " + newForm.getFormType() + " was defined after Form " + lastFormTypeId + ".");
+                getLogger().warning("Form " + newForm.getFormType() + " was defined after Form " + lastFormTypeId + ".");
             lastFormTypeId = newForm.getFormType();
         }
 
         if (this.forms.size() != activeFormCount)
-            System.out.println("[Warning] Expected to read " + activeFormCount + " forms, but " + this.forms.size() + " were found.");
+            getLogger().warning("Expected to read " + activeFormCount + " forms, but " + this.forms.size() + " were found.");
 
         // Set the reader position to the end of the form data.
         reader.setIndex(endPosition);

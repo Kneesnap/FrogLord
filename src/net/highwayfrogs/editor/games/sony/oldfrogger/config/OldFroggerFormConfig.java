@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 /**
  * Holds configuration data about form entries.
@@ -75,7 +76,7 @@ public class OldFroggerFormConfig {
 
             String[] split = text.split("=");
             if (split.length != 2) {
-                System.out.println("Missing equals sign in form config entry '" + text + "'.");
+                getLogger().warning("Missing equals sign in form config entry '" + text + "'.");
                 return null;
             }
 
@@ -83,7 +84,7 @@ public class OldFroggerFormConfig {
             try {
                 formType = Integer.parseInt(split[0]);
             } catch (NumberFormatException nfe) {
-                System.out.println("Invalid form type number '" + split[0] + "' in '" + text + "'.");
+                getLogger().warning("Invalid form type number '" + split[0] + "' in '" + text + "'.");
                 return null;
             }
 
@@ -91,19 +92,23 @@ public class OldFroggerFormConfig {
             String displayName;
             OldFroggerEntityDataFactory entityDataFactory;
             if (split.length > 2 || split.length == 0) {
-                System.out.println("Improperly formatted form config entry '" + text + "'.");
+                getLogger().warning("Improperly formatted form config entry '" + text + "'.");
                 return null;
             } else if (split.length == 2) {
                 displayName = split[0];
                 entityDataFactory = OldFroggerEntityData.getEntityDataFactory(split[1]);
                 if (entityDataFactory == null)
-                    System.out.println("WARNING: Failed to find entity data factory named '" + split[1] + "'.");
+                    getLogger().warning("Failed to find entity data factory named '" + split[1] + "'.");
             } else {
                 displayName = split[0];
                 entityDataFactory = null;
             }
 
             return new OldFroggerFormConfigEntry(formType, displayName, entityDataFactory);
+        }
+
+        private static Logger getLogger() {
+            return Logger.getLogger("OldFroggerFormConfigEntry");
         }
     }
 }

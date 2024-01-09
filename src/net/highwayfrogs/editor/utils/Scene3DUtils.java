@@ -1,16 +1,111 @@
 package net.highwayfrogs.editor.utils;
 
-import javafx.scene.Node;
+import javafx.geometry.Point3D;
+import javafx.scene.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Contains static utilties useful in a 3D Scene.
  * Created by Kneesnap on 1/7/2024.
  */
 public class Scene3DUtils {
+    /**
+     * Search the provided Scene recursively for a SubScene.
+     * @param scene scene to start searching from
+     * @return The identified SubScene 3D group, if there was one.
+     */
+    public static Group getSubSceneGroup(Scene scene) {
+        return scene != null ? getSubSceneGroup(scene.getRoot()) : null;
+    }
+
+    /**
+     * Search the provided node recursively for a SubScene.
+     * @param root node to start searching from
+     * @return The identified SubScene 3D group, if there was one.
+     */
+    public static Group getSubSceneGroup(Parent root) {
+        if (root == null)
+            return null;
+
+        List<Parent> nodesToVisit = new ArrayList<>();
+        nodesToVisit.add(root);
+
+        while (nodesToVisit.size() > 0) {
+            Parent parent = nodesToVisit.remove(nodesToVisit.size() - 1);
+            for (Node node : parent.getChildrenUnmodifiable()) {
+                if (node instanceof SubScene && ((SubScene) node).getRoot() instanceof Group)
+                    return (Group) ((SubScene) node).getRoot();
+                if (node instanceof Parent)
+                    nodesToVisit.add((Parent) node);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Search the provided Scene recursively for a SubScene.
+     * @param scene scene to search
+     * @return The identified SubScene, if there was one.
+     */
+    public static SubScene getSubScene(Scene scene) {
+        return scene != null ? getSubScene(scene.getRoot()) : null;
+    }
+
+    /**
+     * Search the provided node recursively for a SubScene.
+     * @param root node to start searching from
+     * @return The identified SubScene, if there was one.
+     */
+    public static SubScene getSubScene(Parent root) {
+        if (root == null)
+            return null;
+
+        List<Parent> nodesToVisit = new ArrayList<>();
+        nodesToVisit.add(root);
+
+        while (nodesToVisit.size() > 0) {
+            Parent parent = nodesToVisit.remove(nodesToVisit.size() - 1);
+            for (Node node : parent.getChildrenUnmodifiable()) {
+                if (node instanceof SubScene)
+                    return ((SubScene) node);
+                if (node instanceof Parent)
+                    nodesToVisit.add((Parent) node);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets a Point3D representing a translation.
+     * @param translate translation to convert
+     */
+    public static Point3D convertTranslationToPoint(Translate translate) {
+        return translate != null ? new Point3D(translate.getX(), translate.getY(), translate.getZ()) : null;
+    }
+
+    /**
+     * Gets the 3D position of the node.
+     * @param node node to get the position from
+     */
+    public static Point3D get3DPosition(Node node) {
+        if (node == null)
+            return null;
+
+        Translate translate = getOptional3DTranslation(node);
+        if (translate != null)
+            return convertTranslationToPoint(translate);
+
+        return new Point3D(node.getTranslateX(), node.getTranslateY(), node.getTranslateZ());
+    }
+
     /**
      * Gets (or creates) the translation of a node in 3D space.
      * Creates the translation if it does not exist.

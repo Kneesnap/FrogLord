@@ -45,19 +45,21 @@ public class FXFloatArrayBatcher {
     /**
      * Apply to the wrapped JavaFX array.
      * If operations are currently batched, the update will occur once batched operations are finished.
+     * @return true if the array was actually updated (as opposed to batched updates still pending)
      */
-    public void applyToFxArray() {
+    public boolean applyToFxArray() {
         if (isAnyBatchModeEnabled()) {
             this.updateOnBatchCompletion = true;
+            return false;
         } else {
             this.array.apply(this.fxArray);
             this.updateOnBatchCompletion = false;
+            return true;
         }
     }
 
-    private void applyToFxArrayIfNecessary() {
-        if (this.updateOnBatchCompletion)
-            applyToFxArray();
+    private boolean applyToFxArrayIfNecessary() {
+        return this.updateOnBatchCompletion && applyToFxArray();
     }
 
     /**
@@ -94,14 +96,15 @@ public class FXFloatArrayBatcher {
 
     /**
      * Indicate the end of batching array updates, updating the mesh array if values have changed.
+     * @return true if the array was actually updated (as opposed to batched updates still pending)
      */
-    public void endBatchingUpdates() {
+    public boolean endBatchingUpdates() {
         // Check if batch updates are still active.
         if (!this.batchedUpdates.decrement())
-            return;
+            return false;
 
         // Don't update the mesh array unless an update was queued.
-        applyToFxArrayIfNecessary();
+        return applyToFxArrayIfNecessary();
     }
 
     /**
@@ -120,11 +123,12 @@ public class FXFloatArrayBatcher {
 
     /**
      * Indicate the end of batch value insertion, updating the mesh array if values have changed.
+     * @return true if the array was actually updated (as opposed to batched updates still pending)
      */
-    public void endBatchInsertion() {
+    public boolean endBatchInsertion() {
         // Check if batch insertion is still active.
         if (!this.batchedInsertion.decrement())
-            return;
+            return false;
 
         // Ensure the number of values matches the number of indices.
         if (this.queuedInsertionIndices.size() != this.queuedInsertionValues.size())
@@ -132,10 +136,8 @@ public class FXFloatArrayBatcher {
 
         // Abort if there aren't any values to insert.
         int valueCount = this.queuedInsertionValues.size();
-        if (valueCount == 0) {
-            applyToFxArrayIfNecessary(); // We've exited a batch mode, so ensure the array gets updated if necessary.
-            return;
-        }
+        if (valueCount == 0)
+            return applyToFxArrayIfNecessary(); // We've exited a batch mode, so ensure the array gets updated if necessary.
 
         // Shift the array elements and insert in the new values to their slots.
         // This relies upon the array being sorted.
@@ -149,7 +151,7 @@ public class FXFloatArrayBatcher {
         this.queuedInsertionIndices.clear();
 
         // Ensure the array is updated, whether now or later.
-        applyToFxArray();
+        return applyToFxArray();
     }
 
     /**
@@ -216,18 +218,17 @@ public class FXFloatArrayBatcher {
 
     /**
      * Indicate the end of batch value removals, updating the mesh array if values have changed.
+     * @return true if the array was actually updated (as opposed to batched updates still pending)
      */
-    public void endBatchRemoval() {
+    public boolean endBatchRemoval() {
         // Check if batch removals are still active.
         if (!this.batchedRemovals.decrement())
-            return;
+            return false;
 
         // Abort if there aren't any values to remove.
         int removalCount = this.queuedIndexRemovals.getBitCount();
-        if (removalCount == 0) {
-            applyToFxArrayIfNecessary(); // We've exited a batch mode, so ensure the array gets updated if necessary.
-            return;
-        }
+        if (removalCount == 0)
+            return applyToFxArrayIfNecessary(); // We've exited a batch mode, so ensure the array gets updated if necessary.
 
         // Remove the values from the array.
         this.array.removeIndices(this.queuedIndexRemovals);
@@ -239,7 +240,7 @@ public class FXFloatArrayBatcher {
         this.queuedIndexRemovals.clear();
 
         // Ensure the array is updated, whether now or later.
-        applyToFxArray();
+        return applyToFxArray();
     }
 
     /**

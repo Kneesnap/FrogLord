@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArrayBatcher;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * This represents a triangle mesh which has functionality to dynamically create, update, and change mesh data.
@@ -22,6 +23,7 @@ import java.util.List;
 @Getter
 public abstract class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     private final TextureAtlas textureAtlas;
+    private final String meshName;
     private final FXIntArrayBatcher editableFaces;
     private final DynamicMeshFloatArray editableTexCoords;
     private final DynamicMeshFloatArray editableVertices;
@@ -29,13 +31,19 @@ public abstract class DynamicMesh extends TriangleMesh implements IDynamicMeshHe
     private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
     private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which are viewing this mesh.
     private PhongMaterial material;
+    private Logger cachedLogger;
 
     public DynamicMesh(TextureAtlas atlas) {
-        this(atlas, VertexFormat.POINT_TEXCOORD);
+        this(atlas, VertexFormat.POINT_TEXCOORD, null);
     }
 
-    public DynamicMesh(TextureAtlas atlas, VertexFormat format) {
+    public DynamicMesh(TextureAtlas atlas, String meshName) {
+        this(atlas, VertexFormat.POINT_TEXCOORD, meshName);
+    }
+
+    public DynamicMesh(TextureAtlas atlas, VertexFormat format, String meshName) {
         super(format);
+        this.meshName = meshName;
         this.textureAtlas = atlas;
         this.textureAtlas.getImageChangeListeners().add(this::onTextureChange);
         updateMaterial(atlas.getImage());
@@ -44,6 +52,23 @@ public abstract class DynamicMesh extends TriangleMesh implements IDynamicMeshHe
         this.editableFaces = new FXIntArrayBatcher(new FXIntArray(), getFaces());
         this.editableTexCoords = new DynamicMeshFloatArray(this, "texCoord", getTexCoords(), format.getTexCoordIndexOffset(), getTexCoordElementSize());
         this.editableVertices = new DynamicMeshFloatArray(this, "vertex", getPoints(), format.getPointIndexOffset(), getPointElementSize());
+    }
+
+    /**
+     * Gets the logger used for this mesh.
+     */
+    public Logger getLogger() {
+        if (this.cachedLogger != null)
+            return this.cachedLogger;
+
+        return this.cachedLogger = Logger.getLogger("DynamicMesh.Name='" + getMeshName() + "'");
+    }
+
+    /**
+     * Gets the mesh name.
+     */
+    public String getMeshName() {
+        return this.meshName != null ? this.meshName : Utils.getSimpleName(this);
     }
 
     @Override
@@ -172,8 +197,9 @@ public abstract class DynamicMesh extends TriangleMesh implements IDynamicMeshHe
             return false;
 
         this.nodes.add(node);
+        pushBatchOperations();
         node.onAddedToMesh();
-        updateMeshArrays(); // Update mesh data.
+        popBatchOperations();
         return true;
     }
 
@@ -186,7 +212,9 @@ public abstract class DynamicMesh extends TriangleMesh implements IDynamicMeshHe
         if (!this.nodes.remove(node))
             return false;
 
+        pushBatchOperations();
         node.onRemovedFromMesh();
+        popBatchOperations();
         return true;
     }
 

@@ -16,6 +16,7 @@ import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents a file (data corresponding to MWI entry or contents of a filesystem entity) for a particul
@@ -23,8 +24,15 @@ import java.util.List;
  *                        Created by Kneesnap on 9/8/2023.
  */
 public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends SCGameData<TGameInstance> {
+    private Logger cachedLogger;
+
     public SCGameFile(TGameInstance instance) {
         super(instance);
+    }
+
+    @Override
+    public Logger getLogger() {
+        return getIndexEntry().getLogger();
     }
 
     /**
@@ -100,7 +108,7 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      * Export this file in a non-Frogger format.
      */
     public void exportAlternateFormat(FileEntry entry) {
-        System.out.println(entry.getDisplayName() + " (" + getClass().getSimpleName() + ") does not have an alternate file-type it can export as.");
+        getLogger().warning("The file (" + getClass().getSimpleName() + ") does not have an alternate file-type it can export as.");
     }
 
     /**

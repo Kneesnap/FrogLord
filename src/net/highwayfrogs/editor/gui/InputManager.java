@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * This tracks keyboard and mouse input for usage primarily in 3D environments.
@@ -31,6 +32,7 @@ public class InputManager {
     @Getter private final MouseInputState lastDragStartMouseState = new MouseInputState();
     @Getter private final MouseInputState lastMouseState = new MouseInputState();
     @Getter private final MouseInputState mouseState = new MouseInputState();
+    private Logger cachedLogger;
 
     public interface KeyHandler {
         void accept(InputManager manager, KeyEvent event);
@@ -122,8 +124,8 @@ public class InputManager {
                 try {
                     handler.accept(this, evt);
                 } catch (Throwable th) {
-                    System.out.println("Failed to run KeyEventHandler " + handler + ".");
-                    th.printStackTrace();
+                    String errorMessage = "Failed to run KeyEventHandler " + handler + ".";
+                    getLogger().throwing("InputManager", "processKeyEvents", new RuntimeException(errorMessage, th));
                 }
 
                 if (evt.isConsumed())
@@ -138,8 +140,8 @@ public class InputManager {
             try {
                 handler.accept(this, evt);
             } catch (Throwable th) {
-                System.out.println("Failed to run KeyEventHandler " + handler + ".");
-                th.printStackTrace();
+                String errorMessage = "Failed to run KeyEventHandler " + handler + ".";
+                getLogger().throwing("InputManager", "processKeyEvents", new RuntimeException(errorMessage, th));
             }
 
             // If the event was consumed, abort.
@@ -176,8 +178,8 @@ public class InputManager {
                     try {
                         handler.accept(this, newEvent);
                     } catch (Throwable th) {
-                        System.out.println("Failed to run KeyEventHandler " + handler + ".");
-                        th.printStackTrace();
+                        String errorMessage = "Failed to run KeyEventHandler " + handler + ".";
+                        getLogger().throwing("InputManager", "resetKeys", new RuntimeException(errorMessage, th));
                     }
                 }
             }
@@ -189,8 +191,9 @@ public class InputManager {
                 try {
                     handler.accept(this, newEvent);
                 } catch (Throwable th) {
-                    System.out.println("Failed to run KeyEventHandler " + handler + ".");
-                    th.printStackTrace();
+                    String errorMessage = "Failed to run KeyEventHandler " + handler + ".";
+                    getLogger().throwing("InputManager", "resetKeys", new RuntimeException(errorMessage, th));
+
                 }
             }
 
@@ -225,8 +228,8 @@ public class InputManager {
                 try {
                     handler.accept(this, evt, mouseDeltaX, mouseDeltaY);
                 } catch (Throwable th) {
-                    System.out.println("Failed to run MouseHandler " + handler + ".");
-                    th.printStackTrace();
+                    String errorMessage = "Failed to run MouseInputHandler " + handler + ".";
+                    getLogger().throwing("InputManager", "processMouseEvents", new RuntimeException(errorMessage, th));
                 }
 
                 // If the event was consumed, abort.
@@ -242,8 +245,8 @@ public class InputManager {
             try {
                 handler.accept(this, evt, mouseDeltaX, mouseDeltaY);
             } catch (Throwable th) {
-                System.out.println("Failed to run MouseHandler " + handler + ".");
-                th.printStackTrace();
+                String errorMessage = "Failed to run MouseInputHandler " + handler + ".";
+                getLogger().throwing("InputManager", "processMouseEvents", new RuntimeException(errorMessage, th));
             }
 
             // If the event was consumed, abort.
@@ -255,10 +258,20 @@ public class InputManager {
             try {
                 this.finalMouseHandler.accept(this, evt, mouseDeltaX, mouseDeltaY);
             } catch (Throwable th) {
-                System.out.println("Failed to run final MouseHandler " + this.finalMouseHandler + ".");
-                th.printStackTrace();
+                String errorMessage = "Failed to run final MouseInputHandler " + this.finalMouseHandler + ".";
+                getLogger().throwing("InputManager", "processMouseEvents", new RuntimeException(errorMessage, th));
             }
         }
+    }
+
+    /**
+     * Gets the logger for this class.
+     */
+    private Logger getLogger() {
+        if (this.cachedLogger != null)
+            return this.cachedLogger;
+
+        return this.cachedLogger = Logger.getLogger("InputManager");
     }
 
     /**

@@ -44,12 +44,11 @@ public class OldFroggerMapHeaderPacket extends OldFroggerMapPacket {
         long splinesAddr = reader.readUnsignedIntAsLong();
 
         // Verify data
-        // TODO: This should go to a logger provided to the class.
         if (fileLengthInBytes != reader.getSize())
-            System.out.println("[WARNING] The amount of bytes reported by the file '" + getParentFile().getFileDisplayName() + "' was " + fileLengthInBytes + ", but the actual amount was " + reader.getSize() + ".");
+            getLogger().warning("The amount of bytes reported by the file '" + getParentFile().getFileDisplayName() + "' was " + fileLengthInBytes + ", but the actual amount was " + reader.getSize() + ".");
 
         if ((mofsAddr & 0xFFFFFFFFL) != EXPECTED_MOF_ADDRESS)
-            System.out.println("[WARNING] MofsAddress was " + Utils.toHexString(mofsAddr) + ", but " + Utils.toHexString(EXPECTED_MOF_ADDRESS) + " was expected.");
+            getLogger().warning("MofsAddress was " + Utils.toHexString(mofsAddr) + ", but " + Utils.toHexString(EXPECTED_MOF_ADDRESS) + " was expected.");
     }
 
     @Override

@@ -40,7 +40,7 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
     public OldFroggerMapEntity getEntityByFileOffset(int fileOffset) {
         OldFroggerMapEntity entity = this.entitiesByFileOffsets.get(fileOffset);
         if (entity == null)
-            System.out.println("Couldn't find map entity at " + Utils.toHexString(fileOffset) + " in " + getParentFile().getFileDisplayName() + ".");
+            getLogger().warning("Couldn't find map entity at " + Utils.toHexString(fileOffset) + " in " + getParentFile().getFileDisplayName() + ".");
         return entity;
     }
 
@@ -52,7 +52,7 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
     public int getEntityFileOffset(OldFroggerMapEntity entity) {
         Integer fileOffset = this.entityFileOffsets.get(entity);
         if (fileOffset == null) {
-            System.out.println("Couldn't find map entity file offset for entity in " + getParentFile().getFileDisplayName() + ".");
+            getLogger().warning("Couldn't find map entity file offset for entity in " + getParentFile().getFileDisplayName() + ".");
             return -1;
         }
 
@@ -143,8 +143,8 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
         WADEntry mofEntry = form != null ? form.getMofFileEntry() : null;
 
         // Display message.
-        System.out.println("[INVALID/" + getParentFile().getFileDisplayName()
-                + (mofEntry != null ? "/" + mofEntry.getDisplayName() : "")
+        getLogger().warning("[INVALID/"
+                + (mofEntry != null ? mofEntry.getDisplayName() : "")
                 + "] Entity " + this.entities.indexOf(entity)
                 + "/" + entity.getDifficulty()
                 + (form != null ? "/" + form.getFormType() : "")

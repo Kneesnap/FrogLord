@@ -270,7 +270,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
     @SneakyThrows
     public void exportAlternateFormat(FileEntry fileEntry) {
         ImageIO.write(createTextureMap(), "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(fileEntry.getDisplayName()) + ".png"));
-        System.out.println("Exported texture map Image.");
+        getLogger().info("Exported texture map Image.");
     }
 
     @Override

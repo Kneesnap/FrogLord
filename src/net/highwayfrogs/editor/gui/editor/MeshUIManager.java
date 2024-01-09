@@ -6,18 +6,31 @@ import javafx.scene.input.KeyEvent;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.utils.Utils;
+
+import java.util.logging.Logger;
 
 /**
  * A Mesh UI manager is our way of isolating different editor features shown in a 3D environment.
  * This helps isolate UI code, 3D management code, etc.
  * Created by Kneesnap on 9/26/2023.
  */
-@Getter
 public class MeshUIManager<TMesh extends DynamicMesh> {
-    private final MeshViewController<TMesh> controller;
+    @Getter private final MeshViewController<TMesh> controller;
+    private Logger cachedLogger;
 
     public MeshUIManager(MeshViewController<TMesh> controller) {
         this.controller = controller;
+    }
+
+    /**
+     * Get the logger for this manager.
+     */
+    public Logger getLogger() {
+        if (this.cachedLogger != null)
+            return this.cachedLogger;
+
+        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
     }
 
     /**

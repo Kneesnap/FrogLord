@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Represents an instance of a game created by Sony Cambridge / Millennium Interactive.
@@ -43,6 +44,7 @@ public abstract class SCGameInstance {
     @Getter private MWIFile archiveIndex;
     @Getter private File mwdFile;
     @Getter private File exeFile;
+    private Logger cachedLogger;
 
     // Instance data read from game files:
     private boolean loadingAllRemaps;
@@ -57,6 +59,16 @@ public abstract class SCGameInstance {
         this.gameType = gameType;
         this.fileEntriesByFileObjects = new HashMap<>();
         this.fileObjectsByFileEntries = new HashMap<>();
+    }
+
+    /**
+     * Gets the logger for this game instance.
+     */
+    public Logger getLogger() {
+        if (this.cachedLogger != null)
+            return this.cachedLogger;
+
+        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
     }
 
     /**
@@ -198,8 +210,7 @@ public abstract class SCGameInstance {
             long nextValue = reader.readUnsignedIntAsLong();
             reader.jumpReturn();
 
-            if (SCUtils.isValidLookingPointer(SCGamePlatform.PLAYSTATION, nextValue))
-                return true; // If the next value is a pointer, abort!
+            return SCUtils.isValidLookingPointer(SCGamePlatform.PLAYSTATION, nextValue); // If the next value is a pointer, abort!
         }
 
         // Doesn't look like the end of a remap.
@@ -219,7 +230,7 @@ public abstract class SCGameInstance {
             if (nextTextureRemap != null) {
                 int availableSlots = (nextTextureRemap.getLoadAddress() - textureRemap.getLoadAddress()) / Constants.SHORT_SIZE;
                 if (textureRemap.getTextureIds().size() > availableSlots) {
-                    System.out.println("WARNING: '" + textureRemap.getDebugName() + "' has been skipped because it has " + textureRemap.getTextureIds().size() + "texture ids, but there is only room for " + availableSlots + ".");
+                    getLogger().warning("'" + textureRemap.getDebugName() + "' has been skipped because it has " + textureRemap.getTextureIds().size() + "texture ids, but there is only room for " + availableSlots + ".");
                     continue;
                 }
             }
@@ -265,7 +276,7 @@ public abstract class SCGameInstance {
         nextTextureRemap = this.textureRemaps.size() > index + 1 ? this.textureRemaps.get(index + 1) : null;
         int extraBytes = nextTextureRemap != null ? nextTextureRemap.getReaderIndex() - reader.getIndex() : 0;
         if (extraBytes != 0)
-            System.out.println(textureRemap + " has " + extraBytes + " unread bytes between it and " + nextTextureRemap + ".");
+            getLogger().warning(textureRemap + " has " + extraBytes + " unread bytes between it and " + nextTextureRemap + ".");
 
         // Return, but only after calling hook.
         reader.jumpReturn();
@@ -312,7 +323,7 @@ public abstract class SCGameInstance {
             LinkedTextureRemap<?> linkedRemap = (LinkedTextureRemap<?>) remap;
             LinkedTextureRemap<?> oldLinkedRemap = this.linkedTextureMaps.put(linkedRemap.getFileEntry(), linkedRemap);
             if (oldLinkedRemap != null)
-                System.out.println("WARNING: A remap (" + oldLinkedRemap + ") that was previously linked to '" + linkedRemap.getFileEntry().getDisplayName() + "' has been overwritten by " + linkedRemap + ".");
+                getLogger().warning("A remap (" + oldLinkedRemap + ") that was previously linked to '" + linkedRemap.getFileEntry().getDisplayName() + "' has been overwritten by " + linkedRemap + ".");
         }
     }
 
@@ -530,8 +541,6 @@ public abstract class SCGameInstance {
         long nextPossiblePtr;
         while (reader.hasMore() && isValidLookingPointer(nextPossiblePtr = reader.readUnsignedIntAsLong()))
             this.bmpTexturePointers.add(nextPossiblePtr);
-
-        System.out.println("Read " + this.bmpTexturePointers.size() + " texture pointers."); // TODO: TOSS later..?
     }
 
     private void validateBmpPointerData(MWDFile mwdFile) {
@@ -547,7 +556,7 @@ public abstract class SCGameInstance {
         // Another option for this is that texture remap tables appear to occur immediately after the texture array.
         // In the interest of cross-game compatibility, it was easier to do it this way.
         if (highestTextureId >= 0 && highestTextureId + 1 != this.bmpTexturePointers.size())
-            System.out.println("We found pointers to " + this.bmpTexturePointers.size() + " textures, but only the highest texture ID we saw suggests there should have been " + (highestTextureId + 1) + ".");
+            getLogger().warning("We found pointers to " + this.bmpTexturePointers.size() + " textures, but only the highest texture ID we saw suggests there should have been " + (highestTextureId + 1) + ".");
     }
 
     private void writeBmpPointerData(DataWriter exeWriter) {

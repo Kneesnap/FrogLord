@@ -164,9 +164,10 @@ public class CameraHeightFieldMeshNode extends DynamicMeshNode {
         int vtxTopRightIndex = vtxTopLeftIndex + 1;
 
         // JavaFX uses counter-clockwise winding order.
+        getMesh().getEditableFaces().startBatchingUpdates();
         this.mainEntry.writeFace(faceIndex++, vtxBottomLeftIndex, uvBottomLeftIndex, vtxTopRightIndex, uvTopRightIndex, vtxTopLeftIndex, uvTopLeftIndex);
         this.mainEntry.writeFace(faceIndex, vtxBottomLeftIndex, uvBottomLeftIndex, vtxBottomRightIndex, uvBottomRightIndex, vtxTopRightIndex, uvTopRightIndex);
-        getMesh().getEditableFaces().applyToFxArray();
+        getMesh().getEditableFaces().endBatchingUpdates();
     }
 
     /**
@@ -177,7 +178,6 @@ public class CameraHeightFieldMeshNode extends DynamicMeshNode {
     public void updateVertex(int x, int z) {
         OldFroggerMapCameraHeightFieldPacket packet = getMapPacket();
         this.mainEntry.writeVertexXYZ(getMeshIndex(x, z), packet.getWorldX(x), packet.getWorldY(x, z), packet.getWorldZ(z));
-        getMesh().getEditableVertices().applyToFxArray();
     }
 
     /**
@@ -194,7 +194,6 @@ public class CameraHeightFieldMeshNode extends DynamicMeshNode {
         }
 
         this.mainEntry.writeTexCoordValue(getMeshIndex(x, z), localTextureUv);
-        getMesh().getEditableTexCoords().applyToFxArray();
     }
 
     /**

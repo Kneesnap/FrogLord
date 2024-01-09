@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Represents a Sony Cambridge game file which is chunked with 4-byte magic headers.
@@ -123,7 +124,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
                 int size = reader.readInt();
                 PacketSizeType sizeType;
                 if (size >= 0 && (size % 4) == 0 && size <= reader.getRemaining() && (sizeType = getPacketSizeForUnknownChunk(Utils.toMagicString(identifier))) != PacketSizeType.NO_SIZE) {
-                    System.out.println("Skipping unsupported packet '" + Utils.toMagicString(identifier) + "' (" + size + " bytes) in '" + getFileDisplayName() + "'.");
+                    getLogger().warning("Skipping unsupported packet '" + Utils.toMagicString(identifier) + "' (" + size + " bytes).");
                     if (sizeType == PacketSizeType.SIZE_INCLUSIVE) {
                         reader.skipBytes(size - Constants.INTEGER_SIZE * 2);
                     } else {
@@ -133,11 +134,11 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
                     SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> nextPacket = lastPacket != null ? lastPacket.findNextPacketWithKnownAddress() : null;
 
                     if (nextPacket != null) {
-                        System.out.println("The packet '" + Utils.toMagicString(identifier) + "' could not be identified at " + Utils.toHexString(packetReadStartIndex) + " (did the previous packet finish reading at the right spot?). Attempting to continue from '" + nextPacket.getIdentifierString() + "'.");
+                        getLogger().warning("The packet '" + Utils.toMagicString(identifier) + "' could not be identified at " + Utils.toHexString(packetReadStartIndex) + " (did the previous packet finish reading at the right spot?). Attempting to continue from '" + nextPacket.getIdentifierString() + "'.");
                         reader.setIndex(nextPacket.getKnownStartAddress());
                         lastPacket = nextPacket;
                     } else {
-                        System.out.println("The packet '" + Utils.toMagicString(identifier) + "' could not be identified at " + Utils.toHexString(packetReadStartIndex) + " (did the previous packet finish reading at the right spot?), and due to the questionable byte size (" + size + "), further reading of '" + getFileDisplayName() + "' has terminated.");
+                        getLogger().warning("The packet '" + Utils.toMagicString(identifier) + "' could not be identified at " + Utils.toHexString(packetReadStartIndex) + " (did the previous packet finish reading at the right spot?), and due to the questionable byte size (" + size + "), further reading has terminated.");
                         reader.skipBytes(reader.getRemaining());
                     }
                 }
@@ -148,7 +149,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
 
         // Warn if there are missing bytes.
         if (reader.hasMore())
-            System.out.println("The file '" + getFileDisplayName() + "' has " + reader.getRemaining() + " unprocessed bytes.");
+            getLogger().warning("Chunked file reading finished, but it still has " + reader.getRemaining() + " unprocessed bytes.");
     }
 
     /**
@@ -211,6 +212,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
         private int lastValidWriteHeaderAddress = -1;
         private int lastValidWriteBodyAddress = -1;
         private int lastValidWriteSize = -1;
+        private Logger cachedLogger;
 
         public SCFilePacket(TFile parentFile, String identifier, boolean required, PacketSizeType sizeType) {
             this.parentFile = parentFile;
@@ -218,6 +220,16 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             this.identiferInteger = Utils.makeIdentifier(identifier);
             this.required = required;
             this.sizeType = sizeType;
+        }
+
+        /**
+         * Gets the logger used for this chunked file packet.
+         */
+        public Logger getLogger() {
+            if (this.cachedLogger != null)
+                return this.cachedLogger;
+
+            return this.cachedLogger = Logger.getLogger(this.parentFile.getFileDisplayName() + "|" + this.identifierString);
         }
 
         /**
@@ -284,7 +296,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
                 this.loadBody(reader, expectedEndPosition);
             } catch (Throwable th) {
                 threwError = true;
-                System.out.println("An error occurred while reading the '" + getIdentifierString() + "' packet data in '" + getParentFile().getFileDisplayName() + "'.");
+                getLogger().warning("An error occurred while reading the '" + getIdentifierString() + "' packet data.");
                 th.printStackTrace();
             }
 
@@ -292,17 +304,17 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             reader.align(4);
 
             if (expectedEndPosition >= 0 && expectedEndPosition != reader.getIndex()) {
-                System.out.println("Didn't end at the right position for '" + getIdentifierString() + "' in " + getParentFile().getFileDisplayName() + ". (Expected: " + Utils.toHexString(expectedEndPosition) + ", Actual: " + Utils.toHexString(reader.getIndex()) + ")");
+                getLogger().warning("Didn't end at the right position for '" + getIdentifierString() + "'. (Expected: " + Utils.toHexString(expectedEndPosition) + ", Actual: " + Utils.toHexString(reader.getIndex()) + ")");
                 reader.setIndex(expectedEndPosition);
             } else if (threwError) {
                 // Find the next packet to resume reading from.
                 SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> bestNextPacket = findNextPacketWithKnownAddress();
 
                 if (bestNextPacket != null) {
-                    System.out.println("Failed while reading packet '" + getIdentifierString() + "' in '" + getParentFile().getFileDisplayName() + " from " + Utils.toHexString(this.lastValidReadHeaderAddress) + ". Attempting to continue from '" + bestNextPacket.getIdentifierString() + "'.");
+                    getLogger().warning("Failed while reading packet '" + getIdentifierString() + "' at " + Utils.toHexString(this.lastValidReadHeaderAddress) + ". Attempting to continue from '" + bestNextPacket.getIdentifierString() + "'.");
                     reader.setIndex(bestNextPacket.getKnownStartAddress());
                 } else {
-                    System.out.println("Failed in an unrecoverable manner when reading '" + getIdentifierString() + "' in '" + getParentFile().getFileDisplayName() + " from " + Utils.toHexString(this.lastValidReadHeaderAddress) + ".");
+                    getLogger().warning("Failed in an unrecoverable manner when reading '" + getIdentifierString() + "' at " + Utils.toHexString(this.lastValidReadHeaderAddress) + ".");
                     reader.skipBytes(reader.getRemaining());
                 }
             }
@@ -343,7 +355,8 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             try {
                 this.saveBodyFirstPass(writer);
             } catch (Throwable th) {
-                System.out.println("An error occurred while saving the '" + getIdentifierString() + "' packet data in '" + getParentFile().getFileDisplayName() + "'.");
+                String errorMessage = "An error occurred while saving the '" + getIdentifierString() + "' packet data.";
+                getLogger().throwing("SCChunkedFile", "save", new RuntimeException(errorMessage));
                 throw new RuntimeException(th);
             }
 

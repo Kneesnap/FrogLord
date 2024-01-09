@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.utils.fx.wrapper.FXFloatArrayBatcher;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArray;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArrayBatcher;
 
+import java.util.logging.Logger;
+
 /**
  * Represents an array of mesh data.
  * Meshes will group multiple elements together, into what I'm calling here as a unit.
@@ -30,6 +32,13 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
         this.vertexSize = mesh.getVertexFormat().getVertexIndexSize();
         this.vertexOffset = vertexOffset;
         this.elementsPerUnit = elementsPerUnit;
+    }
+
+    /**
+     * Gets the logger used by this class.
+     */
+    public Logger getLogger() {
+        return this.mesh.getLogger();
     }
 
     @Override
@@ -112,9 +121,9 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
             if (indices.getBit(oldElementIndex)) {
                 errorCount++;
                 if (errorCount == 10) {
-                    System.out.println("[Warning] Omitting remaining batch removal warnings.");
+                    getLogger().warning("Omitting remaining batch removal warnings.");
                 } else if (errorCount < 10) {
-                    System.out.println("[Warning] Face Element " + i + " referenced index " + oldDataIndex + ", which was just removed. This will probably create visual corruption.");
+                    getLogger().warning("Face Element " + i + " referenced index " + oldDataIndex + ", which was just removed. This will probably create visual corruption.");
                 }
             }
 
@@ -130,7 +139,7 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
         }
 
         if (errorCount > 10)
-            System.out.println("[Warning] " + errorCount + " face elements referenced newly removed indices. This will probably create visual corruption.");
+            getLogger().warning(errorCount + " face elements referenced newly removed indices. This will probably create visual corruption.");
 
         getMesh().updateEntryStartIndices();
     }

@@ -41,7 +41,7 @@ public class OldFroggerMapPathPacket extends OldFroggerMapPacket {
 
         // Verify count.
         if (getSplineCount() != totalSplineCount)
-            System.out.println("WARNING: The number of path splines read was " + getSplineCount() + ", but " + totalSplineCount + " were expected.");
+            getLogger().warning("The number of path splines read was " + getSplineCount() + ", but " + totalSplineCount + " were expected.");
 
         reader.skipBytes(OldFroggerSpline.SIZE_IN_BYTES * totalSplineCount);
     }

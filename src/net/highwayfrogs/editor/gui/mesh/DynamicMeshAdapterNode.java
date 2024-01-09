@@ -180,8 +180,10 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
             throw new RuntimeException("Cannot update texture coordinates for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
 
         // Update each tex coord.
+        this.mesh.getEditableTexCoords().startBatchingUpdates();
         for (int i = 0; i < entry.getWrittenTexCoordCount(); i++)
             this.updateTexCoord(entry, i);
+        this.mesh.getEditableTexCoords().endBatchingUpdates();
     }
 
     /**

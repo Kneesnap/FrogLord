@@ -107,7 +107,7 @@ public class OldFroggerLevelTableEntry extends SCGameData<OldFroggerGameInstance
 
         String[] split = levelTableEntryStr.split(",");
         if (split.length != 5) {
-            System.out.println("Failed to parse level table entry from '" + levelTableEntryStr + "'.");
+            instance.getLogger().warning("Failed to parse level table entry from '" + levelTableEntryStr + "'.");
             return null;
         }
 
@@ -122,7 +122,7 @@ public class OldFroggerLevelTableEntry extends SCGameData<OldFroggerGameInstance
             wadResourceId = Integer.parseInt(split[2]);
             ulrResourceId = Integer.parseInt(split[3]);
         } catch (NumberFormatException ex) {
-            System.out.println("Failed to parse number / resource ids from '" + levelTableEntryStr + "'.");
+            instance.getLogger().warning("Failed to parse number / resource ids from '" + levelTableEntryStr + "'.");
             return null;
         }
 

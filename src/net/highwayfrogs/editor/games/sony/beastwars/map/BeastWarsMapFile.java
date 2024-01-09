@@ -175,13 +175,13 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
             } else if (signature == SIGNATURE_COLP) { // 'COLP' - Collision Primitives
                 readCollisionPrimitives(reader, size);
             } else {
-                System.out.println("Skipping unsupported section '" + Utils.toMagicString(signature) + "' (" + size + " bytes) in " + getFileDisplayName() + ".");
+                getLogger().warning("Skipping unsupported section '" + Utils.toMagicString(signature) + "' (" + size + " bytes).");
                 reader.skipBytes(size);
             }
 
             reader.align(4); // Automatically align to the next section.
             if (endPos != reader.getIndex()) {
-                System.out.println("Didn't end at the right position for '" + Utils.toMagicString(signature) + "' in " + getFileDisplayName() + ". (Expected: " + Utils.toHexString(endPos) + ", Actual: " + Utils.toHexString(reader.getIndex()) + ")");
+                getLogger().warning("Didn't end at the right position for '" + Utils.toMagicString(signature) + "'. (Expected: " + Utils.toHexString(endPos) + ", Actual: " + Utils.toHexString(reader.getIndex()) + ")");
                 reader.setIndex(endPos);
             }
         }
@@ -214,7 +214,7 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
 
     private void readEmptySection(int signature, int size) {
         if (size != 0)
-            System.out.println("Section '" + Utils.toMagicString(signature) + "' was expected to be empty, but reporting having " + size + " bytes.");
+            getLogger().warning("Section '" + Utils.toMagicString(signature) + "' was expected to be empty, but reporting having " + size + " bytes.");
     }
 
     private void readInfoSection(DataReader reader) {
@@ -338,14 +338,14 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
         byte[] fullBytes = mapReader.readBytes(size);
         DataReader reader = new DataReader(new ArraySource(fullBytes));
 
-        //System.out.println(getFileDisplayName() + ":"); // TODO: TOSS
+        //getLogger().warning(getFileDisplayName() + ":"); // TODO: TOSS
         this.collprims.clear();
         int collPrimCount = reader.readInt();
         for (int i = 0; i < collPrimCount; i++) {
             BeastWarsMapCollprim collprim = new BeastWarsMapCollprim(this);
             this.collprims.add(collprim); // Add collprim first so in-case something in the read process wants to get the position in the list, it's there. Used for debugging sometimes.
             collprim.load(reader);
-            //System.out.println(collprim); // TODO: TOSS
+            //getLogger().warning(collprim.toString()); // TODO: TOSS
         }
     }
 

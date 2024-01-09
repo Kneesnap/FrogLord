@@ -59,10 +59,6 @@ public interface IDynamicMeshHelper {
         for (int i = 0; i < dataEntries.size(); i++)
             dataEntries.get(i).updateTextureIndex(oldTextureUvIndex, newTextureUvIndex);
 
-        // Apply changes if any were made.
-        if (dataEntries.size() > 0)
-            getMesh().getEditableFaces().applyToFxArray();
-
         // We're done bulking changes.
         getMesh().getEditableFaces().endBatchingUpdates();
     }

@@ -20,17 +20,20 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ConsoleErrorHandler;
+import net.highwayfrogs.editor.utils.logging.ConsoleOutputHandler;
+import net.highwayfrogs.editor.utils.logging.LogFormatter;
+import net.highwayfrogs.editor.utils.logging.UIConsoleHandler;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.function.Consumer;
+import java.util.logging.Formatter;
+import java.util.logging.*;
 
 public class GUIMain extends Application {
     public static GUIMain INSTANCE;
@@ -48,6 +51,7 @@ public class GUIMain extends Application {
     public void start(Stage primaryStage) throws Exception {
         INSTANCE = this;
         MAIN_STAGE = primaryStage;
+        setupLogger();
         SystemOutputReplacement.activateReplacement();
 
         long availableMemory = Runtime.getRuntime().maxMemory();
@@ -176,5 +180,62 @@ public class GUIMain extends Application {
             if (instance.isFrogger())
                 FroggerVersionComparison.addNewVersionToConfig((FroggerGameInstance) instance);
         });
+    }
+
+    @SuppressWarnings("ConditionalBreakInInfiniteLoop")
+    private static void setupLogger() {
+        Utils.makeDirectory(new File("logs")); // Ensure the logs directory exists.
+
+        // Setup global logger.
+        Logger logger = Logger.getGlobal();
+
+        // Delete all handlers recursively, and reach the root node.
+        while (true) {
+            Handler[] handlers = logger.getHandlers();
+            for (int i = 0; i < handlers.length; i++)
+                logger.removeHandler(handlers[i]);
+
+            if (logger.getParent() == null) { // Reached the root.
+                break;
+            } else {
+                logger = logger.getParent();
+            }
+        }
+
+        // Setup root logger.
+        logger.setLevel(Level.ALL);
+
+        // Setup log formatter
+        Formatter formatter = new LogFormatter(LogFormatter.FULL_LOG_FORMAT);
+
+        // Setup System.out console handler.
+        ConsoleOutputHandler consoleHandler = new ConsoleOutputHandler();
+        consoleHandler.setFormatter(formatter);
+        consoleHandler.setLevel(Level.ALL);
+        logger.addHandler(consoleHandler);
+
+        // Setup System.err console handler.
+        ConsoleErrorHandler errorHandler = new ConsoleErrorHandler();
+        errorHandler.setFormatter(formatter);
+        errorHandler.setLevel(Level.ALL);
+        logger.addHandler(errorHandler);
+
+        // Setup UI Handler.
+        UIConsoleHandler uiConsoleHandler = new UIConsoleHandler();
+        uiConsoleHandler.setFormatter(new LogFormatter(LogFormatter.PARTIAL_LOG_FORMAT));
+        uiConsoleHandler.setLevel(Level.CONFIG);
+        logger.addHandler(uiConsoleHandler);
+
+        // Setup file handler.
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String dateStr = dateFormat.format(Calendar.getInstance().getTime());
+        try {
+            FileHandler fileHandler = new FileHandler("logs/" + dateStr + "-%u.log");
+            fileHandler.setFormatter(formatter);
+            fileHandler.setFilter(record -> !LogFormatter.isJavaFXMessage(record));
+            logger.addHandler(fileHandler);
+        } catch (Throwable th) {
+            logger.throwing("GUIMain", "setupLogger", new RuntimeException("Failed to setup FileHandler for logger.", th));
+        }
     }
 }

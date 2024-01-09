@@ -10,15 +10,18 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
+import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshUnmanagedNode;
+import net.highwayfrogs.editor.gui.mesh.wrapper.MeshEntryBox;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
 import net.highwayfrogs.editor.system.math.Vector2f;
@@ -127,7 +130,7 @@ public class TranslationGizmo extends DynamicMesh {
             DynamicMeshDataEntry xNodeEntry = new DynamicMeshDataEntry(this);
             this.lightRedTextureUvIndex = xNodeEntry.addTexCoordValue(lightRedTextureUv);
             this.redTextureUvIndex = xNodeEntry.addTexCoordValue(redTextureUv);
-            MeshUtils.createBox(xNodeEntry, halfBoxSize, -halfThickness, -halfThickness, barEnd, halfThickness, halfThickness, this.redTextureUvIndex);
+            MeshEntryBox.createBox(xNodeEntry, halfBoxSize, -halfThickness, -halfThickness, barEnd, halfThickness, halfThickness, this.redTextureUvIndex);
             MeshUtils.createXAxisPyramid(xNodeEntry, BAR_LENGTH, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.redTextureUvIndex);
             this.xAxisNode.addEntry(xNodeEntry);
         }
@@ -139,7 +142,7 @@ public class TranslationGizmo extends DynamicMesh {
             DynamicMeshDataEntry zNodeEntry = new DynamicMeshDataEntry(this);
             this.lightBlueTextureUvIndex = zNodeEntry.addTexCoordValue(lightBlueTextureUv);
             this.blueTextureUvIndex = zNodeEntry.addTexCoordValue(blueTextureUv);
-            MeshUtils.createBox(zNodeEntry, -halfThickness, -halfThickness, halfBoxSize, halfThickness, halfThickness, barEnd, this.blueTextureUvIndex);
+            MeshEntryBox.createBox(zNodeEntry, -halfThickness, -halfThickness, halfBoxSize, halfThickness, halfThickness, barEnd, this.blueTextureUvIndex);
             MeshUtils.createZAxisPyramid(zNodeEntry, 0, 0, BAR_LENGTH, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.blueTextureUvIndex);
             this.zAxisNode.addEntry(zNodeEntry);
         }
@@ -152,7 +155,7 @@ public class TranslationGizmo extends DynamicMesh {
             DynamicMeshDataEntry yNodeEntry = new DynamicMeshDataEntry(this);
             this.lightGreenTextureUvIndex = yNodeEntry.addTexCoordValue(lightGreenTextureUv);
             this.greenTextureUvIndex = yNodeEntry.addTexCoordValue(greenTextureUv);
-            MeshUtils.createBox(yNodeEntry, -halfThickness, -halfBoxSize, -halfThickness, halfThickness, -barEnd, halfThickness, this.greenTextureUvIndex);
+            MeshEntryBox.createBox(yNodeEntry, -halfThickness, -halfBoxSize, -halfThickness, halfThickness, -barEnd, halfThickness, this.greenTextureUvIndex);
             MeshUtils.createYAxisPyramid(yNodeEntry, 0, -BAR_LENGTH, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.greenTextureUvIndex);
             this.yAxisNode.addEntry(yNodeEntry);
         }
@@ -164,15 +167,27 @@ public class TranslationGizmo extends DynamicMesh {
         DynamicMeshDataEntry baseNodeEntry = new DynamicMeshDataEntry(this);
         this.whiteTextureUvIndex = baseNodeEntry.addTexCoordValue(whiteTextureUv);
         this.orangeTextureUvIndex = baseNodeEntry.addTexCoordValue(orangeTextureUv);
-        MeshUtils.createCenteredBoxWithDimensions(baseNodeEntry, 0, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, whiteTextureUvIndex);
+        MeshEntryBox.createCenteredBox(baseNodeEntry, 0, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, whiteTextureUvIndex);
         this.baseNode.addEntry(baseNodeEntry);
+    }
+
+    /**
+     * Adds a MeshView with extra data setup.
+     * @param view     the MeshView to add.
+     * @param camera   the camera the scene is viewed from.
+     * @param listener the listener to call when the position changes.
+     */
+    public void addView(MeshView view, FirstPersonCamera camera, IPositionChangeListener listener) {
+        addView(view);
+        GizmoMeshViewState state = this.meshViewStates.get(view);
+        state.setCamera(camera);
+        state.setChangeListener(listener);
     }
 
     @Override
     public void addView(MeshView view) {
         super.addView(view);
         this.meshViewStates.put(view, new GizmoMeshViewState(this, view));
-        view.setDepthTest(DepthTest.DISABLE); // This should show up in front.
 
         // Setup listeners.
         // Uses the simple press-drag-release gesture as described by https://docs.oracle.com/javase/8/javafx/api/javafx/scene/input/MouseEvent.html
@@ -186,7 +201,6 @@ public class TranslationGizmo extends DynamicMesh {
     @Override
     public void removeView(MeshView view) {
         super.addView(view);
-        this.meshViewStates.remove(view);
 
         // Remove listeners.
         view.setOnMouseEntered(null);
@@ -197,6 +211,7 @@ public class TranslationGizmo extends DynamicMesh {
 
         // Remove plane.
         stopDragging(view);
+        this.meshViewStates.remove(view);
     }
 
     /**
@@ -251,7 +266,7 @@ public class TranslationGizmo extends DynamicMesh {
 
     private void onDragStart(MouseEvent event) {
         MeshView meshView = (MeshView) event.getSource();
-        Group scene = MeshUtils.getSubSceneGroup(meshView.getScene().getRoot());
+        Group scene = Scene3DUtils.getSubSceneGroup(meshView.getScene().getRoot());
 
         // Clear existing axis plane, if it somehow exists.
         if (this.axisPlane != null) {
@@ -266,6 +281,8 @@ public class TranslationGizmo extends DynamicMesh {
         if (clickedMeshNode == null)
             return;
 
+        // Setup Axis Planes
+        GizmoMeshViewState state = this.meshViewStates.get(meshView);
         if (clickedMeshNode == this.xAxisNode) {
             this.movementAxis = Rotate.X_AXIS;
             this.xAxisNode.updateTextureIndex(this.redTextureUvIndex, this.orangeTextureUvIndex);
@@ -275,7 +292,24 @@ public class TranslationGizmo extends DynamicMesh {
             this.movementAxis = Rotate.Y_AXIS;
             this.yAxisNode.updateTextureIndex(this.greenTextureUvIndex, this.orangeTextureUvIndex);
             this.yAxisNode.updateTextureIndex(this.lightGreenTextureUvIndex, this.orangeTextureUvIndex);
-            createAxisPlane(meshView, scene, VERTICAL_BOX_SIZE, AXIS_PLANE_SIZE, VERTICAL_BOX_SIZE);
+
+            if (state.getCamera() != null) {
+                Box plane = createAxisPlane(meshView, scene, AXIS_PLANE_SIZE, AXIS_PLANE_SIZE, 0);
+
+                // Angle the plane towards the camera.
+                FirstPersonCamera camera = state.getCamera();
+                Point3D gizmoPos = meshView.localToScene(0, 0, 0);
+                double relativeX = camera.getCamPosXProperty().get() - gizmoPos.getX();
+                double relativeZ = camera.getCamPosZProperty().get() - gizmoPos.getZ();
+                double angle = Rotate.Z_AXIS.angle(relativeX, 0, relativeZ);
+                if (relativeX < 0)
+                    angle = -angle;
+
+                plane.getTransforms().add(new Rotate(angle, Rotate.Y_AXIS));
+            } else {
+                // Fallback option is to create a vertical box.
+                createAxisPlane(meshView, scene, VERTICAL_BOX_SIZE, AXIS_PLANE_SIZE, VERTICAL_BOX_SIZE);
+            }
         } else if (clickedMeshNode == this.zAxisNode) {
             this.movementAxis = Rotate.Z_AXIS;
             this.zAxisNode.updateTextureIndex(this.blueTextureUvIndex, this.orangeTextureUvIndex);
@@ -288,8 +322,14 @@ public class TranslationGizmo extends DynamicMesh {
         }
 
         // Update state.
-        GizmoMeshViewState state = this.meshViewStates.get(meshView);
-        state.setDragStartPosition(result.getIntersectedPoint());
+        Scale scale = Scene3DUtils.getOptional3DScale(meshView);
+        if (scale != null) {
+            Point3D startPoint = result.getIntersectedPoint();
+            Point3D scaledPoint = new Point3D(startPoint.getX() * scale.getX(), startPoint.getY() * scale.getY(), startPoint.getZ() * scale.getZ());
+            state.setDragStartPosition(scaledPoint);
+        } else {
+            state.setDragStartPosition(result.getIntersectedPoint());
+        }
 
         // Disable dragging on the gizmo, so only the plane will get events.
         meshView.setMouseTransparent(true);
@@ -359,17 +399,17 @@ public class TranslationGizmo extends DynamicMesh {
             gizmoTranslate.setX(newWorldPos.getX());
             planeTranslate.setX(newWorldPos.getX());
             if (state.getChangeListener() != null)
-                state.getChangeListener().handle(oldX, oldY, oldZ, newWorldPos.getX(), oldY, oldZ);
+                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, newWorldPos.getX(), oldY, oldZ);
         } else if (this.movementAxis == Rotate.Y_AXIS) {
             gizmoTranslate.setY(newWorldPos.getY());
             planeTranslate.setY(newWorldPos.getY());
             if (state.getChangeListener() != null)
-                state.getChangeListener().handle(oldX, oldY, oldZ, oldX, newWorldPos.getY(), oldZ);
+                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, oldX, newWorldPos.getY(), oldZ);
         } else if (this.movementAxis == Rotate.Z_AXIS) {
             gizmoTranslate.setZ(newWorldPos.getZ());
             planeTranslate.setZ(newWorldPos.getZ());
             if (state.getChangeListener() != null)
-                state.getChangeListener().handle(oldX, oldY, oldZ, oldX, oldY, newWorldPos.getZ());
+                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, oldX, oldY, newWorldPos.getZ());
         }
     }
 
@@ -382,8 +422,12 @@ public class TranslationGizmo extends DynamicMesh {
     }
 
     private void stopDragging(MeshView meshView) {
+        GizmoMeshViewState state = this.meshViewStates.get(meshView);
+        if (state == null)
+            return;
+
         // Remove the axis plane from the scene.
-        Group scene = MeshUtils.getSubSceneGroup(meshView.getScene().getRoot());
+        Group scene = Scene3DUtils.getSubSceneGroup(meshView.getScene().getRoot());
         if (this.axisPlane != null) {
             scene.getChildren().remove(this.axisPlane);
             this.axisPlane = null;
@@ -403,7 +447,6 @@ public class TranslationGizmo extends DynamicMesh {
         }
 
         // Update state.
-        GizmoMeshViewState state = this.meshViewStates.get(meshView);
         state.setDragStartPosition(null);
 
         // Re-enable dragging on the gizmo.
@@ -419,6 +462,7 @@ public class TranslationGizmo extends DynamicMesh {
         private final List<Box> planes = new ArrayList<>();
         @Setter private Point3D dragStartPosition;
         @Setter private IPositionChangeListener changeListener;
+        @Setter private FirstPersonCamera camera;
     }
 
     /**
@@ -427,13 +471,14 @@ public class TranslationGizmo extends DynamicMesh {
     public interface IPositionChangeListener {
         /**
          * Handle a position change.
-         * @param oldX old x coordinate
-         * @param oldY old y coordinate
-         * @param oldZ old z coordinate
-         * @param newX new x coordinate
-         * @param newY new y coordinate
-         * @param newZ new z coordinate
+         * @param meshView the mesh view which updated its scale
+         * @param oldX     old x coordinate
+         * @param oldY     old y coordinate
+         * @param oldZ     old z coordinate
+         * @param newX     new x coordinate
+         * @param newY     new y coordinate
+         * @param newZ     new z coordinate
          */
-        void handle(double oldX, double oldY, double oldZ, double newX, double newY, double newZ);
+        void handle(MeshView meshView, double oldX, double oldY, double oldZ, double newX, double newY, double newZ);
     }
 }

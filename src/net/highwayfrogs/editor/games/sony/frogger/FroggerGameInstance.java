@@ -214,7 +214,7 @@ public class FroggerGameInstance extends SCGameInstance {
     @SneakyThrows
     public void exportCode(File folder) {
         if (isPC()) {
-            System.out.println("Cannot generate headers for PC builds yet.");
+            getLogger().warning("Cannot generate headers for PC builds yet.");
             return;
         }
 
@@ -233,7 +233,7 @@ public class FroggerGameInstance extends SCGameInstance {
         @Cleanup PrintWriter textureCfgWriter = new PrintWriter(new File(folder, "texture-config.txt"));
         saveTextureCfg(textureCfgWriter);
 
-        System.out.println("Generated source files.");
+        getLogger().info("Generated source files.");
     }
 
     private void saveFrogVRAM(PrintWriter vramHWriter, PrintWriter vramCWriter) {
@@ -242,7 +242,7 @@ public class FroggerGameInstance extends SCGameInstance {
             for (GameImage image : vlo.getImages())
                 maxTexId = Math.max(maxTexId, image.getTextureId());
 
-        System.out.println("Maximum Texture ID: " + maxTexId);
+        getLogger().info("Maximum Texture ID: " + maxTexId);
 
         String[] imageNames = new String[maxTexId + 1];
         for (int i = 0; i < imageNames.length; i++)
@@ -509,7 +509,7 @@ public class FroggerGameInstance extends SCGameInstance {
             int byteSize = getConfig().isAtOrBeforeBuild4() ? FormEntry.OLD_BYTE_SIZE : FormEntry.BYTE_SIZE;
             int entryCount = (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / byteSize;
             if (entryCount != nameCount)
-                System.out.println(lastTheme + " has " + nameCount + " configured form names but " + entryCount + " calculated form entries in the form library.");
+                getLogger().warning(lastTheme + " has " + nameCount + " configured form names but " + entryCount + " calculated form entries in the form library.");
 
             // Load form library.
             lastBook.loadFormLibrary(this, nameCount);
@@ -577,12 +577,12 @@ public class FroggerGameInstance extends SCGameInstance {
 
             int findIndex = Utils.indexOf(getExecutableBytes(), searchFor);
             if (findIndex == -1) {
-                System.out.println("Failed to automatically find the demo table.");
+                getLogger().warning("Failed to automatically find the demo table.");
                 return; // Didn't find the bytes, ABORT!
             }
 
             getConfig().setDemoTableAddress(findIndex);
-            System.out.println("Found the demo table address at " + Utils.toHexString(findIndex));
+            getLogger().info("Found the demo table address at " + Utils.toHexString(findIndex));
         }
 
         reader.setIndex(getConfig().getDemoTableAddress());
@@ -627,8 +627,8 @@ public class FroggerGameInstance extends SCGameInstance {
             try {
                 newScript.load(reader);
             } catch (Throwable th) {
-                System.out.println("Failed to load script '" + getConfig().getScriptBank().getName(i) + "'");
-                th.printStackTrace();
+                String errorMessage = "Failed to load script '" + getConfig().getScriptBank().getName(i) + "'.";
+                getLogger().throwing("FroggerGameInstance", "readScripts", new RuntimeException(errorMessage, th));
 
                 try {
                     Thread.sleep(1);
@@ -654,7 +654,7 @@ public class FroggerGameInstance extends SCGameInstance {
 
             FroggerScript script = this.scripts.get(i);
             if (script.isTooLarge())
-                System.out.println("WARNING: Saving " + script.getName() + ", which is larger than what is considered safe!");
+                getLogger().warning("Saving " + script.getName() + ", which is larger than what is considered safe!");
 
             exeWriter.setIndex((int) (address - getConfig().getRamPointerOffset()));
             script.save(exeWriter);

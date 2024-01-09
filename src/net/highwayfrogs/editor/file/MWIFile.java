@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 /**
  * Millennium Wad Index: Holds information about all game files, usually in a MWD.
@@ -155,6 +156,7 @@ public class MWIFile extends SCSharedGameData {
         private String filePath;
         private String sha1Hash;
         private transient int resourceId;
+        private transient Logger logger;
 
         public static final int FLAG_SINGLE_ACCESS = Constants.BIT_FLAG_0; // I assume this is for files loaded individually, by themselves.
         public static final int FLAG_GROUP_ACCESS = Constants.BIT_FLAG_1; // Cannot be loaded individually / by itself. Presumably this is for files in child-WADs.
@@ -166,6 +168,14 @@ public class MWIFile extends SCSharedGameData {
         public FileEntry(SCGameInstance instance, int resourceId) {
             super(instance);
             this.resourceId = resourceId;
+        }
+
+        @Override
+        public Logger getLogger() {
+            if (this.logger != null)
+                return this.logger;
+
+            return this.logger = Logger.getLogger(getDisplayName());
         }
 
         /**

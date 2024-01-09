@@ -52,9 +52,8 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
                 try {
                     this.entityData.load(reader);
                 } catch (Throwable th) {
-                    System.out.println("Failed to load " + entityDataFactory.getName() + " for " + getDebugName() + " at " + Utils.toHexString(entityDataStartIndex) + " in " + getMap().getFileDisplayName());
-                    System.err.println("Failed to load " + entityDataFactory.getName() + " for " + getDebugName() + " at " + Utils.toHexString(entityDataStartIndex) + " in " + getMap().getFileDisplayName());
-                    th.printStackTrace();
+                    String errorMessage = "Failed to load " + entityDataFactory.getName() + " for " + getDebugName() + " at " + Utils.toHexString(entityDataStartIndex);
+                    getLogger().throwing("OldFroggerMapEntity", "load", new RuntimeException(errorMessage, th));
                     // Don't throw an exception, there's a pointer table so the next entity will read from the right spot.
                 }
             }

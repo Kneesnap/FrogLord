@@ -2,6 +2,9 @@ package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.MWDFile;
+import net.highwayfrogs.editor.utils.Utils;
+
+import java.util.logging.Logger;
 
 /**
  * Represents an object used by a Sony Cambridge / Millennium Interactive game.
@@ -29,6 +32,13 @@ public abstract class SCGameObject<TGameInstance extends SCGameInstance> {
      */
     public SCGameConfig getConfig() {
         return getGameInstance().getConfig();
+    }
+
+    /**
+     * Gets the logger for this class type.
+     */
+    public Logger getLogger() {
+        return Logger.getLogger(Utils.getSimpleName(this));
     }
 
     /**

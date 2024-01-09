@@ -5,6 +5,7 @@ import java.io.PrintStream;
 
 /**
  * Redirects System.out to somewhere else.
+ * TODO: Toss this later.
  * Created by Kneesnap on 9/17/2018.
  */
 public class SystemOutputReplacement extends OutputStream {

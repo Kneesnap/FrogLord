@@ -4,9 +4,11 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.logging.Logger;
 
 
 /**
@@ -143,7 +145,7 @@ public class SCGameConfig {
             try {
                 textureId = Short.parseShort(key);
             } catch (NumberFormatException nfe) {
-                System.out.println("Skipping non-integer key '" + key + "' as texture ID / image file name pair in version config '" + this.internalName + "'.");
+                getLogger().warning("Skipping non-integer key '" + key + "' as texture ID / image file name pair in version config '" + this.internalName + "'.");
                 continue;
             }
 
@@ -192,5 +194,12 @@ public class SCGameConfig {
         System.arraycopy(oldExeBytes, 0, newExeBytes, 0, oldExeBytes.length);
         System.arraycopy(identifierBytes, 0, newExeBytes, oldExeBytes.length, identifierBytes.length);
         return newExeBytes;
+    }
+
+    /**
+     * Gets the logger for this config.
+     */
+    public Logger getLogger() {
+        return Logger.getLogger(Utils.getSimpleName(this));
     }
 }

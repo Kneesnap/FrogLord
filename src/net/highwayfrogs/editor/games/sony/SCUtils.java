@@ -109,7 +109,7 @@ public class SCUtils {
             if (replaceFileEntry != null)
                 completeMof = instance.getGameFile(replaceFileEntry.getResourceId());
             if (completeMof == null)
-                System.out.println("MOF Parent Override for '" + otherMofFile + "' was not found. Entry: " + replaceFileEntry);
+                fileEntry.getLogger().warning("MOF Parent Override for '" + otherMofFile + "' was not found. Entry: " + replaceFileEntry);
         } else {
             MOFHolder lastCompleteMOF = null;
             for (int i = fileEntry.getResourceId() - 1; i >= 0; i--) {

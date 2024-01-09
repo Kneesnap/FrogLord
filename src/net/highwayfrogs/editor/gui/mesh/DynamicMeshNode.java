@@ -74,10 +74,10 @@ public class DynamicMeshNode implements IDynamicMeshHelper {
         // Register the entry.
         this.dataEntries.add(entry);
         getMesh().getDataEntries().add(entry);
+        this.mesh.pushBatchOperations();
         this.onEntryAdded(entry);
         entry.onAddedToNode(this);
-        if (this.mesh.isActive(this))
-            getMesh().updateMeshArrays();
+        this.mesh.popBatchOperations();
         return true;
     }
 

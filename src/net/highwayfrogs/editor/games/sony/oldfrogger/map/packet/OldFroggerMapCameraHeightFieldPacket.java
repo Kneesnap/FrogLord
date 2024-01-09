@@ -42,7 +42,7 @@ public class OldFroggerMapCameraHeightFieldPacket extends OldFroggerMapPacket {
         this.startPositionZ = reader.readShort();
 
         if (heightFieldEntryCount != (this.xSquareCount * this.zSquareCount))
-            System.out.println("WARNING: HeightField EntryCount was " + heightFieldEntryCount + " bytes with dimensions: [" + this.xSquareCount + ", " + this.zSquareCount + "]");
+            getLogger().warning("HeightField EntryCount was " + heightFieldEntryCount + " bytes with dimensions: [" + this.xSquareCount + ", " + this.zSquareCount + "]");
 
         // Read height map.
         if (this.xSquareCount > 0 && this.zSquareCount > 0) {

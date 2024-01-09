@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents a form definition in an old Frogger map.
@@ -48,6 +49,11 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
     }
 
     @Override
+    public Logger getLogger() {
+        return this.map.getFormInstancePacket().getLogger();
+    }
+
+    @Override
     public void load(DataReader reader) {
         this.formType = reader.readUnsignedShortAsInt();
         this.mofId = reader.readUnsignedShortAsInt();
@@ -66,7 +72,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
             OldFroggerMapFormDataEntry newEntry = new OldFroggerMapFormDataEntry(getGameInstance());
 
             if (i > 0 && endPointer != formEntryDataStartAddress)
-                System.out.println("[Warning] Form " + i + " in " + getMap().getFileDisplayName() + " starts at " + Utils.toHexString(formEntryDataStartAddress) + ", but the form ended at " + Utils.toHexString(endPointer));
+                getLogger().warning("Form " + i + " starts at " + Utils.toHexString(formEntryDataStartAddress) + ", but the form ended at " + Utils.toHexString(endPointer));
 
             reader.jumpTemp(formEntryDataStartAddress);
             newEntry.load(reader);
@@ -213,18 +219,18 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
 
         OldFroggerLevelTableEntry levelTableEntry = this.map.getLevelTableEntry();
         if (levelTableEntry == null) {
-            System.out.println("Couldn't get level table entry for " + this.map.getFileDisplayName() + ", which prevents getting the mof file for a form.");
+            getLogger().warning("Couldn't get level table entry, which prevents getting the mof file for a form.");
             return null;
         }
 
         WADFile wadFile = levelTableEntry.getWadFile();
         if (wadFile == null) {
-            System.out.println("Couldn't get WAD from the level table entry for " + this.map.getFileDisplayName() + ", which prevents getting the mof file for a form.");
+            getLogger().warning("Couldn't get WAD from the level table entry, which prevents getting the mof file for a form.");
             return null;
         }
 
         if (this.mofId < 0 || this.mofId >= wadFile.getFiles().size()) {
-            System.out.println("Couldn't get file " + this.mofId + " from the WAD file '" + wadFile.getFileDisplayName() + "', which prevents getting the mof file for a form.");
+            getLogger().warning("Couldn't get file " + this.mofId + " from the WAD file '" + wadFile.getFileDisplayName() + "', which prevents getting the mof file for a form.");
             return null;
         }
 
@@ -240,7 +246,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
             return null;
 
         if (!(wadEntry.getFile() instanceof MOFHolder)) {
-            System.out.println("The form specified file '" + wadEntry.getDisplayName() + "' as its MOF, but this seems to not actually be a MOF.");
+            getLogger().warning("The form specified file '" + wadEntry.getDisplayName() + "' as its MOF, but this seems to not actually be a MOF.");
             return null;
         }
 

@@ -67,7 +67,7 @@ public class OldFroggerMapMesh extends DynamicMesh {
         // Find the level table entry for the map this mesh represents.
         OldFroggerLevelTableEntry levelEntry = getMap().getLevelTableEntry();
         if (levelEntry == null) {
-            System.out.println("No level table entry was found for " + getMap().getFileDisplayName() + ", ");
+            getLogger().warning("No level table entry was found, so map textures have not been loaded.");
             return;
         }
 

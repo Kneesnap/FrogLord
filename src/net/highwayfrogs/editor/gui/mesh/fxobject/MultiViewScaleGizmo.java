@@ -10,6 +10,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -35,11 +36,11 @@ import java.util.Map;
 
 /**
  * A scale gizmo represents a 3D UI element which can be expanded in any of the XYZ directions, indicating scale.
- * This is different from MultiViewScaleGizmo, because this mesh visually looks better than that one, at the cost of not displaying correctly when used for multiple MeshViews.
+ * This is different from ScaleGizmo, because this gizmo is usable for multiple MeshViews, but looks visually worse.
  * Created by Kneesnap on 1/7/2024.
  */
 @Getter
-public class ScaleGizmo extends DynamicMesh {
+public class MultiViewScaleGizmo extends DynamicMesh {
     private static final RawColorTextureSource RED_TEXTURE_SOURCE = new RawColorTextureSource(Color.RED);
     private static final RawColorTextureSource GREEN_TEXTURE_SOURCE = new RawColorTextureSource(Color.GREEN);
     private static final RawColorTextureSource BLUE_TEXTURE_SOURCE = new RawColorTextureSource(Color.BLUE);
@@ -60,12 +61,6 @@ public class ScaleGizmo extends DynamicMesh {
     private final boolean xAxisEnabled;
     private final boolean yAxisEnabled;
     private final boolean zAxisEnabled;
-    private MeshEntryBox redBarEntry;
-    private MeshEntryBox greenBarEntry;
-    private MeshEntryBox blueBarEntry;
-    private MeshEntryBox redBoxEntry;
-    private MeshEntryBox greenBoxEntry;
-    private MeshEntryBox blueBoxEntry;
     private AtlasTexture redTexture;
     private AtlasTexture greenTexture;
     private AtlasTexture blueTexture;
@@ -87,20 +82,15 @@ public class ScaleGizmo extends DynamicMesh {
     private DynamicMeshUnmanagedNode yAxisNode; // Green
     private DynamicMeshUnmanagedNode zAxisNode; // Blue
 
-    // Current scale:
-    private double scaleX = 1;
-    private double scaleY = 1;
-    private double scaleZ = 1;
-
     // Used for user interaction.
     private Box axisPlane;
     private Point3D movementAxis;
 
-    public ScaleGizmo() {
+    public MultiViewScaleGizmo() {
         this(true, true, true);
     }
 
-    public ScaleGizmo(boolean xAxisEnabled, boolean yAxisEnabled, boolean zAxisEnabled) {
+    public MultiViewScaleGizmo(boolean xAxisEnabled, boolean yAxisEnabled, boolean zAxisEnabled) {
         super(new SequentialTextureAtlas(32, 32, false));
         this.xAxisEnabled = xAxisEnabled;
         this.yAxisEnabled = yAxisEnabled;
@@ -142,8 +132,8 @@ public class ScaleGizmo extends DynamicMesh {
             DynamicMeshDataEntry xNodeEntry = new DynamicMeshDataEntry(this);
             this.lightRedTextureUvIndex = xNodeEntry.addTexCoordValue(lightRedTextureUv);
             this.redTextureUvIndex = xNodeEntry.addTexCoordValue(redTextureUv);
-            this.redBarEntry = MeshEntryBox.createBoxEntry(xNodeEntry, halfBoxSize, -halfThickness, -halfThickness, barEnd, halfThickness, halfThickness, this.redTextureUvIndex);
-            this.redBoxEntry = MeshEntryBox.createCenteredBoxEntry(xNodeEntry, AXIS_BASE_BOX_DISTANCE, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.redTextureUvIndex);
+            MeshEntryBox.createBox(xNodeEntry, halfBoxSize, -halfThickness, -halfThickness, barEnd, halfThickness, halfThickness, this.redTextureUvIndex);
+            MeshEntryBox.createCenteredBox(xNodeEntry, AXIS_BASE_BOX_DISTANCE, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.redTextureUvIndex);
             this.xAxisNode.addEntry(xNodeEntry);
         }
 
@@ -154,8 +144,8 @@ public class ScaleGizmo extends DynamicMesh {
             DynamicMeshDataEntry zNodeEntry = new DynamicMeshDataEntry(this);
             this.lightBlueTextureUvIndex = zNodeEntry.addTexCoordValue(lightBlueTextureUv);
             this.blueTextureUvIndex = zNodeEntry.addTexCoordValue(blueTextureUv);
-            this.blueBarEntry = MeshEntryBox.createBoxEntry(zNodeEntry, -halfThickness, -halfThickness, halfBoxSize, halfThickness, halfThickness, barEnd, this.blueTextureUvIndex);
-            this.blueBoxEntry = MeshEntryBox.createCenteredBoxEntry(zNodeEntry, 0, 0, AXIS_BASE_BOX_DISTANCE, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.blueTextureUvIndex);
+            MeshEntryBox.createBox(zNodeEntry, -halfThickness, -halfThickness, halfBoxSize, halfThickness, halfThickness, barEnd, this.blueTextureUvIndex);
+            MeshEntryBox.createCenteredBox(zNodeEntry, 0, 0, AXIS_BASE_BOX_DISTANCE, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.blueTextureUvIndex);
             this.zAxisNode.addEntry(zNodeEntry);
         }
 
@@ -167,8 +157,8 @@ public class ScaleGizmo extends DynamicMesh {
             DynamicMeshDataEntry yNodeEntry = new DynamicMeshDataEntry(this);
             this.lightGreenTextureUvIndex = yNodeEntry.addTexCoordValue(lightGreenTextureUv);
             this.greenTextureUvIndex = yNodeEntry.addTexCoordValue(greenTextureUv);
-            this.greenBarEntry = MeshEntryBox.createBoxEntry(yNodeEntry, -halfThickness, -halfBoxSize, -halfThickness, halfThickness, -barEnd, halfThickness, this.greenTextureUvIndex);
-            this.greenBoxEntry = MeshEntryBox.createCenteredBoxEntry(yNodeEntry, 0, -AXIS_BASE_BOX_DISTANCE, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.greenTextureUvIndex);
+            MeshEntryBox.createBox(yNodeEntry, -halfThickness, -halfBoxSize, -halfThickness, halfThickness, -barEnd, halfThickness, this.greenTextureUvIndex);
+            MeshEntryBox.createCenteredBox(yNodeEntry, 0, -AXIS_BASE_BOX_DISTANCE, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.greenTextureUvIndex);
             this.yAxisNode.addEntry(yNodeEntry);
         }
 
@@ -240,105 +230,6 @@ public class ScaleGizmo extends DynamicMesh {
         state.setChangeListener(listener);
     }
 
-    /**
-     * Sets the new scale X factor.
-     * @param newScaleX new scale in the x direction
-     * @param fireEvent whether the listener should be alerted of this change
-     */
-    public void setScaleX(double newScaleX, boolean fireEvent) {
-        if (newScaleX < 0)
-            throw new IllegalArgumentException("The scale cannot be set to a value less than zero (Got: " + newScaleX + ")");
-        if (!Double.isFinite(newScaleX))
-            throw new IllegalArgumentException("The scale factor cannot be set to: " + newScaleX);
-
-        // Update scale value.
-        double oldX = this.scaleX;
-        this.scaleX = newScaleX;
-
-        // Update displays, if they exist.
-        double newBoxPos = (newScaleX * BAR_LENGTH) + BOX_SIZE;
-        if (this.redBoxEntry != null)
-            this.redBoxEntry.setCenterX(newBoxPos);
-        if (this.redBarEntry != null)
-            this.redBarEntry.setMaxX(newBoxPos - (BOX_SIZE / 2));
-
-        // Fire the event if necessary.
-        if (fireEvent) {
-            for (int i = 0; i < getMeshViews().size(); i++) {
-                MeshView meshView = getMeshViews().get(i);
-                GizmoMeshViewState state = this.meshViewStates.get(meshView);
-                if (state != null && state.getChangeListener() != null)
-                    state.getChangeListener().handle(meshView, oldX, this.scaleY, this.scaleZ, newScaleX, this.scaleY, this.scaleZ);
-            }
-        }
-    }
-
-    /**
-     * Sets the new scale Y factor.
-     * @param newScaleY new scale in the y direction
-     * @param fireEvent whether the listener should be alerted of this change
-     */
-    public void setScaleY(double newScaleY, boolean fireEvent) {
-        if (newScaleY < 0)
-            throw new IllegalArgumentException("The scale cannot be set to a value less than zero (Got: " + newScaleY + ")");
-        if (!Double.isFinite(newScaleY))
-            throw new IllegalArgumentException("The scale factor cannot be set to: " + newScaleY);
-
-        // Update scale value.
-        double oldY = this.scaleY;
-        this.scaleY = newScaleY;
-
-        // Update displays, if they exist.
-        double newBoxPos = -((newScaleY * BAR_LENGTH) + BOX_SIZE);
-        if (this.greenBoxEntry != null)
-            this.greenBoxEntry.setCenterY(newBoxPos);
-        if (this.greenBarEntry != null)
-            this.greenBarEntry.setMinY(newBoxPos + (BOX_SIZE / 2));
-
-        // Fire the event if necessary.
-        if (fireEvent) {
-            for (int i = 0; i < getMeshViews().size(); i++) {
-                MeshView meshView = getMeshViews().get(i);
-                GizmoMeshViewState state = this.meshViewStates.get(meshView);
-                if (state != null && state.getChangeListener() != null)
-                    state.getChangeListener().handle(meshView, this.scaleX, oldY, this.scaleZ, this.scaleX, newScaleY, this.scaleZ);
-            }
-        }
-    }
-
-    /**
-     * Sets the new scale Z factor.
-     * @param newScaleZ new scale in the z direction
-     * @param fireEvent whether the listener should be alerted of this change
-     */
-    public void setScaleZ(double newScaleZ, boolean fireEvent) {
-        if (newScaleZ < 0)
-            throw new IllegalArgumentException("The scale cannot be set to a value less than zero (Got: " + newScaleZ + ")");
-        if (!Double.isFinite(newScaleZ))
-            throw new IllegalArgumentException("The scale factor cannot be set to: " + newScaleZ);
-
-        // Update scale value.
-        double oldZ = this.scaleZ;
-        this.scaleZ = newScaleZ;
-
-        // Update displays, if they exist.
-        double newBoxPos = (newScaleZ * BAR_LENGTH) + BOX_SIZE;
-        if (this.blueBoxEntry != null)
-            this.blueBoxEntry.setCenterZ(newBoxPos);
-        if (this.blueBarEntry != null)
-            this.blueBarEntry.setMaxZ(newBoxPos - (BOX_SIZE / 2));
-
-        // Fire the event if necessary.
-        if (fireEvent) {
-            for (int i = 0; i < getMeshViews().size(); i++) {
-                MeshView meshView = getMeshViews().get(i);
-                GizmoMeshViewState state = this.meshViewStates.get(meshView);
-                if (state != null && state.getChangeListener() != null)
-                    state.getChangeListener().handle(meshView, this.scaleX, this.scaleY, oldZ, this.scaleX, this.scaleY, newScaleZ);
-            }
-        }
-    }
-
     private void onMouseEnter(MouseEvent event) {
         if (event.isPrimaryButtonDown())
             return; // If the button is currently held, don't do anything here.
@@ -376,7 +267,9 @@ public class ScaleGizmo extends DynamicMesh {
 
     private void onDragStart(MouseEvent event) {
         MeshView meshView = (MeshView) event.getSource();
-        Group scene = Scene3DUtils.getSubSceneGroup(meshView.getScene());
+        Group scene = Scene3DUtils.getSubSceneGroup(meshView.getScene().getRoot());
+
+        // Clear existing axis plane, if it somehow exists.
         if (this.axisPlane != null) {
             scene.getChildren().remove(this.axisPlane);
             this.axisPlane = null;
@@ -396,13 +289,17 @@ public class ScaleGizmo extends DynamicMesh {
             this.xAxisNode.updateTextureIndex(this.redTextureUvIndex, this.orangeTextureUvIndex);
             this.xAxisNode.updateTextureIndex(this.lightRedTextureUvIndex, this.orangeTextureUvIndex);
             createAxisPlane(meshView, scene, AXIS_PLANE_SIZE, 0, AXIS_PLANE_SIZE);
-            state.setDragStartLength(this.scaleX * BAR_LENGTH);
+
+            // Set starting distance.
+            Scale scale = Scene3DUtils.getOptional3DScale(meshView);
+            double xScale = scale != null ? scale.getX() : 1;
+            state.setStartDistance(BAR_LENGTH * xScale);
         } else if (clickedMeshNode == this.yAxisNode) {
             this.movementAxis = Rotate.Y_AXIS;
             this.yAxisNode.updateTextureIndex(this.greenTextureUvIndex, this.orangeTextureUvIndex);
             this.yAxisNode.updateTextureIndex(this.lightGreenTextureUvIndex, this.orangeTextureUvIndex);
+            createAxisPlane(meshView, scene, VERTICAL_BOX_SIZE, AXIS_PLANE_SIZE, VERTICAL_BOX_SIZE);
 
-            // Create plane which faces the camera, if we were given the camera.
             if (state.getCamera() != null) {
                 Box plane = createAxisPlane(meshView, scene, AXIS_PLANE_SIZE, AXIS_PLANE_SIZE, 0);
 
@@ -421,13 +318,20 @@ public class ScaleGizmo extends DynamicMesh {
                 createAxisPlane(meshView, scene, VERTICAL_BOX_SIZE, AXIS_PLANE_SIZE, VERTICAL_BOX_SIZE);
             }
 
-            state.setDragStartLength(this.scaleY * BAR_LENGTH);
+            // Set starting distance.
+            Scale scale = Scene3DUtils.getOptional3DScale(meshView);
+            double yScale = scale != null ? scale.getY() : 1;
+            state.setStartDistance(BAR_LENGTH * yScale);
         } else if (clickedMeshNode == this.zAxisNode) {
             this.movementAxis = Rotate.Z_AXIS;
             this.zAxisNode.updateTextureIndex(this.blueTextureUvIndex, this.orangeTextureUvIndex);
             this.zAxisNode.updateTextureIndex(this.lightBlueTextureUvIndex, this.orangeTextureUvIndex);
             createAxisPlane(meshView, scene, AXIS_PLANE_SIZE, 0, AXIS_PLANE_SIZE);
-            state.setDragStartLength(this.scaleZ * BAR_LENGTH);
+
+            // Set starting distance.
+            Scale scale = Scene3DUtils.getOptional3DScale(meshView);
+            double zScale = scale != null ? scale.getZ() : 1;
+            state.setStartDistance(BAR_LENGTH * zScale);
         } else {
             // Didn't click one of the axis.
             this.movementAxis = null;
@@ -489,20 +393,43 @@ public class ScaleGizmo extends DynamicMesh {
         if (mousePoint == null)
             return;
 
-        // Treat the initial mouse position as the origin for all dragged mouse positions.
-        // This allows us to calculate the new position of the scale box as relative to the click position.
+        // Ensure the coordinates we get are now absolute.
         Point3D mouseOffset = mousePoint.subtract(state.getDragStartPosition());
+
+        // Get old position.
+        Scale gizmoScale = Scene3DUtils.get3DScale(meshView);
+        double oldX = gizmoScale.getX();
+        double oldY = gizmoScale.getY();
+        double oldZ = gizmoScale.getZ();
 
         // Update positions.
         if (this.movementAxis == Rotate.X_AXIS) {
-            double newX = Math.max(0, (mouseOffset.getX() + state.getDragStartLength()) / BAR_LENGTH);
-            setScaleX(newX, true);
+            double mouseX = mouseOffset.getX() + state.getStartDistance();
+            if (mouseX < BOX_SIZE)
+                return;
+
+            double newX = (mouseX - (oldX * BOX_SIZE)) / BAR_LENGTH;
+            gizmoScale.setX(newX);
+            if (state.getChangeListener() != null)
+                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, newX, oldY, oldZ);
         } else if (this.movementAxis == Rotate.Y_AXIS) {
-            double newY = Math.max(0, -(mouseOffset.getY() - state.getDragStartLength()) / BAR_LENGTH);
-            setScaleY(newY, true);
+            double mouseY = mouseOffset.getY() - state.getStartDistance();
+            if (mouseY > -BOX_SIZE)
+                return;
+
+            double newY = -(mouseY + (oldY * BOX_SIZE)) / BAR_LENGTH;
+            gizmoScale.setY(newY);
+            if (state.getChangeListener() != null)
+                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, oldX, newY, oldZ);
         } else if (this.movementAxis == Rotate.Z_AXIS) {
-            double newZ = Math.max(0, (mouseOffset.getZ() + state.getDragStartLength()) / BAR_LENGTH);
-            setScaleZ(newZ, true);
+            double mouseZ = mouseOffset.getZ() + state.getStartDistance();
+            if (mouseZ < BOX_SIZE)
+                return;
+
+            double newZ = (mouseZ - (oldZ * BOX_SIZE)) / BAR_LENGTH;
+            gizmoScale.setZ(newZ);
+            if (state.getChangeListener() != null)
+                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, oldX, oldY, newZ);
         }
     }
 
@@ -547,11 +474,11 @@ public class ScaleGizmo extends DynamicMesh {
     @Getter
     @RequiredArgsConstructor
     private static class GizmoMeshViewState {
-        private final ScaleGizmo gizmo;
+        private final MultiViewScaleGizmo gizmo;
         private final MeshView meshView;
         private final List<Box> planes = new ArrayList<>();
         @Setter private Point3D dragStartPosition;
-        @Setter private double dragStartLength;
+        @Setter private double startDistance;
         @Setter private IScaleChangeListener changeListener;
         @Setter private FirstPersonCamera camera;
     }
