@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.utils.fx.wrapper;
 
 import javafx.collections.ObservableIntegerArray;
 import net.highwayfrogs.editor.utils.IndexBitArray;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.Arrays;
 
@@ -264,7 +263,7 @@ public class FXIntArray {
     public void insertValues(FXIntArray indices, FXIntArray values) {
         // Ensure the number of values matches the number of indices.
         if (indices.size() != values.size())
-            throw new InvalidStateException("There were " + indices.size() + " indices corresponding to " + values.size() + " values.");
+            throw new IllegalStateException("There were " + indices.size() + " indices corresponding to " + values.size() + " values.");
 
         // Abort if there aren't any values to add.
         int valueCount = values.size();

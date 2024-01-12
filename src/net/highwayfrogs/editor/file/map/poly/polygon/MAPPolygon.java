@@ -59,6 +59,12 @@ public abstract class MAPPolygon extends MAPPrimitive implements TextureSource {
      */
     public void setupEditor(GUIEditorGrid editor, MapUIController controller) {
         editor.addBoldLabel(getClass().getSimpleName());
+
+        for (int i = 0; i < getVertices().length; i++)
+            editor.addLabel("Vertex " + i, String.valueOf(getVertices()[i]));
+
+        if (getVerticeCount() == REQUIRES_VERTEX_PADDING)
+            editor.addLabel("Padding", String.valueOf(this.padding));
     }
 
     /**

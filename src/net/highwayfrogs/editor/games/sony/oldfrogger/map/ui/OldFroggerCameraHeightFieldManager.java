@@ -6,10 +6,9 @@ import javafx.geometry.Point3D;
 import javafx.scene.control.Separator;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
@@ -32,17 +31,16 @@ import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Manages editing of camera height-field data.
  * TODO:
- *  - Selected vertices should allow:
- *   - Setting the height of all of them to be the same.
- *   - Adjusting the height of all of them together by a relative amount.
  *  - Allow a cylindrical update. Eg: Allow entering a mode where our selected vertex / vertices are treated as the centers of circles.
  *   - Allow choosing a radius of vertices to highlight, which will fall off in terms of color intensity.
  *   - Pulling the height of the vertex upwards / downward will pull all of the vertices.
  *   - The radius controls which vertices are impacted, although I'm less certain about
- *   - Start off by making be pull be a textbox, but let's see if we can get an editor to show up in 3D space.
  * Created by Kneesnap on 12/25/2023.
  */
 public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
@@ -51,12 +49,12 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
     private DisplayList verticeDisplayList;
     private CameraHeightFieldMesh mesh;
     private MeshView meshView;
-    private SelectedVertex[][] selectedVertices;
+    private SelectedVertex[][] selectedVerticesGrid;
+    private final List<SelectedVertex> selectedVertices = new ArrayList<>();
     private TranslationGizmo vertexTranslationGizmo;
     private Rectangle selectionArea;
     private boolean rectangleSelectionActive;
 
-    private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
     private static final Scale TRANSLATION_GIZMO_SCALE = new Scale(.6F, .25F, .6F);
 
     public OldFroggerCameraHeightFieldManager(MeshViewController<OldFroggerMapMesh> controller) {
@@ -71,7 +69,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         // Setup Basics.
         OldFroggerMapCameraHeightFieldPacket packet = getMap().getCameraHeightFieldPacket();
         this.verticeDisplayList = getRenderManager().createDisplayListWithNewGroup();
-        this.selectedVertices = new SelectedVertex[packet.getZSquareCount()][packet.getXSquareCount()];
+        this.selectedVerticesGrid = new SelectedVertex[packet.getZSquareCount()][packet.getXSquareCount()];
 
         // Setup translation gizmo.
         this.vertexTranslationGizmo = new TranslationGizmo(false, true, false);
@@ -134,15 +132,12 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         this.verticeDisplayList.setVisible(false);
         this.meshView.setVisible(false);
 
-        // TODO: Consider making the heightfield mesh fully lit, but have it use that blend texture to make lower heights a darker shade of grey?
-
         // TODO: When doing spherical calculations, replace Sphere in the displayGrid with some class that can also hold a strength decimal value.
         // A selected vertex has a strength of 1, a vertex without any impact has a strength of zero.
         // TODO: This strength is how we'll do spherical calculations. Also, when doing a spherical check, check a vertex in each of the four cardinal directions. For each vertex found, you can know to skip vertices in that direction, since your influence on those vertices would be less than that sphere.
-        // TODO: Another option is flood fill, but I think that last one should be better.
-        // TODO: Some kind of lasso area selection would be nice too.
 
         // TODO: Should we generalize this to be something agnostic, so we don't have to type the full thing each time? Like we could make this a class.
+        // TODO: Also let's generalize the creation of an axis plane.
         this.selectionArea = new Rectangle(5, 5, 25, 25);
         this.selectionArea.setMouseTransparent(true);
         this.selectionArea.setStyle("-fx-fill: rgb(200,200,0); -fx-opacity: 50%; -fx-stroke: black; -fx-stroke-width: 2;");
@@ -266,7 +261,6 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
     }
 
     @Override
-    @SuppressWarnings("IfStatementMissingBreakInLoop") // Handled via loop condition in multiple loops.
     public void updateEditor() {
         super.updateEditor();
         this.editorGrid.clearEditor();
@@ -279,11 +273,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         }
 
         // Determine if any vertices are selected.
-        boolean anyVerticesSelected = false;
-        for (int z = 0; z < this.selectedVertices.length && !anyVerticesSelected; z++)
-            for (int x = 0; x < this.selectedVertices[z].length && !anyVerticesSelected; x++)
-                if (this.selectedVertices[z][x] != null)
-                    anyVerticesSelected = true;
+        boolean anyVerticesSelected = this.selectedVertices.size() > 0;
 
         // If nothing is selected, include information on how to use the editor.
         if (!anyVerticesSelected) {
@@ -297,7 +287,27 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         this.editorGrid.addBoldLabel("Vertices Editor:");
         this.editorGrid.addNormalLabel("Use the arrow keys to move the selection.");
         this.editorGrid.addNormalLabel("Change the height by dragging the gizmo.");
-        // TODO: Implement editor.
+        this.editorGrid.addSeparator();
+
+        // Height.
+        double averageHeight = 0;
+        for (int i = 0; i < this.selectedVertices.size(); i++) {
+            SelectedVertex vertex = this.selectedVertices.get(i);
+            averageHeight += getPacket().getWorldY(vertex.getX(), vertex.getZ());
+        }
+        averageHeight /= this.selectedVertices.size();
+        this.editorGrid.addNormalLabel(String.format("Average Height: %.4f", averageHeight));
+        this.editorGrid.addDoubleField("Set Height", averageHeight, newHeight -> {
+            short fixedNewHeight = Utils.floatToFixedPointShort4Bit((float) (double) newHeight);
+
+            // Apply height to all selected vertices.
+            for (int i = 0; i < this.selectedVertices.size(); i++) {
+                SelectedVertex vertex = this.selectedVertices.get(i);
+                getPacket().getHeightMap()[vertex.getZ()][vertex.getX()] = fixedNewHeight;
+            }
+        }, null);
+
+        // TODO: Finish editor.
     }
 
     /**
@@ -306,16 +316,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
      */
     private void onVertexMoved(MeshView meshView, double oldX, double oldY, double oldZ, double newX, double newY, double newZ) {
         // Get selected vertex.
-        SelectedVertex selectedVertex = null;
-        for (int z = 0; z < this.selectedVertices.length; z++) {
-            for (int x = 0; x < this.selectedVertices[z].length; x++) {
-                SelectedVertex tempVertex = this.selectedVertices[z][x];
-                if (tempVertex != null && tempVertex.getDisplay() == meshView) {
-                    selectedVertex = tempVertex;
-                    break;
-                }
-            }
-        }
+        SelectedVertex selectedVertex = getSelectedVertexByDisplay(meshView);
 
         if (selectedVertex == null)
             return; // Couldn't find the vertex.
@@ -327,16 +328,11 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
 
         // Apply offset to all selected vertices.
         int fixedOffset = (fixedNewHeight - fixedOldHeight);
-        for (int z = 0; z < this.selectedVertices.length; z++) {
-            for (int x = 0; x < this.selectedVertices[z].length; x++) {
-                SelectedVertex tempVertex = this.selectedVertices[z][x];
-                if (tempVertex == null)
-                    continue;
-
-                int tempOldHeight = getPacket().getHeightMap()[z][x];
-                int tempNewHeight = Math.max(Short.MIN_VALUE, Math.min(Short.MAX_VALUE, tempOldHeight + fixedOffset));
-                getPacket().getHeightMap()[z][x] = (short) tempNewHeight;
-            }
+        for (int i = 0; i < this.selectedVertices.size(); i++) {
+            SelectedVertex tempVertex = this.selectedVertices.get(i);
+            int tempOldHeight = getPacket().getHeightMap()[tempVertex.getZ()][tempVertex.getX()];
+            int tempNewHeight = Math.max(Short.MIN_VALUE, Math.min(Short.MAX_VALUE, tempOldHeight + fixedOffset));
+            getPacket().getHeightMap()[tempVertex.getZ()][tempVertex.getX()] = (short) tempNewHeight;
         }
 
         // Update the positions the vertices are displayed at.
@@ -350,9 +346,9 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
      * @return true if the vertex is selected
      */
     public boolean isVertexSelected(int x, int z) {
-        return z >= 0 && z < this.selectedVertices.length
-                && x >= 0 && x < this.selectedVertices[z].length
-                && this.selectedVertices[z][x] != null;
+        return z >= 0 && z < this.selectedVerticesGrid.length
+                && x >= 0 && x < this.selectedVerticesGrid[z].length
+                && this.selectedVerticesGrid[z][x] != null;
     }
 
     /**
@@ -362,17 +358,17 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
      * @param z z grid coordinate of the vertex to select
      */
     public void selectVertex(int x, int z) {
-        if (z < 0 || z >= this.selectedVertices.length)
+        if (z < 0 || z >= this.selectedVerticesGrid.length)
             throw new IllegalArgumentException("The provided Z coordinate (" + z + ") is not within the camera grid.");
-        if (x < 0 || x >= this.selectedVertices[z].length)
+        if (x < 0 || x >= this.selectedVerticesGrid[z].length)
             throw new IllegalArgumentException("The provided X coordinate (" + x + ") is not within the camera grid.");
-        if (this.selectedVertices[z][x] != null)
+        if (this.selectedVerticesGrid[z][x] != null)
             return; // Already selected.
 
         // Track the vertex, and create its display.
         boolean wasEmpty = this.verticeDisplayList.isEmpty();
         SelectedVertex newVertex = new SelectedVertex(this, x, z);
-        this.selectedVertices[z][x] = newVertex;
+        this.selectedVerticesGrid[z][x] = newVertex;
         newVertex.createDisplay();
 
         // Update the mesh display to the vertex as selected.
@@ -381,6 +377,28 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         // If there were no active vertices, and this is the first one, update the editor.
         if (wasEmpty)
             updateEditor();
+    }
+
+    private void onDisplayClicked(MouseEvent event) {
+        MeshView meshView = (MeshView) event.getSource();
+        SelectedVertex clickedVertex = getSelectedVertexByDisplay(meshView);
+        if (clickedVertex != null) {
+            onClickVertex(clickedVertex.getX(), clickedVertex.getZ());
+            return;
+        }
+
+        // No sphere was found, which should not occur.
+        throw new IllegalStateException("The vertex corresponding to the clicked display was not found.");
+    }
+
+    private SelectedVertex getSelectedVertexByDisplay(MeshView display) {
+        for (int i = 0; i < this.selectedVertices.size(); i++) {
+            SelectedVertex vertex = this.selectedVertices.get(i);
+            if (vertex.getDisplay() == display)
+                return vertex;
+        }
+
+        return null;
     }
 
     /**
@@ -395,8 +413,8 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
      */
     public void deselectAllVerticesExcept(int skipX, int skipZ) {
         this.mesh.getEditableTexCoords().startBatchingUpdates();
-        for (int z = 0; z < this.selectedVertices.length; z++)
-            for (int x = 0; x < this.selectedVertices[z].length; x++)
+        for (int z = 0; z < this.selectedVerticesGrid.length; z++)
+            for (int x = 0; x < this.selectedVerticesGrid[z].length; x++)
                 if (x != skipX || z != skipZ)
                     deselectVertex(x, z);
 
@@ -411,18 +429,18 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
      * @param z z grid coordinate of the vertex to select
      */
     public void deselectVertex(int x, int z) {
-        if (z < 0 || z >= this.selectedVertices.length)
+        if (z < 0 || z >= this.selectedVerticesGrid.length)
             throw new IllegalArgumentException("The provided Z coordinate (" + z + ") is not within the camera grid.");
-        if (x < 0 || x >= this.selectedVertices[z].length)
+        if (x < 0 || x >= this.selectedVerticesGrid[z].length)
             throw new IllegalArgumentException("The provided X coordinate (" + x + ") is not within the camera grid.");
 
-        SelectedVertex selectedVertex = this.selectedVertices[z][x];
+        SelectedVertex selectedVertex = this.selectedVerticesGrid[z][x];
         if (selectedVertex == null)
             return; // Already unselected.
 
         // Remove the display, marking the vertex as unselected.
         selectedVertex.removeDisplay();
-        this.selectedVertices[z][x] = null;
+        this.selectedVerticesGrid[z][x] = null;
 
         // Update the mesh display to show the vertex as not selected.
         this.mesh.getMainNode().updateTexCoord(x, z);
@@ -461,11 +479,11 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
             int copyWidth = Math.min(oldX, newX);
             int copyHeight = Math.min(oldZ, newZ);
             for (int z = 0; z < copyHeight; z++) {
-                System.arraycopy(this.selectedVertices[z], 0, newVertexDisplays[z], 0, copyWidth);
+                System.arraycopy(this.selectedVerticesGrid[z], 0, newVertexDisplays[z], 0, copyWidth);
 
                 // Delete unused selections in the position X direction.
                 for (int x = copyWidth; x < oldX; x++) {
-                    SelectedVertex selectedVertex = this.selectedVertices[z][x];
+                    SelectedVertex selectedVertex = this.selectedVerticesGrid[z][x];
                     if (selectedVertex != null)
                         selectedVertex.removeDisplay();
                 }
@@ -474,7 +492,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
             // Delete vertex displays which are now unused, and update the positions of ones which are used.
             for (int z = 0; z < oldZ; z++) {
                 for (int x = 0; x < oldX; x++) {
-                    SelectedVertex selectedVertex = this.selectedVertices[z][x];
+                    SelectedVertex selectedVertex = this.selectedVerticesGrid[z][x];
                     if (selectedVertex == null)
                         continue;
 
@@ -489,7 +507,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         }
 
         // Save new display point.
-        this.selectedVertices = newVertexDisplays;
+        this.selectedVerticesGrid = newVertexDisplays;
     }
 
     /**
@@ -500,13 +518,8 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         this.mesh.getMainNode().updateAllVertices();
 
         // Update the position of all displays.
-        for (int z = 0; z < this.selectedVertices.length; z++) {
-            for (int x = 0; x < this.selectedVertices[z].length; x++) {
-                SelectedVertex selectedVertex = this.selectedVertices[z][x];
-                if (selectedVertex != null)
-                    selectedVertex.updateDisplayPosition();
-            }
-        }
+        for (int i = 0; i < this.selectedVertices.size(); i++)
+            this.selectedVertices.get(i).updateDisplayPosition();
     }
 
     /**
@@ -589,19 +602,19 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
             return false; // No change.
 
         // Bounds Check - Ensure there are no elements that would be moved outside the grid.
-        for (int z = 0; z < this.selectedVertices.length; z++) {
-            for (int x = 0; x < this.selectedVertices[z].length; x++) {
-                if (this.selectedVertices[z][x] == null)
+        for (int z = 0; z < this.selectedVerticesGrid.length; z++) {
+            for (int x = 0; x < this.selectedVerticesGrid[z].length; x++) {
+                if (this.selectedVerticesGrid[z][x] == null)
                     continue; // Not selected.
 
                 // Test bounds in the x direction.
                 int newX = x + xOffset;
-                if ((newX >= this.selectedVertices[z].length) || (newX < 0))
+                if ((newX >= this.selectedVerticesGrid[z].length) || (newX < 0))
                     return false;
 
                 // Test bounds in the z direction.
                 int newZ = z + zOffset;
-                if ((newZ >= this.selectedVertices.length) || (newZ < 0))
+                if ((newZ >= this.selectedVerticesGrid.length) || (newZ < 0))
                     return false;
             }
         }
@@ -612,22 +625,22 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
 
         // Perform updates.
         if (xOffset > 0) {
-            for (int z = 0; z < this.selectedVertices.length; z++)
-                for (int x = this.selectedVertices[z].length - xOffset - 1; x >= 0; x--)
+            for (int z = 0; z < this.selectedVerticesGrid.length; z++)
+                for (int x = this.selectedVerticesGrid[z].length - xOffset - 1; x >= 0; x--)
                     moveSelection(x, z, xOffset, 0);
         } else if (xOffset < 0) {
-            for (int z = 0; z < this.selectedVertices.length; z++)
-                for (int x = -xOffset; x < this.selectedVertices[z].length; x++)
+            for (int z = 0; z < this.selectedVerticesGrid.length; z++)
+                for (int x = -xOffset; x < this.selectedVerticesGrid[z].length; x++)
                     moveSelection(x, z, xOffset, 0);
         }
 
         if (zOffset > 0) {
-            for (int z = this.selectedVertices.length - zOffset - 1; z >= 0; z--)
-                for (int x = 0; x < this.selectedVertices[z].length; x++)
+            for (int z = this.selectedVerticesGrid.length - zOffset - 1; z >= 0; z--)
+                for (int x = 0; x < this.selectedVerticesGrid[z].length; x++)
                     moveSelection(x, z, 0, zOffset);
         } else if (zOffset < 0) {
-            for (int z = -zOffset; z < this.selectedVertices.length; z++)
-                for (int x = 0; x < this.selectedVertices[z].length; x++)
+            for (int z = -zOffset; z < this.selectedVerticesGrid.length; z++)
+                for (int x = 0; x < this.selectedVerticesGrid[z].length; x++)
                     moveSelection(x, z, 0, zOffset);
         }
 
@@ -639,7 +652,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
 
     private void moveSelection(int x, int z, int xOffset, int zOffset) {
         OldFroggerMapCameraHeightFieldPacket packet = getPacket();
-        SelectedVertex selectedVertex = this.selectedVertices[z][x];
+        SelectedVertex selectedVertex = this.selectedVerticesGrid[z][x];
         if (selectedVertex == null)
             return; // Not selected.
 
@@ -649,7 +662,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         // Get information for position replaced by the selection.
         int replacedX = x + xOffset;
         int replacedZ = z + zOffset;
-        SelectedVertex replacedVertex = this.selectedVertices[replacedZ][replacedX];
+        SelectedVertex replacedVertex = this.selectedVerticesGrid[replacedZ][replacedX];
         short replacedHeight = packet.getHeightMap()[replacedZ][replacedX];
 
         // Swap height data.
@@ -657,8 +670,8 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         packet.getHeightMap()[z][x] = replacedHeight;
 
         // Update tracking & visual displays.
-        this.selectedVertices[replacedZ][replacedX] = selectedVertex;
-        this.selectedVertices[z][x] = replacedVertex;
+        this.selectedVerticesGrid[replacedZ][replacedX] = selectedVertex;
+        this.selectedVerticesGrid[z][x] = replacedVertex;
         selectedVertex.setGridPosition(replacedX, replacedZ);
         if (replacedVertex != null)
             replacedVertex.setGridPosition(x, z);
@@ -733,11 +746,13 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
             this.display = new MeshView();
             this.display.getTransforms().add(new Translate(xPos, yPos, zPos));
             this.display.getTransforms().add(TRANSLATION_GIZMO_SCALE);
+            this.display.setOnMouseClicked(this.manager::onDisplayClicked);
 
             FirstPersonCamera camera = this.manager.getController().getFirstPersonCamera();
             this.manager.vertexTranslationGizmo.addView(this.display, camera, this.manager.positionChangeListener);
-            this.manager.getController().getLightingGroup().getChildren().add(this.display);
+            this.manager.getController().getMainLight().getScope().add(this.display);
             this.manager.verticeDisplayList.add(this.display);
+            this.manager.selectedVertices.add(this);
         }
 
         /**
@@ -749,7 +764,8 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
 
             this.manager.vertexTranslationGizmo.removeView(this.display);
             this.manager.verticeDisplayList.remove(this.display);
-            this.manager.getController().getLightingGroup().getChildren().remove(this.display);
+            this.manager.selectedVertices.remove(this);
+            this.manager.getController().getMainLight().getScope().remove(this.display);
             this.display = null;
         }
     }

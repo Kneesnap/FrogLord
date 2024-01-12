@@ -60,7 +60,6 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     @FXML private CheckBox checkBoxShowMesh;
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
     @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
-    @FXML private ChoiceBox<ShadingMode> shadingModeChoiceBox;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldCamMoveSpeed;
     @FXML private Button btnResetCamMoveSpeed;
@@ -115,7 +114,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        this.shadingModeChoiceBox.setDisable(true); // TODO: Enable this as we implement the new shading system.
+        // Do nothing for now.
     }
 
     /**
@@ -514,18 +513,5 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         // Setup UI.
         controller.setupController(mesh, stageToOverride, loadRoot);
         return controller;
-    }
-
-    @Getter // TODO: I think this needs to be deleted at some point.
-    @AllArgsConstructor
-    public enum ShadingMode {
-        NO_SHADING("None", 1, 1),
-        OVERLAY_SHADING("Overlay", 1, 1),
-        MIXED_SHADING("Mixed", 2, 2), // Works to create a middle-ground between accurate and low quality.
-        EVERYTHING("Texture", 4, 4);
-
-        private final String name;
-        private final double widthMultiplier;
-        private final double heightMultiplier;
     }
 }

@@ -4,7 +4,6 @@ import javafx.collections.ObservableFloatArray;
 import lombok.Getter;
 import net.highwayfrogs.editor.utils.IndexBitArray;
 import net.highwayfrogs.editor.utils.IntegerCounter;
-import sun.plugin.dom.exception.InvalidStateException;
 
 /**
  * Batches insert/remove array operations for a FXFloatArray into single operations to increase performance.
@@ -132,7 +131,7 @@ public class FXFloatArrayBatcher {
 
         // Ensure the number of values matches the number of indices.
         if (this.queuedInsertionIndices.size() != this.queuedInsertionValues.size())
-            throw new InvalidStateException("There were " + this.queuedInsertionIndices.size() + " indices corresponding to " + this.queuedInsertionValues.size() + " values.");
+            throw new IllegalStateException("There were " + this.queuedInsertionIndices.size() + " indices corresponding to " + this.queuedInsertionValues.size() + " values.");
 
         // Abort if there aren't any values to insert.
         int valueCount = this.queuedInsertionValues.size();

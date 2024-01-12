@@ -278,6 +278,8 @@ public class GeometryManager extends MapManager {
             box.setCullFace(CullFace.BACK);
             box.getTransforms().addAll(new Translate(0, 0, 0));
             box.setMouseTransparent(false);
+            final int index = this.unusedVertexBoxes.size();
+            box.setOnMouseClicked(evt -> System.out.println("Clicked Vertex " + getMap().getVertexes().indexOf(newBoxes.get(index))));
             this.unusedVertexBoxes.add(box);
             getRenderManager().addNode(UNUSED_VERTEX_DISPLAY_LIST, box);
         }

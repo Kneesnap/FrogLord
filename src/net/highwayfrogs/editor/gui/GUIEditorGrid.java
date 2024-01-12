@@ -250,6 +250,28 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Add a double field.
+     * @param label  The name.
+     * @param number The initial number.
+     * @return textField
+     */
+    public TextField addDoubleField(String label, double number, Consumer<Double> setter, Predicate<Double> test) {
+        TextField field = addTextField(label, String.valueOf(number), str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            double doubleValue = Double.parseDouble(str);
+            boolean testPass = test == null || test.test(doubleValue);
+            if (testPass)
+                setter.accept(doubleValue);
+
+            return testPass;
+        });
+        field.setDisable(setter == null);
+        return field;
+    }
+
+    /**
      * Add a short field.
      * @param label  The name.
      * @param number The initial number.

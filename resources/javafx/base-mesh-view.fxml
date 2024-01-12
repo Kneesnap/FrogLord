@@ -61,8 +61,6 @@
                                                                   GridPane.columnIndex="1" GridPane.rowIndex="3"/>
                                                         <ColorPicker fx:id="colorPickerLevelBackground"
                                                                      GridPane.columnIndex="1" GridPane.rowIndex="4"/>
-                                                        <ChoiceBox fx:id="shadingModeChoiceBox" prefWidth="150.0"
-                                                                   GridPane.columnIndex="1" GridPane.rowIndex="5"/>
                                                     </children>
                                                 </GridPane>
                                             </children>
