@@ -18,8 +18,8 @@ import java.util.List;
  * TODO: When adding map collprims (if I'm remembering right and they do exist), make sure to review flag data.
  * Created by Kneesnap on 9/7/2023.
  */
-public class MedievilGameInstance extends SCGameInstance {
-    public MedievilGameInstance() {
+public class MediEvilGameInstance extends SCGameInstance {
+    public MediEvilGameInstance() {
         super(SCGameType.MEDIEVIL);
     }
 

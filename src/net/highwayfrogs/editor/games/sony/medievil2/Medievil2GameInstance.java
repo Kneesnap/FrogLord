@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * Represents an instance of MediEvil 2 game files.
- * Created by RampantSpirit on 9/14/2023. Based on MedievilGameInstance.
+ * Created by RampantSpirit on 9/14/2023. Based on MediEvilGameInstance.
  */
 public class Medievil2GameInstance extends SCGameInstance {
     public Medievil2GameInstance() {

@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.games.sony.medievil.MedievilGameInstance;
+import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil2.Medievil2GameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 
@@ -22,7 +22,7 @@ public enum SCGameType {
     BEAST_WARS(BeastWarsInstance::new),
     FROGGER(FroggerGameInstance::new),
     //TAX_MAN(null),
-    MEDIEVIL(MedievilGameInstance::new),
+    MEDIEVIL(MediEvilGameInstance::new),
     //COMMON_TALES(null),
     MOONWARRIOR(null),
     MEDIEVIL2(Medievil2GameInstance::new),

@@ -1,22 +1,16 @@
 package net.highwayfrogs.editor.games.sony.medievil.map;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.games.sony.medievil.MedievilGameInstance;
+import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
-import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerConfig;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerFormConfig;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerMapConfig;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapVersion;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMeshController;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.*;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapController;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
 import net.highwayfrogs.editor.gui.GUIMain;
@@ -30,13 +24,13 @@ import java.util.List;
  * Cloned from a file created by Kneesnap on 03/9/2024.
  */
 @Getter
-public class MediEvilMapFile extends SCChunkedFile<MedievilGameInstance> {
+public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
 
 
     // Random stuff
     private transient OldFroggerMapConfig cachedMapConfig;
 
-    public MediEvilMapFile(MedievilGameInstance instance) {
+    public MediEvilMapFile(MediEvilGameInstance instance) {
         super(instance, false);
 
     }
