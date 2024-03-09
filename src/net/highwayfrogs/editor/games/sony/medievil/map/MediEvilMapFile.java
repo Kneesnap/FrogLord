@@ -1,20 +1,15 @@
 package net.highwayfrogs.editor.games.sony.medievil.map;
 
+import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
-import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
-import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerConfig;
-import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerFormConfig;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerMapConfig;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapVersion;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
-import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Tuple2;
 
 import java.util.List;
@@ -32,7 +27,6 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
 
     public MediEvilMapFile(MediEvilGameInstance instance) {
         super(instance, false);
-
     }
 
     @Override
@@ -45,6 +39,11 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
         return MAPFile.ICON;
     }
 
+    @Override
+    public Node makeEditor() {
+        return null;
+    }
+
 //    @Override
 //    public Node makeEditor() {
 //        return loadEditor(new MediEvilMapController(getGameInstance()), "medievil-map", this);
@@ -52,13 +51,14 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
 
     @Override
     public void handleWadEdit(WADFile parent) {
-        MeshViewController.setupMeshViewer(GUIMain.MAIN_STAGE, new MediEvilMapMeshController(), new MediEvilMapMesh(this));
+        // TODO: ENABLE
+        //MeshViewController.setupMeshViewer(GUIMain.MAIN_STAGE, new MediEvilMapMeshController(), new MediEvilMapMesh(this));
     }
 
     @Override
     public List<Tuple2<String, Object>> createPropertyList() {
         List<Tuple2<String, Object>> list = super.createPropertyList();
-        list.add(new Tuple2<>("File Version", getMapConfig().getVersion()));
+        /*list.add(new Tuple2<>("File Version", getMapConfig().getVersion()));
         list.add(new Tuple2<>("Comment", this.headerPacket.getComment()));
         list.add(new Tuple2<>("Default Reaction", this.levelSpecificDataPacket.getDefaultReactionType()));
         list.add(new Tuple2<>("Paths", this.pathPacket.getPaths().size()));
@@ -77,7 +77,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
             list.add(new Tuple2<>("Camera Height Grid Dimensions", this.cameraHeightFieldPacket.getXSquareCount() + " x " + this.cameraHeightFieldPacket.getZSquareCount()));
             list.add(new Tuple2<>("Camera Height Grid Square Size", this.cameraHeightFieldPacket.getSquareXSizeAsFloat() + " x " + this.cameraHeightFieldPacket.getSquareZSizeAsFloat()));
             list.add(new Tuple2<>("Camera Height Grid Start Pos", this.cameraHeightFieldPacket.getStartXAsFloat() + ", " + this.cameraHeightFieldPacket.getStartZAsFloat()));
-        }
+        }*/
 
         return list;
     }
@@ -87,37 +87,24 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
      * @return levelTableEntry
      */
     public OldFroggerLevelTableEntry getLevelTableEntry() {
-        return getGameInstance().getLevelTableEntry(getIndexEntry().getResourceId());
+        // TODO: !
+        //return getGameInstance().getLevelTableEntry(getIndexEntry().getResourceId());
+        return null;
     }
 
-    @Override
-    public OldFroggerConfig getConfig() {
-        return (OldFroggerConfig) super.getConfig();
-    }
-
-    /**
-     * Gets the form config utilized by this level. Can be null.
-     */
-    public OldFroggerFormConfig getFormConfig() {
-        return getMapConfig().getFormConfig();
-    }
+    // TODO: Basic Config override (If we make one for MediEvil)
 
     /**
      * Gets the map config usable by this map.
      * @return mapConfig
      */
     public OldFroggerMapConfig getMapConfig() {
+        // TODO: CHANGE OR TOSS.
         if (this.cachedMapConfig != null)
             return this.cachedMapConfig;
 
-        OldFroggerMapConfig mapConfig = getConfig().getMapConfigs().get(getFileDisplayName());
-        return this.cachedMapConfig = mapConfig != null ? mapConfig : getConfig().getDefaultMapConfig();
-    }
-
-    /**
-     * Get the format version which this map was loaded from.
-     */
-    public OldFroggerMapVersion getFormatVersion() {
-        return getMapConfig().getVersion();
+        /*OldFroggerMapConfig mapConfig = getConfig().getMapConfigs().get(getFileDisplayName());
+        return this.cachedMapConfig = mapConfig != null ? mapConfig : getConfig().getDefaultMapConfig();*/
+        return null;
     }
 }
