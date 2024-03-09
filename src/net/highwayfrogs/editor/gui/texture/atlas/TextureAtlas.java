@@ -77,7 +77,7 @@ public abstract class TextureAtlas extends SimpleTexture {
     /**
      * Removes a texture from this atlas.
      * @param texture The texture to remove.
-     * @return Whether or not the texture was removed.
+     * @return Whether the texture was removed.
      */
     public abstract boolean removeTexture(AtlasTexture texture);
 

@@ -3,12 +3,10 @@ package net.highwayfrogs.editor.games.sony.medievil.map.mesh;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
-import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapVersion;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolygon;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerShadedTextureManager;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapGridHeaderPacket.OldFroggerMapGrid;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
@@ -62,11 +60,19 @@ public class MediEvilMapMesh extends DynamicMesh {
 
     private void setupMapTextures() {
         // Find the level table entry for the map this mesh represents.
-        OldFroggerLevelTableEntry levelEntry = getMap().getLevelTableEntry();
+        MediEvilLevelTableEntry levelEntry = getMap().getLevelTableEntry();
         if (levelEntry == null) {
             getLogger().warning("No level table entry was found, so map textures have not been loaded.");
             return;
         }
+
+        if (levelEntry.getRemap() != null)
+            getLogger().info("Found level entry with " + levelEntry.getRemap().getTextureIds().size() + " texture remaps.");  // TODO: TOSS
+
+        // Register VLO textures for the level.
+        VLOArchive levelVlo = levelEntry.getVloFile();
+        if (levelVlo != null)
+            SCUtils.addAtlasTextures(getTextureAtlas(), levelVlo);
 
         // Add gouraud shaded stuff.
         //if (getMap().getFormatVersion() == OldFroggerMapVersion.MILESTONE3)

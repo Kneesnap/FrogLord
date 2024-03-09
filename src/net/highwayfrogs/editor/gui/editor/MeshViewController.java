@@ -18,7 +18,6 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIMain;
@@ -288,7 +287,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 getMesh().removeView(getMeshView()); // Remove view from mesh.
                 Utils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
-                Utils.takeScreenshot(this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), true);
+                Utils.takeScreenshot(this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), false);
             } else if (event.getCode() == KeyCode.F12) {
                 getLogger().info("Saving main mesh texture sheet to 'texture-sheet.png'...");
 

@@ -6,10 +6,16 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
-import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
-import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerMapConfig;
+import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
+import net.highwayfrogs.editor.games.sony.medievil.map.config.MediEvilConfig;
+import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
+import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMeshController;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapGraphicsPacket;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapHeaderPacket;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
+import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Tuple2;
 
 import java.util.List;
@@ -20,13 +26,19 @@ import java.util.List;
  */
 @Getter
 public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
-
-
-    // Random stuff
-    private transient OldFroggerMapConfig cachedMapConfig;
+    private final MediEvilMapHeaderPacket headerPacket;
+    private final MediEvilMapGraphicsPacket graphicsPacket;
 
     public MediEvilMapFile(MediEvilGameInstance instance) {
         super(instance, false);
+        addFilePacket(this.headerPacket = new MediEvilMapHeaderPacket(this));
+        addFilePacket(new DummyFilePacket<>(this, "PTME", true, PacketSizeType.SIZE_INCLUSIVE)); // EMTP - Entity Markets Table Packet?
+        addFilePacket(new DummyFilePacket<>(this, "NHCP", true, PacketSizeType.SIZE_INCLUSIVE)); // PCHN - Path Chain?
+        addFilePacket(new DummyFilePacket<>(this, "2LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL2 - 2D Splines
+        addFilePacket(new DummyFilePacket<>(this, "3LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL3 - 3D Splines
+        addFilePacket(this.graphicsPacket = new MediEvilMapGraphicsPacket(this)); // PSX Graphics
+        addFilePacket(new DummyFilePacket<>(this, "PLOC", true, PacketSizeType.SIZE_INCLUSIVE)); // Collision Primitives (REFER TO BEAST WARS, THIS IS ALREADY REVERSE ENGINEERED / HAS CODE IN FROGLORD)
+        addFilePacket(new DummyFilePacket<>(this, "DIRG", true, PacketSizeType.SIZE_INCLUSIVE)); // GRID - Collision Info?
     }
 
     @Override
@@ -51,15 +63,18 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
 
     @Override
     public void handleWadEdit(WADFile parent) {
-        // TODO: ENABLE
-        //MeshViewController.setupMeshViewer(GUIMain.MAIN_STAGE, new MediEvilMapMeshController(), new MediEvilMapMesh(this));
+        MeshViewController.setupMeshViewer(GUIMain.MAIN_STAGE, new MediEvilMapMeshController(), new MediEvilMapMesh(this));
     }
 
     @Override
     public List<Tuple2<String, Object>> createPropertyList() {
         List<Tuple2<String, Object>> list = super.createPropertyList();
+        list.add(new Tuple2<>("Level String", this.headerPacket.getLevelString()));
+        list.add(new Tuple2<>("Chunks", String.join(", ", this.headerPacket.getHeaderIdentifiers())));
+        list.add(new Tuple2<>("Vertices", this.graphicsPacket.getVertices().size()));
+        list.add(new Tuple2<>("Polygons", this.graphicsPacket.getPolygons().size()));
+
         /*list.add(new Tuple2<>("File Version", getMapConfig().getVersion()));
-        list.add(new Tuple2<>("Comment", this.headerPacket.getComment()));
         list.add(new Tuple2<>("Default Reaction", this.levelSpecificDataPacket.getDefaultReactionType()));
         list.add(new Tuple2<>("Paths", this.pathPacket.getPaths().size()));
         list.add(new Tuple2<>("Zones", this.zonePacket.getZones().size()));
@@ -70,7 +85,6 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
         list.add(new Tuple2<>("Grid Count", this.gridPacket.getXCount() + " x " + this.gridPacket.getZCount() + " (" + this.gridPacket.getGrids().size() + ")"));
         list.add(new Tuple2<>("Grid Base", this.gridPacket.getBasePoint().toFloatString()));
         list.add(new Tuple2<>("Lights", this.lightPacket.getLights().size()));
-        list.add(new Tuple2<>("Vertices", this.vertexPacket.getVertices().size()));
         list.add(new Tuple2<>("UV Animations", this.animPacket.getUvAnimations().size()));
 
         if (this.cameraHeightFieldPacket != null) {
@@ -86,25 +100,12 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
      * Get the level table entry for this level, if one exists.
      * @return levelTableEntry
      */
-    public OldFroggerLevelTableEntry getLevelTableEntry() {
-        // TODO: !
-        //return getGameInstance().getLevelTableEntry(getIndexEntry().getResourceId());
-        return null;
+    public MediEvilLevelTableEntry getLevelTableEntry() {
+        return getGameInstance().getLevelTableEntry(getIndexEntry().getResourceId());
     }
 
-    // TODO: Basic Config override (If we make one for MediEvil)
-
-    /**
-     * Gets the map config usable by this map.
-     * @return mapConfig
-     */
-    public OldFroggerMapConfig getMapConfig() {
-        // TODO: CHANGE OR TOSS.
-        if (this.cachedMapConfig != null)
-            return this.cachedMapConfig;
-
-        /*OldFroggerMapConfig mapConfig = getConfig().getMapConfigs().get(getFileDisplayName());
-        return this.cachedMapConfig = mapConfig != null ? mapConfig : getConfig().getDefaultMapConfig();*/
-        return null;
+    @Override
+    public MediEvilConfig getConfig() {
+        return (MediEvilConfig) super.getConfig();
     }
 }

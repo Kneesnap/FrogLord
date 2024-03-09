@@ -473,6 +473,11 @@ public class DynamicMeshDataEntry {
         if (this.faceStartIndex == -1)
             this.faceStartIndex = this.mesh.getEditableFaces().pendingSize() / this.mesh.getFaceElementSize();
 
+        // Validate face values.
+        validateFace(meshVertex1, meshTexCoord1, 1);
+        validateFace(meshVertex2, meshTexCoord2, 2);
+        validateFace(meshVertex3, meshTexCoord3, 3);
+
         // Write values to array.
         TEMP_FACE_ARRAY[0] = meshVertex1;
         TEMP_FACE_ARRAY[1] = meshTexCoord1;
@@ -519,6 +524,11 @@ public class DynamicMeshDataEntry {
         if (localFaceIndex < 0 || localFaceIndex >= this.writtenFaceCount)
             throw new IllegalArgumentException("The local face index " + localFaceIndex + " is not a valid index to overwrite face data.");
 
+        // Validate face values.
+        validateFace(meshVertex1, meshTexCoord1, 1);
+        validateFace(meshVertex2, meshTexCoord2, 2);
+        validateFace(meshVertex3, meshTexCoord3, 3);
+
         // Write values to array.
         TEMP_FACE_ARRAY[0] = meshVertex1;
         TEMP_FACE_ARRAY[1] = meshTexCoord1;
@@ -534,6 +544,16 @@ public class DynamicMeshDataEntry {
 
         // Trigger an update. (If batching is enabled, this will occur after all changes are ready)
         this.mesh.getEditableFaces().applyToFxArray();
+    }
+
+    private void validateFace(int meshVertexIndex, int texCoordIndex, int localVertexIndex) {
+        int vertexCount = (this.mesh.getEditableVertices().pendingSize() / this.mesh.getPointElementSize());
+        if (meshVertexIndex >= vertexCount || meshVertexIndex < 0)
+            throw new IllegalStateException("Invalid mesh vertex index (" + meshVertexIndex + ") for vertex " + localVertexIndex + ". There are only " + vertexCount + " total vertices!");
+
+        int texCoordCount = (this.mesh.getEditableTexCoords().pendingSize() / this.mesh.getTexCoordElementSize());
+        if (texCoordIndex >= texCoordCount || texCoordIndex < 0)
+            throw new IllegalStateException("Invalid mesh texCoord index (" + texCoordIndex + ") for texCoord " + localVertexIndex + ". There are only " + texCoordCount + " total texCoords!");
     }
 
     /**

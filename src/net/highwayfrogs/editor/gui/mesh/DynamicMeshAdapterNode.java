@@ -67,7 +67,14 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
      * @param source The source to add.
      */
     public final boolean add(TDataSource source) {
-        DynamicMeshTypedDataEntry newEntry = this.writeValuesToArrayAndCreateEntry(source);
+        DynamicMeshTypedDataEntry newEntry;
+
+        try {
+            newEntry = this.writeValuesToArrayAndCreateEntry(source);
+        } catch (Throwable th) {
+            throw new IllegalArgumentException("Failed to write mesh values for " + source, th);
+        }
+
         if (newEntry == null)
             throw new IllegalStateException(Utils.getSimpleName(this) + " returned null from writeValuesToArrayAndCreateEntry(TDataSource).");
 

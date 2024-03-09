@@ -409,4 +409,27 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             SIZE_EXCLUSIVE, // Does not include the header size.
         }
     }
+
+    /**
+     * Represents a file packet which is unimplemented, and just reads/stores the packet in full.
+     */
+    @Getter
+    public static class DummyFilePacket<TFile extends SCChunkedFile<TGameInstance>, TGameInstance extends SCGameInstance> extends SCFilePacket<TFile, TGameInstance> {
+        private byte[] rawData;
+
+        public DummyFilePacket(TFile parentFile, String identifier, boolean required, PacketSizeType sizeType) {
+            super(parentFile, identifier, required, sizeType);
+        }
+
+        @Override
+        protected void loadBody(DataReader reader, int endIndex) {
+            this.rawData = reader.readBytes(endIndex - reader.getIndex());
+        }
+
+        @Override
+        protected void saveBodyFirstPass(DataWriter writer) {
+            if (this.rawData != null)
+                writer.writeBytes(this.rawData);
+        }
+    }
 }

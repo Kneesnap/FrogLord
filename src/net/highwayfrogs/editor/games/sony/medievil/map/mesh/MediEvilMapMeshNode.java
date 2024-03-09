@@ -1,8 +1,7 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.mesh;
 
-import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
@@ -10,11 +9,13 @@ import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.system.math.Vector2f;
 
+import java.util.List;
+
 /**
  * Represents a node in a map mesh for MediEvil.
  * Cloned from a file created by Kneesnap on 03/9/2024.
  */
-public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapPolygon> {
+public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<MediEvilMapPolygon> {
     private final Vector2f tempVector = new Vector2f();
     private DynamicMeshDataEntry vertexEntry;
 
@@ -32,8 +33,8 @@ public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapPol
         super.onAddedToMesh();
 
         // Setup vertices.
-        /*this.vertexEntry = new DynamicMeshDataEntry(getMesh());
-        List<SVector> vertices = getMap().getVertexPacket().getVertices();
+        this.vertexEntry = new DynamicMeshDataEntry(getMesh());
+        List<SVector> vertices = getMap().getGraphicsPacket().getVertices();
         for (int i = 0; i < vertices.size(); i++) {
             SVector vertex = vertices.get(i);
             this.vertexEntry.addVertexValue(vertex.getFloatX(), vertex.getFloatY(), vertex.getFloatZ());
@@ -41,10 +42,8 @@ public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapPol
         addUnlinkedEntry(this.vertexEntry);
 
         // Setup polygons.
-        for (OldFroggerMapGrid grid : getMap().getGridPacket().getGrids())
-            for (OldFroggerMapPolygon polygon : grid.getPolygons())
-                this.add(polygon);*/
-        // TODO: !
+        for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
+            this.add(polygon);
     }
 
     @Override
@@ -54,34 +53,48 @@ public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapPol
     }
 
     @Override
-    protected DynamicMeshTypedDataEntry writeValuesToArrayAndCreateEntry(OldFroggerMapPolygon data) {
+    protected DynamicMeshTypedDataEntry writeValuesToArrayAndCreateEntry(MediEvilMapPolygon data) {
         DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), data);
 
         // Resolve texture.
-        //ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(data);
-        //Texture texture = getMesh().getTextureAtlas().getTextureFromSourceOrFallback(textureSource); // TODO: !
-        Texture texture = getMesh().getTextureAtlas().getFallbackTexture();
+        //TODO: ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(data);
+        ITextureSource textureSource = entry.getDataSource().getTexture(getMap().getLevelTableEntry());
+        Texture texture = getMesh().getTextureAtlas().getTextureFromSourceOrFallback(textureSource);
 
         // Add texture UVs.
-        int uvIndex1 = entry.addTexCoordValue(getTextureCoordinate(data, null, texture, 0, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
-        int uvIndex2 = entry.addTexCoordValue(getTextureCoordinate(data, null, texture, 1, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F
-        int uvIndex3 = entry.addTexCoordValue(getTextureCoordinate(data, null, texture, 2, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
-        int uvIndex4 = entry.addTexCoordValue(getTextureCoordinate(data, null, texture, 3, Vector2f.ONE)); // uvBottomRight, 1F, 1F
+        if (data.getPolygonType().getVerticeCount() == 4) {
+            int uvIndex1 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 0, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
+            int uvIndex2 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 1, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F
+            int uvIndex3 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 2, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
+            int uvIndex4 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 3, Vector2f.ONE)); // uvBottomRight, 1F, 1F
 
-        // Vertice IDs are the same IDs seen in the map data.
-        int vtxIndex1 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[0];
-        int vtxIndex2 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[1];
-        int vtxIndex3 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[2];
-        int vtxIndex4 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[3];
+            // Vertice IDs are the same IDs seen in the map data.
+            int vtxIndex1 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[0];
+            int vtxIndex2 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[1];
+            int vtxIndex3 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[2];
+            int vtxIndex4 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[3];
 
-        // JavaFX uses counter-clockwise winding order.
-        entry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
-        entry.addFace(vtxIndex3, uvIndex3, vtxIndex4, uvIndex4, vtxIndex2, uvIndex2);
+            // JavaFX uses counter-clockwise winding order.
+            entry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
+            entry.addFace(vtxIndex3, uvIndex3, vtxIndex4, uvIndex4, vtxIndex2, uvIndex2);
+        } else {
+            int uvIndex1 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 0, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
+            int uvIndex2 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 1, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F
+            int uvIndex3 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 2, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
+
+            // Vertice IDs are the same IDs seen in the map data.
+            int vtxIndex1 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[0];
+            int vtxIndex2 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[1];
+            int vtxIndex3 = this.vertexEntry.getVertexStartIndex() + data.getVertices()[2];
+
+            // JavaFX uses counter-clockwise winding order.
+            entry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
+        }
 
         return entry;
     }
 
-    private Vector2f getTextureCoordinate(OldFroggerMapPolygon polygon, ITextureSource textureSource, Texture texture, int index, Vector2f fallback) {
+    private Vector2f getTextureCoordinate(MediEvilMapPolygon polygon, ITextureSource textureSource, Texture texture, int index, Vector2f fallback) {
         Vector2f localUv;
         if (polygon.getPolygonType().isTextured()) {
             localUv = polygon.getTextureUvs()[index].toVector(this.tempVector);
@@ -111,7 +124,7 @@ public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapPol
 
         // Map textures seem to be flipped vertically,
         // and generated shaded textures are consistent with this behavior.
-        if (textureSource instanceof PSXShadeTextureDefinition || textureSource instanceof GameImage)
+        if (textureSource instanceof PSXShadeTextureDefinition)
             localUv.setY(1F - localUv.getY()); // UVs are flipped for generated shader textures too, in order to stay consistent.
 
         // Get the UVs local to the texture.
@@ -121,8 +134,8 @@ public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapPol
     @Override
     public void updateVertex(DynamicMeshTypedDataEntry entry, int localVertexIndex) {
         if (this.vertexEntry == entry) {
-            /*SVector vertexPos = getMap().getVertexPacket().getVertices().get(localVertexIndex);
-            entry.writeVertexXYZ(localVertexIndex, vertexPos.getFloatX(), vertexPos.getFloatY(), vertexPos.getFloatZ());*/
+            SVector vertexPos = getMap().getGraphicsPacket().getVertices().get(localVertexIndex);
+            entry.writeVertexXYZ(localVertexIndex, vertexPos.getFloatX(), vertexPos.getFloatY(), vertexPos.getFloatZ());
         }
 
         // Do nothing else, no other entries are given vertices.
@@ -130,24 +143,24 @@ public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapPol
 
     @Override
     public void updateTexCoord(DynamicMeshTypedDataEntry entry, int localTexCoordIndex) {
-        OldFroggerMapPolygon polygon = entry.getDataSource();
-        /*ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(polygon);
-        Texture texture = getMesh().getTextureAtlas().getTextureFromSourceOrFallback(textureSource);*/
-        Texture texture = getMesh().getTextureAtlas().getFallbackTexture(); // TODO: !
+        MediEvilMapPolygon polygon = entry.getDataSource();
+        // TODO: ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(polygon);
+        ITextureSource textureSource = entry.getDataSource().getTexture(getMap().getLevelTableEntry());
+        Texture texture = getMesh().getTextureAtlas().getTextureFromSourceOrFallback(textureSource);
 
         Vector2f uv;
         switch (localTexCoordIndex) {
             case 0:
-                uv = getTextureCoordinate(polygon, null, texture, 0, Vector2f.ZERO); // uvTopLeft, 0F, 0F
+                uv = getTextureCoordinate(polygon, textureSource, texture, 0, Vector2f.ZERO); // uvTopLeft, 0F, 0F
                 break;
             case 1:
-                uv = getTextureCoordinate(polygon, null, texture, 1, Vector2f.UNIT_X); // uvTopRight, 1F, 0F
+                uv = getTextureCoordinate(polygon, textureSource, texture, 1, Vector2f.UNIT_X); // uvTopRight, 1F, 0F
                 break;
             case 2:
-                uv = getTextureCoordinate(polygon, null, texture, 2, Vector2f.UNIT_Y); // uvBottomLeft, 0F, 1F
+                uv = getTextureCoordinate(polygon, textureSource, texture, 2, Vector2f.UNIT_Y); // uvBottomLeft, 0F, 1F
                 break;
             case 3:
-                uv = getTextureCoordinate(polygon, null, texture, 3, Vector2f.ONE); // uvBottomRight, 1F, 1F
+                uv = getTextureCoordinate(polygon, textureSource, texture, 3, Vector2f.ONE); // uvBottomRight, 1F, 1F
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported local texCoordIndex " + localTexCoordIndex);
