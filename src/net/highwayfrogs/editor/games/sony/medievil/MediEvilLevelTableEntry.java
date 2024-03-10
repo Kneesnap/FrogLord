@@ -35,7 +35,15 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
         int endIndex = reader.getIndex() + getByteSize();
         this.wadResourceId = reader.readInt();
         this.vloResourceId = reader.readInt();
-        reader.skipBytes(4);
+
+        // Japanese versions have an extra resource ID
+        if (getByteSize() > 100) {
+            reader.skipBytes(8);
+        }
+        else {
+            reader.skipBytes(4);
+        }
+
         this.textureRemapPointer = reader.readUnsignedIntAsLong();
         reader.setIndex(endIndex);
     }
