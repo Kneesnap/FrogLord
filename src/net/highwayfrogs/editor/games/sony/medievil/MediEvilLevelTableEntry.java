@@ -19,12 +19,15 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
     private int wadResourceId;
     private int vloResourceId;
+    @Getter private final int byteSize;
     @Setter private long textureRemapPointer;
 
     @Setter private transient TextureRemapArray remap;
 
-    public MediEvilLevelTableEntry(MediEvilGameInstance instance) {
+    public MediEvilLevelTableEntry(MediEvilGameInstance instance, int byteSize) {
+
         super(instance);
+        this.byteSize = byteSize;
     }
 
     @Override
@@ -50,17 +53,6 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
             if (wadEntry.getFile() instanceof MediEvilMapFile)
                 return (MediEvilMapFile) wadEntry.getFile();
         return null;
-    }
-
-    public int getByteSize() {
-        if ("medievil-rolling-demo".equalsIgnoreCase(getConfig().getInternalName())) {
-            return 76;
-        }
-        if ("medievil-ects-pre-alpha".equalsIgnoreCase(getConfig().getInternalName())) {
-            return 88;
-        } else {
-            return 100;
-        }
     }
 
     /**

@@ -35,13 +35,14 @@ public class MediEvilConfig extends SCGameConfig {
         int levelTableAddress = config.getInt("levelTable", -1);
         int levelTableSize = config.getInt("levelTableSize", 25);
         int levelTableOffset = config.getInt("levelTableOffset", 0);
+        int levelTableEntryByteSize = config.getInt("levelTableEntryByteSize", 100);
         if (levelTableAddress < 0)
             return;
 
         DataReader reader = this.instance.getExecutableReader();
         reader.jumpTemp(levelTableAddress);
         for (int i = 0; i < levelTableSize; i++) {
-            MediEvilLevelTableEntry newEntry = new MediEvilLevelTableEntry(this.instance);
+            MediEvilLevelTableEntry newEntry = new MediEvilLevelTableEntry(this.instance, levelTableEntryByteSize);
             newEntry.load(reader);
             if (newEntry.getTextureRemapPointer() > 0)
                 newEntry.setTextureRemapPointer(newEntry.getTextureRemapPointer() + levelTableOffset);
