@@ -53,6 +53,9 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
     }
 
     public int getByteSize() {
+        if ("medievil-rolling-demo".equalsIgnoreCase(getConfig().getInternalName())) {
+            return 76;
+        }
         if ("medievil-ects-pre-alpha".equalsIgnoreCase(getConfig().getInternalName())) {
             return 88;
         } else {
