@@ -7,7 +7,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import lombok.Getter;
@@ -51,6 +50,14 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     }
 
     /**
+     * Gets the index of the selected value in the value list.
+     * @return selectedValueIndex
+     */
+    public int getSelectedValueIndex() {
+        return this.valueSelectionBox.getSelectionModel().getSelectedIndex();
+    }
+
+    /**
      * Gets the title of the UI accordion pane.
      */
     public abstract String getTitle();
@@ -77,9 +84,9 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         super.onSetup();
 
         // Unchanging UI Fields
-        VBox editorBox = this.getController().makeAccordionMenu(getTitle());
-        this.mainGrid = getController().makeEditorGrid(editorBox);
-        this.setupMainGridEditor(editorBox);
+        UISidePanel sidePanel = getController().createSidePanel(getTitle());
+        this.mainGrid = sidePanel.makeEditorGrid();
+        this.setupMainGridEditor(sidePanel);
 
         // Value Creation Button
         Button addValueButton = new Button("Add " + getValueName());
@@ -108,8 +115,8 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         this.mainGrid.addRow();
 
         // Separator, and grid setup.
-        editorBox.getChildren().add(new Separator(Orientation.HORIZONTAL));
-        this.editorGrid = this.getController().makeEditorGrid(editorBox);
+        sidePanel.add(new Separator(Orientation.HORIZONTAL));
+        this.editorGrid = sidePanel.makeEditorGrid();
 
         // Setup collprims.
         for (TValue value : getValues()) {
@@ -123,12 +130,12 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
 
     /**
      * Sets up the main grid editor UI.
-     * @param editorBox The box to create the UI inside.
+     * @param sidePanel The side panel to add UI elements to.
      */
-    protected void setupMainGridEditor(VBox editorBox) {
+    protected void setupMainGridEditor(UISidePanel sidePanel) {
         // Value count label.
         this.valueCountLabel = new Label(getValueName() + " Count: " + getValues().size());
-        editorBox.getChildren().add(this.valueCountLabel);
+        sidePanel.add(this.valueCountLabel);
 
         // Value Selection Box
         this.valueSelectionBox = this.mainGrid.addSelectionBox("Select " + getValueName(), null, getValues(), null);

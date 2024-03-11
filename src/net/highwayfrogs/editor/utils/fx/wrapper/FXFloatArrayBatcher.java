@@ -280,12 +280,24 @@ public class FXFloatArrayBatcher {
     /**
      * Gets a single value of array. This is generally as fast as direct access
      * to an array and eliminates necessity to make a copy of array.
+     * If a pending value is waiting to be written (but not inserted), the pending value is returned.
      * @param index index of element to get
      * @return value at the given index
      * @throws ArrayIndexOutOfBoundsException if {@code index} is outside array bounds
      */
     public float get(int index) {
         return this.array.get(index);
+    }
+
+    /**
+     * Gets a single value of array. If a pending value is waiting to be written, the original unchanged value is returned.
+     * This is generally as fast as direct access to an array.
+     * @param index index of element to get
+     * @return value at the given index
+     * @throws ArrayIndexOutOfBoundsException if {@code index} is outside array bounds
+     */
+    public float getOld(int index) {
+        return this.fxArray.get(index);
     }
 
     /**

@@ -7,11 +7,13 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.shared.MRSplineHermite;
-import net.highwayfrogs.editor.games.sony.shared.MRSplineMatrix;
+import net.highwayfrogs.editor.games.sony.shared.spline.MRSplineHermite;
+import net.highwayfrogs.editor.games.sony.shared.spline.MRSplineMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.Utils;
+
+import java.util.Arrays;
 
 /**
  * Represents a spline in old Frogger.
@@ -23,9 +25,9 @@ public class OldFroggerSpline extends SCSharedGameData {
     private final int[][] smoothC = new int[4][3]; // Smoothing coefficient data.
 
     private static final int SPLINE_FIX_INTERVAL = 0x200;
-    private static final int SPLINE_WORLD_SHIFT = 3;
-    private static final int SPLINE_PARAM_SHIFT = 11;
-    private static final int SPLINE_T2_SHIFT = 3;
+    private static final int SPLINE_WORLD_SHIFT = 3; // shift world coords down by this to fit into calculation size
+    private static final int SPLINE_PARAM_SHIFT = 11; // fixed point for parameter t ("ONE" = ( 1<< MR_SPLINE_PARAM_SHIFT))
+    private static final int SPLINE_T2_SHIFT = 3; // shift applied to (t*t) before it is used
     public static final int SIZE_IN_BYTES = MRSplineMatrix.SIZE_IN_BYTES + (4 * Constants.INTEGER_SIZE) + (4 * 3 * Constants.INTEGER_SIZE);
 
     public OldFroggerSpline(SCGameInstance instance) {
@@ -62,10 +64,54 @@ public class OldFroggerSpline extends SCSharedGameData {
     }
 
     /**
-     * Calculate a coefficient matrix from the spline hermite.
+     * Convert the spline hermite to a spline matrix.
+     * This accounts for the tangent scaling present in the game.
+     * This was reverse engineered from the function at 0x8002F044 in build 1997-03-19-psx-milestone3.
+     * @return splineMatrix
      */
-    public MRSplineMatrix calculateMatrix() {
-        return this.splineHermite.calculateMatrix(new MRSplineMatrix(getGameInstance()), true);
+    public MRSplineMatrix toMatrix() {
+        return toMatrix(null);
+    }
+
+    /**
+     * Convert the spline hermite to a spline matrix.
+     * This accounts for the tangent scaling present in the game.
+     * This was reverse engineered from the function at 0x8002F044 in build 1997-03-19-psx-milestone3.
+     * @param matrix The spline matrix to write calculated data in. If null is supplied, a new instance will be created.
+     * @return splineMatrix
+     */
+    public MRSplineMatrix toMatrix(MRSplineMatrix matrix) {
+        if (matrix == null)
+            matrix = new MRSplineMatrix(getGameInstance());
+
+        IVector startTangent = this.splineHermite.getStartTangent();
+        int oldStartTangentX = startTangent.getX();
+        int oldStartTangentY = startTangent.getX();
+        int oldStartTangentZ = startTangent.getX();
+        startTangent.setX(3 * oldStartTangentX);
+        startTangent.setY(3 * oldStartTangentY);
+        startTangent.setZ(3 * oldStartTangentZ);
+
+        IVector endTangent = this.splineHermite.getEndTangent();
+        int oldEndTangentX = endTangent.getX();
+        int oldEndTangentY = endTangent.getY();
+        int oldEndTangentZ = endTangent.getZ();
+        endTangent.setX(-3 * oldEndTangentX);
+        endTangent.setY(-3 * oldEndTangentY);
+        endTangent.setZ(-3 * oldEndTangentZ);
+
+        // Calculate matrix only after scaling tangents.
+        matrix = this.splineHermite.toSplineMatrix(matrix);
+
+        // Restore original values.
+        startTangent.setX(oldStartTangentX);
+        startTangent.setY(oldStartTangentY);
+        startTangent.setZ(oldStartTangentZ);
+        endTangent.setX(oldEndTangentX);
+        endTangent.setY(oldEndTangentY);
+        endTangent.setZ(oldEndTangentZ);
+
+        return matrix;
     }
 
     // What follows is horrible to read, but is accurate to the game.
@@ -110,7 +156,7 @@ public class OldFroggerSpline extends SCSharedGameData {
 
         SVector pos = new SVector();
 
-        int[][] splineMatrix = calculateMatrix().getMatrix();
+        int[][] splineMatrix = toMatrix().getMatrix();
         pos.setX((short) (((t3 * splineMatrix[0][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t2 * splineMatrix[1][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t * splineMatrix[2][0]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
@@ -130,10 +176,11 @@ public class OldFroggerSpline extends SCSharedGameData {
     }
 
     public IVector calculateSplineTangent(int distance) {
+        // evaluates the derivative function of the spline position.
         int t = getSplineParamFromLength(distance);
         int t2 = (3 * t * t) >> SPLINE_T2_SHIFT;
 
-        int[][] splineMatrix = calculateMatrix().getMatrix();
+        int[][] splineMatrix = toMatrix().getMatrix();
         int x = ((t2 * splineMatrix[0][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
                 ((t * splineMatrix[1][0]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT - 1)) +
                 (splineMatrix[2][0] << SPLINE_WORLD_SHIFT);
@@ -200,19 +247,25 @@ public class OldFroggerSpline extends SCSharedGameData {
             this.smoothT[i] = Utils.floatToFixedPointInt((length * smoothingT[i]), 12);
     }
 
-    public void setupEditor(MeshViewController<?> controller, GUIEditorGrid editor) {
-        editor.addFloatSVector("Start Point", this.splineHermite.getStartPoint(), controller);
-        editor.addFloatSVector("End Point", this.splineHermite.getEndPoint(), controller);
-        editor.addFloatVector("Start Tangent", this.splineHermite.getStartTangent(), null, controller);
-        editor.addFloatVector("End Tangent", this.splineHermite.getEndTangent(), null, controller);
-        makeTEditor(controller, editor);
+    /**
+     * Create an editor for the spline.
+     * @param controller The controller to create the UI under.
+     * @param grid the grid to create the UI elements inside
+     */
+    public void setupEditor(MeshViewController<?> controller, GUIEditorGrid grid) {
+        this.splineHermite.setupEditor(controller, grid, null); // TODO: We should update in real-time when changes occur.
+        int[][] splineMatrix = toMatrix().getMatrix();
+        for (int i = 0; i < splineMatrix.length; i++) // TODO: TOSS
+            grid.addNormalLabel("matrix[" + i + "] = " + Arrays.toString(splineMatrix[i]));
 
-        editor.addBoldLabel("Smooth C:"); //TODO: Make a real editor.
+        makeTEditor(controller, grid);
+
+        grid.addBoldLabel("Smooth C:"); //TODO: Make a real editor.
         for (int i = 0; i < this.smoothC.length; i++) {
             final int index1 = i;
             for (int j = 0; j < this.smoothC[i].length; j++) {
                 final int index2 = j;
-                editor.addIntegerField(i + "," + j, this.smoothC[i][j], newVal -> {
+                grid.addIntegerField(i + "," + j, this.smoothC[i][j], newVal -> {
                     this.smoothC[index1][index2] = newVal;
                     // TODO: onUpdate(controller);
                 }, null);

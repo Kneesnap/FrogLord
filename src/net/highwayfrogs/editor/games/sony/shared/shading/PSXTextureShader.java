@@ -111,31 +111,33 @@ public class PSXTextureShader {
             coordinates[0].setXY(startX, startY);
             coordinates[1].setXY(startX, endY);
             coordinates[2].setXY(endX, startY);
-            shadeTriangle(null, image, colors, coordinates, true, true);
+            shadeTriangle(null, image, colors, coordinates);
         } else if (colors.length == 4) {
             CVector[] triangleColors = instance.getTriangleColors();
 
-            // Left triangle.
+            // Left triangle. (0, 0 is the top-left corner)
             triangleColors[0].copyFrom(colors[0]);
             triangleColors[1].copyFrom(colors[1]);
             triangleColors[2].copyFrom(colors[2]);
-            coordinates[0].setXY(startX, endY);
-            coordinates[1].setXY(endX, endY);
-            coordinates[2].setXY(startX, startY);
-            shadeTriangle(null, image, triangleColors, coordinates, true, false);
+            coordinates[0].setXY(startX, startY);
+            coordinates[1].setXY(endX, startY);
+            coordinates[2].setXY(startX, endY);
+            shadeTriangle(null, image, triangleColors, coordinates);
 
-            // Right triangle.
+            // Right triangle. (width, height is the bottom-right corner)
             triangleColors[0].copyFrom(colors[3]);
             triangleColors[1].copyFrom(colors[2]);
             triangleColors[2].copyFrom(colors[1]);
-            coordinates[0].setXY(endX, startY);
-            coordinates[1].setXY(startX, startY);
-            coordinates[2].setXY(endX, endY);
-            shadeTriangle(null, image, triangleColors, coordinates, false, true);
+            coordinates[0].setXY(endX, endY);
+            coordinates[1].setXY(startX, endY);
+            coordinates[2].setXY(endX, startY);
+            shadeTriangle(null, image, triangleColors, coordinates);
         } else {
             throw new RuntimeException("Can't create gouraud shaded image with " + colors.length + " colors.");
         }
 
+        fillHorizontalPadding(image, true, true);
+        fillVerticalPadding(image, true, true);
         return image;
     }
 
@@ -157,7 +159,7 @@ public class PSXTextureShader {
             coordinates[0].loadUV(paddedWidth, paddedHeight, textureUvs[0]);
             coordinates[1].loadUV(paddedWidth, paddedHeight, textureUvs[1]);
             coordinates[2].loadUV(paddedWidth, paddedHeight, textureUvs[2]);
-            shadeTriangle(originalImage, image, colors, coordinates, true, true);
+            shadeTriangle(originalImage, image, colors, coordinates);
         } else if (colors.length == 4) {
             CVector[] triangleColors = instance.getTriangleColors();
 
@@ -168,7 +170,7 @@ public class PSXTextureShader {
             coordinates[0].loadUV(paddedWidth, paddedHeight, textureUvs[0]);
             coordinates[1].loadUV(paddedWidth, paddedHeight, textureUvs[1]);
             coordinates[2].loadUV(paddedWidth, paddedHeight, textureUvs[2]);
-            shadeTriangle(originalImage, image, triangleColors, coordinates, false, false);
+            shadeTriangle(originalImage, image, triangleColors, coordinates);
 
             // Right triangle.
             triangleColors[0].copyFrom(colors[3]);
@@ -177,12 +179,11 @@ public class PSXTextureShader {
             coordinates[0].loadUV(paddedWidth, paddedHeight, textureUvs[3]);
             coordinates[1].loadUV(paddedWidth, paddedHeight, textureUvs[2]);
             coordinates[2].loadUV(paddedWidth, paddedHeight, textureUvs[1]);
-            shadeTriangle(originalImage, image, triangleColors, coordinates, false, false);
+            shadeTriangle(originalImage, image, triangleColors, coordinates);
         } else {
             throw new RuntimeException("Can't create gouraud shaded image with " + colors.length + " colors.");
         }
 
-        // Unlike the other gouraud image, it's easier to fill in padding afterwards due
         fillHorizontalPadding(image, true, true);
         fillVerticalPadding(image, true, true);
         return image;
@@ -190,14 +191,12 @@ public class PSXTextureShader {
 
     /**
      * Applies gouraud shading to an image.
-     * @param sourceImage          The texture to apply shading to, if one exists.
-     * @param targetImage          The image to draw the shaded image onto.
-     * @param colors               The colors of each triangle vertex.
-     * @param vertices             The position of each triangle vertex.
-     * @param fillOutOfBoundsLeft  If the area out of bounds to the left of the triangle should be shaded.
-     * @param fillOutOfBoundsRight If the area out of bounds to the right of the triangle should be shaded.
+     * @param sourceImage The texture to apply shading to, if one exists.
+     * @param targetImage The image to draw the shaded image onto.
+     * @param colors The colors of each triangle vertex.
+     * @param vertices The position of each triangle vertex.
      */
-    public static void shadeTriangle(BufferedImage sourceImage, BufferedImage targetImage, CVector[] colors, TextureCoordinate[] vertices, boolean fillOutOfBoundsLeft, boolean fillOutOfBoundsRight) {
+    public static void shadeTriangle(BufferedImage sourceImage, BufferedImage targetImage, CVector[] colors, TextureCoordinate[] vertices) {
         if (sourceImage != null && (sourceImage.getWidth() != targetImage.getWidth() || sourceImage.getHeight() != targetImage.getHeight()))
             throw new RuntimeException("The source image had dimensions of " + sourceImage.getWidth() + "x" + sourceImage.getHeight() + ", but the target image was " + targetImage.getWidth() + "x" + targetImage.getHeight() + ".");
 
@@ -284,20 +283,7 @@ public class PSXTextureShader {
                 CVector pixelColor = interpolateCVector(leftLineColor, rightLineColor, xLerpFactor, instance.getTempColorVector3());
                 shadePixel(sourceImage, targetImage, x, y, pixelColor);
             }
-
-            // Fill out of bounds colors to the left.
-            if (fillOutOfBoundsLeft)
-                for (int x = 0; x < leftLineX; x++)
-                    shadePixel(sourceImage, targetImage, x, y, leftLineColor);
-
-            // Fill out of bounds colors to the right.
-            if (fillOutOfBoundsRight)
-                for (int x = rightLineX + 1; x < targetImage.getWidth(); x++)
-                    shadePixel(sourceImage, targetImage, x, y, rightLineColor);
         }
-
-        // Step 3) Fill in padding pixels.
-        fillVerticalPadding(targetImage, fillOutOfBoundsRight, fillOutOfBoundsLeft);
     }
 
     private static void fillHorizontalPadding(BufferedImage targetImage, boolean fillLeftPadding, boolean fillRightPadding) {

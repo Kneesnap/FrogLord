@@ -138,7 +138,7 @@ public class OldFroggerPathManager extends OldFroggerMapListManager<OldFroggerMa
 
     @Override
     protected void onSelectedValueChange(OldFroggerMapPath oldValue, DisplayList oldDelegate, OldFroggerMapPath newValue, DisplayList newDelegate) {
-        // TODO: Hmm.
+        // Do nothing
     }
 
     @Override

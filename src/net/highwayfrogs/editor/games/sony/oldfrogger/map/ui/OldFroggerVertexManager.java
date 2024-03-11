@@ -11,14 +11,10 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Manages vertex displays for the map.
- * TODO: Allow editing vertices.
- * TODO: Allow clicking on a vertex to show its position.
- * TODO: Either all vertices are visible, none are visible, or none are supposed to be visible, but vertices for the selected face are displayed.
- * TODO: Allow selecting multiple.
- * TODO: This probably should not be an extension of list manager when we flesh it out. A list manager is really for selecting one item from a list, while vertices are a little more complex.
  * Created by Kneesnap on 12/12/2023.
  */
 public class OldFroggerVertexManager extends OldFroggerMapListManager<SVector, Sphere> {
@@ -26,6 +22,7 @@ public class OldFroggerVertexManager extends OldFroggerMapListManager<SVector, S
 
     private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
     private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.LIME);
+    private static final UUID VERTEX_POSITION_IDENTIFIER = UUID.randomUUID();
 
     public OldFroggerVertexManager(MeshViewController<OldFroggerMapMesh> controller) {
         super(controller);
@@ -62,9 +59,9 @@ public class OldFroggerVertexManager extends OldFroggerMapListManager<SVector, S
     }
 
     @Override
-    protected void updateEditor(SVector selectedValue) {
-        getEditorGrid().addFloatSVector("Position", selectedValue, getController());
-        // TODO: Add an update hook to make this update the mesh in real-time.
+    protected void updateEditor(SVector vertex) {
+        getEditorGrid().addPositionEditor(getController(), VERTEX_POSITION_IDENTIFIER, "Position", vertex,
+                ((meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> getMesh().getMainNode().updateMapVertex(getSelectedValueIndex())));
     }
 
     @Override

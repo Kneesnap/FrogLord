@@ -285,6 +285,19 @@ public class DynamicMeshDataEntry {
     }
 
     /**
+     * Gets the index which vertex position data starts in the full mesh array.
+     * @param localVertexIndex local index of vertex managed by this entry
+     * @return vertexMeshArrayIndex
+     */
+    public int getVertexMeshArrayIndex(int localVertexIndex) {
+        if (localVertexIndex < 0 || localVertexIndex >= this.pendingVertexCount)
+            throw new ArrayIndexOutOfBoundsException("Invalid local vertex ID: " + localVertexIndex);
+
+        int vertexElementSize = this.mesh.getPointElementSize(); // 3
+        return (this.vertexStartIndex + localVertexIndex) * vertexElementSize;
+    }
+
+    /**
      * Adds a new texture coordinate value.
      * @param uv The vector containing uv values.
      * @return the index into the mesh array which the tex coord data starts.
@@ -439,6 +452,19 @@ public class DynamicMeshDataEntry {
     }
 
     /**
+     * Gets the index which texture coordinate data starts in the full mesh array.
+     * @param localTexCoordIndex local index of texCoord managed by this entry
+     * @return texCoordMeshArrayIndex
+     */
+    public int getTexCoordMeshArrayIndex(int localTexCoordIndex) {
+        if (localTexCoordIndex < 0 || localTexCoordIndex >= this.pendingTexCoordCount)
+            throw new ArrayIndexOutOfBoundsException("Invalid local texCoord ID: " + localTexCoordIndex);
+
+        int texCoordElementSize = this.mesh.getTexCoordElementSize(); // 2
+        return (this.texCoordStartIndex + localTexCoordIndex) * texCoordElementSize;
+    }
+
+    /**
      * Adds a new face referencing existing vertex and texCoord data.
      * @param meshVertex1   The index to the position of the first vertex.
      * @param meshTexCoord1 The index to the position of the first texture coordinate.
@@ -581,6 +607,19 @@ public class DynamicMeshDataEntry {
 
         // Trigger an update. (If batching is enabled, this will occur after all changes are ready)
         this.mesh.getEditableFaces().applyToFxArray();
+    }
+
+    /**
+     * Gets the index which face index data starts in the full mesh array.
+     * @param localFaceIndex local index of vertex managed by this entry
+     * @return faceMeshArrayIndex
+     */
+    public int getFaceMeshArrayIndex(int localFaceIndex) {
+        if (localFaceIndex < 0 || localFaceIndex >= this.pendingFaceCount)
+            throw new ArrayIndexOutOfBoundsException("Invalid local face ID: " + localFaceIndex);
+
+        int faceElementSize = this.mesh.getFaceElementSize(); // 6 = 3 vertices * (1 vertex ID + 1 texture coordinate)
+        return (this.faceStartIndex + localFaceIndex) * faceElementSize;
     }
 
     /**

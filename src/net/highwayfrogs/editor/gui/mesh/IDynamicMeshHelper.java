@@ -18,6 +18,84 @@ public interface IDynamicMeshHelper {
     DynamicMesh getMesh();
 
     /**
+     * Updates the vertex position data for the given local vertex index.
+     * @param entry the entry containing the vertex to update
+     * @param localTexCoordIndex the local index of the texCoord to update
+     * @return true, iff the local texture coordinate was updated.
+     */
+    boolean updateTexCoord(DynamicMeshDataEntry entry, int localTexCoordIndex);
+
+    /**
+     * Update all the texCoord data associated with the entry.
+     * @param entry The entry to update texCoords for.
+     */
+    default void updateTexCoords(DynamicMeshDataEntry entry) {
+        if (entry == null)
+            throw new NullPointerException("entry");
+        if (!entry.isActive())
+            throw new RuntimeException("Cannot update mesh data on an inactive entry.");
+
+        // Update each texCoord.
+        getMesh().getEditableTexCoords().startBatchingUpdates();
+        for (int i = 0; i < entry.getWrittenTexCoordCount(); i++)
+            this.updateTexCoord(entry, i);
+        getMesh().getEditableTexCoords().endBatchingUpdates();
+    }
+
+    /**
+     * Update all texCoords held by entries tracked by this object.
+     */
+    default void updateTexCoords() {
+        List<DynamicMeshDataEntry> entries = getDataEntries();
+        getMesh().getEditableTexCoords().startBatchingUpdates();
+        for (int i = 0; i < entries.size(); i++) {
+            DynamicMeshDataEntry entry = entries.get(i);
+            for (int j = 0; j < entry.getWrittenTexCoordCount(); j++)
+                this.updateTexCoord(entry, j);
+        }
+        getMesh().getEditableTexCoords().endBatchingUpdates();
+    }
+
+    /**
+     * Updates the vertex position data for the given local vertex index.
+     * @param entry the entry containing the vertex to update
+     * @param localVertexIndex the local index of the vertex to update
+     * @return true, iff the local vertex was updated.
+     */
+    boolean updateVertex(DynamicMeshDataEntry entry, int localVertexIndex);
+
+    /**
+     * Update all the vertex position data associated with the entry.
+     * @param entry The entry to update vertices for.
+     */
+    default void updateVertices(DynamicMeshDataEntry entry) {
+        if (entry == null)
+            throw new NullPointerException("entry");
+        if (!entry.isActive())
+            throw new RuntimeException("Cannot update mesh data on an inactive entry.");
+
+        // Update each vertex.
+        getMesh().getEditableVertices().startBatchingUpdates();
+        for (int i = 0; i < entry.getWrittenVertexCount(); i++)
+            this.updateVertex(entry, i);
+        getMesh().getEditableVertices().endBatchingUpdates();
+    }
+
+    /**
+     * Update all vertices held by entries tracked by this object.
+     */
+    default void updateVertices() {
+        List<DynamicMeshDataEntry> entries = getDataEntries();
+        getMesh().getEditableVertices().startBatchingUpdates();
+        for (int i = 0; i < entries.size(); i++) {
+            DynamicMeshDataEntry entry = entries.get(i);
+            for (int j = 0; j < entry.getWrittenVertexCount(); j++)
+                this.updateVertex(entry, j);
+        }
+        getMesh().getEditableVertices().endBatchingUpdates();
+    }
+
+    /**
      * Gets the tracked data entry corresponding to the provided face index.
      * @param faceIndex The index of the face.
      * @return dataEntry, or null.

@@ -47,6 +47,18 @@ public class TextureRemapArray extends SCSharedGameObject {
     }
 
     /**
+     * Get the index in the remap where the provided texture id is found.
+     * @param globalTextureId the global texture id to find.
+     * @return index, or -1 if the texture is not in the remap.
+     */
+    public int getRemapIndex(short globalTextureId) {
+        for (int i = 0; i < this.textureIds.size(); i++)
+            if (this.textureIds.get(i) == globalTextureId)
+                return i;
+        return -1;
+    }
+
+    /**
      * Gets the address this remap starts in the executable.
      */
     public int getReaderIndex() {

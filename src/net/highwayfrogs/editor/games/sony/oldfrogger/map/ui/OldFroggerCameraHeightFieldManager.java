@@ -1,18 +1,15 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.ui;
 
 import javafx.geometry.Orientation;
-import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
 import javafx.scene.control.Separator;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
-import javafx.scene.layout.VBox;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
@@ -23,8 +20,9 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.InputManager.MouseInputState;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
-import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.editor.UISidePanel;
+import net.highwayfrogs.editor.gui.fxobject.SelectionRectangle;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
 import net.highwayfrogs.editor.system.math.Vector3f;
@@ -36,11 +34,6 @@ import java.util.List;
 
 /**
  * Manages editing of camera height-field data.
- * TODO:
- *  - Allow a cylindrical update. Eg: Allow entering a mode where our selected vertex / vertices are treated as the centers of circles.
- *   - Allow choosing a radius of vertices to highlight, which will fall off in terms of color intensity.
- *   - Pulling the height of the vertex upwards / downward will pull all of the vertices.
- *   - The radius controls which vertices are impacted, although I'm less certain about
  * Created by Kneesnap on 12/25/2023.
  */
 public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
@@ -52,8 +45,6 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
     private SelectedVertex[][] selectedVerticesGrid;
     private final List<SelectedVertex> selectedVertices = new ArrayList<>();
     private TranslationGizmo vertexTranslationGizmo;
-    private Rectangle selectionArea;
-    private boolean rectangleSelectionActive;
 
     private static final Scale TRANSLATION_GIZMO_SCALE = new Scale(.6F, .25F, .6F);
 
@@ -75,8 +66,8 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         this.vertexTranslationGizmo = new TranslationGizmo(false, true, false);
 
         // Unchanging UI Fields
-        VBox editorBox = this.getController().makeAccordionMenu("Camera Height Field");
-        GUIEditorGrid mainGrid = getController().makeEditorGrid(editorBox);
+        UISidePanel sidePanel = getController().createSidePanel("Camera Height Field");
+        GUIEditorGrid mainGrid = sidePanel.makeEditorGrid();
         mainGrid.addCheckBox("Preview Visible", false, visible -> {
             this.verticeDisplayList.setVisible(visible);
             this.meshView.setVisible(visible);
@@ -90,8 +81,8 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         packet.setupEditor(this, mainGrid);
 
         // Separator, and grid setup.
-        editorBox.getChildren().add(new Separator(Orientation.HORIZONTAL));
-        this.editorGrid = this.getController().makeEditorGrid(editorBox);
+        sidePanel.add(new Separator(Orientation.HORIZONTAL));
+        this.editorGrid = sidePanel.makeEditorGrid();
 
         // Create the height-field display mesh.
         this.mesh = new CameraHeightFieldMesh(this);
@@ -132,65 +123,9 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         this.verticeDisplayList.setVisible(false);
         this.meshView.setVisible(false);
 
-        // TODO: When doing spherical calculations, replace Sphere in the displayGrid with some class that can also hold a strength decimal value.
-        // A selected vertex has a strength of 1, a vertex without any impact has a strength of zero.
-        // TODO: This strength is how we'll do spherical calculations. Also, when doing a spherical check, check a vertex in each of the four cardinal directions. For each vertex found, you can know to skip vertices in that direction, since your influence on those vertices would be less than that sphere.
-
-        // TODO: Should we generalize this to be something agnostic, so we don't have to type the full thing each time? Like we could make this a class.
-        // TODO: Also let's generalize the creation of an axis plane.
-        this.selectionArea = new Rectangle(5, 5, 25, 25);
-        this.selectionArea.setMouseTransparent(true);
-        this.selectionArea.setStyle("-fx-fill: rgb(200,200,0); -fx-opacity: 50%; -fx-stroke: black; -fx-stroke-width: 2;");
-
-        // Setup dragging UI.
-        this.meshView.setOnMousePressed(event -> {
-            InputManager manager = getController().getInputManager();
-            if (!manager.isKeyPressed(KeyCode.SHIFT))
-                return;
-
-            // Start dragging.
-            event.consume();
-            this.rectangleSelectionActive = true;
-            manager.getLastDragStartMouseState().apply(event);
-            this.selectionArea.setX(0);
-            this.selectionArea.setY(0);
-            this.selectionArea.setWidth(0);
-            this.selectionArea.setHeight(0);
-            getController().getSubScene2DElements().getChildren().add(this.selectionArea);
-        });
-
-        this.meshView.setOnMouseDragged(event -> {
-            if (!this.rectangleSelectionActive)
-                return;
-
-            // Update preview.
-            event.consume();
-            InputManager manager = getController().getInputManager();
-            Point2D uiOffset = getController().getSubScene().localToScene(0, 0);
-            if (uiOffset.getX() >= event.getSceneX() || uiOffset.getY() >= event.getSceneY())
-                return; // Don't allow moving the 3D view.
-
-            double minX = Math.min(event.getSceneX(), manager.getLastDragStartMouseState().getX()) - uiOffset.getX();
-            double maxX = Math.max(event.getSceneX(), manager.getLastDragStartMouseState().getX()) - uiOffset.getX();
-            double minY = Math.min(event.getSceneY(), manager.getLastDragStartMouseState().getY()) - uiOffset.getY();
-            double maxY = Math.max(event.getSceneY(), manager.getLastDragStartMouseState().getY()) - uiOffset.getY();
-            this.selectionArea.setX(minX);
-            this.selectionArea.setY(minY);
-            this.selectionArea.setWidth(maxX - minX);
-            this.selectionArea.setHeight(maxY - minY);
-        });
-
-        this.meshView.setOnMouseReleased(event -> {
-            if (!this.rectangleSelectionActive)
-                return;
-
-            // Update preview.
-            event.consume();
-            this.rectangleSelectionActive = false;
-            getController().getSubScene2DElements().getChildren().remove(this.selectionArea);
-
-            // Handle vertex click.
-            int meshIndex = getClosestVertex(event.getPickResult());
+        SelectionRectangle selectionRectangle = new SelectionRectangle(getController(), this.meshView);
+        selectionRectangle.setListener((dragStart, dragEnd) -> {
+            int meshIndex = getClosestVertex(dragEnd);
             if (meshIndex < 0)
                 return;
 
@@ -306,15 +241,13 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
                 getPacket().getHeightMap()[vertex.getZ()][vertex.getX()] = fixedNewHeight;
             }
         }, null);
-
-        // TODO: Finish editor.
     }
 
     /**
      * Handles the vertex gizmo getting moved for a vertex.
      * Turns that one movement into a movement for all selected vertices.
      */
-    private void onVertexMoved(MeshView meshView, double oldX, double oldY, double oldZ, double newX, double newY, double newZ) {
+    private void onVertexMoved(MeshView meshView, double oldX, double oldY, double oldZ, double newX, double newY, double newZ, int flags) {
         // Get selected vertex.
         SelectedVertex selectedVertex = getSelectedVertexByDisplay(meshView);
 
@@ -515,7 +448,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
      * Should be called only if a change occurs which impacts the position of all vertices.
      */
     public void updateVertexPositions() {
-        this.mesh.getMainNode().updateAllVertices();
+        this.mesh.getMainNode().updateVertices();
 
         // Update the position of all displays.
         for (int i = 0; i < this.selectedVertices.size(); i++)
@@ -748,8 +681,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
             this.display.getTransforms().add(TRANSLATION_GIZMO_SCALE);
             this.display.setOnMouseClicked(this.manager::onDisplayClicked);
 
-            FirstPersonCamera camera = this.manager.getController().getFirstPersonCamera();
-            this.manager.vertexTranslationGizmo.addView(this.display, camera, this.manager.positionChangeListener);
+            this.manager.vertexTranslationGizmo.addView(this.display, this.manager.getController(), this.manager.positionChangeListener);
             this.manager.getController().getMainLight().getScope().add(this.display);
             this.manager.verticeDisplayList.add(this.display);
             this.manager.selectedVertices.add(this);

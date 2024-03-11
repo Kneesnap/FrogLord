@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.ui;
 
-import javafx.scene.layout.VBox;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapFormInstancePacket;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapUIManager.OldFroggerMapListManager;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 
 import java.util.List;
@@ -35,8 +35,8 @@ public class OldFroggerFormUIManager extends OldFroggerMapListManager<OldFrogger
     }
 
     @Override
-    protected void setupMainGridEditor(VBox editorBox) {
-        super.setupMainGridEditor(editorBox);
+    protected void setupMainGridEditor(UISidePanel sidePanel) {
+        super.setupMainGridEditor(sidePanel);
 
         // Setup stuff.
         getValueDisplaySetting().setValue(ListDisplayType.NONE); // Forms cannot be previewed.

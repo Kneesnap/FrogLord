@@ -9,6 +9,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Shape3D;
 import javafx.util.StringConverter;
 import lombok.AllArgsConstructor;
@@ -22,14 +23,14 @@ import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.gui.editor.MOFController;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
+import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -40,7 +41,7 @@ import java.util.function.Predicate;
  */
 @SuppressWarnings("UnusedReturnValue")
 public class GUIEditorGrid {
-    private final GridPane gridPane;
+    @Getter private final GridPane gridPane;
     private int rowIndex;
 
     private static final DecimalFormat FORMAT = new DecimalFormat("#.#######");
@@ -356,7 +357,8 @@ public class GUIEditorGrid {
         CheckBox box = setupSecondNode(new CheckBox(label), true);
         box.setSelected(currentState);
         box.selectedProperty().addListener((listener, oldVal, newVal) -> {
-            setter.accept(newVal);
+            if (setter != null)
+                setter.accept(newVal);
             onChange();
         });
 
@@ -826,9 +828,258 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Add a float SVector for editing.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param vector the vector containing positional data
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addPositionEditor(MeshViewController<?> controller, UUID identifier, String text, Vector vector, IPositionChangeListener listener) {
+        return addPositionEditor(controller, identifier, text, vector, vector.defaultBits(), listener);
+    }
+
+    /**
+     * Add a position offset vector for editing.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param vector the vector containing positional data
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addPositionOffsetEditor(MeshViewController<?> controller, UUID identifier, String text, Vector vector, double offsetX, double offsetY, double offsetZ, IPositionChangeListener listener) {
+        return addPositionOffsetEditor(controller, identifier, text, vector, vector.defaultBits(), offsetX, offsetY, offsetZ, listener);
+    }
+
+    /**
+     * Add a position offset vector for editing.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param vector the vector containing positional data
+     * @param offset the offset to apply to the position
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addPositionOffsetEditor(MeshViewController<?> controller, UUID identifier, String text, Vector vector, Vector offset, IPositionChangeListener listener) {
+        return addPositionOffsetEditor(controller, identifier, text, vector, vector.defaultBits(), offset, listener);
+    }
+
+    /**
+     * Add a position vector for editing.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param vector the vector containing positional data
+     * @param bits the number of integer bits the vector uses for its fixed point conversions
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addPositionEditor(MeshViewController<?> controller, UUID identifier, String text, Vector vector, int bits, IPositionChangeListener listener) {
+        double worldX = vector.getFloatX(bits);
+        double worldY = vector.getFloatY(bits);
+        double worldZ = vector.getFloatZ(bits);
+        return addPositionEditor(controller, identifier, text, worldX, worldY, worldZ, (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> {
+            // Update vector.
+            if ((flags & TranslationGizmo.X_CHANGED_FLAG) == TranslationGizmo.X_CHANGED_FLAG)
+                vector.setFloatX((float) newX, bits);
+            if ((flags & TranslationGizmo.Y_CHANGED_FLAG) == TranslationGizmo.Y_CHANGED_FLAG)
+                vector.setFloatY((float) newY, bits);
+            if ((flags & TranslationGizmo.Z_CHANGED_FLAG) == TranslationGizmo.Z_CHANGED_FLAG)
+                vector.setFloatZ((float) newZ, bits);
+
+            // Fire listener.
+            if (listener != null)
+                listener.handle(meshView, oldX, oldY, oldZ, newX, newY, newZ, flags);
+        });
+    }
+
+    /**
+     * Add a position offset vector for editing.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param vector the vector containing positional data
+     * @param bits the number of integer bits the vector uses for its fixed point conversions
+     * @param offset the offset to apply to the position
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addPositionOffsetEditor(MeshViewController<?> controller, UUID identifier, String text, Vector vector, int bits, Vector offset, IPositionChangeListener listener) {
+        return addPositionOffsetEditor(controller, identifier, text, vector, bits, offset.getFloatX(bits), offset.getFloatY(bits), offset.getFloatZ(bits), listener);
+    }
+
+    /**
+     * Add a position offset vector for editing.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param vector the vector containing positional data
+     * @param bits the number of integer bits the vector uses for its fixed point conversions
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addPositionOffsetEditor(MeshViewController<?> controller, UUID identifier, String text, Vector vector, int bits, double offsetX, double offsetY, double offsetZ, IPositionChangeListener listener) {
+        double worldX = vector.getFloatX(bits) + offsetX;
+        double worldY = vector.getFloatY(bits) + offsetY;
+        double worldZ = vector.getFloatZ(bits) + offsetZ;
+        return addPositionEditor(controller, identifier, text, worldX, worldY, worldZ, (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> {
+            // Update vector.
+            if ((flags & TranslationGizmo.X_CHANGED_FLAG) == TranslationGizmo.X_CHANGED_FLAG)
+                vector.setFloatX((float) (newX - offsetX), bits);
+            if ((flags & TranslationGizmo.Y_CHANGED_FLAG) == TranslationGizmo.Y_CHANGED_FLAG)
+                vector.setFloatY((float) (newY - offsetY), bits);
+            if ((flags & TranslationGizmo.Z_CHANGED_FLAG) == TranslationGizmo.Z_CHANGED_FLAG)
+                vector.setFloatZ((float) (newZ - offsetZ), bits);
+
+            // Fire listener.
+            if (listener != null)
+                listener.handle(meshView, oldX - offsetX, oldY - offsetY, oldZ - offsetZ, newX - offsetX, newY - offsetY, newZ - offsetZ, flags);
+        });
+    }
+
+    /**
+     * Creates a position editor.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param x the x world position
+     * @param y the y world position
+     * @param z the z world position
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addPositionEditor(MeshViewController<?> controller, UUID identifier, String text, double x, double y, double z, IPositionChangeListener listener) {
+        TextField[] textFields = new TextField[3];
+        double[] positionCache = new double[]{x, y, z};
+
+        IPositionChangeListener ourListener = (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> {
+            if ((flags & TranslationGizmo.X_CHANGED_FLAG) == TranslationGizmo.X_CHANGED_FLAG) {
+                textFields[0].setText(String.valueOf(newX));
+                positionCache[0] = newX;
+            }
+
+            if ((flags & TranslationGizmo.Y_CHANGED_FLAG) == TranslationGizmo.Y_CHANGED_FLAG) {
+                textFields[1].setText(String.valueOf(newY));
+                positionCache[1] = newY;
+            }
+
+            if ((flags & TranslationGizmo.Z_CHANGED_FLAG) == TranslationGizmo.Z_CHANGED_FLAG) {
+                textFields[2].setText(String.valueOf(newZ));
+                positionCache[2] = newZ;
+            }
+
+            // Fire listener.
+            if (listener != null)
+                listener.handle(meshView, oldX, oldY, oldZ, newX, newY, newZ, flags);
+        };
+
+
+        AtomicReference<MeshView> meshViewRef = new AtomicReference<>(controller.getMarkerManager().updateGizmo(identifier, x, y, z, ourListener));
+        if (controller != null) {
+            addBoldLabelButton(text + ":", "Toggle Display", 25,
+                    () -> meshViewRef.set(controller.getMarkerManager().toggleGizmo(identifier, x, y, z, ourListener)));
+        }
+
+        GridPane vecPane = new GridPane();
+        vecPane.addRow(0);
+
+        // Label:
+        VBox labelBox = new VBox();
+        labelBox.getChildren().add(new Label("X:"));
+        labelBox.getChildren().add(new Label("Y:"));
+        labelBox.getChildren().add(new Label("Z:"));
+        labelBox.setSpacing(10);
+        vecPane.addColumn(0, labelBox);
+
+        // XYZ:
+        VBox posBox = new VBox();
+        TextField xField = textFields[0] = new TextField(String.valueOf(x));
+        TextField yField = textFields[1] = new TextField(String.valueOf(y));
+        TextField zField = textFields[2] = new TextField(String.valueOf(z));
+        xField.setPrefWidth(60);
+        yField.setPrefWidth(60);
+        zField.setPrefWidth(60);
+        Utils.setHandleKeyPress(xField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            double newValue = Double.parseDouble(str);
+            if (!Double.isFinite(newValue))
+                return false;
+
+            // Update cache.
+            double oldX = positionCache[0];
+            positionCache[0] = newValue;
+
+            // Fire listener, and update gizmo position.
+            MeshView meshView = meshViewRef.get();
+            if (meshView != null) {
+                ((TranslationGizmo) meshView.getMesh()).setPositionX(meshView, newValue, true);
+            } else {
+                listener.handle(null, oldX, positionCache[1], positionCache[2], newValue, positionCache[1], positionCache[2], TranslationGizmo.X_CHANGED_FLAG);
+            }
+
+            return true;
+        }, this::onChange);
+        Utils.setHandleKeyPress(yField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            double newValue = Double.parseDouble(str);
+            if (!Double.isFinite(newValue))
+                return false;
+
+            // Update cache.
+            double oldY = positionCache[1];
+            positionCache[1] = newValue;
+
+            // Fire listener, and update gizmo position.
+            MeshView meshView = meshViewRef.get();
+            if (meshView != null) {
+                ((TranslationGizmo) meshView.getMesh()).setPositionY(meshView, newValue, true);
+            } else {
+                listener.handle(null, positionCache[0], oldY, positionCache[2], positionCache[0], newValue, positionCache[2], TranslationGizmo.Y_CHANGED_FLAG);
+            }
+
+            return true;
+        }, this::onChange);
+        Utils.setHandleKeyPress(zField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            double newValue = Double.parseDouble(str);
+            if (!Double.isFinite(newValue))
+                return false;
+
+            // Update cache.
+            double oldZ = positionCache[2];
+            positionCache[2] = newValue;
+
+            // Fire listener, and update gizmo position.
+            MeshView meshView = meshViewRef.get();
+            if (meshView != null) {
+                ((TranslationGizmo) meshView.getMesh()).setPositionZ(meshView, newValue, true);
+            } else {
+                listener.handle(null, positionCache[0], positionCache[1], oldZ, positionCache[0], positionCache[1], newValue, TranslationGizmo.Z_CHANGED_FLAG);
+            }
+
+            return true;
+        }, this::onChange);
+
+        posBox.getChildren().add(xField);
+        posBox.getChildren().add(yField);
+        posBox.getChildren().add(zField);
+        posBox.setSpacing(2);
+        vecPane.addColumn(1, posBox);
+
+        vecPane.setHgap(10);
+        GridPane.setColumnSpan(vecPane, 2); // Make it take up the full space in the grid it will be added to.
+        setupNode(vecPane); // Setup this in the new area.
+        addRow(75);
+
+        return meshViewRef;
+    }
+
+    /**
      * Add a fixed point short decimal value.
-     * @param text    The text to add.
-     * @param value   The short value.
+     * @param text The text to add.
+     * @param value The short value.
      * @param handler The setter handler.
      */
     public void addFixedShort(String text, short value, Consumer<Short> handler) {
@@ -1134,12 +1385,9 @@ public class GUIEditorGrid {
      */
     public ImageView addCenteredImage(Image image, double dimensions) {
         ImageView view = new ImageView(image);
-        GridPane.setHalignment(view, HPos.CENTER);
         view.setFitWidth(dimensions);
         view.setFitHeight(dimensions);
-        setupSecondNode(view, true);
-        addRow(dimensions + 5);
-        return view;
+        return addCenteredImageView(view);
     }
 
     /**
@@ -1149,17 +1397,26 @@ public class GUIEditorGrid {
      */
     public ImageView addCenteredImage(Image image) {
         ImageView view = new ImageView(image);
-        GridPane.setHalignment(view, HPos.CENTER);
         view.setFitWidth(image.getWidth());
         view.setFitHeight(image.getHeight());
-        setupSecondNode(view, true);
-        addRow(image.getHeight() + 5);
-        return view;
+        return addCenteredImageView(view);
+    }
+
+    /**
+     * Adds a centered ImageView.
+     * @param imageView the ImageView to add
+     * @return imageView
+     */
+    public ImageView addCenteredImageView(ImageView imageView) {
+        GridPane.setHalignment(imageView, HPos.CENTER);
+        setupSecondNode(imageView, true);
+        addRow(imageView.getFitHeight() + 5);
+        return imageView;
     }
 
     /**
      * Add a PSXMatrix to the editor grid.
-     * @param matrix           The rotation matrix to add data for.
+     * @param matrix The rotation matrix to add data for.
      * @param onPositionUpdate Behavior to apply when the position is updated.
      */
     public void addEntityMatrix(PSXMatrix matrix, MapUIController controller, Runnable onPositionUpdate) {

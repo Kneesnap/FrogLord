@@ -122,23 +122,23 @@ public class PSXMatrix extends GameObject {
      * @param roll  The new roll.
      */
     public void updateMatrix(double yaw, double pitch, double roll) {
-        double su = Math.sin(roll);
-        double cu = Math.cos(roll);
-        double sv = Math.sin(pitch);
-        double cv = Math.cos(pitch);
-        double sw = Math.sin(yaw);
-        double cw = Math.cos(yaw);
+        double sx = Math.sin(roll);
+        double cx = Math.cos(roll);
+        double sy = Math.sin(pitch);
+        double cy = Math.cos(pitch);
+        double sz = Math.sin(yaw);
+        double cz = Math.cos(yaw);
 
         // Update rotation matrix.
-        this.matrix[0][0] = Utils.floatToFixedPointShort12Bit((float) (cv * cw)); // r11
-        this.matrix[0][1] = Utils.floatToFixedPointShort12Bit((float) (su * sv * cw - cu * sw)); // r12
-        this.matrix[0][2] = Utils.floatToFixedPointShort12Bit((float) (su * sw + cu * sv * cw)); // r13
-        this.matrix[1][0] = Utils.floatToFixedPointShort12Bit((float) (cv * sw)); // r21
-        this.matrix[1][1] = Utils.floatToFixedPointShort12Bit((float) (cu * cw + su * sv * sw)); // r22
-        this.matrix[1][2] = Utils.floatToFixedPointShort12Bit((float) (cu * sv * sw - su * cw)); // r23
-        this.matrix[2][0] = Utils.floatToFixedPointShort12Bit((float) -sv); // r31
-        this.matrix[2][1] = Utils.floatToFixedPointShort12Bit((float) (su * cv)); // r32
-        this.matrix[2][2] = Utils.floatToFixedPointShort12Bit((float) (cu * cv)); // r33
+        this.matrix[0][0] = Utils.floatToFixedPointShort12Bit((float) (cy * cz)); // r11
+        this.matrix[0][1] = Utils.floatToFixedPointShort12Bit((float) (sx * sy * cz - cx * sz)); // r12
+        this.matrix[0][2] = Utils.floatToFixedPointShort12Bit((float) (cx * sy * cz + sx * sz)); // r13
+        this.matrix[1][0] = Utils.floatToFixedPointShort12Bit((float) (cy * sz)); // r21
+        this.matrix[1][1] = Utils.floatToFixedPointShort12Bit((float) (sx * sy * sz + cx * cz)); // r22
+        this.matrix[1][2] = Utils.floatToFixedPointShort12Bit((float) (cx * sy * sz - sx * cz)); // r23
+        this.matrix[2][0] = Utils.floatToFixedPointShort12Bit((float) -sy); // r31
+        this.matrix[2][1] = Utils.floatToFixedPointShort12Bit((float) (sx * cy)); // r32
+        this.matrix[2][2] = Utils.floatToFixedPointShort12Bit((float) (cx * cy)); // r33
     }
 
     /**

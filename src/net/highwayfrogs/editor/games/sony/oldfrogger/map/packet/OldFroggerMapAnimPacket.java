@@ -11,7 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Includes map information data from old Frogger maps.
+ * Includes map animation data from old Frogger maps.
+ * This seems to be unused, and isn't really supported fully by FrogLord.
  * Created by Kneesnap on 12/12/2023.
  */
 @Getter
@@ -72,12 +73,12 @@ public class OldFroggerMapAnimPacket extends OldFroggerMapPacket {
      */
     @Getter
     public static class OldFroggerMapAnimUV extends SCGameData<OldFroggerGameInstance> {
-        private int vertexPointer; // TODO: Replace this with vertex reference or with vertex ID.
+        private int vertexPointer; // Replace this with vertex reference or with vertex ID.
         private int vertexCount; // The number of impacted vertices.
         private short deltaU;
         private short deltaV;
-        private int target; // TODO: ?
-        private int count; // TODO: ?
+        private int target; // Not sure.
+        private int count; // Not sure.
 
         public OldFroggerMapAnimUV(OldFroggerGameInstance instance) {
             super(instance);

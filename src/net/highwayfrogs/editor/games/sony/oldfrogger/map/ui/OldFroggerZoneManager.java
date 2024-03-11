@@ -90,7 +90,7 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
 
     @Override
     protected void updateEditor(OldFroggerMapZone selectedZone) {
-        selectedZone.setupEditor(getEditorGrid(), getDelegatesByValue().get(selectedZone));
+        selectedZone.setupEditor(this, getDelegatesByValue().get(selectedZone));
     }
 
     @Override
@@ -108,7 +108,7 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
 
     @Override
     protected OldFroggerMapZone createNewValue() {
-        return new OldFroggerMapZone(getMap().getGameInstance());
+        return new OldFroggerMapZone(getMap());
     }
 
     @Override

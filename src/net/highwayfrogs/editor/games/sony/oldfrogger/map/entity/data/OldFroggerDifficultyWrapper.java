@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 import java.util.Arrays;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 /**
  * This is a wrapper around entity data which can be different depending on the difficulty configuration.
@@ -55,6 +56,11 @@ public class OldFroggerDifficultyWrapper<TDifficultyData extends OldFroggerDiffi
                 writer.align(data.getByteAlignment());
             }
         }
+    }
+
+    @Override
+    public Logger getLogger() {
+        return this.entity != null ? this.entity.getLogger() : super.getLogger();
     }
 
     /**
@@ -106,10 +112,15 @@ public class OldFroggerDifficultyWrapper<TDifficultyData extends OldFroggerDiffi
             this.entity = entity;
         }
 
+        @Override
+        public Logger getLogger() {
+            return this.entity != null ? this.entity.getLogger() : super.getLogger();
+        }
+
         /**
          * Sets up the UI editor for the entity data.
          * @param manager The manager to create the ui for.
-         * @param editor  The editor context to setup ui under.
+         * @param editor The editor context to setup ui under.
          */
         public abstract void setupEditor(OldFroggerEntityManager manager, GUIEditorGrid editor);
 

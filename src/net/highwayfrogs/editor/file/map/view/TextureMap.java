@@ -48,6 +48,7 @@ public class TextureMap extends SCSharedGameObject {
     private final VLOArchive vloArchive;
     private final List<Short> remapList;
     private PhongMaterial material;
+    private PhongMaterial highlightedMaterial;
     private final TextureTree textureTree;
     @Setter private ShadingMode mode;
     private final Map<Short, Set<BigInteger>> mapTextureList = new HashMap<>();
@@ -119,18 +120,58 @@ public class TextureMap extends SCSharedGameObject {
         return this.material;
     }
 
+    private BufferedImage makeHighlightedImage() {
+        BufferedImage originalImage = getTextureTree().getImage();
+        BufferedImage newImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), originalImage.getType());
+
+        // Setup graphics.
+        Graphics2D g = newImage.createGraphics();
+
+        try {
+            // Clean image.
+            g.setBackground(new Color(255, 255, 255, 0));
+            g.clearRect(0, 0, newImage.getWidth(), newImage.getHeight());
+
+            // Draw new image.
+            g.drawImage(originalImage, 0, 0, originalImage.getWidth(), originalImage.getHeight(), null);
+            g.setColor(new Color(200, 200, 0, 127));
+            g.fillRect(0, 0, originalImage.getWidth(), originalImage.getHeight());
+        } finally {
+            g.dispose();
+        }
+
+        return newImage;
+    }
+
+    /**
+     * Gets the 3D PhongMaterial (diffuse components only, affected by lighting).
+     * @return phongMaterial
+     */
+    public PhongMaterial getDiffuseHighlightedMaterial() {
+        if (this.highlightedMaterial == null)
+            this.highlightedMaterial = Utils.makeDiffuseMaterial(Utils.toFXImage(makeHighlightedImage(), false));
+
+        return this.highlightedMaterial;
+    }
+
     /**
      * Updates the color data for the tree.
      * @param sourceMap The map in question to update the tree with.
      */
     public void updateTree(Map<BigInteger, TextureSource> sourceMap) {
         this.textureTree.rebuildTree(sourceMap);
-        if (this.material == null)
-            this.material = getDiffuseMaterial();
 
-        Image image = Utils.toFXImage(getTextureTree().getImage(), false);
-        this.material.setDiffuseMap(image);
-        this.material.setSpecularMap(image); // Fixes polygon lighting.
+        if (this.material != null) {
+            Image image = Utils.toFXImage(getTextureTree().getImage(), false);
+            this.material.setDiffuseMap(image);
+            this.material.setSpecularMap(image); // Fixes polygon lighting.
+        }
+
+        if (this.highlightedMaterial != null) {
+            Image image = Utils.toFXImage(makeHighlightedImage(), false);
+            this.highlightedMaterial.setDiffuseMap(image); // Fixes polygon lighting.
+            this.highlightedMaterial.setSpecularMap(image); // Fixes polygon lighting.
+        }
     }
 
     /**

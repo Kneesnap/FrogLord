@@ -125,7 +125,7 @@ public abstract class Texture {
             throw new NullPointerException("source");
 
         this.textureSource = source;
-        this.textureSource.getImageChangeListeners().add(this::update);
+        this.textureSource.getImageChangeListeners().add(this::update); // TODO: Memory leak, this is never removed.
     }
 
     /**

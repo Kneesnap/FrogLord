@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.sony.shared;
+package net.highwayfrogs.editor.games.sony.shared.spline;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -95,5 +95,59 @@ public class MRBezierCurve extends SCSharedGameData {
         }
 
         return est1;
+    }
+
+    /**
+     * Converts this curve to a spline matrix.
+     * @return splineMatrix
+     */
+    public MRSplineMatrix toSplineMatrix() {
+        return toSplineMatrix(null);
+    }
+
+    /**
+     * Converts this curve to a spline matrix.
+     * Implementation of 'MRCalculateSplineBezierMatrix'.
+     * @param matrix The spline matrix to write information to. If null is provided, a new one will be created.
+     * @return splineMatrix
+     */
+    public MRSplineMatrix toSplineMatrix(MRSplineMatrix matrix) {
+        if (matrix == null)
+            matrix = new MRSplineMatrix(getGameInstance());
+
+        short uX = (short) (this.start.getX() >> MRSplineMatrix.SPLINE_WORLD_SHIFT);
+        short uY = (short) (this.start.getY() >> MRSplineMatrix.SPLINE_WORLD_SHIFT);
+        short uZ = (short) (this.start.getZ() >> MRSplineMatrix.SPLINE_WORLD_SHIFT);
+        short vX = (short) ((this.control1.getX() >> MRSplineMatrix.SPLINE_WORLD_SHIFT) * 3);
+        short vY = (short) ((this.control1.getY() >> MRSplineMatrix.SPLINE_WORLD_SHIFT) * 3);
+        short vZ = (short) ((this.control1.getZ() >> MRSplineMatrix.SPLINE_WORLD_SHIFT) * 3);
+        short UX = (short) ((this.control2.getX() >> MRSplineMatrix.SPLINE_WORLD_SHIFT) * 3);
+        short UY = (short) ((this.control2.getY() >> MRSplineMatrix.SPLINE_WORLD_SHIFT) * 3);
+        short UZ = (short) ((this.control2.getZ() >> MRSplineMatrix.SPLINE_WORLD_SHIFT) * 3);
+        short VX = (short) (this.end.getX() >> MRSplineMatrix.SPLINE_WORLD_SHIFT);
+        short VY = (short) (this.end.getY() >> MRSplineMatrix.SPLINE_WORLD_SHIFT);
+        short VZ = (short) (this.end.getZ() >> MRSplineMatrix.SPLINE_WORLD_SHIFT);
+
+        int[][] splineMatrix = matrix.getMatrix();
+        splineMatrix[0][0] = -uX + vX - UX + VX;
+        splineMatrix[0][1] = -uY + vY - UY + VY;
+        splineMatrix[0][2] = -uZ + vZ - UZ + VZ;
+
+        splineMatrix[3][0] = uX;
+        splineMatrix[3][1] = uY;
+        splineMatrix[3][2] = uZ;
+
+        uX *= 3;
+        uY *= 3;
+        uZ *= 3;
+        splineMatrix[1][0] = uX - (2 * vX) + UX;
+        splineMatrix[1][1] = uY - (2 * vY) + UY;
+        splineMatrix[1][2] = uZ - (2 * vZ) + UZ;
+
+        splineMatrix[2][0] = -uX + vX;
+        splineMatrix[2][1] = -uY + vY;
+        splineMatrix[2][2] = -uZ + vZ;
+
+        return matrix;
     }
 }

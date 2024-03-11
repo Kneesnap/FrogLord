@@ -6,7 +6,9 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.sony.shared.MRBezierCurve;
+import net.highwayfrogs.editor.games.sony.shared.spline.MRBezierCurve;
+import net.highwayfrogs.editor.games.sony.shared.spline.MRSplineHermite;
+import net.highwayfrogs.editor.games.sony.shared.spline.MRSplineMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.utils.Utils;
@@ -18,15 +20,11 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 9/16/2018.
  */
 public class SplineSegment extends PathSegment {
-    private final int[][] splineMatrix = new int[4][3];
+    private final MRSplineMatrix splineMatrix = new MRSplineMatrix(null);
     private final int[] smoothT = new int[4]; // Smooth T is the distance values to reach each point. (Translation)
     private final int[][] smoothC = new int[4][3]; // Smoothing coefficient data.
 
     private static final int SPLINE_FIX_INTERVAL = 0x200;
-
-    private static final int SPLINE_WORLD_SHIFT = 3;
-    private static final int SPLINE_PARAM_SHIFT = 11;
-    private static final int SPLINE_T2_SHIFT = 3;
 
     public SplineSegment(Path path) {
         super(path, PathType.SPLINE);
@@ -40,9 +38,7 @@ public class SplineSegment extends PathSegment {
     @Override
     protected void loadData(DataReader reader) {
         // Read MR_SPLINE_MATRIX:
-        for (int i = 0; i < splineMatrix.length; i++)
-            for (int j = 0; j < splineMatrix[i].length; j++)
-                this.splineMatrix[i][j] = reader.readInt();
+        this.splineMatrix.load(reader);
 
         // Read ps_smooth_t
         for (int i = 0; i < smoothT.length; i++)
@@ -56,9 +52,7 @@ public class SplineSegment extends PathSegment {
 
     @Override
     protected void saveData(DataWriter writer) {
-        for (int[] arr : this.splineMatrix)
-            for (int val : arr)
-                writer.writeInt(val);
+        this.splineMatrix.save(writer);
 
         for (int val : this.smoothT)
             writer.writeInt(val);
@@ -80,7 +74,7 @@ public class SplineSegment extends PathSegment {
 
         int i;
         for (i = 3; i > 0; i--) {
-            d = length - (smoothT[i - 1] >> SPLINE_WORLD_SHIFT);
+            d = length - (this.smoothT[i - 1] >> MRSplineMatrix.SPLINE_WORLD_SHIFT);
             if (d >= 0)
                 break;
         }
@@ -90,15 +84,15 @@ public class SplineSegment extends PathSegment {
 
         int e = d;
         d = 0;
-        d += (smoothC[i][0] >> SPLINE_PARAM_SHIFT);
+        d += (this.smoothC[i][0] >> MRSplineMatrix.SPLINE_PARAM_SHIFT);
         d *= e;
         d >>= 13;
 
-        d += (smoothC[i][1] >> SPLINE_PARAM_SHIFT);
+        d += (this.smoothC[i][1] >> MRSplineMatrix.SPLINE_PARAM_SHIFT);
         d *= e;
         d >>= 13;
 
-        d += (smoothC[i][2] >> SPLINE_PARAM_SHIFT);
+        d += (this.smoothC[i][2] >> MRSplineMatrix.SPLINE_PARAM_SHIFT);
         d *= e;
         d >>= 13;
         d >>= 5;
@@ -109,49 +103,51 @@ public class SplineSegment extends PathSegment {
 
     // I hate this.
     private SVector calculateSplinePoint(int distance) {
+        // TODO: TOSS (Maybe)
         int t = getSplineParamFromLength(distance);
-        int t2 = (t * t) >> SPLINE_T2_SHIFT;
-        int t3 = (t2 * t) >> SPLINE_PARAM_SHIFT;
+        return this.splineMatrix.evaluatePosition(t);
+    }
 
-        SVector pos = new SVector();
-
-        pos.setX((short) (((t3 * splineMatrix[0][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-                ((t2 * splineMatrix[1][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-                ((t * splineMatrix[2][0]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
-                ((splineMatrix[3][0]) << SPLINE_WORLD_SHIFT)));
-
-        pos.setY((short) (((t3 * splineMatrix[0][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-                ((t2 * splineMatrix[1][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-                ((t * splineMatrix[2][1]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
-                ((splineMatrix[3][1]) << SPLINE_WORLD_SHIFT)));
-
-        pos.setZ((short) (((t3 * splineMatrix[0][2]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-                ((t2 * splineMatrix[1][2]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-                ((t * splineMatrix[2][2]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT)) +
-                ((splineMatrix[3][2]) << SPLINE_WORLD_SHIFT)));
-
-        return pos;
+    private SVector calculateSplinePosition(int t) {
+        // TODO: TOSS
+        return this.splineMatrix.evaluatePosition(t);
     }
 
     private IVector calculateSplineTangent(int distance) {
+        // TODO: TOSS (Maybe)
         int t = getSplineParamFromLength(distance);
-        int t2 = (3 * t * t) >> SPLINE_T2_SHIFT;
+        return this.splineMatrix.calculateTangentLine(t);
+    }
 
-        int x = ((t2 * splineMatrix[0][0]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-                ((t * splineMatrix[1][0]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT - 1)) +
-                (splineMatrix[2][0] << SPLINE_WORLD_SHIFT);
-        int y = ((t2 * splineMatrix[0][1]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-                ((t * splineMatrix[1][1]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT - 1)) +
-                (splineMatrix[2][1] << SPLINE_WORLD_SHIFT);
-        int z = ((t2 * splineMatrix[0][2]) >> (SPLINE_PARAM_SHIFT * 2 - SPLINE_WORLD_SHIFT - SPLINE_T2_SHIFT)) +
-                ((t * splineMatrix[1][2]) >> (SPLINE_PARAM_SHIFT - SPLINE_WORLD_SHIFT - 1)) +
-                (splineMatrix[2][2] << SPLINE_WORLD_SHIFT);
+    @Override
+    public SVector getStartPosition() {
+        return getStartPosition(null);
+    }
 
-        x >>= 4;
-        y >>= 4;
-        z >>= 4;
+    /**
+     * Gets the start position of this spline segment.
+     * @param result The vector to store the start position.
+     * @return startPosition
+     */
+    public SVector getStartPosition(SVector result) {
+        return this.splineMatrix.evaluatePosition(result, 0);
+    }
 
-        return new IVector(x, y, z).normalise();
+    /**
+     * Gets the end position of this spline segment.
+     * @return endPosition
+     */
+    public SVector getEndPosition() {
+        return getEndPosition(null);
+    }
+
+    /**
+     * Gets the end position of this spline segment.
+     * @param result The vector to store the end position.
+     * @return endPosition
+     */
+    public SVector getEndPosition(SVector result) {
+        return this.splineMatrix.evaluatePosition(result, MRSplineMatrix.SPLINE_PARAM_ONE);
     }
 
     @Override
@@ -161,6 +157,7 @@ public class SplineSegment extends PathSegment {
 
     @Override
     public void recalculateLength() {
+        // TODO: Reimplement.
         // We leave this up to user input, since I've yet to come up with an algorithm which is accurate enough to get this right,
         // and it seems like just leaving it as-is even during changes will create valid results.
         final int maxLength = 1000 * (1 << 4);
@@ -183,9 +180,31 @@ public class SplineSegment extends PathSegment {
         this.setLength(bestLength);
     }
 
-    @Override
-    public SVector getStartPosition() {
-        return calculateSplinePoint(0);
+    // TODO: TOSS
+    private double calculateLengthWithOffset(int increment) {
+        double hiDefLength = 0;
+        SVector lastPos = calculateSplinePosition(0);
+        for (int i = increment; i < 2048 + increment; i += increment) {
+            SVector curPos = calculateSplinePosition(i);
+            hiDefLength += Math.sqrt(curPos.distanceSquared(lastPos));
+            lastPos = curPos;
+        }
+
+        return hiDefLength;
+    }
+
+    // TODO: TOSS
+    private double test(int startT, int currentT, int segments) {
+        SVector lastPos = calculateSplinePoint(startT);
+        double fullLength = 0;
+        for (int i = 1; i <= segments; i++) {
+            int tempT = startT + (int) Math.round(((double) (currentT - startT) / segments) * i);
+            SVector currPos = calculateSplinePoint(tempT);
+            fullLength += Math.sqrt(currPos.distanceSquared(lastPos));
+            lastPos = currPos;
+        }
+
+        return fullLength;
     }
 
     @Override
@@ -218,10 +237,10 @@ public class SplineSegment extends PathSegment {
 
         Path path = getPath();
         if (path.getSegments().isEmpty()) {
+            start = new SVector();
+        } else {
             PathSegment lastSegment = path.getSegments().get(path.getSegments().size() - 1);
             start = lastSegment.calculatePosition(map, lastSegment.getLength()).getPosition();
-        } else {
-            start = new SVector();
         }
 
         SVector cp1 = new SVector(start).add(new SVector(400, 0, 400));
@@ -259,86 +278,19 @@ public class SplineSegment extends PathSegment {
      * @param curve The curve to load data from.
      */
     public void loadFromCurve(MRBezierCurve curve, MapUIController controller) {
-        short uX = (short) (curve.getStart().getX() >> SPLINE_WORLD_SHIFT);
-        short uY = (short) (curve.getStart().getY() >> SPLINE_WORLD_SHIFT);
-        short uZ = (short) (curve.getStart().getZ() >> SPLINE_WORLD_SHIFT);
-        short vX = (short) ((curve.getControl1().getX() >> SPLINE_WORLD_SHIFT) * 3);
-        short vY = (short) ((curve.getControl1().getY() >> SPLINE_WORLD_SHIFT) * 3);
-        short vZ = (short) ((curve.getControl1().getZ() >> SPLINE_WORLD_SHIFT) * 3);
-        short UX = (short) ((curve.getControl2().getX() >> SPLINE_WORLD_SHIFT) * 3);
-        short UY = (short) ((curve.getControl2().getY() >> SPLINE_WORLD_SHIFT) * 3);
-        short UZ = (short) ((curve.getControl2().getZ() >> SPLINE_WORLD_SHIFT) * 3);
-        short VX = (short) (curve.getEnd().getX() >> SPLINE_WORLD_SHIFT);
-        short VY = (short) (curve.getEnd().getY() >> SPLINE_WORLD_SHIFT);
-        short VZ = (short) (curve.getEnd().getZ() >> SPLINE_WORLD_SHIFT);
-
-        this.splineMatrix[0][0] = -uX + vX - UX + VX;
-        this.splineMatrix[0][1] = -uY + vY - UY + VY;
-        this.splineMatrix[0][2] = -uZ + vZ - UZ + VZ;
-
-        this.splineMatrix[3][0] = uX;
-        this.splineMatrix[3][1] = uY;
-        this.splineMatrix[3][2] = uZ;
-
-        uX *= 3;
-        uY *= 3;
-        uZ *= 3;
-        this.splineMatrix[1][0] = uX - (2 * vX) + UX;
-        this.splineMatrix[1][1] = uY - (2 * vY) + UY;
-        this.splineMatrix[1][2] = uZ - (2 * vZ) + UZ;
-
-        this.splineMatrix[2][0] = -uX + vX;
-        this.splineMatrix[2][1] = -uY + vY;
-        this.splineMatrix[2][2] = -uZ + vZ;
+        // TODO: Better editor.
+        curve.toSplineMatrix(this.splineMatrix);
         onUpdate(controller);
     }
 
     /**
-     * Generate this as a bezier curve.
+     * Convert this to a Bézier curve.
+     * This function has been carefully written to maximize decimal accuracy during conversion.
      * @return bezierCurve
      */
     public MRBezierCurve convertToBezierCurve() {
-        MRBezierCurve bezier = new MRBezierCurve(null);
-
-        int[][] m = this.splineMatrix;
-        SVector start = bezier.getStart();
-        start.setX((short) m[3][0]);
-        start.setY((short) m[3][1]);
-        start.setZ((short) m[3][2]);
-
-        // Control Point 1
-        SVector control1 = bezier.getControl1();
-        control1.setX((short) (((start.getX() * 3) + m[2][0]) / 3));
-        control1.setY((short) (((start.getY() * 3) + m[2][1]) / 3));
-        control1.setZ((short) (((start.getZ() * 3) + m[2][2]) / 3));
-
-        // Control Point 2
-        SVector control2 = bezier.getControl2();
-        control2.setX((short) ((m[1][0] + (6 * control1.getX()) - (3 * start.getX())) / 3));
-        control2.setY((short) ((m[1][1] + (6 * control1.getY()) - (3 * start.getY())) / 3));
-        control2.setZ((short) ((m[1][2] + (6 * control1.getZ()) - (3 * start.getZ())) / 3));
-
-        // End
-        SVector end = bezier.getEnd();
-        end.setX((short) (m[0][0] + start.getX() - (3 * control1.getX()) + (3 * control2.getX())));
-        end.setY((short) (m[0][1] + start.getY() - (3 * control1.getY()) + (3 * control2.getY())));
-        end.setZ((short) (m[0][2] + start.getZ() - (3 * control1.getZ()) + (3 * control2.getZ())));
-
-        // Shift all of them left.
-        start.setX((short) (start.getX() << SPLINE_WORLD_SHIFT));
-        start.setY((short) (start.getY() << SPLINE_WORLD_SHIFT));
-        start.setZ((short) (start.getZ() << SPLINE_WORLD_SHIFT));
-        control1.setX((short) (control1.getX() << SPLINE_WORLD_SHIFT));
-        control1.setY((short) (control1.getY() << SPLINE_WORLD_SHIFT));
-        control1.setZ((short) (control1.getZ() << SPLINE_WORLD_SHIFT));
-        control2.setX((short) (control2.getX() << SPLINE_WORLD_SHIFT));
-        control2.setY((short) (control2.getY() << SPLINE_WORLD_SHIFT));
-        control2.setZ((short) (control2.getZ() << SPLINE_WORLD_SHIFT));
-        end.setX((short) (end.getX() << SPLINE_WORLD_SHIFT));
-        end.setY((short) (end.getY() << SPLINE_WORLD_SHIFT));
-        end.setZ((short) (end.getZ() << SPLINE_WORLD_SHIFT));
-
-        return bezier;
+        // TODO: Probably doesn't need to exist.
+        return this.splineMatrix.toBezierCurve();
     }
 
     private void makeTEditor(MapUIController controller, GUIEditorGrid editor) {

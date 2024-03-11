@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.ui;
 import javafx.scene.AmbientLight;
 import javafx.scene.Group;
 import javafx.scene.LightBase;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
@@ -11,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapLig
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapUIManager.OldFroggerMapListManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.editor.UISidePanel;
 
 import java.util.List;
 
@@ -61,8 +61,8 @@ public class OldFroggerLightManager extends OldFroggerMapListManager<OldFroggerM
     }
 
     @Override
-    protected void setupMainGridEditor(VBox editorBox) {
-        super.setupMainGridEditor(editorBox);
+    protected void setupMainGridEditor(UISidePanel sidePanel) {
+        super.setupMainGridEditor(sidePanel);
         if (getMap().getMapConfig().isCaveLightingEnabled()) {
             getValueDisplaySetting().setValue(ListDisplayType.NONE); // Disable lighting by default, because it's pitch black.
         } else {

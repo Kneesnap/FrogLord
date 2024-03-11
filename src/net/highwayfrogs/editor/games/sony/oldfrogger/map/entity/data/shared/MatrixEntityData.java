@@ -15,7 +15,9 @@ import java.util.function.Function;
 
 /**
  * Represents old frogger entity data with a static matrix holding position/rotation.
- * TODO: Rotations are displaying wrong. Look at the static dead trees at the start of the swamp level, or the gates in the Retro level.
+ * The tunnel in ORIGINAL.MAP is not rotated correctly in editor, but it shows up correctly in-game.
+ * After looking at the raw matrix rotation data, the math all seems correct.
+ * Most likely there is code in-game which forces the rotation to be correct.
  * Created by Kneesnap on 12/11/2023.
  */
 @Getter

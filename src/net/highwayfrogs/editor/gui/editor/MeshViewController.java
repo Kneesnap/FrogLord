@@ -5,22 +5,21 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
@@ -128,48 +127,23 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     }
 
     /**
-     * Creates a new UI section in the left accordion pane.
-     * @param title The title of the UI pane.
-     * @return gridPane
+     * Creates a side panel.
+     * @param title The title of the side panel.
+     * @return newSidePanel
      */
-    public VBox makeAccordionMenu(String title) {
-        VBox vbox = new VBox();
-
-        AnchorPane anchorPane = new AnchorPane(vbox);
-        AnchorPane.setBottomAnchor(vbox, 0D);
-        AnchorPane.setLeftAnchor(vbox, 0D);
-        AnchorPane.setRightAnchor(vbox, 0D);
-        AnchorPane.setTopAnchor(vbox, 0D);
-
-        ScrollPane scrollPane = new ScrollPane(anchorPane);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPadding(new Insets(8, 8, 8, 8));
-
-        TitledPane titledPane = new TitledPane(title, scrollPane);
-        titledPane.setAnimated(false);
-        this.accordionLeft.getPanes().add(0, titledPane);
-        return vbox;
+    public UISidePanel createSidePanel(String title) {
+        return createSidePanel(title, false);
     }
 
     /**
-     * Creates a new UI section in the left accordion pane.
-     * @param title The title of the UI pane.
-     * @return gridPane
+     * Creates a side panel.
+     * @param title The title of the side panel.
+     * @return newSidePanel
      */
-    public GUIEditorGrid makeEditorGrid(String title) {
-        VBox box = makeAccordionMenu(title);
-        return makeEditorGrid(box);
-    }
-
-    /**
-     * Creates a new editor grid attached to an existing UI node.
-     * @param holder The UI node which the editor grid should be added to.
-     * @return editorGrid
-     */
-    public GUIEditorGrid makeEditorGrid(Pane holder) {
-        GridPane gridPane = GUIEditorGrid.createDefaultPane();
-        holder.getChildren().add(gridPane);
-        return new GUIEditorGrid(gridPane);
+    public UISidePanel createSidePanel(String title, boolean insertFirst) {
+        UISidePanel sidePanel = new UISidePanel(this.accordionLeft, insertFirst, title);
+        sidePanel.setVisible(true);
+        return sidePanel;
     }
 
     /**
@@ -264,8 +238,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.firstPersonCamera.assignSceneControls(stageToOverride, this.meshScene);
         this.firstPersonCamera.startThreadProcessing();
 
-        this.meshScene.setOnKeyPressed(event -> {
-            if (onKeyPress(event))
+        this.inputManager.setFinalKeyHandler((manager, event) -> {
+            if (onKeyPress(event) || event.getEventType() != KeyEvent.KEY_PRESSED)
                 return; // Handled by the other controller.
 
             if (event.getCode() == KeyCode.ESCAPE) { // Exit the viewer.
@@ -314,8 +288,11 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             this.accordionLeft.getPanes().get(0).setExpanded(true);
 
         setDefaultCameraPosition();
-        setupBindings(subScene3D, this.meshView); // Setup UI.
         setupBasicLighting();
+
+        // Setup managers & UI.
+        // Should run last since UI managers may use information from this class.
+        setupBindings(subScene3D, this.meshView);
     }
 
     /**
@@ -471,14 +448,18 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 MeshUISelector<TMesh, ?> selector = this.selectors.get(i);
                 if (selector.isActive()) {
                     selector.cancel();
+                    event.consume();
                     return true;
                 }
             }
         }
 
-        for (MeshUIManager<TMesh> manager : getManagers()) // Handle key presses.
-            if (manager.onKeyPress(event))
+        for (MeshUIManager<TMesh> manager : getManagers()) { // Handle key presses.
+            if (manager.onKeyPress(event)) {
+                event.consume();
                 return true;
+            }
+        }
 
         return false;
     }

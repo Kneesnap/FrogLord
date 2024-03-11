@@ -7,7 +7,10 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTable
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapVersion;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapGridHeaderPacket.OldFroggerMapGrid;
+import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
+import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
 
@@ -21,9 +24,10 @@ import java.awt.*;
 public class OldFroggerMapMesh extends DynamicMesh {
     private final OldFroggerMapFile map;
     private final OldFroggerMapMeshNode mainNode;
-    private final OldFroggerShadedTextureManager shadedTextureManager;
+    private final DynamicMeshOverlayNode highlightedPolygonNode;
     private AtlasTexture flatPlaceholderTexture;
     private AtlasTexture gouarudPlaceholderTexture;
+    private AtlasTexture highlightedPolygonTexture;
 
     public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.ORANGE, Color.BLACK);
     public static final CursorVertexColor REMOVE_FACE_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
@@ -34,7 +38,6 @@ public class OldFroggerMapMesh extends DynamicMesh {
     public OldFroggerMapMesh(OldFroggerMapFile mapFile) {
         super(new SequentialTextureAtlas(64, 64, true));
         this.map = mapFile;
-        this.shadedTextureManager = new OldFroggerShadedTextureManager(this);
 
         // Add textures.
         getTextureAtlas().startBulkOperations();
@@ -51,6 +54,9 @@ public class OldFroggerMapMesh extends DynamicMesh {
             this.mainNode = new OldFroggerMapMeshNode(this);
             addNode(this.mainNode);
         }
+
+        this.highlightedPolygonNode = new DynamicMeshOverlayNode(this);
+        addNode(this.highlightedPolygonNode);
     }
 
     private void setupBasicTextures() {
@@ -59,6 +65,7 @@ public class OldFroggerMapMesh extends DynamicMesh {
         getTextureAtlas().addTexture(GRAY_COLOR);
         getTextureAtlas().addTexture(YELLOW_COLOR);
         getTextureAtlas().addTexture(GREEN_COLOR);
+        this.highlightedPolygonTexture = getTextureAtlas().addTexture(BakedLandscapeUIManager.MATERIAL_POLYGON_HIGHLIGHT);
         this.flatPlaceholderTexture = getTextureAtlas().addTexture(UnknownTextureSource.CYAN_INSTANCE);
         this.gouarudPlaceholderTexture = getTextureAtlas().addTexture(UnknownTextureSource.GREEN_INSTANCE);
     }
@@ -75,6 +82,16 @@ public class OldFroggerMapMesh extends DynamicMesh {
         if (getMap().getFormatVersion() == OldFroggerMapVersion.MILESTONE3)
             for (OldFroggerMapGrid grid : getMap().getGridPacket().getGrids())
                 for (OldFroggerMapPolygon polygon : grid.getPolygons())
-                    this.shadedTextureManager.addPolygon(polygon);
+                    getShadedTextureManager().addPolygon(polygon);
+    }
+
+    @Override
+    public OldFroggerShadedTextureManager getShadedTextureManager() {
+        return (OldFroggerShadedTextureManager) super.getShadedTextureManager();
+    }
+
+    @Override
+    protected PSXMeshShadedTextureManager<?> createShadedTextureManager() {
+        return new OldFroggerShadedTextureManager(this);
     }
 }

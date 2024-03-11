@@ -274,8 +274,8 @@ public class SVector extends GameObject implements Vector {
      * @return distanceSquared
      */
     public double distanceSquared(SVector other) {
-        return ((other.getFloatX() - getFloatX()) * (other.getFloatX() - getFloatX()))
-                + ((other.getFloatY() - getFloatY()) * (other.getFloatY() - getFloatY()))
-                + ((other.getFloatZ() - getFloatZ()) * (other.getFloatZ() - getFloatZ()));
+        return ((double) (other.getFloatX() - getFloatX()) * (double) (other.getFloatX() - getFloatX()))
+                + ((double) (other.getFloatY() - getFloatY()) * (double) (other.getFloatY() - getFloatY()))
+                + ((double) (other.getFloatZ() - getFloatZ()) * (double) (other.getFloatZ() - getFloatZ()));
     }
 }

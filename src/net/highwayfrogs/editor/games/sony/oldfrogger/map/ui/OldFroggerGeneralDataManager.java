@@ -2,10 +2,10 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.ui;
 
 import javafx.geometry.Orientation;
 import javafx.scene.control.Separator;
-import javafx.scene.layout.VBox;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.editor.UISidePanel;
 
 /**
  * Allows editing general map level data.
@@ -23,11 +23,11 @@ public class OldFroggerGeneralDataManager extends OldFroggerMapUIManager {
         super.onSetup();
 
         // UI Pane
-        VBox editorBox = this.getController().makeAccordionMenu("General Level Settings");
+        UISidePanel sidePanel = getController().createSidePanel("General Level Settings");
 
         // Separator, and grid setup.
-        editorBox.getChildren().add(new Separator(Orientation.HORIZONTAL));
-        this.editorGrid = this.getController().makeEditorGrid(editorBox);
+        sidePanel.add(new Separator(Orientation.HORIZONTAL));
+        this.editorGrid = sidePanel.makeEditorGrid();
     }
 
     @Override

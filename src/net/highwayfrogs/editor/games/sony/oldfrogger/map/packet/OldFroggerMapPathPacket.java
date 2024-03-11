@@ -144,8 +144,6 @@ public class OldFroggerMapPathPacket extends OldFroggerMapPacket {
          * @param editor  The editor to add UI elements to.
          */
         public void setupEditor(OldFroggerPathManager manager, GUIEditorGrid editor) {
-            // TODO: Consider how to improve editor.
-
             for (int i = 0; i < this.splines.size(); i++)
                 this.splines.get(i).setupEditor(manager.getController(), editor);
         }

@@ -17,6 +17,9 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityMana
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.lang.ref.SoftReference;
+import java.util.logging.Logger;
+
 /**
  * Represents an entity on an old Frogger map.
  * Created by Kneesnap on 12/10/2023.
@@ -25,9 +28,10 @@ import net.highwayfrogs.editor.utils.Utils;
 public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
     private final OldFroggerMapFile map;
     private int formTypeId;
-    private int difficulty; // TODO: Flag 0x2000 (1 << 13) is seen in DES_STAT_BALLCACTUS in DESERT.MAP, 0x8000 (1 << 15) is seen in CAVES.MAP on CAV_SLIME.XMR
+    private int difficulty;
     private short entityId;
     private OldFroggerEntityData<?> entityData;
+    private SoftReference<Logger> logger;
 
     public OldFroggerMapEntity(OldFroggerMapFile map) {
         super(map.getGameInstance());
@@ -75,10 +79,21 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
         return (OldFroggerConfig) super.getConfig();
     }
 
+    @Override
+    public Logger getLogger() {
+        Logger logger = this.logger != null ? this.logger.get() : null;
+        if (logger == null) {
+            logger = Logger.getLogger(getMap().getFileDisplayName() + "|Entity " + this.entityId + "|" + getDebugName());
+            this.logger = new SoftReference<>(logger);
+        }
+
+        return logger;
+    }
+
     /**
      * Setup the editor UI for the entity.
      * @param manager The manager for editing entities.
-     * @param editor  The editor used to create the UI.
+     * @param editor The editor used to create the UI.
      */
     public void setupEditor(OldFroggerEntityManager manager, GUIEditorGrid editor) {
         editor.addLabel("Form ID ", String.valueOf(this.formTypeId));
@@ -93,15 +108,18 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
         if (formConfigEntry != null)
             editor.addLabel("Form Name", formConfigEntry.getDisplayName());
 
-        OldFroggerEditorUtils.addDifficultyEditor(editor, this.difficulty, newValue -> this.difficulty = newValue);
+        // Difficulty Editor
+        editor.addSeparator();
+        OldFroggerEditorUtils.addDifficultyEditor(editor, this.difficulty, newValue -> this.difficulty = newValue, false, manager::updateEditor);
 
+        // Entity Data Editor
         if (this.entityData != null) {
             editor.addSeparator();
             try {
                 this.entityData.setupEditor(manager, editor);
             } catch (Throwable th) {
                 editor.addNormalLabel("Encountered an error setting up the editor.");
-                th.printStackTrace();
+                getLogger().throwing("OldFroggerMapEntity", "setupEditor", th);
             }
         }
     }
