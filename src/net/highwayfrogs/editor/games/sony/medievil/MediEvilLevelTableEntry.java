@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
+import net.highwayfrogs.editor.games.sony.SCGameRegion;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 
@@ -37,7 +38,7 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
         this.vloResourceId = reader.readInt();
 
         // Japanese versions have an extra resource ID
-        if (getByteSize() > 100) {
+        if (getByteSize() > 100 && getConfig().getRegion() == SCGameRegion.JAPAN) {
             reader.skipBytes(8);
         }
         else {
