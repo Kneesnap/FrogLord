@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.sound.VBAudioBody;
 import net.highwayfrogs.editor.file.sound.VHAudioHeader;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
@@ -14,12 +15,16 @@ import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.entity.data.MediEvilEntityData;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.MainController.LazySCMainMenuFileGroup;
 import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
 import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroupFileID;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +41,8 @@ import java.util.List;
 @Getter
 public class MediEvilGameInstance extends SCGameInstance {
     private final List<MediEvilLevelTableEntry> levelTable = new ArrayList<>();
-
+    private final List<MediEvilEntityPointerTableEntry> entityPtrTable = new ArrayList<>();
+    private final List<MediEvilEntityData> entityTable = new ArrayList<>();
     public MediEvilGameInstance() {
         super(SCGameType.MEDIEVIL);
     }
@@ -71,6 +77,43 @@ public class MediEvilGameInstance extends SCGameInstance {
     protected void onConfigLoad(Config configObj) {
         super.onConfigLoad(configObj);
         readLevelTable(getExecutableReader());
+        readEntityPointerTable(getExecutableReader());
+        makeEntityTable(getExecutableReader());
+    }
+
+    private void makeEntityTable(DataReader exeReader) {
+        this.entityTable.clear();
+        if (this.entityPtrTable.size() == 0)
+            return;
+
+        for (int i = 0; i < this.entityPtrTable.size(); i++) {
+            MediEvilEntityPointerTableEntry entry = this.entityPtrTable.get(i);
+
+            // Entity data is defined in the executable
+            if (entry.getEntityDataPointer() != 0 && entry.getEntityDataLocation().equals("")) {
+                MediEvilEntityData entityData = new MediEvilEntityData(this, false);
+                exeReader.jumpTemp((int)entry.getEntityDataPointer());
+                entityData.load(exeReader);
+                this.entityTable.add(entityData);
+            }
+            // Entity data is defined in an overlay
+            else if (entry.getEntityDataPointer() != 0 && !entry.getEntityDataLocation().equals("")) {
+                MediEvilEntityData entityData = new MediEvilEntityData(this, true);
+                File overlay = new File(GUIMain.getWorkingDirectory() + getConfig().getOverlayDirectory() + entry.getEntityDataLocation());
+                try {
+                    DataReader overlayReader = new DataReader(new FileSource(overlay));
+                    overlayReader.jumpTemp((int)entry.getEntityDataPointer());
+                    entityData.load(overlayReader);
+                    this.entityTable.add(entityData);
+                } catch (IOException ex) {
+                    throw new RuntimeException("Overlay file " + entry.getEntityDataLocation() + " was not found in the expected location.");
+                }
+            }
+            // No data
+            else {
+                this.entityTable.add(null);
+            }
+        }
     }
 
     private void readLevelTable(DataReader reader) {
@@ -80,9 +123,23 @@ public class MediEvilGameInstance extends SCGameInstance {
 
         reader.jumpTemp(getConfig().getLevelTableAddress());
         for (int i = 0; i < getConfig().getLevelTableSize(); i++) {
-            MediEvilLevelTableEntry newEntry = new MediEvilLevelTableEntry(this, getConfig().getLevelTableEntryByteSize());
+            MediEvilLevelTableEntry newEntry = new MediEvilLevelTableEntry(this);
             newEntry.load(reader);
             this.levelTable.add(newEntry);
+        }
+        reader.jumpReturn();
+    }
+
+    private void readEntityPointerTable(DataReader reader) {
+        this.entityPtrTable.clear();
+        if (getConfig().getEntityPtrTableAddress() < 0)
+            return;
+
+        reader.jumpTemp(getConfig().getEntityPtrTableAddress());
+        for (int i = 0; i < getConfig().getEntityPtrTableSize(); i++) {
+            MediEvilEntityPointerTableEntry newEntry = new MediEvilEntityPointerTableEntry(this, getConfig().getOverlayOffset());
+            newEntry.load(reader);
+            this.entityPtrTable.add(newEntry);
         }
         reader.jumpReturn();
     }

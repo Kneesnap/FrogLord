@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.entity;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -11,6 +10,9 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.entity.data.MediEvilEntityData;
+
+import java.util.List;
 
 /**
  * Represents an entity on a MediEvil map.
@@ -32,7 +34,7 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
     private SVector initialPosition;
     private SVector currentPosition;
 
-    private int mofId;
+    private MediEvilEntityData entityData;
 
     public MediEvilMapEntity(MediEvilMapFile map) {
         super(map.getGameInstance());
@@ -44,6 +46,9 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
         this.entityId = reader.readInt();
         this.formId = reader.readUnsignedShortAsInt();
         this.subFormId = reader.readUnsignedByte();
+
+        this.entityData = getGameInstance().getEntityTable().get(this.formId);
+
         reader.skipBytes(1); //Unused?
 
         reader.skipBytes(4); //Pointer
@@ -79,9 +84,18 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
     /**
      * Gets the mof file associated with the form, if it can be found.
      */
-    public WADFile.WADEntry getMofFileEntry() {
+    public MOFHolder getMof() {
         if (this.map == null)
             return null;
+        List<MOFHolder> mofs = getGameInstance().getMainArchive().getAllFiles(MOFHolder.class);
+
+        for (int i = 0; i < mofs.size(); ++i)
+        {
+            if (mofs.get(i).getIndexEntry().getResourceId() == this.entityData.getMofId())
+            {
+                return mofs.get(i);
+            }
+        }
 
         MediEvilLevelTableEntry levelTableEntry = this.map.getLevelTableEntry();
         if (levelTableEntry == null) {
@@ -89,31 +103,7 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
             return null;
         }
 
-        WADFile wadFile = levelTableEntry.getWadFile();
-        if (wadFile == null) {
-            getLogger().warning("Couldn't get WAD from the level table entry, which prevents getting the mof file for a form.");
-            return null;
-        }
-
-        if (this.mofId < 0 || this.mofId >= wadFile.getFiles().size()) {
-            getLogger().warning("Couldn't get file " + this.mofId + " from the WAD file '" + wadFile.getFileDisplayName() + "', which prevents getting the mof file for a form.");
-            return null;
-        }
-
-        return wadFile.getFiles().get(this.mofId);
-    }
-
-    public MOFHolder getMof() {
-        WADFile.WADEntry wadEntry = getMofFileEntry();
-        if (wadEntry == null)
-            return null;
-
-        if (!(wadEntry.getFile() instanceof MOFHolder)) {
-            getLogger().warning("The form specified file '" + wadEntry.getDisplayName() + "' as its MOF, but this seems to not actually be a MOF.");
-            return null;
-        }
-
-        return (MOFHolder) wadEntry.getFile();
+        return null;
     }
 
     @Override

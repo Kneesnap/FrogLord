@@ -20,25 +20,23 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
     private int wadResourceId;
     private int vloResourceId;
-    @Getter private final int byteSize;
     @Setter private long textureRemapPointer;
 
     @Setter private transient TextureRemapArray remap;
 
-    public MediEvilLevelTableEntry(MediEvilGameInstance instance, int byteSize) {
-
+    public MediEvilLevelTableEntry(MediEvilGameInstance instance) {
         super(instance);
-        this.byteSize = byteSize;
     }
 
     @Override
     public void load(DataReader reader) {
-        int endIndex = reader.getIndex() + getByteSize();
+        int byteSize = getGameInstance().getConfig().getLevelTableEntryByteSize();
+        int endIndex = reader.getIndex() + byteSize;
         this.wadResourceId = reader.readInt();
         this.vloResourceId = reader.readInt();
 
         // Japanese versions have an extra resource ID
-        if (getByteSize() > 100 && getConfig().getRegion() == SCGameRegion.JAPAN) {
+        if (byteSize > 100 && getConfig().getRegion() == SCGameRegion.JAPAN) {
             reader.skipBytes(8);
         }
         else {
