@@ -67,13 +67,13 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket {
         if (reader.getIndex() != vertexGridOffsetTablePtr)
             getLogger().warning("The vertex data ended at " + Utils.toHexString(reader.getIndex()) + ", which was not when the grid offset table started! (" + Utils.toHexString(vertexGridOffsetTablePtr) + ")");
 
-        reader.jumpReturn();
-
         // Read grid offset table.
         // TODO: !
 
         // Read grid length table.
         // TODO: !
+
+        reader.setIndex(endIndex);
     }
 
     @Override

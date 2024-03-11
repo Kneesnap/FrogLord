@@ -36,6 +36,8 @@ public class MediEvilMapEntitiesPacket extends MediEvilMapPacket {
             entity.load(reader);
             this.entities.add(entity);
         }
+
+        reader.setIndex(endIndex);
     }
 
     @Override
