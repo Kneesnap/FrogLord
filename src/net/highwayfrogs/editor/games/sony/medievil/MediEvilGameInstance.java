@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
-import net.highwayfrogs.editor.games.sony.medievil.map.config.MediEvilConfig;
+import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
 import net.highwayfrogs.editor.utils.Utils;

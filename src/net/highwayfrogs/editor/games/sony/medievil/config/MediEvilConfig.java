@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.sony.medievil.map.config;
+package net.highwayfrogs.editor.games.sony.medievil.config;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;

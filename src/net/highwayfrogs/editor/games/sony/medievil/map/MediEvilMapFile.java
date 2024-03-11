@@ -7,9 +7,10 @@ import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
-import net.highwayfrogs.editor.games.sony.medievil.map.config.MediEvilConfig;
+import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMeshController;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapEntitiesPacket;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapGraphicsPacket;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapHeaderPacket;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
@@ -28,11 +29,12 @@ import java.util.List;
 public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
     private final MediEvilMapHeaderPacket headerPacket;
     private final MediEvilMapGraphicsPacket graphicsPacket;
+    private final MediEvilMapEntitiesPacket entitiesPacket;
 
     public MediEvilMapFile(MediEvilGameInstance instance) {
         super(instance, false);
         addFilePacket(this.headerPacket = new MediEvilMapHeaderPacket(this));
-        addFilePacket(new DummyFilePacket<>(this, "PTME", true, PacketSizeType.SIZE_INCLUSIVE)); // EMTP - Entity Markets Table Packet?
+        addFilePacket(this.entitiesPacket = new MediEvilMapEntitiesPacket(this)); // Entities
         addFilePacket(new DummyFilePacket<>(this, "NHCP", true, PacketSizeType.SIZE_INCLUSIVE)); // PCHN - Path Chain?
         addFilePacket(new DummyFilePacket<>(this, "2LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL2 - 2D Splines
         addFilePacket(new DummyFilePacket<>(this, "3LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL3 - 3D Splines
@@ -73,7 +75,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
         list.add(new Tuple2<>("Chunks", String.join(", ", this.headerPacket.getHeaderIdentifiers())));
         list.add(new Tuple2<>("Vertices", this.graphicsPacket.getVertices().size()));
         list.add(new Tuple2<>("Polygons", this.graphicsPacket.getPolygons().size()));
-
+        list.add(new Tuple2<>("Entities", this.entitiesPacket.getEntities().size()));
         /*list.add(new Tuple2<>("File Version", getMapConfig().getVersion()));
         list.add(new Tuple2<>("Default Reaction", this.levelSpecificDataPacket.getDefaultReactionType()));
         list.add(new Tuple2<>("Paths", this.pathPacket.getPaths().size()));
