@@ -22,7 +22,7 @@ public class SCGameConfig {
 
     // Loaded configuration data.
     private String displayName;
-    private long ramPointerOffset;
+    private long overrideRamOffset;
     private int MWIOffset;
     private int MWILength;
     private int bmpPointerAddress;
@@ -76,7 +76,7 @@ public class SCGameConfig {
         this.platform = config.getEnum("platform", SCGamePlatform.class);
         this.MWIOffset = config.getInt("mwiOffset");
         this.MWILength = config.getInt("mwiLength");
-        this.ramPointerOffset = config.getLong("ramOffset"); // If I have an offset in a file, adding this number will give its pointer.
+        this.overrideRamOffset = config.getLong("ramOffset", 0); // If I have an offset in a file, adding this number will give its pointer.
         this.bmpPointerAddress = config.getInt("bmpPointerAddress", 0); // Generally right at the start of the 'data' section.
     }
 

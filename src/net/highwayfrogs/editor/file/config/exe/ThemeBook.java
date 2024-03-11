@@ -39,7 +39,7 @@ public abstract class ThemeBook extends ExeStruct {
     public void loadFormLibrary(FroggerGameInstance instance, int toRead) {
         DataReader reader = instance.getExecutableReader();
         int globalFormId = instance.getFullFormBook().size();
-        reader.jumpTemp((int) (getFormLibraryPointer() - instance.getConfig().getRamPointerOffset()));
+        reader.jumpTemp((int) (getFormLibraryPointer() - instance.getRamOffset()));
 
         int localFormId = 0;
         for (int i = 0; i < toRead; i++) {
@@ -127,7 +127,7 @@ public abstract class ThemeBook extends ExeStruct {
 
     @Override
     public void save(DataWriter writer) {
-        writer.jumpTemp((int) (getFormLibraryPointer() - getConfig().getRamPointerOffset()));
+        writer.jumpTemp((int) (getFormLibraryPointer() - getGameInstance().getRamOffset()));
         getFormBook().forEach(entry -> entry.save(writer));
         writer.jumpReturn();
     }

@@ -452,7 +452,7 @@ public class FroggerGameInstance extends SCGameInstance {
         reader.setIndex(getConfig().getPickupDataAddress());
         for (int i = 0; i < this.pickupData.length; i++) {
             long tempPointer = reader.readUnsignedIntAsLong();
-            reader.jumpTemp((int) (tempPointer - getConfig().getRamPointerOffset()));
+            reader.jumpTemp((int) (tempPointer - getRamOffset()));
             PickupData pickupData = new PickupData(this);
             pickupData.load(reader);
             this.pickupData[i] = pickupData;
@@ -621,7 +621,7 @@ public class FroggerGameInstance extends SCGameInstance {
                 continue;
             }
 
-            reader.jumpTemp((int) (address - getConfig().getRamPointerOffset()));
+            reader.jumpTemp((int) (address - getRamOffset()));
             FroggerScript newScript = new FroggerScript(this);
             this.scripts.add(newScript); // Adds before loading so getName() can be accessed.
             try {
@@ -656,7 +656,7 @@ public class FroggerGameInstance extends SCGameInstance {
             if (script.isTooLarge())
                 getLogger().warning("Saving " + script.getName() + ", which is larger than what is considered safe!");
 
-            exeWriter.setIndex((int) (address - getConfig().getRamPointerOffset()));
+            exeWriter.setIndex((int) (address - getRamOffset()));
             script.save(exeWriter);
         }
     }

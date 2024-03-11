@@ -91,7 +91,7 @@ public class PSXMapBook extends MapBook {
     @Override
     public void handleCorrection(String[] args) {
         this.mapId = Integer.parseInt(args[0]);
-        this.remapPointer = Long.decode(args[1]) + getConfig().getRamPointerOffset();
+        this.remapPointer = Long.decode(args[1]) + getGameInstance().getRamOffset();
         this.wadId = Integer.parseInt(args[2]);
     }
 
@@ -100,7 +100,7 @@ public class PSXMapBook extends MapBook {
      * @return fileRemapPointer
      */
     public int getFileRemapPointer() {
-        return (int) (getRemapPointer() - getConfig().getRamPointerOffset());
+        return (int) (getRemapPointer() - getGameInstance().getRamOffset());
     }
 
     @Override
