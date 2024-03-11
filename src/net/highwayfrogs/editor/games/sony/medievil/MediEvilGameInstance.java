@@ -1,18 +1,21 @@
 package net.highwayfrogs.editor.games.sony.medievil;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
+import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
-import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
+import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,7 +28,10 @@ import java.util.List;
  * TODO: When adding map collprims (if I'm remembering right and they do exist), make sure to review flag data.
  * Created by Kneesnap on 9/7/2023.
  */
+@Getter
 public class MediEvilGameInstance extends SCGameInstance {
+    private final List<MediEvilLevelTableEntry> levelTable = new ArrayList<>();
+
     public MediEvilGameInstance() {
         super(SCGameType.MEDIEVIL);
     }
@@ -44,7 +50,7 @@ public class MediEvilGameInstance extends SCGameInstance {
 
     @Override
     protected MediEvilConfig makeConfig(String internalName) {
-        return new MediEvilConfig(this, internalName);
+        return new MediEvilConfig(internalName);
     }
 
     @Override
@@ -57,9 +63,29 @@ public class MediEvilGameInstance extends SCGameInstance {
     }
 
     @Override
+    protected void onConfigLoad(Config configObj) {
+        super.onConfigLoad(configObj);
+        readLevelTable(getExecutableReader());
+    }
+
+    private void readLevelTable(DataReader reader) {
+        this.levelTable.clear();
+        if (getConfig().getLevelTableAddress() < 0)
+            return;
+
+        reader.jumpTemp(getConfig().getLevelTableAddress());
+        for (int i = 0; i < getConfig().getLevelTableSize(); i++) {
+            MediEvilLevelTableEntry newEntry = new MediEvilLevelTableEntry(this, getConfig().getLevelTableEntryByteSize());
+            newEntry.load(reader);
+            this.levelTable.add(newEntry);
+        }
+        reader.jumpReturn();
+    }
+
+    @Override
     protected void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile) {
-        for (int i = 0; i < getConfig().getLevelTable().size(); i++) {
-            MediEvilLevelTableEntry entry = getConfig().getLevelTable().get(i);
+        for (int i = 0; i < this.levelTable.size(); i++) {
+            MediEvilLevelTableEntry entry = this.levelTable.get(i);
             if (entry.getTextureRemapPointer() < 0)
                 continue;
 
@@ -93,8 +119,8 @@ public class MediEvilGameInstance extends SCGameInstance {
      * @return levelTableEntry, or null
      */
     public MediEvilLevelTableEntry getLevelTableEntry(int mapResourceId) {
-        for (int i = 0; i < getConfig().getLevelTable().size(); i++) {
-            MediEvilLevelTableEntry entry = getConfig().getLevelTable().get(i);
+        for (int i = 0; i < this.levelTable.size(); i++) {
+            MediEvilLevelTableEntry entry = this.levelTable.get(i);
             if (mapResourceId > entry.getWadResourceId()) {
                 MediEvilMapFile levelTableMapFile = entry.getMapFile();
                 if (levelTableMapFile != null && levelTableMapFile.getIndexEntry().getResourceId() == mapResourceId)
