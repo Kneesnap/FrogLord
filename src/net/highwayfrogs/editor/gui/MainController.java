@@ -11,10 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.SneakyThrows;
+import lombok.*;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
@@ -42,7 +39,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.function.BiPredicate;
 
 @Getter
 public class MainController implements Initializable {
@@ -84,10 +84,73 @@ public class MainController implements Initializable {
     }
 
     @Getter
-    @AllArgsConstructor
-    public static class SCDisplayedFileType {
-        private final int id;
+    @RequiredArgsConstructor
+    public static abstract class SCMainMenuFileGroup {
+        private final List<SCGameFile<?>> files = new ArrayList<>();
         private final String name;
+
+        /**
+         * Test if the given file is part of this group.
+         * @param gameFile The file to test.
+         * @return true iff the file is part of the group.
+         */
+        public abstract boolean isPartOfGroup(SCGameFile<?> gameFile);
+
+        /**
+         * Creates the UI accordion pane.
+         * @param controller The controller to create the UI for.
+         */
+        public void createUI(MainController controller) {
+            TitledPane pane = new TitledPane();
+            pane.setPrefSize(200, 180);
+            pane.setAnimated(false);
+
+            ObservableList<SCGameFile<?>> fxFilesList = FXCollections.observableArrayList(this.files);
+            ListView<SCGameFile<?>> listView = new ListView<>(fxFilesList);
+            listView.setCellFactory(param -> new AttachmentListCell());
+            listView.setItems(fxFilesList);
+
+            pane.setContent(listView);
+            pane.setText(this.name + " Files (" + listView.getItems().size() + " items)");
+            controller.getAccordionMain().getPanes().add(pane);
+
+            listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> controller.openEditor(listView, newValue));
+
+            // Expand first pane.
+            if (controller.getAccordionMain().getPanes().size() <= 1) {
+                listView.getSelectionModel().selectFirst();
+                pane.setExpanded(true);
+            }
+        }
+    }
+
+    @Getter
+    public static class SCMainMenuFileGroupFileID extends SCMainMenuFileGroup {
+        private final int typeId;
+
+        public SCMainMenuFileGroupFileID(String name, int typeId) {
+            super(name);
+            this.typeId = typeId;
+        }
+
+        @Override
+        public boolean isPartOfGroup(SCGameFile<?> gameFile) {
+            return gameFile.getIndexEntry().getTypeId() == this.typeId;
+        }
+    }
+
+    public static class LazySCMainMenuFileGroup extends SCMainMenuFileGroup {
+        private final BiPredicate<SCGameFile<?>, FileEntry> predicate;
+
+        public LazySCMainMenuFileGroup(String name, BiPredicate<SCGameFile<?>, FileEntry> predicate) {
+            super(name);
+            this.predicate = predicate;
+        }
+
+        @Override
+        public boolean isPartOfGroup(SCGameFile<?> gameFile) {
+            return this.predicate != null && this.predicate.test(gameFile, gameFile.getIndexEntry());
+        }
     }
 
     /**
@@ -97,24 +160,38 @@ public class MainController implements Initializable {
         System.out.println("Hello! FrogLord is loading config '" + instance.getConfig().getInternalName() + "'.");
         this.gameInstance = instance;
 
-        Map<Integer, ObservableList<SCGameFile<?>>> gameFileRegistry = new HashMap<>();
+        // Create the list of groups to add files amongst.
+        List<SCMainMenuFileGroup> fileGroups = new ArrayList<>();
+        instance.setupFileGroups(fileGroups);
+        fileGroups.add(new SCMainMenuFileGroupFileID("WAD", WADFile.TYPE_ID));
+        fileGroups.add(new SCMainMenuFileGroupFileID("Uncategorized", 0));
+
+        // Add files to the different groups.
         for (SCGameFile<?> gameFile : getArchive().getFiles()) {
-            FileEntry fileEntry = gameFile.getIndexEntry();
-            gameFileRegistry.computeIfAbsent(fileEntry.getTypeId(), key -> FXCollections.observableArrayList())
-                    .add(gameFile);
+            // Check each file group to see if the file belongs there.
+            boolean addedSuccessfully = false;
+            for (int i = 0; i < fileGroups.size(); i++) {
+                SCMainMenuFileGroup fileGroup = fileGroups.get(i);
+                if (fileGroup != null && fileGroup.isPartOfGroup(gameFile)) {
+                    addedSuccessfully = true;
+                    fileGroup.getFiles().add(gameFile);
+                    break;
+                }
+            }
+
+            // If no group was found, add a new one which covers this.
+            if (!addedSuccessfully) {
+                int id = gameFile.getIndexEntry().getResourceId();
+                SCMainMenuFileGroup newGroup = new SCMainMenuFileGroupFileID("Unknown [Resource ID: " + id + "]", id);
+                fileGroups.add(newGroup);
+                newGroup.getFiles().add(gameFile);
+            }
         }
 
-        // TODO: This is temporary. I'd like to come up with a system which is a bit more flexible, controlled by the game instance. The game instance should be able to create categories, and specify which category a file belongs in. Then, we can build the list from that.
-        List<SCDisplayedFileType> displayedFileTypes = new ArrayList<>();
-        instance.setupFileTypes(displayedFileTypes);
-        for (SCDisplayedFileType displayedFileType : displayedFileTypes)
-            getAndAddFileList(displayedFileType.getId(), displayedFileType.getName(), gameFileRegistry);
-
-        // Manually tracked data.
-        getAndAddFileList(WADFile.TYPE_ID, "WAD", gameFileRegistry);
-        getAndAddFileList(0, "Uncategorized", gameFileRegistry);
-        for (Integer id : new ArrayList<>(gameFileRegistry.keySet()))
-            getAndAddFileList(id, "Unknown (ID: " + id + ")", gameFileRegistry);
+        // Create the UI.
+        for (SCMainMenuFileGroup fileGroup : fileGroups)
+            if (fileGroup != null && !fileGroup.getFiles().isEmpty())
+                fileGroup.createUI(this);
 
         // Setup!
         FroggerGameInstance frogger = getGameInstance().isFrogger() ? (FroggerGameInstance) getGameInstance() : null;
@@ -123,36 +200,6 @@ public class MainController implements Initializable {
         scriptEditor.setDisable(frogger == null || frogger.getScripts().isEmpty());
         demoTableEditor.setDisable(frogger == null || frogger.getDemoTableEntries().isEmpty());
         differenceReport.setDisable(!FroggerVersionComparison.isEnabled());
-    }
-
-    public void getAndAddFileList(int type, String name, Map<Integer, ObservableList<SCGameFile<?>>> fileMap) {
-        ObservableList<SCGameFile<?>> files = fileMap.remove(type);
-        if (files == null)
-            return; // There are no files of this type.
-
-        addFileList(name, files);
-    }
-
-    public void addFileList(String name, ObservableList<SCGameFile<?>> files) {
-        TitledPane pane = new TitledPane();
-        pane.setPrefSize(200, 180);
-        pane.setAnimated(false);
-
-        ListView<SCGameFile<?>> listView = new ListView<>(files);
-        listView.setCellFactory(param -> new AttachmentListCell());
-        listView.setItems(files);
-
-        pane.setContent(listView);
-        pane.setText(name + " Files (" + listView.getItems().size() + " items)");
-        accordionMain.getPanes().add(pane);
-
-        listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> openEditor(listView, newValue));
-
-        // Expand first pane.
-        if (accordionMain.getPanes().size() <= 1) {
-            listView.getSelectionModel().selectFirst();
-            pane.setExpanded(true);
-        }
     }
 
     /**

@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.sony;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
+import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class SCGameUnimplemented extends SCGameInstance {
     }
 
     @Override
-    public void setupFileTypes(List<SCDisplayedFileType> fileTypes) {
+    public void setupFileGroups(List<SCMainMenuFileGroup> fileTypes) {
 
     }
 }

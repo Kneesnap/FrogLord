@@ -6,7 +6,8 @@ import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
-import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
+import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
+import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroupFileID;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
@@ -58,12 +59,12 @@ public class BeastWarsInstance extends SCGameInstance {
     }
 
     @Override
-    public void setupFileTypes(List<SCDisplayedFileType> fileTypes) {
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_VLO, "VLO Texture Bank"));
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_MOF, "Models"));
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_MAP, "Map"));
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_TEX, "Map Texture"));
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_TIM, "TIM (PSX Image)"));
-        fileTypes.add(new SCDisplayedFileType(FILE_TYPE_PLT, "PLT (Palette)"));
+    public void setupFileGroups(List<SCMainMenuFileGroup> fileGroups) {
+        fileGroups.add(new SCMainMenuFileGroupFileID("VLO Texture Bank", FILE_TYPE_VLO));
+        fileGroups.add(new SCMainMenuFileGroupFileID("Models", FILE_TYPE_MOF));
+        fileGroups.add(new SCMainMenuFileGroupFileID("MAP [Playable Map]", FILE_TYPE_MAP));
+        fileGroups.add(new SCMainMenuFileGroupFileID("Map Texture", FILE_TYPE_TEX));
+        fileGroups.add(new SCMainMenuFileGroupFileID("TIM [PSX Image]", FILE_TYPE_TIM));
+        fileGroups.add(new SCMainMenuFileGroupFileID("PLT [Palette]", FILE_TYPE_PLT));
     }
 }

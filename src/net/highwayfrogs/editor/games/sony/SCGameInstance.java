@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
-import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
+import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -44,6 +44,7 @@ public abstract class SCGameInstance {
     @Getter private MWIFile archiveIndex;
     @Getter private File mwdFile;
     @Getter private File exeFile;
+    @Getter private long ramOffset;
     private Logger cachedLogger;
 
     // Instance data read from game files:
@@ -117,7 +118,11 @@ public abstract class SCGameInstance {
      * @param configObj The config object which data is loaded from.
      */
     protected void onConfigLoad(Config configObj) {
-        this.readBmpPointerData(getExecutableReader());
+        DataReader exeReader = getExecutableReader();
+        readExecutableHeader(exeReader);
+
+        // Read data. (Should occur after we know the executable header info)
+        this.readBmpPointerData(exeReader);
     }
 
     /**
@@ -340,7 +345,7 @@ public abstract class SCGameInstance {
      * Setup a list of supported file types.
      * @param fileTypes The list to setup.
      */
-    public abstract void setupFileTypes(List<SCDisplayedFileType> fileTypes);
+    public abstract void setupFileGroups(List<SCMainMenuFileGroup> fileTypes);
 
     /**
      * Tests if a given unsigned 32 bit number passed as a long looks like a valid pointer to memory present in the executable.
@@ -528,6 +533,20 @@ public abstract class SCGameInstance {
     public DataWriter createExecutableWriter() {
         byte[] cachedData = getExecutableBytes(); // Ensure the bytes have been read.
         return new DataWriter(new FixedArrayReceiver(cachedData));
+    }
+
+    private void readExecutableHeader(DataReader reader) {
+        if (getConfig().getOverrideRamOffset() != 0) {
+            this.ramOffset = getConfig().getOverrideRamOffset();
+        } else if (isPSX()) {
+            reader.jumpTemp(0);
+            reader.verifyString("PS-X EXE"); // Ensure it's a PSX executable.
+            reader.skipBytes(16);
+            this.ramOffset = reader.readUnsignedIntAsLong() - 0x800; // 0x800 is a CD sector. It's also the distance between the exe header and the start of the executable data put in memory.
+            reader.jumpReturn();
+        } else {
+            throw new RuntimeException("Failed to load ramOffset for '" + getConfig().getInternalName() + "', it may need to be added to the configuration.");
+        }
     }
 
     // Beyond here are functions for handling game data from game files, and potentially also configuration data.

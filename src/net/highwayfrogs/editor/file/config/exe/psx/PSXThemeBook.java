@@ -85,7 +85,7 @@ public class PSXThemeBook extends ThemeBook {
         this.multiplayerVloId = Integer.parseInt(args[3]);
         this.formLibraryPointer = Long.decode(args[4]);
         if (this.formLibraryPointer > 0)
-            this.formLibraryPointer += getConfig().getRamPointerOffset();
+            this.formLibraryPointer += getGameInstance().getRamOffset();
     }
 
     @Override

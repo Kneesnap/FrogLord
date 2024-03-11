@@ -62,7 +62,7 @@ public class TextureRemapArray extends SCSharedGameObject {
      * Gets the address this remap starts in the executable.
      */
     public int getReaderIndex() {
-        return (int) (this.loadAddress - getConfig().getRamPointerOffset());
+        return (int) (this.loadAddress - getGameInstance().getRamOffset());
     }
 
     /**
@@ -70,7 +70,7 @@ public class TextureRemapArray extends SCSharedGameObject {
      * @param offset The offset from the start of the file.
      */
     public void setFileOffset(int offset) {
-        this.loadAddress = (int) (offset + getConfig().getRamPointerOffset());
+        this.loadAddress = (int) (offset + getGameInstance().getRamOffset());
     }
 
     /**

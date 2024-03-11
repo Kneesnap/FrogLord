@@ -209,6 +209,15 @@ public class Config {
     }
 
     /**
+     * Get a long config value.
+     * @param keyName The name of the key.
+     * @return longValue
+     */
+    public long getLong(String keyName, long fallback) {
+        return has(keyName) ? get(keyName, Long::decode) : fallback;
+    }
+
+    /**
      * Gets a value from its string. Throws an error if the value does not exist.
      * @param keyName    The name of the value's key.
      * @param fromString How to get the object we want from its string.

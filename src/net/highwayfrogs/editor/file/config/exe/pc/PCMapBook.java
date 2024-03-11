@@ -70,7 +70,7 @@ public class PCMapBook extends MapBook {
      * @return fileLowRemapPointer
      */
     public int getFileLowRemapPointer() {
-        return (int) (getLowRemapPointer() - getConfig().getRamPointerOffset());
+        return (int) (getLowRemapPointer() - getGameInstance().getRamOffset());
     }
 
     /**
@@ -78,7 +78,7 @@ public class PCMapBook extends MapBook {
      * @return fileHighRemapPointer
      */
     public int getFileHighRemapPointer() {
-        return (int) (getHighRemapPointer() - getConfig().getRamPointerOffset());
+        return (int) (getHighRemapPointer() - getGameInstance().getRamOffset());
     }
 
     @Override
