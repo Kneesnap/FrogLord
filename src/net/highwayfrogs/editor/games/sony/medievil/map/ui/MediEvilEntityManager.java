@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.ui;
 
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
@@ -12,6 +11,7 @@ import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 
 import java.util.HashMap;
@@ -45,8 +45,8 @@ public class MediEvilEntityManager extends MediEvilMapUIManager.MediEvilMapListM
     }
 
     @Override
-    protected void setupMainGridEditor(VBox editorBox) {
-        super.setupMainGridEditor(editorBox);
+    protected void setupMainGridEditor(UISidePanel sidePanel) {
+        super.setupMainGridEditor(sidePanel);
         getValueDisplaySetting().setValue(ListDisplayType.ALL);
     }
 
