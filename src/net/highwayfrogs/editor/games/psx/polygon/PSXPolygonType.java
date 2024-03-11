@@ -43,4 +43,11 @@ public enum PSXPolygonType {
     public int getColorCount() {
         return this.gouraud ? this.verticeCount : 1;
     }
+
+    /**
+     * Check if this polygon type is a quad polygon. (4 vertices)
+     */
+    public boolean isQuad() {
+        return this.verticeCount == 4;
+    }
 }

@@ -10,7 +10,7 @@ import java.util.List;
  * Created by Kneesnap on 9/25/2023.
  */
 @Getter
-public class DynamicMeshNode implements IDynamicMeshHelper {
+public abstract class DynamicMeshNode implements IDynamicMeshHelper {
     private final DynamicMesh mesh;
     private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
 

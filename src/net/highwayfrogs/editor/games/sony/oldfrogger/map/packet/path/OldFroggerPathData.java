@@ -137,27 +137,10 @@ public class OldFroggerPathData extends SCGameData<OldFroggerGameInstance> {
         // Motion Data:
         editor.addEnumSelector("Motion Type", this.motionType, MotionType.values(), false, newMotionType -> this.motionType = newMotionType);
 
-        if (this.pathId < 0 || this.pathId >= manager.getMap().getPathPacket().getPaths().size()) { // Invalid path! Show this as a text box.
-            editor.addIntegerField("Path ID", this.pathId, newPathId -> {
-                this.pathId = newPathId;
-                manager.updateEntityPositionRotation(entity);
-            }, newPathId -> newPathId >= 0 && newPathId < manager.getMap().getPathPacket().getPaths().size());
-        } else { // Otherwise, show it as a selection box!
-            editor.addIntegerField("Path ID", this.pathId, newPathId -> {
-                this.pathId = newPathId;
-                manager.updateEntityPositionRotation(entity);
-            }, newPathId -> newPathId >= 0 && newPathId < manager.getMap().getPathPacket().getPaths().size());
-
-            // TODO: Bring back path selection.
-            /*
-            editor.addBoldLabelButton("Path #" + pathId, "Select Path", 25, () ->
-                    controller.getPathManager().promptPath((path, segment, segDistance) -> {
-                        setPath(manager.getMap(), path, segment);
-                        setSegmentDistance(segDistance);
-                        manager.updateEntityPositionRotation(entity);
-                        manager.showEntityInfo(getParentEntity()); // Update the entity editor display, update path slider, etc.
-                    }, null));*/
-        }
+        editor.addIntegerField("Path ID", this.pathId, newPathId -> {
+            this.pathId = newPathId;
+            manager.updateEntityPositionRotation(entity);
+        }, newPathId -> newPathId >= 0 && newPathId < manager.getMap().getPathPacket().getPaths().size());
     }
 
     /**

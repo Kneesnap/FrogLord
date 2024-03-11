@@ -2,11 +2,11 @@ package net.highwayfrogs.editor.gui.mesh.fxobject;
 
 import javafx.geometry.Point3D;
 import javafx.scene.Cursor;
-import javafx.scene.DepthTest;
 import javafx.scene.Group;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
-import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
@@ -15,8 +15,12 @@ import javafx.scene.transform.Translate;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
+import net.highwayfrogs.editor.gui.InputManager;
+import net.highwayfrogs.editor.gui.InputManager.KeyHandler;
 import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshNode;
@@ -29,9 +33,7 @@ import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,14 +50,14 @@ public class TranslationGizmo extends DynamicMesh {
     private static final RawColorTextureSource LIGHT_BLUE_TEXTURE_SOURCE = new RawColorTextureSource(0xFF19197F);
     private static final RawColorTextureSource ORANGE_TEXTURE_SOURCE = new RawColorTextureSource(Color.ORANGE);
     private static final RawColorTextureSource WHITE_TEXTURE_SOURCE = new RawColorTextureSource(Color.WHITE);
-    private static final PhongMaterial TRANSPARENT_MATERIAL = Utils.makeSpecialMaterial(javafx.scene.paint.Color.TRANSPARENT);
+    private static final Point3D ALL_AXIS = new Point3D(1, 1, 1);
     private static final double BAR_THICKNESS = 2D;
     private static final double BAR_LENGTH = 25D;
     private static final double BOX_SIZE = 6D;
-    private static final double AXIS_PLANE_SIZE = 10000;
-    private static final double VERTICAL_BOX_SIZE = 20;
+    private static final double SNAPPING_THRESHOLD = 3.5D;
 
     private final Map<MeshView, GizmoMeshViewState> meshViewStates = new HashMap<>();
+    private final KeyHandler keyListener = this::onKeyPressed;
     private final boolean xAxisEnabled;
     private final boolean yAxisEnabled;
     private final boolean zAxisEnabled;
@@ -80,9 +82,16 @@ public class TranslationGizmo extends DynamicMesh {
     private DynamicMeshUnmanagedNode yAxisNode; // Green
     private DynamicMeshUnmanagedNode zAxisNode; // Blue
 
-    // Used for user interaction.
+    // Drag/user interaction state.
     private Box axisPlane;
     private Point3D movementAxis;
+    private Point3D dragStartPosition;
+    private double originalPosition = Double.NaN;
+    private MeshView draggedMeshView;
+
+    public static final int X_CHANGED_FLAG = Constants.BIT_FLAG_0;
+    public static final int Y_CHANGED_FLAG = Constants.BIT_FLAG_1;
+    public static final int Z_CHANGED_FLAG = Constants.BIT_FLAG_2;
 
     public TranslationGizmo() {
         this(true, true, true);
@@ -173,14 +182,16 @@ public class TranslationGizmo extends DynamicMesh {
 
     /**
      * Adds a MeshView with extra data setup.
-     * @param view     the MeshView to add.
-     * @param camera   the camera the scene is viewed from.
+     * @param view the MeshView to add.
+     * @param controller the mesh view controller the scene is viewed from.
      * @param listener the listener to call when the position changes.
      */
-    public void addView(MeshView view, FirstPersonCamera camera, IPositionChangeListener listener) {
+    public void addView(MeshView view, MeshViewController<?> controller, IPositionChangeListener listener) {
         addView(view);
         GizmoMeshViewState state = this.meshViewStates.get(view);
-        state.setCamera(camera);
+        state.setController(controller);
+        state.setCamera(controller.getFirstPersonCamera());
+        state.setInputManager(controller.getInputManager());
         state.setChangeListener(listener);
     }
 
@@ -210,14 +221,14 @@ public class TranslationGizmo extends DynamicMesh {
         view.setOnMouseReleased(null);
 
         // Remove plane.
-        stopDragging(view);
+        stopDragging(view, false);
         this.meshViewStates.remove(view);
     }
 
     /**
      * Set the position change listener for a given mesh view.
      * This function is only valid after the MeshView has been registered with addView().
-     * @param view     view to set the change listener for
+     * @param view view to set the change listener for
      * @param listener the new listener to apply
      */
     public void setChangeListener(MeshView view, IPositionChangeListener listener) {
@@ -226,7 +237,175 @@ public class TranslationGizmo extends DynamicMesh {
             throw new RuntimeException("The provided MeshView '" + view + "' has not been registered to " + Utils.getSimpleName(this) + ", and thus it is not yet possible to set the listener.");
 
         state.setChangeListener(listener);
+    }
 
+    /**
+     * Gets the X position coordinate of the provided MeshView.
+     * @param meshView the MeshView to get the position from
+     * @return positional value
+     */
+    public double getPositionX(MeshView meshView) {
+        if (!getMeshViews().contains(meshView))
+            throw new IllegalArgumentException("Cannot read position from a MeshView which isn't displaying this gizmo!");
+
+        // Get position value.
+        Translate position = Scene3DUtils.getOptional3DTranslation(meshView);
+        return position != null ? position.getX() : 0;
+    }
+
+    /**
+     * Sets the new X position coordinate.
+     * @param meshView the MeshView to set the coordinate for
+     * @param newX new x coordinate
+     * @param fireEvent whether the listener should be alerted of this change
+     */
+    public void setPositionX(MeshView meshView, double newX, boolean fireEvent) {
+        if (!Double.isFinite(newX))
+            throw new IllegalArgumentException("The x world coordinate cannot be set to: " + newX);
+        if (!getMeshViews().contains(meshView))
+            throw new IllegalArgumentException("Cannot apply position to a MeshView which isn't displaying this gizmo!");
+
+        // Update position value.
+        Translate position = Scene3DUtils.get3DTranslation(meshView);
+        double oldX = position.getX();
+        position.setX(newX);
+
+        // Fire the event if necessary.
+        if (fireEvent) {
+            GizmoMeshViewState state = this.meshViewStates.get(meshView);
+            if (state != null && state.getChangeListener() != null)
+                state.getChangeListener().handle(meshView, oldX, position.getY(), position.getZ(), newX, position.getY(), position.getZ(), X_CHANGED_FLAG);
+        }
+    }
+
+    /**
+     * Gets the Y position coordinate of the provided MeshView.
+     * @param meshView the MeshView to get the position from
+     * @return positional value
+     */
+    public double getPositionY(MeshView meshView) {
+        if (!getMeshViews().contains(meshView))
+            throw new IllegalArgumentException("Cannot read position from a MeshView which isn't displaying this gizmo!");
+
+        // Get position value.
+        Translate position = Scene3DUtils.getOptional3DTranslation(meshView);
+        return position != null ? position.getY() : 0;
+    }
+
+    /**
+     * Sets the new Y position coordinate.
+     * @param meshView the MeshView to set the coordinate for
+     * @param newY new y coordinate
+     * @param fireEvent whether the listener should be alerted of this change
+     */
+    public void setPositionY(MeshView meshView, double newY, boolean fireEvent) {
+        if (!Double.isFinite(newY))
+            throw new IllegalArgumentException("The y world coordinate cannot be set to: " + newY);
+        if (!getMeshViews().contains(meshView))
+            throw new IllegalArgumentException("Cannot apply position to a MeshView which isn't displaying this gizmo!");
+
+        // Update position value.
+        Translate position = Scene3DUtils.get3DTranslation(meshView);
+        double oldY = position.getY();
+        position.setY(newY);
+
+        // Fire the event if necessary.
+        if (fireEvent) {
+            GizmoMeshViewState state = this.meshViewStates.get(meshView);
+            if (state != null && state.getChangeListener() != null)
+                state.getChangeListener().handle(meshView, position.getX(), oldY, position.getZ(), position.getX(), newY, position.getZ(), Y_CHANGED_FLAG);
+        }
+    }
+
+    /**
+     * Gets the Z position coordinate of the provided MeshView.
+     * @param meshView the MeshView to get the position from
+     * @return positional value
+     */
+    public double getPositionZ(MeshView meshView) {
+        if (!getMeshViews().contains(meshView))
+            throw new IllegalArgumentException("Cannot read position from a MeshView which isn't displaying this gizmo!");
+
+        // Get position value.
+        Translate position = Scene3DUtils.getOptional3DTranslation(meshView);
+        return position != null ? position.getZ() : 0;
+    }
+
+    /**
+     * Sets the new Y position coordinate.
+     * @param meshView the MeshView to set the coordinate for
+     * @param newZ new z coordinate
+     * @param fireEvent whether the listener should be alerted of this change
+     */
+    public void setPositionZ(MeshView meshView, double newZ, boolean fireEvent) {
+        if (!Double.isFinite(newZ))
+            throw new IllegalArgumentException("The z world coordinate cannot be set to: " + newZ);
+        if (!getMeshViews().contains(meshView))
+            throw new IllegalArgumentException("Cannot apply position to a MeshView which isn't displaying this gizmo!");
+
+        // Update position value.
+        Translate position = Scene3DUtils.get3DTranslation(meshView);
+        double oldZ = position.getZ();
+        position.setZ(newZ);
+
+        // Fire the event if necessary.
+        if (fireEvent) {
+            GizmoMeshViewState state = this.meshViewStates.get(meshView);
+            if (state != null && state.getChangeListener() != null)
+                state.getChangeListener().handle(meshView, position.getX(), position.getY(), oldZ, position.getX(), position.getY(), newZ, Z_CHANGED_FLAG);
+        }
+    }
+
+    /**
+     * Gets the position coordinates of the provided MeshView.
+     * @param meshView the MeshView to get the position from
+     * @return positional value, or null if there is no position
+     */
+    public Translate getPosition(MeshView meshView) {
+        if (!getMeshViews().contains(meshView))
+            throw new IllegalArgumentException("Cannot read position from a MeshView which isn't displaying this gizmo!");
+
+        return Scene3DUtils.getOptional3DTranslation(meshView);
+    }
+
+    /**
+     * Sets the new X position coordinate.
+     * @param meshView the MeshView to set the coordinate for
+     * @param newX new x coordinate
+     * @param fireEvent whether the listener should be alerted of this change
+     */
+    public void setPosition(MeshView meshView, double newX, double newY, double newZ, boolean fireEvent) {
+        if (!Double.isFinite(newX))
+            throw new IllegalArgumentException("The x world coordinate cannot be set to: " + newX);
+        if (!Double.isFinite(newY))
+            throw new IllegalArgumentException("The y world coordinate cannot be set to: " + newY);
+        if (!Double.isFinite(newZ))
+            throw new IllegalArgumentException("The z world coordinate cannot be set to: " + newZ);
+        if (!getMeshViews().contains(meshView))
+            throw new IllegalArgumentException("Cannot apply position to a MeshView which isn't displaying this gizmo!");
+
+        // Update position value.
+        Translate position = Scene3DUtils.get3DTranslation(meshView);
+        double oldX = position.getX();
+        double oldY = position.getY();
+        double oldZ = position.getZ();
+        position.setX(newX);
+        position.setY(newY);
+        position.setZ(newZ);
+
+        // Fire the event if necessary.
+        if (fireEvent) {
+            GizmoMeshViewState state = this.meshViewStates.get(meshView);
+            if (state != null && state.getChangeListener() != null)
+                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, newX, newY, newZ, X_CHANGED_FLAG | Y_CHANGED_FLAG | Z_CHANGED_FLAG);
+        }
+    }
+
+    /**
+     * Test if the gizmo is currently used for dragging.
+     */
+    public boolean isDraggingActive() {
+        return this.movementAxis != null && this.axisPlane != null && this.dragStartPosition != null;
     }
 
     private void onMouseEnter(MouseEvent event) {
@@ -287,49 +466,39 @@ public class TranslationGizmo extends DynamicMesh {
             this.movementAxis = Rotate.X_AXIS;
             this.xAxisNode.updateTextureIndex(this.redTextureUvIndex, this.orangeTextureUvIndex);
             this.xAxisNode.updateTextureIndex(this.lightRedTextureUvIndex, this.orangeTextureUvIndex);
-            createAxisPlane(meshView, scene, AXIS_PLANE_SIZE, 0, AXIS_PLANE_SIZE);
+            this.originalPosition = getPositionX(meshView);
         } else if (clickedMeshNode == this.yAxisNode) {
             this.movementAxis = Rotate.Y_AXIS;
             this.yAxisNode.updateTextureIndex(this.greenTextureUvIndex, this.orangeTextureUvIndex);
             this.yAxisNode.updateTextureIndex(this.lightGreenTextureUvIndex, this.orangeTextureUvIndex);
-
-            if (state.getCamera() != null) {
-                Box plane = createAxisPlane(meshView, scene, AXIS_PLANE_SIZE, AXIS_PLANE_SIZE, 0);
-
-                // Angle the plane towards the camera.
-                FirstPersonCamera camera = state.getCamera();
-                Point3D gizmoPos = meshView.localToScene(0, 0, 0);
-                double relativeX = camera.getCamPosXProperty().get() - gizmoPos.getX();
-                double relativeZ = camera.getCamPosZProperty().get() - gizmoPos.getZ();
-                double angle = Rotate.Z_AXIS.angle(relativeX, 0, relativeZ);
-                if (relativeX < 0)
-                    angle = -angle;
-
-                plane.getTransforms().add(new Rotate(angle, Rotate.Y_AXIS));
-            } else {
-                // Fallback option is to create a vertical box.
-                createAxisPlane(meshView, scene, VERTICAL_BOX_SIZE, AXIS_PLANE_SIZE, VERTICAL_BOX_SIZE);
-            }
+            this.originalPosition = getPositionY(meshView);
         } else if (clickedMeshNode == this.zAxisNode) {
             this.movementAxis = Rotate.Z_AXIS;
             this.zAxisNode.updateTextureIndex(this.blueTextureUvIndex, this.orangeTextureUvIndex);
             this.zAxisNode.updateTextureIndex(this.lightBlueTextureUvIndex, this.orangeTextureUvIndex);
-            createAxisPlane(meshView, scene, AXIS_PLANE_SIZE, 0, AXIS_PLANE_SIZE);
+            this.originalPosition = getPositionZ(meshView);
         } else {
             // Didn't click one of the axis.
             this.movementAxis = null;
             return;
         }
 
+        // Setup axis plane for mouse-picking.
+        this.axisPlane = Scene3DUtils.createAxisPlane(meshView, scene, state.getCamera(), this.movementAxis);
+
         // Update state.
         Scale scale = Scene3DUtils.getOptional3DScale(meshView);
         if (scale != null) {
             Point3D startPoint = result.getIntersectedPoint();
-            Point3D scaledPoint = new Point3D(startPoint.getX() * scale.getX(), startPoint.getY() * scale.getY(), startPoint.getZ() * scale.getZ());
-            state.setDragStartPosition(scaledPoint);
+            this.dragStartPosition = new Point3D(startPoint.getX() * scale.getX(), startPoint.getY() * scale.getY(), startPoint.getZ() * scale.getZ());
         } else {
-            state.setDragStartPosition(result.getIntersectedPoint());
+            this.dragStartPosition = result.getIntersectedPoint();
         }
+
+        // Add key listener, so we can cancel if necessary.
+        this.draggedMeshView = meshView;
+        if (state.getInputManager() != null)
+            state.getInputManager().addKeyListener(KeyCode.ESCAPE, this.keyListener);
 
         // Disable dragging on the gizmo, so only the plane will get events.
         meshView.setMouseTransparent(true);
@@ -337,27 +506,6 @@ public class TranslationGizmo extends DynamicMesh {
 
         // Prevent the drag updates from moving the camera view.
         event.consume();
-    }
-
-    private Box createAxisPlane(MeshView meshView, Group scene, double boxWidth, double boxHeight, double boxDepth) {
-        // Add axis-aligned plane.
-        Box axisPlane = new Box(boxWidth, boxHeight, boxDepth);
-        axisPlane.setMaterial(TRANSPARENT_MATERIAL);
-        axisPlane.setDepthTest(DepthTest.DISABLE);
-
-        // Add translation.
-        Translate translate = Scene3DUtils.getOptional3DTranslation(meshView);
-        if (translate != null)
-            axisPlane.getTransforms().add(translate);
-
-        // Add rotation.
-        Rotate rotation = Scene3DUtils.getOptional3DRotation(meshView);
-        if (rotation != null)
-            axisPlane.getTransforms().add(rotation);
-
-        scene.getChildren().add(axisPlane);
-        this.axisPlane = axisPlane;
-        return axisPlane;
     }
 
     private void onDragUpdate(MouseEvent event) {
@@ -375,7 +523,7 @@ public class TranslationGizmo extends DynamicMesh {
 
         // If there's no axis currently selected, or no drag start, we're probably selecting the base, which shouldn't do anything here.
         GizmoMeshViewState state = this.meshViewStates.get(meshView);
-        if (this.movementAxis == null || state.getDragStartPosition() == null)
+        if (!isDraggingActive())
             return;
 
         // Test if there's an intersection point.
@@ -384,7 +532,7 @@ public class TranslationGizmo extends DynamicMesh {
             return;
 
         // Ensure the coordinates we get are now absolute.
-        Point3D mouseOffset = mousePoint.subtract(state.getDragStartPosition());
+        Point3D mouseOffset = mousePoint.subtract(this.dragStartPosition);
         Point3D newWorldPos = result.getIntersectedNode().localToScene(mouseOffset);
 
         // Get old position.
@@ -396,39 +544,59 @@ public class TranslationGizmo extends DynamicMesh {
 
         // Update positions.
         if (this.movementAxis == Rotate.X_AXIS) {
-            gizmoTranslate.setX(newWorldPos.getX());
-            planeTranslate.setX(newWorldPos.getX());
-            if (state.getChangeListener() != null)
-                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, newWorldPos.getX(), oldY, oldZ);
+            double newX = newWorldPos.getX();
+            if (Math.abs(newX - this.originalPosition) <= SNAPPING_THRESHOLD)
+                newX = this.originalPosition; // Snap positions near the start position to the start position.
+
+            // Update positions & fire event.
+            gizmoTranslate.setX(newX);
+            planeTranslate.setX(newX);
+            if (state.getChangeListener() != null && oldX != newX)
+                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, newX, oldY, oldZ, X_CHANGED_FLAG);
         } else if (this.movementAxis == Rotate.Y_AXIS) {
-            gizmoTranslate.setY(newWorldPos.getY());
-            planeTranslate.setY(newWorldPos.getY());
-            if (state.getChangeListener() != null)
-                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, oldX, newWorldPos.getY(), oldZ);
+            double newY = newWorldPos.getY();
+            if (Math.abs(newY - this.originalPosition) <= SNAPPING_THRESHOLD)
+                newY = this.originalPosition; // Snap positions near the start position to the start position.
+
+            // Update positions & fire event.
+            gizmoTranslate.setY(newY);
+            planeTranslate.setY(newY);
+            if (state.getChangeListener() != null && oldY != newY)
+                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, oldX, newY, oldZ, Y_CHANGED_FLAG);
         } else if (this.movementAxis == Rotate.Z_AXIS) {
-            gizmoTranslate.setZ(newWorldPos.getZ());
-            planeTranslate.setZ(newWorldPos.getZ());
-            if (state.getChangeListener() != null)
-                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, oldX, oldY, newWorldPos.getZ());
+            double newZ = newWorldPos.getZ();
+            if (Math.abs(newZ - this.originalPosition) <= SNAPPING_THRESHOLD)
+                newZ = this.originalPosition; // Snap positions near the start position to the start position.
+
+            // Update positions & fire event.
+            gizmoTranslate.setZ(newZ);
+            planeTranslate.setZ(newZ);
+            if (state.getChangeListener() != null && oldZ != newZ)
+                state.getChangeListener().handle(meshView, oldX, oldY, oldZ, oldX, oldY, newZ, Z_CHANGED_FLAG);
         }
     }
 
     private void onDragStop(MouseEvent event) {
         MeshView meshView = (MeshView) event.getSource();
-        stopDragging(meshView);
 
-        // Prevent the drag updates from moving the camera view.
-        event.consume();
+        event.consume(); // Prevent the drag updates from moving the camera view.
+        stopDragging(meshView, false); // Stop dragging.
     }
 
-    private void stopDragging(MeshView meshView) {
+    private void onKeyPressed(InputManager manager, KeyEvent event) {
+        // Cancel the drag, and restore the original position.
+        event.consume();
+        stopDragging(this.draggedMeshView, true);
+    }
+
+    private void stopDragging(MeshView meshView, boolean restoreOriginalPosition) {
         GizmoMeshViewState state = this.meshViewStates.get(meshView);
-        if (state == null)
-            return;
+        if (state != null && state.getInputManager() != null)
+            state.getInputManager().removeKeyListener(KeyCode.ESCAPE, this.keyListener);
 
         // Remove the axis plane from the scene.
-        Group scene = Scene3DUtils.getSubSceneGroup(meshView.getScene().getRoot());
         if (this.axisPlane != null) {
+            Group scene = Scene3DUtils.getSubSceneGroup(this.axisPlane.getScene());
             scene.getChildren().remove(this.axisPlane);
             this.axisPlane = null;
         }
@@ -437,17 +605,25 @@ public class TranslationGizmo extends DynamicMesh {
         if (this.movementAxis != null) {
             if (this.movementAxis == Rotate.X_AXIS) {
                 this.xAxisNode.updateTextureIndex(this.orangeTextureUvIndex, this.redTextureUvIndex);
+                if (restoreOriginalPosition)
+                    setPositionX(meshView, this.originalPosition, true);
             } else if (this.movementAxis == Rotate.Y_AXIS) {
                 this.yAxisNode.updateTextureIndex(this.orangeTextureUvIndex, this.greenTextureUvIndex);
+                if (restoreOriginalPosition)
+                    setPositionY(meshView, this.originalPosition, true);
             } else if (this.movementAxis == Rotate.Z_AXIS) {
                 this.zAxisNode.updateTextureIndex(this.orangeTextureUvIndex, this.blueTextureUvIndex);
+                if (restoreOriginalPosition)
+                    setPositionZ(meshView, this.originalPosition, true);
             }
 
             this.movementAxis = null;
+            this.originalPosition = Double.NaN;
         }
 
-        // Update state.
-        state.setDragStartPosition(null);
+        // Clear remaining drag state.
+        this.dragStartPosition = null;
+        this.draggedMeshView = null;
 
         // Re-enable dragging on the gizmo.
         meshView.setMouseTransparent(false);
@@ -459,10 +635,10 @@ public class TranslationGizmo extends DynamicMesh {
     private static class GizmoMeshViewState {
         private final TranslationGizmo gizmo;
         private final MeshView meshView;
-        private final List<Box> planes = new ArrayList<>();
-        @Setter private Point3D dragStartPosition;
         @Setter private IPositionChangeListener changeListener;
+        @Setter private MeshViewController<?> controller;
         @Setter private FirstPersonCamera camera;
+        @Setter private InputManager inputManager;
     }
 
     /**
@@ -472,13 +648,14 @@ public class TranslationGizmo extends DynamicMesh {
         /**
          * Handle a position change.
          * @param meshView the mesh view which updated its scale
-         * @param oldX     old x coordinate
-         * @param oldY     old y coordinate
-         * @param oldZ     old z coordinate
-         * @param newX     new x coordinate
-         * @param newY     new y coordinate
-         * @param newZ     new z coordinate
+         * @param oldX old x coordinate
+         * @param oldY old y coordinate
+         * @param oldZ old z coordinate
+         * @param newX new x coordinate
+         * @param newY new y coordinate
+         * @param newZ new z coordinate
+         * @param flags flags containing information about the change
          */
-        void handle(MeshView meshView, double oldX, double oldY, double oldZ, double newX, double newY, double newZ);
+        void handle(MeshView meshView, double oldX, double oldY, double oldZ, double newX, double newY, double newZ, int flags);
     }
 }

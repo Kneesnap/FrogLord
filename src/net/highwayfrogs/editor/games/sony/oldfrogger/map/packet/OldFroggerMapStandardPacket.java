@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
@@ -9,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerGeneralDat
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 /**
  * Contains the "STANDARD" chunk data.
@@ -17,6 +19,7 @@ import java.util.Arrays;
 @Getter
 public class OldFroggerMapStandardPacket extends OldFroggerMapPacket {
     public static final String IDENTIFIER = "STND";
+    private static final UUID CAMERA_OFFSET_IDENTIFIER = UUID.randomUUID();
 
     private final SVector cameraOffset = new SVector();
     private short halfHeight;
@@ -70,7 +73,9 @@ public class OldFroggerMapStandardPacket extends OldFroggerMapPacket {
      * @param editor  Creating the editor
      */
     public void setupEditor(OldFroggerGeneralDataManager manager, GUIEditorGrid editor) {
-        editor.addFloatSVector("Camera Offset", this.cameraOffset, manager.getController()); // TODO: This should show offset to the frogger start position.
+        IVector froggerStartPosition = getParentFile().getLevelSpecificDataPacket().getFroggerStartPosition();
+
+        editor.addPositionOffsetEditor(manager.getController(), CAMERA_OFFSET_IDENTIFIER, "Camera Offset", this.cameraOffset, froggerStartPosition, null);
         editor.addFixedShort("Half Height", this.halfHeight, newValue -> this.halfHeight = newValue);
         editor.addFixedShort("Camera Max Left", this.cameraMaximumLeft, newValue -> this.cameraMaximumLeft = newValue);
         editor.addFixedShort("Camera Max Bottom", this.cameraMaximumBottom, newValue -> this.cameraMaximumBottom = newValue); // 95.5625, -2.6875, -592.0

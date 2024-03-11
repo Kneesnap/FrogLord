@@ -2,16 +2,13 @@ package net.highwayfrogs.editor.gui.mesh.fxobject;
 
 import javafx.geometry.Point3D;
 import javafx.scene.Cursor;
-import javafx.scene.DepthTest;
 import javafx.scene.Group;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
-import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
-import javafx.scene.transform.Translate;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -49,13 +46,10 @@ public class MultiViewScaleGizmo extends DynamicMesh {
     private static final RawColorTextureSource LIGHT_BLUE_TEXTURE_SOURCE = new RawColorTextureSource(0xFF19197F);
     private static final RawColorTextureSource ORANGE_TEXTURE_SOURCE = new RawColorTextureSource(Color.ORANGE);
     private static final RawColorTextureSource WHITE_TEXTURE_SOURCE = new RawColorTextureSource(Color.WHITE);
-    private static final PhongMaterial TRANSPARENT_MATERIAL = Utils.makeSpecialMaterial(javafx.scene.paint.Color.TRANSPARENT);
     private static final double BAR_THICKNESS = 2D;
     private static final double BAR_LENGTH = 25D;
     private static final double BOX_SIZE = 6D;
     private static final double AXIS_BASE_BOX_DISTANCE = BAR_LENGTH + BOX_SIZE;
-    private static final double AXIS_PLANE_SIZE = 10000;
-    private static final double VERTICAL_BOX_SIZE = 20;
 
     private final Map<MeshView, GizmoMeshViewState> meshViewStates = new HashMap<>();
     private final boolean xAxisEnabled;
@@ -288,7 +282,6 @@ public class MultiViewScaleGizmo extends DynamicMesh {
             this.movementAxis = Rotate.X_AXIS;
             this.xAxisNode.updateTextureIndex(this.redTextureUvIndex, this.orangeTextureUvIndex);
             this.xAxisNode.updateTextureIndex(this.lightRedTextureUvIndex, this.orangeTextureUvIndex);
-            createAxisPlane(meshView, scene, AXIS_PLANE_SIZE, 0, AXIS_PLANE_SIZE);
 
             // Set starting distance.
             Scale scale = Scene3DUtils.getOptional3DScale(meshView);
@@ -298,25 +291,6 @@ public class MultiViewScaleGizmo extends DynamicMesh {
             this.movementAxis = Rotate.Y_AXIS;
             this.yAxisNode.updateTextureIndex(this.greenTextureUvIndex, this.orangeTextureUvIndex);
             this.yAxisNode.updateTextureIndex(this.lightGreenTextureUvIndex, this.orangeTextureUvIndex);
-            createAxisPlane(meshView, scene, VERTICAL_BOX_SIZE, AXIS_PLANE_SIZE, VERTICAL_BOX_SIZE);
-
-            if (state.getCamera() != null) {
-                Box plane = createAxisPlane(meshView, scene, AXIS_PLANE_SIZE, AXIS_PLANE_SIZE, 0);
-
-                // Angle the plane towards the camera.
-                FirstPersonCamera camera = state.getCamera();
-                Point3D gizmoPos = meshView.localToScene(0, 0, 0);
-                double relativeX = camera.getCamPosXProperty().get() - gizmoPos.getX();
-                double relativeZ = camera.getCamPosZProperty().get() - gizmoPos.getZ();
-                double angle = Rotate.Z_AXIS.angle(relativeX, 0, relativeZ);
-                if (relativeX < 0)
-                    angle = -angle;
-
-                plane.getTransforms().add(new Rotate(angle, Rotate.Y_AXIS));
-            } else {
-                // Fallback option is to create a vertical box.
-                createAxisPlane(meshView, scene, VERTICAL_BOX_SIZE, AXIS_PLANE_SIZE, VERTICAL_BOX_SIZE);
-            }
 
             // Set starting distance.
             Scale scale = Scene3DUtils.getOptional3DScale(meshView);
@@ -326,7 +300,6 @@ public class MultiViewScaleGizmo extends DynamicMesh {
             this.movementAxis = Rotate.Z_AXIS;
             this.zAxisNode.updateTextureIndex(this.blueTextureUvIndex, this.orangeTextureUvIndex);
             this.zAxisNode.updateTextureIndex(this.lightBlueTextureUvIndex, this.orangeTextureUvIndex);
-            createAxisPlane(meshView, scene, AXIS_PLANE_SIZE, 0, AXIS_PLANE_SIZE);
 
             // Set starting distance.
             Scale scale = Scene3DUtils.getOptional3DScale(meshView);
@@ -338,6 +311,9 @@ public class MultiViewScaleGizmo extends DynamicMesh {
             return;
         }
 
+        // Setup axis plane for mouse-picking.
+        this.axisPlane = Scene3DUtils.createAxisPlane(meshView, scene, state.getCamera(), this.movementAxis);
+
         // Update state.
         state.setDragStartPosition(result.getIntersectedPoint());
 
@@ -347,27 +323,6 @@ public class MultiViewScaleGizmo extends DynamicMesh {
 
         // Prevent the drag updates from moving the camera view.
         event.consume();
-    }
-
-    private Box createAxisPlane(MeshView meshView, Group scene, double boxWidth, double boxHeight, double boxDepth) {
-        // Add axis-aligned plane.
-        Box axisPlane = new Box(boxWidth, boxHeight, boxDepth);
-        axisPlane.setMaterial(TRANSPARENT_MATERIAL);
-        axisPlane.setDepthTest(DepthTest.DISABLE);
-
-        // Add translation.
-        Translate translate = Scene3DUtils.getOptional3DTranslation(meshView);
-        if (translate != null)
-            axisPlane.getTransforms().add(translate);
-
-        // Add rotation.
-        Rotate rotation = Scene3DUtils.getOptional3DRotation(meshView);
-        if (rotation != null)
-            axisPlane.getTransforms().add(rotation);
-
-        scene.getChildren().add(axisPlane);
-        this.axisPlane = axisPlane;
-        return axisPlane;
     }
 
     private void onDragUpdate(MouseEvent event) {

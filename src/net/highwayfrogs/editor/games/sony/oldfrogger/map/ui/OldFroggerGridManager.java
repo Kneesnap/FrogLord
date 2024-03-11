@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.ui;
 
-import javafx.scene.layout.VBox;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapGridHeaderPacket.OldFroggerMapGrid;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapUIManager.OldFroggerMapListManager;
+import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode.OverlayTarget;
 
@@ -36,11 +36,11 @@ public class OldFroggerGridManager extends OldFroggerMapListManager<OldFroggerMa
     }
 
     @Override
-    protected void setupMainGridEditor(VBox editorBox) {
+    protected void setupMainGridEditor(UISidePanel sidePanel) {
         getMap().getGridPacket().setupEditor(this, getMainGrid());
         getMainGrid().addSeparator();
 
-        super.setupMainGridEditor(editorBox);
+        super.setupMainGridEditor(sidePanel);
     }
 
     @Override

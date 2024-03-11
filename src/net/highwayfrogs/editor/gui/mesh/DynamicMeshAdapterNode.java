@@ -128,53 +128,6 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
     }
 
     /**
-     * Update all the vertex position values stored for a particular data source.
-     * @param source The source to update vertices for.
-     */
-    public void updateVertices(TDataSource source) {
-        if (!this.mesh.isActive(this))
-            throw new RuntimeException("Cannot update mesh data on an inactive node.");
-
-        DynamicMeshTypedDataEntry entry = this.entriesByDataSource.get(source);
-        if (entry == null)
-            throw new RuntimeException("Cannot update vertices for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
-
-        // Update each vertex.
-        for (int i = 0; i < entry.getWrittenVertexCount(); i++)
-            this.updateVertex(entry, i);
-    }
-
-    /**
-     * Update the vertex position for the provided data source.
-     * @param source           The data source to update a vertex for.
-     * @param localVertexIndex The local vertex index to the data source / entry.
-     */
-    public void updateVertex(TDataSource source, int localVertexIndex) {
-        if (!this.mesh.isActive(this))
-            throw new RuntimeException("Cannot update mesh data on an inactive node.");
-
-        DynamicMeshTypedDataEntry entry = this.entriesByDataSource.get(source);
-        if (entry == null)
-            throw new RuntimeException("Cannot update vertices for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
-
-        if (localVertexIndex < 0 || localVertexIndex >= entry.getWrittenVertexCount()) {
-            if (entry.getWrittenVertexCount() == 0)
-                throw new RuntimeException("Cannot update local vertex index " + localVertexIndex + ", since there are no vertices tracked for the " + Utils.getSimpleName(source));
-
-            throw new RuntimeException("Cannot update local vertex index " + localVertexIndex + ", since it was not in the local vertex ID range [0, " + entry.getWrittenVertexCount() + ") tracked for the " + Utils.getSimpleName(source));
-        }
-
-        this.updateVertex(entry, localVertexIndex);
-    }
-
-    /**
-     * Update the vertex position for the provided data entry.
-     * @param entry            The data entry to write updated vertex positions for.
-     * @param localVertexIndex The vertex ID to update.
-     */
-    public abstract void updateVertex(DynamicMeshTypedDataEntry entry, int localVertexIndex);
-
-    /**
      * Update all the texture coordinate values stored for a particular data source.
      * @param source The source to update texture coordinates for.
      */
@@ -213,15 +166,84 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
             throw new RuntimeException("Cannot update local texture coordinate index " + localTexCoordIndex + ", since it was not in the texture coordinate range [0, " + entry.getWrittenTexCoordCount() + ") tracked for the " + Utils.getSimpleName(source));
         }
 
-        this.updateVertex(entry, localTexCoordIndex);
+        this.updateTexCoord(entry, localTexCoordIndex);
+    }
+
+    /**
+     * Update all the vertex position values stored for a particular data source.
+     * @param source The source to update vertices for.
+     */
+    public void updateVertices(TDataSource source) {
+        if (!this.mesh.isActive(this))
+            throw new RuntimeException("Cannot update mesh data on an inactive node.");
+
+        DynamicMeshTypedDataEntry entry = this.entriesByDataSource.get(source);
+        if (entry == null)
+            throw new RuntimeException("Cannot update vertices for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
+
+        // Update each vertex.
+        for (int i = 0; i < entry.getWrittenVertexCount(); i++)
+            this.updateVertex(entry, i);
+    }
+
+    /**
+     * Update the vertex position for the provided data source.
+     * @param source The data source to update a vertex for.
+     * @param localVertexIndex The local vertex index to the data source / entry.
+     */
+    public void updateVertex(TDataSource source, int localVertexIndex) {
+        if (!this.mesh.isActive(this))
+            throw new RuntimeException("Cannot update mesh data on an inactive node.");
+
+        DynamicMeshTypedDataEntry entry = this.entriesByDataSource.get(source);
+        if (entry == null)
+            throw new RuntimeException("Cannot update vertices for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
+
+        if (localVertexIndex < 0 || localVertexIndex >= entry.getWrittenVertexCount()) {
+            if (entry.getWrittenVertexCount() == 0)
+                throw new RuntimeException("Cannot update local vertex index " + localVertexIndex + ", since there are no vertices tracked for the " + Utils.getSimpleName(source));
+
+            throw new RuntimeException("Cannot update local vertex index " + localVertexIndex + ", since it was not in the local vertex ID range [0, " + entry.getWrittenVertexCount() + ") tracked for the " + Utils.getSimpleName(source));
+        }
+
+        this.updateVertex(entry, localVertexIndex);
     }
 
     /**
      * Update the tex coord value for the provided data entry.
-     * @param entry              The data entry to write the updated texture coordinates for.
+     * @param entry The data entry to write the updated texture coordinates for.
      * @param localTexCoordIndex The tex coord to update.
      */
     public abstract void updateTexCoord(DynamicMeshTypedDataEntry entry, int localTexCoordIndex);
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public boolean updateTexCoord(DynamicMeshDataEntry entry, int localTexCoordIndex) {
+        if (entry instanceof DynamicMeshAdapterNode.DynamicMeshTypedDataEntry) {
+            updateTexCoord((DynamicMeshTypedDataEntry) entry, localTexCoordIndex);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Update the vertex position for the provided data entry.
+     * @param entry The data entry to write updated vertex positions for.
+     * @param localVertexIndex The vertex ID to update.
+     */
+    public abstract void updateVertex(DynamicMeshTypedDataEntry entry, int localVertexIndex);
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public boolean updateVertex(DynamicMeshDataEntry entry, int localVertexIndex) {
+        if (entry instanceof DynamicMeshAdapterNode.DynamicMeshTypedDataEntry) {
+            updateVertex((DynamicMeshTypedDataEntry) entry, localVertexIndex);
+            return true;
+        }
+
+        return false;
+    }
 
     @Getter
     public class DynamicMeshTypedDataEntry extends DynamicMeshDataEntry {

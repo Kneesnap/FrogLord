@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.ui;
 
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
+import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapUIManager.OldFroggerMapListManager;
 import net.highwayfrogs.editor.gui.editor.MapUIController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 
 import java.util.HashMap;
@@ -48,8 +49,8 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
     }
 
     @Override
-    protected void setupMainGridEditor(VBox editorBox) {
-        super.setupMainGridEditor(editorBox);
+    protected void setupMainGridEditor(UISidePanel sidePanel) {
+        super.setupMainGridEditor(sidePanel);
         getValueDisplaySetting().setValue(ListDisplayType.ALL);
     }
 
@@ -62,7 +63,14 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
         updateEntityPositionRotation(entity, newView);
         getController().getLightManager().getLightingGroup().getChildren().add(newView);
 
-        newView.setOnMouseClicked(evt -> getValueSelectionBox().getSelectionModel().select(entity));
+        newView.setOnMouseClicked(evt -> {
+            evt.consume();
+            if (entity == getSelectedValue()) {
+                getValueSelectionBox().getSelectionModel().clearSelection();
+            } else {
+                getValueSelectionBox().getSelectionModel().select(entity);
+            }
+        });
         return newView;
     }
 
@@ -91,7 +99,10 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
             // Update MeshView.
             MOFMesh modelMesh = this.meshCache.computeIfAbsent(holder, MOFHolder::makeMofMesh);
             entityMesh.setMesh(modelMesh);
-            entityMesh.setMaterial(modelMesh.getTextureMap().getDiffuseMaterial());
+
+            // Update material.
+            TextureMap textureSheet = modelMesh.getTextureMap();
+            entityMesh.setMaterial((getSelectedValue() == entity) ? textureSheet.getDiffuseHighlightedMaterial() : textureSheet.getDiffuseMaterial());
             return;
         }
 
@@ -183,7 +194,10 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
 
     @Override
     protected void onSelectedValueChange(OldFroggerMapEntity oldEntity, MeshView oldMeshView, OldFroggerMapEntity newEntity, MeshView newMeshView) {
-        // TODO: Maybe highlight?
+        if (oldEntity != null && oldMeshView != null)
+            updateEntityMesh(oldEntity, oldMeshView); // Restore original material.
+        if (newEntity != null && newMeshView != null)
+            updateEntityMesh(newEntity, newMeshView); // Apply new highlight material.
     }
 
     @Override

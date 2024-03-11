@@ -85,6 +85,18 @@ public class SCByteTextureUV implements IBinarySerializable {
     }
 
     /**
+     * Copy the data of another UV to this one.
+     * @param other the uv to assume
+     */
+    public void copyFrom(SCByteTextureUV other) {
+        if (other == null)
+            throw new NullPointerException("other");
+
+        this.u = other.u;
+        this.v = other.v;
+    }
+
+    /**
      * Creates a new ByteUV object which has the same properties as this one.
      */
     @SuppressWarnings("MethodDoesntCallSuperMethod")

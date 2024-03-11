@@ -2,19 +2,84 @@ package net.highwayfrogs.editor.utils;
 
 import javafx.geometry.Point3D;
 import javafx.scene.*;
+import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Box;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
+import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Contains static utilties useful in a 3D Scene.
  * Created by Kneesnap on 1/7/2024.
  */
 public class Scene3DUtils {
+    private static final PhongMaterial TRANSPARENT_MATERIAL = Utils.makeSpecialMaterial(javafx.scene.paint.Color.TRANSPARENT);
+    private static final double AXIS_PLANE_SIZE = 10000;
+    private static final double VERTICAL_BOX_SIZE = 20;
+
+    /**
+     * Creates an axis plane used for flat mouse-picking.
+     * @param node the node to create the axis plane relative to
+     * @param group the group to add the axis plane to
+     * @param camera the camera the user is viewing from
+     * @param axis the axis of the plane to create
+     * @return newAxisPlaneNode
+     */
+    public static Box createAxisPlane(Node node, Group group, FirstPersonCamera camera, Point3D axis) {
+        if (Objects.equals(axis, Rotate.X_AXIS)) {
+            return createAxisPlane(node, group, AXIS_PLANE_SIZE, 0, AXIS_PLANE_SIZE);
+        } else if (Objects.equals(axis, Rotate.Y_AXIS)) {
+            if (camera != null) {
+                Box plane = createAxisPlane(node, group, AXIS_PLANE_SIZE, AXIS_PLANE_SIZE, 0);
+
+                // Angle the plane towards the camera.
+                Point3D gizmoPos = node.localToScene(0, 0, 0);
+                double relativeX = camera.getCamPosXProperty().get() - gizmoPos.getX();
+                double relativeZ = camera.getCamPosZProperty().get() - gizmoPos.getZ();
+                double angle = Rotate.Z_AXIS.angle(relativeX, 0, relativeZ);
+                if (relativeX < 0)
+                    angle = -angle;
+
+                plane.getTransforms().add(new Rotate(angle, Rotate.Y_AXIS));
+                return plane;
+            } else {
+                // Fallback option is to create a vertical box.
+                return createAxisPlane(node, group, VERTICAL_BOX_SIZE, AXIS_PLANE_SIZE, VERTICAL_BOX_SIZE);
+            }
+        } else if (Objects.equals(axis, Rotate.Z_AXIS)) {
+            return createAxisPlane(node, group, AXIS_PLANE_SIZE, 0, AXIS_PLANE_SIZE);
+        } else {
+            // Axis unrecognized.
+            throw new IllegalArgumentException("Unrecognized axis " + axis);
+        }
+    }
+
+    private static Box createAxisPlane(Node node, Group group, double boxWidth, double boxHeight, double boxDepth) {
+        // Add axis-aligned plane.
+        Box axisPlane = new Box(boxWidth, boxHeight, boxDepth);
+        axisPlane.setMaterial(TRANSPARENT_MATERIAL);
+        axisPlane.setDepthTest(DepthTest.DISABLE);
+
+        // Add translation.
+        Translate translate = Scene3DUtils.getOptional3DTranslation(node);
+        if (translate != null)
+            axisPlane.getTransforms().add(translate);
+
+        // Add rotation.
+        Rotate rotation = Scene3DUtils.getOptional3DRotation(node);
+        if (rotation != null)
+            axisPlane.getTransforms().add(rotation);
+
+        group.getChildren().add(axisPlane);
+        return axisPlane;
+    }
+
     /**
      * Search the provided Scene recursively for a SubScene.
      * @param scene scene to start searching from

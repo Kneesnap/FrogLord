@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.beastwars.ui;
 
 import javafx.scene.control.CheckBox;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.DrawMode;
@@ -16,6 +15,7 @@ import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim.CollprimTyp
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
@@ -59,13 +59,13 @@ public class BeastWarsCollprimManager extends BeastWarsMapListManager<BeastWarsM
     }
 
     @Override
-    protected void setupMainGridEditor(VBox editorBox) {
-        super.setupMainGridEditor(editorBox);
+    protected void setupMainGridEditor(UISidePanel sidePanel) {
+        super.setupMainGridEditor(sidePanel);
 
         // Wireframe preview checkbox.
         this.wireframePreviewCheckBox = new CheckBox("Wireframe Display");
         this.wireframePreviewCheckBox.selectedProperty().addListener((listener, oldValue, newValue) -> updateCollprimWireframeState(newValue));
-        editorBox.getChildren().add(this.wireframePreviewCheckBox);
+        sidePanel.add(this.wireframePreviewCheckBox);
     }
 
     @Override

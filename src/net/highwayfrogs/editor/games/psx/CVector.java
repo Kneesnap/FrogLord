@@ -52,6 +52,10 @@ public class CVector implements IBinarySerializable {
 
     public static final int BYTE_LENGTH = 4 * Constants.BYTE_SIZE;
 
+    public static final int FLAG_MODULATION = Constants.BIT_FLAG_0;
+    public static final int MASK_COMMAND = 0b11100000;
+    public static final int MASK_COMMAND_VALID = 0b00100000;
+
     @Override
     public void load(DataReader reader) {
         this.red = reader.readByte();
@@ -81,6 +85,22 @@ public class CVector implements IBinarySerializable {
     public int hashCode() {
         return ((0xFF & this.red) << 24) | ((0xFF & this.green) << 16) |
                 ((0xFF & this.blue) << 8) | (0xFF & this.code);
+    }
+
+    /**
+     * Test if the code represents a valid draw command.
+     */
+    public boolean isCodeValid() {
+        return (this.code & MASK_COMMAND) == MASK_COMMAND_VALID;
+    }
+
+    /**
+     * Test if the code is valid and represents a valid draw command.
+     * @param bitMask the mask to test
+     * @return bitsSet
+     */
+    public boolean testFlag(int bitMask) {
+        return isCodeValid() && (this.code & bitMask) == bitMask;
     }
 
     /**
@@ -261,7 +281,7 @@ public class CVector implements IBinarySerializable {
                 onUpdate.run();
         }));
 
-        // Color Preview
+        // Texture Preview
         ImageView preview = new ImageView(scaledTexture != null ? Utils.toFXImage(scaledTexture, false) : null);
         preview.setOnMouseClicked(evt ->
                 InputMenu.promptInput("Please enter the color value you'd like to use.", Integer.toHexString(toRGB()).toUpperCase(), newText -> {
@@ -296,20 +316,30 @@ public class CVector implements IBinarySerializable {
         };
         imageUpdate[0].run();
 
-        previewBox.getChildren().addAll(labelFont(label, useFont), preview);
+        previewBox.getChildren().add(preview);
         redBox.getChildren().addAll(redLabel, redSlider);
         greenBox.getChildren().addAll(greenLabel, greenSlider);
         blueBox.getChildren().addAll(blueLabel, blueSlider);
 
-        // Center VBox Children
+        // Center HBox Children
         previewBox.setAlignment(Pos.CENTER);
         redBox.setAlignment(Pos.CENTER);
         greenBox.setAlignment(Pos.CENTER);
         blueBox.setAlignment(Pos.CENTER);
 
+        // Space horizontal box.
         box.setSpacing(1);
         box.getChildren().addAll(previewBox, redBox, greenBox, blueBox);
-        grid.setupSecondNode(box, true);
+
+        // Setup vbox.
+        VBox vbox = new VBox();
+        vbox.setSpacing(1);
+        if (label != null)
+            vbox.getChildren().add(labelFont(label, useFont));
+        vbox.getChildren().add(box);
+
+        // Add to editor grid.
+        grid.setupSecondNode(vbox, true);
         grid.addRow(60);
     }
 
@@ -317,7 +347,7 @@ public class CVector implements IBinarySerializable {
      * Adds a color vector to the editor.
      * This is not for picking a color, rather it's for the PSX gouraud shading settings.
      */
-    public void setupModulatedEditor(GUIEditorGrid grid, Runnable onUpdate) {
+    public void setupModulatedEditor(GUIEditorGrid grid, String label, Runnable onUpdate) {
         HBox box = new HBox();
 
         javafx.scene.text.Font useFont = javafx.scene.text.Font.font(javafx.scene.text.Font.getDefault().getSize() * .75D);
@@ -347,7 +377,7 @@ public class CVector implements IBinarySerializable {
         redSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
             setRedShort((short) (double) newValue);
             redLabel.setText("Red (" + getRedShort() + ")");
-            updateColorImage(redColorView, redColorImage, getRedShort(), 0, 0);
+            updateModulatedColorPreviewImage(redColorView, redColorImage, getRedShort(), 0, 0);
             if (onUpdate != null)
                 onUpdate.run();
         }));
@@ -359,7 +389,7 @@ public class CVector implements IBinarySerializable {
         greenSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
             setGreenShort((short) (double) newValue);
             greenLabel.setText("Green (" + getGreenShort() + ")");
-            updateColorImage(greenColorView, greenColorImage, 0, getGreenShort(), 0);
+            updateModulatedColorPreviewImage(greenColorView, greenColorImage, 0, getGreenShort(), 0);
             if (onUpdate != null)
                 onUpdate.run();
         }));
@@ -371,10 +401,14 @@ public class CVector implements IBinarySerializable {
         blueSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
             setBlueShort((short) (double) newValue);
             blueLabel.setText("Blue (" + getBlueShort() + ")");
-            updateColorImage(blueColorView, blueColorImage, 0, 0, getBlueShort());
+            updateModulatedColorPreviewImage(blueColorView, blueColorImage, 0, 0, getBlueShort());
             if (onUpdate != null)
                 onUpdate.run();
         }));
+
+        updateModulatedColorPreviewImage(redColorView, redColorImage, getRedShort(), 0, 0);
+        updateModulatedColorPreviewImage(greenColorView, greenColorImage, 0, getGreenShort(), 0);
+        updateModulatedColorPreviewImage(blueColorView, blueColorImage, 0, 0, getBlueShort());
 
         redBox.getChildren().addAll(redLabel, redSlider, redColorView);
         greenBox.getChildren().addAll(greenLabel, greenSlider, greenColorView);
@@ -385,10 +419,20 @@ public class CVector implements IBinarySerializable {
         greenBox.setAlignment(Pos.CENTER);
         blueBox.setAlignment(Pos.CENTER);
 
-        box.setSpacing(1);
+        // Add color boxes.
         box.getChildren().addAll(redBox, greenBox, blueBox);
-        grid.setupSecondNode(box, true);
-        grid.addRow(60);
+        box.setSpacing(1);
+
+        // Create vertical box.
+        VBox rootNode = new VBox();
+        rootNode.setSpacing(1);
+        if (label != null)
+            rootNode.getChildren().add(labelFont(label, useFont));
+        rootNode.getChildren().add(box);
+
+        // Setup in grid.
+        grid.setupSecondNode(rootNode, true);
+        grid.addRow(50);
     }
 
     private static javafx.scene.control.Label labelFont(String text, Font font) {
@@ -398,7 +442,7 @@ public class CVector implements IBinarySerializable {
         return label;
     }
 
-    private static void updateColorImage(ImageView view, BufferedImage image, int newRed, int newGreen, int newBlue) {
+    private static void updateModulatedColorPreviewImage(ImageView view, BufferedImage image, int newRed, int newGreen, int newBlue) {
         Graphics2D graphics = image.createGraphics();
 
         // Clamp modulated color value. This preview's purpose is to make it clear that 127 is the brightest color value in the editor.

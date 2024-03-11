@@ -5,6 +5,7 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
 import net.highwayfrogs.editor.utils.Utils;
@@ -14,6 +15,7 @@ import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArrayBatcher;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -21,8 +23,9 @@ import java.util.logging.Logger;
  * Created by Kneesnap on 9/24/2023.
  */
 @Getter
-public abstract class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
+public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     private final TextureAtlas textureAtlas;
+    private final PSXMeshShadedTextureManager<?> shadedTextureManager;
     private final String meshName;
     private final FXIntArrayBatcher editableFaces;
     private final DynamicMeshFloatArray editableTexCoords;
@@ -45,6 +48,7 @@ public abstract class DynamicMesh extends TriangleMesh implements IDynamicMeshHe
         super(format);
         this.meshName = meshName;
         this.textureAtlas = atlas;
+        this.textureAtlas.getTextureSource().setMesh(this);
         this.textureAtlas.getImageChangeListeners().add(this::onTextureChange);
         updateMaterial(atlas.getImage());
 
@@ -52,6 +56,15 @@ public abstract class DynamicMesh extends TriangleMesh implements IDynamicMeshHe
         this.editableFaces = new FXIntArrayBatcher(new FXIntArray(), getFaces());
         this.editableTexCoords = new DynamicMeshFloatArray(this, "texCoord", getTexCoords(), format.getTexCoordIndexOffset(), getTexCoordElementSize());
         this.editableVertices = new DynamicMeshFloatArray(this, "vertex", getPoints(), format.getPointIndexOffset(), getPointElementSize());
+
+        this.shadedTextureManager = createShadedTextureManager();
+    }
+
+    /**
+     * Creates the shaded texture manager for this mesh.
+     */
+    protected PSXMeshShadedTextureManager<?> createShadedTextureManager() {
+        return null;
     }
 
     /**
@@ -74,6 +87,16 @@ public abstract class DynamicMesh extends TriangleMesh implements IDynamicMeshHe
     @Override
     public DynamicMesh getMesh() {
         return this;
+    }
+
+    @Override
+    public boolean updateTexCoord(DynamicMeshDataEntry entry, int localTexCoordIndex) {
+        return entry != null && entry.getMeshNode() != null && entry.getMeshNode().updateTexCoord(entry, localTexCoordIndex);
+    }
+
+    @Override
+    public boolean updateVertex(DynamicMeshDataEntry entry, int localVertexIndex) {
+        return entry != null && entry.getMeshNode() != null && entry.getMeshNode().updateVertex(entry, localVertexIndex);
     }
 
     /**
@@ -266,5 +289,20 @@ public abstract class DynamicMesh extends TriangleMesh implements IDynamicMeshHe
 
     private void onTextureChange(Texture texture, BufferedImage oldImage, BufferedImage newImage, boolean didOldImageHaveAnyTransparentPixels) {
         updateMaterial(newImage); // Apply the image to the mesh now.
+    }
+
+    // Common updates. (Useful to be here to reduce code duplication)
+
+    /**
+     * Updates the texture coordinates of faces which are not otherwise updated when the atlas changes.
+     */
+    public void updateNonShadedPolygonTexCoords(Set<DynamicMeshNode> skippedNodes) {
+        this.editableTexCoords.startBatchingUpdates();
+        for (int i = 0; i < this.nodes.size(); i++) {
+            DynamicMeshNode node = this.nodes.get(i);
+            if (skippedNodes == null || !skippedNodes.contains(node))
+                node.updateTexCoords();
+        }
+        this.editableTexCoords.endBatchingUpdates();
     }
 }

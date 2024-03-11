@@ -6,8 +6,10 @@ import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.awt.image.BufferedImage;
+
 /**
- * Represents a texture which is part of a TextureAltas.
+ * Represents a texture which is part of a TextureAtlas.
  * Created by Kneesnap on 9/23/2023.
  */
 @Getter
@@ -19,10 +21,12 @@ public class AtlasTexture extends Texture {
     private int downPaddingEmpty;
     private int leftPaddingEmpty;
     private int rightPaddingEmpty;
+    private boolean atlasCachedImageInvalid = true;
+    private boolean meshTextureCoordsInvalid = true;
 
     /**
      * Creates a new AtlasTexture
-     * @param atlas  The atlas which holds the texture.
+     * @param atlas The atlas which holds the texture.
      * @param source The texture source.
      */
     public AtlasTexture(TextureAtlas atlas, ITextureSource source) {
@@ -60,6 +64,22 @@ public class AtlasTexture extends Texture {
         return super.getPaddedHeight() + this.upPaddingEmpty + this.downPaddingEmpty;
     }
 
+    @Override
+    protected void updateCachedImage(BufferedImage image) {
+        // This function handles both the image changing, in addition to padding supplied from the texture source.
+        ITextureSource source = getTextureSource();
+        boolean didPaddingChange = (getUpPadding() != source.getUpPadding())
+                || (getDownPadding() != source.getDownPadding())
+                || (getLeftPadding() != source.getLeftPadding())
+                || (getRightPadding() != source.getRightPadding());
+
+        this.atlasCachedImageInvalid = true;
+        if (didPaddingChange)
+            this.meshTextureCoordsInvalid = true;
+
+        super.updateCachedImage(image);
+    }
+
     /**
      * Sets the x position of the top left-hand corner of this texture (with padding) in the atlas.
      * @param value The new x coordinate value
@@ -70,6 +90,8 @@ public class AtlasTexture extends Texture {
 
         if (this.x != value) {
             this.x = value;
+            this.atlasCachedImageInvalid = true;
+            this.meshTextureCoordsInvalid = true;
             this.atlas.markPositionsDirty();
         }
     }
@@ -84,6 +106,8 @@ public class AtlasTexture extends Texture {
 
         if (this.y != value) {
             this.y = value;
+            this.atlasCachedImageInvalid = true;
+            this.meshTextureCoordsInvalid = true;
             this.atlas.markPositionsDirty();
         }
     }
@@ -105,8 +129,11 @@ public class AtlasTexture extends Texture {
 
         this.x = x;
         this.y = y;
-        if (positionChanged)
+        if (positionChanged) {
+            this.atlasCachedImageInvalid = true;
+            this.meshTextureCoordsInvalid = true;
             this.atlas.markPositionsDirty();
+        }
     }
 
     /**
@@ -118,6 +145,8 @@ public class AtlasTexture extends Texture {
 
         if (this.upPaddingEmpty != value) {
             this.upPaddingEmpty = value;
+            this.atlasCachedImageInvalid = true;
+            this.meshTextureCoordsInvalid = true;
             this.atlas.markTextureSizesDirty();
         }
     }
@@ -131,6 +160,8 @@ public class AtlasTexture extends Texture {
 
         if (this.downPaddingEmpty != value) {
             this.downPaddingEmpty = value;
+            this.atlasCachedImageInvalid = true;
+            this.meshTextureCoordsInvalid = true;
             this.atlas.markTextureSizesDirty();
         }
     }
@@ -144,6 +175,8 @@ public class AtlasTexture extends Texture {
 
         if (this.leftPaddingEmpty != value) {
             this.leftPaddingEmpty = value;
+            this.atlasCachedImageInvalid = true;
+            this.meshTextureCoordsInvalid = true;
             this.atlas.markTextureSizesDirty();
         }
     }
@@ -157,6 +190,8 @@ public class AtlasTexture extends Texture {
 
         if (this.rightPaddingEmpty != value) {
             this.rightPaddingEmpty = value;
+            this.atlasCachedImageInvalid = true;
+            this.meshTextureCoordsInvalid = true;
             this.atlas.markTextureSizesDirty();
         }
     }
@@ -186,8 +221,11 @@ public class AtlasTexture extends Texture {
         this.downPaddingEmpty = down;
         this.leftPaddingEmpty = left;
         this.rightPaddingEmpty = right;
-        if (paddingChanged)
+        if (paddingChanged) {
+            this.atlasCachedImageInvalid = true;
+            this.meshTextureCoordsInvalid = true;
             this.atlas.markTextureSizesDirty();
+        }
     }
 
     @Override
@@ -206,5 +244,19 @@ public class AtlasTexture extends Texture {
     public Vector2f getUV(Texture heldTexture, Vector2f localUv) {
         // We only want to throw when this one is called, the other GetUV has reasonable use-cases.
         throw new UnsupportedOperationException("getUV of a " + Utils.getSimpleName(this) + " does not exist. To get the UV for an atlas texture, call this method in the atlas texture itself.");
+    }
+
+    /**
+     * Called upon writing the texture to the atlas.
+     */
+    public void onTextureWrittenToAtlas() {
+        this.atlasCachedImageInvalid = false;
+    }
+
+    /**
+     * Called when texture UVs are updated.
+     */
+    public void onTextureUvsUpdated() {
+        this.meshTextureCoordsInvalid = false;
     }
 }

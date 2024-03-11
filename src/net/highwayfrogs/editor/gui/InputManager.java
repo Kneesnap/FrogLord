@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 public class InputManager {
     private final Map<KeyCode, List<KeyHandler>> keySpecificHandlers = new HashMap<>();
     private final List<KeyHandler> keyHandlers = new ArrayList<>();
+    @Setter private KeyHandler finalKeyHandler;
     private final List<MouseHandler> mouseHandlers = new ArrayList<>();
     @Setter private MouseHandler finalMouseHandler;
     private final Map<EventType<? super MouseEvent>, List<MouseHandler>> mouseHandlersByType = new HashMap<>();
@@ -75,9 +76,27 @@ public class InputManager {
     }
 
     /**
+     * Removes a key listener listening for a specific key.
+     * @param keyCode The key to remove the listener for.
+     * @param listener The listener to add.
+     */
+    public boolean removeKeyListener(KeyCode keyCode, KeyHandler listener) {
+        List<KeyHandler> handlerList = this.keySpecificHandlers.get(keyCode);
+        return handlerList != null && handlerList.remove(listener);
+    }
+
+    /**
+     * Removes a key listener listening for all keyboard events.
+     * @param listener The listener to remove.
+     */
+    public boolean removeKeyListener(KeyHandler listener) {
+        return this.keyHandlers.remove(listener);
+    }
+
+    /**
      * Adds a mouse listener for a specific mouse event type.
      * @param eventType The event type to track.
-     * @param listener  The listener to add.
+     * @param listener The listener to add.
      */
     public void addMouseListener(EventType<? super MouseEvent> eventType, MouseHandler listener) {
         this.mouseHandlersByType.computeIfAbsent(eventType, key -> new ArrayList<>()).add(listener);
@@ -128,8 +147,10 @@ public class InputManager {
                     getLogger().throwing("InputManager", "processKeyEvents", new RuntimeException(errorMessage, th));
                 }
 
-                if (evt.isConsumed())
+                if (evt.isConsumed()) {
+                    updateKeyboardStates(evt);
                     return;
+                }
             }
         }
 
@@ -145,10 +166,26 @@ public class InputManager {
             }
 
             // If the event was consumed, abort.
-            if (evt.isConsumed())
+            if (evt.isConsumed()) {
+                updateKeyboardStates(evt);
                 return;
+            }
         }
 
+        try {
+            if (this.finalKeyHandler != null)
+                this.finalKeyHandler.accept(this, evt);
+        } catch (Throwable th) {
+            String errorMessage = "Failed to run final KeyEventHandler " + this.finalKeyHandler + ".";
+            getLogger().throwing("InputManager", "processKeyEvents", new RuntimeException(errorMessage, th));
+        }
+
+        // Update keyboard states (final)
+        updateKeyboardStates(evt);
+    }
+
+    private void updateKeyboardStates(KeyEvent evt) {
+        KeyCode keyCode = evt.getCode();
         if (evt.getEventType() == KeyEvent.KEY_PRESSED) {
             this.pressedKeys[keyCode.ordinal()] = true;
             evt.consume();
@@ -193,8 +230,16 @@ public class InputManager {
                 } catch (Throwable th) {
                     String errorMessage = "Failed to run KeyEventHandler " + handler + ".";
                     getLogger().throwing("InputManager", "resetKeys", new RuntimeException(errorMessage, th));
-
                 }
+            }
+
+            // Fire the last key handler.
+            try {
+                if (this.finalKeyHandler != null)
+                    this.finalKeyHandler.accept(this, newEvent);
+            } catch (Throwable th) {
+                String errorMessage = "Failed to run the final KeyEventHandler " + this.finalKeyHandler + ".";
+                getLogger().throwing("InputManager", "resetKeys", new RuntimeException(errorMessage, th));
             }
 
             // Make sure the key is seen as released.

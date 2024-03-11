@@ -40,6 +40,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<TreeAtlasTexture> {
         TreeAtlasTexture rootNode = sortedTextureList.get(0);
         rootNode.nodeWidth = getAtlasWidth();
         rootNode.nodeHeight = getAtlasHeight();
+        rootNode.setPosition(0, 0); // The root should be at the origin to ensure textures are placed correctly.
 
         // Now, we'll setup positions of all remaining textures by building their tree.
         for (int i = 1; i < sortedTextureList.size(); i++) {
@@ -67,7 +68,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<TreeAtlasTexture> {
         /**
          * Attempts to insert a texture node into the tree.
          * @param texture The texture to insert.
-         * @return Whether or not there was space to insert the texture node.
+         * @return Whether there was space to insert the texture node.
          */
         boolean insert(TreeAtlasTexture texture) {
             // First, test if there's room to fit it here.

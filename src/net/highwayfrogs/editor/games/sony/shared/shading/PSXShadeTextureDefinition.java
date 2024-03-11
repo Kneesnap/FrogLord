@@ -30,11 +30,25 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     public static final int UNTEXTURED_GOURAUD_SIZE = 16;
     public static final int UNTEXTURED_PADDING_SIZE = 1;
 
+    public static final String[] QUAD_VERTEX_NAMES = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"};
+    public static final String[] TRI_VERTEX_NAMES = {"1st Corner", "2nd Corner", "3rd Corner"};
+
     public PSXShadeTextureDefinition(PSXPolygonType polygonType, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUVs) {
         this.polygonType = polygonType;
         this.textureSource = textureSource;
         this.colors = colors;
         this.textureUVs = textureUVs;
+    }
+
+    /**
+     * Tests if modulation should be enabled for the shade definition.
+     */
+    public boolean isModulated() {
+        if (this.colors == null || this.colors.length == 0)
+            return false;
+
+        return this.colors[0].testFlag(CVector.FLAG_MODULATION)
+                || (!this.colors[0].isCodeValid() && getPolygonType().isGouraud());
     }
 
     /**
@@ -49,6 +63,22 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
      */
     public boolean isTextured() {
         return getPolygonType().isTextured();
+    }
+
+    /**
+     * Gets display names for each vertex.
+     * Flip vertically only applies to UVs, not colors or vertices.
+     * @return vertexNames
+     */
+    public String[] getVertexNames() {
+        switch (getVerticeCount()) {
+            case 3:
+                return TRI_VERTEX_NAMES;
+            case 4:
+                return QUAD_VERTEX_NAMES;
+            default:
+                throw new UnsupportedOperationException("Don't have vertex names for a face with " + getVerticeCount() + " vertices.");
+        }
     }
 
     @Override
@@ -85,6 +115,24 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     }
 
     /**
+     * Creates a clone of this texture definition.
+     */
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    public PSXShadeTextureDefinition clone() {
+        CVector[] copyColors = this.colors != null ? new CVector[this.colors.length] : null;
+        if (this.colors != null)
+            for (int i = 0; i < this.colors.length; i++)
+                copyColors[i] = this.colors[i] != null ? this.colors[i].clone() : null;
+
+        SCByteTextureUV[] copyUvs = this.textureUVs != null ? new SCByteTextureUV[this.textureUVs.length] : null;
+        if (this.textureUVs != null)
+            for (int i = 0; i < this.textureUVs.length; i++)
+                copyUvs[i] = this.textureUVs[i] != null ? this.textureUVs[i].clone() : null;
+
+        return new PSXShadeTextureDefinition(this.polygonType, this.textureSource, copyColors, copyUvs);
+    }
+
+    /**
      * Called when this object is setup to be used long-term and track changes to the underlying texture source.
      */
     public void onRegister() {
@@ -102,8 +150,10 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
      * Called when this object is no longer necessary and can be released.
      */
     public void onDispose() {
-        if (this.onTextureSourceUpdate != null && this.textureSource != null)
+        if (this.onTextureSourceUpdate != null && this.textureSource != null) {
             this.textureSource.getImageChangeListeners().remove(this.onTextureSourceUpdate);
+            this.onTextureSourceUpdate = null;
+        }
     }
 
     /**

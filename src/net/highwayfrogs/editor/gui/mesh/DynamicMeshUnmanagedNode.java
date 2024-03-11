@@ -26,4 +26,16 @@ public class DynamicMeshUnmanagedNode extends DynamicMeshNode {
     public boolean removeEntry(DynamicMeshDataEntry entry) {
         return super.removeUnlinkedEntry(entry);
     }
+
+    @Override
+    public boolean updateTexCoord(DynamicMeshDataEntry entry, int localTexCoordIndex) {
+        // We don't have the capability of updates.
+        return false;
+    }
+
+    @Override
+    public boolean updateVertex(DynamicMeshDataEntry entry, int localVertexIndex) {
+        // We don't have the capability of updates.
+        return false;
+    }
 }

@@ -8,7 +8,6 @@ import java.util.Arrays;
  * This atlas tries to fit textures in sequentially.
  * This may be slower than using <see cref="VorkTreeAtlas"/> sometimes, but it should produce more tightly packed results.
  * This is a backport from ModToolFramework.
- * TODO: We could potentially speed this up by tracking the biggest gap on each y, and binary searching for the smallest gap that can fit the texture.
  * Created by Kneesnap on 9/23/2023.
  */
 public class SequentialTextureAtlas extends BasicTextureAtlas<AtlasTexture> {

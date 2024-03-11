@@ -26,6 +26,37 @@ public class CameraHeightFieldMeshNode extends DynamicMeshNode {
     }
 
     @Override
+    public boolean updateTexCoord(DynamicMeshDataEntry entry, int localTexCoordIndex) {
+        if (entry == this.mainEntry) {
+            Vector2f localTextureUv;
+            int x = getGridX(localTexCoordIndex);
+            int z = getGridZ(localTexCoordIndex);
+            if (getManager().isVertexSelected(x, z)) {
+                localTextureUv = calculateSelectedTextureUv();
+            } else {
+                localTextureUv = calculateUnselectedTextureUv();
+            }
+
+            this.mainEntry.writeTexCoordValue(localTexCoordIndex, localTextureUv);
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean updateVertex(DynamicMeshDataEntry entry, int localVertexIndex) {
+        if (entry == this.mainEntry) {
+            int x = getGridX(localVertexIndex);
+            int z = getGridZ(localVertexIndex);
+            OldFroggerMapCameraHeightFieldPacket packet = getMapPacket();
+            this.mainEntry.writeVertexXYZ(localVertexIndex, packet.getWorldX(x), packet.getWorldY(x, z), packet.getWorldZ(z));
+        }
+
+        return false;
+    }
+
+    @Override
     protected void onAddedToMesh() {
         super.onAddedToMesh();
         this.mainEntry = createMeshEntry();
@@ -254,42 +285,6 @@ public class CameraHeightFieldMeshNode extends DynamicMeshNode {
     }
 
     /**
-     * Updates the uvs of all texCoords.
-     * Should be called only if a change occurs which impacts the position of all vertices.
-     */
-    public void updateAllTexCoords() {
-        int xCount = getMapPacket().getXSquareCount();
-        int zCount = getMapPacket().getZSquareCount();
-
-        // Update UVs.
-        getMesh().getEditableTexCoords().startBatchingUpdates();
-        for (int z = 0; z < zCount; z++)
-            for (int x = 0; x < xCount; x++)
-                updateTexCoord(x, z);
-
-        // Update UVs together.
-        getMesh().getEditableTexCoords().endBatchingUpdates();
-    }
-
-    /**
-     * Updates the position of all vertices.
-     * Should be called only if a change occurs which impacts the position of all vertices.
-     */
-    public void updateAllVertices() {
-        int xCount = getMapPacket().getXSquareCount();
-        int zCount = getMapPacket().getZSquareCount();
-
-        // Update positions.
-        getMesh().getEditableVertices().startBatchingUpdates();
-        for (int z = 0; z < zCount; z++)
-            for (int x = 0; x < xCount; x++)
-                updateVertex(x, z);
-
-        // Update positions together.
-        getMesh().getEditableVertices().endBatchingUpdates();
-    }
-
-    /**
      * Handles the change of the size of the camera height-field grid.
      * @param oldX old number of squares in the x direction
      * @param oldZ old number of squares in the z direction
@@ -377,7 +372,7 @@ public class CameraHeightFieldMeshNode extends DynamicMeshNode {
         }
 
         // Update the contents of the buffers now that they are sized properly.
-        updateAllVertices();
-        updateAllTexCoords();
+        updateVertices();
+        updateTexCoords();
     }
 }

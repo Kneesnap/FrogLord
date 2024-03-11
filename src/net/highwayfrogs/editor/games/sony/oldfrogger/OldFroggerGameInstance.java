@@ -19,6 +19,8 @@ import java.util.*;
 
 /**
  * Represents pre-recode frogger
+ * TODO: Profile the editor doing various things after all the todos are taken care of.
+ *  - Let's fix lag.
  * Created by Kneesnap on 12/8/2023.
  */
 @Getter
@@ -27,6 +29,12 @@ public class OldFroggerGameInstance extends SCGameInstance {
     public static final int FILE_TYPE_MAP = 9;
 
     public static final int DIFFICULTY_LEVELS = 10; // There are 7 different difficulty levels.
+    public static final int DIFFICULTY_FLAG_UNKNOWN_1 = 10;
+    public static final int DIFFICULTY_FLAG_UNKNOWN_2 = 11;
+    public static final int DIFFICULTY_FLAG_CHECKPOINT = 12;
+    public static final int DIFFICULTY_FLAG_INACTIVE_DEFAULT = 13;
+    public static final int DIFFICULTY_FLAG_UNKNOWN_3 = 14;
+    public static final int DIFFICULTY_FLAG_STATIC_MODEL = 15;
 
     private final List<OldFroggerLevelTableEntry> levelTableEntries = new ArrayList<>();
     private final List<OldFroggerLevelTableEntry> manuallyConfiguredLevelTableEntries = new ArrayList<>();

@@ -28,6 +28,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 /**
  * Represents arbitrary entity data.
@@ -49,16 +50,29 @@ public abstract class OldFroggerEntityData<TDifficultyData extends OldFroggerDif
     public void load(DataReader reader) {
         this.loadMainEntityData(reader);
         reader.alignRequireEmpty(4);
-        if (this.difficultyData != null)
+        if (this.difficultyData != null) {
+            if (this.entity != null && this.entity.isDifficultyLevelEnabled(OldFroggerGameInstance.DIFFICULTY_FLAG_STATIC_MODEL))
+                getLogger().warning("Loading entity difficulty data despite the difficulty flag marking this as a static model entity.");
+
             this.difficultyData.load(reader);
+        }
     }
 
     @Override
     public void save(DataWriter writer) {
         this.saveMainEntityData(writer);
         writer.align(4);
-        if (this.difficultyData != null)
+        if (this.difficultyData != null) {
+            if (this.entity != null && this.entity.isDifficultyLevelEnabled(OldFroggerGameInstance.DIFFICULTY_FLAG_STATIC_MODEL))
+                getLogger().warning("Saving entity difficulty data despite the difficulty flag marking this as a static model entity.");
+
             this.difficultyData.save(writer);
+        }
+    }
+
+    @Override
+    public Logger getLogger() {
+        return this.entity != null ? this.entity.getLogger() : super.getLogger();
     }
 
     /**
@@ -91,7 +105,7 @@ public abstract class OldFroggerEntityData<TDifficultyData extends OldFroggerDif
      */
     public void setupEditor(OldFroggerEntityManager manager, GUIEditorGrid editor) {
         this.setupMainEntityDataEditor(manager, editor);
-        if (this.difficultyData != null)
+        if (this.difficultyData != null && !this.entity.isDifficultyLevelEnabled(OldFroggerGameInstance.DIFFICULTY_FLAG_STATIC_MODEL))
             this.difficultyData.setupEditor(manager, editor);
     }
 

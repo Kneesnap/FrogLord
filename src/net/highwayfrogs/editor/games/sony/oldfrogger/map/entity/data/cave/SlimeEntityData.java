@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 /**
  * Represents entity data for the snail cave slime.
  * This data seems somewhat similar to the "Swarm" entity data seen in the forest level.
- * TODO: Entities with this come with difficulty flag 15 set. Could this mean the same data is used for all difficulty levels?
  * Created by Kneesnap on 12/17/2023.
  */
 @Getter

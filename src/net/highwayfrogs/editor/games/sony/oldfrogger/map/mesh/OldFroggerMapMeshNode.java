@@ -94,6 +94,7 @@ public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapP
         // This padding prevents bleeding colors from nearby textures.
         // Frogger does this normally for its textured polygons, but because untextured polygons don't have UVs,
         // it's our job to handle it here.
+        boolean shadedTextureNeedsFlipping = false;
         if (textureSource instanceof PSXShadeTextureDefinition) {
             PSXShadeTextureDefinition shadeTexture = (PSXShadeTextureDefinition) textureSource;
             if (!shadeTexture.getPolygonType().isTextured()) {
@@ -107,12 +108,16 @@ public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapP
                     localUv.setY(minValue);
                 if (localUv.getY() == 1F)
                     localUv.setY(maxValue);
+            } else {
+                shadedTextureNeedsFlipping = true;
             }
         }
 
-        // Map textures seem to be flipped vertically,
-        // and generated shaded textures are consistent with this behavior.
-        if (textureSource instanceof PSXShadeTextureDefinition || textureSource instanceof GameImage)
+        // Map textures seem to be flipped vertically.
+        // Shaded textures only need flipping if they are using real textures (real UVs).
+        // The reason is that the UVs in the map file are inverted, but when we use our own UVs (necessary for shaded un-texturedp polygons which don't have UVs),
+        // since we choose the UVs, we provide the correct ones.
+        if (shadedTextureNeedsFlipping || textureSource instanceof GameImage)
             localUv.setY(1F - localUv.getY()); // UVs are flipped for generated shader textures too, in order to stay consistent.
 
         // Get the UVs local to the texture.
@@ -121,12 +126,26 @@ public class OldFroggerMapMeshNode extends DynamicMeshAdapterNode<OldFroggerMapP
 
     @Override
     public void updateVertex(DynamicMeshTypedDataEntry entry, int localVertexIndex) {
-        if (this.vertexEntry == entry) {
+        // Do nothing, the typed entries don't contain any vertices.
+    }
+
+    @Override
+    public boolean updateVertex(DynamicMeshDataEntry entry, int localVertexIndex) {
+        if (entry == this.vertexEntry) {
             SVector vertexPos = getMap().getVertexPacket().getVertices().get(localVertexIndex);
-            entry.writeVertexXYZ(localVertexIndex, vertexPos.getFloatX(), vertexPos.getFloatY(), vertexPos.getFloatZ());
+            this.vertexEntry.writeVertexXYZ(localVertexIndex, vertexPos.getFloatX(), vertexPos.getFloatY(), vertexPos.getFloatZ());
+            return true;
         }
 
-        // Do nothing else, no other entries are given vertices.
+        return super.updateVertex(entry, localVertexIndex);
+    }
+
+    /**
+     * Updates a map vertex index.
+     * @param mapVertexIndex index of the map vertex to update
+     */
+    public void updateMapVertex(int mapVertexIndex) {
+        updateVertex(this.vertexEntry, mapVertexIndex);
     }
 
     @Override

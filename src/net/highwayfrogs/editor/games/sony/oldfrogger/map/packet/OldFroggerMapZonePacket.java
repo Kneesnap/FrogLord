@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerReactionType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEditorUtils;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerZoneManager;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerZoneManager.ZonePreview3D;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerZoneManager.ZoneRegionEditor;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerZoneManager.ZoneRegionPreview3D;
@@ -43,7 +44,7 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
             int zonePointer = reader.readInt();
 
             reader.jumpTemp(zonePointer);
-            OldFroggerMapZone newZone = new OldFroggerMapZone(getParentFile().getGameInstance());
+            OldFroggerMapZone newZone = new OldFroggerMapZone(getParentFile());
             newZone.load(reader);
             endPointer = Math.max(endPointer, reader.getIndex());
             reader.jumpReturn();
@@ -77,6 +78,7 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
      */
     @Getter
     public static class OldFroggerMapZone extends SCGameData<OldFroggerGameInstance> {
+        private final OldFroggerMapFile mapFile;
         private short planeY; // world height of this zone
         private int objBoundAX1; // Object Aligned Bounding Box
         private int objBoundAZ1; //	(World Coords)
@@ -88,8 +90,9 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
         private OldFroggerReactionType reactionType = OldFroggerReactionType.Nothing;
         private final int[] reactionData = new int[3];
 
-        public OldFroggerMapZone(OldFroggerGameInstance instance) {
-            super(instance);
+        public OldFroggerMapZone(OldFroggerMapFile mapFile) {
+            super(mapFile.getGameInstance());
+            this.mapFile = mapFile;
         }
 
         @Override
@@ -141,10 +144,12 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
 
         /**
          * Creates an editor UI for this zone.
-         * @param editor      The editor to create the UI with.
-         * @param zonePreview The 3D zone preview to update.
+         * @param manager the UI manager
+         * @param zonePreview the 3D zone preview to update
          */
-        public void setupEditor(GUIEditorGrid editor, ZonePreview3D zonePreview) {
+        public void setupEditor(OldFroggerZoneManager manager, ZonePreview3D zonePreview) {
+            GUIEditorGrid editor = manager.getEditorGrid();
+
             // Position Updates
             editor.addFixedInt("Min X", this.objBoundAX1, newValue -> {
                 this.objBoundAX1 = newValue;
@@ -172,7 +177,7 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
             }, 1 << 4, Short.MIN_VALUE, Short.MAX_VALUE);
 
             // Basic Data
-            OldFroggerEditorUtils.addDifficultyEditor(editor, this.difficulty, newValue -> this.difficulty = newValue);
+            OldFroggerEditorUtils.addDifficultyEditor(editor, this.difficulty, newValue -> this.difficulty = newValue, true, manager::updateEditor);
             editor.addEnumSelector("Zone Type", this.zoneType, OldFroggerMapZoneType.values(), false, newValue -> this.zoneType = newValue);
             OldFroggerEditorUtils.setupReactionEditor(editor, this.reactionType, this.reactionData, newValue -> this.reactionType = newValue);
 

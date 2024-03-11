@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
-import net.highwayfrogs.editor.games.sony.shared.MRBezierCurve;
+import net.highwayfrogs.editor.games.sony.shared.spline.MRBezierCurve;
 
 import java.util.ArrayList;
 import java.util.List;

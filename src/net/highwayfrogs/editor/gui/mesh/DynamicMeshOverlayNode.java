@@ -6,10 +6,11 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode.OverlayTarget;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
+import net.highwayfrogs.editor.system.math.Vector2f;
+import net.highwayfrogs.editor.utils.fx.wrapper.FXFloatArrayBatcher;
 
 /**
  * Allows highlighting a node by overlaying all if its faces with an ITextureSource.
- * TODO: Another idea is updating the existing face's texture coordinates, and storing the old texture coordinate values. Hmm, now that's an idea.
  * Created by Kneesnap on 9/25/2023.
  */
 public class DynamicMeshOverlayNode extends DynamicMeshAdapterNode<OverlayTarget> {
@@ -26,9 +27,9 @@ public class DynamicMeshOverlayNode extends DynamicMeshAdapterNode<OverlayTarget
         TextureAtlas atlas = getMesh().getTextureAtlas();
         Texture texture = atlas.getTextureFromSourceOrFallback(data.getOverlay());
 
-        int texCoord1 = entry.addTexCoordValue(atlas.getUV(texture, 0, 0));
-        int texCoord2 = entry.addTexCoordValue(atlas.getUV(texture, texture.getPaddedWidth() - texture.getLeftPadding() - 1, 0));
-        int texCoord3 = entry.addTexCoordValue(atlas.getUV(texture, 0, texture.getPaddedHeight() - texture.getRightPadding() - 1));
+        int texCoord1 = entry.addTexCoordValue(getUv(texture, 0));
+        int texCoord2 = entry.addTexCoordValue(getUv(texture, 1));
+        int texCoord3 = entry.addTexCoordValue(getUv(texture, 2));
         int valuesPerVertex = getMesh().getVertexFormat().getVertexIndexSize();
 
         // For each face/polygon in the target entry:
@@ -49,13 +50,42 @@ public class DynamicMeshOverlayNode extends DynamicMeshAdapterNode<OverlayTarget
     }
 
     @Override
-    public void updateVertex(DynamicMeshTypedDataEntry entry, int localVertexIndex) {
-        // TODO: Update vertex from reading face information.
+    public void updateVertex(DynamicMeshTypedDataEntry overlayEntry, int localVertexIndex) {
+        DynamicMeshDataEntry targetEntry = overlayEntry.getDataSource().getOverlayEntry();
+        if (targetEntry == null)
+            return;
+
+        // Read vertex data from target entry.
+        FXFloatArrayBatcher sourceArray = targetEntry.getMesh().getEditableVertices();
+        int sourceVertexIndex = targetEntry.getVertexMeshArrayIndex(localVertexIndex);
+        float x = sourceArray.get(sourceVertexIndex++);
+        float y = sourceArray.get(sourceVertexIndex++);
+        float z = sourceArray.get(sourceVertexIndex);
+
+        // Write vertex position for overlay entry.
+        overlayEntry.writeVertexXYZ(localVertexIndex, x, y, z);
     }
 
     @Override
     public void updateTexCoord(DynamicMeshTypedDataEntry entry, int localTexCoordIndex) {
-        // Do nothing, since the texture coordinates we use for the fallback texture do not change.
+        TextureAtlas atlas = getMesh().getTextureAtlas();
+        Texture texture = atlas.getTextureFromSourceOrFallback(entry.getDataSource().getOverlay());
+        entry.writeTexCoordValue(localTexCoordIndex, getUv(texture, localTexCoordIndex));
+    }
+
+    private Vector2f getUv(Texture texture, int localTexCoordIndex) {
+        TextureAtlas atlas = getMesh().getTextureAtlas();
+
+        switch (localTexCoordIndex) {
+            case 0:
+                return atlas.getUV(texture, 0, 0);
+            case 1:
+                return atlas.getUV(texture, texture.getPaddedWidth() - texture.getLeftPadding() - 1, 0);
+            case 2:
+                return atlas.getUV(texture, 0, texture.getPaddedHeight() - texture.getRightPadding() - 1);
+            default:
+                throw new UnsupportedOperationException("Cannot update localTexCoordIndex " + localTexCoordIndex + " as a DynamicMeshOverlayNode. It should not exist.");
+        }
     }
 
     @Getter
