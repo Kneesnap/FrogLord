@@ -2,8 +2,11 @@ package net.highwayfrogs.editor.games.sony.medievil2;
 
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.*;
-import net.highwayfrogs.editor.gui.MainController;
+import net.highwayfrogs.editor.gui.MainController.LazySCMainMenuFileGroup;
+import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
+import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroupFileID;
 
 import java.util.List;
 
@@ -35,8 +38,8 @@ public class Medievil2GameInstance extends SCGameInstance {
     }
 
     @Override
-    public void setupFileTypes(List<MainController.SCDisplayedFileType> fileTypes) {
-        fileTypes.add(new MainController.SCDisplayedFileType(FILE_TYPE_VLO, "VLO Texture Bank"));
-        // TODO: Create category for .TIM file.
+    public void setupFileGroups(List<SCMainMenuFileGroup> fileGroups) {
+        fileGroups.add(new SCMainMenuFileGroupFileID("VLO Texture Bank", FILE_TYPE_VLO));
+        fileGroups.add(new LazySCMainMenuFileGroup("TIM [PSX Image]", (file, index) -> file instanceof PSXTIMFile));
     }
 }

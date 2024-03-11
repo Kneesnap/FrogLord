@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
-import net.highwayfrogs.editor.gui.MainController.SCDisplayedFileType;
+import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -345,7 +345,7 @@ public abstract class SCGameInstance {
      * Setup a list of supported file types.
      * @param fileTypes The list to setup.
      */
-    public abstract void setupFileTypes(List<SCDisplayedFileType> fileTypes);
+    public abstract void setupFileGroups(List<SCMainMenuFileGroup> fileTypes);
 
     /**
      * Tests if a given unsigned 32 bit number passed as a long looks like a valid pointer to memory present in the executable.
