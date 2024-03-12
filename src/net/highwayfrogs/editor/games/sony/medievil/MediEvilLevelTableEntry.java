@@ -21,6 +21,8 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
     private int wadResourceId;
     private int vloResourceId;
+    private int overlayId;
+
     @Setter private long textureRemapPointer;
 
     @Setter private transient TextureRemapArray remap;
@@ -44,6 +46,20 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
         }
 
         this.textureRemapPointer = reader.readUnsignedIntAsLong();
+
+        // Standard
+        if (byteSize > 92) { // TODO: Read all this (and make into separate classes as per above if necessary)
+            reader.skipBytes(60);
+        }
+        // ECTS Pre-Alpha build
+        else if (getGameInstance().getConfig().getLevelTableSize() > 25 && byteSize > 76) {
+            reader.skipBytes(68);
+        }
+        else {
+            reader.skipBytes(52);
+        }
+
+        this.overlayId = reader.readInt();
         reader.setIndex(endIndex);
     }
 

@@ -10,7 +10,6 @@ import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTableEntry;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -143,8 +143,7 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
             return null;
         }
 
-        // TODO: Rampant Spirit put this here, but idk what it's for / it looks like it needs to be finished.
-
+        // Fallback return statement
         return null;
     }
 

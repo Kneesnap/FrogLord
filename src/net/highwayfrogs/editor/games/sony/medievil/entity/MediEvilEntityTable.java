@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents the
+ * Represents the entity table.
  * Created by Kneesnap on 3/11/2024.
  */
 @Getter
@@ -33,29 +33,20 @@ public class MediEvilEntityTable extends SCGameData<MediEvilGameInstance> {
             entry.load(exeReader);
             this.entries.add(entry);
 
-            String hardcodedOverlayNameLookup = MediEvilEntityPointerTableEntry.resolveOverlay(entry.getOverlayId());
-
-            // Find the overlay in the table based on the name we got.
-            SCOverlayTableEntry overlayTableEntry = null;
-            if (hardcodedOverlayNameLookup != null) {
-                for (SCOverlayTableEntry overlayEntry : getGameInstance().getOverlayTable().getEntries()) {
-                    if (overlayEntry.getFilePath() != null && overlayEntry.getFilePath().endsWith(hardcodedOverlayNameLookup)) {
-                        overlayTableEntry = overlayEntry;
-                        break;
-                    }
-                }
-            }
-
-            if (hardcodedOverlayNameLookup != null && overlayTableEntry == null) {
-                getLogger().warning("Couldn't find full overlay path for '" + hardcodedOverlayNameLookup + "'.");
-                this.entityDefinitions.add(null);
-                continue;
-            }
-
             // If the entity pointer is null, don't read an entity definition.
             if (entry.getEntityDataPointer() == 0) {
                 this.entityDefinitions.add(null);
                 continue;
+            }
+
+            // Find the overlay in the table based on the name we got.
+            SCOverlayTableEntry overlayTableEntry = null;
+
+            int levelIndex = resolveOverlay(entry.getOverlayId());
+
+            if (levelIndex != -1) {
+                int overlayIndex = getGameInstance().getLevelTable().get(levelIndex).getOverlayId();
+                overlayTableEntry = getGameInstance().getOverlayTable().getEntries().get(overlayIndex);
             }
 
             // Read the entity definition.
@@ -73,6 +64,21 @@ public class MediEvilEntityTable extends SCGameData<MediEvilGameInstance> {
                 definitionReader.jumpReturn();
             }
         }
+    }
+
+    public int resolveOverlay(int overlayFlag) {
+        if (overlayFlag != -1) {
+            for (int i = 0; i < getGameInstance().getLevelTable().size(); ++i) {
+                if (overlayFlag >> i == 1 && i != 24) {
+                    return i;
+                }
+                // Hack for Stone Wolves who resolve to the PP.BIN overlay but aren't actually in there... TODO: Find better solution?
+                else if (overlayFlag >> i == 1 && i == 24) {
+                    return 2;
+                }
+            }
+        }
+        return overlayFlag;
     }
 
     @Override
