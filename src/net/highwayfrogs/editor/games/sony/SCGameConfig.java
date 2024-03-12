@@ -23,6 +23,7 @@ public class SCGameConfig {
     // Loaded configuration data.
     private String displayName;
     private long overrideRamOffset;
+    private long overlayTableOffset;
     private int MWIOffset;
     private int MWILength;
     private int bmpPointerAddress;
@@ -79,6 +80,7 @@ public class SCGameConfig {
         this.MWIOffset = config.getInt("mwiOffset");
         this.MWILength = config.getInt("mwiLength");
         this.overrideRamOffset = config.getLong("ramOffset", 0); // If I have an offset in a file, adding this number will give its pointer.
+        this.overlayTableOffset = config.getLong("overlayTable", 0);
         this.bmpPointerAddress = config.getInt("bmpPointerAddress", 0); // Generally right at the start of the 'data' section.
     }
 

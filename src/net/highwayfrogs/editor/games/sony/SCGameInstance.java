@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
 import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -39,6 +40,7 @@ public abstract class SCGameInstance {
     @Getter private final SCGameType gameType;
     @Getter private final Map<SCGameFile<?>, FileEntry> fileEntriesByFileObjects;
     @Getter private final Map<FileEntry, SCGameFile<?>> fileObjectsByFileEntries;
+    @Getter private final SCOverlayTable overlayTable;
     @Getter private SCGameConfig config;
     @Getter private MWDFile mainArchive;
     @Getter private MWIFile archiveIndex;
@@ -60,6 +62,7 @@ public abstract class SCGameInstance {
         this.gameType = gameType;
         this.fileEntriesByFileObjects = new HashMap<>();
         this.fileObjectsByFileEntries = new HashMap<>();
+        this.overlayTable = new SCOverlayTable(this);
     }
 
     /**
@@ -122,6 +125,7 @@ public abstract class SCGameInstance {
         readExecutableHeader(exeReader);
 
         // Read data. (Should occur after we know the executable header info)
+        this.readOverlayTable(exeReader);
         this.readBmpPointerData(exeReader);
     }
 
@@ -404,6 +408,31 @@ public abstract class SCGameInstance {
     }
 
     /**
+     * Gets a GameFile by its resource id.
+     * @param resourceId The file's resource id.
+     * @return gameFile
+     */
+    public <T extends SCGameFile<?>> T getGameFileByResourceID(int resourceId, Class<T> fileClass, boolean allowNull) {
+        FileEntry fileEntry = getResourceEntryByID(resourceId);
+        if (fileEntry == null) {
+            if (allowNull)
+                return null;
+
+            throw new IllegalArgumentException("There was no file entry for resource ID: " + resourceId);
+        }
+
+        SCGameFile<?> gameFile = this.fileObjectsByFileEntries.get(fileEntry);
+        if (gameFile == null || !fileClass.isInstance(gameFile)) {
+            if (allowNull)
+                return null;
+
+            throw new ClassCastException("The file '" + fileEntry.getDisplayName() + "'/" + resourceId + " was expected to be " + Utils.getSimpleName(fileClass) + ", but was actually " + Utils.getSimpleName(gameFile));
+        }
+
+        return fileClass.cast(gameFile);
+    }
+
+    /**
      * Gets a GameFile by its resource entry.
      * @param fileEntry The file resource entry.
      * @return gameFile
@@ -426,7 +455,7 @@ public abstract class SCGameInstance {
 
     /**
      * Attempts to find an image by its pointer.
-     * @param pointer The pointer get get the image for.
+     * @param pointer The pointer get the image for.
      * @return matchingImage - May be null.
      */
     public GameImage getImageFromPointer(long pointer) {
@@ -547,6 +576,16 @@ public abstract class SCGameInstance {
         } else {
             throw new RuntimeException("Failed to load ramOffset for '" + getConfig().getInternalName() + "', it may need to be added to the configuration.");
         }
+    }
+
+    private void readOverlayTable(DataReader reader) {
+        if (getConfig().getOverlayTableOffset() <= 0 || !isPSX())
+            return;
+
+        reader.jumpTemp((int) getConfig().getOverlayTableOffset());
+        this.overlayTable.load(reader);
+        reader.jumpReturn();
+        getLogger().info("Read " + this.overlayTable.getEntries().size() + " overlay entries from the table.");
     }
 
     // Beyond here are functions for handling game data from game files, and potentially also configuration data.

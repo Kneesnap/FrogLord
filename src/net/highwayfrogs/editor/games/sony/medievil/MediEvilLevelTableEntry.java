@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 
 /**
  * Represents an entry in the MediEvil level table.
+ * TODO: Consider making this an interface or an abstract class, so we can support different versions.
  * Created by Kneesnap on 3/8/2024.
  */
 @Getter
@@ -38,8 +39,7 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
         // Japanese versions have an extra resource ID
         if (byteSize > 100 && getConfig().getRegion() == SCGameRegion.JAPAN) {
             reader.skipBytes(8);
-        }
-        else {
+        } else {
             reader.skipBytes(4);
         }
 

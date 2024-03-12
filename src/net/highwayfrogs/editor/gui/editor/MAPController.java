@@ -41,6 +41,7 @@ import java.util.List;
 
 /**
  * Sets up the map editor.
+ * TODO: It'd be very nice to get SKY_LAND rendering under the sky maps. We can hardcode the colors to use for each map.
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter

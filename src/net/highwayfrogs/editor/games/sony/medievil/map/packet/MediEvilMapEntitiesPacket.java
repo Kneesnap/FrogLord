@@ -25,7 +25,7 @@ public class MediEvilMapEntitiesPacket extends MediEvilMapPacket {
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
         int entityCount = reader.readUnsignedShortAsInt();
-        reader.skipBytes(2); // Padding
+        reader.skipShort(); // Padding (-1)
         int entityListPtr = reader.readInt();
 
         // Read entities.

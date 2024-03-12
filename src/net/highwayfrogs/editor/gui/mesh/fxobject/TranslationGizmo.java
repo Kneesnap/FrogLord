@@ -35,6 +35,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * A translation gizmo represents a 3D UI element which can be moved in any of the XYZ direction.
@@ -657,5 +658,23 @@ public class TranslationGizmo extends DynamicMesh {
          * @param flags flags containing information about the change
          */
         void handle(MeshView meshView, double oldX, double oldY, double oldZ, double newX, double newY, double newZ, int flags);
+
+        /**
+         * Creates a listener which only listens for the change, but doesn't care about the changed positional values.
+         * @param runnable The runnable to run on change.
+         * @return newListener, or null
+         */
+        public static IPositionChangeListener makeListener(Runnable runnable) {
+            return runnable != null ? (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> runnable.run() : null;
+        }
+
+        /**
+         * Creates a listener which only listens for the change, but doesn't care about the changed positional values.
+         * @param listener The consumer to run on change.
+         * @return newListener, or null
+         */
+        public static IPositionChangeListener makeListener(Consumer<MeshView> listener) {
+            return listener != null ? (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> listener.accept(meshView) : null;
+        }
     }
 }
