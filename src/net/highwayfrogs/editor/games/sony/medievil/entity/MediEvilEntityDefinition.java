@@ -64,7 +64,14 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
         reader.jumpReturn();
         this.modelCount = reader.readUnsignedShortAsInt();
 
-        reader.skipBytes(170); // TODO: Read more of this instead of skipping.
+        // ECTS Pre-Alpha entities
+        if (getGameInstance().getConfig().getEntityTableSize() <= 111) {
+            reader.skipBytes(186);
+        }
+        // All others
+        else {
+            reader.skipBytes(170); // TODO: Read more of this instead of skipping.
+        }
         this.mofId = reader.readUnsignedIntAsLong();
 
         // Read model data.

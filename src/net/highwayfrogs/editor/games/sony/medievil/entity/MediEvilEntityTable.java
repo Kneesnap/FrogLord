@@ -42,7 +42,7 @@ public class MediEvilEntityTable extends SCGameData<MediEvilGameInstance> {
             // Find the overlay in the table based on the name we got.
             SCOverlayTableEntry overlayTableEntry = null;
 
-            int levelIndex = resolveOverlay(entry.getOverlayId());
+            int levelIndex = getConfig().getLevelTableEntryByteSize() <= 88 ? entry.getOverlayId() : resolveOverlay(entry.getOverlayId());
 
             if (levelIndex != -1) {
                 int overlayIndex = getGameInstance().getLevelTable().get(levelIndex).getOverlayId();
