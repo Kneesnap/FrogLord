@@ -33,7 +33,7 @@ import java.util.function.Consumer;
 public abstract class MRCollprim extends SCSharedGameData {
     private CollprimType type = CollprimType.CUBOID;
     private int flags;
-    private final SVector offset = new SVector();
+    private SVector offset = new SVector();
     private float radiusSquared = 10F; // For cylinder base or sphere. It seems like we can safely ignore this value, leaving it as is.
     private float xLength = 3F;
     private float yLength = 3F;
@@ -53,7 +53,6 @@ public abstract class MRCollprim extends SCSharedGameData {
     @Override
     public void load(DataReader reader) {
         this.type = CollprimType.values()[reader.readUnsignedShortAsInt()];
-        this.flags = reader.readUnsignedShortAsInt();
         reader.skipInt(); // Run-time pointer.
         reader.skipInt(); // Run-time pointer.
         this.offset.loadWithPadding(reader);

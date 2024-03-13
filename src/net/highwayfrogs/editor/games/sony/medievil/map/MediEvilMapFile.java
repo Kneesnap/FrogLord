@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMeshController;
+import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapCollprimsPacket;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapEntitiesPacket;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapGraphicsPacket;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapHeaderPacket;
@@ -36,6 +37,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
     private final MediEvilMapHeaderPacket headerPacket;
     private final MediEvilMapGraphicsPacket graphicsPacket;
     private final MediEvilMapEntitiesPacket entitiesPacket;
+    private final MediEvilMapCollprimsPacket collprimsPacket;
 
     public MediEvilMapFile(MediEvilGameInstance instance) {
         super(instance, false);
@@ -45,7 +47,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
         addFilePacket(new DummyFilePacket<>(this, "2LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL2 - 2D Splines
         addFilePacket(new DummyFilePacket<>(this, "3LPS", true, PacketSizeType.SIZE_INCLUSIVE)); // SPL3 - 3D Splines
         addFilePacket(this.graphicsPacket = new MediEvilMapGraphicsPacket(this)); // PSX Graphics
-        addFilePacket(new DummyFilePacket<>(this, "PLOC", true, PacketSizeType.SIZE_INCLUSIVE)); // Collision Primitives (REFER TO BEAST WARS, THIS IS ALREADY REVERSE ENGINEERED / HAS CODE IN FROGLORD)
+        addFilePacket(this.collprimsPacket = new MediEvilMapCollprimsPacket(this)); // Collision Primitives
         addFilePacket(new DummyFilePacket<>(this, "DIRG", true, PacketSizeType.SIZE_INCLUSIVE)); // GRID - Collision Info?
     }
 
@@ -82,24 +84,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
         list.add(new Tuple2<>("Vertices", this.graphicsPacket.getVertices().size()));
         list.add(new Tuple2<>("Polygons", this.graphicsPacket.getPolygons().size()));
         list.add(new Tuple2<>("Entities", this.entitiesPacket.getEntities().size()));
-        /*list.add(new Tuple2<>("File Version", getMapConfig().getVersion()));
-        list.add(new Tuple2<>("Default Reaction", this.levelSpecificDataPacket.getDefaultReactionType()));
-        list.add(new Tuple2<>("Paths", this.pathPacket.getPaths().size()));
-        list.add(new Tuple2<>("Zones", this.zonePacket.getZones().size()));
-        list.add(new Tuple2<>("Forms", this.formInstancePacket.getForms().size() + " (Table Size: " + this.formInstancePacket.getFormTableSize() + ")"));
-        list.add(new Tuple2<>("Entities", this.entityMarkerPacket.getEntities().size()));
-        list.add(new Tuple2<>("Grid Type", this.gridPacket.getType()));
-        list.add(new Tuple2<>("Grid Size", this.gridPacket.getXSize() + " x " + this.gridPacket.getZSize()));
-        list.add(new Tuple2<>("Grid Count", this.gridPacket.getXCount() + " x " + this.gridPacket.getZCount() + " (" + this.gridPacket.getGrids().size() + ")"));
-        list.add(new Tuple2<>("Grid Base", this.gridPacket.getBasePoint().toFloatString()));
-        list.add(new Tuple2<>("Lights", this.lightPacket.getLights().size()));
-        list.add(new Tuple2<>("UV Animations", this.animPacket.getUvAnimations().size()));
-
-        if (this.cameraHeightFieldPacket != null) {
-            list.add(new Tuple2<>("Camera Height Grid Dimensions", this.cameraHeightFieldPacket.getXSquareCount() + " x " + this.cameraHeightFieldPacket.getZSquareCount()));
-            list.add(new Tuple2<>("Camera Height Grid Square Size", this.cameraHeightFieldPacket.getSquareXSizeAsFloat() + " x " + this.cameraHeightFieldPacket.getSquareZSizeAsFloat()));
-            list.add(new Tuple2<>("Camera Height Grid Start Pos", this.cameraHeightFieldPacket.getStartXAsFloat() + ", " + this.cameraHeightFieldPacket.getStartZAsFloat()));
-        }*/
+        list.add(new Tuple2<>("Collision Primitives", this.collprimsPacket.getCollprims().size()));
 
         return list;
     }

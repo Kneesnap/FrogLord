@@ -8,6 +8,7 @@ import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilCollprimManager;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilEntityManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -56,6 +57,7 @@ public class MediEvilMapMeshController extends MeshViewController<MediEvilMapMes
     @Override
     protected void setupManagers() {
         addManager(new MediEvilEntityManager(this));
+        addManager(new MediEvilCollprimManager(this));
         // TODO: Setup more managers.
     }
 

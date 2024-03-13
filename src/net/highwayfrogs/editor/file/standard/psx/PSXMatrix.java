@@ -34,9 +34,9 @@ public class PSXMatrix extends GameObject {
             for (int j = 0; j < this.matrix[i].length; j++)
                 this.matrix[i][j] = reader.readShort();
 
-        short padding = reader.readShort(); // Used to align to 4-bytes.
-        if (padding != 0 && padding != -1) // It's -1 in some of the maps in Build 01.
-            throw new RuntimeException("Matrix padding was not zero! (" + padding + ")");
+        reader.readShort(); // Used to align to 4-bytes.
+        //if (padding != 0 && padding != -1) // It's -1 in some of the maps in Build 01. TODO: Padding seems to have random values in MediEvil.
+        //    throw new RuntimeException("Matrix padding was not zero! (" + padding + ")");
 
         for (int i = 0; i < this.transform.length; i++)
             this.transform[i] = reader.readInt();
