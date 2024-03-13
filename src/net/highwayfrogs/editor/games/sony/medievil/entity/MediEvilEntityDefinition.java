@@ -24,7 +24,7 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
     private final SCOverlayTableEntry overlay;
     private final List<MediEvilModelEntityData> modelData = new ArrayList<>();
     private String name;
-    private int modelCount;
+    private int subtypeCount;
     private long mofId = -1;
 
     public MediEvilEntityDefinition(MediEvilGameInstance instance, SCOverlayTableEntry overlay) {
@@ -62,7 +62,7 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
         reader.jumpTemp((int) (entityNamePtr - offset));
         this.name = reader.readNullTerminatedString();
         reader.jumpReturn();
-        this.modelCount = reader.readUnsignedShortAsInt();
+        this.subtypeCount = reader.readUnsignedShortAsInt();
 
         // ECTS Pre-Alpha entities
         if (getGameInstance().getConfig().getEntityTableSize() <= 111) {
@@ -73,12 +73,15 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
             reader.skipBytes(170); // TODO: Read more of this instead of skipping.
         }
         this.mofId = reader.readUnsignedIntAsLong();
-
         // Read model data.
         this.modelData.clear();
         if (SCUtils.isValidLookingPointer(getGameInstance().getPlatform(), this.mofId)) {
             reader.jumpTemp((int) (this.mofId - offset));
-            for (int i = 0; i < this.modelCount; i++) {
+
+            // Assume there is at least one entry if subtype count is zero
+            int iterator = this.subtypeCount > 0 ? this.subtypeCount : 1;
+
+            for (int i = 0; i < iterator; i++) {
                 MediEvilModelEntityData newData = new MediEvilModelEntityData(getGameInstance());
                 newData.load(reader);
                 this.modelData.add(newData);
