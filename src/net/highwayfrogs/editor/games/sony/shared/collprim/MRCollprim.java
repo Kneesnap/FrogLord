@@ -192,7 +192,24 @@ public abstract class MRCollprim extends SCSharedGameData {
 
         // Function
         if (getGameInstance().isMediEvil()) {
-            grid.addLabel("Functionality", getMediEvilFunctionality().toString());
+            MediEvilCollprimFunctionality func = getMediEvilFunctionality();
+            grid.addLabel("Functionality", func.toString());
+            // Warp
+            if (func == MediEvilCollprimFunctionality.WARP) {
+                grid.addLabel("Warp Source ID", String.valueOf(flags & WARP_FROM));
+                grid.addLabel("Warp Destination ID", String.valueOf((flags & WARP_TO) >> WARP_TO_SHIFT));
+            }
+            // Plugin camera
+            if (func == MediEvilCollprimFunctionality.CAMERA && ((flags & ~CAMERA_PLUGIN_ID) == (TYPE_CAMERA | CAMERA_PLUGIN))) {
+                grid.addLabel("Camera Plugin ID", String.valueOf(flags & CAMERA_PLUGIN_ID));
+            }
+            else if (func == MediEvilCollprimFunctionality.CAMERA) {
+                grid.addLabel("Camera Spline ID", String.valueOf(flags & CAMERA_SPLINE_ID));
+            }
+
+            if (func == MediEvilCollprimFunctionality.COLLNEVENT && (flags & COLLNEVENT_HAS_EVENT) != 0) {
+                grid.addLabel("Event ID", String.valueOf(flags & COLLNEVENT_EVENT_ID));
+            }
         }
 
         // Shape data
@@ -496,7 +513,7 @@ public abstract class MRCollprim extends SCSharedGameData {
         {
             return MediEvilMapCollprim.MediEvilCollprimFunctionality.COLLNEVENT;
         }
-        return MediEvilMapCollprim.MediEvilCollprimFunctionality.UNKNOWN;
+        return MediEvilMapCollprim.MediEvilCollprimFunctionality.NONE;
     }
 
     /**

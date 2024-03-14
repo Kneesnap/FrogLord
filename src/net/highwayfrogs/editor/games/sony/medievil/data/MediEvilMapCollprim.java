@@ -6,6 +6,7 @@ import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Sphere;
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
@@ -37,11 +38,23 @@ public class MediEvilMapCollprim extends MRCollprim {
     public static final int TYPE_WARP = 0x4000;
     public static final int TYPE_COLLNEVENT = 0xC000;
 
+    public static final int WARP_FROM = 0x007F;
+    public static final int WARP_TO = 0x3F80;
+    public static final int WARP_TO_SHIFT = 7;
+
+    public static final int CAMERA_LOCK = Constants.BIT_FLAG_12;
+    public static final int CAMERA_PLUGIN = Constants.BIT_FLAG_11;
+    public static final int CAMERA_SPLINE_ID = 0x00FF;
+    public static final int CAMERA_PLUGIN_ID = 0x00FF;
+
+    public static final int COLLNEVENT_HAS_EVENT = Constants.BIT_FLAG_9;
+    public static final int COLLNEVENT_EVENT_ID = 0x00FF;
+
     public enum MediEvilCollprimFunctionality {
         CAMERA,
         WARP,
         COLLNEVENT,
-        UNKNOWN
+        NONE
     }
 
     public MediEvilMapCollprim(MediEvilMapFile mapFile) {

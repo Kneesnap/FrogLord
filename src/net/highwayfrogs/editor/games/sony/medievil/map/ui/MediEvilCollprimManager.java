@@ -19,6 +19,8 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
 
+import static net.highwayfrogs.editor.games.sony.medievil.data.MediEvilMapCollprim.*;
+
 /**
  * Manages map collprims.
  * TODO: Collprim menu isn't automatically extended.
@@ -29,8 +31,10 @@ public class MediEvilCollprimManager extends MediEvilMapUIManager.MediEvilMapLis
     private CheckBox wireframePreviewCheckBox;
 
     private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.GREEN);
+    private static final PhongMaterial MATERIAL_LIME = Utils.makeSpecialMaterial(Color.LIME);
     private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
     private static final PhongMaterial MATERIAL_PINK = Utils.makeSpecialMaterial(Color.PINK);
+    private static final PhongMaterial MATERIAL_SALMON = Utils.makeSpecialMaterial(Color.LIGHTSALMON);
     private static final PhongMaterial MATERIAL_BLUE = Utils.makeSpecialMaterial(Color.BLUE);
     private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
 
@@ -74,22 +78,28 @@ public class MediEvilCollprimManager extends MediEvilMapUIManager.MediEvilMapLis
     @Override
     protected CollprimShapeAdapter<?> setupDisplay(MediEvilMapCollprim collprim) {
         boolean isSelected = (collprim == getValueSelectionBox().getValue());
-        CollprimShapeAdapter<?> adapter = collprim.addDisplay(this, this.collprimDisplayList, isSelected ? MATERIAL_YELLOW : getCollprimMaterial(collprim.getMediEvilFunctionality()));
+        CollprimShapeAdapter<?> adapter = collprim.addDisplay(this, this.collprimDisplayList, isSelected ? MATERIAL_YELLOW : getCollprimMaterial(collprim));
         adapter.getShape().setDrawMode(this.wireframePreviewCheckBox.isSelected() ? DrawMode.LINE : DrawMode.FILL);
         adapter.getShape().setOnMouseClicked(event -> getValueSelectionBox().getSelectionModel().select(collprim));
 
         return adapter;
     }
 
-    protected PhongMaterial getCollprimMaterial(MediEvilMapCollprim.MediEvilCollprimFunctionality functionality)
+    protected PhongMaterial getCollprimMaterial(MediEvilMapCollprim collprim)
     {
-        switch(functionality)
+        switch(collprim.getMediEvilFunctionality())
         {
             case CAMERA:
-                return MATERIAL_PINK;
+                if ((collprim.getFlags() & ~CAMERA_PLUGIN_ID) == (TYPE_CAMERA | CAMERA_PLUGIN)) {
+                    return MATERIAL_PINK;
+                }
+                return MATERIAL_SALMON;
             case WARP:
                 return MATERIAL_BLUE;
             case COLLNEVENT:
+                if ((collprim.getFlags() & COLLNEVENT_HAS_EVENT) != 0) {
+                    return MATERIAL_LIME;
+                }
                 return MATERIAL_GREEN;
             default:
                 return MATERIAL_WHITE;
@@ -115,7 +125,7 @@ public class MediEvilCollprimManager extends MediEvilMapUIManager.MediEvilMapLis
     @Override
     protected void onSelectedValueChange(MediEvilMapCollprim oldValue, CollprimShapeAdapter<?> oldAdapter, MediEvilMapCollprim newValue, CollprimShapeAdapter<?> newAdapter) {
         if (oldAdapter != null) // Apply de-selected material.
-            oldAdapter.getShape().setMaterial(getCollprimMaterial(oldValue.getMediEvilFunctionality()));
+            oldAdapter.getShape().setMaterial(getCollprimMaterial(oldValue));
 
         if (newAdapter != null) // Apply selected material.
             newAdapter.getShape().setMaterial(MATERIAL_YELLOW);
