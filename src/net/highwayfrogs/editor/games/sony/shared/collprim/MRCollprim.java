@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.medievil.data.MediEvilMapCollprim;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MOFController;
@@ -23,6 +24,8 @@ import net.highwayfrogs.editor.gui.editor.RenderManager;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Consumer;
+
+import static net.highwayfrogs.editor.games.sony.medievil.data.MediEvilMapCollprim.*;
 
 /**
  * Represents a Collision Primitive / MR_COLLPRIM.
@@ -187,6 +190,11 @@ public abstract class MRCollprim extends SCSharedGameData {
             flagLabel.setText(Utils.toHexString(updateFlags()));
         });
 
+        // Function
+        if (getGameInstance().isMediEvil()) {
+            grid.addLabel("Functionality", getMediEvilFunctionality().toString());
+        }
+
         // Shape data
         grid.addSeparator();
 
@@ -277,6 +285,11 @@ public abstract class MRCollprim extends SCSharedGameData {
             setFlag(FLAG_COLLISION_DISABLED, newValue);
             flagLabel.setText(Utils.toHexString(updateFlags()));
         });
+
+        // Function
+        if (getGameInstance().isMediEvil()) {
+            grid.addLabel("Functionality", getMediEvilFunctionality().toString()); // TODO: Add option to modify.
+        }
 
         // Shape data
         grid.addSeparator();
@@ -459,6 +472,31 @@ public abstract class MRCollprim extends SCSharedGameData {
         CYLINDER_Y, // Seen in Old Frogger
         CYLINDER_Z, // Seen in Old Frogger
         SPHERE,
+    }
+
+    /**
+     * Gets the MediEvilCollprimFunctionality, if this is Frogger.
+     */
+    public MediEvilMapCollprim.MediEvilCollprimFunctionality getMediEvilFunctionality() {
+        if (!getGameInstance().isMediEvil())
+            throw new RuntimeException("Cannot get MediEvilCollprimFunctionality when the active game is not MediEvil!");
+
+        if (this.userData < 0 || this.userData >= FroggerCollprimReactionType.values().length)
+            throw new RuntimeException("The value was " + this.userData + ", which is not a recognized FroggerCollprimReactionType.");
+
+        if ((flags & TYPE_MASK) == TYPE_CAMERA)
+        {
+            return MediEvilMapCollprim.MediEvilCollprimFunctionality.CAMERA;
+        }
+        else if ((flags & TYPE_MASK) == TYPE_WARP)
+        {
+            return MediEvilMapCollprim.MediEvilCollprimFunctionality.WARP;
+        }
+        else if ((flags & TYPE_MASK) == TYPE_COLLNEVENT)
+        {
+            return MediEvilMapCollprim.MediEvilCollprimFunctionality.COLLNEVENT;
+        }
+        return MediEvilMapCollprim.MediEvilCollprimFunctionality.UNKNOWN;
     }
 
     /**

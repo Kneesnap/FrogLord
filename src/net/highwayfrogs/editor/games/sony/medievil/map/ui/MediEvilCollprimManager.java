@@ -30,6 +30,9 @@ public class MediEvilCollprimManager extends MediEvilMapUIManager.MediEvilMapLis
 
     private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.GREEN);
     private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_PINK = Utils.makeSpecialMaterial(Color.PINK);
+    private static final PhongMaterial MATERIAL_BLUE = Utils.makeSpecialMaterial(Color.BLUE);
+    private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
 
 
     public MediEvilCollprimManager(MeshViewController<MediEvilMapMesh> controller) {
@@ -63,6 +66,7 @@ public class MediEvilCollprimManager extends MediEvilMapUIManager.MediEvilMapLis
 
         // Wireframe preview checkbox.
         this.wireframePreviewCheckBox = new CheckBox("Wireframe Display");
+        this.wireframePreviewCheckBox.setSelected(true);
         this.wireframePreviewCheckBox.selectedProperty().addListener((listener, oldValue, newValue) -> updateCollprimWireframeState(newValue));
         sidePanel.add(this.wireframePreviewCheckBox);
     }
@@ -70,11 +74,26 @@ public class MediEvilCollprimManager extends MediEvilMapUIManager.MediEvilMapLis
     @Override
     protected CollprimShapeAdapter<?> setupDisplay(MediEvilMapCollprim collprim) {
         boolean isSelected = (collprim == getValueSelectionBox().getValue());
-        CollprimShapeAdapter<?> adapter = collprim.addDisplay(this, this.collprimDisplayList, isSelected ? MATERIAL_YELLOW : MATERIAL_GREEN);
+        CollprimShapeAdapter<?> adapter = collprim.addDisplay(this, this.collprimDisplayList, isSelected ? MATERIAL_YELLOW : getCollprimMaterial(collprim.getMediEvilFunctionality()));
         adapter.getShape().setDrawMode(this.wireframePreviewCheckBox.isSelected() ? DrawMode.LINE : DrawMode.FILL);
         adapter.getShape().setOnMouseClicked(event -> getValueSelectionBox().getSelectionModel().select(collprim));
 
         return adapter;
+    }
+
+    protected PhongMaterial getCollprimMaterial(MediEvilMapCollprim.MediEvilCollprimFunctionality functionality)
+    {
+        switch(functionality)
+        {
+            case CAMERA:
+                return MATERIAL_PINK;
+            case WARP:
+                return MATERIAL_BLUE;
+            case COLLNEVENT:
+                return MATERIAL_GREEN;
+            default:
+                return MATERIAL_WHITE;
+        }
     }
 
     @Override
@@ -96,9 +115,9 @@ public class MediEvilCollprimManager extends MediEvilMapUIManager.MediEvilMapLis
     @Override
     protected void onSelectedValueChange(MediEvilMapCollprim oldValue, CollprimShapeAdapter<?> oldAdapter, MediEvilMapCollprim newValue, CollprimShapeAdapter<?> newAdapter) {
         if (oldAdapter != null) // Apply de-selected material.
-            oldAdapter.getShape().setMaterial(MATERIAL_GREEN);
+            oldAdapter.getShape().setMaterial(getCollprimMaterial(oldValue.getMediEvilFunctionality()));
 
-        if (newAdapter != null) // Apply de-selected material.
+        if (newAdapter != null) // Apply selected material.
             newAdapter.getShape().setMaterial(MATERIAL_YELLOW);
     }
 

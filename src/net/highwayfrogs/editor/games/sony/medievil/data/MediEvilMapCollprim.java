@@ -32,6 +32,18 @@ public class MediEvilMapCollprim extends MRCollprim {
     @Setter
     private PSXMatrix matrix;
 
+    public static final int TYPE_MASK = 0xC000;
+    public static final int TYPE_CAMERA = 0x8000;
+    public static final int TYPE_WARP = 0x4000;
+    public static final int TYPE_COLLNEVENT = 0xC000;
+
+    public enum MediEvilCollprimFunctionality {
+        CAMERA,
+        WARP,
+        COLLNEVENT,
+        UNKNOWN
+    }
+
     public MediEvilMapCollprim(MediEvilMapFile mapFile) {
         super(mapFile.getGameInstance());
         this.mapFile = mapFile;
@@ -46,21 +58,21 @@ public class MediEvilMapCollprim extends MRCollprim {
     public void load(DataReader reader) {
         setRawMatrixValue(reader, 0);
         this.setFlags(reader.readUnsignedShortAsInt());
-        this.setType(resolveType(this.getFlags() >> 14));
+        this.setType(resolveShape(this.getFlags() >> 14));
         this.setXLength(Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4));
         this.setYLength(Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4));
         this.setZLength(Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4));
         this.setRadiusSquared(Utils.fixedPointIntToFloatNBits(reader.readInt(), 8)); // 8 bits are used because multiplying two fixed point numbers together increases the position of the radius.
     }
 
-    private CollprimType resolveType(int type)
+    private CollprimType resolveShape(int shape)
     {
-        switch(type) {
+        switch(shape) {
             default:
             case 3:
                 return CollprimType.CUBOID;
             case 2:
-                return CollprimType.CYLINDER_X; // TODO: Confirm these are correct. I'm pretty sure about cuboid and CYLINDER_Y.
+                return CollprimType.SPHERE; // TODO: Confirm these are correct. I'm pretty sure about CUBOID and CYLINDER_Y.
             case 1:
                 return CollprimType.CYLINDER_Y;
             case 0:
@@ -107,6 +119,7 @@ public class MediEvilMapCollprim extends MRCollprim {
         float x = Utils.fixedPointIntToFloat4Bit(position.getX());
         float y = Utils.fixedPointIntToFloat4Bit(position.getY());
         float z = Utils.fixedPointIntToFloat4Bit(position.getZ());
+        float radius = this.getRadiusSquared();
 
         CollprimShapeAdapter<?> adapter;
         switch (this.getType()) {
@@ -125,6 +138,7 @@ public class MediEvilMapCollprim extends MRCollprim {
                 // zLength thus indicates the height.
                 Cylinder cylinder = manager.addCylinder(listID, x, y, z, 1, 2, material, true);
                 adapter = new CylinderCollprimShapeAdapter(this, cylinder);
+                radius = Utils.fixedPointIntToFloat4Bit((int)this.getRadiusSquared()); // TODO: Not sure if this is necessary, but scales seem off otherwise.
                 break;
             default:
                 throw new RuntimeException("Unsupported Collprim type " + this.getType() + ", cannot create display for " + toString() + ".");
@@ -135,7 +149,7 @@ public class MediEvilMapCollprim extends MRCollprim {
         adapter.onLengthXUpdate(this.getXLength());
         adapter.onLengthYUpdate(this.getYLength());
         adapter.onLengthZUpdate(this.getZLength());
-        adapter.onRadiusSquaredUpdate(Utils.fixedPointIntToFloat4Bit((int)this.getRadiusSquared()));
+        adapter.onRadiusSquaredUpdate(radius);
 
         return adapter;
     }
@@ -147,6 +161,7 @@ public class MediEvilMapCollprim extends MRCollprim {
         float x = Utils.fixedPointIntToFloat4Bit(position.getX());
         float y = Utils.fixedPointIntToFloat4Bit(position.getY());
         float z = Utils.fixedPointIntToFloat4Bit(position.getZ());
+        float radius = this.getRadiusSquared();
 
         CollprimShapeAdapter<?> adapter;
         switch (this.getType()) {
@@ -165,6 +180,7 @@ public class MediEvilMapCollprim extends MRCollprim {
                 // zLength thus indicates the height.
                 Cylinder cylinder = displayList.addCylinder(x, y, z, 1, 2, material, true);
                 adapter = new CylinderCollprimShapeAdapter(this, cylinder);
+                radius = Utils.fixedPointIntToFloat4Bit((int)this.getRadiusSquared()); // TODO: Not sure if this is necessary, but scales seem off otherwise.
                 break;
             default:
                 throw new RuntimeException("Unsupported Collprim type " + this.getType() + ", cannot create display for " + toString() + ".");
@@ -175,7 +191,7 @@ public class MediEvilMapCollprim extends MRCollprim {
         adapter.onLengthXUpdate(this.getXLength());
         adapter.onLengthYUpdate(this.getYLength());
         adapter.onLengthZUpdate(this.getZLength());
-        adapter.onRadiusSquaredUpdate(Utils.fixedPointIntToFloat4Bit((int)this.getRadiusSquared()));
+        adapter.onRadiusSquaredUpdate(radius);
 
         return adapter;
     }
