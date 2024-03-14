@@ -4,6 +4,8 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Sphere;
+import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Transform;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -138,6 +140,29 @@ public class MediEvilMapCollprim extends MRCollprim {
         switch (this.getType()) {
             case CUBOID:
                 Box box = manager.addBoundingBoxCenteredWithDimensions(listID, x, y, z, this.getXLength() * 2, this.getYLength() * 2, this.getZLength() * 2, material, true);
+                int foundRotations = 0;
+                for (Transform transform : box.getTransforms()) {
+                    if (!(transform instanceof Rotate))
+                        continue;
+                    foundRotations++;
+                    Rotate rotate = (Rotate) transform;
+                    if (rotate.getAxis() == Rotate.X_AXIS) {
+                        rotate.setAngle(Math.toDegrees(this.matrix.getRollAngle()));
+                    } else if (rotate.getAxis() == Rotate.Y_AXIS) {
+                        rotate.setAngle(Math.toDegrees(this.matrix.getPitchAngle()));
+                    } else if (rotate.getAxis() == Rotate.Z_AXIS) {
+                        rotate.setAngle(Math.toDegrees(this.matrix.getYawAngle()));
+                    } else {
+                        foundRotations--;
+                    }
+                }
+
+                if (foundRotations == 0) { // There are no rotations, so add rotations.
+                    box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getYawAngle()), Rotate.Z_AXIS));
+                    box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getPitchAngle()), Rotate.Y_AXIS));
+                    box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getRollAngle()), Rotate.X_AXIS));
+                }
+
                 adapter = new CuboidCollprimShapeAdapter(this, box);
                 break;
             case SPHERE:
@@ -181,6 +206,29 @@ public class MediEvilMapCollprim extends MRCollprim {
             case CUBOID:
                 Box box = displayList.addBoundingBoxCenteredWithDimensions(x, y, z, this.getXLength() * 2, this.getYLength() * 2, this.getZLength() * 2, material, true);
                 adapter = new CuboidCollprimShapeAdapter(this, box);
+                int foundRotations = 0;
+                for (Transform transform : box.getTransforms()) {
+                    if (!(transform instanceof Rotate))
+                        continue;
+                    foundRotations++;
+                    Rotate rotate = (Rotate) transform;
+                    if (rotate.getAxis() == Rotate.X_AXIS) {
+                        rotate.setAngle(Math.toDegrees(this.matrix.getRollAngle()));
+                    } else if (rotate.getAxis() == Rotate.Y_AXIS) {
+                        rotate.setAngle(Math.toDegrees(this.matrix.getPitchAngle()));
+                    } else if (rotate.getAxis() == Rotate.Z_AXIS) {
+                        rotate.setAngle(Math.toDegrees(this.matrix.getYawAngle()));
+                    } else {
+                        foundRotations--;
+                    }
+                }
+
+                if (foundRotations == 0) { // There are no rotations, so add rotations.
+                    getLogger().info("We here");
+                    box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getYawAngle()), Rotate.Z_AXIS));
+                    box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getPitchAngle()), Rotate.Y_AXIS));
+                    box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getRollAngle()), Rotate.X_AXIS));
+                }
                 break;
             case SPHERE:
                 Sphere sphere = displayList.addSphere(x, y, z, 1, material, true);
