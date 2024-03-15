@@ -149,7 +149,7 @@ public class MediEvilMapCollprim extends MRCollprim {
                     if (rotate.getAxis() == Rotate.X_AXIS) {
                         rotate.setAngle(Math.toDegrees(this.matrix.getRollAngle()));
                     } else if (rotate.getAxis() == Rotate.Y_AXIS) {
-                        rotate.setAngle(Math.toDegrees(this.matrix.getPitchAngle()));
+                        rotate.setAngle(Math.toDegrees(-this.matrix.getPitchAngle()));
                     } else if (rotate.getAxis() == Rotate.Z_AXIS) {
                         rotate.setAngle(Math.toDegrees(this.matrix.getYawAngle()));
                     } else {
@@ -159,7 +159,7 @@ public class MediEvilMapCollprim extends MRCollprim {
 
                 if (foundRotations == 0) { // There are no rotations, so add rotations.
                     box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getYawAngle()), Rotate.Z_AXIS));
-                    box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getPitchAngle()), Rotate.Y_AXIS));
+                    box.getTransforms().add(new Rotate(Math.toDegrees(-this.matrix.getPitchAngle()), Rotate.Y_AXIS));
                     box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getRollAngle()), Rotate.X_AXIS));
                 }
 
@@ -215,7 +215,7 @@ public class MediEvilMapCollprim extends MRCollprim {
                     if (rotate.getAxis() == Rotate.X_AXIS) {
                         rotate.setAngle(Math.toDegrees(this.matrix.getRollAngle()));
                     } else if (rotate.getAxis() == Rotate.Y_AXIS) {
-                        rotate.setAngle(Math.toDegrees(this.matrix.getPitchAngle()));
+                        rotate.setAngle(Math.toDegrees(-this.matrix.getPitchAngle()));
                     } else if (rotate.getAxis() == Rotate.Z_AXIS) {
                         rotate.setAngle(Math.toDegrees(this.matrix.getYawAngle()));
                     } else {
@@ -224,9 +224,8 @@ public class MediEvilMapCollprim extends MRCollprim {
                 }
 
                 if (foundRotations == 0) { // There are no rotations, so add rotations.
-                    getLogger().info("We here");
                     box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getYawAngle()), Rotate.Z_AXIS));
-                    box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getPitchAngle()), Rotate.Y_AXIS));
+                    box.getTransforms().add(new Rotate(Math.toDegrees(-this.matrix.getPitchAngle()), Rotate.Y_AXIS));
                     box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getRollAngle()), Rotate.X_AXIS));
                 }
                 break;
