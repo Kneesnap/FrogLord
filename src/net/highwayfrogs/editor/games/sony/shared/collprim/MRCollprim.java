@@ -513,7 +513,7 @@ public abstract class MRCollprim extends SCSharedGameData {
         {
             return MediEvilMapCollprim.MediEvilCollprimFunctionality.COLLNEVENT;
         }
-        return MediEvilMapCollprim.MediEvilCollprimFunctionality.NONE;
+        return MediEvilMapCollprim.MediEvilCollprimFunctionality.EMPTY;
     }
 
     /**

@@ -56,7 +56,7 @@ public class MediEvilMapCollprim extends MRCollprim {
         CAMERA,
         WARP,
         COLLNEVENT,
-        NONE
+        EMPTY
     }
 
     public MediEvilMapCollprim(MediEvilMapFile mapFile) {
@@ -73,16 +73,21 @@ public class MediEvilMapCollprim extends MRCollprim {
     public void load(DataReader reader) {
         setRawMatrixValue(reader, 0);
         this.setFlags(reader.readUnsignedShortAsInt());
-        this.setType(resolveShape(this.getFlags() >> 14));
+        this.setType(resolveShape(this.getFlags()));
         this.setXLength(Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4));
         this.setYLength(Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4));
         this.setZLength(Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4));
         this.setRadiusSquared(Utils.fixedPointIntToFloatNBits(reader.readInt(), 8)); // 8 bits are used because multiplying two fixed point numbers together increases the position of the radius.
     }
 
-    private CollprimType resolveShape(int shape)
+    private CollprimType resolveShape(int flags)
     {
-        switch(shape) {
+        // Flags are empty; default to cuboid
+        if (flags == 0)
+        {
+            return CollprimType.CUBOID;
+        }
+        switch(this.getFlags() >> 14) {
             default:
             case 3:
                 return CollprimType.CUBOID;
