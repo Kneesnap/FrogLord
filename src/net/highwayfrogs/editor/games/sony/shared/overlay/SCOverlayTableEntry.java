@@ -67,18 +67,19 @@ public class SCOverlayTableEntry extends SCSharedGameData {
      * Gets a reader which can read the overlay file.
      */
     public DataReader getReader() {
+        File overlayFile = new File(getGameInstance().getGameFolder(), this.filePath);
 
-        String[] path = new String[]{this.filePath};
-        File overlayFile;
-        do {
-            overlayFile = new File(getGameInstance().getExeFile().getParentFile(), path[path.length - 1]);
-            if (overlayFile.exists() && overlayFile.isFile())
-                break;
-            path = path[path.length - 1].split("\\\\", 2);
-        } while(path.length > 1);
-
-        if (!overlayFile.exists() || !overlayFile.isFile())
-            throw new IllegalArgumentException("Unable to read overlay from '" + overlayFile.getPath() + "'.");
+        // Try stripping directories until the overlays are found.
+        String tempFilePath = this.filePath;
+        while (!overlayFile.exists() || !overlayFile.isFile()) {
+            int nextSplitIndex = tempFilePath.indexOf('\\');
+            if (nextSplitIndex >= 0) {
+                tempFilePath = tempFilePath.substring(nextSplitIndex + 1);
+                overlayFile = new File(getGameInstance().getGameFolder(), tempFilePath);
+            } else {
+                throw new IllegalArgumentException("Unable to read overlay from file path: '" + this.filePath + "'.");
+            }
+        }
 
         try {
             return new DataReader(new FileSource(overlayFile));

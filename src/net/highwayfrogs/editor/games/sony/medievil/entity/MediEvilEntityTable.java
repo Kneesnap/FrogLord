@@ -42,8 +42,8 @@ public class MediEvilEntityTable extends SCGameData<MediEvilGameInstance> {
             // Find the overlay in the table based on the name we got.
             SCOverlayTableEntry overlayTableEntry = null;
 
-            int levelIndex = getConfig().getLevelTableEntryByteSize() <= 88 ? entry.getOverlayId() : resolveOverlay(entry.getOverlayId());
-
+            // TODO: Long-term, this should be changed to getConfig().isBuildAtOrBefore028() ? entry.getLevelId() : getLevelIDFromLevelBitFlags(entry.getOverlayLevelFlags()), since this check is otherwise impossible to understand the intent behind.
+            int levelIndex = getConfig().getLevelTableEntryByteSize() <= 88 ? entry.getOverlayId() : getLevelIDFromLevelBitFlags(entry.getOverlayId());
             if (levelIndex != -1) {
                 int overlayIndex = getGameInstance().getLevelTable().get(levelIndex).getOverlayId();
                 overlayTableEntry = getGameInstance().getOverlayTable().getEntries().get(overlayIndex);
@@ -66,19 +66,21 @@ public class MediEvilEntityTable extends SCGameData<MediEvilGameInstance> {
         }
     }
 
-    public int resolveOverlay(int overlayFlag) {
-        if (overlayFlag != -1) {
-            for (int i = 0; i < getGameInstance().getLevelTable().size(); ++i) {
-                if (overlayFlag >> i == 1 && i != 24) {
-                    return i;
-                }
-                // Hack for Stone Wolves who resolve to the PP.BIN overlay but aren't actually in there... TODO: Find better solution?
-                else if (overlayFlag >> i == 1 && i == 24) {
-                    return 2;
-                }
-            }
-        }
-        return overlayFlag;
+    /**
+     * Gets the level ID based on the level bit flags.
+     * Defaults to choosing the smallest level ID if multiple bit flags are set.
+     * @param levelBitFlags The bit flags to test.
+     * @return levelID
+     */
+    public int getLevelIDFromLevelBitFlags(int levelBitFlags) {
+        if (levelBitFlags == -1)
+            return levelBitFlags;
+
+        for (int i = 0; i < getGameInstance().getLevelTable().size(); i++)
+            if ((levelBitFlags >> i) == 1)
+                return i;
+
+        return levelBitFlags;
     }
 
     @Override

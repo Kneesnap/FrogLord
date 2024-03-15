@@ -47,20 +47,14 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
 
         this.textureRemapPointer = reader.readUnsignedIntAsLong();
 
-        // Retail to 0.37
-        if (byteSize > 92 && getGameInstance().getConfig().getEntityTableSize() > 294) { // TODO: Read all this (and make into separate classes as per above if necessary)
+        // TODO: Read all this (and make into separate classes as per above if necessary)
+        if (byteSize > 92 && getGameInstance().getConfig().getEntityTableSize() > 294) { // Retail to 0.37
             reader.skipBytes(60);
-        }
-        // 0.36 and below
-        else if (byteSize > 92)
-        {
+        } else if (byteSize > 92) { // 0.36 and below
             reader.skipBytes(56);
-        }
-        // ECTS Pre-Alpha build
-        else if (getGameInstance().getConfig().getLevelTableSize() > 25 && byteSize > 76) {
+        } else if (getGameInstance().getConfig().getLevelTableSize() > 25 && byteSize > 76) { // ECTS Pre-Alpha build
             reader.skipBytes(68);
-        }
-        else {
+        } else { // Version ???
             reader.skipBytes(52);
         }
 

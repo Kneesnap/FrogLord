@@ -133,17 +133,6 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
             }
         }
 
-        if (this.map == null)
-            return null;
-
-        // Attempt to look up from a form.
-        MediEvilLevelTableEntry levelTableEntry = this.map.getLevelTableEntry();
-        if (levelTableEntry == null) {
-            getLogger().warning("Couldn't get level table entry, which prevents getting the mof file for a form.");
-            return null;
-        }
-
-        // Fallback return statement
         return null;
     }
 

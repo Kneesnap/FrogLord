@@ -76,6 +76,20 @@ public abstract class SCGameInstance {
     }
 
     /**
+     * Gets the folder where the main game files are located.
+     * @return gameFolder
+     */
+    public File getGameFolder() {
+        if (this.exeFile != null) {
+            return this.exeFile.getParentFile();
+        } else if (this.mwdFile != null) {
+            return this.mwdFile.getParentFile();
+        } else {
+            throw new IllegalStateException("Cannot get the game folder, no game files are loaded.");
+        }
+    }
+
+    /**
      * Associate a new object with a FileEntry.
      * @param entry   The entry to associate the file with.
      * @param newFile The file to associate with the entry.
