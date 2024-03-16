@@ -22,7 +22,7 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 public class BeastWarsMapCollprim extends MRCollprim {
     private final BeastWarsMapFile mapFile;
-    @Setter private PSXMatrix matrix;
+    private PSXMatrix matrix;
 
     public BeastWarsMapCollprim(BeastWarsMapFile mapFile) {
         super(mapFile.getGameInstance());

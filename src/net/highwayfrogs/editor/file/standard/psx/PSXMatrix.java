@@ -23,6 +23,7 @@ import net.highwayfrogs.editor.utils.Utils;
 public class PSXMatrix extends GameObject {
     private short[][] matrix = new short[DIMENSION][DIMENSION]; // 3x3 Rotation Matrix.
     private int[] transform = new int[DIMENSION]; // Transform vector.
+    private short padding;
 
     private static final int DIMENSION = 3;
     public static final int BYTE_SIZE = (DIMENSION * DIMENSION * Constants.SHORT_SIZE) + (DIMENSION * Constants.INTEGER_SIZE) + Constants.SHORT_SIZE;
@@ -34,9 +35,9 @@ public class PSXMatrix extends GameObject {
             for (int j = 0; j < this.matrix[i].length; j++)
                 this.matrix[i][j] = reader.readShort();
 
-        reader.readShort(); // Used to align to 4-bytes.
-        //if (padding != 0 && padding != -1) // It's -1 in some of the maps in Build 01. TODO: Padding seems to have random values in MediEvil.
-        //    throw new RuntimeException("Matrix padding was not zero! (" + padding + ")");
+        this.padding = reader.readShort(); // Used to align to 4-bytes.
+        /*if (this.padding != 0 && this.padding != -1) // It's -1 in some of the maps in Build 01. MediEvil also appears to use the padding field to store data too.
+            throw new RuntimeException("Matrix padding was not zero! (" + padding + ")");*/ // TODO: Re-enable this later once PSXMatrix is renamed to MRMatrix and has access to the game instance so we can check if it's MediEvil.
 
         for (int i = 0; i < this.transform.length; i++)
             this.transform[i] = reader.readInt();
@@ -48,7 +49,7 @@ public class PSXMatrix extends GameObject {
             for (short aShort : aMatrix)
                 writer.writeShort(aShort);
 
-        writer.writeShort((short) 0); // Padding.
+        writer.writeShort(this.padding);
         for (int aTransfer : this.transform)
             writer.writeInt(aTransfer);
     }

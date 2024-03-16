@@ -1,10 +1,12 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.packet;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.sony.medievil.data.MediEvilMapCollprim;
+import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapCollprim;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,23 +27,31 @@ public class MediEvilMapCollprimsPacket extends MediEvilMapPacket {
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
         int collprimCount = reader.readUnsignedShortAsInt();
-        reader.skipShort(); // Padding (-1)
+        reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding
         int collprimListPtr = reader.readInt();
+        if (collprimListPtr != reader.getIndex()) {
+            getLogger().warning("The collprim list pointer was not at the expected position! (Was: " + Utils.toHexString(collprimListPtr) + ", Expected: " + Utils.toHexString(reader.getIndex()));
+            reader.setIndex(collprimListPtr);
+        }
 
-        // Read collprims
+        // Read collprims.
         this.collprims.clear();
-        reader.jumpTemp(collprimListPtr);
         for (int i = 0; i < collprimCount; i++) {
             MediEvilMapCollprim collprim = new MediEvilMapCollprim(getParentFile());
             collprim.load(reader);
             this.collprims.add(collprim);
         }
-
-        reader.setIndex(endIndex);
     }
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
-        // TODO: Implement.
+        writer.writeUnsignedShort(this.collprims.size());
+        writer.writeUnsignedShort(0); // Padding
+        int collprimListPtr = writer.writeNullPointer();
+
+        // Write collprims.
+        writer.writeAddressTo(collprimListPtr);
+        for (int i = 0; i < this.collprims.size(); i++)
+            this.collprims.get(i).save(writer);
     }
 }

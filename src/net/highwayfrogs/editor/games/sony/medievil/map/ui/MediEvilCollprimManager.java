@@ -1,17 +1,16 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.ui;
 
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Box;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.Shape3D;
-import net.highwayfrogs.editor.games.sony.medievil.data.MediEvilMapCollprim;
+import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapCollprim;
+import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapCollprim.MediEvilMapCollprimType;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
-import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
-import net.highwayfrogs.editor.games.sony.shared.collprim.ICollprimEditorUI;
-import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
-import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim.CollprimType;
-import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilMapUIManager.MediEvilMapListManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
@@ -19,16 +18,14 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
 
-import static net.highwayfrogs.editor.games.sony.medievil.data.MediEvilMapCollprim.*;
-
 /**
  * Manages map collprims.
- * TODO: Collprim menu isn't automatically extended.
  * Cloned from a file created by Kneesnap on 3/13/2024.
  */
-public class MediEvilCollprimManager extends MediEvilMapUIManager.MediEvilMapListManager<MediEvilMapCollprim, CollprimShapeAdapter<?>> implements ICollprimEditorUI {
+public class MediEvilCollprimManager extends MediEvilMapListManager<MediEvilMapCollprim, Box> {
     private final DisplayList collprimDisplayList;
     private CheckBox wireframePreviewCheckBox;
+    private ComboBox<MediEvilMapCollprimType> collprimTypeFilterComboBox;
 
     private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.GREEN);
     private static final PhongMaterial MATERIAL_LIME = Utils.makeSpecialMaterial(Color.LIME);
@@ -37,7 +34,6 @@ public class MediEvilCollprimManager extends MediEvilMapUIManager.MediEvilMapLis
     private static final PhongMaterial MATERIAL_SALMON = Utils.makeSpecialMaterial(Color.LIGHTSALMON);
     private static final PhongMaterial MATERIAL_BLUE = Utils.makeSpecialMaterial(Color.BLUE);
     private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
-
 
     public MediEvilCollprimManager(MeshViewController<MediEvilMapMesh> controller) {
         super(controller);
@@ -68,39 +64,42 @@ public class MediEvilCollprimManager extends MediEvilMapUIManager.MediEvilMapLis
     protected void setupMainGridEditor(UISidePanel sidePanel) {
         super.setupMainGridEditor(sidePanel);
 
+        // Shown Types.
+        MediEvilMapCollprimType[] strippedTypes = new MediEvilMapCollprimType[MediEvilMapCollprimType.values().length - 1];
+        for (int i = 0, ordinal = 0; i < MediEvilMapCollprimType.values().length; i++) {
+            MediEvilMapCollprimType testType = MediEvilMapCollprimType.values()[i];
+            if (testType != MediEvilMapCollprimType.NONE)
+                strippedTypes[ordinal++] = testType;
+        }
+
+        this.collprimTypeFilterComboBox = getMainGrid().addEnumSelector("Type Shown", null, strippedTypes, true, newType -> updateValueVisibility());
+
         // Wireframe preview checkbox.
-        this.wireframePreviewCheckBox = new CheckBox("Wireframe Display");
-        this.wireframePreviewCheckBox.setSelected(true);
-        this.wireframePreviewCheckBox.selectedProperty().addListener((listener, oldValue, newValue) -> updateCollprimWireframeState(newValue));
-        sidePanel.add(this.wireframePreviewCheckBox);
+        this.wireframePreviewCheckBox = getMainGrid().addCheckBox("Wireframe Display", true, this::updateCollprimWireframeState);
     }
 
     @Override
-    protected CollprimShapeAdapter<?> setupDisplay(MediEvilMapCollprim collprim) {
-        boolean isSelected = (collprim == getValueSelectionBox().getValue());
-        CollprimShapeAdapter<?> adapter = collprim.addDisplay(this, this.collprimDisplayList, isSelected ? MATERIAL_YELLOW : getCollprimMaterial(collprim));
-        adapter.getShape().setDrawMode(this.wireframePreviewCheckBox.isSelected() ? DrawMode.LINE : DrawMode.FILL);
-        adapter.getShape().setOnMouseClicked(event -> getValueSelectionBox().getSelectionModel().select(collprim));
-
-        return adapter;
+    public boolean isValueVisibleByUI(MediEvilMapCollprim collprim) {
+        return super.isValueVisibleByUI(collprim) && (collprim.getType() == this.collprimTypeFilterComboBox.getValue() || this.collprimTypeFilterComboBox.getValue() == null);
     }
 
-    protected PhongMaterial getCollprimMaterial(MediEvilMapCollprim collprim)
-    {
-        switch(collprim.getMediEvilFunctionality())
-        {
+    @Override
+    protected Box setupDisplay(MediEvilMapCollprim collprim) {
+        boolean isSelected = (collprim == getValueSelectionBox().getValue());
+        Box box = collprim.addDisplay(this, this.collprimDisplayList, isSelected ? MATERIAL_YELLOW : getCollprimMaterial(collprim));
+        box.setDrawMode(this.wireframePreviewCheckBox.isSelected() ? DrawMode.LINE : DrawMode.FILL);
+        box.setOnMouseClicked(event -> handleClick(event, collprim));
+        return box;
+    }
+
+    private static PhongMaterial getCollprimMaterial(MediEvilMapCollprim collprim) {
+        switch(collprim.getType()) {
             case CAMERA:
-                if ((collprim.getFlags() & ~CAMERA_PLUGIN_ID) == (TYPE_CAMERA | CAMERA_PLUGIN)) {
-                    return MATERIAL_PINK;
-                }
-                return MATERIAL_SALMON;
+                return collprim.testFlagMask(MediEvilMapCollprim.CAMERA_PLUGIN_ID_MASK)  ? MATERIAL_PINK : MATERIAL_SALMON;
             case WARP:
                 return MATERIAL_BLUE;
-            case COLLNEVENT:
-                if ((collprim.getFlags() & COLLNEVENT_HAS_EVENT) != 0) {
-                    return MATERIAL_LIME;
-                }
-                return MATERIAL_GREEN;
+            case NORMAL:
+                return collprim.testFlagMask(MediEvilMapCollprim.NORMAL_FLAG_FIRES_EVENT) ? MATERIAL_LIME : MATERIAL_GREEN;
             default:
                 return MATERIAL_WHITE;
         }
@@ -118,47 +117,27 @@ public class MediEvilCollprimManager extends MediEvilMapUIManager.MediEvilMapLis
     }
 
     @Override
-    protected void setVisible(MediEvilMapCollprim medievilMapCollprim, CollprimShapeAdapter<?> collprimShapeAdapter, boolean visible) {
-        collprimShapeAdapter.getShape().setVisible(visible);
+    protected void setVisible(MediEvilMapCollprim collprim, Box box, boolean visible) {
+        box.setVisible(visible);
     }
 
     @Override
-    protected void onSelectedValueChange(MediEvilMapCollprim oldValue, CollprimShapeAdapter<?> oldAdapter, MediEvilMapCollprim newValue, CollprimShapeAdapter<?> newAdapter) {
-        if (oldAdapter != null) // Apply de-selected material.
-            oldAdapter.getShape().setMaterial(getCollprimMaterial(oldValue));
+    protected void onSelectedValueChange(MediEvilMapCollprim oldValue, Box oldBox, MediEvilMapCollprim newValue, Box newBox) {
+        if (oldBox != null) // Apply de-selected material.
+            oldBox.setMaterial(getCollprimMaterial(oldValue));
 
-        if (newAdapter != null) // Apply selected material.
-            newAdapter.getShape().setMaterial(MATERIAL_YELLOW);
+        if (newBox != null) // Apply selected material.
+            newBox.setMaterial(MATERIAL_YELLOW);
     }
 
     @Override
-    protected void onDelegateRemoved(MediEvilMapCollprim removedValue, CollprimShapeAdapter<?> removedAdapter) {
-        this.collprimDisplayList.remove(removedAdapter.getShape());
+    protected void onDelegateRemoved(MediEvilMapCollprim removedValue, Box removedBox) {
+        this.collprimDisplayList.remove(removedBox);
     }
 
     private void updateCollprimWireframeState(boolean wireframeMode) {
         DrawMode newDrawMode = wireframeMode ? DrawMode.LINE : DrawMode.FILL;
         for (int i = 0; i < this.collprimDisplayList.size(); i++)
             ((Shape3D) this.collprimDisplayList.getNodes().get(i)).setDrawMode(newDrawMode);
-    }
-
-    @Override
-    public GUIEditorGrid getCollprimEditorGrid() {
-        return getEditorGrid();
-    }
-
-    @Override
-    public void onCollprimChangeType(MRCollprim collprim, CollprimShapeAdapter<?> adapter, CollprimType oldType, CollprimType newType) {
-        createDisplay((MediEvilMapCollprim) collprim); // Setup display again.
-    }
-
-    @Override
-    public void updateCollprimPosition(MRCollprim collprim, CollprimShapeAdapter<?> adapter) {
-        // TODO: Implement.
-    }
-
-    @Override
-    public void onCollprimRemove(MRCollprim collprim, CollprimShapeAdapter<?> adapter) {
-        removeValue((MediEvilMapCollprim) collprim);
     }
 }

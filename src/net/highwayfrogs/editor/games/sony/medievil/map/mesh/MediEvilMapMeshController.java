@@ -56,8 +56,8 @@ public class MediEvilMapMeshController extends MeshViewController<MediEvilMapMes
 
     @Override
     protected void setupManagers() {
-        addManager(new MediEvilEntityManager(this));
         addManager(new MediEvilCollprimManager(this));
+        addManager(new MediEvilEntityManager(this));
         // TODO: Setup more managers.
     }
 

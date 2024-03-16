@@ -7,9 +7,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapCollprim;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
@@ -196,6 +198,20 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     protected abstract T3DDelegate setupDisplay(TValue value);
 
     /**
+     * Handles the click of a list element's 3D delegate.
+     * @param event The event to handle the click.
+     * @param value The value whose delegate was clicked.
+     */
+    protected void handleClick(MouseEvent event, TValue value) {
+        event.consume();
+        if (value == getSelectedValue()) {
+            getValueSelectionBox().getSelectionModel().clearSelection();
+        } else {
+            getValueSelectionBox().getSelectionModel().select(value);
+        }
+    }
+
+    /**
      * Update the UI for the selected value.
      * @param selectedValue The value currently selected.
      */
@@ -207,6 +223,14 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
      */
     protected void setValuesVisible(boolean valuesVisible) {
         getDelegatesByValue().forEach((value, delegate) -> setVisible(value, delegate, valuesVisible));
+    }
+
+    /**
+     * Updates the visibility state of all values to what the UI says they should be.
+     */
+    public void updateValueVisibility() {
+        for (TValue value : getValues())
+            setVisible(value, getDelegatesByValue().get(value), isValueVisibleByUI(value));
     }
 
     /**

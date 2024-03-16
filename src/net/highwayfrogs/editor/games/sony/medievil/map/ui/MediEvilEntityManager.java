@@ -63,14 +63,7 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
         getRenderManager().getRoot().getChildren().add(newView);
         getController().getLightingGroup().getChildren().add(newView);
 
-        newView.setOnMouseClicked(evt -> {
-            evt.consume();
-            if (entity == getSelectedValue()) {
-                getValueSelectionBox().getSelectionModel().clearSelection();
-            } else {
-                getValueSelectionBox().getSelectionModel().select(entity);
-            }
-        });
+        newView.setOnMouseClicked(evt -> handleClick(evt, entity));
         return newView;
     }
 

@@ -416,6 +416,16 @@ public class Utils {
     }
 
     /**
+     * Convert an int value (fixed point, n fractional bits) into a float.
+     * @param intVal The integer to convert.
+     * @param n      The number of fractional bits.
+     * @return floatValue
+     */
+    public static double fixedPointIntToFloatNBits(long intVal, long n) {
+        return ((double) intVal / (double) (1L << n));
+    }
+
+    /**
      * Convert an int value (fixed point, 4 fractional bits) into a float.
      * @param intVal The integer to convert.
      * @return floatValue
