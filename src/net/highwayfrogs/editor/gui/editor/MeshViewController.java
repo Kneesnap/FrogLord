@@ -226,8 +226,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.subScene2DElements.getChildren().add(subScene3D);
         uiPane.setCenter(this.subScene2DElements);
 
-        // Create and set the scene.
-        this.meshScene = new Scene(uiPane);
+        // Create and set the scene with antialiasing.
+        this.meshScene = new Scene(uiPane, -1, -1, true, SceneAntialiasing.BALANCED);
         this.originalScene = Utils.setSceneKeepPosition(stageToOverride, this.meshScene);
 
         // Handle scaling of SubScene on stage resizing.

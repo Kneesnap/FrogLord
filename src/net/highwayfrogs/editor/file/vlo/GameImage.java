@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.BlackFilter;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.TransparencyFilter;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
@@ -400,7 +401,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource, I
         if (this.cachedImage != null)
             return this.cachedImage;
 
-        return this.cachedImage = makeImage();
+        return this.cachedImage = makeUnmodifiedImage();
     }
 
     /**
@@ -524,8 +525,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource, I
         return this;
     }
 
-    @Override
-    public BufferedImage makeImage() {
+    private BufferedImage makeUnmodifiedImage() {
         int height = getFullHeight();
         int width = getFullWidth();
 
@@ -547,6 +547,15 @@ public class GameImage extends GameObject implements Cloneable, TextureSource, I
         int[] array = new int[buffer.remaining()];
         buffer.get(array);
         image.setRGB(0, 0, image.getWidth(), image.getHeight(), array, 0, image.getWidth());
+        return image;
+    }
+
+    @Override
+    public BufferedImage makeImage() {
+        BufferedImage image = makeUnmodifiedImage();
+        if (testFlag(FLAG_BLACK_IS_TRANSPARENT))
+            image = ImageWorkHorse.applyFilter(image, new TransparencyFilter());
+
         return image;
     }
 
