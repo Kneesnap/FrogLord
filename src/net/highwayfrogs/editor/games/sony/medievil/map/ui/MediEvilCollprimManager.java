@@ -72,7 +72,7 @@ public class MediEvilCollprimManager extends MediEvilMapListManager<MediEvilMapC
                 strippedTypes[ordinal++] = testType;
         }
 
-        this.collprimTypeFilterComboBox = getMainGrid().addEnumSelector("Type Shown", null, strippedTypes, true, newType -> updateValueVisibility());
+        this.collprimTypeFilterComboBox = getMainGrid().addEnumSelector("Type Shown", MediEvilMapCollprimType.ALL, strippedTypes, false, newType -> updateValueVisibility());
 
         // Wireframe preview checkbox.
         this.wireframePreviewCheckBox = getMainGrid().addCheckBox("Wireframe Display", true, this::updateCollprimWireframeState);
@@ -80,7 +80,7 @@ public class MediEvilCollprimManager extends MediEvilMapListManager<MediEvilMapC
 
     @Override
     public boolean isValueVisibleByUI(MediEvilMapCollprim collprim) {
-        return super.isValueVisibleByUI(collprim) && (collprim.getType() == this.collprimTypeFilterComboBox.getValue() || this.collprimTypeFilterComboBox.getValue() == null);
+        return super.isValueVisibleByUI(collprim) && (collprim.getType() == this.collprimTypeFilterComboBox.getValue() || this.collprimTypeFilterComboBox.getValue() == MediEvilMapCollprimType.ALL);
     }
 
     @Override
