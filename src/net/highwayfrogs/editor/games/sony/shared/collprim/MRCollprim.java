@@ -53,6 +53,7 @@ public abstract class MRCollprim extends SCSharedGameData {
     @Override
     public void load(DataReader reader) {
         this.type = CollprimType.values()[reader.readUnsignedShortAsInt()];
+        this.flags = reader.readUnsignedShortAsInt();
         reader.skipBytesRequireEmpty(2 * Constants.POINTER_SIZE); // Run-time pointers.
         this.offset.loadWithPadding(reader);
         this.radiusSquared = Utils.fixedPointIntToFloatNBits(reader.readInt(), 8); // 8 bits are used because multiplying two fixed point numbers together increases the position of the radius.
