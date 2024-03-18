@@ -77,8 +77,13 @@ public class MediEvilEntityTable extends SCGameData<MediEvilGameInstance> {
             return levelBitFlags;
 
         for (int i = 0; i < getGameInstance().getLevelTable().size(); i++)
-            if ((levelBitFlags >> i) == 1)
+            if ((levelBitFlags >> i) == 1 && i != 24) {
                 return i;
+            }
+            // Hack for Stone Wolves who resolve to overlay PP.BIN which doesn't exist... TODO: Find better solution?
+            else if (levelBitFlags >> i == 1 && i == 24) {
+                return 2;
+            }
 
         return levelBitFlags;
     }
