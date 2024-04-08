@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony.medievil.map.mesh;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -11,6 +12,7 @@ import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
+import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
@@ -45,6 +47,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     private static final int FLAG_QUAD = Constants.BIT_FLAG_0;
     private static final int FLAG_TEXTURED = Constants.BIT_FLAG_1;
     public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_9;
+    private static final CVector UNSHADED_COLOR = CVector.makeColorFromRGB(0x7F7F7F7F);
 
     public MediEvilMapPolygon(MediEvilGameInstance instance) {
         super(instance);
@@ -88,6 +91,28 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     }
 
     /**
+     * Test if a bit mask containing flags is set
+     * @param flagMask the bits containing flags to test
+     * @return flagMaskSet
+     */
+    public boolean isFlagMaskSet(int flagMask) {
+        return (this.flags & flagMask) == flagMask;
+    }
+
+    /**
+     * Sets whether the given flags are set.
+     * @param flagMask the bit flags to apply
+     * @param newState whether the bits should be set true or false
+     */
+    public void setFlagMask(int flagMask, boolean newState) {
+        if (newState) {
+            this.flags |= flagMask;
+        } else {
+            this.flags &= ~flagMask;
+        }
+    }
+
+    /**
      * Get the number of vertices supported by this polygon.
      */
     public int getVertexCount() {
@@ -121,6 +146,30 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
             } else {
                 return PSXPolygonType.POLY_G3;
             }
+        }
+    }
+
+    /**
+     * Set the type of PSX polygon.
+     */
+    public void setPolygonType(PSXPolygonType newType) {
+        switch (newType) {
+            case POLY_G3:
+                setFlagMask(FLAG_QUAD | FLAG_TEXTURED, false);
+                break;
+            case POLY_GT3:
+                setFlagMask(FLAG_QUAD, false);
+                setFlagMask(FLAG_TEXTURED, true);
+                break;
+            case POLY_G4:
+                setFlagMask(FLAG_QUAD, true);
+                setFlagMask(FLAG_TEXTURED, false);
+                break;
+            case POLY_GT4:
+                setFlagMask(FLAG_QUAD | FLAG_TEXTURED, true);
+                break;
+            default:
+                throw new IllegalArgumentException("MediEvil map polygons cannot be set to type " + newType + ".");
         }
     }
 
@@ -161,10 +210,12 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
 
     /**
      * Creates a texture shade definition for this polygon.
-     * @param levelTableEntry The level table entry necessary for looking up texture remap data.
+     * @param mapFile The map file which the polygon is used within.
      */
-    public PSXShadeTextureDefinition createPolygonShadeDefinition(MediEvilLevelTableEntry levelTableEntry) {
+    public PSXShadeTextureDefinition createPolygonShadeDefinition(MediEvilMapFile mapFile, boolean enableGouraudShading) {
+        MediEvilLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
         PSXPolygonType polygonType = getPolygonType();
+        boolean isSemiTransparent = isSemiTransparent(levelTableEntry);
 
         SCByteTextureUV[] uvs = null;
         if (polygonType.isTextured()) {
@@ -174,11 +225,95 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         }
 
         // Clone colors.
-        CVector[] colors = new CVector[polygonType.isGouraud() ? getVertexCount() : 1];
-        for (int i = 0; i < colors.length; i++) // TODO: Get shading information from the map file.
-            colors[i] = CVector.makeColorFromRGB(polygonType.isGouraud() ? 0x7F7F7F7F : 0xFFFFFFFF);
+        if (!polygonType.isGouraud())
+            throw new IllegalStateException("MediEvil does not support map polygons with flat shading. (" + polygonType + ")");
 
+        CVector[] colors;
+        if (enableGouraudShading) {
+            colors = makeGouraudColorArray(mapFile, polygonType, isSemiTransparent);
+        } else {
+            colors = new CVector[getVertexCount()];
+            Arrays.fill(colors, UNSHADED_COLOR);
+        }
+
+        // Create definition.
         ITextureSource textureSource = polygonType.isTextured() ? getTexture(levelTableEntry) : null;
-        return new PSXShadeTextureDefinition(polygonType, textureSource, colors, uvs, isSemiTransparent(levelTableEntry));
+        return new PSXShadeTextureDefinition(polygonType, textureSource, colors, uvs, isSemiTransparent);
+    }
+
+    private CVector[] makeGouraudColorArray(MediEvilMapFile mapFile, PSXPolygonType polygonType, boolean isSemiTransparent) {
+        CVector[] colors = new CVector[getVertexCount()];
+        for (int i = 0; i < colors.length; i++) {
+            SVector vertex = mapFile.getGraphicsPacket().getVertices().get(this.vertices[i]);
+
+            // Process padding into color value.
+            int color = vertex.getPadding() & 0xFFFF;
+            int redHiBits = (color & 0x700);
+            int redLoBits = (color & 3);
+            color &= 0xF8F8;
+            color |= redHiBits << 13;
+            color |= redLoBits << 19;
+
+            // Calculate GPU code.
+            byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING;
+            if (polygonType.isQuad())
+                gpuCode |= CVector.FLAG_QUAD;
+            if (polygonType.isTextured())
+                gpuCode |= CVector.FLAG_TEXTURED;
+            if (isSemiTransparent)
+                gpuCode |= CVector.FLAG_SEMI_TRANSPARENT;
+
+            // Create color.
+            CVector loadedColor = CVector.makeColorFromRGB(color);
+            loadedColor.setCode(gpuCode);
+            colors[i] = loadedColor;
+        }
+
+        return colors;
+    }
+
+    /**
+     * Creates a texture shade definition for this polygon.
+     * @param mapFile The level necessary for looking up texture remap data.
+     * @param shadeTexture The shaded texture to load from.
+     */
+    public void loadDataFromShadeDefinition(MediEvilMapFile mapFile, PSXShadeTextureDefinition shadeTexture, boolean isShadingEnabled) {
+        if (shadeTexture.getPolygonType().getVerticeCount() != getPolygonType().getVerticeCount())
+            throw new UnsupportedOperationException("Cannot change between quad/tri polygons."); // This is just not coded yet, we could theoretically add this.
+
+        // Update polygon type.
+        PSXPolygonType newPolygonType = shadeTexture.getPolygonType();
+        setPolygonType(newPolygonType);
+
+        // Apply texture UVs.
+        if (newPolygonType.isTextured() && shadeTexture.getTextureUVs() != null) {
+            for (int i = 0; i < newPolygonType.getVerticeCount(); i++) {
+                SCByteTextureUV modifiedUv = shadeTexture.getTextureUVs()[i];
+                if (modifiedUv != null)
+                    this.textureUvs[i].copyFrom(modifiedUv);
+            }
+        }
+
+        // Apply colors.
+        if (isShadingEnabled && newPolygonType.getColorCount() > 0 && shadeTexture.getColors() != null && newPolygonType.getVerticeCount() == shadeTexture.getColors().length) {
+            for (int i = 0; i < shadeTexture.getVerticeCount(); i++) {
+                SVector vertex = mapFile.getGraphicsPacket().getVertices().get(this.vertices[i]);
+                vertex.setPadding(toPackedShort(shadeTexture.getColors()[i]));
+            }
+        }
+
+        // Load texture.
+        if (shadeTexture.getTextureSource() instanceof GameImage) {
+            GameImage gameImage = (GameImage) shadeTexture.getTextureSource();
+            MediEvilLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
+            int remapIndex = levelTableEntry.getRemap().getRemapIndex(gameImage.getTextureId());
+            if (remapIndex >= 0)
+                this.textureId = remapIndex;
+        }
+    }
+
+    private static short toPackedShort(CVector color) {
+        return (short) (((color.getGreenShort() & 0b11111000) << 8) | (color.getBlueShort() & 0b11111000)
+                | ((color.getRedShort() & 0b111000000) << 3) | ((color.getRedShort() & 0b00011000) >> 3));
     }
 }

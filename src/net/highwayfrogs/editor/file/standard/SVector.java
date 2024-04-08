@@ -22,6 +22,7 @@ public class SVector extends GameObject implements Vector {
     private short x;
     private short y;
     private short z;
+    private short padding; // You'd think this is all zero, but it seems like MediEvil stores
 
     public static final int UNPADDED_BYTE_SIZE = 3 * Constants.SHORT_SIZE;
     public static final int PADDED_BYTE_SIZE = UNPADDED_BYTE_SIZE + Constants.SHORT_SIZE;
@@ -60,7 +61,9 @@ public class SVector extends GameObject implements Vector {
      */
     public void loadWithPadding(DataReader reader) {
         this.load(reader);
-        reader.skipShort();
+        this.padding = reader.readShort();
+        /*if (this.padding != 0 && !(getGameInstance() instanceof MediEvilGameInstance)) // MediEvil uses this for vertex shading.
+            getLogger().logWarning("There is non-zero padding data in the SVector. [Padding: " + this.padding + "]");*/ // TODO: Activate once this becomes an SCGameObject.
     }
 
     @Override
@@ -161,7 +164,7 @@ public class SVector extends GameObject implements Vector {
      */
     public void saveWithPadding(DataWriter writer) {
         save(writer);
-        writer.writeNull(Constants.SHORT_SIZE);
+        writer.writeShort(this.padding);
     }
 
     /**

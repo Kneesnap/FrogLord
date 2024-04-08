@@ -20,6 +20,7 @@ import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.sony.shared.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
@@ -59,6 +60,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     @FXML private CheckBox checkBoxShowMesh;
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
     @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
+    @FXML private CheckBox checkBoxEnablePsxShading;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldCamMoveSpeed;
     @FXML private Button btnResetCamMoveSpeed;
@@ -248,7 +250,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 this.renderManager.removeAllDisplayLists();
 
                 // Clear selectors
-                while (this.selectors.size() > 0)
+                while (!this.selectors.isEmpty())
                     this.selectors.get(this.selectors.size() - 1).cancel();
 
                 // Call shutdown hook.
@@ -390,6 +392,15 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.comboBoxMeshCullFace.getItems().setAll(CullFace.values());
         this.comboBoxMeshCullFace.valueProperty().bindBidirectional(meshView.cullFaceProperty());
 
+        if (getMesh() instanceof IPSXShadedMesh) {
+            IPSXShadedMesh shadedMesh = (IPSXShadedMesh) getMesh();
+            this.checkBoxEnablePsxShading.setSelected(shadedMesh.isShadingEnabled());
+            this.checkBoxEnablePsxShading.selectedProperty().addListener((observable, oldState, newState) -> shadedMesh.setShadingEnabled(newState));
+        } else {
+            // PSX Shading is not supported, so keep it disabled.
+            this.checkBoxEnablePsxShading.setDisable(true);
+        }
+
         // Must be called after MAPController is passed.
         runForEachManager(MeshUIManager::onSetup, "onSetup"); // Setup all the managers.
         runForEachManager(MeshUIManager::updateEditor, "updateEditor"); // Setup all the managers editors.
@@ -445,7 +456,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
      * @return wasHandled
      */
     public boolean onKeyPress(KeyEvent event) {
-        if (event.getCode() == KeyCode.ESCAPE && this.selectors.size() > 0) {
+        if (event.getCode() == KeyCode.ESCAPE && !this.selectors.isEmpty()) {
             // First, attempt to cancel the active selector.
             for (int i = this.selectors.size() - 1; i >= 0; i--) {
                 MeshUISelector<TMesh, ?> selector = this.selectors.get(i);

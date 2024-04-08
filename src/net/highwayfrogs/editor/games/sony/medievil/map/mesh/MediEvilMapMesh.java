@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.shared.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
@@ -20,13 +21,14 @@ import java.awt.*;
  * Cloned from a file created by Kneesnap on 03/9/2024.
  */
 @Getter
-public class MediEvilMapMesh extends DynamicMesh {
+public class MediEvilMapMesh extends DynamicMesh implements IPSXShadedMesh {
     private final MediEvilMapFile map;
     private final MediEvilMapMeshNode mainNode;
     private final DynamicMeshOverlayNode highlightedPolygonNode;
     private final MediEvilShadedTextureManager shadedTextureManager;
     private AtlasTexture flatPlaceholderTexture;
     private AtlasTexture gouraudPlaceholderTexture;
+    private boolean shadingEnabled;
 
     public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.ORANGE, Color.BLACK);
     public static final CursorVertexColor REMOVE_FACE_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
@@ -73,12 +75,24 @@ public class MediEvilMapMesh extends DynamicMesh {
             return;
         }
 
-        if (levelEntry.getRemap() != null)
-            getLogger().info("Found level entry with " + levelEntry.getRemap().getTextureIds().size() + " texture remaps.");  // TODO: TOSS
-
         // Add gouraud shaded polygons.
         for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
             this.shadedTextureManager.addPolygon(polygon);
+    }
+
+    @Override
+    public void setShadingEnabled(boolean newState) {
+        if (this.shadingEnabled == newState)
+            return;
+
+        this.shadingEnabled = newState;
+
+        getMesh().pushBatchOperations();
+        getTextureAtlas().startBulkOperations();
+        for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
+            this.shadedTextureManager.updatePolygon(polygon, polygon.createPolygonShadeDefinition(getMap(), newState));
+        getTextureAtlas().endBulkOperations();
+        getMesh().popBatchOperations();
     }
 
     public static class MediEvilShadedTextureManager extends PSXMeshShadedTextureManager<MediEvilMapPolygon> {
@@ -93,12 +107,12 @@ public class MediEvilMapMesh extends DynamicMesh {
 
         @Override
         protected PSXShadeTextureDefinition createShadedTexture(MediEvilMapPolygon polygon) {
-            return polygon.createPolygonShadeDefinition(getMesh().getMap().getLevelTableEntry());
+            return polygon.createPolygonShadeDefinition(getMesh().getMap(), getMesh().isShadingEnabled());
         }
 
         @Override
         protected void applyTextureShading(MediEvilMapPolygon polygon, PSXShadeTextureDefinition shadedTexture) {
-            // TODO: Implement after we support MediEvil shading.
+            polygon.loadDataFromShadeDefinition(getMesh().getMap(), shadedTexture, getMesh().isShadingEnabled());
         }
     }
 }

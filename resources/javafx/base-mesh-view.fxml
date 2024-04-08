@@ -48,12 +48,12 @@
                                                         <Label text="Draw Mode:" GridPane.rowIndex="2"/>
                                                         <Label text="Face Culling:" GridPane.rowIndex="3"/>
                                                         <Label text="Background: " GridPane.rowIndex="4"/>
-                                                        <Label text="Shader Mode:" GridPane.rowIndex="5"/>
+                                                        <Label text="Enable Shading:" GridPane.rowIndex="5"/>
                                                         <CheckBox fx:id="checkBoxShowAxis" mnemonicParsing="false"
                                                                   nodeOrientation="LEFT_TO_RIGHT" selected="true"
                                                                   GridPane.columnIndex="1"/>
                                                         <CheckBox fx:id="checkBoxShowMesh" mnemonicParsing="false"
-                                                                  nodeOrientation="RIGHT_TO_LEFT" selected="true"
+                                                                  nodeOrientation="LEFT_TO_RIGHT" selected="true"
                                                                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
                                                         <ComboBox fx:id="comboBoxMeshDrawMode" prefWidth="150.0"
                                                                   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
@@ -61,6 +61,9 @@
                                                                   GridPane.columnIndex="1" GridPane.rowIndex="3"/>
                                                         <ColorPicker fx:id="colorPickerLevelBackground"
                                                                      GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                                                        <CheckBox fx:id="checkBoxEnablePsxShading" prefWidth="150.0"
+                                                                  nodeOrientation="LEFT_TO_RIGHT"
+                                                                  GridPane.columnIndex="1" GridPane.rowIndex="5"/>
                                                     </children>
                                                 </GridPane>
                                             </children>

@@ -50,11 +50,26 @@ public class CVector implements IBinarySerializable {
     // This value is ignored for all colors after the first one.
     private byte code = (byte) 0xFF; // Frogger has these as 0xFF by default, but other games might not do that.
 
+    // GP0 Command List:
+    //  0 (000)      Misc commands
+    //  1 (001)      Polygon primitive
+    //  2 (010)      Line primitive
+    //  3 (011)      Rectangle primitive
+    //  4 (100)      VRAM-to-VRAM blit
+    //  5 (101)      CPU-to-VRAM blit
+    //  6 (110)      VRAM-to-CPU blit
+    //  7 (111)      Environment commands
+
     public static final int BYTE_LENGTH = 4 * Constants.BYTE_SIZE;
 
     public static final int FLAG_MODULATION = Constants.BIT_FLAG_0;
+    public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_1;
+    public static final int FLAG_TEXTURED = Constants.BIT_FLAG_2;
+    public static final int FLAG_QUAD = Constants.BIT_FLAG_3;
+    public static final int FLAG_GOURAUD_SHADING = Constants.BIT_FLAG_4;
     public static final int MASK_COMMAND = 0b11100000;
     public static final int MASK_COMMAND_VALID = 0b00100000;
+    public static final int GP0_COMMAND_POLYGON_PRIMITIVE = 0b00100000;
 
     @Override
     public void load(DataReader reader) {
@@ -209,6 +224,15 @@ public class CVector implements IBinarySerializable {
         this.blue = Utils.unsignedShortToByte((short) (rgbValue & 0xFF));
     }
 
+    /**
+     * Read color data from an integer value.
+     * @param crgbValue The value to read from.
+     */
+    public void fromCRGB(int crgbValue) {
+        fromRGB(crgbValue);
+        this.code = Utils.unsignedShortToByte((short) ((crgbValue >> 24) & 0xFF));
+    }
+
     @Override
     public String toString() {
         return "CVector<red=" + getRedShort() + ",green=" + getGreenShort() + ",blue=" + getBlueShort() + ",code=" + Utils.byteToUnsignedShort(this.code) + ">";
@@ -222,6 +246,17 @@ public class CVector implements IBinarySerializable {
     public static CVector makeColorFromRGB(int rgbValue) {
         CVector vec = new CVector();
         vec.fromRGB(rgbValue);
+        return vec;
+    }
+
+    /**
+     * Create a CVector from an RGB value with a gpu code in the highest byte.
+     * @param crgbValue The crgb color value.
+     * @return colorVector
+     */
+    public static CVector makeColorFromCRGB(int crgbValue) {
+        CVector vec = new CVector();
+        vec.fromCRGB(crgbValue);
         return vec;
     }
 

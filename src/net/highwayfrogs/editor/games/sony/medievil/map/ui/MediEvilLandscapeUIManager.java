@@ -14,9 +14,6 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 
-import java.util.Arrays;
-
-
 /**
  * Manages UI relating to the landscape/terrain of a MediEvil map.
  * Created by Kneesnap on 3/16/2024.
@@ -68,7 +65,7 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
 
     @Override
     public PSXShadeTextureDefinition createPolygonShadeDefinition(MediEvilMapPolygon polygon) {
-        return polygon.createPolygonShadeDefinition(getMap().getLevelTableEntry());
+        return polygon.createPolygonShadeDefinition(getMap(), getMesh().isShadingEnabled());
     }
 
     @Override
