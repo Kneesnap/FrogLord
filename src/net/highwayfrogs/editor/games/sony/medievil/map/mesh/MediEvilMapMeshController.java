@@ -7,7 +7,9 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityDefinition;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilCollprimManager;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilEntityManager;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilLandscapeUIManager;
@@ -70,7 +72,19 @@ public class MediEvilMapMeshController extends MeshViewController<MediEvilMapMes
 
     @Override
     protected void setDefaultCameraPosition() {
-        // TODO: CREATE
+        for (MediEvilMapEntity entity : getMap().getEntitiesPacket().getEntities()) {
+            MediEvilEntityDefinition entityDefinition = entity.getEntityDefinition();
+            if (entityDefinition == null || !"Dan".equalsIgnoreCase(entityDefinition.getName()))
+                continue; // If this isn't Dan, skip it.
+
+            // Once we've found Dan, come up with a camera position
+            double rotationYaw = entity.getRotationYInRadians();
+            double xMultiple = Math.cos(-rotationYaw - (Math.PI / 2));
+            double zMultiple = Math.sin(-rotationYaw - (Math.PI / 2));
+            SVector danPos = entity.getPosition();
+            getFirstPersonCamera().setPos(danPos.getFloatX() + (xMultiple * 50), danPos.getFloatY() - 35, danPos.getFloatZ() + (zMultiple * 50));
+            getFirstPersonCamera().setCameraLookAt(danPos.getFloatX(), danPos.getFloatY(), danPos.getFloatZ());
+        }
     }
 
     /**

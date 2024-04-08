@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
-import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityDefinition.MediEvilModelEntityData;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
@@ -101,6 +100,27 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
      */
     public MediEvilEntityDefinition getEntityDefinition() {
         return getGameInstance().getEntityTable().getDefinition(this.formId);
+    }
+
+    /**
+     * Gets the rotation X angle in radians.
+     */
+    public double getRotationXInRadians() {
+        return (2 * Math.PI * (this.rotationX / 256F));
+    }
+
+    /**
+     * Gets the rotation Y angle in radians.
+     */
+    public double getRotationYInRadians() {
+        return  (2 * Math.PI * (this.rotationY / 256F));
+    }
+
+    /**
+     * Gets the rotation Z angle in radians.
+     */
+    public double getRotationZInRadians() {
+        return (2 * Math.PI * (this.rotationZ / 256F));
     }
 
     /**
