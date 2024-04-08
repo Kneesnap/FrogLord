@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
+import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
@@ -40,7 +41,13 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
             if (result == null || result.getIntersectedNode() != getController().getMeshView())
                 return; // No pick result, or the thing that was clicked was not the main mesh.
 
+            // Ensure the face clicked is the same face hovered initially. Avoids accidental face clicks.
             int intersectedFace = result.getIntersectedFace();
+            InputManager inputManager = getController().getInputManager();
+            if (inputManager != null && inputManager.getLastDragStartMouseState() != null && inputManager.getLastDragStartMouseState().getIntersectedFaceIndex() != intersectedFace)
+                return;
+
+            // Find clicked polygon.
             MediEvilMapPolygon polygon = null;
             if (intersectedFace >= 0)
                 polygon = getMesh().getMainNode().getDataSourceByFaceIndex(intersectedFace);
