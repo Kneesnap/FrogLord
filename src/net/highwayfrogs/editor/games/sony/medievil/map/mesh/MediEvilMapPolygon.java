@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Arrays;
 
@@ -224,15 +225,17 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
                 uvs[i] = this.textureUvs[i].clone();
         }
 
-        // Clone colors.
+        // Apply colors.
         if (!polygonType.isGouraud())
             throw new IllegalStateException("MediEvil does not support map polygons with flat shading. (" + polygonType + ")");
 
-        CVector[] colors;
+        CVector[] colors = new CVector[polygonType.getColorCount()];
         if (enableGouraudShading) {
-            colors = makeGouraudColorArray(mapFile, polygonType, isSemiTransparent);
+            for (int i = 0; i < colors.length; i++) {
+                SVector vertex = mapFile.getGraphicsPacket().getVertices().get(this.vertices[i]);
+                colors[i] = fromPackedShort(vertex.getPadding(), polygonType, isSemiTransparent);
+            }
         } else {
-            colors = new CVector[getVertexCount()];
             Arrays.fill(colors, UNSHADED_COLOR);
         }
 
@@ -241,35 +244,25 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         return new PSXShadeTextureDefinition(polygonType, textureSource, colors, uvs, isSemiTransparent);
     }
 
-    private CVector[] makeGouraudColorArray(MediEvilMapFile mapFile, PSXPolygonType polygonType, boolean isSemiTransparent) {
-        CVector[] colors = new CVector[getVertexCount()];
-        for (int i = 0; i < colors.length; i++) {
-            SVector vertex = mapFile.getGraphicsPacket().getVertices().get(this.vertices[i]);
+    private static CVector fromPackedShort(short packedColor, PSXPolygonType polygonType, boolean isSemiTransparent) {
+        // Process padding into color value.
+        int blueHiBits = (packedColor & 0x700);
+        int blueLoBits = (packedColor & 3);
+        int bgrColor = (packedColor & 0xF8F8) | (blueHiBits << 13) | (blueLoBits << 19);
 
-            // Process padding into color value.
-            int color = vertex.getPadding() & 0xFFFF;
-            int redHiBits = (color & 0x700);
-            int redLoBits = (color & 3);
-            color &= 0xF8F8;
-            color |= redHiBits << 13;
-            color |= redLoBits << 19;
+        // Calculate GPU code.
+        byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING;
+        if (polygonType.isQuad())
+            gpuCode |= CVector.FLAG_QUAD;
+        if (polygonType.isTextured())
+            gpuCode |= CVector.FLAG_TEXTURED;
+        if (isSemiTransparent)
+            gpuCode |= CVector.FLAG_SEMI_TRANSPARENT;
 
-            // Calculate GPU code.
-            byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING;
-            if (polygonType.isQuad())
-                gpuCode |= CVector.FLAG_QUAD;
-            if (polygonType.isTextured())
-                gpuCode |= CVector.FLAG_TEXTURED;
-            if (isSemiTransparent)
-                gpuCode |= CVector.FLAG_SEMI_TRANSPARENT;
-
-            // Create color.
-            CVector loadedColor = CVector.makeColorFromRGB(color);
-            loadedColor.setCode(gpuCode);
-            colors[i] = loadedColor;
-        }
-
-        return colors;
+        // Create color.
+        CVector loadedColor = CVector.makeColorFromRGB(Utils.swapRedBlue(bgrColor));
+        loadedColor.setCode(gpuCode);
+        return loadedColor;
     }
 
     /**
@@ -313,7 +306,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     }
 
     private static short toPackedShort(CVector color) {
-        return (short) (((color.getGreenShort() & 0b11111000) << 8) | (color.getBlueShort() & 0b11111000)
-                | ((color.getRedShort() & 0b111000000) << 3) | ((color.getRedShort() & 0b00011000) >> 3));
+        return (short) (((color.getGreenShort() & 0b11111000) << 8) | (color.getRedShort() & 0b11111000)
+                | ((color.getBlueShort() & 0b111000000) << 3) | ((color.getBlueShort() & 0b00011000) >> 3));
     }
 }
