@@ -23,6 +23,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     @Getter private final ITextureSource textureSource;
     @Getter private final CVector[] colors;
     @Getter private final SCByteTextureUV[] textureUVs;
+    @Getter private final boolean semiTransparentMode;
     private Consumer<BufferedImage> onTextureSourceUpdate;
     private BufferedImage cachedImage;
 
@@ -33,11 +34,12 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     public static final String[] QUAD_VERTEX_NAMES = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"};
     public static final String[] TRI_VERTEX_NAMES = {"1st Corner", "2nd Corner", "3rd Corner"};
 
-    public PSXShadeTextureDefinition(PSXPolygonType polygonType, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUVs) {
+    public PSXShadeTextureDefinition(PSXPolygonType polygonType, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUVs, boolean semiTransparentMode) {
         this.polygonType = polygonType;
         this.textureSource = textureSource;
         this.colors = colors;
         this.textureUVs = textureUVs;
+        this.semiTransparentMode = semiTransparentMode;
     }
 
     /**
@@ -99,6 +101,9 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         if (this.textureSource != null)
             hash ^= this.textureSource.hashCode();
 
+        if (this.semiTransparentMode)
+            hash *= 5;
+
         return hash;
     }
 
@@ -111,7 +116,8 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         return this.polygonType == other.polygonType
                 && Objects.equals(this.textureSource, other.textureSource)
                 && Arrays.equals(this.colors, other.colors)
-                && Arrays.equals(this.textureUVs, other.textureUVs);
+                && Arrays.equals(this.textureUVs, other.textureUVs)
+                && this.semiTransparentMode == other.semiTransparentMode;
     }
 
     /**
@@ -129,7 +135,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
             for (int i = 0; i < this.textureUVs.length; i++)
                 copyUvs[i] = this.textureUVs[i] != null ? this.textureUVs[i].clone() : null;
 
-        return new PSXShadeTextureDefinition(this.polygonType, this.textureSource, copyColors, copyUvs);
+        return new PSXShadeTextureDefinition(this.polygonType, this.textureSource, copyColors, copyUvs, this.semiTransparentMode);
     }
 
     /**
@@ -175,19 +181,34 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         switch (this.polygonType) {
             case POLY_F3:
             case POLY_F4:
-                return PSXTextureShader.makeFlatShadedImage(getWidth(), getHeight(), this.colors[0]);
+                return applyImagePostFx(PSXTextureShader.makeFlatShadedImage(getWidth(), getHeight(), this.colors[0]));
             case POLY_FT3:
             case POLY_FT4:
-                return PSXTextureShader.makeTexturedFlatShadedImage(getSourceImage(), this.colors[0]);
+                return applyImagePostFx(PSXTextureShader.makeTexturedFlatShadedImage(getSourceImage(), this.colors[0]));
             case POLY_G3:
             case POLY_G4:
-                return PSXTextureShader.makeGouraudShadedImage(getWidth(), getHeight(), this.colors);
+                return applyImagePostFx(PSXTextureShader.makeGouraudShadedImage(getWidth(), getHeight(), this.colors));
             case POLY_GT3:
             case POLY_GT4:
-                return PSXTextureShader.makeTexturedGouraudShadedImage(getSourceImage(), this.colors, this.textureUVs);
+                return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(getSourceImage(), this.colors, this.textureUVs));
             default:
                 throw new UnsupportedOperationException("The polygon type " + this.polygonType + " is not supported.");
         }
+    }
+
+    private BufferedImage applyImagePostFx(BufferedImage image) {
+        if (this.semiTransparentMode) {
+            // Reduce opacity / alpha.
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    int rgb = image.getRGB(x, y);
+                    if ((rgb & 0xFF000000L) > 0)
+                        image.setRGB(x, y, (rgb & 0x00FFFFFF) | 0x7F000000);
+                }
+            }
+        }
+
+        return image;
     }
 
     @Override

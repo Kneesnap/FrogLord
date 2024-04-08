@@ -125,8 +125,11 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
         SCByteTextureUV[] uvs = null;
         if (this.polygonType.isTextured()) {
             uvs = new SCByteTextureUV[this.textureUvs.length];
-            for (int i = 0; i < uvs.length; i++)
-                uvs[i] = this.textureUvs[i].clone();
+            for (int i = 0; i < uvs.length; i++) {
+                SCByteTextureUV clonedUv = this.textureUvs[i].clone();
+                clonedUv.setFloatV(1F - clonedUv.getFloatV());
+                uvs[i] = clonedUv;
+            }
         }
 
         // Clone colors.
@@ -143,7 +146,7 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
         }
 
         ITextureSource textureSource = this.polygonType.isTextured() ? getTexture(mapFile.getLevelTableEntry()) : null;
-        return new PSXShadeTextureDefinition(this.polygonType, textureSource, colors, uvs);
+        return new PSXShadeTextureDefinition(this.polygonType, textureSource, colors, uvs, false);
     }
 
     /**
@@ -164,11 +167,15 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
                 this.textureUvs = Arrays.copyOf(this.textureUvs, this.polygonType.getVerticeCount());
 
             for (int i = 0; i < this.textureUvs.length; i++) {
+                SCByteTextureUV modifiedUv = shadeTexture.getTextureUVs()[i];
+
                 if (this.textureUvs[i] != null) {
-                    this.textureUvs[i].copyFrom(shadeTexture.getTextureUVs()[i]);
+                    this.textureUvs[i].copyFrom(modifiedUv);
                 } else {
-                    this.textureUvs[i] = shadeTexture.getTextureUVs()[i].clone();
+                    this.textureUvs[i] = modifiedUv.clone();
                 }
+
+                this.textureUvs[i].setFloatV(1F - modifiedUv.getFloatV());
             }
         } else {
             this.textureUvs = EMPTY_UV_ARRAY;

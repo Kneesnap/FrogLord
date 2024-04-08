@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilCollprimManager;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilEntityManager;
+import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilLandscapeUIManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.Utils;
@@ -58,6 +59,7 @@ public class MediEvilMapMeshController extends MeshViewController<MediEvilMapMes
     protected void setupManagers() {
         addManager(new MediEvilCollprimManager(this));
         addManager(new MediEvilEntityManager(this));
+        addManager(new MediEvilLandscapeUIManager(this));
         // TODO: Setup more managers.
     }
 

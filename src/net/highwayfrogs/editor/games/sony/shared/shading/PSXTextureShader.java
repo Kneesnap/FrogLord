@@ -70,7 +70,7 @@ public class PSXTextureShader {
         public void loadUV(int width, int height, SCByteTextureUV uv) {
             // It looks more accurate with rounding.
             this.x = Math.round(uv.getFloatU() * (width - 1));
-            this.y = Math.round((1F - uv.getFloatV()) * (height - 1)); // It might be wise to invert this on save / load in the frogger map polygon instead of changing it everywhere else.
+            this.y = Math.round(uv.getFloatV() * (height - 1));
         }
     }
 
@@ -271,6 +271,13 @@ public class PSXTextureShader {
             } else { // Use data directly from the vertex since it's on this scanline.
                 rightLineColor = colors[rightIndex];
                 rightLineX = rightPos.getX();
+            }
+
+            // Ensures the line is always drawn. (MediEvil has situations where the topIndex is somewhat ambiguous, and this ensures the image still draws properly)
+            if (leftLineX > rightLineX) {
+                int temp = leftLineX;
+                leftLineX = rightLineX;
+                rightLineX = temp;
             }
 
             // Fill a scanline.

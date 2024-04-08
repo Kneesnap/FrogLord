@@ -3,11 +3,13 @@ package net.highwayfrogs.editor.games.sony.medievil.map.mesh;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
+import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
+import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
 
@@ -21,7 +23,8 @@ import java.awt.*;
 public class MediEvilMapMesh extends DynamicMesh {
     private final MediEvilMapFile map;
     private final MediEvilMapMeshNode mainNode;
-    //private final OldFroggerShadedTextureManager shadedTextureManager;
+    private final DynamicMeshOverlayNode highlightedPolygonNode;
+    private final MediEvilShadedTextureManager shadedTextureManager;
     private AtlasTexture flatPlaceholderTexture;
     private AtlasTexture gouraudPlaceholderTexture;
 
@@ -34,7 +37,7 @@ public class MediEvilMapMesh extends DynamicMesh {
     public MediEvilMapMesh(MediEvilMapFile mapFile) {
         super(new SequentialTextureAtlas(64, 64, true));
         this.map = mapFile;
-        //this.shadedTextureManager = new OldFroggerShadedTextureManager(this);
+        this.shadedTextureManager = new MediEvilShadedTextureManager(this);
 
         // Add textures.
         getTextureAtlas().startBulkOperations();
@@ -46,6 +49,9 @@ public class MediEvilMapMesh extends DynamicMesh {
         // Setup main node.
         this.mainNode = new MediEvilMapMeshNode(this);
         addNode(this.mainNode);
+
+        this.highlightedPolygonNode = new DynamicMeshOverlayNode(this);
+        addNode(this.highlightedPolygonNode);
     }
 
     private void setupBasicTextures() {
@@ -54,6 +60,7 @@ public class MediEvilMapMesh extends DynamicMesh {
         getTextureAtlas().addTexture(GRAY_COLOR);
         getTextureAtlas().addTexture(YELLOW_COLOR);
         getTextureAtlas().addTexture(GREEN_COLOR);
+        getTextureAtlas().addTexture(BakedLandscapeUIManager.MATERIAL_POLYGON_HIGHLIGHT);
         this.flatPlaceholderTexture = getTextureAtlas().addTexture(UnknownTextureSource.CYAN_INSTANCE);
         this.gouraudPlaceholderTexture = getTextureAtlas().addTexture(UnknownTextureSource.GREEN_INSTANCE);
     }
@@ -69,15 +76,29 @@ public class MediEvilMapMesh extends DynamicMesh {
         if (levelEntry.getRemap() != null)
             getLogger().info("Found level entry with " + levelEntry.getRemap().getTextureIds().size() + " texture remaps.");  // TODO: TOSS
 
-        // Register VLO textures for the level.
-        VLOArchive levelVlo = levelEntry.getVloFile();
-        if (levelVlo != null)
-            SCUtils.addAtlasTextures(getTextureAtlas(), levelVlo);
+        // Add gouraud shaded polygons.
+        for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
+            this.shadedTextureManager.addPolygon(polygon);
+    }
 
-        // Add gouraud shaded stuff.
-        //if (getMap().getFormatVersion() == OldFroggerMapVersion.MILESTONE3)
-        //    for (OldFroggerMapGrid grid : getMap().getGridPacket().getGrids())
-        //        for (OldFroggerMapPolygon polygon : grid.getPolygons())
-        //            this.shadedTextureManager.addPolygon(polygon);
+    public static class MediEvilShadedTextureManager extends PSXMeshShadedTextureManager<MediEvilMapPolygon> {
+        public MediEvilShadedTextureManager(MediEvilMapMesh mesh) {
+            super(mesh);
+        }
+
+        @Override
+        public MediEvilMapMesh getMesh() {
+            return (MediEvilMapMesh) super.getMesh();
+        }
+
+        @Override
+        protected PSXShadeTextureDefinition createShadedTexture(MediEvilMapPolygon polygon) {
+            return polygon.createPolygonShadeDefinition(getMesh().getMap().getLevelTableEntry());
+        }
+
+        @Override
+        protected void applyTextureShading(MediEvilMapPolygon polygon, PSXShadeTextureDefinition shadedTexture) {
+            // TODO: Implement after we support MediEvil shading.
+        }
     }
 }

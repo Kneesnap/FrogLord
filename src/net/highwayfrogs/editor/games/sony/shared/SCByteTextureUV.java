@@ -27,8 +27,8 @@ public class SCByteTextureUV implements IBinarySerializable {
     public static final int BYTE_SIZE = 2 * Constants.BYTE_SIZE;
 
     public SCByteTextureUV(float u, float v) {
-        this.u = Utils.floatToByte(u);
-        this.v = Utils.floatToByte(v);
+        setFloatU(u);
+        setFloatV(v);
     }
 
     @Override
@@ -66,11 +66,27 @@ public class SCByteTextureUV implements IBinarySerializable {
     }
 
     /**
+     * Set U as a float ranging from 0 to 1.
+     * @param value the float value to apply
+     */
+    public void setFloatU(float value) {
+        this.u = floatToByte(value);
+    }
+
+    /**
      * Get V as a float ranging from 0 to 1.
      * @return floatV
      */
     public float getFloatV() {
         return Utils.unsignedByteToFloat(this.v);
+    }
+
+    /**
+     * Set V as a float ranging from 0 to 1.
+     * @param value the float value to apply
+     */
+    public void setFloatV(float value) {
+        this.v = floatToByte(value);
     }
 
     /**
@@ -137,8 +153,8 @@ public class SCByteTextureUV implements IBinarySerializable {
             if (!Float.isFinite(u) || !Float.isFinite(v) || (u < 0F) || (u > 1F) || (v < 0F) || (v > 1F))
                 return false;
 
-            this.u = floatToByte(u);
-            this.v = floatToByte(v);
+            setFloatU(u);
+            setFloatV(v);
             if (onUpdate != null)
                 onUpdate.run();
             return true;

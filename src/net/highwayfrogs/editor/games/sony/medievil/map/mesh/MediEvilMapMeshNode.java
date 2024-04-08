@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.mesh;
 
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
@@ -42,9 +43,20 @@ public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<MediEvilMapPolyg
         addUnlinkedEntry(this.vertexEntry);
 
         // Setup polygons.
+        // First, setup the non-transparent polygons.
+        MediEvilLevelTableEntry levelTableEntry = getMap().getLevelTableEntry();
         for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
-            this.add(polygon);
+            if (!polygon.isSemiTransparent(levelTableEntry))
+                this.add(polygon);
+
+        // Second, add the transparent polygons.
+        for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
+            if (polygon.isSemiTransparent(levelTableEntry))
+                this.add(polygon);
     }
+
+    // TODO: Consider making the texture atlas regeneration async, so we can only update once it's ready. (Maybe... I think we only need a WritableImage though)
+    // TODO: https://github.com/Teragam/JFXShader
 
     @Override
     public void clear() {
@@ -57,12 +69,11 @@ public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<MediEvilMapPolyg
         DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), data);
 
         // Resolve texture.
-        //TODO: ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(data);
-        ITextureSource textureSource = entry.getDataSource().getTexture(getMap().getLevelTableEntry());
+        ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(data);
         Texture texture = getMesh().getTextureAtlas().getTextureFromSourceOrFallback(textureSource);
 
         // Add texture UVs.
-        if (data.getPolygonType().getVerticeCount() == 4) {
+        if (data.getVertexCount() == 4) {
             int uvIndex1 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 0, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
             int uvIndex2 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 1, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F
             int uvIndex3 = entry.addTexCoordValue(getTextureCoordinate(data, textureSource, texture, 2, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
@@ -122,13 +133,16 @@ public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<MediEvilMapPolyg
             }
         }
 
-        // Map textures seem to be flipped vertically,
-        // and generated shaded textures are consistent with this behavior.
-        if (textureSource instanceof PSXShadeTextureDefinition)
-            localUv.setY(1F - localUv.getY()); // UVs are flipped for generated shader textures too, in order to stay consistent.
-
         // Get the UVs local to the texture.
         return getMesh().getTextureAtlas().getUV(texture, localUv);
+    }
+
+    /**
+     * Updates a map vertex index.
+     * @param mapVertexIndex index of the map vertex to update
+     */
+    public void updateMapVertex(int mapVertexIndex) {
+        updateVertex(this.vertexEntry, mapVertexIndex);
     }
 
     @Override
@@ -144,8 +158,7 @@ public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<MediEvilMapPolyg
     @Override
     public void updateTexCoord(DynamicMeshTypedDataEntry entry, int localTexCoordIndex) {
         MediEvilMapPolygon polygon = entry.getDataSource();
-        // TODO: ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(polygon);
-        ITextureSource textureSource = entry.getDataSource().getTexture(getMap().getLevelTableEntry());
+        ITextureSource textureSource = getMesh().getShadedTextureManager().getShadedTexture(polygon);
         Texture texture = getMesh().getTextureAtlas().getTextureFromSourceOrFallback(textureSource);
 
         Vector2f uv;

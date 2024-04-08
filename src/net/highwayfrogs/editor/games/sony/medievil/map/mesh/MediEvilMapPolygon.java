@@ -6,12 +6,15 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
+import net.highwayfrogs.editor.gui.texture.ITextureSource;
 
 import java.util.Arrays;
 
@@ -41,6 +44,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
 
     private static final int FLAG_QUAD = Constants.BIT_FLAG_0;
     private static final int FLAG_TEXTURED = Constants.BIT_FLAG_1;
+    public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_9;
 
     public MediEvilMapPolygon(MediEvilGameInstance instance) {
         super(instance);
@@ -81,6 +85,24 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         }
 
         return builder.append("]}").toString();
+    }
+
+    /**
+     * Get the number of vertices supported by this polygon.
+     */
+    public int getVertexCount() {
+        return getPolygonType().getVerticeCount();
+    }
+
+    /**
+     * If the polygon renders as partially transparent, this will return true.
+     */
+    public boolean isSemiTransparent(MediEvilLevelTableEntry levelTableEntry) {
+        GameImage image = getTexture(levelTableEntry);
+        if (image != null && image.testFlag(GameImage.FLAG_TRANSLUCENT))
+            return true;
+
+        return (this.flags & FLAG_SEMI_TRANSPARENT) == FLAG_SEMI_TRANSPARENT;
     }
 
     /**
@@ -141,23 +163,22 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
      * Creates a texture shade definition for this polygon.
      * @param levelTableEntry The level table entry necessary for looking up texture remap data.
      */
-    /*public PSXShadeTextureDefinition createPolygonShadeDefinition(OldFroggerLevelTableEntry levelTableEntry) {
+    public PSXShadeTextureDefinition createPolygonShadeDefinition(MediEvilLevelTableEntry levelTableEntry) {
+        PSXPolygonType polygonType = getPolygonType();
+
         SCByteTextureUV[] uvs = null;
-        if (this.polygonType.isTextured()) {
-            uvs = new SCByteTextureUV[this.textureUvs.length];
+        if (polygonType.isTextured()) {
+            uvs = new SCByteTextureUV[getVertexCount()];
             for (int i = 0; i < uvs.length; i++)
                 uvs[i] = this.textureUvs[i].clone();
         }
 
         // Clone colors.
-        CVector[] colors = null;
-        if (this.colors != null) {
-            colors = new CVector[this.colors.length];
-            for (int i = 0; i < colors.length; i++)
-                colors[i] = this.colors[i].clone();
-        }
+        CVector[] colors = new CVector[polygonType.isGouraud() ? getVertexCount() : 1];
+        for (int i = 0; i < colors.length; i++) // TODO: Get shading information from the map file.
+            colors[i] = CVector.makeColorFromRGB(polygonType.isGouraud() ? 0x7F7F7F7F : 0xFFFFFFFF);
 
-        ITextureSource textureSource = this.polygonType.isTextured() ? getTexture(levelTableEntry) : null;
-        return new PSXShadeTextureDefinition(this.polygonType, textureSource, colors, uvs);
-    }*/ // TODO: IMPLEMENT.
+        ITextureSource textureSource = polygonType.isTextured() ? getTexture(levelTableEntry) : null;
+        return new PSXShadeTextureDefinition(polygonType, textureSource, colors, uvs, isSemiTransparent(levelTableEntry));
+    }
 }

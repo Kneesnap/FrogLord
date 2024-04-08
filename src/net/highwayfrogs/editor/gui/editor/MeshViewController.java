@@ -211,7 +211,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         dynamicMesh.addView(this.meshView);
 
         // Create the 3D elements and use them within a subscene.
-        this.root3D = new Group(this.meshView);
+        this.root3D = new Group();
         SubScene subScene3D = new SubScene(this.root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
         subScene3D.setFill(Color.BLACK);
         subScene3D.setCamera(this.firstPersonCamera.getCamera());
@@ -293,6 +293,9 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         // Setup managers & UI.
         // Should run last since UI managers may use information from this class.
         setupBindings(subScene3D, this.meshView);
+
+        // Ensure that any transparent parts of the map show 3D models behind it.
+        this.root3D.getChildren().add(this.meshView);
     }
 
     /**

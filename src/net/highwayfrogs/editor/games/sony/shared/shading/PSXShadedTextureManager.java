@@ -61,7 +61,7 @@ public abstract class PSXShadedTextureManager<TPolygon> {
             return false; // Bugged?
 
         // If the list is empty, clean up.
-        if (polygonList.size() == 0) {
+        if (polygonList.isEmpty()) {
             this.polygonsByShadedTexture.remove(shadedTexture);
             onShadedTextureRemoved(shadedTexture);
         }
