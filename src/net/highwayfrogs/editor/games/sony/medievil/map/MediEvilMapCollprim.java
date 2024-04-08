@@ -473,11 +473,11 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
     @Getter
     @AllArgsConstructor
     public enum MediEvilMapCollprimType {
-        ALL(-1),
         NONE(0),
         CAMERA(0x8000),
         WARP(0x4000),
         NORMAL(0xC000); // Seems to allow collision and/or events getting fired.
+
         private static final int COLLPRIM_TYPE_FLAG_MASK = 0xC000;
 
         private final int bitMask;
