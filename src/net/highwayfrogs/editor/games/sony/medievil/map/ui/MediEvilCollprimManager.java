@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilMapUIManager.M
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
+import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
@@ -73,7 +74,8 @@ public class MediEvilCollprimManager extends MediEvilMapListManager<MediEvilMapC
         }
 
         this.collprimTypeFilterComboBox = getMainGrid().addEnumSelector("Type Shown", null, strippedTypes, true, newType -> updateValueVisibility());
-        this.collprimTypeFilterComboBox.setPromptText("ALL");
+        this.collprimTypeFilterComboBox.setConverter(new AbstractStringConverter<>(value -> value != null ? value.name() : "ALL"));
+
         // Wireframe preview checkbox.
         this.wireframePreviewCheckBox = getMainGrid().addCheckBox("Wireframe Display", true, this::updateCollprimWireframeState);
     }
