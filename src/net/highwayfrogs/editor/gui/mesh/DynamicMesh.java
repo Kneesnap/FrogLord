@@ -5,6 +5,7 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.sony.shared.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
@@ -252,6 +253,10 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         if (this.meshViews.contains(view))
             return; // Already registered.
 
+        // Register the texture.
+        if (this.meshViews.isEmpty())
+            this.textureAtlas.registerTexture();
+
         this.meshViews.add(view);
         view.setMesh(this);
         view.setMaterial(this.material);
@@ -270,6 +275,13 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
 
         view.setMesh(null);
         view.setMaterial(null);
+
+        // Attempt to free the texture.
+        if (this.meshViews.isEmpty()) {
+            if (this instanceof IPSXShadedMesh)
+                ((IPSXShadedMesh) this).getShadedTextureManager().onDispose();
+            this.textureAtlas.releaseTexture();
+        }
     }
 
     private void updateMaterial(BufferedImage newImage) {

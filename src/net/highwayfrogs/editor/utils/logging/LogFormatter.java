@@ -69,7 +69,12 @@ public class LogFormatter extends Formatter {
         String className = record.getSourceClassName() != null ? record.getSourceClassName() : "";
         String loggerName = record.getLoggerName() != null ? record.getLoggerName() : "";
 
+        // Many of these messages only show up once we use a debugger.
+        // And they spam messages we don't care about (usually).
         return (className.startsWith("javafx.") || loggerName.startsWith("javafx."))
-                || (className.startsWith("com.sun.") || loggerName.startsWith("com.sun."));
+                || (className.startsWith("javax.") || loggerName.startsWith("javax."))
+                || (className.startsWith("com.sun.") || loggerName.startsWith("com.sun."))
+                || (className.startsWith("sun.") || loggerName.startsWith("sun."))
+                || (className.startsWith("java.io.serialization") || loggerName.startsWith("java.io.serialization"));
     }
 }

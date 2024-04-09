@@ -70,6 +70,17 @@ public abstract class PSXShadedTextureManager<TPolygon> {
     }
 
     /**
+     * Called to free the textures tracked by this manager
+     */
+    public void onDispose() {
+        for (PSXShadeTextureDefinition textureDefinition : this.polygonsByShadedTexture.keySet())
+            textureDefinition.onDispose();
+
+        this.shadedTexturesByPolygon.clear();
+        this.polygonsByShadedTexture.clear();
+    }
+
+    /**
      * Updates a polygon to use a new shade definition.
      * @param polygon The polygon to update.
      */

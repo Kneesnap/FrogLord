@@ -248,6 +248,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 // Stop camera processing and clear up the render manager
                 this.firstPersonCamera.stopThreadProcessing();
                 this.renderManager.removeAllDisplayLists();
+                this.inputManager.shutdown();
 
                 // Clear selectors
                 while (!this.selectors.isEmpty())
@@ -263,6 +264,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
                 getMesh().removeView(getMeshView()); // Remove view from mesh.
                 Utils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
+                this.root3D.getChildren().clear(); // Clear data to avoid memory leak.
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
                 Utils.takeScreenshot(this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), false);
             } else if (event.getCode() == KeyCode.F12) {
@@ -395,7 +397,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         if (getMesh() instanceof IPSXShadedMesh) {
             IPSXShadedMesh shadedMesh = (IPSXShadedMesh) getMesh();
             this.checkBoxEnablePsxShading.setSelected(shadedMesh.isShadingEnabled());
-            this.checkBoxEnablePsxShading.selectedProperty().addListener((observable, oldState, newState) -> shadedMesh.setShadingEnabled(newState));
+            this.checkBoxEnablePsxShading.selectedProperty().addListener((observable, oldState, newState) -> ((IPSXShadedMesh) getMesh()).setShadingEnabled(newState));
         } else {
             // PSX Shading is not supported, so keep it disabled.
             this.checkBoxEnablePsxShading.setDisable(true);

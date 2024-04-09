@@ -31,7 +31,8 @@ import java.util.List;
  * TODO: No models seem to have collprims, is this just how the game works? Probably need to look at raw data to be sure. Perhaps they could be in the map data similar to beast wars instead?
  * TODO: Support multiple MOFs (& go over mof data again to ensure we're not missing anything).
  * TODO: Go over PS4 asset names again to see stuff we missed / might have gotten wrong. MOFFile - has unknown value MOFHolder flags -> are there values getting ignored?
- * TODO: When adding map collprims (if I'm remembering right and they do exist), make sure to review flag data.
+ * TODO: Map Tex Anims? Map Sky Boxes?
+ * TODO: Shading is done per-vertex. Right now, if you edit the shading of a polygon, it won't update other usages of the vertex.
  * Created by Kneesnap on 9/7/2023.
  */
 @Getter

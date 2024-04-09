@@ -54,7 +54,6 @@ public class MediEvilMapMeshController extends MeshViewController<MediEvilMapMes
 
         for (SVector vertex : unusedVertices)
             this.vertexDisplayList.addSphere(vertex.getFloatX(), vertex.getFloatY(), vertex.getFloatZ(), 1, VERTEX_MATERIAL, false);
-
     }
 
     @Override

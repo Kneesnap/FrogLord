@@ -8,10 +8,7 @@ import net.highwayfrogs.editor.utils.SortedList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiFunction;
 
 /**
@@ -35,6 +32,18 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
         this.atlasTextureConstructor = atlasTextureConstructor;
         this.sortedTextures = makeSortedTextureList();
         this.imageChangeListener = this::onTextureChange;
+    }
+
+    @Override
+    public void registerTexture() {
+        super.registerTexture();
+        this.sortedTextures.forEach(TTexture::registerTexture);
+    }
+
+    @Override
+    public void releaseTexture() {
+        super.releaseTexture();
+        this.sortedTextures.forEach(TTexture::releaseTexture);
     }
 
     /**
@@ -150,6 +159,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
         if (!this.sortedTextures.add(newTexture) || this.texturesBySource.put(textureSource, newTexture) != null)
             throw new RuntimeException("The texture atlas didn't think the texture source was registered, but when we tried to register it, it was.");
 
+        newTexture.registerTexture();
         this.markPositionsDirty();
         newTexture.getImageChangeListeners().add(this.imageChangeListener);
         return newTexture;
@@ -185,6 +195,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
 
         if (this.sortedTextures.remove(texture)) {
             this.texturesBySource.remove(texture.getTextureSource());
+            texture.releaseTexture();
             texture.getImageChangeListeners().remove(this.imageChangeListener);
             if (this.fallbackTexture == texture)
                 this.fallbackTexture = null;

@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -20,6 +21,7 @@ import java.util.function.Function;
  */
 public abstract class Texture {
     @Getter private final ITextureSource textureSource;
+    private final Consumer<BufferedImage> updateHook = this::update;
     private BufferedImage cachedImage;
     private BufferedImage cachedImageWithoutPadding;
     private boolean cachedImageInvalid; // This should start as false, as to avoid updates before the image is even used.
@@ -125,7 +127,6 @@ public abstract class Texture {
             throw new NullPointerException("source");
 
         this.textureSource = source;
-        this.textureSource.getImageChangeListeners().add(this::update); // TODO: Memory leak, this is never removed.
     }
 
     /**
@@ -136,7 +137,22 @@ public abstract class Texture {
         if (source == null)
             throw new NullPointerException("source");
         this.textureSource = source.apply(this);
-        this.textureSource.getImageChangeListeners().add(this::update);
+    }
+
+    /**
+     * Registers the texture to the texture source.
+     */
+    public void registerTexture() {
+        if (this.textureSource != null && !this.textureSource.getImageChangeListeners().contains(this.updateHook))
+            this.textureSource.getImageChangeListeners().add(this.updateHook);
+    }
+
+    /**
+     * Called when the texture is removed.
+     */
+    public void releaseTexture() {
+        if (this.textureSource != null)
+            this.textureSource.getImageChangeListeners().remove(this.updateHook);
     }
 
     /**

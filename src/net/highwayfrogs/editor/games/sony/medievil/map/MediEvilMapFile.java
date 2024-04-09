@@ -25,11 +25,9 @@ import java.util.List;
 /**
  * Represents a map file in MediEvil.
  * TODO:
- *  - 0) Collision Primitives
- *  - 1) Can we figure out shading?
- *  - 2) Can we figure out the skybox? It'd be very nice to have the skybox automatically load and display. (Allow turning it off though)
- *  - 3) Can we figure out lighting? (Allow turning off)
- *  - 4) Get splines working in 3D space.
+ *  - 1) Can we figure out the skybox? It'd be very nice to have the skybox automatically load and display. (Allow turning it off though)
+ *  - 2) Can we figure out lighting? (Allow turning off)
+ *  - 3) Get splines working in 3D space.
  * Cloned from a file created by Kneesnap on 03/9/2024.
  */
 @Getter

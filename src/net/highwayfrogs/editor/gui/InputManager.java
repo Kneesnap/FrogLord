@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.gui;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -12,10 +14,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.system.math.Vector3f;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -24,7 +23,9 @@ import java.util.logging.Logger;
  */
 public class InputManager {
     private final Map<KeyCode, List<KeyHandler>> keySpecificHandlers = new HashMap<>();
+    private final ChangeListener<? super Boolean> stageInputListener = this::onStageFocusChange;
     private final List<KeyHandler> keyHandlers = new ArrayList<>();
+    private Stage stage;
     @Setter private KeyHandler finalKeyHandler;
     private final List<MouseHandler> mouseHandlers = new ArrayList<>();
     @Setter private MouseHandler finalMouseHandler;
@@ -52,10 +53,23 @@ public class InputManager {
         scene.addEventHandler(MouseEvent.ANY, this::processMouseEvents);
 
         // Reset keys when focus is lost.
-        stage.focusedProperty().addListener((ov, hidden, shown) -> {
-            if (hidden || !shown)
-                resetKeys();
-        });
+        stage.focusedProperty().addListener(this.stageInputListener);
+        this.stage = stage;
+    }
+
+    /**
+     * Shutdown input management
+     */
+    public void shutdown() {
+        if (this.stage != null) {
+            this.stage.focusedProperty().removeListener(this.stageInputListener);
+            this.stage = null;
+        }
+    }
+
+    private void onStageFocusChange(ObservableValue<? extends Boolean> observable, boolean wasFocused, boolean nowFocused) {
+        if (wasFocused || !nowFocused)
+            resetKeys();
     }
 
     /**
