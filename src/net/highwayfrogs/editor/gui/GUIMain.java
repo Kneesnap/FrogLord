@@ -120,6 +120,7 @@ public class GUIMain extends Application {
         Config config = new Config(Utils.getResourceStream(getExeConfigPath(configName)));
         SCGameType gameType = config.getEnum(SCGameConfig.CFG_GAME_TYPE, SCGameType.FROGGER);
         SCGameInstance instance = gameType.createInstance();
+        MainController.MAIN_WINDOW = null; // Ensures messages get logged to the new window instead of printed to the old one.
         instance.loadGame(configName, config, inputMwd, inputExe);
         return instance;
     }
