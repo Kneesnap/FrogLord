@@ -86,8 +86,8 @@ public class OldFroggerSpline extends SCSharedGameData {
 
         IVector startTangent = this.splineHermite.getStartTangent();
         int oldStartTangentX = startTangent.getX();
-        int oldStartTangentY = startTangent.getX();
-        int oldStartTangentZ = startTangent.getX();
+        int oldStartTangentY = startTangent.getY();
+        int oldStartTangentZ = startTangent.getZ();
         startTangent.setX(3 * oldStartTangentX);
         startTangent.setY(3 * oldStartTangentY);
         startTangent.setZ(3 * oldStartTangentZ);
