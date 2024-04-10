@@ -229,19 +229,19 @@ public class AtlasTexture extends Texture {
     }
 
     @Override
-    public Vector2f getUV(Texture heldTexture, int x, int y) {
+    public Vector2f getUV(Texture heldTexture, int x, int y, Vector2f result) {
         if (heldTexture == null)
             throw new NullPointerException("heldTexture");
         if (heldTexture != this)
             throw new IllegalArgumentException("Cannot get UV for texture " + Utils.getSimpleName(heldTexture) + ", because " + Utils.getSimpleName(this) + " doesn't support held textures.");
 
-        float u = (float) (x + heldTexture.getLeftPadding()) / this.getNonEmptyPaddedWidth();
-        float v = (float) (y + heldTexture.getUpPadding()) / this.getNonEmptyPaddedHeight();
-        return new Vector2f(u, v);
+        result.setX((float) (x + heldTexture.getLeftPadding()) / this.getNonEmptyPaddedWidth());
+        result.setY((float) (y + heldTexture.getUpPadding()) / this.getNonEmptyPaddedHeight());
+        return result;
     }
 
     @Override
-    public Vector2f getUV(Texture heldTexture, Vector2f localUv) {
+    public Vector2f getUV(Texture heldTexture, Vector2f localUv, Vector2f result) {
         // We only want to throw when this one is called, the other GetUV has reasonable use-cases.
         throw new UnsupportedOperationException("getUV of a " + Utils.getSimpleName(this) + " does not exist. To get the UV for an atlas texture, call this method in the atlas texture itself.");
     }

@@ -139,7 +139,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     }
 
     /**
-     * Called when this object is setup to be used long-term and track changes to the underlying texture source.
+     * Called when this object is created to be used long-term and track changes to the underlying texture source.
      */
     public void onRegister() {
         if (this.onTextureSourceUpdate != null)
@@ -190,7 +190,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
                 return applyImagePostFx(PSXTextureShader.makeGouraudShadedImage(getWidth(), getHeight(), this.colors));
             case POLY_GT3:
             case POLY_GT4:
-                return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(getSourceImage(), this.colors, this.textureUVs));
+                return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(getSourceImage(), this.textureSource, this.colors, this.textureUVs));
             default:
                 throw new UnsupportedOperationException("The polygon type " + this.polygonType + " is not supported.");
         }

@@ -121,7 +121,7 @@ public class MediEvilMapMeshNode extends DynamicMeshAdapterNode<MediEvilMapPolyg
             PSXShadeTextureDefinition shadeTexture = (PSXShadeTextureDefinition) textureSource;
             if (!shadeTexture.getPolygonType().isTextured()) {
                 float minValue = (float) texture.getLeftPadding() / texture.getPaddedWidth();
-                float maxValue = (float) (texture.getLeftPadding() + texture.getWidth()) / texture.getPaddedWidth();
+                float maxValue = (float) (texture.getLeftPadding() + texture.getWidthWithoutPadding()) / texture.getPaddedWidth();
                 if (localUv.getX() == 0F)
                     localUv.setX(minValue);
                 if (localUv.getX() == 1F)

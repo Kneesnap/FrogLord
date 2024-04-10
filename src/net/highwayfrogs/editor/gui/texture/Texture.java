@@ -54,17 +54,15 @@ public abstract class Texture {
     /**
      * Gets the width (in pixels) of the texture without padding.
      */
-    public int getWidth() {
-        return ((this.cachedImage != null && !this.cachedImageInvalid) ? this.cachedImage.getWidth() : this.textureSource.getWidth())
-                - (getLeftPadding() + getRightPadding());
+    public int getWidthWithoutPadding() {
+        return getPaddedWidth() - (getLeftPadding() + getRightPadding());
     }
 
     /**
      * Gets the height (in pixels) of the texture without padding.
      */
-    public int getHeight() {
-        return ((this.cachedImage != null && !this.cachedImageInvalid) ? this.cachedImage.getHeight() : this.textureSource.getHeight())
-                - (getUpPadding() + getDownPadding());
+    public int getHeightWithoutPadding() {
+        return getPaddedHeight() - (getUpPadding() + getDownPadding());
     }
 
     /**
@@ -101,14 +99,14 @@ public abstract class Texture {
      * Gets the width of this texture with padding included.
      */
     public int getPaddedWidth() {
-        return getWidth() + getLeftPadding() + getRightPadding();
+        return ((this.cachedImage != null && !this.cachedImageInvalid) ? this.cachedImage.getWidth() : this.textureSource.getWidth());
     }
 
     /**
      * Gets the height of this texture with padding included.
      */
     public int getPaddedHeight() {
-        return getHeight() + getUpPadding() + getDownPadding();
+        return ((this.cachedImage != null && !this.cachedImageInvalid) ? this.cachedImage.getHeight() : this.textureSource.getHeight());
     }
 
     /**
@@ -266,7 +264,19 @@ public abstract class Texture {
      * @param y           The y position to get the 'v' value from.
      * @return The vector containing the uv values.
      */
-    public abstract Vector2f getUV(Texture heldTexture, int x, int y);
+    public Vector2f getUV(Texture heldTexture, int x, int y) {
+        return getUV(heldTexture, x, y, new Vector2f());
+    }
+
+    /**
+     * Gets the UV values for a particular xy pixel position for a texture held by this one.
+     * @param heldTexture The held texture to get the UV for.
+     * @param x The x position to get the 'u' value from.
+     * @param y The y position to get the 'v' value from.
+     * @param output The output vector to save the data to
+     * @return The vector containing the uv values.
+     */
+    public abstract Vector2f getUV(Texture heldTexture, int x, int y, Vector2f output);
 
     /**
      * Gets the UV values for a 'local' uv for a texture held by this one.
@@ -274,7 +284,18 @@ public abstract class Texture {
      * @param localUv     The 'local' uv to get the full UV from.
      * @return The vector containing the uv values.
      */
-    public abstract Vector2f getUV(Texture heldTexture, Vector2f localUv);
+    public Vector2f getUV(Texture heldTexture, Vector2f localUv) {
+        return getUV(heldTexture, localUv, new Vector2f());
+    }
+
+    /**
+     * Gets the UV values for a 'local' uv for a texture held by this one.
+     * @param heldTexture The held texture to get the UV for
+     * @param localUv The 'local' uv to get the full UV from.
+     * @param output The output vector to save the data to
+     * @return The vector containing the uv values.
+     */
+    public abstract Vector2f getUV(Texture heldTexture, Vector2f localUv, Vector2f output);
 
     /**
      * Gets a texture nested inside of this texture which uses the provided source.

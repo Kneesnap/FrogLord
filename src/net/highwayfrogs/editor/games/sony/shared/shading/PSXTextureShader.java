@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
+import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -35,6 +36,7 @@ public class PSXTextureShader {
     private final CVector tempColorVector1 = new CVector();
     private final CVector tempColorVector2 = new CVector();
     private final CVector tempColorVector3 = new CVector();
+    private static final int GOURAUD_PADDING_PIXELS = 2;
 
     private PSXTextureShader() {
         for (int i = 0; i < this.triangleCoordinates.length; i++)
@@ -63,14 +65,12 @@ public class PSXTextureShader {
 
         /**
          * Load the texture coordinates from a texture UV.
-         * @param width  The padded width of the texture.
-         * @param height The padded height of the texture.
+         * @param textureSource  The texture source
          * @param uv     The uv to load coordinates from.
          */
-        public void loadUV(int width, int height, SCByteTextureUV uv) {
-            // It looks more accurate with rounding.
-            this.x = Math.round(uv.getFloatU() * (width - 1));
-            this.y = Math.round(uv.getFloatV() * (height - 1));
+        public void loadUV(ITextureSource textureSource, SCByteTextureUV uv) {
+            this.x = textureSource.getLeftPadding() + (int) (uv.getFloatU() * textureSource.getUnpaddedWidth());
+            this.y = textureSource.getUpPadding() + (int) (uv.getFloatV() * textureSource.getUnpaddedHeight());
         }
     }
 
@@ -148,17 +148,15 @@ public class PSXTextureShader {
      * @param textureUvs    The texture uvs to use as the corner of the triangles.
      * @return gouraudShadedImage
      */
-    public static BufferedImage makeTexturedGouraudShadedImage(BufferedImage originalImage, CVector[] colors, SCByteTextureUV[] textureUvs) {
+    public static BufferedImage makeTexturedGouraudShadedImage(BufferedImage originalImage, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUvs) {
         BufferedImage image = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        int paddedWidth = originalImage.getWidth();
-        int paddedHeight = originalImage.getHeight();
 
         PSXTextureShader instance = getInstance();
         TextureCoordinate[] coordinates = instance.getTriangleCoordinates();
         if (colors.length == 3) {
-            coordinates[0].loadUV(paddedWidth, paddedHeight, textureUvs[0]);
-            coordinates[1].loadUV(paddedWidth, paddedHeight, textureUvs[1]);
-            coordinates[2].loadUV(paddedWidth, paddedHeight, textureUvs[2]);
+            coordinates[0].loadUV(textureSource, textureUvs[0]);
+            coordinates[1].loadUV(textureSource, textureUvs[1]);
+            coordinates[2].loadUV(textureSource, textureUvs[2]);
             shadeTriangle(originalImage, image, colors, coordinates);
         } else if (colors.length == 4) {
             CVector[] triangleColors = instance.getTriangleColors();
@@ -167,25 +165,23 @@ public class PSXTextureShader {
             triangleColors[0].copyFrom(colors[0]);
             triangleColors[1].copyFrom(colors[1]);
             triangleColors[2].copyFrom(colors[2]);
-            coordinates[0].loadUV(paddedWidth, paddedHeight, textureUvs[0]);
-            coordinates[1].loadUV(paddedWidth, paddedHeight, textureUvs[1]);
-            coordinates[2].loadUV(paddedWidth, paddedHeight, textureUvs[2]);
+            coordinates[0].loadUV(textureSource, textureUvs[0]);
+            coordinates[1].loadUV(textureSource, textureUvs[1]);
+            coordinates[2].loadUV(textureSource, textureUvs[2]);
             shadeTriangle(originalImage, image, triangleColors, coordinates);
 
             // Right triangle.
             triangleColors[0].copyFrom(colors[3]);
             triangleColors[1].copyFrom(colors[2]);
             triangleColors[2].copyFrom(colors[1]);
-            coordinates[0].loadUV(paddedWidth, paddedHeight, textureUvs[3]);
-            coordinates[1].loadUV(paddedWidth, paddedHeight, textureUvs[2]);
-            coordinates[2].loadUV(paddedWidth, paddedHeight, textureUvs[1]);
+            coordinates[0].loadUV(textureSource, textureUvs[3]);
+            coordinates[1].loadUV(textureSource, textureUvs[2]);
+            coordinates[2].loadUV(textureSource, textureUvs[1]);
             shadeTriangle(originalImage, image, triangleColors, coordinates);
         } else {
             throw new RuntimeException("Can't create gouraud shaded image with " + colors.length + " colors.");
         }
 
-        fillHorizontalPadding(image, true, true);
-        fillVerticalPadding(image, true, true);
         return image;
     }
 
@@ -242,7 +238,8 @@ public class PSXTextureShader {
         PSXTextureShader instance = getInstance();
 
         // Draw the scan-lines.
-        for (int y = minTriangleY; y <= maxTriangleY; y++) {
+        int lastLeftLineX = -1, lastRightLineX = -1;
+        for (int y = Math.max(0, minTriangleY); y <= Math.min(maxTriangleY, targetImage.getHeight() - 1); y++) {
             CVector leftLineColor;
             int leftLineX;
             if (y < leftPos.getY()) { // Interpolate between top vertex and left vertex.
@@ -281,15 +278,48 @@ public class PSXTextureShader {
             }
 
             // Fill a scanline.
-            for (int x = leftLineX; x <= rightLineX; x++) {
+            int paddingLeftLineX = leftLineX - GOURAUD_PADDING_PIXELS;
+            int paddingRightLineX = rightLineX + GOURAUD_PADDING_PIXELS;
+            int endOfLineX = Math.min(targetImage.getWidth() - 1, paddingRightLineX);
+            for (int x = Math.max(0, paddingLeftLineX); x <= endOfLineX; x++) {
+                // If this is padding data, verify the pixel is empty.
+                // This is here to deal with quads. When we draw a quad, we draw two triangles.
+                // We need to ensure the padding pixels are skipped if there's already another (potentially non-padding) color there.
+                boolean isPadding = (x < leftLineX || x >= rightLineX);
+                if (isPadding && targetImage.getRGB(x, y) != 0)
+                    continue;
+
+                // Calculate interpolation factor.
                 float xLerpFactor = .5F;
                 if (leftLineX != rightLineX)
                     xLerpFactor = Math.max(0, Math.min(1, ((float) (x - leftLineX)) / (rightLineX - leftLineX)));
 
-                // Write texture.
+                // Apply shading to pixel in scanline.
                 CVector pixelColor = interpolateCVector(leftLineColor, rightLineColor, xLerpFactor, instance.getTempColorVector3());
-                shadePixel(sourceImage, targetImage, x, y, pixelColor);
+                int pixelRgb = sourceImage != null ? sourceImage.getRGB(Math.max(leftLineX, Math.min(x, rightLineX - 1)), y) : 0;
+                shadePixel(sourceImage, targetImage, x, y, pixelRgb, pixelColor);
+
+                // Vertical padding expansion.
+                if (!isPadding) {
+                    // If this is the minimum Y pixel to be part of the triangle in this column, expand the color vertically.
+                    boolean xWrittenLastScanLine = (x >= lastLeftLineX && x < lastRightLineX);
+                    if (!xWrittenLastScanLine) // Write vertical shading extension.
+                        for (int paddingY = Math.max(0, y - GOURAUD_PADDING_PIXELS); paddingY < y; paddingY++)
+                            if (targetImage.getRGB(x, paddingY) == 0)
+                                shadePixel(sourceImage, targetImage, x, paddingY, pixelRgb, pixelColor);
+
+                    // Apply shading to extension to the one below.
+                    // TODO: This performs unnecessary pixel writes. The alternative is doing this next loop iteration, which means caching the pixel color from last time.
+                    // TODO: I'm confident we can avoid an array, by storing the information necessary to re-interpolate.
+                    int paddingMaxTriangleY = Math.min(targetImage.getHeight() - 1, y + GOURAUD_PADDING_PIXELS);
+                    for (int paddingY = y + 1; paddingY <= paddingMaxTriangleY; paddingY++)
+                        if (targetImage.getRGB(x, paddingY) == 0)
+                            shadePixel(sourceImage, targetImage, x, paddingY, pixelRgb, pixelColor);
+                }
             }
+
+            lastLeftLineX = leftLineX;
+            lastRightLineX = rightLineX;
         }
     }
 
@@ -365,7 +395,20 @@ public class PSXTextureShader {
 
     private static void shadePixel(BufferedImage sourceImage, BufferedImage targetImage, int x, int y, CVector shadeColor) {
         if (sourceImage != null) {
-            int textureColor = sourceImage.getRGB(x, y);
+            if (x >= 0 && x < sourceImage.getWidth() && y >= 0 && y < sourceImage.getHeight()) {
+                int textureColor = sourceImage.getRGB(x, y);
+                shadePixel(sourceImage, targetImage, x, y, textureColor, shadeColor);
+            }
+        } else {
+            shadePixel(null, targetImage, x, y, 0, shadeColor);
+        }
+    }
+
+    private static void shadePixel(BufferedImage sourceImage, BufferedImage targetImage, int x, int y, int textureColor, CVector shadeColor) {
+        if (x < 0 || x >= targetImage.getWidth() || y < 0 || y >= targetImage.getHeight())
+            return;
+
+        if (sourceImage != null) {
             byte alpha = Utils.getAlpha(textureColor);
             // If the value exceeds the max, clamp it to the max. Or at least that's what https://psx-spx.consoledev.net/graphicsprocessingunitgpu/ says.
             short red = (short) Math.min(255, (((double) shadeColor.getRedShort() / 127D) * Utils.getRedInt(textureColor)));
@@ -436,6 +479,12 @@ public class PSXTextureShader {
      * @return interpolatedColorVector
      */
     public static CVector interpolateCVector(CVector a, CVector b, float t, CVector result) {
+        // Clamp the value.
+        if (t < 0)
+            t = 0;
+        if (t > 1)
+            t = 1;
+
         if (result == null)
             result = new CVector();
 

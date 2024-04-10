@@ -42,7 +42,7 @@ public interface ITextureSource {
      * Get the height of the image with padding removed.
      */
     default int getUnpaddedHeight() {
-        return getWidth() - getUpPadding() - getDownPadding();
+        return getHeight() - getUpPadding() - getDownPadding();
     }
 
     /**

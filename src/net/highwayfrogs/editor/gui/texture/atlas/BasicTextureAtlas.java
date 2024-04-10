@@ -90,9 +90,9 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
     }
 
     @Override
-    public Vector2f getUV(Texture heldTexture, int x, int y) {
+    public Vector2f getUV(Texture heldTexture, int x, int y, Vector2f result) {
         if (heldTexture == this)
-            return super.getUV(heldTexture, x, y);
+            return super.getUV(heldTexture, x, y, result);
 
         if (heldTexture == null)
             throw new NullPointerException("heldTexture");
@@ -102,15 +102,17 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
             throw new IllegalStateException("Tried to get the UV of a texture which wasn't held by this atlas!");
 
         AtlasTexture atlasTexture = (AtlasTexture) heldTexture;
-        float xPos = atlasTexture.getX() + atlasTexture.getLeftPadding() + atlasTexture.getLeftPaddingEmpty() + x;
-        float yPos = atlasTexture.getY() + atlasTexture.getUpPadding() + atlasTexture.getUpPaddingEmpty() + y;
-        return new Vector2f(xPos / getPaddedWidth(), yPos / getPaddedHeight());
+        int xPos = atlasTexture.getX() + atlasTexture.getLeftPaddingEmpty() + atlasTexture.getLeftPadding() + x;
+        int yPos = atlasTexture.getY() + atlasTexture.getUpPaddingEmpty() + atlasTexture.getUpPadding() + y;
+        result.setX((float) xPos / getPaddedHeight());
+        result.setY((float) yPos / getPaddedHeight());
+        return result;
     }
 
     @Override
-    public Vector2f getUV(Texture heldTexture, Vector2f localUv) {
+    public Vector2f getUV(Texture heldTexture, Vector2f localUv, Vector2f result) {
         if (heldTexture == this)
-            return super.getUV(heldTexture, localUv);
+            return super.getUV(heldTexture, localUv, result);
 
         if (heldTexture == null)
             throw new NullPointerException("heldTexture");
@@ -120,11 +122,11 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
             throw new IllegalStateException("Tried to get the UV of a texture which wasn't held by this atlas!");
 
         AtlasTexture atlasTexture = (AtlasTexture) heldTexture;
-        float baseU = (float) (atlasTexture.getX() + atlasTexture.getLeftPadding() + atlasTexture.getLeftPaddingEmpty()) / this.getPaddedWidth();
-        float baseV = (float) (atlasTexture.getY() + atlasTexture.getUpPadding() + atlasTexture.getUpPaddingEmpty()) / this.getPaddedHeight();
-        float localU = (localUv.getX() * heldTexture.getWidth()) / this.getPaddedWidth();
-        float localV = (localUv.getY() * heldTexture.getHeight()) / this.getPaddedHeight();
-        return new Vector2f(baseU + localU, baseV + localV);
+        int baseX = (atlasTexture.getX() + atlasTexture.getLeftPaddingEmpty() + atlasTexture.getLeftPadding());
+        int baseY = (atlasTexture.getY() + atlasTexture.getUpPaddingEmpty() + atlasTexture.getUpPadding());
+        result.setX((baseX + (localUv.getX() * heldTexture.getWidthWithoutPadding())) / getPaddedWidth());
+        result.setY((baseY + (localUv.getY() * heldTexture.getHeightWithoutPadding())) / getPaddedHeight());
+        return result;
     }
 
     private void onTextureChange(Texture texture, BufferedImage oldImage, BufferedImage newImage, boolean didOldImageHaveAnyTransparency) {
