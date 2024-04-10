@@ -27,10 +27,14 @@ public class BeastWarsMapMeshNode extends DynamicMeshAdapterNode<BeastWarsMapVer
         for (int z = 0; z < getMap().getHeightMapZLength(); z++)
             for (int x = 0; x < getMap().getHeightMapXLength(); x++)
                 this.add(getMap().getVertex(x, z));
+        getMesh().popBatchOperations(); // Complete vertex operations before we're able to start adding other stuff. I think we should look into why this is necessary at some point.
 
+        // After the vertices are set, lets try to create the faces.
         for (int z = 0; z < getMap().getHeightMapZLength(); z++)
             for (int x = 0; x < getMap().getHeightMapXLength(); x++)
                 this.setupFaces(getMap().getVertex(x, z));
+
+        getMesh().pushBatchOperations(); // onAddedToMesh() expects batch operations to be pushed.
     }
 
     @Override
