@@ -66,6 +66,11 @@ public class AtlasBuilderTextureSource implements ITextureSource {
     }
 
     @Override
+    public boolean hasAnyTransparentPixels(BufferedImage image) {
+        return true; // Empty space is transparent.
+    }
+
+    @Override
     public BufferedImage makeImage() {
         if (this.cachedImage == null || (this.atlas.getAtlasWidth() != this.cachedImage.getWidth()) || (this.atlas.getAtlasHeight() != this.cachedImage.getHeight())) {
             this.cachedImage = makeNewImage();
@@ -82,6 +87,7 @@ public class AtlasBuilderTextureSource implements ITextureSource {
         Graphics2D g = this.cachedImage.createGraphics();
 
         g.setBackground(new Color(255, 255, 255, 0));
+        g.setComposite(AlphaComposite.Src); // If we write a transparent image, it will still delete whatever image data is there already.
 
         // Update each image marked for update.
         try {
@@ -90,10 +96,6 @@ public class AtlasBuilderTextureSource implements ITextureSource {
             for (int i = 0; i < sortedTextures.size(); i++) {
                 AtlasTexture texture = sortedTextures.get(i);
                 if (texture.isAtlasCachedImageInvalid()) {
-                    // If there are any transparent pixels, we must clear the area first to avoid the previous image showing through.
-                    if (texture.isHasAnyTransparentPixels())
-                        g.clearRect(texture.getX(), texture.getY(), texture.getPaddedWidth(), texture.getPaddedHeight());
-
                     g.drawImage(texture.getImage(), texture.getX() + texture.getLeftPaddingEmpty(), texture.getY() + texture.getUpPaddingEmpty(), texture.getNonEmptyPaddedWidth(), texture.getNonEmptyPaddedHeight(), null);
                     texture.onTextureWrittenToAtlas();
                 }

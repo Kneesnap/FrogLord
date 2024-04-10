@@ -178,12 +178,7 @@ public abstract class Texture {
         this.leftPadding = this.textureSource.getLeftPadding();
         this.rightPadding = this.textureSource.getRightPadding();
 
-        boolean foundTransparentPixel = false;
-        for (int y = 0; y < this.cachedImage.getHeight() && !foundTransparentPixel; y++)
-            for (int x = 0; x < this.cachedImage.getWidth() && !foundTransparentPixel; x++)
-                if (Utils.getAlpha(this.cachedImage.getRGB(x, y)) != (byte) 0xFF)
-                    foundTransparentPixel = true;
-        this.hasAnyTransparentPixels = foundTransparentPixel;
+        this.hasAnyTransparentPixels = this.textureSource.hasAnyTransparentPixelsImpl(this.cachedImage);
 
         this.cachedImageWithoutPadding = null;
         if (oldImage != null)

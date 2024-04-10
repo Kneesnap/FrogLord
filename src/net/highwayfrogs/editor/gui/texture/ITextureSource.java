@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.gui.texture;
 
+import net.highwayfrogs.editor.utils.Utils;
+
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.function.Consumer;
@@ -10,6 +12,30 @@ import java.util.function.Consumer;
  * Created by Kneesnap on 9/23/2023.
  */
 public interface ITextureSource {
+    /**
+     * Returns true if the image has at least one portion of transparency.
+     * @param image the image to test which is represented by this texture source
+     * @return true iff there are any transparent pixels
+     */
+    default boolean hasAnyTransparentPixels(BufferedImage image) {
+        return hasAnyTransparentPixelsImpl(image);
+    }
+
+    /**
+     * The default implementation of hasAnyTransparentPixels() which checks the image for any transparent pixels
+     * @param image the image to test
+     */
+    default boolean hasAnyTransparentPixelsImpl(BufferedImage image) {
+        if (image == null)
+            return false;
+
+        for (int y = 0; y < image.getHeight(); y++)
+            for (int x = 0; x < image.getWidth(); x++)
+                if (Utils.getAlpha(image.getRGB(x, y)) != (byte) 0xFF)
+                    return true;
+        return false;
+    }
+
     /**
      * Gets a list of listeners listening for an image change that impacts rendering.
      */

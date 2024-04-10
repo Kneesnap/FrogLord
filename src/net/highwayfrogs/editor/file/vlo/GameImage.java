@@ -551,6 +551,11 @@ public class GameImage extends GameObject implements Cloneable, TextureSource, I
     }
 
     @Override
+    public boolean hasAnyTransparentPixels(BufferedImage image) {
+        return testFlag(FLAG_TRANSLUCENT) || testFlag(FLAG_BLACK_IS_TRANSPARENT) || hasAnyTransparentPixelsImpl(image);
+    }
+
+    @Override
     public BufferedImage makeImage() {
         BufferedImage image = makeUnmodifiedImage();
         if (testFlag(FLAG_BLACK_IS_TRANSPARENT))

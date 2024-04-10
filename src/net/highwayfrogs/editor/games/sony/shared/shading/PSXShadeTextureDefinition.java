@@ -174,6 +174,11 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     }
 
     @Override
+    public boolean hasAnyTransparentPixels(BufferedImage image) {
+        return this.semiTransparentMode || hasAnyTransparentPixelsImpl(image);
+    }
+
+    @Override
     public BufferedImage makeImage() {
         if (this.polygonType.isTextured() && getSourceImage() == null)
             return null; // There's no texture available.
