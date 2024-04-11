@@ -276,6 +276,9 @@ public class PSXTextureShader {
                 int temp = leftLineX;
                 leftLineX = rightLineX;
                 rightLineX = temp;
+                CVector tempColor = leftLineColor;
+                leftLineColor = rightLineColor;
+                rightLineColor = tempColor;
             }
 
             // Write vertical padding under the pixels which stopped getting written after the previous scanline.
