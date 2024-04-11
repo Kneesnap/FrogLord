@@ -496,7 +496,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         }
 
         // Load FXML for UI layout.
-        FXMLLoader fxmlLoader = new FXMLLoader(MeshViewController.class.getResource("/javafx/base-mesh-view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(MeshViewController.class.getResource("/fxml/scene-basic-3d.fxml"));
         fxmlLoader.setController(controller);
 
         // Load template.

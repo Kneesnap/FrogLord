@@ -46,6 +46,6 @@ public class AboutController implements Initializable {
      * Opens the about menu.
      */
     public static void openAboutMenu() {
-        Utils.loadFXMLTemplate("about", "About FrogLord", AboutController::new);
+        Utils.loadFXMLTemplate(null, "window-about", "About FrogLord", AboutController::new);
     }
 }

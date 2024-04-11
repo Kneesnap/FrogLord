@@ -68,6 +68,6 @@ public class GridResizeController implements Initializable {
      * @param gridController The grid controller.
      */
     public static void open(GridController gridController) {
-        Utils.loadFXMLTemplate("grid-resize", "Grid Resize", newStage -> new GridResizeController(newStage, gridController));
+        Utils.loadFXMLTemplate(gridController.getMap().getGameInstance(), "window-map-resize-grid", "Grid Resize", newStage -> new GridResizeController(newStage, gridController));
     }
 }

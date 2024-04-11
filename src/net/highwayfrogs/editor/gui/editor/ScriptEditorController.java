@@ -221,13 +221,13 @@ public class ScriptEditorController extends SCGameObject<FroggerGameInstance> im
      * Opens the Script Editor.
      */
     public static void openEditor(FroggerGameInstance instance) {
-        Utils.loadFXMLTemplate(instance, "script", "Script Editor", ScriptEditorController::new);
+        Utils.loadFXMLTemplate(instance, "window-script-editor", "Script Editor", ScriptEditorController::new);
     }
 
     /**
      * Opens the Script Editor and view a given script.
      */
     public static void openEditor(FroggerGameInstance instance, FroggerScript script) {
-        Utils.loadFXMLTemplate(instance, "script", "Script Editor", (safeInstance, stage) -> new ScriptEditorController(safeInstance, stage, script));
+        Utils.loadFXMLTemplate(instance, "window-script-editor", "Script Editor", (safeInstance, stage) -> new ScriptEditorController(safeInstance, stage, script));
     }
 }

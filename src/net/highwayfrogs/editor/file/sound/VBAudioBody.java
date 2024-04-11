@@ -33,7 +33,7 @@ public abstract class VBAudioBody<THeader extends VHAudioHeader> extends SCShare
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new VABController(getGameInstance()), "vb", this);
+        return loadEditor(getGameInstance(), new VABController(getGameInstance()), "edit-file-vb", this);
     }
 
     @Override

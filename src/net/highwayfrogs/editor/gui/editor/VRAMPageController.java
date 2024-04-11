@@ -401,6 +401,6 @@ public class VRAMPageController implements Initializable {
      */
     public static void openEditor(VLOController controller) {
         boolean isPsx = controller.getFile().isPsxMode();
-        Utils.loadFXMLTemplate(isPsx ? "vram-psx" : "vram-pc", (isPsx ? "PS1" : "PC") + " VRAM Editor", newStage -> new VRAMPageController(newStage, controller));
+        Utils.loadFXMLTemplate(controller.getGameInstance(), "edit-file-vlo-vram-" + (isPsx ? "psx" : "pc"), (isPsx ? "PS1" : "PC") + " VRAM Editor", newStage -> new VRAMPageController(newStage, controller));
     }
 }

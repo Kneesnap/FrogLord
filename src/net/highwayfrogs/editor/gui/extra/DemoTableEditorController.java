@@ -79,6 +79,6 @@ public class DemoTableEditorController extends SCGameObject<FroggerGameInstance>
      * Opens the demo table Editor.
      */
     public static void openEditor(FroggerGameInstance instance) {
-        Utils.loadFXMLTemplate(instance, "demo-table", "Demo Table Editor", DemoTableEditorController::new);
+        Utils.loadFXMLTemplate(instance, "edit-hardcoded-demo-table", "Demo Table Editor", DemoTableEditorController::new);
     }
 }

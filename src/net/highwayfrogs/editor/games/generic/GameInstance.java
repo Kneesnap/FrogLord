@@ -5,12 +5,11 @@ import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
+import java.net.URL;
 import java.util.logging.Logger;
 
 /**
  * Represents an instance of a game. For example, a folder containing the files for a single version of a game.
- * TODO: Organize resources folder.
- * TODO: Add dates to all of the game configs. (& Stop relying on configured indicator of game type)
  * TODO: UI Plans?
  *  - 1) Standard UI for opening games.
  *  - 2) Standardize Main UI Layout. (But let games optionally roll their own system) -> Also, change who's in charge of UI.
@@ -56,7 +55,7 @@ public abstract class GameInstance {
             throw new IllegalStateException("Cannot load the game configuration '" + configName + "' because it has already been loaded.");
 
         this.config = makeConfig(configName);
-        this.config.loadData(config);
+        this.config.loadData(config, this.gameType);
         this.onConfigLoad(config);
     }
 
@@ -103,5 +102,14 @@ public abstract class GameInstance {
      */
     public boolean isValidLookingPointer(long testPointer) {
         return GameUtils.isValidLookingPointer(getPlatform(), testPointer);
+    }
+
+    /**
+     * Gets the FXMLLoader by its name.
+     * @param template The template name.
+     * @return loader
+     */
+    public URL getFXMLTemplateURL(String template) {
+        return this.gameType.getEmbeddedResourceURL("fxml/" + template + ".fxml");
     }
 }

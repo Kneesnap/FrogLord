@@ -66,7 +66,7 @@ public class DemoFile extends SCGameFile<FroggerGameInstance> {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new DemoController(getGameInstance()), "demo", this);
+        return loadEditor(getGameInstance(), new DemoController(getGameInstance()), "edit-file-demo", this);
     }
 
     @AllArgsConstructor

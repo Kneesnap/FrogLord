@@ -35,7 +35,7 @@ public class InputMenu {
      * @param handler The behavior to execute when the user accepts.
      */
     public static void promptInput(String prompt, String defaultText, Consumer<String> handler) {
-        Utils.loadFXMLTemplate("input", "Waiting for user input...", newStage -> new InputController(newStage, prompt, handler, defaultText));
+        Utils.loadFXMLTemplate(null, "window-wait-for-user-input", "Waiting for user input...", newStage -> new InputController(newStage, prompt, handler, defaultText));
     }
 
     public static class InputController implements Initializable {

@@ -145,7 +145,7 @@ public class MOFHolder extends SCSharedGameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new MOFMainController(getGameInstance()), "mofmain", this);
+        return loadEditor(getGameInstance(), new MOFMainController(getGameInstance()), "edit-file-mof", this);
     }
 
     @Override

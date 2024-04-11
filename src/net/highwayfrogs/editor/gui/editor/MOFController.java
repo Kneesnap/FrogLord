@@ -146,7 +146,7 @@ public class MOFController extends EditorController<MOFHolder, SCGameInstance, S
         this.camera = new PerspectiveCamera(true);
 
         // Load FXML for UI layout.
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/javafx/mof-view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getGameInstance().getFXMLTemplateURL("scene-mof-viewer-3d"));
         fxmlLoader.setController(this.uiController);
         Parent loadRoot = fxmlLoader.load();
 

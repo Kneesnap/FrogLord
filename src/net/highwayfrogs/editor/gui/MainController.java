@@ -313,7 +313,7 @@ public class MainController implements Initializable {
 
     @FXML
     private void actionHashPlayground(ActionEvent evt) {
-        HashPlaygroundController.openEditor();
+        HashPlaygroundController.openEditor(getGameInstance());
     }
 
     @FXML

@@ -25,6 +25,7 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
 
@@ -543,7 +544,7 @@ public class Utils {
      * @param resourceName The resource name.
      * @return resourceURL
      */
-    public static URL getResource(String resourceName) {
+    public static URL getResourceURL(String resourceName) {
         return Utils.class.getClassLoader().getResource(resourceName);
     }
 
@@ -1009,13 +1010,14 @@ public class Utils {
     /**
      * Load a FXML template as a new window.
      * WARNING: This method is blocking.
-     * @param template   The name of the template to load. Should not be user-controllable, as there is no path sanitization.
-     * @param title      The title of the window to show.
+     * @param gameInstance the game instance to load the fxml template for
+     * @param template The name of the template to load. Should not be user-controllable, as there is no path sanitization.
+     * @param title The title of the window to show.
      * @param controller Makes the window controller.
      */
     @SneakyThrows
-    public static <T> void loadFXMLTemplate(String template, String title, Function<Stage, T> controller) {
-        loadFXMLTemplate(template, title, controller, null);
+    public static <T> void loadFXMLTemplate(GameInstance gameInstance, String template, String title, Function<Stage, T> controller) {
+        loadFXMLTemplate(gameInstance, template, title, controller, null);
     }
 
     /**
@@ -1035,8 +1037,17 @@ public class Utils {
      * @param template The template name.
      * @return loader
      */
-    public static FXMLLoader getFXMLLoader(String template) {
-        return new FXMLLoader(getResource("javafx/" + template + ".fxml"));
+    public static FXMLLoader getFXMLLoader(GameInstance gameInstance, String template) {
+        URL url = gameInstance != null ? gameInstance.getFXMLTemplateURL(template) : null;
+
+        String localPath = "fxml/" + template + ".fxml";
+        if (url == null)
+            url = Utils.getResourceURL(localPath);
+
+        if (url == null)
+            throw new RuntimeException("Could not find resource '" + localPath + "' for " + Utils.getSimpleName(gameInstance) + ".");
+
+        return new FXMLLoader(url);
     }
 
     /**
@@ -1047,8 +1058,8 @@ public class Utils {
      * @param controller Makes the window controller.
      */
     @SneakyThrows
-    public static <T> void loadFXMLTemplate(String template, String title, Function<Stage, T> controller, BiConsumer<Stage, T> consumer) {
-        FXMLLoader loader = getFXMLLoader(template);
+    public static <T> void loadFXMLTemplate(GameInstance gameInstance, String template, String title, Function<Stage, T> controller, BiConsumer<Stage, T> consumer) {
+        FXMLLoader loader = getFXMLLoader(gameInstance, template);
 
         Stage newStage = new Stage();
         newStage.setTitle(title);
@@ -1078,7 +1089,7 @@ public class Utils {
      */
     @SneakyThrows
     public static <T> void loadFXMLTemplate(FroggerGameInstance instance, String template, String title, BiFunction<FroggerGameInstance, Stage, T> controller, TriConsumer<FroggerGameInstance, Stage, T> consumer) {
-        FXMLLoader loader = getFXMLLoader(template);
+        FXMLLoader loader = getFXMLLoader(instance, template);
 
         Stage newStage = new Stage();
         newStage.setTitle(title);

@@ -63,7 +63,7 @@ public class TGQUtils {
 
         loadedFileListConfiguration = true;
 
-        Config config = new Config(Utils.getResourceStream("tgq/file-list.cfg"));
+        Config config = new Config(TGQGameType.INSTANCE.getEmbeddedResourceStream("file-list.cfg"));
         for (Config fileListCfg : config.getOrderedChildren()) {
             for (String filePath : fileListCfg.getText()) {
                 if (filePath.equalsIgnoreCase("UNKNOWN") || filePath.trim().isEmpty())

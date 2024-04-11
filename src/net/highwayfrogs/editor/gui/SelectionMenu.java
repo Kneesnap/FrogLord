@@ -37,7 +37,7 @@ public class SelectionMenu {
      * @param handler The behavior to execute when the user accepts.
      */
     public static <T> void promptSelection(String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction) {
-        Utils.loadFXMLTemplate("select", "Waiting for selection...", newStage -> new SelectionController<>(newStage, prompt, handler, values, nameFunction, imageFunction));
+        Utils.loadFXMLTemplate(null, "window-wait-for-user-select", "Waiting for selection...", newStage -> new SelectionController<>(newStage, prompt, handler, values, nameFunction, imageFunction));
     }
 
     /**

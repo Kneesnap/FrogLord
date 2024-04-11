@@ -137,6 +137,6 @@ public class FormEntryController extends SCGameObject<FroggerGameInstance> imple
      * Open the level info controller.
      */
     public static void openEditor(FroggerGameInstance instance) {
-        Utils.loadFXMLTemplate(instance, "form-entry", "Form Library Editor", FormEntryController::new);
+        Utils.loadFXMLTemplate(instance, "edit-hardcoded-form-entry", "Form Library Editor", FormEntryController::new);
     }
 }

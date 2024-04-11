@@ -77,7 +77,7 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new OldFroggerMapController(getGameInstance()), "old-frogger-map", this);
+        return loadEditor(getGameInstance(), new OldFroggerMapController(getGameInstance()), "edit-file-map", this);
     }
 
     @Override

@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 public class GameConfig {
     private final String internalName;
     private Config config;
+    private IGameType gameType;
 
     // Loaded configuration data.
     private String displayName;
@@ -36,13 +37,14 @@ public class GameConfig {
      * Load data from the specified config.
      * @param config The config to load data from.
      */
-    public final void loadData(Config config) {
+    public final void loadData(Config config, IGameType gameType) {
         if (this.config != null)
             throw new RuntimeException("The config " + this.internalName + " already has its data loaded.");
 
         if (config == null)
             return;
 
+        this.gameType = gameType;
         this.config = config;
         readConfigData(config);
     }
@@ -70,7 +72,7 @@ public class GameConfig {
         if (animBankName == null)
             return NameBank.EMPTY_BANK;
 
-        return NameBank.readBank(bankName, animBankName, addChildrenToMainBank, nameHandler);
+        return NameBank.readBank(this.gameType, bankName, animBankName, addChildrenToMainBank, nameHandler);
     }
 
     /**

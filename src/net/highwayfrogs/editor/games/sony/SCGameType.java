@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.sony;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
@@ -10,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2GameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.util.Locale;
 import java.util.function.Supplier;
 
 /**
@@ -17,7 +17,6 @@ import java.util.function.Supplier;
  * Created by Kneesnap on 9/6/2023.
  */
 @Getter
-@AllArgsConstructor
 public enum SCGameType implements IGameType {
     //HEADRUSH(null), // Aka Brains In Planes
     OLD_FROGGER(OldFroggerGameInstance::new),
@@ -31,6 +30,12 @@ public enum SCGameType implements IGameType {
     C12(null);
 
     private final Supplier<SCGameInstance> instanceMaker;
+    private final String identifier;
+
+    SCGameType(Supplier<SCGameInstance> instanceMaker) {
+        this.instanceMaker = instanceMaker;
+        this.identifier = name().toLowerCase(Locale.ROOT).replace("_", "");
+    }
 
     /**
      * Test if this game was developed at or after the provided game.

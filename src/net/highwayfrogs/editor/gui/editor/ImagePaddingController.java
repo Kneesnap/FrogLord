@@ -110,6 +110,6 @@ public class ImagePaddingController implements Initializable {
      * @param controller The VLO controller opening this.
      */
     public static void openPaddingMenu(VLOController controller) {
-        Utils.loadFXMLTemplate("image-padding", "Image Padding Editor", newStage -> new ImagePaddingController(newStage, controller));
+        Utils.loadFXMLTemplate(controller.getGameInstance(), "window-edit-vlo-image-padding", "Image Padding Editor", newStage -> new ImagePaddingController(newStage, controller));
     }
 }

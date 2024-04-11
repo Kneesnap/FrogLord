@@ -169,7 +169,7 @@ public class WADFile extends SCSharedGameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new WADController(getGameInstance()), "wad", this);
+        return loadEditor(getGameInstance(), new WADController(getGameInstance()), "edit-file-wad", this);
     }
 
     @Getter

@@ -140,7 +140,7 @@ public class VLOArchive extends SCSharedGameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new VLOController(getGameInstance()), "vlo", this);
+        return loadEditor(getGameInstance(), new VLOController(getGameInstance()), "edit-file-vlo", this);
     }
 
     @Override

@@ -215,7 +215,7 @@ public class MAPController extends EditorController<MAPFile, FroggerGameInstance
         meshView.setCullFace(CullFace.BACK);
 
         // Load FXML for UI layout.
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/javafx/mapui.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getGameInstance().getFXMLTemplateURL("scene-map-editor-3d"));
         Parent loadRoot = fxmlLoader.load();
         this.mapUIController = fxmlLoader.getController(); // Get the custom mapui controller
         this.mapUIController.setupController(this, stageToOverride, mesh, meshView, loadRoot);

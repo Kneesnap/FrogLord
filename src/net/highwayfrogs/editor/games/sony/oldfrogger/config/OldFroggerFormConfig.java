@@ -3,9 +3,9 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.config;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
+import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerEntityData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerEntityData.OldFroggerEntityDataFactory;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,7 +54,7 @@ public class OldFroggerFormConfig {
      * @return formConfig
      */
     public static OldFroggerFormConfig loadFormConfig(String formConfigName) {
-        Config config = new Config(Utils.getResourceStream("banks/forms/" + formConfigName + ".cfg"));
+        Config config = new Config(SCGameType.OLD_FROGGER.getEmbeddedResourceStream("forms/" + formConfigName + ".cfg"));
         return parseFromConfig(config);
     }
 

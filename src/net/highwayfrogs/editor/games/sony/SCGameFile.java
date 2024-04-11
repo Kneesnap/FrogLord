@@ -127,7 +127,7 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      */
     @SneakyThrows
     public static Image loadIcon(String iconName) {
-        return Utils.toFXImage(ImageIO.read(Utils.getResource("icons/" + iconName + ".png")), false);
+        return Utils.toFXImage(ImageIO.read(Utils.getResourceURL("icons/" + iconName + ".png")), false);
     }
 
     /**
@@ -137,9 +137,9 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      * @param editFile   The file to edit.
      * @return guiNode
      */
-    public static <T extends SCGameFile<?>> Node loadEditor(EditorController<T, ?, ?> controller, String template, T editFile) {
+    public static <T extends SCGameFile<?>> Node loadEditor(SCGameInstance gameInstance, EditorController<T, ?, ?> controller, String template, T editFile) {
         try {
-            FXMLLoader loader = Utils.getFXMLLoader(template);
+            FXMLLoader loader = Utils.getFXMLLoader(gameInstance, template);
             loader.setController(controller);
             Node node = loader.load();
             controller.loadFile(editFile);

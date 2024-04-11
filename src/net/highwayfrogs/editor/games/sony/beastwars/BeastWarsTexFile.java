@@ -263,7 +263,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new TexController(getGameInstance()), "tex", this);
+        return loadEditor(getGameInstance(), new TexController(getGameInstance()), "edit-file-tex", this);
     }
 
     @Override

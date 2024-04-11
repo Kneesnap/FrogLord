@@ -640,6 +640,6 @@ public class GridController implements Initializable {
      * @param manager The geometry manager.
      */
     public static void openGridEditor(GeometryManager manager) {
-        Utils.loadFXMLTemplate("grid", "Grid Editor", newStage -> new GridController(newStage, manager));
+        Utils.loadFXMLTemplate(manager.getMap().getGameInstance(), "window-edit-map-collision-grid", "Grid Editor", newStage -> new GridController(newStage, manager));
     }
 }

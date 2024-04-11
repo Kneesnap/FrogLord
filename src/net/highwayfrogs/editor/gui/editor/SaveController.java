@@ -58,7 +58,7 @@ public class SaveController implements Initializable {
      * @param instance The executable config.
      */
     public static void saveFiles(SCGameInstance instance) {
-        Utils.loadFXMLTemplate("save", "Saving MWD", SaveController::new,
+        Utils.loadFXMLTemplate(instance, "window-saving-progress", "Saving MWD", SaveController::new,
                 (stage, controller) -> controller.startSaving(instance, instance.getExeFile().getParentFile()));
     }
 

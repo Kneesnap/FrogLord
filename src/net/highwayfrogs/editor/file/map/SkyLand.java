@@ -48,7 +48,7 @@ public class SkyLand extends SCGameFile<FroggerGameInstance> {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new SkyLandController(getGameInstance()), "skyland", this);
+        return loadEditor(getGameInstance(), new SkyLandController(getGameInstance()), "edit-file-sky-land", this);
     }
 
     @Override

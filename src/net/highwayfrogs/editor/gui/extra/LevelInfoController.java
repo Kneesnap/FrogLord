@@ -111,6 +111,6 @@ public class LevelInfoController extends SCGameObject<FroggerGameInstance> imple
      * Open the level info controller.
      */
     public static void openEditor(FroggerGameInstance instance) {
-        Utils.loadFXMLTemplate(instance, "level-info", "Level Stack Editor", LevelInfoController::new);
+        Utils.loadFXMLTemplate(instance, "edit-hardcoded-level-info", "Level Stack Editor", LevelInfoController::new);
     }
 }

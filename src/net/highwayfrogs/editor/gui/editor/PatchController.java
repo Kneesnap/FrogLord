@@ -19,6 +19,7 @@ import net.highwayfrogs.editor.file.patch.GamePatch;
 import net.highwayfrogs.editor.file.patch.PatchArgument;
 import net.highwayfrogs.editor.file.patch.PatchRuntime;
 import net.highwayfrogs.editor.file.patch.PatchValue;
+import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.games.sony.SCGameObject;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
@@ -187,21 +188,21 @@ public class PatchController extends SCGameObject<FroggerGameInstance> implement
      */
     public static void openMenu(FroggerGameInstance instance) {
         if (getPatches().isEmpty())
-            loadPatches();
+            loadPatches(instance.getGameType());
 
-        Utils.loadFXMLTemplate(instance, "patch-menu", "Patch Menu", PatchController::new);
+        Utils.loadFXMLTemplate(instance, "window-patch-menu", "Patch Menu", PatchController::new);
     }
 
     /**
      * Loads built-in patches.
      */
-    public static void loadPatches() {
+    public static void loadPatches(IGameType gameType) {
         getPatches().clear();
 
-        List<String> lines = Utils.readLinesFromStream(Utils.getResourceStream("patches/list"));
+        List<String> lines = Utils.readLinesFromStream(gameType.getEmbeddedResourceStream("patches/list"));
 
         for (String patchName : lines) {
-            Config config = new Config(Utils.getResourceStream("patches/" + patchName + ".patch"));
+            Config config = new Config(gameType.getEmbeddedResourceStream("patches/" + patchName + ".patch"));
             GamePatch loadPatch = new GamePatch();
             loadPatch.loadPatchFromConfig(config);
             getPatches().add(loadPatch);

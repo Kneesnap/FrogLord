@@ -389,7 +389,7 @@ public class PSXTIMFile extends SCSharedGameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new TIMController(getGameInstance()), "tim", this);
+        return loadEditor(getGameInstance(), new TIMController(getGameInstance()), "edit-file-tim", this);
     }
 
     @Override

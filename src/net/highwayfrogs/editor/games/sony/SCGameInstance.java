@@ -15,7 +15,6 @@ import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.generic.GameUtils;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
@@ -25,6 +24,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.util.*;
 
@@ -132,6 +132,15 @@ public abstract class SCGameInstance extends GameInstance {
     @Override
     public SCGameConfig getConfig() {
         return (SCGameConfig) super.getConfig();
+    }
+
+    @Override
+    public URL getFXMLTemplateURL(String template) {
+        URL templateUrl = super.getFXMLTemplateURL(template);
+        if (templateUrl == null) // Lookup from shared fxml templates if the lookup in this game fails.
+            templateUrl = Utils.getResourceURL("games/sony/fxml/" + template + ".fxml");
+
+        return templateUrl;
     }
 
     /**

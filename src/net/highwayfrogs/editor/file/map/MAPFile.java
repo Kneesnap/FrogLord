@@ -812,7 +812,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new MAPController(getGameInstance()), "map", this);
+        return loadEditor(getGameInstance(), new MAPController(getGameInstance()), "edit-file-map", this);
     }
 
     @Override

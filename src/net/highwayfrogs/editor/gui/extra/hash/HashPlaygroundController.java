@@ -9,6 +9,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -106,7 +107,7 @@ public class HashPlaygroundController implements Initializable {
     /**
      * Open the level info controller.
      */
-    public static void openEditor() {
-        Utils.loadFXMLTemplate("hash-playground", "Hash Playground", HashPlaygroundController::new);
+    public static void openEditor(SCGameInstance gameInstance) {
+        Utils.loadFXMLTemplate(gameInstance, "window-hash-playground", "Hash Playground", HashPlaygroundController::new);
     }
 }

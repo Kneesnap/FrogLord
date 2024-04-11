@@ -48,7 +48,7 @@ public class TimeUtils {
             return Instant.ofEpochSecond(Long.parseLong(input));
 
         try {
-            return DATE_PARSE_FORMATTER.parseBest(input, ZonedDateTime::from, YearMonth::from, Year::from);
+            return DATE_PARSE_FORMATTER.parseBest(input, ZonedDateTime::from, LocalDateTime::from, YearMonth::from, Year::from);
         } catch (DateTimeParseException exception) {
             throw new RuntimeException("Failed to parse timestamp from '" + input + "'", exception);
         }

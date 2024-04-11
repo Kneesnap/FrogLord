@@ -96,7 +96,7 @@ public class PALFile extends SCSharedGameFile {
 
     @Override
     public Node makeEditor() {
-        return loadEditor(new PaletteController(getGameInstance()), "pal", this);
+        return loadEditor(getGameInstance(), new PaletteController(getGameInstance()), "edit-file-pal", this);
     }
 
     /**

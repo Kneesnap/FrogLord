@@ -116,8 +116,9 @@ public class GUIMain extends Application {
         }, internalToDisplayNames, Entry::getValue, null);
     }
 
-    private SCGameInstance makeGameInstance(File inputExe, File inputMwd, String configName) {
-        Config config = new Config(Utils.getResourceStream(getExeConfigPath(configName)));
+    private SCGameInstance makeGameInstance(File inputExe, File inputMwd, String configPath) {
+        Config config = new Config(Utils.getResourceStream(getExeConfigPath(configPath)));
+        String configName = configPath.contains("/") ? configPath.substring(configPath.lastIndexOf('/') + 1) : configPath;
         SCGameType gameType = config.getEnum("game", SCGameType.FROGGER); // TODO: Better system.
         SCGameInstance instance = gameType.createGameInstance();
         MainController.MAIN_WINDOW = null; // Ensures messages get logged to the new window instead of printed to the old one.
@@ -126,13 +127,13 @@ public class GUIMain extends Application {
     }
 
     private static String getExeConfigPath(String configName) {
-        return "exes/" + configName + ".cfg";
+        return "games/" + configName + ".cfg";
     }
 
     @SneakyThrows
     private void openGUI(Stage primaryStage, SCGameInstance instance) {
         // Setup GUI (We display the uninitialized GUI before the MWD loads because it intangibly feels better this way.)
-        Parent root = FXMLLoader.load(Utils.getResource("javafx/main.fxml"));
+        Parent root = FXMLLoader.load(Utils.getResourceURL("fxml/window-main.fxml"));
         Scene scene = new Scene(root);
 
         primaryStage.setTitle("FrogLord " + Constants.VERSION);
