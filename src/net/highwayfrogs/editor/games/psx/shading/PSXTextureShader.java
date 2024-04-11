@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.sony.shared.shading;
+package net.highwayfrogs.editor.games.psx.shading;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

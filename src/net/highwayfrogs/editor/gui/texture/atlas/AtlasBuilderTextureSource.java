@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.gui.texture.atlas;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshNode;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;

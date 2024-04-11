@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTable
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapVersion;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapGridHeaderPacket.OldFroggerMapGrid;
-import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;

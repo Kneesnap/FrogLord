@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
-import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
 
 /**
  * Manages shaded textures for old Frogger.

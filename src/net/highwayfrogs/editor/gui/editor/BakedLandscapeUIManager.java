@@ -9,7 +9,7 @@ import javafx.scene.transform.Translate;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.games.sony.shared.shading.PSXShadeTextureDefinition;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.fxobject.PSXShadingEditor;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;

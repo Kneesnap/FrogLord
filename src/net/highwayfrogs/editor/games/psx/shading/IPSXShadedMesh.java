@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.sony.shared.shading;
+package net.highwayfrogs.editor.games.psx.shading;
 
 /**
  * Represents a mesh which has toggleable PSX shading.

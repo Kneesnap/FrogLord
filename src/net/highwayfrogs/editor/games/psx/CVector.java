@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.sony.shared.shading.PSXTextureShader;
+import net.highwayfrogs.editor.games.psx.shading.PSXTextureShader;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.utils.IBinarySerializable;
