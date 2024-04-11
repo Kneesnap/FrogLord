@@ -14,7 +14,6 @@ import java.util.logging.Logger;
  *  - 1) Standard UI for opening games.
  *  - 2) Standardize Main UI Layout. (But let games optionally roll their own system) -> Also, change who's in charge of UI.
  *  - 3) Standardize 3D UI.
- * TODO: Old Frogger UVs seem slightly borked. (See: "Seceret here" in DESERT.MAP) -> it's a little busted. (Also, FOREST.MAP)
  * Created by Kneesnap on 4/10/2024.
  */
 public abstract class GameInstance {
