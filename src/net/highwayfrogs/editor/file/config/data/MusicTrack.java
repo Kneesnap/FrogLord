@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file.config.data;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.sony.SCGamePlatform;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 /**
@@ -49,13 +48,13 @@ public enum MusicTrack {
      * @return trackId
      */
     public byte getTrack(FroggerGameInstance instance) {
-        if (instance.getPlatform() == SCGamePlatform.WINDOWS) {
+        if (instance.isPC()) {
             if (instance.getConfig().isAtLeastRetailWindows()) {
                 return getPcTrack();
             } else {
                 return getPrototypeTrack();
             }
-        } else if (instance.getPlatform() == SCGamePlatform.PLAYSTATION) {
+        } else if (instance.isPSX()) {
             return getPsxTrack();
         }
 

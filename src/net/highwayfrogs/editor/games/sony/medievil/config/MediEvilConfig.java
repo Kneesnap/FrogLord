@@ -22,8 +22,8 @@ public class MediEvilConfig extends SCGameConfig {
     }
 
     @Override
-    public void loadData(Config config) {
-        super.loadData(config);
+    protected void readConfigData(Config config) {
+        super.readConfigData(config);
         loadLevelTableInfo(config); // Load level table info.
         loadEntityPointerTableInfo(config); // Load entity table info.
     }

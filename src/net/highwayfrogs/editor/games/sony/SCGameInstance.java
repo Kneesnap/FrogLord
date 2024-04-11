@@ -14,6 +14,8 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
+import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.generic.GameUtils;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
@@ -25,29 +27,21 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Represents an instance of a game created by Sony Cambridge / Millennium Interactive.
- * TODO: Let's add a logger object to this one, and start to use it for logging.
- * TODO: Let's add a function to resolve what VLO should be used for a particular file (generally map, mof, or wad). This differs per-game so it could be great to have it here.
  * TODO: Let's fix the MOF UI to rotate collision boxes and collprim boxes with the part rotation.
- * TODO: https://docs.oracle.com/javase/8/javafx/graphics-tutorial/sampleapp3d.htm#CJAHFAF shows how to show a unit axis. this gives me an idea, perhaps we can use this for 3D position and rotation widgets.
- * TODO: Mess around with JavaFX TriangleMesh.getFaceSmoothingGroups(). This might have something to do with the reason stuff looks bad from a far? It's not currently clear. We may consider using POINT_NORMAL_TEXCOORD to disable it, with calculated (or dummy?) vertices.
  * Created by Kneesnap on 9/7/2023.
  */
-public abstract class SCGameInstance {
-    @Getter private final SCGameType gameType;
+public abstract class SCGameInstance extends GameInstance {
     @Getter private final Map<SCGameFile<?>, FileEntry> fileEntriesByFileObjects;
     @Getter private final Map<FileEntry, SCGameFile<?>> fileObjectsByFileEntries;
     @Getter private final SCOverlayTable overlayTable;
-    @Getter private SCGameConfig config;
     @Getter private MWDFile mainArchive;
     @Getter private MWIFile archiveIndex;
     @Getter private File mwdFile;
     @Getter private File exeFile;
     @Getter private long ramOffset;
-    private Logger cachedLogger;
 
     // Instance data read from game files:
     private boolean loadingAllRemaps;
@@ -59,27 +53,14 @@ public abstract class SCGameInstance {
     private DataReader cachedExecutableReader;
 
     public SCGameInstance(SCGameType gameType) {
-        this.gameType = gameType;
+        super(gameType);
         this.fileEntriesByFileObjects = new HashMap<>();
         this.fileObjectsByFileEntries = new HashMap<>();
         this.overlayTable = new SCOverlayTable(this);
     }
 
-    /**
-     * Gets the logger for this game instance.
-     */
-    public Logger getLogger() {
-        if (this.cachedLogger != null)
-            return this.cachedLogger;
-
-        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
-    }
-
-    /**
-     * Gets the folder where the main game files are located.
-     * @return gameFolder
-     */
-    public File getGameFolder() {
+    @Override
+    public File getMainGameFolder() {
         if (this.exeFile != null) {
             return this.exeFile.getParentFile();
         } else if (this.mwdFile != null) {
@@ -113,7 +94,7 @@ public abstract class SCGameInstance {
      * @param exeFile    The main game executable file, containing the MWI.
      */
     public void loadGame(String configName, Config config, File mwdFile, File exeFile) {
-        if (this.config != null || this.mainArchive != null)
+        if (getConfig() != null || this.mainArchive != null)
             throw new RuntimeException("The game instance has already been loaded.");
 
         if (mwdFile == null || !mwdFile.exists())
@@ -123,24 +104,34 @@ public abstract class SCGameInstance {
 
         this.mwdFile = mwdFile;
         this.exeFile = exeFile;
-        this.config = makeConfig(configName);
-        this.config.loadData(config);
-        this.onConfigLoad(config);
+        loadGameConfig(configName, config);
         this.archiveIndex = this.readMWI();
         this.mainArchive = this.readMWD();
     }
 
-    /**
-     * Called when configuration data is loaded.
-     * @param configObj The config object which data is loaded from.
-     */
+    @Override
     protected void onConfigLoad(Config configObj) {
+        super.onConfigLoad(configObj);
+
         DataReader exeReader = getExecutableReader();
         readExecutableHeader(exeReader);
 
         // Read data. (Should occur after we know the executable header info)
         this.readOverlayTable(exeReader);
         this.readBmpPointerData(exeReader);
+    }
+
+    @Override
+    protected abstract SCGameConfig makeConfig(String internalName);
+
+    @Override
+    public SCGameType getGameType() {
+        return (SCGameType) super.getGameType();
+    }
+
+    @Override
+    public SCGameConfig getConfig() {
+        return (SCGameConfig) super.getConfig();
     }
 
     /**
@@ -158,11 +149,6 @@ public abstract class SCGameInstance {
     protected void onMWDLoad(MWDFile mwdFile) {
         validateBmpPointerData(mwdFile);
     }
-
-    /**
-     * Makes a new game config instance for this game.
-     */
-    protected abstract SCGameConfig makeConfig(String internalName);
 
     /**
      * Creates a SCGameFile object for the given file entry.
@@ -233,7 +219,7 @@ public abstract class SCGameInstance {
             long nextValue = reader.readUnsignedIntAsLong();
             reader.jumpReturn();
 
-            return SCUtils.isValidLookingPointer(SCGamePlatform.PLAYSTATION, nextValue); // If the next value is a pointer, abort!
+            return isValidLookingPointer(nextValue); // If the next value is a pointer, abort!
         }
 
         // Doesn't look like the end of a remap.
@@ -366,15 +352,6 @@ public abstract class SCGameInstance {
     public abstract void setupFileGroups(List<SCMainMenuFileGroup> fileTypes);
 
     /**
-     * Tests if a given unsigned 32 bit number passed as a long looks like a valid pointer to memory present in the executable.
-     * @param testPointer The pointer to test.
-     * @return If it looks good or not.
-     */
-    public boolean isValidLookingPointer(long testPointer) {
-        return SCUtils.isValidLookingPointer(getPlatform(), testPointer);
-    }
-
-    /**
      * Get the FileEntry for a given resource id.
      * @param resourceId The resource id.
      * @return fileEntry
@@ -488,54 +465,31 @@ public abstract class SCGameInstance {
     }
 
     /**
-     * Get the target platform this game version runs on.
-     */
-    public SCGamePlatform getPlatform() {
-        return this.config.getPlatform();
-    }
-
-    /**
-     * Test if this is a game version intended for Windows.
-     * @return isPCRelease
-     */
-    public boolean isPC() {
-        return getPlatform() == SCGamePlatform.WINDOWS;
-    }
-
-    /**
-     * Test if this is a game version intended for the PlayStation.
-     * @return isPSXRelease
-     */
-    public boolean isPSX() {
-        return getPlatform() == SCGamePlatform.PLAYSTATION;
-    }
-
-    /**
      * Tests if the game currently being read is Frogger.
      */
     public boolean isOldFrogger() {
-        return this.gameType == SCGameType.OLD_FROGGER;
+        return getGameType() == SCGameType.OLD_FROGGER;
     }
 
     /**
      * Tests if the game currently being read is Frogger.
      */
     public boolean isFrogger() {
-        return this.gameType == SCGameType.FROGGER;
+        return getGameType() == SCGameType.FROGGER;
     }
 
     /**
      * Tests if the game currently being read is Beast Wars.
      */
     public boolean isBeastWars() {
-        return this.gameType == SCGameType.BEAST_WARS;
+        return getGameType() == SCGameType.BEAST_WARS;
     }
 
     /**
      * Tests if the game currently being read is MediEvil.
      */
     public boolean isMediEvil() {
-        return this.gameType == SCGameType.MEDIEVIL;
+        return getGameType() == SCGameType.MEDIEVIL;
     }
 
     /**
@@ -605,10 +559,10 @@ public abstract class SCGameInstance {
     // Beyond here are functions for handling game data from game files, and potentially also configuration data.
     private void readBmpPointerData(DataReader reader) {
         this.bmpTexturePointers.clear();
-        if (this.config.getBmpPointerAddress() <= 0)
+        if (getConfig().getBmpPointerAddress() <= 0)
             return; // Not specified.
 
-        reader.setIndex(this.config.getBmpPointerAddress());
+        reader.setIndex(getConfig().getBmpPointerAddress());
 
         long nextPossiblePtr;
         while (reader.hasMore() && isValidLookingPointer(nextPossiblePtr = reader.readUnsignedIntAsLong()))
@@ -632,10 +586,10 @@ public abstract class SCGameInstance {
     }
 
     private void writeBmpPointerData(DataWriter exeWriter) {
-        if (this.config.getBmpPointerAddress() <= 0 || this.bmpTexturePointers.isEmpty())
+        if (getConfig().getBmpPointerAddress() <= 0 || this.bmpTexturePointers.isEmpty())
             return; // Not specified.
 
-        exeWriter.setIndex(this.config.getBmpPointerAddress());
+        exeWriter.setIndex(getConfig().getBmpPointerAddress());
         this.bmpTexturePointers.forEach(exeWriter::writeUnsignedInt);
     }
 
@@ -643,13 +597,13 @@ public abstract class SCGameInstance {
      * Read the MWI file from the executable.
      */
     public MWIFile readMWI() {
-        if (this.config.getMWIOffset() <= 0)
+        if (getConfig().getMWIOffset() <= 0)
             throw new RuntimeException("The MWI cannot be read because either no MWI offset was specified or the configuration hasn't been loaded yet.");
 
         // Read MWI bytes.
         DataReader reader = getExecutableReader();
-        reader.setIndex(this.config.getMWIOffset());
-        byte[] mwiBytes = reader.readBytes(this.config.getMWILength());
+        reader.setIndex(getConfig().getMWIOffset());
+        byte[] mwiBytes = reader.readBytes(getConfig().getMWILength());
 
         // Load an MWI file.
         DataReader arrayReader = new DataReader(new ArraySource(mwiBytes));
@@ -673,10 +627,10 @@ public abstract class SCGameInstance {
 
         // Verify MWI size ok.
         int bytesWritten = mwiWriter.getIndex();
-        Utils.verify(bytesWritten == this.config.getMWILength(), "Saving the MWI failed. The size of the written MWI does not match the correct MWI size! [%d/%d]", bytesWritten, this.config.getMWILength());
+        Utils.verify(bytesWritten == getConfig().getMWILength(), "Saving the MWI failed. The size of the written MWI does not match the correct MWI size! [%d/%d]", bytesWritten, getConfig().getMWILength());
 
         // Write MWI to the provided writer.
-        writer.setIndex(this.config.getMWIOffset());
+        writer.setIndex(getConfig().getMWIOffset());
         writer.writeBytes(receiver.toArray());
     }
 
@@ -684,7 +638,7 @@ public abstract class SCGameInstance {
      * Read the MWD file.
      */
     public MWDFile readMWD() {
-        if (this.config.getMWIOffset() <= 0)
+        if (getConfig().getMWIOffset() <= 0)
             throw new RuntimeException("The MWI cannot be read because either no MWI offset was specified or the configuration hasn't been loaded yet.");
 
         FileSource fileSource;
@@ -715,7 +669,7 @@ public abstract class SCGameInstance {
             writeExecutableData(getArchiveIndex());
 
         byte[] data = getExecutableBytes();
-        data = this.config.applyConfigIdentifier(data);
+        data = getConfig().applyConfigIdentifier(data);
 
         // Write file.
         Utils.deleteFile(outputFile);

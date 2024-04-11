@@ -32,7 +32,7 @@ public class SCOverlayTableEntry extends SCSharedGameData {
     @Override
     public void load(DataReader reader) {
         long pathPointer = reader.readUnsignedIntAsLong();
-        if (SCUtils.isValidLookingPointer(getGameInstance().getPlatform(), pathPointer)) {
+        if (getGameInstance().isValidLookingPointer(pathPointer)) {
             reader.jumpTemp((int) (pathPointer - getGameInstance().getRamOffset()));
             this.filePath = reader.readNullTerminatedString();
             reader.jumpReturn();
@@ -41,7 +41,7 @@ public class SCOverlayTableEntry extends SCSharedGameData {
         }
 
         long overlayPointer = reader.readUnsignedIntAsLong();
-        if (SCUtils.isValidLookingPointer(getGameInstance().getPlatform(), overlayPointer)) {
+        if (getGameInstance().isValidLookingPointer(overlayPointer)) {
             this.overlayDoublePointer = overlayPointer;
             reader.jumpTemp((int) (overlayPointer - getGameInstance().getRamOffset()));
             this.overlayStartPointer = reader.readUnsignedIntAsLong();
@@ -67,7 +67,7 @@ public class SCOverlayTableEntry extends SCSharedGameData {
      * Gets a reader which can read the overlay file.
      */
     public DataReader getReader() {
-        File overlayFile = new File(getGameInstance().getGameFolder(), this.filePath);
+        File overlayFile = new File(getGameInstance().getMainGameFolder(), this.filePath);
 
         // Try stripping directories until the overlays are found.
         String tempFilePath = this.filePath;
@@ -75,7 +75,7 @@ public class SCOverlayTableEntry extends SCSharedGameData {
             int nextSplitIndex = tempFilePath.indexOf('\\');
             if (nextSplitIndex >= 0) {
                 tempFilePath = tempFilePath.substring(nextSplitIndex + 1);
-                overlayFile = new File(getGameInstance().getGameFolder(), tempFilePath);
+                overlayFile = new File(getGameInstance().getMainGameFolder(), tempFilePath);
             } else {
                 throw new IllegalArgumentException("Unable to read overlay from file path: '" + this.filePath + "'.");
             }

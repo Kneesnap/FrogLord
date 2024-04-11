@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.MWDFile;
+import net.highwayfrogs.editor.games.generic.GameObject;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.logging.Logger;
@@ -12,11 +13,9 @@ import java.util.logging.Logger;
  * Created by Kneesnap on 9/8/2023.
  */
 @Getter
-public abstract class SCGameObject<TGameInstance extends SCGameInstance> {
-    private final TGameInstance gameInstance;
-
+public abstract class SCGameObject<TGameInstance extends SCGameInstance> extends GameObject<TGameInstance> {
     public SCGameObject(TGameInstance instance) {
-        this.gameInstance = instance;
+        super(instance);
     }
 
     /**
@@ -24,21 +23,12 @@ public abstract class SCGameObject<TGameInstance extends SCGameInstance> {
      * @return fileArchive
      */
     public MWDFile getArchive() {
-        return this.gameInstance != null ? this.gameInstance.getMainArchive() : null;
+        return getGameInstance() != null ? getGameInstance().getMainArchive() : null;
     }
 
-    /**
-     * Gets the game version config.
-     */
+    @Override
     public SCGameConfig getConfig() {
         return getGameInstance().getConfig();
-    }
-
-    /**
-     * Gets the logger for this class type.
-     */
-    public Logger getLogger() {
-        return Logger.getLogger(Utils.getSimpleName(this));
     }
 
     /**

@@ -2,11 +2,13 @@ package net.highwayfrogs.editor.games.sony;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2GameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Supplier;
 
@@ -16,7 +18,7 @@ import java.util.function.Supplier;
  */
 @Getter
 @AllArgsConstructor
-public enum SCGameType {
+public enum SCGameType implements IGameType {
     //HEADRUSH(null), // Aka Brains In Planes
     OLD_FROGGER(OldFroggerGameInstance::new),
     BEAST_WARS(BeastWarsInstance::new),
@@ -54,10 +56,13 @@ public enum SCGameType {
         return otherType.ordinal() > ordinal();
     }
 
-    /**
-     * Creates a new instance of the game.
-     */
-    public SCGameInstance createInstance() {
+    @Override
+    public String getDisplayName() {
+        return Utils.capitalize(name());
+    }
+
+    @Override
+    public SCGameInstance createGameInstance() {
         return this.instanceMaker != null ? this.instanceMaker.get() : new SCGameUnimplemented(this);
     }
 

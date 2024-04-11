@@ -29,12 +29,12 @@ public class OldFroggerConfig extends SCGameConfig {
     }
 
     @Override
-    public void loadData(Config config) {
+    protected void readConfigData(Config config) {
+        super.readConfigData(config);
         loadRemapTable(config); // Load remap table.
         loadLevelTableInfo(config); // Load level table info.
         loadManuallyConfiguredLevelTableEntries(config); // Load manually configured text.
         readMapConfigs(config);
-        super.loadData(config);
     }
 
     private void loadRemapTable(Config config) {

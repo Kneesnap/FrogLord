@@ -4,11 +4,9 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.generic.GameConfig;
 
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.logging.Logger;
 
 
 /**
@@ -16,19 +14,13 @@ import java.util.logging.Logger;
  * Created by Kneesnap on 9/7/2023.
  */
 @Getter
-public class SCGameConfig {
-    private final String internalName;
-    private Config config;
-
-    // Loaded configuration data.
-    private String displayName;
+public class SCGameConfig extends GameConfig {
     private long overrideRamOffset;
     private long overlayTableOffset;
     private int MWIOffset;
     private int MWILength;
     private int bmpPointerAddress;
     private SCGameRegion region;
-    private SCGamePlatform platform;
     private NameBank soundBank;
     private NameBank animationBank;
     private final Map<String, int[]> hiddenPartIds = new HashMap<>();
@@ -37,30 +29,19 @@ public class SCGameConfig {
     private final List<String> fallbackFileNames = new ArrayList<>();
     private final Map<Short, String> imageNames = new HashMap<>();
 
-    public static final String CFG_DISPLAY_NAME = "name";
-    public static final String CFG_GAME_TYPE = "game";
     private static final String CFG_FILE_NAMES = "Files";
     private static final String CFG_CHILD_IMAGE_NAMES = "ImageNames";
     private static final String CFG_CHILD_MOF_FORCE_VLO = "ForceVLO";
 
     public SCGameConfig(String internalName) {
-        this.internalName = internalName;
+        super(internalName);
     }
 
-    /**
-     * Load data from the specified config.
-     * @param config The config to load data from.
-     */
-    public void loadData(Config config) {
-        if (this.config != null)
-            throw new RuntimeException("The config " + this.internalName + " already has its data loaded.");
-
-        if (config == null)
-            return;
-
-        this.config = config;
-        loadBanks(config);
+    @Override
+    protected void readConfigData(Config config) {
+        super.readConfigData(config);
         readBasicConfigData(config);
+        loadBanks(config);
         readFallbackFileNames(config);
         readHiddenParts(config);
         readMofOverrides(config);
@@ -74,26 +55,12 @@ public class SCGameConfig {
     }
 
     private void readBasicConfigData(Config config) {
-        this.displayName = config.getString(CFG_DISPLAY_NAME);
-        this.platform = config.getEnum("platform", SCGamePlatform.class);
         this.region = config.getEnum("region", SCGameRegion.UNSPECIFIED);
         this.MWIOffset = config.getInt("mwiOffset");
         this.MWILength = config.getInt("mwiLength");
         this.overrideRamOffset = config.getLong("ramOffset", 0); // If I have an offset in a file, adding this number will give its pointer.
         this.overlayTableOffset = config.getLong("overlayTable", 0);
         this.bmpPointerAddress = config.getInt("bmpPointerAddress", 0); // Generally right at the start of the 'data' section.
-    }
-
-    protected NameBank loadBank(Config config, String configKey, String defaultBank, String bankName, String unknownName, boolean addChildrenToMainBank) {
-        return loadBank(config, configKey, defaultBank, bankName, addChildrenToMainBank, (bank, index) -> "Unknown " + unknownName + " [" + index + "]");
-    }
-
-    protected NameBank loadBank(Config config, String configKey, String defaultBank, String bankName, boolean addChildrenToMainBank, BiFunction<NameBank, Integer, String> nameHandler) {
-        String animBankName = config.getString(configKey, defaultBank);
-        if (animBankName == null)
-            return NameBank.EMPTY_BANK;
-
-        return NameBank.readBank(bankName, animBankName, addChildrenToMainBank, nameHandler);
     }
 
     /**
@@ -149,7 +116,7 @@ public class SCGameConfig {
             try {
                 textureId = Short.parseShort(key);
             } catch (NumberFormatException nfe) {
-                getLogger().warning("Skipping non-integer key '" + key + "' as texture ID / image file name pair in version config '" + this.internalName + "'.");
+                getLogger().warning("Skipping non-integer key '" + key + "' as texture ID / image file name pair in version config '" + getInternalName() + "'.");
                 continue;
             }
 
@@ -183,11 +150,11 @@ public class SCGameConfig {
      * Write the config identifier to the end of the executable, so it will automatically know which config to use when this is loaded.
      */
     public byte[] applyConfigIdentifier(byte[] oldExeBytes) {
-        if (this.internalName == null)
+        if (getInternalName() == null)
             return oldExeBytes;
 
         // Test if the executable already has the identifier at the end.
-        byte[] identifierBytes = this.internalName.getBytes();
+        byte[] identifierBytes = getInternalName().getBytes();
         boolean hasIdentifierAlready = oldExeBytes.length >= identifierBytes.length
                 && Arrays.equals(Arrays.copyOfRange(oldExeBytes, oldExeBytes.length - identifierBytes.length, oldExeBytes.length), identifierBytes);
         if (hasIdentifierAlready)
@@ -198,12 +165,5 @@ public class SCGameConfig {
         System.arraycopy(oldExeBytes, 0, newExeBytes, 0, oldExeBytes.length);
         System.arraycopy(identifierBytes, 0, newExeBytes, oldExeBytes.length, identifierBytes.length);
         return newExeBytes;
-    }
-
-    /**
-     * Gets the logger for this config.
-     */
-    public Logger getLogger() {
-        return Logger.getLogger(Utils.getSimpleName(this));
     }
 }

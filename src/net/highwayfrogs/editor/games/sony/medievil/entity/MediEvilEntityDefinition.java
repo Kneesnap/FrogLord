@@ -75,7 +75,7 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
         this.mofId = reader.readUnsignedIntAsLong();
         // Read model data.
         this.modelData.clear();
-        if (SCUtils.isValidLookingPointer(getGameInstance().getPlatform(), this.mofId)) {
+        if (getGameInstance().isValidLookingPointer(this.mofId)) {
             reader.jumpTemp((int) (this.mofId - offset));
 
             // Assume there is at least one entry if subtype count is zero

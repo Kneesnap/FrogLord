@@ -25,26 +25,6 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 public class SCUtils {
     /**
-     * Test if a value looks like a valid pointer.
-     * Built for Frogger 1997, but will likely be used in most games.
-     * @param platform The platform value to test.
-     * @param pointer  The pointer value to test.
-     * @return looks like a pointer.
-     */
-    public static boolean isValidLookingPointer(SCGamePlatform platform, long pointer) {
-        if (platform == SCGamePlatform.PLAYSTATION) {
-            // Tests if the value is within address space of KSEG0, since that's Main RAM.
-            // The first 64K (0x10000 bytes) are skipped because it's reserved for the BIOS.
-            // There is 2 MB of RAM in this area, so the data must be within such a range.
-            return (pointer >= 0x80010000L && pointer < 0x80200000L) || (pointer >= 0x10000L && pointer < 0x200000L);
-        } else if (platform == SCGamePlatform.WINDOWS) {
-            return (pointer & 0xFFF00000) == 0x00400000;
-        } else {
-            throw new RuntimeException("Unsupported platform '" + platform + "'.");
-        }
-    }
-
-    /**
      * Creates a game file from formats seen between different games.
      * @param fileEntry The entry to create a game file from.
      * @param fileData  The file data to create files from. Can be null.

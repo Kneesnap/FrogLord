@@ -40,11 +40,11 @@ public class FroggerConfig extends SCGameConfig {
     }
 
     @Override
-    public void loadData(Config config) {
+    protected void readConfigData(Config config) {
         this.build = config.getInt("build", -1);
         this.skyLandTextureAddress = config.getInt("txl_sky_land", 0); // Get this by searching for the hex texture ids of sky images as shorts. The textures in the PSX US Demo are textures #98, #97, #96. -> 1723, 1722, 1753 -> "BB 06 BA 06 D9 06".
 
-        super.loadData(config);
+        super.readConfigData(config);
         loadBanks(config);
         readBasicConfigData(config);
         readMapConfigs(config);
