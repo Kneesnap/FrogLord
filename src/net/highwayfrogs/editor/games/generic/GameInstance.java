@@ -12,7 +12,6 @@ import java.util.logging.Logger;
  * TODO: Organize resources folder.
  * TODO: Add dates to all of the game configs. (& Stop relying on configured indicator of game type)
  * TODO: Fix long management & memory locations.
- * TODO: Rename 'tgq' package to 'greatquest'.
  * TODO: Move texture shading outside of the sony folder into the psx folder.
  * TODO: UI Plans?
  *  - 1) Standard UI for opening games.
