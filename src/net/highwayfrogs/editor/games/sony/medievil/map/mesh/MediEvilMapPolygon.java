@@ -9,13 +9,13 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
-import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -241,7 +241,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
 
         // Create definition.
         ITextureSource textureSource = polygonType.isTextured() ? getTexture(levelTableEntry) : null;
-        return new PSXShadeTextureDefinition(polygonType, textureSource, colors, uvs, isSemiTransparent);
+        return new PSXShadeTextureDefinition(polygonType, textureSource, colors, uvs, isSemiTransparent, false);
     }
 
     private static CVector fromPackedShort(short packedColor, PSXPolygonType polygonType, boolean isSemiTransparent) {

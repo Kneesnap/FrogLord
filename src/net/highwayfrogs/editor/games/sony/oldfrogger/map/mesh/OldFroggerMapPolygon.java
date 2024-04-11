@@ -8,13 +8,13 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
-import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 
 import java.util.Arrays;
@@ -146,7 +146,7 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
         }
 
         ITextureSource textureSource = this.polygonType.isTextured() ? getTexture(mapFile.getLevelTableEntry()) : null;
-        return new PSXShadeTextureDefinition(this.polygonType, textureSource, colors, uvs, false);
+        return new PSXShadeTextureDefinition(this.polygonType, textureSource, colors, uvs, false, true);
     }
 
     /**

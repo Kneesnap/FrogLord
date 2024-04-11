@@ -24,6 +24,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     @Getter private final CVector[] colors;
     @Getter private final SCByteTextureUV[] textureUVs;
     @Getter private final boolean semiTransparentMode;
+    @Getter private final boolean includeLastPixel;
     private Consumer<BufferedImage> onTextureSourceUpdate;
     private BufferedImage cachedImage;
 
@@ -34,12 +35,13 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     public static final String[] QUAD_VERTEX_NAMES = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"};
     public static final String[] TRI_VERTEX_NAMES = {"1st Corner", "2nd Corner", "3rd Corner"};
 
-    public PSXShadeTextureDefinition(PSXPolygonType polygonType, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUVs, boolean semiTransparentMode) {
+    public PSXShadeTextureDefinition(PSXPolygonType polygonType, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUVs, boolean semiTransparentMode, boolean includeLastPixel) {
         this.polygonType = polygonType;
         this.textureSource = textureSource;
         this.colors = colors;
         this.textureUVs = textureUVs;
         this.semiTransparentMode = semiTransparentMode;
+        this.includeLastPixel = includeLastPixel;
     }
 
     /**
@@ -135,7 +137,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
             for (int i = 0; i < this.textureUVs.length; i++)
                 copyUvs[i] = this.textureUVs[i] != null ? this.textureUVs[i].clone() : null;
 
-        return new PSXShadeTextureDefinition(this.polygonType, this.textureSource, copyColors, copyUvs, this.semiTransparentMode);
+        return new PSXShadeTextureDefinition(this.polygonType, this.textureSource, copyColors, copyUvs, this.semiTransparentMode, this.includeLastPixel);
     }
 
     /**
@@ -195,7 +197,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
                 return applyImagePostFx(PSXTextureShader.makeGouraudShadedImage(getWidth(), getHeight(), this.colors));
             case POLY_GT3:
             case POLY_GT4:
-                return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(getSourceImage(), this.textureSource, this.colors, this.textureUVs));
+                return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(getSourceImage(), this.textureSource, this.colors, this.textureUVs, this.includeLastPixel));
             default:
                 throw new UnsupportedOperationException("The polygon type " + this.polygonType + " is not supported.");
         }
