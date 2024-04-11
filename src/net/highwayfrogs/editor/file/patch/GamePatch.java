@@ -54,6 +54,8 @@ public class GamePatch {
 
         // Read version-specific variables.
         for (String versionKey : GUIMain.getVersions().keySet()) {
+            if (versionKey.contains("/"))
+                versionKey = versionKey.substring(versionKey.lastIndexOf('/') + 1);
             if (!config.hasChild(versionKey))
                 continue;
 
