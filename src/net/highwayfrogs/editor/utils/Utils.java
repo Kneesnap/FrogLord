@@ -507,7 +507,7 @@ public class Utils {
     public static long intToUnsignedLong(int unsignedInt) {
         long num = unsignedInt;
         if (num < 0) {
-            num += Integer.MAX_VALUE;
+            num += 0xFFFFFFFFL;
             num++;
         }
         return num;

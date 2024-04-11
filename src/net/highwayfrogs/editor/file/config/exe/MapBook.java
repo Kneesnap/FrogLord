@@ -54,7 +54,7 @@ public abstract class MapBook extends ExeStruct {
      * @param remapPointer  The runtime pointer address to the remap.
      * @param lowPoly       If win95 low poly mode is enabled.
      */
-    protected static void addRemap(FroggerGameInstance instance, int mapResourceId, int remapPointer, boolean lowPoly) {
+    protected static void addRemap(FroggerGameInstance instance, int mapResourceId, long remapPointer, boolean lowPoly) {
         if (mapResourceId <= 0 || remapPointer <= 0)
             return; // Invalid.
 

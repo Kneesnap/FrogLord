@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Getter
 public class TextureRemapArray extends SCSharedGameObject {
-    @Setter private int loadAddress;
+    @Setter private long loadAddress;
     private String name;
     private final List<Short> textureIds = new ArrayList<>();
 
@@ -23,7 +23,7 @@ public class TextureRemapArray extends SCSharedGameObject {
         super(instance);
     }
 
-    public TextureRemapArray(SCGameInstance instance, int loadAddress) {
+    public TextureRemapArray(SCGameInstance instance, long loadAddress) {
         this(instance, null, loadAddress);
     }
 
@@ -31,7 +31,7 @@ public class TextureRemapArray extends SCSharedGameObject {
         this(instance, name, 0);
     }
 
-    public TextureRemapArray(SCGameInstance instance, String name, int loadAddress) {
+    public TextureRemapArray(SCGameInstance instance, String name, long loadAddress) {
         super(instance);
         this.loadAddress = loadAddress;
         this.name = name;
@@ -70,7 +70,7 @@ public class TextureRemapArray extends SCSharedGameObject {
      * @param offset The offset from the start of the file.
      */
     public void setFileOffset(int offset) {
-        this.loadAddress = (int) (offset + getGameInstance().getRamOffset());
+        this.loadAddress = (offset + getGameInstance().getRamOffset());
     }
 
     /**

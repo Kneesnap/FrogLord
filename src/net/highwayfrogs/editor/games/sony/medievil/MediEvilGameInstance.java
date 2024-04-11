@@ -116,7 +116,7 @@ public class MediEvilGameInstance extends SCGameInstance {
                 continue;
 
             // Create new remap.
-            TextureRemapArray remap = new TextureRemapArray(this, "txl_map" + i, (int) entry.getTextureRemapPointer());
+            TextureRemapArray remap = new TextureRemapArray(this, "txl_map" + i, entry.getTextureRemapPointer());
             entry.setRemap(remap);
             addRemap(remap);
         }

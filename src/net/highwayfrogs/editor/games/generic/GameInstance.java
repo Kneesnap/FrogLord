@@ -11,12 +11,11 @@ import java.util.logging.Logger;
  * Represents an instance of a game. For example, a folder containing the files for a single version of a game.
  * TODO: Organize resources folder.
  * TODO: Add dates to all of the game configs. (& Stop relying on configured indicator of game type)
- * TODO: Fix long management & memory locations.
  * TODO: UI Plans?
  *  - 1) Standard UI for opening games.
  *  - 2) Standardize Main UI Layout. (But let games optionally roll their own system) -> Also, change who's in charge of UI.
  *  - 3) Standardize 3D UI.
- * TODO: Old Frogger UVs seem slightly borked. (See: "Seceret here" in DESERT.MAP) -> it's a little busted.
+ * TODO: Old Frogger UVs seem slightly borked. (See: "Seceret here" in DESERT.MAP) -> it's a little busted. (Also, FOREST.MAP)
  * Created by Kneesnap on 4/10/2024.
  */
 public abstract class GameInstance {

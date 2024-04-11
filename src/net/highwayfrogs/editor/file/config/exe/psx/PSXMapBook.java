@@ -56,7 +56,7 @@ public class PSXMapBook extends MapBook {
 
     @Override
     public void addTextureRemaps(FroggerGameInstance instance) {
-        addRemap(instance, this.mapId, (int) this.remapPointer, false);
+        addRemap(instance, this.mapId, this.remapPointer, false);
     }
 
     @Override

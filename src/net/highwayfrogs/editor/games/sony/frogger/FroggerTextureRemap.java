@@ -19,11 +19,11 @@ public class FroggerTextureRemap extends LinkedTextureRemap<MAPFile> {
         super(instance, fileEntry, MAPFile.class, name);
     }
 
-    public FroggerTextureRemap(FroggerGameInstance instance, FileEntry fileEntry, int loadAddress) {
+    public FroggerTextureRemap(FroggerGameInstance instance, FileEntry fileEntry, long loadAddress) {
         super(instance, fileEntry, MAPFile.class, loadAddress);
     }
 
-    public FroggerTextureRemap(FroggerGameInstance instance, FileEntry fileEntry, String name, int loadAddress) {
+    public FroggerTextureRemap(FroggerGameInstance instance, FileEntry fileEntry, String name, long loadAddress) {
         super(instance, fileEntry, MAPFile.class, name, loadAddress);
     }
 

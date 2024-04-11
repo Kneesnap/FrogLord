@@ -21,8 +21,8 @@ import java.util.function.Function;
 public class PCMapBook extends MapBook {
     private int highMapId; // If both map ids are zero, it means this is a dummied out map entry. (For instance VOL5, SWPM, ARN1, etc)
     private int lowMapId;
-    private int highRemapPointer;
-    private int lowRemapPointer;
+    private long highRemapPointer;
+    private long lowRemapPointer;
     private boolean useCaveLights;
     private long environmentTexturePointer;
     private int highWadId;
@@ -37,8 +37,8 @@ public class PCMapBook extends MapBook {
     public void load(DataReader reader) {
         this.highMapId = reader.readInt();
         this.lowMapId = reader.readInt();
-        this.highRemapPointer = reader.readInt();
-        this.lowRemapPointer = reader.readInt();
+        this.highRemapPointer = reader.readUnsignedIntAsLong();
+        this.lowRemapPointer = reader.readUnsignedIntAsLong();
         this.useCaveLights = (reader.readInt() == 1);
         this.environmentTexturePointer = reader.readUnsignedIntAsLong();
         this.highWadId = reader.readInt();
@@ -50,8 +50,8 @@ public class PCMapBook extends MapBook {
     public void save(DataWriter writer) {
         writer.writeInt(this.highMapId);
         writer.writeInt(this.lowMapId);
-        writer.writeInt(this.highRemapPointer);
-        writer.writeInt(this.lowRemapPointer);
+        writer.writeUnsignedInt(this.highRemapPointer);
+        writer.writeUnsignedInt(this.lowRemapPointer);
         writer.writeInt(this.useCaveLights ? 1 : 0);
         writer.writeUnsignedInt(this.environmentTexturePointer);
         writer.writeInt(this.highWadId);

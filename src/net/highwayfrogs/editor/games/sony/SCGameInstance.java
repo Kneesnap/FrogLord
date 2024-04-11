@@ -237,7 +237,7 @@ public abstract class SCGameInstance extends GameInstance {
 
             // Verify there is enough space.
             if (nextTextureRemap != null) {
-                int availableSlots = (nextTextureRemap.getLoadAddress() - textureRemap.getLoadAddress()) / Constants.SHORT_SIZE;
+                int availableSlots = (int) ((nextTextureRemap.getLoadAddress() - textureRemap.getLoadAddress()) / Constants.SHORT_SIZE);
                 if (textureRemap.getTextureIds().size() > availableSlots) {
                     getLogger().warning("'" + textureRemap.getDebugName() + "' has been skipped because it has " + textureRemap.getTextureIds().size() + "texture ids, but there is only room for " + availableSlots + ".");
                     continue;
@@ -301,7 +301,7 @@ public abstract class SCGameInstance extends GameInstance {
             throw new IllegalArgumentException("Cannot add a null remap.");
 
         // Ensure remap isn't already registered.
-        int index = Collections.binarySearch(this.textureRemaps, remap, Comparator.comparingInt(TextureRemapArray::getLoadAddress));
+        int index = Collections.binarySearch(this.textureRemaps, remap, Comparator.comparingLong(TextureRemapArray::getLoadAddress));
         if (index >= 0)
             return false;
 

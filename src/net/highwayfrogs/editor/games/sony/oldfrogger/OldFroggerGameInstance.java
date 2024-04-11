@@ -105,7 +105,7 @@ public class OldFroggerGameInstance extends SCGameInstance {
             }
 
             // Create new remap.
-            remap = new TextureRemapArray(this, "txl_" + remapNameSuffix, (int) remapPointer);
+            remap = new TextureRemapArray(this, "txl_" + remapNameSuffix, remapPointer);
             this.textureRemapsByLevelId.add(remap);
             remapsByPointer.put(remapPointer, remap);
             addRemap(remap);

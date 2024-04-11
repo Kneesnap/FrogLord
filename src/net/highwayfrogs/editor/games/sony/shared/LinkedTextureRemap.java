@@ -23,11 +23,11 @@ public class LinkedTextureRemap<TFile extends SCGameFile<?>> extends TextureRema
         this(instance, fileEntry, fileClass, name, 0);
     }
 
-    public LinkedTextureRemap(SCGameInstance instance, FileEntry fileEntry, Class<TFile> fileClass, int loadAddress) {
+    public LinkedTextureRemap(SCGameInstance instance, FileEntry fileEntry, Class<TFile> fileClass, long loadAddress) {
         this(instance, fileEntry, fileClass, null, loadAddress);
     }
 
-    public LinkedTextureRemap(SCGameInstance instance, FileEntry fileEntry, Class<TFile> fileClass, String name, int loadAddress) {
+    public LinkedTextureRemap(SCGameInstance instance, FileEntry fileEntry, Class<TFile> fileClass, String name, long loadAddress) {
         super(instance, name, loadAddress);
         this.fileEntry = fileEntry;
         this.fileClass = fileClass;
