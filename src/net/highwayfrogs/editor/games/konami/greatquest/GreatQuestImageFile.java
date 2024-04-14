@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestImageController;
+import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -16,6 +17,9 @@ import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Frogger - The Great Quest
@@ -26,7 +30,8 @@ import java.io.IOException;
  * Created by Kneesnap on 8/17/2019.
  */
 @Getter
-public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileExport {
+public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileExport, ITextureSource {
+    private final List<Consumer<BufferedImage>> imageChangeListeners = new ArrayList<>();
     private boolean hasHeader;
     private BufferedImage image;
 
@@ -275,6 +280,46 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
     @Override
     public GreatQuestImageController makeEditorUI() {
         return loadEditor(getGameInstance(), "edit-file-img", new GreatQuestImageController(getGameInstance()), this);
+    }
+
+    @Override
+    public BufferedImage makeImage() {
+        return this.image;
+    }
+
+    @Override
+    public int getWidth() {
+        return this.image != null ? this.image.getWidth() : 0;
+    }
+
+    @Override
+    public int getHeight() {
+        return this.image != null ? this.image.getHeight() : 0;
+    }
+
+    @Override
+    public int getUpPadding() {
+        return 0;
+    }
+
+    @Override
+    public int getDownPadding() {
+        return 0;
+    }
+
+    @Override
+    public int getLeftPadding() {
+        return 0;
+    }
+
+    @Override
+    public int getRightPadding() {
+        return 0;
+    }
+
+    @Override
+    public void fireChangeEvent(BufferedImage newImage) {
+        fireChangeEvent0(newImage);
     }
 
     /**

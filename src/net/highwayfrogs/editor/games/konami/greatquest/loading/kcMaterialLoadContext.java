@@ -242,9 +242,9 @@ public class kcMaterialLoadContext {
                     continue;
 
                 GreatQuestChunkTextureReference texRef = (GreatQuestChunkTextureReference) resource;
-                GreatQuestArchiveFile texRefFile = chunkedFile.getGameInstance().getMainArchive().getFileByName(chunkedFile, texRef.getPath());
-                if (texRefFile instanceof GreatQuestImageFile)
-                    cachedImages.put(strippedTextureFileName, (GreatQuestImageFile) texRefFile);
+                GreatQuestImageFile referencedImage = texRef.getReferencedImage();
+                if (referencedImage != null)
+                    cachedImages.put(strippedTextureFileName, referencedImage);
             }
         }
 

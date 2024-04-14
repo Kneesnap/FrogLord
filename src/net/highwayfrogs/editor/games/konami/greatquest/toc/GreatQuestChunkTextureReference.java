@@ -4,9 +4,12 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestImageFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents a texture reference.
@@ -44,5 +47,18 @@ public class GreatQuestChunkTextureReference extends kcCResource {
     public void save(DataWriter writer) {
         super.save(writer);
         writer.writeTerminatedStringOfLength(this.path, PATH_SIZE);
+    }
+
+    /**
+     * Gets the images referenced by this chunk.
+     */
+    public GreatQuestImageFile getReferencedImage() {
+        GreatQuestArchiveFile texRefFile = getGameInstance().getMainArchive().getFileByName(getParentFile(), this.path);
+        if (texRefFile != null && !(texRefFile instanceof GreatQuestImageFile)) {
+            getLogger().warning(Utils.getSimpleName(this) + " pointed to path '" + this.path + "', which yielded a " + Utils.getSimpleName(texRefFile) + " instead of an image???");
+            return null;
+        }
+
+        return (GreatQuestImageFile) texRefFile;
     }
 }

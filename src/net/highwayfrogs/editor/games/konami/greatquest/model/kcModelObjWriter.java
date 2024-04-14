@@ -403,7 +403,7 @@ public class kcModelObjWriter {
     }
 
     @RequiredArgsConstructor
-    private static class ObjWriterContext {
+    public static class ObjWriterContext {
         @Getter private final File outputFolder;
         @Getter private final String fileName;
         @Getter private final StringBuilder objWriter;

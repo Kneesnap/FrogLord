@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
@@ -32,6 +33,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
     public static final int NAME_SIZE = 32;
     private static final int RESERVED_HEADER_FIELDS = 7;
     private static final int RESERVED_PRIM_HEADER_FIELDS = 3;
+    public static final int LEVEL_RESOURCE_HASH = GreatQuestUtils.hash("OctTreeSceneMgr", true);
 
     public kcCResOctTreeSceneMgr(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.OCTTREESCENEMGR);
