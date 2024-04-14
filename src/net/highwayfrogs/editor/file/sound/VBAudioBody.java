@@ -1,14 +1,11 @@
 package net.highwayfrogs.editor.file.sound;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.gui.MainController;
-import net.highwayfrogs.editor.gui.editor.VABController;
+import net.highwayfrogs.editor.games.sony.shared.ui.file.VABController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,18 +24,13 @@ public abstract class VBAudioBody<THeader extends VHAudioHeader> extends SCShare
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return VHFile.ICON;
     }
 
     @Override
-    public Node makeEditor() {
-        return loadEditor(getGameInstance(), new VABController(getGameInstance()), "edit-file-vb", this);
-    }
-
-    @Override
-    public void handleWadEdit(WADFile parent) {
-        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), this);
+    public VABController makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-vb", new VABController(getGameInstance()), this);
     }
 
     @Override

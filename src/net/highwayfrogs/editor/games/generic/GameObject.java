@@ -22,7 +22,8 @@ public abstract class GameObject<TGameInstance extends GameInstance> {
      * Gets the game version config.
      */
     public GameConfig getConfig() {
-        return getGameInstance().getConfig();
+        GameInstance instance = getGameInstance();
+        return instance != null ? instance.getConfig() : null;
     }
 
     /**

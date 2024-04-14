@@ -4,11 +4,9 @@ import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.*;
-import net.highwayfrogs.editor.gui.MainController.LazySCMainMenuFileGroup;
-import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
-import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroupFileID;
-
-import java.util.List;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 
 /**
  * Represents an instance of MediEvil 2 game files.
@@ -38,8 +36,8 @@ public class MediEvil2GameInstance extends SCGameInstance {
     }
 
     @Override
-    public void setupFileGroups(List<SCMainMenuFileGroup> fileGroups) {
-        fileGroups.add(new SCMainMenuFileGroupFileID("VLO Texture Bank", FILE_TYPE_VLO));
-        fileGroups.add(new LazySCMainMenuFileGroup("TIM [PSX Image]", (file, index) -> file instanceof PSXTIMFile));
+    public void setupFileGroups(SCGameFileGroupedListViewComponent fileListView) {
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("VLO Texture Bank", FILE_TYPE_VLO));
+        fileListView.addGroup(new LazySCGameFileListGroup("TIM [PSX Image]", (file, index) -> file instanceof PSXTIMFile));
     }
 }

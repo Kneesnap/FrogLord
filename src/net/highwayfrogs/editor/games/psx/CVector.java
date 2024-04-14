@@ -319,7 +319,7 @@ public class CVector implements IBinarySerializable {
         // Texture Preview
         ImageView preview = new ImageView(scaledTexture != null ? Utils.toFXImage(scaledTexture, false) : null);
         preview.setOnMouseClicked(evt ->
-                InputMenu.promptInput("Please enter the color value you'd like to use.", Integer.toHexString(toRGB()).toUpperCase(), newText -> {
+                InputMenu.promptInput(null, "Please enter the color value you'd like to use.", Integer.toHexString(toRGB()).toUpperCase(), newText -> {
                     int colorRGB;
                     try {
                         colorRGB = Integer.parseInt(newText, 16);

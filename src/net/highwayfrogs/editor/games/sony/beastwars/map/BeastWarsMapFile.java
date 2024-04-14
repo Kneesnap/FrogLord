@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
@@ -16,7 +15,7 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.data.*;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapMesh;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapVertex;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsMapMeshController;
-import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
@@ -354,18 +353,18 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return MAPFile.ICON;
     }
 
     @Override
-    public Node makeEditor() {
+    public GameUIController<?> makeEditorUI() {
         return null;
     }
 
     @Override
     public void handleWadEdit(WADFile parent) {
-        MeshViewController.setupMeshViewer(GUIMain.MAIN_STAGE, new BeastWarsMapMeshController(), new BeastWarsMapMesh(this));
+        MeshViewController.setupMeshViewer(getGameInstance(), new BeastWarsMapMeshController(), new BeastWarsMapMesh(this));
     }
 
     @Override

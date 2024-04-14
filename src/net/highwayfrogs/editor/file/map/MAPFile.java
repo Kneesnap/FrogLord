@@ -1,13 +1,11 @@
 package net.highwayfrogs.editor.file.map;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWDFile;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.FroggerMapConfig;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
@@ -41,9 +39,9 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.ui.FroggerMapInfoUIController;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
-import net.highwayfrogs.editor.gui.MainController;
-import net.highwayfrogs.editor.gui.editor.MAPController;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
@@ -55,7 +53,7 @@ import java.util.Map.Entry;
  * TODO: When we port this to new FrogLord,
  *  - Each part should be broken off into a separate class, one interface for loading / saving, and one for holding the data.
  *  - The loading / saving part should be able to perform diagnostics. Eg: Allow previewing byte data in some kind of debug viewer.
- *  - Which loader / saver classes get used should be chosen by having each of the loader classes have an overridable "testCompatibiity" method, so we can use build number, look at any data in the thing, file name, etc.
+ *  - Which loader / saver classes get used should be chosen by having each of the loader classes have an overridable "testCompatibility" method, so we can use build number, look at any data in the thing, file name, etc.
  *  - New FrogLord should be able to configure form & entity library overrides per-level, per-build. For example, QB.MAP is in many builds, but is clearly using a form library from before even build #1.
  *  - New FrogLord should be able to open maps like ISLAND.MAP directly, without importing nonsense. Eg: If we're not sure, let the user select the theme to load a map with.
  *  - New FrogLord will have an understanding of the formats from Build 1 to the full retail release.
@@ -123,7 +121,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
     private static final String GRID_SIGNATURE = "GRID"; // Grid Chunk
     private static final String ANIMATION_SIGNATURE = "ANIM"; // Anim Chunk
     // Removed chunks:
-    // "STND" - Standard Chunk, Contained general information like camera data, heights, etc, which seems to have been completely eliminated.
+    // "STND" - Standard Chunk, Contained general information like camera data, heights, etc., which seems to have been completely eliminated.
 
     public static final short MAP_ANIMATION_TEXTURE_LIST_TERMINATOR = (short) 0xFFFF;
     private static final int TOTAL_CHECKPOINT_TIMER_ENTRIES = 5;
@@ -156,6 +154,11 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
     @Override
     public FroggerConfig getConfig() {
         return (FroggerConfig) super.getConfig();
+    }
+
+    @Override
+    public String getCollectionViewDisplayStyle() {
+        return getMapConfig().isIslandPlaceholder() ? "-fx-text-fill: red;" : null;
     }
 
     /**
@@ -361,8 +364,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
                 entities.add(entity);
                 lastEntity = entity;
             } catch (Throwable th) {
-                System.out.println("Failed to load an entity which was part of " + getFileDisplayName());
-                th.printStackTrace();
+                Utils.handleError(getLogger(), th, false, "Failed to load an entity.");
                 lastEntity = null;
             }
 
@@ -792,7 +794,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         MAPLevel level = MAPLevel.getByName(getFileDisplayName());
 
         if (level != null) {
@@ -811,13 +813,8 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
     }
 
     @Override
-    public Node makeEditor() {
-        return loadEditor(getGameInstance(), new MAPController(getGameInstance()), "edit-file-map", this);
-    }
-
-    @Override
-    public void handleWadEdit(WADFile parent) {
-        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), this);
+    public GameUIController<?> makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-map", new FroggerMapInfoUIController(getGameInstance()), this);
     }
 
     private void printInvalidEntityReadDetection(DataReader reader, Entity lastEntity, int endPointer) {
@@ -989,7 +986,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
     }
 
     /**
-     * Gets all of the polygons in this map, in a list.
+     * Gets all the polygons in this map, in a list.
      * @return allPolygons
      */
     public List<MAPPolygon> getAllPolygons() {
@@ -1002,7 +999,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
     }
 
     /**
-     * Gets all of the polygons in this map, in a list.
+     * Gets all the polygons in this map, in a list.
      * Ensures they are returned in a predictable order.
      * @return allPolygons
      */

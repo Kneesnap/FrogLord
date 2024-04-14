@@ -29,8 +29,8 @@ import net.highwayfrogs.editor.file.map.entity.data.volcano.EntityTriggeredPlatf
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.ui.mapeditor.EntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.map.manager.EntityManager;
 import net.highwayfrogs.editor.system.Tuple2;
 
 import java.lang.reflect.Constructor;

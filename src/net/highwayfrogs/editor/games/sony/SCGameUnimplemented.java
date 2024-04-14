@@ -3,9 +3,7 @@ package net.highwayfrogs.editor.games.sony;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
-
-import java.util.List;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 
 /**
  * Represents a game which support hasn't been added for yet.
@@ -32,7 +30,7 @@ public class SCGameUnimplemented extends SCGameInstance {
     }
 
     @Override
-    public void setupFileGroups(List<SCMainMenuFileGroup> fileTypes) {
-
+    public void setupFileGroups(SCGameFileGroupedListViewComponent fileListView) {
+        // Nothing.
     }
 }

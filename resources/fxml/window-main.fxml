@@ -6,82 +6,30 @@
 <?import javafx.scene.text.Font?>
 <AnchorPane fx:id="rootAnchor" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
             minHeight="-Infinity" minWidth="-Infinity" prefHeight="625.0" prefWidth="900.0"
-            xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="net.highwayfrogs.editor.gui.MainController">
+            xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
     <children>
         <MenuBar fx:id="menuBar" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
             <menus>
-                <Menu mnemonicParsing="false" text="File">
+                <Menu fx:id="menuBarFile" mnemonicParsing="false" text="File">
                     <items>
-                        <MenuItem mnemonicParsing="false" onAction="#actionLoadMWD" text="Load">
+                        <MenuItem fx:id="menuItemLoadMain" mnemonicParsing="false" onAction="#actionLoadMain" text="Load">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="L" control="DOWN" meta="UP" shift="UP"
                                                     shortcut="UP"/>
                             </accelerator>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#actionSaveMWD" text="Save">
+                        <MenuItem fx:id="menuItemSaveMain" mnemonicParsing="false" onAction="#actionSaveMain" text="Save">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="S" control="DOWN" meta="UP" shift="UP"
                                                     shortcut="UP"/>
                             </accelerator>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#actionSaveMWI" text="Save MWI"/>
-                        <MenuItem mnemonicParsing="false" onAction="#actionImportFile" text="Import File">
-                            <accelerator>
-                                <KeyCodeCombination alt="UP" code="I" control="DOWN" meta="UP" shift="UP"
-                                                    shortcut="UP"/>
-                            </accelerator>
-                        </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#actionExportFile" text="Export File">
-                            <accelerator>
-                                <KeyCodeCombination alt="UP" code="O" control="DOWN" meta="UP" shift="UP"
-                                                    shortcut="UP"/>
-                            </accelerator>
-                        </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#actionExportAlternateFile"
-                                  text="Export Alternate Format">
-                            <accelerator>
-                                <KeyCodeCombination alt="UP" code="E" control="DOWN" meta="UP" shift="UP"
-                                                    shortcut="UP"/>
-                            </accelerator>
-                        </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#actionExportBulkTextures"
-                                  text="Export All Textures"/>
                     </items>
                 </Menu>
-                <Menu mnemonicParsing="false" text="Edit">
+                <Menu fx:id="menuBarEdit" mnemonicParsing="false" text="Edit"/>
+                <Menu fx:id="menuBarHelp" mnemonicParsing="false" text="Help">
                     <items>
-                        <MenuItem mnemonicParsing="false" onAction="#actionMakeHeaders" text="Generate Source Files">
-                            <accelerator>
-                                <KeyCodeCombination alt="UP" code="X" control="DOWN" meta="UP" shift="UP"
-                                                    shortcut="UP"/>
-                            </accelerator>
-                        </MenuItem>
-                        <MenuItem fx:id="levelInfoEditor" mnemonicParsing="false" onAction="#editLevelInfo"
-                                  text="Edit Level Info"/>
-                        <MenuItem fx:id="formLibEditor" mnemonicParsing="false" onAction="#editFormBook"
-                                  text="Edit Form Library"/>
-                        <MenuItem fx:id="scriptEditor" mnemonicParsing="false" onAction="#editScript"
-                                  text="Edit Scripts"/>
-                        <MenuItem fx:id="demoTableEditor" mnemonicParsing="false" onAction="#editDemoTable"
-                                  text="Edit Demo Table"/>
-                        <MenuItem fx:id="textureFinder" mnemonicParsing="false" onAction="#actionSearchForTexture"
-                                  text="Find Texture"/>
-                        <MenuItem fx:id="patchMenu" mnemonicParsing="false" onAction="#actionOpenPatchMenu"
-                                  text="Patches"/>
-                        <MenuItem mnemonicParsing="false" onAction="#actionHashPlayground"
-                                  text="Hash Playground"/>
-                        <MenuItem fx:id="differenceReport" mnemonicParsing="false"
-                                  onAction="#actionGenerateDifferenceReport"
-                                  text="Make Difference Report"/>
-                        <MenuItem fx:id="findUnusedVertices" mnemonicParsing="false"
-                                  onAction="#actionFindUnusedVertices"
-                                  text="Find Unused Map Vertices"/>
-                    </items>
-                </Menu>
-                <Menu mnemonicParsing="false" text="Help">
-                    <items>
-                        <MenuItem mnemonicParsing="false" onAction="#actionOpenAbout" text="About"/>
+                        <MenuItem mnemonicParsing="false" onAction="#actionOpenAboutWindow" text="About"/>
                     </items>
                 </Menu>
             </menus>
@@ -91,19 +39,15 @@
                    prefWidth="900.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
                    AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0">
             <items>
-                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0">
-                    <children>
-                  <Accordion fx:id="accordionMain" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="350.0" snapToPixel="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                    </children>
-                </AnchorPane>
-                <SplitPane dividerPositions="0.7774798927613941" orientation="VERTICAL" prefHeight="398.0"
+                <AnchorPane fx:id="leftSideAnchorPane" minHeight="0.0" minWidth="0.0" prefHeight="160.0"/>
+                <SplitPane fx:id="rightSideSplitPane" dividerPositions="0.7774798927613941" orientation="VERTICAL" prefHeight="398.0"
                            prefWidth="417.0">
                     <items>
-                        <AnchorPane fx:id="editorPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                        <AnchorPane fx:id="fileEditorPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
                                     AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                             <children>
-                                <TextArea fx:id="consoleText" editable="false" layoutY="-3.0" prefHeight="80.0"
+                                <TextArea fx:id="consoleTextArea" editable="false" layoutY="-3.0" prefHeight="80.0"
                                           AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
                                           AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                     <font>

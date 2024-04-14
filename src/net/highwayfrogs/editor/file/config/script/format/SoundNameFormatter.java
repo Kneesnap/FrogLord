@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.config.script.ScriptCommand;
 import net.highwayfrogs.editor.file.config.script.ScriptParseException;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.gui.editor.ScriptEditorController;
+import net.highwayfrogs.editor.games.sony.frogger.ui.ScriptEditorController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 

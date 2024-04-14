@@ -3,15 +3,13 @@ package net.highwayfrogs.editor.gui;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
-import javafx.stage.Stage;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.net.URL;
-import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
 /**
@@ -19,14 +17,13 @@ import java.util.function.Consumer;
  * Created by Kneesnap on 12/2/2018.
  */
 public class InputMenu {
-
     /**
      * Require the user to perform a selection.
      * @param prompt  The prompt to display the user.
      * @param handler The behavior to execute when the user accepts.
      */
-    public static void promptInput(String prompt, Consumer<String> handler) {
-        promptInput(prompt, null, handler);
+    public static void promptInput(GameInstance instance, String prompt, Consumer<String> handler) {
+        promptInput(instance, prompt, null, handler);
     }
 
     /**
@@ -34,28 +31,27 @@ public class InputMenu {
      * @param prompt  The prompt to display the user.
      * @param handler The behavior to execute when the user accepts.
      */
-    public static void promptInput(String prompt, String defaultText, Consumer<String> handler) {
-        Utils.loadFXMLTemplate(null, "window-wait-for-user-input", "Waiting for user input...", newStage -> new InputController(newStage, prompt, handler, defaultText));
+    public static void promptInput(GameInstance instance, String prompt, String defaultText, Consumer<String> handler) {
+        Utils.createWindowFromFXMLTemplate("window-wait-for-user-input", new InputController(instance, prompt, handler, defaultText), "Waiting for user input...", true);
     }
 
-    public static class InputController implements Initializable {
+    public static class InputController extends GameUIController<GameInstance> {
         @FXML private Label promptText;
         @FXML private TextField textField;
 
-        private Stage stage;
-        private String text;
-        private Consumer<String> handler;
-        private String defaultText;
+        private final String text;
+        private final Consumer<String> handler;
+        private final String defaultText;
 
-        public InputController(Stage stage, String promptText, Consumer<String> handler, String defaultText) {
+        public InputController(GameInstance instance, String promptText, Consumer<String> handler, String defaultText) {
+            super(instance);
             this.text = promptText;
             this.handler = handler;
-            this.stage = stage;
             this.defaultText = defaultText;
         }
 
         @Override
-        public void initialize(URL location, ResourceBundle resources) {
+        protected void onControllerLoad(Node rootNode) {
             this.promptText.setText(this.text);
 
             if (this.defaultText != null)
@@ -79,13 +75,13 @@ public class InputMenu {
             if (response == null || response.isEmpty())
                 return;
 
-            this.stage.close();
+            closeWindow();
             handler.accept(response);
         }
 
         @FXML
         private void onCancel(ActionEvent event) {
-            this.stage.close();
+            closeWindow();
         }
     }
 }

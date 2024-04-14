@@ -2,16 +2,12 @@ package net.highwayfrogs.editor.gui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -31,16 +27,24 @@ import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.logging.Formatter;
 import java.util.logging.*;
 
+/**
+ * The entry point to FrogLord.
+ * TODO: Search bar, add bar, etc.
+ * TODO: Save/load from config file.
+ * TODO: Show loading bar while the game files load.
+ * TODO: New game open menu.
+ */
 public class GUIMain extends Application {
-    public static GUIMain INSTANCE;
-    public static Stage MAIN_STAGE;
+    public static GUIMain INSTANCE; // TODO: TOSS (LATER)
     @Getter private static File workingDirectory = new File("./");
-    public static final Image NORMAL_ICON = SCGameFile.loadIcon("icon");
-    private static boolean loadedSuccessfullyAtLeastOnce;
+    public static final Image MAIN_ICON = SCGameFile.loadIcon("icon");
+    private static boolean loadedSuccessfullyAtLeastOnce; // TODO: TOSS (LATER)
+    @Getter private static final List<GameInstance> activeGameInstances = new CopyOnWriteArrayList<>();
 
 
     public static void main(String[] args) {
@@ -50,7 +54,6 @@ public class GUIMain extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         INSTANCE = this;
-        MAIN_STAGE = primaryStage;
         setupLogger();
         SystemOutputReplacement.activateReplacement();
 
@@ -110,7 +113,7 @@ public class GUIMain extends Application {
         List<Entry<String, String>> internalToDisplayNames = new ArrayList<>(configDisplayName.entrySet());
         internalToDisplayNames.sort(Entry.comparingByKey());
 
-        SelectionMenu.promptSelection("Select a configuration.", resourcePath -> {
+        SelectionMenu.promptSelection(null, "Select a configuration.", resourcePath -> {
             SCGameInstance instance = makeGameInstance(exeFile, mwdFile, resourcePath.getKey());
             onConfigLoad.accept(instance);
         }, internalToDisplayNames, Entry::getValue, null);
@@ -121,29 +124,13 @@ public class GUIMain extends Application {
         String configName = configPath.contains("/") ? configPath.substring(configPath.lastIndexOf('/') + 1) : configPath;
         SCGameType gameType = config.getEnum("game", SCGameType.FROGGER); // TODO: Better system.
         SCGameInstance instance = gameType.createGameInstance();
-        MainController.MAIN_WINDOW = null; // Ensures messages get logged to the new window instead of printed to the old one.
+        instance.getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
         instance.loadGame(configName, config, inputMwd, inputExe);
         return instance;
     }
 
     private static String getExeConfigPath(String configName) {
         return "games/" + configName + ".cfg";
-    }
-
-    @SneakyThrows
-    private void openGUI(Stage primaryStage, SCGameInstance instance) {
-        // Setup GUI (We display the uninitialized GUI before the MWD loads because it intangibly feels better this way.)
-        Parent root = FXMLLoader.load(Utils.getResourceURL("fxml/window-main.fxml"));
-        Scene scene = new Scene(root);
-
-        primaryStage.setTitle("FrogLord " + Constants.VERSION);
-        primaryStage.setScene(scene);
-        primaryStage.getIcons().add(NORMAL_ICON);
-        primaryStage.show();
-
-        // Setup MWD UI.
-        MainController.MAIN_WINDOW.loadMWD(instance); // Setup GUI.
-        loadedSuccessfullyAtLeastOnce = true;
     }
 
     /**
@@ -163,14 +150,14 @@ public class GUIMain extends Application {
         FroggerVersionComparison.setup(getWorkingDirectory());
 
         // If this isn't a debug setup, prompt the user to select the files to load.
-        File mwdFile = Utils.promptFileOpen("Please select a Millennium WAD", "Millennium WAD", "MWD");
+        File mwdFile = Utils.promptFileOpen(null, "Please select a Millennium WAD", "Millennium WAD", "MWD");
         if (mwdFile == null) {
             if (!loadedSuccessfullyAtLeastOnce)
                 Platform.exit(); // No file given. Shutdown if there is nothing loaded already. Otherwise, keep the last data active.
             return;
         }
 
-        File exeFile = Utils.promptFileOpenExtensions("Please select a Millennium executable", "Millennium Executable", "EXE", "dat", "04", "06", "26", "64", "65", "66", "99");
+        File exeFile = Utils.promptFileOpenExtensions(null, "Please select a Millennium executable", "Millennium Executable", "EXE", "dat", "04", "06", "26", "64", "65", "66", "99");
         if (exeFile == null) {
             if (!loadedSuccessfullyAtLeastOnce)
                 Platform.exit(); // No file given. Shutdown if there is nothing loaded already. Otherwise, keep the last data active.
@@ -178,13 +165,13 @@ public class GUIMain extends Application {
         }
 
         createGameInstance(exeFile, mwdFile, instance -> {
-            openGUI(MAIN_STAGE, instance);
+            loadedSuccessfullyAtLeastOnce = true;
+            instance.setupMainMenuWindow();
             if (instance.isFrogger())
                 FroggerVersionComparison.addNewVersionToConfig((FroggerGameInstance) instance);
         });
     }
 
-    @SuppressWarnings("ConditionalBreakInInfiniteLoop")
     private static void setupLogger() {
         Utils.makeDirectory(new File("logs")); // Ensure the logs directory exists.
 

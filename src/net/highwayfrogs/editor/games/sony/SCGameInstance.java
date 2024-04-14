@@ -18,7 +18,9 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
-import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
+import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -141,6 +143,11 @@ public abstract class SCGameInstance extends GameInstance {
             templateUrl = Utils.getResourceURL("games/sony/fxml/" + template + ".fxml");
 
         return templateUrl;
+    }
+
+    @Override
+    protected MainMenuController<?, SCGameFile<?>> makeMainMenuController() {
+        return new SCMainMenuUIController<>(this);
     }
 
     /**
@@ -355,10 +362,10 @@ public abstract class SCGameInstance extends GameInstance {
     }
 
     /**
-     * Setup a list of supported file types.
-     * @param fileTypes The list to setup.
+     * Populate the file groups for the main menu file list.
+     * @param fileListView The file list view to register files for.
      */
-    public abstract void setupFileGroups(List<SCMainMenuFileGroup> fileTypes);
+    public abstract void setupFileGroups(SCGameFileGroupedListViewComponent fileListView);
 
     /**
      * Get the FileEntry for a given resource id.

@@ -3,11 +3,7 @@ package net.highwayfrogs.editor.utils;
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.SnapshotParameters;
-import javafx.scene.SubScene;
+import javafx.scene.*;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
@@ -26,8 +22,8 @@ import lombok.Cleanup;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.GameUIController;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -43,10 +39,9 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
@@ -93,10 +88,10 @@ public class Utils {
      * @return intValue
      */
     public static int readNumberFromBytes(byte[] data, int readSize, int startIndex) {
-        int value = 0;
+        long value = 0;
         for (int i = 0; i < readSize; i++)
             value += ((long) data[startIndex + i] & 0xFFL) << (Constants.BITS_PER_BYTE * i);
-        return value;
+        return (int) value;
     }
 
     /**
@@ -875,7 +870,7 @@ public class Utils {
      * @param extensions Allowed extensions.
      * @return selectedFile, Can be null.
      */
-    public static File promptFileOpenExtensions(String title, String typeInfo, String... extensions) {
+    public static File promptFileOpenExtensions(GameInstance instance, String title, String typeInfo, String... extensions) {
         Utils.verify(extensions.length > 0, "");
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(title);
@@ -897,7 +892,7 @@ public class Utils {
 
         fileChooser.setInitialDirectory(getValidFolder(GUIMain.getWorkingDirectory()));
 
-        File selectedFile = fileChooser.showOpenDialog(GUIMain.MAIN_STAGE);
+        File selectedFile = fileChooser.showOpenDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFile != null)
             GUIMain.setWorkingDirectory(selectedFile.getParentFile());
 
@@ -911,8 +906,8 @@ public class Utils {
      * @param extension Allowed extension.
      * @return selectedFile, Can be null.
      */
-    public static File promptFileOpen(String title, String typeInfo, String extension) {
-        return promptFileOpenExtensions(title, typeInfo, extension);
+    public static File promptFileOpen(GameInstance instance, String title, String typeInfo, String extension) {
+        return promptFileOpenExtensions(instance, title, typeInfo, extension);
     }
 
     /**
@@ -923,7 +918,7 @@ public class Utils {
      * @param extension   Allowed extension.
      * @return selectedFile, Can be null.
      */
-    public static File promptFileSave(String title, String suggestName, String typeInfo, String extension) {
+    public static File promptFileSave(GameInstance instance, String title, String suggestName, String typeInfo, String extension) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(title);
 
@@ -949,7 +944,7 @@ public class Utils {
             fileChooser.setInitialFileName(initialName);
         }
 
-        File selectedFile = fileChooser.showSaveDialog(GUIMain.MAIN_STAGE);
+        File selectedFile = fileChooser.showSaveDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFile != null)
             GUIMain.setWorkingDirectory(selectedFile.getParentFile());
 
@@ -974,12 +969,12 @@ public class Utils {
      * @param saveDirectory Should this directory be saved as the current directory?
      * @return directoryFile
      */
-    public static File promptChooseDirectory(String title, boolean saveDirectory) {
+    public static File promptChooseDirectory(GameInstance instance, String title, boolean saveDirectory) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle(title);
         chooser.setInitialDirectory(getValidFolder(GUIMain.getWorkingDirectory()));
 
-        File selectedFolder = chooser.showDialog(GUIMain.MAIN_STAGE);
+        File selectedFolder = chooser.showDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFolder != null && saveDirectory)
             GUIMain.setWorkingDirectory(selectedFolder);
 
@@ -1009,35 +1004,37 @@ public class Utils {
 
     /**
      * Load a FXML template as a new window.
-     * WARNING: This method is blocking.
-     * @param gameInstance the game instance to load the fxml template for
      * @param template The name of the template to load. Should not be user-controllable, as there is no path sanitization.
-     * @param title The title of the window to show.
-     * @param controller Makes the window controller.
+     * @param controller the window controller
+     * @param title the title of the window to show
+     * @param waitUntilClose if true, the thread will be blocked until the window is closed
      */
-    @SneakyThrows
-    public static <T> void loadFXMLTemplate(GameInstance gameInstance, String template, String title, Function<Stage, T> controller) {
-        loadFXMLTemplate(gameInstance, template, title, controller, null);
+    public static <T> boolean createWindowFromFXMLTemplate(String template, GameUIController<?> controller, String title, boolean waitUntilClose) {
+        if (controller == null)
+            throw new NullPointerException("controller");
+
+        GameInstance instance = controller.getGameInstance();
+        URL fxmlTemplateUrl = getFXMLTemplateURL(instance, template);
+        if (fxmlTemplateUrl == null) {
+            makePopUp("The UI template '" + template + "' was not found.", AlertType.ERROR);
+            return false;
+        }
+
+        // Load fxml data.
+        if (GameUIController.loadController(instance, fxmlTemplateUrl, controller) == null)
+            return false;
+
+        // Open a window.
+        GameUIController.openWindow(controller, title, waitUntilClose);
+        return true;
     }
 
     /**
-     * Load a FXML template as a new window.
-     * WARNING: This method is blocking.
-     * @param template   The name of the template to load. Should not be user-controllable, as there is no path sanitization.
-     * @param title      The title of the window to show.
-     * @param controller Makes the window controller.
-     */
-    @SneakyThrows
-    public static <T> void loadFXMLTemplate(FroggerGameInstance instance, String template, String title, BiFunction<FroggerGameInstance, Stage, T> controller) {
-        loadFXMLTemplate(instance, template, title, controller, null);
-    }
-
-    /**
-     * Gets the FXMLLoader by its name.
+     * Gets the fxml template URL by its name.
      * @param template The template name.
-     * @return loader
+     * @return fxmlTemplateUrl
      */
-    public static FXMLLoader getFXMLLoader(GameInstance gameInstance, String template) {
+    public static URL getFXMLTemplateURL(GameInstance gameInstance, String template) {
         URL url = gameInstance != null ? gameInstance.getFXMLTemplateURL(template) : null;
 
         String localPath = "fxml/" + template + ".fxml";
@@ -1047,67 +1044,7 @@ public class Utils {
         if (url == null)
             throw new RuntimeException("Could not find resource '" + localPath + "' for " + Utils.getSimpleName(gameInstance) + ".");
 
-        return new FXMLLoader(url);
-    }
-
-    /**
-     * Load a FXML template as a new window.
-     * WARNING: This method is blocking.
-     * @param template   The name of the template to load. Should not be user-controllable, as there is no path sanitization.
-     * @param title      The title of the window to show.
-     * @param controller Makes the window controller.
-     */
-    @SneakyThrows
-    public static <T> void loadFXMLTemplate(GameInstance gameInstance, String template, String title, Function<Stage, T> controller, BiConsumer<Stage, T> consumer) {
-        FXMLLoader loader = getFXMLLoader(gameInstance, template);
-
-        Stage newStage = new Stage();
-        newStage.setTitle(title);
-
-        T controllerObject = controller.apply(newStage);
-        loader.setController(controllerObject);
-
-        Parent rootNode = loader.load();
-        newStage.setScene(new Scene(rootNode));
-        newStage.setResizable(false);
-
-        if (consumer != null)
-            consumer.accept(newStage, controllerObject);
-
-        newStage.initModality(Modality.WINDOW_MODAL);
-        newStage.initOwner(GUIMain.MAIN_STAGE);
-        newStage.getIcons().add(GUIMain.NORMAL_ICON);
-        newStage.showAndWait();
-    }
-
-    /**
-     * Load a FXML template as a new window.
-     * WARNING: This method is blocking.
-     * @param template   The name of the template to load. Should not be user-controllable, as there is no path sanitization.
-     * @param title      The title of the window to show.
-     * @param controller Makes the window controller.
-     */
-    @SneakyThrows
-    public static <T> void loadFXMLTemplate(FroggerGameInstance instance, String template, String title, BiFunction<FroggerGameInstance, Stage, T> controller, TriConsumer<FroggerGameInstance, Stage, T> consumer) {
-        FXMLLoader loader = getFXMLLoader(instance, template);
-
-        Stage newStage = new Stage();
-        newStage.setTitle(title);
-
-        T controllerObject = controller.apply(instance, newStage);
-        loader.setController(controllerObject);
-
-        Parent rootNode = loader.load();
-        newStage.setScene(new Scene(rootNode));
-        newStage.setResizable(false);
-
-        if (consumer != null)
-            consumer.accept(instance, newStage, controllerObject);
-
-        newStage.initModality(Modality.WINDOW_MODAL);
-        newStage.initOwner(GUIMain.MAIN_STAGE);
-        newStage.getIcons().add(GUIMain.NORMAL_ICON);
-        newStage.showAndWait();
+        return url;
     }
 
     /**
@@ -1748,6 +1685,66 @@ public class Utils {
     }
 
     /**
+     * Handle an exception which should be reported to the user.
+     * @param logger the logger to write the error to
+     * @param th the exception to log
+     * @param showWindow if true, a popup window will display the error
+     * @param message the message to accompany the exception
+     * @param arguments format string arguments to the message
+     */
+    public static void handleError(Logger logger, Throwable th, boolean showWindow, String message, Object... arguments) {
+        handleError(logger, th, showWindow, 2, message, arguments);
+    }
+
+    /**
+     * Handle an exception which should be reported to the user.
+     * @param logger the logger to write the error to
+     * @param th the exception to log
+     * @param showWindow if true, a popup window will display the error
+     * @param skipCount the number of methods to search back.
+     * @param message the message to accompany the exception
+     * @param arguments format string arguments to the message
+     */
+    public static void handleError(Logger logger, Throwable th, boolean showWindow, int skipCount, String message, Object... arguments) {
+        // TODO: Should generalize? Probably?
+        // TODO: JAva 9 -> StackWalker.getCallerClass()
+        // TODO: return StackWalker.
+        //      getInstance().
+        //      walk(stream -> stream.skip(1).findFirst().get()).
+        //      getMethodName();
+
+        // There
+        String callingMethodName = null;
+        Class<?> callingClass = null;
+        try {
+            StackTraceElement element = new Throwable().fillInStackTrace().getStackTrace()[skipCount];
+            callingMethodName = element.getMethodName();
+            callingClass = element.getClass();
+        } catch (Throwable classLookupException) {
+            // If this fails, just use null.
+        }
+
+        // Format message.
+        String formattedMessage;
+        try {
+            formattedMessage = message != null ? String.format(message, arguments) : null;
+        } catch (IllegalFormatException exception) {
+            formattedMessage = "[String Formatting Failed] " + message;
+        }
+
+        // Print stage trace.
+        if (logger != null) {
+            if (formattedMessage != null)
+                logger.severe(formattedMessage);
+            logger.throwing(callingClass != null ? callingClass.getSimpleName() : null, callingMethodName, th);
+        }
+
+        // Create popup window.
+        if (showWindow)
+            Utils.makeErrorPopUp(formattedMessage, th, false);
+    }
+
+    /**
      * Calculate bilinear interpolated color value.
      * @param color0 The first color.
      * @param color1 The second color.
@@ -1977,7 +1974,7 @@ public class Utils {
      * @param subScene   The subScene to take a screenshot of.
      * @param namePrefix The file name prefix to save the image as.
      */
-    public static void takeScreenshot(SubScene subScene, Scene scene, String namePrefix, boolean transparentBackground) {
+    public static void takeScreenshot(GameInstance instance, SubScene subScene, Scene scene, String namePrefix, boolean transparentBackground) {
         Paint subSceneColor = subScene.getFill();
 
         if (transparentBackground)
@@ -2006,12 +2003,12 @@ public class Utils {
                 } catch (IOException ex) {
                     try {
                         // Let user pick a directory (in case current working directory is not writeable)
-                        File targetDirectory = Utils.promptChooseDirectory("Save Screenshot", true);
+                        File targetDirectory = Utils.promptChooseDirectory(instance, "Save Screenshot", true);
                         ImageIO.write(sceneImage, "png", new File(targetDirectory, fileName));
                         break;
                     } catch (IOException ex2) {
-                        ex.printStackTrace();
-                        throw new RuntimeException("Failed to write screenshot. (No permissions to write here?)", ex2);
+                        handleError(instance.getLogger(), ex2, true, "Failed to write screenshot to '%s'. (No permissions to write here?)", fileName);
+                        return;
                     }
                 }
             }

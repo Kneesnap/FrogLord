@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.utils.logging;
 
-import net.highwayfrogs.editor.gui.MainController;
+import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.gui.GUIMain;
 
 import java.util.logging.ErrorManager;
 import java.util.logging.LogRecord;
@@ -32,11 +33,21 @@ public class UIConsoleHandler extends StreamHandler {
         }
 
         // Add to UI.
-        MainController.addMessage(msg);
+        logMessage(msg);
     }
 
     @Override
     public boolean isLoggable(LogRecord record) {
         return super.isLoggable(record) && !LogFormatter.isJavaFXMessage(record);
+    }
+
+    /**
+     * Print a message to the console window.
+     * @param message The message to print.
+     */
+    public static void logMessage(String message) {
+        for (GameInstance gameInstance : GUIMain.getActiveGameInstances())
+            if (gameInstance.getMainMenuController() != null)
+                gameInstance.getMainMenuController().addConsoleEntry(message);
     }
 }

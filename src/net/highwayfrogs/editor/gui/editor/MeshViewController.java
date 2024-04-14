@@ -20,6 +20,7 @@ import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputManager;
@@ -221,7 +222,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         // Ensure that the render manager has access to the root node
         this.renderManager.setRoot(this.root3D);
 
-        // Setup the UI layout.
+        // Initialise the UI layout.
         BorderPane uiPane = new BorderPane();
         uiPane.setLeft(loadRoot);
         this.subScene2DElements = new Group();
@@ -266,7 +267,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 Utils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
                 this.root3D.getChildren().clear(); // Clear data to avoid memory leak.
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
-                Utils.takeScreenshot(this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), false);
+                Utils.takeScreenshot(null, this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), false);
             } else if (event.getCode() == KeyCode.F12) {
                 getLogger().info("Saving main mesh texture sheet to 'texture-sheet.png'...");
 
@@ -403,7 +404,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             this.checkBoxEnablePsxShading.setDisable(true);
         }
 
-        // Must be called after MAPController is passed.
+        // Must be called after FroggerMapInfoUIController is passed.
         runForEachManager(MeshUIManager::onSetup, "onSetup"); // Setup all the managers.
         runForEachManager(MeshUIManager::updateEditor, "updateEditor"); // Setup all the managers editors.
     }
@@ -478,6 +479,22 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         }
 
         return false;
+    }
+
+    /**
+     * Sets up the mesh viewer UI for a particular scene.
+     * @param controller      The controller for the mesh view.
+     * @param mesh            The mesh to display.
+     * @param <TController>   The type of controller which manages the mesh.
+     * @param <TDynMesh>      The main mesh displayed by the controller.
+     * @return controller
+     */
+    public static <TController extends MeshViewController<TDynMesh>, TDynMesh extends DynamicMesh> TController setupMeshViewer(GameInstance instance, TController controller, TDynMesh mesh) {
+        Stage stage = instance != null ? instance.getMainStage() : null;
+        if (stage == null)
+            return null;
+
+        return setupMeshViewer(stage, controller, mesh);
     }
 
     /**

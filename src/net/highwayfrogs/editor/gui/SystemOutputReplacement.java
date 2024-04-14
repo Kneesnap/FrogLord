@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.gui;
 
+import net.highwayfrogs.editor.utils.logging.UIConsoleHandler;
+
 import java.io.OutputStream;
 import java.io.PrintStream;
 
@@ -27,7 +29,7 @@ public class SystemOutputReplacement extends OutputStream {
             String s = buffer.toString();
             if (s.contains(LINE_SEPARATOR)) { // The whole separator string is written
                 buffer.setLength(0);
-                MainController.addMessage(s.substring(0, s.length() - LINE_SEPARATOR.length()));
+                UIConsoleHandler.logMessage(s.substring(0, s.length() - LINE_SEPARATOR.length()));
             }
         }
     }

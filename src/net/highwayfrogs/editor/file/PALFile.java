@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import lombok.Getter;
@@ -11,7 +10,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.gui.editor.PaletteController;
+import net.highwayfrogs.editor.games.sony.frogger.ui.PaletteController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -21,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Pallete file. PC-Only file. Appears to not actually do anything though. Loading corrupted palettes doesn't seem to break anything, and they are not used on the PSX version. I have tested in both low poly mode and high poly mode.
+ * Palette file. PC-Only file. Appears to not actually do anything though. Loading corrupted palettes doesn't seem to break anything, and they are not used on the PSX version. I have tested in both low poly mode and high poly mode.
  * Appears this might be "Windows 3.0 logical palette" or "LOGPALETTE"
  * Created by Kneesnap on 8/14/2018.
  */
@@ -90,13 +89,13 @@ public class PALFile extends SCSharedGameFile {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return ICON;
     }
 
     @Override
-    public Node makeEditor() {
-        return loadEditor(getGameInstance(), new PaletteController(getGameInstance()), "edit-file-pal", this);
+    public PaletteController makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-pal", new PaletteController(getGameInstance()), this);
     }
 
     /**
@@ -131,7 +130,7 @@ public class PALFile extends SCSharedGameFile {
      */
     @Override
     public void exportAlternateFormat(FileEntry fileEntry) {
-        File file = Utils.promptFileSave("Save the Color Palette.", Utils.stripExtension(fileEntry.getDisplayName()), "ACT File", "act");
+        File file = Utils.promptFileSave(getGameInstance(), "Save the Color Palette.", Utils.stripExtension(fileEntry.getDisplayName()), "ACT File", "act");
         if (file != null) {
             final int redMask = 0xFF0000, greenMask = 0xFF00, blueMask = 0xFF;
 

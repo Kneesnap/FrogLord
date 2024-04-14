@@ -1,7 +1,12 @@
 package net.highwayfrogs.editor.games.generic;
 
+import javafx.scene.control.Alert.AlertType;
+import javafx.stage.Stage;
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
+import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -12,13 +17,14 @@ import java.util.logging.Logger;
  * Represents an instance of a game. For example, a folder containing the files for a single version of a game.
  * TODO: UI Plans?
  *  - 1) Standard UI for opening games.
- *  - 2) Standardize Main UI Layout. (But let games optionally roll their own system) -> Also, change who's in charge of UI.
- *  - 3) Standardize 3D UI.
+ *  - 2) Standardize 3D UI.
+ *  TODO: I think there's some kind of caching bug with shading. It happened on "Time Device", where none of the shading in the world was right. Then, after I toggled shading off/on, it was fine. I suspect there's probably some tracking issue then.
  * Created by Kneesnap on 4/10/2024.
  */
 public abstract class GameInstance {
     @Getter private final IGameType gameType;
     @Getter private GameConfig config;
+    @Getter private MainMenuController<?, ?> mainMenuController;
     private Logger cachedLogger;
 
     public GameInstance(IGameType gameType) {
@@ -29,6 +35,29 @@ public abstract class GameInstance {
     }
 
     /**
+     * Sets up the main menu controller for this game instance
+     */
+    public MainMenuController<?, ?> setupMainMenuWindow() {
+        if (this.mainMenuController != null)
+            throw new IllegalStateException("The main menu controller already exists for this game instance.");
+
+        this.mainMenuController = makeMainMenuController();
+        if (this.mainMenuController != null) {
+            String versionName = (this.config.getDisplayName() != null ? this.config.getDisplayName() : this.config.getInternalName());
+            GameUIController.loadController(this, MainMenuController.MAIN_MENU_FXML_TEMPLATE_URL, this.mainMenuController);
+            Stage stage = GameUIController.openWindow(this.mainMenuController, "FrogLord " + Constants.VERSION + " -- " + versionName, false);
+            stage.setResizable(true);
+        }
+
+        return this.mainMenuController;
+    }
+
+    /**
+     * Creates a new main menu controller.
+     */
+    protected abstract MainMenuController<?, ?> makeMainMenuController();
+
+    /**
      * Gets the logger for this game instance.
      */
     public Logger getLogger() {
@@ -36,6 +65,19 @@ public abstract class GameInstance {
             return this.cachedLogger;
 
         return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
+    }
+
+    /**
+     * Gets the main menu stage available for this game instance.
+     */
+    public Stage getMainStage() {
+        Stage stage = this.mainMenuController != null ? this.mainMenuController.getStage() : null;
+        if (stage == null) {
+            Utils.makePopUp("There was no stage available to override.", AlertType.ERROR);
+            return null;
+        }
+
+        return stage;
     }
 
     /**

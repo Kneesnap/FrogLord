@@ -21,7 +21,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
-import net.highwayfrogs.editor.gui.editor.MOFController;
+import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;

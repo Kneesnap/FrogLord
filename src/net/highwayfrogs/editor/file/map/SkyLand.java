@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.map;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,7 +13,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.gui.editor.SkyLandController;
+import net.highwayfrogs.editor.games.sony.frogger.ui.SkyLandController;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -42,13 +41,13 @@ public class SkyLand extends SCGameFile<FroggerGameInstance> {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return DummyFile.ICON;
     }
 
     @Override
-    public Node makeEditor() {
-        return loadEditor(getGameInstance(), new SkyLandController(getGameInstance()), "edit-file-sky-land", this);
+    public SkyLandController makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-sky-land", new SkyLandController(getGameInstance()), this);
     }
 
     @Override
@@ -65,18 +64,6 @@ public class SkyLand extends SCGameFile<FroggerGameInstance> {
         writer.writeUnsignedShort(this.yLength);
         for (SkyLandTile tile : getSkyData())
             writer.writeShort(tile.toShort());
-    }
-
-    /**
-     * Gets the max sky land index.
-     * @return maxIndex
-     */
-    public int getMaxIndex() {
-        int max = -1;
-        for (SkyLandTile tile : getSkyData())
-            if (tile.getId() > max)
-                max = tile.getId();
-        return max;
     }
 
     /**

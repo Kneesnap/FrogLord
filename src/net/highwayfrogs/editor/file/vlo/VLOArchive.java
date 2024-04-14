@@ -1,22 +1,18 @@
 package net.highwayfrogs.editor.file.vlo;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
-import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.gui.MainController;
 import net.highwayfrogs.editor.gui.SelectionMenu;
-import net.highwayfrogs.editor.gui.editor.VLOController;
+import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -129,26 +125,18 @@ public class VLOArchive extends SCSharedGameFile {
                 System.out.println("Exported image #" + i + ".");
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
+            getLogger().throwing(getClass().getSimpleName(), "exportAllImages", ex);
         }
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return ICON;
     }
 
     @Override
-    public Node makeEditor() {
-        return loadEditor(getGameInstance(), new VLOController(getGameInstance()), "edit-file-vlo", this);
-    }
-
-    @Override
-    public void setupEditor(AnchorPane editorPane, Node node) {
-        super.setupEditor(editorPane, node);
-
-        AnchorPane pane = (AnchorPane) node;
-        editorPane.setMaxHeight(pane.getMinHeight()); // Restricts the height of this editor, since there's nothing beyond the editing area.
+    public VLOController makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-vlo", new VLOController(getGameInstance()), this);
     }
 
     @Override
@@ -156,12 +144,6 @@ public class VLOArchive extends SCSharedGameFile {
     public void exportAlternateFormat(FileEntry fileEntry) {
         ImageIO.write(makeVRAMImage(), "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(fileEntry.getDisplayName()) + ".png"));
         System.out.println("Exported VRAM Image.");
-    }
-
-    @Override
-    public void handleWadEdit(WADFile parent) {
-        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), this);
-        ((VLOController) MainController.getCurrentController()).setParentWad(parent);
     }
 
     @Override
@@ -226,7 +208,7 @@ public class VLOArchive extends SCSharedGameFile {
         if (allowNull)
             allImages.add(0, null);
 
-        SelectionMenu.promptSelection("Select an image.", handler, allImages,
+        SelectionMenu.promptSelection(getGameInstance(), "Select an image.", handler, allImages,
                 image -> image != null ? "#" + image.getLocalImageID() + " (" + image.getTextureId() + ")" : "No Image",
                 image -> image.toFXImage(ICON_EXPORT));
     }

@@ -3,26 +3,23 @@ package net.highwayfrogs.editor.gui.extra.hash;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
-import java.net.URL;
 import java.util.List;
-import java.util.ResourceBundle;
 
 /**
  * Manages the hash playground.
  * Created by Kneesnap on 2/24/2022.
  */
-public class HashPlaygroundController implements Initializable {
-    private final Stage stage;
+public class HashPlaygroundController extends GameUIController<SCGameInstance> {
     @FXML private Label assemblerHashLabel;
     @FXML private Label fullAssemblerHashLabel;
     @FXML private Label linkerHashLabel;
@@ -36,15 +33,15 @@ public class HashPlaygroundController implements Initializable {
     @FXML private ListView<String> stringsListView;
     private final IHashStringGenerator stringGenerator;
 
-    private HashPlaygroundController(Stage stage) {
-        this.stage = stage;
+    private HashPlaygroundController(SCGameInstance gameInstance) {
+        super(gameInstance);
         DictionaryStringGenerator gen = new DictionaryStringGenerator(); // TODO: This is temporary.
         gen.loadDictionaryFromFile(new File("dictionary.txt"));
         this.stringGenerator = gen;
     }
 
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    protected void onControllerLoad(Node rootNode) {
         this.generateNewString();
         this.prefixTextField.textProperty().addListener((observable, oldValue, newValue) -> this.generateNewString());
         this.suffixTextField.textProperty().addListener((observable, oldValue, newValue) -> this.generateNewString());
@@ -108,6 +105,6 @@ public class HashPlaygroundController implements Initializable {
      * Open the level info controller.
      */
     public static void openEditor(SCGameInstance gameInstance) {
-        Utils.loadFXMLTemplate(gameInstance, "window-hash-playground", "Hash Playground", HashPlaygroundController::new);
+        Utils.createWindowFromFXMLTemplate("window-hash-playground", new HashPlaygroundController(gameInstance), "Hash Playground", true);
     }
 }

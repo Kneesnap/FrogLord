@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Converts a Beast Wars map to a .obj file.
@@ -43,6 +44,7 @@ public class BeastWarsMapObjConverter {
     @SuppressWarnings("unchecked")
     public static void exportMapToObj(File folder, String exportName, BeastWarsMapFile map) {
         FileEntry entry = map.getIndexEntry();
+        Logger logger = map.getLogger();
 
         // Find the corresponding texture file.
         BeastWarsTexFile texFile = map.getTextureFile();
@@ -125,8 +127,7 @@ public class BeastWarsMapObjConverter {
         try {
             ImageIO.write(UnknownTextureSource.MAGENTA_INSTANCE.makeTexture(null), "png", new File(folder, "collprim.png"));
         } catch (IOException ex) {
-            ex.printStackTrace();
-            System.out.println("Failed to export collprim image.");
+            Utils.handleError(logger, ex, false, "Failed to export collprim image.");
         }
 
         // Create and use a new material.
@@ -158,7 +159,7 @@ public class BeastWarsMapObjConverter {
         try {
             Files.write(new File(folder, "Map.obj").toPath(), Arrays.asList(objWriter.toString().split("\n")));
             Files.write(new File(folder, "Map.mtl").toPath(), Arrays.asList(mtlWriter.toString().split("\n")));
-            System.out.println("Exported '" + entry.getDisplayName() + " to " + exportName + "/Map.obj");
+            logger.info("Exported '" + entry.getDisplayName() + " to " + exportName + "/Map.obj");
         } catch (IOException ex) {
             throw new RuntimeException("Failed to export " + entry.getDisplayName() + " to " + exportName + "/Map.obj", ex);
         }
@@ -167,7 +168,7 @@ public class BeastWarsMapObjConverter {
         for (int i = 0; i < map.getTextureInfoEntries().length; i++) {
             MapTextureInfoEntry infoEntry = map.getTextureInfoEntries()[i];
             if (infoEntry.isActive() && infoEntry.getFlags() > 0)
-                System.out.println("Texture Entry #" + i + ": " + infoEntry.getTextureId() + ", " + infoEntry.getFlags());
+                logger.info("Texture Entry #" + i + ": " + infoEntry.getTextureId() + ", " + infoEntry.getFlags());
         }
     }
 
@@ -198,8 +199,7 @@ public class BeastWarsMapObjConverter {
             if (image != null)
                 ImageIO.write(image, "png", new File(folder, imageFileName + ".png"));
         } catch (IOException ex) {
-            ex.printStackTrace();
-            System.out.println("Failed to export image " + textureEntryIndex + ".");
+            Utils.handleError(map.getLogger(), ex, false, "Failed to export image %d.", textureEntryIndex);
         }
 
         // Create and use a new material.

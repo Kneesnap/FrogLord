@@ -4,7 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
 import net.highwayfrogs.editor.file.patch.PatchArgument;
 import net.highwayfrogs.editor.file.patch.PatchValue;
-import net.highwayfrogs.editor.gui.editor.PatchController;
+import net.highwayfrogs.editor.games.sony.frogger.ui.PatchController;
 
 /**
  * Created by Kneesnap on 2/15/2020.

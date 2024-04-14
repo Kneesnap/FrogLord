@@ -1,11 +1,9 @@
 package net.highwayfrogs.editor.games.psx;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
@@ -14,8 +12,7 @@ import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.gui.MainController;
-import net.highwayfrogs.editor.gui.editor.TIMController;
+import net.highwayfrogs.editor.games.sony.shared.ui.file.TIMController;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -76,14 +73,14 @@ public class PSXTIMFile extends SCSharedGameFile {
             if (clutSize < HEADER_SIZE + (clutHeight * clutWidth) * PSXClutColor.BYTE_SIZE) // 2 bytes per pixel.
                 throw new RuntimeException("Invalid CLUT Size Read [Size: " + clutSize + ", Width: " + clutWidth + ", Height: " + clutHeight + "]");
 
-            // Noted in PSXPrev/TIMParser/ReadTim and jpsxdec/CreateTim that some files can claim an unpaletted pmode but still use a palette.
+            // Noted in PSXPrev/TIMParser/ReadTim and jpsxdec/CreateTim that some files can claim an unpaletted p-mode but still use a palette.
             this.palettes = new PSXClutColor[clutHeight][]; // Do this immediately because getClutHeight() will error if accessed before this is set. It so happens that getClutHeight() is used in getBPPType() on the next line.
             this.readPalettes(reader, getBPPType(), clutWidth, this.palettes);
 
             // Ensure the reader position is in the expected spot.
             int clutEndPos = clutStartPos + clutSize;
             if (reader.getIndex() != clutEndPos) {
-                System.out.println("CLUT Position Mismatch for " + getFileDisplayName() + ", expected " + Utils.toHexString(clutEndPos) + ", but got " + Utils.toHexString(reader.getIndex()) + ".");
+                getLogger().warning("CLUT Position Mismatch for " + getFileDisplayName() + ", expected " + Utils.toHexString(clutEndPos) + ", but got " + Utils.toHexString(reader.getIndex()) + ".");
                 reader.setIndex(clutEndPos);
             }
         }
@@ -388,14 +385,8 @@ public class PSXTIMFile extends SCSharedGameFile {
     }
 
     @Override
-    public Node makeEditor() {
-        return loadEditor(getGameInstance(), new TIMController(getGameInstance()), "edit-file-tim", this);
-    }
-
-    @Override
-    public void handleWadEdit(WADFile parent) {
-        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), this);
-        ((TIMController) MainController.getCurrentController()).setParentWad(parent);
+    public TIMController makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-tim", new TIMController(getGameInstance()), this);
     }
 
     @Override
@@ -414,7 +405,7 @@ public class PSXTIMFile extends SCSharedGameFile {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return VLOArchive.ICON;
     }
 
@@ -510,7 +501,7 @@ public class PSXTIMFile extends SCSharedGameFile {
         if (!Utils.testSignature(data, SIGNATURE_BYTES))
             return false;
 
-        // Because the signature of a .TIM file is not very unique, false-positives may occur with the above check.
+        // Because the signature of a .TIM file is not reliably uniquely identifiable, false-positives may occur with the above check.
         // So, we take a further look at the data to see if there's any other data.
         if (instance != null) {
             DataReader reader = new DataReader(new ArraySource(data));
@@ -518,7 +509,6 @@ public class PSXTIMFile extends SCSharedGameFile {
                 new PSXTIMFile(instance).load(reader);
                 return true;
             } catch (Throwable th) {
-                th.printStackTrace();
                 return false;
             }
         }

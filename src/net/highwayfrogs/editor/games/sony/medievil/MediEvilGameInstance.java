@@ -16,9 +16,9 @@ import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityTable;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
-import net.highwayfrogs.editor.gui.MainController.LazySCMainMenuFileGroup;
-import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
-import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroupFileID;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -129,15 +129,15 @@ public class MediEvilGameInstance extends SCGameInstance {
     }
 
     @Override
-    public void setupFileGroups(List<SCMainMenuFileGroup> fileGroups) {
-        fileGroups.add(new SCMainMenuFileGroupFileID("VLO Texture Bank", FILE_TYPE_VLO));
-        fileGroups.add(new LazySCMainMenuFileGroup("TIM [PSX Image]", (file, index) -> file instanceof PSXTIMFile));
-        fileGroups.add(new SCMainMenuFileGroupFileID("Models", FILE_TYPE_MOF));
-        fileGroups.add(new SCMainMenuFileGroupFileID("Models", FILE_TYPE_MAPMOF));
-        fileGroups.add(new SCMainMenuFileGroupFileID("Maps", FILE_TYPE_MAP));
-        fileGroups.add(new LazySCMainMenuFileGroup("VAB Sound", (file, index) -> file instanceof VBAudioBody<?> || file instanceof VHAudioHeader));
-        fileGroups.add(new SCMainMenuFileGroupFileID("QTR [Quad Tree]", FILE_TYPE_QTR));
-        fileGroups.add(new SCMainMenuFileGroupFileID("PGD [Collision Grid]", FILE_TYPE_PGD));
+    public void setupFileGroups(SCGameFileGroupedListViewComponent fileListView) {
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("VLO Texture Bank", FILE_TYPE_VLO));
+        fileListView.addGroup(new LazySCGameFileListGroup("TIM [PSX Image]", (file, index) -> file instanceof PSXTIMFile));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("Models", FILE_TYPE_MOF));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("Models", FILE_TYPE_MAPMOF));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("Maps", FILE_TYPE_MAP));
+        fileListView.addGroup(new LazySCGameFileListGroup("VAB Sound", (file, index) -> file instanceof VBAudioBody<?> || file instanceof VHAudioHeader));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("QTR [Quad Tree]", FILE_TYPE_QTR));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("PGD [Collision Grid]", FILE_TYPE_PGD));
     }
 
     /**

@@ -82,8 +82,7 @@ public class MWDFile extends SCSharedGameData {
             try {
                 file.load(new DataReader(new ArraySource(fileBytes)));
             } catch (Exception ex) {
-                System.out.println("Failed to load " + entry.getDisplayName() + " (" + entry.getResourceId() + ")");
-                ex.printStackTrace();
+                Utils.handleError(getLogger(), ex, false, "Failed to load %s (%d)", entry.getDisplayName(), entry.getResourceId());
             }
 
             this.files.add(file);
@@ -97,7 +96,7 @@ public class MWDFile extends SCSharedGameData {
      * @return replacementFile
      */
     @SuppressWarnings("unchecked")
-    public <T extends SCGameFile<?>> T replaceFile(byte[] fileBytes, FileEntry entry, SCGameFile<?> oldFile) {
+    public <T extends SCGameFile<?>> T replaceFile(byte[] fileBytes, FileEntry entry, SCGameFile<?> oldFile, boolean isInsideWadFile) {
         T newFile;
 
         if (oldFile instanceof MOFHolder) {
@@ -116,7 +115,20 @@ public class MWDFile extends SCSharedGameData {
         getGameInstance().getFileEntriesByFileObjects().put(newFile, entry);
         CURRENT_FILE_NAME = entry.getDisplayName();
 
-        newFile.load(new DataReader(new ArraySource(fileBytes)));
+        // Replace file.
+        if (!isInsideWadFile) {
+            int fileIndex = this.files.indexOf(oldFile);
+            if (fileIndex >= 0)
+                this.files.set(fileIndex, newFile);
+        }
+
+        // Load new file data.
+        try {
+            newFile.load(new DataReader(new ArraySource(fileBytes)));
+        } catch (Exception ex) {
+            Utils.handleError(getLogger(), ex, true, "Failed to load %s (%d)", entry.getDisplayName(), entry.getResourceId());
+        }
+
         return newFile;
     }
 
@@ -224,7 +236,7 @@ public class MWDFile extends SCSharedGameData {
         if (cachedVLO != null && allVLOs.remove(cachedVLO))
             allVLOs.add(0, cachedVLO);
 
-        SelectionMenu.promptSelection("Select " + (theme != null ? theme.name() + "'s" : "a") + " VLO.", vlo -> {
+        SelectionMenu.promptSelection(getGameInstance(), "Select " + (theme != null ? theme.name() + "'s" : "a") + " VLO.", vlo -> {
                     if (vlo != null && theme != null)
                         this.vloThemeCache.put(theme, vlo);
                     handler.accept(vlo);

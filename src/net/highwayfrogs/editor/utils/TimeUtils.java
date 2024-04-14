@@ -14,7 +14,7 @@ import java.util.Locale;
  * Created by Kneesnap on 4/10/2024.
  */
 public class TimeUtils {
-    private static final String TEMPLATE = "[yyyy['-'MM['-'dd]]][yyyy['/'MM['/'dd]]][MM'-'dd['-'yyyy]][MM'/'dd['/'yyyy]][' 'hh[':'mm[':'ss]]' 'a][' 'HH[':'mm[':'ss]]][' 'vvvv][' 'VV]";
+    private static final String TEMPLATE = "[yyyy['-'MM['-'dd]]][yyyy['/'MM['/'dd]]][MM'-'dd['-'yyyy]][MM'/'dd['/'yyyy]][' 'hh[':'mm[':'ss]]' 'a][' 'HH[':'mm[':'ss]]][' 'VV]";
     private static final DateTimeFormatter DATE_PARSE_FORMATTER = DateTimeFormatter.ofPattern(TEMPLATE, Locale.ENGLISH);
 
     /**

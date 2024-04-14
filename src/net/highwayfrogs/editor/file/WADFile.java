@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
@@ -20,7 +19,7 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.gui.editor.WADController;
+import net.highwayfrogs.editor.games.sony.shared.ui.file.WADController;
 import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -81,7 +80,7 @@ public class WADFile extends SCSharedGameFile {
                 file = getGameInstance().createFile(wadFileEntry, data);
                 if (file == null) {
                     file = new DummyFile(getGameInstance(), data.length);
-                    System.out.println("File '" + fileName + "' was of an unknown file type. (" + fileType + ")");
+                    getLogger().warning("File '" + fileName + "' was of an unknown file type. (" + fileType + ")");
                 }
             }
 
@@ -92,8 +91,7 @@ public class WADFile extends SCSharedGameFile {
             try {
                 file.load(new DataReader(new ArraySource(data)));
             } catch (Exception ex) {
-                System.out.println("Failed to load " + CURRENT_FILE_NAME + ". (" + resourceId + ")");
-                ex.printStackTrace();
+                Utils.handleError(getLogger(), ex, false, "Failed to load %s. (%d)", CURRENT_FILE_NAME, resourceId);
 
                 // Make it a dummy file instead since it failed.
                 file = new DummyFile(getGameInstance(), data.length);
@@ -130,7 +128,7 @@ public class WADFile extends SCSharedGameFile {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return ICON;
     }
 
@@ -156,7 +154,7 @@ public class WADFile extends SCSharedGameFile {
     }
 
     /**
-     * Set the VLO file of all of the mofs inside this wad.
+     * Set the VLO file of the mof files inside this wad.
      * @param vloArchive The new VLO archive.
      */
     public void setVLO(VLOArchive vloArchive) {
@@ -168,8 +166,8 @@ public class WADFile extends SCSharedGameFile {
     }
 
     @Override
-    public Node makeEditor() {
-        return loadEditor(getGameInstance(), new WADController(getGameInstance()), "edit-file-wad", this);
+    public WADController makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-wad", new WADController(getGameInstance()), this);
     }
 
     @Getter

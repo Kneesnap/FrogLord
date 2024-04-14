@@ -1,31 +1,28 @@
 package net.highwayfrogs.editor.games.sony;
 
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
-import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.gui.MainController;
-import net.highwayfrogs.editor.gui.editor.EditorController;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
+import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
-import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Represents a file (data corresponding to MWI entry or contents of a filesystem entity) for a particul
+ * Represents a file (data corresponding to MWI entry or contents of a filesystem entity).
  * @param <TGameInstance> The type of game instance this file can be used in.
- *                        Created by Kneesnap on 9/8/2023.
+ * Created by Kneesnap on 9/8/2023.
  */
-public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends SCGameData<TGameInstance> {
-    private Logger cachedLogger;
-
+public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends SCGameData<TGameInstance> implements ICollectionViewEntry {
     public SCGameFile(TGameInstance instance) {
         super(instance);
     }
@@ -38,13 +35,28 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
     /**
      * Get the icon which should appear for this file in the file list.
      */
-    public abstract Image getIcon();
+    public abstract Image getCollectionViewIcon();
 
     /**
      * Makes a JavaFX UI Node which will be put into the preview pane for this file. Commonly used for editing.
      * @return editor
      */
-    public abstract Node makeEditor();
+    public abstract GameUIController<?> makeEditorUI();
+
+    @Override
+    public String getCollectionViewDisplayName() {
+        return getFileDisplayName() + " [" + getIndexEntry().getResourceId() + "]";
+    }
+
+    @Override
+    public ICollectionViewEntry getCollectionViewParentEntry() {
+        return null;
+    }
+
+    @Override
+    public String getCollectionViewDisplayStyle() {
+        return null;
+    }
 
     /**
      * WAD files are capable of containing any file.
@@ -53,7 +65,14 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      * @param parent The wad file this is edited from.
      */
     public void handleWadEdit(WADFile parent) {
-
+        GameUIController<?> uiController = makeEditorUI();
+        if (uiController != null) {
+            getGameInstance().getMainMenuController().showEditor(uiController);
+            if (uiController instanceof SCFileEditorUIController<?, ?>)
+                ((SCFileEditorUIController<?, ?>) uiController).setParentWadFile(parent);
+        } else {
+            Utils.makePopUp("There is no editor available for " + Utils.getSimpleName(this), AlertType.ERROR);
+        }
     }
 
     /**
@@ -112,15 +131,6 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
     }
 
     /**
-     * Setup the editor.
-     * @param editorPane The parent pane holding the editor.
-     * @param node       The node created by makeEditor.
-     */
-    public void setupEditor(AnchorPane editorPane, Node node) {
-        editorPane.getChildren().add(node);
-    }
-
-    /**
      * Load an icon by name.
      * @param iconName The icon to load.
      * @return loadedIcon
@@ -131,24 +141,23 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
     }
 
     /**
-     * Sets up a GameFile editor as a JavaFX Node.
-     * @param controller The controller to control the GUI.
-     * @param template   The gui layout template.
-     * @param editFile   The file to edit.
-     * @return guiNode
+     * Loads a GameFile editor.
+     * @param gameInstance the game instance to create the editor for
+     * @param controller the controller to control the GUI
+     * @param template the gui layout template
+     * @param fileToEdit the file to edit
+     * @return editor
      */
-    public static <T extends SCGameFile<?>> Node loadEditor(SCGameInstance gameInstance, EditorController<T, ?, ?> controller, String template, T editFile) {
+    public static <TGameInstance extends SCGameInstance, TGameFile extends SCGameFile<?>, TUIController extends SCFileEditorUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
-            FXMLLoader loader = Utils.getFXMLLoader(gameInstance, template);
-            loader.setController(controller);
-            Node node = loader.load();
-            controller.loadFile(editFile);
-            MainController.setCurrentController(controller);
-
-            return node;
-        } catch (IOException ex) {
-            throw new RuntimeException("Failed to setup file editor for '" + template + "'.", ex);
+            URL templateUrl = Utils.getFXMLTemplateURL(gameInstance, template);
+            GameUIController.loadController(gameInstance, templateUrl, controller);
+            controller.setTargetFile(fileToEdit);
+        } catch (Throwable th) {
+            Utils.handleError(fileToEdit.getLogger(), th, true, "Failed to create editor UI.");
         }
+
+        return controller;
     }
 
     /**

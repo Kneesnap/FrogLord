@@ -6,7 +6,7 @@
 <?import javafx.scene.text.*?>
 <AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0"
             xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="net.highwayfrogs.editor.gui.editor.MapUIController">
+            fx:controller="net.highwayfrogs.editor.games.sony.frogger.ui.mapeditor.MapUIController">
     <children>
         <Accordion fx:id="accordionLeft" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <panes>

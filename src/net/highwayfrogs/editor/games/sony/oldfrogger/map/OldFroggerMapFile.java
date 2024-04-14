@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.WADFile;
@@ -16,7 +15,6 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.*;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapController;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Tuple2;
 
@@ -71,18 +69,18 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return MAPFile.ICON;
     }
 
     @Override
-    public Node makeEditor() {
-        return loadEditor(getGameInstance(), new OldFroggerMapController(getGameInstance()), "edit-file-map", this);
+    public OldFroggerMapController makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-map", new OldFroggerMapController(getGameInstance()), this);
     }
 
     @Override
     public void handleWadEdit(WADFile parent) {
-        MeshViewController.setupMeshViewer(GUIMain.MAIN_STAGE, new OldFroggerMapMeshController(), new OldFroggerMapMesh(this));
+        MeshViewController.setupMeshViewer(getGameInstance(), new OldFroggerMapMeshController(), new OldFroggerMapMesh(this));
     }
 
     @Override

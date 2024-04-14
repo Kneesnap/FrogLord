@@ -5,6 +5,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -17,6 +18,7 @@ import lombok.AllArgsConstructor;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -36,8 +38,8 @@ public class SelectionMenu {
      * @param prompt  The prompt to display the user.
      * @param handler The behavior to execute when the user accepts.
      */
-    public static <T> void promptSelection(String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction) {
-        Utils.loadFXMLTemplate(null, "window-wait-for-user-select", "Waiting for selection...", newStage -> new SelectionController<>(newStage, prompt, handler, values, nameFunction, imageFunction));
+    public static <T> void promptSelection(GameInstance instance, String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction) {
+        Utils.createWindowFromFXMLTemplate("window-wait-for-user-select", new SelectionController<>(instance, prompt, handler, values, nameFunction, imageFunction), "Waiting for selection...", true);
     }
 
     /**
@@ -52,7 +54,7 @@ public class SelectionMenu {
             themes.add(null);
         themes.addAll(Arrays.asList(MAPTheme.values()));
 
-        promptSelection("Select the theme.", handler, themes, theme -> theme != null ? theme.name() : "No Theme", theme -> {
+        promptSelection(instance, "Select the theme.", handler, themes, theme -> theme != null ? theme.name() : "No Theme", theme -> {
             if (theme == null)
                 return null;
 
@@ -68,21 +70,20 @@ public class SelectionMenu {
         });
     }
 
-    public static class SelectionController<T> implements Initializable {
+    public static class SelectionController<T> extends GameUIController<GameInstance> {
         @FXML private Label promptText;
         @FXML private ListView<T> optionList;
         @FXML private Button accept;
 
         private final String prompt;
         private final Consumer<T> handler;
-        private final Stage stage;
         private final Collection<T> values;
         private final Function<T, String> nameFunction;
         private final Function<T, Image> imageFunction;
 
-        public SelectionController(Stage stage, String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction) {
+        public SelectionController(GameInstance instance, String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction) {
+            super(instance);
             this.values = values;
-            this.stage = stage;
             this.prompt = prompt;
             this.handler = handler;
             this.nameFunction = nameFunction;
@@ -90,7 +91,7 @@ public class SelectionMenu {
         }
 
         @Override
-        public void initialize(URL location, ResourceBundle resources) {
+        protected void onControllerLoad(Node rootNode) {
             ObservableList<T> fxOptions = FXCollections.observableArrayList(values);
             optionList.setItems(fxOptions);
             optionList.setCellFactory(param -> new AttachmentListCell<>(nameFunction, imageFunction));
@@ -100,14 +101,14 @@ public class SelectionMenu {
             // Since the l
             optionList.setOnKeyPressed(evt -> {
                 if (evt.getCode() == KeyCode.ESCAPE)
-                    stage.close();
+                    closeWindow();
             });
         }
 
         @FXML
         private void onAccept(ActionEvent event) {
             handler.accept(optionList.getSelectionModel().getSelectedItem());
-            this.stage.close();
+            closeWindow();
         }
     }
 

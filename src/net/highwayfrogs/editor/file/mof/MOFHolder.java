@@ -2,9 +2,9 @@ package net.highwayfrogs.editor.file.mof;
 
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
-import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
+import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -29,10 +29,9 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
+import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFMainController;
 import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.gui.MainController;
-import net.highwayfrogs.editor.gui.editor.MOFController;
-import net.highwayfrogs.editor.gui.editor.MOFMainController;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FileUtils3D;
@@ -139,13 +138,13 @@ public class MOFHolder extends SCSharedGameFile {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return ICON;
     }
 
     @Override
-    public Node makeEditor() {
-        return loadEditor(getGameInstance(), new MOFMainController(getGameInstance()), "edit-file-mof", this);
+    public MOFMainController makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-mof", new MOFMainController(getGameInstance()), this);
     }
 
     @Override
@@ -182,7 +181,7 @@ public class MOFHolder extends SCSharedGameFile {
         }
 
         if (getVloFile() != null) {
-            MainController.MAIN_WINDOW.openEditor(new MOFController(getGameInstance()), this);
+            showEditor3D();
             return;
         }
 
@@ -190,18 +189,27 @@ public class MOFHolder extends SCSharedGameFile {
         VLOArchive firstVLO = getArchive().findFirstVLO();
         if (firstVLO != null) {
             setVloFile(firstVLO);
-            MainController.MAIN_WINDOW.openEditor(new MOFController(getGameInstance()), this);
+            showEditor3D();
         } else {
             getArchive().promptVLOSelection(getTheme(), vlo -> {
                 setVloFile(vlo);
-                MainController.MAIN_WINDOW.openEditor(new MOFController(getGameInstance()), this);
+                showEditor3D();
             }, false);
         }
     }
 
     /**
+     * Show the 3D editor.
+     */
+    public void showEditor3D() {
+        MOFController controller = new MOFController(getGameInstance(), this);
+        Stage stage = getGameInstance().getMainStage();
+        if (stage != null)
+            controller.setupMofViewer(stage);
+    }
+
+    /**
      * Gets the number of animations in this mof. (Does not include texture animation).
-     * Also
      * Get the maximum animation action id.
      * @return maxAnimation
      */

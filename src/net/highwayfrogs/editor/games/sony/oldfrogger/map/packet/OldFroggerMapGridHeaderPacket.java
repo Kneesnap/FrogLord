@@ -130,7 +130,7 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
     }
 
     /**
-     * Setup the editor for grid packet data.
+     * Create the editor for grid packet data.
      * @param manager The UI manager
      * @param editor  The editor context to build upon.
      */
@@ -317,8 +317,8 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
         }
 
         /**
-         * Setup the editor for this grid entry.
-         * @param manager The manager to setup the UI for.
+         * Create the editor for this grid entry.
+         * @param manager The manager to create the UI for.
          * @param editor  The editor to use to create the UI.
          */
         public void setupEditor(OldFroggerGridManager manager, GUIEditorGrid editor) {
@@ -345,7 +345,7 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
 
             // Add Entity Button
             editor.addButton("Add Entity", () -> {
-                InputMenu.promptInput("Please enter the ID of the entity to add.", str -> {
+                InputMenu.promptInput(getGameInstance(), "Please enter the ID of the entity to add.", str -> {
                     if (!Utils.isInteger(str)) {
                         Utils.makePopUp("'" + str + "' is not a valid number.", AlertType.WARNING);
                         return;

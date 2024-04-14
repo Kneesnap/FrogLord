@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.sony.medievil.map;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.WADFile;
@@ -16,7 +15,7 @@ import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapGraphic
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapHeaderPacket;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
-import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Tuple2;
 
@@ -55,23 +54,18 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return MAPFile.ICON;
     }
 
     @Override
-    public Node makeEditor() {
+    public GameUIController<?> makeEditorUI() {
         return null;
     }
 
-//    @Override
-//    public Node makeEditor() {
-//        return loadEditor(new MediEvilMapController(getGameInstance()), "medievil-map", this);
-//    }
-
     @Override
     public void handleWadEdit(WADFile parent) {
-        MeshViewController.setupMeshViewer(GUIMain.MAIN_STAGE, new MediEvilMapMeshController(), new MediEvilMapMesh(this));
+        MeshViewController.setupMeshViewer(getGameInstance(), new MediEvilMapMeshController(), new MediEvilMapMesh(this));
     }
 
     @Override

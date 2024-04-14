@@ -1,16 +1,13 @@
 package net.highwayfrogs.editor.games.sony.beastwars;
 
-import net.highwayfrogs.editor.PLTFile;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
-import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
-import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroupFileID;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.utils.Utils;
-
-import java.util.List;
 
 /**
  * Represents a loaded instance of the Beast Wars: Transformers game files.
@@ -59,12 +56,12 @@ public class BeastWarsInstance extends SCGameInstance {
     }
 
     @Override
-    public void setupFileGroups(List<SCMainMenuFileGroup> fileGroups) {
-        fileGroups.add(new SCMainMenuFileGroupFileID("VLO Texture Bank", FILE_TYPE_VLO));
-        fileGroups.add(new SCMainMenuFileGroupFileID("Models", FILE_TYPE_MOF));
-        fileGroups.add(new SCMainMenuFileGroupFileID("MAP [Playable Map]", FILE_TYPE_MAP));
-        fileGroups.add(new SCMainMenuFileGroupFileID("Map Texture", FILE_TYPE_TEX));
-        fileGroups.add(new SCMainMenuFileGroupFileID("TIM [PSX Image]", FILE_TYPE_TIM));
-        fileGroups.add(new SCMainMenuFileGroupFileID("PLT [Palette]", FILE_TYPE_PLT));
+    public void setupFileGroups(SCGameFileGroupedListViewComponent fileListView) {
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("VLO Texture Bank", FILE_TYPE_VLO));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("Models", FILE_TYPE_MOF));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("MAP [Playable Map]", FILE_TYPE_MAP));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("Map Texture", FILE_TYPE_TEX));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("TIM [PSX Image]", FILE_TYPE_TIM));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("PLT [Palette]", FILE_TYPE_PLT));
     }
 }

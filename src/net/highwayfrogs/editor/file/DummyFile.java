@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.file;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.gui.GameUIController;
 
 import java.nio.ByteBuffer;
 
@@ -45,12 +45,12 @@ public class DummyFile extends SCSharedGameFile {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return ICON;
     }
 
     @Override
-    public Node makeEditor() {
+    public GameUIController<?> makeEditorUI() {
         return null;
     }
 }

@@ -11,8 +11,8 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTable
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapEntityMarkerPacket;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
-import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroup;
-import net.highwayfrogs.editor.gui.MainController.SCMainMenuFileGroupFileID;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -113,9 +113,9 @@ public class OldFroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    public void setupFileGroups(List<SCMainMenuFileGroup> fileGroups) {
-        fileGroups.add(new SCMainMenuFileGroupFileID("MAP [Game Maps]", FILE_TYPE_MAP));
-        fileGroups.add(new SCMainMenuFileGroupFileID("LAN [Language]", FILE_TYPE_LANGUAGE));
+    public void setupFileGroups(SCGameFileGroupedListViewComponent fileListView) {
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("MAP [Game Maps]", FILE_TYPE_MAP));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("LAN [Language]", FILE_TYPE_LANGUAGE));
     }
 
     @Override

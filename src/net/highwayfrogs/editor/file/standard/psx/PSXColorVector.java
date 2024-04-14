@@ -248,7 +248,7 @@ public class PSXColorVector extends GameObject {
 
         ImageView preview = new ImageView(Utils.toFXImage(applyImage, false));
         preview.setOnMouseClicked(evt ->
-                InputMenu.promptInput("Please enter the color value you'd like to use.", Integer.toHexString(toRGB()), newText -> {
+                InputMenu.promptInput(null, "Please enter the color value you'd like to use.", Integer.toHexString(toRGB()), newText -> {
                     int colorRGB;
                     try {
                         colorRGB = Integer.parseInt(newText, 16);

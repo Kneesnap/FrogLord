@@ -1,19 +1,16 @@
 package net.highwayfrogs.editor.games.sony.beastwars;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.beastwars.ui.TexController;
 import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.gui.MainController;
-import net.highwayfrogs.editor.gui.editor.TexController;
 import net.highwayfrogs.editor.gui.texture.BufferedImageWrapper;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
@@ -257,13 +254,13 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
     }
 
     @Override
-    public Image getIcon() {
+    public Image getCollectionViewIcon() {
         return VLOArchive.ICON;
     }
 
     @Override
-    public Node makeEditor() {
-        return loadEditor(getGameInstance(), new TexController(getGameInstance()), "edit-file-tex", this);
+    public TexController makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-tex", new TexController(getGameInstance()), this);
     }
 
     @Override
@@ -271,12 +268,6 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
     public void exportAlternateFormat(FileEntry fileEntry) {
         ImageIO.write(createTextureMap(), "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(fileEntry.getDisplayName()) + ".png"));
         getLogger().info("Exported texture map Image.");
-    }
-
-    @Override
-    public void handleWadEdit(WADFile parent) {
-        MainController.MAIN_WINDOW.openEditor(MainController.MAIN_WINDOW.getCurrentFilesList(), this);
-        ((TexController) MainController.getCurrentController()).setParentWad(parent);
     }
 
     @Override
