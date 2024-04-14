@@ -7,8 +7,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceEntityInst;
 
 /**
@@ -65,12 +65,12 @@ public class kcEntityInst extends GameObject implements IMultiLineInfoWriter {
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        TGQChunkedFile chunkedFile = this.resource != null ? this.resource.getParentFile() : null;
+        GreatQuestChunkedFile chunkedFile = this.resource != null ? this.resource.getParentFile() : null;
 
-        TGQChunkedFile.writeAssetLine(chunkedFile, builder, padding, "Description", this.descriptionHash);
+        GreatQuestChunkedFile.writeAssetLine(chunkedFile, builder, padding, "Description", this.descriptionHash);
         builder.append(padding).append("Priority: ").append(this.priority).append(Constants.NEWLINE);
         builder.append(padding).append("Group: ").append(this.group).append(Constants.NEWLINE);
         builder.append(padding).append("Script Index: ").append(this.scriptIndex).append(Constants.NEWLINE);
-        TGQChunkedFile.writeAssetLine(chunkedFile, builder, padding, "Target Entity", this.targetEntityHash);
+        GreatQuestChunkedFile.writeAssetLine(chunkedFile, builder, padding, "Target Entity", this.targetEntityHash);
     }
 }

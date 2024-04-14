@@ -1,8 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -10,12 +12,14 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 8/17/2019.
  */
 @Getter
-public class TGQDummyFile extends TGQFile {
+public class GreatQuestDummyArchiveFile extends GreatQuestArchiveFile {
     private byte[] data;
     private final int length;
 
-    public TGQDummyFile(TGQBinFile mainArchive, int length) {
-        super(mainArchive);
+    public static final Image DUMMY_ICON = loadIcon("unknown");
+
+    public GreatQuestDummyArchiveFile(GreatQuestInstance instance, int length) {
+        super(instance);
         this.length = length;
     }
 
@@ -43,5 +47,15 @@ public class TGQDummyFile extends TGQFile {
     @Override
     public String getDefaultFolderName() {
         return "Dummy";
+    }
+
+    @Override
+    public Image getCollectionViewIcon() {
+        return DUMMY_ICON;
+    }
+
+    @Override
+    public GameUIController<?> makeEditorUI() {
+        return null;
     }
 }

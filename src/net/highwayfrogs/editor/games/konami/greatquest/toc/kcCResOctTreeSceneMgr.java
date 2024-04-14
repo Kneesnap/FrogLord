@@ -4,8 +4,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.kcPlatform;
+import net.highwayfrogs.editor.games.generic.GamePlatform;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
@@ -33,7 +33,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
     private static final int RESERVED_HEADER_FIELDS = 7;
     private static final int RESERVED_PRIM_HEADER_FIELDS = 3;
 
-    public kcCResOctTreeSceneMgr(TGQChunkedFile parentFile) {
+    public kcCResOctTreeSceneMgr(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.OCTTREESCENEMGR);
     }
 
@@ -83,7 +83,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
 
         // Read primitives.
         this.vertexBuffers.clear();
-        kcPlatform platform = getMainArchive().getPlatform();
+        GamePlatform platform = getGameInstance().getPlatform();
         for (int i = 0; i < primCount; i++) {
             kcVtxBufFileStruct vtxBuf = new kcVtxBufFileStruct();
             vtxBuf.load(reader, platform);
@@ -111,7 +111,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
         super.afterLoad1(context);
 
         // Apply texture file names.
-        TGQChunkedFile parentFile = getParentFile();
+        GreatQuestChunkedFile parentFile = getParentFile();
         if (parentFile != null && parentFile.hasFilePath())
             context.getMaterialLoadContext().applyLevelTextureFileNames(parentFile, parentFile.getFilePath(), this.materials);
     }
@@ -144,7 +144,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
          * @param newFvf   The new fvf value to include.
          * @param platform The platform to save the FVF on.
          */
-        public void setFVF(long newFvf, kcPlatform platform) {
+        public void setFVF(long newFvf, GamePlatform platform) {
             this.fvf = newFvf;
             this.components = kcModel.calculateOrder(newFvf, platform);
             this.fvfStride = kcModel.calculateStride(this.components, newFvf);
@@ -162,7 +162,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
          * @param reader   The reader to read data from.
          * @param platform The platform to read data for.
          */
-        public void load(DataReader reader, kcPlatform platform) {
+        public void load(DataReader reader, GamePlatform platform) {
             int startReadIndex = reader.getIndex();
 
             // _OTAPrimHeader from kcCVtxBufList.h

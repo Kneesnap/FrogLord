@@ -2,13 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.toc;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQFile;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQUtils;
+import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.*;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 
 /**
@@ -16,16 +13,17 @@ import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
-public abstract class kcCResource extends GameObject {
+public abstract class kcCResource extends GameData<GreatQuestInstance> {
     private byte[] rawData;
     private final KCResourceID chunkType;
     @Setter private int hash; // The real hash comes from the TOC chunk.
     @Setter private String name;
-    @Setter private TGQChunkedFile parentFile;
+    @Setter private GreatQuestChunkedFile parentFile;
 
     private static final int NAME_SIZE = 32;
 
-    public kcCResource(TGQChunkedFile parentFile, KCResourceID chunkType) {
+    public kcCResource(GreatQuestChunkedFile parentFile, KCResourceID chunkType) {
+        super(parentFile != null ? parentFile.getGameInstance() : null);
         this.chunkType = chunkType;
         this.parentFile = parentFile;
     }
@@ -34,7 +32,7 @@ public abstract class kcCResource extends GameObject {
      * Calculates the hash from the name used for this resource.
      */
     public int getNameHash() {
-        return this.name != null ? TGQUtils.hash(this.name) : 0;
+        return this.name != null ? GreatQuestUtils.hash(this.name) : 0;
     }
 
     /**
@@ -52,8 +50,9 @@ public abstract class kcCResource extends GameObject {
      * @param filePath The file path to load.
      * @return fileByName
      */
-    public TGQFile getFileByName(String filePath) {
-        return getParentFile() != null ? getParentFile().getMainArchive().getFileByName(getParentFile(), filePath) : null;
+    public GreatQuestArchiveFile getFileByName(String filePath) {
+        GreatQuestAssetBinFile mainArchive = getMainArchive();
+        return mainArchive != null ? mainArchive.getFileByName(getParentFile(), filePath) : null;
     }
 
     /**
@@ -61,8 +60,9 @@ public abstract class kcCResource extends GameObject {
      * @param filePath The file path to load.
      * @return fileByName
      */
-    public TGQFile getOptionalFileByName(String filePath) {
-        return getParentFile() != null ? getParentFile().getMainArchive().getOptionalFileByName(filePath) : null;
+    public GreatQuestArchiveFile getOptionalFileByName(String filePath) {
+        GreatQuestAssetBinFile mainArchive = getMainArchive();
+        return mainArchive != null ? mainArchive.getOptionalFileByName(filePath) : null;
     }
 
     @Override
@@ -103,7 +103,13 @@ public abstract class kcCResource extends GameObject {
     /**
      * Gets the main archive this file resides in.
      */
-    public TGQBinFile getMainArchive() {
-        return this.parentFile != null ? this.parentFile.getMainArchive() : null;
+    public GreatQuestAssetBinFile getMainArchive() {
+        GreatQuestInstance instance = getGameInstance();
+        if (instance != null)
+            return instance.getMainArchive();
+        if (this.parentFile != null && this.parentFile.getGameInstance() != null)
+            return this.parentFile.getGameInstance().getMainArchive();
+
+        return null;
     }
 }

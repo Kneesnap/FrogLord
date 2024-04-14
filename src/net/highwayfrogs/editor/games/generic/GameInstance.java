@@ -137,6 +137,14 @@ public abstract class GameInstance {
     }
 
     /**
+     * Test if this is a game version intended for the PlayStation 2.
+     * @return isPS2Release
+     */
+    public boolean isPS2() {
+        return getPlatform() == GamePlatform.PLAYSTATION_2;
+    }
+
+    /**
      * Tests if a given unsigned 32-bit number passed as a long looks like a valid pointer to memory present in the executable.
      * @param testPointer The pointer to test.
      * @return If it looks good or not.

@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCause;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
@@ -61,7 +61,7 @@ public class kcScript {
      * @param level The chunked file containing level data.
      * @return attachedEntities
      */
-    public List<kcCResourceEntityInst> getAttachedEntities(TGQChunkedFile level) {
+    public List<kcCResourceEntityInst> getAttachedEntities(GreatQuestChunkedFile level) {
         if (level == null)
             return Collections.emptyList();
 
@@ -90,7 +90,7 @@ public class kcScript {
      * @param builder  The builder to write the script to.
      * @param settings The settings for displaying the output.
      */
-    public void toString(TGQChunkedFile level, StringBuilder builder, kcScriptDisplaySettings settings) {
+    public void toString(GreatQuestChunkedFile level, StringBuilder builder, kcScriptDisplaySettings settings) {
         // Write attached entities.
         if (level != null) {
             builder.append("/// Attached Entities: ");

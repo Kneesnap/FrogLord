@@ -3,18 +3,18 @@ package net.highwayfrogs.editor.games.konami.greatquest.toc;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 
 /**
  * Represents a dummy chunk of data.
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
-public class TGQDummyFileChunk extends kcCResource {
+public class GreatQuestDummyFileChunk extends kcCResource {
     private final String magic;
     private byte[] unhandledBytes;
 
-    public TGQDummyFileChunk(TGQChunkedFile parentFile, String magic) {
+    public GreatQuestDummyFileChunk(GreatQuestChunkedFile parentFile, String magic) {
         super(parentFile, KCResourceID.getByMagic(magic));
         this.magic = magic;
     }

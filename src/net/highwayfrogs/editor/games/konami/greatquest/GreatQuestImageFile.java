@@ -1,11 +1,13 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
+import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestImageController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -24,7 +26,7 @@ import java.io.IOException;
  * Created by Kneesnap on 8/17/2019.
  */
 @Getter
-public class TGQImageFile extends TGQFile implements IFileExport {
+public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileExport {
     private boolean hasHeader;
     private BufferedImage image;
 
@@ -33,12 +35,13 @@ public class TGQImageFile extends TGQFile implements IFileExport {
     private static final byte TYPE_CODE_NO_COLOR_TABLE = (byte) 2;
     private static final byte TYPE_CODE_GRAYSCALE_TABLE = (byte) 3;
     private static final int[] GRAYSCALE_COLOR_MODEL = new int[256];
+    public static final Image IMAGE_ICON = loadIcon("image");
 
     public static final int SIGNATURE = 0x64474D49; // 'IMGd'
     public static final String SIGNATURE_STR = "IMGd"; // 'IMGd'
 
-    public TGQImageFile(TGQBinFile mainArchive) {
-        super(mainArchive);
+    public GreatQuestImageFile(GreatQuestInstance instance) {
+        super(instance);
     }
 
     /**
@@ -65,7 +68,7 @@ public class TGQImageFile extends TGQFile implements IFileExport {
             int width = reader.readInt();
             int height = reader.readInt();
             int bitsPerPixel = reader.readInt();
-            if (getMainArchive().getPlatform() == kcPlatform.PC) // TODO: Is this safe? Eg: If we do this, and then save files, will the game still load images?
+            if (getGameInstance().isPC()) // TODO: Is this safe? Eg: If we do this, and then save files, will the game still load images?
                 bitsPerPixel = 32;
 
             int mipLod = reader.readInt(); // Always 1?
@@ -180,11 +183,11 @@ public class TGQImageFile extends TGQFile implements IFileExport {
 
         if (format == kcImageFormat.INDEXED8) {
             if (colorModel == null)
-                throw new RuntimeException("The image format for " + getDebugName() + "was " + format + ", but there was no color lookup table.");
+                throw new RuntimeException("The image format for " + getDebugName() + " was " + format + ", but there was no color lookup table.");
             this.image = new BufferedImage(width, height, format.getBufferedImageType(), colorModel);
         } else {
             if (colorModel != null)
-                throw new RuntimeException("The image format for " + getDebugName() + "was " + format + ", but there was a color lookup table??");
+                throw new RuntimeException("The image format for " + getDebugName() + " was " + format + ", but there was a color lookup table??");
 
             this.image = new BufferedImage(width, height, format.getBufferedImageType());
         }
@@ -239,7 +242,6 @@ public class TGQImageFile extends TGQFile implements IFileExport {
         if (this.hasHeader)
             writer.writeAddressAt(headerSizeAddress, writer.getIndex() - headerSizeAddress - Constants.INTEGER_SIZE);
     }
-
     @Override
     public String getExtension() {
         return "img";
@@ -263,6 +265,16 @@ public class TGQImageFile extends TGQFile implements IFileExport {
         File imageFile = new File(folder, Utils.stripExtension(getExportName()) + ".png");
         if (!imageFile.exists())
             saveImageToFile(imageFile);
+    }
+
+    @Override
+    public Image getCollectionViewIcon() {
+        return IMAGE_ICON;
+    }
+
+    @Override
+    public GreatQuestImageController makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-img", new GreatQuestImageController(getGameInstance()), this);
     }
 
     /**

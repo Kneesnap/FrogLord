@@ -7,8 +7,8 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.*;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
@@ -33,11 +33,11 @@ public class kcCResourceGeneric extends kcCResource {
     private byte[] bytes;
     private GameObject cachedObject;
 
-    public kcCResourceGeneric(TGQChunkedFile parentFile) {
+    public kcCResourceGeneric(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.GENERIC);
     }
 
-    public kcCResourceGeneric(TGQChunkedFile parentFile, kcCResourceGenericType resourceType, GameObject resource) {
+    public kcCResourceGeneric(GreatQuestChunkedFile parentFile, kcCResourceGenericType resourceType, GameObject resource) {
         this(parentFile);
         this.tag = resourceType.getTag();
         this.cachedObject = resource;
@@ -257,8 +257,8 @@ public class kcCResourceGeneric extends kcCResource {
         kcCResourceGenericType(String name, int tag) {
             this.name = name;
             this.tag = tag;
-            if (name != null && TGQUtils.hash(name) != tag)
-                throw new RuntimeException("Generic Resource type '" + name + "'/" + name() + " hashes to " + Utils.to0PrefixedHexString(TGQUtils.hash(name)) + ", instead of " + Utils.to0PrefixedHexString(tag));
+            if (name != null && GreatQuestUtils.hash(name) != tag)
+                throw new RuntimeException("Generic Resource type '" + name + "'/" + name() + " hashes to " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(name)) + ", instead of " + Utils.to0PrefixedHexString(tag));
         }
 
         /**

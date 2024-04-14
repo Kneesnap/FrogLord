@@ -5,9 +5,9 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.utils.Utils;
@@ -28,7 +28,7 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
 
     public static final String ENVIRONMENT_NAME = "_kcEnvironment";
 
-    public kcEnvironment(TGQChunkedFile parentFile) {
+    public kcEnvironment(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.RAW);
     }
 
@@ -36,12 +36,12 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
     public void load(DataReader reader) {
         super.load(reader);
 
-        this.lightingEnabled = TGQUtils.readTGQBoolean(reader);
+        this.lightingEnabled = GreatQuestUtils.readTGQBoolean(reader);
         this.ambientLightPackedColor = reader.readInt();
         for (int i = 0; i < getDirectionalLightCount(); i++)
             getDirectionalLight(i).load(reader);
 
-        this.fogEnabled = TGQUtils.readTGQBoolean(reader);
+        this.fogEnabled = GreatQuestUtils.readTGQBoolean(reader);
         getFog().load(reader);
         getPerspective().load(reader);
     }
@@ -50,12 +50,12 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
     public void save(DataWriter writer) {
         super.save(writer);
 
-        TGQUtils.writeTGQBoolean(writer, this.lightingEnabled);
+        GreatQuestUtils.writeTGQBoolean(writer, this.lightingEnabled);
         writer.writeInt(this.ambientLightPackedColor);
         for (int i = 0; i < getDirectionalLightCount(); i++)
             getDirectionalLight(i).save(writer);
 
-        TGQUtils.writeTGQBoolean(writer, this.fogEnabled);
+        GreatQuestUtils.writeTGQBoolean(writer, this.fogEnabled);
         getFog().save(writer);
         getPerspective().save(writer);
     }

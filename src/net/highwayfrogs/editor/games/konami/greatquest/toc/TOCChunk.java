@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.toc;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
 public class TOCChunk extends kcCResource {
     private final List<Integer> hashes = new ArrayList<>();
 
-    public TOCChunk(TGQChunkedFile chunkedFile) {
+    public TOCChunk(GreatQuestChunkedFile chunkedFile) {
         super(chunkedFile, KCResourceID.TOC);
     }
 

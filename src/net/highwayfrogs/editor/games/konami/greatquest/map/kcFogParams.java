@@ -8,8 +8,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQUtils;
 
 /**
  * Represents the '_kcFogParams' struct.
@@ -34,7 +34,7 @@ public class kcFogParams extends GameObject implements IMultiLineInfoWriter {
         this.start = reader.readFloat();
         this.end = reader.readFloat();
         this.density = reader.readFloat();
-        this.rangeBased = TGQUtils.readTGQBoolean(reader);
+        this.rangeBased = GreatQuestUtils.readTGQBoolean(reader);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class kcFogParams extends GameObject implements IMultiLineInfoWriter {
         writer.writeFloat(this.start);
         writer.writeFloat(this.end);
         writer.writeFloat(this.density);
-        TGQUtils.writeTGQBoolean(writer, this.rangeBased);
+        GreatQuestUtils.writeTGQBoolean(writer, this.rangeBased);
     }
 
     /**

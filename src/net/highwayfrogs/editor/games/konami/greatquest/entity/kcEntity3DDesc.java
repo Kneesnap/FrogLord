@@ -5,7 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -21,7 +21,7 @@ public class kcEntity3DDesc extends kcBaseDesc {
     private final kcSphere boundingSphere = new kcSphere();
     private final int[] padEntity3D = new int[4];
 
-    private static final int CLASS_ID = TGQUtils.hash("kcCEntity3D");
+    private static final int CLASS_ID = GreatQuestUtils.hash("kcCEntity3D");
 
     @Override
     protected int getTargetClassID() {

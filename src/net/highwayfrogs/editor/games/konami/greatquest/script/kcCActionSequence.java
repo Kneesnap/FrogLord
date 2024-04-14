@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
@@ -19,7 +19,7 @@ import java.util.List;
 public class kcCActionSequence extends kcCResource {
     private final List<kcAction> actions = new ArrayList<>();
 
-    public kcCActionSequence(TGQChunkedFile parentFile) {
+    public kcCActionSequence(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.ACTIONSEQUENCE);
     }
 

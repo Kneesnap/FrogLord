@@ -6,8 +6,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.utils.Utils;
@@ -23,7 +23,7 @@ import java.util.function.Function;
  */
 @Getter
 public abstract class kcBaseDesc extends GameObject implements IMultiLineInfoWriter {
-    @Setter private TGQChunkedFile parentFile;
+    @Setter private GreatQuestChunkedFile parentFile;
 
     /**
      * Gets the ID of the class which this template contains data to fill.

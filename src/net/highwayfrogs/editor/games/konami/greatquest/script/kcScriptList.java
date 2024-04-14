@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcInterimScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptListInterim;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptTOC;
@@ -26,7 +26,7 @@ public class kcScriptList extends kcCResource {
 
     public static final String GLOBAL_SCRIPT_NAME = "scriptdata";
 
-    public kcScriptList(TGQChunkedFile parentFile) {
+    public kcScriptList(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.RAW);
     }
 
@@ -92,7 +92,7 @@ public class kcScriptList extends kcCResource {
      * @param builder  The builder to write the script to.
      * @param settings The settings used to build the output.
      */
-    public void toString(TGQChunkedFile level, StringBuilder builder, kcScriptDisplaySettings settings) {
+    public void toString(GreatQuestChunkedFile level, StringBuilder builder, kcScriptDisplaySettings settings) {
         for (int i = 0; i < this.scripts.size(); i++) {
             builder.append("// Script #").append(i + 1).append(":\n");
             this.scripts.get(i).toString(level, builder, settings);

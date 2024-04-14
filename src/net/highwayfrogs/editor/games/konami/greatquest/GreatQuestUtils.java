@@ -13,10 +13,10 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 /**
- * Contains TGQUtils
+ * Contains static utilities for The Great Quest.
  * Created by Kneesnap on 8/17/2019.
  */
-public class TGQUtils {
+public class GreatQuestUtils {
     private static boolean loadedFileListConfiguration;
     private static final Map<Integer, String> FILENAMES_BY_HASH = new HashMap<>();
     private static final Map<Integer, List<String>> COLLIDING_FILE_PATHS = new HashMap<>();
@@ -63,7 +63,7 @@ public class TGQUtils {
 
         loadedFileListConfiguration = true;
 
-        Config config = new Config(TGQGameType.INSTANCE.getEmbeddedResourceStream("file-list.cfg"));
+        Config config = new Config(GreatQuestGameType.INSTANCE.getEmbeddedResourceStream("file-list.cfg"));
         for (Config fileListCfg : config.getOrderedChildren()) {
             for (String filePath : fileListCfg.getText()) {
                 if (filePath.equalsIgnoreCase("UNKNOWN") || filePath.trim().isEmpty())
@@ -301,7 +301,7 @@ public class TGQUtils {
      * @param file       The file to export.
      * @return exportFile
      */
-    public static File getExportFile(File baseFolder, TGQFile file) {
+    public static File getExportFile(File baseFolder, GreatQuestArchiveFile file) {
         File exportFolder;
         String fileName = null;
         if (file.hasFilePath()) {

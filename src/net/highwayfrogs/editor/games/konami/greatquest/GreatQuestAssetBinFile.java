@@ -1,37 +1,25 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceString;
+import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionFlag;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionTemplate;
-import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseNumber;
-import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseNumber.kcScriptCauseNumberOperation;
-import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectActor;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.*;
 
 /**
- * Parses Frogger TGQ's main game data file.
- * Notes: PS2 bin is way smaller than PC file. Support it eventually.
+ * Parses FTGQ's main game data file. It's called "data.bin" in all of the builds we've seen.
  * .SBR files contain sound effects. the SCK file contains only PCM data, with headers in the .IDX file.
  * .PSS (PS2) are video files. Can be opened with VLC.
  * BUFFER.DAT files (PS2) are video files, and can be opened with VLC.
@@ -39,17 +27,16 @@ import java.util.*;
  * Created by Kneesnap on 8/17/2019.
  */
 @Getter
-public class TGQBinFile extends GameObject {
-    private final kcPlatform platform;
+public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
     private List<String> globalPaths;
-    private final List<TGQFile> files = new ArrayList<>();
-    private final Map<Integer, TGQFile> nameMap = new HashMap<>();
-    private final Map<Integer, List<TGQFile>> fileCollisions = new HashMap<>();
+    private final List<GreatQuestArchiveFile> files = new ArrayList<>();
+    private final Map<Integer, GreatQuestArchiveFile> nameMap = new HashMap<>();
+    private final Map<Integer, List<GreatQuestArchiveFile>> fileCollisions = new HashMap<>();
 
     private static final int NAME_SIZE = 0x108;
 
-    public TGQBinFile(kcPlatform platform) {
-        this.platform = platform;
+    public GreatQuestAssetBinFile(GreatQuestInstance gameInstance) {
+        super(gameInstance);
     }
 
     @Override
@@ -67,7 +54,7 @@ public class TGQBinFile extends GameObject {
         reader.jumpReturn();
 
         Map<Integer, String> nameMap = new HashMap<>();
-        TGQUtils.addHardcodedFileNameHashesToMap(nameMap);
+        GreatQuestUtils.addHardcodedFileNameHashesToMap(nameMap);
 
         // Read unnamed files.
         for (int i = 0; i < unnamedFiles; i++) {
@@ -78,7 +65,7 @@ public class TGQBinFile extends GameObject {
         // Read named files. Files are named if they have a collision with other files.
         for (int i = 0; i < namedFiles; i++) {
             String fullFilePath = reader.readTerminatedStringOfLength(NAME_SIZE);
-            readFile(reader, fullFilePath, TGQUtils.hashFilePath(fullFilePath), true);
+            readFile(reader, fullFilePath, GreatQuestUtils.hashFilePath(fullFilePath), true);
         }
 
         // Handle post-load setup.
@@ -91,7 +78,7 @@ public class TGQBinFile extends GameObject {
         context.onComplete();
     }
 
-    private TGQFile readFile(DataReader reader, String name, int crc, boolean hasCollision) {
+    private GreatQuestArchiveFile readFile(DataReader reader, String name, int crc, boolean hasCollision) {
         int size = reader.readInt();
         int zSize = reader.readInt();
         int offset = reader.readInt();
@@ -102,20 +89,20 @@ public class TGQBinFile extends GameObject {
         boolean isCompressed = (zSize != 0); // ZLib compression.
 
         reader.jumpTemp(offset);
-        byte[] fileBytes = isCompressed ? TGQUtils.zlibDecompress(reader.readBytes(zSize), size) : reader.readBytes(size);
+        byte[] fileBytes = isCompressed ? GreatQuestUtils.zlibDecompress(reader.readBytes(zSize), size) : reader.readBytes(size);
         reader.jumpReturn();
 
-        TGQFile readFile;
-        if (Utils.testSignature(fileBytes, TGQImageFile.SIGNATURE_STR)) {
-            readFile = new TGQImageFile(this);
+        GreatQuestArchiveFile readFile;
+        if (Utils.testSignature(fileBytes, GreatQuestImageFile.SIGNATURE_STR)) {
+            readFile = new GreatQuestImageFile(getGameInstance());
         } else if (Utils.testSignature(fileBytes, kcModelWrapper.SIGNATURE_STR)) {
-            readFile = new kcModelWrapper(this);
+            readFile = new kcModelWrapper(getGameInstance());
         } else if (Utils.testSignature(fileBytes, "TOC\0")) {
-            readFile = new TGQChunkedFile(this);
+            readFile = new GreatQuestChunkedFile(getGameInstance());
         } else if (this.files.size() > 100 && fileBytes.length > 30) {
-            readFile = new TGQImageFile(this);
+            readFile = new GreatQuestImageFile(getGameInstance());
         } else {
-            readFile = new TGQDummyFile(this, fileBytes.length);
+            readFile = new GreatQuestDummyArchiveFile(getGameInstance(), fileBytes.length);
         }
 
         // Setup file.
@@ -140,9 +127,9 @@ public class TGQBinFile extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        List<TGQFile> unnamedFiles = new ArrayList<>();
-        List<TGQFile> namedFiles = new ArrayList<>();
-        for (TGQFile file : getFiles())
+        List<GreatQuestArchiveFile> unnamedFiles = new ArrayList<>();
+        List<GreatQuestArchiveFile> namedFiles = new ArrayList<>();
+        for (GreatQuestArchiveFile file : getFiles())
             (file.hasFilePath() && file.isCollision() ? namedFiles : unnamedFiles).add(file);
 
         // Start writing file.
@@ -150,12 +137,12 @@ public class TGQBinFile extends GameObject {
         writer.writeInt(namedFiles.size());
         int nameAddress = writer.writeNullPointer();
 
-        Map<TGQFile, Integer> fileSizeTable = new HashMap<>();
-        Map<TGQFile, Integer> fileZSizeTable = new HashMap<>();
-        Map<TGQFile, Integer> fileOffsetTable = new HashMap<>();
+        Map<GreatQuestArchiveFile, Integer> fileSizeTable = new HashMap<>();
+        Map<GreatQuestArchiveFile, Integer> fileZSizeTable = new HashMap<>();
+        Map<GreatQuestArchiveFile, Integer> fileOffsetTable = new HashMap<>();
 
         // Write file headers:
-        for (TGQFile file : getFiles()) {
+        for (GreatQuestArchiveFile file : getFiles()) {
             if (file.hasFilePath() && file.isCollision()) {
                 int endIndex = (writer.getIndex() + NAME_SIZE);
                 writer.writeTerminatorString(file.getFilePath());
@@ -174,12 +161,12 @@ public class TGQBinFile extends GameObject {
         }
 
         // Write files:
-        for (TGQFile file : getFiles()) {
+        for (GreatQuestArchiveFile file : getFiles()) {
             writer.writeAddressTo(fileOffsetTable.get(file));
             System.out.println("Writing " + file.getFilePath());
 
             byte[] rawBytes; // TODO :TOSS
-            if (!(file instanceof TGQChunkedFile) && file.getRawData() != null) {
+            if (!(file instanceof GreatQuestChunkedFile) && file.getRawData() != null) {
                 // TODO: Seems both models and images are busted.
                 // TODO: We're missing nearly 100MB of texture data when we let textures save themselves.
                 rawBytes = file.getRawData();
@@ -198,7 +185,7 @@ public class TGQBinFile extends GameObject {
 
             // File is compressed.
             if (file.isCompressed()) {
-                rawBytes = TGQUtils.zlibCompress(rawBytes); // Compress data.
+                rawBytes = GreatQuestUtils.zlibCompress(rawBytes); // Compress data.
 
                 // Write z size.
                 writer.jumpTemp(fileZSizeTable.get(file));
@@ -225,7 +212,7 @@ public class TGQBinFile extends GameObject {
     @SuppressWarnings("unused")
     public void printFileList() {
         for (int i = 0; i < this.files.size(); i++) {
-            TGQFile file = this.files.get(i);
+            GreatQuestArchiveFile file = this.files.get(i);
             System.out.print(file.hasFilePath() ? file.getFilePath() : "UNKNOWN");
             System.out.print(" # File ");
             System.out.print(Utils.padNumberString(i, 4));
@@ -251,7 +238,7 @@ public class TGQBinFile extends GameObject {
         }
 
         if (Utils.stripAlphanumeric(fileName).equalsIgnoreCase("hash"))
-            TGQHashReverser.runHashPlayground();
+            GreatQuestHashReverser.runHashPlayground();
 
         File binFile = new File(fileName);
         if (!binFile.exists() || !binFile.isFile()) {
@@ -260,98 +247,39 @@ public class TGQBinFile extends GameObject {
         }
 
         // Determine platform.
-        kcPlatform platform = TGQRunners.getPlatform(binFile, scanner);
-        if (platform == null)
-            return;
+        Config config = getConfiguration(scanner);
 
         // Load main bin.
         System.out.println("Loading file...");
         DataReader reader = new DataReader(new FileSource(binFile));
-        TGQBinFile mainFile = new TGQBinFile(platform);
-        mainFile.load(reader);
+        GreatQuestInstance instance = new GreatQuestInstance();
+        instance.loadGame(config.getName(), config, binFile);
+        instance.getMainArchive().load(reader);
 
         // Export.
-        File exportDir = new File(binFile.getParentFile(), "Export");
+        /*File exportDir = new File(binFile.getParentFile(), "Export");
         Utils.makeDirectory(exportDir);
         exportFileList(exportDir, mainFile);
-        for (TGQFile file : mainFile.getFiles())
-            file.export(exportDir);
+        for (GreatQuestArchiveFile file : mainFile.getFiles())
+            file.export(exportDir);*/
 
-        // Modify script in rolling rapids creek.
-        TGQChunkedFile rollingRapidsCreek = (TGQChunkedFile) mainFile.files.get(16);
-        kcScript script = rollingRapidsCreek.getScriptList().getScripts().get(33);
+        instance.setupMainMenuWindow();
+    }
 
-        int injectAfter = 1;
+    private static Config getConfiguration(Scanner scanner) {
+        String configName;
+        InputStream inputStream;
+        do {
+            System.out.print("Please enter the name of the configuration: ");
+            configName = scanner.nextLine();
 
-        int executionStartNumber = 1337;
-        int executionNumber = executionStartNumber;
-        for (int i = 0; i < 32; i++) {
-            if (i == 0)
-                continue; // Skip
+            String fullPath = "games/greatquest/versions/" + configName + ".cfg";
+            inputStream = Utils.getResourceStream(fullPath);
+            if (inputStream == null)
+                System.out.println("Invalid configuration, please try again.");
+        } while (inputStream == null);
 
-            // Create clear flag function.
-            kcScriptCauseNumber clearFlagDialogCause = new kcScriptCauseNumber(kcScriptCauseNumberOperation.EQUALS, executionNumber++);
-            kcScriptFunction clearFlagFunc = new kcScriptFunction(clearFlagDialogCause);
-
-            // Add dialog resource.
-            kcCResourceGeneric clearFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString("Knee Flag Clear Test: " + i));
-            clearFlagDialog.setName("FgClr" + Utils.padNumberString(i, 2));
-            int clearFlagDialogHash = TGQUtils.hash(clearFlagDialog.getName());
-            clearFlagDialog.setHash(clearFlagDialogHash);
-            rollingRapidsCreek.getChunks().add(clearFlagDialog);
-            rollingRapidsCreek.getFirstTOCChunk().getHashes().add(clearFlagDialogHash);
-
-            // Add dialog action.
-            kcActionTemplate actionClearFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance();
-            actionClearFlagDialog.getArguments().add(new kcParam(clearFlagDialogHash));
-            clearFlagFunc.getEffects().add(new kcScriptEffectActor(actionClearFlagDialog, 0x68FF0A2));
-
-            // Add clear action.
-            kcActionFlag actionClearFlag = new kcActionFlag(kcActionID.SET_FLAGS);
-            actionClearFlag.getArguments().add(new kcParam(1 << i));
-            clearFlagFunc.getEffects().add(new kcScriptEffectActor(actionClearFlag, 0x68FF0A2));
-
-            // Add increment function.
-            // TODO
-
-            // Created set flag function
-            kcScriptCauseNumber setFlagDialogCause = new kcScriptCauseNumber(kcScriptCauseNumberOperation.EQUALS, executionNumber++);
-            kcScriptFunction setFlagFunc = new kcScriptFunction(setFlagDialogCause);
-
-            // Add dialog resource.
-            kcCResourceGeneric setFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString("Knee Flag Set: " + i));
-            setFlagDialog.setName("FgSet" + Utils.padNumberString(i, 2));
-            int setFlagDialogHash = TGQUtils.hash(setFlagDialog.getName());
-            setFlagDialog.setHash(setFlagDialogHash);
-            rollingRapidsCreek.getChunks().add(setFlagDialog);
-            rollingRapidsCreek.getFirstTOCChunk().getHashes().add(setFlagDialogHash);
-
-            // Add dialog action.
-            kcActionTemplate actionSetFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance();
-            actionSetFlagDialog.getArguments().add(new kcParam(setFlagDialogHash));
-            setFlagFunc.getEffects().add(new kcScriptEffectActor(actionSetFlagDialog, 0x68FF0A2));
-
-            // Add set flag action.
-            kcActionFlag actionSetFlag = new kcActionFlag(kcActionID.SET_FLAGS);
-            actionSetFlag.getArguments().add(new kcParam(1 << i));
-            setFlagFunc.getEffects().add(new kcScriptEffectActor(actionSetFlag, 0x68FF0A2));
-
-            // Add increment function.
-            // TODO
-
-            // TODO: If last one, set variable to normal trigger.
-
-            // Register functions.
-            script.getFunctions().add(injectAfter++, setFlagFunc);
-            script.getFunctions().add(injectAfter++, clearFlagFunc);
-        }
-
-        File outputFile = new File(binFile.getParent(), "Playable\\data.bin");
-        DataWriter writer = new DataWriter(new LargeFileReceiver(outputFile));
-        mainFile.save(writer);
-        writer.closeReceiver();
-
-        System.out.println("Done.");
+        return new Config(inputStream, configName);
     }
 
     /**
@@ -359,14 +287,14 @@ public class TGQBinFile extends GameObject {
      * @param filePath              The path of a game file.
      * @param showMessageIfNotFound Specify if a warning should be displayed if the file is not found.
      */
-    public TGQFile applyFileName(String filePath, boolean showMessageIfNotFound) {
-        TGQFile file = getOptionalFileByName(filePath);
+    public GreatQuestArchiveFile applyFileName(String filePath, boolean showMessageIfNotFound) {
+        GreatQuestArchiveFile file = getOptionalFileByName(filePath);
         if (file != null) {
             file.setFilePath(filePath);
             return file;
         }
 
-        int hash = TGQUtils.hashFilePath(filePath);
+        int hash = GreatQuestUtils.hashFilePath(filePath);
         if (showMessageIfNotFound)
             System.out.println("Attempted to apply the file path '" + filePath + "', but no file matched the hash " + Utils.to0PrefixedHexString(hash) + ".");
         return null;
@@ -378,10 +306,10 @@ public class TGQBinFile extends GameObject {
      * @param filePath   Full file path.
      * @return the found file, if there was one.
      */
-    public TGQFile getFileByName(TGQFile searchFrom, String filePath) {
-        TGQFile file = getOptionalFileByName(filePath);
+    public GreatQuestArchiveFile getFileByName(GreatQuestArchiveFile searchFrom, String filePath) {
+        GreatQuestArchiveFile file = getOptionalFileByName(filePath);
         if (file == null)
-            System.out.println("Failed to find file " + filePath + (searchFrom != null ? " referenced in " + searchFrom.getExportName() : "") + ". (" + TGQUtils.getFileIdFromPath(filePath) + ")");
+            System.out.println("Failed to find file " + filePath + (searchFrom != null ? " referenced in " + searchFrom.getExportName() : "") + ". (" + GreatQuestUtils.getFileIdFromPath(filePath) + ")");
         return file;
     }
 
@@ -390,22 +318,22 @@ public class TGQBinFile extends GameObject {
      * @param filePath Full file path.
      * @return the found file, if there was one.
      */
-    public TGQFile getOptionalFileByName(String filePath) {
+    public GreatQuestArchiveFile getOptionalFileByName(String filePath) {
         // Create hash.
-        String abbreviatedFilePath = TGQUtils.getFileIdFromPath(filePath);
-        int hash = TGQUtils.hash(abbreviatedFilePath);
+        String abbreviatedFilePath = GreatQuestUtils.getFileIdFromPath(filePath);
+        int hash = GreatQuestUtils.hash(abbreviatedFilePath);
 
         // Search for unique file without collisions.
-        TGQFile file = this.nameMap.get(hash);
+        GreatQuestArchiveFile file = this.nameMap.get(hash);
         if (file != null)
             return file;
 
         // Search colliding files.
-        List<TGQFile> collidingFiles = this.fileCollisions.get(hash);
+        List<GreatQuestArchiveFile> collidingFiles = this.fileCollisions.get(hash);
         if (collidingFiles != null) {
             for (int i = 0; i < collidingFiles.size(); i++) {
-                TGQFile collidedFile = collidingFiles.get(i);
-                if (TGQUtils.getFileIdFromPath(collidedFile.getFilePath()).equalsIgnoreCase(abbreviatedFilePath))
+                GreatQuestArchiveFile collidedFile = collidingFiles.get(i);
+                if (GreatQuestUtils.getFileIdFromPath(collidedFile.getFilePath()).equalsIgnoreCase(abbreviatedFilePath))
                     return collidedFile;
             }
         }
@@ -413,18 +341,18 @@ public class TGQBinFile extends GameObject {
         return null;
     }
 
-    private static void exportFileList(File baseFolder, TGQBinFile mainArchive) throws IOException {
+    public static void exportFileList(File baseFolder, GreatQuestAssetBinFile mainArchive) throws IOException {
         List<String> lines = new ArrayList<>();
         long namedCount = mainArchive.getFiles().stream().filter(file -> file.getFilePath() != null).count();
         lines.add("File List [" + mainArchive.getFiles().size() + ", " + namedCount + " named]:");
 
         for (int i = 0; i < mainArchive.getFiles().size(); i++) {
-            TGQFile file = mainArchive.getFiles().get(i);
+            GreatQuestArchiveFile file = mainArchive.getFiles().get(i);
 
             lines.add(" - File #" + Utils.padNumberString(i, 4)
                     + ": " + Utils.to0PrefixedHexString(file.getNameHash())
                     + ", " + file.getClass().getSimpleName()
-                    + (file.getFilePath() != null ? ", " + file.getFilePath() + ", " + TGQUtils.getFileIdFromPath(file.getFilePath()) : ""));
+                    + (file.getFilePath() != null ? ", " + file.getFilePath() + ", " + GreatQuestUtils.getFileIdFromPath(file.getFilePath()) : ""));
         }
 
         lines.add("");

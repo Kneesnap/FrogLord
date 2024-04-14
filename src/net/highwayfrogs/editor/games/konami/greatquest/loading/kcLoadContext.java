@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.loading;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQBinFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetBinFile;
 
 /**
  * Contains all data shared between files for loading.
@@ -9,10 +9,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.TGQBinFile;
  */
 @Getter
 public class kcLoadContext {
-    private final TGQBinFile mainArchive;
+    private final GreatQuestAssetBinFile mainArchive;
     private final kcMaterialLoadContext materialLoadContext;
 
-    public kcLoadContext(TGQBinFile mainArchive) {
+    public kcLoadContext(GreatQuestAssetBinFile mainArchive) {
         this.mainArchive = mainArchive;
         this.materialLoadContext = new kcMaterialLoadContext(mainArchive);
     }

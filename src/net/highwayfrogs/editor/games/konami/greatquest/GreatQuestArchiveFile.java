@@ -1,13 +1,20 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
+import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
+import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
+import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -16,8 +23,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Created by Kneesnap on 8/17/2019.
  */
 @Getter
-public abstract class TGQFile extends GameObject {
-    private final TGQBinFile mainArchive;
+public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance> implements ICollectionViewEntry {
     private byte[] rawData;
     private String fileName;
     private String filePath;
@@ -25,8 +31,30 @@ public abstract class TGQFile extends GameObject {
     private boolean collision; // This is true iff there are multiple files that share the hash.
     private boolean compressed;
 
-    public TGQFile(TGQBinFile mainArchive) {
-        this.mainArchive = mainArchive;
+    public GreatQuestArchiveFile(GreatQuestInstance instance) {
+        super(instance);
+    }
+
+    /**
+     * Gets the main archive.
+     */
+    private GreatQuestAssetBinFile getMainArchive() {
+        return getGameInstance().getMainArchive();
+    }
+
+    @Override
+    public ICollectionViewEntry getCollectionViewParentEntry() {
+        return null;
+    }
+
+    @Override
+    public String getCollectionViewDisplayName() {
+        return (this.fileName != null ? this.fileName : getExportName()) + " [Hash: " + Utils.toHexString(this.nameHash) + ", Collision: " + this.collision + ", Compressed: " + this.compressed + (this.filePath != null ? ", Full Path: " + this.filePath : "") + "]";
+    }
+
+    @Override
+    public String getCollectionViewDisplayStyle() {
+        return null;
     }
 
     @Override
@@ -47,6 +75,11 @@ public abstract class TGQFile extends GameObject {
     public void afterLoad2(kcLoadContext context) {
         // Do nothing.
     }
+
+    /**
+     * Creates an editor UI for the file.
+     */
+    public abstract GameUIController<?> makeEditorUI();
 
     /**
      * Initialize the information about this file.
@@ -70,7 +103,7 @@ public abstract class TGQFile extends GameObject {
         // Only files which have collision hashes have something before that (eg: "\\Netapp1\PD\.....").
         // I've chosen to start counting game files at the "root folder of game data" instead of "root folder of network drive".
         if (filePath != null) {
-            int startPos = TGQUtils.indexOfMultiple(filePath, TGQUtils.GAME_PATH_INDEX_PATTERNS);
+            int startPos = GreatQuestUtils.indexOfMultiple(filePath, GreatQuestUtils.GAME_PATH_INDEX_PATTERNS);
             if (startPos > 0)
                 filePath = filePath.substring(startPos);
         }
@@ -154,7 +187,7 @@ public abstract class TGQFile extends GameObject {
      * @param baseFolder The base folder that game assets are saved to.
      */
     public void export(File baseFolder) {
-        File targetFile = TGQUtils.getExportFile(baseFolder, this);
+        File targetFile = GreatQuestUtils.getExportFile(baseFolder, this);
         File targetFolder = targetFile.getParentFile();
         if (this.rawData != null && (!targetFile.exists() || targetFile.length() != this.rawData.length)) {
             try {
@@ -174,5 +207,35 @@ public abstract class TGQFile extends GameObject {
                 throw new RuntimeException("Failed to export file '" + getDebugName() + "' to usable format.", ex);
             }
         }
+    }
+
+    /**
+     * Load an icon by name.
+     * @param iconName The icon to load.
+     * @return loadedIcon
+     */
+    @SneakyThrows
+    public static Image loadIcon(String iconName) {
+        return Utils.toFXImage(Utils.resizeImage(ImageIO.read(Utils.getResourceURL("icons/" + iconName + ".png")), 15, 15), false);
+    }
+
+    /**
+     * Loads a GameFile editor.
+     * @param gameInstance the game instance to create the editor for
+     * @param controller the controller to control the GUI
+     * @param template the gui layout template
+     * @param fileToEdit the file to edit
+     * @return editor
+     */
+    public static <TGameFile extends GreatQuestArchiveFile, TUIController extends GreatQuestFileEditorUIController<TGameFile>> TUIController loadEditor(GreatQuestInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
+        try {
+            URL templateUrl = Utils.getFXMLTemplateURL(gameInstance, template);
+            GameUIController.loadController(gameInstance, templateUrl, controller);
+            controller.setTargetFile(fileToEdit);
+        } catch (Throwable th) {
+            Utils.handleError(fileToEdit.getLogger(), th, true, "Failed to create editor UI.");
+        }
+
+        return controller;
     }
 }

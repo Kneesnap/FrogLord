@@ -5,7 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 
 /**
@@ -21,7 +21,7 @@ public class kcProxyDesc extends kcBaseDesc {
     private int collideWith;
     private boolean isStatic;
 
-    public static final int CLASS_ID = TGQUtils.hash("kcCProxy");
+    public static final int CLASS_ID = GreatQuestUtils.hash("kcCProxy");
 
     @Override
     protected int getTargetClassID() {
@@ -35,7 +35,7 @@ public class kcProxyDesc extends kcBaseDesc {
         this.reaction = reader.readInt();
         this.collisionGroup = reader.readInt();
         this.collideWith = reader.readInt();
-        this.isStatic = TGQUtils.readTGQBoolean(reader);
+        this.isStatic = GreatQuestUtils.readTGQBoolean(reader);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class kcProxyDesc extends kcBaseDesc {
         writer.writeInt(this.reaction);
         writer.writeInt(this.collisionGroup);
         writer.writeInt(this.collideWith);
-        TGQUtils.writeTGQBoolean(writer, this.isStatic);
+        GreatQuestUtils.writeTGQBoolean(writer, this.isStatic);
     }
 
     @Override

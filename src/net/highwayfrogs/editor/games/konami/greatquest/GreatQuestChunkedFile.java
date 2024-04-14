@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
@@ -21,6 +22,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.*;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceNamedHash.HashTableEntry;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -37,11 +39,12 @@ import java.util.stream.Collectors;
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
-public class TGQChunkedFile extends TGQFile implements IFileExport {
+public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFileExport {
     private final List<kcCResource> chunks = new ArrayList<>();
+    public static final Image MAP_ICON = loadIcon("map");
 
-    public TGQChunkedFile(TGQBinFile mainArchive) {
-        super(mainArchive);
+    public GreatQuestChunkedFile(GreatQuestInstance instance) {
+        super(instance);
     }
 
     @Override
@@ -64,7 +67,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
             } else if (readType != null && readType.getMaker() != null) {
                 newChunk = readType.getMaker().apply(this);
             } else {
-                newChunk = new TGQDummyFileChunk(this, magic);
+                newChunk = new GreatQuestDummyFileChunk(this, magic);
             }
 
             DataReader chunkReader = new DataReader(new ArraySource(readBytes));
@@ -106,6 +109,16 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
     }
 
     @Override
+    public Image getCollectionViewIcon() {
+        return MAP_ICON;
+    }
+
+    @Override
+    public GameUIController<?> makeEditorUI() {
+        return null; // TODO: IMPLEMENT.
+    }
+
+    @Override
     public String getDefaultFolderName() {
         return "ChunkedDataFiles";
     }
@@ -132,7 +145,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
         Map<Integer, String> nameMap = new HashMap<>();
         for (kcCResource testChunk : this.chunks) {
             if (testChunk.getName() != null && testChunk.getName().length() > 0)
-                nameMap.put(TGQUtils.hash(testChunk.getName(), true), testChunk.getName());
+                nameMap.put(GreatQuestUtils.hash(testChunk.getName(), true), testChunk.getName());
 
             if (testChunk instanceof kcCResourceNamedHash) {
                 kcCResourceNamedHash namedHashChunk = (kcCResourceNamedHash) testChunk;
@@ -157,7 +170,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
         saveMapObj(folder); // TODO: Here's the slowdown.
         exportChunksToDirectory(folder);
 
-        TGQUtils.addDefaultHashesToMap(nameMap);
+        GreatQuestUtils.addDefaultHashesToMap(nameMap);
         kcScriptDisplaySettings settings = new kcScriptDisplaySettings(nameMap, true, true);
         saveActionSequences(new File(folder, "sequences.txt"), settings);
         saveScripts(new File(folder, "scripts.txt"), settings);
@@ -621,7 +634,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
      * @param prefix       The prefix to write.
      * @param resourceHash The hash value to lookup.
      */
-    public static StringBuilder writeAssetLine(TGQChunkedFile file, StringBuilder builder, String padding, String prefix, int resourceHash) {
+    public static StringBuilder writeAssetLine(GreatQuestChunkedFile file, StringBuilder builder, String padding, String prefix, int resourceHash) {
         return writeAssetInfo(file, builder, padding, prefix, resourceHash, kcCResource::getName).append(Constants.NEWLINE);
     }
 
@@ -636,7 +649,7 @@ public class TGQChunkedFile extends TGQFile implements IFileExport {
      * @param getter       The function to turn the resource into a string.
      * @param <TResource>  The resource type to lookup.
      */
-    public static <TResource extends kcCResource> StringBuilder writeAssetInfo(TGQChunkedFile file, StringBuilder builder, String padding, String prefix, int resourceHash, Function<TResource, String> getter) {
+    public static <TResource extends kcCResource> StringBuilder writeAssetInfo(GreatQuestChunkedFile file, StringBuilder builder, String padding, String prefix, int resourceHash, Function<TResource, String> getter) {
         builder.append(padding).append(prefix).append(": ");
 
         TResource resource = file != null ? file.getResourceByHash(resourceHash) : null;

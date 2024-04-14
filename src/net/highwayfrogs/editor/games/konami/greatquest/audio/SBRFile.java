@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.sound.psx.VAGUtil;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.kcPlatform;
+import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.*;
@@ -26,7 +26,7 @@ import java.util.concurrent.CountDownLatch;
  */
 @Getter
 public class SBRFile extends GameObject {
-    private final kcPlatform platform;
+    private final GamePlatform platform;
     private int sfxBankId;
     private final List<SfxEntry> soundEffects = new ArrayList<>();
     private final List<SfxWave> waves = new ArrayList<>();
@@ -34,7 +34,7 @@ public class SBRFile extends GameObject {
     private static final int SIGNATURE = 0x42584653; // 'SFXB'
     private static final int SUPPORTED_VERSION = 0x100;
 
-    public SBRFile(kcPlatform platform) {
+    public SBRFile(GamePlatform platform) {
         this.platform = platform;
     }
 
@@ -142,9 +142,9 @@ public class SBRFile extends GameObject {
      */
     public SfxWave createNewAttributes() {
         switch (this.platform) {
-            case PC:
+            case WINDOWS:
                 return new SfxWavePC();
-            case PS2:
+            case PLAYSTATION_2:
                 return new SfxWavePS2();
             default:
                 throw new RuntimeException("Cannot create new wave attributes for the " + this.platform + " platform.");

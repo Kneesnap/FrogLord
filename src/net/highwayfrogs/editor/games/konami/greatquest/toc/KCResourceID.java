@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.toc;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 
@@ -18,7 +18,7 @@ import java.util.function.Function;
 public enum KCResourceID {
     NONE("NON\0", null),
     RAW("RAW\0", null),
-    TEXTURE("TEX\0", TGQChunkTextureReference::new),
+    TEXTURE("TEX\0", GreatQuestChunkTextureReference::new),
     OCTTREESCENEMGR("OTT\0", kcCResOctTreeSceneMgr::new),
     MODEL("6YTV", kcCResourceModel::new),
     TRACK("fEAB", null), // TODO
@@ -34,7 +34,7 @@ public enum KCResourceID {
     DUMMY(null, null);
 
     private final String signature;
-    private final Function<TGQChunkedFile, kcCResource> maker;
+    private final Function<GreatQuestChunkedFile, kcCResource> maker;
 
     /**
      * Gets the chunk type based on a magic number.

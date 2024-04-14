@@ -1,16 +1,31 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
+import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
+import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.IDXFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.IDXFile.kcStreamIndexEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntrySimpleAttributes;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxWave;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceString;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionFlag;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionTemplate;
+import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseNumber;
+import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseNumber.kcScriptCauseNumberOperation;
+import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectActor;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.AudioFileFormat.Type;
@@ -28,7 +43,7 @@ import java.util.Scanner;
  * Contains various runners.
  * Created by Kneesnap on 4/22/2020.
  */
-public class TGQRunners {
+public class GreatQuestRunners {
 
     // This runner will replace the "Goblin Fort" level with the unused level on the PC version.
     public static void applyUnusedLevel(String[] args) throws Exception {
@@ -39,15 +54,16 @@ public class TGQRunners {
         // Load main bin.
         System.out.println("Loading file...");
         DataReader reader = new DataReader(new FileSource(binFile));
-        TGQBinFile mainFile = new TGQBinFile(kcPlatform.PC);
-        mainFile.load(reader);
+        GreatQuestInstance instance = new GreatQuestInstance();
+        instance.loadGame("pc-retail", new Config(Utils.getResourceStream("games/greatquest/versions/pc-retail.cfg")), binFile);
+        instance.getMainArchive().load(reader);
         System.out.println("Loaded.");
 
         // TODO: Slight problem at the moment, which is that it doesn't save a 1:1 copy. We need to either get it so it saves each file correctly, so it produces a valid .bin. If we make every file a dummy file, this works.
 
         // Switch the level hashes, so it loads it.
-        TGQFile theGoblinFort = mainFile.getFiles().get(31);
-        TGQFile ruinsOfJoyTown = mainFile.getFiles().get(32);
+        GreatQuestArchiveFile theGoblinFort = instance.getMainArchive().getFiles().get(31);
+        GreatQuestArchiveFile ruinsOfJoyTown = instance.getMainArchive().getFiles().get(32);
         int goblinFortHash = theGoblinFort.getNameHash();
         boolean goblinFortCollision = theGoblinFort.isCollision();
         theGoblinFort.init(ruinsOfJoyTown.getFilePath(), theGoblinFort.isCompressed(), ruinsOfJoyTown.getNameHash(), theGoblinFort.getRawData(), ruinsOfJoyTown.isCollision());
@@ -55,9 +71,91 @@ public class TGQRunners {
 
         System.out.println("Saving.");
         DataWriter writer = new DataWriter(new FileReceiver(new File(binFile.getParentFile(), "export.bin"), 300 * (1024 * 1024)));
-        mainFile.save(writer);
+        instance.getMainArchive().save(writer);
         writer.closeReceiver();
         System.out.println("Done.");
+    }
+
+    // This was a test in Rolling Rapids Creek to attempt to mod the game.
+    public static void modRollingRapidsCreek(GreatQuestInstance instance) {
+        GreatQuestAssetBinFile mainFile = instance.getMainArchive();
+
+        // Modify script in rolling rapids creek.
+        GreatQuestChunkedFile rollingRapidsCreek = (GreatQuestChunkedFile) mainFile.getFiles().get(16);
+        kcScript script = rollingRapidsCreek.getScriptList().getScripts().get(33);
+
+        int injectAfter = 1;
+
+        int executionStartNumber = 1337;
+        int executionNumber = executionStartNumber;
+        for (int i = 0; i < 32; i++) {
+            if (i == 0)
+                continue; // Skip
+
+            // Create clear flag function.
+            kcScriptCauseNumber clearFlagDialogCause = new kcScriptCauseNumber(kcScriptCauseNumberOperation.EQUALS, executionNumber++);
+            kcScriptFunction clearFlagFunc = new kcScriptFunction(clearFlagDialogCause);
+
+            // Add dialog resource.
+            kcCResourceGeneric clearFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString("Knee Flag Clear Test: " + i));
+            clearFlagDialog.setName("FgClr" + Utils.padNumberString(i, 2));
+            int clearFlagDialogHash = GreatQuestUtils.hash(clearFlagDialog.getName());
+            clearFlagDialog.setHash(clearFlagDialogHash);
+            rollingRapidsCreek.getChunks().add(clearFlagDialog);
+            rollingRapidsCreek.getFirstTOCChunk().getHashes().add(clearFlagDialogHash);
+
+            // Add dialog action.
+            kcActionTemplate actionClearFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance();
+            actionClearFlagDialog.getArguments().add(new kcParam(clearFlagDialogHash));
+            clearFlagFunc.getEffects().add(new kcScriptEffectActor(actionClearFlagDialog, 0x68FF0A2));
+
+            // Add clear action.
+            kcActionFlag actionClearFlag = new kcActionFlag(kcActionID.SET_FLAGS);
+            actionClearFlag.getArguments().add(new kcParam(1 << i));
+            clearFlagFunc.getEffects().add(new kcScriptEffectActor(actionClearFlag, 0x68FF0A2));
+
+            // Add increment function.
+            // TODO
+
+            // Created set flag function
+            kcScriptCauseNumber setFlagDialogCause = new kcScriptCauseNumber(kcScriptCauseNumberOperation.EQUALS, executionNumber++);
+            kcScriptFunction setFlagFunc = new kcScriptFunction(setFlagDialogCause);
+
+            // Add dialog resource.
+            kcCResourceGeneric setFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString("Knee Flag Set: " + i));
+            setFlagDialog.setName("FgSet" + Utils.padNumberString(i, 2));
+            int setFlagDialogHash = GreatQuestUtils.hash(setFlagDialog.getName());
+            setFlagDialog.setHash(setFlagDialogHash);
+            rollingRapidsCreek.getChunks().add(setFlagDialog);
+            rollingRapidsCreek.getFirstTOCChunk().getHashes().add(setFlagDialogHash);
+
+            // Add dialog action.
+            kcActionTemplate actionSetFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance();
+            actionSetFlagDialog.getArguments().add(new kcParam(setFlagDialogHash));
+            setFlagFunc.getEffects().add(new kcScriptEffectActor(actionSetFlagDialog, 0x68FF0A2));
+
+            // Add set flag action.
+            kcActionFlag actionSetFlag = new kcActionFlag(kcActionID.SET_FLAGS);
+            actionSetFlag.getArguments().add(new kcParam(1 << i));
+            setFlagFunc.getEffects().add(new kcScriptEffectActor(actionSetFlag, 0x68FF0A2));
+
+            // Add increment function.
+            // TODO
+
+            // TODO: If last one, set variable to normal trigger.
+
+            // Register functions.
+            script.getFunctions().add(injectAfter++, setFlagFunc);
+            script.getFunctions().add(injectAfter++, clearFlagFunc);
+        }
+
+        File outputFile = new File(instance.getMainGameFolder(), "ModdedPlayable\\data.bin");
+        DataWriter writer = new DataWriter(new LargeFileReceiver(outputFile));
+        mainFile.save(writer);
+        writer.closeReceiver();
+
+        System.out.println("Done.");
+
     }
 
     private static File getBinFile(String[] args) {
@@ -84,17 +182,17 @@ public class TGQRunners {
      * Get the platform.
      * @param file    The file in question, if there is one.
      * @param scanner An optional scanner to read data from.
-     * @return kcPlatform or null if one was not given.
+     * @return GamePlatform or null if one was not given.
      */
-    public static kcPlatform getPlatform(File file, Scanner scanner) {
-        kcPlatform platform = null;
+    public static GamePlatform getPlatform(File file, Scanner scanner) {
+        GamePlatform platform = null;
 
         if (file != null) {
             String filePath = file.getPath();
             if (filePath.contains("PC") || filePath.contains("Windows") || filePath.contains(":\\Program Files"))
-                platform = kcPlatform.PC;
+                platform = GamePlatform.WINDOWS;
             if (filePath.contains("PS2") || filePath.contains("Play"))
-                platform = kcPlatform.PS2;
+                platform = GamePlatform.PLAYSTATION_2;
         }
 
         if (platform == null) {
@@ -102,11 +200,11 @@ public class TGQRunners {
             if (makeScanner)
                 scanner = new Scanner(System.in);
 
-            System.out.print("Please enter the platform the files came from (PC, PS2): ");
+            System.out.print("Please enter the platform the files came from (WINDOWS, PLAYSTATION_2): ");
             String platformName = scanner.nextLine();
 
             try {
-                platform = kcPlatform.valueOf(platformName.toUpperCase());
+                platform = GamePlatform.valueOf(platformName.toUpperCase());
             } catch (Throwable th) {
                 // We don't care. This is some temporary development CLI mode for devs.
             }
@@ -145,7 +243,7 @@ public class TGQRunners {
             return;
         }
 
-        kcPlatform platform = getPlatform(soundFolder, null);
+        GamePlatform platform = getPlatform(soundFolder, null);
         if (platform == null)
             return;
 

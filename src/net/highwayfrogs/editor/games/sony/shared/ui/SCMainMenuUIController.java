@@ -15,11 +15,11 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.ui.file.SaveController;
+import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
-import net.highwayfrogs.editor.games.sony.shared.ui.file.SaveController;
-import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.gui.extra.hash.HashPlaygroundController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -29,8 +29,6 @@ import java.util.List;
 
 /**
  * Represents the editor main menu for a Millennium Interactive game.
- * TODO: File List.
- * TODO: Search bar, add bar, etc.
  * Created by Kneesnap on 4/12/2024.
  */
 public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extends MainMenuController<TGameInstance, SCGameFile<?>> {

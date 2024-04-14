@@ -30,6 +30,10 @@ public class Config {
         this(Utils.readLinesFromStream(stream));
     }
 
+    public Config(InputStream stream, String name) {
+        this(Utils.readLinesFromStream(stream), name, 0);
+    }
+
     public Config(List<String> lines) {
         this(lines, null, 0);
     }

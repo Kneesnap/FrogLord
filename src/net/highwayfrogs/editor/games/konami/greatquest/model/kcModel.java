@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.kcPlatform;
+import net.highwayfrogs.editor.games.generic.GamePlatform;
 
 import java.io.File;
 import java.io.IOException;
@@ -210,11 +210,11 @@ public class kcModel extends GameObject {
      * @param platform The platform to calculate the order for.
      * @return orderedComponentList
      */
-    public static kcVertexFormatComponent[] calculateOrder(long fvf, kcPlatform platform) {
+    public static kcVertexFormatComponent[] calculateOrder(long fvf, GamePlatform platform) {
         switch (platform) {
-            case PC:
+            case WINDOWS:
                 return calculateOrderPC(fvf);
-            case PS2:
+            case PLAYSTATION_2:
                 return calculateOrderPS2(fvf);
             default:
                 throw new RuntimeException("Cannot calculate vertex component FVF order for the platform: " + platform);
@@ -315,7 +315,7 @@ public class kcModel extends GameObject {
      * @param platform The platform to calculate the stride for.
      * @return calculatedStride
      */
-    public static int calculateStride(long fvf, kcPlatform platform) {
+    public static int calculateStride(long fvf, GamePlatform platform) {
         kcVertexFormatComponent[] components = calculateOrder(fvf, platform);
         return calculateStride(components, fvf);
     }

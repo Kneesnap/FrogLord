@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetBinFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 
 /**
@@ -14,13 +14,13 @@ import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
  */
 @Getter
 @Setter
-public class TGQChunkTextureReference extends kcCResource {
+public class GreatQuestChunkTextureReference extends kcCResource {
     private String path;
 
     private static final int PATH_SIZE = 260;
     private static final byte PATH_TERMINATOR = (byte) 0xCD;
 
-    public TGQChunkTextureReference(TGQChunkedFile parentFile) {
+    public GreatQuestChunkTextureReference(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.TEXTURE);
     }
 
@@ -35,7 +35,7 @@ public class TGQChunkTextureReference extends kcCResource {
         super.afterLoad1(context);
         // We must wait until afterLoad1() because the file object won't exist for files found later in the file if we don't.
         // But, this must run before afterLoad2() because that's when we start doing lookups based on file paths.
-        TGQBinFile mainArchive = getMainArchive();
+        GreatQuestAssetBinFile mainArchive = getMainArchive();
         if (mainArchive != null)
             mainArchive.applyFileName(this.path, true);
     }

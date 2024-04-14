@@ -4,7 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceModel;
 import net.highwayfrogs.editor.utils.Utils;
@@ -23,9 +23,9 @@ public class LauncherParams extends kcProjectileParams {
     private int projectileLifeTime;
     private float speed;
     private final int[] padLauncherParams = new int[7];
-    private final transient TGQChunkedFile holder;
+    private final transient GreatQuestChunkedFile holder;
 
-    public LauncherParams(TGQChunkedFile holder) {
+    public LauncherParams(GreatQuestChunkedFile holder) {
         this.holder = holder;
     }
 

@@ -4,7 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ import java.util.List;
 public class kcCResourceNamedHash extends kcCResource {
     private final List<HashTableEntry> entries = new ArrayList<>();
 
-    public kcCResourceNamedHash(TGQChunkedFile parentFile) {
+    public kcCResourceNamedHash(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.NAMEDHASH);
     }
 

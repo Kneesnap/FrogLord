@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 
@@ -19,7 +19,7 @@ public class kcCResourceEntityInst extends kcCResource {
     private kcEntityInst entity;
     private byte[] dummyBytes;
 
-    public kcCResourceEntityInst(TGQChunkedFile parentFile) {
+    public kcCResourceEntityInst(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.ENTITYINST);
     }
 

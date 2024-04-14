@@ -7,7 +7,10 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
+import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -23,6 +26,7 @@ import net.highwayfrogs.editor.utils.logging.UIConsoleHandler;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -38,6 +42,15 @@ import java.util.logging.*;
  * TODO: Save/load from config file.
  * TODO: Show loading bar while the game files load.
  * TODO: New game open menu.
+ *
+ * TODO: Solve TODOs in:
+ *  - GUIMain.java
+ *  - GameInstance.java
+ *  - GroupedCollectionViewComponent.java
+ *  - CollectionViewComponent.java
+ *  - CollectionEditorComponent.java
+ *  - MainMenuController.java
+ *  - SCGameFileListEditor.java
  */
 public class GUIMain extends Application {
     public static GUIMain INSTANCE; // TODO: TOSS (LATER)

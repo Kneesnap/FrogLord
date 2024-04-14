@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQImageFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestImageFile;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -36,7 +36,7 @@ public class kcMaterial extends GameObject {
     private float emissiveBlue;
     private float emissiveAlpha = 1F;
     private float power = 1F;
-    @Setter private transient TGQImageFile texture;
+    @Setter private transient GreatQuestImageFile texture;
 
     private static final int NAME_SIZE = 32;
     private static final int FILENAME_SIZE = 32;

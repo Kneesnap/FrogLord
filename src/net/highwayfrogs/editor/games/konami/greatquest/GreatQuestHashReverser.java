@@ -41,7 +41,7 @@ import java.util.*;
  * TODO: Consider building the tree as a nibble xor value instead of a character pair. Would save a massive amount of memory, potentially allowing for eeking just a few more characters out.
  * Created by Kneesnap on 7/6/2023.
  */
-public class TGQHashReverser {
+public class GreatQuestHashReverser {
     // Characters outside of this set are not known to be used in Frogger TGQ hashes, even if they would technically work.
     // This set has been limited to reduce the number of garbage strings that the reverse hashing algorithm generates.
     public static final String VALID_HASH_CHARACTER_STRING = "\0 -0123456789[\\]_abcdefghijklmnopqrstuvwxyz{}";
@@ -136,7 +136,7 @@ public class TGQHashReverser {
             System.out.println("Brute-forcing '" + template + "' to find strings that hash to '" + Utils.to0PrefixedHexString(hash) + "'.");
 
             long hashStartTime = System.currentTimeMillis();
-            List<String> reverseHashes = TGQHashReverser.reverseHash(template, hash, debugMode, allowDuplicateMode);
+            List<String> reverseHashes = GreatQuestHashReverser.reverseHash(template, hash, debugMode, allowDuplicateMode);
             long hashEndTime = System.currentTimeMillis();
 
             Collections.reverse(reverseHashes); // Show the most likely ones at the bottom to reduce scrolling.
@@ -159,7 +159,7 @@ public class TGQHashReverser {
             System.out.println("Brute-forcing '" + template + "' to find strings that hash to '" + Utils.to0PrefixedHexString(hash) + "'.");
 
             long hashStartTime = System.currentTimeMillis();
-            List<String> reverseHashes = TGQHashReverser.reverseHashRepeat(template, hash);
+            List<String> reverseHashes = GreatQuestHashReverser.reverseHashRepeat(template, hash);
             long hashEndTime = System.currentTimeMillis();
 
             Collections.reverse(reverseHashes); // Show the most likely ones at the bottom to reduce scrolling.
@@ -168,12 +168,12 @@ public class TGQHashReverser {
                 System.out.println(" - " + str);
             System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms for " + Utils.to0PrefixedHexString(hash) + ".");
         } else if (line.startsWith("\\")) {
-            String hashFilePath = TGQUtils.getFileIdFromPath(line);
+            String hashFilePath = GreatQuestUtils.getFileIdFromPath(line);
             System.out.println("Full File Path: '" + line + "'");
             System.out.println("Hash File Path: '" + hashFilePath + "'");
-            System.out.println("Hash: " + Utils.to0PrefixedHexString(TGQUtils.hash(hashFilePath)));
+            System.out.println("Hash: " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(hashFilePath)));
         } else {
-            System.out.println("Hash: " + Utils.to0PrefixedHexString(TGQUtils.hash(line)));
+            System.out.println("Hash: " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(line)));
         }
     }
 
@@ -305,7 +305,7 @@ public class TGQHashReverser {
         }
 
         List<String> sortedResults = new ArrayList<>(results);
-        sortedResults.sort(Comparator.comparingDouble(TGQHashReverser::calculateScore).reversed());
+        sortedResults.sort(Comparator.comparingDouble(GreatQuestHashReverser::calculateScore).reversed());
         return sortedResults;
     }
 
@@ -318,7 +318,7 @@ public class TGQHashReverser {
      */
     public static List<String> reverseHash(String prefix, int hash, boolean debugMode, boolean allowRepeatMode) {
         if (!prefix.contains("*")) {
-            if (TGQUtils.hash(prefix) == hash)
+            if (GreatQuestUtils.hash(prefix) == hash)
                 return Collections.singletonList(prefix);
 
             HashSet<String> results = new HashSet<>();
@@ -328,7 +328,7 @@ public class TGQHashReverser {
             }
 
             List<String> sortedResults = new ArrayList<>(results);
-            sortedResults.sort(Comparator.comparingDouble(TGQHashReverser::calculateScore).reversed());
+            sortedResults.sort(Comparator.comparingDouble(GreatQuestHashReverser::calculateScore).reversed());
             return sortedResults;
         }
 
@@ -350,10 +350,10 @@ public class TGQHashReverser {
 
         // Verify there is at least one character to replace.
         if (charsToReplace.length == 0)
-            return (TGQUtils.hash(template) == hash) ? Collections.singletonList(template) : Collections.emptyList();
+            return (GreatQuestUtils.hash(template) == hash) ? Collections.singletonList(template) : Collections.emptyList();
 
         // XOR out the known characters, limiting the possible resulting characters.
-        int templateHash = TGQUtils.hash(template.replace('*', '\0')); // '\0' is a character that will not modify the string when Xor'd.
+        int templateHash = GreatQuestUtils.hash(template.replace('*', '\0')); // '\0' is a character that will not modify the string when Xor'd.
         if (debugMode)
             System.out.println("Partial hash from template '" + template + "' is " + Utils.to0PrefixedHexString(templateHash) + ", XOR is " + Utils.to0PrefixedHexString(hash ^ templateHash) + ".");
 
@@ -428,7 +428,7 @@ public class TGQHashReverser {
 
             // The string is complete.
             if (temp.isDone()) {
-                if (temp.getHash() == context.getTargetHash() && (!debugMode || TGQUtils.hash(temp.toString()) == context.getTargetHash())) {
+                if (temp.getHash() == context.getTargetHash() && (!debugMode || GreatQuestUtils.hash(temp.toString()) == context.getTargetHash())) {
                     String tempStr = temp.toString();
                     if (!results.contains(tempStr)) {
                         results.add(tempStr);
@@ -436,7 +436,7 @@ public class TGQHashReverser {
                         System.out.println("Attempted to add duplicate string '" + tempStr + "'.");
                     }
                 } else if (debugMode) {
-                    System.out.println("Finished string to a non-matching hash: '" + temp + "', Tracked: " + Utils.to0PrefixedHexString(temp.getHash()) + ", String: " + Utils.to0PrefixedHexString(TGQUtils.hash(temp.toString())) + ", Target: " + Utils.to0PrefixedHexString(context.getTargetHash()));
+                    System.out.println("Finished string to a non-matching hash: '" + temp + "', Tracked: " + Utils.to0PrefixedHexString(temp.getHash()) + ", String: " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(temp.toString())) + ", Target: " + Utils.to0PrefixedHexString(context.getTargetHash()));
                 }
 
                 continue;
@@ -445,7 +445,7 @@ public class TGQHashReverser {
             temp.guessNextCharacter(queue);
         }
 
-        results.sort(Comparator.comparingDouble(TGQHashReverser::calculateScore).reversed());
+        results.sort(Comparator.comparingDouble(GreatQuestHashReverser::calculateScore).reversed());
         return results;
     }
 
@@ -1090,8 +1090,8 @@ public class TGQHashReverser {
         CHARACTER_PAIRS = new short[pairCount];
         for (int i = 0, pair = 0; i < XOR_LOOKUP_TABLE.length; i++) {
             List<Short> list = lookupTable[i];
-            list.sort(Comparator.comparingInt(TGQHashReverser::getPrimaryByteFromShort)
-                    .thenComparingInt(TGQHashReverser::getSecondaryByteFromShort));
+            list.sort(Comparator.comparingInt(GreatQuestHashReverser::getPrimaryByteFromShort)
+                    .thenComparingInt(GreatQuestHashReverser::getSecondaryByteFromShort));
 
             // Convert list to array.
             short[] newArray = new short[list.size()];

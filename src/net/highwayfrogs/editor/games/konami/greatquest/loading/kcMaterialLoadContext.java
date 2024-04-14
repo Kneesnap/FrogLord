@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.konami.greatquest.loading;
 
-import net.highwayfrogs.editor.games.konami.greatquest.TGQBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQFile;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQImageFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetBinFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestImageFile;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.TGQChunkTextureReference;
+import net.highwayfrogs.editor.games.konami.greatquest.toc.GreatQuestChunkTextureReference;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -18,13 +18,13 @@ import java.util.regex.Pattern;
  * Created by Kneesnap on 7/11/2023.
  */
 public class kcMaterialLoadContext {
-    private final TGQBinFile mainArchive;
-    private final Map<TGQChunkedFile, Map<String, TGQImageFile>> chunkedFileImageCache = new HashMap<>();
-    private final Map<String, List<TGQImageFile>> globalCachedImages = new HashMap<>();
-    private final Map<kcMaterial, TGQFile> allMaterials = new HashMap<>();
-    private final Map<kcMaterial, TGQFile> multipleMatchMaterials = new HashMap<>();
+    private final GreatQuestAssetBinFile mainArchive;
+    private final Map<GreatQuestChunkedFile, Map<String, GreatQuestImageFile>> chunkedFileImageCache = new HashMap<>();
+    private final Map<String, List<GreatQuestImageFile>> globalCachedImages = new HashMap<>();
+    private final Map<kcMaterial, GreatQuestArchiveFile> allMaterials = new HashMap<>();
+    private final Map<kcMaterial, GreatQuestArchiveFile> multipleMatchMaterials = new HashMap<>();
 
-    public kcMaterialLoadContext(TGQBinFile binFile) {
+    public kcMaterialLoadContext(GreatQuestAssetBinFile binFile) {
         this.mainArchive = binFile;
     }
 
@@ -33,7 +33,7 @@ public class kcMaterialLoadContext {
      * @param fullPath  The full file path to apply texture names from.
      * @param materials The materials to apply texture file names from.
      */
-    public void applyLevelTextureFileNames(TGQFile sourceFile, String fullPath, List<kcMaterial> materials) {
+    public void applyLevelTextureFileNames(GreatQuestArchiveFile sourceFile, String fullPath, List<kcMaterial> materials) {
         if (fullPath == null || fullPath.isEmpty() || materials == null || materials.isEmpty())
             return;
 
@@ -66,7 +66,7 @@ public class kcMaterialLoadContext {
      * @param fullPath  The full file path to apply texture names from.
      * @param materials The materials to apply texture file names from.
      */
-    public void applyTextureFileNames(TGQFile sourceFile, String fullPath, List<kcMaterial> materials) {
+    public void applyTextureFileNames(GreatQuestArchiveFile sourceFile, String fullPath, List<kcMaterial> materials) {
         if (fullPath == null || fullPath.isEmpty())
             return;
 
@@ -86,10 +86,10 @@ public class kcMaterialLoadContext {
             String texturePath = fullPath.substring(0, lastDirectorySeparator + 1)
                     + textureFileName + ".img";
 
-            TGQFile file = this.mainArchive.applyFileName(texturePath, false);
+            GreatQuestArchiveFile file = this.mainArchive.applyFileName(texturePath, false);
 
-            if (file instanceof TGQImageFile) {
-                material.setTexture((TGQImageFile) file);
+            if (file instanceof GreatQuestImageFile) {
+                material.setTexture((GreatQuestImageFile) file);
                 this.allMaterials.put(material, sourceFile);
                 this.multipleMatchMaterials.remove(material); // We prefer the texture referenced in the same chunked file, so if that exists we don't consider there to be multiple files which could apply.
             }
@@ -102,7 +102,7 @@ public class kcMaterialLoadContext {
      * @param chunkedFile The file to search for images to resolve from.
      * @param materials   The materials which need textures resolved.
      */
-    public void resolveMaterialTexturesInChunk(TGQChunkedFile chunkedFile, List<kcMaterial> materials) {
+    public void resolveMaterialTexturesInChunk(GreatQuestChunkedFile chunkedFile, List<kcMaterial> materials) {
         resolveMaterialTexturesInChunk(chunkedFile, chunkedFile, materials);
     }
 
@@ -112,7 +112,7 @@ public class kcMaterialLoadContext {
      * @param sourceFile  the file which the material is defined in.
      * @param materials   The materials which need textures resolved.
      */
-    public void resolveMaterialTexturesInChunk(TGQChunkedFile chunkedFile, TGQFile sourceFile, List<kcMaterial> materials) {
+    public void resolveMaterialTexturesInChunk(GreatQuestChunkedFile chunkedFile, GreatQuestArchiveFile sourceFile, List<kcMaterial> materials) {
         if (materials == null || materials.isEmpty())
             return;
 
@@ -120,7 +120,7 @@ public class kcMaterialLoadContext {
             if (material.getTexture() != null)
                 continue;
 
-            TGQImageFile image = findLocalImageFile(chunkedFile, material.getTextureFileName());
+            GreatQuestImageFile image = findLocalImageFile(chunkedFile, material.getTextureFileName());
             this.allMaterials.put(material, sourceFile);
             if (image != null) {
                 material.setTexture(image);
@@ -135,21 +135,21 @@ public class kcMaterialLoadContext {
      * @param sourceFile The file the materials came from.
      * @param materials  The materials which need texture resolution.
      */
-    public void resolveMaterialTexturesGlobally(TGQFile sourceFile, List<kcMaterial> materials) {
+    public void resolveMaterialTexturesGlobally(GreatQuestArchiveFile sourceFile, List<kcMaterial> materials) {
         if (materials == null || materials.isEmpty())
             return;
 
         if (this.globalCachedImages.isEmpty()) {
-            for (TGQFile file : this.mainArchive.getFiles()) {
-                if (file instanceof TGQImageFile && file.getFileName() != null) {
+            for (GreatQuestArchiveFile file : this.mainArchive.getFiles()) {
+                if (file instanceof GreatQuestImageFile && file.getFileName() != null) {
                     String fileName = Utils.stripExtension(file.getFileName());
-                    List<TGQImageFile> images = this.globalCachedImages.computeIfAbsent(fileName, key -> new ArrayList<>());
-                    images.add((TGQImageFile) file);
+                    List<GreatQuestImageFile> images = this.globalCachedImages.computeIfAbsent(fileName, key -> new ArrayList<>());
+                    images.add((GreatQuestImageFile) file);
                 }
             }
 
             // Sort the cache.
-            this.globalCachedImages.values().forEach(list -> list.sort(Comparator.comparingInt(TGQFile::getArchiveIndex)));
+            this.globalCachedImages.values().forEach(list -> list.sort(Comparator.comparingInt(GreatQuestArchiveFile::getArchiveIndex)));
         }
 
         for (kcMaterial material : materials) {
@@ -157,7 +157,7 @@ public class kcMaterialLoadContext {
             if (material.getTexture() != null)
                 continue; // Already has a resolved texture reference.
 
-            List<TGQImageFile> images = this.globalCachedImages.get(Utils.stripExtension(material.getTextureFileName()));
+            List<GreatQuestImageFile> images = this.globalCachedImages.get(Utils.stripExtension(material.getTextureFileName()));
             if (images == null || images.isEmpty())
                 continue;
 
@@ -172,7 +172,7 @@ public class kcMaterialLoadContext {
      */
     public void onComplete() {
         // Find materials which didn't resolve.
-        for (Entry<kcMaterial, TGQFile> entry : this.allMaterials.entrySet()) {
+        for (Entry<kcMaterial, GreatQuestArchiveFile> entry : this.allMaterials.entrySet()) {
             kcMaterial material = entry.getKey();
             if (!material.hasTexture())
                 continue; // The material isn't supposed to have a texture.
@@ -191,10 +191,10 @@ public class kcMaterialLoadContext {
         }
 
         // Find materials which had multiple possibilities.
-        for (Entry<kcMaterial, TGQFile> entry : this.multipleMatchMaterials.entrySet()) {
+        for (Entry<kcMaterial, GreatQuestArchiveFile> entry : this.multipleMatchMaterials.entrySet()) {
             kcMaterial material = entry.getKey();
-            TGQFile file = entry.getValue();
-            List<TGQImageFile> foundImages = this.globalCachedImages.get(Utils.stripExtension(material.getTextureFileName()));
+            GreatQuestArchiveFile file = entry.getValue();
+            List<GreatQuestImageFile> foundImages = this.globalCachedImages.get(Utils.stripExtension(material.getTextureFileName()));
             int foundImageCount = foundImages != null ? foundImages.size() : 0;
 
             // Attempt to search for images.
@@ -204,12 +204,12 @@ public class kcMaterialLoadContext {
                     String texturePath = file.getFilePath().substring(0, lastDirectorySeparator + 1)
                             + Utils.stripExtension(material.getTextureFileName()) + ".img";
 
-                    TGQFile targetImageFile = this.mainArchive.applyFileName(texturePath, false);
+                    GreatQuestArchiveFile targetImageFile = this.mainArchive.applyFileName(texturePath, false);
                     if (targetImageFile != null) {
-                        if (!(targetImageFile instanceof TGQImageFile))
+                        if (!(targetImageFile instanceof GreatQuestImageFile))
                             throw new RuntimeException("We found a file for material ref '" + texturePath + "', but it wasn't an image file! It was a(n) " + targetImageFile.getClass().getSimpleName() + ".");
 
-                        TGQImageFile imageFile = (TGQImageFile) targetImageFile;
+                        GreatQuestImageFile imageFile = (GreatQuestImageFile) targetImageFile;
                         material.setTexture(imageFile);
                         continue; // Skip.
                     }
@@ -219,7 +219,7 @@ public class kcMaterialLoadContext {
             // Print output.
             System.out.println(foundImageCount + " image file(s) were identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + file.getDebugName() + (foundImageCount > 0 ? ":" : "."));
             if (foundImages != null && foundImageCount > 0)
-                for (TGQImageFile foundImage : foundImages)
+                for (GreatQuestImageFile foundImage : foundImages)
                     System.out.println(" - " + foundImage.getDebugName());
         }
     }
@@ -230,21 +230,21 @@ public class kcMaterialLoadContext {
      * @param imageFileName The texture file name.
      * @return localImageFile or null.
      */
-    private TGQImageFile findLocalImageFile(TGQChunkedFile chunkedFile, String imageFileName) {
+    private GreatQuestImageFile findLocalImageFile(GreatQuestChunkedFile chunkedFile, String imageFileName) {
         String strippedTextureFileName = Utils.stripExtension(imageFileName);
 
         // Setup image cache.
-        Map<String, TGQImageFile> cachedImages = this.chunkedFileImageCache.get(chunkedFile);
+        Map<String, GreatQuestImageFile> cachedImages = this.chunkedFileImageCache.get(chunkedFile);
         if (cachedImages == null) {
             this.chunkedFileImageCache.put(chunkedFile, cachedImages = new HashMap<>());
             for (kcCResource resource : chunkedFile.getChunks()) {
-                if (!(resource instanceof TGQChunkTextureReference))
+                if (!(resource instanceof GreatQuestChunkTextureReference))
                     continue;
 
-                TGQChunkTextureReference texRef = (TGQChunkTextureReference) resource;
-                TGQFile texRefFile = chunkedFile.getMainArchive().getFileByName(chunkedFile, texRef.getPath());
-                if (texRefFile instanceof TGQImageFile)
-                    cachedImages.put(strippedTextureFileName, (TGQImageFile) texRefFile);
+                GreatQuestChunkTextureReference texRef = (GreatQuestChunkTextureReference) resource;
+                GreatQuestArchiveFile texRefFile = chunkedFile.getGameInstance().getMainArchive().getFileByName(chunkedFile, texRef.getPath());
+                if (texRefFile instanceof GreatQuestImageFile)
+                    cachedImages.put(strippedTextureFileName, (GreatQuestImageFile) texRefFile);
             }
         }
 

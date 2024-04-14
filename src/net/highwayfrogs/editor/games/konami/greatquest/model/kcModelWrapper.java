@@ -1,13 +1,15 @@
 package net.highwayfrogs.editor.games.konami.greatquest.model;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.TGQFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.gui.GameUIController;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,17 +19,18 @@ import java.io.IOException;
  * Created by Kneesnap on 6/28/2023.
  */
 @Getter
-public class kcModelWrapper extends TGQFile implements IFileExport {
+public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport {
     private final kcModel model;
 
     public static final String SIGNATURE_STR = "6YTV";
+    public static final Image MODEL_ICON = loadIcon("model");
 
-    public kcModelWrapper(TGQBinFile mainArchive) {
-        this(mainArchive, new kcModel());
+    public kcModelWrapper(GreatQuestInstance instance) {
+        this(instance, new kcModel());
     }
 
-    public kcModelWrapper(TGQBinFile mainArchive, kcModel model) {
-        super(mainArchive);
+    public kcModelWrapper(GreatQuestInstance instance, kcModel model) {
+        super(instance);
         this.model = model;
     }
 
@@ -50,6 +53,16 @@ public class kcModelWrapper extends TGQFile implements IFileExport {
         int sizePos = writer.writeNullPointer();
         this.model.save(writer);
         writer.writeAddressAt(sizePos, writer.getIndex() - sizePos - Constants.INTEGER_SIZE);
+    }
+
+    @Override
+    public Image getCollectionViewIcon() {
+        return MODEL_ICON;
+    }
+
+    @Override
+    public GameUIController<?> makeEditorUI() {
+        return null; // TODO: IMPLEMENT.
     }
 
     @Override
