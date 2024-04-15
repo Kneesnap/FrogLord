@@ -268,7 +268,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 this.root3D.getChildren().clear(); // Clear data to avoid memory leak.
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
                 Utils.takeScreenshot(null, this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), false);
-            } else if (event.getCode() == KeyCode.F12) {
+            } else if (event.getCode() == KeyCode.F12 && getMesh().getTextureAtlas() != null) {
                 getLogger().info("Saving main mesh texture sheet to 'texture-sheet.png'...");
 
                 try {

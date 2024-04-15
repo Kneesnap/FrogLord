@@ -4,8 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestImageFile;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.GreatQuestChunkTextureReference;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
@@ -40,12 +39,10 @@ public class GreatQuestMapMesh extends DynamicMesh {
 
     private void setupMapTextures() {
         // Find the level table entry for the map this mesh represents.
-        for (kcCResource resourceChunk : getMap().getChunks()) {
-            if (resourceChunk instanceof GreatQuestChunkTextureReference) {
-                GreatQuestImageFile imageFile = ((GreatQuestChunkTextureReference) resourceChunk).getReferencedImage();
-                if (imageFile != null)
-                    getTextureAtlas().addTexture(imageFile);
-            }
+        for (kcMaterial material : getMap().getSceneManager().getMaterials()) {
+            GreatQuestImageFile imageFile = material.getTexture();
+            if (imageFile != null)
+                getTextureAtlas().addTexture(imageFile);
         }
     }
 }

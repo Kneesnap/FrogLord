@@ -6,49 +6,47 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcVertex;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResOctTreeSceneMgr;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
-import net.highwayfrogs.editor.gui.texture.Texture;
-import net.highwayfrogs.editor.system.math.Vector2f;
 
 import java.util.List;
 
 /**
  * Manages map terrain for a model in the Great Quest.
- * WARNING: THIS IS DISABLED. IT GIVES A ROUGH DISPLAY OF THE LEVEL, BUT CAN'T ACCOUNT FOR WRAPPING TEXTURES DUE TO THE USE OF A TEXTURE SHEET.
- * USE THE OTHER MESH/MESH NODE INSTEAD.
  * Created by Kneesnap on 4/14/2024.
  */
-public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileStruct> {
-    private final Vector2f tempVector = new Vector2f();
-
-    public GreatQuestMapMeshNode(GreatQuestMapMesh mesh) {
+public class GreatQuestMapMaterialMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileStruct> {
+    public GreatQuestMapMaterialMeshNode(GreatQuestMapMaterialMesh mesh) {
         super(mesh);
     }
 
     @Override
-    public GreatQuestMapMesh getMesh() {
-        return (GreatQuestMapMesh) super.getMesh();
+    public GreatQuestMapMaterialMesh getMesh() {
+        return (GreatQuestMapMaterialMesh) super.getMesh();
     }
 
     @Override
     protected void onAddedToMesh() {
         super.onAddedToMesh();
 
-        // Setup vertex buffers.
-        // This has been disabled because it isn't possible to easily show the texture vertices properly without splitting it into several meshes by material.
-        /*for (kcVtxBufFileStruct vertexBuffer : getSceneManager().getVertexBuffers())
-            this.add(vertexBuffer);*/
+        // Setup vertex buffers matching this material.
+        kcCResOctTreeSceneMgr sceneMgr = getMap().getSceneManager();
+        List<kcMaterial> materials = sceneMgr.getMaterials();
+        for (kcVtxBufFileStruct vertexBuffer : sceneMgr.getVertexBuffers()) {
+            int materialId = (int) vertexBuffer.getMaterialId();
+            kcMaterial material = materialId >= 0 && materials.size() > materialId ? materials.get(materialId) : null;
+            if (material == getMesh().getMapMaterial())
+                this.add(vertexBuffer);
+        }
     }
 
     @Override
     protected DynamicMeshTypedDataEntry writeValuesToArrayAndCreateEntry(kcVtxBufFileStruct vtxBuf) {
         DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), vtxBuf);
-        Texture texture = getTexture(entry.getDataSource());
 
         // Write vertices and uvs.
         for (int i = 0; i < vtxBuf.getVertices().size(); i++) {
             kcVertex vertex = vtxBuf.getVertices().get(i);
             entry.addVertexValue(vertex.getX(), vertex.getY(), vertex.getZ());
-            entry.addTexCoordValue(getTextureCoordinate(vertex, texture, 0));
+            entry.addTexCoordValue(vertex.getU0(), vertex.getV0());
         }
 
         // Write face data.
@@ -93,36 +91,6 @@ public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileSt
         }
     }
 
-    private Texture getTexture(kcVtxBufFileStruct vtxBuf) {
-        int materialId = (int) vtxBuf.getMaterialId();
-        List<kcMaterial> materials = getSceneManager().getMaterials();
-        kcMaterial material = materialId >= 0 && materials.size() > materialId ? materials.get(materialId) : null;
-        return getMesh().getTextureAtlas().getTextureFromSourceOrFallback(material != null ? material.getTexture() : null);
-    }
-
-    private Vector2f getTextureCoordinate(kcVertex vertex, Texture texture, int index) {
-        if (index == 0) {
-            this.tempVector.setXY(clamp(vertex.getU0()), clamp(vertex.getV0()));
-        } else if (index == 1) {
-            this.tempVector.setXY(clamp(vertex.getU1()), clamp(vertex.getV1()));
-        } else {
-            throw new ArrayIndexOutOfBoundsException("Index must either be 0 or 1, but was: " + index);
-        }
-
-        // Get the UVs local to the texture.
-        return getMesh().getTextureAtlas().getUV(texture, this.tempVector);
-    }
-
-    private float clamp(float value) {
-        // TODO: Unfortunately I think we need to start subdividing polygons for this to work. We need to emulate texture wrapping witha texture sheet. Fk.
-        // TODO: Try ideas like just adding nearby neighbors in the texture sheet, or making a mesh for each texture to prove this theory.
-        value %= 1F;
-        if (value < 0F)
-            value += 1F;
-
-        return value;
-    }
-
     @Override
     public void updateVertex(DynamicMeshTypedDataEntry entry, int localVertexIndex) {
         kcVertex vertex = entry.getDataSource().getVertices().get(localVertexIndex);
@@ -135,8 +103,7 @@ public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileSt
             throw new IllegalArgumentException("Unsupported local texCoordIndex " + localTexCoordIndex);
 
         kcVertex vertex = entry.getDataSource().getVertices().get(localTexCoordIndex);
-        Texture texture = getTexture(entry.getDataSource());
-        entry.writeTexCoordValue(localTexCoordIndex, getTextureCoordinate(vertex, texture, 0));
+        entry.writeTexCoordValue(localTexCoordIndex, vertex.getU0(), vertex.getV0());
     }
 
     /**
@@ -144,12 +111,5 @@ public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileSt
      */
     public GreatQuestChunkedFile getMap() {
         return getMesh().getMap();
-    }
-
-    /**
-     * Gets the scene manager for the map
-     */
-    public kcCResOctTreeSceneMgr getSceneManager() {
-        return getMap().getResourceByHash(kcCResOctTreeSceneMgr.LEVEL_RESOURCE_HASH);
     }
 }

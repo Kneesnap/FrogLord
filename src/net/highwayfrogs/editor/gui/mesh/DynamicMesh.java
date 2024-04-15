@@ -49,9 +49,11 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         super(format);
         this.meshName = meshName;
         this.textureAtlas = atlas;
-        this.textureAtlas.getTextureSource().setMesh(this);
-        this.textureAtlas.getImageChangeListeners().add(this::onTextureChange);
-        updateMaterial(atlas.getImage());
+        if (atlas != null) {
+            this.textureAtlas.getTextureSource().setMesh(this);
+            this.textureAtlas.getImageChangeListeners().add(this::onTextureChange);
+            updateMaterial(atlas.getImage());
+        }
 
         // Setup editable array batches.
         this.editableFaces = new FXIntArrayBatcher(new FXIntArray(), getFaces());
@@ -254,7 +256,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
             return; // Already registered.
 
         // Register the texture.
-        if (this.meshViews.isEmpty())
+        if (this.meshViews.isEmpty() && this.textureAtlas != null)
             this.textureAtlas.registerTexture();
 
         this.meshViews.add(view);
@@ -280,11 +282,12 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         if (this.meshViews.isEmpty()) {
             if (this instanceof IPSXShadedMesh)
                 ((IPSXShadedMesh) this).getShadedTextureManager().onDispose();
-            this.textureAtlas.releaseTexture();
+            if (this.textureAtlas != null)
+                this.textureAtlas.releaseTexture();
         }
     }
 
-    private void updateMaterial(BufferedImage newImage) {
+    protected void updateMaterial(BufferedImage newImage) {
         if (this.material == null) {
             this.material = Utils.makeDiffuseMaterial(Utils.toFXImage(newImage, false));
 
