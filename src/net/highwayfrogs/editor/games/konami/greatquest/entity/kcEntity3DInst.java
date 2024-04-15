@@ -6,8 +6,11 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -53,6 +56,14 @@ public class kcEntity3DInst extends kcEntityInst {
         this.scale.save(writer);
         for (int i = 0; i < this.padding.length; i++)
             writer.writeInt(this.padding[i]);
+    }
+
+    @Override
+    protected void setupMainEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestChunkedFile chunkedFile) {
+        super.setupMainEditor(manager, grid, chunkedFile);
+        grid.addLabel("Flags", Utils.toHexString(this.flags));
+        grid.addEnumSelector("Billboard Axis", this.billboardAxis, kcAxisType.values(), false, newType -> this.billboardAxis = newType);
+        // TODO: POSITION, ROTATION, SCALE
     }
 
     @Override

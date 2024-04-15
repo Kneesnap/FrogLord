@@ -60,6 +60,27 @@ public class kcCResourceGeneric extends kcCResource {
     }
 
     /**
+     * Get the resource as an entity description.
+     * Returns null if this is not an entity description.
+     */
+    public kcEntity3DDesc getAsEntityDescription() {
+        switch (getResourceType()) {
+            case ACTOR_BASE_DESCRIPTION:
+                return getAsActorDescription();
+            case ITEM_DESCRIPTION:
+                return getAsItemDescription();
+            case PARTICLE_EMITTER_PARAM:
+                return getAsParticleEmitterParam();
+            case PROP_DESCRIPTION:
+                return getAsPropDescription();
+            case WAYPOINT_DESCRIPTION:
+                return getAsWaypointDescription();
+            default:
+                return null;
+        }
+    }
+
+    /**
      * Get the data in this resource as launcher params, if it is launcher params.
      */
     public kcActorBaseDesc getAsActorDescription() {

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -23,6 +24,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.*;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapInfoController;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -328,7 +330,10 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * Gets the script list in this chunked file, if there is one.
      */
     public kcScriptList getScriptList() {
-        kcScriptList scriptList = null;
+        kcScriptList scriptList = getResourceByHash(kcScriptList.GLOBAL_SCRIPT_NAME_HASH);
+        if (scriptList != null)
+            return scriptList;
+
         for (kcCResource testChunk : this.chunks) {
             if (testChunk instanceof kcScriptList) {
                 if (scriptList != null)
@@ -388,30 +393,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 continue;
 
             kcCResourceGeneric generic = (kcCResourceGeneric) chunk;
-
-            kcEntity3DDesc entityDesc;
-            switch (generic.getResourceType()) {
-                case ACTOR_BASE_DESCRIPTION:
-                    entityDesc = generic.getAsActorDescription();
-                    break;
-                case ITEM_DESCRIPTION:
-                    entityDesc = generic.getAsItemDescription();
-                    break;
-                case PARTICLE_EMITTER_PARAM:
-                    entityDesc = generic.getAsParticleEmitterParam();
-                    break;
-                case PROP_DESCRIPTION:
-                    entityDesc = generic.getAsPropDescription();
-                    break;
-                case WAYPOINT_DESCRIPTION:
-                    entityDesc = generic.getAsWaypointDescription();
-                    break;
-                default:
-                    continue;
+            kcEntity3DDesc entityDesc = generic.getAsEntityDescription();
+            if (entityDesc != null) {
+                writeData(infoBuilder, chunk, entityDesc);
+                infoBuilder.append(Constants.NEWLINE);
             }
-
-            writeData(infoBuilder, chunk, entityDesc);
-            infoBuilder.append(Constants.NEWLINE);
         }
 
         saveExport(file, infoBuilder);
@@ -670,5 +656,33 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         }
 
         return builder;
+    }
+
+    /**
+     * Write the asset name to the UI.
+     * @param file         The chunked file to search for assets from.
+     * @param label        The label to write.
+     * @param resourceHash The hash value to lookup.
+     */
+    public static Label writeAssetLine(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, int resourceHash) {
+        return writeAssetInfo(grid, file, label, resourceHash, kcCResource::getName);
+    }
+
+    /**
+     * Write asset information to the UI. The information written is specified via the function.
+     * If the asset isn't found, the hash is written instead.
+     * @param file         The chunked file to search for assets from.
+     * @param label        The label to write.
+     * @param resourceHash The hash value to lookup.
+     * @param getter       The function to turn the resource into a string.
+     * @param <TResource>  The resource type to lookup.
+     */
+    public static <TResource extends kcCResource> Label writeAssetInfo(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, int resourceHash, Function<TResource, String> getter) {
+        String resourceName = null;
+        TResource resource = file != null ? file.getResourceByHash(resourceHash) : null;
+        if (resource != null)
+            resourceName = getter.apply(resource);
+
+        return grid.addLabel(label + ":", (resourceName != null ? resourceName : "Not Found") + " (" + Utils.to0PrefixedHexString(resourceHash) + ")");
     }
 }

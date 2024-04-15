@@ -11,12 +11,8 @@ import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
-import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
@@ -33,7 +29,6 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
 
     private static final PhongMaterial VERTEX_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
     private static final PhongMaterial CONNECTION_MATERIAL = Utils.makeSpecialMaterial(Color.LIMEGREEN);
-    private static final PhongMaterial YELLOW_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
@@ -47,22 +42,6 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
         getRenderManager().createDisplayList().add(mainLight);
         
         getComboBoxMeshCullFace().setValue(CullFace.NONE); // Great Quest has no back-face culling.
-
-        // Add bounding boxes to represent the entities.
-        // TODO: Display the actual entity models instead, and remove this.
-        DisplayList markerList = getRenderManager().createDisplayList();
-        for (kcCResource resource : getMap().getChunks()) {
-            if (resource instanceof kcCResourceEntityInst) {
-                kcEntityInst entity = ((kcCResourceEntityInst) resource).getEntity();
-                if (entity instanceof kcEntity3DInst) {
-                    kcEntity3DInst entity3d = (kcEntity3DInst) entity;
-                    kcVector4 position = entity3d.getPosition();
-                    kcVector4 scale = entity3d.getScale();
-                    markerList.addBoundingBoxCenteredWithDimensions(position.getX(), position.getY(), position.getZ(), .5 * scale.getX(), .5 * scale.getY(), .5 * scale.getZ(), YELLOW_MATERIAL, false);
-                }
-            }
-        }
-
         getMeshView().setVisible(false); // Hide real mesh view.
 
         // Create mesh views necessary
@@ -75,16 +54,12 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
         // Add mesh click listener.
         getMeshScene().setOnMouseClicked(evt -> {
             PickResult result = evt.getPickResult();
-            if (result == null || !(result.getIntersectedNode() instanceof MeshView)) {
-                System.out.println("NO CLICK ON " + (result != null ? result.getIntersectedNode() : "NULL RESULT")); // TODO: ?
+            if (result == null || !(result.getIntersectedNode() instanceof MeshView))
                 return; // No pick result, or the thing that was clicked was not the main mesh.
-            }
 
             Mesh mesh = ((MeshView) result.getIntersectedNode()).getMesh();
-            if (!(mesh instanceof GreatQuestMapMaterialMesh)) {
-                System.out.println("IS ACTUALLY " + mesh); // TODO: TOSS
+            if (!(mesh instanceof GreatQuestMapMaterialMesh))
                 return;
-            }
 
             GreatQuestMapMaterialMesh materialMesh = (GreatQuestMapMaterialMesh) mesh;
             kcMaterial material = materialMesh.getMapMaterial();
@@ -126,6 +101,7 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
 
     @Override
     protected void setupManagers() {
+        addManager(new GreatQuestEntityManager(this));
         // TODO: Setup managers.
     }
 

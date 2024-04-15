@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcInterimScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptListInterim;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptTOC;
@@ -25,6 +26,7 @@ public class kcScriptList extends kcCResource {
     private byte[] rawUnhandledData;
 
     public static final String GLOBAL_SCRIPT_NAME = "scriptdata";
+    public static final int GLOBAL_SCRIPT_NAME_HASH = GreatQuestUtils.hash("scriptdata");
 
     public kcScriptList(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.RAW);
