@@ -178,12 +178,12 @@ public abstract class Texture {
         this.leftPadding = this.textureSource.getLeftPadding();
         this.rightPadding = this.textureSource.getRightPadding();
 
-        this.hasAnyTransparentPixels = this.textureSource.hasAnyTransparentPixelsImpl(this.cachedImage);
+        this.hasAnyTransparentPixels = this.textureSource.hasAnyTransparentPixels(newImage);
 
         this.cachedImageWithoutPadding = null;
         if (oldImage != null)
             for (int i = 0; i < this.imageChangeListeners.size(); i++)
-                this.imageChangeListeners.get(i).accept(this, oldImage, this.cachedImage, wereAnyPixelsTransparent);
+                this.imageChangeListeners.get(i).accept(this, oldImage, newImage, wereAnyPixelsTransparent);
     }
 
     /**

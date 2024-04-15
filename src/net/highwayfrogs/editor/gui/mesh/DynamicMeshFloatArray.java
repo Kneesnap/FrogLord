@@ -47,6 +47,11 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
         if ((insertedDataAmount % this.elementsPerUnit) != 0)
             throw new IllegalStateException("A range insertion occurred which inserted a number of elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ".");
 
+        int newSize = size();
+        int insertionEnd = startIndex + insertedDataAmount;
+        if (insertionEnd >= newSize)
+            return; // The elements were inserted at the end, so there shouldn't have been any faces accessing the data.
+
         // Update faces to use updated indices.
         int insertedElementAmount = (insertedDataAmount / this.elementsPerUnit);
         FXIntArrayBatcher faceData = this.mesh.getEditableFaces();
@@ -88,6 +93,9 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
         super.onRangeRemovalComplete(startIndex, removedDataAmount);
         if ((removedDataAmount % this.elementsPerUnit) != 0)
             throw new IllegalStateException("A range removal occurred which removed a number of elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ".");
+
+        if (startIndex >= size())
+            return; // The elements were removed from the end, so the behavior for what to do with any faces that used this data is undefined.
 
         // Update faces to use updated indices.
         int removedElementAmount = (removedDataAmount / this.elementsPerUnit);
