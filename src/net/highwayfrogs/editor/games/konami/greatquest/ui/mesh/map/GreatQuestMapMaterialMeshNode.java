@@ -46,7 +46,7 @@ public class GreatQuestMapMaterialMeshNode extends DynamicMeshAdapterNode<kcVtxB
         for (int i = 0; i < vtxBuf.getVertices().size(); i++) {
             kcVertex vertex = vtxBuf.getVertices().get(i);
             entry.addVertexValue(vertex.getX(), vertex.getY(), vertex.getZ());
-            entry.addTexCoordValue(vertex.getU0(), vertex.getV0());
+            entry.addTexCoordValue(vertex.getU0(), -vertex.getV0());
         }
 
         // Write face data.
@@ -103,7 +103,7 @@ public class GreatQuestMapMaterialMeshNode extends DynamicMeshAdapterNode<kcVtxB
             throw new IllegalArgumentException("Unsupported local texCoordIndex " + localTexCoordIndex);
 
         kcVertex vertex = entry.getDataSource().getVertices().get(localTexCoordIndex);
-        entry.writeTexCoordValue(localTexCoordIndex, vertex.getU0(), vertex.getV0());
+        entry.writeTexCoordValue(localTexCoordIndex, vertex.getU0(), -vertex.getV0());
     }
 
     /**
