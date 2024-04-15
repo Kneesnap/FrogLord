@@ -23,18 +23,17 @@ import java.util.logging.Logger;
  * This represents a triangle mesh which has functionality to dynamically create, update, and change mesh data.
  * Created by Kneesnap on 9/24/2023.
  */
-@Getter
 public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
-    private final TextureAtlas textureAtlas;
-    private final PSXMeshShadedTextureManager<?> shadedTextureManager;
     private final String meshName;
-    private final FXIntArrayBatcher editableFaces;
-    private final DynamicMeshFloatArray editableTexCoords;
-    private final DynamicMeshFloatArray editableVertices;
-    private final List<DynamicMeshNode> nodes = new ArrayList<>();
-    private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
-    private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which are viewing this mesh.
-    private PhongMaterial material;
+    @Getter private final TextureAtlas textureAtlas;
+    @Getter private final PSXMeshShadedTextureManager<?> shadedTextureManager;
+    @Getter private final FXIntArrayBatcher editableFaces;
+    @Getter private final DynamicMeshFloatArray editableTexCoords;
+    @Getter private final DynamicMeshFloatArray editableVertices;
+    @Getter private final List<DynamicMeshNode> nodes = new ArrayList<>();
+    @Getter private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
+    @Getter private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which are viewing this mesh.
+    @Getter private PhongMaterial material;
     private Logger cachedLogger;
 
     public DynamicMesh(TextureAtlas atlas) {
@@ -77,7 +76,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         if (this.cachedLogger != null)
             return this.cachedLogger;
 
-        return this.cachedLogger = Logger.getLogger("DynamicMesh.Name='" + getMeshName() + "'");
+        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this) + ".Name='" + getMeshName() + "'");
     }
 
     /**

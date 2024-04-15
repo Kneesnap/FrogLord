@@ -1,21 +1,40 @@
 package net.highwayfrogs.editor.gui.mesh;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * This represents a basic component in a mesh.
  * Created by Kneesnap on 9/25/2023.
  */
-@Getter
+
 public abstract class DynamicMeshNode implements IDynamicMeshHelper {
-    private final DynamicMesh mesh;
-    private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
+    @Getter private final DynamicMesh mesh;
+    @Getter private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
+    private Logger cachedLogger;
 
     protected DynamicMeshNode(DynamicMesh mesh) {
         this.mesh = mesh;
+    }
+
+    /**
+     * Gets the logger available to this mesh node.
+     */
+    public Logger getLogger() {
+        if (this.mesh != null) {
+            Logger logger = this.mesh.getLogger();
+            if (logger != null)
+                return logger;
+        }
+
+        if (this.cachedLogger != null)
+            return this.cachedLogger;
+
+        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
     }
 
     /**
