@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestImageController;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -280,6 +281,14 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
     @Override
     public GreatQuestImageController makeEditorUI() {
         return loadEditor(getGameInstance(), "edit-file-img", new GreatQuestImageController(getGameInstance()), this);
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Image Dimensions", getWidth() + " x " + getHeight());
+        propertyList.add("Has Header?", this.hasHeader);
+        return propertyList;
     }
 
     @Override

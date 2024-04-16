@@ -6,10 +6,14 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -18,7 +22,7 @@ import java.util.List;
  * Created by Kneesnap on 6/22/2023.
  */
 @Getter
-public class kcModel extends GameObject {
+public class kcModel extends GameObject implements IPropertyListCreator {
     private final List<kcMaterial> materials = new ArrayList<>();
     private final List<kcModelNode> nodes = new ArrayList<>();
     private final List<kcModelPrim> primitives = new ArrayList<>();
@@ -392,5 +396,16 @@ public class kcModel extends GameObject {
             default:
                 throw new RuntimeException("Cannot calculate the vertex count for kcPrimitiveType: " + primitiveType);
         }
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("Materials", this.materials.size());
+        propertyList.add("Nodes", this.nodes.size());
+        propertyList.add("Primitives", this.primitives.size());
+        propertyList.add("FvF", Utils.toHexString(this.fvf));
+        propertyList.add("Components", Arrays.toString(this.components));
+        propertyList.add("Bones Per Primitive", this.bonesPerPrimitive);
+        return propertyList;
     }
 }

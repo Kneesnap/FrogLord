@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcVertex;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResOctTreeSceneMgr;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.texture.Texture;
@@ -35,8 +34,8 @@ public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileSt
 
         // Setup vertex buffers.
         // This has been disabled because it isn't possible to easily show the texture vertices properly without splitting it into several meshes by material.
-        /*for (kcVtxBufFileStruct vertexBuffer : getSceneManager().getVertexBuffers())
-            this.add(vertexBuffer);*/
+        for (kcVtxBufFileStruct vertexBuffer : getMap().getSceneManager().getVertexBuffers())
+            this.add(vertexBuffer);
     }
 
     @Override
@@ -48,7 +47,7 @@ public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileSt
         for (int i = 0; i < vtxBuf.getVertices().size(); i++) {
             kcVertex vertex = vtxBuf.getVertices().get(i);
             entry.addVertexValue(vertex.getX(), vertex.getY(), vertex.getZ());
-            entry.addTexCoordValue(getTextureCoordinate(vertex, texture, 0));
+            entry.addTexCoordValue(getTextureCoordinate(vertex, texture));
         }
 
         // Write face data.
@@ -95,32 +94,25 @@ public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileSt
 
     private Texture getTexture(kcVtxBufFileStruct vtxBuf) {
         int materialId = (int) vtxBuf.getMaterialId();
-        List<kcMaterial> materials = getSceneManager().getMaterials();
+        List<kcMaterial> materials = getMap().getSceneManager().getMaterials();
         kcMaterial material = materialId >= 0 && materials.size() > materialId ? materials.get(materialId) : null;
         return getMesh().getTextureAtlas().getTextureFromSourceOrFallback(material != null ? material.getTexture() : null);
     }
 
-    private Vector2f getTextureCoordinate(kcVertex vertex, Texture texture, int index) {
-        if (index == 0) {
-            this.tempVector.setXY(clamp(vertex.getU0()), clamp(vertex.getV0()));
-        } else if (index == 1) {
-            this.tempVector.setXY(clamp(vertex.getU1()), clamp(vertex.getV1()));
-        } else {
-            throw new ArrayIndexOutOfBoundsException("Index must either be 0 or 1, but was: " + index);
-        }
+    private Vector2f getTextureCoordinate(kcVertex vertex, Texture texture) {
+        this.tempVector.setXY(clamp(vertex.getU0(), false), clamp(vertex.getV0(), true));
 
         // Get the UVs local to the texture.
         return getMesh().getTextureAtlas().getUV(texture, this.tempVector);
     }
 
-    private float clamp(float value) {
-        // TODO: Unfortunately I think we need to start subdividing polygons for this to work. We need to emulate texture wrapping witha texture sheet. Fk.
-        // TODO: Try ideas like just adding nearby neighbors in the texture sheet, or making a mesh for each texture to prove this theory.
-        value %= 1F;
-        if (value < 0F)
-            value += 1F;
-
-        return value;
+    private float clamp(float value, boolean flip) {
+        if (value >= 0) {
+            return flip ? (1F - (value % 1F)) : (value % 1F);
+        } else {
+            float result = (value % 1F) + 1F;
+            return flip ? result : 1F - result;
+        }
     }
 
     @Override
@@ -136,7 +128,7 @@ public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileSt
 
         kcVertex vertex = entry.getDataSource().getVertices().get(localTexCoordIndex);
         Texture texture = getTexture(entry.getDataSource());
-        entry.writeTexCoordValue(localTexCoordIndex, getTextureCoordinate(vertex, texture, 0));
+        entry.writeTexCoordValue(localTexCoordIndex, getTextureCoordinate(vertex, texture));
     }
 
     /**
@@ -144,12 +136,5 @@ public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileSt
      */
     public GreatQuestChunkedFile getMap() {
         return getMesh().getMap();
-    }
-
-    /**
-     * Gets the scene manager for the map
-     */
-    public kcCResOctTreeSceneMgr getSceneManager() {
-        return getMap().getResourceByHash(kcCResOctTreeSceneMgr.LEVEL_RESOURCE_HASH);
     }
 }

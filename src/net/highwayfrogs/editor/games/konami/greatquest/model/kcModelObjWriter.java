@@ -291,7 +291,7 @@ public class kcModelObjWriter {
     }
 
     private static void writePrim(ModelObjContext context, kcModelPrim prim) {
-        switch (prim.getPrimType()) {
+        switch (prim.getPrimitiveType()) {
             case TRIANGLE_LIST:
                 writeTriangleList(context, (int) prim.getVertexCount());
                 break;
@@ -299,7 +299,7 @@ public class kcModelObjWriter {
                 writeTriangleStrip(context, (int) prim.getVertexCount());
                 break;
             default:
-                System.out.println("kcModel had a prim of type '" + prim.getPrimType() + "', which was supposed because it was unsupported.");
+                System.out.println("kcModel had a prim of type '" + prim.getPrimitiveType() + "', which was supposed because it was unsupported.");
         }
     }
 

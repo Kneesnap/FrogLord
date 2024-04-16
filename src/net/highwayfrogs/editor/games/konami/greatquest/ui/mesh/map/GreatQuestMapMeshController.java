@@ -1,20 +1,18 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map;
 
-import javafx.scene.AmbientLight;
 import javafx.scene.SubScene;
 import javafx.scene.input.PickResult;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
-import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
-import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -24,6 +22,7 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 @Getter
 public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMapMesh> {
+    private GreatQuestMapMeshCollection meshViewCollection;
     private static final double DEFAULT_FAR_CLIP = 500;
     private static final double DEFAULT_MOVEMENT_SPEED = 100;
 
@@ -35,21 +34,11 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
         super.setupBindings(subScene3D, meshView);
         getFirstPersonCamera().getCamera().setFarClip(DEFAULT_FAR_CLIP);
         getFirstPersonCamera().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
-
-        AmbientLight mainLight = new AmbientLight(Color.WHITE);
-        mainLight.getScope().add(getMeshView());
-        mainLight.getScope().addAll(getAxisDisplayList().getNodes());
-        getRenderManager().createDisplayList().add(mainLight);
-        
         getComboBoxMeshCullFace().setValue(CullFace.NONE); // Great Quest has no back-face culling.
-        getMeshView().setVisible(false); // Hide real mesh view.
 
-        // Create mesh views necessary
-        // TODO: Consider tracking these better.
-        DisplayList mapMeshList = getRenderManager().createDisplayListWithNewGroup();
-        addMaterialMesh(mapMeshList, null);
-        for (kcMaterial material : getMap().getSceneManager().getMaterials())
-            addMaterialMesh(mapMeshList, material);
+        // Create map mesh.
+        this.meshViewCollection = new GreatQuestMapMeshCollection(this);
+        this.meshViewCollection.setMesh(getMesh().getActualMesh());
 
         // Add mesh click listener.
         getMeshScene().setOnMouseClicked(evt -> {
@@ -82,23 +71,6 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
 
     }
 
-    private void addMaterialMesh(DisplayList displayList, kcMaterial material) {
-        GreatQuestMapMaterialMesh materialMesh = new GreatQuestMapMaterialMesh(getMap(), material);
-
-        MeshView meshView = new MeshView();
-        meshView.setDrawMode(getComboBoxMeshDrawMode().getValue());
-        meshView.setCullFace(getComboBoxMeshCullFace().getValue());
-        getCheckBoxShowMesh().selectedProperty().bindBidirectional(meshView.visibleProperty());
-        getComboBoxMeshDrawMode().getItems().setAll(DrawMode.values());
-        getComboBoxMeshDrawMode().valueProperty().bindBidirectional(meshView.drawModeProperty());
-        getComboBoxMeshCullFace().getItems().setAll(CullFace.values());
-        getComboBoxMeshCullFace().valueProperty().bindBidirectional(meshView.cullFaceProperty());
-
-        materialMesh.addView(meshView);
-        displayList.add(meshView);
-        getMainLight().getScope().add(meshView);
-    }
-
     @Override
     protected void setupManagers() {
         addManager(new GreatQuestEntityManager(this));
@@ -115,10 +87,43 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
         // TODO: Come up with default camera position.
     }
 
+    @Override
+    protected double getAxisDisplayLength() {
+        return 3;
+    }
+
+    @Override
+    protected double getAxisDisplaySize() {
+        return 1;
+    }
+
     /**
      * Gets the map file which the mesh represents.
      */
     public GreatQuestChunkedFile getMap() {
         return getMesh().getMap();
+    }
+
+    public static class GreatQuestMapMeshCollection extends MeshViewCollection<GreatQuestMapMaterialMesh> {
+        private final MeshViewController<?> viewController;
+
+        public GreatQuestMapMeshCollection(MeshViewController<?> viewController) {
+            super(viewController.getRenderManager().createDisplayListWithNewGroup());
+            this.viewController = viewController;
+        }
+
+        @Override
+        protected void onMeshViewSetup(int meshIndex, GreatQuestMapMaterialMesh mesh, MeshView meshView) {
+            super.onMeshViewSetup(meshIndex, mesh, meshView);
+            MeshViewController.bindMeshSceneControls(this.viewController, meshView);
+            this.viewController.getMainLight().getScope().add(meshView);
+        }
+
+        @Override
+        protected void onMeshViewCleanup(int meshIndex, GreatQuestMapMaterialMesh mesh, MeshView meshView) {
+            super.onMeshViewCleanup(meshIndex, mesh, meshView);
+            MeshViewController.unbindMeshSceneControls(this.viewController, meshView);
+            this.viewController.getMainLight().getScope().remove(meshView);
+        }
     }
 }

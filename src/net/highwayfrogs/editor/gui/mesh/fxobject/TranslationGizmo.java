@@ -177,7 +177,7 @@ public class TranslationGizmo extends DynamicMesh {
         DynamicMeshDataEntry baseNodeEntry = new DynamicMeshDataEntry(this);
         this.whiteTextureUvIndex = baseNodeEntry.addTexCoordValue(whiteTextureUv);
         this.orangeTextureUvIndex = baseNodeEntry.addTexCoordValue(orangeTextureUv);
-        MeshEntryBox.createCenteredBox(baseNodeEntry, 0, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, whiteTextureUvIndex);
+        MeshEntryBox.createCenteredBox(baseNodeEntry, 0, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.whiteTextureUvIndex);
         this.baseNode.addEntry(baseNodeEntry);
     }
 
@@ -197,8 +197,10 @@ public class TranslationGizmo extends DynamicMesh {
     }
 
     @Override
-    public void addView(MeshView view) {
-        super.addView(view);
+    public boolean addView(MeshView view) {
+        if (!super.addView(view))
+            return false;
+
         this.meshViewStates.put(view, new GizmoMeshViewState(this, view));
 
         // Setup listeners.
@@ -208,11 +210,13 @@ public class TranslationGizmo extends DynamicMesh {
         view.setOnMousePressed(this::onDragStart);
         view.setOnMouseDragged(this::onDragUpdate);
         view.setOnMouseReleased(this::onDragStop);
+        return true;
     }
 
     @Override
-    public void removeView(MeshView view) {
-        super.addView(view);
+    public boolean removeView(MeshView view) {
+        if (!super.removeView(view))
+            return false;
 
         // Remove listeners.
         view.setOnMouseEntered(null);
@@ -224,6 +228,7 @@ public class TranslationGizmo extends DynamicMesh {
         // Remove plane.
         stopDragging(view, false);
         this.meshViewStates.remove(view);
+        return true;
     }
 
     /**

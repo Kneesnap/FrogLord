@@ -191,8 +191,10 @@ public class ScaleGizmo extends DynamicMesh {
     }
 
     @Override
-    public void addView(MeshView view) {
-        super.addView(view);
+    public boolean addView(MeshView view) {
+        if (!super.addView(view))
+            return false;
+
         this.meshViewStates.put(view, new GizmoMeshViewState(this, view));
 
         // Setup listeners.
@@ -202,11 +204,14 @@ public class ScaleGizmo extends DynamicMesh {
         view.setOnMousePressed(this::onDragStart);
         view.setOnMouseDragged(this::onDragUpdate);
         view.setOnMouseReleased(this::onDragStop);
+        return true;
     }
 
     @Override
-    public void removeView(MeshView view) {
-        super.addView(view);
+    public boolean removeView(MeshView view) {
+        if (!super.removeView(view))
+            return false;
+
         this.meshViewStates.remove(view);
 
         // Remove listeners.
@@ -218,6 +223,7 @@ public class ScaleGizmo extends DynamicMesh {
 
         // Remove plane.
         stopDragging(view);
+        return true;
     }
 
     /**

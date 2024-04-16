@@ -1,11 +1,16 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui;
 
+import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestConfig;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 
 /**
  * Represents editor UI for a GreatQuestArchiveFile.
@@ -13,15 +18,41 @@ import net.highwayfrogs.editor.gui.GameUIController;
  */
 @Getter
 public class GreatQuestFileEditorUIController<TGameFile extends GreatQuestArchiveFile> extends GameUIController<GreatQuestInstance> {
+    @FXML private HBox contentBox;
     private TGameFile file;
+    private final PropertyListViewerComponent<GreatQuestInstance> propertyListViewer;
 
     public GreatQuestFileEditorUIController(GreatQuestInstance instance) {
         super(instance);
+        this.propertyListViewer = new PropertyListViewerComponent<>(instance);
     }
 
     @Override
     public GreatQuestConfig getConfig() {
         return (GreatQuestConfig) super.getConfig();
+    }
+
+    @Override
+    protected void onControllerLoad(Node rootNode) {
+        if (this.contentBox != null) {
+            Node propertyListViewRootNode = this.propertyListViewer.getRootNode();
+            HBox.setHgrow(propertyListViewRootNode, Priority.ALWAYS);
+            this.contentBox.getChildren().add(propertyListViewRootNode);
+        }
+    }
+
+    @Override
+    public void onSceneAdd(Scene newScene) {
+        super.onSceneAdd(newScene);
+        if (this.contentBox != null)
+            this.propertyListViewer.onSceneAdd(newScene);
+    }
+
+    @Override
+    public void onSceneRemove(Scene oldScene) {
+        super.onSceneRemove(oldScene);
+        if (this.contentBox != null)
+            this.propertyListViewer.onSceneRemove(oldScene);
     }
 
     /**
@@ -30,12 +61,9 @@ public class GreatQuestFileEditorUIController<TGameFile extends GreatQuestArchiv
      */
     public void setTargetFile(TGameFile file) {
         TGameFile oldFile = this.file;
-        if (oldFile != file)
+        if (oldFile != file) {
             this.file = file;
-    }
-
-    @Override
-    protected void onControllerLoad(Node rootNode) {
-        // Do nothing.
+            this.propertyListViewer.showProperties(file != null ? file.createPropertyList() : null);
+        }
     }
 }

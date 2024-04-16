@@ -99,8 +99,7 @@ public class kcEntityInst extends GameObject implements IMultiLineInfoWriter {
             GreatQuestUtils.addDefaultHashesToMap(nameMap);
             StringBuilder builder = new StringBuilder();
             script.toString(manager.getMap(), builder, displaySettings);
-            for (String str : builder.toString().split("\n"))
-                grid.addNormalLabel(str);
+            grid.addTextArea(builder.toString());
         }
 
         // Write entity description.

@@ -9,6 +9,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -23,7 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Created by Kneesnap on 8/17/2019.
  */
 @Getter
-public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance> implements ICollectionViewEntry {
+public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance> implements ICollectionViewEntry, IPropertyListCreator {
     private byte[] rawData;
     private String fileName;
     private String filePath;
@@ -55,6 +58,22 @@ public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance>
     @Override
     public String getCollectionViewDisplayStyle() {
         return null;
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        if (this.fileName != null)
+            propertyList.add("File Name", this.fileName);
+        if (this.filePath != null)
+            propertyList.add("File Path", this.filePath);
+
+        propertyList.add("Name Hash", Utils.to0PrefixedHexString(this.nameHash));
+        propertyList.add("Name Collision", this.collision);
+        propertyList.add("Compression Enabled", this.compressed);
+        if (this.rawData != null)
+            propertyList.add("Loaded File Size", DataSizeUnit.formatSize(this.rawData.length));
+
+        return propertyList;
     }
 
     @Override

@@ -9,7 +9,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelInfoController;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +22,7 @@ import java.io.IOException;
  * Created by Kneesnap on 6/28/2023.
  */
 @Getter
-public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport {
+public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport, IPropertyListCreator {
     private final kcModel model;
 
     public static final String SIGNATURE_STR = "6YTV";
@@ -62,7 +65,7 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
 
     @Override
     public GameUIController<?> makeEditorUI() {
-        return null; // TODO: IMPLEMENT.
+        return loadEditor(getGameInstance(), "edit-file-vtx", new GreatQuestModelInfoController(getGameInstance()), this);
     }
 
     @Override
@@ -93,5 +96,14 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
             return;
 
         this.model.saveToFile(folder, getExportName());
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        if (this.model != null)
+            this.model.addToPropertyList(propertyList);
+
+        return propertyList;
     }
 }

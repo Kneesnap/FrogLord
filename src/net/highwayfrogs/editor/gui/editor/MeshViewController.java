@@ -387,13 +387,10 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.textFieldCamRoll.textProperty().bind(this.firstPersonCamera.getCamRollProperty().asString("%.6f"));
 
         // Set mesh view bindings
-        this.checkBoxShowMesh.selectedProperty().bindBidirectional(meshView.visibleProperty());
-
         this.comboBoxMeshDrawMode.getItems().setAll(DrawMode.values());
-        this.comboBoxMeshDrawMode.valueProperty().bindBidirectional(meshView.drawModeProperty());
-
+        this.comboBoxMeshDrawMode.setValue(DrawMode.FILL);
         this.comboBoxMeshCullFace.getItems().setAll(CullFace.values());
-        this.comboBoxMeshCullFace.valueProperty().bindBidirectional(meshView.cullFaceProperty());
+        bindMeshSceneControls(this, meshView);
 
         if (getMesh() instanceof IPSXShadedMesh) {
             IPSXShadedMesh shadedMesh = (IPSXShadedMesh) getMesh();
@@ -421,17 +418,32 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.mainLight.getScope().add(this.lightingGroup);
     }
 
-    private void setupAxis() {
-        final int axisLength = 10;
-        final int lineSize = 3;
+    /**
+     * Get the length of the axis display.
+     */
+    protected double getAxisDisplayLength() {
+        return 10;
+    }
 
-        this.axisDisplayList = getRenderManager().createDisplayList();
+    /**
+     * Get the thickness of the axis display.
+     */
+    protected double getAxisDisplaySize() {
+        return 3;
+    }
+
+    private void setupAxis() {
+        final double axisLength = getAxisDisplayLength();
+        final double lineSize = getAxisDisplaySize();
+
+        this.axisDisplayList = getRenderManager().createDisplayListWithNewGroup();
         this.axisDisplayList.addLine(0, 0, 0, axisLength, 0, 0, lineSize, Utils.makeSpecialMaterial(Color.RED)); // X Axis.
         this.axisDisplayList.addLine(0, 0, 0, 0, axisLength, 0, lineSize, Utils.makeSpecialMaterial(Color.GREEN)); // Y Axis.
         this.axisDisplayList.addLine(0, 0, 0, 0, 0, axisLength, lineSize, Utils.makeSpecialMaterial(Color.BLUE)); // Z Axis.
 
         this.axisDisplayList.setVisible(this.checkBoxShowAxis.isSelected());
         this.checkBoxShowAxis.selectedProperty().addListener((listener, oldValue, newValue) -> this.axisDisplayList.setVisible(newValue));
+        this.lightingGroup.getChildren().add(this.axisDisplayList.getRoot());
     }
 
     private void runForEachManager(Consumer<MeshUIManager<TMesh>> execution, String name) {
@@ -479,6 +491,31 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         }
 
         return false;
+    }
+
+    /**
+     * Bind mesh scene controls to the provided MeshView.
+     * @param controller the controller to bind the controls from
+     * @param meshView the meshView to bind the controls to
+     */
+    public static void bindMeshSceneControls(MeshViewController<?> controller, MeshView meshView) {
+        meshView.setVisible(meshView.visibleProperty().get());
+        meshView.setDrawMode(controller.getComboBoxMeshDrawMode().getValue());
+        meshView.setCullFace(controller.getComboBoxMeshCullFace().getValue());
+        controller.getCheckBoxShowMesh().selectedProperty().bindBidirectional(meshView.visibleProperty());
+        controller.getComboBoxMeshDrawMode().valueProperty().bindBidirectional(meshView.drawModeProperty());
+        controller.getComboBoxMeshCullFace().valueProperty().bindBidirectional(meshView.cullFaceProperty());
+    }
+
+    /**
+     * Unbind mesh scene controls to the provided MeshView.
+     * @param controller the controller to unbind the controls from
+     * @param meshView the meshView to unbind the controls from
+     */
+    public static void unbindMeshSceneControls(MeshViewController<?> controller, MeshView meshView) {
+        controller.getCheckBoxShowMesh().selectedProperty().unbindBidirectional(meshView.visibleProperty());
+        controller.getComboBoxMeshDrawMode().valueProperty().unbindBidirectional(meshView.drawModeProperty());
+        controller.getComboBoxMeshCullFace().valueProperty().unbindBidirectional(meshView.cullFaceProperty());
     }
 
     /**

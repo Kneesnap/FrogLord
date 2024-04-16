@@ -246,13 +246,14 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     /**
      * Adds a view as actively displaying this mesh.
      * @param view The view to add.
+     * @return true if added successfully
      */
-    public void addView(MeshView view) {
+    public boolean addView(MeshView view) {
         if (view == null)
             throw new NullPointerException("view");
 
         if (this.meshViews.contains(view))
-            return; // Already registered.
+            return false; // Already registered.
 
         // Register the texture.
         if (this.meshViews.isEmpty() && this.textureAtlas != null)
@@ -261,18 +262,20 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         this.meshViews.add(view);
         view.setMesh(this);
         view.setMaterial(this.material);
+        return true;
     }
 
     /**
      * Removes a view which was actively displaying this mesh.
      * @param view The view to remove.
+     * @return true iff the view was removed successfully
      */
-    public void removeView(MeshView view) {
+    public boolean removeView(MeshView view) {
         if (view == null)
             throw new NullPointerException("view");
 
         if (!this.meshViews.remove(view))
-            return; // Already registered.
+            return false; // Not registered.
 
         view.setMesh(null);
         view.setMaterial(null);
@@ -284,9 +287,15 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
             if (this.textureAtlas != null)
                 this.textureAtlas.releaseTexture();
         }
+
+        return true;
     }
 
-    protected void updateMaterial(BufferedImage newImage) {
+    /**
+     * Apply a new image to the material
+     * @param newImage the image to apply
+     */
+    protected PhongMaterial updateMaterial(BufferedImage newImage) {
         if (this.material == null) {
             this.material = Utils.makeDiffuseMaterial(Utils.toFXImage(newImage, false));
 
@@ -294,11 +303,12 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
             for (int i = 0; i < this.meshViews.size(); i++)
                 this.meshViews.get(i).setMaterial(this.material);
 
-            return;
+            return this.material;
         }
 
         // Update material image.
         this.material.setDiffuseMap(Utils.toFXImage(newImage, false));
+        return this.material;
     }
 
     private void onTextureChange(Texture texture, BufferedImage oldImage, BufferedImage newImage, boolean didOldImageHaveAnyTransparentPixels) {

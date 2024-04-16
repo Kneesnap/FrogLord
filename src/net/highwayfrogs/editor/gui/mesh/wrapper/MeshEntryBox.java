@@ -32,6 +32,12 @@ public class MeshEntryBox {
     private int topDownLeftVertex;
     private int topDownRightVertex;
 
+    // UVs:
+    private int uvTopLeft;
+    private int uvTopRight;
+    private int uvBottomLeft;
+    private int uvBottomRight;
+
     // Faces:
     private int topFace1;
     private int topFace2;
@@ -309,12 +315,53 @@ public class MeshEntryBox {
      * @param width   the length of the x-axis box dimension
      * @param height  the length of the y-axis box dimension
      * @param depth   the length of the z-axis box dimension
+     * @param uvTopLeftIndex the index of the texCoord to apply to a top left vertex in a quad
+     * @param uvTopRightIndex the index of the texCoord to apply to a top right vertex in a quad
+     * @param uvBottomLeftIndex the index of the texCoord to apply to a bottom left vertex in a quad
+     * @param uvBottomRightIndex the index of the texCoord to apply to a bottom right vertex in a quad
+     */
+    public static void createCenteredBox(DynamicMeshDataEntry entry, double x, double y, double z, double width, double height, double depth, int uvTopLeftIndex, int uvTopRightIndex, int uvBottomLeftIndex, int uvBottomRightIndex) {
+        createBox(entry, x - (width / 2), y - (height / 2), z - (depth / 2),
+                x + (width / 2), y + (height / 2), z + (depth / 2),
+                uvTopLeftIndex, uvTopRightIndex, uvBottomLeftIndex, uvBottomRightIndex, false);
+    }
+
+    /**
+     * Creates a box for the given mesh entry centered at the specified position.
+     * @param entry   the entry to write mesh data to
+     * @param x       the x position to place the center of the box
+     * @param y       the y position to place the center of the box
+     * @param z       the z position to place the center of the box
+     * @param width   the length of the x-axis box dimension
+     * @param height  the length of the y-axis box dimension
+     * @param depth   the length of the z-axis box dimension
      * @param uvIndex the index of the uv to apply to the vertices
      * @return object containing information about the created box
      */
     public static MeshEntryBox createCenteredBoxEntry(DynamicMeshDataEntry entry, double x, double y, double z, double width, double height, double depth, int uvIndex) {
         return createBox(entry, x - (width / 2), y - (height / 2), z - (depth / 2),
                 x + (width / 2), y + (height / 2), z + (depth / 2), uvIndex, true);
+    }
+
+    /**
+     * Creates a box for the given mesh entry centered at the specified position.
+     * @param entry   the entry to write mesh data to
+     * @param x       the x position to place the center of the box
+     * @param y       the y position to place the center of the box
+     * @param z       the z position to place the center of the box
+     * @param width   the length of the x-axis box dimension
+     * @param height  the length of the y-axis box dimension
+     * @param depth   the length of the z-axis box dimension
+     * @param uvTopLeftIndex the index of the texCoord to apply to a top left vertex in a quad
+     * @param uvTopRightIndex the index of the texCoord to apply to a top right vertex in a quad
+     * @param uvBottomLeftIndex the index of the texCoord to apply to a bottom left vertex in a quad
+     * @param uvBottomRightIndex the index of the texCoord to apply to a bottom right vertex in a quad
+     * @return object containing information about the created box
+     */
+    public static MeshEntryBox createCenteredBoxEntry(DynamicMeshDataEntry entry, double x, double y, double z, double width, double height, double depth, int uvTopLeftIndex, int uvTopRightIndex, int uvBottomLeftIndex, int uvBottomRightIndex) {
+        return createBox(entry, x - (width / 2), y - (height / 2), z - (depth / 2),
+                x + (width / 2), y + (height / 2), z + (depth / 2),
+                uvTopLeftIndex, uvTopRightIndex, uvBottomLeftIndex, uvBottomRightIndex, true);
     }
 
     /**
@@ -362,6 +409,26 @@ public class MeshEntryBox {
      * @return object containing information about the created box
      */
     private static MeshEntryBox createBox(DynamicMeshDataEntry entry, double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int uvIndex, boolean createEntry) {
+        return createBox(entry, minX, minY, minZ, maxX, maxY, maxZ, uvIndex, uvIndex, uvIndex, uvIndex, createEntry);
+    }
+
+    /**
+     * Creates a box for the given mesh entry, conforming to the specified positions
+     * @param entry       the entry to write mesh data to
+     * @param minX        the x coordinate for the minimum corner of the box
+     * @param minY        the y coordinate for the minimum corner of the box
+     * @param minZ        the z coordinate for the minimum corner of the box
+     * @param maxX        the x coordinate for the maximum corner of the box
+     * @param maxY        the y coordinate for the maximum corner of the box
+     * @param maxZ        the z coordinate for the maximum corner of the box
+     * @param uvTopLeftIndex the index of the texCoord to apply to a top left vertex in a quad
+     * @param uvTopRightIndex the index of the texCoord to apply to a top right vertex in a quad
+     * @param uvBottomLeftIndex the index of the texCoord to apply to a bottom left vertex in a quad
+     * @param uvBottomRightIndex the index of the texCoord to apply to a bottom right vertex in a quad
+     * @param createEntry whether a MeshEntryBox should be created representing the box
+     * @return object containing information about the created box
+     */
+    private static MeshEntryBox createBox(DynamicMeshDataEntry entry, double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int uvTopLeftIndex, int uvTopRightIndex, int uvBottomLeftIndex, int uvBottomRightIndex, boolean createEntry) {
         final float x0 = (float) Math.min(minX, maxX);
         final float y0 = (float) Math.max(minY, maxY);
         final float z0 = (float) Math.min(minZ, maxZ);
@@ -383,18 +450,18 @@ public class MeshEntryBox {
 
         // JavaFX uses counter-clockwise winding order.
         entry.getMesh().getEditableFaces().startBatchInsertion();
-        int topFace1 = entry.addFace(topDownLeftVtx, uvIndex, topUpRightVtx, uvIndex, topUpLeftVtx, uvIndex);
-        int topFace2 = entry.addFace(topDownLeftVtx, uvIndex, topDownRightVtx, uvIndex, topUpRightVtx, uvIndex);
-        int bottomFace1 = entry.addFace(bottomUpRightVtx, uvIndex, bottomDownLeftVtx, uvIndex, bottomUpLeftVtx, uvIndex);
-        int bottomFace2 = entry.addFace(bottomUpRightVtx, uvIndex, bottomDownRightVtx, uvIndex, bottomDownLeftVtx, uvIndex);
-        int polygonFacingNegativeX1 = entry.addFace(bottomUpLeftVtx, uvIndex, topDownLeftVtx, uvIndex, topUpLeftVtx, uvIndex);
-        int polygonFacingNegativeX2 = entry.addFace(bottomUpLeftVtx, uvIndex, bottomDownLeftVtx, uvIndex, topDownLeftVtx, uvIndex);
-        int polygonFacingPositiveX1 = entry.addFace(bottomDownRightVtx, uvIndex, topUpRightVtx, uvIndex, topDownRightVtx, uvIndex); // Polygon Facing Positive X #1
-        int polygonFacingPositiveX2 = entry.addFace(bottomDownRightVtx, uvIndex, bottomUpRightVtx, uvIndex, topUpRightVtx, uvIndex); // Polygon Facing Positive X #2
-        int polygonFacingNegativeZ1 = entry.addFace(bottomDownLeftVtx, uvIndex, topDownRightVtx, uvIndex, topDownLeftVtx, uvIndex); // Polygon Facing Negative Z #1
-        int polygonFacingNegativeZ2 = entry.addFace(bottomDownLeftVtx, uvIndex, bottomDownRightVtx, uvIndex, topDownRightVtx, uvIndex); // Polygon Facing Negative Z #2
-        int polygonFacingPositiveZ1 = entry.addFace(bottomUpRightVtx, uvIndex, topUpLeftVtx, uvIndex, topUpRightVtx, uvIndex); // Polygon Facing Positive Z #1
-        int polygonFacingPositiveZ2 = entry.addFace(bottomUpRightVtx, uvIndex, bottomUpLeftVtx, uvIndex, topUpLeftVtx, uvIndex); // Polygon Facing Positive Z #2
+        int topFace1 = entry.addFace(topDownLeftVtx, uvBottomLeftIndex, topUpRightVtx, uvTopRightIndex, topUpLeftVtx, uvTopLeftIndex);
+        int topFace2 = entry.addFace(topDownLeftVtx, uvBottomLeftIndex, topDownRightVtx, uvBottomRightIndex, topUpRightVtx, uvTopRightIndex);
+        int bottomFace1 = entry.addFace(bottomUpRightVtx, uvBottomRightIndex, bottomDownLeftVtx, uvTopLeftIndex, bottomUpLeftVtx, uvBottomLeftIndex);
+        int bottomFace2 = entry.addFace(bottomUpRightVtx, uvBottomRightIndex, bottomDownRightVtx, uvTopRightIndex, bottomDownLeftVtx, uvBottomRightIndex);
+        int polygonFacingNegativeX1 = entry.addFace(bottomUpLeftVtx, uvBottomLeftIndex, topDownLeftVtx, uvTopRightIndex, topUpLeftVtx, uvTopLeftIndex);
+        int polygonFacingNegativeX2 = entry.addFace(bottomUpLeftVtx, uvBottomLeftIndex, bottomDownLeftVtx, uvBottomRightIndex, topDownLeftVtx, uvTopRightIndex);
+        int polygonFacingPositiveX1 = entry.addFace(bottomDownRightVtx, uvBottomLeftIndex, topUpRightVtx, uvTopRightIndex, topDownRightVtx, uvTopLeftIndex); // Polygon Facing Positive X #1
+        int polygonFacingPositiveX2 = entry.addFace(bottomDownRightVtx, uvBottomLeftIndex, bottomUpRightVtx, uvBottomRightIndex, topUpRightVtx, uvTopRightIndex); // Polygon Facing Positive X #2
+        int polygonFacingNegativeZ1 = entry.addFace(bottomDownLeftVtx, uvBottomLeftIndex, topDownRightVtx, uvTopRightIndex, topDownLeftVtx, uvTopLeftIndex); // Polygon Facing Negative Z #1
+        int polygonFacingNegativeZ2 = entry.addFace(bottomDownLeftVtx, uvBottomLeftIndex, bottomDownRightVtx, uvBottomRightIndex, topDownRightVtx, uvTopRightIndex); // Polygon Facing Negative Z #2
+        int polygonFacingPositiveZ1 = entry.addFace(bottomUpRightVtx, uvBottomLeftIndex, topUpLeftVtx, uvTopRightIndex, topUpRightVtx, uvTopLeftIndex); // Polygon Facing Positive Z #1
+        int polygonFacingPositiveZ2 = entry.addFace(bottomUpRightVtx, uvBottomLeftIndex, bottomUpLeftVtx, uvBottomRightIndex, topUpLeftVtx, uvTopRightIndex); // Polygon Facing Positive Z #2
         entry.getMesh().getEditableFaces().endBatchInsertion();
 
         // Create resulting container with box information.
@@ -419,6 +486,13 @@ public class MeshEntryBox {
             newEntry.topUpRightVertex = topUpRightVtx - vertexStartIndex;
             newEntry.topDownLeftVertex = topDownLeftVtx - vertexStartIndex;
             newEntry.topDownRightVertex = topDownRightVtx - vertexStartIndex;
+
+            // UVs
+            int uvStartIndex = entry.getTexCoordStartIndex();
+            newEntry.uvTopLeft = uvTopLeftIndex - uvStartIndex;
+            newEntry.uvTopRight = uvTopRightIndex - uvStartIndex;
+            newEntry.uvBottomLeft = uvBottomLeftIndex - uvStartIndex;
+            newEntry.uvBottomRight = uvBottomRightIndex - uvStartIndex;
 
             // Faces:
             int faceStartIndex = entry.getFaceStartIndex();

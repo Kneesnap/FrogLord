@@ -18,7 +18,7 @@ public class kcModelPrim extends GameObject {
     private final kcModel model;
     private final List<kcVertex> vertices = new ArrayList<>();
     private long materialId; // uint
-    private kcPrimitiveType primType;
+    private kcPrimitiveType primitiveType;
     @Setter private short[] boneIds;
     private transient long loadedVertexCount = -1;
 
@@ -29,14 +29,14 @@ public class kcModelPrim extends GameObject {
     @Override
     public void load(DataReader reader) {
         this.materialId = reader.readUnsignedIntAsLong();
-        this.primType = kcPrimitiveType.values()[reader.readInt()];
+        this.primitiveType = kcPrimitiveType.values()[reader.readInt()];
         this.loadedVertexCount = reader.readUnsignedIntAsLong();
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedInt(this.materialId);
-        writer.writeUnsignedInt(this.primType.ordinal());
+        writer.writeUnsignedInt(this.primitiveType.ordinal());
         writer.writeUnsignedInt(this.vertices.size());
     }
 

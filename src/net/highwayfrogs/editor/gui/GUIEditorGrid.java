@@ -106,6 +106,21 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Add a text area.
+     * @param textToAdd the text to add
+     * @return textArea
+     */
+    public TextArea addTextArea(String textToAdd) {
+        TextArea textArea = new TextArea(textToAdd);
+        textArea.setWrapText(false);
+        textArea.setEditable(false);
+        textArea.setPrefHeight(150);
+        setupSecondNode(textArea, true);
+        addRow(150);
+        return textArea;
+    }
+
+    /**
      * Adds a label
      * @param text The text to add.
      */
