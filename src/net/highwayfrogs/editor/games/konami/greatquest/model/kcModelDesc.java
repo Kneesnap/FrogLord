@@ -5,9 +5,8 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.*;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceModel;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -18,9 +17,13 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 @Setter
 public class kcModelDesc extends kcBaseDesc implements IInfoWriter {
-    private int hashOfChunkContainingThis; // The hash of the chunk containing this object.
+    private int hashOfChunkContainingThis; // The hash of the generic resource chunk containing this object.
     private int modelChunkHash; // The hash of the chunk which is a reference to a model file.
     private int materialHash = -1; // Seems to be -1.
+
+    public kcModelDesc(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     public int getTargetClassID() {
@@ -49,15 +52,24 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter {
 
     @Override
     public void writeInfo(StringBuilder builder) {
-        builder.append("Hash: ").append(Utils.to0PrefixedHexString(this.hashOfChunkContainingThis));
+        builder.append("kcModelDesc Hash: ").append(Utils.to0PrefixedHexString(this.hashOfChunkContainingThis));
         writeAssetInfo(builder, ", ", "Model", this.modelChunkHash, kcCResourceModel::getFileName);
         writeAssetInfo(builder, ", ", "Material", this.materialHash, kcCResourceModel::getName);
     }
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Hash: ").append(Utils.to0PrefixedHexString(this.hashOfChunkContainingThis)).append(Constants.NEWLINE);
+        builder.append(padding).append("kcModelDesc Hash: ").append(Utils.to0PrefixedHexString(this.hashOfChunkContainingThis)).append(Constants.NEWLINE);
         writeAssetLine(builder, padding, "Model", this.modelChunkHash);
-        writeAssetLine(builder, padding, "Material", this.modelChunkHash);
+        writeAssetLine(builder, padding, "Material", this.materialHash);
+    }
+
+    /**
+     * Gets the model resource.
+     * @param chunkedFile the file to search first
+     * @return modelResource, or null
+     */
+    public kcCResourceModel getModelResource(GreatQuestChunkedFile chunkedFile) {
+        return GreatQuestUtils.findResourceByHash(chunkedFile, getGameInstance(), this.modelChunkHash);
     }
 }

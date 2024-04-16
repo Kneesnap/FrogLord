@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -12,6 +13,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 public class CMagicStoneDesc extends CItemDesc {
     private MagicStoneType type;
     private final int[] padMagicStone = new int[8];
+
+    public CMagicStoneDesc(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     protected int getTargetClassID() {

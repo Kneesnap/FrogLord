@@ -357,4 +357,31 @@ public class Scene3DUtils {
 
         return null;
     }
+
+    /**
+     * Set the rotation of a node in 3D space.
+     * @param node node to update the position of
+     * @param x    x coordinate value
+     * @param y    y coordinate value
+     * @param z    z coordinate value
+     */
+    public static void setNodeRotation(Node node, double x, double y, double z) {
+        double A11 = Math.cos(x) * Math.cos(z);
+        double A12 = Math.cos(y) * Math.sin(x) + Math.cos(x) * Math.sin(y) * Math.sin(z);
+        double A13 = Math.sin(x) * Math.sin(y) - Math.cos(x) * Math.cos(y) * Math.sin(z);
+        double A21 = -Math.cos(z) * Math.sin(x);
+        double A22 = Math.cos(x) * Math.cos(y) - Math.sin(x) * Math.sin(y) * Math.sin(z);
+        double A23 = Math.cos(x) * Math.sin(y) + Math.cos(y) * Math.sin(x) * Math.sin(z);
+        double A31 = Math.sin(z);
+        double A32 = -Math.cos(z) * Math.sin(y);
+        double A33 = Math.cos(y) * Math.cos(z);
+
+        double d = Math.acos((A11 + A22 + A33 - 1) / 2);
+        if(d != 0) {
+            double den = 2 * Math.sin(d);
+            Point3D p = new Point3D((A32 - A23) / den, (A13 - A31) / den, (A21 - A12) / den);
+            node.setRotationAxis(p);
+            node.setRotate(Math.toDegrees(d));
+        }
+    }
 }

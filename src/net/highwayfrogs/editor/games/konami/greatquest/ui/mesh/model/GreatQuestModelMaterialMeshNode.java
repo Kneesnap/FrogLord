@@ -66,7 +66,7 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
 
     private void writeTriangleList(DynamicMeshTypedDataEntry entry, int uvStartIndex, int vtxStartIndex, int vertexCount) {
         for (int i = 0; i < vertexCount; i += 3)
-            entry.addFace(vtxStartIndex + i, uvStartIndex + i, vtxStartIndex + i + 1, uvStartIndex + i + 1, vtxStartIndex + i + 2, uvStartIndex + i + 2);
+            entry.addFace(vtxStartIndex + i + 2, uvStartIndex + i + 2, vtxStartIndex + i + 1, uvStartIndex + i + 1, vtxStartIndex + i, uvStartIndex + i);
     }
 
     private  void writeTriangleStrip(DynamicMeshTypedDataEntry entry, int uvStartIndex, int vtxStartIndex, int vertexCount) {
@@ -85,7 +85,7 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
                 uv2 = temp;
             }
 
-            entry.addFace(vtx1, uv1, vtx2, uv2, vtxStartIndex + i + 2, uvStartIndex + i + 2);
+            entry.addFace(vtxStartIndex + i + 2, uvStartIndex + i + 2, vtx2, uv2, vtx1, uv1);
         }
     }
 

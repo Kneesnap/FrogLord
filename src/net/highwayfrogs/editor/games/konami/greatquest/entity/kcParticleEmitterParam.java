@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcBlend;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
@@ -23,6 +24,10 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
     private float lifeTimeEmitter; // These may be garbage / unused.
     private int maxParticle;
     private final int[] padding = new int[6];
+
+    public kcParticleEmitterParam(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     public int getTargetClassID() {

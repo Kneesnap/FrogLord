@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -17,6 +18,10 @@ public class CPropDesc extends kcActorBaseDesc {
     private int mode;
     private int event;
     private final int[] padProp = new int[64];
+
+    public CPropDesc(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     protected int getTargetClassID() {

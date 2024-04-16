@@ -11,8 +11,11 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.fxobject.Arrow3D;
+import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo;
+import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo.IScaleChangeListener;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
@@ -28,6 +31,7 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
     private final DisplayList markerList;
     private final DisplayList gizmoMeshViews;
     private final Map<UUID, MeshView> translationGizmoViews = new HashMap<>();
+    private final Map<UUID, MeshView> scaleGizmoViews = new HashMap<>();
     private Box boxVisualizer;
     private Arrow3D arrowVisualizer;
     private Vector showPosition;
@@ -52,7 +56,7 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
      */
     public MeshView updateGizmo(UUID identifier, double x, double y, double z, IPositionChangeListener listener) {
         MeshView meshView = this.translationGizmoViews.get(identifier);
-        if (meshView == null)
+        if (meshView == null || !(meshView.getMesh() instanceof TranslationGizmo))
             return null; // Nothing to edit, abort!
 
         TranslationGizmo gizmo = (TranslationGizmo) meshView.getMesh();
@@ -62,11 +66,42 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
     }
 
     /**
+     * Gets and updates a translation gizmo identified by the given identifier.
+     * If there is no gizmo found with this identifier, null is returned.
+     * @param identifier The gizmo identifier
+     * @param x the x world position to place the gizmo at
+     * @param y the y world position to place the gizmo at
+     * @param z the z world position to place the gizmo at
+     * @param listener the listener for position changes
+     */
+    public MeshView updateGizmo(UUID identifier, double x, double y, double z, double scaleX, double scaleY, double scaleZ, IScaleChangeListener listener) {
+        MeshView meshView = this.scaleGizmoViews.get(identifier);
+        if (meshView == null || !(meshView.getMesh() instanceof ScaleGizmo))
+            return null; // Nothing to edit, abort!
+
+        ScaleGizmo gizmo = (ScaleGizmo) meshView.getMesh();
+        gizmo.setChangeListener(meshView, listener);
+        Scene3DUtils.setNodePosition(meshView, x, y, z);
+        gizmo.setScaleX(scaleX, false);
+        gizmo.setScaleY(scaleY, false);
+        gizmo.setScaleZ(scaleZ, false);
+        return meshView;
+    }
+
+    /**
      * Disables a translation gizmo identified by the given identifier.
      * @param identifier the gizmo identifier
      */
     public MeshView removeGizmo(UUID identifier) {
-        MeshView meshView = this.translationGizmoViews.remove(identifier);
+        MeshView meshView = onGizmoRemove(this.translationGizmoViews.remove(identifier));
+        if (meshView != null)
+            return meshView;
+
+        meshView = this.scaleGizmoViews.remove(identifier);
+        return meshView;
+    }
+
+    private MeshView onGizmoRemove(MeshView meshView) {
         if (meshView != null) {
             this.gizmoMeshViews.remove(meshView); // Remove gizmo.
             getController().getMainLight().getScope().remove(meshView);
@@ -91,6 +126,31 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
         TranslationGizmo newGizmo = new TranslationGizmo();
         newGizmo.addView(newView, getController(), listener);
         newGizmo.setPosition(newView, x, y, z, false);
+        getController().getMainLight().getScope().add(newView);
+        this.gizmoMeshViews.add(newView);
+        this.translationGizmoViews.put(identifier, newView);
+        return newView;
+    }
+
+    /**
+     * Enables or disables a translation gizmo identified by the given identifier.
+     * @param identifier The gizmo identifier
+     * @param x the x world position to place the gizmo at
+     * @param y the y world position to place the gizmo at
+     * @param z the z world position to place the gizmo at
+     * @param listener the listener for position changes
+     */
+    public MeshView toggleGizmo(UUID identifier, double x, double y, double z, double scaleX, double scaleY, double scaleZ, IScaleChangeListener listener) {
+        if (removeGizmo(identifier) != null)
+            return null;
+
+        MeshView newView = new MeshView();
+        ScaleGizmo newGizmo = new ScaleGizmo();
+        newGizmo.addView(newView, getController().getFirstPersonCamera(), listener);
+        Scene3DUtils.setNodePosition(newView, x, y, z);
+        newGizmo.setScaleX(scaleX, false);
+        newGizmo.setScaleY(scaleY, false);
+        newGizmo.setScaleZ(scaleZ, false);
         getController().getMainLight().getScope().add(newView);
         this.gizmoMeshViews.add(newView);
         this.translationGizmoViews.put(identifier, newView);

@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -16,6 +17,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 public class CUniqueItemDesc extends CItemDesc {
     private UniqueItemType type;
     private final int[] padUniqueItem = new int[8];
+
+    public CUniqueItemDesc(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     protected int getTargetClassID() {

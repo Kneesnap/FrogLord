@@ -26,6 +26,7 @@ public class LauncherParams extends kcProjectileParams {
     private final transient GreatQuestChunkedFile holder;
 
     public LauncherParams(GreatQuestChunkedFile holder) {
+        super(holder != null ? holder.getGameInstance() : null);
         this.holder = holder;
     }
 

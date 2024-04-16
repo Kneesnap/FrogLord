@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.gui.mesh;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ import java.util.logging.Logger;
 public class DynamicMeshCollection<TMesh extends DynamicMesh> {
     private final String meshName;
     @Getter private final List<TMesh> meshes = new ArrayList<>();
-    @Getter private final List<MeshViewCollection<TMesh>> meshViews = new ArrayList<>();
+    @Getter private final List<MeshViewCollection<? super TMesh>> meshViews = new ArrayList<>();
 
     public DynamicMeshCollection(String meshName) {
         this.meshName = meshName;
@@ -223,6 +224,48 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
          */
         protected void onMeshViewCleanup(int meshIndex, TMesh mesh, MeshView meshView) {
             // Do nothing by default.
+        }
+
+        /**
+         * Control if the currently registered meshviews are visible.
+         * @param visible the desired visibility state
+         */
+        public void setVisible(boolean visible) {
+            for (int i = 0; i < this.meshViews.size(); i++)
+                this.meshViews.get(i).setVisible(visible);
+        }
+
+        /**
+         * Set the position of all attached MeshViews
+         * @param x the new x position
+         * @param y the new y position
+         * @param z the new z position
+         */
+        public void setPosition(double x, double y, double z) {
+            for (int i = 0; i < this.meshViews.size(); i++)
+                Scene3DUtils.setNodePosition(this.meshViews.get(i), x, y, z);
+        }
+
+        /**
+         * Set the scale of all attached MeshViews
+         * @param x the new x scale
+         * @param y the new y scale
+         * @param z the new z scale
+         */
+        public void setScale(double x, double y, double z) {
+            for (int i = 0; i < this.meshViews.size(); i++)
+                Scene3DUtils.setNodeScale(this.meshViews.get(i), x, y, z);
+        }
+
+        /**
+         * Set the rotation of all attached MeshViews
+         * @param x the new x rotation
+         * @param y the new y rotation
+         * @param z the new z rotation
+         */
+        public void setRotation(double x, double y, double z) {
+            for (int i = 0; i < this.meshViews.size(); i++)
+                Scene3DUtils.setNodeRotation(this.meshViews.get(i), x, y, z);
         }
     }
 }

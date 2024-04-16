@@ -4,11 +4,14 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
@@ -325,5 +328,65 @@ public class GreatQuestUtils {
 
         Utils.makeDirectory(exportFolder);
         return new File(exportFolder, fileName);
+    }
+
+    /**
+     * Find a resource by its hash
+     * @param parentFile the parent file. searched first
+     * @param mainInstance the main game instance, all chunked files are searched if not found
+     * @param resourceHash the resource hash to lookup
+     * @return resourceOrNull
+     * @param <TResult> the type of result to return
+     */
+    public static <TResult extends kcCResource> TResult findResourceByHash(GreatQuestChunkedFile parentFile, GreatQuestInstance mainInstance, int resourceHash) {
+        TResult foundResult = parentFile != null ? parentFile.getResourceByHash(resourceHash) : null;
+        if (foundResult != null)
+            return foundResult;
+
+        // Global search.
+        for (GreatQuestArchiveFile file : mainInstance.getMainArchive().getFiles()) {
+            if (!(file instanceof GreatQuestChunkedFile) || (parentFile == file))
+                continue;
+
+            GreatQuestChunkedFile chunkedFile = (GreatQuestChunkedFile) file;
+            foundResult = chunkedFile.getResourceByHash(resourceHash);
+            if (foundResult != null)
+                return foundResult;
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Find a generic resource by its hash
+     * @param parentFile the parent file. searched first
+     * @param mainInstance the main game instance, all chunked files are searched if not found
+     * @param resourceHash the resource hash to lookup
+     * @param transformer the transformer to get the real resource from the generic one
+     * @return genericResourceOrNull
+     * @param <TResult> the type of result to return
+     */
+    public static <TResult> TResult findGenericResourceByHash(GreatQuestChunkedFile parentFile, GreatQuestInstance mainInstance, int resourceHash, Function<kcCResourceGeneric, TResult> transformer) {
+        kcCResourceGeneric genericResult = parentFile != null ? parentFile.getResourceByHash(resourceHash) : null;
+        if (genericResult != null) {
+            TResult transformedResult = transformer.apply(genericResult);
+            if (transformedResult != null)
+                return transformedResult;
+        }
+
+        // Global search.
+        for (GreatQuestArchiveFile file : mainInstance.getMainArchive().getFiles()) {
+            if (!(file instanceof GreatQuestChunkedFile) || (parentFile == file))
+                continue;
+
+            GreatQuestChunkedFile chunkedFile = (GreatQuestChunkedFile) file;
+            genericResult = chunkedFile.getResourceByHash(resourceHash);
+            TResult transformedResult = genericResult != null ? transformer.apply(genericResult) : null;
+            if (transformedResult != null)
+                return transformedResult;
+        }
+
+        return null;
     }
 }

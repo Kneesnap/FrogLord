@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -15,6 +16,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 @Setter
 public class kcProxyTriMeshDesc extends kcProxyDesc {
     private int meshHash; // Hash to identify the '.CTM' collision mesh.
+
+    public kcProxyTriMeshDesc(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     protected int getTargetClassID() {

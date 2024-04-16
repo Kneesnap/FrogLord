@@ -3,9 +3,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -15,10 +16,14 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 @Getter
 @Setter
-public class kcHealthDesc extends GameObject implements IMultiLineInfoWriter {
+public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     private int durability;
     private int startHealth;
     private int immuneMask;
+
+    public kcHealthDesc(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

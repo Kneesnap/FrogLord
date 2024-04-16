@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.map.kcColor4;
 import net.highwayfrogs.editor.utils.Utils;
@@ -24,6 +25,10 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     private final kcColor4 color = new kcColor4();
     private float strength;
     private final int[] padWaypoint = new int[7];
+
+    public kcWaypointDesc(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     public int getTargetClassID() {

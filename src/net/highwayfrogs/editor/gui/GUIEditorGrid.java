@@ -23,6 +23,8 @@ import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.frogger.ui.mapeditor.MapUIController;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo;
+import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo.IScaleChangeListener;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
 import net.highwayfrogs.editor.utils.Utils;
@@ -1090,6 +1092,153 @@ public class GUIEditorGrid {
 
         return meshViewRef;
     }
+
+    /**
+     * Creates a position editor.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param x the x world position
+     * @param y the y world position
+     * @param z the z world position
+     * @param scaleX the x scale
+     * @param scaleY the y scale
+     * @param scaleZ the z scale
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addScaleEditor(MeshViewController<?> controller, UUID identifier, String text, double x, double y, double z, double scaleX, double scaleY, double scaleZ, IScaleChangeListener listener) {
+        TextField[] textFields = new TextField[3];
+        double[] scaleCache = new double[]{scaleX, scaleY, scaleZ};
+
+        IScaleChangeListener ourListener = (meshView, oldX, oldY, oldZ, newX, newY, newZ) -> {
+            if (oldX != newX) {
+                textFields[0].setText(String.valueOf(newX));
+                scaleCache[0] = newX;
+            }
+
+            if (oldY != newY) {
+                textFields[1].setText(String.valueOf(newY));
+                scaleCache[1] = newY;
+            }
+
+            if (oldZ != newZ) {
+                textFields[2].setText(String.valueOf(newZ));
+                scaleCache[2] = newZ;
+            }
+
+            // Fire listener.
+            if (listener != null)
+                listener.handle(meshView, oldX, oldY, oldZ, newX, newY, newZ);
+        };
+
+
+        AtomicReference<MeshView> meshViewRef = new AtomicReference<>(controller.getMarkerManager().updateGizmo(identifier, x, y, z, scaleX, scaleY, scaleZ, ourListener));
+        if (controller != null) {
+            addBoldLabelButton(text + ":", "Toggle Display", 25,
+                    () -> meshViewRef.set(controller.getMarkerManager().toggleGizmo(identifier, x, y, z, scaleX, scaleY, scaleZ, ourListener)));
+        }
+
+        GridPane vecPane = new GridPane();
+        vecPane.addRow(0);
+
+        // Label:
+        VBox labelBox = new VBox();
+        labelBox.getChildren().add(new Label("X:"));
+        labelBox.getChildren().add(new Label("Y:"));
+        labelBox.getChildren().add(new Label("Z:"));
+        labelBox.setSpacing(10);
+        vecPane.addColumn(0, labelBox);
+
+        // XYZ:
+        VBox posBox = new VBox();
+        TextField xField = textFields[0] = new TextField(String.valueOf(scaleX));
+        TextField yField = textFields[1] = new TextField(String.valueOf(scaleY));
+        TextField zField = textFields[2] = new TextField(String.valueOf(scaleZ));
+        xField.setPrefWidth(60);
+        yField.setPrefWidth(60);
+        zField.setPrefWidth(60);
+        Utils.setHandleKeyPress(xField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            double newValue = Double.parseDouble(str);
+            if (!Double.isFinite(newValue))
+                return false;
+
+            // Update cache.
+            double oldX = scaleCache[0];
+            scaleCache[0] = newValue;
+
+            // Fire listener, and update gizmo position.
+            MeshView meshView = meshViewRef.get();
+            if (meshView != null) {
+                ((ScaleGizmo) meshView.getMesh()).setScaleX(newValue, true);
+            } else {
+                listener.handle(null, oldX, scaleCache[1], scaleCache[2], newValue, scaleCache[1], scaleCache[2]);
+            }
+
+            return true;
+        }, this::onChange);
+        Utils.setHandleKeyPress(yField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            double newValue = Double.parseDouble(str);
+            if (!Double.isFinite(newValue))
+                return false;
+
+            // Update cache.
+            double oldY = scaleCache[1];
+            scaleCache[1] = newValue;
+
+            // Fire listener, and update gizmo position.
+            MeshView meshView = meshViewRef.get();
+            if (meshView != null) {
+                ((ScaleGizmo) meshView.getMesh()).setScaleY(newValue, true);
+            } else {
+                listener.handle(null, scaleCache[0], oldY, scaleCache[2], scaleCache[0], newValue, scaleCache[2]);
+            }
+
+            return true;
+        }, this::onChange);
+        Utils.setHandleKeyPress(zField, str -> {
+            if (!Utils.isNumber(str))
+                return false;
+
+            double newValue = Double.parseDouble(str);
+            if (!Double.isFinite(newValue))
+                return false;
+
+            // Update cache.
+            double oldZ = scaleCache[2];
+            scaleCache[2] = newValue;
+
+            // Fire listener, and update gizmo position.
+            MeshView meshView = meshViewRef.get();
+            if (meshView != null) {
+                ((ScaleGizmo) meshView.getMesh()).setScaleZ(newValue, true);
+            } else {
+                listener.handle(null, scaleCache[0], scaleCache[1], oldZ, scaleCache[0], scaleCache[1], newValue);
+            }
+
+            return true;
+        }, this::onChange);
+
+        posBox.getChildren().add(xField);
+        posBox.getChildren().add(yField);
+        posBox.getChildren().add(zField);
+        posBox.setSpacing(2);
+        vecPane.addColumn(1, posBox);
+
+        vecPane.setHgap(10);
+        GridPane.setColumnSpan(vecPane, 2); // Make it take up the full space in the grid it will be added to.
+        setupNode(vecPane); // Setup this in the new area.
+        addRow(75);
+
+        return meshViewRef;
+    }
+
+
 
     /**
      * Add a fixed point short decimal value.

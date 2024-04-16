@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
@@ -16,7 +16,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager.GreatQuestMapModelMeshCollection;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Map;
 
@@ -26,8 +28,7 @@ import java.util.Map;
  */
 @Getter
 @Setter
-@NoArgsConstructor
-public class kcEntityInst extends GameObject implements IMultiLineInfoWriter {
+public class kcEntityInst extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     private transient kcCResourceEntityInst resource;
     private int descriptionHash;
     private int priority;
@@ -38,6 +39,7 @@ public class kcEntityInst extends GameObject implements IMultiLineInfoWriter {
     public static final int SIZE_IN_BYTES = 28;
 
     public kcEntityInst(kcCResourceEntityInst resource) {
+        super(resource.getGameInstance());
         this.resource = resource;
     }
 
@@ -73,12 +75,21 @@ public class kcEntityInst extends GameObject implements IMultiLineInfoWriter {
     }
 
     /**
+     * Gets the entity description
+     * @param parentFile the parent file containing this instance
+     * @return description or null
+     */
+    public kcEntity3DDesc getDescription(GreatQuestChunkedFile parentFile) {
+        return GreatQuestUtils.findGenericResourceByHash(parentFile, getGameInstance(), this.descriptionHash, kcCResourceGeneric::getAsEntityDescription);
+    }
+
+    /**
      * Sets up an editor for the entity data.
      * @param grid the ui creator
      */
-    public void setupEditor(GreatQuestEntityManager manager, GUIEditorGrid grid) {
+    public void setupEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapModelMeshCollection meshViewCollection) {
         GreatQuestChunkedFile chunkedFile = this.resource != null ? this.resource.getParentFile() : null;
-        setupMainEditor(manager, grid, chunkedFile);
+        setupMainEditor(manager, grid, meshViewCollection);
 
         // Add basic entity data.
         GreatQuestChunkedFile.writeAssetLine(grid, chunkedFile, "Target Entity", this.targetEntityHash);
@@ -103,29 +114,25 @@ public class kcEntityInst extends GameObject implements IMultiLineInfoWriter {
         }
 
         // Write entity description.
-        kcCResourceGeneric entityDescription = chunkedFile != null ? chunkedFile.getResourceByHash(this.descriptionHash) : null;
+        kcEntity3DDesc entityDescription = getDescription(chunkedFile);
         if (entityDescription != null) {
-            kcEntity3DDesc entityDesc = entityDescription.getAsEntityDescription();
             grid.addSeparator();
-            grid.addBoldLabel("Description '" + entityDescription.getName() + "':");
+            String name = entityDescription.getGenericResourceParent() != null ? entityDescription.getGenericResourceParent().getName() : null;
+            grid.addBoldLabel("Description" + (name != null ? " '" + name + "'" : "") + " (" + Utils.getSimpleName(entityDescription) + "):");
 
-            if (entityDesc != null) {
-                StringBuilder builder = new StringBuilder();
-                entityDesc.writeMultiLineInfo(builder);
-                for (String str : builder.toString().split(Constants.NEWLINE))
-                    grid.addNormalLabel(str);
-            }
+            StringBuilder builder = new StringBuilder();
+            entityDescription.writeMultiLineInfo(builder);
+            for (String str : builder.toString().split(Constants.NEWLINE))
+                grid.addNormalLabel(str);
         }
     }
 
     /**
      * Sets up the main information to be edited.
      * @param grid the grid to create the UI inside
-     * @param chunkedFile the chunked file to perform hash lookup operations within.
      */
-    protected void setupMainEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestChunkedFile chunkedFile) {
-        GreatQuestChunkedFile.writeAssetLine(grid, chunkedFile, "Entity Hash", this.descriptionHash);
-        GreatQuestChunkedFile.writeAssetLine(grid, chunkedFile, "Entity Description", this.descriptionHash);
+    protected void setupMainEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapModelMeshCollection meshViewCollection) {
+        GreatQuestChunkedFile.writeAssetLine(grid, manager.getMap(), "Entity Description", this.descriptionHash);
     }
 
     @Override

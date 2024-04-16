@@ -2,9 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.ProxyReact;
 import net.highwayfrogs.editor.utils.Utils;
@@ -14,7 +15,7 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
-public class kcProjectileParams extends GameObject implements IMultiLineInfoWriter {
+public class kcProjectileParams extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     private ProxyReact proxyReact;
     private float sensorRadius;
     private int group;
@@ -27,6 +28,10 @@ public class kcProjectileParams extends GameObject implements IMultiLineInfoWrit
     private int damageFlags;
     private int hitStrength;
     private final int[] padProjectileParams = new int[8];
+
+    public kcProjectileParams(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

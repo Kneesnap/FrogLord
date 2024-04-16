@@ -3,11 +3,13 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.utils.Utils;
@@ -22,8 +24,13 @@ import java.util.function.Function;
  * Created by Kneesnap on 8/23/2023.
  */
 @Getter
-public abstract class kcBaseDesc extends GameObject implements IMultiLineInfoWriter {
+public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     @Setter private GreatQuestChunkedFile parentFile;
+    @Setter private kcCResourceGeneric genericResourceParent;
+
+    public kcBaseDesc(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     /**
      * Gets the ID of the class which this template contains data to fill.

@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -14,6 +15,10 @@ public class CItemDesc extends kcActorBaseDesc {
     private int properties;
     private int attributes;
     private final int[] padItem = new int[32];
+
+    public CItemDesc(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     protected int getTargetClassID() {

@@ -453,7 +453,7 @@ public class MeshEntryBox {
         int topFace1 = entry.addFace(topDownLeftVtx, uvBottomLeftIndex, topUpRightVtx, uvTopRightIndex, topUpLeftVtx, uvTopLeftIndex);
         int topFace2 = entry.addFace(topDownLeftVtx, uvBottomLeftIndex, topDownRightVtx, uvBottomRightIndex, topUpRightVtx, uvTopRightIndex);
         int bottomFace1 = entry.addFace(bottomUpRightVtx, uvBottomRightIndex, bottomDownLeftVtx, uvTopLeftIndex, bottomUpLeftVtx, uvBottomLeftIndex);
-        int bottomFace2 = entry.addFace(bottomUpRightVtx, uvBottomRightIndex, bottomDownRightVtx, uvTopRightIndex, bottomDownLeftVtx, uvBottomRightIndex);
+        int bottomFace2 = entry.addFace(bottomUpRightVtx, uvBottomRightIndex, bottomDownRightVtx, uvTopRightIndex, bottomDownLeftVtx, uvTopLeftIndex);
         int polygonFacingNegativeX1 = entry.addFace(bottomUpLeftVtx, uvBottomLeftIndex, topDownLeftVtx, uvTopRightIndex, topUpLeftVtx, uvTopLeftIndex);
         int polygonFacingNegativeX2 = entry.addFace(bottomUpLeftVtx, uvBottomLeftIndex, bottomDownLeftVtx, uvBottomRightIndex, topDownLeftVtx, uvTopRightIndex);
         int polygonFacingPositiveX1 = entry.addFace(bottomDownRightVtx, uvBottomLeftIndex, topUpRightVtx, uvTopRightIndex, topDownRightVtx, uvTopLeftIndex); // Polygon Facing Positive X #1

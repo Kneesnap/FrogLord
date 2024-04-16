@@ -2,9 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.generic;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 
 /**
  * Represents a resource path.
@@ -13,10 +14,14 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 @Setter
-public class kcCResourcePath extends GameObject {
+public class kcCResourcePath extends GameData<GreatQuestInstance> {
     private static final int PATH_LENGTH = 260;
     private int fileHash; // The hash to the chunk which the path is included for.
     private String filePath;
+
+    public kcCResourcePath(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void load(DataReader reader) {

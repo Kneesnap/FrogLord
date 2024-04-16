@@ -1,14 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceModel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection;
-import net.highwayfrogs.editor.gui.mesh.fxobject.BoxMeshNode;
 
 /**
  * Represents a model mesh for Frogger The Great Quest.
@@ -36,13 +34,12 @@ public class GreatQuestModelMesh extends DynamicMesh {
         // Setup actual mesh.
         kcModel model = modelWrapper != null ? modelWrapper.getModel() : null;
         if (model != null) {
-            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(modelWrapper, null));
+            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(model, null, meshName));
             for (kcMaterial material : model.getMaterials())
                 this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(model, material, meshName));
         } else {
             // Setup placeholder.
-            updateMaterial(UnknownTextureSource.MAGENTA_INSTANCE.makeImage());
-            addNode(new BoxMeshNode(this, .5F, .5F, .5F));
+            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(null, null));
         }
     }
 

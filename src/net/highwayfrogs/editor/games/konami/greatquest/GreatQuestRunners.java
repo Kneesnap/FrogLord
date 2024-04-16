@@ -97,7 +97,7 @@ public class GreatQuestRunners {
             kcScriptFunction clearFlagFunc = new kcScriptFunction(clearFlagDialogCause);
 
             // Add dialog resource.
-            kcCResourceGeneric clearFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString("Knee Flag Clear Test: " + i));
+            kcCResourceGeneric clearFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString(instance, "Knee Flag Clear Test: " + i));
             clearFlagDialog.setName("FgClr" + Utils.padNumberString(i, 2));
             int clearFlagDialogHash = GreatQuestUtils.hash(clearFlagDialog.getName());
             clearFlagDialog.setHash(clearFlagDialogHash);
@@ -122,7 +122,7 @@ public class GreatQuestRunners {
             kcScriptFunction setFlagFunc = new kcScriptFunction(setFlagDialogCause);
 
             // Add dialog resource.
-            kcCResourceGeneric setFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString("Knee Flag Set: " + i));
+            kcCResourceGeneric setFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString(instance, "Knee Flag Set: " + i));
             setFlagDialog.setName("FgSet" + Utils.padNumberString(i, 2));
             int setFlagDialogHash = GreatQuestUtils.hash(setFlagDialog.getName());
             setFlagDialog.setHash(setFlagDialogHash);

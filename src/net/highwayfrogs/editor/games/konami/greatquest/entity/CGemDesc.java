@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -12,6 +13,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 public class CGemDesc extends CItemDesc {
     private GemType type;
     private final int[] padGem = new int[8];
+
+    public CGemDesc(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     protected int getTargetClassID() {

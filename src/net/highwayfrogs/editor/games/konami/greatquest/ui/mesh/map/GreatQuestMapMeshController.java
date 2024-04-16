@@ -24,7 +24,7 @@ import net.highwayfrogs.editor.utils.Utils;
 public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMapMesh> {
     private GreatQuestMapMeshCollection meshViewCollection;
     private static final double DEFAULT_FAR_CLIP = 500;
-    private static final double DEFAULT_MOVEMENT_SPEED = 100;
+    private static final double DEFAULT_MOVEMENT_SPEED = 65;
 
     private static final PhongMaterial VERTEX_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
     private static final PhongMaterial CONNECTION_MATERIAL = Utils.makeSpecialMaterial(Color.LIMEGREEN);

@@ -5,7 +5,12 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -23,6 +28,10 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
     private int proxyDescHash;
     private int animHash;
     private final int[] padActorBase = new int[4];
+
+    public kcActorBaseDesc(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     protected int getTargetClassID() {
@@ -67,5 +76,14 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         writeAssetLine(builder, padding, "Anim Set", this.animSetHash);
         writeAssetLine(builder, padding, "Collision Proxy", this.proxyDescHash);
         writeAssetLine(builder, padding, "Animation", this.animHash); // TODO: It may be desired to look at the anim set to map this hash if it's unmapped.
+    }
+
+    /**
+     * Search for the attached model description
+     * @param parentFile the file to start the search from
+     * @return modelDesc
+     */
+    public kcModelDesc getModelDesc(GreatQuestChunkedFile parentFile) {
+        return GreatQuestUtils.findGenericResourceByHash(parentFile, getGameInstance(), this.modelDescHash, kcCResourceGeneric::getAsModelDescription);
     }
 }

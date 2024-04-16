@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -14,9 +15,14 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 @Getter
 @Setter
 public class kcActorDesc extends kcActorBaseDesc {
-    private final kcHealthDesc health = new kcHealthDesc();
+    private final kcHealthDesc health;
     private int invincibleDurationLimitMs;
     private final int[] padActor = new int[3];
+
+    public kcActorDesc(GreatQuestInstance instance) {
+        super(instance);
+        this.health = new kcHealthDesc(instance);
+    }
 
     @Override
     protected int getTargetClassID() {
