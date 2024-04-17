@@ -18,7 +18,6 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 @Getter
 public class GreatQuestModelViewController extends MeshViewController<GreatQuestModelMesh> {
-    private GreatQuestModelMesh modelMesh;
     private GreatQuestModelMeshViewCollection meshViewCollection;
 
     private static final double DEFAULT_FAR_CLIP = 50;
@@ -38,10 +37,9 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
         getColorPickerLevelBackground().setValue(Color.GRAY); // Gray is better for viewing models.
 
         // Create mesh views necessary to display.
-        this.modelMesh = new GreatQuestModelMesh(getMesh().getModelWrapper());
-        if (getModel() != null && this.modelMesh.getActualMesh() != null) {
+        if (getModel() != null && getMesh().getActualMesh() != null) {
             this.meshViewCollection = new GreatQuestModelMeshViewCollection(this);
-            this.meshViewCollection.setMesh(this.modelMesh.getActualMesh());
+            this.meshViewCollection.setMesh(getMesh().getActualMesh());
         }
     }
 

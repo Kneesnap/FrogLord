@@ -21,17 +21,19 @@ import java.awt.image.BufferedImage;
 @Getter
 public class GreatQuestModelMaterialMesh extends DynamicMesh {
     private final kcModel model;
+    private final boolean swapAxis;
     private final kcMaterial gameMaterial;
     private final GreatQuestModelMaterialMeshNode mainNode;
     private PhongMaterial highlightedMaterial;
 
-    public GreatQuestModelMaterialMesh(kcModelWrapper modelWrapper, kcMaterial material) {
-        this(modelWrapper != null ? modelWrapper.getModel() : null, material, modelWrapper != null ? modelWrapper.getExportName() : null);
+    public GreatQuestModelMaterialMesh(kcModelWrapper modelWrapper, kcMaterial material, boolean swapAxis) {
+        this(modelWrapper != null ? modelWrapper.getModel() : null, material, modelWrapper != null ? modelWrapper.getExportName() : null, swapAxis);
     }
 
-    public GreatQuestModelMaterialMesh(kcModel model, kcMaterial material, String modelName) {
+    public GreatQuestModelMaterialMesh(kcModel model, kcMaterial material, String modelName, boolean swapAxis) {
         super(null, modelName != null ? modelName + "-" + (material != null ? material.getMaterialName() : "unknown") : null);
         this.model = model;
+        this.swapAxis = swapAxis;
         this.gameMaterial = material;
 
         // Add textures.

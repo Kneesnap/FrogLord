@@ -43,7 +43,12 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
         // Write vertices and uvs.
         for (int i = 0; i < modelPrim.getVertices().size(); i++) {
             kcVertex vertex = modelPrim.getVertices().get(i);
-            entry.addVertexValue(vertex.getX(), vertex.getZ(), vertex.getY());
+            if (getMesh().isSwapAxis()) {
+                entry.addVertexValue(vertex.getX(), vertex.getZ(), vertex.getY());
+            } else {
+                entry.addVertexValue(vertex.getX(), vertex.getY(), vertex.getZ());
+            }
+
             entry.addTexCoordValue(vertex.getU0(), -vertex.getV0());
         }
 
@@ -65,8 +70,13 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
     }
 
     private void writeTriangleList(DynamicMeshTypedDataEntry entry, int uvStartIndex, int vtxStartIndex, int vertexCount) {
-        for (int i = 0; i < vertexCount; i += 3)
-            entry.addFace(vtxStartIndex + i + 2, uvStartIndex + i + 2, vtxStartIndex + i + 1, uvStartIndex + i + 1, vtxStartIndex + i, uvStartIndex + i);
+        for (int i = 0; i < vertexCount; i += 3) {
+            if (getMesh().isSwapAxis()) {
+                entry.addFace(vtxStartIndex + i + 2, uvStartIndex + i + 2, vtxStartIndex + i + 1, uvStartIndex + i + 1, vtxStartIndex + i, uvStartIndex + i);
+            } else {
+                entry.addFace(vtxStartIndex + i, uvStartIndex + i, vtxStartIndex + i + 1, uvStartIndex + i + 1, vtxStartIndex + i + 2, uvStartIndex + i + 2);
+            }
+        }
     }
 
     private  void writeTriangleStrip(DynamicMeshTypedDataEntry entry, int uvStartIndex, int vtxStartIndex, int vertexCount) {
@@ -85,14 +95,22 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
                 uv2 = temp;
             }
 
-            entry.addFace(vtxStartIndex + i + 2, uvStartIndex + i + 2, vtx2, uv2, vtx1, uv1);
+            if (getMesh().isSwapAxis()) {
+                entry.addFace(vtxStartIndex + i + 2, uvStartIndex + i + 2, vtx2, uv2, vtx1, uv1);
+            } else {
+                entry.addFace(vtx1, uv1, vtx2, uv2, vtxStartIndex + i + 2, uvStartIndex + i + 2);
+            }
         }
     }
 
     @Override
     public void updateVertex(DynamicMeshTypedDataEntry entry, int localVertexIndex) {
         kcVertex vertex = entry.getDataSource().getVertices().get(localVertexIndex);
-        entry.writeVertexXYZ(localVertexIndex, vertex.getX(), vertex.getZ(), vertex.getY());
+        if (getMesh().isSwapAxis()) {
+            entry.addVertexValue(vertex.getX(), vertex.getZ(), vertex.getY());
+        } else {
+            entry.addVertexValue(vertex.getX(), vertex.getY(), vertex.getZ());
+        }
     }
 
     @Override

@@ -18,6 +18,6 @@ public class GreatQuestModelInfoController extends GreatQuestFileEditorUIControl
 
     @FXML
     private void onView(ActionEvent evt) {
-        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(), new GreatQuestModelMesh(getFile()));
+        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(), new GreatQuestModelMesh(getFile(), true));
     }
 }

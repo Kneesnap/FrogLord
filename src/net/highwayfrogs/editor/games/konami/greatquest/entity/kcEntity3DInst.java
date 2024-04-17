@@ -86,10 +86,13 @@ public class kcEntity3DInst extends kcEntityInst {
         // Rotation
         grid.addDoubleSlider("Rotation X", this.rotation.getX(), newValue -> {
             this.rotation.setX((float) (double) newValue);
+
+            kcEntity3DDesc entityDesc = getDescription(manager.getMap());
+            boolean hasAnimationSet = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getAnimationSet(manager.getMap()) != null;
             for (int i = 0; i < meshViewCollection.getMeshViews().size(); i++)
                 for (Transform transform : meshViewCollection.getMeshViews().get(i).getTransforms())
                     if (transform instanceof Rotate && ((Rotate) transform).getAxis().equals(Rotate.X_AXIS))
-                        ((Rotate) transform).setAngle(Math.toDegrees(newValue));
+                        ((Rotate) transform).setAngle(Math.toDegrees(newValue) - (hasAnimationSet ? Math.PI / 2 : 0));
         }, -Math.PI, Math.PI);
 
         grid.addDoubleSlider("Rotation Y", this.rotation.getY(), newValue -> {
@@ -97,7 +100,7 @@ public class kcEntity3DInst extends kcEntityInst {
             for (int i = 0; i < meshViewCollection.getMeshViews().size(); i++)
                 for (Transform transform : meshViewCollection.getMeshViews().get(i).getTransforms())
                     if (transform instanceof Rotate && ((Rotate) transform).getAxis().equals(Rotate.Y_AXIS))
-                        ((Rotate) transform).setAngle(Math.toDegrees(newValue + Math.PI));
+                        ((Rotate) transform).setAngle(Math.toDegrees(newValue));
         }, -Math.PI, Math.PI);
 
 
@@ -108,10 +111,6 @@ public class kcEntity3DInst extends kcEntityInst {
                     if (transform instanceof Rotate && ((Rotate) transform).getAxis().equals(Rotate.Z_AXIS))
                         ((Rotate) transform).setAngle(Math.toDegrees(newValue));
         }, -Math.PI, Math.PI);
-
-
-
-        // TODO: ROTATION
     }
 
     @Override

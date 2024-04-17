@@ -23,7 +23,7 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMapMesh> {
     private GreatQuestMapMeshCollection meshViewCollection;
-    private static final double DEFAULT_FAR_CLIP = 500;
+    private static final double DEFAULT_FAR_CLIP = 1000; // Far enough away to see the skybox.
     private static final double DEFAULT_MOVEMENT_SPEED = 25;
 
     private static final PhongMaterial VERTEX_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);

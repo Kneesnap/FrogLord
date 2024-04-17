@@ -33,6 +33,7 @@ import java.util.Map;
  */
 public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourceEntityInst, GreatQuestMapModelMeshCollection> {
     private final Map<kcCResourceModel, GreatQuestModelMesh> cachedModelMeshes = new HashMap<>();
+    private GreatQuestMapSkyBoxCollection skyBoxCollection;
 
     public GreatQuestEntityManager(MeshViewController<GreatQuestMapMesh> controller) {
         super(controller);
@@ -42,6 +43,15 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     protected void setupMainGridEditor(UISidePanel sidePanel) {
         super.setupMainGridEditor(sidePanel);
         getValueDisplaySetting().setValue(ListDisplayType.ALL);
+
+        // Add skybox.
+        for (kcCResource resource : getMap().getChunks()) {
+            if (resource instanceof kcCResourceModel && resource.getName().toLowerCase().endsWith("dome.vtx")) {
+                GreatQuestModelMesh skyBoxMesh = new GreatQuestModelMesh((kcCResourceModel) resource, false);
+                this.skyBoxCollection = new GreatQuestMapSkyBoxCollection(this);
+                this.skyBoxCollection.setMesh(skyBoxMesh.getActualMesh());
+            }
+        }
     }
 
     @Override
@@ -78,7 +88,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
                 model = modelDesc.getModelResource(getMap());
         }
 
-        GreatQuestModelMesh modelMesh = this.cachedModelMeshes.computeIfAbsent(model, GreatQuestModelMesh::new);
+        GreatQuestModelMesh modelMesh = this.cachedModelMeshes.computeIfAbsent(model, key -> new GreatQuestModelMesh(key, false));
         GreatQuestMapModelMeshCollection entityMeshCollection = new GreatQuestMapModelMeshCollection(this, entityInst);
         entityMeshCollection.setMesh(modelMesh.getActualMesh());
         return entityMeshCollection;
@@ -158,9 +168,11 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
                 // TODO: CCoinDesc, CGemDesc, CPropDesc
                 //  - ? CPropDesc (AGGGHHH. Bruiser's Chair + Lilypads DO need rotation, but treasure chest & Oyster do not) FrogPad description & regular flags perfectly match Oyster soo.
                 //  - CharacterParams
+                kcEntity3DDesc entityDesc = entity3D.getDescription(this.manager.getMap());
+                boolean hasAnimationSet = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getAnimationSet(this.manager.getMap()) != null;
                 meshView.getTransforms().add(new Rotate(Math.toDegrees(entity3D.getRotation().getZ()), Rotate.Z_AXIS));
-                meshView.getTransforms().add(new Rotate(Math.toDegrees(entity3D.getRotation().getY() + Math.PI), Rotate.Y_AXIS));
-                meshView.getTransforms().add(new Rotate(Math.toDegrees(entity3D.getRotation().getX()), Rotate.X_AXIS));
+                meshView.getTransforms().add(new Rotate(Math.toDegrees(entity3D.getRotation().getY()), Rotate.Y_AXIS));
+                meshView.getTransforms().add(new Rotate(Math.toDegrees(entity3D.getRotation().getX() - (hasAnimationSet ? Math.PI / 2 : 0)), Rotate.X_AXIS));
             }
         }
 
@@ -168,6 +180,29 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
         protected void onMeshViewCleanup(int meshIndex, GreatQuestModelMaterialMesh mesh, MeshView meshView) {
             super.onMeshViewCleanup(meshIndex, mesh, meshView);
             meshView.setOnMouseClicked(null);
+            meshView.getTransforms().clear();
+            this.manager.getController().getMainLight().getScope().remove(meshView);
+        }
+    }
+
+    @Getter
+    public static class GreatQuestMapSkyBoxCollection extends MeshViewCollection<GreatQuestModelMaterialMesh> {
+        private final GreatQuestEntityManager manager;
+
+        public GreatQuestMapSkyBoxCollection(GreatQuestEntityManager manager) {
+            super(manager.getRenderManager().createDisplayList());
+            this.manager = manager;
+        }
+
+        @Override
+        protected void onMeshViewSetup(int meshIndex, GreatQuestModelMaterialMesh mesh, MeshView meshView) {
+            super.onMeshViewSetup(meshIndex, mesh, meshView);
+            this.manager.getController().getMainLight().getScope().add(meshView);
+        }
+
+        @Override
+        protected void onMeshViewCleanup(int meshIndex, GreatQuestModelMaterialMesh mesh, MeshView meshView) {
+            super.onMeshViewCleanup(meshIndex, mesh, meshView);
             meshView.getTransforms().clear();
             this.manager.getController().getMainLight().getScope().remove(meshView);
         }
