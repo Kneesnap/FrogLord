@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.GreatQuestDummyFileChunk;
+import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceAnimSet;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceNamedHash;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -24,7 +24,7 @@ import net.highwayfrogs.editor.utils.Utils;
 public class kcActorBaseDesc extends kcEntity3DDesc {
     private int hThis;
     private int modelDescHash;
-    private int hier;
+    private int hier; // TODO: Probably hierarchy
     private int numChan;
     private int animSetHash;
     private int proxyDescHash;
@@ -94,7 +94,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
      * @param parentFile the file to start the search from
      * @return animSet
      */
-    public GreatQuestDummyFileChunk getAnimationSet(GreatQuestChunkedFile parentFile) {
+    public kcCResourceAnimSet getAnimationSet(GreatQuestChunkedFile parentFile) {
         return GreatQuestUtils.findResourceByHash(parentFile, getGameInstance(), this.animSetHash);
     }
 

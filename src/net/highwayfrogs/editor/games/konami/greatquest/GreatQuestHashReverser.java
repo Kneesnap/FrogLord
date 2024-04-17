@@ -85,6 +85,10 @@ public class GreatQuestHashReverser {
         }
     };
 
+    public static void main(String[] args) {
+        runHashPlayground();
+    }
+
     /**
      * Enters a forever loop which checks the CLI for input on hashes.
      */

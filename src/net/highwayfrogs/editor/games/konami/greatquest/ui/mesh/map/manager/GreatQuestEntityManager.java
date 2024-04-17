@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager;
 
+import javafx.application.Platform;
+import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
 import lombok.Getter;
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Manages entities for a Great Quest map.
@@ -33,7 +36,9 @@ import java.util.Map;
  */
 public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourceEntityInst, GreatQuestMapModelMeshCollection> {
     private final Map<kcCResourceModel, GreatQuestModelMesh> cachedModelMeshes = new HashMap<>();
-    private GreatQuestMapSkyBoxCollection skyBoxCollection;
+    private final List<GreatQuestMapEnvironmentCollection> waterMeshCollections = new ArrayList<>();
+    private GreatQuestMapEnvironmentCollection skyBoxCollection;
+    private static final Pattern WATER_PATTERN = Pattern.compile("^\\d\\d((lake)|(river)|(waterfall)|(water))(\\d\\d)?\\.vtx$");
 
     public GreatQuestEntityManager(MeshViewController<GreatQuestMapMesh> controller) {
         super(controller);
@@ -44,12 +49,27 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
         super.setupMainGridEditor(sidePanel);
         getValueDisplaySetting().setValue(ListDisplayType.ALL);
 
+        // Water and sky box should be setup last, because water is the biggest transparent model of all.
+        // So, it should come after everything else.
+        Platform.runLater(this::setupWaterAndSkyBox);
+    }
+
+    private void setupWaterAndSkyBox() {
         // Add skybox.
         for (kcCResource resource : getMap().getChunks()) {
-            if (resource instanceof kcCResourceModel && resource.getName().toLowerCase().endsWith("dome.vtx")) {
-                GreatQuestModelMesh skyBoxMesh = new GreatQuestModelMesh((kcCResourceModel) resource, false);
-                this.skyBoxCollection = new GreatQuestMapSkyBoxCollection(this);
+            if (!(resource instanceof kcCResourceModel))
+                continue;
+
+            kcCResourceModel resourceModel = (kcCResourceModel) resource;
+            if (resource.getName().toLowerCase().endsWith("dome.vtx")) {
+                GreatQuestModelMesh skyBoxMesh = new GreatQuestModelMesh(resourceModel, false);
+                this.skyBoxCollection = new GreatQuestMapEnvironmentCollection(this, false);
                 this.skyBoxCollection.setMesh(skyBoxMesh.getActualMesh());
+            } else if (WATER_PATTERN.matcher(resource.getName().toLowerCase()).matches()) {
+                GreatQuestModelMesh skyBoxMesh = new GreatQuestModelMesh(resourceModel, false);
+                GreatQuestMapEnvironmentCollection waterCollection = new GreatQuestMapEnvironmentCollection(this, true);
+                waterCollection.setMesh(skyBoxMesh.getActualMesh());
+                this.waterMeshCollections.add(waterCollection);
             }
         }
     }
@@ -78,9 +98,8 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     protected GreatQuestMapModelMeshCollection setupDisplay(kcCResourceEntityInst entityInst) {
         kcEntityInst entity = entityInst.getEntity();
 
-
         kcCResourceModel model = null;
-        kcEntity3DDesc entityDescription = entity.getDescription(getMap());
+        kcEntity3DDesc entityDescription = entity != null ? entity.getDescription(getMap()) : null;
         if (entityDescription instanceof kcActorBaseDesc) {
             kcActorBaseDesc actorBaseDesc = (kcActorBaseDesc) entityDescription;
             kcModelDesc modelDesc = actorBaseDesc.getModelDesc(getMap());
@@ -186,18 +205,23 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     }
 
     @Getter
-    public static class GreatQuestMapSkyBoxCollection extends MeshViewCollection<GreatQuestModelMaterialMesh> {
+    public static class GreatQuestMapEnvironmentCollection extends MeshViewCollection<GreatQuestModelMaterialMesh> {
         private final GreatQuestEntityManager manager;
+        private final boolean noCulling;
 
-        public GreatQuestMapSkyBoxCollection(GreatQuestEntityManager manager) {
+        public GreatQuestMapEnvironmentCollection(GreatQuestEntityManager manager, boolean noCulling) {
             super(manager.getRenderManager().createDisplayList());
             this.manager = manager;
+            this.noCulling = noCulling;
         }
 
         @Override
         protected void onMeshViewSetup(int meshIndex, GreatQuestModelMaterialMesh mesh, MeshView meshView) {
             super.onMeshViewSetup(meshIndex, mesh, meshView);
             this.manager.getController().getMainLight().getScope().add(meshView);
+            meshView.setMouseTransparent(true); // Allow clicking through water / sky box to select objects.
+            if (this.noCulling)
+                meshView.setCullFace(CullFace.NONE);
         }
 
         @Override

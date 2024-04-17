@@ -31,14 +31,14 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
+        // Create map mesh before super, so the map is registered before the skybox / transparent water / entities, thus allowing transparency to work right.
+        this.meshViewCollection = new GreatQuestMapMeshCollection(this);
+        this.meshViewCollection.setMesh(getMesh().getActualMesh());
+
         super.setupBindings(subScene3D, meshView);
         getFirstPersonCamera().getCamera().setFarClip(DEFAULT_FAR_CLIP);
         getFirstPersonCamera().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
         getComboBoxMeshCullFace().setValue(CullFace.NONE); // Great Quest has no back-face culling.
-
-        // Create map mesh.
-        this.meshViewCollection = new GreatQuestMapMeshCollection(this);
-        this.meshViewCollection.setMesh(getMesh().getActualMesh());
 
         // Add mesh click listener.
         getMeshScene().setOnMouseClicked(evt -> {
@@ -95,6 +95,12 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
     @Override
     protected double getAxisDisplaySize() {
         return 1;
+    }
+
+    @Override
+    protected boolean mapRendersFirst() {
+        // Gives preference to transparent entities, since the map is rarely (if ever?) transparent.
+        return true;
     }
 
     /**

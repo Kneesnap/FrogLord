@@ -179,6 +179,9 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         saveScripts(new File(folder, "scripts.txt"), settings);
 
         saveGenericText(new File(folder, "strings.txt"));
+        saveAnimationSets(new File(folder, "animation-sets.txt"));
+        saveAnimationSkeletons(new File(folder, "animation-skeletons.txt"));
+        saveAnimationTracks(new File(folder, "animation-tracks.txt"));
         saveEntities(new File(folder, "entity-instances.txt"));
         saveGenericEntityDescriptions(new File(folder, "entity-descriptions.txt"));
         saveGenericProxyInfo(new File(folder, "proxy-descriptions.txt"));
@@ -471,6 +474,61 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
             writeData(builder, chunk, generic.getAsEmitterDescription());
             builder.append(Constants.NEWLINE);
+        }
+
+        saveExport(file, builder);
+    }
+
+    /**
+     * Saves animation sets found to a text file.
+     * @param file The file to save the info to.
+     */
+    public void saveAnimationSets(File file) {
+        StringBuilder builder = new StringBuilder();
+        for (kcCResource chunk : this.chunks) {
+            if (!(chunk instanceof kcCResourceAnimSet))
+                continue;
+
+            kcCResourceAnimSet animSet = (kcCResourceAnimSet) chunk;
+            builder.append(chunk.getName()).append('[').append(Utils.to0PrefixedHexString(chunk.getHash()))
+                    .append("]: ").append(Constants.NEWLINE);
+            animSet.getAnimSetDesc().writeMultiLineInfo(builder, " ");
+        }
+
+        saveExport(file, builder);
+    }
+
+    /**
+     * Saves animation skeletons found to a text file.
+     * @param file The file to save the info to.
+     */
+    public void saveAnimationSkeletons(File file) {
+        StringBuilder builder = new StringBuilder();
+        for (kcCResource chunk : this.chunks) {
+            if (!(chunk instanceof kcCResourceSkeleton))
+                continue;
+
+            kcCResourceSkeleton skeleton = (kcCResourceSkeleton) chunk;
+            skeleton.writeMultiLineInfo(builder, " ");
+            builder.append(Constants.NEWLINE).append(Constants.NEWLINE);
+        }
+
+        saveExport(file, builder);
+    }
+
+    /**
+     * Saves animation tracks found to a text file.
+     * @param file The file to save the info to.
+     */
+    public void saveAnimationTracks(File file) {
+        StringBuilder builder = new StringBuilder();
+        for (kcCResource chunk : this.chunks) {
+            if (!(chunk instanceof kcCResourceTrack))
+                continue;
+
+            kcCResourceTrack track = (kcCResourceTrack) chunk;
+            track.writeMultiLineInfo(builder, " ");
+            builder.append(Constants.NEWLINE).append(Constants.NEWLINE);
         }
 
         saveExport(file, builder);

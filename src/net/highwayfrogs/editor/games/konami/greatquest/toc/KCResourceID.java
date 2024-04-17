@@ -16,15 +16,16 @@ import java.util.function.Function;
 @Getter
 @AllArgsConstructor
 public enum KCResourceID {
-    NONE("NON\0", null),
-    RAW("RAW\0", null),
-    TEXTURE("TEX\0", GreatQuestChunkTextureReference::new),
-    OCTTREESCENEMGR("OTT\0", kcCResOctTreeSceneMgr::new),
-    MODEL("6YTV", kcCResourceModel::new),
-    TRACK("fEAB", null), // TODO
-    HIERARCHY("fEHB", null), // TODO
-    ANIMSET("RAS\0", null), // TODO
-    ACTORDESC("RAD\0", null),
+    NONE("NON\0", null), // Game Registered ID: 0
+    RAW("RAW\0", null), // Game Registered ID: 1
+    TEXTURE("TEX\0", GreatQuestChunkTextureReference::new), // Game Registered ID: 2
+    OCTTREESCENEMGR("OTT\0", kcCResOctTreeSceneMgr::new), // Game Registered ID: 3
+    MODEL("6YTV", kcCResourceModel::new), // Game Registered ID: 4
+    // IMGd (5)
+    TRACK("fEAB", kcCResourceTrack::new), // Game Registered ID: 6,
+    HIERARCHY("fEHB", kcCResourceSkeleton::new), // Game Registered ID: 7,
+    ANIMSET("RAS\0", kcCResourceAnimSet::new), // Game Registered ID: 8
+    ACTORDESC("RAD\0", null), // Game Registered ID: 9 (Unused?)
     TRIMESH("RTM\0", null), // TODO
     GENERIC("GEN\0", kcCResourceGeneric::new),
     TOC("TOC\0", TOCChunk::new),

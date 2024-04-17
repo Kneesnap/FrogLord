@@ -295,12 +295,24 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         setDefaultCameraPosition();
         setupBasicLighting();
 
+        // Ensure that any transparent parts of the map show 3D models behind it.
+        if (mapRendersFirst())
+            this.root3D.getChildren().add(this.meshView);
+
         // Setup managers & UI.
         // Should run last since UI managers may use information from this class.
         setupBindings(subScene3D, this.meshView);
 
         // Ensure that any transparent parts of the map show 3D models behind it.
-        this.root3D.getChildren().add(this.meshView);
+        if (!mapRendersFirst())
+            this.root3D.getChildren().add(this.meshView);
+    }
+
+    /**
+     * If this is true, it gives a preference to 3D models having transparency over the world.
+     */
+    protected boolean mapRendersFirst() {
+        return false;
     }
 
     /**
