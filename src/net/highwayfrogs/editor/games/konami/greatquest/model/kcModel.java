@@ -2,10 +2,11 @@ package net.highwayfrogs.editor.games.konami.greatquest.model;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
@@ -22,7 +23,7 @@ import java.util.List;
  * Created by Kneesnap on 6/22/2023.
  */
 @Getter
-public class kcModel extends GameObject implements IPropertyListCreator {
+public class kcModel extends GameData<GreatQuestInstance> implements IPropertyListCreator {
     private final List<kcMaterial> materials = new ArrayList<>();
     private final List<kcModelNode> nodes = new ArrayList<>();
     private final List<kcModelPrim> primitives = new ArrayList<>();
@@ -54,6 +55,10 @@ public class kcModel extends GameObject implements IPropertyListCreator {
     public static final int FVF_MASK_WEIGHTS = 0b1110;
     public static final int FVF_MASK_TEXTURE_START = 8;
     public static final int FVF_MASK_TEXTURE = 0b1111 << FVF_MASK_TEXTURE_START;
+
+    public kcModel(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     /**
      * Get the number of vertices in the model.

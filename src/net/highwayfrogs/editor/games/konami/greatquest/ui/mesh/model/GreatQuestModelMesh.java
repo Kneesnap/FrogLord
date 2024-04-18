@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceModel;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection;
 
@@ -18,6 +19,7 @@ public class GreatQuestModelMesh extends DynamicMesh {
     private final kcModelWrapper modelWrapper;
     private final DynamicMeshCollection<GreatQuestModelMaterialMesh> actualMesh;
     private final boolean swapAxis;
+    private final boolean environmentalMesh;
 
     public GreatQuestModelMesh(kcCResourceModel resourceModel, boolean swapAxis) {
         this(resourceModel != null ? resourceModel.getModelWrapper() : null, resourceModel != null ? resourceModel.getName() : "dummy", swapAxis);
@@ -32,16 +34,17 @@ public class GreatQuestModelMesh extends DynamicMesh {
         this.modelWrapper = modelWrapper;
         this.actualMesh = new DynamicMeshCollection<>(getMeshName());
         this.swapAxis = swapAxis;
+        this.environmentalMesh = modelWrapper != null && GreatQuestEntityManager.isFileNameEnvironmentalMesh(modelWrapper.getFileName());
 
         // Setup actual mesh.
         kcModel model = modelWrapper != null ? modelWrapper.getModel() : null;
         if (model != null) {
-            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(model, null, meshName, swapAxis));
+            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, model, null, meshName, swapAxis));
             for (kcMaterial material : model.getMaterials())
-                this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(model, material, meshName, swapAxis));
+                this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, model, material, meshName, swapAxis));
         } else {
             // Setup placeholder.
-            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(null, null, swapAxis));
+            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, null, null, swapAxis));
         }
     }
 

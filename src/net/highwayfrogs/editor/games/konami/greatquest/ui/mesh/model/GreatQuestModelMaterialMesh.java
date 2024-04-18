@@ -20,18 +20,20 @@ import java.awt.image.BufferedImage;
  */
 @Getter
 public class GreatQuestModelMaterialMesh extends DynamicMesh {
+    private final GreatQuestModelMesh fullMesh;
     private final kcModel model;
     private final boolean swapAxis;
     private final kcMaterial gameMaterial;
     private final GreatQuestModelMaterialMeshNode mainNode;
     private PhongMaterial highlightedMaterial;
 
-    public GreatQuestModelMaterialMesh(kcModelWrapper modelWrapper, kcMaterial material, boolean swapAxis) {
-        this(modelWrapper != null ? modelWrapper.getModel() : null, material, modelWrapper != null ? modelWrapper.getExportName() : null, swapAxis);
+    public GreatQuestModelMaterialMesh(GreatQuestModelMesh fullMesh, kcModelWrapper modelWrapper, kcMaterial material, boolean swapAxis) {
+        this(fullMesh, modelWrapper != null ? modelWrapper.getModel() : null, material, modelWrapper != null ? modelWrapper.getExportName() : null, swapAxis);
     }
 
-    public GreatQuestModelMaterialMesh(kcModel model, kcMaterial material, String modelName, boolean swapAxis) {
+    public GreatQuestModelMaterialMesh(GreatQuestModelMesh fullMesh, kcModel model, kcMaterial material, String modelName, boolean swapAxis) {
         super(null, modelName != null ? modelName + "-" + (material != null ? material.getMaterialName() : "unknown") : null);
+        this.fullMesh = fullMesh;
         this.model = model;
         this.swapAxis = swapAxis;
         this.gameMaterial = material;

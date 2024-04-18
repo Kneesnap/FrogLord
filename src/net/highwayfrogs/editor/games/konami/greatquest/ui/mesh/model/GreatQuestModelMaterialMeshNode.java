@@ -13,6 +13,8 @@ import java.util.List;
  * Created by Kneesnap on 4/15/2024.
  */
 public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcModelPrim> {
+    private static final double PS2_SCALE = .01D;
+
     public GreatQuestModelMaterialMeshNode(GreatQuestModelMaterialMesh mesh) {
         super(mesh);
     }
@@ -41,12 +43,14 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
         DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), modelPrim);
 
         // Write vertices and uvs.
+        double scaleMultiplier = getVertexScalingMultiplier();
         for (int i = 0; i < modelPrim.getVertices().size(); i++) {
             kcVertex vertex = modelPrim.getVertices().get(i);
+
             if (getMesh().isSwapAxis()) {
-                entry.addVertexValue(vertex.getX(), vertex.getZ(), vertex.getY());
+                entry.addVertexValue((float) (vertex.getX() * scaleMultiplier), (float) (vertex.getZ() * scaleMultiplier), (float) (vertex.getY() * scaleMultiplier));
             } else {
-                entry.addVertexValue(vertex.getX(), vertex.getY(), vertex.getZ());
+                entry.addVertexValue((float) (vertex.getX() * scaleMultiplier), (float) (vertex.getY() * scaleMultiplier), (float) (vertex.getZ() * scaleMultiplier));
             }
 
             entry.addTexCoordValue(vertex.getU0(), -vertex.getV0());
@@ -106,10 +110,11 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
     @Override
     public void updateVertex(DynamicMeshTypedDataEntry entry, int localVertexIndex) {
         kcVertex vertex = entry.getDataSource().getVertices().get(localVertexIndex);
+        double scaleMultiplier = getVertexScalingMultiplier();
         if (getMesh().isSwapAxis()) {
-            entry.addVertexValue(vertex.getX(), vertex.getZ(), vertex.getY());
+            entry.addVertexValue((float) (vertex.getX() * scaleMultiplier), (float) (vertex.getZ() * scaleMultiplier), (float) (vertex.getY() * scaleMultiplier));
         } else {
-            entry.addVertexValue(vertex.getX(), vertex.getY(), vertex.getZ());
+            entry.addVertexValue((float) (vertex.getX() * scaleMultiplier), (float) (vertex.getY() * scaleMultiplier), (float) (vertex.getZ() * scaleMultiplier));
         }
     }
 
@@ -127,5 +132,12 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
      */
     public kcModel getModel() {
         return getMesh().getModel();
+    }
+
+    public double getVertexScalingMultiplier() {
+        if (getModel().getGameInstance().isPS2() && !(getMesh().getFullMesh() != null && getMesh().getFullMesh().isEnvironmentalMesh()))
+            return PS2_SCALE;
+
+        return 1;
     }
 }

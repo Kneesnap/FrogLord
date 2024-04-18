@@ -38,7 +38,8 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     private final Map<kcCResourceModel, GreatQuestModelMesh> cachedModelMeshes = new HashMap<>();
     private final List<GreatQuestMapEnvironmentCollection> waterMeshCollections = new ArrayList<>();
     private GreatQuestMapEnvironmentCollection skyBoxCollection;
-    private static final Pattern WATER_PATTERN = Pattern.compile("^\\d\\d((lake)|(river)|(waterfall)|(water))(\\d\\d)?\\.vtx$");
+    private static final Pattern DOME_PATTERN = Pattern.compile("(?i)^\\d\\ddome(\\d\\d)?\\.vtx$");
+    private static final Pattern WATER_PATTERN = Pattern.compile("(?i)^\\d\\d((lake)|(river)|(waterfall)|(water))(\\d\\d)?\\.vtx$");
 
     public GreatQuestEntityManager(MeshViewController<GreatQuestMapMesh> controller) {
         super(controller);
@@ -61,11 +62,11 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
                 continue;
 
             kcCResourceModel resourceModel = (kcCResourceModel) resource;
-            if (resource.getName().toLowerCase().endsWith("dome.vtx")) {
+            if (isFileNameSkyDome(resource.getName())) {
                 GreatQuestModelMesh skyBoxMesh = new GreatQuestModelMesh(resourceModel, false);
                 this.skyBoxCollection = new GreatQuestMapEnvironmentCollection(this, false);
                 this.skyBoxCollection.setMesh(skyBoxMesh.getActualMesh());
-            } else if (WATER_PATTERN.matcher(resource.getName().toLowerCase()).matches()) {
+            } else if (isFileNameWaterMesh(resource.getName())) {
                 GreatQuestModelMesh skyBoxMesh = new GreatQuestModelMesh(resourceModel, false);
                 GreatQuestMapEnvironmentCollection waterCollection = new GreatQuestMapEnvironmentCollection(this, true);
                 waterCollection.setMesh(skyBoxMesh.getActualMesh());
@@ -230,5 +231,32 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
             meshView.getTransforms().clear();
             this.manager.getController().getMainLight().getScope().remove(meshView);
         }
+    }
+
+    /**
+     * Test if the provided file name matches the file name pattern for a sky dome.
+     * @param fileName the file name to test
+     * @return fileNameIsSkyDome
+     */
+    public static boolean isFileNameSkyDome(String fileName) {
+        return DOME_PATTERN.matcher(fileName).matches();
+    }
+
+    /**
+     * Test if the provided file name matches the file name pattern for a static water mesh.
+     * @param fileName the file name to test
+     * @return fileNameIsWaterMesh
+     */
+    public static boolean isFileNameWaterMesh(String fileName) {
+        return WATER_PATTERN.matcher(fileName).matches();
+    }
+
+    /**
+     * Test if the provided file name matches the file name pattern for a static water mesh or a sky dome.
+     * @param fileName the file name to test
+     * @return fileNameIsEnvironmentMesh
+     */
+    public static boolean isFileNameEnvironmentalMesh(String fileName) {
+        return isFileNameSkyDome(fileName) || isFileNameWaterMesh(fileName);
     }
 }

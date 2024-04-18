@@ -2,9 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
  * Created by Kneesnap on 6/22/2023.
  */
 @Getter
-public class kcModelPrim extends GameObject {
+public class kcModelPrim extends GameData<GreatQuestInstance> {
     private final kcModel model;
     private final List<kcVertex> vertices = new ArrayList<>();
     private long materialId; // uint
@@ -23,6 +24,7 @@ public class kcModelPrim extends GameObject {
     private transient long loadedVertexCount = -1;
 
     public kcModelPrim(kcModel model) {
+        super(model.getGameInstance());
         this.model = model;
     }
 

@@ -29,7 +29,7 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
     public static final Image MODEL_ICON = loadIcon("model");
 
     public kcModelWrapper(GreatQuestInstance instance) {
-        this(instance, new kcModel());
+        this(instance, new kcModel(instance));
     }
 
     public kcModelWrapper(GreatQuestInstance instance, kcModel model) {
