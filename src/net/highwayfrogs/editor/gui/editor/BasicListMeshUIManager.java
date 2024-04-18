@@ -11,7 +11,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapCollprim;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
@@ -20,6 +19,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A basic mesh UI manager which allows displaying one or more contents of a list in 3D space for editing.
@@ -131,6 +131,16 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     }
 
     /**
+     * Gets the name of the value as it displays in the list.
+     * @param index the index of the value
+     * @param value the value to get the name of
+     * @return listDisplayName
+     */
+    protected String getListDisplayName(int index, TValue value) {
+        return getValueName() + " " + index;
+    }
+
+    /**
      * Sets up the main grid editor UI.
      * @param sidePanel The side panel to add UI elements to.
      */
@@ -160,7 +170,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
                 this.updateEditor(); // Refresh UI.
             }
         });
-        this.valueSelectionBox.setConverter(new AbstractIndexStringConverter<>(getValues(), (index, collprim) -> getValueName() + " " + index));
+        this.valueSelectionBox.setConverter(new AbstractIndexStringConverter<>(getValues(), this::getListDisplayName));
 
         // Display Settings Checkbox.
         this.valueDisplaySetting = this.mainGrid.addEnumSelector("Value(s) Displayed", ListDisplayType.SELECTED, ListDisplayType.values(), false, newValue -> {
@@ -186,6 +196,8 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     public T3DDelegate createDisplay(TValue value) {
         T3DDelegate newDelegate = setupDisplay(value);
         T3DDelegate oldDelegate = getDelegatesByValue().put(value, newDelegate);
+        if (Objects.equals(getSelectedValue(), value))
+            onSelectedValueChange(value, oldDelegate, value, newDelegate);
         if (oldDelegate != null)
             onDelegateRemoved(value, oldDelegate);
         return newDelegate;
@@ -314,7 +326,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         this.valueCountLabel.setText(getValueName() + " Count: " + valueCount);
 
         this.valueSelectionBox.setItems(FXCollections.observableArrayList(getValues()));
-        this.valueSelectionBox.setConverter(new AbstractIndexStringConverter<>(getValues(), (index, collprim) -> getValueName() + " " + index));
+        this.valueSelectionBox.setConverter(new AbstractIndexStringConverter<>(getValues(), this::getListDisplayName));
     }
 
     public enum ListDisplayType {

@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 
 /**
  * Manages entities for a Great Quest map.
+ * TODO: Show entity collision via checkbox.
  * Created by Kneesnap on 4/14/2024.
  */
 public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourceEntityInst, GreatQuestMapModelMeshCollection> {
@@ -39,7 +40,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     private final List<GreatQuestMapEnvironmentCollection> waterMeshCollections = new ArrayList<>();
     private GreatQuestMapEnvironmentCollection skyBoxCollection;
     private static final Pattern DOME_PATTERN = Pattern.compile("(?i)^\\d\\ddome(\\d\\d)?\\.vtx$");
-    private static final Pattern WATER_PATTERN = Pattern.compile("(?i)^\\d\\d((lake)|(river)|(waterfall)|(water))(\\d\\d)?\\.vtx$");
+    private static final Pattern WATER_PATTERN = Pattern.compile("(?i)^\\d\\d((lake)|(river)|(waterfall)|(water))(\\d\\d)?\\.((ctm)|(vtx))$");
 
     public GreatQuestEntityManager(MeshViewController<GreatQuestMapMesh> controller) {
         super(controller);
@@ -67,9 +68,9 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
                 this.skyBoxCollection = new GreatQuestMapEnvironmentCollection(this, false);
                 this.skyBoxCollection.setMesh(skyBoxMesh.getActualMesh());
             } else if (isFileNameWaterMesh(resource.getName())) {
-                GreatQuestModelMesh skyBoxMesh = new GreatQuestModelMesh(resourceModel, false);
+                GreatQuestModelMesh waterBoxMesh = new GreatQuestModelMesh(resourceModel, false);
                 GreatQuestMapEnvironmentCollection waterCollection = new GreatQuestMapEnvironmentCollection(this, true);
-                waterCollection.setMesh(skyBoxMesh.getActualMesh());
+                waterCollection.setMesh(waterBoxMesh.getActualMesh());
                 this.waterMeshCollections.add(waterCollection);
             }
         }
@@ -83,6 +84,11 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     @Override
     public String getValueName() {
         return "Entity";
+    }
+
+    @Override
+    protected String getListDisplayName(int index, kcCResourceEntityInst entity) {
+        return entity != null ? entity.getName() : super.getListDisplayName(index, null);
     }
 
     @Override
@@ -158,7 +164,8 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
 
     @Override
     protected void onDelegateRemoved(kcCResourceEntityInst kcCResourceEntityInst, GreatQuestMapModelMeshCollection meshViews) {
-        // Do nothing?
+        if (meshViews != null)
+            meshViews.setMesh(null);
     }
 
     @Getter

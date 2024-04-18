@@ -32,6 +32,8 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
         reader.verifyString(KCResourceID.HIERARCHY.getSignature()); // For some reason this is here again.
         reader.skipInt(); // Skip the size.
         this.rootNode.load(reader);
+        if (this.rootNode.loadEndPosition >= 0) // Ensure the reader is placed after the end of the node data.
+            reader.setIndex(this.rootNode.loadEndPosition);
     }
 
     @Override
@@ -52,15 +54,16 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
         this.rootNode.writeMultiLineInfo(builder, padding + " ");
     }
 
-    @Getter
+
     public static class kcNode extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
-        private final kcCResourceSkeleton skeleton;
-        private final kcNode parent;
-        private final List<kcNode> children = new ArrayList<>();
-        private String name;
-        private int tag;
-        private int flags;
-        private byte[] nodeData; // TODO: Parse this later.
+        @Getter private final kcCResourceSkeleton skeleton;
+        @Getter private final kcNode parent;
+        @Getter private final List<kcNode> children = new ArrayList<>();
+        @Getter private String name;
+        @Getter private int tag;
+        @Getter private int flags;
+        @Getter private byte[] nodeData; // TODO: Parse this later.
+        private transient int loadEndPosition = -1;
 
         public kcNode(kcCResourceSkeleton skeleton, kcNode parent) {
             super(skeleton.getGameInstance());
@@ -90,8 +93,13 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
                 kcNode newChild = new kcNode(this.skeleton, this);
                 reader.jumpTemp(nodeBaseAddress + childDataStartAddress);
                 newChild.load(reader);
+                int childEndIndex = Math.max(reader.getIndex(), newChild.loadEndPosition);
                 reader.jumpReturn();
                 this.children.add(newChild);
+
+                // Get reader end position.
+                if (childEndIndex > this.loadEndPosition)
+                    this.loadEndPosition = childEndIndex;
             }
         }
 

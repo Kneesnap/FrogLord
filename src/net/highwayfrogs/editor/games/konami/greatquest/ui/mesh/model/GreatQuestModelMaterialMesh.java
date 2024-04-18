@@ -9,9 +9,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.fxobject.BoxMeshNode;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
@@ -59,30 +58,7 @@ public class GreatQuestModelMaterialMesh extends DynamicMesh {
     @Override
     protected PhongMaterial updateMaterial(BufferedImage newImage) {
         PhongMaterial parentMaterial = super.updateMaterial(newImage);
-
-        // Setup graphics.
-        BufferedImage highlightedImage = new BufferedImage(newImage.getWidth(), newImage.getHeight(), newImage.getType());
-        Graphics2D g = highlightedImage.createGraphics();
-        try {
-            // Clean image.
-            g.setBackground(new Color(255, 255, 255, 0));
-            g.clearRect(0, 0, highlightedImage.getWidth(), highlightedImage.getHeight());
-
-            // Draw new image.
-            g.drawImage(newImage, 0, 0, newImage.getWidth(), newImage.getHeight(), null);
-            g.setColor(new Color(200, 200, 0, 127));
-            g.fillRect(0, 0, highlightedImage.getWidth(), highlightedImage.getHeight());
-        } finally {
-            g.dispose();
-        }
-
-        if (this.highlightedMaterial == null) {
-            this.highlightedMaterial = Utils.makeDiffuseMaterial(Utils.toFXImage(highlightedImage, false));
-            return this.highlightedMaterial;
-        }
-
-        // Update material image.
-        this.highlightedMaterial.setDiffuseMap(Utils.toFXImage(highlightedImage, false));
+        this.highlightedMaterial = Scene3DUtils.updateHighlightMaterial(this.highlightedMaterial, newImage);
         return parentMaterial;
     }
 }

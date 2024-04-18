@@ -10,6 +10,8 @@ import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -383,5 +385,38 @@ public class Scene3DUtils {
             node.setRotationAxis(p);
             node.setRotate(Math.toDegrees(d));
         }
+    }
+
+    /**
+     * Updates a highlighted material
+     * @param material the material to update
+     * @param rawTexture the image to apply highlighting to
+     * @return highlightedMaterial
+     */
+    public static PhongMaterial updateHighlightMaterial(PhongMaterial material, BufferedImage rawTexture) {
+        // Setup graphics.
+        BufferedImage highlightedImage = new BufferedImage(rawTexture.getWidth(), rawTexture.getHeight(), rawTexture.getType());
+        Graphics2D g = highlightedImage.createGraphics();
+        try {
+            // Clean image.
+            g.setBackground(new Color(255, 255, 255, 0));
+            g.clearRect(0, 0, highlightedImage.getWidth(), highlightedImage.getHeight());
+
+            // Draw new image.
+            g.drawImage(rawTexture, 0, 0, rawTexture.getWidth(), rawTexture.getHeight(), null);
+            g.setColor(new Color(200, 200, 0, 127));
+            g.fillRect(0, 0, highlightedImage.getWidth(), highlightedImage.getHeight());
+        } finally {
+            g.dispose();
+        }
+
+        if (material == null) {
+            material = Utils.makeDiffuseMaterial(Utils.toFXImage(highlightedImage, false));
+            return material;
+        }
+
+        // Update material image.
+        material.setDiffuseMap(Utils.toFXImage(highlightedImage, false));
+        return material;
     }
 }

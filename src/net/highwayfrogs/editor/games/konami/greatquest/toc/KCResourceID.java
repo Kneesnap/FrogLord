@@ -26,7 +26,7 @@ public enum KCResourceID {
     HIERARCHY("fEHB", kcCResourceSkeleton::new), // Game Registered ID: 7,
     ANIMSET("RAS\0", kcCResourceAnimSet::new), // Game Registered ID: 8
     ACTORDESC("RAD\0", null), // Game Registered ID: 9 (Unused?)
-    TRIMESH("RTM\0", null), // TODO
+    TRIMESH("RTM\0", kcCResourceTriMesh::new),
     GENERIC("GEN\0", kcCResourceGeneric::new),
     TOC("TOC\0", TOCChunk::new),
     ACTIONSEQUENCE("ASQ\0", kcCActionSequence::new),
