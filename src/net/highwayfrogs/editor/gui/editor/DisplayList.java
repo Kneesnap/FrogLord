@@ -8,6 +8,7 @@ import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -217,7 +218,7 @@ public class DisplayList {
      * @param radius       The radius of the cylinder.
      * @param height       The height of the cylinder.
      * @param material     The material used to render the cylinder.
-     * @param useWireframe Whether or not to display the cylinder as a wireframe.
+     * @param useWireframe Whether to display the cylinder as a wireframe.
      * @return The newly created/added cylinder
      */
     public Cylinder addCylinder(double x, double y, double z, double radius, double height, PhongMaterial material, boolean useWireframe) {
@@ -236,7 +237,7 @@ public class DisplayList {
      * This class holds render lists.
      */
     public static class RenderListManager {
-        private Group root;
+        @Setter @Getter private Group root;
         private final Set<DisplayList> displayListCache = new HashSet<>();
 
         public RenderListManager() {
@@ -245,22 +246,6 @@ public class DisplayList {
 
         public RenderListManager(Group root) {
             this.root = root;
-        }
-
-        /**
-         * Sets the root node which lists created by this manager should belong to.
-         * @param root The root node.
-         */
-        public void setRoot(Group root) {
-            this.root = root;
-        }
-
-        /**
-         * Gets the root scene graph render node.
-         * @return The root node.
-         */
-        public Group getRoot() {
-            return this.root;
         }
 
         /**

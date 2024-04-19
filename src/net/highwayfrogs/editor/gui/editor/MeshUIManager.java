@@ -62,6 +62,13 @@ public class MeshUIManager<TMesh extends DynamicMesh> {
     }
 
     /**
+     * Gets the transparent RenderManager for this manager.
+     */
+    public RenderListManager getTransparentRenderManager() {
+        return getController().getTransparentRenderManager();
+    }
+
+    /**
      * Gets the MapMesh this manages.
      * @return mapMesh
      */

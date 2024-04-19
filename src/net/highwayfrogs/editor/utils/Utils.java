@@ -3,7 +3,9 @@ package net.highwayfrogs.editor.utils;
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.*;
+import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.SubScene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
@@ -15,9 +17,11 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.paint.PhongMaterial;
-import javafx.stage.*;
-import javafx.stage.Window;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
@@ -1561,6 +1565,21 @@ public class Utils {
         material.setSpecularPower(0.0);
         material.setDiffuseMap(texture);
         return material;
+    }
+
+    /**
+     * Creates a PhongMaterial with a color unaffected by lighting which can be used for highlight overlays.
+     * @param color The color to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial makeHighlightOverlayMaterial(Color color) {
+        BufferedImage colorImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = colorImage.createGraphics();
+        graphics.setColor(toAWTColor(color, (byte) 0x7F));
+        graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
+        graphics.dispose();
+
+        return makeSpecialMaterial(toFXImage(colorImage, false));
     }
 
     /**

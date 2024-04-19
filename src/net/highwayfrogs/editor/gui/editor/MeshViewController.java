@@ -96,6 +96,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private final Map<Class<? extends MeshUIManager<TMesh>>, MeshUIManager<TMesh>> managersByType = new HashMap<>();
     private final List<MeshUISelector<TMesh, ?>> selectors = new ArrayList<>();
     private final RenderListManager renderManager = new RenderListManager();
+    private final RenderListManager transparentRenderManager = new RenderListManager();
     private final InputManager inputManager = new InputManager();
     private final FirstPersonCamera firstPersonCamera = new FirstPersonCamera(this.inputManager);
 
@@ -220,7 +221,12 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         subScene3D.setCamera(this.firstPersonCamera.getCamera());
 
         // Ensure that the render manager has access to the root node
-        this.renderManager.setRoot(this.root3D);
+        Group normalGroup = new Group();
+        Group transparentGroup = new Group();
+        this.root3D.getChildren().add(normalGroup);
+        this.root3D.getChildren().add(transparentGroup);
+        this.renderManager.setRoot(normalGroup);
+        this.transparentRenderManager.setRoot(transparentGroup);
 
         // Initialise the UI layout.
         BorderPane uiPane = new BorderPane();
@@ -249,6 +255,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 // Stop camera processing and clear up the render manager
                 this.firstPersonCamera.stopThreadProcessing();
                 this.renderManager.removeAllDisplayLists();
+                this.transparentRenderManager.removeAllDisplayLists();
                 this.inputManager.shutdown();
 
                 // Clear selectors
@@ -297,7 +304,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
         // Ensure that any transparent parts of the map show 3D models behind it.
         if (mapRendersFirst())
-            this.root3D.getChildren().add(this.meshView);
+            this.renderManager.getRoot().getChildren().add(this.meshView);
 
         // Setup managers & UI.
         // Should run last since UI managers may use information from this class.
@@ -305,7 +312,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
         // Ensure that any transparent parts of the map show 3D models behind it.
         if (!mapRendersFirst())
-            this.root3D.getChildren().add(this.meshView);
+            this.transparentRenderManager.getRoot().getChildren().add(this.meshView);
     }
 
     /**
@@ -421,10 +428,10 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private void setupBasicLighting() {
         // There is no lighting on terrain, equivalent to a fully white ambient light.
         this.mainLight = new AmbientLight(Color.WHITE);
-        getRenderManager().getRoot().getChildren().add(this.mainLight);
+        getRoot3D().getChildren().add(this.mainLight);
 
         // Add lighting group.
-        getRenderManager().getRoot().getChildren().add(this.lightingGroup);
+        getRoot3D().getChildren().add(this.lightingGroup);
 
         // Add scope.
         this.mainLight.getScope().add(this.lightingGroup);
@@ -463,7 +470,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             try {
                 execution.accept(manager);
             } catch (Throwable th) {
-                manager.getLogger().throwing(null, null, new RuntimeException("Failed to run '" + name + "'.", th));
+                Utils.handleError(getLogger(), th, true, "Failed to run '%s'.", name);
             }
         }
     }

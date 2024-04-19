@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
-import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager.GreatQuestMapModelMeshCollection;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -87,9 +87,9 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
      * Sets up an editor for the entity data.
      * @param grid the ui creator
      */
-    public void setupEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapModelMeshCollection meshViewCollection) {
+    public void setupEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapEditorEntityDisplay entityDisplay) {
         GreatQuestChunkedFile chunkedFile = this.resource != null ? this.resource.getParentFile() : null;
-        setupMainEditor(manager, grid, meshViewCollection);
+        setupMainEditor(manager, grid, entityDisplay);
 
         // Add basic entity data.
         GreatQuestChunkedFile.writeAssetLine(grid, chunkedFile, "Target Entity", this.targetEntityHash);
@@ -131,7 +131,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
      * Sets up the main information to be edited.
      * @param grid the grid to create the UI inside
      */
-    protected void setupMainEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapModelMeshCollection meshViewCollection) {
+    protected void setupMainEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapEditorEntityDisplay entityDisplay) {
         GreatQuestChunkedFile.writeAssetLine(grid, manager.getMap(), "Entity Description", this.descriptionHash);
     }
 

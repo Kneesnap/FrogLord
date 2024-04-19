@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcEmitterDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyCapsuleDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyTriMeshDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
@@ -166,9 +167,23 @@ public class kcCResourceGeneric extends kcCResource {
     }
 
     /**
+     * Get the data in this resource as a proxy description, if it is one.
+     */
+    public kcProxyDesc getAsProxyDescription() {
+        switch (getResourceType()) {
+            case PROXY_CAPSULE_DESCRIPTION:
+                return getAsProxyCapsuleDescription();
+            case PROXY_TRI_MESH_DESCRIPTION:
+                return getAsProxyTriMeshDescription();
+            default:
+                return null;
+        }
+    }
+
+    /**
      * Get the data in this resource as a proxy capsule description, if it is one.
      */
-    public kcProxyCapsuleDesc getAProxyCapsuleDescription() {
+    public kcProxyCapsuleDesc getAsProxyCapsuleDescription() {
         return loadAsObject(kcCResourceGenericType.PROXY_CAPSULE_DESCRIPTION, (gameInstance, classID) -> {
             if (classID == kcClassID.PROXY_CAPSULE.getAlternateClassId())
                 return null; // This appears to be old data in a format we don't understand. (Likely outdated format)

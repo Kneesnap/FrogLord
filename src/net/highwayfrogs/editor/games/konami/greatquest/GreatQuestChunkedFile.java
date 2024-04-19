@@ -417,18 +417,9 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 continue;
 
             kcCResourceGeneric generic = (kcCResourceGeneric) chunk;
-
-            kcProxyDesc proxyDesc;
-            switch (generic.getResourceType()) {
-                case PROXY_CAPSULE_DESCRIPTION:
-                    proxyDesc = generic.getAProxyCapsuleDescription();
-                    break;
-                case PROXY_TRI_MESH_DESCRIPTION:
-                    proxyDesc = generic.getAsProxyTriMeshDescription();
-                    break;
-                default:
-                    continue;
-            }
+            kcProxyDesc proxyDesc = generic.getAsProxyDescription();
+            if (proxyDesc == null)
+                continue; // Not a proxy description.
 
             writeData(builder, chunk, proxyDesc);
             builder.append(Constants.NEWLINE);

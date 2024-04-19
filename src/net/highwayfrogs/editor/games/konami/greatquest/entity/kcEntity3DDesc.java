@@ -19,13 +19,14 @@ import net.highwayfrogs.editor.utils.Utils;
 public class kcEntity3DDesc extends kcBaseDesc {
     private int instanceFlags;
     private final int[] padEntity = new int[3];
-    private final kcSphere boundingSphere = new kcSphere();
+    private final kcSphere boundingSphere = new kcSphere(); // Positioned relative to entity position.
     private final int[] padEntity3D = new int[4];
 
     private static final int CLASS_ID = GreatQuestUtils.hash("kcCEntity3D");
 
     public kcEntity3DDesc(GreatQuestInstance instance) {
         super(instance);
+        this.boundingSphere.setRadius(1F); // Default radius is 1.
     }
 
     @Override

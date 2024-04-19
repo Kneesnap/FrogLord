@@ -1,7 +1,5 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
-import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Transform;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -10,7 +8,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
-import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager.GreatQuestMapModelMeshCollection;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -62,8 +60,8 @@ public class kcEntity3DInst extends kcEntityInst {
     }
 
     @Override
-    protected void setupMainEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapModelMeshCollection meshViewCollection) {
-        super.setupMainEditor(manager, grid, meshViewCollection);
+    protected void setupMainEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapEditorEntityDisplay entityDisplay) {
+        super.setupMainEditor(manager, grid, entityDisplay);
         grid.addLabel("Flags", Utils.toHexString(this.flags));
         grid.addEnumSelector("Billboard Axis", this.billboardAxis, kcAxisType.values(), false, newType -> this.billboardAxis = newType);
 
@@ -72,7 +70,7 @@ public class kcEntity3DInst extends kcEntityInst {
             this.position.setX((float) newX);
             this.position.setY((float) newY);
             this.position.setZ((float) newZ);
-            meshViewCollection.setPosition(newX, newY, newZ);
+            entityDisplay.setPosition(newX, newY, newZ);
         });
 
         // Scale Editor TODO: I think we want to make these gizmos managed by the entity editor for maximum flexibility.
@@ -80,36 +78,23 @@ public class kcEntity3DInst extends kcEntityInst {
             this.scale.setX((float) newX);
             this.scale.setY((float) newY);
             this.scale.setZ((float) newZ);
-            meshViewCollection.setScale(newX, newY, newZ);
+            entityDisplay.setScale(newX, newY, newZ);
         });
 
         // Rotation
         grid.addDoubleSlider("Rotation X", this.rotation.getX(), newValue -> {
             this.rotation.setX((float) (double) newValue);
-
-            kcEntity3DDesc entityDesc = getDescription(manager.getMap());
-            boolean hasAnimationSet = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getAnimationSet(manager.getMap()) != null;
-            for (int i = 0; i < meshViewCollection.getMeshViews().size(); i++)
-                for (Transform transform : meshViewCollection.getMeshViews().get(i).getTransforms())
-                    if (transform instanceof Rotate && ((Rotate) transform).getAxis().equals(Rotate.X_AXIS))
-                        ((Rotate) transform).setAngle(Math.toDegrees(newValue) - (hasAnimationSet ? Math.PI / 2 : 0));
+            entityDisplay.updateRotation();
         }, -Math.PI, Math.PI);
 
         grid.addDoubleSlider("Rotation Y", this.rotation.getY(), newValue -> {
             this.rotation.setY((float) (double) newValue);
-            for (int i = 0; i < meshViewCollection.getMeshViews().size(); i++)
-                for (Transform transform : meshViewCollection.getMeshViews().get(i).getTransforms())
-                    if (transform instanceof Rotate && ((Rotate) transform).getAxis().equals(Rotate.Y_AXIS))
-                        ((Rotate) transform).setAngle(Math.toDegrees(newValue));
+            entityDisplay.updateRotation();
         }, -Math.PI, Math.PI);
-
 
         grid.addDoubleSlider("Rotation Z", this.rotation.getZ(), newValue -> {
             this.rotation.setZ((float) (double) newValue);
-            for (int i = 0; i < meshViewCollection.getMeshViews().size(); i++)
-                for (Transform transform : meshViewCollection.getMeshViews().get(i).getTransforms())
-                    if (transform instanceof Rotate && ((Rotate) transform).getAxis().equals(Rotate.Z_AXIS))
-                        ((Rotate) transform).setAngle(Math.toDegrees(newValue));
+            entityDisplay.updateRotation();
         }, -Math.PI, Math.PI);
     }
 

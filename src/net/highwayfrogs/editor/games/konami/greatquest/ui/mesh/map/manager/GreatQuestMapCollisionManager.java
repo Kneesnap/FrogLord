@@ -185,5 +185,4 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
             this.vertexEntry.writeVertexXYZ(localVertexIndex, vertex.getX(), vertex.getY(), vertex.getZ());
         }
     }
-
 }

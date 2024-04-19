@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 public class DynamicMeshCollection<TMesh extends DynamicMesh> {
     private final String meshName;
     @Getter private final List<TMesh> meshes = new ArrayList<>();
-    @Getter private final List<MeshViewCollection<? super TMesh>> meshViews = new ArrayList<>();
+    @Getter private final List<MeshViewCollection<? super TMesh>> viewCollections = new ArrayList<>();
 
     public DynamicMeshCollection(String meshName) {
         this.meshName = meshName;
@@ -46,8 +46,8 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
         this.meshes.add(mesh);
 
         // Setup mesh views.
-        for (int i = 0; i < this.meshViews.size(); i++)
-            this.meshViews.get(i).setupMeshView(newMeshIndex);
+        for (int i = 0; i < this.viewCollections.size(); i++)
+            this.viewCollections.get(i).setupMeshView(newMeshIndex);
 
         return true;
     }
@@ -66,8 +66,8 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
             return false; // Wasn't registered.
 
         // Remove mesh views.
-        for (int i = 0; i < this.meshViews.size(); i++)
-            this.meshViews.get(i).removeMeshView(meshIndex);
+        for (int i = 0; i < this.viewCollections.size(); i++)
+            this.viewCollections.get(i).removeMeshView(meshIndex);
 
         // Remove from the list.
         // NOTE: THIS MUST BE DONE AFTER CLEANING UP THE MESH VIEWS, SINCE THEY WILL ACCESS THE LIST TO GET THE REMOVED MESH.
@@ -106,7 +106,7 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
 
             // Remove old mesh.
             if (this.meshCollection != null) {
-                this.meshCollection.getMeshViews().remove(this);
+                this.meshCollection.getViewCollections().remove(this);
                 for (int i = 0; i < this.meshViews.size(); i++)
                     removeMeshView(i, true);
             }
@@ -114,7 +114,7 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
             // Add new mesh.
             this.meshCollection = newMeshCollection;
             if (newMeshCollection != null) {
-                newMeshCollection.getMeshViews().add(this);
+                newMeshCollection.getViewCollections().add(this);
                 for (int i = 0; i < newMeshCollection.getMeshes().size(); i++)
                     setupMeshView(i);
             }

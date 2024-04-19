@@ -361,30 +361,151 @@ public class Scene3DUtils {
     }
 
     /**
+     * Gets (or creates) the rotation transform of a node in 3D space.
+     * Creates the transform if it does not exist.
+     * @param node node to update the position of
+     */
+    public static Rotate get3DRotationWithAxis(Node node, Point3D axis) {
+        return get3DRotationWithAxis(node, axis, true);
+    }
+
+    /**
+     * Gets (or creates) the rotation transform of a node in 3D space.
+     * Returns null if it does not exist.
+     * @param node node to update the position of
+     */
+    public static Rotate getOptional3DRotationWithAxis(Node node, Point3D axis) {
+        return get3DRotationWithAxis(node, axis, false);
+    }
+
+    /**
+     * Gets (or creates) the rotation transform of a node in 3D space.
+     * @param node            node to update the position of
+     * @param createIfMissing whether the transform should be created if it doesn't exist
+     */
+    public static Rotate get3DRotationWithAxis(Node node, Point3D withAxis, boolean createIfMissing) {
+        if (node == null)
+            return null;
+
+        for (Transform transform : node.getTransforms())
+            if (transform instanceof Rotate && Objects.equals(((Rotate) transform).getAxis(), withAxis))
+                return (Rotate) transform;
+
+        if (createIfMissing) {
+            Rotate newRotate = new Rotate(0, withAxis);
+            node.getTransforms().add(newRotate);
+            return newRotate;
+        }
+
+        return null;
+    }
+
+    /**
      * Set the rotation of a node in 3D space.
      * @param node node to update the position of
-     * @param x    x coordinate value
-     * @param y    y coordinate value
-     * @param z    z coordinate value
+     * @param axis the axis to apply rotation to
+     * @param angle the angle to apply
+     */
+    public static void setNodeAxisRotation(Node node, Point3D axis, double angle) {
+        Rotate rotate = get3DRotationWithAxis(node, axis);
+        rotate.setAngle(angle);
+    }
+
+    /**
+     * Set the rotation of a node in 3D space.
+     * @param node node to update the position of
+     * @param x x angle in radians
+     * @param y y angle in radians
+     * @param z z angle in radians
      */
     public static void setNodeRotation(Node node, double x, double y, double z) {
-        double A11 = Math.cos(x) * Math.cos(z);
-        double A12 = Math.cos(y) * Math.sin(x) + Math.cos(x) * Math.sin(y) * Math.sin(z);
-        double A13 = Math.sin(x) * Math.sin(y) - Math.cos(x) * Math.cos(y) * Math.sin(z);
-        double A21 = -Math.cos(z) * Math.sin(x);
-        double A22 = Math.cos(x) * Math.cos(y) - Math.sin(x) * Math.sin(y) * Math.sin(z);
-        double A23 = Math.cos(x) * Math.sin(y) + Math.cos(y) * Math.sin(x) * Math.sin(z);
-        double A31 = Math.sin(z);
-        double A32 = -Math.cos(z) * Math.sin(y);
-        double A33 = Math.cos(y) * Math.cos(z);
+        Rotate xRotation = null;
+        Rotate yRotation = null;
+        Rotate zRotation = null;
+        for (Transform transform : node.getTransforms()) {
+            if (!(transform instanceof Rotate))
+                continue;
 
-        double d = Math.acos((A11 + A22 + A33 - 1) / 2);
-        if(d != 0) {
-            double den = 2 * Math.sin(d);
-            Point3D p = new Point3D((A32 - A23) / den, (A13 - A31) / den, (A21 - A12) / den);
-            node.setRotationAxis(p);
-            node.setRotate(Math.toDegrees(d));
+            Rotate rotate = (Rotate) transform;
+            if (Rotate.X_AXIS.equals(rotate.getAxis())) {
+                xRotation = rotate;
+            } else if (Rotate.Y_AXIS.equals(rotate.getAxis())) {
+                yRotation = rotate;
+            } else if (Rotate.Z_AXIS.equals(rotate.getAxis())) {
+                zRotation = rotate;
+            }
         }
+
+        if (zRotation != null) {
+            zRotation.setAngle(Math.toDegrees(z));
+        } else {
+            zRotation = new Rotate(Math.toDegrees(z), Rotate.Z_AXIS);
+            node.getTransforms().add(zRotation);
+        }
+
+        if (yRotation != null) {
+            yRotation.setAngle(Math.toDegrees(y));
+        } else {
+            yRotation = new Rotate(Math.toDegrees(y), Rotate.Y_AXIS);
+            node.getTransforms().add(yRotation);
+        }
+
+        if (xRotation != null) {
+            xRotation.setAngle(Math.toDegrees(x));
+        } else {
+            xRotation = new Rotate(Math.toDegrees(x), Rotate.X_AXIS);
+            node.getTransforms().add(xRotation);
+        }
+    }
+
+    /**
+     * Set the rotation pivot of a node in 3D space.
+     * @param node node to update the position of
+     * @param x x world pivot position
+     * @param y y world pivot position
+     * @param z z world pivot position
+     */
+    public static void setNodeRotationPivot(Node node, double x, double y, double z) {
+        Rotate xRotation = null;
+        Rotate yRotation = null;
+        Rotate zRotation = null;
+        for (Transform transform : node.getTransforms()) {
+            if (!(transform instanceof Rotate))
+                continue;
+
+            Rotate rotate = (Rotate) transform;
+            if (Rotate.X_AXIS.equals(rotate.getAxis())) {
+                xRotation = rotate;
+            } else if (Rotate.Y_AXIS.equals(rotate.getAxis())) {
+                yRotation = rotate;
+            } else if (Rotate.Z_AXIS.equals(rotate.getAxis())) {
+                zRotation = rotate;
+            }
+        }
+
+        if (zRotation == null) {
+            zRotation = new Rotate(0, Rotate.Z_AXIS);
+            node.getTransforms().add(zRotation);
+        }
+        zRotation.setPivotX(x);
+        zRotation.setPivotY(y);
+        zRotation.setPivotZ(z);
+
+        if (yRotation == null) {
+            yRotation = new Rotate(0, Rotate.Y_AXIS);
+            node.getTransforms().add(yRotation);
+        }
+        yRotation.setPivotX(x);
+        yRotation.setPivotY(y);
+        yRotation.setPivotZ(z);
+
+        if (xRotation == null) {
+            xRotation = new Rotate(0, Rotate.X_AXIS);
+            node.getTransforms().add(xRotation);
+        }
+        xRotation.setPivotX(x);
+        xRotation.setPivotY(y);
+        xRotation.setPivotZ(z);
     }
 
     /**

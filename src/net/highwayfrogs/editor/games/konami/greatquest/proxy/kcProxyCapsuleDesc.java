@@ -36,6 +36,14 @@ public class kcProxyCapsuleDesc extends kcProxyDesc {
         this.offset = reader.readFloat();
     }
 
+    /**
+     * Gets the processed radius
+     */
+    public float getProcessedRadius() {
+        // See kcCActorBase::CreateCollisionProxy()
+        return this.radius != 0.0F ? this.radius : .5F;
+    }
+
     @Override
     public void saveData(DataWriter writer) {
         super.saveData(writer);
