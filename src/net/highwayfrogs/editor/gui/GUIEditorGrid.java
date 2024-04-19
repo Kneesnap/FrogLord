@@ -32,6 +32,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -1437,15 +1438,52 @@ public class GUIEditorGrid {
      * @param handler What to do when a color is selected
      * @return colorPicker
      */
+    public ColorPicker addColorPickerWithAlpha(String text, int color, Consumer<Integer> handler) {
+        return addColorPickerWithAlpha(text, 25, color, handler);
+    }
+
+    /**
+     * Allow selecting a color.
+     * @param text    The description of the color.
+     * @param color   The starting color.
+     * @param handler What to do when a color is selected
+     * @return colorPicker
+     */
     public ColorPicker addColorPicker(String text, double height, int color, Consumer<Integer> handler) {
         addLabel(text);
         ColorPicker picker = setupSecondNode(new ColorPicker(Utils.fromRGB(color)), false);
         picker.valueProperty().addListener((observable, oldValue, newValue) -> {
-            handler.accept(Utils.toRGB(newValue));
+            handler.accept(Utils.toARGB(newValue));
             onChange();
         });
 
         addRow(height);
+        return picker;
+    }
+
+    /**
+     * Allow selecting a color.
+     * @param text    The description of the color.
+     * @param color   The starting color.
+     * @param handler What to do when a color is selected
+     * @return colorPicker
+     */
+    public ColorPicker addColorPickerWithAlpha(String text, double height, int color, Consumer<Integer> handler) {
+        addLabel(text);
+        AtomicInteger colorArgb = new AtomicInteger(color);
+        ColorPicker picker = setupSecondNode(new ColorPicker(Utils.fromRGB(color)), false);
+        picker.valueProperty().addListener((observable, oldValue, newValue) -> {
+            colorArgb.set((Utils.toARGB(newValue) & 0x00FFFFFF) | (Utils.getAlphaInt(colorArgb.get()) << 24));
+            handler.accept(colorArgb.get());
+            onChange();
+        });
+        addRow(height);
+
+        addIntegerSlider("Opacity (Alpha)", Utils.getAlphaInt(color), newAlpha -> {
+            colorArgb.set((colorArgb.get() & 0x00FFFFFF) | (newAlpha << 24));
+            handler.accept(colorArgb.get());
+            onChange();
+        }, 0, 255);
         return picker;
     }
 

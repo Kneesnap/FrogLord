@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapCollisionManager;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapEnvironmentEditor;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
@@ -74,6 +75,7 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
 
     @Override
     protected void setupManagers() {
+        addManager(new GreatQuestMapEnvironmentEditor(this));
         addManager(new GreatQuestEntityManager(this));
         addManager(new GreatQuestMapCollisionManager(this));
         // TODO: Setup managers.

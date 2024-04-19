@@ -285,6 +285,13 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     /**
      * Gets the scene manager for this map, if it exists.
      */
+    public kcEnvironment getEnvironment() {
+        return getResourceByHash(kcEnvironment.LEVEL_RESOURCE_HASH);
+    }
+
+    /**
+     * Gets the scene manager for this map, if it exists.
+     */
     public kcCResOctTreeSceneMgr getSceneManager() {
         return getResourceByHash(kcCResOctTreeSceneMgr.LEVEL_RESOURCE_HASH);
     }

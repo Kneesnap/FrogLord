@@ -10,6 +10,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -27,6 +29,7 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
     private final kcPerspective perspective = new kcPerspective();
 
     public static final String ENVIRONMENT_NAME = "_kcEnvironment";
+    public static final int LEVEL_RESOURCE_HASH = GreatQuestUtils.hash(ENVIRONMENT_NAME);
 
     public kcEnvironment(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.RAW);
@@ -58,6 +61,30 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
         GreatQuestUtils.writeTGQBoolean(writer, this.fogEnabled);
         getFog().save(writer);
         getPerspective().save(writer);
+    }
+
+    /**
+     * Creates the editor for the data here.
+     * @param editorGrid the editor to setup
+     * @param viewController the view controller
+     */
+    public void setupEditor(GUIEditorGrid editorGrid, MeshViewController<?> viewController) {
+        this.perspective.setupEditor(editorGrid);
+
+        editorGrid.addCheckBox("Fog Enabled", this.fogEnabled, newValue -> this.fogEnabled = newValue);
+        this.fog.setupEditor(editorGrid, this);
+
+        editorGrid.addCheckBox("Lighting Enabled", this.lightingEnabled, newValue -> this.lightingEnabled = newValue); // TODO: Impact 3D view?
+        editorGrid.addColorPickerWithAlpha("Ambient Light Color", this.ambientLightPackedColor, newValue -> this.ambientLightPackedColor = newValue);
+
+        // Lights.
+        for (int i = 0; i < this.directionalLights.length; i++) {
+            if (this.directionalLights[i] == null)
+                continue; // TODO: Allow creation, but not deletion.
+
+            editorGrid.addBoldLabel("Directional Light #" + (i + 1));
+            this.directionalLights[i].setupEditor(editorGrid, viewController);
+        }
     }
 
     @Override

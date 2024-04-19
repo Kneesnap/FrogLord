@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 
 /**
  * Represents the '_kcFogParams' struct.
@@ -45,6 +46,20 @@ public class kcFogParams extends GameObject implements IMultiLineInfoWriter {
         writer.writeFloat(this.end);
         writer.writeFloat(this.density);
         GreatQuestUtils.writeTGQBoolean(writer, this.rangeBased);
+    }
+
+    /**
+     * Creates the editor for the data here.
+     * @param editorGrid the editor to setup
+     */
+    public void setupEditor(GUIEditorGrid editorGrid, kcEnvironment environment) {
+        editorGrid.addEnumSelector("Fog Mode", this.mode, kcFogMode.values(), false, newValue -> this.mode = newValue);
+        editorGrid.addColorPicker("Color", this.color.toColor().getRGB(), this.color::fromRGB);
+
+        editorGrid.addFloatField("Start", this.start, newValue -> this.start = newValue, newFogStart -> newFogStart >= 0 && newFogStart <= this.end);
+        editorGrid.addFloatField("End", this.end, newValue -> this.end = newValue, newFogEnd -> newFogEnd >= this.start && (environment == null || newFogEnd <= environment.getPerspective().getZFar()));
+        editorGrid.addFloatField("Density", this.density, newValue -> this.density = newValue, null);
+        editorGrid.addCheckBox("Range Based", this.rangeBased, newValue -> this.rangeBased = newValue);
     }
 
     /**

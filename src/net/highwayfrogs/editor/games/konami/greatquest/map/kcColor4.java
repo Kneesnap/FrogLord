@@ -56,6 +56,19 @@ public class kcColor4 extends GameObject implements IInfoWriter {
         return new Color(clampedRed, clampedGreen, clampedBlue, clampedAlpha);
     }
 
+    /**
+     * Load color data from an ARGB integer
+     * @param argbColor the argb integer value to load from
+     * @return this
+     */
+    public kcColor4 fromARGB(int argbColor) {
+        this.red = Utils.getRedInt(argbColor) / 255F;
+        this.green = Utils.getGreenInt(argbColor) / 255F;
+        this.blue = Utils.getBlueInt(argbColor) / 255F;
+        this.alpha = Utils.getAlphaInt(argbColor) / 255F;
+        return this;
+    }
+
     @Override
     public void writeInfo(StringBuilder builder) {
         int rgbColor = toColor().getRGB();

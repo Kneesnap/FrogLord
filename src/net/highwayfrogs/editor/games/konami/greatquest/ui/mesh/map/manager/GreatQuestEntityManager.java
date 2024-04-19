@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
  *  - These will become convertible to text as well.
  *  - Allow creating a class to define editing certain things.
  *  - Allow updating other UI components potentially? Not sure yet.
+ *  - This editor should use a standardized vector interface between games.
  * Created by Kneesnap on 4/14/2024.
  */
 @Getter

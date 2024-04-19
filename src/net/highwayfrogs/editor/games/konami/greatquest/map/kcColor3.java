@@ -51,6 +51,19 @@ public class kcColor3 extends GameObject implements IInfoWriter {
         return new Color(clampedRed, clampedGreen, clampedBlue);
     }
 
+    /**
+     * Load the values from an RGB color
+     * @param rgbColor color to read from
+     * @return this
+     */
+    public kcColor3 fromRGB(int rgbColor) {
+        // TODO: We should allow a color object, with direct float access, maybe. Just thinking about what the new UI system could look like.
+        this.red = Utils.getRedInt(rgbColor) / 255F;
+        this.green = Utils.getGreenInt(rgbColor) / 255F;
+        this.blue = Utils.getBlueInt(rgbColor) / 255F;
+        return this;
+    }
+
     @Override
     public void writeInfo(StringBuilder builder) {
         int rgbColor = toColor().getRGB() & 0xFFFFFF;

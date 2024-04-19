@@ -9,6 +9,7 @@ import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.Vector;
+import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.fxobject.Arrow3D;
 import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo;
@@ -219,6 +220,33 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
         this.arrowVisualizer.getEndPosition().setX(startPos.getFloatX(bits) + offset.getFloatX(bits));
         this.arrowVisualizer.getEndPosition().setY(startPos.getFloatY(bits) + offset.getFloatY(bits));
         this.arrowVisualizer.getEndPosition().setZ(startPos.getFloatZ(bits) + offset.getFloatZ(bits));
+        this.arrowVisualizer.updatePositionAndRotation();
+    }
+
+    /**
+     * Updates the marker to display at the given position.
+     * If null is supplied, it'll get removed.
+     */
+    public void updateArrow(kcVector4 startPosition, kcVector4 offset) {
+        updateArrow(startPosition.getX(), startPosition.getY(), startPosition.getZ(), offset.getX(), offset.getY(), offset.getZ());
+    }
+
+    /**
+     * Updates the marker to display at the given position.
+     * If null is supplied, it'll get removed.
+     */
+    public void updateArrow(double x, double y, double z, double offsetX, double offsetY, double offsetZ) {
+        if (this.arrowVisualizer == null) {
+            this.arrowVisualizer = new Arrow3D();
+            this.markerList.add(this.arrowVisualizer);
+        }
+
+        this.arrowVisualizer.getStartPosition().setX((float) x);
+        this.arrowVisualizer.getStartPosition().setY((float) y);
+        this.arrowVisualizer.getStartPosition().setZ((float) z);
+        this.arrowVisualizer.getEndPosition().setX((float) (x + offsetX));
+        this.arrowVisualizer.getEndPosition().setY((float) (y + offsetY));
+        this.arrowVisualizer.getEndPosition().setZ((float) (z + offsetZ));
         this.arrowVisualizer.updatePositionAndRotation();
     }
 }
