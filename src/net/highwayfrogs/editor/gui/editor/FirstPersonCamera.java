@@ -230,8 +230,12 @@ public class FirstPersonCamera extends Parent {
         this.affineXform.setToIdentity();
 
         // Calculate yaw, pitch angles
+        if (this.rotatePitch.getAngle() <= CAM_MIN_PITCH_ANGLE_DEGREES || this.rotatePitch.getAngle() >= CAM_MAX_PITCH_ANGLE_DEGREES)
+            mouseDeltaX *= -1; // TODO: TEMP
+
         this.rotateYaw.setAngle(MathUtils.clamp(((this.rotateYaw.getAngle() + (mouseDeltaX * this.camMouseSpeedProperty.get())) % 360 + 540) % 360 - 180, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
-        this.rotatePitch.setAngle(MathUtils.clamp(this.rotatePitch.getAngle() - (yInvert * mouseDeltaY * this.camMouseSpeedProperty.get()), CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
+        //this.rotatePitch.setAngle(MathUtils.clamp(this.rotatePitch.getAngle() - (yInvert * mouseDeltaY * this.camMouseSpeedProperty.get()), CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
+        this.rotatePitch.setAngle(this.rotatePitch.getAngle() - (yInvert * mouseDeltaY * this.camMouseSpeedProperty.get()));
 
         // Dynamically generate the affine transform from the concatenated translation and rotation components
         this.affineXform.prepend(this.translate.createConcatenation(this.rotateYaw.createConcatenation(this.rotatePitch)));

@@ -77,7 +77,55 @@ public class GUIMain extends Application {
                     + "FrogLord has only been given " + DataSizeUnit.formatSize(availableMemory) + " Memory.\n"
                     + "Proceed at your own risk. Things may not work properly.", AlertType.WARNING);
 
-        openFroggerFiles();
+        try {
+            File dataBinFile = Utils.promptFileOpen(null, "Please locate and open 'data.bin'", "Frogger Great Quest Data", "bin");
+            if (dataBinFile == null) {
+                try {
+                    openFroggerFiles();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+                return;
+            }
+
+            InputMenu.promptInput(null, "Please tell me the game version.", configName -> {
+                // Determine platform.
+                InputStream inputStream = Utils.getResourceStream("games/greatquest/versions/" + configName + ".cfg");
+                if (inputStream == null) {
+                    if (configName != null && configName.length() > 0)
+                        Utils.makePopUp("Invalid config name '" + configName + "'.", AlertType.ERROR);
+
+                    try {
+                        openFroggerFiles();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                    return;
+                }
+
+                Config config = new Config(inputStream, configName);
+
+                // Load main bin.
+                System.out.println("Loading file...");
+
+                DataReader reader;
+                try {
+                    reader = new DataReader(new FileSource(dataBinFile));
+                } catch (IOException ex) {
+                    Utils.handleError(Logger.getLogger("GreatQuest"), ex, true, "Failed to read GreatQuest.");
+                    Platform.exit();
+                    return;
+                }
+
+                GreatQuestInstance instance = new GreatQuestInstance();
+                instance.loadGame(config.getName(), config, dataBinFile);
+                instance.getMainArchive().load(reader);
+                instance.setupMainMenuWindow();
+                instance.getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
+            });
+        } catch (Throwable th) {
+            Utils.handleError(Logger.getLogger("GreatQuest"), th, true, "Encountered an error in GreatQuest hijack.");
+        }
     }
 
     /**
