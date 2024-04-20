@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.model.*;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceTriMesh.kcCTriMesh;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +29,7 @@ import java.util.List;
 public class kcCResOctTreeSceneMgr extends kcCResource {
     private final List<kcVtxBufFileStruct> vertexBuffers = new ArrayList<>();
     private final List<kcMaterial> materials = new ArrayList<>();
+    private final List<kcCTriMesh> collisionMeshes = new ArrayList<>();
 
     public static final int NAME_SIZE = 32;
     private static final int RESERVED_HEADER_FIELDS = 7;
@@ -60,18 +61,14 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
         if (version != 1)
             getLogger().severe("OctTree file in '" + getParentFile().getDebugName() + "' identified as version " + version + ", but we only understand version 1.");
 
-        int meshCount = reader.readInt(); // TODO: Used. 0x08
+        int meshCount = reader.readInt();
         int treeEntityDataSize = reader.readInt();
         int primCount = reader.readInt();
         int treeVisualDataSize = reader.readInt();
-        int materialCount = reader.readInt(); // TODO: Used. 0x18
+        int materialCount = reader.readInt();
         int sourcePathMeshCount = reader.readInt(); // TODO: Used 0x1C
         int sourcePathVisualCount = reader.readInt(); // TODO: Used. 0x20
-        for (int i = 0; i < RESERVED_HEADER_FIELDS; i++) {
-            int zero = reader.readInt();
-            if (zero != 0)
-                throw new RuntimeException("Expected zero in reserved header field at " + reader.getIndex() + ", but got " + zero + " instead.");
-        }
+        reader.skipBytesRequireEmpty(RESERVED_HEADER_FIELDS * Constants.INTEGER_SIZE);
 
         // End of header.
 
@@ -93,14 +90,19 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
         }
 
         // Read materials.
-        getLogger().info("Reading materials from " + Utils.toHexString(reader.getIndex()) + " in " + getParentFile().getDebugName()); // TODO: TOSS
         for (int i = 0; i < materialCount; i++) {
             kcMaterial newMaterial = new kcMaterial();
             newMaterial.load(reader);
             this.materials.add(newMaterial);
         }
 
-        // TODO: There's more data... Figure out what it is and implement it.
+        // Read collision meshes.
+        this.collisionMeshes.clear();
+        for (int i = 0; i < meshCount; i++) {
+            kcCTriMesh newMesh = new kcCTriMesh(getGameInstance());
+            newMesh.load(reader);
+            this.collisionMeshes.add(newMesh);
+        }
     }
 
     @Override

@@ -9,10 +9,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceTriMesh.kcCFace;
+import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceTriMesh.kcCTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapUIManager.GreatQuestMapListManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
@@ -21,6 +23,7 @@ import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,6 +36,18 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
     public GreatQuestMapCollisionManager(MeshViewController<GreatQuestMapMesh> controller) {
         super(controller);
         this.meshViewList = getRenderManager().createDisplayListWithNewGroup(); // Creating a group allows all nodes to be part of a node before transparent stuff is added.
+    }
+
+    @Override
+    public void setupMainGridEditor(UISidePanel sidePanel) {
+        super.setupMainGridEditor(sidePanel);
+
+        MeshView meshView = new MeshView();
+        GreatQuestMapCollisionMesh mapCollisionMesh = new GreatQuestMapCollisionMesh(getMap().getSceneManager().getCollisionMeshes(), "Map Collision");
+        mapCollisionMesh.addView(meshView);
+        setupMeshView(meshView);
+        meshView.setVisible(false);
+        getMainGrid().addCheckBox("Show Map Collision", false, meshView::setVisible);
     }
 
     @Override
@@ -64,11 +79,15 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
     protected MeshView setupDisplay(kcCResourceTriMesh triMesh) {
         MeshView meshView = new MeshView();
         new GreatQuestMapCollisionMesh(triMesh).addView(meshView);
+        meshView.setOnMouseClicked(event -> handleClick(event, triMesh));
+        setupMeshView(meshView);
+        return meshView;
+    }
+
+    private void setupMeshView(MeshView meshView) {
         getController().getMainLight().getScope().add(meshView);
         meshView.setCullFace(CullFace.NONE);
-        meshView.setOnMouseClicked(event -> handleClick(event, triMesh));
         this.meshViewList.add(meshView);
-        return meshView;
     }
 
     @Override
@@ -104,17 +123,22 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
 
     @Getter
     public static class GreatQuestMapCollisionMesh extends DynamicMesh {
-        private final kcCResourceTriMesh triMesh;
-        private final GreatQuestMapCollisionMeshNode mainNode;
+        private final List<kcCTriMesh> triMeshes;
         private PhongMaterial highlightedMaterial;
 
         public GreatQuestMapCollisionMesh(kcCResourceTriMesh triMesh) {
-            super(null, triMesh.getName());
-            this.triMesh = triMesh;
+            this(Collections.singletonList(triMesh.getTriMesh()), triMesh.getName());
+        }
+
+        public GreatQuestMapCollisionMesh(List<kcCTriMesh> triMeshes, String name) {
+            super(null, name);
+            this.triMeshes = triMeshes;
             updateMaterial(UnknownTextureSource.GREEN_INSTANCE.makeImage());
 
-            this.mainNode = new GreatQuestMapCollisionMeshNode(this);
-            addNode(this.mainNode);
+            for (int i = 0; i < triMeshes.size(); i++) {
+                GreatQuestMapCollisionMeshNode newNode = new GreatQuestMapCollisionMeshNode(this, triMeshes.get(i));
+                addNode(newNode);
+            }
         }
 
         @Override
@@ -127,9 +151,11 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
 
     public static class GreatQuestMapCollisionMeshNode extends DynamicMeshAdapterNode<kcCFace> {
         private DynamicMeshDataEntry vertexEntry;
+        private final kcCTriMesh triMesh;
 
-        public GreatQuestMapCollisionMeshNode(GreatQuestMapCollisionMesh mesh) {
+        public GreatQuestMapCollisionMeshNode(GreatQuestMapCollisionMesh mesh, kcCTriMesh triMesh) {
             super(mesh);
+            this.triMesh = triMesh;
         }
 
         @Override
@@ -149,7 +175,7 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
             this.vertexEntry.addTexCoordValue(Vector2f.UNIT_Y); // uvBottomLeft, 0F, 1F
             this.vertexEntry.addTexCoordValue(Vector2f.ONE); // uvBottomRight, 1F, 1F
 
-            List<kcVector4> vertices = getMesh().getTriMesh().getVertices();
+            List<kcVector4> vertices = this.triMesh.getVertices();
             for (int i = 0; i < vertices.size(); i++) {
                 kcVector4 vertex = vertices.get(i);
                 this.vertexEntry.addVertexValue(vertex.getX(), vertex.getY(), vertex.getZ());
@@ -157,7 +183,7 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
             addUnlinkedEntry(this.vertexEntry);
 
             // Setup polygons.
-            getMesh().getTriMesh().getFaces().forEach(this::add);
+            this.triMesh.getFaces().forEach(this::add);
         }
 
         @Override
@@ -181,7 +207,7 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
 
         @Override
         public void updateVertex(DynamicMeshAdapterNode<kcCFace>.DynamicMeshTypedDataEntry entry, int localVertexIndex) {
-            kcVector4 vertex = getMesh().getTriMesh().getVertices().get(localVertexIndex);
+            kcVector4 vertex = this.triMesh.getVertices().get(localVertexIndex);
             this.vertexEntry.writeVertexXYZ(localVertexIndex, vertex.getX(), vertex.getY(), vertex.getZ());
         }
     }
