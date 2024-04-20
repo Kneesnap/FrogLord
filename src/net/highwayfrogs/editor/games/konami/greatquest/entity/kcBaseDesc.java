@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
@@ -106,7 +107,7 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
     protected <TResource extends kcCResource> StringBuilder writeAssetInfo(StringBuilder builder, String padding, String prefix, int resourceHash, Function<TResource, String> getter) {
         builder.append(padding).append(prefix).append(": ");
 
-        TResource resource = this.parentFile != null ? this.parentFile.getResourceByHash(resourceHash) : null;
+        TResource resource = GreatQuestUtils.findResourceByHash(this.parentFile, getGameInstance(), resourceHash);
         if (resource != null) {
             builder.append(getter.apply(resource));
         } else if (resourceHash != 0 && resourceHash != -1) {

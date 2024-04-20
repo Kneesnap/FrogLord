@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceModel;
 import net.highwayfrogs.editor.utils.Utils;
@@ -69,7 +70,7 @@ public class LauncherParams extends kcProjectileParams {
     private <TResource extends kcCResource> void writeAssetInfo(StringBuilder builder, String padding, String prefix, int resourceHash, Function<TResource, String> getter) {
         builder.append(padding).append(prefix).append(": ");
 
-        TResource resource = this.holder != null ? this.holder.getResourceByHash(resourceHash) : null;
+        TResource resource = GreatQuestUtils.findResourceByHash(this.holder, getGameInstance(), resourceHash);
         if (resource != null) {
             builder.append(getter.apply(resource));
         } else if (resourceHash != 0 && resourceHash != -1) {
