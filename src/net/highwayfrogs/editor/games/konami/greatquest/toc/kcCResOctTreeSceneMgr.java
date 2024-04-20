@@ -66,8 +66,8 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
         int primCount = reader.readInt();
         int treeVisualDataSize = reader.readInt();
         int materialCount = reader.readInt();
-        int sourcePathMeshCount = reader.readInt(); // TODO: Used 0x1C
-        int sourcePathVisualCount = reader.readInt(); // TODO: Used. 0x20
+        int sourcePathMeshCount = reader.readInt();
+        int sourcePathVisualCount = reader.readInt();
         reader.skipBytesRequireEmpty(RESERVED_HEADER_FIELDS * Constants.INTEGER_SIZE);
 
         // End of header.
@@ -103,6 +103,14 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
             newMesh.load(reader);
             this.collisionMeshes.add(newMesh);
         }
+
+        // There IS code in the final game which can read these.
+        // However, this feature is not actually used in any of the retail maps.
+        // I think this feature is capable of loading meshes (collision & visual) from other parts of the game.
+        // However, I'm not really sure why we'd ever want this, since collision meshes aren't generally going to be shared.
+        // So, we'll leave this unimplemented unless we see it actually used.
+        if (sourcePathMeshCount != 0 || sourcePathVisualCount != 0)
+            getLogger().severe("The sourcePath counts were not zero!! This feature was not added since it was not seen in any versions at the time of writing! (Source Path Mesh Count: " + sourcePathMeshCount + ", Source Path Visual Count: " + sourcePathVisualCount + ")");
     }
 
     @Override
