@@ -23,7 +23,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.*;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceNamedHash.HashTableEntry;
-import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapInfoController;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestChunkedFileInfoController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.utils.Utils;
@@ -117,7 +117,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     @Override
     public GameUIController<?> makeEditorUI() {
-        return loadEditor(getGameInstance(), "edit-file-toc", new GreatQuestMapInfoController(getGameInstance()), this);
+        return loadEditor(getGameInstance(), "edit-file-toc", new GreatQuestChunkedFileInfoController(getGameInstance()), this);
     }
 
     @Override
