@@ -8,15 +8,17 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 
+import java.util.Objects;
+
 /**
  * Allows viewing a list of entries.
- * TODO: Finish.
  * TODO: Right click -> Rename, Import Raw, Export Raw, Import .png, Export .png, Delete.
  * Created by Kneesnap on 4/12/2024.
  */
 @Getter
 public abstract class CollectionViewComponent<TGameInstance extends GameInstance, TViewEntry extends ICollectionViewEntry> extends GameUIController<TGameInstance> {
     private TViewEntry selectedViewEntry;
+    private String searchQuery;
 
     public CollectionViewComponent(TGameInstance instance) {
         super(instance);
@@ -33,6 +35,14 @@ public abstract class CollectionViewComponent<TGameInstance extends GameInstance
         refreshDisplay();
     }
 
+    public void setSearchQuery(String searchQuery) {
+        if (Objects.equals(this.searchQuery, searchQuery))
+            return;
+
+        this.searchQuery = searchQuery;
+        refreshDisplay();
+    }
+
     /**
      * Called when a view entry has been selected
      * @param viewEntry the view entry which was selected
@@ -46,6 +56,29 @@ public abstract class CollectionViewComponent<TGameInstance extends GameInstance
     public void setSelectedViewEntry(TViewEntry viewEntry) {
         this.selectedViewEntry = viewEntry;
         onSelect(viewEntry);
+    }
+
+    /**
+     * Test if the viewEntry matches the search query
+     * @param viewEntry the view query to test
+     * @return true if the search query is matched
+     */
+    public final boolean matchesSearchQuery(TViewEntry viewEntry) {
+        return matchesSearchQuery(viewEntry, getSearchQuery());
+    }
+
+    /**
+     * Test if the viewEntry matches the search query
+     * @param viewEntry the view query to test
+     * @param searchQuery the search query to test
+     * @return true if the search query is matched
+     */
+    public boolean matchesSearchQuery(TViewEntry viewEntry, String searchQuery) {
+        if (searchQuery == null || searchQuery.isEmpty())
+            return true;
+
+        String viewEntryDisplayName = viewEntry != null ? viewEntry.getCollectionViewDisplayName() : null;
+        return viewEntryDisplayName != null && viewEntryDisplayName.contains(searchQuery);
     }
 
     /**

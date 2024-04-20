@@ -59,7 +59,10 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
             boolean addedSuccessfully = false;
             for (int i = 0; i < this.groups.size(); i++) {
                 CollectionViewGroup<TViewEntry> fileGroup = this.groups.get(i);
-                if (fileGroup.isPartOfGroup(viewEntry) && fileGroup.getEntries().add(viewEntry)) {
+                if (fileGroup.isPartOfGroup(viewEntry)) {
+                    if (matchesSearchQuery(viewEntry))
+                        fileGroup.getEntries().add(viewEntry);
+
                     addedSuccessfully = true;
                     break;
                 }
@@ -69,7 +72,8 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
             if (!addedSuccessfully) {
                 CollectionViewGroup<TViewEntry> newGroup = createMissingEntryGroup(viewEntry);
                 addGroup(newGroup);
-                newGroup.getEntries().add(viewEntry);
+                if (matchesSearchQuery(viewEntry))
+                    newGroup.getEntries().add(viewEntry);
             }
         }
 
