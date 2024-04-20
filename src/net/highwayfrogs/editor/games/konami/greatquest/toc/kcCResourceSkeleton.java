@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.math.kcMatrix;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -62,13 +63,14 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
         @Getter private String name;
         @Getter private int tag;
         @Getter private int flags;
-        @Getter private byte[] nodeData; // TODO: Parse this later.
+        @Getter private final kcMatrix matrix;
         private transient int loadEndPosition = -1;
 
         public kcNode(kcCResourceSkeleton skeleton, kcNode parent) {
             super(skeleton.getGameInstance());
             this.skeleton = skeleton;
             this.parent = parent;
+            this.matrix = new kcMatrix(getGameInstance());
         }
 
         @Override
@@ -82,7 +84,11 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
             int childCount = reader.readInt();
             int nodeDataLength = reader.readInt();
             reader.skipInt(); // Pointer to the node data.
-            this.nodeData = reader.readBytes(nodeDataLength);
+
+            if (nodeDataLength != kcMatrix.BYTE_SIZE) // TODO: We might instead treat this as 3 kcVector4s named [pos rot, scl],PositionRotationScale or [from, at, up],Target, with 16 bytes of padding. This is a union basically. Not sure yet what actually makes the code choose which union to use, but it's probably flags or tag.
+                throw new RuntimeException("Expected data " + nodeDataLength);
+
+            this.matrix.load(reader);
 
             // Read child nodes.
             this.children.clear();
@@ -112,10 +118,10 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
             writer.writeNullPointer(); // Runtime pointer. (There does seem to be a pointer here, but I think it's overwritten at runtime)
             writer.writeNullPointer(); // Runtime pointer. (There does seem to be a pointer here, but I think it's overwritten at runtime)
             writer.writeInt(this.children.size());
-            writer.writeInt(this.nodeData != null ? this.nodeData.length : 0);
+            writer.writeInt(kcMatrix.BYTE_SIZE);
             writer.writeNullPointer(); // Pointer to the node data.
-            if (this.nodeData != null)
-                writer.writeBytes(this.nodeData);
+            if (this.matrix != null)
+                this.matrix.save(writer);
 
             // Write slots for child node offsets.
             int childNodeOffsetList = writer.getIndex();
@@ -131,7 +137,7 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
 
         @Override
         public void writeMultiLineInfo(StringBuilder builder, String padding) {
-            builder.append(padding).append("'").append(this.name).append("'{Tag=").append(this.tag).append(",Flags=").append(this.flags).append(",Data=").append(this.nodeData.length).append(" Bytes Children=").append(this.children.size()).append('}');
+            builder.append(padding).append("'").append(this.name).append("'{Tag=").append(this.tag).append(",Flags=").append(this.flags).append(",Data=").append(Utils.getSimpleName(this.matrix)).append(" Bytes Children=").append(this.children.size()).append('}');
             if (this.children.size() > 0) {
                 builder.append(':').append(Constants.NEWLINE);
 
