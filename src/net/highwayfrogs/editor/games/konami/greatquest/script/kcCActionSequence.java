@@ -28,7 +28,7 @@ public class kcCActionSequence extends kcCResource {
         super.load(reader);
         this.actions.clear();
         while (reader.hasMore())
-            this.actions.add(kcAction.readAction(reader));
+            this.actions.add(kcAction.readAction(reader, getParentFile()));
     }
 
     @Override

@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.effect;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.*;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
 
 /**
@@ -13,8 +13,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType
 public class kcScriptEffectEntity extends kcScriptEffectAction {
     private kcAction action;
 
-    public kcScriptEffectEntity(GreatQuestInstance gameInstance, int effectID) {
-        super(gameInstance, kcScriptEffectType.ENTITY, effectID);
+    public kcScriptEffectEntity(kcScriptFunction parentFunction, int effectID) {
+        super(parentFunction, kcScriptEffectType.ENTITY, effectID);
     }
 
     @Override
@@ -24,19 +24,19 @@ public class kcScriptEffectEntity extends kcScriptEffectAction {
 
         switch (getEffectID()) {
             case 0:
-                kcActionActivate activate = new kcActionActivate();
+                kcActionActivate activate = new kcActionActivate(getChunkedFile());
                 activate.setNewState(true);
                 return activate;
             case 1:
-                return new kcActionActivate();
+                return new kcActionActivate(getChunkedFile());
             case 2:
-                kcActionEnableUpdate enableUpdate = new kcActionEnableUpdate();
+                kcActionEnableUpdate enableUpdate = new kcActionEnableUpdate(getChunkedFile());
                 enableUpdate.setNewState(true);
                 return enableUpdate;
             case 3:
-                return new kcActionEnableUpdate();
+                return new kcActionEnableUpdate(getChunkedFile());
             case 4:
-                return new kcActionActivateSpecial();
+                return new kcActionActivateSpecial(getChunkedFile());
             default:
                 throw new RuntimeException("Unknown Entity effect ID " + getEffectID());
         }

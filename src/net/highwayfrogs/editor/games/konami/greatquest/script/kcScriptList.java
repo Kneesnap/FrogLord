@@ -37,7 +37,7 @@ public class kcScriptList extends kcCResource {
         super.load(reader);
 
         // Read interim list.
-        kcScriptListInterim interim = new kcScriptListInterim(getGameInstance());
+        kcScriptListInterim interim = new kcScriptListInterim(getParentFile());
         interim.load(reader);
 
         // Read unhandled data.
@@ -52,7 +52,7 @@ public class kcScriptList extends kcCResource {
         // Convert interim list to script list.
         this.scripts.clear();
         for (int i = 0; i < interim.getEntries().size(); i++)
-            this.scripts.add(kcScript.loadScript(interim, interim.getEntries().get(i)));
+            this.scripts.add(kcScript.loadScript(interim, this, interim.getEntries().get(i)));
     }
 
     @Override
@@ -80,7 +80,7 @@ public class kcScriptList extends kcCResource {
         }
 
         // Write interim data.
-        kcScriptListInterim interim = new kcScriptListInterim(getGameInstance(), entries, statusData, effects);
+        kcScriptListInterim interim = new kcScriptListInterim(getParentFile(), entries, statusData, effects);
         interim.save(writer);
 
         // Write unhandled data.

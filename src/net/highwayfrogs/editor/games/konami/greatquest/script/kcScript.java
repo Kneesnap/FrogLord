@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -33,10 +32,12 @@ import java.util.List;
  */
 @Getter
 public class kcScript extends GameObject<GreatQuestInstance> {
+    private final kcScriptList scriptList;
     private final List<kcScriptFunction> functions;
 
-    public kcScript(GreatQuestInstance instance, List<kcScriptFunction> functions) {
+    public kcScript(GreatQuestInstance instance, kcScriptList scriptList, List<kcScriptFunction> functions) {
         super(instance);
+        this.scriptList = scriptList;
         this.functions = functions;
     }
 
@@ -126,13 +127,15 @@ public class kcScript extends GameObject<GreatQuestInstance> {
     /**
      * Loads a kcScript from the interim data model.
      * @param interim The interim data to load from.
-     * @param toc     The table of contents entry declaring the script.
+     * @param scriptList The script list to add scripts to.
+     * @param toc The table of contents entry declaring the script.
      */
-    public static kcScript loadScript(kcScriptListInterim interim, kcScriptTOC toc) {
+    public static kcScript loadScript(kcScriptListInterim interim, kcScriptList scriptList, kcScriptTOC toc) {
         int causeIndex = (int) toc.getCauseStartIndex();
 
         int totalEffects = 0;
         List<kcScriptFunction> functions = new ArrayList<>();
+        kcScript newScript = new kcScript(interim.getGameInstance(), scriptList, functions);
         for (int i = 0; i < toc.getCauseCount(); i++) {
             interim.setupCauseReader(causeIndex++, 1);
             int mSize = interim.readNextCauseValue();
@@ -153,38 +156,28 @@ public class kcScript extends GameObject<GreatQuestInstance> {
                     unhandledData.add(interim.readNextCauseValue());
             }
 
+            // Read cause.
+            kcScriptCause cause = readCause(interim.getGameInstance(), causeTypeNumber, causeValueNumber, unhandledData);
+
+            // Read effects.
+            List<kcScriptEffect> effects = new ArrayList<>();
+            kcScriptFunction newFunction = new kcScriptFunction(newScript, cause, effects);
+
             // Find effect.
             int startingEffectIndex = interim.getEffectByOffset(effectOffset);
             if (startingEffectIndex < 0)
                 throw new RuntimeException("The index '" + Utils.toHexString(effectOffset) + "' did not correspond to the start of a script effect.");
 
-            // Find start effect.
             // Read effects.
-            List<kcScriptEffect> effects = new ArrayList<>();
             for (int j = 0; j < effectCount; j++)
-                effects.add(interim.getEffects().get(startingEffectIndex + j).toScriptEffect());
+                effects.add(interim.getEffects().get(startingEffectIndex + j).toScriptEffect(newFunction));
 
             totalEffects += effects.size();
-
-            // Setup cause.
-            kcScriptCauseType causeType = kcScriptCauseType.getCauseType(causeTypeNumber, false);
-            if (causeType == null)
-                throw new RuntimeException("Failed to find causeType from " + causeTypeNumber + ".");
-
-            kcScriptCause cause = causeType.createNew();
-
-            int optionalArgumentCount = unhandledData != null ? unhandledData.size() : 0;
-            if (!cause.validateArgumentCount(optionalArgumentCount))
-                throw new RuntimeException("kcScriptCauseType " + causeType + " cannot accept " + optionalArgumentCount + " optional arguments.");
-
-            cause.load(causeValueNumber, unhandledData);
-            functions.add(new kcScriptFunction(cause, effects));
+            functions.add(newFunction);
         }
 
         if (totalEffects != toc.getEffectCount())
             interim.getLogger().warning("Script TOC listed a total of " + toc.getEffectCount() + " script effect(s), but we actually loaded " + totalEffects + ".");
-
-        kcScript newScript = new kcScript(interim.getGameInstance(), functions);
 
         // Verify calculated cause types are correct.
         int calculatedCauseTypes = newScript.calculateCauseTypes();
@@ -194,17 +187,40 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         return newScript;
     }
 
+    private static kcScriptCause readCause(GreatQuestInstance gameInstance, int causeTypeNumber, int causeValueNumber, List<Integer> unhandledData) {
+        // Setup cause.
+        kcScriptCauseType causeType = kcScriptCauseType.getCauseType(causeTypeNumber, false);
+        if (causeType == null)
+            throw new RuntimeException("Failed to find causeType from " + causeTypeNumber + ".");
+
+        kcScriptCause cause = causeType.createNew(gameInstance);
+
+        int optionalArgumentCount = unhandledData != null ? unhandledData.size() : 0;
+        if (!cause.validateArgumentCount(optionalArgumentCount))
+            throw new RuntimeException("kcScriptCauseType " + causeType + " cannot accept " + optionalArgumentCount + " optional arguments.");
+
+        cause.load(causeValueNumber, unhandledData);
+        return cause;
+    }
+
     /**
      * Represents a unit of code executed as a unit.
      */
     @Getter
-    @AllArgsConstructor
-    public static class kcScriptFunction {
+    public static class kcScriptFunction extends GameObject<GreatQuestInstance> {
+        private final kcScript script;
         @Setter private kcScriptCause cause;
         private final List<kcScriptEffect> effects;
 
-        public kcScriptFunction(kcScriptCause cause) {
-            this(cause, new ArrayList<>());
+        public kcScriptFunction(kcScript script, kcScriptCause cause) {
+            this(script, cause, new ArrayList<>());
+        }
+
+        public kcScriptFunction(kcScript script, kcScriptCause cause, List<kcScriptEffect> effects) {
+            super(script != null ? script.getGameInstance() : null);
+            this.script = script;
+            this.cause = cause;
+            this.effects = effects;
         }
 
         /**
@@ -244,6 +260,13 @@ public class kcScript extends GameObject<GreatQuestInstance> {
                 effect.toString(builder, settings);
                 builder.append('\n');
             }
+        }
+
+        /**
+         * Gets the chunked file containing this script.
+         */
+        public GreatQuestChunkedFile getChunkedFile() {
+            return getScript() != null ? getScript().getScriptList().getParentFile() : null;
         }
     }
 }

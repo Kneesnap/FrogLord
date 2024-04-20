@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcAttachID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
@@ -16,8 +17,8 @@ public class kcActionAttachSensor extends kcActionTemplate {
     private static final kcArgument[] ATTACH_ATTACK_OR_BUMP = kcArgument.make(kcParamType.ATTACH_ID, "type", kcParamType.UNSIGNED_INT, "boneID", kcParamType.FLOAT, "radius", kcParamType.UNSIGNED_INT, "focus");
 
 
-    public kcActionAttachSensor(kcActionID action) {
-        super(action);
+    public kcActionAttachSensor(GreatQuestChunkedFile chunkedFile, kcActionID action) {
+        super(chunkedFile, action);
     }
 
     @Override

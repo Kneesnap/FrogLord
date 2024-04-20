@@ -2,10 +2,11 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * A registration of different actions((byte) 0x00), as defined in "_kcActionID".
@@ -90,8 +91,8 @@ public enum kcActionID {
     COMPLETE((byte) 0x31),*/
 
     @Getter private final byte opcode;
-    private final Function<kcActionID, kcAction> paramMaker;
-    private final Supplier<kcAction> maker;
+    private final BiFunction<GreatQuestChunkedFile, kcActionID, kcAction> paramMaker;
+    private final Function<GreatQuestChunkedFile, kcAction> maker;
 
     kcActionID(byte opcode) {
         this.opcode = opcode;
@@ -99,30 +100,30 @@ public enum kcActionID {
         this.maker = null;
     }
 
-    kcActionID(byte opcode, Function<kcActionID, kcAction> maker) {
+    kcActionID(byte opcode, BiFunction<GreatQuestChunkedFile, kcActionID, kcAction> maker) {
         this.opcode = opcode;
         this.paramMaker = maker;
         this.maker = null;
     }
 
-    kcActionID(byte opcode, Supplier<kcAction> maker) {
+    kcActionID(byte opcode, Function<GreatQuestChunkedFile, kcAction> maker) {
         this.opcode = opcode;
         this.paramMaker = null;
         this.maker = maker;
     }
 
     kcActionID(byte opcode, kcArgument[] arguments) {
-        this(opcode, actionID -> new kcActionLazyTemplate(actionID, arguments));
+        this(opcode, (gameInstance, actionID) -> new kcActionLazyTemplate(gameInstance, actionID, arguments));
     }
 
     /**
      * Creates a new kcAction instance for the type.
      */
-    public kcAction newInstance() {
+    public kcAction newInstance(GreatQuestChunkedFile chunkedFile) {
         if (this.paramMaker != null) {
-            return this.paramMaker.apply(this);
+            return this.paramMaker.apply(chunkedFile, this);
         } else if (this.maker != null) {
-            return this.maker.get();
+            return this.maker.apply(chunkedFile);
         } else {
             throw new RuntimeException("Failed to create new kcAction instance for kcActionID " + name() + ". (Not supported?)");
         }
@@ -152,7 +153,7 @@ public enum kcActionID {
     }
 
     static {
-        // Ensure entries are sorted by opcode so we can verify binary search will work.
+        // Ensure entries are sorted by opcode, so we can verify binary search will work.
         for (int i = 1; i < values().length; i++)
             if ((values()[i - 1].getOpcode() & 0xFF) >= (values()[i].getOpcode() & 0xFF))
                 throw new RuntimeException("kcActionID is not sorted by opcode, " + values()[i].name() + " is out of order!");

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
@@ -18,8 +19,8 @@ public class kcActionEnableUpdate extends kcAction {
     private static final kcArgument[] ARGUMENTS = kcArgument.make(kcParamType.BOOLEAN, "newState");
     private boolean newState;
 
-    public kcActionEnableUpdate() {
-        super(kcActionID.ENABLE_UPDATE);
+    public kcActionEnableUpdate(GreatQuestChunkedFile chunkedFile) {
+        super(chunkedFile, kcActionID.ENABLE_UPDATE);
     }
 
     @Override

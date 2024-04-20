@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 
@@ -10,8 +11,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 public class kcActionEmptyTemplate extends kcActionTemplate {
     private static final kcArgument[] EMPTY_ARGUMENTS_ARRAY = new kcArgument[0];
 
-    public kcActionEmptyTemplate(kcActionID action) {
-        super(action);
+    public kcActionEmptyTemplate(GreatQuestChunkedFile chunkedFile, kcActionID action) {
+        super(chunkedFile, action);
     }
 
     @Override

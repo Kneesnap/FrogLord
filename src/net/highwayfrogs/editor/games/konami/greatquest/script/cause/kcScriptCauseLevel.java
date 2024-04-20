@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -12,8 +13,8 @@ import java.util.List;
 public class kcScriptCauseLevel extends kcScriptCause {
     private boolean levelCompleted;
 
-    public kcScriptCauseLevel() {
-        super(kcScriptCauseType.LEVEL, 0);
+    public kcScriptCauseLevel(GreatQuestInstance gameInstance) {
+        super(gameInstance, kcScriptCauseType.LEVEL, 0);
     }
 
     @Override

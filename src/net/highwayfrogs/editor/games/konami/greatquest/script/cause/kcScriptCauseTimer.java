@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -14,8 +15,8 @@ public class kcScriptCauseTimer extends kcScriptCause {
     private kcScriptCauseTimerState timerState;
     private int alarmId;
 
-    public kcScriptCauseTimer() {
-        super(kcScriptCauseType.TIMER, 1);
+    public kcScriptCauseTimer(GreatQuestInstance gameInstance) {
+        super(gameInstance, kcScriptCauseType.TIMER, 1);
     }
 
     @Override

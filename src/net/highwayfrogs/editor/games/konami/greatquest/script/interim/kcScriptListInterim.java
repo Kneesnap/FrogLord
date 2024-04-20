@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.Utils;
@@ -19,14 +20,16 @@ import java.util.List;
  */
 @Getter
 public class kcScriptListInterim extends GameData<GreatQuestInstance> {
+    private final GreatQuestChunkedFile chunkedFile;
     private final List<kcScriptTOC> entries;
     private final List<kcInterimScriptEffect> effects;
     private int[] causeData;
     private int causeReadIndex = -1;
     private int causeMaxIndex = -1;
 
-    public kcScriptListInterim(GreatQuestInstance gameInstance, List<kcScriptTOC> entries, List<Integer> causeData, List<kcInterimScriptEffect> effects) {
-        super(gameInstance);
+    public kcScriptListInterim(GreatQuestChunkedFile chunkedFile, List<kcScriptTOC> entries, List<Integer> causeData, List<kcInterimScriptEffect> effects) {
+        super(chunkedFile != null ? chunkedFile.getGameInstance() : null);
+        this.chunkedFile = chunkedFile;
         this.entries = entries;
         this.effects = effects;
 
@@ -35,8 +38,9 @@ public class kcScriptListInterim extends GameData<GreatQuestInstance> {
             this.causeData[i] = causeData.get(i);
     }
 
-    public kcScriptListInterim(GreatQuestInstance gameInstance) {
-        super(gameInstance);
+    public kcScriptListInterim(GreatQuestChunkedFile chunkedFile) {
+        super(chunkedFile != null ? chunkedFile.getGameInstance() : null);
+        this.chunkedFile = chunkedFile;
         this.entries = new ArrayList<>();
         this.effects = new ArrayList<>();
     }
@@ -116,7 +120,7 @@ public class kcScriptListInterim extends GameData<GreatQuestInstance> {
 
         long firstEffectStart = reader.getIndex();
         while (effectReadStart + effectBytes > reader.getIndex()) {
-            kcInterimScriptEffect effect = new kcInterimScriptEffect(getGameInstance());
+            kcInterimScriptEffect effect = new kcInterimScriptEffect(this.chunkedFile);
             effect.setDataOffset(reader.getIndex() - firstEffectStart);
             effect.load(reader);
             this.effects.add(effect);

@@ -1,9 +1,11 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
@@ -16,13 +18,16 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
  * Created by Kneesnap on 6/26/2023.
  */
 @Getter
-public abstract class kcAction extends GameObject {
+public abstract class kcAction extends GameData<GreatQuestInstance> {
+    private final GreatQuestChunkedFile chunkedFile;
     private final kcActionID actionID;
     private kcParam[] unhandledArguments;
 
     private static final int ARGUMENT_COUNT = 4;
 
-    public kcAction(kcActionID action) {
+    public kcAction(GreatQuestChunkedFile chunkedFile, kcActionID action) {
+        super(chunkedFile != null ? chunkedFile.getGameInstance() : null);
+        this.chunkedFile = chunkedFile;
         this.actionID = action;
     }
 
@@ -118,7 +123,7 @@ public abstract class kcAction extends GameObject {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        this.toString(builder, kcScriptDisplaySettings.DEFAULT_SETTINGS);
+        this.toString(builder, kcScriptDisplaySettings.getDefaultSettings(getGameInstance(), this.chunkedFile));
         return builder.toString();
     }
 
@@ -188,9 +193,9 @@ public abstract class kcAction extends GameObject {
      * @param reader The reader to read from.
      * @return kcAction
      */
-    public static kcAction readAction(DataReader reader) {
+    public static kcAction readAction(DataReader reader, GreatQuestChunkedFile chunkedFile) {
         kcActionID id = kcActionID.getActionByOpcode(reader.readInt());
-        kcAction action = id.newInstance();
+        kcAction action = id.newInstance(chunkedFile);
         action.load(reader);
         return action;
     }

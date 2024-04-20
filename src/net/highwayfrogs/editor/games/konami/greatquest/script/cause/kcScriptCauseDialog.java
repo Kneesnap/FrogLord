@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -17,8 +18,8 @@ public class kcScriptCauseDialog extends kcScriptCause {
     private kcScriptDialogStage stage;
     private int dialogHash;
 
-    public kcScriptCauseDialog() {
-        super(kcScriptCauseType.DIALOG, 1);
+    public kcScriptCauseDialog(GreatQuestInstance gameInstance) {
+        super(gameInstance, kcScriptCauseType.DIALOG, 1);
     }
 
     @Override

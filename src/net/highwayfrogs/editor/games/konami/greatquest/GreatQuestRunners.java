@@ -93,8 +93,8 @@ public class GreatQuestRunners {
                 continue; // Skip
 
             // Create clear flag function.
-            kcScriptCauseNumber clearFlagDialogCause = new kcScriptCauseNumber(kcScriptCauseNumberOperation.EQUALS, executionNumber++);
-            kcScriptFunction clearFlagFunc = new kcScriptFunction(clearFlagDialogCause);
+            kcScriptCauseNumber clearFlagDialogCause = new kcScriptCauseNumber(instance, kcScriptCauseNumberOperation.EQUALS, executionNumber++);
+            kcScriptFunction clearFlagFunc = new kcScriptFunction(script, clearFlagDialogCause);
 
             // Add dialog resource.
             kcCResourceGeneric clearFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString(instance, "Knee Flag Clear Test: " + i));
@@ -105,21 +105,21 @@ public class GreatQuestRunners {
             rollingRapidsCreek.getFirstTOCChunk().getHashes().add(clearFlagDialogHash);
 
             // Add dialog action.
-            kcActionTemplate actionClearFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance();
+            kcActionTemplate actionClearFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance(rollingRapidsCreek);
             actionClearFlagDialog.getArguments().add(new kcParam(clearFlagDialogHash));
-            clearFlagFunc.getEffects().add(new kcScriptEffectActor(instance, actionClearFlagDialog, 0x68FF0A2));
+            clearFlagFunc.getEffects().add(new kcScriptEffectActor(clearFlagFunc, actionClearFlagDialog, 0x68FF0A2));
 
             // Add clear action.
-            kcActionFlag actionClearFlag = new kcActionFlag(kcActionID.SET_FLAGS);
+            kcActionFlag actionClearFlag = new kcActionFlag(rollingRapidsCreek, kcActionID.SET_FLAGS);
             actionClearFlag.getArguments().add(new kcParam(1 << i));
-            clearFlagFunc.getEffects().add(new kcScriptEffectActor(instance, actionClearFlag, 0x68FF0A2));
+            clearFlagFunc.getEffects().add(new kcScriptEffectActor(clearFlagFunc, actionClearFlag, 0x68FF0A2));
 
             // Add increment function.
             // TODO
 
             // Created set flag function
-            kcScriptCauseNumber setFlagDialogCause = new kcScriptCauseNumber(kcScriptCauseNumberOperation.EQUALS, executionNumber++);
-            kcScriptFunction setFlagFunc = new kcScriptFunction(setFlagDialogCause);
+            kcScriptCauseNumber setFlagDialogCause = new kcScriptCauseNumber(instance, kcScriptCauseNumberOperation.EQUALS, executionNumber++);
+            kcScriptFunction setFlagFunc = new kcScriptFunction(script, setFlagDialogCause);
 
             // Add dialog resource.
             kcCResourceGeneric setFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString(instance, "Knee Flag Set: " + i));
@@ -130,14 +130,14 @@ public class GreatQuestRunners {
             rollingRapidsCreek.getFirstTOCChunk().getHashes().add(setFlagDialogHash);
 
             // Add dialog action.
-            kcActionTemplate actionSetFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance();
+            kcActionTemplate actionSetFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance(rollingRapidsCreek);
             actionSetFlagDialog.getArguments().add(new kcParam(setFlagDialogHash));
-            setFlagFunc.getEffects().add(new kcScriptEffectActor(instance, actionSetFlagDialog, 0x68FF0A2));
+            setFlagFunc.getEffects().add(new kcScriptEffectActor(setFlagFunc, actionSetFlagDialog, 0x68FF0A2));
 
             // Add set flag action.
-            kcActionFlag actionSetFlag = new kcActionFlag(kcActionID.SET_FLAGS);
+            kcActionFlag actionSetFlag = new kcActionFlag(rollingRapidsCreek, kcActionID.SET_FLAGS);
             actionSetFlag.getArguments().add(new kcParam(1 << i));
-            setFlagFunc.getEffects().add(new kcScriptEffectActor(instance, actionSetFlag, 0x68FF0A2));
+            setFlagFunc.getEffects().add(new kcScriptEffectActor(setFlagFunc, actionSetFlag, 0x68FF0A2));
 
             // Add increment function.
             // TODO

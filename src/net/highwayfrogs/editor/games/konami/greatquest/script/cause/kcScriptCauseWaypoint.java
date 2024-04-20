@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -15,8 +16,8 @@ public class kcScriptCauseWaypoint extends kcScriptCause {
     private kcScriptCauseWaypointStatus status;
     private int hEntity;
 
-    public kcScriptCauseWaypoint() {
-        super(kcScriptCauseType.WAYPOINT, 1);
+    public kcScriptCauseWaypoint(GreatQuestInstance gameInstance) {
+        super(gameInstance, kcScriptCauseType.WAYPOINT, 1);
     }
 
     @Override

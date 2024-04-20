@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcAttachID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
@@ -13,8 +14,8 @@ public class kcActionDetachSensor extends kcActionTemplate {
     private static final kcArgument[] BASE_ARGUMENTS = kcArgument.make(kcParamType.ATTACH_ID, "type");
     private static final kcArgument[] DETACH_PARTICLE = kcArgument.make(kcParamType.ATTACH_ID, "type", kcParamType.HASH, "hOwner");
 
-    public kcActionDetachSensor(kcActionID action) {
-        super(action);
+    public kcActionDetachSensor(GreatQuestChunkedFile chunkedFile, kcActionID action) {
+        super(chunkedFile, action);
     }
 
     @Override

@@ -106,7 +106,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
 
             // Generate script string.
             Map<Integer, String> nameMap = manager.getMap().calculateLocalHashes();
-            kcScriptDisplaySettings displaySettings = new kcScriptDisplaySettings(nameMap, true, true);
+            kcScriptDisplaySettings displaySettings = new kcScriptDisplaySettings(getGameInstance(), this.resource != null ? this.resource.getParentFile() : null, nameMap, true, true);
             GreatQuestUtils.addDefaultHashesToMap(nameMap);
             StringBuilder builder = new StringBuilder();
             script.toString(manager.getMap(), builder, displaySettings);

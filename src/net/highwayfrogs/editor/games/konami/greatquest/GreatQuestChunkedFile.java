@@ -147,7 +147,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         Map<Integer, String> nameMap = new HashMap<>();
         for (kcCResource testChunk : this.chunks) {
             if (testChunk.getName() != null && testChunk.getName().length() > 0)
-                nameMap.put(GreatQuestUtils.hash(testChunk.getName(), true), testChunk.getName());
+                nameMap.put(testChunk.getNameHash(), testChunk.getName());
 
             if (testChunk instanceof kcCResourceNamedHash) {
                 kcCResourceNamedHash namedHashChunk = (kcCResourceNamedHash) testChunk;
@@ -173,7 +173,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         exportChunksToDirectory(folder);
 
         GreatQuestUtils.addDefaultHashesToMap(nameMap);
-        kcScriptDisplaySettings settings = new kcScriptDisplaySettings(nameMap, true, true);
+        kcScriptDisplaySettings settings = new kcScriptDisplaySettings(getGameInstance(), this, nameMap, true, true);
         saveActionSequences(new File(folder, "sequences.txt"), settings);
         saveScripts(new File(folder, "scripts.txt"), settings);
 
@@ -274,7 +274,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
         for (int i = 0; i < this.chunks.size(); i++) {
             kcCResource resource = this.chunks.get(i);
-            if (resource.getHash() == hash)
+            if (resource.getHash() == hash || (resource.getName() != null && resource.getNameHash() == hash))
                 return (TResource) resource;
         }
 

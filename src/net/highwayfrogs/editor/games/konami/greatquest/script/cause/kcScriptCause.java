@@ -1,6 +1,11 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
+import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -10,11 +15,13 @@ import java.util.List;
  * Created by Kneesnap on 8/16/2023.
  */
 @Getter
-public abstract class kcScriptCause {
+public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
     private final kcScriptCauseType type;
     private final int minimumArguments;
+    @Setter(AccessLevel.PACKAGE) private kcScriptFunction parentFunction;
 
-    public kcScriptCause(kcScriptCauseType type, int minimumArguments) {
+    public kcScriptCause(GreatQuestInstance instance, kcScriptCauseType type, int minimumArguments) {
+        super(instance);
         this.type = type;
         this.minimumArguments = minimumArguments;
     }
@@ -51,7 +58,7 @@ public abstract class kcScriptCause {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        this.toString(builder, kcScriptDisplaySettings.DEFAULT_SETTINGS);
+        this.toString(builder, kcScriptDisplaySettings.getDefaultSettings(getGameInstance(), this.parentFunction != null ? this.parentFunction.getChunkedFile() : null));
         return builder.toString();
     }
 

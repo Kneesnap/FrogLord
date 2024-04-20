@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -16,8 +17,8 @@ import java.util.List;
 public class kcScriptCauseDamage extends kcScriptCause {
     private DamageFlag damageFlag;
 
-    public kcScriptCauseDamage() {
-        super(kcScriptCauseType.DAMAGE, 0);
+    public kcScriptCauseDamage(GreatQuestInstance gameInstance) {
+        super(gameInstance, kcScriptCauseType.DAMAGE, 0);
     }
 
     @Override

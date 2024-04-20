@@ -3,8 +3,9 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * Represents the script cause type.
@@ -38,19 +39,19 @@ public enum kcScriptCauseType {
     // - System
 
     private final int value;
-    private final Supplier<kcScriptCause> maker;
+    private final Function<GreatQuestInstance, kcScriptCause> maker;
 
     /**
      * Creates a new instance of a cause for this particular type.
      */
-    public kcScriptCause createNew() {
+    public kcScriptCause createNew(GreatQuestInstance gameInstance) {
         if (this.maker != null) {
-            kcScriptCause newCause = this.maker.get();
+            kcScriptCause newCause = this.maker.apply(gameInstance);
             if (newCause != null)
                 return newCause;
         }
 
-        return new kcScriptCauseDummy(this);
+        return new kcScriptCauseDummy(gameInstance, this);
     }
 
     /**

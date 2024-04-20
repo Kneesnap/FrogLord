@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -17,8 +18,8 @@ import java.util.List;
 public class kcScriptCauseWhenItem extends kcScriptCause {
     private boolean playerShouldHaveItem;
 
-    public kcScriptCauseWhenItem() {
-        super(kcScriptCauseType.WHEN_ITEM, 1);
+    public kcScriptCauseWhenItem(GreatQuestInstance gameInstance) {
+        super(gameInstance, kcScriptCauseType.WHEN_ITEM, 1);
     }
 
     @Override

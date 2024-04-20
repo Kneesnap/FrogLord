@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
@@ -19,8 +20,8 @@ public class kcActionNumber extends kcAction {
     private NumberOperation operation;
     private int entityHash;
 
-    public kcActionNumber() {
-        super(kcActionID.NUMBER);
+    public kcActionNumber(GreatQuestChunkedFile chunkedFile) {
+        super(chunkedFile, kcActionID.NUMBER);
     }
 
     @Override

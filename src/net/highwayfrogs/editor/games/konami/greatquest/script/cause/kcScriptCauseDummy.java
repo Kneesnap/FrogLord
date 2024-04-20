@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.ArrayList;
@@ -13,8 +14,8 @@ public class kcScriptCauseDummy extends kcScriptCause {
     private int subCauseType;
     private List<Integer> unhandledValues;
 
-    public kcScriptCauseDummy(kcScriptCauseType type) {
-        super(type, 0);
+    public kcScriptCauseDummy(GreatQuestInstance gameInstance, kcScriptCauseType type) {
+        super(gameInstance, type, 0);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
@@ -11,8 +12,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
 public class kcActionSetAnimation extends kcActionTemplate {
     private static final kcArgument[] ARGUMENTS = kcArgument.make(kcParamType.HASH, "track", kcParamType.UNSIGNED_INT, "mode", kcParamType.INT, "startTick", kcParamType.INT, "transTime");
 
-    public kcActionSetAnimation() {
-        super(kcActionID.SET_ANIMATION);
+    public kcActionSetAnimation(GreatQuestChunkedFile chunkedFile) {
+        super(chunkedFile, kcActionID.SET_ANIMATION);
     }
 
     @Override

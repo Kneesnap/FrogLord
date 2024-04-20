@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -20,12 +21,12 @@ public class kcScriptCauseNumber extends kcScriptCause {
     private kcScriptCauseNumberOperation operation;
     private int value;
 
-    public kcScriptCauseNumber() {
-        super(kcScriptCauseType.NUMBER, 1);
+    public kcScriptCauseNumber(GreatQuestInstance gameInstance) {
+        super(gameInstance, kcScriptCauseType.NUMBER, 1);
     }
 
-    public kcScriptCauseNumber(kcScriptCauseNumberOperation operation, int number) {
-        this();
+    public kcScriptCauseNumber(GreatQuestInstance gameInstance, kcScriptCauseNumberOperation operation, int number) {
+        this(gameInstance);
         this.operation = operation;
         this.value = number;
     }

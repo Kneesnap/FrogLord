@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
@@ -11,8 +12,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
 public class kcActionLazyTemplate extends kcActionTemplate {
     private final kcArgument[] arguments;
 
-    public kcActionLazyTemplate(kcActionID actionID, kcArgument[] arguments) {
-        super(actionID);
+    public kcActionLazyTemplate(GreatQuestChunkedFile chunkedFile, kcActionID actionID, kcArgument[] arguments) {
+        super(chunkedFile, actionID);
         this.arguments = arguments;
     }
 

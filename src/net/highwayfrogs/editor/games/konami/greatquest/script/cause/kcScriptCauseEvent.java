@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -11,8 +12,8 @@ import java.util.List;
 public class kcScriptCauseEvent extends kcScriptCause {
     private int eventNameHash;
 
-    public kcScriptCauseEvent() {
-        super(kcScriptCauseType.EVENT, 1);
+    public kcScriptCauseEvent(GreatQuestInstance gameInstance) {
+        super(gameInstance, kcScriptCauseType.EVENT, 1);
     }
 
     @Override

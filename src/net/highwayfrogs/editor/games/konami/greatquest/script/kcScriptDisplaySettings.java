@@ -1,7 +1,11 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Map;
@@ -11,16 +15,22 @@ import java.util.Map;
  * Created by Kneesnap on 6/27/2023.
  */
 @Getter
-@AllArgsConstructor
-public class kcScriptDisplaySettings {
-    private Map<Integer, String> namesByHash;
-    private boolean showLabels;
-    private boolean showUnusedValues;
+public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
+    private final GreatQuestChunkedFile chunkedFile;
+    private final Map<Integer, String> namesByHash;
+    private final boolean showLabels;
+    private final boolean showUnusedValues;
 
-    public static final kcScriptDisplaySettings DEFAULT_SETTINGS = new kcScriptDisplaySettings(null, true, true);
+    public kcScriptDisplaySettings(GreatQuestInstance instance, GreatQuestChunkedFile chunkedFile, Map<Integer, String> namesByHash, boolean showLabels, boolean showUnusedValues) {
+        super(instance);
+        this.chunkedFile = chunkedFile;
+        this.namesByHash = namesByHash;
+        this.showLabels = showLabels;
+        this.showUnusedValues = showUnusedValues;
+    }
 
     /**
-     * Get the hash number provided displayed either as its unhashed string or as a hex number.
+     * Get the hash number provided displayed either as its un-hashed string or as a hex number.
      * @param hash            The hash to get a display string from.
      * @param prefixHexNumber If the hex number should be padded to 8 characters if it's included directly.
      * @return displayString
@@ -32,6 +42,12 @@ public class kcScriptDisplaySettings {
                 return "\"" + name.replace("\"", "\\\"") + "\"";
         }
 
+        // Search main game file.
+        kcCResource resource = GreatQuestUtils.findResourceByHash(this.chunkedFile, getGameInstance(), hash);
+        if (resource != null && resource.getName() != null)
+            return "\"" + resource.getName().replace("\"", "\\\"") + "\"";
+
+        // Fallback to number.
         if (prefixHexNumber) {
             return "0x" + Utils.to0PrefixedHexString(hash);
         } else {
@@ -40,7 +56,7 @@ public class kcScriptDisplaySettings {
     }
 
     /**
-     * Get the hash number provided displayed either as its unhashed string or as a hex number.
+     * Get the hash number provided displayed either as its un-hashed string or as a hex number.
      * @param hash            The hash to get a display string from.
      * @param prefixHexNumber If the hex number should be padded to 8 characters if it's included directly.
      * @return displayString
@@ -54,5 +70,15 @@ public class kcScriptDisplaySettings {
         } else {
             return "0x" + Integer.toHexString(hash).toUpperCase();
         }
+    }
+
+    /**
+     * Gets the default script settings for the given scenario
+     * @param gameInstance the game instance to lookup resources from
+     * @param parentFile the parent file to lookup resources from
+     * @return defaultSettings
+     */
+    public static kcScriptDisplaySettings getDefaultSettings(GreatQuestInstance gameInstance, GreatQuestChunkedFile parentFile) {
+        return new kcScriptDisplaySettings(gameInstance, parentFile, null, true, true);
     }
 }

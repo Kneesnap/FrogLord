@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -14,8 +15,8 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
     private kcScriptCauseEntity3DStatus status;
     private int hEntity;
 
-    public kcScriptCauseEntity3D() {
-        super(kcScriptCauseType.ENTITY_3D, 4);
+    public kcScriptCauseEntity3D(GreatQuestInstance gameInstance) {
+        super(gameInstance, kcScriptCauseType.ENTITY_3D, 4);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
@@ -17,8 +18,8 @@ import java.util.List;
 public abstract class kcActionTemplate extends kcAction {
     private final List<kcParam> arguments = new ArrayList<>();
 
-    public kcActionTemplate(kcActionID action) {
-        super(action);
+    public kcActionTemplate(GreatQuestChunkedFile chunkedFile, kcActionID action) {
+        super(chunkedFile, action);
     }
 
     @Override

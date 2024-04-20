@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 
 import java.util.List;
@@ -13,8 +14,8 @@ import java.util.List;
 public class kcScriptCauseActor extends kcScriptCause {
     private kcScriptCauseEntityAction action;
 
-    public kcScriptCauseActor() {
-        super(kcScriptCauseType.ACTOR, 0);
+    public kcScriptCauseActor(GreatQuestInstance gameInstance) {
+        super(gameInstance, kcScriptCauseType.ACTOR, 0);
     }
 
     @Override

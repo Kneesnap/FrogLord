@@ -5,9 +5,11 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
 
@@ -17,6 +19,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType
  */
 @Getter
 public class kcInterimScriptEffect extends GameData<GreatQuestInstance> {
+    private final GreatQuestChunkedFile chunkedFile;
     @Setter private transient long dataOffset;
     private kcScriptEffectType effectType;
     private int effectID;
@@ -26,8 +29,9 @@ public class kcInterimScriptEffect extends GameData<GreatQuestInstance> {
 
     public static final int SIZE_IN_BYTES = 0x20; // 32 bytes. This in theory could differ with other versions.
 
-    public kcInterimScriptEffect(GreatQuestInstance instance) {
-        super(instance);
+    public kcInterimScriptEffect(GreatQuestChunkedFile chunkedFile) {
+        super(chunkedFile != null ? chunkedFile.getGameInstance() : null);
+        this.chunkedFile = chunkedFile;
     }
 
     /**
@@ -105,8 +109,8 @@ public class kcInterimScriptEffect extends GameData<GreatQuestInstance> {
     /**
      * Converts this interim container to the object we'll use instead.
      */
-    public kcScriptEffect toScriptEffect() {
-        kcScriptEffect newEffect = this.effectType.newInstance(getGameInstance(), this.effectID);
+    public kcScriptEffect toScriptEffect(kcScriptFunction scriptFunction) {
+        kcScriptEffect newEffect = this.effectType.newInstance(scriptFunction, this.effectID);
         newEffect.setTargetEntityHash(this.destObjectHash);
         kcParamReader reader = new kcParamReader(this.parameters);
         newEffect.load(reader);
@@ -132,7 +136,7 @@ public class kcInterimScriptEffect extends GameData<GreatQuestInstance> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        this.toString(builder, kcScriptDisplaySettings.DEFAULT_SETTINGS);
+        this.toString(builder, kcScriptDisplaySettings.getDefaultSettings(getGameInstance(), this.chunkedFile));
         return builder.toString();
     }
 }

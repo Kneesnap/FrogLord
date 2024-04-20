@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.effect;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionAISetGoal;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
 
 /**
@@ -16,8 +16,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType
 public class kcScriptEffectAI extends kcScriptEffectAction {
     private kcAction action;
 
-    public kcScriptEffectAI(GreatQuestInstance gameInstance, int effectID) {
-        super(gameInstance, kcScriptEffectType.AI, effectID);
+    public kcScriptEffectAI(kcScriptFunction parentFunction, int effectID) {
+        super(parentFunction, kcScriptEffectType.AI, effectID);
     }
 
     @Override
@@ -25,7 +25,7 @@ public class kcScriptEffectAI extends kcScriptEffectAction {
         if (getEffectID() != 0)
             throw new RuntimeException("Unknown AI effect ID " + getEffectID());
 
-        this.action = new kcActionAISetGoal();
+        this.action = new kcActionAISetGoal(getChunkedFile());
         this.action.load(reader);
     }
 

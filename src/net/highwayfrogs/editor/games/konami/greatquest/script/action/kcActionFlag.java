@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
@@ -12,8 +13,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
 public class kcActionFlag extends kcActionTemplate {
     private static final kcArgument[] ARGUMENTS = kcArgument.make(kcParamType.ANY, "flagId");
 
-    public kcActionFlag(kcActionID action) {
-        super(action);
+    public kcActionFlag(GreatQuestChunkedFile chunkedFile, kcActionID action) {
+        super(chunkedFile, action);
     }
 
     @Override
