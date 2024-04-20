@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.toc;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -108,8 +109,8 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
         /**
          * Gets the track type.
          */
-        public int getTrackType() {
-            return this.value >>> 24; // 8 bits
+        public kcTrackControlType getTrackControlType() {
+            return kcTrackControlType.values()[this.value >>> 24]; // 8 bits
         }
 
         /**
@@ -124,5 +125,37 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
             builder.append(padding);
             builder.append("Track{Value=").append(this.value).append(",Tag=").append(this.tag).append(",Size=").append(this.size).append(",UnknownData=").append(this.unknownData.length).append(" Bytes}");
         }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum kcTrackControlType {
+        USER(false, 0xC), // 0
+        LINEAR_FLT(false, 0x14), // 1, FLAT? FLOAT?
+        LINEAR_ROTATION(false, 0x14), // 2
+        LINEAR_POSITION(false, 0x14), // 3
+        LINEAR_SCALE(false, 0x14), // 4
+        TCB_FLT(true, 0x58), // 5, FLAT? FLOAT?
+        TCB_ROTATION(true, 0x58), // 6
+        TCB_POSITION(true, 0x58), // 7
+        TCB_SCALE(true, 0x58), // 8
+        BEZIER_FLT(true, 0x38), // 9, FLAT? FLOAT?
+        BEZIER_POSITION(true, 0x38), // 10
+        BEZIER_SCALE(true, 0x38), // 11
+        POSITION_ROTATION_SCALE(false, 0x40), // 12
+        CAMERA(false, 0), // 13
+        LIGHT(false, 0), // 14
+        STD(false, 0), // 15, STANDARD?
+        FLT(false, 0), // 16, FLAT? FLOAT?
+        POSITION(false, 0), // 17
+        ROTATION(false, 0), // 18
+        SCALE(false, 0), // 19
+        HIERARCHY(false, 0), // 20
+        INVALID(false, 0); // 21
+
+        private final boolean supported;
+        private final int probablySize;
+
+        // NOTE: TCB stands for 'Tension, Continuity, and Bias', which is a curve-based animation system, much like Bezier.
     }
 }
