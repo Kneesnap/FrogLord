@@ -3,11 +3,13 @@ package net.highwayfrogs.editor.games.konami.greatquest;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.*;
@@ -388,5 +390,46 @@ public class GreatQuestUtils {
         }
 
         return null;
+    }
+
+    /**
+     * Fill empty alpha pixels with visible alternating color pattern.
+     * Used to identify textures which aren't loading (or aren't getting used) properly.
+     * We need to find a better solution.
+     * @param source the image to apply
+     * @return newImage
+     */
+    public static BufferedImage fillEmptyAlpha(BufferedImage source) {
+        if (source == null)
+            return null;
+
+        BufferedImage result = null;
+        for (int y = 0; y < source.getHeight(); y++) {
+            for (int x = 0; x < source.getWidth(); x++) {
+                int argbColor = source.getRGB(x, y);
+                int alpha = argbColor >>> 24;
+                if (alpha != 0)
+                    continue;
+
+                // Create result.
+                if (result == null)
+                    result = ImageWorkHorse.copyImage(source);
+
+                // Calculate color.
+                int fixedColor;
+                if (argbColor != 0) {
+                    fixedColor = argbColor | 0xFF000000;
+                } else if ((x + (y % 2)) % 2 > 0) {
+                    fixedColor = 0xFF000000; // Black;
+                } else {
+                    fixedColor = 0xFFFF00FF; // Magenta
+                }
+
+                result.setRGB(x, y, fixedColor);
+            }
+        }
+
+        return result != null ? result : source;
+
     }
 }

@@ -4,6 +4,7 @@ import javafx.scene.paint.PhongMaterial;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestImageFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
@@ -57,6 +58,7 @@ public class GreatQuestModelMaterialMesh extends DynamicMesh {
 
     @Override
     protected PhongMaterial updateMaterial(BufferedImage newImage) {
+        newImage = GreatQuestUtils.fillEmptyAlpha(newImage);
         PhongMaterial parentMaterial = super.updateMaterial(newImage);
         this.highlightedMaterial = Scene3DUtils.updateHighlightMaterial(this.highlightedMaterial, newImage);
         return parentMaterial;
