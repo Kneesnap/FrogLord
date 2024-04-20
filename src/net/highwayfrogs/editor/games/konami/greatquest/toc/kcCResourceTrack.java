@@ -57,11 +57,11 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append("kcCResourceTrack['").append(getName()).append("'/").append(Utils.to0PrefixedHexString(getHash())).append(", Tracks: ").append(this.tracks.size()).append("]:");
+        builder.append(padding).append("kcCResourceTrack['").append(getName()).append("'/").append(Utils.to0PrefixedHexString(getHash())).append(", Tracks: ").append(this.tracks.size()).append("]:").append(Constants.NEWLINE);
         String newPadding = padding + " ";
         for (int i = 0; i < this.tracks.size(); i++) {
-            builder.append(Constants.NEWLINE).append(padding);
             this.tracks.get(i).writeMultiLineInfo(builder, newPadding);
+            builder.append(Constants.NEWLINE);
         }
     }
 
@@ -121,6 +121,7 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
 
         @Override
         public void writeMultiLineInfo(StringBuilder builder, String padding) {
+            builder.append(padding);
             builder.append("Track{Value=").append(this.value).append(",Tag=").append(this.tag).append(",Size=").append(this.size).append(",UnknownData=").append(this.unknownData.length).append(" Bytes}");
         }
     }

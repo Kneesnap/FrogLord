@@ -23,7 +23,7 @@
                                 <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="40.0"
                                             prefWidth="130.0" VBox.vgrow="NEVER">
                                     <children>
-                                        <Label prefHeight="150.0" prefWidth="236.0" text="Map File"
+                                        <Label prefHeight="150.0" prefWidth="236.0" text="Chunk File"
                                                AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0"
                                                AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <graphic>

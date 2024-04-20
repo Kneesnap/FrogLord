@@ -50,7 +50,7 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append("kcCResourceSkeleton['").append(getName()).append("'/").append(Utils.to0PrefixedHexString(getHash())).append("]:").append(Constants.NEWLINE).append(padding);
+        builder.append(padding).append("kcCResourceSkeleton['").append(getName()).append("'/").append(Utils.to0PrefixedHexString(getHash())).append("]:").append(Constants.NEWLINE);
         this.rootNode.writeMultiLineInfo(builder, padding + " ");
     }
 
@@ -131,15 +131,15 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
 
         @Override
         public void writeMultiLineInfo(StringBuilder builder, String padding) {
-            builder.append("'").append(this.name).append("'{Tag=").append(this.tag).append(",Flags=").append(this.flags).append(",Data=").append(this.nodeData.length).append(" Bytes Children=").append(this.children.size()).append('}');
+            builder.append(padding).append("'").append(this.name).append("'{Tag=").append(this.tag).append(",Flags=").append(this.flags).append(",Data=").append(this.nodeData.length).append(" Bytes Children=").append(this.children.size()).append('}');
             if (this.children.size() > 0) {
-                builder.append(':');
+                builder.append(':').append(Constants.NEWLINE);
 
                 String newPadding = padding + " ";
-                for (int i = 0; i < this.children.size(); i++) {
-                    builder.append(Constants.NEWLINE).append(padding).append(' ');
+                for (int i = 0; i < this.children.size(); i++)
                     this.children.get(i).writeMultiLineInfo(builder, newPadding);
-                }
+            } else {
+                builder.append(Constants.NEWLINE);
             }
         }
     }

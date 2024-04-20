@@ -188,6 +188,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         saveGenericLauncherInfo(new File(folder, "emitters.txt"));
         saveGenericResourcePaths(new File(folder, "resource-paths.txt"));
         saveGenericModelDescriptions(new File(folder, "model-descriptions.txt"));
+        saveNamedResourceHashes(new File(folder, "named-hashes.txt"));
         saveInfo(new File(folder, "info.txt"));
 
         // Save hashes to file.
@@ -506,8 +507,8 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 continue;
 
             kcCResourceSkeleton skeleton = (kcCResourceSkeleton) chunk;
-            skeleton.writeMultiLineInfo(builder, " ");
-            builder.append(Constants.NEWLINE).append(Constants.NEWLINE);
+            skeleton.writeMultiLineInfo(builder, "");
+            builder.append(Constants.NEWLINE);
         }
 
         saveExport(file, builder);
@@ -524,8 +525,8 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 continue;
 
             kcCResourceTrack track = (kcCResourceTrack) chunk;
-            track.writeMultiLineInfo(builder, " ");
-            builder.append(Constants.NEWLINE).append(Constants.NEWLINE);
+            track.writeMultiLineInfo(builder, "");
+            builder.append(Constants.NEWLINE);
         }
 
         saveExport(file, builder);
@@ -578,6 +579,25 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
+     * Saves model descriptions found in generic chunks to a text file.
+     * @param file The file to save the info to.
+     */
+    public void saveNamedResourceHashes(File file) {
+        StringBuilder builder = new StringBuilder();
+        for (kcCResource chunk : this.chunks) {
+            if (!(chunk instanceof kcCResourceNamedHash))
+                continue;
+
+            kcCResourceNamedHash namedHash = (kcCResourceNamedHash) chunk;
+            builder.append(chunk.getName()).append('[').append(Utils.to0PrefixedHexString(chunk.getHash())).append("]:").append(Constants.NEWLINE);
+            namedHash.writeMultiLineInfo(builder, " ");
+            builder.append(Constants.NEWLINE);
+        }
+
+        saveExport(file, builder);
+    }
+
+    /**
      * Saves information about the chunked file contents to a text file.
      * @param textFile The file to save the information to.
      */
@@ -617,10 +637,21 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                     builder.append(Utils.to0PrefixedHexString(chunk.getNameHash()));
                 }
 
-                builder.append("|");
-                builder.append(Utils.stripAlphanumeric(chunk.getChunkMagic()));
-                builder.append("|");
-                builder.append(chunk.getClass().getSimpleName());
+                if (chunk instanceof kcCResourceGeneric) {
+                    kcCResourceGeneric genericResource = (kcCResourceGeneric) chunk;
+                    builder.append("|");
+                    builder.append(genericResource.getResourceType());
+                    if (genericResource.getCachedObject() != null) {
+                        builder.append("|");
+                        builder.append(Utils.getSimpleName(genericResource.getCachedObject()));
+                    }
+                } else {
+                    builder.append("|");
+                    builder.append(Utils.stripAlphanumeric(chunk.getChunkMagic()));
+                    builder.append("|");
+                    builder.append(chunk.getClass().getSimpleName());
+                }
+
                 builder.append("]: '");
                 builder.append(chunk.getName());
                 builder.append("', ");

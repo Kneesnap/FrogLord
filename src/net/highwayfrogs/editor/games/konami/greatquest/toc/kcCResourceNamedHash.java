@@ -1,10 +1,14 @@
 package net.highwayfrogs.editor.games.konami.greatquest.toc;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +24,7 @@ import java.util.List;
  * Created by Kneesnap on 8/26/2019.
  */
 @Getter
-public class kcCResourceNamedHash extends kcCResource {
+public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoWriter {
     private final List<HashTableEntry> entries = new ArrayList<>();
 
     public kcCResourceNamedHash(GreatQuestChunkedFile parentFile) {
@@ -61,6 +65,21 @@ public class kcCResourceNamedHash extends kcCResource {
 
         for (int i = 0; i < this.entries.size(); i++)
             this.entries.get(i).save(writer);
+    }
+
+    @Override
+    public void writeMultiLineInfo(StringBuilder builder, String padding) {
+        for (HashTableEntry hashTableEntry : this.entries) {
+            builder.append(padding).append(" - '").append(hashTableEntry.getKeyName()).append("'/")
+                    .append(Utils.to0PrefixedHexString(hashTableEntry.getKeyHash())).append(" -> ")
+                    .append(Utils.to0PrefixedHexString(hashTableEntry.getValueHash()));
+
+            kcCResource targetFile = GreatQuestUtils.findResourceByHash(getParentFile(), getGameInstance(), hashTableEntry.getValueHash());
+            if (targetFile != null)
+                builder.append("/'").append(targetFile.getName()).append("'");
+
+            builder.append(Constants.NEWLINE);
+        }
     }
 
     @Getter
