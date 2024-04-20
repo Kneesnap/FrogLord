@@ -3,17 +3,13 @@ package net.highwayfrogs.editor.gui.editor;
 import javafx.collections.FXCollections;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
-import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
@@ -141,6 +137,16 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     }
 
     /**
+     * Gets the style of the value as it displays in the list.
+     * @param index the index of the value
+     * @param value the value to get the style of
+     * @return listDisplayStyle
+     */
+    protected String getListDisplayStyle(int index, TValue value) {
+        return null;
+    }
+
+    /**
      * Sets up the main grid editor UI.
      * @param sidePanel The side panel to add UI elements to.
      */
@@ -170,7 +176,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
                 this.updateEditor(); // Refresh UI.
             }
         });
-        this.valueSelectionBox.setConverter(new AbstractIndexStringConverter<>(getValues(), this::getListDisplayName));
+        this.valueSelectionBox.setCellFactory(param -> new BasicListEntryCell<>(this));
 
         // Display Settings Checkbox.
         this.valueDisplaySetting = this.mainGrid.addEnumSelector("Value(s) Displayed", ListDisplayType.SELECTED, ListDisplayType.values(), false, newValue -> {
@@ -326,12 +332,27 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         this.valueCountLabel.setText(getValueName() + " Count: " + valueCount);
 
         this.valueSelectionBox.setItems(FXCollections.observableArrayList(getValues()));
-        this.valueSelectionBox.setConverter(new AbstractIndexStringConverter<>(getValues(), this::getListDisplayName));
     }
 
     public enum ListDisplayType {
         NONE,
         SELECTED,
         ALL
+    }
+
+    private static class BasicListEntryCell<TValue> extends ListCell<TValue> {
+        private final BasicListMeshUIManager<?, TValue, ?> listManager;
+
+        public BasicListEntryCell(BasicListMeshUIManager<?, TValue, ?> listManager) {
+            this.listManager = listManager;
+        }
+
+        @Override
+        public void updateItem(TValue value, boolean empty) {
+            super.updateItem(value, empty);
+            int index = this.listManager.valueSelectionBox.getItems().indexOf(value);
+            setText(this.listManager.getListDisplayName(index, value));
+            setStyle(this.listManager.getListDisplayStyle(index, value));
+        }
     }
 }

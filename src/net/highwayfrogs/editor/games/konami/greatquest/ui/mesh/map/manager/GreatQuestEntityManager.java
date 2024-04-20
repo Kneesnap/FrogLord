@@ -7,6 +7,7 @@ import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
@@ -107,6 +108,11 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     @Override
     protected String getListDisplayName(int index, kcCResourceEntityInst entity) {
         return entity != null ? entity.getName() : super.getListDisplayName(index, null);
+    }
+
+    @Override
+    protected String getListDisplayStyle(int index, kcCResourceEntityInst entity) {
+        return (entity == null || !(entity.getEntity() instanceof kcEntity3DInst)) ? "-fx-text-fill: red;" : super.getListDisplayStyle(index, entity);
     }
 
     @Override

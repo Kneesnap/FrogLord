@@ -47,7 +47,7 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
 
     @Override
     protected String getListDisplayName(int index, kcCResourceTriMesh triMesh) {
-        return triMesh.getName();
+        return triMesh != null ? triMesh.getName() : super.getListDisplayName(index, null);
     }
 
     @Override
