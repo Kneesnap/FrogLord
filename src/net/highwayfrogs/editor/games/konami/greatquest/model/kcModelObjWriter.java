@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A utility for converting kcModel objects into wavefront .obj text data.
@@ -20,9 +21,9 @@ import java.util.List;
 public class kcModelObjWriter {
     /**
      * Write the meshes in the model to .obj text.
-     * @param outputFolder The folder to export the model to.
-     * @param fileName     The name of the file to write.
-     * @param model        The model to write mesh data from.
+     * @param outputFolder The folder to export the model to
+     * @param fileName The name of the file to write
+     * @param model The model to write mesh data from
      */
     public static void writeMeshesToObj(File outputFolder, String fileName, kcModel model) {
         File objFile = new File(outputFolder, fileName + ".obj");
@@ -43,10 +44,10 @@ public class kcModelObjWriter {
 
     /**
      * Write the meshes in the model to .obj text.
-     * @param outputFolder The folder to export the model to.
-     * @param objWriter    The writer to write the obj text to.
-     * @param mtlWriter    The writer to write the obj text to.
-     * @param model        The model to write mesh data from.
+     * @param outputFolder the folder to export the model to
+     * @param objWriter the writer to write the obj text to
+     * @param mtlWriter the writer to write the obj text to
+     * @param model the model to write mesh data from
      */
     public static void writeMeshesToObj(File outputFolder, String fileName, StringBuilder objWriter, StringBuilder mtlWriter, kcModel model) {
         ModelObjContext context = new ModelObjContext(model, outputFolder, fileName, objWriter, mtlWriter);
@@ -66,8 +67,8 @@ public class kcModelObjWriter {
 
     /**
      * Write the map mesh to .obj text.
-     * @param outputFolder The folder to write the object to.
-     * @param mapMesh      The map file to write data from.
+     * @param outputFolder the folder to write the object to
+     * @param mapMesh the map file to write data from
      */
     public static void writeMapToObj(File outputFolder, String fileName, kcCResOctTreeSceneMgr mapMesh) throws IOException {
         File objFile = new File(outputFolder, fileName + ".obj");
@@ -88,11 +89,11 @@ public class kcModelObjWriter {
 
     /**
      * Write the map mesh to .obj text.
-     * @param outputFolder The folder to write the object to.
-     * @param fileName     The name of the file to export to.
-     * @param objWriter    The writer to write the obj text to.
-     * @param mtlWriter    The writer to write the obj text to.
-     * @param mapMesh      The map file to write data from.
+     * @param outputFolder the folder to write the object to
+     * @param fileName the name of the file to export to
+     * @param objWriter the writer to write the obj text to
+     * @param mtlWriter the writer to write the obj text to
+     * @param mapMesh the map file to write data from
      */
     public static void writeMapToObj(File outputFolder, String fileName, StringBuilder objWriter, StringBuilder mtlWriter, kcCResOctTreeSceneMgr mapMesh) {
         MapObjContext context = new MapObjContext(mapMesh, outputFolder, fileName, objWriter, mtlWriter);
@@ -155,7 +156,7 @@ public class kcModelObjWriter {
             if (lastMaterialId != prim.getMaterialId() && mtlWriter != null) {
                 if (context.getModel().getMaterials().size() <= prim.getMaterialId()) {
                     // TODO: !
-                    System.out.println("Got material ID " + prim.getMaterialId() + ", but... there are only " + context.getModel().getMaterials().size() + " material(s) available in the model.");
+                    context.getLogger().warning("Got material ID " + prim.getMaterialId() + ", but... there are only " + context.getModel().getMaterials().size() + " material(s) available in the model.");
                 } else {
                     kcMaterial material = context.getModel().getMaterials().get((int) prim.getMaterialId());
                     objWriter.append("usemtl ");
@@ -211,7 +212,7 @@ public class kcModelObjWriter {
             if (lastMaterialId != vtxBuf.getMaterialId() && mtlWriter != null) {
                 if (context.getMap().getMaterials().size() <= vtxBuf.getMaterialId()) {
                     // TODO: !
-                    System.out.println("Got material ID " + vtxBuf.getMaterialId() + ", but... there are only " + context.getMap().getMaterials().size() + " material(s) available in the model.");
+                    context.getLogger().warning("Got material ID " + vtxBuf.getMaterialId() + ", but... there are only " + context.getMap().getMaterials().size() + " material(s) available in the model.");
                 } else {
                     kcMaterial material = context.getMap().getMaterials().get((int) vtxBuf.getMaterialId());
                     objWriter.append("usemtl ");
@@ -223,7 +224,7 @@ public class kcModelObjWriter {
             }
 
             if (!setupContext(context, vtxBuf.getComponents())) {
-                System.out.println("The map mesh contained a primitive which had no position data."); // Shouldn't happen.
+                context.getLogger().warning("The map mesh contained a primitive which had no position data."); // Shouldn't happen.
                 objWriter.append("# Skipping because there was no position data...?");
                 objWriter.append(Constants.NEWLINE);
                 continue;
@@ -299,7 +300,7 @@ public class kcModelObjWriter {
                 writeTriangleStrip(context, (int) prim.getVertexCount());
                 break;
             default:
-                System.out.println("kcModel had a prim of type '" + prim.getPrimitiveType() + "', which was supposed because it was unsupported.");
+                context.getLogger().warning("kcModel had a prim of type '" + prim.getPrimitiveType() + "', which was supposed because it was unsupported.");
         }
     }
 
@@ -312,7 +313,7 @@ public class kcModelObjWriter {
                 writeTriangleStrip(context, vtxBuf.getVertexCount());
                 break;
             default:
-                System.out.println("kcCResOctTreeSceneMgr had a prim of type '" + vtxBuf.getPrimitiveType() + "', which was supposed because it was unsupported.");
+                context.getLogger().warning("kcCResOctTreeSceneMgr had a prim of type '" + vtxBuf.getPrimitiveType() + "', which was supposed because it was unsupported.");
         }
     }
 
@@ -408,11 +409,22 @@ public class kcModelObjWriter {
         @Getter private final String fileName;
         @Getter private final StringBuilder objWriter;
         @Getter private final StringBuilder mtlWriter;
+        private Logger cachedLogger;
         public boolean hasNormals;
         public boolean hasTexCoords;
         public int baseVertex = 1;
         public int baseNormal = 1;
         public int baseTexCoord = 1;
+
+        /**
+         * Gets the logger.
+         */
+        public Logger getLogger() {
+            if (this.cachedLogger == null)
+                this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
+
+            return this.cachedLogger;
+        }
     }
 
     private static class ModelObjContext extends ObjWriterContext {

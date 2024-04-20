@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.effect;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
@@ -17,12 +18,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType
 public class kcScriptEffectActor extends kcScriptEffectAction {
     private kcAction action;
 
-    public kcScriptEffectActor(int effectID) {
-        super(kcScriptEffectType.ACTOR, effectID);
+    public kcScriptEffectActor(GreatQuestInstance gameInstance, int effectID) {
+        super(gameInstance, kcScriptEffectType.ACTOR, effectID);
     }
 
-    public kcScriptEffectActor(kcAction action, int targetEntity) {
-        super(kcScriptEffectType.ACTOR, action.getActionID().getOpcode());
+    public kcScriptEffectActor(GreatQuestInstance gameInstance, kcAction action, int targetEntity) {
+        super(gameInstance, kcScriptEffectType.ACTOR, action.getActionID().getOpcode());
         this.action = action;
         setTargetEntityHash(targetEntity);
     }

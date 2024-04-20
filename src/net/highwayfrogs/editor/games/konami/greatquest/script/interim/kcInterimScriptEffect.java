@@ -2,9 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.interim;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
@@ -15,7 +16,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType
  * Created by Kneesnap on 8/23/2023.
  */
 @Getter
-public class kcInterimScriptEffect extends GameObject {
+public class kcInterimScriptEffect extends GameData<GreatQuestInstance> {
     @Setter private transient long dataOffset;
     private kcScriptEffectType effectType;
     private int effectID;
@@ -24,6 +25,10 @@ public class kcInterimScriptEffect extends GameObject {
     private byte[] unhandledRawBytes;
 
     public static final int SIZE_IN_BYTES = 0x20; // 32 bytes. This in theory could differ with other versions.
+
+    public kcInterimScriptEffect(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     /**
      * Load instance data from a kcScriptEffect object.
@@ -57,7 +62,7 @@ public class kcInterimScriptEffect extends GameObject {
         int readSize = reader.getIndex() - startIndex;
         if (readSize != storedSize) {
             this.unhandledRawBytes = reader.readBytes(storedSize - readSize);
-            System.out.println("Script Effect [" + this + "] was loaded from " + readSize + " bytes, but " + storedSize + " were supposed to be read.");
+            getLogger().warning("Script Effect [" + this + "] was loaded from " + readSize + " bytes, but " + storedSize + " were supposed to be read.");
         } else {
             this.unhandledRawBytes = null;
         }
@@ -101,7 +106,7 @@ public class kcInterimScriptEffect extends GameObject {
      * Converts this interim container to the object we'll use instead.
      */
     public kcScriptEffect toScriptEffect() {
-        kcScriptEffect newEffect = this.effectType.newInstance(this.effectID);
+        kcScriptEffect newEffect = this.effectType.newInstance(getGameInstance(), this.effectID);
         newEffect.setTargetEntityHash(this.destObjectHash);
         kcParamReader reader = new kcParamReader(this.parameters);
         newEffect.load(reader);
@@ -118,7 +123,7 @@ public class kcInterimScriptEffect extends GameObject {
         // Store unused arguments.
         if (lastUnusedArgument >= 0) {
             int unusedCount = lastUnusedArgument - lastReadArgument;
-            System.out.println("There was a " + this.effectType + "/" + this.effectID + " effect with at least " + unusedCount + " unread arguments.");
+            getLogger().warning("There was a " + this.effectType + "/" + this.effectID + " effect with at least " + unusedCount + " unread arguments.");
         }
 
         return newEffect;

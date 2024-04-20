@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.effect;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
@@ -13,8 +14,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType
 public abstract class kcScriptEffectAction extends kcScriptEffect {
     private final int effectID;
 
-    public kcScriptEffectAction(kcScriptEffectType effectType, int effectID) {
-        super(effectType);
+    public kcScriptEffectAction(GreatQuestInstance gameInstance, kcScriptEffectType effectType, int effectID) {
+        super(gameInstance, effectType);
         this.effectID = effectID;
     }
 

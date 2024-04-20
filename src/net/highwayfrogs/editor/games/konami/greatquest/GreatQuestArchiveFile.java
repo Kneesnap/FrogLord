@@ -20,22 +20,31 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.Logger;
 
 /**
  * A base TGQ file.
  * Created by Kneesnap on 8/17/2019.
  */
-@Getter
 public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance> implements ICollectionViewEntry, IPropertyListCreator {
-    private byte[] rawData;
-    private String fileName;
-    private String filePath;
-    private int nameHash;
-    private boolean collision; // This is true iff there are multiple files that share the hash.
-    private boolean compressed;
+    @Getter private byte[] rawData;
+    @Getter private String fileName;
+    @Getter private String filePath;
+    @Getter private int nameHash;
+    @Getter private boolean collision; // This is true iff there are multiple files that share the hash.
+    @Getter private boolean compressed;
+    private Logger cachedLogger;
 
     public GreatQuestArchiveFile(GreatQuestInstance instance) {
         super(instance);
+    }
+
+    @Override
+    public Logger getLogger() {
+        if (this.cachedLogger == null)
+            this.cachedLogger = Logger.getLogger(getExportName());
+
+        return this.cachedLogger;
     }
 
     /**
@@ -129,7 +138,7 @@ public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance>
 
         // If we already have a path, we shouldn't be replacing it, and we should warn if the path differs.
         if (this.filePath != null && !this.filePath.isEmpty() && !this.filePath.equalsIgnoreCase(filePath)) {
-            System.out.println("Attempted to replace file name '" + this.filePath + "' with '" + filePath + "'. Not sure how to handle.");
+            getLogger().warning("Attempted to replace file name '" + this.filePath + "' with '" + filePath + "'. Not sure how to handle.");
             return;
         }
 

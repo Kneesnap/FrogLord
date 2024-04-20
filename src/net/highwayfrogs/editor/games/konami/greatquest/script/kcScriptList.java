@@ -26,7 +26,7 @@ public class kcScriptList extends kcCResource {
     private byte[] rawUnhandledData;
 
     public static final String GLOBAL_SCRIPT_NAME = "scriptdata";
-    public static final int GLOBAL_SCRIPT_NAME_HASH = GreatQuestUtils.hash("scriptdata");
+    public static final int GLOBAL_SCRIPT_NAME_HASH = GreatQuestUtils.hash(GLOBAL_SCRIPT_NAME);
 
     public kcScriptList(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.RAW);
@@ -37,14 +37,14 @@ public class kcScriptList extends kcCResource {
         super.load(reader);
 
         // Read interim list.
-        kcScriptListInterim interim = new kcScriptListInterim();
+        kcScriptListInterim interim = new kcScriptListInterim(getGameInstance());
         interim.load(reader);
 
         // Read unhandled data.
         this.rawUnhandledData = null;
         if (reader.hasMore()) {
             this.rawUnhandledData = reader.readBytes(reader.getRemaining());
-            System.out.println("The kcScriptList '" + getName() + "' "
+            getLogger().warning("The kcScriptList '" + getName() + "' "
                     + (getParentFile() != null ? "' " + getParentFile().getFilePath() : "")
                     + " has " + this.rawUnhandledData.length + " unread/unhandled bytes.");
         }
@@ -80,7 +80,7 @@ public class kcScriptList extends kcCResource {
         }
 
         // Write interim data.
-        kcScriptListInterim interim = new kcScriptListInterim(entries, statusData, effects);
+        kcScriptListInterim interim = new kcScriptListInterim(getGameInstance(), entries, statusData, effects);
         interim.save(writer);
 
         // Write unhandled data.
@@ -90,7 +90,7 @@ public class kcScriptList extends kcCResource {
 
     /**
      * Writes the script list to a string builder.
-     * @param level    The level to lookup any extra data from.
+     * @param level    The level to find any extra data from.
      * @param builder  The builder to write the script to.
      * @param settings The settings used to build the output.
      */

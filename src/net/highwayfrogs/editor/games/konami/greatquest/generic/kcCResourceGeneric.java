@@ -252,7 +252,7 @@ public class kcCResourceGeneric extends kcCResource {
         newObject.load(reader);
         this.cachedObject = newObject;
         if (reader.hasMore())
-            System.out.println("Resource '" + getName() + "'/" + genericType + " read only " + reader.getIndex() + " bytes, leaving " + reader.getRemaining() + " unread.");
+            getLogger().warning("Resource '" + getName() + "'/" + genericType + " read only " + reader.getIndex() + " bytes, leaving " + reader.getRemaining() + " unread.");
 
         return newObject;
     }

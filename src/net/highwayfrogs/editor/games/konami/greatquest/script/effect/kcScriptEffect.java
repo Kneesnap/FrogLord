@@ -2,6 +2,8 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.effect;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcInterimScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
@@ -13,11 +15,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType
  * Created by Kneesnap on 8/23/2023.
  */
 @Getter
-public abstract class kcScriptEffect {
+public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> {
     private final kcScriptEffectType effectType;
     @Setter private int targetEntityHash;
 
-    public kcScriptEffect(kcScriptEffectType effectType) {
+    public kcScriptEffect(GreatQuestInstance instance, kcScriptEffectType effectType) {
+        super(instance);
         this.effectType = effectType;
     }
 
@@ -42,7 +45,7 @@ public abstract class kcScriptEffect {
      * Converts this effect to an interim script effect.
      */
     public kcInterimScriptEffect toInterimScriptEffect() {
-        kcInterimScriptEffect scriptEffect = new kcInterimScriptEffect();
+        kcInterimScriptEffect scriptEffect = new kcInterimScriptEffect(getGameInstance());
         scriptEffect.load(this);
         return scriptEffect;
     }

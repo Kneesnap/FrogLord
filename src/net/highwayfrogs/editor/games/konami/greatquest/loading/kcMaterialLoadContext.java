@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -26,6 +27,13 @@ public class kcMaterialLoadContext {
 
     public kcMaterialLoadContext(GreatQuestAssetBinFile binFile) {
         this.mainArchive = binFile;
+    }
+
+    /**
+     * Gets the logger
+     */
+    public Logger getLogger() {
+        return this.mainArchive.getLogger();
     }
 
     /**
@@ -187,7 +195,7 @@ public class kcMaterialLoadContext {
             if (material.getTexture() != null)
                 continue; // A material has been set.
 
-            System.out.println("No image file was identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + entry.getValue().getDebugName() + ".");
+            getLogger().warning("No image file was identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + entry.getValue().getDebugName() + ".");
         }
 
         // Find materials which had multiple possibilities.
@@ -217,10 +225,10 @@ public class kcMaterialLoadContext {
             }
 
             // Print output.
-            System.out.println(foundImageCount + " image file(s) were identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + file.getDebugName() + (foundImageCount > 0 ? ":" : "."));
+            getLogger().warning(foundImageCount + " image file(s) were identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + file.getDebugName() + (foundImageCount > 0 ? ":" : "."));
             if (foundImages != null && foundImageCount > 0)
                 for (GreatQuestImageFile foundImage : foundImages)
-                    System.out.println(" - " + foundImage.getDebugName());
+                    getLogger().warning(" - " + foundImage.getDebugName());
         }
     }
 

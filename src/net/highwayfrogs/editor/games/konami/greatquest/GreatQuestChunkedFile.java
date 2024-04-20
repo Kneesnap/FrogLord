@@ -82,10 +82,9 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
                 // Warn if not all data is read.
                 if (chunkReader.hasMore())
-                    System.out.println("TGQ Chunk " + Utils.stripAlphanumeric(newChunk.getChunkMagic()) + "/'" + newChunk.getName() + "' in '" + getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
+                    getLogger().warning("GreatQuest Chunk " + Utils.stripAlphanumeric(newChunk.getChunkMagic()) + "/'" + newChunk.getName() + "' in '" + getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
             } catch (Throwable th) {
-                th.printStackTrace();
-                System.err.println("Failed to read " + newChunk.getChunkType() + " chunk from " + getDebugName() + ".");
+                Utils.handleError(getLogger(), th, false, "Failed to read %s chunk from '%s'.", newChunk != null ? newChunk.getChunkType() : null, getDebugName());
             }
 
             if (newChunk instanceof TOCChunk) {
@@ -661,7 +660,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             // Check there is data.
             String fileName = Utils.padNumberString(count, 3);
             if (chunk.getRawData() == null) {
-                System.out.println("Skipping chunk with null data: '" + signature + "-" + fileName + "'.");
+                getLogger().warning("Skipping chunk with null data: '" + signature + "-" + fileName + "'.");
                 continue;
             }
 

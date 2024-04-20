@@ -163,19 +163,19 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         // Write files:
         for (GreatQuestArchiveFile file : getFiles()) {
             writer.writeAddressTo(fileOffsetTable.get(file));
-            System.out.println("Writing " + file.getFilePath());
+            getLogger().info("Saving " + file.getFilePath());
 
             byte[] rawBytes; // TODO :TOSS
             if (!(file instanceof GreatQuestChunkedFile) && file.getRawData() != null) {
                 // TODO: Seems both models and images are busted.
                 // TODO: We're missing nearly 100MB of texture data when we let textures save themselves.
                 rawBytes = file.getRawData();
-                System.out.println(rawBytes.length + " raw bytes.");
+                getLogger().info("Wrote " + rawBytes.length + " raw bytes.");
             } else {
                 ArrayReceiver receiver = new ArrayReceiver();
                 file.save(new DataWriter(receiver));
                 rawBytes = receiver.toArray();
-                System.out.println(rawBytes.length + " written data.");
+                getLogger().info("Wrote " + rawBytes.length + " bytes.");
             }
 
             // Write size.
@@ -211,18 +211,20 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
      */
     @SuppressWarnings("unused")
     public void printFileList() {
+        StringBuilder fileLine = new StringBuilder();
         for (int i = 0; i < this.files.size(); i++) {
             GreatQuestArchiveFile file = this.files.get(i);
-            System.out.print(file.hasFilePath() ? file.getFilePath() : "UNKNOWN");
-            System.out.print(" # File ");
-            System.out.print(Utils.padNumberString(i, 4));
-            System.out.print(", Hash: ");
-            System.out.print(Utils.to0PrefixedHexString(file.getNameHash()));
+            fileLine.append(file.hasFilePath() ? file.getFilePath() : "UNKNOWN");
+            fileLine.append(" # File ");
+            fileLine.append(Utils.padNumberString(i, 4));
+            fileLine.append(", Hash: ");
+            fileLine.append(Utils.to0PrefixedHexString(file.getNameHash()));
             if (file.isCollision())
-                System.out.print(" (Collision)");
+                fileLine.append(" (Collision)");
             if (file.isCompressed())
-                System.out.print(", Compressed");
-            System.out.println();
+                fileLine.append(", Compressed");
+            getLogger().info(fileLine.toString());
+            fileLine.setLength(0);
         }
     }
 
@@ -296,7 +298,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
 
         int hash = GreatQuestUtils.hashFilePath(filePath);
         if (showMessageIfNotFound)
-            System.out.println("Attempted to apply the file path '" + filePath + "', but no file matched the hash " + Utils.to0PrefixedHexString(hash) + ".");
+            getLogger().warning("Attempted to apply the file path '" + filePath + "', but no file matched the hash " + Utils.to0PrefixedHexString(hash) + ".");
         return null;
     }
 
@@ -309,7 +311,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
     public GreatQuestArchiveFile getFileByName(GreatQuestArchiveFile searchFrom, String filePath) {
         GreatQuestArchiveFile file = getOptionalFileByName(filePath);
         if (file == null)
-            System.out.println("Failed to find file " + filePath + (searchFrom != null ? " referenced in " + searchFrom.getExportName() : "") + ". (" + GreatQuestUtils.getFileIdFromPath(filePath) + ")");
+            getLogger().warning("Failed to find file " + filePath + (searchFrom != null ? " referenced in " + searchFrom.getExportName() : "") + ". (" + GreatQuestUtils.getFileIdFromPath(filePath) + ")");
         return file;
     }
 

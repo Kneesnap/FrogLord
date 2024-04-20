@@ -2,9 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.interim;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -17,14 +18,15 @@ import java.util.List;
  * Created by Kneesnap on 6/26/2023.
  */
 @Getter
-public class kcScriptListInterim extends GameObject {
+public class kcScriptListInterim extends GameData<GreatQuestInstance> {
     private final List<kcScriptTOC> entries;
     private final List<kcInterimScriptEffect> effects;
     private int[] causeData;
     private int causeReadIndex = -1;
     private int causeMaxIndex = -1;
 
-    public kcScriptListInterim(List<kcScriptTOC> entries, List<Integer> causeData, List<kcInterimScriptEffect> effects) {
+    public kcScriptListInterim(GreatQuestInstance gameInstance, List<kcScriptTOC> entries, List<Integer> causeData, List<kcInterimScriptEffect> effects) {
+        super(gameInstance);
         this.entries = entries;
         this.effects = effects;
 
@@ -33,7 +35,8 @@ public class kcScriptListInterim extends GameObject {
             this.causeData[i] = causeData.get(i);
     }
 
-    public kcScriptListInterim() {
+    public kcScriptListInterim(GreatQuestInstance gameInstance) {
+        super(gameInstance);
         this.entries = new ArrayList<>();
         this.effects = new ArrayList<>();
     }
@@ -49,7 +52,7 @@ public class kcScriptListInterim extends GameObject {
     }
 
     /**
-     * Read the next 'cause' value.
+     * Read the next cause value.
      * @return nextCauseValue.
      */
     public int readNextCauseValue() {
@@ -113,7 +116,7 @@ public class kcScriptListInterim extends GameObject {
 
         long firstEffectStart = reader.getIndex();
         while (effectReadStart + effectBytes > reader.getIndex()) {
-            kcInterimScriptEffect effect = new kcInterimScriptEffect();
+            kcInterimScriptEffect effect = new kcInterimScriptEffect(getGameInstance());
             effect.setDataOffset(reader.getIndex() - firstEffectStart);
             effect.load(reader);
             this.effects.add(effect);
@@ -142,7 +145,7 @@ public class kcScriptListInterim extends GameObject {
     /**
      * Writes the script to a string builder.
      * @param builder  The builder to write the script to.
-     * @param settings The settings to render the text with.
+     * @param settings The settings to used to render the text.
      */
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         if (this.entries.size() > 0) {
@@ -159,7 +162,7 @@ public class kcScriptListInterim extends GameObject {
             builder.append('\n');
         }
 
-        // Write 'cause' data.
+        // Write cause data.
         if (this.causeData != null && this.causeData.length > 0) {
             builder.append("// Cause Data [").append(this.causeData.length).append("]:\n//");
             for (int i = 0; i < this.causeData.length; i++) {

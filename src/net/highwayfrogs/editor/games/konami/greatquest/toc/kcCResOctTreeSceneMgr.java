@@ -54,11 +54,11 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
 
         int remainingDataInBytes = reader.readInt() - Constants.INTEGER_SIZE;
         if (reader.getRemaining() != remainingDataInBytes)
-            System.out.println("OctTree file in '" + getParentFile().getDebugName() + "' said it had " + remainingDataInBytes + " remaining bytes, but it actually had " + reader.getRemaining() + ".");
+            getLogger().warning("OctTree file in '" + getParentFile().getDebugName() + "' said it had " + remainingDataInBytes + " remaining bytes, but it actually had " + reader.getRemaining() + ".");
 
         int version = reader.readInt();
         if (version != 1)
-            System.out.println("OctTree file in '" + getParentFile().getDebugName() + "' identified as version " + version + ", but we only understand version 1.");
+            getLogger().severe("OctTree file in '" + getParentFile().getDebugName() + "' identified as version " + version + ", but we only understand version 1.");
 
         int meshCount = reader.readInt(); // TODO: Used. 0x08
         int treeEntityDataSize = reader.readInt();
@@ -93,7 +93,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
         }
 
         // Read materials.
-        System.out.println("Reading materials from " + Utils.toHexString(reader.getIndex()) + " in " + getParentFile().getDebugName()); // TODO: TOSS
+        getLogger().info("Reading materials from " + Utils.toHexString(reader.getIndex()) + " in " + getParentFile().getDebugName()); // TODO: TOSS
         for (int i = 0; i < materialCount; i++) {
             kcMaterial newMaterial = new kcMaterial();
             newMaterial.load(reader);

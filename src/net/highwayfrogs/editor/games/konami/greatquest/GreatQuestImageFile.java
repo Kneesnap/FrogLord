@@ -79,7 +79,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
 
             int mipLod = reader.readInt(); // Always 1?
             if (mipLod != 1)
-                System.out.println("The image '" + getDebugName() + "'was read with an LOD of " + mipLod + ", but 1 was expected!");
+                getLogger().warning("The image '" + getDebugName() + "'was read with an LOD of " + mipLod + ", but 1 was expected!");
 
             // TODO: Is it always 8 or 16 bytes here? Let's read the code to figure this poop out.
 
@@ -87,7 +87,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
             int imageBytes = ((bitsPerPixel * width * height) / Constants.BITS_PER_BYTE);
             int skipData = reader.getRemaining() - imageBytes;
             if (skipData != 16) {
-                System.out.println(" - The image " + getDebugName() + " skipped " + skipData + " bytes, with the image being " + imageBytes + " bytes...");
+                getLogger().warning(" - The image " + getDebugName() + " skipped " + skipData + " bytes, with the image being " + imageBytes + " bytes...");
                 // TODO: On PC this seems to include two images. But, I suspect there's more to it, as skycloud.img doesn't look right.
                 // TODO: This only triggers for 26 bytes on PS2 version.
             }
@@ -102,7 +102,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
         }
 
         if (reader.getRemaining() > 0) // Test we're not skipping any data.
-            System.out.println(" - The image '" + getDebugName() + "' has " + reader.getRemaining() + " unread bytes.");
+            getLogger().warning(" - The image '" + getDebugName() + "' has " + reader.getRemaining() + " unread bytes.");
     }
 
     private void kcLoad8BitImageHeader(DataReader reader) {
@@ -117,7 +117,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
         byte bitsPerPixel = reader.readByte();
         byte descriptor = reader.readByte();
 
-        /*System.out.println("IMG [" + getDebugName() + ", " + width + "x" + height + "]: idsize=" + idSize + ", colMapType=" + colMapType + ", typeCode=" + typeCode
+        /*getLogger().info("IMG [" + getDebugName() + ", " + width + "x" + height + "]: idsize=" + idSize + ", colMapType=" + colMapType + ", typeCode=" + typeCode
                 + ", colMap=" + Utils.toByteString(colMap) + ", origin=[" + xOrigin + "," + yOrigin + "], bpp=" + bitsPerPixel + ", Descriptor=" + descriptor);*/
 
         int paletteSizeInBytes = 0;

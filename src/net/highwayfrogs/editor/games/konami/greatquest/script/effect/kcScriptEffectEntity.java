@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.effect;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.*;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
@@ -12,8 +13,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType
 public class kcScriptEffectEntity extends kcScriptEffectAction {
     private kcAction action;
 
-    public kcScriptEffectEntity(int effectID) {
-        super(kcScriptEffectType.ENTITY, effectID);
+    public kcScriptEffectEntity(GreatQuestInstance gameInstance, int effectID) {
+        super(gameInstance, kcScriptEffectType.ENTITY, effectID);
     }
 
     @Override

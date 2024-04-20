@@ -130,7 +130,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         int realStride = (reader.getRemaining() / vertexCount);
 
         if (realStrideRemainder != 0 || realStride != configuredStride) {
-            System.out.println("3D model had " + vertexCount + " vertices with a stride calculated to be " + configuredStride + ", but the actual stride of remaining data was " + realStride + ". (Remainder: " + realStrideRemainder + ")");
+            getLogger().warning("3D model had " + vertexCount + " vertices with a stride calculated to be " + configuredStride + ", but the actual stride of remaining data was " + realStride + ". (Remainder: " + realStrideRemainder + ")");
 
             if (this.components[this.components.length - 1] == kcVertexFormatComponent.WEIGHT1F && realStride == 24 && configuredStride == 26) {
                 // An example of an afflicted file, file 3594 on the PS2 PAL release.
@@ -140,7 +140,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
                 kcVertexFormatComponent[] newComponents = new kcVertexFormatComponent[this.components.length - 1];
                 System.arraycopy(this.components, 0, newComponents, 0, newComponents.length);
                 this.components = newComponents;
-                System.out.println(" - However, a hack was applied to fix the model.");
+                getLogger().warning(" - However, a hack was applied to fix the model.");
             } else {
                 reader.skipBytes(reader.getRemaining());
                 return;
@@ -152,7 +152,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
             loadedVertices += this.primitives.get(i).loadVertices(reader);
 
         if (reader.hasMore() || vertexCount != loadedVertices)
-            System.out.println("3D Model had unread data! (Remaining: " + reader.getRemaining() + ", Position: " + Integer.toHexString(reader.getIndex()) + ", Vertices: " + loadedVertices + "/" + vertexCount + ")");
+            getLogger().warning("3D Model had unread data! (Remaining: " + reader.getRemaining() + ", Position: " + Integer.toHexString(reader.getIndex()) + ", Vertices: " + loadedVertices + "/" + vertexCount + ")");
     }
 
     @Override

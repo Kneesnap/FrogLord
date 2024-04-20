@@ -36,7 +36,7 @@ public class kcCResourceNamedHash extends kcCResource {
         int reserved2 = reader.readInt();
 
         if (version != 0 || reserved1 != 0 || reserved2 != 0)
-            System.out.println("Unexpected non-zero value in named hash chunk! [" + version + ", " + reserved1 + ", " + reserved2 + "]");
+            getLogger().warning("Unexpected non-zero value in named hash chunk! [" + version + ", " + reserved1 + ", " + reserved2 + "]");
 
         // Read entries.
         this.entries.clear();
@@ -48,7 +48,7 @@ public class kcCResourceNamedHash extends kcCResource {
 
         // Check nothing remains.
         if (reader.hasMore())
-            System.out.println("There are " + reader.getRemaining() + " unread bytes in " + getParentFile().getDebugName());
+            getLogger().warning("There are " + reader.getRemaining() + " unread bytes in " + getParentFile().getDebugName());
     }
 
     @Override

@@ -43,7 +43,7 @@ public class kcCResourceEntityInst extends kcCResource {
             this.entity.load(reader);
         } else {
             // TODO: Let's reverse engineer this.
-            System.err.println("Couldn't identify the entity type for '" + getName() + "' from the byte size of " + sizeInBytes + ".");
+            getLogger().severe("Couldn't identify the entity type for '" + getName() + "' from the byte size of " + sizeInBytes + ".");
             this.dummyBytes = reader.readBytes(sizeInBytes);
         }
     }

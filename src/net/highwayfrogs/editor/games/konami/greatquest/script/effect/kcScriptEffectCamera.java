@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.effect;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
@@ -16,8 +17,8 @@ public class kcScriptEffectCamera extends kcScriptEffect {
     private final kcCameraEffect cameraEffect;
     private kcParam[] arguments;
 
-    public kcScriptEffectCamera(int effectID) {
-        super(kcScriptEffectType.CAMERA);
+    public kcScriptEffectCamera(GreatQuestInstance gameInstance, int effectID) {
+        super(gameInstance, kcScriptEffectType.CAMERA);
         this.cameraEffect = kcCameraEffect.getType(effectID, false);
     }
 

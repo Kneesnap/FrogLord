@@ -43,11 +43,11 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
         int size = reader.readInt();
 
         if (size != reader.getRemaining())
-            System.out.println("The model '" + getDebugName() + "' was supposed to have " + size + " bytes, but actually has " + reader.getRemaining() + " bytes.");
+            getLogger().warning("The model '" + getDebugName() + "' was supposed to have " + size + " bytes, but actually has " + reader.getRemaining() + " bytes.");
 
         this.model.load(reader);
         if (reader.hasMore())
-            System.out.println("The model '" + getDebugName() + "' has " + reader.getRemaining() + " unread bytes.");
+            getLogger().warning("The model '" + getDebugName() + "' has " + reader.getRemaining() + " unread bytes.");
     }
 
     @Override

@@ -107,12 +107,12 @@ public class GreatQuestRunners {
             // Add dialog action.
             kcActionTemplate actionClearFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance();
             actionClearFlagDialog.getArguments().add(new kcParam(clearFlagDialogHash));
-            clearFlagFunc.getEffects().add(new kcScriptEffectActor(actionClearFlagDialog, 0x68FF0A2));
+            clearFlagFunc.getEffects().add(new kcScriptEffectActor(instance, actionClearFlagDialog, 0x68FF0A2));
 
             // Add clear action.
             kcActionFlag actionClearFlag = new kcActionFlag(kcActionID.SET_FLAGS);
             actionClearFlag.getArguments().add(new kcParam(1 << i));
-            clearFlagFunc.getEffects().add(new kcScriptEffectActor(actionClearFlag, 0x68FF0A2));
+            clearFlagFunc.getEffects().add(new kcScriptEffectActor(instance, actionClearFlag, 0x68FF0A2));
 
             // Add increment function.
             // TODO
@@ -132,12 +132,12 @@ public class GreatQuestRunners {
             // Add dialog action.
             kcActionTemplate actionSetFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance();
             actionSetFlagDialog.getArguments().add(new kcParam(setFlagDialogHash));
-            setFlagFunc.getEffects().add(new kcScriptEffectActor(actionSetFlagDialog, 0x68FF0A2));
+            setFlagFunc.getEffects().add(new kcScriptEffectActor(instance, actionSetFlagDialog, 0x68FF0A2));
 
             // Add set flag action.
             kcActionFlag actionSetFlag = new kcActionFlag(kcActionID.SET_FLAGS);
             actionSetFlag.getArguments().add(new kcParam(1 << i));
-            setFlagFunc.getEffects().add(new kcScriptEffectActor(actionSetFlag, 0x68FF0A2));
+            setFlagFunc.getEffects().add(new kcScriptEffectActor(instance, actionSetFlag, 0x68FF0A2));
 
             // Add increment function.
             // TODO

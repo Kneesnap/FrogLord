@@ -3,9 +3,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.script;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.*;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * Represents different instructions.
@@ -20,16 +21,16 @@ public enum kcScriptEffectType {
     AI(Constants.BIT_FLAG_18, kcScriptEffectAI::new); // 262144|0x40000
 
     private final int value;
-    private final Function<Integer, kcScriptEffect> effectMaker;
+    private final BiFunction<GreatQuestInstance, Integer, kcScriptEffect> effectMaker;
 
     /**
      * Creates a new instance of a kcScriptEffect representing this type.
      */
-    public kcScriptEffect newInstance(int effectID) {
+    public kcScriptEffect newInstance(GreatQuestInstance gameInstance, int effectID) {
         if (this.effectMaker == null)
             throw new RuntimeException("Cannot create new kcScriptEffect for " + name() + ".");
 
-        return this.effectMaker.apply(effectID);
+        return this.effectMaker.apply(gameInstance, effectID);
     }
 
     /**

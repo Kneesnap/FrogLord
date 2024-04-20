@@ -2,10 +2,11 @@ package net.highwayfrogs.editor.games.konami.greatquest.script;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.generic.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCause;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
@@ -31,9 +32,13 @@ import java.util.List;
  * Created by Kneesnap on 6/26/2023.
  */
 @Getter
-@RequiredArgsConstructor
-public class kcScript {
+public class kcScript extends GameObject<GreatQuestInstance> {
     private final List<kcScriptFunction> functions;
+
+    public kcScript(GreatQuestInstance instance, List<kcScriptFunction> functions) {
+        super(instance);
+        this.functions = functions;
+    }
 
     /**
      * Gets the number of total effects used by this script.
@@ -177,9 +182,9 @@ public class kcScript {
         }
 
         if (totalEffects != toc.getEffectCount())
-            System.out.println("Script TOC listed a total of " + toc.getEffectCount() + " script effect(s), but we actually loaded " + totalEffects + ".");
+            interim.getLogger().warning("Script TOC listed a total of " + toc.getEffectCount() + " script effect(s), but we actually loaded " + totalEffects + ".");
 
-        kcScript newScript = new kcScript(functions);
+        kcScript newScript = new kcScript(interim.getGameInstance(), functions);
 
         // Verify calculated cause types are correct.
         int calculatedCauseTypes = newScript.calculateCauseTypes();
@@ -203,7 +208,7 @@ public class kcScript {
         }
 
         /**
-         * Save the 'cause' data from this function to a list.
+         * Save the "cause" data from this function to a list.
          * @param output           The list to save to.
          * @param effectByteOffset The offset (in bytes) from the start of the effect data which the effect is located at.
          * @return How many values were added.
