@@ -7,11 +7,13 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcOctTree;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.model.*;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceTriMesh.kcCTriMesh;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,14 +32,19 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
     private final List<kcVtxBufFileStruct> vertexBuffers = new ArrayList<>();
     private final List<kcMaterial> materials = new ArrayList<>();
     private final List<kcCTriMesh> collisionMeshes = new ArrayList<>();
+    private final kcOctTree entityTree;
+    private final kcOctTree visualTree;
 
     public static final int NAME_SIZE = 32;
+    private static final int SUPPORTED_VERSION = 1;
     private static final int RESERVED_HEADER_FIELDS = 7;
     private static final int RESERVED_PRIM_HEADER_FIELDS = 3;
     public static final int LEVEL_RESOURCE_HASH = GreatQuestUtils.hash("OctTreeSceneMgr", true);
 
     public kcCResOctTreeSceneMgr(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.OCTTREESCENEMGR);
+        this.entityTree = new kcOctTree(getGameInstance());
+        this.visualTree = new kcOctTree(getGameInstance());
     }
 
     /**
@@ -58,8 +65,8 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
             getLogger().warning("OctTree file in '" + getParentFile().getDebugName() + "' said it had " + remainingDataInBytes + " remaining bytes, but it actually had " + reader.getRemaining() + ".");
 
         int version = reader.readInt();
-        if (version != 1)
-            getLogger().severe("OctTree file in '" + getParentFile().getDebugName() + "' identified as version " + version + ", but we only understand version 1.");
+        if (version != SUPPORTED_VERSION)
+            getLogger().severe("OctTree file in '" + getParentFile().getDebugName() + "' identified as version " + version + ", but we only understand version " + SUPPORTED_VERSION + ".");
 
         int meshCount = reader.readInt();
         int treeEntityDataSize = reader.readInt();
@@ -72,13 +79,21 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
 
         // End of header.
 
-        // Read oct tree data. TODO (Future): Implement actually reading this.
-        reader.skipBytes(treeEntityDataSize);
-        // This data is passed directly to kcCOctTree::Init(), to build the "entity tree"?
+        // Read oct tree data.
+        int treeEntityEndIndex = reader.getIndex() + treeEntityDataSize;
+        this.entityTree.load(reader);
+        if (treeEntityEndIndex != reader.getIndex()) {
+            getLogger().warning("Entity kcOctTree ended at the wrong position! (Expected: " + Utils.toHexString(treeEntityEndIndex) + ", Actual: " + Utils.toHexString(reader.getIndex()) + ")");
+            reader.setIndex(treeEntityEndIndex);
+        }
 
-        // Read visual tree data. TODO (Future): Implement actually reading this.
-        reader.skipBytes(treeVisualDataSize);
-        // This data is passed directly to kcCOctTree::Init(), to build the "visual tree"?
+        // Read visual tree data.
+        int treeVisualEndIndex = reader.getIndex() + treeVisualDataSize;
+        this.visualTree.load(reader);
+        if (treeVisualEndIndex != reader.getIndex()) {
+            getLogger().warning("Visual kcOctTree ended at the wrong position! (Expected: " + Utils.toHexString(treeVisualEndIndex) + ", Actual: " + Utils.toHexString(reader.getIndex()) + ")");
+            reader.setIndex(treeVisualEndIndex);
+        }
 
         // Read primitives.
         this.vertexBuffers.clear();
@@ -115,7 +130,43 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeBytes(getRawData()); // TODO: REPLACE
+        super.save(writer);
+
+        // Header
+        int fullSizeAddress = writer.writeNullPointer();
+        writer.writeInt(SUPPORTED_VERSION);
+        writer.writeInt(this.collisionMeshes.size()); // Mesh count.
+        int treeEntityDataSizeAddress = writer.writeNullPointer();
+        writer.writeInt(this.vertexBuffers.size()); // Prim count.
+        int treeVisualDataSizeAddress = writer.writeNullPointer();
+        writer.writeInt(this.materials.size());
+        writer.writeInt(0); // sourcePathMeshCount
+        writer.writeInt(0); // sourcePathVisualCount
+        writer.writeNull(RESERVED_HEADER_FIELDS * Constants.INTEGER_SIZE);
+
+        // Write oct tree data.
+        int treeEntityStartIndex = writer.getIndex();
+        this.entityTree.save(writer);
+        writer.writeAddressAt(treeEntityDataSizeAddress, writer.getIndex() - treeEntityStartIndex);
+
+        // Write visual tree data.
+        int treeVisualStartIndex = writer.getIndex();
+        this.visualTree.save(writer);
+        writer.writeAddressAt(treeVisualDataSizeAddress, writer.getIndex() - treeVisualStartIndex);
+
+        // Write primitives.
+        for (int i = 0; i < this.vertexBuffers.size(); i++)
+            this.vertexBuffers.get(i).save(writer);
+
+        // Write materials.
+        for (int i = 0; i < this.materials.size(); i++)
+            this.materials.get(i).save(writer);
+
+        // Write collision meshes.
+        for (int i = 0; i < this.collisionMeshes.size(); i++)
+            this.collisionMeshes.get(i).save(writer);
+
+        writer.writeAddressAt(fullSizeAddress, writer.getIndex() - fullSizeAddress);
     }
 
     @Override
@@ -227,7 +278,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
          */
         public void save(DataWriter writer) {
             // _OTAPrimHeader from kcCVtxBufList.h
-            int otaPrimHeaderSizeAddr = writer.writeNullPointer(); // otaPrimHeaderSize
+            int otaPrimHeaderSizeAddress = writer.writeNullPointer(); // otaPrimHeaderSize
             writer.writeUnsignedInt(this.materialId);
             writer.writeFloat(this.normalTolerance);
             writer.writeInt(0); // Verified to be zero. (Reserved)
@@ -239,7 +290,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
             writer.writeInt(this.fvfStride);
             writer.writeInt(this.primitiveType.ordinal());
             writer.writeInt(kcModel.calculatePrimCount(this.vertices.size(), this.primitiveType)); // primitiveCount
-            int vtxByteLengthAddr = writer.writeNullPointer();
+            int vtxByteLengthAddress = writer.writeNullPointer();
             for (int j = 0; j < RESERVED_PRIM_HEADER_FIELDS; j++)
                 writer.writeInt(0); // These are known to be empty.
 
@@ -249,10 +300,10 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
                 this.vertices.get(i).save(writer, this.components, this.fvf);
 
             // Write lengths.
-            int headerByteLength = (writer.getIndex() - otaPrimHeaderSizeAddr);
+            int headerByteLength = (writer.getIndex() - otaPrimHeaderSizeAddress);
             int vtxByteLength = (writer.getIndex() - vtxDataStart);
-            writer.writeAddressAt(otaPrimHeaderSizeAddr, headerByteLength + vtxByteLength);
-            writer.writeAddressAt(vtxByteLengthAddr, vtxByteLength);
+            writer.writeAddressAt(otaPrimHeaderSizeAddress, headerByteLength + vtxByteLength);
+            writer.writeAddressAt(vtxByteLengthAddress, vtxByteLength);
         }
     }
 }
