@@ -17,12 +17,12 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 @Setter
 public class kcWaypointDesc extends kcEntity3DDesc {
-    private short type;
-    private short subType;
+    private short type; // TODO: I think this is always 0. Extensions of kcCWaypoint might have other types, but in terms of what is stored in the game data, I think it's just this.
+    private short subType; // TODO: FOR game data, it's either 0 or 1. (Replace with enum later?)
     private int prevHash;
     private int nextHash;
     private int waypointFlags;
-    private final kcColor4 color = new kcColor4();
+    private final kcColor4 color = new kcColor4(); // When this is type 0 subType 1, THIS IS NOT ACTUALLY A COLOR.
     private float strength;
     private final int[] padWaypoint = new int[7];
 

@@ -3,16 +3,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.enti
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.CullFace;
-import javafx.scene.shape.Cylinder;
-import javafx.scene.shape.MeshView;
-import javafx.scene.shape.Sphere;
+import javafx.scene.shape.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.*;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyCapsuleDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
@@ -37,8 +31,9 @@ public class GreatQuestMapEditorEntityDisplay {
     private final kcCResourceEntityInst entityInstance;
     private final GreatQuestMapModelMeshCollection modelViews;
     private Node collisionPreview;
-    private Sphere boundingSpherePreview;
+    private Shape3D boundingSpherePreview;
 
+    private static final PhongMaterial BOUNDING_OBB_MATERIAL = Utils.makeHighlightOverlayMaterial(Color.RED);
     private static final PhongMaterial BOUNDING_SPHERE_MATERIAL = Utils.makeHighlightOverlayMaterial(Color.BLUE);
     private static final PhongMaterial PROXY_SPHERE_MATERIAL = Utils.makeHighlightOverlayMaterial(Color.LIMEGREEN);
 
@@ -98,15 +93,28 @@ public class GreatQuestMapEditorEntityDisplay {
         if (boundingSphere == null)
             return null;
 
-        Sphere newSphere = new Sphere(boundingSphere.getRadius());
-        newSphere.setMaterial(BOUNDING_SPHERE_MATERIAL);
-        newSphere.setMouseTransparent(true);
-        this.entityManager.getController().getMainLight().getScope().add(newSphere);
-        this.entityManager.getBoundingSphereDisplayList().add(newSphere);
-        this.boundingSpherePreview = newSphere; // Do before calling setupNode()
-        setupNode(newSphere);
+        Shape3D newShape;
+        if (entity3DDesc instanceof kcWaypointDesc && ((kcWaypointDesc) entity3DDesc).getType() == 0 && ((kcWaypointDesc) entity3DDesc).getSubType() == 1) {
+            kcWaypointDesc waypointDesc = ((kcWaypointDesc) entity3DDesc);
+            // Leave it up to the Great Quest to store collision data in a field named & typed as a color. Sigh.
+            // Reference: kcCWaypoint::Init, kcCWaypoint::UpdateRectangularParameters, kcCWaypoint::Intersects
+            double xMagnitude = Math.max(.05, Math.min(64, waypointDesc.getColor().getRed()));
+            double yMagnitude = Math.max(.05, Math.min(64, waypointDesc.getColor().getGreen()));
+            double zMagnitude = Math.max(.05, Math.min(64, waypointDesc.getColor().getBlue()));
+            newShape = new Box(xMagnitude, yMagnitude, zMagnitude);
+            newShape.setMaterial(BOUNDING_OBB_MATERIAL);
+        } else {
+            newShape = new Sphere(boundingSphere.getRadius());
+            newShape.setMaterial(BOUNDING_SPHERE_MATERIAL);
+        }
 
-        return newSphere;
+        newShape.setMouseTransparent(true);
+        this.entityManager.getController().getMainLight().getScope().add(newShape);
+        this.entityManager.getBoundingSphereDisplayList().add(newShape);
+        this.boundingSpherePreview = newShape; // Do before calling setupNode()
+        setupNode(newShape);
+
+        return newShape;
     }
 
     /**
