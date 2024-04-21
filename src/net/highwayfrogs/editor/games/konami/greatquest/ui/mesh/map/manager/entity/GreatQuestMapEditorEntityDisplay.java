@@ -101,7 +101,7 @@ public class GreatQuestMapEditorEntityDisplay {
             double xMagnitude = Math.max(.05, Math.min(64, waypointDesc.getColor().getRed()));
             double yMagnitude = Math.max(.05, Math.min(64, waypointDesc.getColor().getGreen()));
             double zMagnitude = Math.max(.05, Math.min(64, waypointDesc.getColor().getBlue()));
-            newShape = new Box(xMagnitude, yMagnitude, zMagnitude);
+            newShape = new Box(xMagnitude * 2, yMagnitude * 2, zMagnitude * 2);
             newShape.setMaterial(BOUNDING_OBB_MATERIAL);
         } else {
             newShape = new Sphere(boundingSphere.getRadius());
