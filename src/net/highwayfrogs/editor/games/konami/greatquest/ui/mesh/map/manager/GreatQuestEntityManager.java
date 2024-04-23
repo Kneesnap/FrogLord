@@ -2,8 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager;
 
 import javafx.application.Platform;
 import javafx.scene.control.CheckBox;
+import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
+import javafx.scene.shape.Sphere;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
@@ -51,6 +53,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     private CheckBox showEntityMeshCheckBox;
     private CheckBox showCollisionCheckBox;
     private CheckBox showBoundingSphereCheckBox;
+    private CheckBox showBoundingBoxCheckBox;
     private static final Pattern DOME_PATTERN = Pattern.compile("(?i)^\\d\\ddome(\\d\\d)?\\.vtx$");
     private static final Pattern WATER_PATTERN = Pattern.compile("(?i)^\\d\\d((lake)|(river)|(waterfall)|(water))(\\d\\d)?\\.((ctm)|(vtx))$");
 
@@ -67,6 +70,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
         this.showEntityMeshCheckBox = getMainGrid().addCheckBox("Show Entity Mesh", true, this::setEntityMeshVisible);
         this.showCollisionCheckBox = getMainGrid().addCheckBox("Show Collision Proxy", false, this::setCollisionProxyVisible);
         this.showBoundingSphereCheckBox = getMainGrid().addCheckBox("Show Bounding Sphere", false, this::setBoundingSphereVisible);
+        this.showBoundingBoxCheckBox = getMainGrid().addCheckBox("Show Waypoint Bounding Box", false, this::setBoundingBoxVisible);
         getMainGrid().addCheckBox("Show Sky Box", true, this::setSkyBoxVisible);
         getMainGrid().addCheckBox("Show Water", true, this::setWaterVisible);
 
@@ -225,9 +229,20 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
      */
     public void setBoundingSphereVisible(boolean visible) {
         for (GreatQuestMapEditorEntityDisplay display : getDelegatesByValue().values())
-            if (display.getBoundingSpherePreview() != null)
+            if (display.getBoundingSpherePreview() instanceof Sphere)
                 display.getBoundingSpherePreview().setVisible(visible && isValueVisibleByUI(display.getEntityInstance()));
     }
+
+    /**
+     * Set if bounding boxes are displayed.
+     * @param visible the desired visibility state
+     */
+    public void setBoundingBoxVisible(boolean visible) {
+        for (GreatQuestMapEditorEntityDisplay display : getDelegatesByValue().values())
+            if (display.getBoundingSpherePreview() instanceof Box)
+                display.getBoundingSpherePreview().setVisible(visible && isValueVisibleByUI(display.getEntityInstance()));
+    }
+
 
     /**
      * Set if the sky box is visible.

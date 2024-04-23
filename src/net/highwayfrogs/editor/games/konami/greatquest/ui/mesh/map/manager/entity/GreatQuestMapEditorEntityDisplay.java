@@ -55,9 +55,21 @@ public class GreatQuestMapEditorEntityDisplay {
         if (this.collisionPreview != null)
             this.collisionPreview.setVisible(visible && this.entityManager.getShowCollisionCheckBox().isSelected());
         if (this.boundingSpherePreview != null)
-            this.boundingSpherePreview.setVisible(visible && this.entityManager.getShowBoundingSphereCheckBox().isSelected());
+            this.boundingSpherePreview.setVisible(visible && (hasWaypointBoundingBox() ? this.entityManager.getShowBoundingBoxCheckBox().isSelected() : this.entityManager.getShowBoundingSphereCheckBox().isSelected()));
         for (int i = 0; i < this.modelViews.getMeshViews().size(); i++)
             this.modelViews.getMeshViews().get(i).setVisible(visible && this.entityManager.getShowEntityMeshCheckBox().isSelected());
+    }
+
+    /**
+     * Test if this display has a waypoint bounding box type.
+     */
+    public boolean hasWaypointBoundingBox() {
+        kcEntity3DDesc entity3DDesc = getEntity3DDescription();
+        if (!(entity3DDesc instanceof kcWaypointDesc))
+            return false; // Not a waypoint!
+
+        kcWaypointDesc waypointDesc = (kcWaypointDesc) entity3DDesc;
+        return waypointDesc.getType() == 0 && waypointDesc.getSubType() == 1;
     }
 
     /**
