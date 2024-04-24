@@ -17,8 +17,8 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 @Setter
 public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
-    private int durability;
-    private int startHealth;
+    private int durability; // When loaded, if this is less than 1, 100 is used.
+    private int startHealth; // When loaded, if this is less than 1, 100 is used.
     private int immuneMask;
 
     public kcHealthDesc(GreatQuestInstance instance) {

@@ -286,6 +286,7 @@ public class GreatQuestMapEditorEntityDisplay {
         kcEntity3DDesc entityDesc = entity3D.getDescription(this.entityManager.getMap());
         // TODO: Some objects if PI / 2 is subtracted from their X start looking correct. However, this breaks others. Need to figure out what's going on here.
         //  - It seems animated objects are usually what need this.
+        //  - I bet the animations fix the rotations.
         boolean hasAnimationSet = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getAnimationSet(this.entityManager.getMap()) != null;
         boolean hasAnimation = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getAnimationHash() != 0 && ((kcActorBaseDesc) entityDesc).getAnimationHash() != -1;
         double xRotationOffset = Math.PI / 2;

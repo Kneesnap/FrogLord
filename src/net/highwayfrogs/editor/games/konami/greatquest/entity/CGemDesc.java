@@ -8,11 +8,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Represents the 'CGemDesc' struct.
+ * Loaded by CGem::Init
  * Created by Kneesnap on 8/22/2023.
  */
 public class CGemDesc extends CItemDesc {
-    private GemType type;
-    private final int[] padGem = new int[8];
+    private GemType type = GemType.NONE;
+    private static final int PADDING_VALUES = 8;
 
     public CGemDesc(GreatQuestInstance instance) {
         super(instance);
@@ -27,16 +28,14 @@ public class CGemDesc extends CItemDesc {
     public void load(DataReader reader) {
         super.load(reader);
         this.type = GemType.getType(reader.readInt(), false);
-        for (int i = 0; i < this.padGem.length; i++)
-            this.padGem[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
     public void saveData(DataWriter writer) {
         super.saveData(writer);
         writer.writeInt(this.type.ordinal());
-        for (int i = 0; i < this.padGem.length; i++)
-            writer.writeInt(this.padGem[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

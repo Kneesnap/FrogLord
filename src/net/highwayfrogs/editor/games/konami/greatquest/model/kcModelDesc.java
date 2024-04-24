@@ -12,14 +12,15 @@ import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents the kcModelDesc struct.
+ * Loaded by kcCModel::Init
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
 @Setter
 public class kcModelDesc extends kcBaseDesc implements IInfoWriter {
-    private int hashOfChunkContainingThis; // The hash of the generic resource chunk containing this object.
+    private int hashOfChunkContainingThis; // The hash of the generic resource chunk containing this object. TODO: Unused.
     private int modelChunkHash; // The hash of the chunk which is a reference to a model file.
-    private int materialHash = -1; // Seems to be -1.
+    private int materialHash = -1; // Seems to be -1. TODO: Unused.
 
     public kcModelDesc(GreatQuestInstance instance) {
         super(instance);

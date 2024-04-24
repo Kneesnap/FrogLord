@@ -6,7 +6,9 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector3;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +18,7 @@ import java.util.List;
  * Created by Kneesnap on 4/20/2024.
  */
 @Getter
-public class kcOctTree extends GameData<GreatQuestInstance> {
+public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     private int maxDimension; // TODO: Figure this one out.
     private int maxDimensionE; // TODO: Figure this one out.
     private int maxResolution; // TODO: Figure this one out.
@@ -120,6 +122,20 @@ public class kcOctTree extends GameData<GreatQuestInstance> {
         // Read quad branches.
         for (int i = 0; i < this.quadBranches.size(); i++)
             this.quadBranches.get(i).save(writer);
+    }
+
+    @Override
+    public void writeMultiLineInfo(StringBuilder builder, String padding) {
+        builder.append(padding).append("Max Dimension: ").append(this.maxDimension).append(Constants.NEWLINE);
+        builder.append(padding).append("Max Dimension E: ").append(this.maxDimensionE).append(Constants.NEWLINE);
+        builder.append(padding).append("Max Resolution: ").append(this.maxResolution).append(Constants.NEWLINE);
+        builder.append(padding).append("Max Resolution E: ").append(this.maxResolutionE).append(Constants.NEWLINE);
+        this.offset.writePrefixedInfoLine(builder, "Offset", padding);
+        builder.append(padding).append("Root: ").append(this.root).append(Constants.NEWLINE);
+        builder.append(padding).append("Flags: ").append(Utils.toHexString(this.flags)).append(Constants.NEWLINE);
+        builder.append(padding).append("Branches: ").append(Utils.toHexString(this.branches.size())).append(Constants.NEWLINE);
+        builder.append(padding).append("Leaves: ").append(Utils.toHexString(this.leaves.size())).append(Constants.NEWLINE);
+        builder.append(padding).append("Quad Branches: ").append(Utils.toHexString(this.quadBranches.size())).append(Constants.NEWLINE);
     }
 
     @Getter

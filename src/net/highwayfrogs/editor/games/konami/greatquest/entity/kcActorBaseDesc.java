@@ -24,14 +24,14 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 @Setter
 public class kcActorBaseDesc extends kcEntity3DDesc {
-    private int hThis;
+    private int hThis; // Seems unused.
     private int modelDescHash;
     private int hierarchyHash;
-    private int numChan;
-    private int animSetHash;
+    private int numChan; // Used for initializing the skeleton hierarchy in kcCActorBase::Init
+    private int animSetHash; // TODO: MIGHT be unused.
     private int proxyDescHash;
     private int animationHash;
-    private final int[] padActorBase = new int[4];
+    private static final int PADDING_VALUES = 4;
 
     public kcActorBaseDesc(GreatQuestInstance instance) {
         super(instance);
@@ -52,8 +52,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         this.animSetHash = reader.readInt();
         this.proxyDescHash = reader.readInt();
         this.animationHash = reader.readInt();
-        for (int i = 0; i < this.padActorBase.length; i++)
-            this.padActorBase[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -66,8 +65,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         writer.writeInt(this.animSetHash);
         writer.writeInt(this.proxyDescHash);
         writer.writeInt(this.animationHash);
-        for (int i = 0; i < this.padActorBase.length; i++)
-            writer.writeInt(this.padActorBase[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

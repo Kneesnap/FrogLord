@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestImageFile;
+import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -14,7 +15,7 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 6/22/2023.
  */
 @Getter
-public class kcMaterial extends GameObject {
+public class kcMaterial extends GameObject implements IMultiLineInfoWriter {
     private String materialName;
     private String textureFileName;
     private int flags; // TODO: Let's document the different flags.
@@ -179,5 +180,18 @@ public class kcMaterial extends GameObject {
         if (this.textureFileName != null)
             builder.append(Utils.stripExtension(this.textureFileName));
         builder.append(".png").append(Constants.NEWLINE);
+    }
+
+    @Override
+    public void writeMultiLineInfo(StringBuilder builder, String padding) {
+        builder.append(padding).append("kcMaterial[Name='").append(this.materialName).append("',Texture='").append(this.textureFileName).append("']:").append(Constants.NEWLINE);
+        String newPadding = padding + " ";
+        builder.append(newPadding).append("Flags: ").append(Utils.toHexString(this.flags)).append(Constants.NEWLINE);
+        builder.append(newPadding).append("xpVal: ").append(this.xpVal).append(Constants.NEWLINE);
+        builder.append(newPadding).append("Diffuse: [Red=").append(this.diffuseRed).append(",Green=").append(this.diffuseGreen).append(",Blue=").append(this.diffuseBlue).append(",Alpha=").append(this.diffuseAlpha).append("]").append(Constants.NEWLINE);
+        builder.append(newPadding).append("Ambient: [Red=").append(this.ambientRed).append(",Green=").append(this.ambientGreen).append(",Blue=").append(this.ambientBlue).append(",Alpha=").append(this.ambientAlpha).append("]").append(Constants.NEWLINE);
+        builder.append(newPadding).append("Specular: [Red=").append(this.specularRed).append(",Green=").append(this.specularGreen).append(",Blue=").append(this.specularBlue).append(",Alpha=").append(this.specularAlpha).append("]").append(Constants.NEWLINE);
+        builder.append(newPadding).append("Emissive: [Red=").append(this.emissiveRed).append(",Green=").append(this.emissiveGreen).append(",Blue=").append(this.emissiveBlue).append(",Alpha=").append(this.emissiveAlpha).append("]").append(Constants.NEWLINE);
+        builder.append(newPadding).append("Power: ").append(this.power).append(Constants.NEWLINE);
     }
 }

@@ -10,14 +10,15 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Represents the 'kcActorDesc' struct.
+ * Used for setup by kcCActor::Init.
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
 @Setter
 public class kcActorDesc extends kcActorBaseDesc {
     private final kcHealthDesc health;
-    private int invincibleDurationLimitMs;
-    private final int[] padActor = new int[3];
+    private int invincibleDurationLimitMs; // TODO: May not be used?
+    private static final int PADDING_VALUES = 3;
 
     public kcActorDesc(GreatQuestInstance instance) {
         super(instance);
@@ -34,8 +35,7 @@ public class kcActorDesc extends kcActorBaseDesc {
         super.load(reader);
         this.health.load(reader);
         this.invincibleDurationLimitMs = reader.readInt();
-        for (int i = 0; i < this.padActor.length; i++)
-            this.padActor[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -43,8 +43,7 @@ public class kcActorDesc extends kcActorBaseDesc {
         super.saveData(writer);
         this.health.save(writer);
         writer.writeInt(this.invincibleDurationLimitMs);
-        for (int i = 0; i < this.padActor.length; i++)
-            writer.writeInt(this.padActor[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

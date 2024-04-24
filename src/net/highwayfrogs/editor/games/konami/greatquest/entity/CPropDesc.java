@@ -10,6 +10,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Represents the 'CPropDesc' struct.
+ * Loaded by CProp::Init.
+ * Props have gravity disabled.
+ * TODO: This seems to be what rotates collisions differently. Eg: If it is this or extends this, I think this is what causes the rotations to be unexpected. Investigate further.
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
@@ -17,7 +20,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 public class CPropDesc extends kcActorBaseDesc {
     private int mode;
     private int event;
-    private final int[] padProp = new int[64];
+    private static final int PADDING_VALUES = 64;
 
     public CPropDesc(GreatQuestInstance instance) {
         super(instance);
@@ -33,8 +36,7 @@ public class CPropDesc extends kcActorBaseDesc {
         super.load(reader);
         this.mode = reader.readInt();
         this.event = reader.readInt();
-        for (int i = 0; i < this.padProp.length; i++)
-            this.padProp[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -42,8 +44,7 @@ public class CPropDesc extends kcActorBaseDesc {
         super.saveData(writer);
         writer.writeInt(this.mode);
         writer.writeInt(this.event);
-        for (int i = 0; i < this.padProp.length; i++)
-            writer.writeInt(this.padProp[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

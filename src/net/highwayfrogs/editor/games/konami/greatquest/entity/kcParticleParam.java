@@ -37,7 +37,7 @@ public class kcParticleParam extends GameObject implements IMultiLineInfoWriter 
     private float lineLeft;
     private float lineRight;
     private float orientation;
-    private final int[] padding = new int[5];
+    private static final int PADDING_VALUES = 5;
 
     @Override
     public void load(DataReader reader) {
@@ -61,8 +61,7 @@ public class kcParticleParam extends GameObject implements IMultiLineInfoWriter 
         this.lineLeft = reader.readFloat();
         this.lineRight = reader.readFloat();
         this.orientation = reader.readFloat();
-        for (int i = 0; i < this.padding.length; i++)
-            this.padding[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -87,8 +86,7 @@ public class kcParticleParam extends GameObject implements IMultiLineInfoWriter 
         writer.writeFloat(this.lineLeft);
         writer.writeFloat(this.lineRight);
         writer.writeFloat(this.orientation);
-        for (int i = 0; i < this.padding.length; i++)
-            writer.writeInt(this.padding[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

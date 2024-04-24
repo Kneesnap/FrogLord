@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents the kcWaypointDesc struct.
+ * Loaded by kcCWaypoint::Init
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
@@ -21,10 +22,10 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     private short subType; // TODO: FOR game data, it's either 0 or 1. (Replace with enum later?)
     private int prevHash;
     private int nextHash;
-    private int waypointFlags;
-    private final kcColor4 color = new kcColor4(); // When this is type 0 subType 1, THIS IS NOT ACTUALLY A COLOR.
+    private int waypointFlags; // TODO: What are these? Editor?
+    private final kcColor4 color = new kcColor4(); // When this is type 0 subType 1, THIS IS NOT ACTUALLY A COLOR. TODO: REAL EDITOR.
     private float strength;
-    private final int[] padWaypoint = new int[7];
+    private static final int PADDING_VALUES = 7;
 
     public kcWaypointDesc(GreatQuestInstance instance) {
         super(instance);
@@ -45,8 +46,7 @@ public class kcWaypointDesc extends kcEntity3DDesc {
         this.waypointFlags = reader.readInt();
         this.color.load(reader);
         this.strength = reader.readFloat();
-        for (int i = 0; i < this.padWaypoint.length; i++)
-            this.padWaypoint[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -59,8 +59,7 @@ public class kcWaypointDesc extends kcEntity3DDesc {
         writer.writeInt(this.waypointFlags);
         this.color.save(writer);
         writer.writeFloat(this.strength);
-        for (int i = 0; i < this.padWaypoint.length; i++)
-            writer.writeInt(this.padWaypoint[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

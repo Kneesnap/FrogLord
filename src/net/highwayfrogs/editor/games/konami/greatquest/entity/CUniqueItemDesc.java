@@ -10,13 +10,14 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Represents the 'CUniqueItemDesc' struct.
+ * Loaded by CUniqueItem::Init
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
 @Setter
 public class CUniqueItemDesc extends CItemDesc {
-    private UniqueItemType type;
-    private final int[] padUniqueItem = new int[8];
+    private UniqueItemType type = UniqueItemType.NONE;
+    private static final int PADDING_VALUES = 8;
 
     public CUniqueItemDesc(GreatQuestInstance instance) {
         super(instance);
@@ -31,16 +32,14 @@ public class CUniqueItemDesc extends CItemDesc {
     public void load(DataReader reader) {
         super.load(reader);
         this.type = UniqueItemType.getItem(reader.readInt(), false);
-        for (int i = 0; i < this.padUniqueItem.length; i++)
-            this.padUniqueItem[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
     public void saveData(DataWriter writer) {
         super.saveData(writer);
         writer.writeInt(this.type.ordinal());
-        for (int i = 0; i < this.padUniqueItem.length; i++)
-            writer.writeInt(this.padUniqueItem[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

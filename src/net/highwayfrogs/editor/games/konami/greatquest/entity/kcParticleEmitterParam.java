@@ -11,19 +11,22 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Represents the 'kcParticleEmitterParam' struct.
+ * Loaded from kcParticleEmitterParam::Init.
+ * TODO: Really look this one over.
+ * TODO: Inst flags are copied in kcCParticleEmitter::SetParticleDefaults
  * Created by Kneesnap on 8/22/2023.
  */
 @Getter
 @Setter
 public class kcParticleEmitterParam extends kcEntity3DDesc {
-    private kcBlend srcBlend = kcBlend.ZERO;
-    private kcBlend dstBlend = kcBlend.ZERO;
-    private int textureHash;
-    private int descHash = -1;
+    private kcBlend srcBlend = kcBlend.ZERO; // ZERO actually means ONE.
+    private kcBlend dstBlend = kcBlend.ZERO; // ZERO actually means ONE.
+    private int textureHash; // TODO: Getter?
+    private int descHash = -1; // TODO: What is this?
     private final kcParticleParam particleParam = new kcParticleParam();
     private float lifeTimeEmitter; // These may be garbage / unused.
     private int maxParticle;
-    private final int[] padding = new int[6];
+    private static final int PADDING_VALUES = 6;
 
     public kcParticleEmitterParam(GreatQuestInstance instance) {
         super(instance);
@@ -45,8 +48,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         this.particleParam.load(reader);
         this.lifeTimeEmitter = reader.readFloat();
         this.maxParticle = reader.readInt();
-        for (int i = 0; i < this.padding.length; i++)
-            this.padding[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -60,8 +62,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         this.particleParam.save(writer);
         writer.writeFloat(this.lifeTimeEmitter);
         writer.writeInt(this.maxParticle);
-        for (int i = 0; i < this.padding.length; i++)
-            writer.writeInt(this.padding[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -73,6 +74,11 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         writeAssetLine(builder, padding, "Description", this.descHash);
         this.particleParam.writePrefixedMultiLineInfo(builder, "Particle Params", padding);
         builder.append(padding).append("Emitter Life Time (Garbage?): ").append(this.lifeTimeEmitter).append(Constants.NEWLINE);
-        builder.append(padding).append("Max Particle (Garbage?) ").append(this.maxParticle).append(Constants.NEWLINE);
+        builder.append(padding).append("Max Particle: ").append(getMaxParticle()).append(Constants.NEWLINE);
+    }
+
+
+    public int getMaxParticle() {
+        return this.maxParticle == 0 || this.maxParticle == -0x33333334 ? 250 : this.maxParticle;
     }
 }

@@ -188,6 +188,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         saveGenericLauncherInfo(new File(folder, "emitters.txt"));
         saveGenericResourcePaths(new File(folder, "resource-paths.txt"));
         saveGenericModelDescriptions(new File(folder, "model-descriptions.txt"));
+        saveOctTreeSceneManager(new File(folder, "oct-tree-scene-manager.txt"));
         saveNamedResourceHashes(new File(folder, "named-hashes.txt"));
         saveInfo(new File(folder, "info.txt"));
 
@@ -575,6 +576,17 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             builder.append(Constants.NEWLINE);
         }
 
+        saveExport(file, builder);
+    }
+
+    public void saveOctTreeSceneManager(File file) {
+        kcCResOctTreeSceneMgr sceneMgr = getSceneManager();
+        if (sceneMgr == null)
+            return;
+
+        StringBuilder builder = new StringBuilder();
+        builder.append(sceneMgr.getName()).append('[').append(Utils.to0PrefixedHexString(sceneMgr.getHash())).append("], ");
+        sceneMgr.writeMultiLineInfo(builder, " ");
         saveExport(file, builder);
     }
 

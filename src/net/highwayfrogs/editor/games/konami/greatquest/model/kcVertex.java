@@ -3,13 +3,16 @@ package net.highwayfrogs.editor.games.konami.greatquest.model;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
+
+import java.util.Arrays;
 
 /**
  * Represents a single vertex. Data is optional, and is assumed to be present based on the vertex components stored separately from the vertex.
  * Created by Kneesnap on 6/22/2023.
  */
 @Getter
-public class kcVertex {
+public class kcVertex implements IInfoWriter {
     private float x;
     private float y;
     private float z;
@@ -629,5 +632,15 @@ public class kcVertex {
      */
     public float getDiffuseAlpha255F() {
         return ((this.diffuse >> 24) & 0xFF);
+    }
+
+    @Override
+    public void writeInfo(StringBuilder builder) {
+        builder.append("kcVertex{pos=[").append(this.x).append(",").append(this.y).append(",").append(this.z);
+        builder.append("},normal={").append(this.normalX).append(",").append(this.normalY).append(",").append(this.normalZ);
+        builder.append("},diffuse=").append(this.diffuse).append(",specular=").append(this.specular);
+        builder.append(",uv0=[").append(this.u0).append(",").append(this.v0);
+        builder.append("],uv1=[").append(this.u1).append(",").append(this.v1);
+        builder.append("],weight=").append(Arrays.toString(this.weight)).append(",w=").append(this.w).append(",psize=").append(this.psize);
     }
 }

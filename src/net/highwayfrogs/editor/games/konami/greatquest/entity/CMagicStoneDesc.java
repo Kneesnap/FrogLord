@@ -8,11 +8,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Represents the 'CMagicStoneDesc'
+ * Loaded by CMagicStone::Init
  * Created by Kneesnap on 8/22/2023.
  */
 public class CMagicStoneDesc extends CItemDesc {
-    private MagicStoneType type;
-    private final int[] padMagicStone = new int[8];
+    private MagicStoneType type = MagicStoneType.NONE;
+    private static final int PADDING_VALUES = 8;
 
     public CMagicStoneDesc(GreatQuestInstance instance) {
         super(instance);
@@ -27,16 +28,14 @@ public class CMagicStoneDesc extends CItemDesc {
     public void load(DataReader reader) {
         super.load(reader);
         this.type = MagicStoneType.getType(reader.readInt(), false);
-        for (int i = 0; i < this.padMagicStone.length; i++)
-            this.padMagicStone[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
     public void saveData(DataWriter writer) {
         super.saveData(writer);
         writer.writeInt(this.type.ordinal());
-        for (int i = 0; i < this.padMagicStone.length; i++)
-            writer.writeInt(this.padMagicStone[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

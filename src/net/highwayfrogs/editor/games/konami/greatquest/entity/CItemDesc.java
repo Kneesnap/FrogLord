@@ -8,13 +8,17 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Represents the 'CItemDesc' struct.
+ * Loaded by 'CItem::Init'
+ * This has a hardcoded collision proxy, also created in CItem::Init. This explains why the items like the goblet in The Lost Trail Ruins have such small hitboxes.
+ * Additionally, it may also explain why coins have weird hitboxes when viewed in editor.
+ * TODO: Communicate this in FrogLord.
  * Created by Kneesnap on 8/21/2023.
  */
 public class CItemDesc extends kcActorBaseDesc {
     private int value;
     private int properties;
     private int attributes;
-    private final int[] padItem = new int[32];
+    private static final int PADDING_VALUES = 32;
 
     public CItemDesc(GreatQuestInstance instance) {
         super(instance);
@@ -31,8 +35,7 @@ public class CItemDesc extends kcActorBaseDesc {
         this.value = reader.readInt();
         this.properties = reader.readInt();
         this.attributes = reader.readInt();
-        for (int i = 0; i < this.padItem.length; i++)
-            this.padItem[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -41,8 +44,7 @@ public class CItemDesc extends kcActorBaseDesc {
         writer.writeInt(this.value);
         writer.writeInt(this.properties);
         writer.writeInt(this.attributes);
-        for (int i = 0; i < this.padItem.length; i++)
-            writer.writeInt(this.padItem[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

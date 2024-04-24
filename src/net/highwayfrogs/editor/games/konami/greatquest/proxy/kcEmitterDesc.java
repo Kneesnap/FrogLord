@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Implements the 'kcEmitterDesc' struct.
+ * Loaded by kcCEmitter::Init
  * Created by Kneesnap on 8/22/2023.
  */
 @Getter

@@ -14,6 +14,7 @@ import java.util.function.Function;
 
 /**
  * Represents the 'LauncherParams' struct.
+ * Loaded by CLauncher::Init
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
@@ -23,8 +24,8 @@ public class LauncherParams extends kcProjectileParams {
     private int hitParticleEffectHash;
     private int projectileLifeTime;
     private float speed;
-    private final int[] padLauncherParams = new int[7];
     private final transient GreatQuestChunkedFile holder;
+    private static final int PADDING_VALUES = 7;
 
     public LauncherParams(GreatQuestChunkedFile holder) {
         super(holder != null ? holder.getGameInstance() : null);
@@ -39,8 +40,7 @@ public class LauncherParams extends kcProjectileParams {
         this.hitParticleEffectHash = reader.readInt();
         this.projectileLifeTime = reader.readInt();
         this.speed = reader.readFloat();
-        for (int i = 0; i < this.padLauncherParams.length; i++)
-            this.padLauncherParams[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -51,8 +51,7 @@ public class LauncherParams extends kcProjectileParams {
         writer.writeInt(this.hitParticleEffectHash);
         writer.writeInt(this.projectileLifeTime);
         writer.writeFloat(this.speed);
-        for (int i = 0; i < this.padLauncherParams.length; i++)
-            writer.writeInt(this.padLauncherParams[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

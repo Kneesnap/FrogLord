@@ -27,7 +27,7 @@ public class kcProjectileParams extends GameData<GreatQuestInstance> implements 
     private float retainSlide;
     private int damageFlags;
     private int hitStrength;
-    private final int[] padProjectileParams = new int[8];
+    private static final int PADDING_VALUES = 8;
 
     public kcProjectileParams(GreatQuestInstance instance) {
         super(instance);
@@ -46,8 +46,7 @@ public class kcProjectileParams extends GameData<GreatQuestInstance> implements 
         this.retainSlide = reader.readFloat();
         this.damageFlags = reader.readInt();
         this.hitStrength = reader.readInt();
-        for (int i = 0; i < this.padProjectileParams.length; i++)
-            this.padProjectileParams[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -63,8 +62,7 @@ public class kcProjectileParams extends GameData<GreatQuestInstance> implements 
         writer.writeFloat(this.retainSlide);
         writer.writeInt(this.damageFlags);
         writer.writeInt(this.hitStrength);
-        for (int i = 0; i < this.padProjectileParams.length; i++)
-            writer.writeInt(this.padProjectileParams[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

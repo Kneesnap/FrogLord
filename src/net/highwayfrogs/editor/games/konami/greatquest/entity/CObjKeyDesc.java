@@ -8,11 +8,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Represents the 'CObjKeyDesc' struct.
+ * Loaded by CObjKey::Init.
  * Created by Kneesnap on 8/22/2023.
  */
 public class CObjKeyDesc extends CItemDesc {
-    private KeyType type;
-    private final int[] padObjKey = new int[8];
+    private KeyType type = KeyType.NONE;
+    private static final int PADDING_VALUES = 8;
 
     public CObjKeyDesc(GreatQuestInstance instance) {
         super(instance);
@@ -27,16 +28,14 @@ public class CObjKeyDesc extends CItemDesc {
     public void load(DataReader reader) {
         super.load(reader);
         this.type = KeyType.getType(reader.readInt(), false);
-        for (int i = 0; i < this.padObjKey.length; i++)
-            this.padObjKey[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
     public void saveData(DataWriter writer) {
         super.saveData(writer);
         writer.writeInt(this.type.ordinal());
-        for (int i = 0; i < this.padObjKey.length; i++)
-            writer.writeInt(this.padObjKey[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

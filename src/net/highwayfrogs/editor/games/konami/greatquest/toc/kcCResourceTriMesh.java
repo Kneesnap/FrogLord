@@ -1,15 +1,20 @@
 package net.highwayfrogs.editor.games.konami.greatquest.toc;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -38,7 +43,7 @@ public class kcCResourceTriMesh extends kcCResource {
     }
 
     @Getter
-    public static class kcCTriMesh extends GameData<GreatQuestInstance> {
+    public static class kcCTriMesh extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
         private final kcBox4 boundingBox;
         private final List<kcVector4> vertices = new ArrayList<>();
         private final List<kcCFace> faces = new ArrayList<>();
@@ -96,10 +101,22 @@ public class kcCResourceTriMesh extends kcCResource {
             writer.writeAddressAt(dataSizeAddress, writer.getIndex() - dataStartAddress);
         }
 
+        @Override
+        public void writeMultiLineInfo(StringBuilder builder, String padding) {
+            String newPadding = padding + " ";
+            this.boundingBox.writePrefixedMultiLineInfo(builder, "Bounding Box", padding, newPadding);
+            builder.append(padding).append("Vertices (").append(this.vertices.size()).append("):").append(Constants.NEWLINE);
+            for (int i = 0; i < this.vertices.size(); i++)
+                this.vertices.get(i).writePrefixedInfoLine(builder, "Vertex", newPadding);
+
+            builder.append(padding).append("Faces (").append(this.faces.size()).append("):").append(Constants.NEWLINE);
+            for (int i = 0; i < this.faces.size(); i++)
+                this.faces.get(i).writePrefixedInfoLine(builder, "", newPadding);
+        }
     }
 
     @Getter
-    public static class kcCFace extends GameData<GreatQuestInstance> {
+    public static class kcCFace extends GameData<GreatQuestInstance> implements IInfoWriter {
         private final kcCTriMesh parentMesh;
         private final int[] vertices = new int[3];
         private int flags;
@@ -125,6 +142,16 @@ public class kcCResourceTriMesh extends kcCResource {
                 writer.writeInt(this.vertices[i]);
             writer.writeInt(this.flags);
             this.normal.save(writer);
+        }
+
+        @Override
+        public void writeInfo(StringBuilder builder) {
+            builder.append("kcCFace{flags=").append(Utils.toHexString(this.flags))
+                    .append(",vertices=").append(Arrays.toString(this.vertices))
+                    .append(",normal=");
+
+            this.normal.writeInfo(builder);
+            builder.append("}");
         }
     }
 }

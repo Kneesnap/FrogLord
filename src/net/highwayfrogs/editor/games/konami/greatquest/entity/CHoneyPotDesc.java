@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -7,10 +8,11 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Represents the 'CHoneyPotDesc' struct.
+ * CHoneyPot::Init is what loads this, but there's no data actually used.
  * Created by Kneesnap on 8/22/2023.
  */
 public class CHoneyPotDesc extends CItemDesc {
-    private final int[] padHoneyPot = new int[8];
+    private static final int PADDING_VALUES = 8;
 
     public CHoneyPotDesc(GreatQuestInstance instance) {
         super(instance);
@@ -24,14 +26,12 @@ public class CHoneyPotDesc extends CItemDesc {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        for (int i = 0; i < this.padHoneyPot.length; i++)
-            this.padHoneyPot[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
     public void saveData(DataWriter writer) {
         super.saveData(writer);
-        for (int i = 0; i < this.padHoneyPot.length; i++)
-            writer.writeInt(this.padHoneyPot[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 }

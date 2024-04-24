@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcOctTree;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
@@ -18,6 +19,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -28,7 +30,7 @@ import java.util.List;
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
-public class kcCResOctTreeSceneMgr extends kcCResource {
+public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfoWriter {
     private final List<kcVtxBufFileStruct> vertexBuffers = new ArrayList<>();
     private final List<kcMaterial> materials = new ArrayList<>();
     private final List<kcCTriMesh> collisionMeshes = new ArrayList<>();
@@ -187,8 +189,41 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
         context.getMaterialLoadContext().resolveMaterialTexturesInChunk(getParentFile(), this.materials);
     }
 
+    @Override
+    public void writeMultiLineInfo(StringBuilder builder, String padding) {
+        String newPadding = padding + " ";
+
+        // Write vertex buffer data.
+        builder.append(padding).append("Vertex Buffers [").append(this.vertexBuffers.size()).append("]:").append(Constants.NEWLINE);
+        for (int i = 0; i < this.vertexBuffers.size(); i++)
+            this.vertexBuffers.get(i).writeMultiLineInfo(builder, newPadding);
+        builder.append(Constants.NEWLINE);
+
+        // Write material data.
+        builder.append(padding).append("Materials [").append(this.materials.size()).append("]:").append(Constants.NEWLINE);
+        for (int i = 0; i < this.materials.size(); i++)
+            this.materials.get(i).writeMultiLineInfo(builder, newPadding);
+        builder.append(Constants.NEWLINE);
+
+        // Write collision mesh data.
+        builder.append(padding).append("Collision Meshes [").append(this.collisionMeshes.size()).append("]:").append(Constants.NEWLINE);
+        for (int i = 0; i < this.collisionMeshes.size(); i++)
+            this.collisionMeshes.get(i).writeMultiLineInfo(builder, newPadding);
+        builder.append(Constants.NEWLINE);
+
+        // Save entity tree.
+        builder.append(padding).append("Entity Tree:").append(Constants.NEWLINE);
+        this.entityTree.writeMultiLineInfo(builder, newPadding);
+        builder.append(Constants.NEWLINE);
+
+        // Save visual tree.
+        builder.append(padding).append("Visual Tree:").append(Constants.NEWLINE);
+        this.visualTree.writeMultiLineInfo(builder, newPadding);
+        builder.append(Constants.NEWLINE);
+    }
+
     @Getter
-    public static class kcVtxBufFileStruct {
+    public static class kcVtxBufFileStruct implements IMultiLineInfoWriter {
         // _OTAPrimHeader
         private long materialId;
         private float normalTolerance;
@@ -304,6 +339,22 @@ public class kcCResOctTreeSceneMgr extends kcCResource {
             int vtxByteLength = (writer.getIndex() - vtxDataStart);
             writer.writeAddressAt(otaPrimHeaderSizeAddress, headerByteLength + vtxByteLength);
             writer.writeAddressAt(vtxByteLengthAddress, vtxByteLength);
+        }
+
+        @Override
+        public void writeMultiLineInfo(StringBuilder builder, String padding) {
+            builder.append(padding).append("Material ID: ").append(this.materialId).append(Constants.NEWLINE);
+            builder.append(padding).append("Normal Tolerance: ").append(this.normalTolerance).append(Constants.NEWLINE);
+            this.normalAverage.writePrefixedInfoLine(builder, "Normal Average", padding);
+            String newPadding = padding + " ";
+            this.boundingBox.writePrefixedMultiLineInfo(builder, "Bounding Box", padding, newPadding);
+            builder.append(padding).append("FVF: ").append(Utils.toHexString(this.fvf)).append(Constants.NEWLINE);
+            builder.append(padding).append("Components: ").append(Arrays.toString(this.components)).append(Constants.NEWLINE);
+            builder.append(padding).append("FVF Stride: ").append(this.fvfStride).append(Constants.NEWLINE);
+            builder.append(padding).append("Primitive Type: ").append(this.primitiveType).append(Constants.NEWLINE);
+            builder.append(padding).append("Vertices (").append(this.vertices.size()).append("):").append(Constants.NEWLINE);
+            for (int i = 0; i < this.vertices.size(); i++)
+                this.vertices.get(i).writePrefixedInfoLine(builder, "", newPadding);
         }
     }
 }

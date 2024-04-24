@@ -12,21 +12,22 @@ import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents the 'CharacterParams' struct.
+ * Handled by CCharacter::Init
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
 @Setter
 public class CharacterParams extends kcActorDesc {
     private int characterDescHash;
-    private CharacterType characterType;
-    private int attributes;
+    private CharacterType characterType = CharacterType.NONE;
+    private int attributes; // Seems to be pretty much unused. 0x40000000 will setup Frogger's inventory, 0x80000000 will make a health bar. However, these flags are added at runtime if the character type is PLAYER. So, this might be completely useless unless somehow this does something on monsters.
     private final kcVector4 homePos = new kcVector4();
     private float homeRange;
     private float coreRange;
     private float visionRange;
     private float visionFov;
     private float hearRange;
-    private float dialogRange;
+    private float dialogRange = 2.5F; // Ignored when read.
     private float huntRange;
     private float defendRange;
     private float attackRange;
@@ -34,7 +35,7 @@ public class CharacterParams extends kcActorDesc {
     private float missileRange;
     private int weaponMask;
     private int attackStrength;
-    private int attackRate;
+    private int attackRate; // Overwritten to be 3000.
     private short aggression;
     private short fleePercent;
     private short guardHome;
@@ -59,9 +60,9 @@ public class CharacterParams extends kcActorDesc {
     private short meleeAttackSpeed;
     private short rangedAttackSpeed;
     private short preferRun;
-    private short pad1;
+    private short pad1; // Might be unused. Perhaps add a skip require empty?
     private float activationRange;
-    private final int[] padCharacter = new int[56];
+    private static final int PADDING_VALUES = 56;
 
     public CharacterParams(GreatQuestInstance instance) {
         super(instance);
@@ -119,8 +120,7 @@ public class CharacterParams extends kcActorDesc {
         this.preferRun = reader.readUnsignedByteAsShort();
         this.pad1 = reader.readUnsignedByteAsShort();
         this.activationRange = reader.readFloat();
-        for (int i = 0; i < this.padCharacter.length; i++)
-            this.padCharacter[i] = reader.readInt();
+        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -170,8 +170,7 @@ public class CharacterParams extends kcActorDesc {
         writer.writeUnsignedByte(this.preferRun);
         writer.writeUnsignedByte(this.pad1);
         writer.writeFloat(this.activationRange);
-        for (int i = 0; i < this.padCharacter.length; i++)
-            writer.writeInt(this.padCharacter[i]);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override

@@ -21,12 +21,13 @@ import java.util.UUID;
 @Getter
 @Setter
 public class kcEntity3DInst extends kcEntityInst {
-    private int flags;
-    private kcAxisType billboardAxis;
+    private int flags; // TODO: InitFlags() is called.
+    private kcAxisType billboardAxis = kcAxisType.Y;
     private final kcVector4 position = new kcVector4();
     private final kcVector4 rotation = new kcVector4();
     private final kcVector4 scale = new kcVector4();
-    private final int[] padding = new int[39];
+    private final int[] reservedValues = new int[7];
+    private final int[] padding = new int[32];
 
     public static final int SIZE_IN_BYTES = 240;
     private static final UUID GIZMO_ID = UUID.randomUUID();
@@ -43,6 +44,8 @@ public class kcEntity3DInst extends kcEntityInst {
         this.position.load(reader);
         this.rotation.load(reader);
         this.scale.load(reader);
+        for (int i = 0; i < this.reservedValues.length; i++)
+            this.reservedValues[i] = reader.readInt();
         for (int i = 0; i < this.padding.length; i++)
             this.padding[i] = reader.readInt();
     }
@@ -55,6 +58,8 @@ public class kcEntity3DInst extends kcEntityInst {
         this.position.save(writer);
         this.rotation.save(writer);
         this.scale.save(writer);
+        for (int i = 0; i < this.reservedValues.length; i++)
+            writer.writeInt(this.reservedValues[i]);
         for (int i = 0; i < this.padding.length; i++)
             writer.writeInt(this.padding[i]);
     }
