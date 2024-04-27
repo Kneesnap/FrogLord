@@ -22,7 +22,7 @@ public class SCMath {
         SIN_ENTRIES = new short[ACOSTABLE_ENTRIES];
 
         // Read data.
-        DataReader reader = new DataReader(new ArraySource(Utils.readBytesFromStream(Utils.getResourceStream("ACOSTABLE"))));
+        DataReader reader = new DataReader(new ArraySource(Utils.readBytesFromStream(Utils.getResourceStream("games/sony/ACOSTABLE"))));
         for (int i = 0; i < ACOSTABLE_ENTRIES; i++) {
             SIN_ENTRIES[i] = reader.readShort();
             COS_ENTRIES[i] = reader.readShort();

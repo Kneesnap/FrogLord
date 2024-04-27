@@ -200,7 +200,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     @SneakyThrows
     private void exportToFFS(ActionEvent event) {
         FFSUtil.saveMapAsFFS(getFile(), Utils.promptChooseDirectory(getGameInstance(), "Choose the directory to save the map to.", false));
-        Files.write(new File("./frogger-map-blender-plugin.py").toPath(), Utils.readBytesFromStream(Utils.getResourceStream("frogger-map-blender-plugin.py")));
+        Files.write(new File("games/frogger/frogger-map-blender-plugin.py").toPath(), Utils.readBytesFromStream(Utils.getResourceStream("games/frogger/frogger-map-blender-plugin.py")));
     }
 
     @FXML
