@@ -31,7 +31,10 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
-import net.highwayfrogs.editor.games.sony.*;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.SCGameType;
+import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
@@ -82,11 +85,6 @@ public class FroggerGameInstance extends SCGameInstance {
     @Override
     public FroggerConfig getConfig() {
         return (FroggerConfig) super.getConfig();
-    }
-
-    @Override
-    protected SCGameConfig makeConfig(String internalName) {
-        return new FroggerConfig(internalName);
     }
 
     @Override
@@ -170,7 +168,7 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    public void setupFileGroups(SCGameFileGroupedListViewComponent fileListView) {
+    public void setupFileGroups(SCGameFileGroupedListViewComponent<? extends SCGameInstance> fileListView) {
         fileListView.addGroup(new LazySCGameFileListGroup("MAP [Playable Maps]",
                 (file, index) -> index.getTypeId() == FILE_TYPE_ANY && (index.hasExtension("map") || file instanceof MAPFile)));
 

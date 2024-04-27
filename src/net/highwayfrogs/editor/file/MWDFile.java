@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
@@ -21,25 +20,24 @@ import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * MWAD File Format: MediEvil WAD Archive.
- * This represents a loaded MWAD file.
+ * Millennium WAD File Format
+ * Shared between all Millennium games, and contains pretty much all non-sound non-code game assets in their games.
  * Created by Kneesnap on 8/10/2018.
  */
 @Getter
 public class MWDFile extends SCSharedGameData {
     private final List<SCGameFile<?>> files = new ArrayList<>();
-    @Setter private BiConsumer<FileEntry, SCGameFile<?>> saveCallback;
 
     private final transient Map<MAPTheme, VLOArchive> vloThemeCache = new HashMap<>();
 
@@ -55,12 +53,29 @@ public class MWDFile extends SCSharedGameData {
 
     @Override
     public void load(DataReader reader) {
+        load(reader, null);
+    }
+
+    /**
+     * Loads the file with a progress bar to show progress.
+     * @param reader the reader to read from
+     * @param progressBar the progress bar to update, if exists
+     */
+    public void load(DataReader reader, ProgressBarComponent progressBar) {
+        List<FileEntry> mwiEntries = getGameInstance().getArchiveIndex().getEntries();
+        if (progressBar != null)
+            progressBar.setTotalProgress(mwiEntries.size());
+
         reader.verifyString(MARKER);
-
-        for (FileEntry entry : getGameInstance().getArchiveIndex().getEntries()) {
-            if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS))
+        for (FileEntry entry : mwiEntries) {
+            if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS)) {
+                if (progressBar != null)
+                    progressBar.addCompletedProgress(1);
                 continue; // This file is part of a WAD archive, and isn't a file entry in the MWD, so we can't load it here.
+            }
 
+            if (progressBar != null)
+                progressBar.setStatusMessage("Reading '" + entry.getDisplayName() + "'");
             reader.setIndex(entry.getArchiveOffset());
 
             // Read the file. Decompress if it is PP20 compression.
@@ -69,7 +84,7 @@ public class MWDFile extends SCSharedGameData {
                 if (PP20Unpacker.isCompressed(fileBytes)) {
                     fileBytes = PP20Unpacker.unpackData(fileBytes);
                 } else {
-                    System.out.println("ERROR: File is compressed, but not using PowerPacker (PP20) compression.");
+                    getLogger().severe("ERROR: File is compressed, but not using PowerPacker (PP20) compression.");
                 }
             }
 
@@ -86,6 +101,8 @@ public class MWDFile extends SCSharedGameData {
             }
 
             this.files.add(file);
+            if (progressBar != null)
+                progressBar.addCompletedProgress(1);
         }
     }
 
@@ -153,6 +170,18 @@ public class MWDFile extends SCSharedGameData {
 
     @Override
     public void save(DataWriter writer) {
+        this.save(writer, null);
+    }
+
+    /**
+     * Saves the file with a progress bar to show progress.
+     * @param writer the writer to write to
+     * @param progressBar the progress bar to update, if exists
+     */
+    public void save(DataWriter writer, ProgressBarComponent progressBar) {
+        if (progressBar != null)
+            progressBar.setTotalProgress(this.files.size());
+
         writer.writeBytes(MARKER.getBytes());
         writer.writeInt(0);
 
@@ -171,26 +200,34 @@ public class MWDFile extends SCSharedGameData {
             } while (writer.getIndex() > entry.getArchiveOffset());
             writer.jumpTo(entry.getArchiveOffset());
 
-            long start = System.currentTimeMillis();
+            // Debug.
             CURRENT_FILE_NAME = entry.getDisplayName();
-            System.out.print("Saving " + entry.getDisplayName() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ") ");
-            if (getSaveCallback() != null)
-                getSaveCallback().accept(entry, file);
+            if (progressBar != null)
+                progressBar.setStatusMessage("Saving '" + entry.getDisplayName() + "'");
+            getLogger().info("Saving " + entry.getDisplayName() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ") ");
+            long startTime = System.currentTimeMillis();
 
+            // Save the file contents to a byte array.
             ArrayReceiver receiver = new ArrayReceiver();
             file.save(new DataWriter(receiver));
 
+            // Potentially compress the saved byte array.
             byte[] transfer = receiver.toArray();
             entry.setUnpackedSize(transfer.length);
             if (entry.isCompressed())
                 transfer = PP20Packer.packData(transfer);
 
+            // Write resulting data.
             entry.setPackedSize(transfer.length);
-
             writer.writeBytes(transfer);
-            System.out.println("Time: " + ((System.currentTimeMillis() - start) / 1000) + "s.");
+
+            // Report timing.
+            long endTime = System.currentTimeMillis();
+            if (progressBar != null)
+                progressBar.addCompletedProgress(1);
+            getLogger().info("Save Time: " + ((endTime - startTime) / 1000) + " s.");
         }
-        System.out.println("MWD Built. Total Time: " + ((System.currentTimeMillis() - mwdStart) / 1000) + "s.");
+        getLogger().info("MWD Built. Total Time: " + ((System.currentTimeMillis() - mwdStart) / 1000) + "s.");
 
         // Fill the rest of the file with null bytes.
         SCGameFile<?> lastFile = this.files.get(this.files.size() - 1);

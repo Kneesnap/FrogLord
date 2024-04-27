@@ -2,7 +2,8 @@ package net.highwayfrogs.editor.file.patch;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.games.generic.GameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameType;
 
 import java.util.*;
 
@@ -15,12 +16,12 @@ public class GamePatch {
     private String name;
     private String description;
     private String author;
-    private Set<String> supportedVersions = new HashSet<>();
-    private Map<String, PatchValue> defaultVariables = new HashMap<>();
-    private List<String> argsCode = new ArrayList<>();
-    private List<String> code = new ArrayList<>();
-    private Map<String, Map<String, PatchValue>> versionSpecificVariables = new HashMap<>();
-    private List<PatchArgument> arguments = new ArrayList<>();
+    private final Set<String> supportedVersions = new HashSet<>();
+    private final Map<String, PatchValue> defaultVariables = new HashMap<>();
+    private final List<String> argsCode = new ArrayList<>();
+    private final List<String> code = new ArrayList<>();
+    private final Map<String, Map<String, PatchValue>> versionSpecificVariables = new HashMap<>();
+    private final List<PatchArgument> arguments = new ArrayList<>();
 
     /**
      * Loads patch data from the config.
@@ -53,17 +54,16 @@ public class GamePatch {
             this.code.addAll(config.getChild("Code").getText());
 
         // Read version-specific variables.
-        for (String versionKey : GUIMain.getVersions().keySet()) {
-            if (versionKey.contains("/"))
-                versionKey = versionKey.substring(versionKey.lastIndexOf('/') + 1);
-            if (!config.hasChild(versionKey))
+        for (GameConfig gameConfig : SCGameType.FROGGER.getVersionConfigs()) {
+            String versionConfigName = gameConfig.getInternalName();
+            if (!config.hasChild(versionConfigName))
                 continue;
 
-            Config child = config.getChild(versionKey);
+            Config child = config.getChild(versionConfigName);
             Map<String, PatchValue> versionValues = new HashMap<>();
             for (String key : child.keySet())
                 versionValues.put(key, PatchValue.parseStringAsPatchValue(child.getString(key)));
-            this.versionSpecificVariables.put(versionKey, versionValues);
+            this.versionSpecificVariables.put(versionConfigName, versionValues);
         }
     }
 

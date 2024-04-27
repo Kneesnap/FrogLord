@@ -14,7 +14,6 @@ import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,23 +65,19 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
         if (this.fileListComponent != null) {
             setAnchorPaneStretch(this.fileListComponent.getRootNode());
             this.leftSideAnchorPane.getChildren().add(this.fileListComponent.getRootNode());
+            addController(this.fileListComponent);
         }
-    }
 
-    @Override
-    public void onSceneAdd(Scene newScene) {
-        super.onSceneAdd(newScene);
-        GUIMain.getActiveGameInstances().add(getGameInstance());
-        if (this.fileListComponent != null)
-            this.fileListComponent.onSceneAdd(newScene);
+        // Add queued logging.
+        String queuedLogMessages = getGameInstance().getAndClearQueuedLogMessages();
+        if (queuedLogMessages != null)
+            this.consoleTextArea.appendText(queuedLogMessages);
     }
 
     @Override
     public void onSceneRemove(Scene oldScene) {
+        GUIMain.getActiveGameInstances().remove(getGameInstance()); // Window getting closed.
         super.onSceneRemove(oldScene);
-        GUIMain.getActiveGameInstances().remove(getGameInstance());
-        if (this.fileListComponent != null)
-            this.fileListComponent.onSceneRemove(oldScene);
     }
 
     /**
@@ -141,12 +136,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
 
     @FXML
     private void actionLoadMain(ActionEvent evt) {
-        // TODO: Replace this with the game agnostic menu I've been thinking about.
-        try {
-            GUIMain.INSTANCE.openFroggerFiles();
-        } catch (IOException ex) {
-            Utils.makeErrorPopUp("Failed to load game data.", ex, true);
-        }
+        GUIMain.openLoadGameSettingsMenu();
     }
 
     @FXML

@@ -5,7 +5,10 @@ import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.games.sony.*;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.SCGameType;
+import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerConfig;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
@@ -13,6 +16,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapEnt
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -46,19 +50,14 @@ public class OldFroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    public void loadGame(String configName, Config config, File mwdFile, File exeFile) {
-        super.loadGame(configName, config, mwdFile, exeFile);
+    public void loadGame(String versionConfigName, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
+        super.loadGame(versionConfigName, mwdFile, exeFile, progressBar);
         OldFroggerMapEntityMarkerPacket.showFormGenerationOutput();
     }
 
     @Override
     public OldFroggerConfig getConfig() {
         return (OldFroggerConfig) super.getConfig();
-    }
-
-    @Override
-    protected SCGameConfig makeConfig(String internalName) {
-        return new OldFroggerConfig(internalName);
     }
 
     @Override
@@ -113,7 +112,7 @@ public class OldFroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    public void setupFileGroups(SCGameFileGroupedListViewComponent fileListView) {
+    public void setupFileGroups(SCGameFileGroupedListViewComponent<? extends SCGameInstance> fileListView) {
         fileListView.addGroup(new SCGameFileListTypeIdGroup("MAP [Game Maps]", FILE_TYPE_MAP));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("LAN [Language]", FILE_TYPE_LANGUAGE));
     }

@@ -5,6 +5,7 @@ import javafx.stage.Stage;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.utils.Utils;
@@ -16,8 +17,7 @@ import java.util.logging.Logger;
 /**
  * Represents an instance of a game. For example, a folder containing the files for a single version of a game.
  * TODO: UI Plans?
- *  - 1) Standard UI for opening games.
- *  - 2) Standardize 3D UI.
+ *  - Standardize 3D UI.
  *  TODO: I think there's some kind of caching bug with shading. It happened on "Time Device", where none of the shading in the world was right. Then, after I toggled shading off/on, it was fine. I suspect there's probably some tracking issue then.
  * Created by Kneesnap on 4/10/2024.
  */
@@ -26,12 +26,41 @@ public abstract class GameInstance {
     @Getter private GameConfig config;
     @Getter private MainMenuController<?, ?> mainMenuController;
     private Logger cachedLogger;
+    private StringBuilder cachedLogging;
 
     public GameInstance(IGameType gameType) {
         if (gameType == null)
             throw new NullPointerException("gameType");
 
         this.gameType = gameType;
+    }
+
+    /**
+     * Adds a console log entry to the console window.
+     * @param message the message to add.
+     */
+    public void addConsoleLogEntry(String message) {
+        if (this.mainMenuController != null) {
+            this.mainMenuController.addConsoleEntry(message);
+        } else {
+            if (this.cachedLogging == null)
+                this.cachedLogging = new StringBuilder();
+
+            this.cachedLogging.append(message).append(System.lineSeparator());
+        }
+    }
+
+    /**
+     * Gets and clears the logging cache for the main menu UI.
+     */
+    public String getAndClearQueuedLogMessages() {
+        if (this.cachedLogging != null) {
+            String cachedLogging = this.cachedLogging.toString();
+            this.cachedLogging = null;
+            return cachedLogging;
+        }
+
+        return null;
     }
 
     /**
@@ -95,9 +124,27 @@ public abstract class GameInstance {
         if (this.config != null)
             throw new IllegalStateException("Cannot load the game configuration '" + configName + "' because it has already been loaded.");
 
-        this.config = makeConfig(configName);
+        // Register to GUIMain and log.
+        GUIMain.getActiveGameInstances().add(this);
+        getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
+
+        // Create & load config.
+        this.config = this.gameType.createConfig(configName);
         this.config.loadData(config, this.gameType);
         this.onConfigLoad(config);
+    }
+
+    /**
+     * Load and setup game config data relating to the game such as version configuration and game files.
+     * @param gameVersionConfigName the name of the version config file to load
+     */
+    protected void loadGameConfig(String gameVersionConfigName) {
+        if (this.config != null)
+            throw new IllegalStateException("Cannot load the game configuration '" + gameVersionConfigName + "' because it has already been loaded.");
+
+        // Load config.
+        net.highwayfrogs.editor.file.config.Config gameConfig = new net.highwayfrogs.editor.file.config.Config(this.gameType.getEmbeddedResourceStream("versions/" + gameVersionConfigName + ".cfg"));
+        loadGameConfig(gameVersionConfigName, gameConfig);
     }
 
     /**
@@ -107,11 +154,6 @@ public abstract class GameInstance {
     protected void onConfigLoad(Config configObj) {
         // Does nothing by default.
     }
-
-    /**
-     * Makes a new game config instance for this game.
-     */
-    protected abstract GameConfig makeConfig(String internalName);
 
     /**
      * Get the target platform this game version runs on.

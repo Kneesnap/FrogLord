@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui;
 
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import lombok.Getter;
@@ -38,21 +37,8 @@ public class GreatQuestFileEditorUIController<TGameFile extends GreatQuestArchiv
             Node propertyListViewRootNode = this.propertyListViewer.getRootNode();
             HBox.setHgrow(propertyListViewRootNode, Priority.ALWAYS);
             this.contentBox.getChildren().add(propertyListViewRootNode);
+            addController(this.propertyListViewer);
         }
-    }
-
-    @Override
-    public void onSceneAdd(Scene newScene) {
-        super.onSceneAdd(newScene);
-        if (this.contentBox != null)
-            this.propertyListViewer.onSceneAdd(newScene);
-    }
-
-    @Override
-    public void onSceneRemove(Scene oldScene) {
-        super.onSceneRemove(oldScene);
-        if (this.contentBox != null)
-            this.propertyListViewer.onSceneRemove(oldScene);
     }
 
     /**

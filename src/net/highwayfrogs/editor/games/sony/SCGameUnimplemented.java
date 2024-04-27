@@ -15,11 +15,6 @@ public class SCGameUnimplemented extends SCGameInstance {
     }
 
     @Override
-    protected SCGameConfig makeConfig(String internalName) {
-        return new SCGameConfig(internalName);
-    }
-
-    @Override
     public SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData) {
         return SCUtils.createSharedGameFile(fileEntry, fileData);
     }
@@ -30,7 +25,7 @@ public class SCGameUnimplemented extends SCGameInstance {
     }
 
     @Override
-    public void setupFileGroups(SCGameFileGroupedListViewComponent fileListView) {
+    public void setupFileGroups(SCGameFileGroupedListViewComponent<? extends SCGameInstance> fileListView) {
         // Nothing.
     }
 }

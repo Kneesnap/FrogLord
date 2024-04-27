@@ -5,6 +5,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -15,11 +16,11 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.shared.ui.file.SaveController;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.gui.extra.hash.HashPlaygroundController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -65,7 +66,37 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
     @Override
     protected void saveMainGameData() {
-        SaveController.saveFiles(getGameInstance());
+        File baseFolder = getGameInstance().getMainGameFolder();
+        if (!baseFolder.canWrite()) {
+            Utils.makePopUp("Can't write to the file." + Constants.NEWLINE + "Do you have permission to save in this folder?", AlertType.ERROR);
+            return;
+        }
+
+        // The canWrite check does not work on the files, only on the directory.
+        File outputMwdFile = new File(baseFolder, Utils.stripExtension(getGameInstance().getMwdFile().getName()) + "-MODIFIED.MWD");
+        File outputExeFile = new File(baseFolder, Utils.stripExtension(getGameInstance().getExeFile().getName()) + "-modified.exe");
+
+        ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> {
+            // Save the MWD file.
+            DataWriter mwdWriter = new DataWriter(new FileReceiver(outputMwdFile));
+
+            try {
+                getGameInstance().getMainArchive().save(mwdWriter, progressBar);
+            } catch (Throwable th) {
+                throw new RuntimeException("Failed to save the MWD file: '" + outputMwdFile.getName() + "'.", th);
+            } finally {
+                mwdWriter.closeReceiver();
+            }
+
+            // Save the executable too.
+            progressBar.update(0, 1, "Saving the modified executable...");
+            try {
+                getGameInstance().saveExecutable(outputExeFile, true);
+                progressBar.addCompletedProgress(1);
+            } catch (Throwable th) {
+                throw new RuntimeException("Failed to save the patched game executable '" + outputExeFile.getName() + "'.", th);
+            }
+        });
     }
 
     @Override

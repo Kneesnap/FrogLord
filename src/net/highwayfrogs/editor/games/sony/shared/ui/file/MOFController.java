@@ -121,22 +121,11 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
         setTargetFile(mof);
     }
 
-    @Override
-    public void onSceneAdd(Scene newScene) {
-        super.onSceneAdd(newScene);
-        this.uiController.onSceneAdd(newScene);
-    }
-
-    @Override
-    public void onSceneRemove(Scene oldScene) {
-        super.onSceneRemove(oldScene);
-        this.uiController.onSceneRemove(oldScene);
-    }
-
     @SneakyThrows
     public void setupMofViewer(Stage stageToOverride) {
         this.mofMesh = getFile().makeMofMesh();
         this.uiController = new MOFUIController(this);
+        addController(this.uiController);
 
         // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
         MeshView meshView = new MeshView(getMofMesh());

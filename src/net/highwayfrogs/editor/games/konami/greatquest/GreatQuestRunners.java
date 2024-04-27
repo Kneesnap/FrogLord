@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -55,7 +54,7 @@ public class GreatQuestRunners {
         System.out.println("Loading file...");
         DataReader reader = new DataReader(new FileSource(binFile));
         GreatQuestInstance instance = new GreatQuestInstance();
-        instance.loadGame("pc-retail", new Config(Utils.getResourceStream("games/greatquest/versions/pc-retail.cfg")), binFile);
+        instance.loadGame("pc-retail", binFile, null);
         instance.getMainArchive().load(reader);
         System.out.println("Loaded.");
 

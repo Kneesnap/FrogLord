@@ -1,10 +1,15 @@
 package net.highwayfrogs.editor;
 
 import javafx.scene.text.Font;
+import lombok.Getter;
+import net.highwayfrogs.editor.games.generic.GameConfig;
+import net.highwayfrogs.editor.games.generic.IGameType;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestGameType;
+import net.highwayfrogs.editor.games.sony.SCGameType;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
+import java.util.*;
 
 /**
  * Holds constant variables which may come in handy.
@@ -79,6 +84,12 @@ public class Constants {
     public static final Color COLOR_DARK_YELLOW = new Color(128, 128, 0);
     public static final Color COLOR_TAN = new Color(240, 240, 240);
 
+    @Getter private static final List<IGameType> gameTypes = new ArrayList<>();
+    @Getter private static final Map<IGameType, List<GameConfig>> cachedConfigsByGameType = new HashMap<>();
+
+    public static final String HIGHWAY_FROGS_WEBSITE_URL = "https://highwayfrogs.net/";
+    public static final String SOURCE_CODE_REPOSITORY_URL = "https://github.com/Kneesnap/FrogLord/";
+
     /**
      * Log exe info if the option is enabled.
      * @param obj The object to log.
@@ -86,5 +97,11 @@ public class Constants {
     public static void logExeInfo(Object obj) {
         if (LOG_EXE_INFO)
             System.out.println(obj);
+    }
+
+    static {
+        gameTypes.addAll(Arrays.asList(SCGameType.values()));
+        gameTypes.add(GreatQuestGameType.INSTANCE);
+        gameTypes.sort(Comparator.comparing(IGameType::getDisplayName)); // Sort alphabetically.
     }
 }

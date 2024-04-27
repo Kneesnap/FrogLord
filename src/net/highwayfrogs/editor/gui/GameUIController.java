@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.gui;
 
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -15,16 +17,20 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents an entity capable of managing a user interface.
  * This user interface could be as large as a standalone window, or as small as a single UI node.
  * Created by Kneesnap on 4/11/2024.
  */
-@Getter
 public abstract class GameUIController<TGameInstance extends GameInstance> extends GameObject<TGameInstance> {
-    private Node rootNode;
-    private boolean loadingComplete;
+    private final List<GameUIController<?>> childControllers = new ArrayList<>();
+    @Getter private Node rootNode;
+    @Getter private boolean loadingComplete;
+    @Getter private boolean sceneActive;
 
     public GameUIController(TGameInstance instance) {
         super(instance);
@@ -46,6 +52,51 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
         } catch (Throwable th) {
             handleError(th, true, "Failed to setup the UI.");
         }
+    }
+
+    /**
+     * Adds a controller to this controller.
+     * @param childController the controller to add
+     */
+    public void addController(GameUIController<?> childController) {
+        if (childController == null)
+            throw new NullPointerException("childController");
+        if (childController == this || childController.childControllers.contains(this)) // This is technically still possible to do, but ideally this is too obviously bad to do by accident.
+            throw new IllegalArgumentException("Cannot create a circular dependency chain.");
+
+        if (this.childControllers.contains(childController))
+            return; // Already registered.
+
+        this.childControllers.add(childController);
+        if (this.sceneActive)
+            childController.onSceneAdd(getScene());
+    }
+
+    /**
+     * Removes a controller from this controller.
+     * @param childController the controller to remove
+     */
+    public boolean removeController(GameUIController<?> childController) {
+        if (!this.childControllers.remove(childController))
+            return false; // Wasn't.
+
+        if (this.sceneActive)
+            childController.onSceneRemove(getScene());
+
+        return true;
+    }
+
+    /**
+     * Add nodes from the child controllers to the parent nodes list.
+     * @param parentNodes the list to add to
+     */
+    public void addChildControllers(ObservableList<Node> parentNodes) {
+        for (int i = 0; i < this.childControllers.size(); i++) {
+            GameUIController<?> uiController = this.childControllers.get(i);
+            if (uiController.getRootNode() != null)
+                parentNodes.add(uiController.getRootNode());
+        }
+
     }
 
     /**
@@ -104,6 +155,24 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
     }
 
     /**
+     * Resizes the window to the scene.
+     */
+    public void resizeWindow() {
+        if (!this.loadingComplete) {
+            Platform.runLater(this::resizeWindow);
+            return;
+        }
+
+        Stage stage = getStage();
+        if (stage == null) {
+            getLogger().warning("Could not resize window, since the Stage was null!");
+            return;
+        }
+
+        stage.sizeToScene();
+    }
+
+    /**
      * Called when the controller is loaded from the fxml template
      * @param rootNode the node loaded from the fxml template
      */
@@ -113,14 +182,24 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
      * Called when the controller is added to a scene.
      */
     public void onSceneAdd(Scene newScene) {
-        // Don't need to do anything.
+        if (this.sceneActive)
+            throw new IllegalStateException("Called onSceneAdd() while there was already a scene active.");
+
+        this.sceneActive = true;
+        for (int i = 0; i < this.childControllers.size(); i++)
+            this.childControllers.get(i).onSceneAdd(newScene);
     }
 
     /**
      * Called when the node is removed from a scene.
      */
     public void onSceneRemove(Scene oldScene) {
-        // Don't need to do anything.
+        if (!this.sceneActive)
+            throw new IllegalStateException("Called onSceneAdd() while there was no scene active.");
+
+        this.sceneActive = false;
+        for (int i = 0; i < this.childControllers.size(); i++)
+            this.childControllers.get(i).onSceneRemove(oldScene);
     }
 
     /**
@@ -145,7 +224,8 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
             loader.setController(controller);
             rootNode = loader.load();
         } catch (IOException ex) {
-            Utils.handleError(instance.getLogger(), ex, true, "Failed to load FXML template '%s'.", fxmlResourceLocation);
+            Logger logger = instance != null ? instance.getLogger() : Logger.getLogger(GameUIController.class.getSimpleName());
+            Utils.handleError(logger, ex, true, "Failed to load FXML template '%s'.", fxmlResourceLocation);
             return null;
         }
 

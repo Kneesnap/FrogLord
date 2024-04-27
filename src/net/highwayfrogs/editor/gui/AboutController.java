@@ -51,4 +51,14 @@ public class AboutController extends GameUIController<GameInstance> {
     public static void openAboutMenu(GameInstance instance) {
         Utils.createWindowFromFXMLTemplate("window-about", new AboutController(instance), "About FrogLord", true);
     }
+
+    @FXML
+    private void openWebsite(ActionEvent event) {
+        GUIMain.getApplication().getHostServices().showDocument(Constants.HIGHWAY_FROGS_WEBSITE_URL);
+    }
+
+    @FXML
+    private void openSourceCode(ActionEvent event) {
+        GUIMain.getApplication().getHostServices().showDocument(Constants.SOURCE_CODE_REPOSITORY_URL);
+    }
 }

@@ -29,7 +29,7 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
         super.onControllerLoad(rootNode);
 
         // Allow exporting MWI.
-        addMenuItem(this.menuBarFile, "Export Files", () -> {
+        addMenuItem(this.menuBarFile, "Export Files", () -> { // TODO: Make this use the progress bar later.
             File exportFolder = Utils.promptChooseDirectory(getGameInstance(), "Choose the folder to export files into...", true);
             if (exportFolder == null)
                 return; // Cancel.

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.ui;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -26,6 +27,7 @@ import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,11 +59,14 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
     protected void onControllerLoad(Node rootNode) {
         // Setup Selector.
         this.patchSelector.setConverter(new AbstractStringConverter<>(GamePatch::getName));
-        this.patchSelector.setItems(FXCollections.observableArrayList(getPatches()));
+
+        List<GamePatch> compatiblePatches = new ArrayList<>(getPatches());
+        compatiblePatches.removeIf(patch -> !patch.isCompatibleWithVersion(getConfig().getInternalName()));
+        this.patchSelector.setItems(FXCollections.observableArrayList(compatiblePatches));
         this.patchSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
             this.selectedPatchRuntime = newValue != null ? new PatchRuntime(getGameInstance(), newValue) : null;
             if (this.selectedPatchRuntime != null && !this.selectedPatchRuntime.runSetup()) {
-                closeWindow();
+                Platform.runLater(this::closeWindow);
                 return;
             }
 
@@ -113,7 +118,12 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
     public void onSceneAdd(Scene newScene) {
         super.onSceneAdd(newScene);
         Utils.closeOnEscapeKey((Stage) newScene.getWindow(), null);
-        updatePatchDisplay();
+        if (this.patchSelector.getItems() == null || this.patchSelector.getItems().isEmpty()) {
+            Utils.makePopUp("There are no patches available for this version.", AlertType.ERROR);
+            closeWindow();
+        } else {
+            updatePatchDisplay();
+        }
     }
 
     /**
@@ -202,13 +212,16 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
     public static void loadPatches(IGameType gameType) {
         getPatches().clear();
 
-        List<String> lines = Utils.readLinesFromStream(gameType.getEmbeddedResourceStream("patches/list"));
-
-        for (String patchName : lines) {
-            Config config = new Config(gameType.getEmbeddedResourceStream("patches/" + patchName + ".patch"));
-            GamePatch loadPatch = new GamePatch();
-            loadPatch.loadPatchFromConfig(config);
-            getPatches().add(loadPatch);
+        for (URL patchLocation : Utils.getFilesInDirectory(gameType.getEmbeddedResourceURL("patches"), true)) {
+            try {
+                Config config = new Config(patchLocation.openStream());
+                GamePatch loadPatch = new GamePatch();
+                loadPatch.loadPatchFromConfig(config);
+                getPatches().add(loadPatch);
+            } catch (Throwable th) {
+                System.err.println("Failed to load '" + patchLocation + "'.");
+                th.printStackTrace();
+            }
         }
     }
 }

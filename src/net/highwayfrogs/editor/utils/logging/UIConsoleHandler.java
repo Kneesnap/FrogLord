@@ -47,7 +47,6 @@ public class UIConsoleHandler extends StreamHandler {
      */
     public static void logMessage(String message) {
         for (GameInstance gameInstance : GUIMain.getActiveGameInstances())
-            if (gameInstance.getMainMenuController() != null)
-                gameInstance.getMainMenuController().addConsoleEntry(message);
+            gameInstance.addConsoleLogEntry(message);
     }
 }

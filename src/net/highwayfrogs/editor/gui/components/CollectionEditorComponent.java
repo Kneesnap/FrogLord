@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.gui.components;
 
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
@@ -31,6 +30,7 @@ public class CollectionEditorComponent<TGameInstance extends GameInstance, TView
     public CollectionEditorComponent(TGameInstance instance, CollectionViewComponent<TGameInstance, TViewEntry> collectionViewComponent) {
         super(instance);
         this.collectionViewComponent = collectionViewComponent;
+        addController(this.collectionViewComponent);
         loadController(new AnchorPane());
     }
 
@@ -70,7 +70,6 @@ public class CollectionEditorComponent<TGameInstance extends GameInstance, TView
         HBox box = new HBox();
         box.setAlignment(Pos.CENTER);
 
-        this.searchTextField.setAccessibleText("TEST1!!!"); // TODO: TOSS
         this.searchTextField.setPromptText("Search");
         this.searchTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (this.collectionViewComponent != null)
@@ -91,20 +90,6 @@ public class CollectionEditorComponent<TGameInstance extends GameInstance, TView
         box.getChildren().add(new Label("Test3"));
         box.getChildren().add(new Label("Test4"));
         return box;
-    }
-
-    @Override
-    public void onSceneAdd(Scene newScene) {
-        super.onSceneAdd(newScene);
-        if (this.collectionViewComponent != null)
-            this.collectionViewComponent.onSceneAdd(newScene);
-    }
-
-    @Override
-    public void onSceneRemove(Scene oldScene) {
-        super.onSceneRemove(oldScene);
-        if (this.collectionViewComponent != null)
-            this.collectionViewComponent.onSceneRemove(oldScene);
     }
 
     /**

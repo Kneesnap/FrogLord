@@ -1,7 +1,7 @@
 Name=Change Sky Background Color
 Description=Changes the ground color in sky levels.
 Author=Kneesnap
-Versions=pc-retail-v1.0,pc-retail-v3.0e,pc-retail-v3.0e-music,kaos-prototype
+Versions=pc-retail-v1.0,pc-retail-v3.0e,pc-retail-v3.0e-music,pc-1997-09-03
 
 [Args]
 color,color1,Looney Balloons,0
@@ -19,7 +19,7 @@ skyBaseColorAddress=0x73B90
 [pc-retail-v3.0e-vogons]
 skyBaseColorAddress=0x73F90
 
-[kaos-prototype]
+[pc-1997-09-03]
 skyBaseColorAddress=0x5CA58
 
 [ArgsCode]

@@ -3,7 +3,10 @@ package net.highwayfrogs.editor.games.sony.medievil2;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
-import net.highwayfrogs.editor.games.sony.*;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.SCGameType;
+import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
@@ -20,11 +23,6 @@ public class MediEvil2GameInstance extends SCGameInstance {
     private static final int FILE_TYPE_VLO = 1;
 
     @Override
-    protected SCGameConfig makeConfig(String internalName) {
-        return new SCGameConfig(internalName);
-    }
-
-    @Override
     public SCGameFile<?> createFile(MWIFile.FileEntry fileEntry, byte[] fileData) {
         // TODO FILE_TYPE_VLO
         return SCUtils.createSharedGameFile(fileEntry, fileData);
@@ -36,7 +34,7 @@ public class MediEvil2GameInstance extends SCGameInstance {
     }
 
     @Override
-    public void setupFileGroups(SCGameFileGroupedListViewComponent fileListView) {
+    public void setupFileGroups(SCGameFileGroupedListViewComponent<? extends SCGameInstance> fileListView) {
         fileListView.addGroup(new SCGameFileListTypeIdGroup("VLO Texture Bank", FILE_TYPE_VLO));
         fileListView.addGroup(new LazySCGameFileListGroup("TIM [PSX Image]", (file, index) -> file instanceof PSXTIMFile));
     }

@@ -58,11 +58,6 @@ public class MediEvilGameInstance extends SCGameInstance {
     }
 
     @Override
-    protected MediEvilConfig makeConfig(String internalName) {
-        return new MediEvilConfig(internalName);
-    }
-
-    @Override
     public SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData) {
         if (fileEntry.getTypeId() == FILE_TYPE_MAP || fileEntry.hasExtension("map"))
             return new MediEvilMapFile(this);
@@ -129,7 +124,7 @@ public class MediEvilGameInstance extends SCGameInstance {
     }
 
     @Override
-    public void setupFileGroups(SCGameFileGroupedListViewComponent fileListView) {
+    public void setupFileGroups(SCGameFileGroupedListViewComponent<? extends SCGameInstance> fileListView) {
         fileListView.addGroup(new SCGameFileListTypeIdGroup("VLO Texture Bank", FILE_TYPE_VLO));
         fileListView.addGroup(new LazySCGameFileListGroup("TIM [PSX Image]", (file, index) -> file instanceof PSXTIMFile));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Models", FILE_TYPE_MOF));

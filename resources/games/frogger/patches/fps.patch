@@ -1,7 +1,7 @@
 Name=Change Game Speed
 Description=Changes the FPS. This will not be accurate down to the number of frames. # It's as close as it can be though.
 Author=Kneesnap
-Versions=pc-retail-v1.0,pc-retail-v3.0e,pc-retail-v3.0e-vogons,kaos-prototype
+Versions=pc-retail-v1.0,pc-retail-v3.0e,pc-retail-v3.0e-vogons,pc-1997-09-03
 
 # Note from Kneesnap
 #  On 3/15/2020 I tried to support decoupling the game logic from the FPS, because I saw two counters which I believed controlled each separately.
@@ -28,14 +28,14 @@ updateDelayAddress=0x228EC
 [pc-retail-v3.0e-vogons]
 updateDelayAddress=0x228EC
 
-[kaos-prototype]
+[pc-1997-09-03]
 updateDelayAddress=0x1542
 
 [ArgsCode]
 readb millis updateDelayAddress
 set fps 1000
 divide fps millis
-if $VERSION != "kaos-prototype"
+if $VERSION != "pc-1997-09-03"
  divide fps 2
 
 [Code]
@@ -45,7 +45,7 @@ add msg "."
 print msg
 
 set millis 1000
-if $VERSION != "kaos-prototype" # For some unknown reason, this version does not double the value.
+if $VERSION != "pc-1997-09-03" # For some unknown reason, this version does not double the value.
  multiply fps 2
 divide millis fps
 writeb millis updateDelayAddress

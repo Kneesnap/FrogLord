@@ -1,23 +1,14 @@
 package net.highwayfrogs.editor.gui;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
-import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.SCGameType;
-import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
-import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ConsoleErrorHandler;
 import net.highwayfrogs.editor.utils.logging.ConsoleOutputHandler;
@@ -25,23 +16,16 @@ import net.highwayfrogs.editor.utils.logging.LogFormatter;
 import net.highwayfrogs.editor.utils.logging.UIConsoleHandler;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.Calendar;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
-import java.util.logging.Formatter;
 import java.util.logging.*;
 
 /**
  * The entry point to FrogLord.
  * TODO: Search bar, add bar, etc.
- * TODO: Save/load from config file.
  * TODO: Show loading bar while the game files load.
- * TODO: New game open menu.
  *
  * TODO: Solve TODOs in:
  *  - GUIMain.java
@@ -49,16 +33,15 @@ import java.util.logging.*;
  *  - GroupedCollectionViewComponent.java
  *  - CollectionViewComponent.java
  *  - CollectionEditorComponent.java
- *  - MainMenuController.java
  *  - SCGameFileListEditor.java
  */
 public class GUIMain extends Application {
-    public static GUIMain INSTANCE; // TODO: TOSS (LATER)
+    @Getter private static Config mainConfig;
+    @Getter private static File mainConfigFile;
     @Getter private static File workingDirectory = new File("./");
+    @Getter private static GUIMain application;
     public static final Image MAIN_ICON = SCGameFile.loadIcon("icon");
-    private static boolean loadedSuccessfullyAtLeastOnce; // TODO: TOSS (LATER)
     @Getter private static final List<GameInstance> activeGameInstances = new CopyOnWriteArrayList<>();
-
 
     public static void main(String[] args) {
         launch(args);
@@ -66,7 +49,7 @@ public class GUIMain extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        INSTANCE = this;
+        application = this;
         setupLogger();
         SystemOutputReplacement.activateReplacement();
 
@@ -77,121 +60,10 @@ public class GUIMain extends Application {
                     + "FrogLord has only been given " + DataSizeUnit.formatSize(availableMemory) + " Memory.\n"
                     + "Proceed at your own risk. Things may not work properly.", AlertType.WARNING);
 
-        try {
-            File dataBinFile = Utils.promptFileOpen(null, "Please locate and open 'data.bin'", "Frogger Great Quest Data", "bin");
-            if (dataBinFile == null) {
-                try {
-                    openFroggerFiles();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-                return;
-            }
-
-            InputMenu.promptInput(null, "Please tell me the game version.", configName -> {
-                // Determine platform.
-                InputStream inputStream = Utils.getResourceStream("games/greatquest/versions/" + configName + ".cfg");
-                if (inputStream == null) {
-                    if (configName != null && configName.length() > 0)
-                        Utils.makePopUp("Invalid config name '" + configName + "'.", AlertType.ERROR);
-
-                    try {
-                        openFroggerFiles();
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
-                    return;
-                }
-
-                Config config = new Config(inputStream, configName);
-
-                // Load main bin.
-                System.out.println("Loading file...");
-
-                DataReader reader;
-                try {
-                    reader = new DataReader(new FileSource(dataBinFile));
-                } catch (IOException ex) {
-                    Utils.handleError(Logger.getLogger("GreatQuest"), ex, true, "Failed to read GreatQuest.");
-                    Platform.exit();
-                    return;
-                }
-
-                GreatQuestInstance instance = new GreatQuestInstance();
-                instance.loadGame(config.getName(), config, dataBinFile);
-                instance.getMainArchive().load(reader);
-                instance.setupMainMenuWindow();
-                instance.getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
-            });
-        } catch (Throwable th) {
-            Utils.handleError(Logger.getLogger("GreatQuest"), th, true, "Encountered an error in GreatQuest hijack.");
-        }
-    }
-
-    /**
-     * Gets a map of versions to acceptable exe hashes.
-     */
-    public static Map<String, String[]> getVersions() {
-        Config execRegistry = new Config(Utils.getResourceStream("executables.cfg"));
-
-        Map<String, String[]> versionMap = new HashMap<>();
-        for (String configName : execRegistry.keySet())
-            versionMap.put(configName, execRegistry.getString(configName).split(","));
-        return versionMap;
-    }
-
-    private void createGameInstance(File exeFile, File mwdFile, Consumer<SCGameInstance> onConfigLoad) throws IOException {
-        Map<String, String[]> versions = getVersions();
-        byte[] fileBytes = Files.readAllBytes(exeFile.toPath());
-
-        long crcHash = Utils.getCRC32(exeFile);
-        Map<String, String> configDisplayName = new HashMap<>();
-        for (String configName : versions.keySet()) {
-            String[] hashes = versions.get(configName);
-
-            // Executables modified by FrogLord will have a small marker at the end saying which config to use. This works on both playstation and windows executable formats.
-            byte[] configNameBytes = configName.getBytes();
-            if (Utils.testSignature(fileBytes, fileBytes.length - configNameBytes.length, configNameBytes)) {
-                SCGameInstance instance = makeGameInstance(exeFile, mwdFile, configName);
-                onConfigLoad.accept(instance);
-                return;
-            }
-
-            // Use hashes to detect unmodified executables.
-            for (String testHash : hashes) {
-                if (Long.parseLong(testHash) == crcHash) {
-                    SCGameInstance instance = makeGameInstance(exeFile, mwdFile, configName);
-                    onConfigLoad.accept(instance);
-                    return;
-                }
-            }
-
-            Config loadedConfig = new Config(Utils.getResourceStream(getExeConfigPath(configName)));
-            configDisplayName.put(configName, loadedConfig.getString(SCGameConfig.CFG_DISPLAY_NAME));
-        }
-
-        System.out.println("Executable CRC32: " + crcHash); // There was no configuration found, so display the CRC32, in-case we want to make a configuration.
-        List<Entry<String, String>> internalToDisplayNames = new ArrayList<>(configDisplayName.entrySet());
-        internalToDisplayNames.sort(Entry.comparingByKey());
-
-        SelectionMenu.promptSelection(null, "Select a configuration.", resourcePath -> {
-            SCGameInstance instance = makeGameInstance(exeFile, mwdFile, resourcePath.getKey());
-            onConfigLoad.accept(instance);
-        }, internalToDisplayNames, Entry::getValue, null);
-    }
-
-    private SCGameInstance makeGameInstance(File inputExe, File inputMwd, String configPath) {
-        Config config = new Config(Utils.getResourceStream(getExeConfigPath(configPath)));
-        String configName = configPath.contains("/") ? configPath.substring(configPath.lastIndexOf('/') + 1) : configPath;
-        SCGameType gameType = config.getEnum("game", SCGameType.FROGGER); // TODO: Better system.
-        SCGameInstance instance = gameType.createGameInstance();
-        instance.getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
-        instance.loadGame(configName, config, inputMwd, inputExe);
-        return instance;
-    }
-
-    private static String getExeConfigPath(String configName) {
-        return "games/" + configName + ".cfg";
+        // Start.
+        mainConfigFile = new File("main.cfg");
+        mainConfig = Config.loadConfigFromTextFile(mainConfigFile, true);
+        openLoadGameSettingsMenu();
     }
 
     /**
@@ -204,33 +76,24 @@ public class GUIMain extends Application {
     }
 
     /**
-     * Opens the frogger files and sets up the UI.
+     * Opens the menu for loading a game.
      */
-    public void openFroggerFiles() throws IOException {
-        // Setup version comparison.
-        FroggerVersionComparison.setup(getWorkingDirectory());
+    public static void openLoadGameSettingsMenu() {
+        GameConfigController.openGameConfigMenu(getGameLoadSettingsConfig());
+    }
 
-        // If this isn't a debug setup, prompt the user to select the files to load.
-        File mwdFile = Utils.promptFileOpen(null, "Please select a Millennium WAD", "Millennium WAD", "MWD");
-        if (mwdFile == null) {
-            if (!loadedSuccessfullyAtLeastOnce)
-                Platform.exit(); // No file given. Shutdown if there is nothing loaded already. Otherwise, keep the last data active.
-            return;
-        }
+    /**
+     * Get the config containing data for loading games.
+     */
+    public static Config getGameLoadSettingsConfig() {
+        return mainConfig.getOrCreateChildConfigByName("GameLoadSettings");
+    }
 
-        File exeFile = Utils.promptFileOpenExtensions(null, "Please select a Millennium executable", "Millennium Executable", "EXE", "dat", "04", "06", "26", "64", "65", "66", "99");
-        if (exeFile == null) {
-            if (!loadedSuccessfullyAtLeastOnce)
-                Platform.exit(); // No file given. Shutdown if there is nothing loaded already. Otherwise, keep the last data active.
-            return;
-        }
-
-        createGameInstance(exeFile, mwdFile, instance -> {
-            loadedSuccessfullyAtLeastOnce = true;
-            instance.setupMainMenuWindow();
-            if (instance.isFrogger())
-                FroggerVersionComparison.addNewVersionToConfig((FroggerGameInstance) instance);
-        });
+    /**
+     * Save the main config file.
+     */
+    public static void saveMainConfig() {
+        mainConfig.saveTextFile(mainConfigFile);
     }
 
     private static void setupLogger() {

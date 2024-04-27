@@ -15,12 +15,16 @@ import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.MainMenuController;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -90,25 +94,32 @@ public abstract class SCGameInstance extends GameInstance {
 
     /**
      * Load and setup all instance data relating to the game such as version configuration and game files.
-     * @param configName The name of the version configuration to load.
-     * @param config     The config to load.
-     * @param mwdFile    The file representing the Millennium WAD.
-     * @param exeFile    The main game executable file, containing the MWI.
+     * @param versionConfigName The name of the version configuration to load.
+     * @param mwdFile The file representing the Millennium WAD.
+     * @param exeFile The main game executable file, containing the MWI.
+     * @param progressBar the progress bar to display load progress on, if it exists
      */
-    public void loadGame(String configName, Config config, File mwdFile, File exeFile) {
-        if (getConfig() != null || this.mainArchive != null)
+    public void loadGame(String versionConfigName, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
+        if (this.mainArchive != null)
             throw new RuntimeException("The game instance has already been loaded.");
 
-        if (mwdFile == null || !mwdFile.exists())
+        // Verify files.
+        if (mwdFile == null || !mwdFile.exists() || !mwdFile.isFile())
             throw new RuntimeException("The MWD file '" + mwdFile + "' does not exist.");
-        if (exeFile == null || !exeFile.exists())
+        if (exeFile == null || !exeFile.exists() || !exeFile.isFile())
             throw new RuntimeException("The executable file '" + exeFile + "' does not exist.");
 
         this.mwdFile = mwdFile;
         this.exeFile = exeFile;
-        loadGameConfig(configName, config);
+        loadGameConfig(versionConfigName);
         this.archiveIndex = this.readMWI();
-        this.mainArchive = this.readMWD();
+        this.mainArchive = this.readMWD(progressBar);
+
+        // Setup version comparison.
+        if (isFrogger()) {
+            FroggerVersionComparison.setup(GUIMain.getWorkingDirectory());
+            FroggerVersionComparison.addNewVersionToConfig((FroggerGameInstance) this);
+        }
     }
 
     @Override
@@ -122,9 +133,6 @@ public abstract class SCGameInstance extends GameInstance {
         this.readOverlayTable(exeReader);
         this.readBmpPointerData(exeReader);
     }
-
-    @Override
-    protected abstract SCGameConfig makeConfig(String internalName);
 
     @Override
     public SCGameType getGameType() {
@@ -365,7 +373,7 @@ public abstract class SCGameInstance extends GameInstance {
      * Populate the file groups for the main menu file list.
      * @param fileListView The file list view to register files for.
      */
-    public abstract void setupFileGroups(SCGameFileGroupedListViewComponent fileListView);
+    public abstract void setupFileGroups(SCGameFileGroupedListViewComponent<? extends SCGameInstance> fileListView);
 
     /**
      * Get the FileEntry for a given resource id.
@@ -652,8 +660,9 @@ public abstract class SCGameInstance extends GameInstance {
 
     /**
      * Read the MWD file.
+     * @param progressBar the progress bar to display load progress on, if it exists
      */
-    public MWDFile readMWD() {
+    public MWDFile readMWD(ProgressBarComponent progressBar) {
         if (getConfig().getMWIOffset() <= 0)
             throw new RuntimeException("The MWI cannot be read because either no MWI offset was specified or the configuration hasn't been loaded yet.");
 
@@ -669,7 +678,7 @@ public abstract class SCGameInstance extends GameInstance {
         DataReader arrayReader = new DataReader(fileSource);
         MWDFile mwdFile = new MWDFile(this);
         this.mainArchive = mwdFile;
-        mwdFile.load(arrayReader);
+        mwdFile.load(arrayReader, progressBar);
         this.onMWDLoad(mwdFile);
         return mwdFile;
     }

@@ -78,6 +78,7 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
         }
 
         // Update UI visibility.
+        this.hasExpansionOccurred = false;
         for (int i = 0; i < this.groups.size(); i++)
             this.groups.get(i).updateEntryList();
     }

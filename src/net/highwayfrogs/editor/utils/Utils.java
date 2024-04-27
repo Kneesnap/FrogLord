@@ -33,10 +33,13 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -47,6 +50,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
 /**
@@ -222,7 +226,7 @@ public class Utils {
     }
 
     /**
-     * Create a new array with less elements than the supplied one. (Cut from the left side)
+     * Create a new array with fewer elements than the supplied one. (Cut from the left side)
      * @param array    The array to take elements from.
      * @param cutCount The amount of elements to cut.
      * @return newArray
@@ -466,7 +470,7 @@ public class Utils {
     }
 
     /**
-     * Convert an unsigned short back into a unsigned byte.
+     * Convert an unsigned short back into an unsigned byte.
      * @param unsignedShort the short to turn back into a byte.
      * @return byte
      */
@@ -478,7 +482,7 @@ public class Utils {
 
     /**
      * Convert an unsigned short into an int, which can be converted back into a short.
-     * @param unsignedShort The short to convert into a int.
+     * @param unsignedShort The short to convert into an int.
      * @return unsignedShort
      */
     public static int shortToUnsignedInt(short unsignedShort) {
@@ -489,7 +493,7 @@ public class Utils {
     }
 
     /**
-     * Convert an unsigned int back into a unsigned short.
+     * Convert an unsigned int back into an unsigned short.
      * @param unsignedInt the int to turn back into a short.
      * @return byte
      */
@@ -500,7 +504,7 @@ public class Utils {
     }
 
     /**
-     * Convert an unsigned int into an long, which can be converted back into a long.
+     * Convert an unsigned int into a long, which can be converted back into a long.
      * @param unsignedInt The int to convert into a long.
      * @return unsignedLong
      */
@@ -514,7 +518,7 @@ public class Utils {
     }
 
     /**
-     * Convert an unsigned long back into a unsigned int.
+     * Convert an unsigned long back into an unsigned int.
      * @param unsignedLong the long to turn back into an int.
      * @return int
      */
@@ -536,6 +540,33 @@ public class Utils {
             array[array.length - 1 - i] = temp;
         }
         return array;
+    }
+
+    /**
+     * Get a resource in the JAR.
+     * @param resourcePath The resource path.
+     * @param includeSubFolders if true, sub folders will be included.
+     * @return resourceURL
+     */
+    public static List<URL> getFilesInDirectory(URL resourcePath, boolean includeSubFolders) {
+        try {
+            Path path = Paths.get(resourcePath.toURI());
+            try (Stream<Path> stream = Files.walk(path, includeSubFolders ? Integer.MAX_VALUE : 1)) {
+                return stream.map(Path::toUri)
+                        .map(uri -> {
+                            try {
+                                return uri.toURL();
+                            } catch (Throwable th) {
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+                        .filter(url -> !url.getPath().endsWith("/")) // Remove directories.
+                        .collect(Collectors.toList());
+            }
+        } catch (URISyntaxException | IOException ex) {
+            throw new RuntimeException("Failed to get files in resource directory '" + resourcePath + "'", ex);
+        }
     }
 
     /**
@@ -646,7 +677,7 @@ public class Utils {
     /**
      * Get the first file with this name that does not exist. Appends stuff like (1).
      * @param file The file to get.
-     * @return nonexistantFile.
+     * @return nonexistentFile.
      */
     public static File getNonExistantFile(File file) {
         if (!file.exists())
@@ -722,6 +753,42 @@ public class Utils {
     }
 
     /**
+     * Strip the extension from a file name.
+     * @param name The file name.
+     * @return stripped
+     */
+    public static String stripSingleExtension(String name) {
+        int lastDotIndex = name.lastIndexOf('.');
+        return lastDotIndex >= 0 ? name.substring(0, lastDotIndex) : name;
+    }
+
+    /**
+     * Get the file name from the url.
+     * @param url the url to get the file name from
+     * @return fileName
+     */
+    public static String getFileName(URL url) {
+        if (url == null)
+            throw new NullPointerException("url");
+        String query = url.getQuery();
+        if (query != null)
+            return query;
+
+        String fullPath = url.getFile();
+        int backslashPos = fullPath.lastIndexOf('/');
+        return backslashPos >= 0 ? fullPath.substring(backslashPos + 1) : fullPath;
+    }
+
+    /**
+     * Get the file name from the url.
+     * @param url the url to get the file name from
+     * @return fileName
+     */
+    public static String getFileNameWithoutExtension(URL url) {
+        return stripSingleExtension(getFileName(url));
+    }
+
+    /**
      * Strip win95 from the name of a file.
      * @param name The name to strip win95 from.
      * @return strippedName
@@ -731,7 +798,7 @@ public class Utils {
     }
 
     /**
-     * Strip the extension and windows 95 from a file name.
+     * Strip the extension and Windows 95 from a file name.
      * @param name The file name.
      * @return stripped
      */
@@ -1013,6 +1080,7 @@ public class Utils {
      * @param title the title of the window to show
      * @param waitUntilClose if true, the thread will be blocked until the window is closed
      */
+    @SuppressWarnings("ConstantValue")
     public static <T> boolean createWindowFromFXMLTemplate(String template, GameUIController<?> controller, String title, boolean waitUntilClose) {
         if (controller == null)
             throw new NullPointerException("controller");
@@ -1234,7 +1302,7 @@ public class Utils {
     }
 
     /**
-     * Get a integer from a color object.
+     * Get an integer from a color object.
      * @param color The color to turn into rgb.
      * @return rgbInt
      */
@@ -1261,7 +1329,7 @@ public class Utils {
     }
 
     /**
-     * Get a integer from a color object.
+     * Get an integer from a color object.
      * @param color The color to turn into rgb.
      * @return rgbInt
      */
@@ -1270,7 +1338,7 @@ public class Utils {
     }
 
     /**
-     * Get a integer from color bytes.
+     * Get an integer from color bytes.
      * @return rgbInt
      */
     public static int toRGB(byte red, byte green, byte blue) {
@@ -1281,7 +1349,7 @@ public class Utils {
     }
 
     /**
-     * Get a integer from color bytes.
+     * Get an integer from color bytes.
      * @return rgbInt
      */
     public static int toARGB(byte red, byte green, byte blue, byte alpha) {
@@ -1293,7 +1361,7 @@ public class Utils {
     }
 
     /**
-     * Get a integer from a color object.
+     * Get an integer from a color object.
      * @param color The color to turn into bgr.
      * @return rgbInt
      */
@@ -1305,7 +1373,7 @@ public class Utils {
     }
 
     /**
-     * Get a integer from color bytes.
+     * Get an integer from color bytes.
      * @return rgbInt
      */
     public static int toABGR(byte red, byte green, byte blue, byte alpha) {
@@ -1360,7 +1428,7 @@ public class Utils {
     }
 
     /**
-     * Reads all of the bytes in a file.
+     * Reads all bytes in a file.
      * @param file The file to read bytes from.
      * @return fileBytes
      */
@@ -1640,7 +1708,7 @@ public class Utils {
     }
 
     /**
-     * Calculate interpolated color value based on 't' between source and target colours.
+     * Calculate interpolated color value based on "t" between source and target colours.
      * @param colorSrc The source color.
      * @param colorTgt The target color.
      * @param t        The desired delta (from 0.0 to 1.0 inclusive).
@@ -1659,7 +1727,7 @@ public class Utils {
     }
 
     /**
-     * Calculate interpolated color value based on 't' between source and target colours.
+     * Calculate interpolated color value based on "t" between source and target colours.
      * @param colorSrc The source color.
      * @param colorTgt The target color.
      * @param t        The desired delta (from 0.0 to 1.0 inclusive).
@@ -1759,8 +1827,14 @@ public class Utils {
         }
 
         // Create popup window.
-        if (showWindow)
-            Utils.makeErrorPopUp(formattedMessage, th, false);
+        if (showWindow) {
+            if (Platform.isFxApplicationThread()) {
+                Utils.makeErrorPopUp(formattedMessage, th, false);
+            } else {
+                final String finalFormattedMessage = formattedMessage;
+                Platform.runLater(() -> Utils.makeErrorPopUp(finalFormattedMessage, th, false));
+            }
+        }
     }
 
     /**
@@ -1974,7 +2048,7 @@ public class Utils {
     }
 
     /**
-     * Returns the string with all non alpha-numeric characters removed.
+     * Returns the string with all non-alphanumeric characters removed.
      * @param input The input to strip.
      * @return strippedStr
      */
@@ -2099,5 +2173,48 @@ public class Utils {
      */
     public static boolean isNullOrEmpty(String input) {
         return input == null || input.isEmpty();
+    }
+
+    /**
+     * Test if the input string is null or whitespace.
+     * @param input The string to test.
+     * @return True if the string is null or empty.
+     */
+    public static boolean isNullOrWhiteSpace(String input) {
+        return input == null || input.isEmpty() || input.trim().isEmpty();
+    }
+
+    /**
+     * Trim whitespace at the start of the string.
+     * @param input the input string to trim
+     * @return trimmedString
+     */
+    public static String trimStart(String input) {
+        if (input == null)
+            return null;
+
+        int inputLength = input.length();
+        int startIndex = 0;
+        while ((startIndex < inputLength) && (input.charAt(startIndex) <= ' '))
+            startIndex++;
+
+        return (startIndex > 0) ? input.substring(startIndex) : input;
+    }
+
+    /**
+     * Trim whitespace at the end of the string.
+     * @param input the input string to trim
+     * @return trimmedString
+     */
+    public static String trimEnd(String input) {
+        if (input == null)
+            return null;
+
+        int len = input.length();
+        int st = 0;
+        while ((len > 0) && (input.charAt(len - 1) <= ' '))
+            len--;
+
+        return (len < input.length()) ? input.substring(0, len) : input;
     }
 }

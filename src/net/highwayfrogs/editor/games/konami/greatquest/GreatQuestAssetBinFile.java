@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -41,6 +42,15 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
 
     @Override
     public void load(DataReader reader) {
+        this.load(reader, null);
+    }
+
+    /**
+     * Loads the file with a progress bar to show progress.
+     * @param reader the reader to read from
+     * @param progressBar the progress bar to update, if exists
+     */
+    public void load(DataReader reader, ProgressBarComponent progressBar) {
         int unnamedFiles = reader.readInt();
         int namedFiles = reader.readInt();
 
@@ -57,28 +67,48 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         GreatQuestUtils.addHardcodedFileNameHashesToMap(nameMap);
 
         // Read unnamed files.
+        if (progressBar != null)
+            progressBar.setTotalProgress(unnamedFiles);
         for (int i = 0; i < unnamedFiles; i++) {
             int hash = reader.readInt();
-            readFile(reader, nameMap.get(hash), hash, false);
+            readFile(reader, nameMap.get(hash), hash, false, progressBar);
         }
 
         // Read named files. Files are named if they have a collision with other files.
+        if (progressBar != null)
+            progressBar.setTotalProgress(namedFiles);
         for (int i = 0; i < namedFiles; i++) {
             String fullFilePath = reader.readTerminatedStringOfLength(NAME_SIZE);
-            readFile(reader, fullFilePath, GreatQuestUtils.hashFilePath(fullFilePath), true);
+            readFile(reader, fullFilePath, GreatQuestUtils.hashFilePath(fullFilePath), true, progressBar);
         }
 
         // Handle post-load setup.
         kcLoadContext context = new kcLoadContext(this);
-        for (int i = 0; i < this.files.size(); i++)
+        if (progressBar != null)
+            progressBar.update(0, this.files.size(), "After Load Hook 1");
+
+        if (progressBar != null)
+            progressBar.setTotalProgress(this.files.size());
+        for (int i = 0; i < this.files.size(); i++) {
             this.files.get(i).afterLoad1(context);
-        for (int i = 0; i < this.files.size(); i++)
+            if (progressBar != null)
+                progressBar.addCompletedProgress(1);
+        }
+
+        // Second load hook.
+        if (progressBar != null)
+            progressBar.update(0, this.files.size(), "After Load Hook 2");
+
+        for (int i = 0; i < this.files.size(); i++) {
             this.files.get(i).afterLoad2(context);
+            if (progressBar != null)
+                progressBar.addCompletedProgress(1);
+        }
 
         context.onComplete();
     }
 
-    private GreatQuestArchiveFile readFile(DataReader reader, String name, int crc, boolean hasCollision) {
+    private GreatQuestArchiveFile readFile(DataReader reader, String name, int crc, boolean hasCollision, ProgressBarComponent progressBar) {
         int size = reader.readInt();
         int zSize = reader.readInt();
         int offset = reader.readInt();
@@ -107,6 +137,9 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
 
         // Setup file.
         readFile.init(name, isCompressed, crc, fileBytes, hasCollision);
+        if (progressBar != null)
+            progressBar.setStatusMessage("Reading '" + readFile.getExportName() + "'");
+
         this.files.add(readFile); // Add before loading, so it can find its ID.
         if (hasCollision) {
             this.fileCollisions.computeIfAbsent(readFile.getNameHash(), key -> new ArrayList<>()).add(readFile);
@@ -122,11 +155,22 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             throw new RuntimeException("There was a problem reading " + readFile.getClass().getSimpleName() + " [File " + (this.files.size() - 1) + "]", ex);
         }
 
+        if (progressBar != null)
+            progressBar.addCompletedProgress(1);
         return readFile;
     }
 
     @Override
     public void save(DataWriter writer) {
+        this.save(writer, null);
+    }
+
+    /**
+     * Saves the file with a progress bar to show progress.
+     * @param writer the writer to write to
+     * @param progressBar the progress bar to update, if exists
+     */
+    public void save(DataWriter writer, ProgressBarComponent progressBar) {
         List<GreatQuestArchiveFile> unnamedFiles = new ArrayList<>();
         List<GreatQuestArchiveFile> namedFiles = new ArrayList<>();
         for (GreatQuestArchiveFile file : getFiles())
@@ -161,9 +205,13 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         }
 
         // Write files:
+        if (progressBar != null)
+            progressBar.setTotalProgress(getFiles().size());
         for (GreatQuestArchiveFile file : getFiles()) {
-            writer.writeAddressTo(fileOffsetTable.get(file));
+            if (progressBar != null)
+                progressBar.setStatusMessage("Saving '" + file.getExportName() + "'");
             getLogger().info("Saving " + file.getFilePath());
+            writer.writeAddressTo(fileOffsetTable.get(file));
 
             byte[] rawBytes; // TODO :TOSS
             if (!(file instanceof GreatQuestChunkedFile) && file.getRawData() != null) {
@@ -194,6 +242,8 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             }
 
             writer.writeBytes(rawBytes);
+            if (progressBar != null)
+                progressBar.addCompletedProgress(1);
         }
 
         // Lastly, write global strings.
@@ -255,7 +305,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         System.out.println("Loading file...");
         DataReader reader = new DataReader(new FileSource(binFile));
         GreatQuestInstance instance = new GreatQuestInstance();
-        instance.loadGame(config.getName(), config, binFile);
+        instance.loadGame(config.getName(), binFile, null);
         instance.getMainArchive().load(reader);
 
         // Export.
