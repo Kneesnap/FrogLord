@@ -37,15 +37,16 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.FileSystem;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -548,25 +549,56 @@ public class Utils {
      * @param includeSubFolders if true, sub folders will be included.
      * @return resourceURL
      */
+    @SneakyThrows
     public static List<URL> getFilesInDirectory(URL resourcePath, boolean includeSubFolders) {
+        if (resourcePath.getProtocol() != null && resourcePath.getProtocol().equalsIgnoreCase("jar")) {
+            String fullResourcePath = resourcePath.getFile();
+            int exclamationPos = fullResourcePath.indexOf('!');
+            if (exclamationPos < 0) {
+                makePopUp("Couldn't find the JAR-embedded file resource path in the URL '" + resourcePath + "'.", AlertType.ERROR);
+                return Collections.emptyList();
+            }
+
+            String localResourcePath = fullResourcePath.substring(exclamationPos + 1);
+
+            // This is getting run from a JAR file, so we need to do the lookup from the jar file.
+            // Adapted from https://stackoverflow.com/questions/67091892/how-can-an-app-walk-through-the-contents-of-one-of-its-packages-at-run-time
+            Path frogLordJar = new File(Utils.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toPath();
+            BiPredicate<Path, BasicFileAttributes> pathValidityCheck = (path, attributes) -> path.startsWith(localResourcePath);
+            try (FileSystem fs = FileSystems.newFileSystem(frogLordJar, Utils.class.getClassLoader())) {
+                for (Path root : fs.getRootDirectories()) {
+                    try (Stream<Path> stream = Files.find(root, Integer.MAX_VALUE, pathValidityCheck)) {
+                        return getUrlsFromPaths(stream);
+                    }
+                }
+            }
+
+            throw new RuntimeException("Failed to enumerate resource files in '" + resourcePath + "'.");
+        }
+
+        // We should only get here when running from an IDE. (Or if there's some other version FrogLord would be run outside of a jar?)
         try {
             Path path = Paths.get(resourcePath.toURI());
             try (Stream<Path> stream = Files.walk(path, includeSubFolders ? Integer.MAX_VALUE : 1)) {
-                return stream.map(Path::toUri)
-                        .map(uri -> {
-                            try {
-                                return uri.toURL();
-                            } catch (Throwable th) {
-                                return null;
-                            }
-                        })
-                        .filter(Objects::nonNull)
-                        .filter(url -> !url.getPath().endsWith("/")) // Remove directories.
-                        .collect(Collectors.toList());
+                return getUrlsFromPaths(stream);
             }
         } catch (URISyntaxException | IOException ex) {
             throw new RuntimeException("Failed to get files in resource directory '" + resourcePath + "'", ex);
         }
+    }
+
+    private static List<URL> getUrlsFromPaths(Stream<Path> stream) {
+        return stream.map(Path::toUri)
+                .map(uri -> {
+                    try {
+                        return uri.toURL();
+                    } catch (Throwable th) {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .filter(url -> !url.getPath().endsWith("/")) // Remove directories.
+                .collect(Collectors.toList());
     }
 
     /**
