@@ -254,7 +254,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
         Stage newStage = new Stage();
         if (title != null)
             newStage.setTitle(title);
-        newStage.getIcons().add(GUIMain.MAIN_ICON);
+        newStage.getIcons().add(ImageResource.FROGLORD_LOGO_SQUARE_ICON.getFxImage());
 
         // Create scene.
         Scene newScene = new Scene((Parent) controller.getRootNode());

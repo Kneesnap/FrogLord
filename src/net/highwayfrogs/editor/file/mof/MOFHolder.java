@@ -32,6 +32,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFMainController;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FileUtils3D;
@@ -63,7 +64,6 @@ public class MOFHolder extends SCSharedGameFile {
 
     public static final int FLAG_ANIMATION_FILE = Constants.BIT_FLAG_3; // This is an animation MOF file.
 
-    private static final Image ICON = loadIcon("model");
     public static final byte[] DUMMY_DATA = "DUMY".getBytes();
 
     public MOFHolder(SCGameInstance instance, MAPTheme theme, MOFHolder lastCompleteMOF) {
@@ -139,7 +139,7 @@ public class MOFHolder extends SCSharedGameFile {
 
     @Override
     public Image getCollectionViewIcon() {
-        return ICON;
+        return ImageResource.GEOMETRIC_SHAPES_32.getFxImage();
     }
 
     @Override

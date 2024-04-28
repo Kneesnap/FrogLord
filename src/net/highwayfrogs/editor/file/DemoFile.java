@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.ui.DemoController;
+import net.highwayfrogs.editor.gui.ImageResource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,6 @@ public class DemoFile extends SCGameFile<FroggerGameInstance> {
     private int startX;
     private int startZ;
 
-    private static final Image ICON = loadIcon("demo");
     private static final int MAX_DEMO_FRAMES = 30 * 60;
     private static final int FILE_SIZE = MAX_DEMO_FRAMES + (3 * Constants.INTEGER_SIZE);
 
@@ -60,7 +60,7 @@ public class DemoFile extends SCGameFile<FroggerGameInstance> {
 
     @Override
     public Image getCollectionViewIcon() {
-        return ICON;
+        return ImageResource.GAME_CONTROLLER_32.getFxImage();
     }
 
     @Override

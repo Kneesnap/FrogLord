@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.sound;
 
-import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -20,8 +19,6 @@ import java.util.List;
 @Getter
 public class VHFile extends VHAudioHeader {
     private final List<AudioHeader> entries = new ArrayList<>();
-
-    public static final Image ICON = loadIcon("sound");
     public static final int CHANNEL_COUNT = 1;
 
     public VHFile(SCGameInstance instance) {

@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file.map;
 import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.DummyFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.ui.SkyLandController;
+import net.highwayfrogs.editor.gui.ImageResource;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -42,7 +42,7 @@ public class SkyLand extends SCGameFile<FroggerGameInstance> {
 
     @Override
     public Image getCollectionViewIcon() {
-        return DummyFile.ICON;
+        return ImageResource.PHOTO_ALBUM_32.getFxImage();
     }
 
     @Override

@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestImageController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
@@ -41,7 +42,6 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
     private static final byte TYPE_CODE_NO_COLOR_TABLE = (byte) 2;
     private static final byte TYPE_CODE_GRAYSCALE_TABLE = (byte) 3;
     private static final int[] GRAYSCALE_COLOR_MODEL = new int[256];
-    public static final Image IMAGE_ICON = loadIcon("image");
 
     public static final int SIGNATURE = 0x64474D49; // 'IMGd'
     public static final String SIGNATURE_STR = "IMGd"; // 'IMGd'
@@ -275,7 +275,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
 
     @Override
     public Image getCollectionViewIcon() {
-        return IMAGE_ICON;
+        return ImageResource.PHOTO_ALBUM_15.getFxImage();
     }
 
     @Override

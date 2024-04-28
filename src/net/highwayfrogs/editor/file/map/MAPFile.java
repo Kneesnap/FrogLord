@@ -42,6 +42,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.ui.FroggerMapInfoUIController;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
@@ -126,7 +127,6 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
     public static final short MAP_ANIMATION_TEXTURE_LIST_TERMINATOR = (short) 0xFFFF;
     private static final int TOTAL_CHECKPOINT_TIMER_ENTRIES = 5;
 
-    public static final Image ICON = loadIcon("map");
     public static final List<MAPPrimitiveType> PRIMITIVE_TYPES = new ArrayList<>();
     public static final List<MAPPrimitiveType> POLYGON_TYPES = Arrays.asList(MAPPolygonType.values());
 
@@ -804,12 +804,12 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
 
                 LevelInfo info = getGameInstance().getLevelInfoMap().get(key);
                 if (info != null)
-                    return Utils.toFXImage(Utils.resizeImage(getGameInstance().getImageFromPointer(info.getLevelTexturePointer()).toBufferedImage(), 35, 35), false);
+                    return Utils.toFXImage(Utils.resizeImage(getGameInstance().getImageFromPointer(info.getLevelTexturePointer()).toBufferedImage(), 32, 32), false);
                 return null;
             });
         }
 
-        return getGameInstance().getLevelImageMap().getOrDefault(level, ICON);
+        return getGameInstance().getLevelImageMap().getOrDefault(level, ImageResource.TREASURE_MAP_32.getFxImage());
     }
 
     @Override

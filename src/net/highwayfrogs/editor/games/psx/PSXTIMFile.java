@@ -7,12 +7,12 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.TIMController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -406,7 +406,7 @@ public class PSXTIMFile extends SCSharedGameFile {
 
     @Override
     public Image getCollectionViewIcon() {
-        return VLOArchive.ICON;
+        return ImageResource.PHOTO_ALBUM_32.getFxImage();
     }
 
     /**

@@ -5,6 +5,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -15,8 +16,6 @@ import net.highwayfrogs.editor.utils.Utils;
 public class GreatQuestDummyArchiveFile extends GreatQuestArchiveFile {
     private byte[] data;
     private final int length;
-
-    public static final Image DUMMY_ICON = loadIcon("unknown");
 
     public GreatQuestDummyArchiveFile(GreatQuestInstance instance, int length) {
         super(instance);
@@ -51,7 +50,7 @@ public class GreatQuestDummyArchiveFile extends GreatQuestArchiveFile {
 
     @Override
     public Image getCollectionViewIcon() {
-        return DUMMY_ICON;
+        return ImageResource.QUESTION_MARK_15.getFxImage();
     }
 
     @Override

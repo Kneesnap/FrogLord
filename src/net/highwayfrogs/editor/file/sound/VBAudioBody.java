@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VABController;
+import net.highwayfrogs.editor.gui.ImageResource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,7 @@ public abstract class VBAudioBody<THeader extends VHAudioHeader> extends SCShare
 
     @Override
     public Image getCollectionViewIcon() {
-        return VHFile.ICON;
+        return ImageResource.MUSIC_NOTE_32.getFxImage();
     }
 
     @Override

@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.sound.psx;
 
-import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
@@ -35,7 +34,6 @@ public class PSXVHFile extends VHAudioHeader {
 
     private static final int TONES_PER_PROGRAM = 16;
     public static final int TYPE_ID = 2;
-    public static final Image ICON = loadIcon("sound");
     public static final int CHANNEL_COUNT = 1;
     public static final String PSX_SIGNATURE = "pBAV"; // VABp
 

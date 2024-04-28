@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
-import javafx.scene.image.Image;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
@@ -14,7 +12,6 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
 
-import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -181,7 +178,7 @@ public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance>
     }
 
     /**
-     * Gets the file name shown in debug contexts. Trys to show as much detail as possible.
+     * Gets the file name shown in debug contexts. Tries to show as much detail as possible.
      */
     public String getDebugName() {
         if (this.filePath != null)
@@ -235,16 +232,6 @@ public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance>
                 throw new RuntimeException("Failed to export file '" + getDebugName() + "' to usable format.", ex);
             }
         }
-    }
-
-    /**
-     * Load an icon by name.
-     * @param iconName The icon to load.
-     * @return loadedIcon
-     */
-    @SneakyThrows
-    public static Image loadIcon(String iconName) {
-        return Utils.toFXImage(Utils.resizeImage(ImageIO.read(Utils.getResourceURL("icons/" + iconName + ".png")), 15, 15), false);
     }
 
     /**

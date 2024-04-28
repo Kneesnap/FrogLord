@@ -6,11 +6,11 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.TexController;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.texture.BufferedImageWrapper;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
@@ -255,7 +255,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
 
     @Override
     public Image getCollectionViewIcon() {
-        return VLOArchive.ICON;
+        return ImageResource.PHOTO_ALBUM_32.getFxImage();
     }
 
     @Override

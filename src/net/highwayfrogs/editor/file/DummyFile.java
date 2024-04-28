@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 
 import java.nio.ByteBuffer;
 
@@ -18,8 +19,6 @@ import java.nio.ByteBuffer;
 public class DummyFile extends SCSharedGameFile {
     private final int length;
     private final ByteBuffer buffer;
-
-    public static final Image ICON = loadIcon("unknown");
 
     public DummyFile(SCGameInstance instance, int length) {
         super(instance);
@@ -46,7 +45,7 @@ public class DummyFile extends SCSharedGameFile {
 
     @Override
     public Image getCollectionViewIcon() {
-        return ICON;
+        return ImageResource.QUESTION_MARK_32.getFxImage();
     }
 
     @Override

@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony.frogger.ui.mapeditor;
 
 import javafx.scene.Group;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.image.Image;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
@@ -31,10 +30,10 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.AbstractGUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
@@ -54,8 +53,7 @@ public class EntityManager extends MapManager {
     private final Map<MOFHolder, MOFMesh> meshMap = new HashMap<>();
     @Getter private Group entityRenderGroup;
 
-    private static final Image ENTITY_ICON_IMAGE = SCGameFile.loadIcon("entity");
-    public static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ENTITY_ICON_IMAGE);
+    public static final PhongMaterial MATERIAL_ENTITY_ICON = Utils.makeSpecialMaterial(ImageResource.SQUARE_LETTER_E_128.getFxImage());
 
     public EntityManager(MapUIController controller) {
         super(controller);

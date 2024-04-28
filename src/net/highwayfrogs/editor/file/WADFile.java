@@ -18,8 +18,9 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.WADController;
+import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -36,7 +37,6 @@ public class WADFile extends SCSharedGameFile {
     private final List<WADEntry> files = new ArrayList<>();
     private MAPTheme theme;
 
-    private static final Image ICON = loadIcon("packed");
     public static String CURRENT_FILE_NAME = null;
     public static final int TYPE_ID = -1;
     private static final int TERMINATOR = -1;
@@ -129,7 +129,7 @@ public class WADFile extends SCSharedGameFile {
 
     @Override
     public Image getCollectionViewIcon() {
-        return ICON;
+        return ImageResource.ZIPPED_FOLDER_32.getFxImage();
     }
 
     @Override

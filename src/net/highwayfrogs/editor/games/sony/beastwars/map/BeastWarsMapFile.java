@@ -4,7 +4,6 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -16,6 +15,7 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapMesh;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapVertex;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsMapMeshController;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
@@ -354,7 +354,7 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
 
     @Override
     public Image getCollectionViewIcon() {
-        return MAPFile.ICON;
+        return ImageResource.TREASURE_MAP_32.getFxImage();
     }
 
     @Override

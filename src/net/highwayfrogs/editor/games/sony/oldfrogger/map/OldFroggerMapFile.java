@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerConfig;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerFormConfig;
@@ -15,6 +14,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.*;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapController;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Tuple2;
 
@@ -70,7 +70,7 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
 
     @Override
     public Image getCollectionViewIcon() {
-        return MAPFile.ICON;
+        return ImageResource.TREASURE_MAP_32.getFxImage();
     }
 
     @Override

@@ -6,6 +6,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VABController;
+import net.highwayfrogs.editor.gui.ImageResource;
 
 /**
  * Represents a .VH file, or rather an audio header file.
@@ -15,15 +16,13 @@ import net.highwayfrogs.editor.games.sony.shared.ui.file.VABController;
 public abstract class VHAudioHeader extends SCSharedGameFile {
     private VBAudioBody<?> vbFile;
 
-    public static final Image ICON = loadIcon("sound");
-
     public VHAudioHeader(SCGameInstance instance) {
         super(instance);
     }
 
     @Override
     public Image getCollectionViewIcon() {
-        return ICON;
+        return ImageResource.MUSIC_NOTE_32.getFxImage();
     }
 
     @Override

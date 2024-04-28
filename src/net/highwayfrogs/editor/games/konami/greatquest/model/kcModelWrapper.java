@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelInfoController;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
@@ -26,7 +27,6 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
     private final kcModel model;
 
     public static final String SIGNATURE_STR = "6YTV";
-    public static final Image MODEL_ICON = loadIcon("model");
 
     public kcModelWrapper(GreatQuestInstance instance) {
         this(instance, new kcModel(instance));
@@ -60,7 +60,7 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
 
     @Override
     public Image getCollectionViewIcon() {
-        return MODEL_ICON;
+        return ImageResource.GEOMETRIC_SHAPES_15.getFxImage();
     }
 
     @Override

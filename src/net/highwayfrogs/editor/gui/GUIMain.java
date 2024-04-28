@@ -2,11 +2,9 @@ package net.highwayfrogs.editor.gui;
 
 import javafx.application.Application;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
@@ -25,7 +23,7 @@ import java.util.logging.*;
 /**
  * The entry point to FrogLord.
  * TODO: Search bar, add bar, etc.
- * TODO: Show loading bar while the game files load.
+ * TODO: Use new config system in existing code parts?
  *
  * TODO: Solve TODOs in:
  *  - GUIMain.java
@@ -40,7 +38,6 @@ public class GUIMain extends Application {
     @Getter private static File mainConfigFile;
     @Getter private static File workingDirectory = new File("./");
     @Getter private static GUIMain application;
-    public static final Image MAIN_ICON = SCGameFile.loadIcon("icon");
     @Getter private static final List<GameInstance> activeGameInstances = new CopyOnWriteArrayList<>();
 
     public static void main(String[] args) {

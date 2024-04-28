@@ -26,6 +26,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceNamedHash.
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestChunkedFileInfoController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -44,7 +45,6 @@ import java.util.stream.Collectors;
 @Getter
 public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFileExport {
     private final List<kcCResource> chunks = new ArrayList<>();
-    public static final Image MAP_ICON = loadIcon("map");
 
     public GreatQuestChunkedFile(GreatQuestInstance instance) {
         super(instance);
@@ -112,7 +112,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     @Override
     public Image getCollectionViewIcon() {
-        return MAP_ICON;
+        if (getSceneManager() != null) {
+            return ImageResource.TREASURE_MAP_15.getFxImage();
+        } else {
+            return ImageResource.ZIPPED_FOLDER_15.getFxImage();
+        }
     }
 
     @Override

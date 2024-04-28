@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony;
 
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
@@ -11,7 +10,6 @@ import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectio
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
-import javax.imageio.ImageIO;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -128,16 +126,6 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      */
     public void exportAlternateFormat(FileEntry entry) {
         getLogger().warning("The file (" + getClass().getSimpleName() + ") does not have an alternate file-type it can export as.");
-    }
-
-    /**
-     * Load an icon by name.
-     * @param iconName The icon to load.
-     * @return loadedIcon
-     */
-    @SneakyThrows
-    public static Image loadIcon(String iconName) {
-        return Utils.toFXImage(ImageIO.read(Utils.getResourceURL("icons/" + iconName + ".png")), false);
     }
 
     /**

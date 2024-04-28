@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.ui.PaletteController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -28,7 +29,6 @@ import java.util.List;
 public class PALFile extends SCSharedGameFile {
     private final List<Color> colors = new ArrayList<>();
 
-    public static final Image ICON = loadIcon("palette");
     private static final String RIFF_SIGNATURE = "RIFF";
     private static final String PAL_SIGNATURE = "PAL ";
     private static final String DATA_HEADER = "data";
@@ -90,7 +90,7 @@ public class PALFile extends SCSharedGameFile {
 
     @Override
     public Image getCollectionViewIcon() {
-        return ICON;
+        return ImageResource.PAINTERS_PALETTE_32.getFxImage();
     }
 
     @Override

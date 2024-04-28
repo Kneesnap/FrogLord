@@ -10,9 +10,10 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
+import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -44,7 +45,6 @@ public class VLOArchive extends SCSharedGameFile {
     private static final int IMAGE_INFO_BYTES = 24;
     private static final int HEADER_SIZE = SIGNATURE_LENGTH + (2 * Constants.INTEGER_SIZE);
     private static final int PSX_HEADER_SIZE = HEADER_SIZE + (2 * Constants.INTEGER_SIZE);
-    public static final Image ICON = loadIcon("image");
     public static final ImageFilterSettings ICON_EXPORT = new ImageFilterSettings(ImageState.EXPORT);
     public static final ImageFilterSettings VRAM_EXPORT_NO_SCRUNCH = new ImageFilterSettings(ImageState.EXPORT);
 
@@ -131,7 +131,7 @@ public class VLOArchive extends SCSharedGameFile {
 
     @Override
     public Image getCollectionViewIcon() {
-        return ICON;
+        return ImageResource.PHOTO_ALBUM_32.getFxImage();
     }
 
     @Override
