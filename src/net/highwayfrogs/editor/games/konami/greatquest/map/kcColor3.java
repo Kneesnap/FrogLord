@@ -52,6 +52,16 @@ public class kcColor3 extends GameObject implements IInfoWriter {
     }
 
     /**
+     * Gets this as a JavaFX color.
+     */
+    public javafx.scene.paint.Color toFxColor() {
+        float clampedRed = Math.max(0F, Math.min(1F, this.red));
+        float clampedGreen = Math.max(0F, Math.min(1F, this.green));
+        float clampedBlue = Math.max(0F, Math.min(1F, this.blue));
+        return javafx.scene.paint.Color.color(clampedRed, clampedGreen, clampedBlue);
+    }
+
+    /**
      * Load the values from an RGB color
      * @param rgbColor color to read from
      * @return this

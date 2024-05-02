@@ -138,4 +138,10 @@ public abstract class DynamicMeshNode implements IDynamicMeshHelper {
     protected void onEntryRemoved(DynamicMeshDataEntry entry) {
         // Do nothing.
     }
+
+    @Override
+    public boolean updateFace(DynamicMeshDataEntry entry, int localFaceIndex) {
+        // Default implementation does nothing and returns false.
+        return false;
+    }
 }

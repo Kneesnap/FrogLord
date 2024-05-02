@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager;
 
 import javafx.geometry.Orientation;
 import javafx.scene.control.Separator;
+import net.highwayfrogs.editor.games.konami.greatquest.map.kcEnvironment;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -28,6 +29,10 @@ public class GreatQuestMapEnvironmentEditor extends GreatQuestMapUIManager {
         // Separator, and grid setup.
         sidePanel.add(new Separator(Orientation.HORIZONTAL));
         this.editorGrid = sidePanel.makeEditorGrid();
+
+        kcEnvironment environment = getMap().getEnvironment();
+        if (environment != null && environment.isFogEnabled())
+            getController().getColorPickerLevelBackground().setValue(environment.getFog().getColor().toFxColor());
     }
 
     @Override

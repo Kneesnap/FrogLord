@@ -21,6 +21,8 @@ public class GreatQuestInstance extends GameInstance {
     private GreatQuestAssetBinFile mainArchive;
     private File mainArchiveBinFile;
 
+    public static final float JUMP_SLOPE_THRESHOLD = .8F;
+
     public GreatQuestInstance() {
         super(GreatQuestGameType.INSTANCE);
     }

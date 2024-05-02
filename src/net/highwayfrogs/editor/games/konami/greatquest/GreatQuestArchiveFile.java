@@ -58,7 +58,7 @@ public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance>
 
     @Override
     public String getCollectionViewDisplayName() {
-        return (this.fileName != null ? this.fileName : getExportName()) + " [Hash: " + Utils.toHexString(this.nameHash) + ", Collision: " + this.collision + ", Compressed: " + this.compressed + (this.filePath != null ? ", Full Path: " + this.filePath : "") + "]";
+        return (this.fileName != null ? this.fileName : getExportName()) + " [Hash: " + Utils.toHexString(this.nameHash) + (this.filePath != null ? ", Full Path: " + this.filePath : "") + "]";
     }
 
     @Override

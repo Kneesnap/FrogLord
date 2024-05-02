@@ -101,6 +101,11 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         return entry != null && entry.getMeshNode() != null && entry.getMeshNode().updateVertex(entry, localVertexIndex);
     }
 
+    @Override
+    public boolean updateFace(DynamicMeshDataEntry entry, int localFaceIndex) {
+        return entry != null && entry.getMeshNode() != null && entry.getMeshNode().updateFace(entry, localFaceIndex);
+    }
+
     /**
      * Updates entry start indices.
      */

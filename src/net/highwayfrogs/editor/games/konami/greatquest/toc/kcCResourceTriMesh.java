@@ -122,6 +122,27 @@ public class kcCResourceTriMesh extends kcCResource {
         private int flags;
         private final kcVector4 normal;
 
+        public static final int FLAG_DEBUG_USE_OFFSET_WHEN_DRAWING_WIREFRAME = Constants.BIT_FLAG_24; // 0x01000000 (????, Not Seen, kcCTriMesh::RenderWireframe)
+        public static final int FLAG_SKIP_CAMERA_RAYCAST = Constants.BIT_FLAG_25; // 0x02000000 (Yellow, Rolling Rapids Creek)
+        public static final int FLAG_CLIMBABLE = Constants.BIT_FLAG_31; //  0x80000000 (Light Brown, Rolling Rapids Creek) CONFIRMED, CFrogCtl::TestClimb.
+
+        // The following flags are found in the PC data and PS2 Prototype. (Most likely also PS2 NTSC + PS2 PAL)
+        // However, I checked pretty much the full binary and, I was unable to find any code which used these flags.
+        // I also attempted to use a debugger to find any calls that Ghidra might have missed. No other code seemed to access the flags.
+        // I suspect these flags meant something to the original editor. But, these faces don't have consistent enough usage patterns to definitively guess what they could have meant.
+        private static final int FLAG_UNKNOWN_18 = Constants.BIT_FLAG_18; // 0x00040000 (Fairy Town Spring, Tree Door)
+        private static final int FLAG_UNKNOWN_19 = Constants.BIT_FLAG_19; // 0x00080000 (Fairy Town Spring)
+        private static final int FLAG_UNKNOWN_20 = Constants.BIT_FLAG_20; // 0x00100000 (River Town)
+        private static final int FLAG_UNKNOWN_21 = Constants.BIT_FLAG_21; // 0x00200000 (River Town)
+        private static final int FLAG_UNKNOWN_22 = Constants.BIT_FLAG_22; // 0x00400000 (Fairy Town, Buildings)
+        private static final int FLAG_UNKNOWN_23 = Constants.BIT_FLAG_23; // 0x00800000 (River Town)
+        private static final int FLAG_UNKNOWN_26 = Constants.BIT_FLAG_26; // 0x04000000 (Fairy Town Spring)
+        private static final int FLAG_UNKNOWN_27 = Constants.BIT_FLAG_27; // 0x08000000 (Fairy Town Spring Water Bed)
+        private static final int FLAG_UNKNOWN_28 = Constants.BIT_FLAG_28; // 0x10000000 (Fairy Town Spring Invisible Wall)
+        private static final int FLAG_UNKNOWN_29 = Constants.BIT_FLAG_29; // 0x20000000 (Fairy Town Spring Buildings & Goblin Fort)
+        private static final int FLAG_UNKNOWN_30 = Constants.BIT_FLAG_30; // 0x40000000 (Fairy Town Spring River Bed)
+
+
         public kcCFace(kcCTriMesh parentMesh) {
             super(parentMesh.getGameInstance());
             this.parentMesh = parentMesh;

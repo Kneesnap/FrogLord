@@ -210,6 +210,26 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
     }
 
     /**
+     * Update the face data for the provided data entry.
+     * @param entry The data entry to write updated face data for.
+     * @param localFaceIndex The face ID to update.
+     */
+    public void updateFace(DynamicMeshTypedDataEntry entry, int localFaceIndex) {
+        // Do nothing by default.
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public boolean updateFace(DynamicMeshDataEntry entry, int localFaceIndex) {
+        if (entry instanceof DynamicMeshAdapterNode.DynamicMeshTypedDataEntry) {
+            updateFace((DynamicMeshTypedDataEntry) entry, localFaceIndex);
+            return true;
+        }
+
+        return super.updateFace(entry, localFaceIndex);
+    }
+
+    /**
      * Update the tex coord value for the provided data entry.
      * @param entry The data entry to write the updated texture coordinates for.
      * @param localTexCoordIndex The tex coord to update.

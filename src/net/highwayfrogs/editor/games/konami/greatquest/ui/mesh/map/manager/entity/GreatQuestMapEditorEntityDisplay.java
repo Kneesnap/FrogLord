@@ -158,7 +158,7 @@ public class GreatQuestMapEditorEntityDisplay {
         } else if (proxyDesc instanceof kcProxyTriMeshDesc) {
             kcCResourceTriMesh triMesh = ((kcProxyTriMeshDesc) proxyDesc).getTriMesh(this.entityManager.getMap());
             if (triMesh != null) {
-                GreatQuestMapCollisionMesh collisionMesh = new GreatQuestMapCollisionMesh(triMesh);
+                GreatQuestMapCollisionMesh collisionMesh = new GreatQuestMapCollisionMesh(null, triMesh);
                 MeshView view = new MeshView();
                 view.setCullFace(CullFace.NONE);
                 collisionMesh.addView(view);
@@ -224,7 +224,7 @@ public class GreatQuestMapEditorEntityDisplay {
                 Scene3DUtils.setNodeRotationPivot(node, x, y, z);
 
                 kcProxyCapsuleDesc capsuleDesc = (kcProxyCapsuleDesc) proxyDesc;
-                y += capsuleDesc.getProcessedRadius() + capsuleDesc.getOffset() + (capsuleDesc.getLength() / 2); // TODO: Not sure this is right.
+                y += capsuleDesc.getProcessedRadius() + capsuleDesc.getOffset() + (capsuleDesc.getLength() / 2); // TODO: Not sure if this is right.
             }
         } else if (node == this.boundingSpherePreview) {
             // If this is a bounding sphere, apply the bounding sphere offset.

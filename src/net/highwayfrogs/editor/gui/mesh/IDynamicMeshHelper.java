@@ -18,8 +18,54 @@ public interface IDynamicMeshHelper {
     DynamicMesh getMesh();
 
     /**
-     * Updates the vertex position data for the given local vertex index.
-     * @param entry the entry containing the vertex to update
+     * Updates the face data for the given local face index, if supported.
+     * If unsupported, behavior is either to do nothing and return false or to throw an exception.
+     * @param entry the entry containing the face to update
+     * @param localFaceIndex the local index of the face to update
+     * @return true, iff the local face was updated.
+     */
+    boolean updateFace(DynamicMeshDataEntry entry, int localFaceIndex);
+
+    /**
+     * Update all the face data associated with the entry.
+     * @param entry The entry to update faces for.
+     */
+    default void updateFaces(DynamicMeshDataEntry entry) {
+        if (entry == null)
+            throw new NullPointerException("entry");
+        if (!entry.isActive())
+            throw new RuntimeException("Cannot update mesh data on an inactive entry.");
+
+        // Update each texCoord.
+        getMesh().getEditableFaces().startBatchingUpdates();
+        try {
+            for (int i = 0; i < entry.getWrittenFaceCount(); i++)
+                this.updateFace(entry, i);
+        } finally {
+            getMesh().getEditableFaces().endBatchingUpdates();
+        }
+    }
+
+    /**
+     * Update all faces held by entries tracked by this object.
+     */
+    default void updateFaces() {
+        List<DynamicMeshDataEntry> entries = getDataEntries();
+        getMesh().getEditableFaces().startBatchingUpdates();
+        try {
+            for (int i = 0; i < entries.size(); i++) {
+                DynamicMeshDataEntry entry = entries.get(i);
+                for (int j = 0; j < entry.getWrittenFaceCount(); j++)
+                    this.updateFace(entry, j);
+            }
+        } finally {
+            getMesh().getEditableFaces().endBatchingUpdates();
+        }
+    }
+
+    /**
+     * Updates the texCoord data for the given local texCoord index.
+     * @param entry the entry containing the texCoord to update
      * @param localTexCoordIndex the local index of the texCoord to update
      * @return true, iff the local texture coordinate was updated.
      */

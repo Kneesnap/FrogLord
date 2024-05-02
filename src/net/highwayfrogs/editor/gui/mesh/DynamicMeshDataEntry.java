@@ -550,22 +550,25 @@ public class DynamicMeshDataEntry {
         if (localFaceIndex < 0 || localFaceIndex >= this.writtenFaceCount)
             throw new IllegalArgumentException("The local face index " + localFaceIndex + " is not a valid index to overwrite face data.");
 
-        // Validate face values.
-        validateFace(meshVertex1, meshTexCoord1, 1);
-        validateFace(meshVertex2, meshTexCoord2, 2);
-        validateFace(meshVertex3, meshTexCoord3, 3);
-
-        // Write values to array.
-        TEMP_FACE_ARRAY[0] = meshVertex1;
-        TEMP_FACE_ARRAY[1] = meshTexCoord1;
-        TEMP_FACE_ARRAY[2] = meshVertex2;
-        TEMP_FACE_ARRAY[3] = meshTexCoord2;
-        TEMP_FACE_ARRAY[4] = meshVertex3;
-        TEMP_FACE_ARRAY[5] = meshTexCoord3;
-
-        // Write face data.
+        // Calculate indices.
         int faceElementSize = this.mesh.getFaceElementSize(); // 6
         int faceArrayStartIndex = (this.faceStartIndex + localFaceIndex) * faceElementSize;
+
+        // Write values to array.
+        TEMP_FACE_ARRAY[0] = (meshVertex1 > Integer.MIN_VALUE) ? meshVertex1 :  this.mesh.getEditableFaces().get(faceArrayStartIndex);
+        TEMP_FACE_ARRAY[1] = (meshTexCoord1 > Integer.MIN_VALUE) ? meshTexCoord1 : this.mesh.getEditableFaces().get(faceArrayStartIndex + 1);
+        TEMP_FACE_ARRAY[2] = (meshVertex2 > Integer.MIN_VALUE) ? meshVertex2 : this.mesh.getEditableFaces().get(faceArrayStartIndex + 2);
+        TEMP_FACE_ARRAY[3] = (meshTexCoord2 > Integer.MIN_VALUE) ? meshTexCoord2 : this.mesh.getEditableFaces().get(faceArrayStartIndex + 3);
+        TEMP_FACE_ARRAY[4] = (meshVertex3 > Integer.MIN_VALUE) ? meshVertex3 : this.mesh.getEditableFaces().get(faceArrayStartIndex + 4);
+        TEMP_FACE_ARRAY[5] = (meshTexCoord3 > Integer.MIN_VALUE) ? meshTexCoord3 : this.mesh.getEditableFaces().get(faceArrayStartIndex + 5);
+
+        // Validate face values.
+        validateFace(TEMP_FACE_ARRAY[0], TEMP_FACE_ARRAY[1], 1);
+        validateFace(TEMP_FACE_ARRAY[2], TEMP_FACE_ARRAY[3], 2);
+        validateFace(TEMP_FACE_ARRAY[4], TEMP_FACE_ARRAY[5], 3);
+
+
+        // Write face data.
         this.mesh.getEditableFaces().set(faceArrayStartIndex, TEMP_FACE_ARRAY, 0, faceElementSize);
 
         // Trigger an update. (If batching is enabled, this will occur after all changes are ready)
@@ -591,15 +594,17 @@ public class DynamicMeshDataEntry {
     public void writeFace(int localFaceIndex, int faceVertexIndex, int newMeshVertexIndex, int newMeshTexCoordIndex) {
         if (!this.active)
             throw new IllegalStateException("Cannot write polygon face data while the entry is not active.");
-        if (localFaceIndex < 0 || localFaceIndex >= this.writtenFaceCount)
+        if ((localFaceIndex != Integer.MIN_VALUE && localFaceIndex < 0) || localFaceIndex >= this.writtenFaceCount)
             throw new IllegalArgumentException("The local face index " + localFaceIndex + " has no face, and thus we cannot write polygon face data to it.");
-        if (faceVertexIndex < 0 || faceVertexIndex >= 3)
+        if ((localFaceIndex != Integer.MIN_VALUE && faceVertexIndex < 0) || faceVertexIndex >= 3)
             throw new IllegalArgumentException("The provided face vertex ID was " + faceVertexIndex + ", but there are only 3 vertices per face.");
 
-        TEMP_FACE_ARRAY[0] = newMeshVertexIndex;
-        TEMP_FACE_ARRAY[1] = newMeshTexCoordIndex;
-
+        // Get values to write.
         int rawArrayStartIndex = (this.faceStartIndex + localFaceIndex) * this.mesh.getFaceElementSize() + (faceVertexIndex * this.mesh.getVertexFormat().getVertexIndexSize());
+        TEMP_FACE_ARRAY[0] = (newMeshVertexIndex > Integer.MIN_VALUE) ? newMeshVertexIndex : this.mesh.getEditableFaces().get(rawArrayStartIndex);
+        TEMP_FACE_ARRAY[1] = (newMeshTexCoordIndex > Integer.MIN_VALUE) ? newMeshTexCoordIndex : this.mesh.getEditableFaces().get(rawArrayStartIndex + 1);
+
+        // Write raw data.
         this.mesh.getEditableFaces().set(rawArrayStartIndex, TEMP_FACE_ARRAY, 0, 2);
 
         // Trigger an update. (If batching is enabled, this will occur after all changes are ready)

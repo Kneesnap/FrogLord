@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 
 /**
  * Manages entities for a Great Quest map.
+ * TODO: Need some way of viewing an entities activation radius.
  * TODO: Some entities (like the big pike) aren't getting rendered. I think it's when their texture isn't found..?
  * TODO: Allow teleporting the camera to an entity selected.
  * TODO: We need a generalized property editing system. So for each class can implement an interface, and become editable.
