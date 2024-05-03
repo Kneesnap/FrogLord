@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.utils.Utils;
 @Setter
 public class kcEntity3DDesc extends kcBaseDesc {
     private int instanceFlags; // TODO: These seem to be just the mapped flags.
-    private final kcSphere boundingSphere = new kcSphere(); // Positioned relative to entity position.
+    private final kcSphere boundingSphere = new kcSphere(0, 0, 0, 1F); // Positioned relative to entity position.
     private static final int PADDING_VALUES = 3;
     private static final int PADDING_VALUES_3D = 4;
     // TODO: Go over all usages of cached resource too.

@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
@@ -431,5 +432,27 @@ public class GreatQuestUtils {
 
         return result != null ? result : source;
 
+    }
+
+    /**
+     * Skip bytes, requiring the bytes skipped be 0 or the alternate value.
+     * @param reader The reader to read padding from.
+     * @param byteCount The number of bytes to skip.
+     * @param alternateValue The alternative value besides 0x00 which is allowed.
+     */
+    public static void skipPaddingRequireEmptyOrByte(DataReader reader, int byteCount, byte alternateValue) {
+        int index = reader.getIndex();
+        if (byteCount == 0)
+            return;
+
+        if (byteCount < 0)
+            throw new RuntimeException("Tried to skip " + byteCount + " bytes.");
+
+        // Skip bytes.
+        for (int i = 0; i < byteCount; i++) {
+            byte nextByte = reader.readByte();
+            if (nextByte != Constants.NULL_BYTE && nextByte != alternateValue)
+                throw new RuntimeException("Reader wanted to skip " + byteCount + " bytes to reach " + Utils.toHexString(index + byteCount) + ", but got 0x" + Utils.toByteString(nextByte) + " at " + Utils.toHexString(index + i) + " when 0x" + Utils.toByteString(alternateValue) + " or 0x00 were expected.");
+        }
     }
 }

@@ -23,6 +23,11 @@ public class GreatQuestInstance extends GameInstance {
 
     public static final float JUMP_SLOPE_THRESHOLD = .8F;
 
+    // Padding data.
+    public static final byte PADDING_BYTE_DEFAULT = (byte) 0xCC;
+    private static final byte[] PADDING_DEFAULT_INT_BYTES = {PADDING_BYTE_DEFAULT, PADDING_BYTE_DEFAULT, PADDING_BYTE_DEFAULT, PADDING_BYTE_DEFAULT};
+    public static final int PADDING_DEFAULT_INT = Utils.readIntFromBytes(PADDING_DEFAULT_INT_BYTES, 0);
+
     public GreatQuestInstance() {
         super(GreatQuestGameType.INSTANCE);
     }

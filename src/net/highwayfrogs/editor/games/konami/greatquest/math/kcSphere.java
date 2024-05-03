@@ -16,8 +16,17 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
 @Getter
 @Setter
 public class kcSphere extends GameObject implements IInfoWriter, IMultiLineInfoWriter {
-    private final kcVector3 position = new kcVector3();
+    private final kcVector3 position;
     private float radius;
+
+    public kcSphere() {
+        this(0, 0, 0, 1F);
+    }
+
+    public kcSphere(float x, float y, float z, float radius) {
+        this.position = new kcVector3(x, y, z);
+        this.radius = radius;
+    }
 
     @Override
     public void load(DataReader reader) {

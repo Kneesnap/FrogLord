@@ -121,8 +121,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         }
 
         // 7. Align4.
-        if (reader.getIndex() % 4 != 0)
-            reader.skipBytes(4 - (reader.getIndex() % 4)); // Pad.
+        reader.alignRequireEmpty(4); // Pad.
 
         // 8. Read vertex buffers.
         int configuredStride = calculateStride(this.components, this.fvf);
@@ -196,8 +195,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         }
 
         // 7. Align4.
-        if (writer.getIndex() % 4 != 0)
-            writer.writeNull(4 - (writer.getIndex() % 4)); // Pad.
+        writer.align(4);
 
         // 8. Write vertex buffers.
         for (int i = 0; i < this.primitives.size(); i++)

@@ -55,8 +55,8 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
         this.flags = reader.readInt();
         reader.skipBytes(RUNTIME_VALUE_COUNT * Constants.INTEGER_SIZE);
 
-        // Alignment 0xCC
-        reader.alignRequireByte(16, (byte) 0xCC);
+        // Alignment padding
+        reader.alignRequireByte(16, GreatQuestInstance.PADDING_BYTE_DEFAULT);
 
         // Read branches.
         this.branches.clear();
@@ -105,8 +105,8 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
         writer.writeInt(this.flags);
         writer.writeNull(RUNTIME_VALUE_COUNT * Constants.INTEGER_SIZE);
 
-        // Alignment 0xCC
-        writer.align(16, (byte) 0xCC);
+        // Alignment padding
+        writer.align(16, GreatQuestInstance.PADDING_BYTE_DEFAULT);
 
         // Read branches.
         for (int i = 0; i < this.branches.size(); i++)

@@ -6,27 +6,29 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcBlend;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.toc.GreatQuestChunkTextureReference;
 
 /**
  * Represents the 'kcParticleEmitterParam' struct.
  * Loaded from kcParticleEmitterParam::Init.
- * TODO: Really look this one over.
- * TODO: Inst flags are copied in kcCParticleEmitter::SetParticleDefaults
+ * TODO: Inst flags are copied in kcCParticleEmitter::SetParticleDefaults. I'm not sure if this matters yet.
  * Created by Kneesnap on 8/22/2023.
  */
-@Getter
 @Setter
 public class kcParticleEmitterParam extends kcEntity3DDesc {
-    private kcBlend srcBlend = kcBlend.ZERO; // ZERO actually means ONE.
-    private kcBlend dstBlend = kcBlend.ZERO; // ZERO actually means ONE.
-    private int textureHash; // TODO: Getter?
-    private int descHash = -1; // TODO: What is this?
-    private final kcParticleParam particleParam = new kcParticleParam();
-    private float lifeTimeEmitter; // These may be garbage / unused.
-    private int maxParticle;
+    @Getter private kcBlend srcBlend = kcBlend.ONE; // ZERO actually means ONE.
+    @Getter private kcBlend dstBlend = kcBlend.ONE; // ZERO actually means ONE.
+    private int textureReferenceHash = -1;
+    private int selfHash = -1; // TODO: In the future, we'll get rid of this maybe. We should figure out hash tracking.
+    @Getter private final kcParticleParam particleParam = new kcParticleParam();
+    @Getter private float lifeTimeEmitter = -1F; // Valid Values: [-1, 0) union (0, 60) (Seen in kcCParticleEmitter::SetParticleDefaults) If the value is not in the specified range, the kcParticleParam value will be used instead.
+    private int maxParticle = DEFAULT_MAX_PARTICLE;
     private static final int PADDING_VALUES = 6;
+
+    private static final int DEFAULT_MAX_PARTICLE = 250;
 
     public kcParticleEmitterParam(GreatQuestInstance instance) {
         super(instance);
@@ -42,13 +44,13 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         super.load(reader);
         this.srcBlend = kcBlend.getMode(reader.readInt(), false);
         this.dstBlend = kcBlend.getMode(reader.readInt(), false);
-        reader.skipInt(); // Texture pointer (zero)
-        this.textureHash = reader.readInt();
-        this.descHash = reader.readInt();
+        reader.skipPointer(); // Texture pointer (zero)
+        this.textureReferenceHash = reader.readInt();
+        this.selfHash = reader.readInt();
         this.particleParam.load(reader);
         this.lifeTimeEmitter = reader.readFloat();
         this.maxParticle = reader.readInt();
-        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
+        GreatQuestUtils.skipPaddingRequireEmptyOrByte(reader, PADDING_VALUES * Constants.INTEGER_SIZE, GreatQuestInstance.PADDING_BYTE_DEFAULT);
     }
 
     @Override
@@ -57,12 +59,12 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         writer.writeInt(this.srcBlend.getValue());
         writer.writeInt(this.dstBlend.getValue());
         writer.writeInt(0); // Texture pointer (zero)
-        writer.writeInt(this.textureHash);
-        writer.writeInt(this.descHash);
+        writer.writeInt(this.textureReferenceHash);
+        writer.writeInt(this.selfHash);
         this.particleParam.save(writer);
         writer.writeFloat(this.lifeTimeEmitter);
         writer.writeInt(this.maxParticle);
-        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
+        writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE); // CFrogCtl::__ct includes the constructor, which shows that padding is initialized to zero. The old CC padding values are from an old version.
     }
 
     @Override
@@ -70,15 +72,25 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         super.writeMultiLineInfo(builder, padding);
         builder.append(padding).append("Src Blend: ").append(this.srcBlend).append(Constants.NEWLINE);
         builder.append(padding).append("Dest Blend: ").append(this.dstBlend).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Texture", this.textureHash);
-        writeAssetLine(builder, padding, "Description", this.descHash);
+        writeAssetLine(builder, padding, "Texture", this.textureReferenceHash);
+        writeAssetLine(builder, padding, "Self Hash", this.selfHash);
         this.particleParam.writePrefixedMultiLineInfo(builder, "Particle Params", padding);
         builder.append(padding).append("Emitter Life Time (Garbage?): ").append(this.lifeTimeEmitter).append(Constants.NEWLINE);
         builder.append(padding).append("Max Particle: ").append(getMaxParticle()).append(Constants.NEWLINE);
     }
 
+    /**
+     * Gets the texture reference used by this emitter.
+     */
+    public GreatQuestChunkTextureReference getTextureReference() {
+        return getParentFile() != null ? getParentFile().getResourceByHash(this.textureReferenceHash) : null;
+    }
 
+    /**
+     * Gets the max particle value.
+     */
     public int getMaxParticle() {
-        return this.maxParticle == 0 || this.maxParticle == -0x33333334 ? 250 : this.maxParticle;
+        // TODO: If flames 'FireBallParticleParam' and it's the default padding, use 100. (CFrogCtl::SetParticleParams)
+        return this.maxParticle == 0 || this.maxParticle == GreatQuestInstance.PADDING_DEFAULT_INT ? 250 : this.maxParticle;
     }
 }

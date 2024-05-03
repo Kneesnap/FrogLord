@@ -33,7 +33,25 @@ public class DataWriter {
      * @param amount The amount of null bytes to write.
      */
     public void writeNull(int amount) {
-        writeBytes(new byte[amount]);
+        writeByte(Constants.NULL_BYTE, amount);
+    }
+
+    /**
+     * Write the given byte an arbitrary number of times.
+     * @param value The byte value to write.
+     * @param amount The number of times to write it.
+     */
+    public void writeByte(byte value, int amount) {
+        int startIndex = getIndex();
+        if (amount < 0)
+            throw new RuntimeException("Cannot write a byte (" + Utils.toByteString(value) + ") " + amount + " times to " + Utils.toHexString(startIndex) + ".");
+
+        try {
+            for (int i = 0; i < amount; i++)
+                this.output.writeByte(value);
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to write byte (" + Utils.toByteString(value) + ") " + amount + " times to " + Utils.toHexString(startIndex) + ".");
+        }
     }
 
     /**

@@ -50,8 +50,21 @@ public class kcCResourceGeneric extends kcCResource {
         super.load(reader);
         this.tag = reader.readInt();
         int sizeInBytes = reader.readInt();
-        reader.skipInt(); // Pointer.
+        reader.skipPointer(); // Pointer.
         this.bytes = reader.readBytes(sizeInBytes);
+    }
+
+    @Override
+    public void save(DataWriter writer) {
+        super.save(writer);
+        writer.writeInt(this.tag);
+        writer.writeInt(this.bytes != null ? this.bytes.length : 0);
+        writer.writeNullPointer(); // Pointer
+        if (this.cachedObject != null) {
+            this.cachedObject.save(writer);
+        } else if (this.bytes != null) {
+            writer.writeBytes(this.bytes);
+        }
     }
 
     /**
@@ -63,6 +76,7 @@ public class kcCResourceGeneric extends kcCResource {
 
     /**
      * Get the resource as an entity description.
+     * TODO: Allow throwing an exception if it doesn't match, but have it be optional. (Extend this to other similar functions too)
      * Returns null if this is not an entity description.
      */
     public kcEntity3DDesc getAsEntityDescription() {
@@ -153,7 +167,7 @@ public class kcCResourceGeneric extends kcCResource {
     public kcParticleEmitterParam getAsParticleEmitterParam() {
         return loadAsObject(kcCResourceGenericType.PARTICLE_EMITTER_PARAM, (gameInstance, classID) -> {
             if (classID == kcClassID.PARTICLE_EMITTER.getAlternateClassId())
-                return null; // This appears to be old data in a format we don't understand. Data is unused. Example: 1st GEN chunk "CoinGrab" in Level 06 Fairy Town Spring.
+                return null; // This appears to be old data in a format we don't understand. Data is unused. Example: 1st GEN chunk "CoinGrab" in Level 06 Fairy Town Spring. TODO: Or alternatively, maybe there's a conflict with the texture hash and we need to specify the full file path? Dunno.
 
             return new kcParticleEmitterParam(gameInstance);
         });
@@ -186,7 +200,7 @@ public class kcCResourceGeneric extends kcCResource {
     public kcProxyCapsuleDesc getAsProxyCapsuleDescription() {
         return loadAsObject(kcCResourceGenericType.PROXY_CAPSULE_DESCRIPTION, (gameInstance, classID) -> {
             if (classID == kcClassID.PROXY_CAPSULE.getAlternateClassId())
-                return null; // This appears to be old data in a format we don't understand. (Likely outdated format)
+                return null; // This appears to be old data in a format we don't understand. (Likely outdated format) TODO: Investigate further.
 
             return new kcProxyCapsuleDesc(gameInstance);
         });
@@ -249,25 +263,17 @@ public class kcCResourceGeneric extends kcCResource {
             ((kcBaseDesc) newObject).setGenericResourceParent(this);
         }
 
-        newObject.load(reader);
+        try {
+            newObject.load(reader);
+        } catch (Throwable th) {
+            Utils.handleError(getLogger(), th, false, "Failed to load kcCResourceGeneric '%s' as %s.", getName(), genericType);
+        }
+
         this.cachedObject = newObject;
         if (reader.hasMore())
             getLogger().warning("Resource '" + getName() + "'/" + genericType + " read only " + reader.getIndex() + " bytes, leaving " + reader.getRemaining() + " unread.");
 
         return newObject;
-    }
-
-    @Override
-    public void save(DataWriter writer) {
-        super.save(writer);
-        writer.writeInt(this.tag);
-        writer.writeInt(this.bytes != null ? this.bytes.length : 0);
-        writer.writeInt(0); // Pointer
-        if (this.cachedObject != null) {
-            this.cachedObject.save(writer);
-        } else if (this.bytes != null) {
-            writer.writeBytes(this.bytes);
-        }
     }
 
     @Getter
