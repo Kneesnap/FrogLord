@@ -409,6 +409,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.comboBoxMeshDrawMode.getItems().setAll(DrawMode.values());
         this.comboBoxMeshDrawMode.setValue(DrawMode.FILL);
         this.comboBoxMeshCullFace.getItems().setAll(CullFace.values());
+        this.comboBoxMeshCullFace.setValue(CullFace.BACK);
         bindMeshSceneControls(this, meshView);
 
         if (getMesh() instanceof IPSXShadedMesh) {

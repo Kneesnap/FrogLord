@@ -33,7 +33,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFMainController;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
@@ -148,29 +148,30 @@ public class MOFHolder extends SCSharedGameFile {
     }
 
     @Override
-    public List<Tuple2<String, Object>> createPropertyList() {
-        List<Tuple2<String, Object>> list = super.createPropertyList();
-        list.add(new Tuple2<>("Type", isDummy() ? "Dummy" : (isIncomplete() ? "Incomplete" : (isAnimatedMOF() ? "Animated" : "Static"))));
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+
+        propertyList.add("Type", isDummy() ? "Dummy" : (isIncomplete() ? "Incomplete" : (isAnimatedMOF() ? "Animated" : "Static")));
 
         if (!isDummy()) {
             MOFFile staticMof = asStaticFile();
-            list.add(new Tuple2<>("Parts", staticMof.getParts().size()));
-            list.add(new Tuple2<>("Animations", getAnimationCount()));
-            list.add(new Tuple2<>("Texture Animation", staticMof.hasTextureAnimation()));
-            list.add(new Tuple2<>("Hilites", staticMof.getHiliteCount()));
-            list.add(new Tuple2<>("Collprims", staticMof.getCollprimCount()));
+            propertyList.add("Parts", staticMof.getParts().size());
+            propertyList.add("Animations", getAnimationCount());
+            propertyList.add("Texture Animation", staticMof.hasTextureAnimation());
+            propertyList.add("Hilites", staticMof.getHiliteCount());
+            propertyList.add("Collprims", staticMof.getCollprimCount());
             if (isAnimatedMOF()) {
                 MOFAnimation animMof = getAnimatedFile();
-                list.add(new Tuple2<>("MOF Count", animMof.getMofCount()));
-                list.add(new Tuple2<>("Model Set Count", animMof.getModelSetCount()));
-                list.add(new Tuple2<>("Animation Count", animMof.getModelSet().getCelSet().getCels().size()));
-                list.add(new Tuple2<>("Interpolation Enabled", animMof.getModelSet().getCelSet().getCels().stream().filter(MOFAnimationCels::isInterpolationEnabled).count()));
-                list.add(new Tuple2<>("Translation Type", animMof.getTransformType()));
-                list.add(new Tuple2<>("Start at Frame Zero?", animMof.isStartAtFrameZero()));
+                propertyList.add("MOF Count", animMof.getMofCount());
+                propertyList.add("Model Set Count", animMof.getModelSetCount());
+                propertyList.add("Animation Count", animMof.getModelSet().getCelSet().getCels().size());
+                propertyList.add("Interpolation Enabled", animMof.getModelSet().getCelSet().getCels().stream().filter(MOFAnimationCels::isInterpolationEnabled).count());
+                propertyList.add("Translation Type", animMof.getTransformType());
+                propertyList.add("Start at Frame Zero?", animMof.isStartAtFrameZero());
             }
         }
 
-        return list;
+        return propertyList;
     }
 
     @Override

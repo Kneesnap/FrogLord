@@ -137,7 +137,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
     //       really just be setting vertex color values and letting the hardware do the shading work. This just seems
     //       very, very wrong - but I don't know how we can get around it right now due to the crappy limitations of
     //       JavaFx. It's a problem for sure.
-    public static final byte VERTEX_SHADING_APPROXIMATION_ALPHA = (byte) 0x7F;
+    public static final byte VERTEX_SHADING_APPROXIMATION_ALPHA = (byte) 0x80;
     public static final int VERTEX_COLOR_IMAGE_SIZE = 12;
     private static final ImageFilterSettings OBJ_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
             .setTrimEdges(true).setAllowTransparency(true).setAllowFlip(true);

@@ -16,10 +16,8 @@ import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.system.Tuple2;
-
-import java.util.List;
 
 /**
  * Represents a map file in MediEvil.
@@ -69,16 +67,16 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
     }
 
     @Override
-    public List<Tuple2<String, Object>> createPropertyList() {
-        List<Tuple2<String, Object>> list = super.createPropertyList();
-        list.add(new Tuple2<>("Level String", this.headerPacket.getLevelString()));
-        list.add(new Tuple2<>("Chunks", String.join(", ", this.headerPacket.getHeaderIdentifiers())));
-        list.add(new Tuple2<>("Vertices", this.graphicsPacket.getVertices().size()));
-        list.add(new Tuple2<>("Polygons", this.graphicsPacket.getPolygons().size()));
-        list.add(new Tuple2<>("Entities", this.entitiesPacket.getEntities().size()));
-        list.add(new Tuple2<>("Collision Primitives", this.collprimsPacket.getCollprims().size()));
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Level String", this.headerPacket.getLevelString());
+        propertyList.add("Chunks", String.join(", ", this.headerPacket.getHeaderIdentifiers()));
+        propertyList.add("Vertices", this.graphicsPacket.getVertices().size());
+        propertyList.add("Polygons", this.graphicsPacket.getPolygons().size());
+        propertyList.add("Entities", this.entitiesPacket.getEntities().size());
+        propertyList.add("Collision Primitives", this.collprimsPacket.getCollprims().size());
 
-        return list;
+        return propertyList;
     }
 
     /**

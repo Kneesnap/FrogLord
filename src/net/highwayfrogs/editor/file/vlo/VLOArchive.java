@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.SelectionMenu;
-import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -146,12 +146,14 @@ public class VLOArchive extends SCSharedGameFile {
         System.out.println("Exported VRAM Image.");
     }
 
+
+
     @Override
-    public List<Tuple2<String, Object>> createPropertyList() {
-        List<Tuple2<String, Object>> list = super.createPropertyList();
-        list.add(new Tuple2<>("Images", getImages().size()));
-        list.add(new Tuple2<>("PS1 VLO", isPsxMode()));
-        return list;
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Images", getImages().size());
+        propertyList.add("PS1 VLO", isPsxMode());
+        return propertyList;
     }
 
     /**

@@ -13,12 +13,11 @@ import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.TIMController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -390,18 +389,18 @@ public class PSXTIMFile extends SCSharedGameFile {
     }
 
     @Override
-    public List<Tuple2<String, Object>> createPropertyList() {
-        List<Tuple2<String, Object>> list = super.createPropertyList();
-        list.add(new Tuple2<>("Flags", Utils.toHexString(this.flags)));
-        list.add(new Tuple2<>("Palette Count", this.palettes != null ? this.palettes.length : 0));
-        list.add(new Tuple2<>("Image Dimensions", getImageWidth() + "x" + getImageHeight()));
-        list.add(new Tuple2<>("Image Position", "X: " + this.imageX + ", Y: " + this.imageHeight));
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Flags", Utils.toHexString(this.flags));
+        propertyList.add("Palette Count", this.palettes != null ? this.palettes.length : 0);
+        propertyList.add("Image Dimensions", getImageWidth() + "x" + getImageHeight());
+        propertyList.add("Image Position", "X: " + this.imageX + ", Y: " + this.imageHeight);
         if (hasClut()) {
-            list.add(new Tuple2<>("CLUT Dimensions", getClutWidth() + "x" + getClutHeight()));
-            list.add(new Tuple2<>("CLUT Position", "X: " + this.clutX + ", Y: " + this.clutY));
+            propertyList.add("CLUT Dimensions", getClutWidth() + "x" + getClutHeight());
+            propertyList.add("CLUT Position", "X: " + this.clutX + ", Y: " + this.clutY);
         }
 
-        return list;
+        return propertyList;
     }
 
     @Override

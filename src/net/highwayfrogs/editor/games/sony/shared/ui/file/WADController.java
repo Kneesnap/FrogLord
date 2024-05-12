@@ -20,17 +20,15 @@ import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.NameValuePair;
-import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * A temporary WAD Controller. This is temporary.
@@ -206,9 +204,8 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
         this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
 
-        List<Tuple2<String, Object>> properties = this.selectedEntry.getFile().createPropertyList();
-        if (properties != null && properties.size() > 0)
-            for (Tuple2<String, Object> pair : properties)
-                this.tableFileData.getItems().add(new NameValuePair(pair.getA(), Objects.toString(pair.getB())));
+        PropertyList properties = this.selectedEntry.getFile().createPropertyList();
+        if (properties != null)
+            properties.apply(this.tableFileData);
     }
 }

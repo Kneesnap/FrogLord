@@ -12,12 +12,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.NameValuePair;
-import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
-
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Manages the mof display on the main menu.
@@ -40,10 +37,9 @@ public class MOFMainController extends SCFileEditorUIController<SCGameInstance, 
         this.mofPropertyTable.getItems().clear();
         this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-        List<Tuple2<String, Object>> properties = mof.createPropertyList();
-        if (properties != null && properties.size() > 0)
-            for (Tuple2<String, Object> pair : properties)
-                this.mofPropertyTable.getItems().add(new NameValuePair(pair.getA(), Objects.toString(pair.getB())));
+        PropertyList properties = mof.createPropertyList();
+        if (properties != null)
+            properties.apply(this.mofPropertyTable);
 
         updateVLO();
     }

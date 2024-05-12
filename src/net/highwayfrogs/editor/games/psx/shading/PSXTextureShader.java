@@ -437,10 +437,13 @@ public class PSXTextureShader {
 
         if (sourceImage != null) {
             byte alpha = Utils.getAlpha(textureColor);
-            // If the value exceeds the max, clamp it to the max. Or at least that's what https://psx-spx.consoledev.net/graphicsprocessingunitgpu/ says.
-            short red = (short) Math.min(255, (((double) shadeColor.getRedShort() / 127D) * Utils.getRedInt(textureColor)));
-            short green = (short) Math.min(255, (((double) shadeColor.getGreenShort() / 127D) * Utils.getGreenInt(textureColor)));
-            short blue = (short) Math.min(255, (((double) shadeColor.getBlueShort() / 127D) * Utils.getBlueInt(textureColor)));
+            // If the value exceeds the max, clamp it to the max.
+            // It's not explicitly mentioned what happens if it goes above 255, but I think clamping it works.
+            // I think "the results can't exceed the maximum brightness, ie. the 5bit values written to the framebuffer are saturated to max 1F" means it's clamped, but I'm not sure.
+            // Reference: https://psx-spx.consoledev.net/graphicsprocessingunitgpu/
+            short red = (short) Math.min(255, (((double) shadeColor.getRedShort() / 128D) * Utils.getRedInt(textureColor)));
+            short green = (short) Math.min(255, (((double) shadeColor.getGreenShort() / 128D) * Utils.getGreenInt(textureColor)));
+            short blue = (short) Math.min(255, (((double) shadeColor.getBlueShort() / 128D) * Utils.getBlueInt(textureColor)));
             targetImage.setRGB(x, y, Utils.toARGB(Utils.unsignedShortToByte(red), Utils.unsignedShortToByte(green), Utils.unsignedShortToByte(blue), alpha));
         } else {
             targetImage.setRGB(x, y, shadeColor.toARGB());
@@ -477,7 +480,7 @@ public class PSXTextureShader {
     /**
      * Makes a textured flat shaded image (POLY_FT3 / POLY_FT4).
      * @param originalTexture The original texture to apply shading to.
-     * @param color           The shading color to apply. (7 bit color range, 0 - 127, NOT 256)
+     * @param color           The shading color to apply.
      * @return flatTextureShadedImage
      */
     public static BufferedImage makeTexturedFlatShadedImage(BufferedImage originalTexture, CVector color) {
@@ -486,10 +489,13 @@ public class PSXTextureShader {
             for (int y = 0; y < newImage.getHeight(); y++) {
                 int textureColor = originalTexture.getRGB(x, y);
                 byte alpha = Utils.getAlpha(textureColor);
-                // If the value exceeds the max, clamp it to the max. Or at least that's what https://psx-spx.consoledev.net/graphicsprocessingunitgpu/ says should happen for modulation.
-                short red = (short) Math.min(255, (((double) color.getRedShort() / 127D) * Utils.getRedInt(textureColor)));
-                short green = (short) Math.min(255, (((double) color.getGreenShort() / 127D) * Utils.getGreenInt(textureColor)));
-                short blue = (short) Math.min(255, (((double) color.getBlueShort() / 127D) * Utils.getBlueInt(textureColor)));
+                // If the value exceeds the max, clamp it to the max.
+                // It's not explicitly mentioned what happens if it goes above 255, but I think clamping it works.
+                // I think "the results can't exceed the maximum brightness, ie. the 5bit values written to the framebuffer are saturated to max 1F" means it's clamped, but I'm not sure.
+                // Reference: https://psx-spx.consoledev.net/graphicsprocessingunitgpu/
+                short red = (short) Math.min(255, (((double) color.getRedShort() / 128D) * Utils.getRedInt(textureColor)));
+                short green = (short) Math.min(255, (((double) color.getGreenShort() / 128D) * Utils.getGreenInt(textureColor)));
+                short blue = (short) Math.min(255, (((double) color.getBlueShort() / 128D) * Utils.getBlueInt(textureColor)));
                 newImage.setRGB(x, y, Utils.toARGB(Utils.unsignedShortToByte(red), Utils.unsignedShortToByte(green), Utils.unsignedShortToByte(blue), alpha));
             }
         }

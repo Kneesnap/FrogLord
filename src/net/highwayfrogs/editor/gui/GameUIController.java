@@ -96,7 +96,6 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
             if (uiController.getRootNode() != null)
                 parentNodes.add(uiController.getRootNode());
         }
-
     }
 
     /**

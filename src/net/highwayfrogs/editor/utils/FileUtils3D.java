@@ -239,7 +239,7 @@ public class FileUtils3D {
                     }
 
                     PSXColorVector color = polyTex.getColors()[colorIndex];
-                    base += " " + (color.getShadingRed() / 127D) + " " + (color.getShadingGreen() / 127D) + " " + (color.getShadingBlue() / 127D);
+                    base += " " + (color.getShadingRed() / 128D) + " " + (color.getShadingGreen() / 128D) + " " + (color.getShadingBlue() / 128D);
                 }
 
                 objWriter.write(base + Constants.NEWLINE);
@@ -458,9 +458,9 @@ public class FileUtils3D {
                     MMMaterialsBlock material = model.getMaterials().addNewElement();
                     material.setTexture(externalTextureId);
                     material.setName(MATERIAL_NAME_PREFIX + texId + "-" + Integer.toHexString(key.getColor().toRGB()));
-                    material.getDiffuse()[0] = (key.getColor().getShadingRed() / 127F);
-                    material.getDiffuse()[1] = (key.getColor().getShadingGreen() / 127F);
-                    material.getDiffuse()[2] = (key.getColor().getShadingBlue() / 127F);
+                    material.getDiffuse()[0] = (key.getColor().getShadingRed() / 128F);
+                    material.getDiffuse()[1] = (key.getColor().getShadingGreen() / 128F);
+                    material.getDiffuse()[2] = (key.getColor().getShadingBlue() / 128F);
 
                     // Create new group.
                     MMTriangleGroupsBlock group = model.getGroups().addNewElement();
@@ -881,9 +881,9 @@ public class FileUtils3D {
                         for (int j = 0; j < polyTex.getUvs().length; j++)
                             polyTex.getUvs()[poly.getVerticeCount() - j - 1] = new ByteUV(texCoords.getXCoordinates()[j], texCoords.getYCoordinates()[j]);
 
-                    byte red = (byte) (int) (material.getDiffuse()[0] * 127);
-                    byte green = (byte) (int) (material.getDiffuse()[1] * 127);
-                    byte blue = (byte) (int) (material.getDiffuse()[2] * 127);
+                    byte red = (byte) (int) (material.getDiffuse()[0] * 128);
+                    byte green = (byte) (int) (material.getDiffuse()[1] * 128);
+                    byte blue = (byte) (int) (material.getDiffuse()[2] * 128);
                     polyTex.getColor().fromRGB(Utils.toRGB(red, green, blue));
                 }
 
