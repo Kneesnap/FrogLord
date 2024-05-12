@@ -1361,6 +1361,22 @@ public class Utils {
     }
 
     /**
+     * Swaps the red/blue value in ARGB color.
+     * TODO: Toss probably.
+     * @param color The color to swap components in.
+     * @return rgbInt
+     */
+    public static int swapARGBRedGreen(int color) {
+        int oldGreen = ((color >> 8) & 0xFF);
+        int oldRed = ((color >> 16) & 0xFF);
+
+        int result = color & 0xFF0000FF;
+        result |= oldRed << 8;
+        result |= oldGreen << 16;
+        return result;
+    }
+
+    /**
      * Get an integer from a color object.
      * @param color The color to turn into rgb.
      * @return rgbInt
@@ -1675,7 +1691,7 @@ public class Utils {
     public static PhongMaterial makeHighlightOverlayMaterial(Color color) {
         BufferedImage colorImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = colorImage.createGraphics();
-        graphics.setColor(toAWTColor(color, (byte) 0x7F));
+        graphics.setColor(toAWTColor(color, (byte) 0x80));
         graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
         graphics.dispose();
 

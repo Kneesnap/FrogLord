@@ -22,7 +22,7 @@ public class SVector extends GameObject implements Vector {
     private short x;
     private short y;
     private short z;
-    private short padding; // You'd think this is all zero, but it seems like MediEvil stores
+    private short padding; // You'd think this is all zero, but it seems like most (all?) of the later SC games stores vertex colors here.
 
     public static final int UNPADDED_BYTE_SIZE = 3 * Constants.SHORT_SIZE;
     public static final int PADDED_BYTE_SIZE = UNPADDED_BYTE_SIZE + Constants.SHORT_SIZE;
@@ -53,6 +53,13 @@ public class SVector extends GameObject implements Vector {
         this.x = reader.readShort();
         this.y = reader.readShort();
         this.z = reader.readShort();
+    }
+
+    /**
+     * Gets the padding unsigned.
+     */
+    public int getUnsignedPadding() {
+        return Utils.shortToUnsignedInt(this.padding);
     }
 
     /**

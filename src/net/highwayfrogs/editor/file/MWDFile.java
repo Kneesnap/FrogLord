@@ -356,6 +356,42 @@ public class MWDFile extends SCSharedGameData {
     }
 
     /**
+     * Gets a game file by the given file name.
+     * @param fileName The name of the file to lookup.
+     * @return foundFile
+     */
+    @SuppressWarnings("unchecked")
+    public <TGameFile extends SCGameFile<? extends SCGameInstance>> TGameFile getFileByName(String fileName) {
+        for (SCGameFile<?> gameFile : getFiles()) {
+            if (matchesFileName(gameFile.getIndexEntry(), fileName))
+                return (TGameFile) gameFile;
+
+            if (gameFile instanceof WADFile)
+                for (WADEntry wadFileEntry : ((WADFile) gameFile).getFiles())
+                    if (matchesFileName(wadFileEntry.getFileEntry(), fileName))
+                        return (TGameFile) wadFileEntry.getFile();
+        }
+
+        return null;
+    }
+
+    private static boolean matchesFileName(FileEntry fileEntry, String fileName) {
+        if (fileEntry == null)
+            return false;
+
+        String fileDisplayName = fileEntry.getDisplayName();
+        if (fileDisplayName != null && fileDisplayName.equalsIgnoreCase(fileName))
+            return true;
+
+        String fileNameWithoutExtension = fileDisplayName != null ? Utils.stripExtension(fileDisplayName) : null;
+        if (fileNameWithoutExtension != null && fileNameWithoutExtension.equalsIgnoreCase(fileName))
+            return true;
+
+        String fullFilePath = fileEntry.getFullFilePath();
+        return fullFilePath != null && fullFilePath.equalsIgnoreCase(fileName);
+    }
+
+    /**
      * Gets an image by the given texture ID.
      * @param textureId The texture ID to get.
      * @return gameImage

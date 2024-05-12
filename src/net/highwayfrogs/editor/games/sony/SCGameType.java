@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2GameInstance;
+import net.highwayfrogs.editor.games.sony.moonwarrior.MoonWarriorInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerConfig;
 import net.highwayfrogs.editor.gui.GameConfigController;
@@ -38,7 +39,7 @@ public enum SCGameType implements IGameType {
     //TAX_MAN(null),
     MEDIEVIL(MediEvilGameInstance::new, MediEvilConfig::new),
     //COMMON_TALES(null),
-    MOONWARRIOR(null, null),
+    MOONWARRIOR(MoonWarriorInstance::new, null),
     MEDIEVIL2(MediEvil2GameInstance::new, null),
     C12(null, null);
 

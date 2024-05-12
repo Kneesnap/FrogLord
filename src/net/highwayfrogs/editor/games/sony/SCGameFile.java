@@ -148,20 +148,23 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      * Loads a GameFile editor.
      * @param gameInstance the game instance to create the editor for
      * @param controller the controller to control the GUI
+     * @param fileToEdit the file to edit
+     * @return editor
+     */
+    public static <TGameInstance extends SCGameInstance, TGameFile extends SCGameFile<?>, TUIController extends DefaultFileUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, TUIController controller, TGameFile fileToEdit) {
+        return DefaultFileUIController.loadEditor(gameInstance, controller, fileToEdit);
+    }
+
+    /**
+     * Loads a GameFile editor.
+     * @param gameInstance the game instance to create the editor for
+     * @param controller the controller to control the GUI
      * @param template the gui layout template
      * @param fileToEdit the file to edit
      * @return editor
      */
     public static <TGameInstance extends SCGameInstance, TGameFile extends SCGameFile<?>, TUIController extends DefaultFileUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
-        try {
-            URL templateUrl = Utils.getFXMLTemplateURL(gameInstance, template);
-            GameUIController.loadController(gameInstance, templateUrl, controller);
-            controller.setTargetFile(fileToEdit);
-        } catch (Throwable th) {
-            Utils.handleError(fileToEdit.getLogger(), th, true, "Failed to create editor UI.");
-        }
-
-        return controller;
+        return DefaultFileUIController.loadEditor(gameInstance, template, controller, fileToEdit);
     }
 
     /**
