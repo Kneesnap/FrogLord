@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygonPacket;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 /**
  * Implements a MoonWarrior map.
@@ -13,16 +14,26 @@ import net.highwayfrogs.editor.gui.GameUIController;
  */
 public class MoonWarriorMap extends SCMapFile<MoonWarriorInstance> {
     @Getter private final SCMapPolygonPacket<MoonWarriorInstance> polygonPacket;
+    @Getter private final MoonWarriorMapEntityPacket entityPacket;
     private MoonWarriorLevelTableEntry cachedLevelTableEntry;
 
     public MoonWarriorMap(MoonWarriorInstance instance) {
         super(instance);
         addFilePacket(this.polygonPacket = new MoonWarriorPolygonPacket(this));
+        addFilePacket(this.entityPacket = new MoonWarriorMapEntityPacket(this));
     }
 
     @Override
     public GameUIController<?> makeEditorUI() {
         return loadEditor(getGameInstance(), new MoonWarriorMapUIController(getGameInstance()), this);
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        if (this.entityPacket != null && this.entityPacket.isActive())
+            propertyList.add("Entity Count", this.entityPacket.getEntities().size());
+        return propertyList;
     }
 
     @Override

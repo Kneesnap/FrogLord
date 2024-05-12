@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
  */
 public abstract class SCMapFilePacket<TMapFile extends SCMapFile<TGameInstance>, TGameInstance extends SCGameInstance> extends SCFilePacket<TMapFile, TGameInstance> {
     public SCMapFilePacket(TMapFile parentFile, String identifier) {
-        this(parentFile, identifier, true, PacketSizeType.SIZE_INCLUSIVE);
+        this(parentFile, identifier, false, PacketSizeType.SIZE_INCLUSIVE);
     }
 
     public SCMapFilePacket(TMapFile parentFile, String identifier, boolean required) {
@@ -17,7 +17,7 @@ public abstract class SCMapFilePacket<TMapFile extends SCMapFile<TGameInstance>,
     }
 
     public SCMapFilePacket(TMapFile parentFile, String identifier, PacketSizeType sizeType) {
-        this(parentFile, identifier, true, sizeType);
+        this(parentFile, identifier, false, sizeType);
     }
 
     public SCMapFilePacket(TMapFile parentFile, String identifier, boolean required, PacketSizeType sizeType) {

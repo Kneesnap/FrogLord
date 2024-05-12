@@ -213,12 +213,13 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
         private int lastValidWriteBodyAddress = -1;
         private int lastValidWriteSize = -1;
         private Logger cachedLogger;
+        private boolean active;
 
         public SCFilePacket(TFile parentFile, String identifier, boolean required, PacketSizeType sizeType) {
             this.parentFile = parentFile;
             this.identifierString = identifier;
             this.identiferInteger = Utils.makeIdentifier(identifier);
-            this.required = required;
+            this.active = this.required = required;
             this.sizeType = sizeType;
         }
 
@@ -253,11 +254,10 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
 
         /**
          * Test if this packet is active.
-         * If this packet is active, it ensures it will be saved.
-         * Required packets are always saved.
+         * A packet being active means there is valid data, or at minimum the packet should be saved.
          */
         public boolean isActive() {
-            return isRequired();
+            return this.active || this.required;
         }
 
         /**
@@ -294,6 +294,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             boolean threwError = false;
             try {
                 this.loadBody(reader, expectedEndPosition);
+                this.active = true;
             } catch (Throwable th) {
                 threwError = true;
                 getLogger().warning("An error occurred while reading the '" + getIdentifierString() + "' packet data.");

@@ -1,48 +1,44 @@
-package net.highwayfrogs.editor.games.sony.medievil.map.packet;
+package net.highwayfrogs.editor.games.sony.shared.map.packet;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
-import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
+import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
+import net.highwayfrogs.editor.games.sony.shared.map.SCMapFilePacket;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
- * Contains map header data for MediEvil maps.
- * Created by Kneesnap on 3/8/2024.
+ * Represents the header packet in a Sony Cambridge map file. (v1999)
+ * Created by Kneesnap on 5/12/2024.
  */
 @Getter
-public class MediEvilMapHeaderPacket extends MediEvilMapPacket {
-    public static final String IDENTIFIER = "GROF"; // 'FORG' backwards.
-    private static final String FILE_TYPE = "MEDIEVIL";
-    private static final int VERSION_CODE = 1;
-    private static final int LEVEL_STRING_LENGTH = 64;
-    private static final String DEFAULT_LEVEL_STRING = "Buzby sucks eggs, and Eastwood smells!";
-    private static final int EXPECTED_PACKET_COUNT = 8;
+public class SCMapHeaderPacket<TGameInstance extends SCGameInstance> extends SCMapFilePacket<SCMapFile<TGameInstance>, TGameInstance> {
+    public static final String IDENTIFIER = "FORG";
+    private static final int VERSION_CODE = 0;
 
-    private String levelString = DEFAULT_LEVEL_STRING;
+    private int sectionId;
     private String[] headerIdentifiers = EMPTY_STRING_ARRAY;
 
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-    public MediEvilMapHeaderPacket(MediEvilMapFile parentFile) {
+    public SCMapHeaderPacket(SCMapFile<TGameInstance> parentFile) {
         super(parentFile, IDENTIFIER);
     }
 
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
-        reader.verifyString(FILE_TYPE);
         long fileLengthInBytes = reader.readUnsignedIntAsLong();
         int packetCount = reader.readUnsignedShortAsInt();
         int versionCode = reader.readUnsignedShortAsInt();
-        this.levelString = reader.readTerminatedStringOfLength(LEVEL_STRING_LENGTH);
+        this.sectionId = reader.readInt();
 
         // Read header identifiers.
         int headerListPtr = reader.readInt();
         if (headerListPtr != reader.getIndex())
-            throw new RuntimeException("MediEvilMapHeaderPacket expected header list at " + Utils.toHexString(reader.getIndex()) + ", but was actually at " + Utils.toHexString(headerListPtr));
+            throw new RuntimeException("SCMapHeaderPacket expected header list at " + Utils.toHexString(reader.getIndex()) + ", but was actually at " + Utils.toHexString(headerListPtr));
 
         this.headerIdentifiers = new String[packetCount];
         for (int i = 0; i < packetCount; i++)
@@ -54,22 +50,18 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket {
 
         if (fileLengthInBytes != reader.getSize())
             getLogger().warning("The amount of bytes reported by the file '" + getParentFile().getFileDisplayName() + "' was " + fileLengthInBytes + ", but the actual amount was " + reader.getSize() + ".");
-
-        if (packetCount != EXPECTED_PACKET_COUNT)
-            getLogger().warning("File has " + packetCount + " packets, but " + EXPECTED_PACKET_COUNT + " were expected.");
     }
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
-        writer.writeStringBytes(FILE_TYPE);
         writer.writeNullPointer(); // fileLengthInBytes
         writer.writeUnsignedShort(getParentFile().getActivePacketCount()); // Packet Count
         writer.writeUnsignedShort(VERSION_CODE); // Version code.
-        writer.writeTerminatedStringOfLength(this.levelString, LEVEL_STRING_LENGTH);
+        writer.writeInt(this.sectionId); // Section ID.
         int headerListPtrAddress = writer.writeNullPointer();
         writer.writeAddressTo(headerListPtrAddress);
         for (int i = 0; i < getParentFile().getFilePackets().size(); i++) {
-            SCFilePacket<? extends SCChunkedFile<MediEvilGameInstance>, MediEvilGameInstance> filePacket = getParentFile().getFilePackets().get(i);
+            SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> filePacket = getParentFile().getFilePackets().get(i);
             if (filePacket.isActive())
                 writer.writeInt(filePacket.getIdentiferInteger());
         }
@@ -78,7 +70,6 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket {
     @Override
     protected void saveBodySecondPass(DataWriter writer, long sizeInBytes) {
         super.saveBodySecondPass(writer, sizeInBytes);
-        writer.skipBytes(FILE_TYPE.length());
         writer.writeUnsignedInt(sizeInBytes);
     }
 }
