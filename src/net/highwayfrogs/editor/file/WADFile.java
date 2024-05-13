@@ -75,18 +75,18 @@ public class WADFile extends SCSharedGameFile {
             if (FroggerVersionComparison.isEnabled() && wadFileEntry.getSha1Hash() == null)
                 wadFileEntry.setSha1Hash(Utils.calculateSHA1Hash(data));
 
-            SCGameFile<?> file;
-            if (Constants.ENABLE_WAD_FORMATS) {
-                file = getGameInstance().createFile(wadFileEntry, data);
-                if (file == null) {
-                    file = new DummyFile(getGameInstance(), data.length);
-                    getLogger().warning("File '" + fileName + "' was of an unknown file type. (" + fileType + ")");
-                }
+            // Create file.
+            SCGameFile<?> file = getGameInstance().createFile(wadFileEntry, data);
+            if (file == null) {
+                file = new DummyFile(getGameInstance(), data.length);
+                getLogger().warning("File '" + fileName + "' was of an unknown file type. (" + fileType + ")");
             }
 
+            // Setup file.
             WADEntry newEntry = new WADEntry(getGameInstance(), resourceId, fileType, compressed, null);
             this.files.add(newEntry);
             newEntry.setFile(file);
+            file.setRawFileData(data);
 
             try {
                 file.load(new DataReader(new ArraySource(data)));

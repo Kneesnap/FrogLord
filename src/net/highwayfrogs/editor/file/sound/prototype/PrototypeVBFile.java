@@ -53,8 +53,7 @@ public class PrototypeVBFile extends PCVBFile {
                 convertedInputStream = AudioSystem.getAudioInputStream(getAudioFormat(), audioInputStream);
                 audioInputStream.close();
             } catch (UnsupportedAudioFileException | IOException ex) {
-                System.out.println("Couldn't read the audio data. The audio will still play, but it will have a pop.");
-                ex.printStackTrace();
+                Utils.handleError(getLogger(), ex, true, "Couldn't read the audio data. The audio will still play, but it will have a pop.");
                 return this.wavBytes;
             }
 

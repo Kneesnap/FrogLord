@@ -31,6 +31,17 @@ public class SCUtils {
      * @return newGameFile
      */
     public static SCGameFile<?> createSharedGameFile(FileEntry fileEntry, byte[] fileData) {
+        return createSharedGameFile(fileEntry, fileData);
+    }
+
+    /**
+     * Creates a game file from formats seen between different games.
+     * @param fileEntry The entry to create a game file from.
+     * @param fileData  The file data to create files from. Can be null.
+     * @param forceSoundFile If the file should be forced to be treated as a sound file.
+     * @return newGameFile
+     */
+    public static SCGameFile<?> createSharedGameFile(FileEntry fileEntry, byte[] fileData, boolean forceSoundFile) {
         SCGameInstance instance = fileEntry.getGameInstance();
         String vloSignature;
         switch (instance.getPlatform()) {
@@ -59,7 +70,7 @@ public class SCUtils {
                 return makeMofHolder(fileEntry);
         }
 
-        if (fileEntry.hasExtension("vh") || fileEntry.hasExtension("vb"))
+        if (fileEntry.hasExtension("vh") || fileEntry.hasExtension("vb") || forceSoundFile)
             return makeSound(fileEntry, fileData);
 
         if (fileEntry.getTypeId() == WADFile.TYPE_ID)

@@ -640,7 +640,7 @@ public class Utils {
         try {
             return Files.readAllLines(file.toPath());
         } catch (IOException e) {
-            e.printStackTrace();
+            handleError(null, e, false, "Failed to read text lines from file '%s'", file);
             return Collections.emptyList();
         }
     }
@@ -692,16 +692,14 @@ public class Utils {
             while ((bytesRead = input.read(buffer)) != -1)
                 output.write(buffer, 0, bytesRead);
         } catch (IOException ex) {
-            System.out.println("Failed to copy stream data from the input stream to the output stream!");
-            ex.printStackTrace();
+            handleError(null, ex, false, "Failed to copy stream data from the input stream to the output stream!");
         }
 
         if (closeInput) {
             try {
                 input.close();
             } catch (IOException ex) {
-                System.out.println("Failed to close the input stream.");
-                ex.printStackTrace();
+                handleError(null, ex, false, "Failed to close the input stream.");
             }
         }
     }
@@ -1846,7 +1844,7 @@ public class Utils {
         // Format message.
         String formattedMessage;
         try {
-            formattedMessage = message != null ? String.format(message, arguments) : null;
+            formattedMessage = message != null && arguments != null && arguments.length > 0 ? String.format(message, arguments) : message;
         } catch (IllegalFormatException exception) {
             formattedMessage = "[String Formatting Failed] " + message;
         }
@@ -1856,6 +1854,19 @@ public class Utils {
             if (formattedMessage != null)
                 logger.severe(formattedMessage);
             logger.throwing(callingClass != null ? callingClass.getSimpleName() : null, callingMethodName, th);
+        } else {
+            System.err.println(formattedMessage);
+            if (th != null)
+                th.printStackTrace();
+        }
+
+        // Wait a millisecond to ensure logging doesn't separate messages.
+        if (th != null && Platform.isFxApplicationThread()) {
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException ex) {
+                // Do nothing.
+            }
         }
 
         // Create popup window.
@@ -1891,9 +1902,12 @@ public class Utils {
      * @param ex      The exception which caused the error.
      */
     public static void makeErrorPopUp(String message, Throwable ex, boolean printException) {
-        if (printException)
-            ex.printStackTrace();
-        new Alert(AlertType.ERROR, (message != null && message.length() > 0 ? message + Constants.NEWLINE : "") + "Error: " + ex.getMessage(), ButtonType.OK).showAndWait();
+        String errorMessage = (message != null && message.length() > 0 ? message + Constants.NEWLINE : "") + "Error: " + ex.getMessage();
+        if (printException) {
+            handleError(null, ex, true, errorMessage);
+        } else {
+            new Alert(AlertType.ERROR, errorMessage, ButtonType.OK).showAndWait();
+        }
     }
 
     /**
@@ -2165,7 +2179,7 @@ public class Utils {
             crypt.update(data);
             return byteToHex(crypt.digest());
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            handleError(null, e, false, "Couldn't find SHA-1 algorithm implementation.");
             return null;
         }
     }

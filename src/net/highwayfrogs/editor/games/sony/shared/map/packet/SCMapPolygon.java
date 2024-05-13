@@ -188,8 +188,8 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
      */
     public boolean isSemiTransparent(ISCLevelTableEntry levelTableEntry) {
         GameImage image = getTexture(levelTableEntry);
-        if (image != null && image.testFlag(GameImage.FLAG_TRANSLUCENT))
-            return true;
+        if (image != null && (image.testFlag(GameImage.FLAG_TRANSLUCENT) && !getGameInstance().isMediEvil2()))
+            return true; // TODO: Investigate changes to images potentially.
 
         return (this.flags & FLAG_SEMI_TRANSPARENT) == FLAG_SEMI_TRANSPARENT;
     }

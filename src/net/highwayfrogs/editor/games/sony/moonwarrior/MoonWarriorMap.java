@@ -3,9 +3,7 @@ package net.highwayfrogs.editor.games.sony.moonwarrior;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
-import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygonPacket;
-import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 /**
@@ -19,13 +17,8 @@ public class MoonWarriorMap extends SCMapFile<MoonWarriorInstance> {
 
     public MoonWarriorMap(MoonWarriorInstance instance) {
         super(instance);
-        addFilePacket(this.polygonPacket = new MoonWarriorPolygonPacket(this));
+        addFilePacket(this.polygonPacket = new SCMapPolygonPacket<>(this));
         addFilePacket(this.entityPacket = new MoonWarriorMapEntityPacket(this));
-    }
-
-    @Override
-    public GameUIController<?> makeEditorUI() {
-        return loadEditor(getGameInstance(), new MoonWarriorMapUIController(getGameInstance()), this);
     }
 
     @Override
@@ -42,16 +35,5 @@ public class MoonWarriorMap extends SCMapFile<MoonWarriorInstance> {
             this.cachedLevelTableEntry = new MoonWarriorLevelTableEntry(this);
 
         return this.cachedLevelTableEntry;
-    }
-
-    public static class MoonWarriorPolygonPacket extends SCMapPolygonPacket<MoonWarriorInstance> {
-        public MoonWarriorPolygonPacket(SCMapFile<MoonWarriorInstance> parentFile) {
-            super(parentFile);
-        }
-
-        @Override
-        public SCMapPolygon createPolygon() {
-            return new SCMapPolygon(getParentFile());
-        }
     }
 }

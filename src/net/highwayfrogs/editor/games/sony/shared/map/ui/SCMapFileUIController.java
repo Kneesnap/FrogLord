@@ -1,18 +1,22 @@
-package net.highwayfrogs.editor.games.sony.moonwarrior;
+package net.highwayfrogs.editor.games.sony.shared.map.ui;
 
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import lombok.Getter;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 
 /**
- * Manages the ability to view a map.
- * Created by Kneesnap on 5/8/2024.
+ * Manages the ability to view an SCMapFile.
+ * Created by Kneesnap on 5/12/2024.
  */
-public class MoonWarriorMapUIController extends DefaultFileUIController<MoonWarriorInstance, MoonWarriorMap> {
+@Getter
+public class SCMapFileUIController<TGameFile extends SCMapFile<TGameInstance>, TGameInstance extends SCGameInstance> extends DefaultFileUIController<TGameInstance, TGameFile> {
     private Button viewButton;
 
-    public MoonWarriorMapUIController(MoonWarriorInstance instance) {
+    public SCMapFileUIController(TGameInstance instance) {
         super(instance, "Map File", ImageResource.TREASURE_MAP_15.getFxImage());
     }
 
@@ -29,7 +33,7 @@ public class MoonWarriorMapUIController extends DefaultFileUIController<MoonWarr
     }
 
     @Override
-    public void setTargetFile(MoonWarriorMap newMap) {
+    public void setTargetFile(TGameFile newMap) {
         super.setTargetFile(newMap);
         if (this.viewButton != null)
             this.viewButton.setDisable(newMap == null || newMap.getPolygonPacket() == null);

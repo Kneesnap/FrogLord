@@ -14,27 +14,27 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents polygon data for an SC game.
  * Created by Kneesnap on 5/7/2024.
  */
 @Getter
-public abstract class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SCMapFilePacket<SCMapFile<TGameInstance>, TGameInstance> {
+public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SCMapFilePacket<SCMapFile<TGameInstance>, TGameInstance> {
     public static final String IDENTIFIER = "POLY";
-    private static final int VERTEX_GRID_SHIFT = 12;
-    private static final int VERTEX_GRID_DIMENSIONS_FROM_CENTER = 16;
-    private static final int VERTEX_GRID_DIMENSIONS_FULL = VERTEX_GRID_DIMENSIONS_FROM_CENTER * 2;
-    private static final int VERTEX_GRID_ORIGIN = 32768;
 
     private final List<SCMapPolygon> polygons = new ArrayList<>();
     private final List<SVector> vertices = new ArrayList<>();
     private final List<SCMapPolygonUV> uvs = new ArrayList<>();
-    private final short[][] vertexGridOffsetTable = new short[VERTEX_GRID_DIMENSIONS_FULL][VERTEX_GRID_DIMENSIONS_FULL]; // Contains vertex ids.
-    private final short[][] vertexGridLengthTable = new short[VERTEX_GRID_DIMENSIONS_FULL][VERTEX_GRID_DIMENSIONS_FULL]; // Indices are shared between the offset table and the length table.
+    private final short[][] vertexGridOffsetTable; // Contains vertex ids.
+    private final short[][] vertexGridLengthTable; // Indices are shared between the offset table and the length table.
 
     public SCMapPolygonPacket(SCMapFile<TGameInstance> parentFile) {
         super(parentFile, IDENTIFIER);
+        int gridDimensions = getVertexGridDimensions(parentFile, parentFile.getGameInstance().getLogger());
+        this.vertexGridOffsetTable = new short[gridDimensions][gridDimensions];
+        this.vertexGridLengthTable = new short[gridDimensions][gridDimensions];
     }
 
     @Override
@@ -142,7 +142,9 @@ public abstract class SCMapPolygonPacket<TGameInstance extends SCGameInstance> e
     /**
      * Creates a new polygon instance.
      */
-    public abstract SCMapPolygon createPolygon();
+    public SCMapPolygon createPolygon() {
+        return new SCMapPolygon(getParentFile());
+    }
 
     @Getter
     public static class SCMapPolygonUV extends SCGameData<SCGameInstance> {
@@ -164,6 +166,24 @@ public abstract class SCMapPolygonPacket<TGameInstance extends SCGameInstance> e
         public void save(DataWriter writer) {
             for (int i = 0; i < this.textureUvs.length; i++)
                 this.textureUvs[i].save(writer);
+        }
+    }
+
+
+    /**
+     * Get the dimensions of the vertex grid.
+     * @param mapFile The map file to get the dimensions for.
+     * @return vertexGridimensions
+     */
+    private static int getVertexGridDimensions(SCMapFile<? extends SCGameInstance> mapFile, Logger logger) {
+        switch (mapFile.getGameInstance().getGameType()) {
+            case MOONWARRIOR:
+                return 32;
+            case MEDIEVIL2:
+                return 16;
+            default:
+                logger.warning("Vertex Grid dimensions have not been specified. Defaulting to 16.");
+                return 16;
         }
     }
 }

@@ -297,8 +297,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
                 this.active = true;
             } catch (Throwable th) {
                 threwError = true;
-                getLogger().warning("An error occurred while reading the '" + getIdentifierString() + "' packet data.");
-                th.printStackTrace();
+                Utils.handleError(getLogger(), th, false, "An error occurred while reading the '%s' packet data.", getIdentifierString());
             }
 
             // Automatically align to the next section.

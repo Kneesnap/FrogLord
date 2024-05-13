@@ -2,6 +2,8 @@ package net.highwayfrogs.editor.games.sony;
 
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
+import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
@@ -21,6 +23,7 @@ import java.util.logging.Logger;
  * Created by Kneesnap on 9/8/2023.
  */
 public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends SCGameData<TGameInstance> implements ICollectionViewEntry, IPropertyListCreator {
+    @Setter @Getter private byte[] rawFileData;
     public SCGameFile(TGameInstance instance) {
         super(instance);
     }

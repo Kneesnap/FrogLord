@@ -10,6 +10,8 @@ import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMesh;
 import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMeshController;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapHeaderPacket;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygonPacket;
+import net.highwayfrogs.editor.games.sony.shared.map.ui.SCMapFileUIController;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -46,6 +48,11 @@ public abstract class SCMapFile<TGameInstance extends SCGameInstance> extends SC
         }
 
         return propertyList;
+    }
+
+    @Override
+    public GameUIController<?> makeEditorUI() {
+        return loadEditor(getGameInstance(), new SCMapFileUIController<>(getGameInstance()), this);
     }
 
     @Override

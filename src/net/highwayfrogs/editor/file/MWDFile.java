@@ -93,6 +93,7 @@ public class MWDFile extends SCSharedGameData {
                 entry.setSha1Hash(Utils.calculateSHA1Hash(fileBytes));
 
             SCGameFile<?> file = loadFile(fileBytes, entry);
+            this.files.add(file);
 
             try {
                 file.load(new DataReader(new ArraySource(fileBytes)));
@@ -100,7 +101,6 @@ public class MWDFile extends SCSharedGameData {
                 Utils.handleError(getLogger(), ex, false, "Failed to load %s (%d)", entry.getDisplayName(), entry.getResourceId());
             }
 
-            this.files.add(file);
             if (progressBar != null)
                 progressBar.addCompletedProgress(1);
         }
@@ -165,6 +165,7 @@ public class MWDFile extends SCSharedGameData {
         getGameInstance().getFileObjectsByFileEntries().put(entry, file);
         getGameInstance().getFileEntriesByFileObjects().put(file, entry);
         CURRENT_FILE_NAME = entry.getDisplayName();
+        file.setRawFileData(fileBytes);
         return (T) file;
     }
 

@@ -29,8 +29,7 @@ public class SCGameFileGroupedListViewComponent<TGameInstance extends SCGameInst
     @Override
     protected void onSelect(SCGameFile<?> file) {
         GameUIController<?> controller = file.makeEditorUI();
-        if (controller != null)
-            getGameInstance().getMainMenuController().showEditor(controller);
+        getGameInstance().getMainMenuController().showEditor(controller);
     }
 
     @Override
