@@ -5,17 +5,18 @@ import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
-import net.highwayfrogs.editor.file.sound.VBAudioBody;
-import net.highwayfrogs.editor.file.sound.VHAudioHeader;
-import net.highwayfrogs.editor.file.sound.VHFile;
-import net.highwayfrogs.editor.file.sound.prototype.PrototypeVBFile;
-import net.highwayfrogs.editor.file.sound.psx.PSXVBFile;
-import net.highwayfrogs.editor.file.sound.psx.PSXVHFile;
-import net.highwayfrogs.editor.file.sound.retail.RetailPCVBFile;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
+import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
+import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVBFile;
+import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVHFile;
+import net.highwayfrogs.editor.games.sony.shared.sound.body.SCPlayStationSoundBankBody;
+import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsPreReleaseSoundBankBody;
+import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsRetailSoundBankBody;
+import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationVabSoundBankHeader;
+import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -31,7 +32,7 @@ public class SCUtils {
      * @return newGameFile
      */
     public static SCGameFile<?> createSharedGameFile(FileEntry fileEntry, byte[] fileData) {
-        return createSharedGameFile(fileEntry, fileData);
+        return createSharedGameFile(fileEntry, fileData, false);
     }
 
     /**
@@ -61,7 +62,7 @@ public class SCUtils {
                 return new VLOArchive(fileEntry.getGameInstance());
             if (instance.getGameType().isBefore(SCGameType.MOONWARRIOR) && (Utils.testSignature(fileData, MOFHolder.DUMMY_DATA) || Utils.testSignature(fileData, MOFFile.SIGNATURE)) || MOFAnimation.testSignature(fileData))
                 return makeMofHolder(fileEntry);
-            if (instance.isPSX() && Utils.testSignature(fileData, PSXVHFile.PSX_SIGNATURE))
+            if (instance.isPSX() && Utils.testSignature(fileData, SCPlayStationVabSoundBankHeader.PSX_SIGNATURE))
                 return makeSound(fileEntry, fileData);
         } else {
             if (fileEntry.hasExtension("vlo"))
@@ -133,53 +134,66 @@ public class SCUtils {
         boolean doFileNamesMatch = (lastFile != null) && ((!lastEntry.hasFullFilePath() || !fileEntry.hasFullFilePath())
                 || Utils.stripExtension(fileEntry.getDisplayName()).equalsIgnoreCase(Utils.stripExtension(lastEntry.getDisplayName())));
 
-        VHAudioHeader lastVH = lastFile instanceof VHAudioHeader ? (VHAudioHeader) lastFile : null;
-        VBAudioBody<?> lastVB = lastFile instanceof VBAudioBody<?> ? (VBAudioBody<?>) lastFile : null;
+        SCSplitVHFile lastSoundHeader = lastFile instanceof SCSplitVHFile ? (SCSplitVHFile) lastFile : null;
+        SCSplitVBFile lastSoundBody = lastFile instanceof SCSplitVBFile ? (SCSplitVBFile) lastFile : null;
 
         // Ensure we find lastVH if we didn't find it before.
-        if (lastVH == null && fileEntry.hasExtension("vb")) {
+        if (lastSoundHeader == null && fileEntry.hasExtension("vb")) {
             FileEntry vhEntry = fileEntry.getGameInstance().getResourceEntryByName(Utils.stripExtension(fileEntry.getDisplayName()) + ".vh");
             if (vhEntry != null) {
                 SCGameFile<?> vhFile = fileEntry.getGameInstance().getGameFile(vhEntry);
-                if (vhFile instanceof VHAudioHeader)
-                    lastVH = (VHAudioHeader) vhFile;
+                if (vhFile instanceof SCSplitVHFile)
+                    lastSoundHeader = (SCSplitVHFile) vhFile;
             }
         }
 
         // Ensure we find lastVB if we didn't find it before.
-        if (lastVB == null && fileEntry.hasExtension("vh")) {
+        if (lastSoundBody == null && fileEntry.hasExtension("vh")) {
             FileEntry vbEntry = fileEntry.getGameInstance().getResourceEntryByName(Utils.stripExtension(fileEntry.getDisplayName()) + ".vb");
             if (vbEntry != null) {
                 SCGameFile<?> vbFile = fileEntry.getGameInstance().getGameFile(vbEntry);
-                if (vbFile instanceof VBAudioBody<?>)
-                    lastVB = (VBAudioBody<?>) vbFile;
+                if (vbFile instanceof SCSplitVBFile)
+                    lastSoundBody = (SCSplitVBFile) vbFile;
             }
         }
 
         // Create new object.
-        if (lastVB != null || fileEntry.hasExtension("vh") || (instance.isPSX() && Utils.testSignature(fileData, PSXVHFile.PSX_SIGNATURE))) {
-            VHAudioHeader newHeader = instance.isPSX() ? new PSXVHFile(fileEntry.getGameInstance()) : new VHFile(fileEntry.getGameInstance());
-            if (lastVB != null && doFileNamesMatch)
-                newHeader.setVbFile(lastVB);
+        if (lastSoundBody != null || fileEntry.hasExtension("vh") || (instance.isPSX() && Utils.testSignature(fileData, SCPlayStationVabSoundBankHeader.PSX_SIGNATURE))) {
+            SCSplitSoundBankHeader<?, ?> newHeader = createSoundHeaderBody(instance);
+            SCSplitVHFile newHeaderFile = new SCSplitVHFile(fileEntry.getGameInstance(), newHeader);
+            if (doFileNamesMatch && lastSoundBody != null && lastSoundBody.getSoundBank() == null)
+                newHeaderFile.createSoundBank(lastSoundBody);
 
-            return newHeader;
-        } else if (lastVH != null || fileEntry.hasExtension("vb")) {
-            VBAudioBody<?> newBody;
-            if (instance.isPSX()) {
-                newBody = new PSXVBFile(fileEntry.getGameInstance());
-            } else if (instance.isFrogger() && !((FroggerGameInstance) instance).getConfig().isAtLeastRetailWindows()) {
-                newBody = new PrototypeVBFile(fileEntry.getGameInstance());
-            } else {
-                newBody = new RetailPCVBFile(fileEntry.getGameInstance());
-            }
+            return newHeaderFile;
+        } else if (lastSoundHeader != null || fileEntry.hasExtension("vb")) {
+            SCSplitSoundBankBody<?, ?> newBody = createSoundBankBody(fileEntry, instance);
+            SCSplitVBFile newBodyFile = new SCSplitVBFile(fileEntry.getGameInstance(), newBody);
+            if (doFileNamesMatch && lastSoundHeader != null && lastSoundHeader.getSoundBank() == null)
+                newBodyFile.createSoundBank(lastSoundHeader);
 
-            if (lastVH != null && doFileNamesMatch)
-                newBody.setHeader(lastVH);
-
-            return newBody;
+            return newBodyFile;
         }
 
         return null;
+    }
+
+    private static SCSplitSoundBankHeader<?, ?> createSoundHeaderBody(SCGameInstance instance) {
+        if (instance.isPSX()) {
+            return new SCPlayStationVabSoundBankHeader(instance);
+        } else {
+            return new SCWindowsSoundBankHeader<>(instance);
+        }
+    }
+
+    private static SCSplitSoundBankBody<?, ?> createSoundBankBody(FileEntry fileEntry, SCGameInstance instance) {
+        String fileName = fileEntry.getDisplayName();
+        if (instance.isPSX()) {
+            return new SCPlayStationSoundBankBody(fileEntry.getGameInstance(), fileName);
+        } else if (instance.isFrogger() && !((FroggerGameInstance) instance).getConfig().isAtLeastRetailWindows()) {
+            return new SCWindowsPreReleaseSoundBankBody(fileEntry.getGameInstance(), fileName);
+        } else {
+            return new SCWindowsRetailSoundBankBody(fileEntry.getGameInstance(), fileName);
+        }
     }
 
     /**
@@ -187,24 +201,12 @@ public class SCUtils {
      * @param atlas      The texture atlas to add these textures to.
      * @param vloArchive The VLO to add textures from.
      */
+    @SuppressWarnings("unused")
     public static void addAtlasTextures(TextureAtlas atlas, VLOArchive vloArchive) {
         if (vloArchive == null)
             return;
 
         for (int i = 0; i < vloArchive.getImages().size(); i++)
             atlas.addTexture(vloArchive.getImages().get(i));
-    }
-
-    /**
-     * Add textures to the atlas used by model files, texture remaps, etc.
-     * @param atlas        The texture atlas to add these textures to.
-     * @param wadFile      An optional WAD file to scan for models to add VLOs from.
-     * @param textureRemap An optional texture remap to add VLOs from.
-     */
-    public static void addAtlasTextures(TextureAtlas atlas, VLOArchive mainVlo, WADFile wadFile, TextureRemapArray textureRemap) {
-        if (mainVlo != null)
-            addAtlasTextures(atlas, mainVlo);
-
-        // TODO: Finish this once we've got stuff figured out.
     }
 }

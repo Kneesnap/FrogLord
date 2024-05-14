@@ -2,17 +2,19 @@ package net.highwayfrogs.editor.games.sony.shared.ui.file;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.sound.GameSound;
-import net.highwayfrogs.editor.file.sound.VBAudioBody;
+import net.highwayfrogs.editor.games.shared.sound.ISoundSample;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBodyEntry;
+import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVBFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
+import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.Clip;
@@ -24,59 +26,61 @@ import java.io.IOException;
 
 /**
  * Controls the VAB sound screen.
- * Created by Kneesnap on 9/18/2018.
+ * Created by Kneesnap on 5/13/2024.
  */
-public class VABController extends SCFileEditorUIController<SCGameInstance, VBAudioBody<?>> {
-    @FXML private ListView<GameSound> soundList;
+public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, SCSplitVBFile> {
+    @FXML private ListView<ISoundSample> soundList;
     @FXML private Button playButton;
     @FXML private Label label1;
     @FXML private TextField sampleRateField;
     @FXML private CheckBox repeatCheckBox;
     @FXML private Slider sliderSampleRate;
 
-    private GameSound selectedSound;
+    private SCSplitSoundBankBodyEntry selectedSoundBodyEntry;
+    private ISoundSample selectedSound;
     private Clip currentClip;
 
-    public VABController(SCGameInstance instance) {
+    public SCVABUIController(SCGameInstance instance) {
         super(instance);
     }
 
     @Override
-    public void setTargetFile(VBAudioBody<?> vbFile) {
-        super.setTargetFile(vbFile);
+    protected void onControllerLoad(Node rootNode) {
+        super.onControllerLoad(rootNode);
 
-        sliderSampleRate.valueProperty().addListener((observable, oldValue, newValue) -> {
+        this.sliderSampleRate.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.equals(oldValue))
                 return;
 
-            this.selectedSound.setSampleRate(newValue.intValue()); // Apply the new sample rate.
+            String errorMessage = this.selectedSound.getAudioFormat().setSampleRate(newValue.intValue()); // Apply the new sample rate.
+            if (errorMessage != null) {
+                Utils.makePopUp(errorMessage, AlertType.ERROR);
+                return;
+            }
+
             updateInterface();
         });
+    }
 
-        ObservableList<GameSound> gameSounds = FXCollections.observableArrayList(vbFile.getAudioEntries());
-        soundList.setItems(gameSounds);
-        soundList.setCellFactory(param -> new AttachmentListCell());
+    @Override
+    public void setTargetFile(SCSplitVBFile vbFile) {
+        super.setTargetFile(vbFile);
 
-        soundList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+        this.soundList.setItems(FXCollections.observableArrayList(vbFile.getSoundBank().getSounds()));
+        this.soundList.setCellFactory(param -> new AbstractAttachmentCell<>((sound, id) -> sound != null ? sound.getSoundName() : null));
+        this.soundList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             this.selectedSound = newValue;
+            this.selectedSoundBodyEntry = (SCSplitSoundBankBodyEntry) newValue;
             this.updateInterface();
         });
 
-        soundList.getSelectionModel().select(0);
+        this.soundList.getSelectionModel().select(0);
     }
 
     @Override
     public void onSceneRemove(Scene oldScene) {
         super.onSceneRemove(oldScene);
         closeClip();
-    }
-
-    private static class AttachmentListCell extends ListCell<GameSound> {
-        @Override
-        public void updateItem(GameSound sound, boolean empty) {
-            super.updateItem(sound, empty);
-            setText(empty ? null : sound.getSoundName());
-        }
     }
 
     @FXML
@@ -86,7 +90,7 @@ public class VABController extends SCFileEditorUIController<SCGameInstance, VBAu
             return;
 
         try {
-            this.selectedSound.exportToFile(selectedFile);
+            this.selectedSound.saveToImportableFile(selectedFile);
         } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
             throw new RuntimeException("Failed to export sound as " + selectedFile.getName(), ex);
         }
@@ -99,7 +103,7 @@ public class VABController extends SCFileEditorUIController<SCGameInstance, VBAu
             return; // Cancelled.
 
         try {
-            this.selectedSound.replaceWithFile(selectedFile);
+            this.selectedSound.importSoundFromFile(selectedFile);
         } catch (UnsupportedAudioFileException | IOException ex) {
             Utils.makeErrorPopUp("Failed to import sound file " + selectedFile.getName(), ex, true);
         }
@@ -114,8 +118,8 @@ public class VABController extends SCFileEditorUIController<SCGameInstance, VBAu
         if (selectedFolder == null)
             return; // Cancelled.
 
-        for (GameSound sound : getFile().getAudioEntries()) {
-            sound.exportToFile(new File(selectedFolder, sound.getSoundName() + ".wav"));
+        for (ISoundSample sound : getFile().getBody().getEntries()) {
+            sound.saveToImportableFile(new File(selectedFolder, sound.getSoundName() + ".wav"));
             getLogger().info("Exported sound: " + sound.getSoundName());
         }
     }
@@ -153,7 +157,12 @@ public class VABController extends SCFileEditorUIController<SCGameInstance, VBAu
             return;
         }
 
-        this.selectedSound.setSampleRate(newRate);
+        String errorMessage = this.selectedSound.getAudioFormat().setSampleRate(newRate); // Apply the new sample rate.
+        if (errorMessage != null) {
+            Utils.makePopUp(errorMessage, AlertType.ERROR);
+            return;
+        }
+
         updateInterface();
     }
 
@@ -169,9 +178,9 @@ public class VABController extends SCFileEditorUIController<SCGameInstance, VBAu
      * Update the info displayed for the image.
      */
     public void updateSoundInfo() {
-        label1.setText("Vanilla Track ID: " + selectedSound.getVanillaTrackId());
-        this.sampleRateField.setText(String.valueOf(selectedSound.getSampleRate()));
-        this.sliderSampleRate.setValue(selectedSound.getSampleRate());
+        this.label1.setText("Internal Track ID: " + (this.selectedSoundBodyEntry != null ? this.selectedSoundBodyEntry.getInternalTrackId() : "-1"));
+        this.sampleRateField.setText(String.valueOf(this.selectedSound.getAudioFormat().getSampleRate()));
+        this.sliderSampleRate.setValue(this.selectedSound.getAudioFormat().getSampleRate());
     }
 
     private void closeClip() {
@@ -189,15 +198,19 @@ public class VABController extends SCFileEditorUIController<SCGameInstance, VBAu
         closeClip();
 
         if (this.currentClip != null) {
-            byte[] pcmData = this.selectedSound.toRawAudio();
+            byte[] pcmData = this.selectedSound.getRawAudioPlaybackData();
 
             try {
                 this.currentClip.open(this.selectedSound.getAudioFormat(), pcmData, 0, pcmData.length);
             } catch (LineUnavailableException exception) {
-                handleError(exception, false, "Could not load audio data from file.");
+                handleError(exception, true, "Could not load audio data from file.");
             }
         } else {
-            this.currentClip = this.selectedSound.getClip();
+            try {
+                this.currentClip = this.selectedSound.getAudioClip();
+            } catch (LineUnavailableException e) {
+                handleError(e, true, "Could not get AudioClip from file.");
+            }
 
             this.currentClip.addLineListener(e -> {
                 if (e.getType() != Type.STOP)

@@ -36,8 +36,8 @@ public abstract class GameObject<TGameInstance extends GameInstance> {
     /**
      * Represents a GameObject which can be used by any GameInstance.
      */
-    public static abstract class GenericGameObject extends GameObject<GameInstance> {
-        public GenericGameObject(GameInstance instance) {
+    public static abstract class SharedGameObject extends GameObject<GameInstance> {
+        public SharedGameObject(GameInstance instance) {
             super(instance);
         }
     }

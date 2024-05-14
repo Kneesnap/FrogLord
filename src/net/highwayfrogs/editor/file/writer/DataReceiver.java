@@ -21,6 +21,14 @@ public interface DataReceiver {
     public void writeBytes(byte[] values) throws IOException;
 
     /**
+     * Write an array of bytes to this receiver.
+     * @param values The bytes to write.
+     * @param offset the offset into the array.
+     * @param amount the amount of bytes to write.
+     */
+    public void writeBytes(byte[] values, int offset, int amount) throws IOException;
+
+    /**
      * Set the current write index.
      * @param newIndex The new index to write data at.
      */

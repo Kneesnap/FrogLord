@@ -33,6 +33,11 @@ public class LargeFileReceiver implements DataReceiver {
     }
 
     @Override
+    public void writeBytes(byte[] values, int offset, int amount) throws IOException {
+        this.randomAccessFile.write(values, offset, amount);
+    }
+
+    @Override
     public void setIndex(int newIndex) throws IOException {
         this.randomAccessFile.seek(newIndex);
     }

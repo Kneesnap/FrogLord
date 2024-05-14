@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.sound.psx;
+package net.highwayfrogs.editor.games.psx.sound;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

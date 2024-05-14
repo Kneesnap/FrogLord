@@ -1,22 +1,25 @@
-package net.highwayfrogs.editor.file.sound.psx;
+package net.highwayfrogs.editor.games.sony.shared.sound.header;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.sound.GameSound;
-import net.highwayfrogs.editor.file.sound.VHAudioHeader;
-import net.highwayfrogs.editor.file.sound.psx.PSXVBFile.PSXSound;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
+import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
+import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeaderEntry;
+import net.highwayfrogs.editor.games.sony.shared.sound.body.SCPlayStationSoundBankBody.SCPlayStationVabSound;
+import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationVabSoundBankHeader.SCPlayStationVabHeaderEntry;
 
 /**
- * Reads a PSX vab header file.
+ * Represents the PSX sound bank header file format. (VAB Header)
+ * This is shared between PSX games, so at some point we could split the game-agnostic stuff into its own object, but keep this object for SC compatibility.
  * Resources: LIBSND.H (PsyQ)
- * Created by Kneesnap on 11/30/2019.
+ * Created by Kneesnap on 5/13/2024.
  */
 @Getter
-public class PSXVHFile extends VHAudioHeader {
+public class SCPlayStationVabSoundBankHeader extends SCSplitSoundBankHeader<SCPlayStationVabHeaderEntry, SCPlayStationVabSound> {
     private int fileVersion = 7;
     private int vabBankId;
     private int reserved0;
@@ -30,26 +33,28 @@ public class PSXVHFile extends VHAudioHeader {
     private long reserved1;
     private final VABProgram[] programs = new VABProgram[128];
     private VABTone[] tones;
-    private transient int[] loadedSampleAddresses;
+    private int[] loadedSampleAddresses;
+    @Setter private int savedBodyTotalSize;
 
     private static final int TONES_PER_PROGRAM = 16;
     public static final int TYPE_ID = 2;
     public static final int CHANNEL_COUNT = 1;
     public static final String PSX_SIGNATURE = "pBAV"; // VABp
 
-    public PSXVHFile(SCGameInstance instance) {
+    public SCPlayStationVabSoundBankHeader(SCGameInstance instance) {
         super(instance);
     }
 
     @Override
-    public void load(DataReader reader) {
+    public boolean load(DataReader reader, SCSplitSoundBankBody<SCPlayStationVabHeaderEntry, SCPlayStationVabSound> other) {
+        int headerStartIndex = reader.getIndex();
         reader.verifyString(PSX_SIGNATURE);
         this.fileVersion = reader.readInt();
         if (this.fileVersion != 7 && this.fileVersion != 6 && this.fileVersion != 5)
             throw new RuntimeException("Unknown Vab Header Version: " + this.fileVersion + "!");
 
         this.vabBankId = reader.readInt();
-        reader.readUnsignedIntAsLong(); // Seems like it's the size of the VH + VB combined.
+        int savedBodyHeaderSize = reader.readInt(); // Seems like it's the size of the VH + VB combined.
         this.reserved0 = reader.readUnsignedShortAsInt();
         this.programCount = reader.readUnsignedShortAsInt();
         this.toneCount = reader.readUnsignedShortAsInt();
@@ -62,7 +67,7 @@ public class PSXVHFile extends VHAudioHeader {
 
         // Read programs.
         for (int i = 0; i < this.programs.length; i++) {
-            this.programs[i] = new VABProgram();
+            this.programs[i] = new VABProgram(getGameInstance());
             this.programs[i].load(reader);
         }
 
@@ -70,7 +75,7 @@ public class PSXVHFile extends VHAudioHeader {
         int totalToneCount = (TONES_PER_PROGRAM * this.programCount);
         this.tones = new VABTone[totalToneCount];
         for (int i = 0; i < totalToneCount; i++) {
-            this.tones[i] = new VABTone();
+            this.tones[i] = new VABTone(getGameInstance());
             this.tones[i].load(reader);
         }
 
@@ -79,16 +84,16 @@ public class PSXVHFile extends VHAudioHeader {
         for (int i = 0; i < this.loadedSampleAddresses.length; i++)
             this.loadedSampleAddresses[i] = (reader.readUnsignedShortAsInt() << 3);
 
-        if (getVbFile() != null)
-            getVbFile().setHeader(this);
+        this.savedBodyTotalSize = savedBodyHeaderSize - (reader.getIndex() - headerStartIndex); // Get it to be just the size of the body.
+        return true;
     }
 
     @Override
-    public void save(DataWriter writer) {
+    public void save(DataWriter writer, SCSplitSoundBankBody<SCPlayStationVabHeaderEntry, SCPlayStationVabSound> other) {
         writer.writeStringBytes(PSX_SIGNATURE);
         writer.writeInt(this.fileVersion);
         writer.writeInt(this.vabBankId);
-        int sizeAddress = writer.writeNullPointer();
+        int bodyAndHeaderSizeAddress = writer.writeNullPointer();
         writer.writeUnsignedShort(this.reserved0);
         writer.writeUnsignedShort(this.programCount);
         writer.writeUnsignedShort(this.toneCount);
@@ -108,19 +113,38 @@ public class PSXVHFile extends VHAudioHeader {
             tone.save(writer);
 
         // Write Sample Addresses.
-        for (GameSound sound : getVbFile().getAudioEntries())
-            writer.writeUnsignedShort(((PSXSound) sound).getAddressWrittenTo() >> 3);
+        for (int i = 0; i < this.loadedSampleAddresses.length; i++)
+            writer.writeUnsignedShort(this.loadedSampleAddresses[i] >> 3);
 
         // Write the final size.
         int headerSize = writer.getIndex();
-        writer.jumpTemp(sizeAddress);
-        writer.writeInt(headerSize + ((PSXVBFile) getVbFile()).getSavedTotalSize());
-        writer.jumpReturn();
+        writer.writeAddressAt(bodyAndHeaderSizeAddress, headerSize + this.savedBodyTotalSize);
+    }
+
+    public static class SCPlayStationVabHeaderEntry extends SCSplitSoundBankHeaderEntry {
+        public SCPlayStationVabHeaderEntry(SCPlayStationVabSoundBankHeader header, int internalId) {
+            super(header, internalId);
+        }
+
+        @Override
+        public SCPlayStationVabSoundBankHeader getHeader() {
+            return (SCPlayStationVabSoundBankHeader) super.getHeader();
+        }
+
+        @Override
+        public void load(DataReader reader) {
+            // Do nothing.
+        }
+
+        @Override
+        public void save(DataWriter writer) {
+            // Do nothing.
+        }
     }
 
     @Getter
     @Setter // LIBSND.H: VagAtr "VAG Tone Headdings"
-    public static class VABProgram extends GameObject {
+    public static class VABProgram extends SCSharedGameData {
         private short toneCount;
         private short volume;
         private short priority;
@@ -130,6 +154,10 @@ public class PSXVHFile extends VHAudioHeader {
         private short attribute;
         private int reserved2;
         private int reserved3;
+
+        public VABProgram(SCGameInstance instance) {
+            super(instance);
+        }
 
         @Override
         public void load(DataReader reader) {
@@ -160,7 +188,7 @@ public class PSXVHFile extends VHAudioHeader {
 
     @Getter
     @Setter
-    public static class VABTone extends GameObject {
+    public static class VABTone extends SCSharedGameData {
         private short priority;
         private short mode;
         private short volume = 80;
@@ -185,6 +213,10 @@ public class PSXVHFile extends VHAudioHeader {
         private short reserved4;
         private short reserved5;
         private short reserved6;
+
+        public VABTone(SCGameInstance instance) {
+            super(instance);
+        }
 
         @Override
         public void load(DataReader reader) {
