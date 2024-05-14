@@ -24,7 +24,6 @@ import java.util.List;
  * Represents an instance of MediEvil 2 game files.
  *
  * TODO:
- *  - Audio files are using a slightly different format now.
  *  - Allow viewing maps as a whole.
  *  - Support more sections of a map file.
  *  - New model format support

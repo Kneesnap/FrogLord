@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCPlayStationSoundBankBody.SCPlayStationVabSound;
+import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationMinimalSoundBankHeader.SCPlayStationMinimalSoundBankHeaderEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationVabSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationVabSoundBankHeader.SCPlayStationVabHeaderEntry;
 import net.highwayfrogs.editor.utils.Utils;
@@ -76,9 +77,10 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
             // TODO: Prevent editing everything except sample rate.
         }
 
-        @Override
-        public SCPlayStationVabSoundBankHeader getHeader() {
-            return (SCPlayStationVabSoundBankHeader) super.getHeader();
+        public SCPlayStationVabSound(SCSplitSoundBankBody<?, ?> body, SCPlayStationMinimalSoundBankHeaderEntry headerEntry, int internalTrackId, int expectedReadLength) {
+            super(body, headerEntry, headerEntry.getHeader(), new EditableAudioFormat(11025, 16, 1, true, false), makeGlobalId(body, internalTrackId));
+            this.expectedReadLength = expectedReadLength;
+            // TODO: Prevent editing everything except sample rate.
         }
 
         @Override
@@ -118,7 +120,12 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
 
         @Override
         public void save(DataWriter writer) {
-            getHeader().getLoadedSampleAddresses()[getInternalTrackId()] = writer.getIndex();
+            if (getHeaderEntry() instanceof SCPlayStationMinimalSoundBankHeaderEntry) {
+                ((SCPlayStationMinimalSoundBankHeaderEntry) getHeaderEntry()).setDataStartAddress(writer.getIndex());
+            } else if (getHeader() instanceof SCPlayStationVabSoundBankHeader) {
+                ((SCPlayStationVabSoundBankHeader) getHeader()).getLoadedSampleAddresses()[getInternalTrackId()] = writer.getIndex();
+            }
+
             writer.writeNull(16);
             writer.writeBytes(this.audioData);
         }

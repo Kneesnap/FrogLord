@@ -12,9 +12,11 @@ import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVBFile;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVHFile;
+import net.highwayfrogs.editor.games.sony.shared.sound.body.SCPlayStationMinimalSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCPlayStationSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsPreReleaseSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsRetailSoundBankBody;
+import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationMinimalSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationVabSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
@@ -166,7 +168,7 @@ public class SCUtils {
 
             return newHeaderFile;
         } else if (lastSoundHeader != null || fileEntry.hasExtension("vb")) {
-            SCSplitSoundBankBody<?, ?> newBody = createSoundBankBody(fileEntry, instance);
+            SCSplitSoundBankBody<?, ?> newBody = createSoundBankBody(instance, fileEntry);
             SCSplitVBFile newBodyFile = new SCSplitVBFile(fileEntry.getGameInstance(), newBody);
             if (doFileNamesMatch && lastSoundHeader != null && lastSoundHeader.getSoundBank() == null)
                 newBodyFile.createSoundBank(lastSoundHeader);
@@ -178,21 +180,25 @@ public class SCUtils {
     }
 
     private static SCSplitSoundBankHeader<?, ?> createSoundHeaderBody(SCGameInstance instance) {
-        if (instance.isPSX()) {
+        if (instance.isPSX() && instance.getGameType().isAtLeast(SCGameType.MEDIEVIL2)) {
+            return new SCPlayStationMinimalSoundBankHeader(instance);
+        } else if (instance.isPSX()) {
             return new SCPlayStationVabSoundBankHeader(instance);
         } else {
             return new SCWindowsSoundBankHeader<>(instance);
         }
     }
 
-    private static SCSplitSoundBankBody<?, ?> createSoundBankBody(FileEntry fileEntry, SCGameInstance instance) {
+    private static SCSplitSoundBankBody<?, ?> createSoundBankBody(SCGameInstance instance, FileEntry fileEntry) {
         String fileName = fileEntry.getDisplayName();
-        if (instance.isPSX()) {
-            return new SCPlayStationSoundBankBody(fileEntry.getGameInstance(), fileName);
+        if (instance.isPSX() && instance.getGameType().isAtLeast(SCGameType.MEDIEVIL2)) {
+            return new SCPlayStationMinimalSoundBankBody(instance, fileName);
+        } else if (instance.isPSX()) {
+            return new SCPlayStationSoundBankBody(instance, fileName);
         } else if (instance.isFrogger() && !((FroggerGameInstance) instance).getConfig().isAtLeastRetailWindows()) {
-            return new SCWindowsPreReleaseSoundBankBody(fileEntry.getGameInstance(), fileName);
+            return new SCWindowsPreReleaseSoundBankBody(instance, fileName);
         } else {
-            return new SCWindowsRetailSoundBankBody(fileEntry.getGameInstance(), fileName);
+            return new SCWindowsRetailSoundBankBody(instance, fileName);
         }
     }
 
