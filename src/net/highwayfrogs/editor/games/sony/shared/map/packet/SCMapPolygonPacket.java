@@ -10,6 +10,8 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFilePacket;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -21,7 +23,7 @@ import java.util.logging.Logger;
  * Created by Kneesnap on 5/7/2024.
  */
 @Getter
-public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SCMapFilePacket<SCMapFile<TGameInstance>, TGameInstance> {
+public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SCMapFilePacket<SCMapFile<TGameInstance>, TGameInstance> implements IPropertyListCreator {
     public static final String IDENTIFIER = "POLY";
 
     private final List<SCMapPolygon> polygons = new ArrayList<>();
@@ -144,6 +146,14 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
      */
     public SCMapPolygon createPolygon() {
         return new SCMapPolygon(getParentFile());
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("Polygons", this.polygons.size());
+        propertyList.add("Vertices", this.vertices.size());
+        propertyList.add("Texture Uv Pairs", this.uvs.size());
+        return propertyList;
     }
 
     @Getter

@@ -71,7 +71,7 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket {
         for (int i = 0; i < getParentFile().getFilePackets().size(); i++) {
             SCFilePacket<? extends SCChunkedFile<MediEvilGameInstance>, MediEvilGameInstance> filePacket = getParentFile().getFilePackets().get(i);
             if (filePacket.isActive())
-                writer.writeInt(filePacket.getIdentiferInteger());
+                writer.writeInt(filePacket.getIdentifierInteger());
         }
     }
 

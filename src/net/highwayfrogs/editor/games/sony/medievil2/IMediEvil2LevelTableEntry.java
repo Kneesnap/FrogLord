@@ -11,10 +11,10 @@ public interface IMediEvil2LevelTableEntry extends ISCLevelTableEntry {
     /**
      * Gets the map file available.
      */
-    public MediEvil2Map getMapFile();
+    MediEvil2Map getMapFile();
 
     /**
      * Gets the level definition.
      */
-    public MediEvil2LevelDefinition getLevelDefinition();
+    MediEvil2LevelDefinition getLevelDefinition();
 }

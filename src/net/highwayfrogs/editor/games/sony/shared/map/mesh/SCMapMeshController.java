@@ -9,9 +9,13 @@ import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygonPacket;
+import net.highwayfrogs.editor.games.sony.shared.map.ui.SCMapEntityManager;
+import net.highwayfrogs.editor.games.sony.shared.map.ui.SCMapSectionManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
@@ -20,13 +24,14 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Represents a map mesh controller for one of the later Sony Cambridge PSX games.
  * Created by Kneesnap on 5/8/2024.
  */
 @Getter
-public class SCMapMeshController extends MeshViewController<SCMapMesh> {
+public class SCMapMeshController<TMapMesh extends SCMapMesh> extends MeshViewController<TMapMesh> {
     private static final double DEFAULT_FAR_CLIP = 5000;
     private static final double DEFAULT_MOVEMENT_SPEED = 250;
     private DisplayList vertexDisplayList;
@@ -79,7 +84,7 @@ public class SCMapMeshController extends MeshViewController<SCMapMesh> {
                 getLogger().info("Face " + result.getIntersectedFace() + ":");
                 for (int localVtxId = 0; localVtxId < mapPolygon.getVertexCount(); localVtxId++) {
                     int mapVertexId = mapPolygon.getVertices()[localVtxId];
-                    SVector vertex = getMap().getPolygonPacket().getVertices().get(mapVertexId);
+                    SVector vertex = mapMesh.getMap().getPolygonPacket().getVertices().get(mapVertexId);
                     getLogger().info(" Vertex " + localVtxId + "/" + mapVertexId + " -> Pad: " + Utils.toHexString(vertex.getUnsignedPadding()));
                 }
             }
@@ -88,7 +93,26 @@ public class SCMapMeshController extends MeshViewController<SCMapMesh> {
 
     @Override
     protected void setupManagers() {
+        if (isPacketActiveInSelfOrParent(SCMapFile::getEntityPacket))
+            addManager(new SCMapEntityManager<>(this));
+        if (getMap().isParentMap())
+            addManager(new SCMapSectionManager<>(this));
         // TODO: Setup managers.
+    }
+
+    /**
+     * Test if a packet is active in the active map or the parent map.
+     * @param packetGetter The getter logic.
+     * @return is the packet active in either
+     */
+    protected boolean isPacketActiveInSelfOrParent(Function<SCMapFile<? extends SCGameInstance>, SCFilePacket<? extends SCMapFile<? extends SCGameInstance>, ? extends SCGameInstance>> packetGetter) {
+        SCFilePacket<? extends SCMapFile<? extends SCGameInstance>, ? extends SCGameInstance> packet = packetGetter.apply(getMap());
+        if (packet != null && packet.isActive())
+            return true;
+
+        SCMapFile<? extends SCGameInstance> parentMapFile = getMap().getParentMap();
+        packet = parentMapFile != null ? packetGetter.apply(parentMapFile) : null;
+        return packet != null && packet.isActive();
     }
 
     @Override
@@ -118,7 +142,7 @@ public class SCMapMeshController extends MeshViewController<SCMapMesh> {
     /**
      * Gets the map file which the mesh represents.
      */
-    public SCMapFile<?> getMap() {
+    public SCMapFile<? extends SCGameInstance> getMap() {
         return getMesh().getMap();
     }
 }

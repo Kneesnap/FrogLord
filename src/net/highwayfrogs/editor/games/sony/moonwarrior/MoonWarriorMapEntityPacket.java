@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFilePacket;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -17,7 +19,7 @@ import java.util.List;
  * Created by Kneesnap on 5/12/2024.
  */
 @Getter
-public class MoonWarriorMapEntityPacket extends SCMapFilePacket<MoonWarriorMap, MoonWarriorInstance> {
+public class MoonWarriorMapEntityPacket extends SCMapFilePacket<MoonWarriorMap, MoonWarriorInstance> implements IPropertyListCreator {
     private static final String IDENTIFIER = "MWEN"; // Moon Warrior Entities?
     private final List<MoonWarriorEntity> entities = new ArrayList<>();
 
@@ -51,6 +53,12 @@ public class MoonWarriorMapEntityPacket extends SCMapFilePacket<MoonWarriorMap, 
         // Write entities.
         for (int i = 0; i < this.entities.size(); i++)
             this.entities.get(i).save(writer);
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("Entity Count", this.entities.size());
+        return propertyList;
     }
 
     /**

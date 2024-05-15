@@ -4,10 +4,13 @@ import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
@@ -21,7 +24,6 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FileUtils3D;
@@ -70,8 +72,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
 
     private void updateEntryText() {
         entryList.setCellFactory(null);
-        entryList.setCellFactory(param ->
-                new AbstractAttachmentCell<>((wadEntry, index) -> wadEntry != null ? "[" + index + "/" + wadEntry.getFileEntry().getResourceId() + "] " + wadEntry.getDisplayName() : null));
+        entryList.setCellFactory(param -> new WADEntryListCell());
     }
 
     /**
@@ -207,5 +208,32 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
         PropertyList properties = this.selectedEntry.getFile().createPropertyList();
         if (properties != null)
             properties.apply(this.tableFileData);
+    }
+
+    private static class WADEntryListCell extends ListCell<WADEntry> {
+        @Override
+        public void updateItem(WADEntry wadEntry, boolean empty) {
+            super.updateItem(wadEntry, empty);
+            if (empty) {
+                setGraphic(null);
+                setText(null);
+                return;
+            }
+
+            // Apply icon.
+            SCGameFile<?> wadEntryFile = wadEntry.getFile();
+            Image iconImage = wadEntryFile.getCollectionViewIcon();
+            ImageView iconView = iconImage != null ? new ImageView(iconImage) : null;
+            if (iconView != null) {
+                iconView.setFitWidth(15);
+                iconView.setFitHeight(15);
+            }
+
+            setGraphic(iconView);
+
+            // Update text.
+            setStyle(wadEntryFile.getCollectionViewDisplayStyle());
+            setText("[" + getIndex() + "/" + wadEntry.getResourceId() + "] " + wadEntry.getDisplayName());
+        }
     }
 }

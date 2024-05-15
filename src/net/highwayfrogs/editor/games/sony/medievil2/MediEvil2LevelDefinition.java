@@ -129,6 +129,13 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
             }
         }
 
+        SCGameFile<?> gameFile = getGameInstance().getGameFile(this.wadResourceId);
+        if (gameFile instanceof MediEvil2Map) {
+            return (MediEvil2Map) gameFile;
+        } else {
+            getLogger().warning("Don't know how to interpret " + Utils.getSimpleName(gameFile) + "/" + gameFile.getFileDisplayName() + " as a map file.");
+        }
+
         // Couldn't find.
         return null;
     }

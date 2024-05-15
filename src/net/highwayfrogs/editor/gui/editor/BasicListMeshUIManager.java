@@ -31,6 +31,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     private Label valueCountLabel;
     private ComboBox<ListDisplayType> valueDisplaySetting;
     private ComboBox<TValue> valueSelectionBox;
+    private Button addValueButton;
     private Button removeValueButton;
 
     private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
@@ -87,8 +88,8 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         this.setupMainGridEditor(sidePanel);
 
         // Value Creation Button
-        Button addValueButton = new Button("Add " + getValueName());
-        addValueButton.setOnAction(evt -> {
+        this.addValueButton = new Button("Add " + getValueName());
+        this.addValueButton.setOnAction(evt -> {
             TValue newValue = createNewValue();
             if (newValue == null)
                 return; // Don't add a new value.
@@ -99,8 +100,8 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
             updateValuesInUI();
             this.valueSelectionBox.getSelectionModel().selectLast();
         });
-        addValueButton.setAlignment(Pos.CENTER);
-        this.mainGrid.setupNode(addValueButton);
+        this.addValueButton.setAlignment(Pos.CENTER);
+        this.mainGrid.setupNode(this.addValueButton);
 
         // Value Removal Button
         this.removeValueButton = new Button("Remove " + getValueName());

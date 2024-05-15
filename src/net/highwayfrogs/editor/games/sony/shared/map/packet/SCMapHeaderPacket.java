@@ -63,7 +63,7 @@ public class SCMapHeaderPacket<TGameInstance extends SCGameInstance> extends SCM
         for (int i = 0; i < getParentFile().getFilePackets().size(); i++) {
             SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> filePacket = getParentFile().getFilePackets().get(i);
             if (filePacket.isActive())
-                writer.writeInt(filePacket.getIdentiferInteger());
+                writer.writeInt(filePacket.getIdentifierInteger());
         }
     }
 
