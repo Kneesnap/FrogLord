@@ -98,7 +98,7 @@ public class FroggerGameInstance extends SCGameInstance {
         } else if (fileEntry.getTypeId() == FILE_TYPE_DEMO_DATA || fileEntry.hasExtension("dat")) {
             return new DemoFile(this);
         } else if (fileEntry.getTypeId() == FILE_TYPE_SOUND) {
-            return SCUtils.makeSound(fileEntry, fileData);
+            return SCUtils.makeSound(fileEntry, fileData, null);
         } else if (fileEntry.getTypeId() == FILE_TYPE_MOF || fileEntry.getTypeId() == FILE_TYPE_MAPMOF) {
             MOFHolder newMof = SCUtils.makeMofHolder(fileEntry);
             // TODO: Find the WAD file holding the current resource, then set the theme to be that wad file's theme.

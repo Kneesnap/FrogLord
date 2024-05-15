@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.sony.SCUtils.SCForcedLoadSoundFileType;
 import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2LevelDefinition.MediEvil2LevelSectionDefinition;
 import net.highwayfrogs.editor.games.sony.medievil2.map.MediEvil2Map;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
@@ -53,10 +54,15 @@ public class MediEvil2GameInstance extends SCGameInstance {
     public SCGameFile<?> createFile(MWIFile.FileEntry fileEntry, byte[] fileData) {
         // TODO: SKEL, ANIM, STAT.
 
-        if (fileEntry.getTypeId() == FILE_TYPE_MAP || fileEntry.getTypeId() == FILE_TYPE_MAP_ALTERNATE)
+        if (fileEntry.getTypeId() == FILE_TYPE_MAP || fileEntry.getTypeId() == FILE_TYPE_MAP_ALTERNATE) {
             return new MediEvil2Map(this);
-
-        return SCUtils.createSharedGameFile(fileEntry, fileData, isSoundFile(fileEntry.getTypeId()));
+        } else if (fileEntry.getTypeId() == FILE_TYPE_VB || fileEntry.getTypeId() == FILE_TYPE_VB_ALTERNATE) {
+            return SCUtils.makeSound(fileEntry, fileData, SCForcedLoadSoundFileType.BODY);
+        } else if (fileEntry.getTypeId() == FILE_TYPE_VH) {
+            return SCUtils.makeSound(fileEntry, fileData, SCForcedLoadSoundFileType.HEADER);
+        } else {
+            return SCUtils.createSharedGameFile(fileEntry, fileData);
+        }
     }
 
     @Override
@@ -90,7 +96,7 @@ public class MediEvil2GameInstance extends SCGameInstance {
         fileListView.addGroup(new LazySCGameFileListGroup("Map Data", (file, index) -> file instanceof SCMapFile<?>));
         fileListView.addGroup(new LazySCGameFileListGroup("Model Files", (file, index) -> index.getTypeId() == FILE_TYPE_ANIM || index.getTypeId() == FILE_TYPE_SKEL || index.getTypeId() == FILE_TYPE_STAT));
         fileListView.addGroup(new LazySCGameFileListGroup("PSX TIM Images", (file, index) -> file instanceof PSXTIMFile));
-        fileListView.addGroup(new LazySCGameFileListGroup("SFX Banks", (file, index) -> isSoundFile(index.getTypeId())));
+        fileListView.addGroup(new LazySCGameFileListGroup("SFX Banks", (file, index) -> index.getTypeId() == FILE_TYPE_VH || index.getTypeId() == FILE_TYPE_VB || index.getTypeId() == FILE_TYPE_VB_ALTERNATE));
     }
 
     private void readLevelTable(DataReader reader) {
@@ -105,9 +111,5 @@ public class MediEvil2GameInstance extends SCGameInstance {
             levelDefinition.load(reader);
             this.levelTable.add(levelDefinition);
         }
-    }
-
-    private static boolean isSoundFile(int typeId) {
-        return typeId == FILE_TYPE_VH || typeId == FILE_TYPE_VB || typeId == FILE_TYPE_VB_ALTERNATE;
     }
 }

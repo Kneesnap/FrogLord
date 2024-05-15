@@ -34,17 +34,6 @@ public class SCUtils {
      * @return newGameFile
      */
     public static SCGameFile<?> createSharedGameFile(FileEntry fileEntry, byte[] fileData) {
-        return createSharedGameFile(fileEntry, fileData, false);
-    }
-
-    /**
-     * Creates a game file from formats seen between different games.
-     * @param fileEntry The entry to create a game file from.
-     * @param fileData  The file data to create files from. Can be null.
-     * @param forceSoundFile If the file should be forced to be treated as a sound file.
-     * @return newGameFile
-     */
-    public static SCGameFile<?> createSharedGameFile(FileEntry fileEntry, byte[] fileData, boolean forceSoundFile) {
         SCGameInstance instance = fileEntry.getGameInstance();
         String vloSignature;
         switch (instance.getPlatform()) {
@@ -65,7 +54,7 @@ public class SCUtils {
             if (instance.getGameType().isBefore(SCGameType.MOONWARRIOR) && (Utils.testSignature(fileData, MOFHolder.DUMMY_DATA) || Utils.testSignature(fileData, MOFFile.SIGNATURE)) || MOFAnimation.testSignature(fileData))
                 return makeMofHolder(fileEntry);
             if (instance.isPSX() && Utils.testSignature(fileData, SCPlayStationVabSoundBankHeader.PSX_SIGNATURE))
-                return makeSound(fileEntry, fileData);
+                return makeSound(fileEntry, fileData, SCForcedLoadSoundFileType.HEADER);
         } else {
             if (fileEntry.hasExtension("vlo"))
                 return new VLOArchive(fileEntry.getGameInstance());
@@ -73,8 +62,8 @@ public class SCUtils {
                 return makeMofHolder(fileEntry);
         }
 
-        if (fileEntry.hasExtension("vh") || fileEntry.hasExtension("vb") || forceSoundFile)
-            return makeSound(fileEntry, fileData);
+        if (fileEntry.hasExtension("vh") || fileEntry.hasExtension("vb"))
+            return makeSound(fileEntry, fileData, null);
 
         if (fileEntry.getTypeId() == WADFile.TYPE_ID)
             return new WADFile(instance); // I think this is consistent across different games.
@@ -129,12 +118,16 @@ public class SCUtils {
      * @param fileData  The contents of the file to test.
      * @return mofHolder
      */
-    public static SCGameFile<?> makeSound(FileEntry fileEntry, byte[] fileData) {
+    public static SCGameFile<?> makeSound(FileEntry fileEntry, byte[] fileData, SCForcedLoadSoundFileType forcedType) {
         SCGameInstance instance = fileEntry.getGameInstance();
         SCGameFile<?> lastFile = instance.getGameFile(fileEntry.getResourceId() - 1);
+        SCGameFile<?> nextFile = instance.getGameFile(fileEntry.getResourceId() + 1);
         FileEntry lastEntry = lastFile != null ? lastFile.getIndexEntry() : null;
-        boolean doFileNamesMatch = (lastFile != null) && ((!lastEntry.hasFullFilePath() || !fileEntry.hasFullFilePath())
+        FileEntry nextEntry = nextFile != null ? nextFile.getIndexEntry() : null;
+        boolean lastFileNameMatches = (lastFile != null) && ((!lastEntry.hasFullFilePath() || !fileEntry.hasFullFilePath())
                 || Utils.stripExtension(fileEntry.getDisplayName()).equalsIgnoreCase(Utils.stripExtension(lastEntry.getDisplayName())));
+        boolean nextFileNamesMatches = (nextFile != null) && ((!nextEntry.hasFullFilePath() || !fileEntry.hasFullFilePath())
+                || Utils.stripExtension(fileEntry.getDisplayName()).equalsIgnoreCase(Utils.stripExtension(nextEntry.getDisplayName())));
 
         SCSplitVHFile lastSoundHeader = lastFile instanceof SCSplitVHFile ? (SCSplitVHFile) lastFile : null;
         SCSplitVBFile lastSoundBody = lastFile instanceof SCSplitVBFile ? (SCSplitVBFile) lastFile : null;
@@ -160,23 +153,27 @@ public class SCUtils {
         }
 
         // Create new object.
-        if (lastSoundBody != null || fileEntry.hasExtension("vh") || (instance.isPSX() && Utils.testSignature(fileData, SCPlayStationVabSoundBankHeader.PSX_SIGNATURE))) {
+        if (lastSoundBody != null || fileEntry.hasExtension("vh") || forcedType == SCForcedLoadSoundFileType.HEADER || (instance.isPSX() && Utils.testSignature(fileData, SCPlayStationVabSoundBankHeader.PSX_SIGNATURE))) {
             SCSplitSoundBankHeader<?, ?> newHeader = createSoundHeaderBody(instance);
             SCSplitVHFile newHeaderFile = new SCSplitVHFile(fileEntry.getGameInstance(), newHeader);
-            if (doFileNamesMatch && lastSoundBody != null && lastSoundBody.getSoundBank() == null)
+            if ((lastFileNameMatches || !nextFileNamesMatches) && lastSoundBody != null && lastSoundBody.getSoundBank() == null)
                 newHeaderFile.createSoundBank(lastSoundBody);
 
             return newHeaderFile;
-        } else if (lastSoundHeader != null || fileEntry.hasExtension("vb")) {
+        } else if (lastSoundHeader != null || fileEntry.hasExtension("vb") || forcedType == SCForcedLoadSoundFileType.BODY) {
             SCSplitSoundBankBody<?, ?> newBody = createSoundBankBody(instance, fileEntry);
             SCSplitVBFile newBodyFile = new SCSplitVBFile(fileEntry.getGameInstance(), newBody);
-            if (doFileNamesMatch && lastSoundHeader != null && lastSoundHeader.getSoundBank() == null)
+            if ((lastFileNameMatches || !nextFileNamesMatches) && lastSoundHeader != null && lastSoundHeader.getSoundBank() == null)
                 newBodyFile.createSoundBank(lastSoundHeader);
 
             return newBodyFile;
         }
 
         return null;
+    }
+
+    public enum SCForcedLoadSoundFileType {
+        HEADER, BODY
     }
 
     private static SCSplitSoundBankHeader<?, ?> createSoundHeaderBody(SCGameInstance instance) {

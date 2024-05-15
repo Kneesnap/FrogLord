@@ -81,7 +81,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
         }
 
         // Write section info.
-        getLogger().info("Read level definition:");
+        getLogger().info("Read level definition " + (this.levelRelocName != null ? "'" + this.levelRelocName + "'" : "") + ":");
         getLogger().info(" Resources: " + this.vloResourceId + ", " + this.wadResourceId + ", " + this.timResourceId + ", " + this.levelNameId + ", Sections: " + sectionCount);
         for (MediEvil2LevelSectionDefinition sectionDefinition : this.levelSections)
             getLogger().info(" Section: " + sectionDefinition.getMapResourceId() + ", " + sectionDefinition.getVloResourceId() + " -> " + Utils.toHexString(sectionDefinition.getTextureRemapPointer()));
