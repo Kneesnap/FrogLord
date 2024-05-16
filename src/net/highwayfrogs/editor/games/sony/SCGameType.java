@@ -31,27 +31,28 @@ import java.util.function.Supplier;
  * A registry of different game types supported by FrogLord by Sony Cambridge.
  * Created by Kneesnap on 9/6/2023.
  */
-@Getter
 public enum SCGameType implements IGameType {
     //HEADRUSH(null), // Aka Brains In Planes
-    OLD_FROGGER(OldFroggerGameInstance::new, OldFroggerConfig::new),
-    BEAST_WARS(BeastWarsInstance::new, BeastWarsConfig::new),
-    FROGGER(FroggerGameInstance::new, FroggerConfig::new),
+    OLD_FROGGER("Old Frogger (Pre-Recode)", OldFroggerGameInstance::new, OldFroggerConfig::new),
+    BEAST_WARS("Beast Wars: Transformers", BeastWarsInstance::new, BeastWarsConfig::new),
+    FROGGER("Frogger: He's Back", FroggerGameInstance::new, FroggerConfig::new),
     //TAX_MAN(null),
-    MEDIEVIL(MediEvilGameInstance::new, MediEvilConfig::new),
+    MEDIEVIL("MediEvil", MediEvilGameInstance::new, MediEvilConfig::new),
     //COMMON_TALES(null),
-    MOONWARRIOR(MoonWarriorInstance::new, null),
-    MEDIEVIL2(MediEvil2GameInstance::new, MediEvil2Config::new),
-    C12(null, null);
+    MOONWARRIOR("Moon Warrior", MoonWarriorInstance::new, null),
+    MEDIEVIL2("MediEvil II", MediEvil2GameInstance::new, MediEvil2Config::new),
+    C12("C-12: Final Resistance", null, null);
 
+    @Getter private final String displayName;
     private final Supplier<SCGameInstance> instanceMaker;
     private final Function<String, SCGameConfig> configMaker;
-    private final String identifier;
+    @Getter private final String identifier;
 
     public static final String CONFIG_MWD_PATH = "mwdFilePath";
     public static final String CONFIG_EXE_PATH = "executableFilePath";
 
-    SCGameType(Supplier<SCGameInstance> instanceMaker, Function<String, SCGameConfig> configMaker) {
+    SCGameType(String displayName, Supplier<SCGameInstance> instanceMaker, Function<String, SCGameConfig> configMaker) {
+        this.displayName = displayName;
         this.instanceMaker = instanceMaker;
         this.configMaker = configMaker;
         this.identifier = name().toLowerCase(Locale.ROOT).replace("_", "");
@@ -79,11 +80,6 @@ public enum SCGameType implements IGameType {
         if (otherType == null)
             throw new RuntimeException("Cannot compare to null game type.");
         return otherType.ordinal() > ordinal();
-    }
-
-    @Override
-    public String getDisplayName() {
-        return Utils.capitalize(name());
     }
 
     @Override
