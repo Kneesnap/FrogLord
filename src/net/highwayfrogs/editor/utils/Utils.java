@@ -1854,7 +1854,8 @@ public class Utils {
         if (logger != null) {
             if (formattedMessage != null)
                 logger.severe(formattedMessage);
-            logger.throwing(callingClass != null ? callingClass.getSimpleName() : null, callingMethodName, th);
+            if (th != null)
+                logger.throwing(callingClass != null ? callingClass.getSimpleName() : null, callingMethodName, th);
         } else {
             System.err.println(formattedMessage);
             if (th != null)

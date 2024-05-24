@@ -24,12 +24,9 @@ public class ConsoleOutputHandler extends StreamHandler {
         if (!isLoggable(record))
             return;
 
-        boolean isError = record.getThrown() != null;
-        if (this.outputStream.isError() != isError)
-            this.flush();
-
-        this.outputStream.setError(isError);
-        super.publish(record); // Write to System.out
+        this.outputStream.setError(record.getThrown() != null);
+        super.publish(record); // Write to System.out/System.err
+        this.flush();
     }
 
     @Override
@@ -53,6 +50,15 @@ public class ConsoleOutputHandler extends StreamHandler {
                 System.err.write(b);
             } else {
                 System.out.write(b);
+            }
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            if (this.error) {
+                System.err.write(b, off, len);
+            } else {
+                System.out.write(b, off, len);
             }
         }
     }
