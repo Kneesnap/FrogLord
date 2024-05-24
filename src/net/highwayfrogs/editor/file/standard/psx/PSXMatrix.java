@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.file.standard.psx;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
@@ -12,6 +11,8 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.util.Arrays;
+
 /**
  * Represents a MR_MAT struct, which is based on the PSX "MATRIX" struct in libgte.h.
  * Created by Kneesnap on 8/24/2018.
@@ -19,7 +20,6 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 public class PSXMatrix extends GameObject {
     private short[][] matrix = new short[DIMENSION][DIMENSION]; // 3x3 Rotation Matrix.
     private int[] transform = new int[DIMENSION]; // Transform vector.
@@ -28,6 +28,25 @@ public class PSXMatrix extends GameObject {
     private static final int DIMENSION = 3;
     public static final int BYTE_SIZE = (DIMENSION * DIMENSION * Constants.SHORT_SIZE) + (DIMENSION * Constants.INTEGER_SIZE) + Constants.SHORT_SIZE;
     public static final PSXMatrix IDENTITY = newIdentityMatrix();
+
+    public PSXMatrix() {
+        // Initialise to an identity matrix.
+        this.matrix[0][0] = 4096;
+        this.matrix[1][1] = 4096;
+        this.matrix[2][2] = 4096;
+    }
+
+    /**
+     * Become an identity matrix.
+     */
+    public void setIdentity() {
+        for (int i = 0; i < this.matrix.length; i++)
+            Arrays.fill(this.matrix[i], (short) 0);
+        Arrays.fill(this.transform, 0);
+        this.matrix[0][0] = (short) 4096;
+        this.matrix[1][1] = (short) 4096;
+        this.matrix[2][2] = (short) 4096;
+    }
 
     @Override
     public void load(DataReader reader) {
@@ -60,6 +79,25 @@ public class PSXMatrix extends GameObject {
      */
     public SVector toVector() {
         return new SVector((short) getTransform()[0], (short) getTransform()[1], (short) getTransform()[2]);
+    }
+
+    /**
+     * Returns the transpose of this matrix.
+     */
+    public PSXMatrix transpose() {
+        return this.transpose(new PSXMatrix());
+    }
+
+    /**
+     * Calculates the transpose of this matrix, storing it in the result parameter.
+     * @param result The matrix to store the transpose result in.
+     */
+    public PSXMatrix transpose(PSXMatrix result) {
+        for (int y = 0; y < this.matrix.length; y++)
+            for (int x = 0; x < this.matrix[y].length; x++)
+                result.matrix[x][y] = this.matrix[y][x];
+
+        return result;
     }
 
     /**
@@ -175,7 +213,7 @@ public class PSXMatrix extends GameObject {
         for (int i = 0; i < DIMENSION; i++)
             for (int j = 0; j < DIMENSION; j++)
                 for (int k = 0; k < DIMENSION; k++)
-                    tmpMtx.matrix[i][j] += ((b.matrix[k][j] * a.matrix[i][k]) >> 12);
+                    tmpMtx.matrix[i][j] += (short) ((b.matrix[k][j] * a.matrix[i][k]) >> 12);
 
         // Copy values across to output matrix
         c.setTransform(tmpMtx.getTransform());

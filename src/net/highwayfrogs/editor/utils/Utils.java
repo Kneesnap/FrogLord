@@ -1822,6 +1822,7 @@ public class Utils {
      * @param message the message to accompany the exception
      * @param arguments format string arguments to the message
      */
+    @SuppressWarnings("CallToPrintStackTrace")
     public static void handleError(Logger logger, Throwable th, boolean showWindow, int skipCount, String message, Object... arguments) {
         // TODO: Should generalize? Probably?
         // TODO: JAva 9 -> StackWalker.getCallerClass()
@@ -1860,15 +1861,6 @@ public class Utils {
                 th.printStackTrace();
         }
 
-        // Wait a millisecond to ensure logging doesn't separate messages.
-        if (th != null && Platform.isFxApplicationThread()) {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException ex) {
-                // Do nothing.
-            }
-        }
-
         // Create popup window.
         if (showWindow) {
             if (Platform.isFxApplicationThread()) {
@@ -1902,7 +1894,7 @@ public class Utils {
      * @param ex      The exception which caused the error.
      */
     public static void makeErrorPopUp(String message, Throwable ex, boolean printException) {
-        String errorMessage = (message != null && message.length() > 0 ? message + Constants.NEWLINE : "") + "Error: " + ex.getMessage();
+        String errorMessage = (message != null && message.length() > 0 ? message + Constants.NEWLINE : "") + "Error: " + (ex != null ? ex.getMessage() : "null");
         if (printException) {
             handleError(null, ex, true, errorMessage);
         } else {
@@ -2262,5 +2254,25 @@ public class Utils {
             len--;
 
         return (len < input.length()) ? input.substring(0, len) : input;
+    }
+
+    /**
+     * Tests a value for bits outside the supplied mask, warning if found.
+     * @param logger The logger to log the warning to.
+     * @param value The value to test
+     * @param mask The bit mask to test against.
+     * @param target A display string representing the data type.
+     * @return true iff there are no unsupported bits.
+     */
+    public static boolean warnAboutInvalidBitFlags(Logger logger, long value, long mask, String target) {
+        if ((value & ~mask) == 0)
+            return true;
+
+        if (target != null) {
+            logger.warning(target + " had bit flag value " + toHexString(value) + ", which contained unhandled bits.");
+        } else {
+            logger.warning("Bit flag value " + toHexString(value) + " had unexpected bits set!");
+        }
+        return false;
     }
 }

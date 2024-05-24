@@ -96,7 +96,10 @@ public class MWDFile extends SCSharedGameData {
             this.files.add(file);
 
             try {
-                file.load(new DataReader(new ArraySource(fileBytes)));
+                DataReader singleFileReader = new DataReader(new ArraySource(fileBytes));
+                file.load(singleFileReader);
+                if (singleFileReader.hasMore()) // Warn if the full file is not read.
+                    file.getLogger().warning("File contents were read to index " + Utils.toHexString(singleFileReader.getIndex()) + ", leaving " + singleFileReader.getRemaining() + " bytes unread. (Length: " + Utils.toHexString(reader.getSize()) + ")");
             } catch (Exception ex) {
                 Utils.handleError(getLogger(), ex, false, "Failed to load %s (%d)", entry.getDisplayName(), entry.getResourceId());
             }

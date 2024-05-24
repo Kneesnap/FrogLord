@@ -8,6 +8,9 @@ import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile;
+import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonFile;
+import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticFile;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVBFile;
@@ -51,10 +54,22 @@ public class SCUtils {
         if (fileData != null) {
             if (Utils.testSignature(fileData, vloSignature))
                 return new VLOArchive(fileEntry.getGameInstance());
-            if (instance.getGameType().isBefore(SCGameType.MOONWARRIOR) && (Utils.testSignature(fileData, MOFHolder.DUMMY_DATA) || Utils.testSignature(fileData, MOFFile.SIGNATURE)) || MOFAnimation.testSignature(fileData))
-                return makeMofHolder(fileEntry);
+
             if (instance.isPSX() && Utils.testSignature(fileData, SCPlayStationVabSoundBankHeader.PSX_SIGNATURE))
                 return makeSound(fileEntry, fileData, SCForcedLoadSoundFileType.HEADER);
+
+            // 3D models.
+            if (instance.getGameType().isAtLeast(SCGameType.MOONWARRIOR)) {
+                if (Utils.testSignature(fileData, PTStaticFile.IDENTIFIER_STRING))
+                    return new PTStaticFile(fileEntry.getGameInstance());
+                if (Utils.testSignature(fileData, PTSkeletonFile.IDENTIFIER_STRING))
+                    return new PTSkeletonFile(fileEntry.getGameInstance());
+                if (Utils.testSignature(fileData, PTActionSetFile.IDENTIFIER_STRING))
+                    return new PTActionSetFile(fileEntry.getGameInstance());
+            } else {
+                if (Utils.testSignature(fileData, MOFHolder.DUMMY_DATA) || Utils.testSignature(fileData, MOFFile.SIGNATURE) || MOFAnimation.testSignature(fileData))
+                    return makeMofHolder(fileEntry);
+            }
         } else {
             if (fileEntry.hasExtension("vlo"))
                 return new VLOArchive(fileEntry.getGameInstance());

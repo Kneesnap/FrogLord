@@ -81,6 +81,16 @@ public class SVector extends GameObject implements Vector {
     }
 
     /**
+     * Clears the contents of the vector.
+     */
+    public void clear() {
+        this.x = (short) 0;
+        this.y = (short) 0;
+        this.z = (short) 0;
+        this.padding = (short) 0;
+    }
+
+    /**
      * Set the values of this vector.
      * @param x The x value to set.
      * @param y The y value to set.

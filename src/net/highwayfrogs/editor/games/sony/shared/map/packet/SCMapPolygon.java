@@ -301,7 +301,7 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
         if (enableGouraudShading && polygonPacket != null) {
             for (int i = 0; i < colors.length; i++) {
                 SVector vertex = polygonPacket.getVertices().get(this.vertices[i]);
-                colors[i] = fromPackedShort(vertex.getUnsignedPadding(), polygonType, isSemiTransparent);
+                colors[i] = fromPackedShort(vertex.getPadding(), polygonType, isSemiTransparent);
             }
         } else {
             Arrays.fill(colors, UNSHADED_COLOR);
@@ -310,28 +310,6 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
         // Create definition.
         ITextureSource textureSource = polygonType.isTextured() ? getTexture(levelTableEntry) : null;
         return new PSXShadeTextureDefinition(polygonType, textureSource, colors, uvs, isSemiTransparent, false);
-    }
-
-    private static CVector fromPackedShort(int packedColor, PSXPolygonType polygonType, boolean isSemiTransparent) {
-        // Process padding into color value.
-        short red = (short) ((packedColor & 0x1F) << 3);
-        short green = (short) (((packedColor >> 5) & 0x1F) << 3);
-        short blue = (short) (((packedColor >> 10) & 0x1F) << 3);
-        int rgbColor = Utils.toRGB(Utils.unsignedShortToByte(red), Utils.unsignedShortToByte(green), Utils.unsignedShortToByte(blue));
-
-        // Calculate GPU code.
-        byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING | CVector.FLAG_MODULATION;
-        if (polygonType.isQuad())
-            gpuCode |= CVector.FLAG_QUAD;
-        if (polygonType.isTextured())
-            gpuCode |= CVector.FLAG_TEXTURED;
-        if (isSemiTransparent)
-            gpuCode |= CVector.FLAG_SEMI_TRANSPARENT;
-
-        // Create color.
-        CVector loadedColor = CVector.makeColorFromRGB(rgbColor);
-        loadedColor.setCode(gpuCode);
-        return loadedColor;
     }
 
     /**
@@ -380,7 +358,43 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
         }
     }
 
-    private static short toPackedShort(CVector color) {
+    /**
+     * Process a packed color value into a CVector.
+     * The packed color is in the form used by Moon Warrior & MediEvil II.
+     * @param packedColor the color to load from.
+     * @param polygonType the polygon type to generate the code from.
+     * @param isSemiTransparent whether this color is rendered with semi-transparent mode.
+     * @return colorVector
+     */
+    public static CVector fromPackedShort(short packedColor, PSXPolygonType polygonType, boolean isSemiTransparent) {
+        // Process padding into color value.
+        short red = (short) ((packedColor & 0x1F) << 3);
+        short green = (short) (((packedColor >> 5) & 0x1F) << 3);
+        short blue = (short) (((packedColor >> 10) & 0x1F) << 3);
+        int rgbColor = Utils.toRGB(Utils.unsignedShortToByte(red), Utils.unsignedShortToByte(green), Utils.unsignedShortToByte(blue));
+
+        // Calculate GPU code.
+        byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING | CVector.FLAG_MODULATION;
+        if (polygonType.isQuad())
+            gpuCode |= CVector.FLAG_QUAD;
+        if (polygonType.isTextured())
+            gpuCode |= CVector.FLAG_TEXTURED;
+        if (isSemiTransparent)
+            gpuCode |= CVector.FLAG_SEMI_TRANSPARENT;
+
+        // Create color.
+        CVector loadedColor = CVector.makeColorFromRGB(rgbColor);
+        loadedColor.setCode(gpuCode);
+        return loadedColor;
+    }
+
+    /**
+     * Convert the provided color vector to a packed color value.
+     * The packed color is in the form used by Moon Warrior & MediEvil II.
+     * @param color the color to pack
+     * @return packedColor
+     */
+    public static short toPackedShort(CVector color) {
         return (short) (((color.getBlueShort() & 0b11111000) << 7) | ((color.getGreenShort() & 0b11111000) << 2)
                 | (color.getRedShort() & 0b11111000) >>> 3);
     }

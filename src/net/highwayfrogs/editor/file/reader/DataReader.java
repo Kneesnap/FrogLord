@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Stack;
+import java.util.logging.Logger;
 
 /**
  * A tool for reading information from a data source.
@@ -190,6 +191,19 @@ public class DataReader {
     public void verifyString(String verify) {
         String str = readString(verify.getBytes().length);
         Utils.verify(str.equals(verify), "String verify failure! \"%s\" does not match \"%s\".", str, verify);
+    }
+
+    /**
+     * Requires the reader to be at a given index.
+     * @param logger the logger to warn if not at the index.
+     * @param desiredIndex the index to require.
+     * @param messagePrefix The message to print for a warning.
+     */
+    public void requireIndex(Logger logger, int desiredIndex, String messagePrefix) {
+        if (getIndex() != desiredIndex) {
+            logger.warning(messagePrefix + " at " + Utils.toHexString(getIndex()) + ", but it actually started at " + Utils.toHexString(desiredIndex) + ".");
+            setIndex(desiredIndex);
+        }
     }
 
     /**

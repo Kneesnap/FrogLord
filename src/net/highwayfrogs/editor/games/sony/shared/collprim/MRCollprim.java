@@ -30,7 +30,7 @@ import java.util.function.Consumer;
  */
 @Getter
 @Setter
-public abstract class MRCollprim extends SCSharedGameData {
+public abstract class MRCollprim extends SCSharedGameData implements ICollprim {
     private CollprimType type = CollprimType.CUBOID;
     private int flags;
     private final SVector offset = new SVector();

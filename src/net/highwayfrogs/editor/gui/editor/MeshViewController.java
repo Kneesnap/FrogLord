@@ -57,6 +57,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     @FXML private Accordion accordionLeft;
 
     // Control Settings Pane.
+    @FXML private Label meshNameLabel;
     @FXML private CheckBox checkBoxShowAxis;
     @FXML private CheckBox checkBoxShowMesh;
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
@@ -381,6 +382,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.colorPickerLevelBackground.setValue((Color) this.subScene.getFill());
         this.subScene.fillProperty().bind(this.colorPickerLevelBackground.valueProperty());
 
+        this.meshNameLabel.setText(getMeshDisplayName());
         this.textFieldCamMoveSpeed.textProperty().bindBidirectional(this.firstPersonCamera.getCamMoveSpeedProperty(), NUM_TO_STRING_CONVERTER);
         this.textFieldCamMouseSpeed.textProperty().bindBidirectional(this.firstPersonCamera.getCamMouseSpeedProperty(), NUM_TO_STRING_CONVERTER);
         this.textFieldCamSpeedDownMultiplier.textProperty().bindBidirectional(this.firstPersonCamera.getCamSpeedDownMultiplierProperty(), NUM_TO_STRING_CONVERTER);

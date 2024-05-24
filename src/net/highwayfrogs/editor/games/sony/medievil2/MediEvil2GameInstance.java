@@ -14,6 +14,9 @@ import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2LevelDefinition.Med
 import net.highwayfrogs.editor.games.sony.medievil2.map.MediEvil2Map;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
+import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile;
+import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonFile;
+import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
@@ -25,9 +28,7 @@ import java.util.List;
  * Represents an instance of MediEvil 2 game files.
  *
  * TODO:
- *  - Allow viewing maps as a whole.
  *  - Support more sections of a map file.
- *  - New model format support
  *  - Txt File Support?
  *  - Recreate file list as best as possible. I think because there are so many unknown, we should prefix guesses which are uncertain with ??
  * Created by RampantSpirit on 9/14/2023. Based on MediEvilGameInstance.
@@ -52,9 +53,13 @@ public class MediEvil2GameInstance extends SCGameInstance {
 
     @Override
     public SCGameFile<?> createFile(MWIFile.FileEntry fileEntry, byte[] fileData) {
-        // TODO: SKEL, ANIM, STAT.
-
-        if (fileEntry.getTypeId() == FILE_TYPE_MAP || fileEntry.getTypeId() == FILE_TYPE_MAP_ALTERNATE) {
+        if (fileEntry.getTypeId() == FILE_TYPE_STAT) {
+            return new PTStaticFile(this);
+        } else if (fileEntry.getTypeId() == FILE_TYPE_SKEL) {
+            return new PTSkeletonFile(this);
+        } else if (fileEntry.getTypeId() == FILE_TYPE_ANIM) {
+            return new PTActionSetFile(this);
+        } else if (fileEntry.getTypeId() == FILE_TYPE_MAP || fileEntry.getTypeId() == FILE_TYPE_MAP_ALTERNATE) {
             return new MediEvil2Map(this);
         } else if (fileEntry.getTypeId() == FILE_TYPE_VB || fileEntry.getTypeId() == FILE_TYPE_VB_ALTERNATE) {
             return SCUtils.makeSound(fileEntry, fileData, SCForcedLoadSoundFileType.BODY);

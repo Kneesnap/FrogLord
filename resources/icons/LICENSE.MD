@@ -25,6 +25,39 @@ Visit http://www.everaldo.com/crystal/?action=license for details.
 image.png "App Paint Icon" https://www.iconarchive.com/show/crystal-clear-icons-by-everaldo/App-paint-icon.html
 ```
 
+### Flaticon
+Icons obtained from [this website](https://www.flaticon.com/).  
+
+**License:**  
+```
+Obtained by clicking "More info" where it lists the Flaticon license.
+
+Flaticon License Summary
+Our license allows you to use the content:
+ For commercial and personal projects
+ On digital or printed media
+ For an unlimited number of times without interruption
+ Anywhere in the world
+ To make changes and derivative works.
+```
+
+**Files:**  
+```
+skeleton-joints.png "Joints free icon" https://www.flaticon.com/free-icon/joints_835231 (By Freepik.com)
+```
+
+### Tango Icon Library - Public Domain
+[License Source](https://github.com/NationalSecurityAgency/ghidra/blob/master/licenses/Tango_Icons_-_Public_Domain.txt)  
+**License:**  
+```
+These icons are from the Tango Icon library and are public domain.
+```
+
+**Files:**  
+```
+applications-multimedia32.png "applications multimedia" https://iconduck.com/icons/50175/applications-multimedia
+```
+
 ### Others
 **swampy.png:**  
 This image is a screenshot of a cutscene in `Frogger 2: Swampy's Revenge`, with the background edited out.  

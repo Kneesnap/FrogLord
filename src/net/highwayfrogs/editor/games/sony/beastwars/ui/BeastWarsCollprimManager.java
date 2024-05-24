@@ -11,7 +11,6 @@ import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsMapUIManager.Bea
 import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
 import net.highwayfrogs.editor.games.sony.shared.collprim.ICollprimEditorUI;
 import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
-import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim.CollprimType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -25,7 +24,7 @@ import java.util.List;
  * TODO: Collprim menu isn't automatically extended.
  * Created by Kneesnap on 9/26/2023.
  */
-public class BeastWarsCollprimManager extends BeastWarsMapListManager<BeastWarsMapCollprim, CollprimShapeAdapter<?>> implements ICollprimEditorUI {
+public class BeastWarsCollprimManager extends BeastWarsMapListManager<BeastWarsMapCollprim, CollprimShapeAdapter<?>> implements ICollprimEditorUI<MRCollprim> {
     private final DisplayList collprimDisplayList;
     private CheckBox wireframePreviewCheckBox;
 
@@ -120,7 +119,7 @@ public class BeastWarsCollprimManager extends BeastWarsMapListManager<BeastWarsM
     }
 
     @Override
-    public void onCollprimChangeType(MRCollprim collprim, CollprimShapeAdapter<?> adapter, CollprimType oldType, CollprimType newType) {
+    public void onCollprimChangeType(MRCollprim collprim, CollprimShapeAdapter<?> adapter, Object oldType, Object newType) {
         createDisplay((BeastWarsMapCollprim) collprim); // Setup display again.
     }
 

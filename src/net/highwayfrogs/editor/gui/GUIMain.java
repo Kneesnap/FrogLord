@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
-import net.highwayfrogs.editor.utils.logging.ConsoleErrorHandler;
 import net.highwayfrogs.editor.utils.logging.ConsoleOutputHandler;
 import net.highwayfrogs.editor.utils.logging.LogFormatter;
 import net.highwayfrogs.editor.utils.logging.UIConsoleHandler;
@@ -118,17 +117,11 @@ public class GUIMain extends Application {
         // Setup log formatter
         Formatter formatter = new LogFormatter(LogFormatter.FULL_LOG_FORMAT);
 
-        // Setup System.out console handler.
+        // Setup System.out/System.err console handler.
         ConsoleOutputHandler consoleHandler = new ConsoleOutputHandler();
         consoleHandler.setFormatter(formatter);
         consoleHandler.setLevel(Level.ALL);
         logger.addHandler(consoleHandler);
-
-        // Setup System.err console handler.
-        ConsoleErrorHandler errorHandler = new ConsoleErrorHandler();
-        errorHandler.setFormatter(formatter);
-        errorHandler.setLevel(Level.ALL);
-        logger.addHandler(errorHandler);
 
         // Setup UI Handler.
         UIConsoleHandler uiConsoleHandler = new UIConsoleHandler();

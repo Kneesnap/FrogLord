@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.generic;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.utils.IGameObject;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.logging.Logger;
@@ -11,7 +12,7 @@ import java.util.logging.Logger;
  * Created by Kneesnap on 4/10/2024.
  */
 @Getter
-public abstract class GameObject<TGameInstance extends GameInstance> {
+public abstract class GameObject<TGameInstance extends GameInstance> implements IGameObject {
     private final TGameInstance gameInstance;
 
     public GameObject(TGameInstance instance) {

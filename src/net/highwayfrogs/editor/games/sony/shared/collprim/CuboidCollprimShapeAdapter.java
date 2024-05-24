@@ -7,7 +7,7 @@ import javafx.scene.shape.Box;
  * Created by Kneesnap on 9/26/2023.
  */
 public class CuboidCollprimShapeAdapter extends CollprimShapeAdapter<Box> {
-    public CuboidCollprimShapeAdapter(MRCollprim collprim, Box box) {
+    public CuboidCollprimShapeAdapter(ICollprim collprim, Box box) {
         super(collprim, box);
     }
 

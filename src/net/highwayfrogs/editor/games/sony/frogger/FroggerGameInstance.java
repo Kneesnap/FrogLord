@@ -633,14 +633,7 @@ public class FroggerGameInstance extends SCGameInstance {
             try {
                 newScript.load(reader);
             } catch (Throwable th) {
-                String errorMessage = "Failed to load script '" + getConfig().getScriptBank().getName(i) + "'.";
-                getLogger().throwing("FroggerGameInstance", "readScripts", new RuntimeException(errorMessage, th));
-
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException ex) {
-                    // Do nothing.
-                }
+                Utils.handleError(getLogger(), th, false, "Failed to load script '%s'.", getConfig().getScriptBank().getName(i));
             } finally {
                 reader.jumpReturn();
             }

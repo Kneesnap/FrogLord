@@ -52,12 +52,11 @@ public class WADFile extends SCSharedGameFile {
 
         while (true) {
             int resourceId = reader.readInt();
-            if (resourceId == TERMINATOR)
-                break; // There are no more files.
-
             int fileType = reader.readInt();
             int size = reader.readInt();
-            reader.skipInt(); // Padding.
+            reader.skipInt(); // The number of files in the wad, until the last one which is zero.
+            if (resourceId == TERMINATOR)
+                break; // There are no more files.
 
             FileEntry wadFileEntry = getGameInstance().getResourceEntryByID(resourceId);
             String fileName = wadFileEntry.getDisplayName();
