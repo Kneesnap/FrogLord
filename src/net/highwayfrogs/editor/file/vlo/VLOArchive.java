@@ -114,6 +114,11 @@ public class VLOArchive extends SCSharedGameFile {
             this.clutEntries.forEach(entry -> entry.saveExtra(writer));
     }
 
+    @Override
+    public boolean warnIfEndNotReached() {
+        return false;
+    }
+
     /**
      * Export all images in this VLO archive.
      */

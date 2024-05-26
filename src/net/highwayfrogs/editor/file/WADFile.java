@@ -88,7 +88,10 @@ public class WADFile extends SCSharedGameFile {
             file.setRawFileData(data);
 
             try {
-                file.load(new DataReader(new ArraySource(data)));
+                DataReader wadFileReader = new DataReader(new ArraySource(data));
+                file.load(wadFileReader);
+                if (wadFileReader.hasMore() && file.warnIfEndNotReached())
+                    file.getLogger().warning("File contents were read to index " + Utils.toHexString(wadFileReader.getIndex()) + ", leaving " + wadFileReader.getRemaining() + " bytes unread. (Length: " + Utils.toHexString(wadFileReader.getSize()) + ")");
             } catch (Exception ex) {
                 Utils.handleError(getLogger(), ex, false, "Failed to load %s. (%d)", CURRENT_FILE_NAME, resourceId);
 

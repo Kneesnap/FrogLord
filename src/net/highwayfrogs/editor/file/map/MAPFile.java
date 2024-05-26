@@ -32,6 +32,7 @@ import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygonType;
 import net.highwayfrogs.editor.file.map.zone.Zone;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -103,6 +104,7 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
 
     private final transient Map<MAPPrimitive, Integer> savePolygonPointerMap = new HashMap<>();
     private final transient Map<Integer, MAPPrimitive> savePointerPolygonMap = new HashMap<>();
+    private final transient Map<MAPPrimitiveType, Integer> polygonTypePointerMap = new HashMap<>();
     private transient FroggerMapConfig cachedMapConfig;
 
     public static final String SIGNATURE = "FROG";
@@ -718,16 +720,14 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
         }
 
         writer.setIndex(lastPointer);
-        for (MAPPrimitiveType type : PRIMITIVE_TYPES) {
-            if (type == MAPLineType.G2)
-                continue; // G2 was only enabled as a debug rendering option. It is not enabled in the retail release fairly sure.
-
-            tempAddress = writer.getIndex();
+        for (MAPPrimitiveType type : getTypes(getMapConfig())) {
+            tempAddress = type == MAPLineType.G2 ? 0 : writer.getIndex();
 
             writer.jumpTemp(polyAddresses.get(type));
             writer.writeInt(tempAddress);
             writer.jumpReturn();
 
+            getPolygonTypePointerMap().put(type, tempAddress);
             for (MAPPrimitive prim : getPolygons().get(type)) {
                 Integer index = writer.getIndex();
                 getSavePointerPolygonMap().put(index, prim);
@@ -803,13 +803,22 @@ public class MAPFile extends SCGameFile<FroggerGameInstance> {
                     return null;
 
                 LevelInfo info = getGameInstance().getLevelInfoMap().get(key);
-                if (info != null)
-                    return Utils.toFXImage(Utils.resizeImage(getGameInstance().getImageFromPointer(info.getLevelTexturePointer()).toBufferedImage(), 32, 32), false);
+                if (info != null) {
+                    GameImage levelTextureImage = getGameInstance().getImageFromPointer(info.getLevelTexturePointer());
+                    if (levelTextureImage != null)
+                        return Utils.toFXImage(Utils.resizeImage(levelTextureImage.toBufferedImage(), 32, 32), false);
+                }
+
                 return null;
             });
         }
 
         return getGameInstance().getLevelImageMap().getOrDefault(level, ImageResource.TREASURE_MAP_32.getFxImage());
+    }
+
+    @Override
+    public boolean warnIfEndNotReached() {
+        return false;
     }
 
     @Override

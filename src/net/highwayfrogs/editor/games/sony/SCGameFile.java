@@ -28,6 +28,13 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
         super(instance);
     }
 
+    /**
+     * Warn if the end of the file is not reached.
+     */
+    public boolean warnIfEndNotReached() {
+        return true;
+    }
+
     @Override
     public Logger getLogger() {
         return getIndexEntry().getLogger();

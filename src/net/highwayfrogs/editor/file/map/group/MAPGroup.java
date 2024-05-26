@@ -72,16 +72,11 @@ public class MAPGroup extends GameObject {
         Utils.verify(this.savePointerLocation > 0, "Cannot save polygon pointers before polygons are written.");
         writer.jumpTemp(this.savePointerLocation);
 
-        for (MAPPrimitiveType type : MAPFile.PRIMITIVE_TYPES) {
+        for (MAPPrimitiveType type : MAPFile.getTypes(this.mapConfig)) {
             List<MAPPrimitive> polyList = polygonMap.get(type);
 
-            int pointer = 0;
-            if (!polyList.isEmpty()) {
-                Integer newPointer = map.getSavePolygonPointerMap().get(polyList.get(0));
-                Utils.verify(newPointer != null, "A MAP_GROUP polygon was not written.");
-                pointer = newPointer;
-            }
-
+            Integer pointer = polyList != null && polyList.size() > 0 ? map.getSavePolygonPointerMap().get(polyList.get(0)) : map.getPolygonTypePointerMap().get(type);
+            Utils.verify(pointer != null, "A MAP_GROUP polygon was not written. (" + polyList + ", " + type + ") -> " + map.getPolygonTypePointerMap().get(type)); // TODO !
             writer.writeInt(pointer);
         }
 

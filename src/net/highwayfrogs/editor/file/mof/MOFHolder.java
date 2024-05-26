@@ -138,6 +138,11 @@ public class MOFHolder extends SCSharedGameFile {
     }
 
     @Override
+    public boolean warnIfEndNotReached() {
+        return false;
+    }
+
+    @Override
     public Image getCollectionViewIcon() {
         return ImageResource.GEOMETRIC_SHAPES_32.getFxImage();
     }

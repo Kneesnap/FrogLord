@@ -43,8 +43,8 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
 
         getEntries().clear();
         for (int i = 0; i < addresses.length; i++) {
-            int audioSize = i >= addresses.length - 1 ? reader.getRemaining() : addresses[i + 1]; // Where the reading ends.
-            if (audioSize == 0)
+            int audioSize = i >= addresses.length - 1 || addresses[i + 1] == 0 ? reader.getRemaining() : addresses[i + 1]; // Where the reading ends.
+            if (!reader.hasMore())
                 break;
 
             SCPlayStationVabSound newSound = new SCPlayStationVabSound(this, typedHeader, i, audioSize);
@@ -69,7 +69,8 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
     @Getter
     public static class SCPlayStationVabSound extends SCSplitSoundBankBodyEntry implements ISoundSample {
         private final int expectedReadLength;
-        private byte[] audioData;
+        private byte[] vagAudioData;
+        private static final int EMPTY_BYTE_PADDING = 16;
 
         public SCPlayStationVabSound(SCSplitSoundBankBody<?, ?> body, SCPlayStationVabSoundBankHeader header, int internalTrackId, int expectedReadLength) {
             super(body, null, header, new EditableAudioFormat(11025, 16, 1, true, false), makeGlobalId(body, internalTrackId));
@@ -90,12 +91,12 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
 
         @Override
         public byte[] getRawAudioPlaybackData() {
-            return VAGUtil.rawVagToWav(this.audioData);
+            return VAGUtil.rawVagToWav(this.vagAudioData);
         }
 
         @Override
         public void saveToImportableFile(File saveTo) throws IOException {
-            Files.write(saveTo.toPath(), VAGUtil.rawVagToWav(this.audioData, (int) getAudioFormat().getSampleRate()));
+            Files.write(saveTo.toPath(), VAGUtil.rawVagToWav(this.vagAudioData, (int) getAudioFormat().getSampleRate()));
         }
 
         @Override
@@ -109,13 +110,13 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
                 return;
             }
 
-            this.audioData = VAGUtil.wavToVag(wavBytes);
+            this.vagAudioData = VAGUtil.wavToVag(wavBytes);
         }
 
         @Override
         public void load(DataReader reader) {
-            reader.skipBytes(16);
-            this.audioData = reader.readBytes(this.expectedReadLength - 16);
+            reader.skipBytesRequireEmpty(EMPTY_BYTE_PADDING);
+            this.vagAudioData = reader.readBytes(this.expectedReadLength - EMPTY_BYTE_PADDING);
         }
 
         @Override
@@ -123,11 +124,12 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
             if (getHeaderEntry() instanceof SCPlayStationMinimalSoundBankHeaderEntry) {
                 ((SCPlayStationMinimalSoundBankHeaderEntry) getHeaderEntry()).setDataStartAddress(writer.getIndex());
             } else if (getHeader() instanceof SCPlayStationVabSoundBankHeader) {
-                ((SCPlayStationVabSoundBankHeader) getHeader()).getLoadedSampleAddresses()[getInternalTrackId()] = writer.getIndex();
+                ((SCPlayStationVabSoundBankHeader) getHeader()).getLoadedSampleAddresses()[getInternalTrackId() + 1] = (this.vagAudioData != null ? this.vagAudioData.length : 0) + EMPTY_BYTE_PADDING;
             }
 
-            writer.writeNull(16);
-            writer.writeBytes(this.audioData);
+            writer.writeNull(EMPTY_BYTE_PADDING);
+            if (this.vagAudioData != null)
+                writer.writeBytes(this.vagAudioData);
         }
 
         private static int makeGlobalId(SCSplitSoundBankBody<?, ?> body, int internalTrackId) {

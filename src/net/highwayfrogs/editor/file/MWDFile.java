@@ -98,7 +98,7 @@ public class MWDFile extends SCSharedGameData {
             try {
                 DataReader singleFileReader = new DataReader(new ArraySource(fileBytes));
                 file.load(singleFileReader);
-                if (singleFileReader.hasMore()) // Warn if the full file is not read.
+                if (singleFileReader.hasMore() && file.warnIfEndNotReached()) // Warn if the full file is not read.
                     file.getLogger().warning("File contents were read to index " + Utils.toHexString(singleFileReader.getIndex()) + ", leaving " + singleFileReader.getRemaining() + " bytes unread. (Length: " + Utils.toHexString(reader.getSize()) + ")");
             } catch (Exception ex) {
                 Utils.handleError(getLogger(), ex, false, "Failed to load %s (%d)", entry.getDisplayName(), entry.getResourceId());
@@ -208,30 +208,36 @@ public class MWDFile extends SCSharedGameData {
             CURRENT_FILE_NAME = entry.getDisplayName();
             if (progressBar != null)
                 progressBar.setStatusMessage("Saving '" + entry.getDisplayName() + "'");
-            getLogger().info("Saving " + entry.getDisplayName() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ") ");
             long startTime = System.currentTimeMillis();
 
-            // Save the file contents to a byte array.
-            ArrayReceiver receiver = new ArrayReceiver();
-            file.save(new DataWriter(receiver));
+            try {
+                // Save the file contents to a byte array.
+                ArrayReceiver receiver = new ArrayReceiver();
+                file.save(new DataWriter(receiver));
 
-            // Potentially compress the saved byte array.
-            byte[] transfer = receiver.toArray();
-            entry.setUnpackedSize(transfer.length);
-            if (entry.isCompressed())
-                transfer = PP20Packer.packData(transfer);
+                // Potentially compress the saved byte array.
+                byte[] transfer = receiver.toArray();
+                entry.setUnpackedSize(transfer.length);
+                if (entry.isCompressed())
+                    transfer = PP20Packer.packData(transfer);
 
-            // Write resulting data.
-            entry.setPackedSize(transfer.length);
-            writer.writeBytes(transfer);
+                // Write resulting data.
+                entry.setPackedSize(transfer.length);
+                writer.writeBytes(transfer);
+            } catch (Throwable th) {
+                Utils.handleError(getLogger(), th, true, "Failed to save file '%s' to MWD.", entry.getDisplayName());
+                return;
+            }
 
             // Report timing.
             long endTime = System.currentTimeMillis();
             if (progressBar != null)
                 progressBar.addCompletedProgress(1);
-            getLogger().info("Save Time: " + ((endTime - startTime) / 1000) + " s.");
+            long timeTaken = (endTime - startTime);
+            if (timeTaken >= 10)
+                getLogger().warning("Saving the file '" + entry.getDisplayName() + "' took " + timeTaken + " ms.");
         }
-        getLogger().info("MWD Built. Total Time: " + ((System.currentTimeMillis() - mwdStart) / 1000) + "s.");
+        getLogger().info("MWD Built. Total Time: " + (System.currentTimeMillis() - mwdStart) + " ms.");
 
         // Fill the rest of the file with null bytes.
         SCGameFile<?> lastFile = this.files.get(this.files.size() - 1);

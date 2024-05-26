@@ -47,6 +47,7 @@ public class FormData extends GameObject {
         reader.jumpTemp(squarePointer); // Really we don't need to jump, as the data is at the current read index, but this is to keep it in spec with the engine.
         for (int i = 0; i < gridFlags.length; i++)
             this.gridFlags[i] = reader.readUnsignedShortAsInt();
+        reader.align(4);
         reader.jumpReturn();
     }
 
@@ -62,6 +63,7 @@ public class FormData extends GameObject {
         writer.writeAddressTo(squareFlagPointer);
         for (int flag : this.gridFlags)
             writer.writeUnsignedShort(flag);
+        writer.align(4);
     }
 
     /**

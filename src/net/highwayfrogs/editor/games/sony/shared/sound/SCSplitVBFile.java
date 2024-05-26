@@ -35,6 +35,11 @@ public class SCSplitVBFile extends SCSharedGameFile {
     }
 
     @Override
+    public boolean warnIfEndNotReached() {
+        return false;
+    }
+
+    @Override
     public Image getCollectionViewIcon() {
         return ImageResource.MUSIC_NOTE_32.getFxImage();
     }
