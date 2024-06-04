@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -99,7 +100,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         // 4. Read nodes.
         this.nodes.clear();
         for (int i = 0; i < nodeCount; i++) {
-            kcModelNode node = new kcModelNode();
+            kcModelNode node = new kcModelNode(getGameInstance());
             node.load(reader);
             this.nodes.add(node);
         }
@@ -111,6 +112,13 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
             prim.load(reader);
             this.primitives.add(prim);
         }
+
+        // 5b. Load the primitive lists in the model nodes.
+        int primitiveIndex = 0;
+        for (int i = 0; i < this.nodes.size(); i++)
+            primitiveIndex = this.nodes.get(i).loadPrimsFromList(this.primitives, primitiveIndex);
+        if (primitiveIndex != this.primitives.size())
+            getLogger().warning("Expected " + this.primitives.size() + " nodes to be part of nodes, but " + primitiveIndex + " were instead.");
 
         // 6. Read Bone Bytes.
         for (kcModelPrim prim : this.primitives) {
@@ -200,6 +208,14 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         // 8. Write vertex buffers.
         for (int i = 0; i < this.primitives.size(); i++)
             this.primitives.get(i).saveVertices(writer);
+    }
+
+    /**
+     * Gets the primitives in an unmodifiable state.
+     * We do not allow direct modification of the primitives due to their tracking in two places.
+     */
+    public List<kcModelPrim> getPrimitives() {
+        return Collections.unmodifiableList(this.primitives);
     }
 
     /**

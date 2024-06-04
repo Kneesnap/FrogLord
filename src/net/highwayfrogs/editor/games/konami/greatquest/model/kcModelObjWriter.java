@@ -143,8 +143,9 @@ public class kcModelObjWriter {
         StringBuilder mtlWriter = context.getMtlWriter();
 
         long lastMaterialId = -1;
-        for (int i = 0; i < context.getModel().getPrimitives().size(); i++) {
-            kcModelPrim prim = context.getModel().getPrimitives().get(i);
+        List<kcModelPrim> primitives = context.getModel().getPrimitives();
+        for (int i = 0; i < primitives.size(); i++) {
+            kcModelPrim prim = primitives.get(i);
 
             // Write new primitive ID.
             objWriter.append("# Primitive #");

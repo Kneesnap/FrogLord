@@ -35,6 +35,24 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
         this.rootNode.load(reader);
         if (this.rootNode.loadEndPosition >= 0) // Ensure the reader is placed after the end of the node data.
             reader.setIndex(this.rootNode.loadEndPosition);
+
+        // Warn if the ids do not follow the expected pattern.
+        // (This will break our search algorithms so it's good to confirm)
+        int expectedTag = 0;
+        List<kcNode> nodeQueue = new ArrayList<>();
+        nodeQueue.add(this.rootNode);
+        while (nodeQueue.size() > 0) {
+            kcNode tempNode = nodeQueue.remove(0);
+            if (tempNode.children.size() > 0)
+                nodeQueue.addAll(0, tempNode.children);
+
+            if (tempNode.getTag() != expectedTag) {
+                getLogger().warning("kcNode['" + tempNode.getName() + "',tag=" + tempNode.getTag() + "] was expected to have tag " + expectedTag + ".");
+                expectedTag = tempNode.getTag() + 1;
+            } else {
+                expectedTag++;
+            }
+        }
     }
 
     @Override
@@ -55,6 +73,42 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
         this.rootNode.writeMultiLineInfo(builder, padding + " ");
     }
 
+    /**
+     * Finds a node by its tag.
+     * @param tag the tag to lookup a node by.
+     * @return node, or null if no node exists with the tag.
+     */
+    public kcNode getNodeByTag(int tag) {
+        if (tag < 0)
+            return null;
+
+        // Warn if the ids do not follow the expected pattern.
+        // (This will break our search algorithms so it's good to confirm)
+        kcNode tempNode = this.rootNode;
+        while (tempNode != null) {
+            // Test if the current node is our target.
+            if (tempNode.getTag() == tag)
+                return tempNode;
+
+            // We could binary search here.
+            // However, I do not think it common for there to be more than 3 child nodes per bone, let alone have that happen in a nested manner.
+            // So, a simple linear search is probably best for now.
+            kcNode lastNode = null;
+            for (int i = 0; i < tempNode.getChildren().size(); i++) {
+                kcNode childNode = tempNode.getChildren().get(i);
+                if (childNode.getTag() > tag)
+                    break; // Gone too far up, use the last node we've seen.
+
+                lastNode = childNode;
+            }
+
+            // Apply the node which could contain the tag as our next node.
+            tempNode = lastNode;
+        }
+
+        // Didn't find any node with this one.
+        return null;
+    }
 
     public static class kcNode extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
         @Getter private final kcCResourceSkeleton skeleton;
