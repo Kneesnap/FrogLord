@@ -1,14 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.toc;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -31,14 +29,12 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
         super.load(reader);
         reader.verifyString(KCResourceID.TRACK.getSignature()); // For some reason this is here again.
         reader.skipInt(); // Skip the size.
-
-        if (reader.getIndex() != kcTrack.BYTE_OFFSET)
-            throw new RuntimeException("The reader index (" + reader.getIndex() + ") needs to match the expected byte offset, otherwise the offset calculations will fail!");
+        int baseByteOffset = reader.getIndex(); // 40 (32 bytes for name, and 8 for the file ID + size.)
 
         this.tracks.clear();
         while (reader.hasMore()) {
             kcTrack newTrack = new kcTrack(this);
-            newTrack.load(reader);
+            newTrack.load(reader, baseByteOffset);
             this.tracks.add(newTrack);
         }
     }
@@ -49,8 +45,11 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
         super.save(writer);
         writer.writeStringBytes(KCResourceID.TRACK.getSignature());
         int dataSizeAddress = writer.writeNullPointer();
+        int baseByteOffset = writer.getIndex(); // 40 (32 bytes for name, and 8 for the file ID + size.)
+
+        // Write each track.
         for (int i = 0; i < this.tracks.size(); i++)
-            this.tracks.get(i).save(writer);
+            this.tracks.get(i).save(writer, baseByteOffset);
 
         // Ensure we get the size right.
         writer.writeAddressAt(dataSizeAddress, writer.getIndex() - dataStartAddress);
@@ -64,98 +63,5 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
             this.tracks.get(i).writeMultiLineInfo(builder, newPadding);
             builder.append(Constants.NEWLINE);
         }
-    }
-
-    public static class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
-        private final kcCResourceTrack resourceTrack;
-        private int value;
-        private int tag;
-        private int size;
-        private byte[] unknownData; // TODO: Figure out how to handle this data.
-
-        public static final int FLAG_IS_TRACKED = Constants.BIT_FLAG_23;
-        private static final int BYTE_OFFSET = 40; // 32 bytes for name, and 8 for the file ID + size.
-
-        public kcTrack(kcCResourceTrack resourceTrack) {
-            super(resourceTrack.getGameInstance());
-            this.resourceTrack = resourceTrack;
-        }
-
-        @Override
-        public void load(DataReader reader) {
-            this.value = reader.readInt();
-            this.tag = reader.readInt();
-            this.size = reader.readInt(); // TODO: Key Count
-            reader.skipPointer(); // Runtime pointer.
-            int nextTrackAddress = reader.readInt();
-            this.unknownData = reader.readBytes(nextTrackAddress != 0 ? (nextTrackAddress + BYTE_OFFSET - reader.getIndex()) : reader.getRemaining());
-        }
-
-        @Override
-        public void save(DataWriter writer) {
-            writer.writeInt(this.value);
-            writer.writeInt(this.tag);
-            writer.writeInt(this.size);
-            writer.writeNullPointer(); // Runtime pointer.
-            int nextTrackAddress = writer.writeNullPointer();
-            if (this.unknownData != null)
-                writer.writeBytes(this.unknownData);
-
-            // Write the pointer of the next track unless this is the last track.
-            if (this.resourceTrack.getTracks().size() > 0 && this.resourceTrack.getTracks().get(this.resourceTrack.getTracks().size() - 1) != this)
-                writer.writeAddressAt(nextTrackAddress, writer.getIndex() - BYTE_OFFSET);
-        }
-
-        /**
-         * Gets the track type.
-         */
-        public kcTrackControlType getTrackControlType() {
-            return kcTrackControlType.values()[this.value >>> 24]; // 8 bits
-        }
-
-        /**
-         * Gets the track mode
-         */
-        public int getTrackMode() {
-            return this.value & 0x1ffff; // 17 bits
-        }
-
-        @Override
-        public void writeMultiLineInfo(StringBuilder builder, String padding) {
-            builder.append(padding);
-            builder.append("Track{Value=").append(this.value).append(",Tag=").append(this.tag).append(",Size=").append(this.size).append(",UnknownData=").append(this.unknownData.length).append(" Bytes}");
-        }
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public enum kcTrackControlType {
-        USER(false, 0xC), // 0
-        LINEAR_FLT(false, 0x14), // 1, FLAT? FLOAT?
-        LINEAR_ROTATION(false, 0x14), // 2
-        LINEAR_POSITION(false, 0x14), // 3
-        LINEAR_SCALE(false, 0x14), // 4
-        TCB_FLT(true, 0x58), // 5, FLAT? FLOAT?
-        TCB_ROTATION(true, 0x58), // 6
-        TCB_POSITION(true, 0x58), // 7
-        TCB_SCALE(true, 0x58), // 8
-        BEZIER_FLT(true, 0x38), // 9, FLAT? FLOAT?
-        BEZIER_POSITION(true, 0x38), // 10
-        BEZIER_SCALE(true, 0x38), // 11
-        POSITION_ROTATION_SCALE(false, 0x40), // 12
-        CAMERA(false, 0), // 13
-        LIGHT(false, 0), // 14
-        STD(false, 0), // 15, STANDARD?
-        FLT(false, 0), // 16, FLAT? FLOAT?
-        POSITION(false, 0), // 17
-        ROTATION(false, 0), // 18
-        SCALE(false, 0), // 19
-        HIERARCHY(false, 0), // 20
-        INVALID(false, 0); // 21
-
-        private final boolean supported;
-        private final int probablySize;
-
-        // NOTE: TCB stands for 'Tension, Continuity, and Bias', which is a curve-based animation system, much like Bezier.
     }
 }

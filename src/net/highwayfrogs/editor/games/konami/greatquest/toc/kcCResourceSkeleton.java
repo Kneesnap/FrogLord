@@ -83,7 +83,7 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
             reader.skipPointer(); // Runtime pointer. (There does seem to be a pointer here, but I think it's overwritten at runtime)
             int childCount = reader.readInt();
             int nodeDataLength = reader.readInt();
-            reader.skipInt(); // Pointer to the node data.
+            reader.skipPointer(); // Pointer to the node data.
 
             if (nodeDataLength != kcMatrix.BYTE_SIZE) // TODO: We might instead treat this as 3 kcVector4s named [pos rot, scl],PositionRotationScale or [from, at, up],Target, with 16 bytes of padding. This is a union basically. Not sure yet what actually makes the code choose which union to use, but it's probably flags or tag.
                 throw new RuntimeException("Expected data " + nodeDataLength);

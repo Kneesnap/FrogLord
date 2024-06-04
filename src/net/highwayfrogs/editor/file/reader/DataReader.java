@@ -285,14 +285,14 @@ public class DataReader {
      * @param amount The number of bytes to skip.
      */
     public void skipBytesRequireEmpty(int amount) {
-        skipBytesRequire(amount, Constants.NULL_BYTE);
+        skipBytesRequire(Constants.NULL_BYTE, amount);
     }
 
     /**
      * Skip bytes, requiring the bytes skipped be 0.
      * @param amount The number of bytes to skip.
      */
-    public void skipBytesRequire(int amount, byte expected) {
+    public void skipBytesRequire(byte expected, int amount) {
         int index = getIndex();
         if (amount == 0)
             return;
@@ -324,18 +324,18 @@ public class DataReader {
      * @param alignment The number of bytes the index should have an increment of.
      */
     public void alignRequireEmpty(int alignment) {
-        alignRequireByte(alignment, Constants.NULL_BYTE);
+        alignRequireByte(Constants.NULL_BYTE, alignment);
     }
 
     /**
      * Skip bytes to align to the given byte boundary, requiring the bytes skipped be 0.
      * @param alignment The number of bytes the index should have an increment of.
      */
-    public void alignRequireByte(int alignment, byte value) {
+    public void alignRequireByte(byte value, int alignment) {
         int index = getIndex();
         int offsetAmount = (index % alignment);
         if (offsetAmount != 0)
-            skipBytesRequire(alignment - offsetAmount, value);
+            skipBytesRequire(value, alignment - offsetAmount);
     }
 
     /**
