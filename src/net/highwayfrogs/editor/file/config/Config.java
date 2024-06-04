@@ -232,8 +232,7 @@ public class Config {
         try {
             return fromString.apply(value);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Failed to parse '" + value + "' as " + keyName + "'s type.");
+            Utils.handleError(null, e, false, "Failed to parse '%s' as %s's type.", value, keyName);
         }
 
         return null;

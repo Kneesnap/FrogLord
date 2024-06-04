@@ -2,17 +2,19 @@ package net.highwayfrogs.editor.games.sony;
 
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
+import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
+import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
-import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -20,7 +22,8 @@ import java.util.logging.Logger;
  * @param <TGameInstance> The type of game instance this file can be used in.
  * Created by Kneesnap on 9/8/2023.
  */
-public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends SCGameData<TGameInstance> implements ICollectionViewEntry {
+public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends SCGameData<TGameInstance> implements ICollectionViewEntry, IPropertyListCreator {
+    @Setter @Getter private byte[] rawFileData;
     public SCGameFile(TGameInstance instance) {
         super(instance);
     }
@@ -83,18 +86,14 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
 
     }
 
-    /**
-     * Gets a list of properties to show in contexts where a file has information shown.
-     * @return wadProperties, can be null.
-     */
-    public List<Tuple2<String, Object>> createPropertyList() {
-        List<Tuple2<String, Object>> list = new ArrayList<>();
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
         FileEntry fileEntry = getIndexEntry();
-        list.add(new Tuple2<>("File Type ID", fileEntry.getTypeId()));
+        propertyList.add("File Type ID", fileEntry.getTypeId());
         if (fileEntry.hasFilePath()) // Show path from MWI, not faked one.
-            list.add(new Tuple2<>("File Path", fileEntry.getFilePath()));
+            propertyList.add("File Path", fileEntry.getFilePath());
 
-        return list;
+        return propertyList;
     }
 
     /**
@@ -146,6 +145,29 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
         }
 
         return controller;
+    }
+
+    /**
+     * Loads a GameFile editor.
+     * @param gameInstance the game instance to create the editor for
+     * @param controller the controller to control the GUI
+     * @param fileToEdit the file to edit
+     * @return editor
+     */
+    public static <TGameInstance extends SCGameInstance, TGameFile extends SCGameFile<?>, TUIController extends DefaultFileUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, TUIController controller, TGameFile fileToEdit) {
+        return DefaultFileUIController.loadEditor(gameInstance, controller, fileToEdit);
+    }
+
+    /**
+     * Loads a GameFile editor.
+     * @param gameInstance the game instance to create the editor for
+     * @param controller the controller to control the GUI
+     * @param template the gui layout template
+     * @param fileToEdit the file to edit
+     * @return editor
+     */
+    public static <TGameInstance extends SCGameInstance, TGameFile extends SCGameFile<?>, TUIController extends DefaultFileUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
+        return DefaultFileUIController.loadEditor(gameInstance, template, controller, fileToEdit);
     }
 
     /**

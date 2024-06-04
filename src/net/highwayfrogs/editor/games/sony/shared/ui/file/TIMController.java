@@ -12,17 +12,15 @@ import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.NameValuePair;
-import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Controls the screen for viewing TIM files.
@@ -68,10 +66,9 @@ public class TIMController extends SCFileEditorUIController<SCGameInstance, PSXT
         this.tableFileData.getItems().clear();
         this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-        List<Tuple2<String, Object>> properties = getFile().createPropertyList();
-        if (properties != null && properties.size() > 0)
-            for (Tuple2<String, Object> pair : properties)
-                this.tableFileData.getItems().add(new NameValuePair(pair.getA(), Objects.toString(pair.getB())));
+        PropertyList properties = getFile().createPropertyList();
+        if (properties != null)
+            properties.apply(this.tableFileData);
     }
 
     private void updatePalette() {

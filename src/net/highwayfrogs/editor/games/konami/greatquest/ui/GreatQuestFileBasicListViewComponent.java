@@ -22,8 +22,7 @@ public class GreatQuestFileBasicListViewComponent extends GroupedCollectionViewC
     @Override
     protected void onSelect(GreatQuestArchiveFile file) {
         GameUIController<?> controller = file.makeEditorUI();
-        if (controller != null)
-            getGameInstance().getMainMenuController().showEditor(controller);
+        getGameInstance().getMainMenuController().showEditor(controller);
     }
 
     @Override

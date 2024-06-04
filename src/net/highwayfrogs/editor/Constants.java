@@ -73,7 +73,6 @@ public class Constants {
     public static final Font SYSTEM_BOLD_FONT = new Font("System Bold", 12);
     public static final String DUMMY_FILE_NAME = "NULL";
 
-    public static final boolean ENABLE_WAD_FORMATS = true;
     public static final boolean LOG_EXE_INFO = false;
 
     public static final List<Integer> PC_ISLAND_REMAP = Arrays.asList(221, 862, 860, 859, 688, 863, 857, 694, 722, 854, 729, 857, 854, 853, 850, 3, 863);

@@ -12,7 +12,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public abstract class CollprimShapeAdapter<TShape extends Shape3D> {
-    private final MRCollprim collprim;
+    private final ICollprim collprim;
     private final TShape shape;
 
     /**
@@ -38,4 +38,22 @@ public abstract class CollprimShapeAdapter<TShape extends Shape3D> {
      * @param newRadiusSquared The new radius squared value.
      */
     public abstract void onRadiusSquaredUpdate(float newRadiusSquared);
+
+    /**
+     * Test if this adapter is adapted to a collprim of the given type.
+     * @param collprimType the type to test.
+     * @return true iff the collprim is of the given type.
+     */
+    protected boolean isCollprimType(MRCollprim.CollprimType collprimType) {
+        return (getCollprim() instanceof MRCollprim) && ((MRCollprim) getCollprim()).getType() == collprimType;
+    }
+
+    /**
+     * Test if this adapter is adapted to a collprim of the given type.
+     * @param collprimType the type to test.
+     * @return true iff the collprim is of the given type.
+     */
+    protected boolean isCollprimType(PTCollprim.CollprimType collprimType) {
+        return (getCollprim() instanceof PTCollprim) && ((PTCollprim) getCollprim()).getType() == collprimType;
+    }
 }

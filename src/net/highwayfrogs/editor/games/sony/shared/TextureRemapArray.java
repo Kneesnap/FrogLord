@@ -2,6 +2,8 @@ package net.highwayfrogs.editor.games.sony.shared;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
 import net.highwayfrogs.editor.utils.Utils;
@@ -86,5 +88,39 @@ public class TextureRemapArray extends SCSharedGameObject {
     @Override
     public String toString() {
         return getDebugName();
+    }
+
+    /**
+     * Creates a remap based on the contents of a VLO archive.
+     */
+    public static class VLODirectTextureRemapArray extends TextureRemapArray {
+        private final VLOArchive vloArchive;
+
+        public VLODirectTextureRemapArray(SCGameInstance instance, VLOArchive vloArchive) {
+            super(instance);
+            this.vloArchive = vloArchive;
+            updateRemapArray();
+        }
+
+        /**
+         * Update the texture remap id array.
+         */
+        public void updateRemapArray() {
+            List<Short> values = getTextureIds();
+
+            // Remove now unused texture slots.
+            while (values.size() > this.vloArchive.getImages().size())
+                values.remove(values.size() - 1);
+
+            // Apply texture ids.
+            for (int i = 0; i < this.vloArchive.getImages().size(); i++) {
+                GameImage image = this.vloArchive.getImages().get(i);
+                if (i >= values.size()) {
+                    values.add(image.getTextureId());
+                } else if (image.getTextureId() != values.get(i)) { // Avoid autoboxing a new short if it matches to begin with.
+                    values.set(i, image.getTextureId());
+                }
+            }
+        }
     }
 }

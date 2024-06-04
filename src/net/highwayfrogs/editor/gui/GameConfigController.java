@@ -126,7 +126,6 @@ public class GameConfigController extends GameUIController<GameInstance> {
         closeWindow();
         GUIMain.saveMainConfig();
 
-
         // Setup the game instance.
         GameInstance newInstance = gameType.createGameInstance();
         ProgressBarComponent.openProgressBarWindow(newInstance, "Loading Game Data...", progressBar -> {

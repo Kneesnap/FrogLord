@@ -79,6 +79,15 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
         public void add(String key, Object value) {
             this.entries.add(new NameValuePair(key, String.valueOf(value)));
         }
+
+        /**
+         * Apply the property list to the given table.
+         * @param tableFileData the table to apply to
+         */
+        public void apply(TableView<NameValuePair> tableFileData) {
+            tableFileData.getItems().clear();
+            tableFileData.getItems().addAll(this.entries);
+        }
     }
 
     public interface IPropertyListCreator {

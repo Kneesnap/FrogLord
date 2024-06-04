@@ -74,7 +74,7 @@ public abstract class GameInstance {
         if (this.mainMenuController != null) {
             String versionName = (this.config.getDisplayName() != null ? this.config.getDisplayName() : this.config.getInternalName());
             GameUIController.loadController(this, MainMenuController.MAIN_MENU_FXML_TEMPLATE_URL, this.mainMenuController);
-            Stage stage = GameUIController.openWindow(this.mainMenuController, "FrogLord " + Constants.VERSION + " -- " + versionName, false);
+            Stage stage = GameUIController.openWindow(this.mainMenuController, "FrogLord " + Constants.VERSION + " -- " + this.gameType.getDisplayName() + " " + versionName, false);
             stage.setResizable(true);
         }
 

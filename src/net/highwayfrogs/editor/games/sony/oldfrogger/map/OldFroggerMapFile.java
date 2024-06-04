@@ -15,10 +15,8 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapControl
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.system.Tuple2;
-
-import java.util.List;
 
 /**
  * Represents a map file in pre-recode frogger.
@@ -84,30 +82,30 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
     }
 
     @Override
-    public List<Tuple2<String, Object>> createPropertyList() {
-        List<Tuple2<String, Object>> list = super.createPropertyList();
-        list.add(new Tuple2<>("File Version", getMapConfig().getVersion()));
-        list.add(new Tuple2<>("Comment", this.headerPacket.getComment()));
-        list.add(new Tuple2<>("Default Reaction", this.levelSpecificDataPacket.getDefaultReactionType()));
-        list.add(new Tuple2<>("Paths", this.pathPacket.getPaths().size()));
-        list.add(new Tuple2<>("Zones", this.zonePacket.getZones().size()));
-        list.add(new Tuple2<>("Forms", this.formInstancePacket.getForms().size() + " (Table Size: " + this.formInstancePacket.getFormTableSize() + ")"));
-        list.add(new Tuple2<>("Entities", this.entityMarkerPacket.getEntities().size()));
-        list.add(new Tuple2<>("Grid Type", this.gridPacket.getType()));
-        list.add(new Tuple2<>("Grid Size", this.gridPacket.getXSize() + " x " + this.gridPacket.getZSize()));
-        list.add(new Tuple2<>("Grid Count", this.gridPacket.getXCount() + " x " + this.gridPacket.getZCount() + " (" + this.gridPacket.getGrids().size() + ")"));
-        list.add(new Tuple2<>("Grid Base", this.gridPacket.getBasePoint().toFloatString()));
-        list.add(new Tuple2<>("Lights", this.lightPacket.getLights().size()));
-        list.add(new Tuple2<>("Vertices", this.vertexPacket.getVertices().size()));
-        list.add(new Tuple2<>("UV Animations", this.animPacket.getUvAnimations().size()));
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("File Version", getMapConfig().getVersion());
+        propertyList.add("Comment", this.headerPacket.getComment());
+        propertyList.add("Default Reaction", this.levelSpecificDataPacket.getDefaultReactionType());
+        propertyList.add("Paths", this.pathPacket.getPaths().size());
+        propertyList.add("Zones", this.zonePacket.getZones().size());
+        propertyList.add("Forms", this.formInstancePacket.getForms().size() + " (Table Size: " + this.formInstancePacket.getFormTableSize() + ")");
+        propertyList.add("Entities", this.entityMarkerPacket.getEntities().size());
+        propertyList.add("Grid Type", this.gridPacket.getType());
+        propertyList.add("Grid Size", this.gridPacket.getXSize() + " x " + this.gridPacket.getZSize());
+        propertyList.add("Grid Count", this.gridPacket.getXCount() + " x " + this.gridPacket.getZCount() + " (" + this.gridPacket.getGrids().size() + ")");
+        propertyList.add("Grid Base", this.gridPacket.getBasePoint().toFloatString());
+        propertyList.add("Lights", this.lightPacket.getLights().size());
+        propertyList.add("Vertices", this.vertexPacket.getVertices().size());
+        propertyList.add("UV Animations", this.animPacket.getUvAnimations().size());
 
         if (this.cameraHeightFieldPacket != null) {
-            list.add(new Tuple2<>("Camera Height Grid Dimensions", this.cameraHeightFieldPacket.getXSquareCount() + " x " + this.cameraHeightFieldPacket.getZSquareCount()));
-            list.add(new Tuple2<>("Camera Height Grid Square Size", this.cameraHeightFieldPacket.getSquareXSizeAsFloat() + " x " + this.cameraHeightFieldPacket.getSquareZSizeAsFloat()));
-            list.add(new Tuple2<>("Camera Height Grid Start Pos", this.cameraHeightFieldPacket.getStartXAsFloat() + ", " + this.cameraHeightFieldPacket.getStartZAsFloat()));
+            propertyList.add("Camera Height Grid Dimensions", this.cameraHeightFieldPacket.getXSquareCount() + " x " + this.cameraHeightFieldPacket.getZSquareCount());
+            propertyList.add("Camera Height Grid Square Size", this.cameraHeightFieldPacket.getSquareXSizeAsFloat() + " x " + this.cameraHeightFieldPacket.getSquareZSizeAsFloat());
+            propertyList.add("Camera Height Grid Start Pos", this.cameraHeightFieldPacket.getStartXAsFloat() + ", " + this.cameraHeightFieldPacket.getStartZAsFloat());
         }
 
-        return list;
+        return propertyList;
     }
 
     /**

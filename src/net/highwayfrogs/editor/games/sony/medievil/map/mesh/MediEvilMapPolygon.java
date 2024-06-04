@@ -48,7 +48,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     private static final int FLAG_QUAD = Constants.BIT_FLAG_0;
     private static final int FLAG_TEXTURED = Constants.BIT_FLAG_1;
     public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_9;
-    private static final CVector UNSHADED_COLOR = CVector.makeColorFromRGB(0x7F7F7F7F);
+    private static final CVector UNSHADED_COLOR = CVector.makeColorFromRGB(0x80808080);
 
     public MediEvilMapPolygon(MediEvilGameInstance instance) {
         super(instance);
@@ -251,7 +251,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         int bgrColor = (packedColor & 0xF8F8) | (blueHiBits << 13) | (blueLoBits << 19);
 
         // Calculate GPU code.
-        byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING;
+        byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING | CVector.FLAG_MODULATION;
         if (polygonType.isQuad())
             gpuCode |= CVector.FLAG_QUAD;
         if (polygonType.isTextured())

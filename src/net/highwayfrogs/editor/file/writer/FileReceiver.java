@@ -14,8 +14,8 @@ import java.nio.file.Files;
  * Created by Kneesnap on 8/10/2018.
  */
 public class FileReceiver implements DataReceiver {
-    private File targetFile;
-    private ArrayReceiver arrayReceiver;
+    private final File targetFile;
+    private final ArrayReceiver arrayReceiver;
 
     public FileReceiver(File file) {
         this.targetFile = file;
@@ -35,6 +35,11 @@ public class FileReceiver implements DataReceiver {
     @Override
     public void writeBytes(byte[] values) throws IOException {
         this.arrayReceiver.writeBytes(values);
+    }
+
+    @Override
+    public void writeBytes(byte[] values, int offset, int amount) throws IOException {
+        this.arrayReceiver.writeBytes(values, offset, amount);
     }
 
     @Override

@@ -26,9 +26,11 @@ public enum ImageResource {
     GEOMETRIC_SHAPES_32("icons/model.png"),
     ZIPPED_FOLDER_32("icons/packed.png"),
     PAINTERS_PALETTE_32("icons/palette.png"),
+    SKELETON_JOINTS_32("icons/skeleton-joints.png"),
     MUSIC_NOTE_32("icons/sound.png"),
     SWAMPY_32("icons/swampy.png"),
     QUESTION_MARK_32("icons/unknown.png"),
+    ICON_MULTIMEDIA_32("icons/applications-multimedia32.png"),
 
     // Logos
     FROGLORD_LOGO_ALTERNATE_LARGE("graphics/alternate-logo-large.png"),

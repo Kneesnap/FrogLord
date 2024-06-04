@@ -16,8 +16,8 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapVertex;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsMapMeshController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -368,11 +368,11 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     }
 
     @Override
-    public List<Tuple2<String, Object>> createPropertyList() {
-        List<Tuple2<String, Object>> list = super.createPropertyList();
-        list.add(new Tuple2<>("Map Dimensions", this.heightMapXLength + "x" + this.heightMapZLength));
-        list.add(new Tuple2<>("World Height Scale", this.worldHeightScale));
-        list.add(new Tuple2<>("Unknown Values: ", this.unknownInfoValue1 + ", " + this.unknownInfoValue2));
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Map Dimensions", this.heightMapXLength + "x" + this.heightMapZLength);
+        propertyList.add("World Height Scale", this.worldHeightScale);
+        propertyList.add("Unknown Values: ", this.unknownInfoValue1 + ", " + this.unknownInfoValue2);
 
         // Texture Counts
         int activeTextureCount = 0;
@@ -387,13 +387,13 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
         for (int i = 0; i < this.zones.size(); i++)
             regionCount += this.zones.get(i).getRegions().size();
 
-        list.add(new Tuple2<>("Textures", activeTextureCount));
-        list.add(new Tuple2<>("Collision Primitives", this.collprims.size()));
-        list.add(new Tuple2<>("Zones", this.zones.size() + " (" + regionCount + " Regions)"));
-        list.add(new Tuple2<>("Lines", this.lines.size()));
-        list.add(new Tuple2<>("Splines", this.splines.size()));
+        propertyList.add("Textures", activeTextureCount);
+        propertyList.add("Collision Primitives", this.collprims.size());
+        propertyList.add("Zones", this.zones.size() + " (" + regionCount + " Regions)");
+        propertyList.add("Lines", this.lines.size());
+        propertyList.add("Splines", this.splines.size());
 
-        return list;
+        return propertyList;
     }
 
     @Override

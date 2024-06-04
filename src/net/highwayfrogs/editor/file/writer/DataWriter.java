@@ -190,6 +190,18 @@ public class DataWriter {
     }
 
     /**
+     * Write a byte array to the receiver.
+     * @param array The array of values to write.
+     */
+    public void writeBytes(byte[] array, int offset, int amount) {
+        try {
+            output.writeBytes(array, offset, amount);
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to write a byte-array to the receiver.", ex);
+        }
+    }
+
+    /**
      * Writes an unsigned byte short as an unsigned byte.
      * @param value the short to write.
      */

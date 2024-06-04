@@ -2,7 +2,7 @@
 <img src="https://github.com/Kneesnap/FrogLord/blob/master/resources/graphics/logo-large.png?raw=true" width="50%" height="50%">
 </p>
 
-# FrogLord - The Frogger Modding Tool
+# FrogLord - The Frogger (& More) Modding Tool
 ## What is FrogLord?
 FrogLord is a modding suite for Frogger (1997). It allows fans to create new levels, import 3D models, view unused content, and allow changing all game files.
 To use this tool, you must have a copy of the game.
@@ -10,6 +10,17 @@ To use this tool, you must have a copy of the game.
 ## Screenshots:
 ![MAP Viewer](https://i.imgur.com/R67Jhao.png)
 ![MOF Viewer](https://i.imgur.com/dZJwhUm.png)
+
+## Supported Games
+| Name                     | # of Supported Builds | Support Notes                  |
+|--------------------------|-----------------------|--------------------------------|
+| Beast Wars: Transformers | PC: 1, PSX: 1         | Support WIP.                   |
+| C-12 Final Resistance    | PSX: 16               | Support WIP.                   |
+| Frogger He's Back        | PC: 6, PSX: 67        | Map editing not yet finalized. |
+| Frogger: The Great Quest | PC: 1, PS2: 3         | Support WIP.                   |
+| MediEvil                 | PSX: 38               | Support WIP.                   |
+| MediEvil II              | PSX: 16               | Support WIP.                   |
+| Moon Warrior             | PSX: 1                | Support WIP.                   |
 
 ## Usage:
 Download: [here](https://github.com/Kneesnap/FrogLord/releases)  

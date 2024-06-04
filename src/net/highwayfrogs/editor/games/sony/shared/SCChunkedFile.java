@@ -7,7 +7,8 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
-import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -48,7 +49,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             throw new RuntimeException("There was already a packet with the identifier '" + packet.getIdentifierString() + "' registered to this " + Utils.getSimpleName(this) + ".");
 
         this.filePacketsByIdentifierString.put(packet.getIdentifierString(), packet);
-        this.filePacketsByIdentifierInteger.put(packet.getIdentiferInteger(), packet);
+        this.filePacketsByIdentifierInteger.put(packet.getIdentifierInteger(), packet);
         this.filePackets.add(packet);
     }
 
@@ -104,7 +105,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             if (this.enforcePacketOrder) {
                 // Get packets in order.
                 packet = this.filePackets.get(packetIndex++);
-                while (packet.getIdentiferInteger() != identifier && this.filePackets.size() > packetIndex && !packet.isRequired())
+                while (packet.getIdentifierInteger() != identifier && this.filePackets.size() > packetIndex && !packet.isRequired())
                     packet = this.filePackets.get(packetIndex++);
             } else {
                 // Get any packet.
@@ -112,7 +113,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             }
 
             // If we've found the packet, read it. Otherwise, print we don't recognize it.
-            if (packet != null && packet.getIdentiferInteger() == identifier) {
+            if (packet != null && packet.getIdentifierInteger() == identifier) {
                 reader.setIndex(packetReadStartIndex); // Move back so the packet can verify the identifier.
                 packet.load(reader);
                 lastPacket = packet;
@@ -186,10 +187,16 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
     }
 
     @Override
-    public List<Tuple2<String, Object>> createPropertyList() {
-        List<Tuple2<String, Object>> list = super.createPropertyList();
-        list.add(new Tuple2<>("Active Packet Count", getActivePacketCount()));
-        return list;
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Active Packet Count", getActivePacketCount());
+        for (int i = 0; i < this.filePackets.size(); i++) {
+            SCFilePacket<?, TGameInstance> filePacket = this.filePackets.get(i);
+            if (filePacket.isActive() && filePacket instanceof IPropertyListCreator)
+                ((IPropertyListCreator) filePacket).addToPropertyList(propertyList);
+        }
+
+        return propertyList;
     }
 
     /**
@@ -203,7 +210,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
     public static abstract class SCFilePacket<TFile extends SCChunkedFile<TGameInstance>, TGameInstance extends SCGameInstance> {
         private final TFile parentFile;
         private final String identifierString;
-        private final int identiferInteger;
+        private final int identifierInteger;
         private final boolean required;
         private final PacketSizeType sizeType;
         private int lastValidReadHeaderAddress = -1;
@@ -213,12 +220,13 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
         private int lastValidWriteBodyAddress = -1;
         private int lastValidWriteSize = -1;
         private Logger cachedLogger;
+        private boolean active;
 
         public SCFilePacket(TFile parentFile, String identifier, boolean required, PacketSizeType sizeType) {
             this.parentFile = parentFile;
             this.identifierString = identifier;
-            this.identiferInteger = Utils.makeIdentifier(identifier);
-            this.required = required;
+            this.identifierInteger = Utils.makeIdentifier(identifier);
+            this.active = this.required = required;
             this.sizeType = sizeType;
         }
 
@@ -253,11 +261,10 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
 
         /**
          * Test if this packet is active.
-         * If this packet is active, it ensures it will be saved.
-         * Required packets are always saved.
+         * A packet being active means there is valid data, or at minimum the packet should be saved.
          */
         public boolean isActive() {
-            return isRequired();
+            return this.active || this.required;
         }
 
         /**
@@ -294,10 +301,10 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             boolean threwError = false;
             try {
                 this.loadBody(reader, expectedEndPosition);
+                this.active = true;
             } catch (Throwable th) {
                 threwError = true;
-                getLogger().warning("An error occurred while reading the '" + getIdentifierString() + "' packet data.");
-                th.printStackTrace();
+                Utils.handleError(getLogger(), th, false, "An error occurred while reading the '%s' packet data.", getIdentifierString());
             }
 
             // Automatically align to the next section.
@@ -347,7 +354,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
          */
         public void save(DataWriter writer) {
             this.lastValidWriteHeaderAddress = writer.getIndex();
-            writer.writeInt(this.identiferInteger);
+            writer.writeInt(this.identifierInteger);
             int sizeAddress = hasSize() ? writer.writeNullPointer() : -1;
 
             // Write body data.

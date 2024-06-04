@@ -11,10 +11,10 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.TexController;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.texture.BufferedImageWrapper;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
-import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -271,9 +271,9 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
     }
 
     @Override
-    public List<Tuple2<String, Object>> createPropertyList() {
-        List<Tuple2<String, Object>> list = super.createPropertyList();
-        list.add(new Tuple2<>("Image Count", this.images.size()));
-        return list;
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Image Count", this.images.size());
+        return propertyList;
     }
 }

@@ -480,10 +480,12 @@ public class CVector implements IBinarySerializable {
     private static void updateModulatedColorPreviewImage(ImageView view, BufferedImage image, int newRed, int newGreen, int newBlue) {
         Graphics2D graphics = image.createGraphics();
 
-        // Clamp modulated color value. This preview's purpose is to make it clear that 127 is the brightest color value in the editor.
-        int red = (int) Math.min((255D * newRed) / 127D, 255);
-        int green = (int) Math.min((255D * newGreen) / 127D, 255);
-        int blue = (int) Math.min((255D * newBlue) / 127D, 255);
+        // Clamp modulated color value.
+        // This preview's purpose is to make it clear that 128 is the default color value.
+        // Above/below 128 will increase/decrease intensity.
+        int red = (int) Math.min((255D * newRed) / 128D, 255);
+        int green = (int) Math.min((255D * newGreen) / 128D, 255);
+        int blue = (int) Math.min((255D * newBlue) / 128D, 255);
 
         graphics.setColor(new Color(red, green, blue, 255));
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());

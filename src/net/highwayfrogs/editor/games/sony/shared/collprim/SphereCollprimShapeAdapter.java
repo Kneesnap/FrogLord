@@ -7,7 +7,7 @@ import javafx.scene.shape.Sphere;
  * Created by Kneesnap on 9/26/2023.
  */
 public class SphereCollprimShapeAdapter extends CollprimShapeAdapter<Sphere> {
-    public SphereCollprimShapeAdapter(MRCollprim collprim, Sphere sphere) {
+    public SphereCollprimShapeAdapter(ICollprim collprim, Sphere sphere) {
         super(collprim, sphere);
     }
 

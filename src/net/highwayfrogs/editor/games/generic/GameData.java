@@ -15,8 +15,8 @@ public abstract class GameData<TGameInstance extends GameInstance> extends GameO
     /**
      * Represents GameData which can be used by any GameInstance.
      */
-    public static abstract class GenericGameData extends GameData<GameInstance> {
-        public GenericGameData(GameInstance instance) {
+    public static abstract class SharedGameData extends GameData<GameInstance> {
+        public SharedGameData(GameInstance instance) {
             super(instance);
         }
     }

@@ -3,7 +3,10 @@ package net.highwayfrogs.editor.games.sony.medievil.map.packet;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -38,7 +41,9 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket {
 
         // Read header identifiers.
         int headerListPtr = reader.readInt();
-        reader.setIndex(headerListPtr);
+        if (headerListPtr != reader.getIndex())
+            throw new RuntimeException("MediEvilMapHeaderPacket expected header list at " + Utils.toHexString(reader.getIndex()) + ", but was actually at " + Utils.toHexString(headerListPtr));
+
         this.headerIdentifiers = new String[packetCount];
         for (int i = 0; i < packetCount; i++)
             this.headerIdentifiers[i] = Utils.toMagicString(reader.readInt());
@@ -56,11 +61,24 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket {
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
-        // TODO: Implement later!
+        writer.writeStringBytes(FILE_TYPE);
+        writer.writeNullPointer(); // fileLengthInBytes
+        writer.writeUnsignedShort(getParentFile().getActivePacketCount()); // Packet Count
+        writer.writeUnsignedShort(VERSION_CODE); // Version code.
+        writer.writeTerminatedStringOfLength(this.levelString, LEVEL_STRING_LENGTH);
+        int headerListPtrAddress = writer.writeNullPointer();
+        writer.writeAddressTo(headerListPtrAddress);
+        for (int i = 0; i < getParentFile().getFilePackets().size(); i++) {
+            SCFilePacket<? extends SCChunkedFile<MediEvilGameInstance>, MediEvilGameInstance> filePacket = getParentFile().getFilePackets().get(i);
+            if (filePacket.isActive())
+                writer.writeInt(filePacket.getIdentifierInteger());
+        }
     }
 
     @Override
     protected void saveBodySecondPass(DataWriter writer, long sizeInBytes) {
-        // TODO: Implement later!
+        super.saveBodySecondPass(writer, sizeInBytes);
+        writer.skipBytes(FILE_TYPE.length());
+        writer.writeUnsignedInt(sizeInBytes);
     }
 }

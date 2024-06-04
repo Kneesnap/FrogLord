@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
  */
 @Getter
 public class ArrayReceiver implements DataReceiver {
-    private List<Byte> bytes;
+    private final List<Byte> bytes;
     private int index;
 
     public ArrayReceiver() {
@@ -42,6 +43,16 @@ public class ArrayReceiver implements DataReceiver {
     public void writeBytes(byte[] values) {
         for (byte value : values)
             writeByte(value);
+    }
+
+    @Override
+    public void writeBytes(byte[] values, int offset, int amount) throws IOException {
+        amount = Math.max(0, Math.min(amount, values.length - offset - 1));
+        if (amount == 0)
+            return;
+
+        for (int i = 0; i < amount; i++)
+            writeByte(values[offset + i]);
     }
 
     @Override

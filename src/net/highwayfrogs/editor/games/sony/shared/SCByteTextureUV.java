@@ -58,6 +58,16 @@ public class SCByteTextureUV implements IBinarySerializable {
     }
 
     /**
+     * Set UV values as floats ranging from 0 to 1.
+     * @param u the float value to apply
+     * @param v the float value to apply
+     */
+    public void setFloatUV(float u, float v) {
+        this.u = floatToByte(u);
+        this.v = floatToByte(v);
+    }
+
+    /**
      * Get U as a float ranging from 0 to 1.
      * @return floatU
      */

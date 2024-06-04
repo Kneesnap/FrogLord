@@ -30,6 +30,17 @@ public class FileSource implements DataSource {
     }
 
     @Override
+    public int readBytes(byte[] output, int offset, int amount) throws IOException {
+        amount = Math.max(0, Math.min(amount, this.fileData.length - this.index - 1));
+        if (amount == 0)
+            return 0;
+
+        System.arraycopy(this.fileData, this.index, output, offset, amount);
+        this.index += amount;
+        return amount;
+    }
+
+    @Override
     public void skip(int byteCount) throws IOException {
         this.index += byteCount;
     }

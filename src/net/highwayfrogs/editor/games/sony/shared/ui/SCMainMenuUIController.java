@@ -57,6 +57,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
         addMenuItem(this.menuBarFile, "Import File", this::importFile); // Ctrl + I
         addMenuItem(this.menuBarFile, "Export File", this::exportFile); // Ctrl + O
+        addMenuItem(this.menuBarFile, "Export Original File", this::exportOriginalFile);
         addMenuItem(this.menuBarFile, "Export File (Alternate Format)", () -> getSelectedFileEntry().exportAlternateFormat(getFileEntry())); // Ctrl + E
         addMenuItem(this.menuBarFile, "Export All Textures", this::exportBulkTextures);
 
@@ -145,6 +146,26 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
             getFileListComponent().getCollectionViewComponent().refreshDisplay();
 
         getLogger().info("Imported " + selectedFile.getName() + " as " + getFileEntry().getDisplayName() + ".");
+    }
+
+    /**
+     * Export the current file in its original form.
+     */
+    @SneakyThrows
+    public void exportOriginalFile() {
+        SCGameFile<?> currentFile = getSelectedFileEntry();
+        if (currentFile == null || currentFile.getRawFileData() == null) {
+            Utils.makePopUp("Cannot export file.", AlertType.ERROR);
+            return;
+        }
+
+        FileEntry entry = getFileEntry();
+        File selectedFile = Utils.promptFileSave(getGameInstance(), "Specify the file to export this data as...", entry.getDisplayName(), "All Files", "*");
+        if (selectedFile == null)
+            return; // Cancel.
+
+        Files.write(selectedFile.toPath(), currentFile.getRawFileData());
+        getLogger().info("Exported " + selectedFile.getName() + ".");
     }
 
     /**

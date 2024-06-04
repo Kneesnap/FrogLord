@@ -5,8 +5,6 @@ import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.sound.VBAudioBody;
-import net.highwayfrogs.editor.file.sound.VHAudioHeader;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -16,6 +14,8 @@ import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityTable;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVBFile;
+import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVHFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
@@ -130,7 +130,7 @@ public class MediEvilGameInstance extends SCGameInstance {
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Models", FILE_TYPE_MOF));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Models", FILE_TYPE_MAPMOF));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Maps", FILE_TYPE_MAP));
-        fileListView.addGroup(new LazySCGameFileListGroup("VAB Sound", (file, index) -> file instanceof VBAudioBody<?> || file instanceof VHAudioHeader));
+        fileListView.addGroup(new LazySCGameFileListGroup("VAB Sound", (file, index) -> file instanceof SCSplitVBFile || file instanceof SCSplitVHFile));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("QTR [Quad Tree]", FILE_TYPE_QTR));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("PGD [Collision Grid]", FILE_TYPE_PGD));
     }

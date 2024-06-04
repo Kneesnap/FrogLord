@@ -640,7 +640,7 @@ public class Utils {
         try {
             return Files.readAllLines(file.toPath());
         } catch (IOException e) {
-            e.printStackTrace();
+            handleError(null, e, false, "Failed to read text lines from file '%s'", file);
             return Collections.emptyList();
         }
     }
@@ -692,16 +692,14 @@ public class Utils {
             while ((bytesRead = input.read(buffer)) != -1)
                 output.write(buffer, 0, bytesRead);
         } catch (IOException ex) {
-            System.out.println("Failed to copy stream data from the input stream to the output stream!");
-            ex.printStackTrace();
+            handleError(null, ex, false, "Failed to copy stream data from the input stream to the output stream!");
         }
 
         if (closeInput) {
             try {
                 input.close();
             } catch (IOException ex) {
-                System.out.println("Failed to close the input stream.");
-                ex.printStackTrace();
+                handleError(null, ex, false, "Failed to close the input stream.");
             }
         }
     }
@@ -1675,7 +1673,7 @@ public class Utils {
     public static PhongMaterial makeHighlightOverlayMaterial(Color color) {
         BufferedImage colorImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = colorImage.createGraphics();
-        graphics.setColor(toAWTColor(color, (byte) 0x7F));
+        graphics.setColor(toAWTColor(color, (byte) 0x80));
         graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
         graphics.dispose();
 
@@ -1824,6 +1822,7 @@ public class Utils {
      * @param message the message to accompany the exception
      * @param arguments format string arguments to the message
      */
+    @SuppressWarnings("CallToPrintStackTrace")
     public static void handleError(Logger logger, Throwable th, boolean showWindow, int skipCount, String message, Object... arguments) {
         // TODO: Should generalize? Probably?
         // TODO: JAva 9 -> StackWalker.getCallerClass()
@@ -1846,7 +1845,7 @@ public class Utils {
         // Format message.
         String formattedMessage;
         try {
-            formattedMessage = message != null ? String.format(message, arguments) : null;
+            formattedMessage = message != null && arguments != null && arguments.length > 0 ? String.format(message, arguments) : message;
         } catch (IllegalFormatException exception) {
             formattedMessage = "[String Formatting Failed] " + message;
         }
@@ -1856,6 +1855,10 @@ public class Utils {
             if (formattedMessage != null)
                 logger.severe(formattedMessage);
             logger.throwing(callingClass != null ? callingClass.getSimpleName() : null, callingMethodName, th);
+        } else {
+            System.err.println(formattedMessage);
+            if (th != null)
+                th.printStackTrace();
         }
 
         // Create popup window.
@@ -1891,9 +1894,12 @@ public class Utils {
      * @param ex      The exception which caused the error.
      */
     public static void makeErrorPopUp(String message, Throwable ex, boolean printException) {
-        if (printException)
-            ex.printStackTrace();
-        new Alert(AlertType.ERROR, (message != null && message.length() > 0 ? message + Constants.NEWLINE : "") + "Error: " + ex.getMessage(), ButtonType.OK).showAndWait();
+        String errorMessage = (message != null && message.length() > 0 ? message + Constants.NEWLINE : "") + "Error: " + (ex != null ? ex.getMessage() : "null");
+        if (printException) {
+            handleError(null, ex, true, errorMessage);
+        } else {
+            new Alert(AlertType.ERROR, errorMessage, ButtonType.OK).showAndWait();
+        }
     }
 
     /**
@@ -2165,7 +2171,7 @@ public class Utils {
             crypt.update(data);
             return byteToHex(crypt.digest());
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            handleError(null, e, false, "Couldn't find SHA-1 algorithm implementation.");
             return null;
         }
     }
@@ -2248,5 +2254,25 @@ public class Utils {
             len--;
 
         return (len < input.length()) ? input.substring(0, len) : input;
+    }
+
+    /**
+     * Tests a value for bits outside the supplied mask, warning if found.
+     * @param logger The logger to log the warning to.
+     * @param value The value to test
+     * @param mask The bit mask to test against.
+     * @param target A display string representing the data type.
+     * @return true iff there are no unsupported bits.
+     */
+    public static boolean warnAboutInvalidBitFlags(Logger logger, long value, long mask, String target) {
+        if ((value & ~mask) == 0)
+            return true;
+
+        if (target != null) {
+            logger.warning(target + " had bit flag value " + toHexString(value) + ", which contained unhandled bits.");
+        } else {
+            logger.warning("Bit flag value " + toHexString(value) + " had unexpected bits set!");
+        }
+        return false;
     }
 }

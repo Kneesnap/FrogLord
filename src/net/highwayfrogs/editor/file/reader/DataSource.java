@@ -22,6 +22,15 @@ public interface DataSource {
     public byte[] readBytes(int amount) throws IOException;
 
     /**
+     * Read a given amount of bytes into an array.
+     * @param output the output byte array to read bytes into.
+     * @param offset The offset into the array to place bytes at.
+     * @param amount The amount of bytes to read.
+     * @return amount of bytes actually read.
+     */
+    public int readBytes(byte[] output, int offset, int amount) throws IOException;
+
+    /**
      * Skip a given number of bytes, from the current index.
      * @param byteCount The bytes to skip.
      */

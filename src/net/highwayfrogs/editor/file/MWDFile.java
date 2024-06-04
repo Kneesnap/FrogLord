@@ -93,14 +93,17 @@ public class MWDFile extends SCSharedGameData {
                 entry.setSha1Hash(Utils.calculateSHA1Hash(fileBytes));
 
             SCGameFile<?> file = loadFile(fileBytes, entry);
+            this.files.add(file);
 
             try {
-                file.load(new DataReader(new ArraySource(fileBytes)));
+                DataReader singleFileReader = new DataReader(new ArraySource(fileBytes));
+                file.load(singleFileReader);
+                if (singleFileReader.hasMore()) // Warn if the full file is not read.
+                    file.getLogger().warning("File contents were read to index " + Utils.toHexString(singleFileReader.getIndex()) + ", leaving " + singleFileReader.getRemaining() + " bytes unread. (Length: " + Utils.toHexString(reader.getSize()) + ")");
             } catch (Exception ex) {
                 Utils.handleError(getLogger(), ex, false, "Failed to load %s (%d)", entry.getDisplayName(), entry.getResourceId());
             }
 
-            this.files.add(file);
             if (progressBar != null)
                 progressBar.addCompletedProgress(1);
         }
@@ -165,6 +168,7 @@ public class MWDFile extends SCSharedGameData {
         getGameInstance().getFileObjectsByFileEntries().put(entry, file);
         getGameInstance().getFileEntriesByFileObjects().put(file, entry);
         CURRENT_FILE_NAME = entry.getDisplayName();
+        file.setRawFileData(fileBytes);
         return (T) file;
     }
 
@@ -353,6 +357,42 @@ public class MWDFile extends SCSharedGameData {
         }
 
         return null; // Nothing found.
+    }
+
+    /**
+     * Gets a game file by the given file name.
+     * @param fileName The name of the file to lookup.
+     * @return foundFile
+     */
+    @SuppressWarnings("unchecked")
+    public <TGameFile extends SCGameFile<? extends SCGameInstance>> TGameFile getFileByName(String fileName) {
+        for (SCGameFile<?> gameFile : getFiles()) {
+            if (matchesFileName(gameFile.getIndexEntry(), fileName))
+                return (TGameFile) gameFile;
+
+            if (gameFile instanceof WADFile)
+                for (WADEntry wadFileEntry : ((WADFile) gameFile).getFiles())
+                    if (matchesFileName(wadFileEntry.getFileEntry(), fileName))
+                        return (TGameFile) wadFileEntry.getFile();
+        }
+
+        return null;
+    }
+
+    private static boolean matchesFileName(FileEntry fileEntry, String fileName) {
+        if (fileEntry == null)
+            return false;
+
+        String fileDisplayName = fileEntry.getDisplayName();
+        if (fileDisplayName != null && fileDisplayName.equalsIgnoreCase(fileName))
+            return true;
+
+        String fileNameWithoutExtension = fileDisplayName != null ? Utils.stripExtension(fileDisplayName) : null;
+        if (fileNameWithoutExtension != null && fileNameWithoutExtension.equalsIgnoreCase(fileName))
+            return true;
+
+        String fullFilePath = fileEntry.getFullFilePath();
+        return fullFilePath != null && fullFilePath.equalsIgnoreCase(fileName);
     }
 
     /**

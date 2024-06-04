@@ -525,7 +525,7 @@ public class Scene3DUtils {
 
             // Draw new image.
             g.drawImage(rawTexture, 0, 0, rawTexture.getWidth(), rawTexture.getHeight(), null);
-            g.setColor(new Color(200, 200, 0, 127));
+            g.setColor(new Color(200, 200, 0, 128));
             g.fillRect(0, 0, highlightedImage.getWidth(), highlightedImage.getHeight());
         } finally {
             g.dispose();
