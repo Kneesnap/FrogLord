@@ -151,6 +151,32 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList.add("Polygons", this.polygons.size());
+        int g3Count = 0;
+        int g4Count = 0;
+        int gt3Count = 0;
+        int gt4Count = 0;
+        for (int i = 0; i < this.polygons.size(); i++) {
+            SCMapPolygon polygon = this.polygons.get(i);
+            switch (polygon.getPolygonType()) {
+                case POLY_G3:
+                    g3Count++;
+                    break;
+                case POLY_G4:
+                    g4Count++;
+                    break;
+                case POLY_GT3:
+                    gt3Count++;
+                    break;
+                case POLY_GT4:
+                    gt4Count++;
+                    break;
+                default:
+                    throw new RuntimeException("Unsupported polygon type: " + polygon.getPolygonType());
+            }
+        }
+
+        propertyList.add("Untextured Polygons", "[G3s: " + g3Count + ", G4s: " + g4Count + "]");
+        propertyList.add("Textured Polygons", "[GT3s: " + gt3Count + ", GT4s: " + gt4Count + "]");
         propertyList.add("Vertices", this.vertices.size());
         propertyList.add("Texture Uv Pairs", this.uvs.size());
         return propertyList;

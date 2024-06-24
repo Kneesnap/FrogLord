@@ -79,6 +79,19 @@ public class Vector2f {
     }
 
     /**
+     * Adds scalar values to the vector.
+     * @param x The x value to add.
+     * @param y The y value to add.
+     * @return this
+     */
+    public Vector2f add(float x, float y) {
+        this.x += x;
+        this.y += y;
+        return this;
+    }
+
+
+    /**
      * Adds two vectors together.
      * @param other The vector to add.
      * @return this
@@ -86,6 +99,18 @@ public class Vector2f {
     public Vector2f add(Vector2f other) {
         this.x += other.x;
         this.y += other.y;
+        return this;
+    }
+
+    /**
+     * Subtracts scalar values from the vector.
+     * @param x The x value to subtract.
+     * @param y The y value to subtract.
+     * @return this
+     */
+    public Vector2f subtract(float x, float y) {
+        this.x -= x;
+        this.y -= y;
         return this;
     }
 

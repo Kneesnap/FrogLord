@@ -1,13 +1,12 @@
 package net.highwayfrogs.editor.file.vlo;
 
+import javafx.scene.image.PixelFormat;
 import net.highwayfrogs.editor.Constants;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
-import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageFilter;
-import java.awt.image.RGBImageFilter;
+import java.awt.image.*;
+import java.nio.IntBuffer;
 
 /**
  * Apply image filters.
@@ -22,12 +21,9 @@ public class ImageWorkHorse {
      * @return trimmedImage
      */
     public static BufferedImage trimEdges(GameImage gameImage, BufferedImage image) {
-        int xTrim = gameImage.getFullWidth() - gameImage.getIngameWidth();
-        int yTrim = gameImage.getFullHeight() - gameImage.getIngameHeight();
-
         BufferedImage trimImage = new BufferedImage(gameImage.getIngameWidth(), gameImage.getIngameHeight(), image.getType());
         Graphics2D graphics = trimImage.createGraphics();
-        graphics.drawImage(image, -xTrim / 2, -yTrim / 2, gameImage.getFullWidth(), gameImage.getFullHeight(), null);
+        graphics.drawImage(image, -gameImage.getLeftPadding(), -gameImage.getUpPadding(), gameImage.getFullWidth(), gameImage.getFullHeight(), null);
         graphics.dispose();
 
         return trimImage;
@@ -176,9 +172,9 @@ public class ImageWorkHorse {
     // Black -> Transparency
     public static class TransparencyFilter extends RGBImageFilter {
         @Override
-        public int filterRGB(int x, int y, int rgb) {
-            int colorWOAlpha = rgb & 0xFFFFFF;
-            return colorWOAlpha == 0x000000 ? colorWOAlpha : rgb;
+        public int filterRGB(int x, int y, int argb) {
+            int colorWOAlpha = argb & 0x00FFFFFF;
+            return colorWOAlpha == 0x000000 ? colorWOAlpha : argb;
         }
     }
 
@@ -216,6 +212,35 @@ public class ImageWorkHorse {
     }
 
     /**
+     * Draws one image onto another very quickly.
+     * @param sourceImage The image to transfer from.
+     * @param targetImage The image to transfer to.
+     * @param targetGraphics The graphics to draw the image with if necessary.
+     * @param x the x coordinate to place the texture in the target at.
+     * @param y the y coordinate to place the texture in the target at.
+     */
+    public static void drawImageFast(BufferedImage sourceImage, BufferedImage targetImage, Graphics targetGraphics, int x, int y) {
+        if (sourceImage.getType() != targetImage.getType()) {
+            if (targetGraphics != null) {
+                targetGraphics.drawImage(sourceImage, x, y, null);
+            } else {
+                Graphics graphics = targetImage.createGraphics();
+                graphics.drawImage(sourceImage, x, y, null);
+                graphics.dispose();
+            }
+        } else {
+            int[] rawSourceImage = getPixelIntegerArray(sourceImage);
+            int[] rawTargetImage = getPixelIntegerArray(targetImage);
+
+            int sourceImageWidth = sourceImage.getWidth();
+            int targetImageWidth = targetImage.getWidth();
+            int copyWidth = Math.min(sourceImageWidth, targetImageWidth - x);
+            for (int yOffset = 0; yOffset < sourceImage.getHeight(); yOffset++)
+                System.arraycopy(rawSourceImage, (yOffset * sourceImageWidth), rawTargetImage, ((y + yOffset) * targetImageWidth) + x, copyWidth);
+        }
+    }
+
+    /**
      * Takes an image and creates a new rotated version.
      * Copied from https://stackoverflow.com/questions/37758061/rotate-a-buffered-image-in-java/37758533
      * @param img   The image to rotate.
@@ -242,5 +267,50 @@ public class ImageWorkHorse {
         g2d.setTransform(at);
         g2d.drawImage(img, 0, 0, null);
         return rotated;
+    }
+
+    /**
+     * Writes the buffered image to the FX image.
+     * Adapted from <a href="https://stackoverflow.com/questions/30970005/bufferedimage-to-javafx-image"/>.
+     * @param awtImage the BufferedImage to write to the FX image.
+     * @param fxImage the FX image to be written to
+     */
+    public static void writeBufferedImageToFxImage(BufferedImage awtImage, javafx.scene.image.WritableImage fxImage, int x, int y) {
+        if (awtImage == null)
+            throw new NullPointerException("awtImage");
+        if (fxImage == null)
+            throw new NullPointerException("fxImage");
+        if (x < 0 || y < 0 || x + awtImage.getWidth() > fxImage.getWidth() || y + awtImage.getHeight() > fxImage.getHeight())
+            throw new IllegalArgumentException("Cannot paste image of dimensions " + awtImage.getWidth() + "x" + awtImage.getHeight() + " at position (" + x + ", " + y + ") for an FX image of dimensions " + fxImage.getWidth() + "x" + fxImage.getHeight() + ".");
+
+        // Ensure the image is the appropriate format.
+        if (awtImage.getType() != BufferedImage.TYPE_INT_ARGB) {
+            BufferedImage oldAwtImage = awtImage;
+            awtImage = new BufferedImage(oldAwtImage.getWidth(), oldAwtImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+            Graphics2D graphics = awtImage.createGraphics();
+            try {
+                graphics.drawImage(oldAwtImage, 0, 0, oldAwtImage.getWidth(), oldAwtImage.getHeight(), null);
+            } finally {
+                graphics.dispose();
+            }
+        }
+
+        // Converting the BufferedImage to an IntBuffer.
+        int[] intArgbBuffer = getPixelIntegerArray(awtImage);
+
+        // Converting the IntBuffer to an Image.
+        PixelFormat<IntBuffer> pixelFormat = PixelFormat.getIntArgbInstance();
+        fxImage.getPixelWriter().setPixels(x, y, awtImage.getWidth(), awtImage.getHeight(), pixelFormat, intArgbBuffer, 0, awtImage.getWidth());
+    }
+
+    /**
+     * Gets the integer array containing raw pixel data for the image.
+     * This can be edited directly, and yields the most performant editing results.
+     * @param awtImage the image to edit directly
+     * @return integerArray
+     */
+    public static int[] getPixelIntegerArray(BufferedImage awtImage) {
+        return awtImage != null ? ((DataBufferInt) awtImage.getRaster().getDataBuffer()).getData() : null;
     }
 }

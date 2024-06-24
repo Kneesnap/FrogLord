@@ -27,7 +27,7 @@ import java.util.List;
  * Created by Kneesnap on 12/12/2023.
  */
 public class OldFroggerPathManager extends OldFroggerMapListManager<OldFroggerMapPath, DisplayList> {
-    private static final PhongMaterial SPLINE_MATERIAL = Utils.makeSpecialMaterial(Color.LIGHTPINK);
+    private static final PhongMaterial SPLINE_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIGHTPINK);
 
     public OldFroggerPathManager(MeshViewController<OldFroggerMapMesh> controller) {
         super(controller);

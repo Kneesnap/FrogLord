@@ -75,9 +75,6 @@ public class Constants {
 
     public static final boolean LOG_EXE_INFO = false;
 
-    public static final List<Integer> PC_ISLAND_REMAP = Arrays.asList(221, 862, 860, 859, 688, 863, 857, 694, 722, 854, 729, 857, 854, 853, 850, 3, 863);
-    public static final List<Integer> PSX_ISLAND_REMAP = Arrays.asList(363, 1191, 1189, 1188, 996, 1192, 1186, 1002, 1033, 1183, 1040, 1186, 1183, 1182, 1179, 4, 1192);
-
     public static final Color COLOR_TURQUOISE = new Color(0, 128, 128);
     public static final Color COLOR_DEEP_GREEN = new Color(0, 128, 0);
     public static final Color COLOR_DARK_YELLOW = new Color(128, 128, 0);
@@ -88,6 +85,8 @@ public class Constants {
 
     public static final String HIGHWAY_FROGS_WEBSITE_URL = "https://highwayfrogs.net/";
     public static final String SOURCE_CODE_REPOSITORY_URL = "https://github.com/Kneesnap/FrogLord/";
+
+    public static final String FX_STYLE_INVALID_TEXT = "-fx-text-inner-color: red;";
 
     /**
      * Log exe info if the option is enabled.

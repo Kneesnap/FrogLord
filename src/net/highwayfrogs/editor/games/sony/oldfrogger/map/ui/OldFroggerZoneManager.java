@@ -39,10 +39,10 @@ import java.util.Map;
 public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMapZone, ZonePreview3D> {
     private DisplayList boxDisplayList;
 
-    private static final PhongMaterial DEFAULT_MATERIAL = Utils.makeSpecialMaterial(Color.LIME);
-    private static final PhongMaterial SELECTED_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
-    private static final PhongMaterial WHITE_MATERIAL = Utils.makeSpecialMaterial(Color.WHITE);
-    private static final PhongMaterial BLUE_MATERIAL = Utils.makeSpecialMaterial(Color.LIGHTBLUE);
+    private static final PhongMaterial DEFAULT_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIME);
+    private static final PhongMaterial SELECTED_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial WHITE_MATERIAL = Utils.makeUnlitSharpMaterial(Color.WHITE);
+    private static final PhongMaterial BLUE_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIGHTBLUE);
 
     public OldFroggerZoneManager(MeshViewController<OldFroggerMapMesh> controller) {
         super(controller);

@@ -211,9 +211,11 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
 
     /**
      * Creates a texture shade definition for this polygon.
-     * @param mapFile The map file which the polygon is used within.
+     * @param mapMesh The map mesh which the polygon is used within.
      */
-    public PSXShadeTextureDefinition createPolygonShadeDefinition(MediEvilMapFile mapFile, boolean enableGouraudShading) {
+    public PSXShadeTextureDefinition createPolygonShadeDefinition(MediEvilMapMesh mapMesh, boolean enableGouraudShading) {
+        MediEvilMapFile mapFile = mapMesh.getMap();
+
         MediEvilLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
         PSXPolygonType polygonType = getPolygonType();
         boolean isSemiTransparent = isSemiTransparent(levelTableEntry);
@@ -241,7 +243,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
 
         // Create definition.
         ITextureSource textureSource = polygonType.isTextured() ? getTexture(levelTableEntry) : null;
-        return new PSXShadeTextureDefinition(polygonType, textureSource, colors, uvs, isSemiTransparent, false);
+        return new PSXShadeTextureDefinition(mapMesh.getShadedTextureManager(), polygonType, textureSource, colors, uvs, isSemiTransparent);
     }
 
     private static CVector fromPackedShort(short packedColor, PSXPolygonType polygonType, boolean isSemiTransparent) {
@@ -305,7 +307,12 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         }
     }
 
-    private static short toPackedShort(CVector color) {
+    /**
+     * Gets the CVector as a packet short saved in vertex padding.
+     * @param color the color to get as a short
+     * @return packedShortColor
+     */
+    public static short toPackedShort(CVector color) {
         return (short) (((color.getGreenShort() & 0b11111000) << 8) | (color.getRedShort() & 0b11111000)
                 | ((color.getBlueShort() & 0b111000000) << 3) | ((color.getBlueShort() & 0b00011000) >> 3));
     }

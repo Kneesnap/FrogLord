@@ -4,10 +4,11 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
-import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
+import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.Utils;
@@ -21,12 +22,13 @@ import java.util.function.Consumer;
  * Another editor with mouse-draggable points will be available for material editors.
  * Created by Kneesnap on 1/22/2024.
  */
-public abstract class PSXShadingEditor {
+public abstract class PSXShadingEditor<TShadeTarget> {
     @Getter private PSXShadeTextureDefinition shadeDefinition;
+    @Getter private TShadeTarget editTarget;
     private final ImageView previewImageView;
     private final boolean registerImageView;
     private final Consumer<BufferedImage> textureChangeListener = this::onTextureChangeReceived;
-    private boolean staticUISetup;
+    @Getter private boolean staticUISetup;
     private GUIEditorGrid dynamicEditorGrid;
     private MeshViewController<?> editorController;
     private Label polygonTypeNameLabel;
@@ -34,17 +36,21 @@ public abstract class PSXShadingEditor {
     private CheckBox polygonTypeGouraudCheckBox;
     private CheckBox polygonTypeTexturedCheckBox;
 
-    public PSXShadingEditor(PSXShadeTextureDefinition shadeDefinition, ImageView previewImageView) {
+    public PSXShadingEditor(TShadeTarget shadeTarget, PSXShadeTextureDefinition shadeDefinition, ImageView previewImageView) {
         this.previewImageView = previewImageView != null ? previewImageView : new ImageView();
         this.registerImageView = (previewImageView == null);
-        setShadeDefinition(shadeDefinition);
+        setShadeDefinition(shadeTarget, shadeDefinition);
     }
 
     /**
      * Applies a new shade definition to the editor.
+     * @param shadeTarget the new shade target
      * @param shadeDefinition the new shade definition
      */
-    public void setShadeDefinition(PSXShadeTextureDefinition shadeDefinition) {
+    public void setShadeDefinition(TShadeTarget shadeTarget, PSXShadeTextureDefinition shadeDefinition) {
+        if (shadeTarget == null && shadeDefinition != null)
+            throw new IllegalArgumentException("Cannot apply null shadeTarget when shadeDefinition is not null.");
+
         if (this.shadeDefinition != null) {
             this.shadeDefinition.getImageChangeListeners().remove(this.textureChangeListener);
             this.shadeDefinition.onDispose();
@@ -52,22 +58,22 @@ public abstract class PSXShadingEditor {
 
         // Apply new shade definition.
         this.shadeDefinition = shadeDefinition;
-
-        // Abort.
-        if (shadeDefinition == null) {
-            updateUI();
-            return;
-        }
+        this.editTarget = shadeTarget;
 
         // Register new shade definition.
-        shadeDefinition.onRegister();
-        shadeDefinition.getImageChangeListeners().add(this.textureChangeListener);
+        if (shadeDefinition != null) {
+            shadeDefinition.onRegister();
+            shadeDefinition.getImageChangeListeners().add(this.textureChangeListener);
+        }
 
         // Update editor UI elements, if they have been setup.
         updateUI();
         updatePreviewImage();
     }
 
+    /**
+     * Update the UI to reflect the selected polygon.
+     */
     public void updateUI() {
         if (this.staticUISetup) {
             PSXPolygonType polygonType = this.shadeDefinition != null ? this.shadeDefinition.getPolygonType() : null;
@@ -100,7 +106,14 @@ public abstract class PSXShadingEditor {
      */
     public void updatePreviewImage() {
         if (this.shadeDefinition != null) {
-            updatePreviewImage(this.shadeDefinition.makeImage());
+            boolean didDrawCorners = this.shadeDefinition.isDebugDrawCornerMarkers();
+            this.shadeDefinition.setDebugDrawCornerMarkers(true);
+
+            try {
+                updatePreviewImage(this.shadeDefinition.makeImage());
+            } finally {
+                this.shadeDefinition.setDebugDrawCornerMarkers(didDrawCorners);
+            }
         } else {
             this.previewImageView.setImage(null);
         }
@@ -108,7 +121,7 @@ public abstract class PSXShadingEditor {
 
     protected void updatePreviewImage(BufferedImage newShadedImage) {
         if (this.shadeDefinition != null && newShadedImage != null) {
-            this.previewImageView.setImage(Utils.toFXImage(newShadedImage, false));
+            this.previewImageView.setImage(Utils.toFXImage(ImageWorkHorse.resizeImage(newShadedImage, (int) this.previewImageView.getFitWidth(), (int) this.previewImageView.getFitHeight(), true), false));
         } else {
             this.previewImageView.setImage(null);
         }
@@ -118,7 +131,7 @@ public abstract class PSXShadingEditor {
      * Signals this object is no longer used.
      */
     public void dispose() {
-        setShadeDefinition(null); // Cleanup shade definition listeners.
+        setShadeDefinition(null, null); // Cleanup shade definition listeners.
         this.dynamicEditorGrid = null;
         this.editorController = null;
     }

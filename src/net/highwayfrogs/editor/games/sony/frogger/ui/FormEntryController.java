@@ -64,7 +64,7 @@ public class FormEntryController extends GameUIController<FroggerGameInstance> {
 
         // Setup:
         formSelector.setItems(FXCollections.observableArrayList(getGameInstance().getFullFormBook()));
-        formSelector.setConverter(new AbstractStringConverter<>(FormEntry::getFormName));
+        formSelector.setConverter(new AbstractStringConverter<>(FormEntry::getFormTypeName));
         entitySelector.setItems(FXCollections.observableArrayList(Utils.getIntegerList(getConfig().getEntityBank().size())));
         entitySelector.setConverter(new AbstractStringConverter<>(getConfig().getEntityBank()::getName));
         deathSelector.setItems(FXCollections.observableArrayList(FormDeathType.values()));

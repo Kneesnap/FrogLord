@@ -265,10 +265,10 @@ public class OldFroggerSpline extends SCSharedGameData {
             final int index1 = i;
             for (int j = 0; j < this.smoothC[i].length; j++) {
                 final int index2 = j;
-                grid.addIntegerField(i + "," + j, this.smoothC[i][j], newVal -> {
+                grid.addSignedIntegerField(i + "," + j, this.smoothC[i][j], newVal -> {
                     this.smoothC[index1][index2] = newVal;
                     // TODO: onUpdate(controller);
-                }, null);
+                });
             }
         }
     }

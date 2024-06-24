@@ -82,14 +82,14 @@ public class MOFHilite extends SCSharedGameData {
         if (froggerHiliteType != null) {
             grid.addEnumSelector("Hilite Type", froggerHiliteType, FroggerHiliteType.values(), false, newType -> this.hiliteType = (short) newType.ordinal());
         } else {
-            grid.addShortField("Hilite Type", this.hiliteType, this::setHiliteType, value -> value >= 0 && value <= 255);
+            grid.addUnsignedByteField("Hilite Type", this.hiliteType, this::setHiliteType);
         }
 
 
         grid.addButton("Remove Hilite", () -> {
             getParent().getHilites().remove(this);
             grid.clearEditor();
-            manager.clearDisplayList(MOFController.HILITE_VERTICE_LIST); // Toss all of the vertice choices.
+            manager.clearDisplayList(MOFController.HILITE_VERTICE_LIST); // Toss the vertice choices.
             controller.updateHiliteBoxes();
         });
 

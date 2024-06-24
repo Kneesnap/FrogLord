@@ -2,12 +2,14 @@ package net.highwayfrogs.editor.gui.editor;
 
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
@@ -48,6 +50,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     public static final double MAP_VIEW_FAR_CLIP = 2000.0;
     public static final double MAP_VIEW_FOV = 60.0;
 
+    private final GameInstance gameInstance;
     private SubScene subScene;
     private Group subScene2DElements;
     private Logger cachedLogger;
@@ -63,6 +66,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
     @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
     @FXML private CheckBox checkBoxEnablePsxShading;
+    @FXML private ImageView textureSheetDebugView;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldCamMoveSpeed;
     @FXML private Button btnResetCamMoveSpeed;
@@ -98,6 +102,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private final List<MeshUISelector<TMesh, ?>> selectors = new ArrayList<>();
     private final RenderListManager renderManager = new RenderListManager();
     private final RenderListManager transparentRenderManager = new RenderListManager();
+    private final MeshViewFrameTimer frameTimer = new MeshViewFrameTimer(this);
     private final InputManager inputManager = new InputManager();
     private final FirstPersonCamera firstPersonCamera = new FirstPersonCamera(this.inputManager);
 
@@ -115,6 +120,14 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private AmbientLight mainLight;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
+
+    protected MeshViewController() {
+        this(null);
+    }
+
+    protected MeshViewController(GameInstance instance) {
+        this.gameInstance = instance;
+    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -254,10 +267,12 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
             if (event.getCode() == KeyCode.ESCAPE) { // Exit the viewer.
                 // Stop camera processing and clear up the render manager
+                this.textureSheetDebugView.imageProperty().unbind();
                 this.firstPersonCamera.stopThreadProcessing();
                 this.renderManager.removeAllDisplayLists();
                 this.transparentRenderManager.removeAllDisplayLists();
                 this.inputManager.shutdown();
+                this.frameTimer.stop();
 
                 // Clear selectors
                 while (!this.selectors.isEmpty())
@@ -274,15 +289,28 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 getMesh().removeView(getMeshView()); // Remove view from mesh.
                 Utils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
                 this.root3D.getChildren().clear(); // Clear data to avoid memory leak.
+            } else if (event.getCode() == KeyCode.F9) { // Print mesh information.
+                getMesh().printDebugMeshInfo();
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
                 Utils.takeScreenshot(null, this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), false);
             } else if (event.getCode() == KeyCode.F12 && getMesh().getTextureAtlas() != null) {
-                getLogger().info("Saving main mesh texture sheet to 'texture-sheet.png'...");
 
-                try {
-                    ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet.png"));
-                } catch (IOException ex) {
-                    Utils.makeErrorPopUp("Failed to save 'texture-sheet.png'.", ex, true);
+                if (getMesh().getTextureAtlas().getTextureSource().isEnableAwtImage()) {
+                    getLogger().info("Saving main mesh texture sheet to 'texture-sheet-awt.png'...");
+                    try {
+                        ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet-awt.png"));
+                    } catch (IOException ex) {
+                        Utils.makeErrorPopUp("Failed to save 'texture-sheet-awt.png'.", ex, true);
+                    }
+                }
+
+                if (getMesh().getTextureAtlas().getTextureSource().isEnableFxImage()) {
+                    getLogger().info("Saving main mesh texture sheet to 'texture-sheet-fx.png'...");
+                    try {
+                        ImageIO.write(SwingFXUtils.fromFXImage(getMesh().getTextureAtlas().getFxImage(), null), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet-fx.png"));
+                    } catch (IOException ex) {
+                        Utils.makeErrorPopUp("Failed to save 'texture-sheet-fx.png'.", ex, true);
+                    }
                 }
             } else if ((event.isControlDown() && event.getCode() == KeyCode.ENTER)) { // Toggle full-screen.
                 this.overwrittenStage.setFullScreen(!this.overwrittenStage.isFullScreen());
@@ -293,8 +321,14 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
         // Setup managers.
         this.managers.clear();
+        List<TitledPane> startingPanes = new ArrayList<>(this.accordionLeft.getPanes());
+        this.accordionLeft.getPanes().clear();
+
         addManager(this.markerManager = new MeshUIMarkerManager<>(this));
         setupManagers();
+
+        // Move default panes to the bottom.
+        this.accordionLeft.getPanes().addAll(startingPanes);
 
         // Select Manager
         if (this.accordionLeft.getPanes().size() > 0)
@@ -314,6 +348,11 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         // Ensure that any transparent parts of the map show 3D models behind it.
         if (!mapRendersFirst())
             this.transparentRenderManager.getRoot().getChildren().add(this.meshView);
+
+        runForEachManager(MeshUIManager::setupNodesWhichRenderLast, "setupNodesWhichRenderLast,"); // Setup all the nodes which render last.
+
+        // Start the task timer.
+        this.frameTimer.start();
     }
 
     /**
@@ -423,6 +462,9 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             this.checkBoxEnablePsxShading.setDisable(true);
         }
 
+        if (getMesh().getMaterialFxImage() != null)
+            this.textureSheetDebugView.imageProperty().bind(getMesh().getMaterial().diffuseMapProperty());
+
         // Must be called after FroggerMapInfoUIController is passed.
         runForEachManager(MeshUIManager::onSetup, "onSetup"); // Setup all the managers.
         runForEachManager(MeshUIManager::updateEditor, "updateEditor"); // Setup all the managers editors.
@@ -459,9 +501,9 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         final double lineSize = getAxisDisplaySize();
 
         this.axisDisplayList = getRenderManager().createDisplayListWithNewGroup();
-        this.axisDisplayList.addLine(0, 0, 0, axisLength, 0, 0, lineSize, Utils.makeSpecialMaterial(Color.RED)); // X Axis.
-        this.axisDisplayList.addLine(0, 0, 0, 0, axisLength, 0, lineSize, Utils.makeSpecialMaterial(Color.GREEN)); // Y Axis.
-        this.axisDisplayList.addLine(0, 0, 0, 0, 0, axisLength, lineSize, Utils.makeSpecialMaterial(Color.BLUE)); // Z Axis.
+        this.axisDisplayList.addLine(0, 0, 0, axisLength, 0, 0, lineSize, Utils.makeUnlitSharpMaterial(Color.RED)); // X Axis.
+        this.axisDisplayList.addLine(0, 0, 0, 0, axisLength, 0, lineSize, Utils.makeUnlitSharpMaterial(Color.GREEN)); // Y Axis.
+        this.axisDisplayList.addLine(0, 0, 0, 0, 0, axisLength, lineSize, Utils.makeUnlitSharpMaterial(Color.BLUE)); // Z Axis.
 
         this.axisDisplayList.setVisible(this.checkBoxShowAxis.isSelected());
         this.checkBoxShowAxis.selectedProperty().addListener((listener, oldValue, newValue) -> this.axisDisplayList.setVisible(newValue));
@@ -473,7 +515,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             try {
                 execution.accept(manager);
             } catch (Throwable th) {
-                Utils.handleError(getLogger(), th, true, "Failed to run '%s'.", name);
+                Utils.handleError(getLogger(), th, true, "Failed to run '%s.%s'.", Utils.getSimpleName(manager), name);
             }
         }
     }

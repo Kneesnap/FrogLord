@@ -5,8 +5,8 @@ import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
-import net.highwayfrogs.editor.file.map.SkyLand;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -19,7 +19,7 @@ import java.io.IOException;
  * Controls the UI for viewing sky land.
  * Created by Kneesnap on 12/26/2019.
  */
-public class SkyLandController extends SCFileEditorUIController<FroggerGameInstance, SkyLand> {
+public class SkyLandController extends SCFileEditorUIController<FroggerGameInstance, FroggerSkyLand> {
     @FXML private ImageView previewImage;
     @FXML private Button exportButton;
     private BufferedImage image;
@@ -29,7 +29,7 @@ public class SkyLandController extends SCFileEditorUIController<FroggerGameInsta
     }
 
     @Override
-    public void setTargetFile(SkyLand newFile) {
+    public void setTargetFile(FroggerSkyLand newFile) {
         super.setTargetFile(newFile);
         updateUI(false);
     }

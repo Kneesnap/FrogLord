@@ -9,7 +9,6 @@ import java.util.*;
 public class SortedList<TElement> implements List<TElement> {
     private final Comparator<TElement> comparator;
     private final List<TElement> wrappedList = new ArrayList<>();
-    private final Set<TElement> wrappedSet = new HashSet<>();
 
     public SortedList(Comparator<TElement> comparator) {
         if (comparator == null)
@@ -26,24 +25,18 @@ public class SortedList<TElement> implements List<TElement> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean contains(Object value) {
-        return this.wrappedSet.contains(value);
+        return Collections.binarySearch(this.wrappedList, (TElement) value, this.comparator) >= 0;
     }
 
     @Override
     public boolean add(TElement value) {
-        if (!this.wrappedSet.add(value))
+        int searchResult = Collections.binarySearch(this.wrappedList, value, this.comparator);
+        if (searchResult >= 0)
             return false; // Value is already here.
 
-        int searchResult = Collections.binarySearch(this.wrappedList, value, this.comparator);
-
-        int insertionPoint;
-        if (searchResult >= 0) { // Found a valid point.
-            insertionPoint = searchResult;
-        } else {
-            insertionPoint = -(searchResult + 1);
-        }
-
+        int insertionPoint = -(searchResult + 1);
         this.wrappedList.add(insertionPoint, value);
         return true;
     }
@@ -51,9 +44,6 @@ public class SortedList<TElement> implements List<TElement> {
     @Override
     @SuppressWarnings("unchecked")
     public boolean remove(Object value) {
-        if (!this.wrappedSet.remove(value))
-            return false;
-
         // Try binary search. If it fails, we'll do a normal.
         int searchResult = Collections.binarySearch(this.wrappedList, (TElement) value, this.comparator);
         if (searchResult >= 0 && Objects.equals(this.wrappedList.get(searchResult), value)) {
@@ -127,7 +117,6 @@ public class SortedList<TElement> implements List<TElement> {
     }
 
     @Override
-    @SuppressWarnings("SuspiciousToArrayCall")
     public <T> T[] toArray(T[] arr) {
         return this.wrappedList.toArray(arr);
     }
@@ -139,17 +128,16 @@ public class SortedList<TElement> implements List<TElement> {
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        return this.wrappedList.removeAll(c) && this.wrappedSet.removeAll(c);
+        return this.wrappedList.removeAll(c);
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        return this.wrappedList.retainAll(c) && this.wrappedSet.retainAll(c);
+        return this.wrappedList.retainAll(c);
     }
 
     @Override
     public void clear() {
-        this.wrappedSet.clear();
         this.wrappedList.clear();
     }
 
@@ -170,9 +158,7 @@ public class SortedList<TElement> implements List<TElement> {
 
     @Override
     public TElement remove(int index) {
-        TElement removedValue = this.wrappedList.remove(index);
-        this.wrappedSet.remove(removedValue);
-        return removedValue;
+        return this.wrappedList.remove(index);
     }
 
     @Override

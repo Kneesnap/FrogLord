@@ -27,7 +27,7 @@ public class Line3D extends Group {
     private final Cylinder line;
 
     private static final double DEFAULT_THICKNESS = 1;
-    private static final PhongMaterial DEFAULT_MATERIAL = Utils.makeSpecialMaterial(Color.RED);
+    private static final PhongMaterial DEFAULT_MATERIAL = Utils.makeUnlitSharpMaterial(Color.RED);
     private static final Point3D Y_AXIS = new Point3D(0f, 1f, 0f);
 
     public Line3D() {

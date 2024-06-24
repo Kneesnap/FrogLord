@@ -1,59 +1,55 @@
 package net.highwayfrogs.editor.games.sony.frogger.ui;
 
-import javafx.application.ConditionalFeature;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
+import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
-import javafx.scene.shape.CullFace;
-import javafx.scene.shape.MeshView;
-import javafx.stage.Stage;
+import javafx.scene.input.MouseButton;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
-import net.highwayfrogs.editor.file.map.FFSUtil;
-import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.view.MapMesh;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.ui.mapeditor.MapUIController;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
+import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
-import net.highwayfrogs.editor.utils.FileUtils3D;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Sets up the map editor.
- * TODO: It'd be very nice to get SKY_LAND rendering under the sky maps. We can hardcode the colors to use for each map.
  * Created by Kneesnap on 11/22/2018.
  */
 @Getter
-public class FroggerMapInfoUIController extends SCFileEditorUIController<FroggerGameInstance, MAPFile> {
+public class FroggerMapInfoUIController extends SCFileEditorUIController<FroggerGameInstance, FroggerMapFile> {
+    private final PropertyListViewerComponent<FroggerGameInstance> propertyListViewer;
+    @FXML private HBox contentBox;
+    @FXML private Label remapListLabel;
     @FXML private ListView<Short> remapList;
-    @FXML private ImageView previewImage;
-    @FXML private ImageView nameImage;
-    @FXML private ImageView remapImage;
-    @FXML private Button changeTextureButton;
-    private MapUIController mapUIController;
+    @FXML private ImageView levelPreviewScreenshotView;
+    @FXML private ImageView levelNameImageView;
     @FXML private Button saveTextureButton;
     @FXML private Button loadFromFFS;
     @FXML private Button saveToFFS;
@@ -61,102 +57,128 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
 
     public FroggerMapInfoUIController(FroggerGameInstance instance) {
         super(instance);
+        this.propertyListViewer = new PropertyListViewerComponent<>(instance);
     }
 
     @Override
-    public void setTargetFile(MAPFile mapFile) {
+    protected void onControllerLoad(Node rootNode) {
+        super.onControllerLoad(rootNode);
+        if (this.contentBox != null) {
+            Node propertyListViewRootNode = this.propertyListViewer.getRootNode();
+            HBox.setHgrow(propertyListViewRootNode, Priority.ALWAYS);
+            this.contentBox.getChildren().add(propertyListViewRootNode);
+            addController(this.propertyListViewer);
+        }
+    }
+
+    @Override
+    public void setTargetFile(FroggerMapFile mapFile) {
         super.setTargetFile(mapFile);
 
-        List<Short> remapTable = mapFile.getRemapTable();
-        if (remapTable == null) {
-            changeTextureButton.setDisable(true);
-            remapList.setDisable(true);
-            loadFromFFS.setDisable(true);
-            saveToFFS.setDisable(true);
-            return; // Empty.
-        }
+        // Clear display.
+        this.levelPreviewScreenshotView.setImage(null);
+        this.levelNameImageView.setImage(null);
+        this.propertyListViewer.showProperties(null);
+        this.remapListLabel.setText("No Texture Remap");
+        this.remapList.setDisable(true);
+        if (this.remapList.getItems() != null)
+            this.remapList.getItems().clear();
 
-        // Display Level Name & Image.
-        previewImage.setImage(null);
-        nameImage.setImage(null);
+        // If there's no map file, abort!
+        if (mapFile == null)
+            return;
 
+        // Show map file properties.
+        this.propertyListViewer.showProperties(mapFile.createPropertyList());
+
+        // Apply level name & screenshot to UI, if found.
         MAPLevel level = MAPLevel.getByName(mapFile.getFileDisplayName());
         if (level != null && !mapFile.getGameInstance().getLevelInfoMap().isEmpty()) {
             LevelInfo info = mapFile.getGameInstance().getLevelInfoMap().get(level);
             if (info != null) {
                 GameImage gamePreviewImage = mapFile.getGameInstance().getImageFromPointer(info.getLevelTexturePointer());
                 if (gamePreviewImage != null)
-                    previewImage.setImage(gamePreviewImage.toFXImage());
+                    this.levelPreviewScreenshotView.setImage(gamePreviewImage.toFXImage());
                 GameImage gameNameImage = mapFile.getGameInstance().getImageFromPointer(info.getLevelNameTexturePointer());
                 if (gameNameImage != null)
-                    nameImage.setImage(gameNameImage.toFXImage());
+                    this.levelNameImageView.setImage(gameNameImage.toFXImage());
             }
         }
 
         // Setup Remap Editor.
-        this.remapList.setItems(FXCollections.observableArrayList(remapTable));
-        this.remapList.setCellFactory(param -> new AttachmentListCell<>(num -> "#" + num, num -> {
-            GameImage temp = getFile().getVlo() != null ? getFile().getVlo().getImageByTextureId(num, false) : null;
-            if (temp == null)
-                temp = getFile().getArchive().getImageByTextureId(num);
+        TextureRemapArray textureRemap = mapFile.getTextureRemap();
 
-            return temp != null ? temp.toFXImage(MWDFile.VLO_ICON_SETTING) : null;
-        }));
+        if (textureRemap != null) {
+            List<Short> textureRemapIdList = textureRemap.getTextureIds() != null ? textureRemap.getTextureIds() : Collections.emptyList();
+            this.remapListLabel.setText(textureRemap.getDebugName() + " (" + textureRemapIdList.size() + " texture" + (textureRemapIdList.size() != 1 ? "s" : "") + ")");
+            this.remapList.setDisable(false);
+            this.remapList.setItems(FXCollections.observableArrayList(textureRemapIdList));
+            this.remapList.getSelectionModel().selectFirst();
+            this.remapList.setCellFactory(param -> new AttachmentListCell<>(num -> "#" + num, num -> {
+                GameImage temp = getFile().getVloFile() != null ? getFile().getVloFile().getImageByTextureId(num, false) : null;
+                if (temp == null)
+                    temp = getFile().getArchive().getImageByTextureId(num);
 
-        this.remapList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue == null)
-                return;
+                return temp != null ? temp.toFXImage(MWDFile.VLO_ICON_SETTING) : null;
+            }));
 
-            GameImage temp = getFile().getVlo() != null ? getFile().getVlo().getImageByTextureId(newValue, false) : null;
-            if (temp == null)
-                temp = getFile().getArchive().getImageByTextureId(newValue);
-            if (temp != null)
-                this.remapImage.setImage(temp.toFXImage(MWDFile.VLO_ICON_SETTING));
-        });
-        this.remapList.getSelectionModel().selectFirst();
-
-        saveTextureButton.setOnAction(evt -> {
-            try {
-                for (ShadingMode mode : ShadingMode.values()) {
-                    File file = new File(GUIMain.getWorkingDirectory(), getFile().getFileDisplayName() + "-" + mode + ".png");
-                    ImageIO.write(TextureMap.newTextureMap(getFile(), mode).getTextureTree().getImage(), "png", file);
-                    getLogger().info("Saved '" + file.getName() + "'.");
+            // Handle double-click to change.
+            this.remapList.setOnMouseClicked(event -> {
+                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                    promptChangeTexture();
+                    event.consume();
                 }
+            });
+        }
+
+        this.saveTextureButton.setOnAction(evt -> {
+            try {
+                FroggerMapMesh mapMesh = new FroggerMapMesh(getFile());
+
+                // With shading:
+                mapMesh.setShadingEnabled(true);
+                File file = new File(GUIMain.getWorkingDirectory(), getFile().getFileDisplayName() + "-shaded.png");
+                ImageIO.write(mapMesh.getTextureAtlas().getImage(), "png", file);
+
+                // Without shading:
+                mapMesh.setShadingEnabled(false);
+                file = new File(GUIMain.getWorkingDirectory(), getFile().getFileDisplayName() + "-unshaded.png");
+                ImageIO.write(mapMesh.getTextureAtlas().getImage(), "png", file);
             } catch (IOException e) {
                 handleError(e, true, "Failed to save all images.");
             }
         });
     }
 
-    @FXML
-    private void onChangeTexture(ActionEvent event) {
-        if (getFile().getVlo() == null) {
+    private void promptChangeTexture() {
+        TextureRemapArray textureRemap = getFile().getTextureRemap();
+        if (textureRemap == null)
+            return;
+
+        // Validate selection index.
+        int selectionIndex = this.remapList.getSelectionModel().getSelectedIndex();
+        if (selectionIndex < 0 || selectionIndex >= textureRemap.getTextureIds().size())
+            return;
+
+        // Ensure we've got the VLO to find textures from.
+        VLOArchive vloFile = getFile().getVloFile();
+        if (vloFile == null) {
             Utils.makePopUp("Cannot edit remaps for a map which has no associated VLO!", AlertType.WARNING);
             return;
         }
 
-        getFile().getVlo().promptImageSelection(newImage -> {
+        // Ask the user which texture to apply.
+        vloFile.promptImageSelection(newImage -> {
             int index = this.remapList.getSelectionModel().getSelectedIndex();
-            getFile().getRemapTable().set(index, newImage.getTextureId());
-            this.remapList.setItems(FXCollections.observableArrayList(getFile().getRemapTable())); // Refresh remap.
+            getFile().getTextureRemap().getTextureIds().set(index, newImage.getTextureId());
+            this.remapList.setItems(FXCollections.observableArrayList(getFile().getTextureRemap().getTextureIds())); // Refresh remap.
             this.remapList.getSelectionModel().select(index);
         }, false);
     }
 
     @FXML
     private void onMapButtonClicked(ActionEvent event) {
-        if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {
-            Utils.makePopUp("Your version of JavaFX does not support 3D, so maps cannot be previewed.", AlertType.WARNING);
-            return;
-        }
-
-        TextureMap textureMap = TextureMap.newTextureMap(getFile(), ShadingMode.NO_SHADING);
-        setupMapViewer(getGameInstance(), new MapMesh(getFile(), textureMap), textureMap);
-    }
-
-    @FXML
-    private void onFixIslandClicked(ActionEvent event) {
-        getFile().fixAsIslandMap();
+        MeshViewController.setupMeshViewer(getGameInstance(), new FroggerMapMeshController(getGameInstance()), new FroggerMapMesh(getFile()));
     }
 
     @FXML
@@ -196,38 +218,9 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
 
     @FXML
     @SneakyThrows
-    private void loadFromFFS(ActionEvent event) {
-        FFSUtil.importFFSToMap(getFile(), Utils.promptFileOpen(getGameInstance(), "Choose the .ffs file to import", "FrogLord Map", "ffs"));
-    }
-
-    @FXML
-    @SneakyThrows
-    private void exportToFFS(ActionEvent event) {
-        FFSUtil.saveMapAsFFS(getFile(), Utils.promptChooseDirectory(getGameInstance(), "Choose the directory to save the map to.", false));
-        Files.write(new File("games/frogger/frogger-map-blender-plugin.py").toPath(), Utils.readBytesFromStream(Utils.getResourceStream("games/frogger/frogger-map-blender-plugin.py")));
-    }
-
-    @FXML
-    @SneakyThrows
     private void exportToObj(ActionEvent event) {
-        FileUtils3D.exportMapToObj(getFile(), Utils.promptChooseDirectory(getGameInstance(), "Choose the directory to save the map to.", false));
-    }
-
-    @SneakyThrows
-    private void setupMapViewer(GameInstance instance, MapMesh mesh, TextureMap texMap) {
-        Stage stageToOverride = instance.getMainStage();
-        if (stageToOverride == null)
-            return;
-
-        // Create mesh view and initialise with xyz rotation transforms, materials and initial face culling policy.
-        MeshView meshView = new MeshView(mesh);
-        meshView.setMaterial(texMap.getDiffuseMaterial());
-        meshView.setCullFace(CullFace.BACK);
-
-        // Load FXML for UI layout.
-        FXMLLoader fxmlLoader = new FXMLLoader(getGameInstance().getFXMLTemplateURL("scene-map-editor-3d"));
-        Parent loadRoot = fxmlLoader.load();
-        this.mapUIController = fxmlLoader.getController(); // Get the custom 3D controller
-        this.mapUIController.setupController(this, stageToOverride, mesh, meshView, loadRoot);
+        // TODO: IMPLEMENT
+        Utils.makePopUp("Exporting to obj is not currently supported.", AlertType.ERROR);
+        // TODO: FileUtils3D.exportMapToObj(getFile(), Utils.promptChooseDirectory(getGameInstance(), "Choose the directory to save the map to.", false));
     }
 }

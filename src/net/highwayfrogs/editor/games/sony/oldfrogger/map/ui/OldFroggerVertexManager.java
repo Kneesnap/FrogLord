@@ -20,8 +20,8 @@ import java.util.UUID;
 public class OldFroggerVertexManager extends OldFroggerMapListManager<SVector, Sphere> {
     private DisplayList verticeDisplayList;
 
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
-    private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.LIME);
+    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_GREEN = Utils.makeUnlitSharpMaterial(Color.LIME);
     private static final UUID VERTEX_POSITION_IDENTIFIER = UUID.randomUUID();
 
     public OldFroggerVertexManager(MeshViewController<OldFroggerMapMesh> controller) {
@@ -61,7 +61,7 @@ public class OldFroggerVertexManager extends OldFroggerMapListManager<SVector, S
     @Override
     protected void updateEditor(SVector vertex) {
         getEditorGrid().addPositionEditor(getController(), VERTEX_POSITION_IDENTIFIER, "Position", vertex,
-                ((meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> getMesh().getMainNode().updateMapVertex(getSelectedValueIndex())));
+                ((meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> getMesh().getMainNode().updateVertex(getSelectedValueIndex())));
     }
 
     @Override

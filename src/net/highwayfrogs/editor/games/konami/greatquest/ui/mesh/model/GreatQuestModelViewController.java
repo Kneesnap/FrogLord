@@ -23,8 +23,8 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
     private static final double DEFAULT_FAR_CLIP = 50;
     private static final double DEFAULT_MOVEMENT_SPEED = 3;
 
-    private static final PhongMaterial VERTEX_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
-    private static final PhongMaterial CONNECTION_MATERIAL = Utils.makeSpecialMaterial(Color.LIMEGREEN);
+    private static final PhongMaterial VERTEX_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial CONNECTION_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIMEGREEN);
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {

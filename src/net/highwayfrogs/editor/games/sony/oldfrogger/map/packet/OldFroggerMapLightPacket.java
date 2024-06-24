@@ -5,7 +5,6 @@ import javafx.scene.LightBase;
 import javafx.scene.PointLight;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.map.light.APILightType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerLightManager;
+import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -65,7 +65,7 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
         private OldFroggerMapLightType type = OldFroggerMapLightType.STATIC;
         private short priority; // can bin low priority lights (detail) top bit is ON/OFF
         private int parentId; // (depends on above)
-        private APILightType apiType = APILightType.AMBIENT; // (point/parallel/etc.)
+        private MRLightType apiType = MRLightType.AMBIENT; // (point/parallel/etc.)
         private final CVector color = new CVector();
         private final SVector position = new SVector();
         private final SVector direction = new SVector();
@@ -81,7 +81,7 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
             this.type = OldFroggerMapLightType.values()[reader.readUnsignedByteAsShort()];
             this.priority = reader.readUnsignedByteAsShort();
             this.parentId = reader.readUnsignedShortAsInt();
-            this.apiType = APILightType.getType(reader.readUnsignedByteAsShort());
+            this.apiType = MRLightType.getType(reader.readUnsignedByteAsShort());
             reader.alignRequireEmpty(4);
             this.color.load(reader);
             this.position.loadWithPadding(reader);
@@ -96,7 +96,7 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
             writer.writeUnsignedByte((short) (this.type != null ? this.type.ordinal() : 0));
             writer.writeUnsignedByte(this.priority);
             writer.writeUnsignedShort(this.parentId);
-            writer.writeUnsignedByte((short) (this.apiType != null ? this.apiType.getFlag() : 0));
+            writer.writeUnsignedByte((short) (this.apiType != null ? this.apiType.getBitFlagMask() : 0));
             writer.align(4);
             this.color.save(writer);
             this.position.saveWithPadding(writer);
@@ -114,9 +114,9 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
          */
         public void setupEditor(OldFroggerLightManager manager, GUIEditorGrid editor) {
             editor.addEnumSelector("Light Type", this.type, OldFroggerMapLightType.values(), false, newValue -> this.type = newValue).setDisable(true); // Disabled since there's no reason to change this.
-            editor.addShortField("Priority:", this.priority, newPriority -> this.priority = newPriority, newPriority -> newPriority >= 0 && newPriority <= 0xFF);
+            editor.addUnsignedByteField("Priority:", this.priority, newPriority -> this.priority = newPriority);
             editor.addUnsignedFixedShort("Parent ID", this.parentId, newValue -> this.parentId = newValue, 1);
-            editor.addEnumSelector("API Light", this.apiType, APILightType.values(), false, newValue -> {
+            editor.addEnumSelector("API Light", this.apiType, MRLightType.values(), false, newValue -> {
                 this.apiType = newValue;
                 manager.createDisplay(this); // Create a new display for the light.
             });

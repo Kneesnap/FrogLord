@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.DemoFile;
 import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.PALFile;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.config.TargetPlatform;
@@ -21,11 +20,6 @@ import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
-import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.MAPTheme;
-import net.highwayfrogs.editor.file.map.SkyLand;
-import net.highwayfrogs.editor.file.map.entity.FlyScoreType;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -35,10 +29,20 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
+import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
+import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerGridSquareFlagTester;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
+import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -62,9 +66,9 @@ public class FroggerGameInstance extends SCGameInstance {
     private final List<FormEntry> fullFormBook = new ArrayList<>();
     private final List<FroggerScript> scripts = new ArrayList<>();
     private final Map<MAPLevel, Image> levelImageMap = new HashMap<>();
-    private final Map<MAPTheme, FormEntry[]> allowedForms = new HashMap<>();
-    private final ThemeBook[] themeLibrary = new ThemeBook[MAPTheme.values().length];
-    private final PickupData[] pickupData = new PickupData[FlyScoreType.values().length];
+    private final Map<FroggerMapTheme, FormEntry[]> allowedForms = new HashMap<>();
+    private final ThemeBook[] themeLibrary = new ThemeBook[FroggerMapTheme.values().length];
+    private final PickupData[] pickupData = new PickupData[FroggerFlyScoreType.values().length];
     private final TextureRemapArray skyLandTextureRemap;
 
     private static final String CHILD_RESTORE_MAP_BOOK = "MapBookRestore";
@@ -83,6 +87,16 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     @Override
+    public void loadGame(String versionConfigName, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
+        super.loadGame(versionConfigName, mwdFile, exeFile, progressBar);
+
+        // Setup version comparison.
+        FroggerVersionComparison.setup(GUIMain.getWorkingDirectory());
+        FroggerVersionComparison.addNewVersionToConfig(this);
+        FroggerGridSquareFlagTester.printFlagInformation(this); // TODO: TOSS
+    }
+
+    @Override
     public FroggerConfig getConfig() {
         return (FroggerConfig) super.getConfig();
     }
@@ -90,19 +104,17 @@ public class FroggerGameInstance extends SCGameInstance {
     @Override
     public SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData) {
         if (fileEntry.getTypeId() == FILE_TYPE_ANY && fileEntry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX)) {
-            return new SkyLand(this);
-        } else if ((fileEntry.getTypeId() == FILE_TYPE_ANY && fileEntry.hasExtension("map")) || Utils.testSignature(fileData, MAPFile.SIGNATURE)) {
-            return new MAPFile(this);
+            return new FroggerSkyLand(this);
+        } else if ((fileEntry.getTypeId() == FILE_TYPE_ANY && fileEntry.hasExtension("map")) || Utils.testSignature(fileData, FroggerMapFilePacketHeader.IDENTIFIER)) {
+            return new FroggerMapFile(this, fileEntry);
         } else if (fileEntry.getTypeId() == FILE_TYPE_PAL || fileEntry.hasExtension("pal")) {
-            return new PALFile(this);
+            return new FroggerPaletteFile(this);
         } else if (fileEntry.getTypeId() == FILE_TYPE_DEMO_DATA || fileEntry.hasExtension("dat")) {
             return new DemoFile(this);
         } else if (fileEntry.getTypeId() == FILE_TYPE_SOUND) {
             return SCUtils.makeSound(fileEntry, fileData, null);
         } else if (fileEntry.getTypeId() == FILE_TYPE_MOF || fileEntry.getTypeId() == FILE_TYPE_MAPMOF) {
-            MOFHolder newMof = SCUtils.makeMofHolder(fileEntry);
-            // TODO: Find the WAD file holding the current resource, then set the theme to be that wad file's theme.
-            return newMof;
+            return SCUtils.makeMofHolder(fileEntry);
         } else {
             return SCUtils.createSharedGameFile(fileEntry, fileData);
         }
@@ -161,16 +173,18 @@ public class FroggerGameInstance extends SCGameInstance {
             reader.jumpReturn();
 
             if (nextData == 0x00100020L)
-                return true; // 'FRInput_default_map' comes after texture remaps, which seems to start with this.
+                return true; // 'FRInput_default_map' comes after texture remaps, which seems to start with this. This happens even as far back as the April 97 build.
         }
 
-        return super.isEndOfRemap(current, next, reader, value);
+        // The Sony Presentation Build (April '97) has extremely low texture IDs, low enough to be mistaken for a pointer.
+        // The simplest solution for now is just to use the above check to end the remap, which is confirmed to work.
+        return !getConfig().isSonyPresentation() && super.isEndOfRemap(current, next, reader, value);
     }
 
     @Override
     public void setupFileGroups(SCGameFileGroupedListViewComponent<? extends SCGameInstance> fileListView) {
         fileListView.addGroup(new LazySCGameFileListGroup("MAP [Playable Maps]",
-                (file, index) -> index.getTypeId() == FILE_TYPE_ANY && (index.hasExtension("map") || file instanceof MAPFile)));
+                (file, index) -> index.getTypeId() == FILE_TYPE_ANY && (index.hasExtension("map") || file instanceof FroggerMapFile)));
 
         fileListView.addGroup(new SCGameFileListTypeIdGroup("VLO Texture Bank", FILE_TYPE_VLO));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Models", FILE_TYPE_MOF));
@@ -181,13 +195,13 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     /**
-     * Gets this MWD's SkyLand file.
+     * Gets this MWD's FroggerSkyLand file.
      * @return skyLand
      */
-    public SkyLand getSkyLand() {
+    public FroggerSkyLand getSkyLand() {
         for (SCGameFile<?> file : getMainArchive().getFiles())
-            if (file instanceof SkyLand)
-                return (SkyLand) file;
+            if (file instanceof FroggerSkyLand)
+                return (FroggerSkyLand) file;
         throw new RuntimeException("Sky Land was not found.");
     }
 
@@ -196,7 +210,7 @@ public class FroggerGameInstance extends SCGameInstance {
      * @param theme The theme to get the book for.
      * @return themeBook
      */
-    public ThemeBook getThemeBook(MAPTheme theme) {
+    public ThemeBook getThemeBook(FroggerMapTheme theme) {
         return theme != null ? this.themeLibrary[theme.ordinal()] : null;
     }
 
@@ -360,9 +374,9 @@ public class FroggerGameInstance extends SCGameInstance {
      * @param formBookId The form id in question. Normally passed to ENTITY_GET_FORM_BOOK as en_form_book_id.
      * @return formBook
      */
-    public FormEntry getMapFormEntry(MAPTheme mapTheme, int formBookId) {
+    public FormEntry getMapFormEntry(FroggerMapTheme mapTheme, int formBookId) {
         if ((formBookId & FormEntry.FLAG_GENERAL) == FormEntry.FLAG_GENERAL)
-            mapTheme = MAPTheme.GENERAL;
+            mapTheme = FroggerMapTheme.GENERAL;
 
         ThemeBook themeBook = getThemeBook(mapTheme);
         if (themeBook == null)
@@ -399,14 +413,14 @@ public class FroggerGameInstance extends SCGameInstance {
      * @param theme The theme to get forms for.
      * @return allowedForms
      */
-    public FormEntry[] getAllowedForms(MAPTheme theme) {
+    public FormEntry[] getAllowedForms(FroggerMapTheme theme) {
         return allowedForms.computeIfAbsent(theme, safeTheme -> {
-            ThemeBook themeBook = this.themeLibrary[MAPTheme.GENERAL.ordinal()];
+            ThemeBook themeBook = this.themeLibrary[FroggerMapTheme.GENERAL.ordinal()];
             if (themeBook == null)
                 return new FormEntry[0];
 
             List<FormEntry> formType = new ArrayList<>(themeBook.getFormBook());
-            if (safeTheme != null && safeTheme != MAPTheme.GENERAL) {
+            if (safeTheme != null && safeTheme != FroggerMapTheme.GENERAL) {
                 ThemeBook mapBook = this.themeLibrary[safeTheme.ordinal()];
                 if (mapBook != null)
                     formType.addAll(mapBook.getFormBook());
@@ -414,6 +428,15 @@ public class FroggerGameInstance extends SCGameInstance {
 
             return formType.toArray(new FormEntry[0]);
         });
+    }
+
+    /**
+     * Gets the pickup data for the given fly score type.
+     * @param flyScoreType the fly score type to get the pickup data for
+     * @return pickupData, or null if it couldn't be found
+     */
+    public PickupData getPickupData(FroggerFlyScoreType flyScoreType) {
+        return flyScoreType != null ? this.pickupData[flyScoreType.ordinal()] : null;
     }
 
     @Override
@@ -459,7 +482,7 @@ public class FroggerGameInstance extends SCGameInstance {
         for (int i = 0; i < this.pickupData.length; i++) {
             long tempPointer = reader.readUnsignedIntAsLong();
             reader.jumpTemp((int) (tempPointer - getRamOffset()));
-            PickupData pickupData = new PickupData(this);
+            PickupData pickupData = new PickupData(this, FroggerFlyScoreType.values()[i]);
             pickupData.load(reader);
             this.pickupData[i] = pickupData;
             reader.jumpReturn();
@@ -473,7 +496,7 @@ public class FroggerGameInstance extends SCGameInstance {
         reader.setIndex(getConfig().getThemeBookAddress());
         for (int i = 0; i < this.themeLibrary.length; i++) {
             ThemeBook book = TargetPlatform.makeNewThemeBook(this);
-            book.setTheme(MAPTheme.values()[i]);
+            book.setTheme(FroggerMapTheme.values()[i]);
             book.load(reader);
             this.themeLibrary[i] = book;
             Constants.logExeInfo(book);
@@ -483,7 +506,7 @@ public class FroggerGameInstance extends SCGameInstance {
             Config themeBookRestore = config.getChild(CHILD_RESTORE_THEME_BOOK);
 
             for (String key : themeBookRestore.keySet()) {
-                MAPTheme theme = MAPTheme.getTheme(key);
+                FroggerMapTheme theme = FroggerMapTheme.getTheme(key);
                 Utils.verify(theme != null, "Unknown theme: '%s'", key);
                 getThemeBook(theme).handleCorrection(themeBookRestore.getString(key));
             }
@@ -500,13 +523,13 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void readFormLibrary() {
-        MAPTheme lastTheme = MAPTheme.values()[0];
-        for (int i = 1; i < MAPTheme.values().length; i++) {
-            MAPTheme currentTheme = MAPTheme.values()[i];
+        FroggerMapTheme lastTheme = FroggerMapTheme.values()[0];
+        for (int i = 1; i < FroggerMapTheme.values().length; i++) {
+            FroggerMapTheme currentTheme = FroggerMapTheme.values()[i];
 
             ThemeBook lastBook = getThemeBook(lastTheme);
             ThemeBook currentBook = getThemeBook(currentTheme);
-            if (currentBook == null || currentBook.getFormLibraryPointer() == 0)
+            if (currentBook == null || currentBook.getFormLibraryPointer() == 0 || lastBook == null || lastBook.getFormLibraryPointer() == 0)
                 continue;
 
             // Determine number of form entries and compare with name bank.
@@ -524,7 +547,7 @@ public class FroggerGameInstance extends SCGameInstance {
 
         // Load the last theme, which we use the number of names for to determine size.
         ThemeBook lastBook = getThemeBook(lastTheme);
-        if (lastBook != null) {
+        if (lastBook != null && lastBook.getFormLibraryPointer() != 0) {
             int nameCount = getConfig().getFormBank().getChildBank(lastTheme.name()).size();
             lastBook.loadFormLibrary(this, nameCount);
         }

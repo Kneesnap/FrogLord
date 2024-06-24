@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
@@ -119,9 +120,11 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
 
     /**
      * Creates a texture shade definition for this polygon.
-     * @param mapFile The level entry necessary for looking up cave lighting status.
+     * @param mapMesh The map mesh to create the shading definition for.
      */
-    public PSXShadeTextureDefinition createPolygonShadeDefinition(OldFroggerMapFile mapFile) {
+    public PSXShadeTextureDefinition createPolygonShadeDefinition(OldFroggerMapMesh mapMesh) {
+        OldFroggerMapFile mapFile = mapMesh.getMap();
+
         SCByteTextureUV[] uvs = null;
         if (this.polygonType.isTextured()) {
             uvs = new SCByteTextureUV[this.textureUvs.length];
@@ -146,7 +149,8 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
         }
 
         ITextureSource textureSource = this.polygonType.isTextured() ? getTexture(mapFile.getLevelTableEntry()) : null;
-        return new PSXShadeTextureDefinition(this.polygonType, textureSource, colors, uvs, false, true);
+        PSXShadedTextureManager<OldFroggerMapPolygon> shadedTextureManager = mapMesh != null ? mapMesh.getShadedTextureManager() : null;
+        return new PSXShadeTextureDefinition(shadedTextureManager, this.polygonType, textureSource, colors, uvs, false);
     }
 
     /**

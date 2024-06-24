@@ -153,11 +153,9 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
 
     @Override
     protected void updateEditor(kcCResourceEntityInst entityInst) {
-        if (entityInst != null) {
-            getEditorGrid().addLabel("Entity Name", entityInst.getName());
-            getEditorGrid().addLabel("Entity Hash", Utils.to0PrefixedHexString(entityInst.getHash()));
-            entityInst.getEntity().setupEditor(this, getEditorGrid(), getDelegatesByValue().get(entityInst));
-        }
+        getEditorGrid().addLabel("Entity Name", entityInst.getName());
+        getEditorGrid().addLabel("Entity Hash", Utils.to0PrefixedHexString(entityInst.getHash()));
+        entityInst.getEntity().setupEditor(this, getEditorGrid(), getDelegatesByValue().get(entityInst));
     }
 
     @Override

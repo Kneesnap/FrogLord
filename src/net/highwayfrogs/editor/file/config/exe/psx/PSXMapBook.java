@@ -5,11 +5,11 @@ import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Function;
@@ -75,12 +75,12 @@ public class PSXMapBook extends MapBook {
     }
 
     @Override
-    public WADFile getWad(MAPFile map) {
+    public WADFile getWad(FroggerMapFile map) {
         int wadId = this.wadId;
 
         // When the map reports a particular theme, I think it's reliable.
-        if (map != null && map.getTheme() != null && getConfig().getPlatform() == GamePlatform.PLAYSTATION) {
-            PSXThemeBook themeBook = ((PSXThemeBook) getGameInstance().getThemeBook(map.getTheme()));
+        if (map != null && map.getMapTheme() != null && getConfig().getPlatform() == GamePlatform.PLAYSTATION) {
+            PSXThemeBook themeBook = ((PSXThemeBook) getGameInstance().getThemeBook(map.getMapTheme()));
             if (themeBook != null && themeBook.getWadId() != wadId)
                 wadId = themeBook.getWadId();
         }
@@ -105,9 +105,9 @@ public class PSXMapBook extends MapBook {
 
     @Override
     public String toString() {
-        return "MAP[" + getGameInstance().getResourceName(mapId)
+        return "MAP[" + getGameInstance().getResourceName(this.mapId)
                 + "] Remap[" + Utils.toHexString(getFileRemapPointer())
-                + "] WAD[" + getGameInstance().getResourceName(wadId)
+                + "] WAD[" + getGameInstance().getResourceName(this.wadId)
                 + "] ENV[" + getGameInstance().getTextureIdFromPointer(this.environmentTexturePointer) + "]";
     }
 }

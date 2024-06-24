@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
+import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMesh;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygonPacket.SCMapPolygonUV;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
@@ -278,9 +279,11 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
 
     /**
      * Creates a texture shade definition for this polygon.
-     * @param mapFile The map file which the polygon is used within.
+     * @param mapMesh The map mesh which the polygon is used within.
      */
-    public PSXShadeTextureDefinition createPolygonShadeDefinition(SCMapFile<?> mapFile, boolean enableGouraudShading) {
+    public PSXShadeTextureDefinition createPolygonShadeDefinition(SCMapMesh mapMesh, boolean enableGouraudShading) {
+        SCMapFile<?> mapFile = mapMesh.getMap();
+
         SCMapPolygonPacket<?> polygonPacket = mapFile.getPolygonPacket();
         ISCLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
         PSXPolygonType polygonType = getPolygonType();
@@ -309,7 +312,7 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
 
         // Create definition.
         ITextureSource textureSource = polygonType.isTextured() ? getTexture(levelTableEntry) : null;
-        return new PSXShadeTextureDefinition(polygonType, textureSource, colors, uvs, isSemiTransparent, false);
+        return new PSXShadeTextureDefinition(mapMesh.getShadedTextureManager(), polygonType, textureSource, colors, uvs, isSemiTransparent);
     }
 
     /**

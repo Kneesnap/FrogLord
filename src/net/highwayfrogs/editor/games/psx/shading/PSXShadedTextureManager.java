@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshNode;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
 
+import java.awt.image.BufferedImage;
 import java.util.*;
 
 /**
@@ -13,8 +14,10 @@ import java.util.*;
  * Created by Kneesnap on 12/19/2023.
  */
 public abstract class PSXShadedTextureManager<TPolygon> {
+    @Getter private final PSXShadeTextureImageCache imageCache = new PSXShadeTextureImageCache();
     private final Map<PSXShadeTextureDefinition, List<TPolygon>> polygonsByShadedTexture = new HashMap<>();
     private final Map<TPolygon, PSXShadeTextureDefinition> shadedTexturesByPolygon = new HashMap<>();
+    protected final List<PSXShadeTextureDefinition> looseShadedTextures = new ArrayList<>();
 
     /**
      * Gets a list of polygons belonging to a shaded texture.
@@ -39,6 +42,8 @@ public abstract class PSXShadedTextureManager<TPolygon> {
      * @param polygon The polygon to add.
      */
     public void addPolygon(TPolygon polygon) {
+        if (polygon == null)
+            throw new NullPointerException("polygon");
         if (this.shadedTexturesByPolygon.containsKey(polygon))
             throw new RuntimeException("The provided polygon is already tracked.");
 
@@ -70,14 +75,53 @@ public abstract class PSXShadedTextureManager<TPolygon> {
     }
 
     /**
+     * Adds a loose shade definition to the tracker.
+     * @param shadeDefinition The loose shade definition to add.
+     */
+    public void addLooseShadingDefinition(PSXShadeTextureDefinition shadeDefinition) {
+        if (shadeDefinition == null)
+            throw new NullPointerException("shadeDefinition");
+        if (this.looseShadedTextures.contains(shadeDefinition))
+            throw new RuntimeException("The provided shade definition is already tracked.");
+
+        if (isValid(shadeDefinition, null)) {
+            this.looseShadedTextures.add(shadeDefinition);
+            onShadedTextureAdded(shadeDefinition);
+        }
+    }
+
+    /**
+     * Removes a loose shade definition from the tracker.
+     * @param shadeDefinition The loose shade definition to remove.
+     */
+    public boolean removeLooseShadingDefinition(PSXShadeTextureDefinition shadeDefinition) {
+        if (!this.looseShadedTextures.remove(shadeDefinition))
+            return false; // Not registered.
+
+        onShadedTextureRemoved(shadeDefinition);
+        return true;
+    }
+
+    /**
      * Called to free the textures tracked by this manager
      */
     public void onDispose() {
         for (PSXShadeTextureDefinition textureDefinition : this.polygonsByShadedTexture.keySet())
             textureDefinition.onDispose();
+        for (int i = 0; i < this.looseShadedTextures.size(); i++)
+            this.looseShadedTextures.get(i).onDispose();
 
         this.shadedTexturesByPolygon.clear();
         this.polygonsByShadedTexture.clear();
+        this.looseShadedTextures.clear();
+    }
+
+    /**
+     * Update the polygon to use new shading definition.
+     * @param polygon the polygon to update
+     */
+    public boolean updatePolygon(TPolygon polygon) {
+        return updatePolygon(polygon, createShadedTexture(polygon));
     }
 
     /**
@@ -131,6 +175,33 @@ public abstract class PSXShadedTextureManager<TPolygon> {
         return true;
     }
 
+    /**
+     * Updates a polygon to use a new shade definition.
+     * @param oldShadedTexture The extra shade definition to update
+     * @param newShadedTexture The extra shade definition to apply
+     */
+    public boolean updateLooseShadeDefinition(PSXShadeTextureDefinition oldShadedTexture, PSXShadeTextureDefinition newShadedTexture) {
+        if (Objects.equals(oldShadedTexture, newShadedTexture))
+            return false; // We've got the same shaded texture data, no need to update.
+
+        if (this.looseShadedTextures.remove(oldShadedTexture)) {
+            onShadedTextureRemoved(oldShadedTexture);
+        } else if (oldShadedTexture != null) {
+            return false; // Wasn't registered.
+        }
+
+        if (newShadedTexture != null) {
+            if (!this.looseShadedTextures.contains(newShadedTexture)) {
+                this.looseShadedTextures.add(newShadedTexture);
+                onShadedTextureAdded(newShadedTexture);
+            }
+
+            applyTextureShading(null, newShadedTexture);
+        }
+
+        return true;
+    }
+
     private void addPolygon(TPolygon polygon, PSXShadeTextureDefinition newShadedTexture) {
         List<TPolygon> newPolygonList = this.polygonsByShadedTexture.get(newShadedTexture);
 
@@ -143,6 +214,7 @@ public abstract class PSXShadedTextureManager<TPolygon> {
             this.polygonsByShadedTexture.put(newShadedTexture, newPolygonList);
             this.shadedTexturesByPolygon.put(polygon, newShadedTexture);
             onShadedTextureAdded(newShadedTexture, polygon);
+            // No need to call applyTextureShading(), since it's going to be setting the same values as part of the adding process.
         }
     }
 
@@ -163,7 +235,7 @@ public abstract class PSXShadedTextureManager<TPolygon> {
     /**
      * Test if a definition is valid.
      * @param definition The definition to test validity of
-     * @param polygon The polygon it belongs to.
+     * @param polygon The polygon it belongs to. Can be null.
      * @return isValid
      */
     protected boolean isValid(PSXShadeTextureDefinition definition, TPolygon polygon) {
@@ -173,10 +245,18 @@ public abstract class PSXShadedTextureManager<TPolygon> {
     /**
      * Called when a shaded texture is added.
      * @param shadedTexture The shaded texture which has been added.
+     */
+    protected void onShadedTextureAdded(PSXShadeTextureDefinition shadedTexture) {
+        shadedTexture.onRegister();
+    }
+
+    /**
+     * Called when a shaded texture is added.
+     * @param shadedTexture The shaded texture which has been added.
      * @param firstPolygon  The first polygon associated with this shaded texture.
      */
     protected void onShadedTextureAdded(PSXShadeTextureDefinition shadedTexture, TPolygon firstPolygon) {
-        shadedTexture.onRegister();
+        onShadedTextureAdded(shadedTexture); // Call other hook.
     }
 
     /**
@@ -184,6 +264,9 @@ public abstract class PSXShadedTextureManager<TPolygon> {
      * @param shadedTexture The shaded texture which has been added.
      */
     protected void onShadedTextureRemoved(PSXShadeTextureDefinition shadedTexture) {
+        BufferedImage shadedImage = shadedTexture.getCachedImage();
+        if (shadedImage != null)
+            this.imageCache.addTargetImage(shadedTexture, shadedImage);
         shadedTexture.onDispose();
     }
 
@@ -196,8 +279,8 @@ public abstract class PSXShadedTextureManager<TPolygon> {
         }
 
         @Override
-        protected void onShadedTextureAdded(PSXShadeTextureDefinition shadedTexture, TPolygon firstPolygon) {
-            super.onShadedTextureAdded(shadedTexture, firstPolygon);
+        protected void onShadedTextureAdded(PSXShadeTextureDefinition shadedTexture) {
+            super.onShadedTextureAdded(shadedTexture);
             this.textureAtlas.addTexture(shadedTexture);
         }
 
@@ -228,6 +311,7 @@ public abstract class PSXShadedTextureManager<TPolygon> {
             if (polygonsUsingTexture == null || polygonsUsingTexture.isEmpty())
                 return;
 
+
             // Update each polygon's entry.
             this.mesh.getEditableTexCoords().startBatchingUpdates();
             for (int i = 0; i < this.mesh.getNodes().size(); i++) {
@@ -245,6 +329,35 @@ public abstract class PSXShadedTextureManager<TPolygon> {
                             seenNodes.add(node);
                     }
                 }
+            }
+
+            updateLooseShadingTexCoords();
+            this.mesh.getEditableTexCoords().endBatchingUpdates();
+        }
+
+        /**
+         * Updates loose shading definitions.
+         */
+        protected abstract void updateLooseShadingTexCoords();
+
+        @Override
+        @SuppressWarnings("unchecked")
+        protected void applyTextureShading(TPolygon polygon, PSXShadeTextureDefinition shadedTexture) {
+            if (polygon == null) { // Update loose shading texture coordinates.
+                updateLooseShadingTexCoords();
+                return;
+            }
+
+            // Applies updated texture coordinates to the polygon.
+            this.mesh.getEditableTexCoords().startBatchingUpdates();
+            for (int i = 0; i < this.mesh.getNodes().size(); i++) {
+                DynamicMeshNode node = this.mesh.getNodes().get(i);
+                if (!(node instanceof DynamicMeshAdapterNode<?>))
+                    continue;
+
+                DynamicMeshAdapterNode<TPolygon> nodeForcedType = (DynamicMeshAdapterNode<TPolygon>) node;
+                if (nodeForcedType.getDataEntry(polygon) != null)
+                    nodeForcedType.updateTexCoords(polygon);
             }
 
             this.mesh.getEditableTexCoords().endBatchingUpdates();

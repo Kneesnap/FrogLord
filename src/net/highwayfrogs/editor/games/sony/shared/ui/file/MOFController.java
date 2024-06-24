@@ -27,7 +27,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.MWDFile;
-import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
@@ -43,9 +42,10 @@ import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
+import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.ui.mapeditor.MapUIController;
 import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
 import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
@@ -105,16 +105,18 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
     private static final String COLLPRIM_BOX_LIST = "collprimBoxes";
     public static final String HILITE_VERTICE_LIST = "mofHiliteVerticeChoices";
 
-    private static final PhongMaterial HILITE_MATERIAL = Utils.makeSpecialMaterial(Color.PURPLE);
-    private static final PhongMaterial COLLPRIM_MATERIAL = Utils.makeSpecialMaterial(Color.LIGHTGREEN);
-    private static final PhongMaterial BBOX_MATERIAL = Utils.makeSpecialMaterial(Color.RED);
+    private static final PhongMaterial HILITE_MATERIAL = Utils.makeUnlitSharpMaterial(Color.PURPLE);
+    private static final PhongMaterial COLLPRIM_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIGHTGREEN);
+    private static final PhongMaterial BBOX_MATERIAL = Utils.makeUnlitSharpMaterial(Color.RED);
 
     private static final String GENERIC_POS_LIST = "genericPositionList";
     private static final double GENERIC_POS_SIZE = 3;
-    private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(java.awt.Color.MAGENTA, java.awt.Color.BLACK);
     public static final CursorVertexColor CANT_APPLY_COLOR = new CursorVertexColor(java.awt.Color.RED, java.awt.Color.BLACK);
     public static final CursorVertexColor HILITE_COLOR = new CursorVertexColor(Utils.toAWTColor(Color.PURPLE), java.awt.Color.BLACK);
+    public static final double MAP_VIEW_FAR_CLIP = 2000.0;
+    public static final ImageFilterSettings PREVIEW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true);
 
     public MOFController(SCGameInstance instance, MOFHolder mof) {
         super(instance);
@@ -147,7 +149,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group(this.camera, meshView);
         subScene3D = new SubScene(root3D, stageToOverride.getScene().getWidth() - uiController.uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
-        camera.setFarClip(MapUIController.MAP_VIEW_FAR_CLIP);
+        camera.setFarClip(MAP_VIEW_FAR_CLIP);
         subScene3D.setFill(Color.GRAY);
         subScene3D.setCamera(camera);
         getRenderManager().setRenderRoot(this.root3D);
@@ -555,9 +557,9 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
             AtomicBoolean isAnimating = new AtomicBoolean(false);
             AtomicInteger framesWaited = new AtomicInteger(0);
             int maxValidFrame = entries.size() - 1;
-            ImageView imagePreview = grid.addCenteredImage(mwd.getImageByTextureId(entries.get(0).getImageId()).toFXImage(MAPAnimation.PREVIEW_SETTINGS), 150);
+            ImageView imagePreview = grid.addCenteredImage(mwd.getImageByTextureId(entries.get(0).getImageId()).toFXImage(PREVIEW_SETTINGS), 150);
             Slider frameSlider = grid.addIntegerSlider("Animation Frame", 0, newFrame ->
-                    imagePreview.setImage(mwd.getImageByTextureId(entries.get(newFrame).getImageId()).toFXImage(MAPAnimation.PREVIEW_SETTINGS)), 0, maxValidFrame);
+                    imagePreview.setImage(mwd.getImageByTextureId(entries.get(newFrame).getImageId()).toFXImage(PREVIEW_SETTINGS)), 0, maxValidFrame);
 
             toDisable.add(frameSlider);
             double millisInterval = (1000D / getGameInstance().getFPS());
@@ -811,7 +813,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
             });
 
             this.addHiliteButton.setOnAction(evt -> {
-                PhongMaterial material = Utils.makeSpecialMaterial(Color.MAGENTA);
+                PhongMaterial material = Utils.makeUnlitSharpMaterial(Color.MAGENTA);
                 RenderManager manager = getController().getRenderManager();
                 manager.clearDisplayList(HILITE_VERTICE_LIST);
 

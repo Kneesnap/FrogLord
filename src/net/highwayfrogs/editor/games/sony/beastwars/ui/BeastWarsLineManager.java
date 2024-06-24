@@ -20,8 +20,8 @@ import java.util.List;
  * Created by Kneesnap on 9/26/2023.
  */
 public class BeastWarsLineManager extends BeastWarsMapListManager<BeastWarsMapLine, DisplayList> {
-    private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_WHITE = Utils.makeUnlitSharpMaterial(Color.WHITE);
+    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
 
     public BeastWarsLineManager(MeshViewController<BeastWarsMapMesh> controller) {
         super(controller);
@@ -62,10 +62,10 @@ public class BeastWarsLineManager extends BeastWarsMapListManager<BeastWarsMapLi
     @Override
     protected void updateEditor(BeastWarsMapLine line) {
         // Unknown Values
-        getEditorGrid().addIntegerField("Unknown #1", line.getUnknown1(), line::setUnknown1, null);
-        getEditorGrid().addIntegerField("Unknown #2", line.getUnknown2(), line::setUnknown2, null);
-        getEditorGrid().addIntegerField("Unknown #3", line.getUnknown3(), line::setUnknown3, null);
-        getEditorGrid().addIntegerField("Unknown #4", line.getUnknown4(), line::setUnknown4, null);
+        getEditorGrid().addSignedIntegerField("Unknown #1", line.getUnknown1(), line::setUnknown1);
+        getEditorGrid().addSignedIntegerField("Unknown #2", line.getUnknown2(), line::setUnknown2);
+        getEditorGrid().addSignedIntegerField("Unknown #3", line.getUnknown3(), line::setUnknown3);
+        getEditorGrid().addSignedIntegerField("Unknown #4", line.getUnknown4(), line::setUnknown4);
 
 
         // TODO: Show positions

@@ -54,10 +54,10 @@ public class BeastWarsZoneManager extends BeastWarsMapListManager<BeastWarsMapZo
         getEditorGrid().addNormalLabel("Region Count: " + zone.getRegions().size());
         getEditorGrid().addNormalLabel("Zone Position: (" + zone.getMainRegion().getAbsoluteStartX() + ", " + zone.getMainRegion().getAbsoluteStartZ() + ")");
         getEditorGrid().addNormalLabel("Zone Size: " + (zone.getMainRegion().getXLength() + 1) + "x" + (zone.getMainRegion().getZLength() + 1));
-        getEditorGrid().addIntegerField("Unknown #1", zone.getUnknown1(), zone::setUnknown1, null);
-        getEditorGrid().addIntegerField("Unknown #2", zone.getUnknown2(), zone::setUnknown2, null);
-        getEditorGrid().addIntegerField("Unknown #3", zone.getUnknown3(), zone::setUnknown3, null);
-        getEditorGrid().addIntegerField("Unknown #4", zone.getUnknown4(), zone::setUnknown4, null);
+        getEditorGrid().addSignedIntegerField("Unknown #1", zone.getUnknown1(), zone::setUnknown1);
+        getEditorGrid().addSignedIntegerField("Unknown #2", zone.getUnknown2(), zone::setUnknown2);
+        getEditorGrid().addSignedIntegerField("Unknown #3", zone.getUnknown3(), zone::setUnknown3);
+        getEditorGrid().addSignedIntegerField("Unknown #4", zone.getUnknown4(), zone::setUnknown4);
 
         // De-select the selected region if it doesn't belong to the provided zone..
         if (this.selectedRegion != null && this.selectedRegion.getZone() != zone) {

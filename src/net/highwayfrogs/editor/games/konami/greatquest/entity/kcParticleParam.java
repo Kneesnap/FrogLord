@@ -61,7 +61,7 @@ public class kcParticleParam extends GameObject implements IMultiLineInfoWriter 
         this.lineLeft = reader.readFloat();
         this.lineRight = reader.readFloat();
         this.orientation = reader.readFloat();
-        reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
+        reader.skipBytes(PADDING_VALUES * Constants.INTEGER_SIZE); // TODO: This should require 0xCC or something. I think I have code written on another PC though which fixes this which I need to push.
     }
 
     @Override

@@ -6,7 +6,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.FrogMesh;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Manages mesh data.
@@ -16,7 +17,7 @@ import java.util.LinkedList;
 @Getter
 public class MeshManager {
     private final FrogMesh<?> mesh;
-    private final LinkedList<MeshData> meshData = new LinkedList<>();
+    private final List<MeshData> meshData = new ArrayList<>();
 
     public MeshManager(FrogMesh<?> mesh) {
         this.mesh = mesh;
@@ -55,12 +56,12 @@ public class MeshManager {
      * Record recent changes as mesh changes.
      */
     public MeshData addMesh() {
-        MeshData lastData = getMeshData().isEmpty() ? null : getMeshData().getLast();
+        MeshData lastData = getMeshData().isEmpty() ? null : getMeshData().get(getMeshData().size() - 1);
 
         int texIndex = lastData != null ? (getTexIndex(lastData) + lastData.getTexCoordCount()) : getMesh().getTextureCount();
         int faceIndex = lastData != null ? (getFaceIndex(lastData) + lastData.getFaceCount()) : getMesh().getFaceCount();
         MeshData newData = new MeshData(getMesh().getFaces().size() - faceIndex, getMesh().getTexCoords().size() - texIndex);
-        getMeshData().addLast(newData);
+        getMeshData().add(newData);
         return newData;
     }
 

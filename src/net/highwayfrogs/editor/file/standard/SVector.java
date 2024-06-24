@@ -38,8 +38,8 @@ public class SVector extends GameObject implements Vector {
 
     public SVector(int x, int y, int z) {
         setX((short) x);
-        setX((short) y);
-        setX((short) z);
+        setY((short) y);
+        setZ((short) z);
     }
 
     public SVector(float x, float y, float z) {
@@ -88,6 +88,17 @@ public class SVector extends GameObject implements Vector {
         this.y = (short) 0;
         this.z = (short) 0;
         this.padding = (short) 0;
+    }
+
+    /**
+     * Set the values of this vector.
+     * @param copyVector the vector to copy values from
+     */
+    public void setValues(SVector copyVector) {
+        this.x = copyVector.x;
+        this.y = copyVector.y;
+        this.z = copyVector.z;
+        this.padding = copyVector.padding;
     }
 
     /**

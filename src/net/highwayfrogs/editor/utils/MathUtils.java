@@ -7,6 +7,25 @@ package net.highwayfrogs.editor.utils;
 public class MathUtils {
 
     /**
+     * Calculates the greatest common divisor between the two numbers using euclid's algorithm.
+     * If both factors are 0, 0 will be returned. Otherwise, the greatest common factor will be returned, with the default as 1 if there are no other shared factors.
+     * Based on <a href="https://stackoverflow.com/questions/13673600/how-to-write-a-simple-java-program-that-finds-the-greatest-common-divisor-betwee"/>.
+     * @param a the first value
+     * @param b the second value
+     * @return greatestCommonDivisor
+     */
+    public static int gcd(int a, int b) {
+        while (a != 0 && b != 0)  {
+            int c = b;
+            b = a % b;
+            a = c;
+        }
+
+        // Either one is 0, so return the non-zero value
+        return a + b;
+    }
+
+    /**
      * Clamp a short value to a specified range.
      * @param valueIn the value to clamp.
      * @param minVal the minimum (inclusive) clamped value.

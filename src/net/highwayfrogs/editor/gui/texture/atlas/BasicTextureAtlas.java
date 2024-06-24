@@ -8,7 +8,9 @@ import net.highwayfrogs.editor.utils.SortedList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.BiFunction;
 
 /**
@@ -28,7 +30,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
     private boolean cachedTextureSizesInvalid;
 
     public BasicTextureAtlas(int startingWidth, int startingHeight, boolean allowAutomaticResizing, BiFunction<TextureAtlas, ITextureSource, TTexture> atlasTextureConstructor) {
-        super(atlas -> new AtlasBuilderTextureSource((TextureAtlas) atlas), startingWidth, startingHeight, allowAutomaticResizing);
+        super(atlas -> new AtlasBuilderTextureSource((TextureAtlas) atlas, false, true), startingWidth, startingHeight, allowAutomaticResizing);
         this.atlasTextureConstructor = atlasTextureConstructor;
         this.sortedTextures = makeSortedTextureList();
         this.imageChangeListener = this::onTextureChange;
@@ -50,7 +52,8 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
      * Makes a sorted texture list.
      */
     protected SortedList<TTexture> makeSortedTextureList() {
-        return new SortedList<>(Comparator.comparingInt((TTexture texture) -> texture.getPaddedWidth() * texture.getPaddedHeight()).reversed().thenComparingInt(Objects::hashCode));
+        return new SortedList<>(Comparator.comparingInt((TTexture texture) -> texture.getPaddedWidth() * texture.getPaddedHeight()).reversed()
+                .thenComparingLong(Texture::getUniqueId)); // Need something instant and constant for sorting/lookup order consistency.
     }
 
     @Override
@@ -80,7 +83,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
         return this.texturesBySource.get(textureSource);
     }
 
-    @Override // This is a duplicateish method since this method inherits from Texture, instead of just TextureAtlas.
+    @Override // This is a duplicate method since this method inherits from Texture, instead of just TextureAtlas.
     public Texture getChildTextureBySource(ITextureSource source, boolean throwErrorIfNotFound) {
         TTexture texture = this.texturesBySource.get(source);
         if (texture != null)
@@ -98,14 +101,16 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
             throw new NullPointerException("heldTexture");
         if (!(heldTexture instanceof AtlasTexture))
             throw new IllegalArgumentException("Provided texture " + Utils.getSimpleName(heldTexture) + "is not held by this atlas.");
-        if (!this.texturesBySource.containsKey(heldTexture.getTextureSource()))
-            throw new IllegalStateException("Tried to get the UV of a texture which wasn't held by this atlas!");
+        // This check causes a pretty significant slowdown when updating texture UVs.
+        // Additionally, if the texture isn't in the atlas, it displays as an unknown texture, making it easy to identify.
+        //if (((AtlasTexture) heldTexture).getAtlas() != this || !this.texturesBySource.containsKey(heldTexture.getTextureSource()))
+        //    throw new IllegalStateException("Tried to get the UV of a texture which wasn't held by this atlas!");
 
         AtlasTexture atlasTexture = (AtlasTexture) heldTexture;
         int xPos = atlasTexture.getX() + atlasTexture.getLeftPaddingEmpty() + atlasTexture.getLeftPadding() + x;
         int yPos = atlasTexture.getY() + atlasTexture.getUpPaddingEmpty() + atlasTexture.getUpPadding() + y;
-        result.setX((float) xPos / getPaddedHeight());
-        result.setY((float) yPos / getPaddedHeight());
+        result.setX((float) xPos / getAtlasWidth());
+        result.setY((float) yPos / getAtlasHeight());
         return result;
     }
 
@@ -118,25 +123,30 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
             throw new NullPointerException("heldTexture");
         if (!(heldTexture instanceof AtlasTexture))
             throw new IllegalArgumentException("Provided texture " + Utils.getSimpleName(heldTexture) + " is not held by this atlas.");
-        if (!this.texturesBySource.containsKey(heldTexture.getTextureSource()))
-            throw new IllegalStateException("Tried to get the UV of a texture which wasn't held by this atlas!");
+        // This check causes a pretty significant slowdown when updating texture UVs.
+        // Additionally, if the texture isn't in the atlas, it displays as an unknown texture, making it easy to identify.
+        // if (((AtlasTexture) heldTexture).getAtlas() != this || !this.texturesBySource.containsKey(heldTexture.getTextureSource()))
+        //    throw new IllegalStateException("Tried to get the UV of a texture which wasn't held by this atlas!");
 
         AtlasTexture atlasTexture = (AtlasTexture) heldTexture;
         int baseX = (atlasTexture.getX() + atlasTexture.getLeftPaddingEmpty() + atlasTexture.getLeftPadding());
         int baseY = (atlasTexture.getY() + atlasTexture.getUpPaddingEmpty() + atlasTexture.getUpPadding());
-        result.setX((baseX + (localUv.getX() * heldTexture.getWidthWithoutPadding())) / getPaddedWidth());
-        result.setY((baseY + (localUv.getY() * heldTexture.getHeightWithoutPadding())) / getPaddedHeight());
+        result.setX((baseX + (localUv.getX() * heldTexture.getWidthWithoutPadding())) / getAtlasWidth());
+        result.setY((baseY + (localUv.getY() * heldTexture.getHeightWithoutPadding())) / getAtlasHeight());
         return result;
     }
 
     private void onTextureChange(Texture texture, BufferedImage oldImage, BufferedImage newImage, boolean didOldImageHaveAnyTransparency) {
         if (oldImage == null || (oldImage.getWidth() != newImage.getWidth()) || (oldImage.getHeight() != newImage.getHeight()))
             this.markTextureSizesDirty(false);
-        getTextureSource().fireChangeEvent();
+
+        markImageDirty();
+        if (!shouldDisableUpdates())
+           getTextureSource().fireChangeEvent();
     }
 
     @Override
-    public Texture getFallbackTexture() {
+    public TTexture getFallbackTexture() {
         return this.fallbackTexture;
     }
 
@@ -162,8 +172,14 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
             throw new RuntimeException("The texture atlas didn't think the texture source was registered, but when we tried to register it, it was.");
 
         newTexture.registerTexture();
-        this.markPositionsDirty();
         newTexture.getImageChangeListeners().add(this.imageChangeListener);
+        if (placeTexture(newTexture)) {
+            if (!shouldDisableUpdates())
+                getTextureSource().fireChangeEvent();
+        } else {
+            this.markPositionsDirty();
+        }
+
         return newTexture;
     }
 
@@ -190,7 +206,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
      * @return Whether the texture was removed.
      */
     @Override
-    @SuppressWarnings("SuspiciousMethodCalls")
+    @SuppressWarnings({"SuspiciousMethodCalls", "unchecked"})
     public boolean removeTexture(AtlasTexture texture) {
         if (texture == null)
             throw new NullPointerException("texture");
@@ -201,6 +217,8 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
             texture.getImageChangeListeners().remove(this.imageChangeListener);
             if (this.fallbackTexture == texture)
                 this.fallbackTexture = null;
+
+            freeTexture((TTexture) texture);
             return true;
         }
 
@@ -259,18 +277,15 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
         }
 
         // Update positions.
-        if (cachedTextureSizesInvalid || this.cachedPositionsInvalid) {
-            this.cachedPositionsInvalid = false;
+        if (cachedTextureSizesInvalid || this.cachedPositionsInvalid)
             this.rebuildTexturePositions();
-            this.markImageDirty();
-        }
     }
 
     @Override
     public void rebuildTexturePositions() {
         this.pushDisableUpdates();
 
-        boolean ranOutOfSpace = this.updatePositions(this.sortedTextures);
+        boolean ranOutOfSpace = !this.updatePositions(this.sortedTextures);
         if (ranOutOfSpace) {
             if (!isAutomaticResizingEnabled())
                 throw new RuntimeException("The texture atlas is full, and automatic resizing is disabled.");
@@ -280,6 +295,8 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
             this.rebuildTexturePositions();
         }
 
+        this.cachedPositionsInvalid = false; // Prevents recursive looping.
+        this.markImageDirty();
         this.popDisableUpdates();
     }
 
@@ -288,5 +305,26 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
      * @param sortedTextureList The list of textures to place, sorted from largest to smallest.
      * @return Returns true if the atlas ran out of space.
      */
-    protected abstract boolean updatePositions(SortedList<TTexture> sortedTextureList);
+    protected boolean updatePositions(SortedList<TTexture> sortedTextureList) {
+        for (int i = 0; i < sortedTextureList.size(); i++) {
+            TTexture texture = sortedTextureList.get(i);
+            if (!placeTexture(texture))
+                return false; // Ran out of space.
+        }
+
+        return true;
+    }
+
+    /**
+     * Algorithmic implementation which updates positions of a texture.
+     * @param texture the texture to place
+     * @return Returns true if the texture was placed successfully.
+     */
+    protected abstract boolean placeTexture(TTexture texture);
+
+    /**
+     * Algorithmic implementation which frees the positional area covered by the texture.
+     * @param texture the texture to free
+     */
+    protected abstract void freeTexture(TTexture texture);
 }

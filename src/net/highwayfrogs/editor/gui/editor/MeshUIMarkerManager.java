@@ -38,7 +38,7 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
     private Vector showPosition;
 
     private static final double GENERIC_POS_SIZE = 3;
-    private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
 
     public MeshUIMarkerManager(MeshViewController<TMesh> controller) {
         super(controller);

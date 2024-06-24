@@ -22,7 +22,7 @@ public class DynamicMeshOverlayNode extends DynamicMeshAdapterNode<OverlayTarget
     protected DynamicMeshTypedDataEntry writeValuesToArrayAndCreateEntry(OverlayTarget data) {
         DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), data);
         if (data.getOverlayEntry().getWrittenFaceCount() == 0)
-            return entry;
+            return entry; // Abort if the overlay target has no face data written.
 
         TextureAtlas atlas = getMesh().getTextureAtlas();
         Texture texture = atlas.getTextureFromSourceOrFallback(data.getOverlay());
@@ -37,7 +37,7 @@ public class DynamicMeshOverlayNode extends DynamicMeshAdapterNode<OverlayTarget
             // Calculate the absolute face index of the target polygon.
             int startFaceIndex = (data.getOverlayEntry().getFaceStartIndex() + i) * getMesh().getFaceElementSize();
 
-            // Each vertex is spaced in between the tex coord index, because the faces array includes a value for both texcoord and normal.
+            // Each vertex is spaced in between the tex coord index, because the faces array includes a value for both texCoord and normal.
             int meshVertex1 = getMesh().getEditableFaces().get(startFaceIndex);
             int meshVertex2 = getMesh().getEditableFaces().get(startFaceIndex + valuesPerVertex);
             int meshVertex3 = getMesh().getEditableFaces().get(startFaceIndex + (2 * valuesPerVertex));
@@ -78,11 +78,11 @@ public class DynamicMeshOverlayNode extends DynamicMeshAdapterNode<OverlayTarget
 
         switch (localTexCoordIndex) {
             case 0:
-                return atlas.getUV(texture, 0, 0);
+                return atlas.getUV(texture, texture.getLeftPadding(), texture.getUpPadding());
             case 1:
-                return atlas.getUV(texture, texture.getPaddedWidth() - texture.getLeftPadding() - 1, 0);
+                return atlas.getUV(texture, texture.getPaddedWidth() - texture.getRightPadding() - 1, texture.getUpPadding());
             case 2:
-                return atlas.getUV(texture, 0, texture.getPaddedHeight() - texture.getRightPadding() - 1);
+                return atlas.getUV(texture, texture.getLeftPadding(), texture.getPaddedHeight() - texture.getDownPadding() - 1);
             default:
                 throw new UnsupportedOperationException("Cannot update localTexCoordIndex " + localTexCoordIndex + " as a DynamicMeshOverlayNode. It should not exist.");
         }

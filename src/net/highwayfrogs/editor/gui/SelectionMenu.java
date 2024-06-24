@@ -4,7 +4,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -13,17 +12,18 @@ import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.stage.Stage;
 import lombok.AllArgsConstructor;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -48,11 +48,11 @@ public class SelectionMenu {
      * @param handler   The handler to fire to handle selecting the theme.
      * @param allowNull Allow selecting null theme.
      */
-    public static void promptThemeSelection(FroggerGameInstance instance, Consumer<MAPTheme> handler, boolean allowNull) {
-        List<MAPTheme> themes = new ArrayList<>(MAPTheme.values().length + (allowNull ? 1 : 0));
+    public static void promptThemeSelection(FroggerGameInstance instance, Consumer<FroggerMapTheme> handler, boolean allowNull) {
+        List<FroggerMapTheme> themes = new ArrayList<>(FroggerMapTheme.values().length + (allowNull ? 1 : 0));
         if (allowNull)
             themes.add(null);
-        themes.addAll(Arrays.asList(MAPTheme.values()));
+        themes.addAll(Arrays.asList(FroggerMapTheme.values()));
 
         promptSelection(instance, "Select the theme.", handler, themes, theme -> theme != null ? theme.name() : "No Theme", theme -> {
             if (theme == null)

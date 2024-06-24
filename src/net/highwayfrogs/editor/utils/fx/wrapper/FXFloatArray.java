@@ -43,13 +43,6 @@ public class FXFloatArray {
     /**
      * Get the number of floats currently tracked in the array.
      */
-    public int getLength() {
-        return this.length;
-    }
-
-    /**
-     * Get the number of floats currently tracked in the array.
-     */
     public int size() {
         return this.length;
     }
@@ -85,7 +78,7 @@ public class FXFloatArray {
      */
     public void growCapacityIfNecessary(int numberOfElements) {
         int currentCapacity = getCapacity();
-        int neededCapacity = getLength() + numberOfElements;
+        int neededCapacity = size() + numberOfElements;
         while (neededCapacity > currentCapacity) {
             if (currentCapacity > 0) {
                 currentCapacity *= 2;
@@ -320,8 +313,8 @@ public class FXFloatArray {
 
             // If copy length is 0, that means there is a duplicate index (impossible), and we can just safely skip it.
             if (copyLength > 0) {
-                removedGroups++;
                 int removeIndex = currentIndex - removedGroups; // This works because TestRemovals is sorted.
+                removedGroups++;
                 System.arraycopy(this.array, removeIndex + removedGroups, this.array, removeIndex, copyLength);
             } else if (i == totalIndexCount - 1) { // Edge-case, if we're at the end of the array, copyLength can be zero because there would be nothing to copy. This should still be counted as a removal.
                 removedGroups++;
@@ -403,6 +396,14 @@ public class FXFloatArray {
     public void set(int destIndex, float[] src, int srcIndex, int length) {
         rangeCheck(destIndex + length);
         System.arraycopy(src, srcIndex, array, destIndex, length);
+    }
+
+    /**
+     * Returns an array containing copy of the observable array.
+     * @return a float array containing the copy of the observable array
+     */
+    public float[] toArray() {
+        return toArray(null);
     }
 
     /**

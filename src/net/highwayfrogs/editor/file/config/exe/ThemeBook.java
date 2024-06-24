@@ -6,12 +6,12 @@ import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
-import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.function.Function;
  */
 @Getter
 public abstract class ThemeBook extends ExeStruct {
-    @Setter private transient MAPTheme theme;
+    @Setter private transient FroggerMapTheme theme;
     private final List<FormEntry> formBook = new ArrayList<>();
 
     public ThemeBook(FroggerGameInstance instance) {
@@ -65,14 +65,14 @@ public abstract class ThemeBook extends ExeStruct {
      * @param file The map file to get the vlo from.
      * @return vloArchive
      */
-    public abstract VLOArchive getVLO(MAPFile file);
+    public abstract VLOArchive getVLO(FroggerMapFile file);
 
     /**
      * Get the wad of this book.
      * @param file The map file to get the vlo from.
      * @return vloArchive
      */
-    public abstract WADFile getWAD(MAPFile file);
+    public abstract WADFile getWAD(FroggerMapFile file);
 
     /**
      * Tests if this is a valid theme.

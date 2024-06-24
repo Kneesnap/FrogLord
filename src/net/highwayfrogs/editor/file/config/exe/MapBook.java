@@ -4,9 +4,9 @@ import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerTextureRemap;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Locale;
@@ -45,7 +45,7 @@ public abstract class MapBook extends ExeStruct {
      * @param map The map to get the wad file for.
      * @return wadFile
      */
-    public abstract WADFile getWad(MAPFile map);
+    public abstract WADFile getWad(FroggerMapFile map);
 
     /**
      * Add a texture remap for a level.
@@ -60,7 +60,7 @@ public abstract class MapBook extends ExeStruct {
 
         FileEntry entry = instance.getResourceEntryByID(mapResourceId);
         if (entry == null) {
-            System.out.println("WARNING: Couldn't find map with resource ID " + mapResourceId);
+            instance.getLogger().warning("Couldn't find map with resource ID " + mapResourceId);
             return;
         }
 

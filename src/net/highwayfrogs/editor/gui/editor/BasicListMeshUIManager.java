@@ -4,6 +4,8 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
@@ -34,8 +36,8 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     private Button addValueButton;
     private Button removeValueButton;
 
-    private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_WHITE = Utils.makeUnlitSharpMaterial(Color.WHITE);
+    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
 
     public BasicListMeshUIManager(MeshViewController<TMesh> controller) {
         super(controller);
@@ -148,6 +150,16 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     }
 
     /**
+     * Gets the image to display in the list.
+     * @param index the index of the value
+     * @param value the value to get the style of
+     * @return listImage
+     */
+    protected Image getListDisplayImage(int index, TValue value) {
+        return null;
+    }
+
+    /**
      * Sets up the main grid editor UI.
      * @param sidePanel The side panel to add UI elements to.
      */
@@ -157,7 +169,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         sidePanel.add(this.valueCountLabel);
 
         // Value Selection Box
-        this.valueSelectionBox = this.mainGrid.addSelectionBox("Select " + getValueName(), null, getValues(), null);
+        this.valueSelectionBox = this.mainGrid.addSelectionBox("Select " + getValueName(), null, getValues(), null, 30);
         this.valueSelectionBox.valueProperty().addListener((listener, oldValue, newValue) -> {
             if (oldValue != newValue) {
                 T3DDelegate oldDelegate = this.delegatesByValue.get(oldValue);
@@ -177,6 +189,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
                 this.updateEditor(); // Refresh UI.
             }
         });
+        this.valueSelectionBox.setButtonCell(new BasicListEntryCell<>(this));
         this.valueSelectionBox.setCellFactory(param -> new BasicListEntryCell<>(this));
 
         // Display Settings Checkbox.
@@ -303,7 +316,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
             try {
                 updateEditor(selectedValue);
             } catch (Throwable th) {
-                th.printStackTrace();
+                Utils.handleError(getLogger(), th, false, "An error occurred while setting up the UI.");
                 this.editorGrid.addBoldLabel("An error occurred while setting up the UI.");
             }
         }
@@ -314,7 +327,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
      * @param value The value to remove.
      */
     public void removeValue(TValue value) {
-        if (!getValues().remove(value))
+        if (!tryRemoveValue(value))
             return;
 
         T3DDelegate delegate = this.delegatesByValue.remove(value);
@@ -323,6 +336,15 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         updateValuesInUI();
         this.valueSelectionBox.setValue(null);
         this.valueSelectionBox.getSelectionModel().clearSelection();
+    }
+
+    /**
+     * Attempts to remove the value from the list.
+     * @param value the value to remove
+     * @return removed successfully
+     */
+    protected boolean tryRemoveValue(TValue value) {
+        return getValues().remove(value);
     }
 
     /**
@@ -354,6 +376,16 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
             int index = this.listManager.valueSelectionBox.getItems().indexOf(value);
             setText(this.listManager.getListDisplayName(index, value));
             setStyle(this.listManager.getListDisplayStyle(index, value));
+
+            Image image = this.listManager.getListDisplayImage(index, value);
+            ImageView imageView = null;
+            if (image != null) {
+                imageView = new ImageView(image);
+                imageView.setFitWidth(20);
+                imageView.setFitHeight(20);
+            }
+
+            setGraphic(imageView);
         }
     }
 }

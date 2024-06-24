@@ -1,0 +1,126 @@
+PT Model Support + Animations
+Saving PSX game wads / non-frogger games.
+Rewrite Frogger file support.
+Map Editor MVP
+ - Track Polygons per vertex.
+ - The grid is the most fundamental concept.
+  - Grid tile has polygons plus the main one.
+  - Editing UI is based around the idea of a tile being a fixed size.
+   - Extension mode will never create new things on the grid, but expansion mode will.
+ - Welcome tab is the default tab in the mesh editor and will explain how to edit a map.
+ - Material-based.
+ - How will we support multiple layers? From a UX perspective I say it'll know what part of the grid is highlighted when we do an expansion over an existing area, so I'm not sure we need to do anything.
+ - How will we handle stretched textures vs single textures?
+  - While extending, the uvs shouldn't change
+  - While expanding... I think we should have a flag on the material which controls this.
+ - Build towards a 1.0.0 release. It doesn't need to be perfect, just good enough.
+
+Questions:
+ - How will UVs work when we split polygons?
+
+Future Features:
+ - Lighting
+ - Static Model Import
+ - Polygon splitting
+
+v1.0 Release:
+ - Editor MVP
+ - Automatic version detection + Drag & Drop support on game selection menu.
+ - Fix the memory leak seen displaying MediEvil (MediEvil 2?) maps.
+ - Ensure TGQ saves a playable version of the game.
+ - Make those UI buttons on the main menu do something.
+ - UI Todos.
+ - Make it more user friendly.
+ - Figure out a basic workflow for integration with decomp.
+  - Ideally we can setup one-click run.
+  - Manually editing the executable may no longer be necessary / desirable.
+  - Do we want an extracted style-system, where we can configure a list of files to apply, or actions like importing images from directory?
+  - We should probably include searchable written documentation too.
+
+How do the sky maps work? Eg: What's the behavior for when there's no grid square? Fall off map?
+Consider water wibble, and what considerations we need to support that.
+
+General Data:
+
+Animations:
+ - Animations will be part of a material.
+ - Editor can be pretty simple.
+ - Animations should update / render in real-time. Double bind this check box to also show up under a "Preview" tab.
+
+Entities:
+ - SELECTION SYSTEM: Gizmo Position & Rotation
+ - Allow adding a new one to the map by dragging an entity to a position. If path-based, highlight red unless hovering near a path, in which case snap to the path and show green.
+ - Allow path visualization. Double bind this check box to also show up under a "Preview" tab.
+
+Forms:
+ - Allow popping out a new window which gives a 3D preview of a form on the model.
+ - Selection System: Form Grid. [Position Gizmo, allow selecting multiple, with only Y axis control]
+ - Allow selecting the base position as well, with an XYZ position gizmo.
+ - Allow selecting between all unique model files which are seen to be used by the given form.
+ - I'd like to allow saving forms on a per-mof basis. Eg: All unique forms should be saved somewhere, so they can be used independently of level.
+
+Group:
+ - I'd like to make groups as automated as possible, and as close to the original as possible.
+ - This means spending some time trying different algorithms to generate groups and comparing the outputs to the original, both in terms of bytes, but also in terms of parsed data (which will be faster to debug).
+ - Potentially change the preview of this into a mesh, instead of a bunch of boxes. (Improve performance)
+ -
+
+Grid:
+ - Change the preview of this into a mesh, instead of a bunch of boxes. (Improve performance)
+ - Make sure to look at the collision grid to understand what we're up against. (Usage of tris?)
+ - The grid will be the core of the terrain mesh editor.
+ - At the start, we will have very tools for adding terrain inside a grid, and working with grid edges is preferred instead. Make sure to communicate this to the user.
+ - There's still the question of how the square height is calculated, but with it only being used for cliff height it may not desperately matter.
+
+Light:
+ - New editor needs to be 3D based.
+ - Include information in the baked editor about how lighting will only impact entities, but how this restriction does not apply to the new editor.
+
+Path:
+ - The new editor should be 3D based.
+ - When creating the first position of a path, allow dragging a sphere around the map to place it. [Disable the full left UI panel when doing this]
+
+Zone:
+ - ?
+
+Materials:
+ Properties:
+  - Texture ID (Or Not)swqa
+  - Flat Shading Color
+  - Perhaps a toggle for if the material should be gouraud. (SHOuLD LOOK AT GAME MAPS FIRST TO SEE IF POLYGON TYPE SEEMS CONSISTENT PER MATERIAL)
+  - Animation Data
+  - Default Grid Flags (Still overridable per-polygon, though the polygon should track if it overrides a value or not)
+  - I think this should allow texture rotation. (How did they make this work in CAV1.MAP's walls?)
+   -> I say this because the vertex ordering of the walls still appears ordered the same non-wall grid tiles, which suggests some kind of texture rotation feature.
+
+Polygon:
+ - Vertices
+ - Texture UVs [If textured]
+ - Material [Need to deal with a material getting stretched over multiple polygons. I think we just stretch & split, I don't think we ever stretch a texture on the ground, just on walls.]
+ - If Collision [Collision Overriden Flags, Collision Overriden Flag list]
+  -> Actually, this probably belongs on the grid stack layer, not on the polygon itself.
+ - Splitting behavior configuration?
+ - [If desirable] -> Override is gouraud flag?
+ - Is visible Y/N? (Or should this be on the material? Unsure!)
+ -> Make sure to look at the collision grid to understand what we're up against. (Usage of tris?)
+
+Vertex:
+ - Position, Color
+
+Grid Stack:
+ - Vertices.
+ - Grid Squares
+ - Non-collision polygons.
+
+Grid Square:
+ - Collision Flags
+ - Polygon
+
+Future Features:
+ - Importing static models.
+  -> Questions about how they will interact with the grid.
+  -> Questions about what format we'd use. We definitely need to support XMR, and mm3d could probably work. I like obj as well, but vertex coloring is a question. Can we use Assimp?
+  -> Ensure these models are impacted by lighting, etc.
+  -> Remember how few polygons of a given type can exist in a map group. 255 max. We need to warn if we go above this limit.
+
+Go over all packets, and look at the data types used. Which ones are at the highest risk of overflow? What precautions do we need to take to ensure we don't exceed this limit?

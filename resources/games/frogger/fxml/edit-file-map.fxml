@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 <AnchorPane fx:id="rootPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity"
@@ -9,7 +10,7 @@
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
             xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
     <children>
-      <HBox prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <HBox fx:id="contentBox" prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
              <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="250.0" HBox.hgrow="NEVER">
                <children>
@@ -17,7 +18,7 @@
                      <children>
                         <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="40.0" VBox.vgrow="NEVER">
                            <children>
-                              <Label prefHeight="40.0" prefWidth="139.0" text="MAP File" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <Label prefHeight="40.0" prefWidth="139.0" text="Map File" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                  <font>
                                     <Font name="System Bold" size="14.0" />
                                  </font>
@@ -29,60 +30,53 @@
                                     </ImageView>
                                  </graphic>
                               </Label>
-                               <ImageView fx:id="nameImage" fitHeight="25.0" fitWidth="128.0" layoutX="108.0"
+                               <ImageView fx:id="levelNameImageView" fitHeight="25.0" fitWidth="128.0" layoutX="108.0"
                                           layoutY="14.0" pickOnBounds="true" preserveRatio="true"
                                           AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="14.0"/>
                            </children>
                         </AnchorPane>
-                        <AnchorPane prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                        <AnchorPane prefHeight="148.0" prefWidth="200.0" VBox.vgrow="NEVER">
                            <children>
                                <Button fx:id="openEditorButton" layoutX="8.0" layoutY="2.0" mnemonicParsing="false"
                                        onAction="#onMapButtonClicked" prefHeight="25.0" prefWidth="90.0"
                                        text="Open Editor" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="152.0"
                                        AnchorPane.topAnchor="2.0"/>
-                               <Button fx:id="fixIslandButton" layoutX="143.0" layoutY="226.0" mnemonicParsing="false"
-                                       onAction="#onFixIslandClicked" prefHeight="25.0" prefWidth="99.0"
-                                       text="Fix Island Map" AnchorPane.bottomAnchor="14.0"
-                                       AnchorPane.rightAnchor="8.0"/>
-                               <Button layoutX="143.0" layoutY="201.0" mnemonicParsing="false" onAction="#makeNewMap"
-                                       prefHeight="25.0" prefWidth="99.0" text="Clear Map"
-                                       AnchorPane.bottomAnchor="40.0" AnchorPane.rightAnchor="8.0"/>
-                               <ImageView fx:id="previewImage" fitHeight="128.0" fitWidth="128.0" layoutX="122.0"
+                               <ImageView fx:id="levelPreviewScreenshotView" fitHeight="128.0" fitWidth="128.0" layoutX="122.0"
                                           pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="14.0"
                                           AnchorPane.topAnchor="0.0"/>
-                               <Button fx:id="saveTextureButton" mnemonicParsing="false" prefWidth="99.0"
-                                       text="Save Texture" AnchorPane.bottomAnchor="66.0" AnchorPane.rightAnchor="8.0"/>
-                               <Button fx:id="saveToObj" layoutX="14.0" layoutY="252.0" mnemonicParsing="false"
-                                       onAction="#exportToObj" prefWidth="99.0" text="Export to .obj"
-                                       AnchorPane.bottomAnchor="66.0" AnchorPane.leftAnchor="14.0"/>
-                               <Button fx:id="saveToFFS" layoutX="14.0" layoutY="226.0" mnemonicParsing="false"
-                                       onAction="#exportToFFS" prefWidth="99.0" text="Export to .ffs"
-                                       AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0"/>
-                               <Button fx:id="loadFromFFS" layoutX="14.0" layoutY="200.0" mnemonicParsing="false"
-                                       onAction="#loadFromFFS" prefWidth="99.0" text="Import .ffs"
-                                       AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="14.0"/>
+                               <Label fx:id="remapListLabel" alignment="CENTER" contentDisplay="CENTER" layoutY="142.0" prefHeight="17.0"
+                                      prefWidth="200.0" text="Remap[???] (? Textures)" underline="true" AnchorPane.leftAnchor="0.0"
+                                      AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="142.0"/>
                            </children>
                         </AnchorPane>
+                         <ListView fx:id="remapList" prefHeight="305.0" prefWidth="200.0" VBox.vgrow="ALWAYS"/>
+                         <AnchorPane prefHeight="100.0" prefWidth="200.0" VBox.vgrow="NEVER">
+                             <children>
+                                 <!-- <Button fx:id="fixIslandButton" layoutX="143.0" layoutY="226.0" mnemonicParsing="false"
+                                         onAction="#onFixIslandClicked" prefHeight="25.0" prefWidth="99.0"
+                                         text="Fix Island Map" AnchorPane.bottomAnchor="14.0"
+                                         AnchorPane.rightAnchor="8.0"/> -->
+                                 <Button layoutX="143.0" layoutY="201.0" mnemonicParsing="false" onAction="#makeNewMap"
+                                         prefHeight="25.0" prefWidth="99.0" text="Clear Map"
+                                         AnchorPane.bottomAnchor="40.0" AnchorPane.rightAnchor="8.0"/>
+                                 <Button fx:id="saveTextureButton" mnemonicParsing="false" prefWidth="99.0"
+                                         text="Save Texture" AnchorPane.bottomAnchor="66.0" AnchorPane.rightAnchor="8.0"/>
+                                 <Button fx:id="saveToObj" layoutX="14.0" layoutY="252.0" mnemonicParsing="false"
+                                         onAction="#exportToObj" prefWidth="99.0" text="Export to .obj"
+                                         AnchorPane.bottomAnchor="66.0" AnchorPane.leftAnchor="14.0"/>
+                                 <!-- <Button fx:id="saveToFFS" layoutX="14.0" layoutY="226.0" mnemonicParsing="false"
+                                         onAction="#exportToFFS" prefWidth="99.0" text="Export to .ffs"
+                                         AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0"/>
+                                 <Button fx:id="loadFromFFS" layoutX="14.0" layoutY="200.0" mnemonicParsing="false"
+                                         onAction="#loadFromFFS" prefWidth="99.0" text="Import .ffs"
+                                         AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="14.0"/> -->
+                             </children>
+                         </AnchorPane>
                      </children>
                   </VBox>
                </children>
             </AnchorPane>
             <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" HBox.hgrow="NEVER" />
-            <AnchorPane style="-fx-border-color: #ffffff; -fx-border-width: 0px 0px 0px 1px;" HBox.hgrow="ALWAYS">
-                <children>
-                    <ListView fx:id="remapList" prefHeight="305.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0"
-                              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
-                    <Label alignment="CENTER" contentDisplay="CENTER" layoutX="22.0" layoutY="6.0" prefHeight="17.0"
-                           prefWidth="100.0" text="Remap Editor" underline="true" AnchorPane.leftAnchor="21.0"
-                           AnchorPane.rightAnchor="230.0" AnchorPane.topAnchor="6.0"/>
-                    <ImageView fx:id="remapImage" fitHeight="128.0" fitWidth="128.0" layoutX="14.0" layoutY="141.0"
-                               pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="14.0"
-                               AnchorPane.leftAnchor="10.0"/>
-                    <Button fx:id="changeTextureButton" layoutX="154.0" layoutY="10.0" mnemonicParsing="false"
-                            onAction="#onChangeTexture" text="Change Texture" AnchorPane.leftAnchor="20.0"
-                            AnchorPane.rightAnchor="229.0" AnchorPane.topAnchor="30.0"/>
-                </children>
-            </AnchorPane>
          </children>
       </HBox>
     </children>

@@ -4,11 +4,11 @@ import javafx.scene.input.PickResult;
 import javafx.scene.shape.MeshView;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.psx.CVector;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
-import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -72,7 +72,7 @@ public class OldFroggerLandscapeUIManager extends BakedLandscapeUIManager<OldFro
 
     @Override
     public PSXShadeTextureDefinition createPolygonShadeDefinition(OldFroggerMapPolygon polygon) {
-        return polygon.createPolygonShadeDefinition(getMap());
+        return polygon.createPolygonShadeDefinition(getMesh());
     }
 
     @Override
@@ -90,7 +90,7 @@ public class OldFroggerLandscapeUIManager extends BakedLandscapeUIManager<OldFro
         return getSelectedPolygon() != null ? getSelectedPolygon().getVertices() : null;
     }
 
-    public static class OldFroggerPolygonShadingEditor extends BakedLandscapePolygonShadingEditor {
+    public static class OldFroggerPolygonShadingEditor extends BakedLandscapePolygonShadingEditor<OldFroggerMapPolygon> {
         public OldFroggerPolygonShadingEditor(OldFroggerLandscapeUIManager manager) {
             super(manager);
         }
@@ -103,31 +103,27 @@ public class OldFroggerLandscapeUIManager extends BakedLandscapeUIManager<OldFro
         @Override
         protected void onVertexPositionChange(MeshView meshView, int localVertexIndex, double oldX, double oldY, double oldZ, double newX, double newY, double newZ, int flags) {
             OldFroggerMapMesh mesh = getManager().getController().getMesh();
-            mesh.getMainNode().updateMapVertex(getManager().getSelectedPolygonVertexIds()[localVertexIndex]);
+            mesh.getMainNode().updateVertex(getManager().getSelectedPolygonVertexIds()[localVertexIndex]);
         }
 
         @Override
         protected void onColorUpdate(int colorIndex, CVector color) {
-            OldFroggerMapPolygon polygon = getManager().getSelectedPolygon();
+            OldFroggerMapPolygon polygon = getEditTarget();
             OldFroggerMapMesh mesh = getManager().getController().getMesh();
-            PSXShadeTextureDefinition oldShadedTexture = mesh.getShadedTextureManager().getShadedTexture(polygon);
 
             // Apply color changes.
-            PSXShadeTextureDefinition newShadedTexture = oldShadedTexture.clone();
-            newShadedTexture.getColors()[colorIndex].copyFrom(color);
-            getManager().getController().getMesh().getShadedTextureManager().updatePolygon(polygon, newShadedTexture);
+            polygon.getColors()[colorIndex].copyFrom(color);
+            mesh.getShadedTextureManager().updatePolygon(polygon);
         }
 
         @Override
         protected void onTextureUvUpdate(int uvIndex, SCByteTextureUV uv) {
+            OldFroggerMapPolygon polygon = getEditTarget();
             OldFroggerMapMesh mesh = getManager().getController().getMesh();
-            OldFroggerMapPolygon polygon = getManager().getSelectedPolygon();
-            PSXShadeTextureDefinition oldShadedTexture = mesh.getShadedTextureManager().getShadedTexture(polygon);
 
             // Apply updated uv data and update the 3D view.
-            PSXShadeTextureDefinition newShadedTexture = oldShadedTexture.clone();
-            newShadedTexture.getTextureUVs()[uvIndex].copyFrom(uv);
-            mesh.getShadedTextureManager().updatePolygon(polygon, newShadedTexture);
+            polygon.getTextureUvs()[uvIndex].copyFrom(uv);
+            mesh.getShadedTextureManager().updatePolygon(polygon);
         }
     }
 }

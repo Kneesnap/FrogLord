@@ -16,7 +16,6 @@ import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
 /**
@@ -64,19 +63,6 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
     @Override
     public void handleWadEdit(WADFile parent) {
         MeshViewController.setupMeshViewer(getGameInstance(), new MediEvilMapMeshController(), new MediEvilMapMesh(this));
-    }
-
-    @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
-        propertyList.add("Level String", this.headerPacket.getLevelString());
-        propertyList.add("Chunks", String.join(", ", this.headerPacket.getHeaderIdentifiers()));
-        propertyList.add("Vertices", this.graphicsPacket.getVertices().size());
-        propertyList.add("Polygons", this.graphicsPacket.getPolygons().size());
-        propertyList.add("Entities", this.entitiesPacket.getEntities().size());
-        propertyList.add("Collision Primitives", this.collprimsPacket.getCollprims().size());
-
-        return propertyList;
     }
 
     /**

@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.mof.prims;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -22,7 +22,7 @@ public class MOFColorPolygon extends MOFPolygon {
 
     @Override
     public BufferedImage makeTexture(TextureMap map) {
-        BufferedImage shadeImage = new BufferedImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage shadeImage = new BufferedImage(CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE, CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = shadeImage.createGraphics();
 
         graphics.setColor(getColor().toColor());

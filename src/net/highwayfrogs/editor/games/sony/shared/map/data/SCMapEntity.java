@@ -168,18 +168,18 @@ public class SCMapEntity extends SCSharedGameData {
      */
     public void setupEditor(SCMapEntityManager<?> manager, GUIEditorGrid editor) {
         editor.addEnumSelector("Link Target Type", this.linkTarget, EntityLinkTargetType.values(), false, newTarget -> this.linkTarget = newTarget);
-        editor.addIntegerField("Link Level Section", getSectionIndex(), this::setSectionIndex, value -> value >= 0 && value <= MAX_SECTION_INDEX);
-        editor.addIntegerField("Index in Section", getIndexInSection(), this::setIndexInSection, value -> value >= 0 && value <= MAX_INDEX_IN_SECTION);
-        editor.addIntegerField("Entity ID", this.entityId, newEntityId -> this.entityId = newEntityId, null);
+        editor.addSignedIntegerField("Link Level Section", getSectionIndex(), value -> value >= 0 && value <= MAX_SECTION_INDEX, this::setSectionIndex);
+        editor.addSignedIntegerField("Index in Section", getIndexInSection(), value -> value >= 0 && value <= MAX_INDEX_IN_SECTION, this::setIndexInSection);
+        editor.addSignedIntegerField("Entity ID", this.entityId, newEntityId -> this.entityId = newEntityId);
         MediEvilEntityDefinition definition = null; // TODO: getEntityDefinition();
         if (definition != null) {
             editor.addLabel("Entity Type", definition.getName());
             editor.addLabel("Overlay", (definition.getOverlay() != null ? definition.getOverlay().getFilePath() : "None"));
         } else {
-            editor.addIntegerField("Form ID", this.formId, newFormId -> this.formId = newFormId, null).setDisable(true);
+            editor.addSignedIntegerField("Form ID", this.formId, newFormId -> this.formId = newFormId).setDisable(true);
         }
 
-        editor.addShortField("Sub-Form ID", this.subFormId, newFormId -> this.subFormId = newFormId, value -> value >= 0 && value <= 0xFF);
+        editor.addUnsignedByteField("Sub-Form ID", this.subFormId, newFormId -> this.subFormId = newFormId);
 
         // Position & Rotation
         IPositionChangeListener updatePositionCallback = IPositionChangeListener.makeListener(() -> manager.updateEntityPositionRotation(this));
@@ -198,16 +198,16 @@ public class SCMapEntity extends SCSharedGameData {
         }, 0, 0xFF);
 
         // Other data
-        editor.addIntegerField("Init Flags", this.initFlags, newFlags -> this.initFlags = newFlags, null);
-        editor.addIntegerField("Destroy Flags", this.destroyFlags, newFlags -> this.destroyFlags = newFlags, null);
+        editor.addSignedIntegerField("Init Flags", this.initFlags, newFlags -> this.initFlags = newFlags);
+        editor.addSignedIntegerField("Destroy Flags", this.destroyFlags, newFlags -> this.destroyFlags = newFlags);
         if (this.group != 0 || this.map.getGameInstance().getGameType() == SCGameType.C12)
-            editor.addShortField("Group", this.group, newGroup -> this.group = newGroup, value -> value >= 0 && value <= 0xFF);
+            editor.addUnsignedByteField("Group", this.group, newGroup -> this.group = newGroup);
         if (this.scriptIndex != 0 || this.map.getGameInstance().getGameType() == SCGameType.C12)
-            editor.addShortField("Script Index", this.scriptIndex, newScriptIndex -> this.scriptIndex = newScriptIndex, value -> value >= 0 && value <= 0xFF);
-        editor.addIntegerField("Species", this.species, newScriptIndex -> this.species = newScriptIndex, value -> value >= 0 && value <= 0xFFFF);
+            editor.addUnsignedByteField("Script Index", this.scriptIndex, newScriptIndex -> this.scriptIndex = newScriptIndex);
+        editor.addUnsignedShortField("Species", this.species, newScriptIndex -> this.species = newScriptIndex);
         for (int i = 0; i < this.genericData.length; i++) {
             final int index = i;
-            editor.addIntegerField("Generic Data " + i, this.genericData[i], newValue -> this.genericData[index] = newValue, null);
+            editor.addSignedIntegerField("Generic Data " + i, this.genericData[i], newValue -> this.genericData[index] = newValue);
         }
     }
 

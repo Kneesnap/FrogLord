@@ -3,32 +3,31 @@ package net.highwayfrogs.editor.games.sony.medievil.map.mesh;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
-import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
-import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
+import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
+import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh.MediEvilShadedTextureManager;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
-import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
+import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
-import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
+import net.highwayfrogs.editor.gui.texture.atlas.TreeTextureAtlas;
 
 import java.awt.*;
+import java.util.Collection;
 
 /**
  * Represents the mesh for a MediEvil map.
  * Cloned from a file created by Kneesnap on 03/9/2024.
  */
 @Getter
-public class MediEvilMapMesh extends DynamicMesh implements IPSXShadedMesh {
+public class MediEvilMapMesh extends PSXShadedDynamicMesh<MediEvilMapPolygon, MediEvilShadedTextureManager> {
     private final MediEvilMapFile map;
     private final MediEvilMapMeshNode mainNode;
     private final DynamicMeshOverlayNode highlightedPolygonNode;
-    private final MediEvilShadedTextureManager shadedTextureManager;
     private AtlasTexture flatPlaceholderTexture;
     private AtlasTexture gouraudPlaceholderTexture;
-    private boolean shadingEnabled;
 
     public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.ORANGE, Color.BLACK);
     public static final CursorVertexColor REMOVE_FACE_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
@@ -37,9 +36,8 @@ public class MediEvilMapMesh extends DynamicMesh implements IPSXShadedMesh {
     public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
 
     public MediEvilMapMesh(MediEvilMapFile mapFile) {
-        super(new SequentialTextureAtlas(64, 64, true));
+        super(new TreeTextureAtlas(64, 64, true), false);
         this.map = mapFile;
-        this.shadedTextureManager = new MediEvilShadedTextureManager(this);
 
         // Add textures.
         getTextureAtlas().startBulkOperations();
@@ -76,23 +74,17 @@ public class MediEvilMapMesh extends DynamicMesh implements IPSXShadedMesh {
         }
 
         // Add gouraud shaded polygons.
-        for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
-            this.shadedTextureManager.addPolygon(polygon);
+        setupShadedPolygons();
     }
 
     @Override
-    public void setShadingEnabled(boolean newState) {
-        if (this.shadingEnabled == newState)
-            return;
+    public Collection<MediEvilMapPolygon> getAllShadedPolygons() {
+        return getMap().getGraphicsPacket().getPolygons();
+    }
 
-        this.shadingEnabled = newState;
-
-        getMesh().pushBatchOperations();
-        getTextureAtlas().startBulkOperations();
-        for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
-            this.shadedTextureManager.updatePolygon(polygon, polygon.createPolygonShadeDefinition(getMap(), newState));
-        getTextureAtlas().endBulkOperations();
-        getMesh().popBatchOperations();
+    @Override
+    protected MediEvilShadedTextureManager createShadedTextureManager() {
+        return new MediEvilShadedTextureManager(this);
     }
 
     public static class MediEvilShadedTextureManager extends PSXMeshShadedTextureManager<MediEvilMapPolygon> {
@@ -107,12 +99,12 @@ public class MediEvilMapMesh extends DynamicMesh implements IPSXShadedMesh {
 
         @Override
         protected PSXShadeTextureDefinition createShadedTexture(MediEvilMapPolygon polygon) {
-            return polygon.createPolygonShadeDefinition(getMesh().getMap(), getMesh().isShadingEnabled());
+            return polygon.createPolygonShadeDefinition(getMesh(), getMesh().isShadingEnabled());
         }
 
         @Override
-        protected void applyTextureShading(MediEvilMapPolygon polygon, PSXShadeTextureDefinition shadedTexture) {
-            polygon.loadDataFromShadeDefinition(getMesh().getMap(), shadedTexture, getMesh().isShadingEnabled());
+        protected void updateLooseShadingTexCoords() {
+            // Don't have any loose shade definitions.
         }
     }
 }

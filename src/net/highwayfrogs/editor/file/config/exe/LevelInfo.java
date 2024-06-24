@@ -5,10 +5,10 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.data.WorldId;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 
 /**
  * Holds information about each level.
@@ -98,15 +98,15 @@ public class LevelInfo extends ExeStruct {
      * Gets the MapTheme this info represents.
      * @return mapLevel
      */
-    public MAPTheme getTheme() {
-        return isTerminator() ? null : MAPTheme.values()[this.theme];
+    public FroggerMapTheme getTheme() {
+        return isTerminator() ? null : FroggerMapTheme.values()[this.theme];
     }
 
     /**
      * Set the theme of this level.
      * @param theme The new theme.
      */
-    public void setTheme(MAPTheme theme) {
+    public void setTheme(FroggerMapTheme theme) {
         this.theme = theme != null ? theme.ordinal() : -1;
     }
 

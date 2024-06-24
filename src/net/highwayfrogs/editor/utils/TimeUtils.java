@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.utils;
 
 import java.time.*;
+import java.time.chrono.ChronoLocalDate;
+import java.time.chrono.ChronoLocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
@@ -185,5 +187,50 @@ public class TimeUtils {
                 }
             }
         }
+    }
+
+    /**
+     * Get the provided TemporalAccessor as an epoch millisecond timestamp, if possible.
+     * @param accessor the accessor to convert
+     * @return epochMillis
+     */
+    public static long toMillis(TemporalAccessor accessor) {
+        if (accessor == null)
+            throw new NullPointerException("accessor");
+
+        return Instant.from(accessor).toEpochMilli();
+    }
+
+    public static boolean canConvertToMillis(TemporalAccessor accessor) {
+        return accessor != null && accessor.isSupported(ChronoField.INSTANT_SECONDS) && accessor.isSupported(ChronoField.NANO_OF_SECOND);
+    }
+
+    /**
+     * Compare the two temporal accessors, like an IComparable.
+     * @param first The first value to compare.
+     * @param second The second value to compare.
+     * @return -1, 0, or -1, as compliant with IComparable.
+     */
+    @SuppressWarnings("unchecked")
+    public static int compare(TemporalAccessor first, TemporalAccessor second) {
+        // This is kind of a mess, but for now it makes the most sense. I'd like to consider if we want to change it though.
+        if (first instanceof Comparable<?>) {
+            if (second == null) {
+                return 1; // first > second
+            } else if (first instanceof LocalDate) {
+                if (second instanceof ChronoLocalDate)
+                    return ((LocalDate) first).compareTo((ChronoLocalDate) second);
+            } else if (first instanceof LocalDateTime) {
+                if (second instanceof ChronoLocalDateTime<?>)
+                    return ((LocalDateTime) first).compareTo((ChronoLocalDateTime<?>) second);
+            } else if (first.getClass().isAssignableFrom(second.getClass())) {
+                // The others use the same class. This is bad practice, but is unlikely to fail.
+                return ((Comparable<? super TemporalAccessor>) first).compareTo(second);
+            }
+        }
+
+        long firstValue = canConvertToMillis(first) ? toMillis(first) : 0;
+        long secondValue = canConvertToMillis(second) ? toMillis(second) : 0;
+        return Long.compare(firstValue, secondValue);
     }
 }

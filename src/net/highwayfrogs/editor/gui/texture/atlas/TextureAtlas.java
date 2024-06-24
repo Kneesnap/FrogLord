@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui.texture.atlas;
 
+import javafx.scene.image.Image;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,10 +17,11 @@ import java.util.function.Function;
  * Back-ported from ModToolFramework.
  * Created by Kneesnap on 9/23/2023.
  */
+@Getter
 public abstract class TextureAtlas extends SimpleTexture {
-    @Getter @Setter(AccessLevel.PACKAGE) private int atlasWidth;
-    @Getter @Setter(AccessLevel.PACKAGE) private int atlasHeight;
-    @Getter @Setter private boolean automaticResizingEnabled;
+    @Setter(AccessLevel.PACKAGE) private int atlasWidth;
+    @Setter(AccessLevel.PACKAGE) private int atlasHeight;
+    @Setter private boolean automaticResizingEnabled;
 
     public TextureAtlas(Function<Texture, ITextureSource> source, int width, int height, boolean allowAutomaticResizing) {
         super(source);
@@ -36,6 +38,13 @@ public abstract class TextureAtlas extends SimpleTexture {
     @Override
     public AtlasBuilderTextureSource getTextureSource() {
         return (AtlasBuilderTextureSource) super.getTextureSource();
+    }
+
+    /**
+     * Gets the updated JavaFX image containing the full texture sheet.
+     */
+    public Image getFxImage() {
+        return getTextureSource().getCachedFxImage();
     }
 
     /**
@@ -85,7 +94,7 @@ public abstract class TextureAtlas extends SimpleTexture {
      * Gets the texture which is returned if a texture is not found.
      * @return The currently active fallback texture.
      */
-    public abstract Texture getFallbackTexture();
+    public abstract AtlasTexture getFallbackTexture();
 
     /**
      * Sets the texture which is returned if a texture is not found.
@@ -113,7 +122,7 @@ public abstract class TextureAtlas extends SimpleTexture {
      * @param textureSource The texture source to get the texture from.
      * @return The texture, if it is found. If the source does not have anything tracked, the fallback texture is provided.
      */
-    public Texture getTextureFromSourceOrFallback(ITextureSource textureSource) {
+    public AtlasTexture getTextureFromSourceOrFallback(ITextureSource textureSource) {
         AtlasTexture texture = getNullTextureFromSource(textureSource);
         return texture != null ? texture : getFallbackTexture();
     }

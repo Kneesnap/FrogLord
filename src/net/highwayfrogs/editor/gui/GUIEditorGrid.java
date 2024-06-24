@@ -20,7 +20,6 @@ import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.games.sony.frogger.ui.mapeditor.MapUIController;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo;
@@ -214,25 +213,356 @@ public class GUIEditorGrid {
     }
 
     /**
-     * Add an integer field.
-     * @param label  The name.
+     * Add a text field allowing the edit a signed byte.
+     * @param label The name of the text field.
      * @param number The initial number.
-     * @param setter The success behavior.
-     * @param test   Whether the number is valid.
+     * @param setter The handler for a new valid value getting specified.
      * @return textField
      */
-    public TextField addIntegerField(String label, int number, Consumer<Integer> setter, Function<Integer, Boolean> test) {
+    public TextField addSignedByteField(String label, byte number, Consumer<Byte> setter) {
+        return this.addSignedByteField(label, number, null, setter);
+    }
+
+    /**
+     * Add a text field allowing the edit a signed byte.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param validityTest A callback used to test if the number is valid.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addSignedByteField(String label, byte number, Function<Byte, Boolean> validityTest, Consumer<Byte> setter) {
         return addTextField(label, String.valueOf(number), str -> {
             if (!Utils.isInteger(str))
                 return false;
 
-            int value = Integer.parseInt(str);
-            boolean testPass = test == null || test.apply(value);
+            int parsedNumber = Integer.parseInt(str);
+            if (parsedNumber > 0x7F || parsedNumber < -0x80)
+                return false; // Not within the range of a signed byte.
 
-            if (testPass)
-                setter.accept(value);
+            // Ensure the value passes the validity test, if one was provided.
+            byte parsedByte = (byte) parsedNumber;
+            if (validityTest != null) {
+                try {
+                    if (!validityTest.apply(parsedByte))
+                        return false;
+                } catch (Throwable th) {
+                    // An exception being thrown means either something unexpected meant wrong, or it contains a message to display to the user.
+                    Utils.handleError(null, th, true, "The provided value '%d' was not valid.", parsedNumber);
+                    return false;
+                }
+            }
 
-            return testPass;
+            try {
+                setter.accept(parsedByte);
+                return true;
+            } catch (Throwable th) {
+                Utils.handleError(null, th, true, "Failed to apply '%s' value %d.", label, parsedByte);
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Add a text field allowing the edit an unsigned byte.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addUnsignedByteField(String label, short number, Consumer<Short> setter) {
+        return this.addUnsignedByteField(label, number, null, setter);
+    }
+
+    /**
+     * Add a text field allowing the edit an unsigned byte.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param validityTest A callback used to test if the number is valid.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addUnsignedByteField(String label, short number, Function<Short, Boolean> validityTest, Consumer<Short> setter) {
+        return addTextField(label, String.valueOf(number), str -> {
+            if (!Utils.isInteger(str))
+                return false;
+
+            int parsedNumber = Integer.parseInt(str);
+            if (parsedNumber > 0xFF || parsedNumber < 0)
+                return false; // Not within the range of an unsigned byte.
+
+            // Ensure the value passes the validity test, if one was provided.
+            short parsedShort = (short) parsedNumber;
+            if (validityTest != null) {
+                try {
+                    if (!validityTest.apply(parsedShort))
+                        return false;
+                } catch (Throwable th) {
+                    // An exception being thrown means either something unexpected meant wrong, or it contains a message to display to the user.
+                    Utils.handleError(null, th, true, "The provided value '%d' was not valid.", parsedNumber);
+                    return false;
+                }
+            }
+
+            try {
+                setter.accept(parsedShort);
+                return true;
+            } catch (Throwable th) {
+                Utils.handleError(null, th, true, "Failed to apply '%s' value %d.", label, parsedShort);
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Add a text field allowing the edit a signed short.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addSignedShortField(String label, short number, Consumer<Short> setter) {
+        return this.addSignedShortField(label, number, null, setter);
+    }
+
+    /**
+     * Add a text field allowing the edit a signed short.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param validityTest A callback used to test if the number is valid.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addSignedShortField(String label, short number, Function<Short, Boolean> validityTest, Consumer<Short> setter) {
+        return addTextField(label, String.valueOf(number), str -> {
+            if (!Utils.isInteger(str))
+                return false;
+
+            int parsedNumber = Integer.parseInt(str);
+            if (parsedNumber > 0x7FFF || parsedNumber < -0x8000)
+                return false; // Not within the range of a signed short.
+
+            // Ensure the value passes the validity test, if one was provided.
+            short parsedShort = (short) parsedNumber;
+            if (validityTest != null) {
+                try {
+                    if (!validityTest.apply(parsedShort))
+                        return false;
+                } catch (Throwable th) {
+                    // An exception being thrown means either something unexpected meant wrong, or it contains a message to display to the user.
+                    Utils.handleError(null, th, true, "The provided value '%d' was not valid.", parsedNumber);
+                    return false;
+                }
+            }
+
+            try {
+                setter.accept(parsedShort);
+                return true;
+            } catch (Throwable th) {
+                Utils.handleError(null, th, true, "Failed to apply '%s' value %d.", label, parsedShort);
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Add a text field allowing the edit an unsigned short.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addUnsignedShortField(String label, short number, Consumer<Short> setter) {
+        return this.addUnsignedShortField(label, number, null, setter);
+    }
+
+    /**
+     * Add a text field allowing the edit an unsigned short.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addUnsignedShortField(String label, int number, Consumer<Integer> setter) {
+        return this.addUnsignedShortField(label, number, null, setter);
+    }
+
+    /**
+     * Add a text field allowing the edit an unsigned short.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param validityTest A callback used to test if the number is valid.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addUnsignedShortField(String label, short number, Function<Short, Boolean> validityTest, Consumer<Short> setter) {
+        return addUnsignedShortField(label, Utils.shortToUnsignedInt(number),
+                validityTest != null ? intValue -> validityTest.apply(Utils.unsignedIntToShort(intValue)) : null,
+                newValue -> setter.accept(Utils.unsignedIntToShort(newValue)));
+    }
+
+    /**
+     * Add a text field allowing the edit an unsigned short.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param validityTest A callback used to test if the number is valid.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addUnsignedShortField(String label, int number, Function<Integer, Boolean> validityTest, Consumer<Integer> setter) {
+        return addTextField(label, String.valueOf(number), str -> {
+            if (!Utils.isInteger(str))
+                return false;
+
+            int parsedNumber = Integer.parseInt(str);
+            if (parsedNumber > 0xFFFF || parsedNumber < 0)
+                return false; // Not within the range of an unsigned short.
+
+            // Ensure the value passes the validity test, if one was provided.
+            if (validityTest != null) {
+                try {
+                    if (!validityTest.apply(parsedNumber))
+                        return false;
+                } catch (Throwable th) {
+                    // An exception being thrown means either something unexpected meant wrong, or it contains a message to display to the user.
+                    Utils.handleError(null, th, true, "The provided value '%d' was not valid.", parsedNumber);
+                    return false;
+                }
+            }
+
+            try {
+                setter.accept(parsedNumber);
+                return true;
+            } catch (Throwable th) {
+                Utils.handleError(null, th, true, "Failed to apply '%s' value %d.", label, parsedNumber);
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Add a text field allowing the edit a signed integer.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addSignedIntegerField(String label, int number, Consumer<Integer> setter) {
+        return this.addSignedIntegerField(label, number, null, setter);
+    }
+
+    /**
+     * Add a text field allowing the edit a signed integer.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param validityTest A callback used to test if the number is valid.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addSignedIntegerField(String label, int number, Function<Integer, Boolean> validityTest, Consumer<Integer> setter) {
+        return addTextField(label, String.valueOf(number), str -> {
+            if (!Utils.isInteger(str))
+                return false;
+
+            long parsedNumber = Long.parseLong(str);
+            if (parsedNumber > 0x7FFFFFFFL || parsedNumber < -0x80000000L)
+                return false; // Not within the range of a signed byte.
+
+            // Ensure the value passes the validity test, if one was provided.
+            int parsedInteger = (int) parsedNumber;
+            if (validityTest != null) {
+                try {
+                    if (!validityTest.apply(parsedInteger))
+                        return false;
+                } catch (Throwable th) {
+                    // An exception being thrown means either something unexpected meant wrong, or it contains a message to display to the user.
+                    Utils.handleError(null, th, true, "The provided value '%d' was not valid.", parsedInteger);
+                    return false;
+                }
+            }
+
+            try {
+                setter.accept(parsedInteger);
+                return true;
+            } catch (Throwable th) {
+                Utils.handleError(null, th, true, "Failed to apply '%s' value %d.", label, parsedInteger);
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Add a text field allowing the edit an unsigned integer.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addUnsignedIntegerField(String label, int number, Consumer<Integer> setter) {
+        return addUnsignedIntegerField(label, number, null, setter);
+    }
+
+    /**
+     * Add a text field allowing the edit an unsigned integer.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addUnsignedIntegerField(String label, long number, Consumer<Long> setter) {
+        return this.addUnsignedIntegerField(label, number, null, setter);
+    }
+
+    /**
+     * Add a text field allowing the edit an unsigned integer.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param validityTest A callback used to test if the number is valid.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addUnsignedIntegerField(String label, int number, Function<Integer, Boolean> validityTest, Consumer<Integer> setter) {
+        return addUnsignedIntegerField(label, Utils.intToUnsignedLong(number),
+                validityTest != null ? longValue -> validityTest.apply(Utils.unsignedLongToInt(longValue)) : null,
+                newValue -> setter.accept(Utils.unsignedLongToInt(newValue)));
+    }
+
+    /**
+     * Add a text field allowing the edit an unsigned integer.
+     * @param label The name of the text field.
+     * @param number The initial number.
+     * @param validityTest A callback used to test if the number is valid.
+     * @param setter The handler for a new valid value getting specified.
+     * @return textField
+     */
+    public TextField addUnsignedIntegerField(String label, long number, Function<Long, Boolean> validityTest, Consumer<Long> setter) {
+        return addTextField(label, String.valueOf(number), str -> {
+            if (!Utils.isInteger(str))
+                return false;
+
+            long parsedNumber = Long.parseLong(str);
+            if (parsedNumber > 0xFFFFFFFFL || parsedNumber < 0)
+                return false; // Not within the range of an unsigned byte.
+
+            // Ensure the value passes the validity test, if one was provided.
+            if (validityTest != null) {
+                try {
+                    if (!validityTest.apply(parsedNumber))
+                        return false;
+                } catch (Throwable th) {
+                    // An exception being thrown means either something unexpected meant wrong, or it contains a message to display to the user.
+                    Utils.handleError(null, th, true, "The provided value '%d' was not valid.", parsedNumber);
+                    return false;
+                }
+            }
+
+            try {
+                setter.accept(parsedNumber);
+                return true;
+            } catch (Throwable th) {
+                Utils.handleError(null, th, true, "Failed to apply '%s' value %d.", label, parsedNumber);
+                return false;
+            }
         });
     }
 
@@ -291,30 +621,15 @@ public class GUIEditorGrid {
     }
 
     /**
-     * Add a short field.
-     * @param label  The name.
-     * @param number The initial number.
-     * @param setter The success behavior.
-     * @param test   Whether the number is valid.
-     * @return textField
+     * Add a selection-box.
+     * @param label   The label text to add.
+     * @param current The currently selected value.
+     * @param values  Accepted values. (If null is acceptable, add null to this list.)
+     * @param setter  The setter
+     * @return comboBox
      */
-    public TextField addShortField(String label, short number, Consumer<Short> setter, Function<Short, Boolean> test) {
-        return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
-                return false;
-
-            int intValue = Integer.parseInt(str);
-            if (intValue < Short.MIN_VALUE || intValue > Short.MAX_VALUE)
-                return false;
-
-            short shortValue = (short) intValue;
-            boolean testPass = test == null || test.apply(shortValue);
-
-            if (testPass)
-                setter.accept(shortValue);
-
-            return testPass;
-        });
+    public <T> ComboBox<T> addSelectionBox(String label, T current, List<T> values, Consumer<T> setter) {
+        return addSelectionBox(label, current, values, setter, 25);
     }
 
     /**
@@ -325,7 +640,7 @@ public class GUIEditorGrid {
      * @param setter  The setter
      * @return comboBox
      */
-    public <T> ComboBox<T> addSelectionBox(String label, T current, List<T> values, Consumer<T> setter) {
+    public <T> ComboBox<T> addSelectionBox(String label, T current, List<T> values, Consumer<T> setter, double height) {
         addLabel(label);
         ComboBox<T> box = setupSecondNode(new ComboBox<>(FXCollections.observableArrayList(values)), false);
         box.valueProperty().setValue(current); // Set the selected value.
@@ -344,7 +659,7 @@ public class GUIEditorGrid {
             });
         }
 
-        addRow(25);
+        addRow(height);
         return box;
     }
 
@@ -389,15 +704,6 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatSVector(String text, SVector vector, MapUIController controller) {
-        addFloatVector(text, vector, null, controller, vector.defaultBits());
-    }
-
-    /**
-     * Add a float SVector for editing.
-     * @param text   The name of the SVector.
-     * @param vector The SVector itself.
-     */
     public void addFloatSVector(String text, SVector vector, MeshViewController<?> controller) {
         addFloatVector(text, vector, null, controller, vector.defaultBits());
     }
@@ -412,29 +718,11 @@ public class GUIEditorGrid {
     }
 
     /**
-     * Add a float Vector for editing.
-     * @param text   The name of the SVector.
-     * @param vector The SVector itself.
-     */
-    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller) {
-        addFloatVector(text, vector, update, controller, vector.defaultBits());
-    }
-
-    /**
      * Add a float SVector for editing.
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
     public void addFloatVector(String text, Vector vector, Runnable update, MeshViewController<?> controller, int bits) {
-        addFloatVector(text, vector, update, controller, bits, null, null);
-    }
-
-    /**
-     * Add a float SVector for editing.
-     * @param text   The name of the SVector.
-     * @param vector The SVector itself.
-     */
-    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller, int bits) {
         addFloatVector(text, vector, update, controller, bits, null, null);
     }
 
@@ -454,133 +742,6 @@ public class GUIEditorGrid {
         Runnable onPass = () -> {
             if (controller != null)
                 controller.getMarkerManager().updateMarker(vector, bits, origin, visualRepresentative);
-
-            if (update != null)
-                update.run();
-            onChange();
-        };
-
-        GridPane vecPane = new GridPane();
-        vecPane.addRow(0);
-
-        // Label:
-        VBox labelBox = new VBox();
-        labelBox.getChildren().add(new Label("X:"));
-        labelBox.getChildren().add(new Label("Y:"));
-        labelBox.getChildren().add(new Label("Z:"));
-        labelBox.setSpacing(10);
-        vecPane.addColumn(0, labelBox);
-
-        // XYZ:
-        VBox posBox = new VBox();
-        TextField xField = new TextField(String.valueOf(vector.getFloatX(bits)));
-        TextField yField = new TextField(String.valueOf(vector.getFloatY(bits)));
-        TextField zField = new TextField(String.valueOf(vector.getFloatZ(bits)));
-        xField.setPrefWidth(60);
-        yField.setPrefWidth(60);
-        zField.setPrefWidth(60);
-        Utils.setHandleKeyPress(xField, str -> {
-            if (!Utils.isNumber(str))
-                return false;
-
-            vector.setFloatX(Float.parseFloat(str), bits);
-            return true;
-        }, onPass);
-        Utils.setHandleKeyPress(yField, str -> {
-            if (!Utils.isNumber(str))
-                return false;
-
-            vector.setFloatY(Float.parseFloat(str), bits);
-            return true;
-        }, onPass);
-        Utils.setHandleKeyPress(zField, str -> {
-            if (!Utils.isNumber(str))
-                return false;
-
-            vector.setFloatZ(Float.parseFloat(str), bits);
-            return true;
-        }, onPass);
-
-        posBox.getChildren().add(xField);
-        posBox.getChildren().add(yField);
-        posBox.getChildren().add(zField);
-        posBox.setSpacing(2);
-        vecPane.addColumn(1, posBox);
-
-        // XZ Move.
-        ImageView xzView = new ImageView(GRAY_IMAGE_XZ);
-        vecPane.addColumn(2, xzView);
-
-        DragPos[] xzLastDrag = new DragPos[1];
-        xzView.setOnMouseClicked(evt -> xzLastDrag[0] = new DragPos(evt.getX(), evt.getY()));
-        xzView.setOnMouseDragged(evt -> {
-            DragPos lastDrag = xzLastDrag[0];
-            if (lastDrag == null) { // Set it up if it's not present.
-                xzLastDrag[0] = new DragPos(evt.getX(), evt.getY());
-                return;
-            }
-
-            double xDiff = -(lastDrag.getX() - evt.getX()) / 10;
-            double zDiff = (lastDrag.getY() - evt.getY()) / 10;
-            double angle = controller != null ? -Math.toRadians(controller.getFirstPersonCamera().getCamYawProperty().doubleValue()) : Math.PI / 2;
-
-            vector.setFloatX((float) (vector.getFloatX(bits) + (xDiff * Math.cos(angle)) - (zDiff * Math.sin(angle))), bits);
-            vector.setFloatZ((float) (vector.getFloatZ(bits) + (xDiff * Math.sin(angle)) + (zDiff * Math.cos(angle))), bits);
-            xField.setText(String.valueOf(vector.getFloatX(bits)));
-            zField.setText(String.valueOf(vector.getFloatZ(bits)));
-
-            onPass.run();
-
-            lastDrag.setX(evt.getX());
-            lastDrag.setY(evt.getY());
-        });
-        xzView.setOnMouseReleased(evt -> xzLastDrag[0] = null);
-
-        // Y Move.
-        ImageView yView = new ImageView(GRAY_IMAGE_Y);
-        vecPane.addColumn(3, yView);
-
-        DragPos[] yLastDrag = new DragPos[1];
-        yView.setOnMouseClicked(evt -> yLastDrag[0] = new DragPos(evt.getX(), evt.getY()));
-        yView.setOnMouseDragged(evt -> {
-            DragPos lastDrag = yLastDrag[0];
-            if (lastDrag == null) { // Set it up if it's not present.
-                yLastDrag[0] = new DragPos(evt.getX(), evt.getY());
-                return;
-            }
-
-            double yDiff = -(lastDrag.getY() - evt.getY()) / 10;
-            vector.setFloatY((float) (vector.getFloatY(bits) + yDiff), bits);
-            yField.setText(String.valueOf(vector.getFloatY(bits)));
-            onPass.run();
-
-            lastDrag.setX(evt.getX());
-            lastDrag.setY(evt.getY());
-        });
-        yView.setOnMouseReleased(evt -> yLastDrag[0] = null);
-
-        vecPane.setHgap(10);
-        GridPane.setColumnSpan(vecPane, 2); // Make it take up the full space in the grid it will be added to.
-        setupNode(vecPane); // Setup this in the new area.
-        addRow(75);
-    }
-
-    /**
-     * Add a float SVector for editing.
-     * @param text   The name of the SVector.
-     * @param vector The SVector itself.
-     */
-    public void addFloatVector(String text, Vector vector, Runnable update, MapUIController controller, int bits, Vector origin, Shape3D visualRepresentative) {
-        if (controller != null && visualRepresentative == null) {
-            addBoldLabelButton(text + ":", "Toggle Display", 25,
-                    () -> controller.getGeneralManager().updateMarker(controller.getGeneralManager().getShowPosition() == null || !Objects.equals(vector, controller.getGeneralManager().getShowPosition()) ? vector : null, bits, origin, null));
-        } else {
-            addBoldLabel(text + ":");
-        }
-
-        Runnable onPass = () -> {
-            if (controller != null)
-                controller.getGeneralManager().updateMarker(vector, bits, origin, visualRepresentative);
 
             if (update != null)
                 update.run();
@@ -1253,6 +1414,17 @@ public class GUIEditorGrid {
 
     /**
      * Add a fixed point short decimal value.
+     * @param text The text to add.
+     * @param value The short value.
+     * @param handler The setter handler.
+     * @param interval The interval it takes for a single full integer to be read.
+     */
+    public void addFixedShort(String text, short value, Consumer<Short> handler, int interval) {
+        addFixedShort(text, value, handler, interval, Short.MIN_VALUE, Short.MAX_VALUE);
+    }
+
+    /**
+     * Add a fixed point short decimal value.
      * @param text             The text to add.
      * @param value            The short value.
      * @param handler          The setter handler.
@@ -1317,6 +1489,17 @@ public class GUIEditorGrid {
      */
     public TextField addFixedInt(String text, int value, Consumer<Integer> handler) {
         return addFixedInt(text, value, handler, 1 << 4, Integer.MIN_VALUE, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Add a fixed point integer decimal value.
+     * @param text The text to add.
+     * @param value The integer value.
+     * @param handler The setter handler.
+     * @param interval The interval it takes for a single full integer to be read.
+     */
+    public TextField addFixedInt(String text, int value, Consumer<Integer> handler, int interval) {
+        return addFixedInt(text, value, handler, interval, Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
     /**
@@ -1614,25 +1797,6 @@ public class GUIEditorGrid {
         setupSecondNode(imageView, true);
         addRow(imageView.getFitHeight() + 5);
         return imageView;
-    }
-
-    /**
-     * Add a PSXMatrix to the editor grid.
-     * @param matrix The rotation matrix to add data for.
-     * @param onPositionUpdate Behavior to apply when the position is updated.
-     */
-    public void addEntityMatrix(PSXMatrix matrix, MapUIController controller, Runnable onPositionUpdate) {
-        IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
-
-        addFloatVector("Position", vec, () -> {
-            matrix.getTransform()[0] = vec.getX();
-            matrix.getTransform()[1] = vec.getY();
-            matrix.getTransform()[2] = vec.getZ();
-            if (onPositionUpdate != null)
-                onPositionUpdate.run(); // Run position hook.
-        }, controller, 4);
-
-        addRotationMatrix(matrix, null);
     }
 
     /**

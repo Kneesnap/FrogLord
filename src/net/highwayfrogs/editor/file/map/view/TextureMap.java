@@ -6,9 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
@@ -39,7 +36,7 @@ import java.util.*;
  * - http://www.gamedev.net/community/forums/topic.asp?topic_id=392413
  *
  * Future Ideas:
- * 1. Instead of putting all of the vertex colors in the corner, we could just add them to the tree, though preferably after all of the textures have been added. This would ensure they don't overlap with textures, and it would ensure as many vertex colors as possible are stored. This would also allow for pages of different sizes to be used.
+ * 1. Instead of putting the vertex colors in the corner, we could just add them to the tree, though preferably after all of the textures have been added. This would ensure they don't overlap with textures, and it would ensure as many vertex colors as possible are stored. This would also allow for pages of different sizes to be used.
  *
  * Created by Kneesnap on 11/28/2018.
  */
@@ -77,16 +74,6 @@ public class TextureMap extends SCSharedGameObject {
         TextureMap newMap = new TextureMap(mofHolder.getGameInstance(), mofHolder.getVloFile(), null, mode, 0, 0);
         newMap.setUseModelTextureAnimation(true);
         newMap.updateModel(mofHolder, mode);
-        return newMap;
-    }
-
-    /**
-     * Create a new texture map from an existing VLOArchive.
-     * @return newTextureMap
-     */
-    public static TextureMap newTextureMap(MAPFile mapFile, ShadingMode mode) {
-        TextureMap newMap = new TextureMap(mapFile.getGameInstance(), mapFile.getVlo(), mapFile.getRemapTable(), mode, 1024, 1024);
-        newMap.updateMap(mapFile, mode);
         return newMap;
     }
 
@@ -175,17 +162,6 @@ public class TextureMap extends SCSharedGameObject {
     }
 
     /**
-     * Updates this map texture map.
-     * @param mapFile The map file to update for.
-     * @param newMode The shading mode to use.
-     */
-    public void updateMap(MAPFile mapFile, ShadingMode newMode) {
-        if (newMode != null)
-            this.mode = newMode;
-        updateTree(createSourceMap(mapFile));
-    }
-
-    /**
      * Updates this model texture map.
      * @param mof     The model to update for.
      * @param newMode The shading mode to use.
@@ -201,7 +177,7 @@ public class TextureMap extends SCSharedGameObject {
         // Dynamic resizing to keep it small.
         int totalArea = 0;
         double toBase2 = Math.log10(10) / Math.log10(2);
-        final int vertexArea = (MAPFile.VERTEX_COLOR_IMAGE_SIZE * MAPFile.VERTEX_COLOR_IMAGE_SIZE);
+        final int vertexArea = (CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE * CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE);
         for (TextureSource source : sourceMap.values()) {
             GameImage gameImage = source.getGameImage(this);
 
@@ -220,48 +196,6 @@ public class TextureMap extends SCSharedGameObject {
         updateTree(sourceMap);
         if (oldModelTextureState)
             this.useModelTextureAnimation = true; // Enables the use of animated textures.
-    }
-
-    /**
-     * Creates a texture source map for a map.
-     */
-    private Map<BigInteger, TextureSource> createSourceMap(MAPFile map) {
-        // Calculate how many of each are used.
-        this.mapTextureList.clear();
-        for (MAPPolygon poly : map.getAllPolygons()) {
-            if (poly instanceof MAPPolyTexture) {
-                MAPPolyTexture polyTex = (MAPPolyTexture) poly;
-                this.mapTextureList.computeIfAbsent(polyTex.getTextureId(), key -> new HashSet<>()).add(polyTex.makeIdentifier(this));
-            }
-        }
-
-        // Calculate the polygon data.
-        Map<BigInteger, TextureSource> texMap = new HashMap<>();
-        Set<Short> visitedTextures = new HashSet<>();
-        for (MAPPolygon poly : map.getAllPolygons()) {
-            BigInteger id = poly.makeIdentifier(this);
-            if (!texMap.containsKey(id))
-                texMap.put(id, poly);
-
-            if (poly instanceof MAPPolyTexture && poly.isOverlay(this)) {
-                MAPPolyTexture polyTex = (MAPPolyTexture) poly;
-                if (visitedTextures.add(polyTex.getTextureId())) {
-                    GameImage image = polyTex.getGameImage(this);
-                    id = image.makeIdentifier(this);
-                    if (!texMap.containsKey(id))
-                        texMap.put(id, image);
-                }
-            }
-        }
-
-        texMap.put(UnknownTextureSource.MAGENTA_INSTANCE.makeIdentifier(this), UnknownTextureSource.MAGENTA_INSTANCE);
-        texMap.put(MapMesh.CURSOR_COLOR.makeIdentifier(this), MapMesh.CURSOR_COLOR);
-        texMap.put(MapMesh.ANIMATION_COLOR.makeIdentifier(this), MapMesh.ANIMATION_COLOR);
-        texMap.put(MapMesh.INVISIBLE_COLOR.makeIdentifier(this), MapMesh.INVISIBLE_COLOR);
-        texMap.put(MapMesh.GRID_COLOR.makeIdentifier(this), MapMesh.GRID_COLOR);
-        texMap.put(MapMesh.REMOVE_FACE_COLOR.makeIdentifier(this), MapMesh.REMOVE_FACE_COLOR);
-        texMap.put(MapMesh.GENERAL_SELECTION.makeIdentifier(this), MapMesh.GENERAL_SELECTION);
-        return texMap;
     }
 
     /**
@@ -350,8 +284,8 @@ public class TextureMap extends SCSharedGameObject {
 
             this.accessMap.clear();
 
-            int minX = getWidth() - MAPFile.VERTEX_COLOR_IMAGE_SIZE; // Our goal is to start in the bottom right corner, and grow out.
-            int minY = getHeight() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+            int minX = getWidth() - CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE; // Our goal is to start in the bottom right corner, and grow out.
+            int minY = getHeight() - CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE;
             int x = minX;
             int y = minY;
 
@@ -376,7 +310,7 @@ public class TextureMap extends SCSharedGameObject {
                         minX -= image.getWidth();
                         minY -= image.getHeight();
                         x = minX;
-                        y = getHeight() - MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+                        y = getHeight() - CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE;
                     }
                 } else {
                     images.add(new TextureEntry(key, source, image));
@@ -540,7 +474,7 @@ public class TextureMap extends SCSharedGameObject {
         }
 
         public float getMaxU() {
-            return (float) (getStartX() + (getGameImage() != null ? getGameImage().getIngameWidth() : MAPFile.VERTEX_COLOR_IMAGE_SIZE - 2)) / (float) getTree().getWidth();
+            return (float) (getStartX() + (getGameImage() != null ? getGameImage().getIngameWidth() : CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE - 2)) / (float) getTree().getWidth();
         }
 
         public float getMinV() {
@@ -548,7 +482,7 @@ public class TextureMap extends SCSharedGameObject {
         }
 
         public float getMaxV() {
-            return (float) (getStartY() + (getGameImage() != null ? getGameImage().getIngameHeight() : MAPFile.VERTEX_COLOR_IMAGE_SIZE - 2)) / (float) getTree().getHeight();
+            return (float) (getStartY() + (getGameImage() != null ? getGameImage().getIngameHeight() : CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE - 2)) / (float) getTree().getHeight();
         }
 
         private int getStartX() {
@@ -560,7 +494,7 @@ public class TextureMap extends SCSharedGameObject {
         }
 
         /**
-         * Apply this node to a MapMesh.
+         * Apply this node to a FrogMesh.
          * @param mesh      The mesh to apply this entry to.
          * @param vertCount The amount of vertices to add.
          */
@@ -568,7 +502,7 @@ public class TextureMap extends SCSharedGameObject {
             mesh.getTexCoords().addAll(getMinU(), getMinV());
             mesh.getTexCoords().addAll(getMinU(), getMaxV());
             mesh.getTexCoords().addAll(getMaxU(), getMinV());
-            if (vertCount == MAPPolygon.QUAD_SIZE)
+            if (vertCount == 4)
                 mesh.getTexCoords().addAll(getMaxU(), getMaxV());
         }
 

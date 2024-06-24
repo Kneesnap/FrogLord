@@ -160,13 +160,13 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
             addFlagCheckbox(grid, "Ignore Entities", NORMAL_FLAG_IGNORE_ENTITY, null);
 
             if (testFlagMask(NORMAL_FLAG_FIRES_EVENT)) {
-                grid.addIntegerField("Event ID", getNormalEventID(), this::setNormalEventID, value -> value >= 0 && value <= NORMAL_EVENT_ID_MASK);
+                grid.addSignedIntegerField("Event ID", getNormalEventID(), value -> value >= 0 && value <= NORMAL_EVENT_ID_MASK, this::setNormalEventID);
             } else if (!testFlagMask(NORMAL_FLAG_IGNORE_PLAYER)) {
-                grid.addIntegerField("Material ID", getNormalMaterialID(), this::setNormalMaterialID, value -> value >= 0 && value <= NORMAL_MATERIAL_ID_MASK);
+                grid.addSignedIntegerField("Material ID", getNormalMaterialID(), value -> value >= 0 && value <= NORMAL_MATERIAL_ID_MASK, this::setNormalMaterialID);
             }
         } else if (collprimType == MediEvilMapCollprimType.WARP) {
-            grid.addIntegerField("Source (Zone ID)", getWarpFromZoneID(), this::setWarpFromZoneID, value -> value >= 0 && value <= WARP_FROM_ZONE_MASK);
-            grid.addIntegerField("Target (Zone ID)", getWarpZoneToID(), this::setWarpToZoneID, value -> value >= 0 && value <= (WARP_TO_ZONE_MASK >>> WARP_TO_SHIFT));
+            grid.addSignedIntegerField("Source (Zone ID)", getWarpFromZoneID(), value -> value >= 0 && value <= WARP_FROM_ZONE_MASK, this::setWarpFromZoneID);
+            grid.addSignedIntegerField("Target (Zone ID)", getWarpZoneToID(), value -> value >= 0 && value <= (WARP_TO_ZONE_MASK >>> WARP_TO_SHIFT), this::setWarpToZoneID);
         } else if (collprimType == MediEvilMapCollprimType.CAMERA) {
             boolean cameraLock = testFlagMask(FLAG_CAMERA_LOCK);
             boolean usePlugin = testFlagMask(FLAG_CAMERA_PLUGIN);
@@ -174,16 +174,16 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
             addFlagCheckbox(grid, "Use Plugin", FLAG_CAMERA_PLUGIN, manager::updateEditor).setDisable(cameraLock);
 
             if (usePlugin) {
-                grid.addIntegerField("Plugin ID", getCameraPluginID(), this::setCameraPluginID, value -> value >= 0 && value <= CAMERA_PLUGIN_ID_MASK);
+                grid.addSignedIntegerField("Plugin ID", getCameraPluginID(), value -> value >= 0 && value <= CAMERA_PLUGIN_ID_MASK, this::setCameraPluginID);
             } else if (cameraLock) {
-                grid.addIntegerField("Spline ID", getCameraSplineID(), this::setCameraSplineID, value -> value >= 0 && value <= CAMERA_SPLINE_ID_MASK);
+                grid.addSignedIntegerField("Spline ID", getCameraSplineID(), value -> value >= 0 && value <= CAMERA_SPLINE_ID_MASK, this::setCameraSplineID);
             }
         } else {
-            grid.addIntegerField("Raw Flags Value", this.flags, newValue -> {
+            grid.addUnsignedShortField("Raw Flags Value", this.flags, newValue -> {
                 this.flags = newValue;
                 if (collprimType != getType())
                     manager.updateEditor(); // Flags have the capability of changing the collprim type. If that occurs, the editor should probably update.
-            }, value -> value >= 0 && value <= 0xFFFF);
+            });
         }
     }
 

@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file.mof.view;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.view.FrogMesh;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
@@ -196,7 +195,7 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     public void renderOverPolygon(MOFPolygon targetPoly, TextureSource source) {
         setVerticeStart(0);
         int increment = getVertexFormat().getVertexIndexSize();
-        boolean isQuad = (targetPoly.getVerticeCount() == MAPPolygon.QUAD_SIZE);
+        boolean isQuad = (targetPoly.getVerticeCount() == 4);
 
         int face = getPolyFaceMap().get(targetPoly) * getFaceElementSize();
         int v1 = getFaces().get(face);

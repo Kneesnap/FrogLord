@@ -77,7 +77,7 @@ public class OldFroggerMapLevelSpecificPacket extends OldFroggerMapPacket {
         editor.addBoldLabel("Generic Level Data:");
         for (int i = 0; i < this.genericLevelData.length; i++) {
             final int index = i;
-            editor.addIntegerField("Value " + (i + 1), this.genericLevelData[i], newValue -> this.genericLevelData[index] = newValue, null);
+            editor.addSignedIntegerField("Value " + (i + 1), this.genericLevelData[i], newValue -> this.genericLevelData[index] = newValue);
         }
     }
 }

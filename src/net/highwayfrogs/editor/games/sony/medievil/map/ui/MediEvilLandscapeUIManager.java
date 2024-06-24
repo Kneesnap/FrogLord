@@ -4,11 +4,11 @@ import javafx.scene.input.PickResult;
 import javafx.scene.shape.MeshView;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.psx.CVector;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
-import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -72,7 +72,7 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
 
     @Override
     public PSXShadeTextureDefinition createPolygonShadeDefinition(MediEvilMapPolygon polygon) {
-        return polygon.createPolygonShadeDefinition(getMap(), getMesh().isShadingEnabled());
+        return polygon.createPolygonShadeDefinition(getMesh(), getMesh().isShadingEnabled());
     }
 
     @Override
@@ -103,7 +103,7 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
         return this.cachedSelectedPolygonVertexIds;
     }
 
-    public static class MediEvilPolygonShadingEditor extends BakedLandscapePolygonShadingEditor {
+    public static class MediEvilPolygonShadingEditor extends BakedLandscapePolygonShadingEditor<MediEvilMapPolygon> {
         public MediEvilPolygonShadingEditor(MediEvilLandscapeUIManager manager) {
             super(manager);
         }
@@ -116,31 +116,32 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
         @Override
         protected void onVertexPositionChange(MeshView meshView, int localVertexIndex, double oldX, double oldY, double oldZ, double newX, double newY, double newZ, int flags) {
             MediEvilMapMesh mesh = getManager().getController().getMesh();
-            mesh.getMainNode().updateMapVertex(getManager().getSelectedPolygonVertexIds()[localVertexIndex]);
+            mesh.getMainNode().updateVertex(getManager().getSelectedPolygonVertexIds()[localVertexIndex]);
         }
 
         @Override
         protected void onColorUpdate(int colorIndex, CVector color) {
-            MediEvilMapPolygon polygon = getManager().getSelectedPolygon();
+            MediEvilMapPolygon polygon = getEditTarget();
             MediEvilMapMesh mesh = getManager().getController().getMesh();
-            PSXShadeTextureDefinition oldShadedTexture = mesh.getShadedTextureManager().getShadedTexture(polygon);
 
             // Apply color changes.
-            PSXShadeTextureDefinition newShadedTexture = oldShadedTexture.clone();
-            newShadedTexture.getColors()[colorIndex].copyFrom(color);
-            getManager().getController().getMesh().getShadedTextureManager().updatePolygon(polygon, newShadedTexture);
+            if (polygon.getPolygonType().getColorCount() <= colorIndex)
+                throw new RuntimeException("Cannot apply color " + colorIndex + " to polygon of type: " + polygon.getPolygonType() + ".");
+
+            // Apply color and update polygon.
+            SVector vertex = getManager().getMap().getGraphicsPacket().getVertices().get(polygon.getVertices()[colorIndex]);
+            vertex.setPadding(MediEvilMapPolygon.toPackedShort(color));
+            mesh.getShadedTextureManager().updatePolygon(polygon);
         }
 
         @Override
         protected void onTextureUvUpdate(int uvIndex, SCByteTextureUV uv) {
+            MediEvilMapPolygon polygon = getEditTarget();
             MediEvilMapMesh mesh = getManager().getController().getMesh();
-            MediEvilMapPolygon polygon = getManager().getSelectedPolygon();
-            PSXShadeTextureDefinition oldShadedTexture = mesh.getShadedTextureManager().getShadedTexture(polygon);
 
             // Apply updated uv data and update the 3D view.
-            PSXShadeTextureDefinition newShadedTexture = oldShadedTexture.clone();
-            newShadedTexture.getTextureUVs()[uvIndex].copyFrom(uv);
-            mesh.getShadedTextureManager().updatePolygon(polygon, newShadedTexture);
+            polygon.getTextureUvs()[uvIndex].copyFrom(uv);
+            mesh.getShadedTextureManager().updatePolygon(polygon);
         }
     }
 }

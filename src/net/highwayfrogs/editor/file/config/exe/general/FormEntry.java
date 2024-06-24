@@ -9,14 +9,16 @@ import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
 
 /**
  * Represents an entry in a form book.
@@ -24,7 +26,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
  */
 @Getter
 @Setter
-public class FormEntry extends SCGameData<FroggerGameInstance> {
+public class FormEntry extends SCGameData<FroggerGameInstance> implements IFroggerFormEntry {
     private int entityType; // Index into global entity book.
     private int id; // Index into theme wad.
     private int scriptId;
@@ -34,7 +36,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> {
     private FormDeathType deathType;
     private long bonusCallbackFunction; // Eaten.
 
-    private transient final MAPTheme theme;
+    private transient final FroggerMapTheme theme;
     private transient final int globalFormId;
     private transient final int localFormId;
 
@@ -42,7 +44,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> {
     public static final int BYTE_SIZE = (8 * Constants.INTEGER_SIZE);
     public static final int OLD_BYTE_SIZE = (7 * Constants.INTEGER_SIZE);
 
-    public FormEntry(FroggerGameInstance instance, MAPTheme theme, int formId, int globalFormId) {
+    public FormEntry(FroggerGameInstance instance, FroggerMapTheme theme, int formId, int globalFormId) {
         super(instance);
         this.theme = theme;
         this.localFormId = formId;
@@ -84,14 +86,11 @@ public class FormEntry extends SCGameData<FroggerGameInstance> {
             writer.writeUnsignedInt(this.bonusCallbackFunction);
     }
 
-    /**
-     * Gets the name of the entity this represents.
-     * @return entityName
-     */
-    public String getEntityName() {
+    @Override
+    public String getEntityTypeName() {
         Config config = getConfig().getEntityBank().getConfig();
         if (config.hasChild("Override")) {
-            String formName = getFormName();
+            String formName = getFormTypeName();
             Config overrideConfig = config.getChild("Override");
             String forceEntity = overrideConfig.getString(formName, null);
             if (forceEntity != null) {
@@ -105,11 +104,8 @@ public class FormEntry extends SCGameData<FroggerGameInstance> {
         return getConfig().getEntityBank().getName(this.entityType);
     }
 
-    /**
-     * Gets the name of this form.
-     * @return formName
-     */
-    public String getFormName() {
+    @Override
+    public String getFormTypeName() {
         return getConfig().getFormBank().getName(this.globalFormId);
     }
 
@@ -119,7 +115,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> {
      */
     public int getMapFormId() {
         int id = this.localFormId;
-        if (theme == MAPTheme.GENERAL)
+        if (theme == FroggerMapTheme.GENERAL)
             id |= FLAG_GENERAL;
         return id;
     }
@@ -130,9 +126,9 @@ public class FormEntry extends SCGameData<FroggerGameInstance> {
      */
     public int getWadIndex() {
         int wadIndex = getId();
-        if (getTheme() == MAPTheme.GENERAL) {
+        if (getTheme() == FroggerMapTheme.GENERAL) {
             wadIndex -= getTheme().getFormOffset();
-            if (!getConfig().isAtLeastRetailWindows() && (!getConfig().isAtOrBeforeBuild21() || getConfig().isWindowsAlpha()))
+            if (!getConfig().isAtLeastRetailWindows() && !getConfig().isAtOrBeforeBuild21())
                 wadIndex++; // Some builds have GEN_VRAM.VLO in THEME_GEN.WAD, which requires this offset.
         }
 
@@ -168,11 +164,11 @@ public class FormEntry extends SCGameData<FroggerGameInstance> {
     /**
      * Gets the MOF for this particular form.
      */
-    public WADEntry getModel(MAPFile mapFile) {
+    public WADEntry getModel(FroggerMapFile mapFile) {
         if (testFlag(FormLibFlag.NO_MODEL))
             return null;
 
-        boolean isGeneralTheme = getTheme() == MAPTheme.GENERAL;
+        boolean isGeneralTheme = getTheme() == FroggerMapTheme.GENERAL;
 
         WADFile wadFile = null;
         if (isGeneralTheme) {
@@ -192,6 +188,11 @@ public class FormEntry extends SCGameData<FroggerGameInstance> {
         }
 
         return null;
+    }
+
+    @Override
+    public WADEntry getEntityModel(FroggerMapEntity entity) {
+        return getModel(entity.getMapFile());
     }
 
     @Getter

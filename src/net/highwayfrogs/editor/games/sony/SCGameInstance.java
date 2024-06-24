@@ -15,16 +15,13 @@ import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
-import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -114,12 +111,6 @@ public abstract class SCGameInstance extends GameInstance {
         loadGameConfig(versionConfigName);
         this.archiveIndex = this.readMWI();
         this.mainArchive = this.readMWD(progressBar);
-
-        // Setup version comparison.
-        if (isFrogger()) {
-            FroggerVersionComparison.setup(GUIMain.getWorkingDirectory());
-            FroggerVersionComparison.addNewVersionToConfig((FroggerGameInstance) this);
-        }
     }
 
     @Override

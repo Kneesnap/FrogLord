@@ -101,6 +101,29 @@ public class DisplayList {
     }
 
     /**
+     * Adds a node to the display list if it is not already contained in the display list.
+     * @param node The node to add.
+     * @return if the node was added successfully
+     */
+    public boolean addIfMissing(Node node) {
+        if (this.nodes.contains(node))
+            return false;
+
+        this.nodes.add(node);
+        this.root.getChildren().add(node);
+        return true;
+    }
+
+    /**
+     * Test if the display list contains the given node.
+     * @param node the node to test
+     * @return true iff the display list contains the node
+     */
+    public boolean contains(Node node) {
+        return this.nodes.contains(node);
+    }
+
+    /**
      * Adds a cylindrical representation of a 3D line.
      * @param x0       The x-coordinate defining the start of the line segment.
      * @param y0       The y-coordinate defining the start of the line segment.

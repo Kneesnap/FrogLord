@@ -111,6 +111,16 @@ public class SCByteTextureUV implements IBinarySerializable {
     }
 
     /**
+     * Adds uv coordinate offsets to this vector
+     * @param uOffset the u offset to apply
+     * @param vOffset the v offset to apply
+     */
+    public void add(float uOffset, float vOffset) {
+        setFloatU(Math.max(0F, Math.min(1F, getFloatU() + uOffset)));
+        setFloatV(Math.max(0F, Math.min(1F, getFloatV() + vOffset)));
+    }
+
+    /**
      * Copy the data of another UV to this one.
      * @param other the uv to assume
      */
@@ -136,6 +146,11 @@ public class SCByteTextureUV implements IBinarySerializable {
      */
     public String toObjTextureString() {
         return "vt " + getFloatU() + " " + getFloatV();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("SCByteTextureUV<u=%02X,v=%02X>", this.u, this.v);
     }
 
     /**

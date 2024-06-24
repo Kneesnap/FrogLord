@@ -48,12 +48,12 @@ public interface ITextureSource {
     BufferedImage makeImage();
 
     /**
-     * Gets the up to date width of the image.
+     * Gets the padded width of the image.
      */
     int getWidth();
 
     /**
-     * Gets the up to date height of the image.
+     * Gets the padded height of the image.
      */
     int getHeight();
 
@@ -82,12 +82,12 @@ public interface ITextureSource {
     int getDownPadding();
 
     /**
-     * The number of pixels at the left side of the image which should be considered padding.
+     * The number of pixels on the left side of the image which should be considered padding.
      */
     int getLeftPadding();
 
     /**
-     * The number of pixels at the right side of the image which should be considered padding.
+     * The number of pixels on the right side of the image which should be considered padding.
      */
     int getRightPadding();
 

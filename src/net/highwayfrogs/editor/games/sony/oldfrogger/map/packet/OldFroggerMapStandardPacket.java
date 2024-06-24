@@ -88,8 +88,8 @@ public class OldFroggerMapStandardPacket extends OldFroggerMapPacket {
         // Race Paths
         for (int i = 0; i < this.racePathID.length; i++) {
             final int index = i;
-            editor.addIntegerField("Race Path ID #" + (i + 1), this.racePathID[i],
-                    newValue -> this.racePathID[index] = newValue, null);
+            editor.addSignedIntegerField("Race Path ID #" + (i + 1), this.racePathID[i],
+                    newValue -> this.racePathID[index] = newValue);
         }
     }
 }

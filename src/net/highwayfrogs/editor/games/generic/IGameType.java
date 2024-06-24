@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.TimeUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.IOException;
@@ -87,14 +88,18 @@ public interface IGameType {
         // Load configs.
         versionConfigs = new ArrayList<>();
         Logger logger = Logger.getLogger(getClass().getSimpleName());
-        for (URL url : Utils.getFilesInDirectory(getEmbeddedResourceURL("versions"), true)) {
+        List<URL> versionConfigFiles = Utils.getInternalResourceFilesInDirectory(getEmbeddedResourceURL("versions"), true);
+        if (versionConfigFiles.isEmpty())
+            logger.severe("Did not find any version configs for the game type " + getIdentifier() + "/'" + getDisplayName() + "'. This seems like a bug.");
+
+        for (URL url : versionConfigFiles) {
             String versionConfigName = Utils.getFileNameWithoutExtension(url);
 
             net.highwayfrogs.editor.file.config.Config versionConfig;
             try {
                 versionConfig = new net.highwayfrogs.editor.file.config.Config(url.openStream(), versionConfigName);
             } catch (IOException ex) {
-                Utils.handleError(logger, ex, false, "Failed to load configuration file '%s'.", url);
+                Utils.handleError(logger, ex, false, "Failed to load configuration file '%s'. (%s)", url, versionConfigName);
                 continue;
             }
 
@@ -109,6 +114,8 @@ public interface IGameType {
 
             versionConfigs.add(newConfig);
         }
+
+        versionConfigs.sort((o1, o2) -> TimeUtils.compare(o1.getBuildTime(), o2.getBuildTime()));
 
         // Store configs in cache.
         Constants.getCachedConfigsByGameType().put(this, versionConfigs);

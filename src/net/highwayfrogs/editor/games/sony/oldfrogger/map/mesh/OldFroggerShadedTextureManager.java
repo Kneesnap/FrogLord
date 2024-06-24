@@ -21,11 +21,11 @@ public class OldFroggerShadedTextureManager extends PSXMeshShadedTextureManager<
 
     @Override
     protected PSXShadeTextureDefinition createShadedTexture(OldFroggerMapPolygon polygon) {
-        return polygon.createPolygonShadeDefinition(getMesh().getMap());
+        return polygon.createPolygonShadeDefinition(getMesh());
     }
 
     @Override
-    protected void applyTextureShading(OldFroggerMapPolygon polygon, PSXShadeTextureDefinition shadedTexture) {
-        polygon.loadDataFromShadeDefinition(getMesh().getMap(), shadedTexture);
+    protected void updateLooseShadingTexCoords() {
+        // Don't have any loose shade definitions.
     }
 }

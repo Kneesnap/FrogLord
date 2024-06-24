@@ -1,0 +1,39 @@
+package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.suburbia;
+
+import lombok.Getter;
+import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
+
+/**
+ * Implements 'SUBURBIA_DOG' entity data from ent_sub.h
+ * Created by Kneesnap on 11/26/2018.
+ */
+@Getter
+public class FroggerEntityDataDog extends FroggerEntityDataPathInfo {
+    private int waitDelay = 30;
+
+    public FroggerEntityDataDog(FroggerMapFile mapFile) {
+        super(mapFile);
+    }
+
+    @Override
+    public void load(DataReader reader) {
+        super.load(reader);
+        this.waitDelay = reader.readInt();
+    }
+
+    @Override
+    public void save(DataWriter writer) {
+        super.save(writer);
+        writer.writeInt(this.waitDelay);
+    }
+
+    @Override
+    public void setupEditor(GUIEditorGrid editor) {
+        super.setupEditor(editor);
+        editor.addFixedInt("Wait Delay", this.waitDelay, newWaitDelay -> this.waitDelay = newWaitDelay, 30);
+    }
+}
