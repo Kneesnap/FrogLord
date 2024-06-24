@@ -58,7 +58,7 @@ public class FroggerMapFilePacketPath extends FroggerMapFilePacket {
     public void loadEntityLists(DataReader reader) {
         for (int i = 0; i < this.paths.size(); i++)
             this.paths.get(i).loadEntityList(reader);
-        reader.alignRequireByte(Constants.INTEGER_SIZE, (byte) 0xFF);
+        reader.alignRequireByte((byte) 0xFF, Constants.INTEGER_SIZE);
     }
 
     @Override
