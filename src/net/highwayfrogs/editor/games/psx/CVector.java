@@ -203,7 +203,7 @@ public class CVector implements IBinarySerializable {
      * @return rgbValue
      */
     public int toRGB() {
-        return Utils.toRGB(getRed(), getGreen(), getBlue());
+        return Utils.toRGB(this.red, this.green, this.blue);
     }
 
     /**
@@ -211,7 +211,7 @@ public class CVector implements IBinarySerializable {
      * @return argbValue
      */
     public int toARGB() {
-        return Utils.toARGB(getRed(), getGreen(), getBlue(), (byte) 0xFF);
+        return Utils.toARGB(this.red, this.green, this.blue, (byte) 0xFF);
     }
 
     /**
@@ -219,9 +219,18 @@ public class CVector implements IBinarySerializable {
      * @param rgbValue The value to read from.
      */
     public void fromRGB(int rgbValue) {
-        this.red = Utils.unsignedShortToByte((short) ((rgbValue >> 16) & 0xFF));
-        this.green = Utils.unsignedShortToByte((short) ((rgbValue >> 8) & 0xFF));
-        this.blue = Utils.unsignedShortToByte((short) (rgbValue & 0xFF));
+        this.red = (byte) ((rgbValue >> 16) & 0xFF);
+        this.green = (byte) ((rgbValue >> 8) & 0xFF);
+        this.blue = (byte) (rgbValue & 0xFF);
+    }
+
+    /**
+     * Read color data from an integer value.
+     * @param argbValue The value to read from.
+     */
+    public void fromARGB(int argbValue) {
+        fromRGB(argbValue);
+        // TODO: !
     }
 
     /**

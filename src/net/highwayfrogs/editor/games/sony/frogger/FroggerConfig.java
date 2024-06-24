@@ -217,6 +217,22 @@ public class FroggerConfig extends SCGameConfig {
     }
 
     /**
+     * Tests if the build is at/before build 28.
+     * @return isBuildAtOrBeforeBuild28
+     */
+    public boolean isAtOrBeforeBuild28() {
+        return (this.build >= 0 && this.build <= 28) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+    }
+
+    /**
+     * Tests if the build is at/before build 33
+     * @return isBuildAtOrBeforeBuild33
+     */
+    public boolean isAtOrBeforeBuild33() {
+        return (this.build >= 0 && this.build <= 38) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+    }
+
+    /**
      * Tests if the build is at/before build 38
      * @return isBuildAtOrBeforeBuild38
      */

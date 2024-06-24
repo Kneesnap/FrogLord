@@ -268,7 +268,7 @@ public class MOFPart extends SCSharedGameData {
         }
 
         // Write collprim matrices.
-        if (this.matrices != null) {
+        if (this.matrices.size() > 0) {
             writer.writeAddressTo(getTempMatrixPointer());
             for (int i = 0; i < this.matrices.size(); i++)
                 this.matrices.get(i).save(writer);

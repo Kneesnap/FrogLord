@@ -28,13 +28,13 @@ public class MediEvilCollprimManager extends MediEvilMapListManager<MediEvilMapC
     private CheckBox wireframePreviewCheckBox;
     private ComboBox<MediEvilMapCollprimType> collprimTypeFilterComboBox;
 
-    private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.GREEN);
-    private static final PhongMaterial MATERIAL_LIME = Utils.makeSpecialMaterial(Color.LIME);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
-    private static final PhongMaterial MATERIAL_PINK = Utils.makeSpecialMaterial(Color.PINK);
-    private static final PhongMaterial MATERIAL_SALMON = Utils.makeSpecialMaterial(Color.LIGHTSALMON);
-    private static final PhongMaterial MATERIAL_BLUE = Utils.makeSpecialMaterial(Color.BLUE);
-    private static final PhongMaterial MATERIAL_WHITE = Utils.makeSpecialMaterial(Color.WHITE);
+    private static final PhongMaterial MATERIAL_GREEN = Utils.makeUnlitSharpMaterial(Color.GREEN);
+    private static final PhongMaterial MATERIAL_LIME = Utils.makeUnlitSharpMaterial(Color.LIME);
+    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_PINK = Utils.makeUnlitSharpMaterial(Color.PINK);
+    private static final PhongMaterial MATERIAL_SALMON = Utils.makeUnlitSharpMaterial(Color.LIGHTSALMON);
+    private static final PhongMaterial MATERIAL_BLUE = Utils.makeUnlitSharpMaterial(Color.BLUE);
+    private static final PhongMaterial MATERIAL_WHITE = Utils.makeUnlitSharpMaterial(Color.WHITE);
 
     public MediEvilCollprimManager(MeshViewController<MediEvilMapMesh> controller) {
         super(controller);

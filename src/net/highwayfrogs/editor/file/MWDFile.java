@@ -4,7 +4,6 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile.WADEntry;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.packers.PP20Packer;
 import net.highwayfrogs.editor.file.packers.PP20Unpacker;
@@ -19,6 +18,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FroggerVersionComparison;
@@ -37,12 +37,14 @@ import java.util.stream.Collectors;
  */
 @Getter
 public class MWDFile extends SCSharedGameData {
+    private String buildNotes;
     private final List<SCGameFile<?>> files = new ArrayList<>();
 
-    private final transient Map<MAPTheme, VLOArchive> vloThemeCache = new HashMap<>();
+    private final transient Map<FroggerMapTheme, VLOArchive> vloThemeCache = new HashMap<>();
 
     public static String CURRENT_FILE_NAME = null;
     private static final String MARKER = "DAWM";
+    private static final int BUILD_NOTES_SIZE = 2040;
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEEE, d MMMM yyyy");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
     public static final ImageFilterSettings VLO_ICON_SETTING = new ImageFilterSettings(ImageState.EXPORT);
@@ -66,7 +68,12 @@ public class MWDFile extends SCSharedGameData {
         if (progressBar != null)
             progressBar.setTotalProgress(mwiEntries.size());
 
+        // Read header.
         reader.verifyString(MARKER);
+        reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE);
+        this.buildNotes = reader.readTerminatedStringOfLength(BUILD_NOTES_SIZE);
+        getGameInstance().getLogger().info("Build Notes: \n" + this.buildNotes);
+
         for (FileEntry entry : mwiEntries) {
             if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS)) {
                 if (progressBar != null)
@@ -76,7 +83,7 @@ public class MWDFile extends SCSharedGameData {
 
             if (progressBar != null)
                 progressBar.setStatusMessage("Reading '" + entry.getDisplayName() + "'");
-            reader.setIndex(entry.getArchiveOffset());
+            reader.setIndex(entry.getArchiveOffset()); // TODO: We should warn if we miss data / this isn't the expected offset.
 
             // Read the file. Decompress if it is PP20 compression.
             byte[] fileBytes = reader.readBytes(entry.getArchiveSize());
@@ -98,7 +105,7 @@ public class MWDFile extends SCSharedGameData {
             try {
                 DataReader singleFileReader = new DataReader(new ArraySource(fileBytes));
                 file.load(singleFileReader);
-                if (singleFileReader.hasMore()) // Warn if the full file is not read.
+                if (singleFileReader.hasMore() && file.warnIfEndNotReached()) // Warn if the full file is not read.
                     file.getLogger().warning("File contents were read to index " + Utils.toHexString(singleFileReader.getIndex()) + ", leaving " + singleFileReader.getRemaining() + " bytes unread. (Length: " + Utils.toHexString(reader.getSize()) + ")");
             } catch (Exception ex) {
                 Utils.handleError(getLogger(), ex, false, "Failed to load %s (%d)", entry.getDisplayName(), entry.getResourceId());
@@ -190,9 +197,14 @@ public class MWDFile extends SCSharedGameData {
         writer.writeInt(0);
 
         Date date = Date.from(Calendar.getInstance().toInstant());
-        writer.writeTerminatorString("\nCreation Date: " + DATE_FORMAT.format(date)
+        writer.writeTerminatorString("\nCreated by FrogLord"
+                + "\nCreation Date: " + DATE_FORMAT.format(date)
                 + "\nCreation Time: " + TIME_FORMAT.format(date)
-                + "\nThis MWD was built using FrogLord.\n");
+                + "\n[BuildInfo]"
+                + "\ngame=" + getGameInstance().getGameType().getIdentifier()
+                + "\ngameVersion=" + getGameInstance().getConfig().getInternalName()
+                + "\nversion=1"
+                + "\n");
 
         int sectorOffset = 0;
         long mwdStart = System.currentTimeMillis();
@@ -208,30 +220,36 @@ public class MWDFile extends SCSharedGameData {
             CURRENT_FILE_NAME = entry.getDisplayName();
             if (progressBar != null)
                 progressBar.setStatusMessage("Saving '" + entry.getDisplayName() + "'");
-            getLogger().info("Saving " + entry.getDisplayName() + " to MWD. (" + (files.indexOf(file) + 1) + "/" + files.size() + ") ");
             long startTime = System.currentTimeMillis();
 
-            // Save the file contents to a byte array.
-            ArrayReceiver receiver = new ArrayReceiver();
-            file.save(new DataWriter(receiver));
+            try {
+                // Save the file contents to a byte array.
+                ArrayReceiver receiver = new ArrayReceiver();
+                file.save(new DataWriter(receiver));
 
-            // Potentially compress the saved byte array.
-            byte[] transfer = receiver.toArray();
-            entry.setUnpackedSize(transfer.length);
-            if (entry.isCompressed())
-                transfer = PP20Packer.packData(transfer);
+                // Potentially compress the saved byte array.
+                byte[] transfer = receiver.toArray();
+                entry.setUnpackedSize(transfer.length);
+                if (entry.isCompressed())
+                    transfer = PP20Packer.packData(transfer);
 
-            // Write resulting data.
-            entry.setPackedSize(transfer.length);
-            writer.writeBytes(transfer);
+                // Write resulting data.
+                entry.setPackedSize(transfer.length);
+                writer.writeBytes(transfer);
+            } catch (Throwable th) {
+                Utils.handleError(getLogger(), th, true, "Failed to save file '%s' to MWD.", entry.getDisplayName());
+                return;
+            }
 
             // Report timing.
             long endTime = System.currentTimeMillis();
             if (progressBar != null)
                 progressBar.addCompletedProgress(1);
-            getLogger().info("Save Time: " + ((endTime - startTime) / 1000) + " s.");
+            long timeTaken = (endTime - startTime);
+            if (timeTaken >= 10)
+                getLogger().warning("Saving the file '" + entry.getDisplayName() + "' took " + timeTaken + " ms.");
         }
-        getLogger().info("MWD Built. Total Time: " + ((System.currentTimeMillis() - mwdStart) / 1000) + "s.");
+        getLogger().info("MWD Built. Total Time: " + (System.currentTimeMillis() - mwdStart) + " ms.");
 
         // Fill the rest of the file with null bytes.
         SCGameFile<?> lastFile = this.files.get(this.files.size() - 1);
@@ -256,7 +274,7 @@ public class MWDFile extends SCSharedGameData {
      * @param handler   The handler for when the VLO is determined.
      * @param allowNull Are null VLOs allowed?
      */
-    public void promptVLOSelection(MAPTheme theme, Consumer<VLOArchive> handler, boolean allowNull) {
+    public void promptVLOSelection(FroggerMapTheme theme, Consumer<VLOArchive> handler, boolean allowNull) {
         List<VLOArchive> allVLOs = getAllFiles(VLOArchive.class);
 
         if (allowNull)

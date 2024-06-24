@@ -9,9 +9,9 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
+import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityDefinition;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityDefinition.MediEvilModelEntityData;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
-import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityDefinition;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
@@ -165,17 +165,17 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
      * Setup the editor UI for the entity.
      */
     public void setupEditor(MediEvilEntityManager manager, GUIEditorGrid editor) {
-        editor.addIntegerField("Entity ID", this.entityId, newEntityId -> this.entityId = newEntityId, null);
+        editor.addSignedIntegerField("Entity ID", this.entityId, newEntityId -> this.entityId = newEntityId);
 
         MediEvilEntityDefinition definition = getEntityDefinition();
         if (definition != null) {
             editor.addLabel("Entity Type", definition.getName());
             editor.addLabel("Overlay", (definition.getOverlay() != null ? definition.getOverlay().getFilePath() : "None"));
         } else {
-            editor.addIntegerField("Form ID", this.formId, newFormId -> this.formId = newFormId, null).setDisable(true);
+            editor.addSignedIntegerField("Form ID", this.formId, newFormId -> this.formId = newFormId).setDisable(true);
         }
 
-        editor.addShortField("Sub-Form ID", this.subFormId, newFormId -> this.subFormId = newFormId, value -> value >= 0 && value <= 0xFF);
+        editor.addUnsignedByteField("Sub-Form ID", this.subFormId, newFormId -> this.subFormId = newFormId);
 
         // Position & Rotation
         IPositionChangeListener updatePositionCallback = IPositionChangeListener.makeListener(() -> manager.updateEntityPositionRotation(this));
@@ -195,12 +195,12 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
 
         // Other data
         editor.addLabel("Trigger Data: ", Utils.toHexString(this.triggerData));
-        editor.addIntegerField("Init Flags", this.initFlags, newFlags -> this.initFlags = newFlags, null);
-        editor.addIntegerField("Destroy Flags", this.destroyFlags, newFlags -> this.destroyFlags = newFlags, null);
-        editor.addShortField("Base Generic Data", this.baseGenericData, newFormId -> this.baseGenericData = newFormId, value -> value >= 0 && value <= 0xFF);
+        editor.addSignedIntegerField("Init Flags", this.initFlags, newFlags -> this.initFlags = newFlags);
+        editor.addSignedIntegerField("Destroy Flags", this.destroyFlags, newFlags -> this.destroyFlags = newFlags);
+        editor.addUnsignedByteField("Base Generic Data", this.baseGenericData, newFormId -> this.baseGenericData = newFormId);
         for (int i = 0; i < this.genericData.length; i++) {
             final int index = i;
-            editor.addIntegerField("Generic Data " + i, this.genericData[i], newValue -> this.genericData[index] = newValue, null);
+            editor.addSignedIntegerField("Generic Data " + i, this.genericData[i], newValue -> this.genericData[index] = newValue);
         }
     }
 }

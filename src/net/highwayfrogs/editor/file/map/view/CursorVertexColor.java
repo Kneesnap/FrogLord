@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.file.map.view;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
@@ -21,6 +20,8 @@ import java.util.function.Consumer;
 public class CursorVertexColor implements TextureSource, ITextureSource {
     private final Color bodyColor;
     private final Color outlineColor;
+
+    public static final int VERTEX_COLOR_IMAGE_SIZE = 12;
 
     public CursorVertexColor(Color bodyColor, Color outlineColor) {
         this.bodyColor = bodyColor;
@@ -54,7 +55,7 @@ public class CursorVertexColor implements TextureSource, ITextureSource {
 
     @Override
     public BufferedImage makeImage() {
-        BufferedImage image = new BufferedImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage image = new BufferedImage(VERTEX_COLOR_IMAGE_SIZE, VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
 
         graphics.setColor(getBodyColor());
@@ -69,12 +70,12 @@ public class CursorVertexColor implements TextureSource, ITextureSource {
 
     @Override
     public int getWidth() {
-        return MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+        return VERTEX_COLOR_IMAGE_SIZE;
     }
 
     @Override
     public int getHeight() {
-        return MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+        return VERTEX_COLOR_IMAGE_SIZE;
     }
 
     @Override

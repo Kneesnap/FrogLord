@@ -28,8 +28,8 @@ public class BeastWarsCollprimManager extends BeastWarsMapListManager<BeastWarsM
     private final DisplayList collprimDisplayList;
     private CheckBox wireframePreviewCheckBox;
 
-    private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.GREEN);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_GREEN = Utils.makeUnlitSharpMaterial(Color.GREEN);
+    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
 
 
     public BeastWarsCollprimManager(MeshViewController<BeastWarsMapMesh> controller) {

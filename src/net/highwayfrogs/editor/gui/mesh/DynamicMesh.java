@@ -1,12 +1,11 @@
 package net.highwayfrogs.editor.gui.mesh;
 
+import javafx.scene.image.Image;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
-import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
 import net.highwayfrogs.editor.utils.Utils;
@@ -26,15 +25,20 @@ import java.util.logging.Logger;
 public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     private final String meshName;
     @Getter private final TextureAtlas textureAtlas;
-    @Getter private final PSXMeshShadedTextureManager<?> shadedTextureManager;
     @Getter private final FXIntArrayBatcher editableFaces;
     @Getter private final DynamicMeshFloatArray editableTexCoords;
     @Getter private final DynamicMeshFloatArray editableVertices;
     @Getter private final List<DynamicMeshNode> nodes = new ArrayList<>();
     @Getter private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
     @Getter private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which are viewing this mesh.
+    @Getter private Image materialFxImage;
     @Getter private PhongMaterial material;
     private Logger cachedLogger;
+
+    // It's possible to disable smoothing, using a non-empty array where the first element is zero.
+    // This feature was not documented anywhere I could find, but I found the code responsible at com.sun.prism.impl.BaseMesh.checkSmoothingGroup()
+    // Apply this to a mesh and smoothing should be disabled.
+    private static final int[] SMOOTHING_ARRAY_DISABLE_SMOOTHING = new int[0];
 
     public DynamicMesh(TextureAtlas atlas) {
         this(atlas, VertexFormat.POINT_TEXCOORD, null);
@@ -58,15 +62,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         this.editableFaces = new FXIntArrayBatcher(new FXIntArray(), getFaces());
         this.editableTexCoords = new DynamicMeshFloatArray(this, "texCoord", getTexCoords(), format.getTexCoordIndexOffset(), getTexCoordElementSize());
         this.editableVertices = new DynamicMeshFloatArray(this, "vertex", getPoints(), format.getPointIndexOffset(), getPointElementSize());
-
-        this.shadedTextureManager = createShadedTextureManager();
-    }
-
-    /**
-     * Creates the shaded texture manager for this mesh.
-     */
-    protected PSXMeshShadedTextureManager<?> createShadedTextureManager() {
-        return null;
+        getFaceSmoothingGroups().setAll(SMOOTHING_ARRAY_DISABLE_SMOOTHING); // Disable smoothing.
     }
 
     /**
@@ -286,14 +282,18 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         view.setMaterial(null);
 
         // Attempt to free the texture.
-        if (this.meshViews.isEmpty()) {
-            if (this instanceof IPSXShadedMesh)
-                ((IPSXShadedMesh) this).getShadedTextureManager().onDispose();
-            if (this.textureAtlas != null)
-                this.textureAtlas.releaseTexture();
-        }
+        if (this.meshViews.isEmpty())
+            onFree();
 
         return true;
+    }
+
+    /**
+     * Called when the mesh has been free'd.
+     */
+    protected void onFree() {
+        if (this.textureAtlas != null)
+            this.textureAtlas.releaseTexture();
     }
 
     /**
@@ -301,8 +301,16 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
      * @param newImage the image to apply
      */
     protected PhongMaterial updateMaterial(BufferedImage newImage) {
+        return updateMaterial(Utils.toFXImage(newImage, false));
+    }
+
+    /**
+     * Apply a new image to the material
+     * @param newFxImage the image to apply
+     */
+    protected PhongMaterial updateMaterial(Image newFxImage) {
         if (this.material == null) {
-            this.material = Utils.makeDiffuseMaterial(Utils.toFXImage(newImage, false));
+            this.material = Utils.makeDiffuseMaterial(this.materialFxImage = newFxImage);
 
             // Apply newly created material to meshes.
             for (int i = 0; i < this.meshViews.size(); i++)
@@ -312,12 +320,18 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         }
 
         // Update material image.
-        this.material.setDiffuseMap(Utils.toFXImage(newImage, false));
+        if (this.materialFxImage != newFxImage)
+            this.material.setDiffuseMap(this.materialFxImage = newFxImage);
         return this.material;
     }
 
     private void onTextureChange(Texture texture, BufferedImage oldImage, BufferedImage newImage, boolean didOldImageHaveAnyTransparentPixels) {
-        updateMaterial(newImage); // Apply the image to the mesh now.
+        // Apply the image to the mesh now.
+        if (this.textureAtlas.getFxImage() != null) {
+            updateMaterial(this.textureAtlas.getFxImage());
+        } else {
+            updateMaterial(newImage);
+        }
     }
 
     // Common updates. (Useful to be here to reduce code duplication)
@@ -333,5 +347,39 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
                 node.updateTexCoords();
         }
         this.editableTexCoords.endBatchingUpdates();
+    }
+
+    /**
+     * Prints debugging information about the mesh.
+     */
+    @SuppressWarnings("CommentedOutCode")
+    public void printDebugMeshInfo() {
+        Logger logger = getLogger();
+        logger.info("Mesh Information" + (this.meshName != null ? "[" + this.meshName + "]:" : ":"));
+        logger.info(" Texture Atlas: " + (this.textureAtlas != null ? this.textureAtlas.getAtlasWidth() + "x" + this.textureAtlas.getAtlasHeight() + " (" + this.textureAtlas.getSortedTextureList().size() + " entries)" : "None"));
+        logger.info(" Vertices[EditableSize=" + this.editableVertices.size() + ",EditablePendingSize=" + this.editableVertices.pendingSize() + ",FxArraySize=" + getPoints().size() + "]");
+        logger.info(" TexCoords[EditableSize=" + this.editableTexCoords.size() + ",EditablePendingSize=" + this.editableTexCoords.pendingSize() + ",FxArraySize=" + getTexCoords().size() + "]");
+        logger.info(" Faces[EditableSize=" + this.editableFaces.size() + ",EditablePendingSize=" + this.editableFaces.pendingSize() + ",FxArraySize=" + getFaces().size() + "]");
+        logger.info(" Active MeshViews: " + this.meshViews.size());
+        logger.info(" DynamicMeshDataEntry Count: " + this.dataEntries.size());
+        logger.info(" Nodes[" + this.nodes.size() + "]:");
+        for (int i = 0; i < this.nodes.size(); i++) {
+            DynamicMeshNode node = this.nodes.get(i);
+            logger.info("  - " + Utils.getSimpleName(node) + "[" + node.getDataEntries().size() + " entries]");
+        }
+
+        // This is disabled by default, since it spams the console, but it can be helpful for debugging.
+        //logger.info(" Vertices: " + Arrays.toString(this.editableVertices.getArray().toArray()));
+        //logger.info(" TexCoords: " + Arrays.toString(this.editableTexCoords.getArray().toArray()));
+        //logger.info(" Faces: " + Arrays.toString(this.editableFaces.getArray().toArray()));
+    }
+
+    /**
+     * Unregisters the MeshView from its parent DynamicMesh, IF the parent mesh is a DynamicMesh
+     * @param meshView the MeshView to unregister
+     * @return success
+     */
+    public static boolean tryRemoveMesh(MeshView meshView) {
+        return meshView != null && meshView.getMesh() instanceof DynamicMesh && ((DynamicMesh) meshView.getMesh()).removeView(meshView);
     }
 }

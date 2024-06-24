@@ -22,13 +22,42 @@ public class IndexBitArray {
         clear();
     }
 
+    public IndexBitArray(int expectedBitCount) {
+        this.array = new int[getArraySize(expectedBitCount)];
+        clear();
+    }
+
     /**
      * Clear all the bits in the array.
      */
     public void clear() {
-        Arrays.fill(this.array, 0);
+        Arrays.fill(this.array, 0, getArraySize(Math.max(0, this.lastBitIndex)), 0);
         this.bitCount = 0;
         this.lastBitIndex = -1;
+    }
+
+    /**
+     * Writes the index bit array to a StringBuilder.
+     * @param builder the string builder to write to.
+     */
+    public void toArrayString(StringBuilder builder) {
+        int startLength = builder.length();
+        int lastBitIndex = getFirstBitIndex();
+        while (lastBitIndex != -1) {
+            if (builder.length() > startLength)
+                builder.append(", ");
+            builder.append(lastBitIndex);
+            lastBitIndex = getNextBitIndex(lastBitIndex);
+        }
+    }
+
+    /**
+     * Writes the index bit array to a String.
+     */
+    public String toArrayString() {
+        StringBuilder builder = new StringBuilder("[");
+        toArrayString(builder);
+        return builder.append(']').toString();
     }
 
     /**
@@ -143,8 +172,9 @@ public class IndexBitArray {
      * Set the state of the bit corresponding to the provided bit index.
      * @param bitIndex The bit index to set.
      * @param newState Whether the bit should be set.
+     * @return true iff the bit changed
      */
-    public void setBit(int bitIndex, boolean newState) {
+    public boolean setBit(int bitIndex, boolean newState) {
         ensureCapacity(bitIndex);
 
         int elementIndex = (bitIndex >> ELEMENT_BIT_SHIFT);
@@ -154,7 +184,7 @@ public class IndexBitArray {
         // Verify there is a difference between the old and the new.
         boolean oldState = (oldValue & bitMask) == bitMask;
         if (oldState == newState)
-            return;
+            return false;
 
         // Update new state.
         if (newState) {
@@ -172,6 +202,8 @@ public class IndexBitArray {
             if (this.lastBitIndex == bitIndex)
                 this.lastBitIndex = getPreviousBitIndex(this.lastBitIndex);
         }
+
+        return true;
     }
 
     private void ensureCapacity(int bit) {
@@ -191,5 +223,9 @@ public class IndexBitArray {
 
         if (newArraySize != this.array.length)
             this.array = Arrays.copyOf(this.array, (int) newArraySize);
+    }
+
+    private static int getArraySize(int bitCount) {
+        return (bitCount >> ELEMENT_BIT_SHIFT) + ((bitCount % BITS_PER_ELEMENT > 0) ? 1 : 0);
     }
 }

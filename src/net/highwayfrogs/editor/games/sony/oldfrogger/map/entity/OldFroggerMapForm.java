@@ -129,7 +129,6 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
         // Ensure this gets moved to the correct position in the map form list.
         List<OldFroggerMapForm> formList = this.map.getFormInstancePacket().getForms();
         int oldIndex = Collections.binarySearch(formList, this, Comparator.comparingInt(OldFroggerMapForm::getFormType));
-        this.formType = newFormType;
 
         // The form is not currently registered in the form list.
         if (oldIndex < 0)
@@ -163,10 +162,12 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
     public void setupEditor(OldFroggerFormUIManager manager, GUIEditorGrid editor) {
         String formName = getName();
         editor.addLabel("Form Name", formName != null ? formName : "Unknown");
-        editor.addIntegerField("Form ID", this.formType, newFormType -> {
+        editor.addSignedIntegerField("Form ID", this.formType,
+                newFormType -> newFormType >= 0 && newFormType < getMap().getFormInstancePacket().getFormTableSize(),
+                newFormType -> {
             setFormType(newFormType);
             manager.updateEditor();
-        }, newFormType -> newFormType >= 0 && newFormType < getMap().getFormInstancePacket().getFormTableSize());
+        });
 
         // Display MOF Selector
         OldFroggerLevelTableEntry levelTableEntry = this.map.getLevelTableEntry();

@@ -2,16 +2,16 @@ package net.highwayfrogs.editor.games.sony.beastwars;
 
 import javafx.scene.paint.Color;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.PALFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Beast Wars Palette Support.
  * Created by Kneesnap on 5/23/2020.
  */
-public class PLTFile extends PALFile {
+public class PLTFile extends FroggerPaletteFile {
     public PLTFile(BeastWarsInstance instance) {
         super(instance);
     }

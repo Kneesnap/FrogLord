@@ -54,7 +54,7 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
         if (!hasEntry)
             return;
 
-        getRootNode().getItems().clear();
+        clear();
         this.tableColumnKey.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnValue.setCellValueFactory(new PropertyValueFactory<>("value"));
 
@@ -62,6 +62,13 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
         if (properties != null && properties.size() > 0)
             for (NameValuePair pair : properties)
                 getRootNode().getItems().add(pair);
+    }
+
+    /**
+     * Clears the properties seen here.
+     */
+    public void clear() {
+        getRootNode().getItems().clear();
     }
 
     /**

@@ -19,11 +19,16 @@ public class PTModelShadedTextureManager extends PSXMeshShadedTextureManager<PTP
 
     @Override
     protected PSXShadeTextureDefinition createShadedTexture(PTPolygon polygon) {
-        return polygon.createPolygonShadeDefinition(getMesh().isShadingEnabled());
+        return polygon.createPolygonShadeDefinition(getMesh(), getMesh().isShadingEnabled());
     }
 
     @Override
     protected void applyTextureShading(PTPolygon polygon, PSXShadeTextureDefinition shadedTexture) {
         polygon.loadDataFromShadeDefinition(shadedTexture, getMesh().isShadingEnabled());
+    }
+
+    @Override
+    protected void updateLooseShadingTexCoords() {
+        // Don't have any loose shade definitions.
     }
 }

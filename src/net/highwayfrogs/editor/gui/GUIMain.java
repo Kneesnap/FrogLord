@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.gui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -45,9 +46,11 @@ public class GUIMain extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        Thread.setDefaultUncaughtExceptionHandler(GUIMain::handleFxThreadError);
+
         application = this;
         setupLogger();
-        SystemOutputReplacement.activateReplacement();
+        Runtime.getRuntime().addShutdownHook(new Thread(GUIMain::onShutdown));
 
         long availableMemory = Runtime.getRuntime().maxMemory();
         long minMemory = DataSizeUnit.GIGABYTE.getIncrement();
@@ -60,6 +63,33 @@ public class GUIMain extends Application {
         mainConfigFile = new File("main.cfg");
         mainConfig = Config.loadConfigFromTextFile(mainConfigFile, true);
         openLoadGameSettingsMenu();
+    }
+
+    private static void handleFxThreadError(Thread thread, Throwable throwable) {
+        if (Platform.isFxApplicationThread()) {
+            Utils.handleError(null, throwable, true, "An unhandled error occurred in the user interface.");
+        } else {
+            // This method shouldn't be possible to call from outside the FX thread.
+            Utils.handleError(null, throwable, true, "An unhandled error occurred on %s. (SHOULDN'T OCCUR????)", thread);
+        }
+    }
+    
+    @SuppressWarnings("CallToPrintStackTrace")
+    private static void onShutdown() {
+        Logger.getLogger(GUIMain.class.getSimpleName()).info("FrogLord is shutting down...");
+        
+        // Logger shutdown.
+        Logger globalLogger = Logger.getGlobal();
+        for (int i = 0; i < globalLogger.getHandlers().length; i++) {
+            try {
+                Handler handler = globalLogger.getHandlers()[i];
+                handler.flush();
+                handler.close();
+            } catch (Throwable th) {
+                // Can't do a lot except to log it to the console.
+                th.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -132,8 +162,19 @@ public class GUIMain extends Application {
         // Setup file handler.
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String dateStr = dateFormat.format(Calendar.getInstance().getTime());
+
+        // Generate log file name.
+        int id = 0;
+        String logFileName;
+        File logFile;
+        do {
+            logFileName = dateStr + "-" + (id++) + ".log";
+            logFile = new File("logs" + File.separator + logFileName);
+        } while (logFile.exists() && logFile.isFile());
+
+        // Setup logging.
         try {
-            FileHandler fileHandler = new FileHandler("logs/" + dateStr + "-%u.log");
+            FileHandler fileHandler = new FileHandler("logs/" + logFileName.replace("%", "%%"), true);
             fileHandler.setFormatter(formatter);
             fileHandler.setFilter(record -> !LogFormatter.isJavaFXMessage(record));
             logger.addHandler(fileHandler);

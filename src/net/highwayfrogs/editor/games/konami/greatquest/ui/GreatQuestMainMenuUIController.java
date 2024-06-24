@@ -46,7 +46,11 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
             int exportedFileCount = 0;
             for (GreatQuestArchiveFile file : getMainArchive().getFiles()) {
                 getLogger().info("Exporting '" + file.getDebugName() + "'...  (" + (++exportedFileCount) + "/" + getMainArchive().getFiles().size() + ")");
-                file.export(exportDir);
+                try {
+                    file.export(exportDir);
+                } catch (Exception ex) {
+                    throw new RuntimeException("Failed to export the file '" + file.getDebugName() + "'.", ex);
+                }
             }
         });
 
@@ -75,7 +79,7 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
 
     protected static MenuItem addMenuItem(Menu menuBar, String title, Runnable action) {
         MenuItem menuItem = new MenuItem(title);
-        menuItem.setOnAction(event -> action.run());
+        menuItem.setOnAction(event -> Utils.reportErrorIfFails(action));
         menuBar.getItems().add(menuItem);
         return menuItem;
     }

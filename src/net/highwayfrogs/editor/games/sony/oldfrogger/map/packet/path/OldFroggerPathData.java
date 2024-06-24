@@ -137,10 +137,12 @@ public class OldFroggerPathData extends SCGameData<OldFroggerGameInstance> {
         // Motion Data:
         editor.addEnumSelector("Motion Type", this.motionType, MotionType.values(), false, newMotionType -> this.motionType = newMotionType);
 
-        editor.addIntegerField("Path ID", this.pathId, newPathId -> {
+        editor.addSignedIntegerField("Path ID", this.pathId,
+                newPathId -> newPathId >= 0 && newPathId < manager.getMap().getPathPacket().getPaths().size(),
+                newPathId -> {
             this.pathId = newPathId;
             manager.updateEntityPositionRotation(entity);
-        }, newPathId -> newPathId >= 0 && newPathId < manager.getMap().getPathPacket().getPaths().size());
+        });
     }
 
     /**

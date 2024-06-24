@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.file.map.view;
 
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
@@ -73,7 +72,7 @@ public class UnknownTextureSource implements TextureSource, ITextureSource {
         if (this.cachedImage != null)
             return this.cachedImage;
 
-        this.cachedImage = new BufferedImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
+        this.cachedImage = new BufferedImage(CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE, CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics graphics = this.cachedImage.createGraphics();
         int xSize = (this.cachedImage.getWidth() / 2);
         int ySize = (this.cachedImage.getHeight() / 2);
@@ -92,12 +91,12 @@ public class UnknownTextureSource implements TextureSource, ITextureSource {
 
     @Override
     public int getWidth() {
-        return MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+        return CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE;
     }
 
     @Override
     public int getHeight() {
-        return MAPFile.VERTEX_COLOR_IMAGE_SIZE;
+        return CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE;
     }
 
     @Override

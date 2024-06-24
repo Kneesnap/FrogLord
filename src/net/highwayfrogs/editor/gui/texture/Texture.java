@@ -20,8 +20,10 @@ import java.util.function.Function;
  * Created by Kneesnap on 9/23/2023.
  */
 public abstract class Texture {
+    private static long nextAvailableTextureId = 0;
     @Getter private final ITextureSource textureSource;
     private final Consumer<BufferedImage> updateHook = this::update;
+    @Getter private final long uniqueId = nextAvailableTextureId++;
     private BufferedImage cachedImage;
     private BufferedImage cachedImageWithoutPadding;
     private boolean cachedImageInvalid; // This should start as false, as to avoid updates before the image is even used.
@@ -209,7 +211,7 @@ public abstract class Texture {
      * Marks the image dirty for rebuilding.
      */
     public void markImageDirty() {
-        if (this.cachedImage != null) // Don't consider an image which doesn't exist yet "dirty".
+        if (this.cachedImage != null) // Don't consider an image which doesn't exist yet to be "dirty".
             this.cachedImageInvalid = true;
     }
 
@@ -233,7 +235,7 @@ public abstract class Texture {
             throw new UnsupportedOperationException("BulkMode was not enabled!");
 
         this.bulkMode = false;
-        this.update();
+        this.update(); // Upon reaching zero, update! (This will only update if the image was marked as dirty).
     }
 
     /**
@@ -249,7 +251,13 @@ public abstract class Texture {
     protected final void popDisableUpdates() {
         if (this.disableUpdateCount <= 0)
             throw new UnsupportedOperationException("Cannot pop disable updates, because there's nothing to pop.");
-        this.disableUpdateCount--;
+
+        // Decrease counter.
+        if (--this.disableUpdateCount > 0)
+            return;
+
+        // Upon reaching zero, update! (This will only update if the image was marked as dirty).
+        update();
     }
 
     /**

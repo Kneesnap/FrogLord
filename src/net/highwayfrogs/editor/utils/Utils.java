@@ -46,9 +46,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiPredicate;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -56,6 +54,7 @@ import java.util.zip.CRC32;
 
 /**
  * Some static utilities.
+ * TODO: Split this into multiple classes at some point.
  * Created by Kneesnap on 8/12/2018.
  */
 @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "unused"})
@@ -69,6 +68,18 @@ public class Utils {
     private static final Map<Color, java.awt.Color> awtColorCacheMap = new HashMap<>();
     private static final long IMAGE_CACHE_EXPIRE = TimeUnit.MINUTES.toMillis(5);
     private static final Map<Integer, List<Integer>> integerLists = new HashMap<>();
+    private static Logger logger;
+
+    /**
+     * Gets a logger usable in a static context.
+     * This is reported as "Utils", so it's recommended to not use this, but this can be helpful for debugging.
+     */
+    public static Logger getLogger() {
+        if (logger != null)
+            return logger;
+        
+        return logger = Logger.getLogger(Utils.class.getSimpleName());
+    }
 
     /**
      * Creates an integer identifier from a string.
@@ -550,7 +561,7 @@ public class Utils {
      * @return resourceURL
      */
     @SneakyThrows
-    public static List<URL> getFilesInDirectory(URL resourcePath, boolean includeSubFolders) {
+    public static List<URL> getInternalResourceFilesInDirectory(URL resourcePath, boolean includeSubFolders) {
         if (resourcePath.getProtocol() != null && resourcePath.getProtocol().equalsIgnoreCase("jar")) {
             String fullResourcePath = resourcePath.getFile();
             int exclamationPos = fullResourcePath.indexOf('!');
@@ -560,35 +571,45 @@ public class Utils {
             }
 
             String localResourcePath = fullResourcePath.substring(exclamationPos + 1);
+            File frogLordJar = getFileFromURL(Utils.class.getProtectionDomain().getCodeSource().getLocation());
+            if (!frogLordJar.exists())
+                throw new RuntimeException("Failed to find resource files at '" + localResourcePath + "', we resolved the FrogLord jar file to '" + frogLordJar + "', which did not exist. (" + resourcePath + ")");
 
-            // This is getting run from a JAR file, so we need to do the lookup from the jar file.
-            // Adapted from https://stackoverflow.com/questions/67091892/how-can-an-app-walk-through-the-contents-of-one-of-its-packages-at-run-time
-            Path frogLordJar = new File(Utils.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toPath();
             BiPredicate<Path, BasicFileAttributes> pathValidityCheck = (path, attributes) -> path.startsWith(localResourcePath);
-            try (FileSystem fs = FileSystems.newFileSystem(frogLordJar, Utils.class.getClassLoader())) {
+            try (FileSystem fs = FileSystems.newFileSystem(frogLordJar.toPath(), Utils.class.getClassLoader())) {
+                boolean didAnyPathsMatch = false;
+                List<URL> foundResourceUrls = new ArrayList<>();
+
+                // Test the path for resource files.
                 for (Path root : fs.getRootDirectories()) {
                     try (Stream<Path> stream = Files.find(root, Integer.MAX_VALUE, pathValidityCheck)) {
-                        return getUrlsFromPaths(stream);
+                        foundResourceUrls.addAll(getUrlsFromPaths(stream, true));
+                    } catch (Throwable th) {
+                        handleError(null, th, false, "Failed to test the path '%s' for internal resource files.", root);
                     }
                 }
+
+                return foundResourceUrls;
+            } catch (Throwable th) {
+                handleError(null, th, false, "Failed to get the FileSystem object for the FrogLord jar: '%s'", frogLordJar);
             }
 
             throw new RuntimeException("Failed to enumerate resource files in '" + resourcePath + "'.");
         }
 
-        // We should only get here when running from an IDE. (Or if there's some other version FrogLord would be run outside of a jar?)
+        // We should only get here when running from an IDE. (Or if there's some other version FrogLord would be run outside a jar?)
         try {
             Path path = Paths.get(resourcePath.toURI());
             try (Stream<Path> stream = Files.walk(path, includeSubFolders ? Integer.MAX_VALUE : 1)) {
-                return getUrlsFromPaths(stream);
+                return getUrlsFromPaths(stream, false);
             }
         } catch (URISyntaxException | IOException ex) {
             throw new RuntimeException("Failed to get files in resource directory '" + resourcePath + "'", ex);
         }
     }
 
-    private static List<URL> getUrlsFromPaths(Stream<Path> stream) {
-        return stream.map(Path::toUri)
+    private static List<URL> getUrlsFromPaths(Stream<Path> stream, boolean remakeResources) {
+        Stream<URL> urlStream = stream.map(Path::toUri)
                 .map(uri -> {
                     try {
                         return uri.toURL();
@@ -597,8 +618,45 @@ public class Utils {
                     }
                 })
                 .filter(Objects::nonNull)
-                .filter(url -> !url.getPath().endsWith("/")) // Remove directories.
-                .collect(Collectors.toList());
+                .filter(url -> !url.getPath().endsWith("/")); // Remove directories.
+
+        // This part is necessary since the urls we get from the file walker aren't actually valid for to open for some reason.
+        // So, we take the file paths we get, and then feed them back into something we know we can get the paths from.
+        if (remakeResources) {
+            urlStream = urlStream.map(url -> {
+                String fullResourcePath = url.getFile();
+                int exclamationPos = fullResourcePath.indexOf('!');
+                if (exclamationPos < 0)
+                    throw new RuntimeException("Couldn't find the JAR-embedded file resource path in the URL '" + url + "'/'" + fullResourcePath + "'.");
+
+                String localResourcePath = fullResourcePath.substring(exclamationPos + (fullResourcePath.charAt(exclamationPos + 1) == '/' ? 2 : 1));
+                URL convertedURL = getResourceURL(localResourcePath);
+                if (convertedURL == null)
+                    throw new RuntimeException("Failed to convert local resource path '" + localResourcePath + "' from URL '" + url + "' into usable resource path URL.");
+
+                return convertedURL;
+            });
+        }
+
+        return urlStream.collect(Collectors.toList());
+    }
+
+    /**
+     * Often times we have improperly formatted URLs in java. Unfortunately, this comes with characters like ' ' replaced with %20, which can cause headaches when working with the file system.
+     * https://web.archive.org/web/20100327174235/http://weblogs.java.net/blog/kohsuke/archive/2007/04/how_to_convert.html
+     * This is our attempt at fixing the problem.
+     * @param url the url to resolve a file for
+     * @return validFile
+     */
+    public static File getFileFromURL(URL url) {
+        if (!url.getProtocol().equalsIgnoreCase("file") && !url.getProtocol().equalsIgnoreCase("jar"))
+            throw new UnsupportedOperationException("Cannot get file from URL with protocol '" + url.getProtocol() + "'. (" + url + ")");
+
+        try {
+            return new File(url.toURI());
+        } catch(URISyntaxException e) {
+            return new File(url.getPath());
+        }
     }
 
     /**
@@ -1372,10 +1430,7 @@ public class Utils {
      * @return rgbInt
      */
     public static int toRGB(byte red, byte green, byte blue) {
-        int result = byteToUnsignedShort(red);
-        result = (result << 8) + byteToUnsignedShort(green);
-        result = (result << 8) + byteToUnsignedShort(blue);
-        return result;
+        return ((red & 0xFF) << 16) | ((green & 0xFF) << 8) | (blue & 0xFF);
     }
 
     /**
@@ -1383,11 +1438,7 @@ public class Utils {
      * @return rgbInt
      */
     public static int toARGB(byte red, byte green, byte blue, byte alpha) {
-        int result = byteToUnsignedShort(alpha);
-        result = (result << 8) + byteToUnsignedShort(red);
-        result = (result << 8) + byteToUnsignedShort(green);
-        result = (result << 8) + byteToUnsignedShort(blue);
-        return result;
+        return ((alpha & 0xFF) << 24) | ((red & 0xFF) << 16) | ((green & 0xFF) << 8) | (blue & 0xFF);
     }
 
     /**
@@ -1407,11 +1458,7 @@ public class Utils {
      * @return rgbInt
      */
     public static int toABGR(byte red, byte green, byte blue, byte alpha) {
-        int result = byteToUnsignedShort(alpha);
-        result = (result << 8) + byteToUnsignedShort(blue);
-        result = (result << 8) + byteToUnsignedShort(green);
-        result = (result << 8) + byteToUnsignedShort(red);
-        return result;
+        return ((alpha & 0xFF) << 24) | ((blue & 0xFF) << 16) | ((green & 0xFF) << 8) | (red & 0xFF);
     }
 
     /**
@@ -1533,6 +1580,7 @@ public class Utils {
      */
     public static void setHandleKeyPress(TextField field, Function<String, Boolean> setter, Runnable onPass) {
         AtomicReference<String> resetTextRef = new AtomicReference<>(field.getText());
+        field.setStyle(null);
         field.setOnKeyPressed(evt -> {
             KeyCode code = evt.getCode();
             if (field.getStyle().isEmpty() && (code.isLetterKey() || code.isDigitKey() || code == KeyCode.BACK_SPACE)) {
@@ -1568,7 +1616,7 @@ public class Utils {
                     }
                 }
 
-                field.setStyle("-fx-text-inner-color: red;");
+                field.setStyle(Constants.FX_STYLE_INVALID_TEXT);
             }
         });
     }
@@ -1638,16 +1686,34 @@ public class Utils {
     }
 
     /**
-     * Creates a PhongMaterial with a texture unaffected by lighting.
+     * Creates an unlit PhongMaterial which uses nearest-neighbor texture display and is unaffected by lighting.
+     * When the transparency outlines look poorly, the solution is to resize the image to use a higher resolution (while also using nearest neighbor)
      * @param texture The texture to create.
      * @return phongMaterial
      */
-    public static PhongMaterial makeSpecialMaterial(Image texture) {
+    public static PhongMaterial makeUnlitSharpMaterial(Image texture) {
+        return makeUnlitMaterial(texture, false);
+    }
+
+    /**
+     * Creates an unlit PhongMaterial which uses nearest-neighbor texture display and is unaffected by lighting.
+     * When the transparency outlines look poorly, the solution is to resize the image to use a higher resolution (while also using nearest neighbor)
+     * @param texture The texture to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial makeUnlitMaterial(Image texture, boolean blurry) {
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(Color.BLACK);
-        material.setSpecularColor(Color.BLACK);
-        material.setDiffuseMap(texture);
-        material.setSelfIlluminationMap(texture);
+        if (blurry) {
+            // The following is what would seem to intuitively work, and it does. However, it results in the same transparency problems, but the image is also blurry.
+            // I'm not entirely sure why adding a self-illumination map seems to disable blending.
+            material.setDiffuseColor(Color.WHITE);
+            material.setDiffuseMap(texture);
+        } else {
+            material.setDiffuseColor(Color.BLACK); // When this is set to the default (WHITE), the coloring looks wrong when combined with a self-illumination map, since it's combining the light from both sources.
+            material.setDiffuseMap(texture); // Setting the diffuse map this seems to enable transparency, where-as it will be the diffuse color if not set.
+            material.setSelfIlluminationMap(texture); // When this is not present, the material becomes fully black, because the diffuse color is off. If the color is changed to white, then the image does display but it's blurry and still has the same transparency problems.
+        }
+
         return material;
     }
 
@@ -1677,7 +1743,7 @@ public class Utils {
         graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
         graphics.dispose();
 
-        return makeSpecialMaterial(toFXImage(colorImage, false));
+        return makeUnlitSharpMaterial(toFXImage(colorImage, false));
     }
 
     /**
@@ -1685,8 +1751,8 @@ public class Utils {
      * @param color The color to create.
      * @return phongMaterial
      */
-    public static PhongMaterial makeSpecialMaterial(Color color) {
-        return makeSpecialMaterial(makeColorImage(color));
+    public static PhongMaterial makeUnlitSharpMaterial(Color color) {
+        return makeUnlitSharpMaterial(makeColorImage(color));
     }
 
     /**
@@ -1806,6 +1872,64 @@ public class Utils {
      * @param logger the logger to write the error to
      * @param th the exception to log
      * @param showWindow if true, a popup window will display the error
+     */
+    public static void handleError(Logger logger, Throwable th, boolean showWindow) {
+        handleError(logger, th, showWindow, 2);
+    }
+
+    /**
+     * Handle an exception which should be reported to the user.
+     * @param logger the logger to write the error to
+     * @param th the exception to log
+     * @param showWindow if true, a popup window will display the error
+     * @param skipCount the number of methods to search back.
+     */
+    @SuppressWarnings("CallToPrintStackTrace")
+    public static void handleError(Logger logger, Throwable th, boolean showWindow, int skipCount) {
+        // TODO: Should generalize? Probably?
+        // TODO: JAva 9 -> StackWalker.getCallerClass()
+        // TODO: return StackWalker.
+        //      getInstance().
+        //      walk(stream -> stream.skip(1).findFirst().get()).
+        //      getMethodName();
+
+        // There
+        String callingMethodName = null;
+        Class<?> callingClass = null;
+        try {
+            StackTraceElement element = new Throwable().fillInStackTrace().getStackTrace()[skipCount];
+            callingMethodName = element.getMethodName();
+            callingClass = element.getClass();
+        } catch (Throwable classLookupException) {
+            // If this fails, just use null.
+        }
+
+        // Use the utils logger if we weren't given one.
+        if (logger == null)
+            logger = getLogger();
+
+        // Print stage trace.
+        if (logger != null) {
+            logger.throwing(callingClass != null ? callingClass.getSimpleName() : null, callingMethodName, th);
+        } else {
+            th.printStackTrace();
+        }
+
+        // Create popup window.
+        if (showWindow) {
+            if (Platform.isFxApplicationThread()) {
+                Utils.makeErrorPopUp(null, th, false);
+            } else {
+                Platform.runLater(() -> Utils.makeErrorPopUp(null, th, false));
+            }
+        }
+    }
+
+    /**
+     * Handle an exception which should be reported to the user.
+     * @param logger the logger to write the error to
+     * @param th the exception to log
+     * @param showWindow if true, a popup window will display the error
      * @param message the message to accompany the exception
      * @param arguments format string arguments to the message
      */
@@ -1850,11 +1974,16 @@ public class Utils {
             formattedMessage = "[String Formatting Failed] " + message;
         }
 
+        // Use the utils logger if we weren't given one.
+        if (logger == null)
+            logger = getLogger();
+
         // Print stage trace.
         if (logger != null) {
             if (formattedMessage != null)
                 logger.severe(formattedMessage);
-            logger.throwing(callingClass != null ? callingClass.getSimpleName() : null, callingMethodName, th);
+            if (th != null)
+                logger.throwing(callingClass != null ? callingClass.getSimpleName() : null, callingMethodName, th);
         } else {
             System.err.println(formattedMessage);
             if (th != null)
@@ -1894,11 +2023,25 @@ public class Utils {
      * @param ex      The exception which caused the error.
      */
     public static void makeErrorPopUp(String message, Throwable ex, boolean printException) {
-        String errorMessage = (message != null && message.length() > 0 ? message + Constants.NEWLINE : "") + "Error: " + (ex != null ? ex.getMessage() : "null");
+        // Get the exception as a string.
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(stringWriter);
+
+        if (message != null && message.length() > 0) {
+            printWriter.append(message);
+            printWriter.append(System.lineSeparator());
+        }
+
+        if (ex != null)
+            ex.printStackTrace(printWriter);
+
         if (printException) {
-            handleError(null, ex, true, errorMessage);
+            handleError(null, ex, true, stringWriter.toString());
         } else {
-            new Alert(AlertType.ERROR, errorMessage, ButtonType.OK).showAndWait();
+            Alert alert = new Alert(AlertType.ERROR, stringWriter.toString(), ButtonType.OK);
+            if (ex != null)
+                alert.setWidth(3 * alert.getWidth());
+            alert.showAndWait();
         }
     }
 
@@ -2274,5 +2417,148 @@ public class Utils {
             logger.warning("Bit flag value " + toHexString(value) + " had unexpected bits set!");
         }
         return false;
+    }
+
+    /**
+     * Performs a binary search on a list to find a value which can be reduced to the provided key.
+     * @param list The sorted list to search.
+     * @param key The key to search for.
+     * @param toKeyFunction The function to convert the list element into a key.
+     * @return foundIndex or insertion index
+     * @param <TIntSource> the list element
+     */
+    public static <TIntSource> int binarySearch(List<TIntSource> list, int key, ToIntFunction<TIntSource> toKeyFunction) {
+        int left = 0;
+        int right = list.size() - 1;
+
+        while (left <= right) {
+            int middleIndex = (left + right) >>> 1;
+            int middleValue = toKeyFunction.applyAsInt(list.get(middleIndex));
+
+            if (middleValue > key) {
+                right = middleIndex - 1;
+            } else if (middleValue < key) {
+                left = middleIndex + 1;
+            } else {
+                return middleIndex;
+            }
+        }
+
+        // Return insertion index.
+        return -(left + 1);
+    }
+
+    /**
+     * Performs a binary search on a list to find a value which can be reduced to the provided key.
+     * @param list The sorted list to search.
+     * @param key The key to search for.
+     * @param param the param value used to get a key from the list elements
+     * @param toKeyFunction The function to convert the list element into a key.
+     * @return foundIndex or insertion index
+     * @param <TIntSource> the list element
+     * @param <TParam> the param value type used to get a key from the list elements
+     */
+    public static <TIntSource, TParam> int binarySearch(List<TIntSource> list, int key, TParam param, ToIntBiFunction<TParam, TIntSource> toKeyFunction) {
+        int left = 0;
+        int right = list.size() - 1;
+
+        while (left <= right) {
+            int middleIndex = (left + right) >>> 1;
+            int middleValue = toKeyFunction.applyAsInt(param, list.get(middleIndex));
+
+            if (middleValue > key) {
+                right = middleIndex - 1;
+            } else if (middleValue < key) {
+                left = middleIndex + 1;
+            } else {
+                return middleIndex;
+            }
+        }
+
+        // Return insertion index.
+        return -(left + 1);
+    }
+
+    /**
+     * Performs a binary search on a list to find a value which can be reduced to the provided key.
+     * @param list The sorted list to search.
+     * @param key The key to search for.
+     * @param toKeyFunction The function to convert the list element into a key.
+     * @return foundIndex or insertion index
+     * @param <TLongSource> the list element
+     */
+    public static <TLongSource> int binarySearch(List<TLongSource> list, long key, ToLongFunction<TLongSource> toKeyFunction) {
+        int left = 0;
+        int right = list.size() - 1;
+
+        while (left <= right) {
+            int middleIndex = (left + right) >>> 1;
+            long middleValue = toKeyFunction.applyAsLong(list.get(middleIndex));
+
+            if (middleValue > key) {
+                right = middleIndex - 1;
+            } else if (middleValue < key) {
+                left = middleIndex + 1;
+            } else {
+                return middleIndex;
+            }
+        }
+
+        // Return insertion index.
+        return -(left + 1);
+    }
+
+    /**
+     * Performs a binary search on a list to find a value which can be reduced to the provided key.
+     * @param list The sorted list to search.
+     * @param key The key to search for.
+     * @param param the param value used to get a key from the list elements
+     * @param toKeyFunction The function to convert the list element into a key.
+     * @return foundIndex or insertion index
+     * @param <TLongSource> the list element
+     * @param <TParam> the param value type used to get a key from the list elements
+     */
+    public static <TLongSource, TParam> int binarySearch(List<TLongSource> list, long key, TParam param, ToLongBiFunction<TParam, TLongSource> toKeyFunction) {
+        int left = 0;
+        int right = list.size() - 1;
+
+        while (left <= right) {
+            int middleIndex = (left + right) >>> 1;
+            long middleValue = toKeyFunction.applyAsLong(param, list.get(middleIndex));
+
+            if (middleValue > key) {
+                right = middleIndex - 1;
+            } else if (middleValue < key) {
+                left = middleIndex + 1;
+            } else {
+                return middleIndex;
+            }
+        }
+
+        // Return insertion index.
+        return -(left + 1);
+    }
+
+    /**
+     * Report an error if the action fails.
+     * @param action the action to run
+     */
+    public static void reportErrorIfFails(Runnable action) {
+        try {
+            action.run();
+        } catch (Throwable th) {
+            handleError(null, th, true);
+        }
+    }
+
+    /**
+     * Prints the stack trace of the current thread.
+     */
+    public static void printStackTrace() {
+        try {
+            throw new RuntimeException("Triggered Exception");
+        } catch (Throwable e) {
+            handleError(null, e, false);
+        }
     }
 }

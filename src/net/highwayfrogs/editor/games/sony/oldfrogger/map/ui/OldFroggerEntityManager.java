@@ -7,8 +7,7 @@ import javafx.scene.transform.Transform;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
-import net.highwayfrogs.editor.games.sony.frogger.ui.mapeditor.EntityManager;
-import net.highwayfrogs.editor.games.sony.frogger.ui.mapeditor.MapUIController;
+import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
@@ -100,10 +99,10 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
         }
 
         // Couldn't find a model to use, so instead we'll display as a 2D sprite.
-        float entityIconSize = MapUIController.ENTITY_ICON_SIZE;
+        float entityIconSize = FroggerUIMapEntityManager.ENTITY_PLACEHOLDER_SPRITE_SIZE;
 
         // Attempt to apply 2d textures, instead of the default texture.
-        PhongMaterial material = EntityManager.MATERIAL_ENTITY_ICON;
+        PhongMaterial material = FroggerUIMapEntityManager.ENTITY_PLACEHOLDER_SPRITE_MATERIAL;
 
         // NOTE: Maybe this could be a single tri mesh, local to this manager, and we just update its points in updateEntities().
         TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);

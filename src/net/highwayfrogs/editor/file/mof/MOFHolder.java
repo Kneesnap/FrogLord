@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.NameBank;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
@@ -29,6 +28,7 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFMainController;
 import net.highwayfrogs.editor.gui.GUIMain;
@@ -58,7 +58,7 @@ public class MOFHolder extends SCSharedGameFile {
     private MOFFile staticFile;
     private MOFAnimation animatedFile;
 
-    private transient MAPTheme theme; // TODO: We may want to change how we track this to instead maybe know the parent WAD file and calculate it from that. This is in the interest of supporting other games.
+    private transient FroggerMapTheme theme; // TODO: We may want to change how we track this to instead maybe know the parent WAD file and calculate it from that. This is in the interest of supporting other games.
     private transient VLOArchive vloFile;
     private MOFHolder completeMOF; // This is the last MOF which was not incomplete.
 
@@ -66,7 +66,7 @@ public class MOFHolder extends SCSharedGameFile {
 
     public static final byte[] DUMMY_DATA = "DUMY".getBytes();
 
-    public MOFHolder(SCGameInstance instance, MAPTheme theme, MOFHolder lastCompleteMOF) {
+    public MOFHolder(SCGameInstance instance, FroggerMapTheme theme, MOFHolder lastCompleteMOF) {
         super(instance);
         this.theme = theme;
         this.completeMOF = lastCompleteMOF;
@@ -135,6 +135,11 @@ public class MOFHolder extends SCSharedGameFile {
         this.animatedFile.load(reader);
         if (!isIncomplete()) // We're not incomplete, we don't need to hold onto this value.
             this.completeMOF = null;
+    }
+
+    @Override
+    public boolean warnIfEndNotReached() {
+        return false;
     }
 
     @Override

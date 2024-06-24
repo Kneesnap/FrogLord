@@ -7,6 +7,8 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -14,7 +16,7 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 3/8/2024.
  */
 @Getter
-public class MediEvilMapHeaderPacket extends MediEvilMapPacket {
+public class MediEvilMapHeaderPacket extends MediEvilMapPacket implements IPropertyListCreator {
     public static final String IDENTIFIER = "GROF"; // 'FORG' backwards.
     private static final String FILE_TYPE = "MEDIEVIL";
     private static final int VERSION_CODE = 1;
@@ -80,5 +82,11 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket {
         super.saveBodySecondPass(writer, sizeInBytes);
         writer.skipBytes(FILE_TYPE.length());
         writer.writeUnsignedInt(sizeInBytes);
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("Level String", this.levelString);
+        return propertyList;
     }
 }

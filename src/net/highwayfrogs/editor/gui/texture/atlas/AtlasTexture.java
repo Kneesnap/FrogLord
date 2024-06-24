@@ -92,7 +92,7 @@ public class AtlasTexture extends Texture {
             this.x = value;
             this.atlasCachedImageInvalid = true;
             this.meshTextureCoordsInvalid = true;
-            this.atlas.markPositionsDirty();
+            this.atlas.markImageDirty();
         }
     }
 
@@ -108,7 +108,7 @@ public class AtlasTexture extends Texture {
             this.y = value;
             this.atlasCachedImageInvalid = true;
             this.meshTextureCoordsInvalid = true;
-            this.atlas.markPositionsDirty();
+            this.atlas.markImageDirty();
         }
     }
 
@@ -125,14 +125,14 @@ public class AtlasTexture extends Texture {
         if (y < 0)
             throw new IndexOutOfBoundsException("Y cannot be set below 0! (Got: " + y + ")");
 
-        boolean positionChanged = (this.x != x) || (this.x != y);
+        boolean positionChanged = (this.x != x) || (this.y != y);
 
         this.x = x;
         this.y = y;
         if (positionChanged) {
             this.atlasCachedImageInvalid = true;
             this.meshTextureCoordsInvalid = true;
-            this.atlas.markPositionsDirty();
+            this.atlas.markImageDirty();
         }
     }
 

@@ -33,8 +33,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygon> extends MeshUIManager<TMesh> {
     private DisplayList vertexDisplayList;
-    @Getter private UISidePanel sidePanel;
-    @Getter private BakedLandscapePolygonShadingEditor shadingEditor;
+    @Getter protected UISidePanel sidePanel;
+    @Getter private BakedLandscapePolygonShadingEditor<TPolygon> shadingEditor;
     @Getter private ImageView imagePreview;
 
     // 3D selection of current polygon.
@@ -43,10 +43,10 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
     @Getter private AtomicReference<MeshView>[] vertexGizmos;
     @Getter private Sphere[] vertexSpheres;
 
-    private static final PhongMaterial MATERIAL_GREEN = Utils.makeSpecialMaterial(Color.LIME);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeSpecialMaterial(Color.YELLOW);
-    private static final PhongMaterial MATERIAL_RED = Utils.makeSpecialMaterial(Color.RED);
-    private static final PhongMaterial MATERIAL_BLUE = Utils.makeSpecialMaterial(Color.BLUE);
+    private static final PhongMaterial MATERIAL_GREEN = Utils.makeUnlitSharpMaterial(Color.LIME);
+    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_RED = Utils.makeUnlitSharpMaterial(Color.RED);
+    private static final PhongMaterial MATERIAL_BLUE = Utils.makeUnlitSharpMaterial(Color.BLUE);
     public static final PhongMaterial[] VERTEX_MATERIALS = {MATERIAL_YELLOW, MATERIAL_GREEN, MATERIAL_RED, MATERIAL_BLUE};
 
     public static final UUID VERTEX_POSITION_EDITOR_ID = UUID.randomUUID();
@@ -62,14 +62,16 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
         this.vertexDisplayList = getRenderManager().createDisplayList();
 
         // Unchanging UI Fields
-        this.sidePanel = getController().createSidePanel("Landscape Polygon Information", true);
+        if (this.sidePanel == null)
+            this.sidePanel = getController().createSidePanel("Landscape Polygon Information", true);
         GUIEditorGrid mainGrid = this.sidePanel.makeEditorGrid();
-        this.sidePanel.setVisible(false);
+        if (isSidePaneHiddenWhenNoPolygon())
+            this.sidePanel.setVisible(false);
 
         // Setup Image Preview
         this.imagePreview = new ImageView();
-        this.imagePreview.setFitWidth(256);
-        this.imagePreview.setFitHeight(256);
+        this.imagePreview.setFitWidth(200);
+        this.imagePreview.setFitHeight(200);
         mainGrid.addCenteredImageView(this.imagePreview);
 
         // Setup Shading Editor
@@ -88,6 +90,20 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
     }
 
     /**
+     * Test if a polygon is selected.
+     */
+    public boolean isPolygonSelected() {
+        return this.selectedPolygon != null;
+    }
+
+    /**
+     * If this is set, the side panel should be hidden when there is no polygon selected.
+     */
+    public boolean isSidePaneHiddenWhenNoPolygon() {
+        return true;
+    }
+
+    /**
      * Returns the overlay node used to highlight polygons.
      * If null is returned, polygon highlighting will not occur.
      */
@@ -96,7 +112,7 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
     /**
      * Creates the shading editor.
      */
-    protected abstract BakedLandscapePolygonShadingEditor createShadingEditor();
+    protected abstract BakedLandscapePolygonShadingEditor<TPolygon> createShadingEditor();
 
     /**
      * Creates a polygon shade definition for the polygon.
@@ -155,14 +171,14 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
 
         // No new polygon to select.
         if (polygon == null) {
-            this.shadingEditor.setShadeDefinition(null);
+            this.shadingEditor.setShadeDefinition(null, null);
             return;
         }
 
         // Find the mesh entry representing the target polygon.
         DynamicMeshDataEntry polygonMeshEntry = getMeshEntryForPolygon(polygon);
         if (polygonMeshEntry == null) {
-            this.shadingEditor.setShadeDefinition(null);
+            this.shadingEditor.setShadeDefinition(null, null);
             return;
         }
 
@@ -191,7 +207,7 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
         }
 
         // Update Editor UI
-        this.shadingEditor.setShadeDefinition(createPolygonShadeDefinition(polygon));
+        this.shadingEditor.setShadeDefinition(polygon, createPolygonShadeDefinition(polygon));
         this.sidePanel.requestFocus();
     }
 
@@ -202,12 +218,12 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
     }
 
     @Getter
-    public static abstract class BakedLandscapePolygonShadingEditor extends PSXShadingEditor {
+    public static abstract class BakedLandscapePolygonShadingEditor<TPolygon> extends PSXShadingEditor<TPolygon> {
         private final BakedLandscapeUIManager<?, ?> manager;
         private final IPositionChangeListener vertexPositionChangeListener;
 
         public BakedLandscapePolygonShadingEditor(BakedLandscapeUIManager<?, ?> manager) {
-            super(null, manager.getImagePreview());
+            super(null, null, manager.getImagePreview());
             this.manager = manager;
             this.vertexPositionChangeListener = this::onVertexPositionChangeReceived;
         }
@@ -268,15 +284,16 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
         protected abstract void onVertexPositionChange(MeshView meshView, int localVertexIndex, double oldX, double oldY, double oldZ, double newX, double newY, double newZ, int flags);
 
         @Override
-        public void setShadeDefinition(PSXShadeTextureDefinition shadeDefinition) {
+        public void setShadeDefinition(TPolygon polygon, PSXShadeTextureDefinition shadeDefinition) {
             boolean oldDefinitionExisted = getShadeDefinition() != null;
             boolean newDefinitionExists = (shadeDefinition != null);
-            super.setShadeDefinition(shadeDefinition);
+            super.setShadeDefinition(polygon, shadeDefinition);
 
             if (!oldDefinitionExisted && newDefinitionExists) {
                 this.manager.getSidePanel().requestFocus();
             } else if (oldDefinitionExisted && !newDefinitionExists) {
-                this.manager.getSidePanel().setVisible(false);
+                if (this.manager.isSidePaneHiddenWhenNoPolygon())
+                    this.manager.getSidePanel().setVisible(false);
             }
         }
     }

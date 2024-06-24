@@ -6,8 +6,8 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
-import net.highwayfrogs.editor.file.PALFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.utils.Utils;
@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.utils.Utils;
  * Allows changing palette files.
  * Created by Kneesnap on 3/4/2019.
  */
-public class PaletteController extends SCFileEditorUIController<SCGameInstance, PALFile> {
+public class PaletteController extends SCFileEditorUIController<SCGameInstance, FroggerPaletteFile> {
     @FXML private ColorPicker colorPicker;
     @FXML private ListView<Color> colorList;
     @FXML private ImageView paletteImageView;
@@ -30,7 +30,7 @@ public class PaletteController extends SCFileEditorUIController<SCGameInstance, 
     }
 
     @Override
-    public void setTargetFile(PALFile file) {
+    public void setTargetFile(FroggerPaletteFile file) {
         super.setTargetFile(file);
 
         // If you click on a color in the palette image, select that color.

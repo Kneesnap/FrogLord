@@ -154,6 +154,19 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
     }
 
     /**
+     * Opens the window and waits.
+     */
+    public void openWindowAndWait() {
+        Stage stage = getStage();
+        if (stage == null) {
+            getLogger().warning("Could not open the window, since the Stage was null!");
+            return;
+        }
+
+        stage.showAndWait();
+    }
+
+    /**
      * Resizes the window to the scene.
      */
     public void resizeWindow() {

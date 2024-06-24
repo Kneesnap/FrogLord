@@ -4,7 +4,9 @@ import javafx.scene.Node;
 import javafx.scene.control.TitledPane;
 import javafx.scene.input.KeyEvent;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
+import net.highwayfrogs.editor.gui.editor.MeshViewFrameTimer.MeshViewFixedFrameRateTimer;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -24,6 +26,13 @@ public class MeshUIManager<TMesh extends DynamicMesh> {
     }
 
     /**
+     * Gets the game instance which this ui manager exists for.
+     */
+    public GameInstance getGameInstance() {
+        return this.controller != null ? this.controller.getGameInstance() : null;
+    }
+
+    /**
      * Get the logger for this manager.
      */
     public Logger getLogger() {
@@ -31,6 +40,15 @@ public class MeshUIManager<TMesh extends DynamicMesh> {
             return this.cachedLogger;
 
         return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
+    }
+
+    /**
+     * Gets the frame timer for the given frame-rate.
+     * @param framesPerSecond the frame-rate to get the timer for
+     * @return frameTimer
+     */
+    public MeshViewFixedFrameRateTimer getFrameTimer(int framesPerSecond) {
+        return this.controller != null ? this.controller.getFrameTimer().getOrCreateTimer(framesPerSecond) : null;
     }
 
     /**
@@ -44,6 +62,13 @@ public class MeshUIManager<TMesh extends DynamicMesh> {
      * Called when the manager is shutdown.
      */
     public void onRemove() {
+        // Do nothing, this is for overriding.
+    }
+
+    /**
+     * Called to add nodes which render last.
+     */
+    public void setupNodesWhichRenderLast() {
         // Do nothing, this is for overriding.
     }
 
@@ -69,7 +94,7 @@ public class MeshUIManager<TMesh extends DynamicMesh> {
     }
 
     /**
-     * Gets the MapMesh this manages.
+     * Gets the mesh this manages.
      * @return mapMesh
      */
     public TMesh getMesh() {

@@ -5,10 +5,10 @@ import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Function;
@@ -95,7 +95,7 @@ public class PCMapBook extends MapBook {
     }
 
     @Override
-    public WADFile getWad(MAPFile map) {
+    public WADFile getWad(FroggerMapFile map) {
         if (this.lowMapId == map.getIndexEntry().getResourceId())
             return getGameInstance().getGameFile(this.lowWadId);
 

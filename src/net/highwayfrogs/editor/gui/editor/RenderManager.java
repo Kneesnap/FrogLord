@@ -9,8 +9,8 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +69,7 @@ public class RenderManager {
     public void addDisplayList(String listID) {
         if (!displayListCache.containsKey(listID)) {
             // Create a new list keyed on the provided ID
-            displayListCache.put(listID, new LinkedList<>());
+            displayListCache.put(listID, new ArrayList<>());
         } else {
             // A list already exists keyed on the provided ID
             throw new RuntimeException("RenderManager::addDisplayList() - " + listID + " already exists!");

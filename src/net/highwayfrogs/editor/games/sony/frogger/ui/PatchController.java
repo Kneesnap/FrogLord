@@ -212,7 +212,7 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
     public static void loadPatches(IGameType gameType) {
         getPatches().clear();
 
-        for (URL patchLocation : Utils.getFilesInDirectory(gameType.getEmbeddedResourceURL("patches"), true)) {
+        for (URL patchLocation : Utils.getInternalResourceFilesInDirectory(gameType.getEmbeddedResourceURL("patches"), true)) {
             try {
                 Config config = new Config(patchLocation.openStream());
                 GamePatch loadPatch = new GamePatch();

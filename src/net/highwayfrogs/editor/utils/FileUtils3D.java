@@ -6,16 +6,6 @@ import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.MAPTheme;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyFlat;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyGouraud;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureTreeNode;
 import net.highwayfrogs.editor.file.mof.*;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.mof.animation.MOFAnimationCels;
@@ -35,6 +25,8 @@ import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.blocks.*;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMFrameAnimationsBlock.MMAnimationFrame;
@@ -44,10 +36,8 @@ import net.highwayfrogs.editor.system.mm3d.blocks.MMSkeletalAnimationBlock.MMSke
 import net.highwayfrogs.editor.system.mm3d.blocks.MMWeightedInfluencesBlock.MMWeightedInfluenceType;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMWeightedInfluencesBlock.MMWeightedPositionType;
 
-import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.PrintWriter;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -191,12 +181,12 @@ public class FileUtils3D {
      * @param directory The directory to export it to.
      */
     @SneakyThrows
-    public static void exportMapToObj(MAPFile map, File directory) {
-        if (directory == null)
+    public static void exportMapToObj(FroggerMapFile map, File directory) {
+        /*if (directory == null)
             return;
 
         FileEntry entry = map.getIndexEntry();
-        VLOArchive vloArchive = map.getVlo();
+        VLOArchive vloArchive = map.getVloFile();
         TextureMap textureMap = TextureMap.newTextureMap(map, ShadingMode.NO_SHADING);
         String cleanName = Utils.getRawFileName(entry.getDisplayName());
         boolean exportTextures = vloArchive != null;
@@ -321,7 +311,7 @@ public class FileUtils3D {
             ImageIO.write(textureMap.getTextureTree().getImage(), "png", new File(directory, cleanName + ".png"));
         }
 
-        System.out.println("Export complete.");
+        System.out.println("Export complete.");*/ // TODO: ENABLE LATER.
     }
 
     /**
@@ -581,7 +571,7 @@ public class FileUtils3D {
         }
 
         boolean isReplacementAnimated = model.getSkeletalAnimations().size() > 0;
-        boolean isUnsafeReplacementArea = (holder.getTheme() == null || holder.getTheme() == MAPTheme.GENERAL);
+        boolean isUnsafeReplacementArea = (holder.getTheme() == null || holder.getTheme() == FroggerMapTheme.GENERAL);
         if (isUnsafeReplacementArea && (isReplacementAnimated != holder.isAnimatedMOF())) { // Any model which is accessed directly by the game code via hardcoded ids is assumed to be a certain type by the code, and we should not change this type.
             Utils.makePopUp("This " + (holder.isAnimatedMOF() ? "animated" : "static") + " model cannot be overwritten by a " + (isReplacementAnimated ? "animated" : "static") + " model.", AlertType.ERROR);
             return;

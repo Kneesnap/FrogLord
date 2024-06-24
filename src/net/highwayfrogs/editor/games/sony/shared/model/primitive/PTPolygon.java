@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
+import net.highwayfrogs.editor.games.sony.shared.model.meshview.PTModelMesh;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 
 import java.util.Arrays;
@@ -251,7 +252,7 @@ public class PTPolygon extends SCGameData<SCGameInstance> implements IPTPrimitiv
     /**
      * Creates a texture shade definition for this polygon.
      */
-    public PSXShadeTextureDefinition createPolygonShadeDefinition(boolean enableGouraudShading) {
+    public PSXShadeTextureDefinition createPolygonShadeDefinition(PTModelMesh modelMesh, boolean enableGouraudShading) {
         PTPrimitiveType polygonType = getPolygonType();
         boolean isSemiTransparent = isSemiTransparent();
 
@@ -272,7 +273,7 @@ public class PTPolygon extends SCGameData<SCGameInstance> implements IPTPrimitiv
 
         // Create definition.
         ITextureSource textureSource = polygonType.isTextured() ? getTexture() : null;
-        return new PSXShadeTextureDefinition(polygonType.getUnderlyingType(), textureSource, colors, uvs, isSemiTransparent, false);
+        return new PSXShadeTextureDefinition(modelMesh.getShadedTextureManager(), polygonType.getUnderlyingType(), textureSource, colors, uvs, isSemiTransparent);
     }
 
     /**

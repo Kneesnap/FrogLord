@@ -98,7 +98,7 @@ public class ScriptEditorController extends GameUIController<FroggerGameInstance
 
             if (foundAny)
                 results.append(", ");
-            results.append(entry.getFormName());
+            results.append(entry.getFormTypeName());
             foundAny = true;
         }
 

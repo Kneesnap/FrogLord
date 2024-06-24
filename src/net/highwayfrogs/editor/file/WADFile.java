@@ -5,7 +5,6 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.map.MAPTheme;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.packers.PP20Packer;
@@ -18,6 +17,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.WADController;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
@@ -35,7 +35,7 @@ import java.util.List;
 @Getter
 public class WADFile extends SCSharedGameFile {
     private final List<WADEntry> files = new ArrayList<>();
-    private MAPTheme theme;
+    private FroggerMapTheme theme;
 
     public static String CURRENT_FILE_NAME = null;
     public static final int TYPE_ID = -1;
@@ -48,7 +48,7 @@ public class WADFile extends SCSharedGameFile {
     @Override
     public void load(DataReader reader) {
         ThemeBook themeBook = getIndexEntry().getThemeBook();
-        this.theme = themeBook != null ? themeBook.getTheme() : MAPTheme.getTheme(getFileDisplayName());
+        this.theme = themeBook != null ? themeBook.getTheme() : FroggerMapTheme.getTheme(getFileDisplayName());
 
         while (true) {
             int resourceId = reader.readInt();
@@ -88,7 +88,10 @@ public class WADFile extends SCSharedGameFile {
             file.setRawFileData(data);
 
             try {
-                file.load(new DataReader(new ArraySource(data)));
+                DataReader wadFileReader = new DataReader(new ArraySource(data));
+                file.load(wadFileReader);
+                if (wadFileReader.hasMore() && file.warnIfEndNotReached())
+                    file.getLogger().warning("File contents were read to index " + Utils.toHexString(wadFileReader.getIndex()) + ", leaving " + wadFileReader.getRemaining() + " bytes unread. (Length: " + Utils.toHexString(wadFileReader.getSize()) + ")");
             } catch (Exception ex) {
                 Utils.handleError(getLogger(), ex, false, "Failed to load %s. (%d)", CURRENT_FILE_NAME, resourceId);
 

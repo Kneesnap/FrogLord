@@ -76,24 +76,10 @@ public class kcScriptListInterim extends GameData<GreatQuestInstance> {
     /**
      * Finds a script effect written at a given offset from the first byte of script effect data.
      * @param byteOffset The offset (in bytes) to lookup.
-     * @return Returns the index of the effect in the list, or null.
+     * @return Returns the index of the effect in the list, or an insertion index.
      */
     public int getEffectByOffset(long byteOffset) {
-        int left = 0, right = this.effects.size() - 1;
-
-        while (left <= right) {
-            int mid = (left + right) / 2;
-            kcInterimScriptEffect midEffect = this.effects.get(mid);
-            if (midEffect.getDataOffset() == byteOffset) {
-                return mid;
-            } else if (byteOffset > midEffect.getDataOffset()) {
-                left = mid + 1;
-            } else {
-                right = mid - 1;
-            }
-        }
-
-        return -1;
+        return Utils.binarySearch(this.effects, byteOffset, kcInterimScriptEffect::getDataOffset);
     }
 
     @Override

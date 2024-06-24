@@ -387,7 +387,7 @@ public class FXFloatArrayBatcher {
     public void addAll(float... elements) {
         // These values are added to the end of the array.
         // There is no performance benefit to batching values added to the end of the array.
-        int insertIndex = this.array.getLength();
+        int insertIndex = this.array.size();
         this.array.addAll(elements);
         onRangeInsertionComplete(insertIndex, elements.length);
     }

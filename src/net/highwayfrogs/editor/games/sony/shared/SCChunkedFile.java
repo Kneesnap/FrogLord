@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
@@ -135,11 +136,11 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
                     SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> nextPacket = lastPacket != null ? lastPacket.findNextPacketWithKnownAddress() : null;
 
                     if (nextPacket != null) {
-                        getLogger().warning("The packet '" + Utils.toMagicString(identifier) + "' could not be identified at " + Utils.toHexString(packetReadStartIndex) + " (did the previous packet finish reading at the right spot?). Attempting to continue from '" + nextPacket.getIdentifierString() + "'.");
+                        getLogger().warning("The packet '" + Utils.toMagicString(identifier) + "' could not be identified at " + Utils.toHexString(packetReadStartIndex) + " (did the previous packet '" + lastPacket.getIdentifierString() + "' finish reading at the right spot?). Attempting to continue from '" + nextPacket.getIdentifierString() + "'. (Address: " + Utils.toHexString(nextPacket.getKnownStartAddress()) + ")");
                         reader.setIndex(nextPacket.getKnownStartAddress());
                         lastPacket = nextPacket;
                     } else {
-                        getLogger().warning("The packet '" + Utils.toMagicString(identifier) + "' could not be identified at " + Utils.toHexString(packetReadStartIndex) + " (did the previous packet finish reading at the right spot?), and due to the questionable byte size (" + size + "), further reading has terminated.");
+                        getLogger().warning("The packet '" + Utils.toMagicString(identifier) + "' could not be identified at " + Utils.toHexString(packetReadStartIndex) + " (did the previous packet " + (lastPacket != null ? "'" + lastPacket.getIdentifierString() + "' " : "") + "finish reading at the right spot?), and due to the questionable byte size (" + size + "), further reading has terminated.");
                         reader.skipBytes(reader.getRemaining());
                     }
                 }
@@ -151,6 +152,16 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
         // Warn if there are missing bytes.
         if (reader.hasMore())
             getLogger().warning("Chunked file reading finished, but it still has " + reader.getRemaining() + " unprocessed bytes.");
+
+        // Run second pass.
+        for (int i = 0; i < this.filePackets.size(); i++) {
+            SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> packet = this.filePackets.get(i);
+            if (packet.isActive() && packet.getLastValidReadBodyAddress() >= 0) {
+                reader.jumpTemp(packet.getLastValidReadBodyAddress());
+                packet.loadBodySecondPass(reader, packet.getLastValidReadSize() >= 0 ? (packet.getLastValidReadBodyAddress() + packet.getLastValidReadSize()) : -1);
+                reader.jumpReturn();
+            }
+        }
     }
 
     /**
@@ -190,6 +201,20 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
         propertyList.add("Active Packet Count", getActivePacketCount());
+
+        // Get a list of active packets.
+        StringBuilder activePackets = new StringBuilder();
+        for (int i = 0; i < this.filePackets.size(); i++) {
+            SCFilePacket<?, TGameInstance> filePacket = this.filePackets.get(i);
+            if (filePacket.isActive()) {
+                if (activePackets.length() > 0)
+                    activePackets.append(", ");
+                activePackets.append(filePacket.getIdentifierString());
+            }
+        }
+        propertyList.add("Active Packets", activePackets);
+
+        // Add properties in chunk packets.
         for (int i = 0; i < this.filePackets.size(); i++) {
             SCFilePacket<?, TGameInstance> filePacket = this.filePackets.get(i);
             if (filePacket.isActive() && filePacket instanceof IPropertyListCreator)
@@ -221,6 +246,8 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
         private int lastValidWriteSize = -1;
         private Logger cachedLogger;
         private boolean active;
+        private boolean loading;
+        private boolean saving;
 
         public SCFilePacket(TFile parentFile, String identifier, boolean required, PacketSizeType sizeType) {
             this.parentFile = parentFile;
@@ -228,6 +255,13 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             this.identifierInteger = Utils.makeIdentifier(identifier);
             this.active = this.required = required;
             this.sizeType = sizeType;
+        }
+
+        /**
+         * Gets the game config.
+         */
+        public SCGameConfig getConfig() {
+            return this.parentFile.getConfig();
         }
 
         /**
@@ -300,11 +334,14 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             // Read data body.
             boolean threwError = false;
             try {
+                this.loading = true;
                 this.loadBody(reader, expectedEndPosition);
                 this.active = true;
             } catch (Throwable th) {
                 threwError = true;
                 Utils.handleError(getLogger(), th, false, "An error occurred while reading the '%s' packet data.", getIdentifierString());
+            } finally {
+                this.loading = false;
             }
 
             // Automatically align to the next section.
@@ -318,10 +355,10 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
                 SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> bestNextPacket = findNextPacketWithKnownAddress();
 
                 if (bestNextPacket != null) {
-                    getLogger().warning("Failed while reading packet '" + getIdentifierString() + "' at " + Utils.toHexString(this.lastValidReadHeaderAddress) + ". Attempting to continue from '" + bestNextPacket.getIdentifierString() + "'.");
+                    getLogger().warning("The packet '" + getIdentifierString() + "' was not read to completion (Start: " + Utils.toHexString(this.lastValidReadHeaderAddress) + ", Reading Stopped: " + Utils.toHexString(reader.getIndex()) + "). Attempting to continue from '" + bestNextPacket.getIdentifierString() + "'. (Address: " + Utils.toHexString(bestNextPacket.getKnownStartAddress()) + ")");
                     reader.setIndex(bestNextPacket.getKnownStartAddress());
                 } else {
-                    getLogger().warning("Failed in an unrecoverable manner when reading '" + getIdentifierString() + "' at " + Utils.toHexString(this.lastValidReadHeaderAddress) + ".");
+                    getLogger().warning("Failed in an unrecoverable manner when reading '" + getIdentifierString() + "' at " + Utils.toHexString(this.lastValidReadHeaderAddress) + ". (Reading Stopped: " + Utils.toHexString(reader.getIndex()) + ")");
                     reader.skipBytes(reader.getRemaining());
                 }
             }
@@ -349,6 +386,16 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
         protected abstract void loadBody(DataReader reader, int endIndex);
 
         /**
+         * Reads the packet body data from the reader.
+         * This is for data which is unknown until after the first pass completes.
+         * @param reader The reader to read body data from.
+         * @param endIndex The reader index which indicates the end of the data. This value is -1 if the data end position is unknown.
+         */
+        protected void loadBodySecondPass(DataReader reader, int endIndex) {
+            // By default, do nothing.
+        }
+
+        /**
          * Writes this packet to the writer.
          * @param writer The writer to write data to.
          */
@@ -360,11 +407,14 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             // Write body data.
             this.lastValidWriteBodyAddress = writer.getIndex();
             try {
+                this.saving = true;
                 this.saveBodyFirstPass(writer);
             } catch (Throwable th) {
                 String errorMessage = "An error occurred while saving the '" + getIdentifierString() + "' packet data.";
                 getLogger().throwing("SCChunkedFile", "save", new RuntimeException(errorMessage));
                 throw new RuntimeException(th);
+            } finally {
+                this.saving = false;
             }
 
             // Automatically align to the next section.
@@ -373,9 +423,9 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             // Write size, if there is one.
             int sizeValue = -1;
             if (this.sizeType == PacketSizeType.SIZE_EXCLUSIVE) {
-                sizeValue = writer.getIndex() - this.lastValidReadBodyAddress;
+                sizeValue = writer.getIndex() - this.lastValidWriteBodyAddress;
             } else if (this.sizeType == PacketSizeType.SIZE_INCLUSIVE) {
-                sizeValue = writer.getIndex() - this.lastValidReadHeaderAddress;
+                sizeValue = writer.getIndex() - this.lastValidWriteHeaderAddress;
             }
 
             if (sizeValue >= 0 && hasSize()) {
@@ -408,6 +458,27 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
          */
         public int getKnownStartAddress() {
             return -1;
+        }
+
+        /**
+         * Gets the index of the value in the list.
+         * If the value is not seen in the list, AND the chunk is loading, an index at the end of the list will be provided.
+         * This is primarily used for identifying indices when debugging.
+         * @param list the list to find the index from
+         * @param value the value to lookup
+         * @return index
+         * @param <TElement> the type of elements in the list.
+         */
+        public <TElement> int getLoadingIndex(List<TElement> list, TElement value) {
+            if (list == null)
+                return -1;
+
+            int index = list.indexOf(value);
+            if (index == -1 && this.loading) {
+                return list.size();
+            } else {
+                return index;
+            }
         }
 
         public enum PacketSizeType {

@@ -44,10 +44,12 @@ public class OldFroggerFormUIManager extends OldFroggerMapListManager<OldFrogger
 
         // Allow changing form.
         OldFroggerMapFormInstancePacket formPacket = getMap().getFormInstancePacket();
-        getMainGrid().addIntegerField("Form Table Size", formPacket.getFormTableSize(), newFormTableSize -> {
+        getMainGrid().addUnsignedShortField("Form Table Size", formPacket.getFormTableSize(),
+                newFormTableSize -> formPacket.getForms().isEmpty() || newFormTableSize > formPacket.getForms().get(formPacket.getForms().size() - 1).getFormType(),
+                newFormTableSize -> {
             formPacket.setFormTableSize(newFormTableSize);
             updateEditor();
-        }, newFormTableSize -> newFormTableSize > 0 && newFormTableSize < 65536 && (formPacket.getForms().isEmpty() || newFormTableSize > formPacket.getForms().get(formPacket.getForms().size() - 1).getFormType()));
+        });
     }
 
     @Override

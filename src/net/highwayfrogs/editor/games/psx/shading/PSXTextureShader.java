@@ -4,10 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.IndexBitArray;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArray;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -36,7 +39,12 @@ public class PSXTextureShader {
     private final CVector tempColorVector1 = new CVector();
     private final CVector tempColorVector2 = new CVector();
     private final CVector tempColorVector3 = new CVector();
-    private static final int GOURAUD_PADDING_PIXELS = 2;
+    private final IndexBitArray pixelPosSeen = new IndexBitArray();
+    private final IndexBitArray firstLayerPixelShadePositions = new IndexBitArray();
+    private final FXIntArray pixelPosBuffer = new FXIntArray();
+    private static final int DEFAULT_SHADING_EXPANSION_LAYERS = 4; // 2 seems to be the minimum which fully covers the polygons. There are a few diagonal polygons in VOL2.MAP that seem like they need some help, but I don't think the issue is with this constant.
+    public static final int UNSHADED_COLOR_ARGB = 0x80808080;
+    public static final CVector UNSHADED_COLOR = CVector.makeColorFromRGB(UNSHADED_COLOR_ARGB);
 
     private PSXTextureShader() {
         for (int i = 0; i < this.triangleCoordinates.length; i++)
@@ -65,12 +73,14 @@ public class PSXTextureShader {
 
         /**
          * Load the texture coordinates from a texture UV.
-         * @param textureSource  The texture source
-         * @param uv     The uv to load coordinates from.
+         * @param textureSource The texture source
+         * @param uv The uv to load coordinates from.
+         * @param scaleX The horizontal texture scaling factor. (Default = 1, which indicates no scaling)
+         * @param scaleY The vertical texture scaling factor. (Default = 1, which indicates no scaling)
          */
-        public void loadUV(ITextureSource textureSource, SCByteTextureUV uv) {
-            this.x = textureSource.getLeftPadding() + (int) (uv.getFloatU() * textureSource.getUnpaddedWidth());
-            this.y = textureSource.getUpPadding() + (int) (uv.getFloatV() * textureSource.getUnpaddedHeight());
+        public void loadUV(ITextureSource textureSource, SCByteTextureUV uv, int scaleX, int scaleY) {
+            this.x = (scaleX * textureSource.getLeftPadding()) + (int) (uv.getFloatU() * ((scaleX * textureSource.getUnpaddedWidth()) - 1));
+            this.y = (scaleY * textureSource.getUpPadding()) + (int) (uv.getFloatV() * ((scaleY * textureSource.getUnpaddedHeight()) - 1));
         }
     }
 
@@ -83,22 +93,26 @@ public class PSXTextureShader {
 
     /**
      * Makes a gouraud shaded, untextured image (POLY_G3 / POLY_G4)
-     * @param colors The colors to apply to the image. (8 bits, 0 - 255)
-     * @return gouraudShadedImage
-     */
-    public static BufferedImage makeGouraudShadedImage(CVector[] colors) {
-        return makeGouraudShadedImage(PSXShadeTextureDefinition.UNTEXTURED_GOURAUD_SIZE, PSXShadeTextureDefinition.UNTEXTURED_GOURAUD_SIZE, colors);
-    }
-
-    /**
-     * Makes a gouraud shaded, untextured image (POLY_G3 / POLY_G4)
      * @param width  The width of the image.
      * @param height The height of the image.
      * @param colors The colors to apply to the image. (8 bits, 0 - 255)
      * @return gouraudShadedImage
      */
     public static BufferedImage makeGouraudShadedImage(int width, int height, CVector[] colors) {
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        return makeGouraudShadedImage(null, width, height, colors);
+    }
+
+    /**
+     * Makes a gouraud shaded, untextured image (POLY_G3 / POLY_G4)
+     * @param targetImage The image to write the shaded data to. If null, a new one will be created.
+     * @param width  The width of the image.
+     * @param height The height of the image.
+     * @param colors The colors to apply to the image. (8 bits, 0 - 255)
+     * @return gouraudShadedImage
+     */
+    public static BufferedImage makeGouraudShadedImage(BufferedImage targetImage, int width, int height, CVector[] colors) {
+        if (targetImage == null)
+            targetImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
         int startX = PSXShadeTextureDefinition.UNTEXTURED_PADDING_SIZE;
         int startY = PSXShadeTextureDefinition.UNTEXTURED_PADDING_SIZE;
@@ -106,12 +120,15 @@ public class PSXTextureShader {
         int endY = height - PSXShadeTextureDefinition.UNTEXTURED_PADDING_SIZE - 1;
 
         PSXTextureShader instance = getInstance();
+        instance.getFirstLayerPixelShadePositions().clear();
+        instance.getPixelPosSeen().clear();
+        instance.getPixelPosBuffer().clear();
         TextureCoordinate[] coordinates = instance.getTriangleCoordinates();
         if (colors.length == 3) {
             coordinates[0].setXY(startX, startY);
-            coordinates[1].setXY(startX, endY);
-            coordinates[2].setXY(endX, startY);
-            shadeTriangle(null, image, colors, coordinates, true);
+            coordinates[1].setXY(endX, startY);
+            coordinates[2].setXY(startX, endY);
+            shadeTriangle(instance, null, targetImage, colors, coordinates);
         } else if (colors.length == 4) {
             CVector[] triangleColors = instance.getTriangleColors();
 
@@ -122,7 +139,7 @@ public class PSXTextureShader {
             coordinates[0].setXY(startX, startY);
             coordinates[1].setXY(endX, startY);
             coordinates[2].setXY(startX, endY);
-            shadeTriangle(null, image, triangleColors, coordinates, true);
+            shadeTriangle(instance, null, targetImage, triangleColors, coordinates);
 
             // Right triangle. (width, height is the bottom-right corner)
             triangleColors[0].copyFrom(colors[3]);
@@ -131,33 +148,66 @@ public class PSXTextureShader {
             coordinates[0].setXY(endX, endY);
             coordinates[1].setXY(startX, endY);
             coordinates[2].setXY(endX, startY);
-            shadeTriangle(null, image, triangleColors, coordinates, true);
+            shadeTriangle(instance, null, targetImage, triangleColors, coordinates);
         } else {
             throw new RuntimeException("Can't create gouraud shaded image with " + colors.length + " colors.");
         }
 
-        fillHorizontalPadding(image, true, true);
-        fillVerticalPadding(image, true, true);
-        return image;
+        expandShading(targetImage, instance, DEFAULT_SHADING_EXPANSION_LAYERS);
+        return targetImage;
     }
 
     /**
      * Makes a gouraud shaded, textured image (POLY_GT3 / POLY_GT4)
      * @param originalImage The original image to create this one from.
-     * @param colors        The colors to apply to the image. (8 bits, 0 - 255)
-     * @param textureUvs    The texture uvs to use as the corner of the triangles.
+     * @param textureSource The texture source which the texture came from.
+     * @param colors The colors to apply to the image.
+     * @param textureUvs The texture uvs to use as the corner of the triangles.
+     * @param textureScaleX The horizontal texture scaling factor. (Default = 1, which indicates no scaling)
+     * @param textureScaleY The vertical texture scaling factor. (Default = 1, which indicates no scaling)
+     * @param highlightCorners If true, the corners of the polygon will be colored using the baked lighting polygon vertex colors. (Order: Yellow, Green, Red, Blue)
      * @return gouraudShadedImage
      */
-    public static BufferedImage makeTexturedGouraudShadedImage(BufferedImage originalImage, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUvs, boolean includeLastPixel) {
-        BufferedImage image = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    public static BufferedImage makeTexturedGouraudShadedImage(BufferedImage originalImage, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUvs, int textureScaleX, int textureScaleY, boolean highlightCorners) {
+        return makeTexturedGouraudShadedImage(originalImage, null, textureSource, colors, textureUvs, textureScaleX, textureScaleY, highlightCorners);
+    }
+
+    /**
+     * Makes a gouraud shaded, textured image (POLY_GT3 / POLY_GT4)
+     * @param originalImage The original image to create this one from.
+     * @param targetImage The image to write the shaded data to. If null, a new one will be created.
+     * @param textureSource The texture source which the texture came from.
+     * @param colors The colors to apply to the image.
+     * @param textureUvs The texture uvs to use as the corner of the triangles.
+     * @param textureScaleX The horizontal texture scaling factor. (Default = 1, which indicates no scaling)
+     * @param textureScaleY The vertical texture scaling factor. (Default = 1, which indicates no scaling)
+     * @param highlightCorners If true, the corners of the polygon will be colored using the baked lighting polygon vertex colors. (Order: Yellow, Green, Red, Blue)
+     * @return gouraudShadedImage
+     */
+    public static BufferedImage makeTexturedGouraudShadedImage(BufferedImage originalImage, BufferedImage targetImage, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUvs, int textureScaleX, int textureScaleY, boolean highlightCorners) {
+        if (targetImage == null)
+            targetImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
         PSXTextureShader instance = getInstance();
         TextureCoordinate[] coordinates = instance.getTriangleCoordinates();
+        instance.getFirstLayerPixelShadePositions().clear();
+        instance.getPixelPosSeen().clear();
+        instance.getPixelPosBuffer().clear();
         if (colors.length == 3) {
-            coordinates[0].loadUV(textureSource, textureUvs[0]);
-            coordinates[1].loadUV(textureSource, textureUvs[1]);
-            coordinates[2].loadUV(textureSource, textureUvs[2]);
-            shadeTriangle(originalImage, image, colors, coordinates, includeLastPixel);
+            coordinates[0].loadUV(textureSource, textureUvs[0], textureScaleX, textureScaleY);
+            coordinates[1].loadUV(textureSource, textureUvs[1], textureScaleX, textureScaleY);
+            coordinates[2].loadUV(textureSource, textureUvs[2], textureScaleX, textureScaleY);
+            shadeTriangle(instance, originalImage, targetImage, colors, coordinates);
+
+            // Expand shading, then apply shading to the source image.
+            expandShading(targetImage, instance, DEFAULT_SHADING_EXPANSION_LAYERS);
+            applyShadingToSourceImage(originalImage, targetImage);
+            if (highlightCorners) {
+                targetImage.setRGB(coordinates[0].getX(), coordinates[0].getY(), Color.YELLOW.getRGB());
+                targetImage.setRGB(coordinates[1].getX(), coordinates[1].getY(), Color.GREEN.getRGB());
+                targetImage.setRGB(coordinates[2].getX(), coordinates[2].getY(), Color.RED.getRGB());
+            }
+
         } else if (colors.length == 4) {
             CVector[] triangleColors = instance.getTriangleColors();
 
@@ -165,36 +215,50 @@ public class PSXTextureShader {
             triangleColors[0].copyFrom(colors[0]);
             triangleColors[1].copyFrom(colors[1]);
             triangleColors[2].copyFrom(colors[2]);
-            coordinates[0].loadUV(textureSource, textureUvs[0]);
-            coordinates[1].loadUV(textureSource, textureUvs[1]);
-            coordinates[2].loadUV(textureSource, textureUvs[2]);
-            shadeTriangle(originalImage, image, triangleColors, coordinates, includeLastPixel);
+            coordinates[0].loadUV(textureSource, textureUvs[0], textureScaleX, textureScaleY);
+            coordinates[1].loadUV(textureSource, textureUvs[1], textureScaleX, textureScaleY);
+            coordinates[2].loadUV(textureSource, textureUvs[2], textureScaleX, textureScaleY);
+            shadeTriangle(instance, originalImage, targetImage, triangleColors, coordinates);
 
             // Right triangle.
             triangleColors[0].copyFrom(colors[3]);
             triangleColors[1].copyFrom(colors[2]);
             triangleColors[2].copyFrom(colors[1]);
-            coordinates[0].loadUV(textureSource, textureUvs[3]);
-            coordinates[1].loadUV(textureSource, textureUvs[2]);
-            coordinates[2].loadUV(textureSource, textureUvs[1]);
-            shadeTriangle(originalImage, image, triangleColors, coordinates, includeLastPixel);
+            coordinates[0].loadUV(textureSource, textureUvs[3], textureScaleX, textureScaleY);
+            coordinates[1].loadUV(textureSource, textureUvs[2], textureScaleX, textureScaleY);
+            coordinates[2].loadUV(textureSource, textureUvs[1], textureScaleX, textureScaleY);
+            shadeTriangle(instance, originalImage, targetImage, triangleColors, coordinates);
+
+            // Expand shading, then apply shading to the source image.
+            expandShading(targetImage, instance, DEFAULT_SHADING_EXPANSION_LAYERS);
+            applyShadingToSourceImage(originalImage, targetImage);
+            if (highlightCorners) {
+                targetImage.setRGB(coordinates[0].getX(), coordinates[0].getY(), Color.BLUE.getRGB()); // 3
+                targetImage.setRGB(coordinates[1].getX(), coordinates[1].getY(), Color.RED.getRGB()); // 2
+                targetImage.setRGB(coordinates[2].getX(), coordinates[2].getY(), Color.GREEN.getRGB()); // 1
+                coordinates[0].loadUV(textureSource, textureUvs[0], textureScaleX, textureScaleY);
+                targetImage.setRGB(coordinates[0].getX(), coordinates[0].getY(), Color.YELLOW.getRGB()); // 0
+            }
         } else {
             throw new RuntimeException("Can't create gouraud shaded image with " + colors.length + " colors.");
         }
 
-        return image;
+        return targetImage;
     }
 
     /**
-     * Applies gouraud shading to an image.
-     * @param sourceImage The texture to apply shading to, if one exists.
+     * Draws a gouraud shading triangle onto an image.
+     * @param instance The cached data we can use for the shading.
+     * @param sourceImage The texture to validate against.
      * @param targetImage The image to draw the shaded image onto.
      * @param colors The colors of each triangle vertex.
      * @param vertices The position of each triangle vertex.
      */
-    public static void shadeTriangle(BufferedImage sourceImage, BufferedImage targetImage, CVector[] colors, TextureCoordinate[] vertices, boolean includeLastPixel) {
+    private static void shadeTriangle(PSXTextureShader instance, BufferedImage sourceImage, BufferedImage targetImage, CVector[] colors, TextureCoordinate[] vertices) {
         if (sourceImage != null && (sourceImage.getWidth() != targetImage.getWidth() || sourceImage.getHeight() != targetImage.getHeight()))
             throw new RuntimeException("The source image had dimensions of " + sourceImage.getWidth() + "x" + sourceImage.getHeight() + ", but the target image was " + targetImage.getWidth() + "x" + targetImage.getHeight() + ".");
+
+        int imageWidth = targetImage.getWidth();
 
         // BufferedImage's origin is the top left corner. (Ie: X = 0, Y = 0 is the top left corner)
         // Step 1) Find the scanline bounds.
@@ -235,12 +299,16 @@ public class PSXTextureShader {
         float inverseLeftSlope = (topToLeftHeight != 0) ? (((float) (leftPos.getX() - topPos.getX())) / topToLeftHeight) : Float.NaN;
         float inverseRightSlope = (topToRightHeight != 0) ? (((float) (rightPos.getX() - topPos.getX())) / topToRightHeight) : Float.NaN;
         float inverseLeftRightSlope = (leftToRightHeight != 0) ? (((float) (rightPos.getX() - leftPos.getX())) / leftToRightHeight) : Float.NaN;
-        PSXTextureShader instance = getInstance();
 
         // Draw the scan-lines.
         int lastLeftLineX = -1, lastRightLineX = -1;
-        CVector lastLeftLineColor = null, lastRightLineColor = null;
-        for (int y = Math.max(0, minTriangleY); y <= Math.min(maxTriangleY, targetImage.getHeight() - 1); y++) {
+        IndexBitArray seenPixelPos = instance.getPixelPosSeen();
+        IndexBitArray firstLayerPixelShadePositions = instance.getFirstLayerPixelShadePositions();
+        FXIntArray pixelPosBuffer = instance.getPixelPosBuffer();
+        int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
+        int maxRenderedTriangleY = Math.min(maxTriangleY, targetImage.getHeight() - 1);
+        for (int y = Math.max(0, minTriangleY); y <= maxRenderedTriangleY; y++) {
+            // Calculate the left scanline boundary.
             CVector leftLineColor;
             int leftLineX;
             if (y < leftPos.getY()) { // Interpolate between top vertex and left vertex.
@@ -256,6 +324,7 @@ public class PSXTextureShader {
                 leftLineX = leftPos.getX();
             }
 
+            // Calculate the right scanline boundary.
             CVector rightLineColor;
             int rightLineX;
             if (y < rightPos.getY()) { // Interpolate between top vertex and right vertex.
@@ -281,182 +350,317 @@ public class PSXTextureShader {
                 rightLineColor = tempColor;
             }
 
-            // Write vertical padding under the pixels which stopped getting written after the previous scanline.
-            int paddingMaxTriangleY = Math.min(targetImage.getHeight(), y + GOURAUD_PADDING_PIXELS);
-            for (int x = Math.max(0, lastLeftLineX); x < lastRightLineX; x++) {
-                if (x >= leftLineX && x < rightLineX)
-                    continue; // This position is skipped for padding, since it's part of what we're drawing this line.
+            // Fill a scanline with interpolated pixel shading colors, and mark other areas as having shading.
+            CVector tempInterpolatedColor = instance.getTempColorVector3();
+            int minX = Math.max(0, lastLeftLineX >= 0 ? Math.min(lastLeftLineX, leftLineX) : leftLineX);
+            int maxX = Math.max(lastRightLineX, rightLineX);
+            for (int x = minX; x <= maxX; x++) {
+                int pixelIndex = (y * imageWidth) + x;
 
-                CVector pixelColor = calculatePixelColor(instance.getTempColorVector3(), lastLeftLineColor, lastRightLineColor, lastLeftLineX, lastRightLineX, x);
-                for (int paddingY = y; paddingY < paddingMaxTriangleY; paddingY++)
-                    if (targetImage.getRGB(x, paddingY) == 0)
-                        shadePixel(sourceImage, targetImage, x, paddingY, pixelColor);
+                // The pixel is part of the current scanline.
+                if (x >= leftLineX && x <= rightLineX) {
+                    // Calculate (& write to the image) the interpolated pixel shading color.
+                    int pixelColor = calculatePixelColor(tempInterpolatedColor, leftLineColor, rightLineColor, leftLineX, rightLineX, x);
+                    rawTargetImage[pixelIndex] = pixelColor;
+                    seenPixelPos.setBit(pixelIndex, true);
+
+                    // Test if the pixel is part of the current scanline, but not the previous one. (It needs expansion shading!)
+                    if (y > 0) {
+                        int lastLinePixelIndex = ((y - 1) * imageWidth) + x;
+                        if (!seenPixelPos.getBit(lastLinePixelIndex) && firstLayerPixelShadePositions.setBit(lastLinePixelIndex, true)) {
+                            pixelPosBuffer.add(lastLinePixelIndex);
+                            pixelPosBuffer.add(1); // Different IDs are used for debugging / troubleshooting.
+                        }
+                    }
+                } else {
+                    // The pixel was part of the previous scanline, but not the current one. (It needs expansion shading!)
+                    if (!seenPixelPos.getBit(pixelIndex) && firstLayerPixelShadePositions.setBit(pixelIndex, true)) {
+                        pixelPosBuffer.add(pixelIndex);
+                        pixelPosBuffer.add(2);
+                    }
+                }
             }
 
-            // Fill a scanline.
-            int paddingLeftLineX = leftLineX - GOURAUD_PADDING_PIXELS;
-            int paddingRightLineX = rightLineX + GOURAUD_PADDING_PIXELS;
-            int endOfLineX = Math.min(targetImage.getWidth(), paddingRightLineX);
-            for (int x = Math.max(0, paddingLeftLineX); x < endOfLineX; x++) {
-                // If this is padding data, verify the pixel is empty.
-                // This is here to deal with quads. When we draw a quad, we draw two triangles.
-                // We need to ensure the padding pixels are skipped if there's already another (potentially non-padding) color there.
-                boolean isPadding = (x < leftLineX || (x > rightLineX || (!includeLastPixel && x == rightLineX)));
-                if (isPadding && targetImage.getRGB(x, y) != 0)
-                    continue;
-
-                // Calculate interpolated pixel shading color.
-                CVector pixelColor = calculatePixelColor(instance.getTempColorVector3(), leftLineColor, rightLineColor, leftLineX, rightLineX, x);
-                int pixelRgb = sourceImage != null ? sourceImage.getRGB(Math.max(leftLineX, Math.min(x, rightLineX - (includeLastPixel ? 0 : 1))), y) : 0;
-                shadePixel(sourceImage, targetImage, x, y, pixelRgb, pixelColor);
-
-                // Vertical padding expansion.
-                if (!isPadding) {
-                    // If this is the minimum Y pixel to be part of the triangle in this column, expand the color vertically.
-                    boolean xWrittenLastScanLine = (x >= lastLeftLineX && (x < lastRightLineX || (includeLastPixel && x == lastRightLineX)));
-                    if (!xWrittenLastScanLine) // Write vertical shading extension.
-                        for (int paddingY = Math.max(0, y - GOURAUD_PADDING_PIXELS); paddingY < y; paddingY++)
-                            if (targetImage.getRGB(x, paddingY) == 0)
-                                shadePixel(sourceImage, targetImage, x, paddingY, pixelRgb, pixelColor);
+            // Adds the pixel to the left & right of the line to the shading expansion buffer.
+            if (rightLineX >= leftLineX) {
+                if (leftLineX > 0) {
+                    int pixelIndex = (y * imageWidth) + (leftLineX - 1);
+                    if (!seenPixelPos.getBit(pixelIndex) && firstLayerPixelShadePositions.setBit(pixelIndex, true)) {
+                        pixelPosBuffer.add(pixelIndex);
+                        pixelPosBuffer.add(3);
+                    }
+                }
+                if (rightLineX < targetImage.getWidth() - 1) {
+                    int pixelIndex = (y * imageWidth) + (rightLineX + 1);
+                    if (!seenPixelPos.getBit(pixelIndex) && firstLayerPixelShadePositions.setBit(pixelIndex, true)) {
+                        pixelPosBuffer.add(pixelIndex);
+                        pixelPosBuffer.add(4);
+                    }
                 }
             }
 
             lastLeftLineX = leftLineX;
-            lastRightLineX = Math.min(targetImage.getWidth(), rightLineX);
-            lastLeftLineColor = leftLineColor;
-            lastRightLineColor = rightLineColor;
+            lastRightLineX = rightLineX;
         }
 
-        // Write vertical padding under the pixels which stopped getting written after the final scanline.
-        if (targetImage.getHeight() > maxTriangleY + 1) {
-            int paddingMaxTriangleY = Math.min(targetImage.getHeight(), maxTriangleY + GOURAUD_PADDING_PIXELS);
-            for (int x = Math.max(0, lastLeftLineX); x < lastRightLineX; x++) {
-                CVector pixelColor = calculatePixelColor(instance.getTempColorVector3(), lastLeftLineColor, lastRightLineColor, lastLeftLineX, lastRightLineX, x);
-                for (int paddingY = maxTriangleY + 1; paddingY < paddingMaxTriangleY; paddingY++)
-                    if (targetImage.getRGB(x, paddingY) == 0)
-                        shadePixel(sourceImage, targetImage, x, paddingY, pixelColor);
+        // Mark the line under the final scanline for expansion shading.
+        if (targetImage.getHeight() > maxRenderedTriangleY + 1) {
+            for (int x = Math.max(0, lastLeftLineX); x <= lastRightLineX; x++) {
+                int pixelIndex = ((maxRenderedTriangleY + 1) * imageWidth) + x;
+                if (!seenPixelPos.getBit(pixelIndex) && firstLayerPixelShadePositions.setBit(pixelIndex, true)) {
+                    pixelPosBuffer.add(pixelIndex);
+                    pixelPosBuffer.add(5);
+                }
             }
         }
     }
 
-    private static CVector calculatePixelColor(CVector temp, CVector leftLineColor, CVector rightLineColor, int leftLineX, int rightLineX, int x) {
+    private static int calculatePixelColor(CVector temp, CVector leftLineColor, CVector rightLineColor, int leftLineX, int rightLineX, int x) {
         // Calculate interpolation factor.
         float xLerpFactor = .5F;
         if (leftLineX != rightLineX)
-            xLerpFactor = Math.max(0, Math.min(1, ((float) (x - leftLineX)) / (rightLineX - leftLineX)));
+            xLerpFactor = ((float) (x - leftLineX)) / (rightLineX - leftLineX);
 
         // Apply shading to pixel in scanline.
-        return interpolateCVector(leftLineColor, rightLineColor, xLerpFactor, temp);
-
-    }
-
-    private static void fillHorizontalPadding(BufferedImage targetImage, boolean fillLeftPadding, boolean fillRightPadding) {
-        // Fill in any padding pixels by extending the pixels with color.
-        if (fillRightPadding) {
-            for (int y = 0; y < targetImage.getHeight(); y++) {
-                for (int x = targetImage.getWidth() - 1; x >= 0; x--) {
-                    int pixelColor = targetImage.getRGB(x, y);
-                    if (pixelColor == 0)
-                        continue; // Skip untouched pixels.
-
-                    // Copy the pixels.
-                    while (targetImage.getWidth() > ++x)
-                        targetImage.setRGB(x, y, pixelColor);
-
-                    break;
-                }
-            }
-        }
-
-        if (fillLeftPadding) {
-            for (int y = 0; y < targetImage.getHeight(); y++) {
-                for (int x = 0; x < targetImage.getWidth(); x++) {
-                    int pixelColor = targetImage.getRGB(x, y);
-                    if (pixelColor == 0)
-                        continue; // Skip untouched pixels.
-
-                    // Copy the pixels.
-                    while (x-- > 0)
-                        targetImage.setRGB(x, y, pixelColor);
-
-                    break;
-                }
-            }
-        }
-    }
-
-    private static void fillVerticalPadding(BufferedImage targetImage, boolean fillUpPadding, boolean fillDownPadding) {
-        // Fill in any padding pixels by extending the pixels with color.
-        if (fillDownPadding) {
-            for (int x = 0; x < targetImage.getWidth(); x++) {
-                for (int y = targetImage.getHeight() - 1; y >= 0; y--) {
-                    int pixelColor = targetImage.getRGB(x, y);
-                    if (pixelColor == 0)
-                        continue; // Skip untouched pixels.
-
-                    // Copy the pixels.
-                    while (targetImage.getHeight() > ++y)
-                        targetImage.setRGB(x, y, pixelColor);
-
-                    break;
-                }
-            }
-        }
-
-        if (fillUpPadding) {
-            for (int x = 0; x < targetImage.getWidth(); x++) {
-                for (int y = 0; y < targetImage.getHeight(); y++) {
-                    int pixelColor = targetImage.getRGB(x, y);
-                    if (pixelColor == 0)
-                        continue; // Skip untouched pixels.
-
-                    // Copy the pixels.
-                    while (y-- > 0)
-                        targetImage.setRGB(x, y, pixelColor);
-
-                    break;
-                }
-            }
-        }
-    }
-
-    private static void shadePixel(BufferedImage sourceImage, BufferedImage targetImage, int x, int y, CVector shadeColor) {
-        if (sourceImage != null) {
-            if (x >= 0 && x < sourceImage.getWidth() && y >= 0 && y < sourceImage.getHeight()) {
-                int textureColor = sourceImage.getRGB(x, y);
-                shadePixel(sourceImage, targetImage, x, y, textureColor, shadeColor);
-            }
-        } else {
-            shadePixel(null, targetImage, x, y, 0, shadeColor);
-        }
-    }
-
-    private static void shadePixel(BufferedImage sourceImage, BufferedImage targetImage, int x, int y, int textureColor, CVector shadeColor) {
-        if (x < 0 || x >= targetImage.getWidth() || y < 0 || y >= targetImage.getHeight())
-            return;
-
-        if (sourceImage != null) {
-            byte alpha = Utils.getAlpha(textureColor);
-            // If the value exceeds the max, clamp it to the max.
-            // It's not explicitly mentioned what happens if it goes above 255, but I think clamping it works.
-            // I think "the results can't exceed the maximum brightness, ie. the 5bit values written to the framebuffer are saturated to max 1F" means it's clamped, but I'm not sure.
-            // Reference: https://psx-spx.consoledev.net/graphicsprocessingunitgpu/
-            short red = (short) Math.min(255, (((double) shadeColor.getRedShort() / 128D) * Utils.getRedInt(textureColor)));
-            short green = (short) Math.min(255, (((double) shadeColor.getGreenShort() / 128D) * Utils.getGreenInt(textureColor)));
-            short blue = (short) Math.min(255, (((double) shadeColor.getBlueShort() / 128D) * Utils.getBlueInt(textureColor)));
-            targetImage.setRGB(x, y, Utils.toARGB(Utils.unsignedShortToByte(red), Utils.unsignedShortToByte(green), Utils.unsignedShortToByte(blue), alpha));
-        } else {
-            targetImage.setRGB(x, y, shadeColor.toARGB());
-        }
+        return interpolateCVector(leftLineColor, rightLineColor, xLerpFactor, temp).toARGB();
     }
 
     /**
-     * Makes a flat shaded, untextured image (POLY_F3 / POLY_F4)
-     * @param color The color to apply to the image. (8 bits, 0 - 255)
-     * @return flatShadedImage
+     * Expands the gouraud shading to other parts of the image using flood fill.
+     * This assumes the pixel position buffer has been filled with the edges of the polygon as part of the shadeTriangle() function.
+     * @param targetImage The image to draw the shaded image onto.
+     * @param instance The shader instance to get the data from.
+     * @param maxLayers the maximum number of pixels to write
      */
-    public static BufferedImage makeFlatShadedImage(CVector color) {
-        return makeFlatShadedImage(PSXShadeTextureDefinition.UNTEXTURED_FLAT_SIZE, PSXShadeTextureDefinition.UNTEXTURED_FLAT_SIZE, color);
+    private static void expandShading(BufferedImage targetImage, PSXTextureShader instance, int maxLayers) {
+        // 1) Clear the pixel seen flags from the expansion pixels, since them being set will cause the shading to load from unset pixels.
+        FXIntArray pixelPosBuffer = instance.getPixelPosBuffer();
+        IndexBitArray seenPixelPos = instance.getPixelPosSeen();
+
+        // 2) Calculate the colors for the pixel positions in the buffer.
+        int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
+        for (int i = 0; i < pixelPosBuffer.size(); i += 2) {
+            int pixelPos = pixelPosBuffer.get(i);
+            if (seenPixelPos.getBit(pixelPos)) {
+                pixelPosBuffer.set(i, -1); // Skip this, the image actually did have a pixel get placed here.
+                continue;
+            }
+
+            CVector pixelShadingColor = tryLoadColor(targetImage, rawTargetImage, instance, pixelPos);
+            pixelPosBuffer.set(i + 1, pixelShadingColor != null ? pixelShadingColor.toARGB() : UNSHADED_COLOR_ARGB);
+        }
+
+        // 3) Flood-fill the shading layers.
+        int colorStartIndex = 0;
+        for (int i = 0; i < maxLayers; i++)
+            colorStartIndex = floodFillLayer(targetImage, rawTargetImage, instance, colorStartIndex, i >= maxLayers - 1);
+    }
+
+    private static int floodFillLayer(BufferedImage targetImage, int[] rawTargetImage, PSXTextureShader instance, int colorStartIndex, boolean lastLayer) {
+        FXIntArray pixelPosBuffer = instance.getPixelPosBuffer();
+        IndexBitArray seenPixelPos = instance.getPixelPosSeen();
+        int imageWidth = targetImage.getWidth();
+        int imageHeight = targetImage.getHeight();
+
+        // 1) Fill the colors for the current layer.
+        int nextColorStartIndex = pixelPosBuffer.size();
+        for (int i = colorStartIndex; i < nextColorStartIndex; i += 2) {
+            int currentPixelPos = pixelPosBuffer.get(i);
+            int currentColor = pixelPosBuffer.get(i + 1);
+            if (currentPixelPos >= 0)
+                rawTargetImage[currentPixelPos] = currentColor;
+        }
+
+        // 2) Fill the queue for the next layer.
+        if (!lastLayer) {
+            for (int i = colorStartIndex; i < nextColorStartIndex; i += 2) {
+                int currentPixelPos = pixelPosBuffer.get(i);
+                if (currentPixelPos < 0)
+                    continue;
+
+                int x = currentPixelPos % imageWidth;
+                int y = currentPixelPos / imageWidth;
+
+                // Attempt to load color from the left pixel.
+                if (x > 0) {
+                    int leftPixel = (y * imageWidth) + (x - 1);
+
+                    if (!seenPixelPos.getBit(leftPixel)) { // The nearby pixel needs shading color data.
+                        CVector color = tryLoadColor(targetImage, rawTargetImage, instance, leftPixel);
+                        if (color != null) {
+                            seenPixelPos.setBit(leftPixel, true);
+                            pixelPosBuffer.add(leftPixel);
+                            pixelPosBuffer.add(color.toARGB());
+                        }
+                    }
+                }
+
+                // Attempt to load color from the right pixel.
+                if (x < imageWidth - 1) {
+                    int rightPixel = (y * imageWidth) + (x + 1);
+
+                    if (!seenPixelPos.getBit(rightPixel)) { // The nearby pixel needs shading color data.
+                        CVector color = tryLoadColor(targetImage, rawTargetImage, instance, rightPixel);
+                        if (color != null) {
+                            seenPixelPos.setBit(rightPixel, true);
+                            pixelPosBuffer.add(rightPixel);
+                            pixelPosBuffer.add(color.toARGB());
+                        }
+                    }
+                }
+
+                // Attempt to load color from the upper pixel.
+                if (y > 0) {
+                    int upperPixel = ((y - 1) * imageWidth) + x;
+
+                    if (!seenPixelPos.getBit(upperPixel)) { // The nearby pixel needs shading color data.
+                        CVector color = tryLoadColor(targetImage, rawTargetImage, instance, upperPixel);
+                        if (color != null) {
+                            seenPixelPos.setBit(upperPixel, true);
+                            pixelPosBuffer.add(upperPixel);
+                            pixelPosBuffer.add(color.toARGB());
+                        }
+                    }
+                }
+
+                // Attempt to load color from the lower pixel.
+                if (y < imageHeight - 1) {
+                    int lowerPixel = ((y + 1) * imageWidth) + x;
+
+                    if (!seenPixelPos.getBit(lowerPixel)) { // The nearby pixel needs shading color data.
+                        CVector color = tryLoadColor(targetImage, rawTargetImage, instance, lowerPixel);
+                        if (color != null) {
+                            seenPixelPos.setBit(lowerPixel, true);
+                            pixelPosBuffer.add(lowerPixel);
+                            pixelPosBuffer.add(color.toARGB());
+                        }
+                    }
+                }
+            }
+        }
+
+        // Done.
+        return nextColorStartIndex;
+    }
+
+    private static CVector tryLoadColor(BufferedImage targetImage, int[] rawTargetImage, PSXTextureShader instance, int currentPixelPos) {
+        IndexBitArray seenPixelPos = instance.getPixelPosSeen();
+        CVector color1 = instance.getTempColorVector1();
+        CVector color2 = instance.getTempColorVector2();
+        int imageWidth = targetImage.getWidth();
+        int x = currentPixelPos % imageWidth;
+        int y = currentPixelPos / imageWidth;
+        boolean loadedAnyColorsYet = false;
+
+        // Attempt to load color from the left pixel.
+        if (x > 0) {
+            int leftPixel = (y * imageWidth) + (x - 1);
+
+            if (seenPixelPos.getBit(leftPixel)) { // The nearby pixel has shading color data.
+                int leftPixelColor = rawTargetImage[leftPixel];
+                if (leftPixelColor != 0) {
+                    color1.fromARGB(leftPixelColor);
+                    loadedAnyColorsYet = true;
+                }
+            }
+        }
+
+        // Attempt to load color from the right pixel.
+        if (x < imageWidth - 1) {
+            int rightPixel = (y * imageWidth) + (x + 1);
+
+            if (seenPixelPos.getBit(rightPixel)) { // The nearby pixel has shading color data.
+                int rightPixelColor = rawTargetImage[rightPixel];
+                if (rightPixelColor != 0) {
+                    if (loadedAnyColorsYet) {
+                        color2.fromARGB(rightPixelColor);
+                        color1 = interpolateCVector(color1, color2, .5F, color1);
+                    } else {
+                        color1.fromARGB(rightPixelColor);
+                        loadedAnyColorsYet = true;
+                    }
+                }
+            }
+        }
+
+        // Attempt to load color from the above pixel.
+        if (y > 0) {
+            int upperPixel = ((y - 1) * imageWidth) + x;
+
+            if (seenPixelPos.getBit(upperPixel)) { // The nearby pixel has shading color data.
+                int upperPixelColor = rawTargetImage[upperPixel];
+                if (upperPixelColor != 0) {
+                    if (loadedAnyColorsYet) {
+                        color2.fromARGB(upperPixelColor);
+                        color1 = interpolateCVector(color1, color2, .5F, color1);
+                    } else {
+                        color1.fromARGB(upperPixelColor);
+                        loadedAnyColorsYet = true;
+                    }
+                }
+            }
+        }
+
+        // Attempt to load color from the lower pixel.
+        if (y < targetImage.getHeight() - 1) {
+            int lowerPixel = ((y + 1) * imageWidth) + x;
+
+            if (seenPixelPos.getBit(lowerPixel)) { // The nearby pixel has shading color data.
+                int lowerPixelColor = rawTargetImage[lowerPixel];
+                if (lowerPixelColor != 0) {
+                    if (loadedAnyColorsYet) {
+                        color2.fromARGB(lowerPixelColor);
+                        color1 = interpolateCVector(color1, color2, .5F, color1);
+                    } else {
+                        color1.fromARGB(lowerPixelColor);
+                        loadedAnyColorsYet = true;
+                    }
+                }
+            }
+        }
+
+        return loadedAnyColorsYet ? color1 : null;
+    }
+
+    private static void shadeRawPixel(int[] sourceImage, int[] targetImage, int pixelIndex, int shadeColor) {
+        // This function is optimized for performance, since this is performance critical.
+        // The big performance killer here was .setRGB(), with the runner up being the color functions in the Utils class.
+        // Putting the bit manipulation here seemed to make a huge difference, which is why it was implemented here.
+        if (sourceImage != null) {
+            int textureColor = sourceImage[pixelIndex];
+            byte alpha = (byte) ((textureColor >> 24) & 0xFF);
+            int oldRed = ((textureColor >> 16) & 0xFF);
+            int oldGreen = ((textureColor >> 8) & 0xFF);
+            int oldBlue = (textureColor & 0xFF);
+
+            // If the value exceeds the max, clamp it to the max.
+            // It's not explicitly mentioned what happens if it goes above 255, but I think clamping it works.
+            // I think "the results can't exceed the maximum brightness, i.e. the 5bit values written to the frame-buffer are saturated to max 1F" means it's clamped, but I'm not sure.
+            // Reference: https://psx-spx.consoledev.net/graphicsprocessingunitgpu/
+            int shadeRed = (shadeColor >> 16) & 0xFF;
+            int shadeGreen = (shadeColor >> 8) & 0xFF;
+            int shadeBlue = shadeColor & 0xFF;
+            byte newRed = (byte) Math.min(255, (shadeRed / 128D) * oldRed);
+            byte newGreen = (byte) Math.min(255, (shadeGreen / 128D) * oldGreen);
+            byte newBlue = (byte) Math.min(255, (shadeBlue / 128D) * oldBlue);
+            targetImage[pixelIndex] = Utils.toARGB(newRed, newGreen, newBlue, alpha);
+        } else {
+            targetImage[pixelIndex] = shadeColor;
+        }
+    }
+
+    private static void applyShadingToSourceImage(BufferedImage sourceImage, BufferedImage targetImage) {
+        if (sourceImage == null)
+            return;
+        if (targetImage == null)
+            throw new NullPointerException("targetImage");
+
+        // This has been optimized for performance, since it has been deemed performance critical code.
+        int[] rawSourceImage = ImageWorkHorse.getPixelIntegerArray(sourceImage);
+        int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
+        int pixelCount = targetImage.getWidth() * targetImage.getHeight();
+        for (int i = 0; i < pixelCount; i++)
+            shadeRawPixel(rawSourceImage, rawTargetImage, i, rawTargetImage[i]);
     }
 
     /**
@@ -467,16 +671,28 @@ public class PSXTextureShader {
      * @return flatShadedImage
      */
     public static BufferedImage makeFlatShadedImage(int width, int height, CVector color) {
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-
-        Graphics2D graphics = image.createGraphics();
-        graphics.setColor(color.toColor());
-        graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
-        graphics.dispose();
-
-        return image;
+        return makeFlatShadedImage(null, width, height, color);
     }
 
+    /**
+     * Makes a flat shaded, untextured image (POLY_F3 / POLY_F4)
+     * @param targetImage The image to write the shaded data to. If null, a new one will be created.
+     * @param width  The width of the image.
+     * @param height The height of the image.
+     * @param color  The color to apply to the image. (8 bits, 0 - 255)
+     * @return flatShadedImage
+     */
+    public static BufferedImage makeFlatShadedImage(BufferedImage targetImage, int width, int height, CVector color) {
+        if (targetImage == null)
+            targetImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D graphics = targetImage.createGraphics();
+        graphics.setColor(color.toColor());
+        graphics.fillRect(0, 0, targetImage.getWidth(), targetImage.getHeight());
+        graphics.dispose();
+
+        return targetImage;
+    }
     /**
      * Makes a textured flat shaded image (POLY_FT3 / POLY_FT4).
      * @param originalTexture The original texture to apply shading to.
@@ -484,23 +700,30 @@ public class PSXTextureShader {
      * @return flatTextureShadedImage
      */
     public static BufferedImage makeTexturedFlatShadedImage(BufferedImage originalTexture, CVector color) {
-        BufferedImage newImage = new BufferedImage(originalTexture.getWidth(), originalTexture.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        for (int x = 0; x < newImage.getWidth(); x++) {
-            for (int y = 0; y < newImage.getHeight(); y++) {
-                int textureColor = originalTexture.getRGB(x, y);
-                byte alpha = Utils.getAlpha(textureColor);
-                // If the value exceeds the max, clamp it to the max.
-                // It's not explicitly mentioned what happens if it goes above 255, but I think clamping it works.
-                // I think "the results can't exceed the maximum brightness, ie. the 5bit values written to the framebuffer are saturated to max 1F" means it's clamped, but I'm not sure.
-                // Reference: https://psx-spx.consoledev.net/graphicsprocessingunitgpu/
-                short red = (short) Math.min(255, (((double) color.getRedShort() / 128D) * Utils.getRedInt(textureColor)));
-                short green = (short) Math.min(255, (((double) color.getGreenShort() / 128D) * Utils.getGreenInt(textureColor)));
-                short blue = (short) Math.min(255, (((double) color.getBlueShort() / 128D) * Utils.getBlueInt(textureColor)));
-                newImage.setRGB(x, y, Utils.toARGB(Utils.unsignedShortToByte(red), Utils.unsignedShortToByte(green), Utils.unsignedShortToByte(blue), alpha));
-            }
-        }
+        return makeTexturedFlatShadedImage(originalTexture, null, color);
+    }
 
-        return newImage;
+    /**
+     * Makes a textured flat shaded image (POLY_FT3 / POLY_FT4).
+     * @param originalTexture The original texture to apply shading to.
+     * @param targetImage The image to write the shaded data to. If null, a new one will be created.
+     * @param color           The shading color to apply.
+     * @return flatTextureShadedImage
+     */
+    public static BufferedImage makeTexturedFlatShadedImage(BufferedImage originalTexture, BufferedImage targetImage, CVector color) {
+        int colorArgb = color.toARGB();
+        if (colorArgb == UNSHADED_COLOR_ARGB)
+            return originalTexture;
+
+        if (targetImage == null)
+            targetImage = new BufferedImage(originalTexture.getWidth(), originalTexture.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        int[] rawSourceImage = ImageWorkHorse.getPixelIntegerArray(originalTexture);
+        int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
+        int pixelCount = targetImage.getWidth() * targetImage.getHeight();
+        for (int i = 0; i < pixelCount; i++)
+            shadeRawPixel(rawSourceImage, rawTargetImage, i, colorArgb);
+
+        return targetImage;
     }
 
     /**
@@ -521,9 +744,9 @@ public class PSXTextureShader {
         if (result == null)
             result = new CVector();
 
-        result.setRed(Utils.unsignedShortToByte((short) ((a.getRedShort() * (1 - t)) + (b.getRedShort() * t))));
-        result.setGreen(Utils.unsignedShortToByte((short) ((a.getGreenShort() * (1 - t)) + (b.getGreenShort() * t))));
-        result.setBlue(Utils.unsignedShortToByte((short) ((a.getBlueShort() * (1 - t)) + (b.getBlueShort() * t))));
+        result.setRed((byte) ((((a.getRed() & 0xFF) * (1 - t)) + ((b.getRed() & 0xFF) * t))));
+        result.setGreen((byte) ((((a.getGreen() & 0xFF) * (1 - t)) + ((b.getGreen() & 0xFF) * t))));
+        result.setBlue((byte) ((((a.getBlue() & 0xFF) * (1 - t)) + ((b.getBlue() & 0xFF) * t))));
         return result;
     }
 }

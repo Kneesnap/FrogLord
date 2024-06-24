@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapCollprim;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -16,7 +18,7 @@ import java.util.List;
  * Created by RampantSpirit on 3/13/2024.
  */
 @Getter
-public class MediEvilMapCollprimsPacket extends MediEvilMapPacket {
+public class MediEvilMapCollprimsPacket extends MediEvilMapPacket implements IPropertyListCreator {
     public static final String IDENTIFIER = "PLOC"; // 'COLP'.
     private final List<MediEvilMapCollprim> collprims = new ArrayList<>();
 
@@ -53,5 +55,11 @@ public class MediEvilMapCollprimsPacket extends MediEvilMapPacket {
         writer.writeAddressTo(collprimListPtr);
         for (int i = 0; i < this.collprims.size(); i++)
             this.collprims.get(i).save(writer);
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("Collision Primitives", this.collprims.size());
+        return propertyList;
     }
 }

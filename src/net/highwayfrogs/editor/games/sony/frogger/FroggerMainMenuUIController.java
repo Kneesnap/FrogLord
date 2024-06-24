@@ -1,14 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger;
 
 import javafx.scene.Node;
-import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.ui.*;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.FroggerVersionComparison;
-
-import java.util.List;
+import net.highwayfrogs.editor.utils.IndexBitArray;
 
 /**
  * The main menu controller for Frogger.
@@ -34,10 +32,11 @@ public class FroggerMainMenuUIController extends SCMainMenuUIController<FroggerG
     }
 
     private void findUnusedVertices() {
-        getGameInstance().getMainArchive().getAllFiles(MAPFile.class).forEach(mapFile -> {
-            List<SVector> unusedVertices = mapFile.findUnusedVertices();
-            if (unusedVertices.size() > 1)
-                getLogger().info(" - " + mapFile.getFileDisplayName() + " has " + unusedVertices.size() + " unused vertices.");
+        getGameInstance().getMainArchive().getAllFiles(FroggerMapFile.class).forEach(mapFile -> {
+            IndexBitArray unusedVertices = mapFile.findUnusedVertexIds();
+            int vertexCount = unusedVertices.getBitCount();
+            if (vertexCount > 1)
+                getLogger().info(" - " + mapFile.getFileDisplayName() + " has " + vertexCount + " unused vertices.");
         });
     }
 }

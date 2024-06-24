@@ -89,6 +89,21 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
+     * Copy matrix data from another matrix.
+     * @param otherMatrix the matrix to copy data from
+     */
+    public void copyFrom(PSXMatrix otherMatrix) {
+        if (otherMatrix == null)
+            throw new NullPointerException("otherMatrix");
+
+        System.arraycopy(otherMatrix.matrix[0], 0, this.matrix[0], 0, DIMENSION);
+        System.arraycopy(otherMatrix.matrix[1], 0, this.matrix[1], 0, DIMENSION);
+        System.arraycopy(otherMatrix.matrix[2], 0, this.matrix[2], 0, DIMENSION);
+        System.arraycopy(otherMatrix.transform, 0, this.transform, 0, DIMENSION);
+        this.padding = otherMatrix.padding;
+    }
+
+    /**
      * Calculates the transpose of this matrix, storing it in the result parameter.
      * @param result The matrix to store the transpose result in.
      */

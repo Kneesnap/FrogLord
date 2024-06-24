@@ -93,9 +93,9 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
 
         // Add basic entity data.
         GreatQuestChunkedFile.writeAssetLine(grid, chunkedFile, "Target Entity", this.targetEntityHash);
-        grid.addIntegerField("Priority", this.priority, newValue -> this.priority = newValue, null);
-        grid.addIntegerField("Group", this.group, newValue -> this.group = newValue, null);
-        grid.addIntegerField("Script Index", this.scriptIndex, newValue -> this.scriptIndex = newValue, null);
+        grid.addSignedIntegerField("Priority", this.priority, newValue -> this.priority = newValue);
+        grid.addSignedIntegerField("Group", this.group, newValue -> this.group = newValue);
+        grid.addSignedIntegerField("Script Index", this.scriptIndex, newValue -> this.scriptIndex = newValue);
 
         // Add script data, if it exists.
         kcScriptList scriptList = chunkedFile != null ? chunkedFile.getScriptList() : null;

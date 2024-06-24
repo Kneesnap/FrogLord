@@ -79,7 +79,7 @@ public class Vector3f {
     }
 
     /**
-     * Applies the absolute value of all of the components stored by this vector.
+     * Applies the absolute value of the components stored by this vector.
      */
     public Vector3f abs() {
         this.x = Math.abs(this.x);
@@ -154,6 +154,22 @@ public class Vector3f {
         this.x = -this.x;
         this.y = -this.y;
         this.z = -this.z;
+        return this;
+    }
+
+    /**
+     * Normalises the vector.
+     * @return this
+     */
+    public Vector3f normalise() {
+        double magnitudeSq = (this.x * this.x) + (this.y * this.y) + (this.z * this.z);
+        if (!Double.isFinite(magnitudeSq))
+            throw new RuntimeException(this + " cannot be normalized, its magnitudeSq was: " + magnitudeSq);
+
+        double inverseMagnitude = 1D / Math.sqrt(magnitudeSq);
+        this.x = (float) (this.x * inverseMagnitude);
+        this.y = (float) (this.y * inverseMagnitude);
+        this.z = (float) (this.z * inverseMagnitude);
         return this;
     }
 

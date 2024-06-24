@@ -232,7 +232,7 @@ public abstract class MRCollprim extends SCSharedGameData implements ICollprim {
         if (getGameInstance().isFrogger()) {
             grid.addEnumSelector("Reaction", getFroggerReaction(), FroggerCollprimReactionType.values(), false, newReaction -> this.userData = newReaction.ordinal());
         } else {
-            grid.addIntegerField("User Data", this.userData, newValue -> this.userData = newValue, newValue -> newValue >= 0 && newValue <= 0xFFFF);
+            grid.addUnsignedShortField("User Data", this.userData, newValue -> this.userData = newValue);
         }
 
         // Add a button to remove the collprim if possible.
@@ -322,7 +322,7 @@ public abstract class MRCollprim extends SCSharedGameData implements ICollprim {
         if (getGameInstance().isFrogger()) {
             grid.addEnumSelector("Reaction", getFroggerReaction(), FroggerCollprimReactionType.values(), false, newReaction -> this.userData = newReaction.ordinal());
         } else {
-            grid.addIntegerField("User Data", this.userData, newValue -> this.userData = newValue, newValue -> newValue >= 0 && newValue <= 0xFFFF);
+            grid.addUnsignedShortField("User Data", this.userData, newValue -> this.userData = newValue);
         }
 
         // Add a button to remove the collprim if possible.

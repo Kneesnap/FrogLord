@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 <AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0"
@@ -68,6 +69,9 @@
                                                                   GridPane.columnIndex="1" GridPane.rowIndex="6"/>
                                                     </children>
                                                 </GridPane>
+                                                <Label text="Texture Sheet (Debug):" underline="true"/>
+                                                <ImageView fx:id="textureSheetDebugView"
+                                                           fitWidth="250" fitHeight="250"/>
                                             </children>
                                         </VBox>
                                     </children>

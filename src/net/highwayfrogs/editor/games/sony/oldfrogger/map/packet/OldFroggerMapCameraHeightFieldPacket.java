@@ -85,18 +85,18 @@ public class OldFroggerMapCameraHeightFieldPacket extends OldFroggerMapPacket {
      */
     public void setupEditor(OldFroggerCameraHeightFieldManager manager, GUIEditorGrid editor) {
         // Square Counts
-        editor.addShortField("X Square Count", this.xSquareCount, newValue -> {
+        editor.addSignedShortField("X Square Count", this.xSquareCount, value -> value > 0, newValue -> {
             int oldX = this.xSquareCount;
             int oldZ = this.zSquareCount;
             setXSquareCount(newValue);
             manager.onGridSizeChange(oldX, oldZ, newValue, oldZ);
-        }, value -> value > 0);
-        editor.addShortField("Z Square Count", this.zSquareCount, newValue -> {
+        });
+        editor.addSignedShortField("Z Square Count", this.zSquareCount, value -> value > 0, newValue -> {
             int oldX = this.xSquareCount;
             int oldZ = this.zSquareCount;
             setZSquareCount(newValue);
             manager.onGridSizeChange(oldX, oldZ, oldX, newValue);
-        }, value -> value > 0);
+        });
 
         // Square Size:
         editor.addFixedShort("X Square Size", this.xSquareSize, newValue -> {

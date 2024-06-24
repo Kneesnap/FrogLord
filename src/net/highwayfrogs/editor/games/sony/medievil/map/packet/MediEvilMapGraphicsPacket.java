@@ -7,6 +7,8 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygon;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -17,7 +19,7 @@ import java.util.List;
  * Created by Kneesnap on 3/8/2024.
  */
 @Getter
-public class MediEvilMapGraphicsPacket extends MediEvilMapPacket {
+public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPropertyListCreator {
     public static final String IDENTIFIER = "GXSP"; // 'PSXG'.
     private final List<MediEvilMapPolygon> polygons = new ArrayList<>();
     private final List<SVector> vertices = new ArrayList<>();
@@ -79,5 +81,38 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket {
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
         // TODO: Implement.
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        int g3Count = 0;
+        int g4Count = 0;
+        int gt3Count = 0;
+        int gt4Count = 0;
+        for (int i = 0; i < this.polygons.size(); i++) {
+            MediEvilMapPolygon polygon = this.polygons.get(i);
+            switch (polygon.getPolygonType()) {
+                case POLY_G3:
+                    g3Count++;
+                    break;
+                case POLY_G4:
+                    g4Count++;
+                    break;
+                case POLY_GT3:
+                    gt3Count++;
+                    break;
+                case POLY_GT4:
+                    gt4Count++;
+                    break;
+                default:
+                    throw new RuntimeException("Unsupported polygon type: " + polygon.getPolygonType());
+            }
+        }
+
+        propertyList.add("Polygons", this.polygons.size());
+        propertyList.add("Untextured Polygons", "[G3s: " + g3Count + ", G4s: " + g4Count + "]");
+        propertyList.add("Textured Polygons", "[GT3s: " + gt3Count + ", GT4s: " + gt4Count + "]");
+        propertyList.add("Vertices", this.vertices.size());
+        return propertyList;
     }
 }

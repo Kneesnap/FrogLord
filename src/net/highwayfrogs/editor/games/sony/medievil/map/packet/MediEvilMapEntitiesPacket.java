@@ -5,6 +5,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +16,7 @@ import java.util.List;
  * Created by RampantSpirit on 3/11/2024.
  */
 @Getter
-public class MediEvilMapEntitiesPacket extends MediEvilMapPacket {
+public class MediEvilMapEntitiesPacket extends MediEvilMapPacket implements IPropertyListCreator {
     public static final String IDENTIFIER = "PTME"; // 'EMTP'.
     private final List<MediEvilMapEntity> entities = new ArrayList<>();
 
@@ -43,5 +45,11 @@ public class MediEvilMapEntitiesPacket extends MediEvilMapPacket {
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
         // TODO: Implement.
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("Entities", this.entities.size());
+        return propertyList;
     }
 }

@@ -4,6 +4,8 @@ import javafx.geometry.Point3D;
 import javafx.scene.*;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
+import javafx.scene.shape.TriangleMesh;
+import javafx.scene.shape.VertexFormat;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
@@ -21,7 +23,7 @@ import java.util.Objects;
  * Created by Kneesnap on 1/7/2024.
  */
 public class Scene3DUtils {
-    private static final PhongMaterial TRANSPARENT_MATERIAL = Utils.makeSpecialMaterial(javafx.scene.paint.Color.TRANSPARENT);
+    private static final PhongMaterial TRANSPARENT_MATERIAL = Utils.makeUnlitSharpMaterial(javafx.scene.paint.Color.TRANSPARENT);
     private static final double AXIS_PLANE_SIZE = 10000;
     private static final double VERTICAL_BOX_SIZE = 20;
 
@@ -532,12 +534,25 @@ public class Scene3DUtils {
         }
 
         if (material == null) {
-            material = Utils.makeDiffuseMaterial(Utils.toFXImage(highlightedImage, false));
+            material = Utils.makeUnlitMaterial(Utils.toFXImage(highlightedImage, false), true);
             return material;
         }
 
         // Update material image.
         material.setDiffuseMap(Utils.toFXImage(highlightedImage, false));
         return material;
+    }
+
+    /**
+     * Creates a TriangleMesh (square, vertically aligned), often display a 2D sprite.
+     * @param spriteSize the size of the sprite
+     */
+    public static TriangleMesh createSpriteMesh(float spriteSize) {
+        // NOTE: Maybe this could be a single tri mesh, local to this manager, and we just update its points in updateEntities().
+        TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
+        triMesh.getPoints().addAll(-spriteSize * 0.5f, spriteSize * 0.5f, 0, -spriteSize * 0.5f, -spriteSize * 0.5f, 0, spriteSize * 0.5f, -spriteSize * 0.5f, 0, spriteSize * 0.5f, spriteSize * 0.5f, 0);
+        triMesh.getTexCoords().addAll(0, 1, 0, 0, 1, 0, 1, 1);
+        triMesh.getFaces().addAll(0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 0, 0);
+        return triMesh;
     }
 }

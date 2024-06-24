@@ -5,11 +5,11 @@ import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
-import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 
 import java.util.function.Function;
 
@@ -58,12 +58,12 @@ public class PSXThemeBook extends ThemeBook {
     }
 
     @Override
-    public VLOArchive getVLO(MAPFile map) {
+    public VLOArchive getVLO(FroggerMapFile map) {
         return isValid() ? getGameInstance().getGameFile(map.isMultiplayer() ? getMultiplayerVloId() : getVloId()) : null;
     }
 
     @Override
-    public WADFile getWAD(MAPFile map) {
+    public WADFile getWAD(FroggerMapFile map) {
         return isValid() ? getGameInstance().getGameFile(map.isMultiplayer() ? getMultiplayerWadId() : getWadId()) : null;
     }
 

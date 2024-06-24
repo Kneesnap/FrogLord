@@ -82,14 +82,14 @@ public class MOFHilite extends SCSharedGameData {
         if (froggerHiliteType != null) {
             grid.addEnumSelector("Hilite Type", froggerHiliteType, FroggerHiliteType.values(), false, newType -> this.hiliteType = (short) newType.ordinal());
         } else {
-            grid.addShortField("Hilite Type", this.hiliteType, this::setHiliteType, value -> value >= 0 && value <= 255);
+            grid.addUnsignedByteField("Hilite Type", this.hiliteType, this::setHiliteType);
         }
 
 
         grid.addButton("Remove Hilite", () -> {
             getParent().getHilites().remove(this);
             grid.clearEditor();
-            manager.clearDisplayList(MOFController.HILITE_VERTICE_LIST); // Toss all of the vertice choices.
+            manager.clearDisplayList(MOFController.HILITE_VERTICE_LIST); // Toss the vertice choices.
             controller.updateHiliteBoxes();
         });
 
@@ -102,9 +102,9 @@ public class MOFHilite extends SCSharedGameData {
         writer.writeUnsignedByte((short) this.attachType.ordinal());
 
         int saveId = -1;
-        if (this.attachType == HiliteAttachType.PRIM) {
+        if (this.attachType == HiliteAttachType.VERTEX) {
             saveId = getVertices().indexOf(getVertex());
-        } else if (this.attachType == HiliteAttachType.VERTEX) {
+        } else if (this.attachType == HiliteAttachType.PRIM) {
             int amount = 0;
             for (MOFPrimType primType : MOFPrimType.values()) { // NOTE: This erases the order which seems to not be consistent.
                 List<MOFPolygon> polygons = getParent().getMofPolygons().get(primType);

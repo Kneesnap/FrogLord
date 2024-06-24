@@ -3,11 +3,6 @@ package net.highwayfrogs.editor.utils;
 import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.MAPTheme;
-import net.highwayfrogs.editor.file.map.animation.MAPAnimation;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolyTexture;
-import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.mof.MOFPart;
@@ -17,6 +12,11 @@ import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
+import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,7 +35,7 @@ public class AnalysisUtils {
      * @param instance The game instance file to scan.
      */
     public static void findUnusedTextures(SCGameInstance instance) {
-        List<MAPFile> mapFiles = instance.getMainArchive().getAllFiles(MAPFile.class);
+        List<FroggerMapFile> mapFiles = instance.getMainArchive().getAllFiles(FroggerMapFile.class);
         List<MOFHolder> mofFiles = new ArrayList<>();
 
         instance.getMainArchive().forEachFile(WADFile.class, wad -> wad.getFiles().forEach(entry -> {
@@ -73,25 +73,25 @@ public class AnalysisUtils {
 
         // Populate MAP ids.
         mapFiles.forEach(map -> {
-            List<Short> remapTable = map.getRemapTable();
+            TextureRemapArray remapTable = map.getTextureRemap();
             if (remapTable == null)
                 return; // Failed to get a remap table. It's likely an unused map.
 
             // Populate animation data.
-            for (MAPAnimation animation : map.getMapAnimations())
-                for (short texValue : animation.getTextures())
-                    textureIds.add(remapTable.get(texValue));
+            for (FroggerMapAnimation animation : map.getAnimationPacket().getAnimations())
+                for (short texValue : animation.getTextureIds())
+                    textureIds.add(remapTable.getRemappedTextureId(texValue));
 
             // Populate face data.
-            for (MAPPolygon poly : map.getAllPolygons())
-                if (poly instanceof MAPPolyTexture)
-                    textureIds.add(remapTable.get(((MAPPolyTexture) poly).getTextureId()));
+            for (FroggerMapPolygon poly : map.getPolygonPacket().getPolygons())
+                if (poly.getPolygonType().isTextured())
+                    textureIds.add(remapTable.getRemappedTextureId(poly.getTextureId()));
         });
 
         // Find unused textures.
         if (instance.isFrogger()) {
             for (ThemeBook themeBook : ((FroggerGameInstance) instance).getThemeLibrary()) {
-                if (themeBook.getTheme() == MAPTheme.GENERAL)
+                if (themeBook.getTheme() == FroggerMapTheme.GENERAL)
                     continue; // Contains mostly things we can't check the validity of.
 
                 Set<Short> loggedIds = new HashSet<>(); // Prevents logging both high and low poly versions.
