@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.system.math.Vector3f;
 
 /**
  * Represents a 4x4 matrix.
@@ -33,5 +34,17 @@ public class kcMatrix extends GameData<GreatQuestInstance> {
         for (int y = 0; y < MATRIX_HEIGHT; y++)
             for (int x = 0; x < MATRIX_WIDTH; x++)
                 writer.writeFloat(this.matrix[y][x]);
+    }
+
+    /**
+     * Equivalent to ApplyMatrix. matrix -> vec (http://psxdev.tlrmcknz.com/psyq/ref/libref46/0392.html?sidebar=outlines)
+     * @param matrix The matrix to multiply.
+     */
+    public static Vector3f applyMatrix(kcVector3 position, kcMatrix matrix) {
+        Vector3f output = new Vector3f();
+        output.setX((((matrix.matrix[0][0] * position.getX()) + (matrix.matrix[0][1] * position.getY()) + (matrix.matrix[0][2] * position.getZ()))) + matrix.matrix[3][0]);
+        output.setY((((matrix.matrix[1][0] * position.getX()) + (matrix.matrix[1][1] * position.getY()) + (matrix.matrix[1][2] * position.getZ()))) + matrix.matrix[3][1]);
+        output.setZ((((matrix.matrix[2][0] * position.getX()) + (matrix.matrix[2][1] * position.getY()) + (matrix.matrix[2][2] * position.getZ()))) + matrix.matrix[3][2]);
+        return output;
     }
 }
