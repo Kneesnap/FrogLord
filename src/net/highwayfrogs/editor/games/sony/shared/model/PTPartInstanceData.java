@@ -28,7 +28,7 @@ public class PTPartInstanceData extends SCSharedGameObject {
     }
 
     /**
-     * Resizes the vector block.
+     * Resize the vector block.
      */
     public void resizeVectorBlock() {
         // PartCel.

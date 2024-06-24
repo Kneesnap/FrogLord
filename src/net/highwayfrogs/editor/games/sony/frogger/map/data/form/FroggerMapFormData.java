@@ -219,7 +219,7 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
     }
 
     /**
-     * Resizes the grid to the new size, keeping old flags.
+     * Resize the grid to the new size, keeping old flags.
      * This should only be called by FroggerMapForm, which is able to do it before it has its internal data update.
      * @param newX the new x grid size
      * @param newZ the new z grid size

@@ -794,7 +794,7 @@ public class Utils {
     }
 
     /**
-     * Resizes an image.
+     * Resize an image.
      * @param img    The image to resize.
      * @param width  The new width.
      * @param height The new height.

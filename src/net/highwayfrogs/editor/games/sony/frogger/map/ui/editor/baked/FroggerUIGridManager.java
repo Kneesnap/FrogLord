@@ -850,7 +850,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
     }
 
     /**
-     * Resizes the grid and updates the UI.
+     * Resize the grid and updates the UI.
      * @param newX The new x grid size.
      * @param newZ The new z grid size.
      */

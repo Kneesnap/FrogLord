@@ -167,7 +167,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
     }
 
     /**
-     * Resizes the window to the scene.
+     * Resize the window to the scene.
      */
     public void resizeWindow() {
         if (!this.loadingComplete) {

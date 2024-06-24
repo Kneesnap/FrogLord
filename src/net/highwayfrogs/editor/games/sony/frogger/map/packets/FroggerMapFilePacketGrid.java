@@ -197,7 +197,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     }
 
     /**
-     * Resizes the grid to a new size.
+     * Resize the grid to a new size.
      * @param xSize The new x count of the grid.
      * @param zSize The new z count of the grid.
      */

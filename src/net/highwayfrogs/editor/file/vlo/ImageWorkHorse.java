@@ -89,11 +89,11 @@ public class ImageWorkHorse {
     }
 
     /**
-     * Resizes an image to a new width / height.
+     * Resize an image to a new width / height.
      * @param image           The image to scale.
      * @param newWidth        The new image width.
      * @param newHeight       The new image height.
-     * @param nearestNeighbor Whether or not nearest neighbor interpolation should be used.
+     * @param nearestNeighbor Whether nearest neighbor interpolation should be used.
      * @return scaledImage
      */
     public static BufferedImage resizeImage(BufferedImage image, int newWidth, int newHeight, boolean nearestNeighbor) {
@@ -109,10 +109,10 @@ public class ImageWorkHorse {
     }
 
     /**
-     * Resizes an image to a new width / height.
+     * Resize an image to a new width / height.
      * @param image           The image to scale.
      * @param sideLength      The image size to rescale to.
-     * @param nearestNeighbor Whether or not nearest neighbor interpolation should be used.
+     * @param nearestNeighbor Whether nearest neighbor interpolation should be used.
      * @return scaledImage
      */
     public static BufferedImage scaleForDisplay(BufferedImage image, int sideLength, boolean nearestNeighbor) {
