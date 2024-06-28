@@ -54,7 +54,7 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
 
     // PARALLEL:
     // priority = 131, parentId = GARBAGE?
-    // position = INVALID, direction = VALID (Seems normalized)
+    // position = INVALID, direction = VALID (Seems normalized) (Position may not actually be invalid, since different parallel lights have different but close-by positions.)
     // attribute0 = ??? (Usually 20000k ish), attribute1 = ??? (Near 100)
     // NOTE!!!! CAV3.MAP has all zeros except color, direction, and priority. I believe ALL the other data is garbage for this light type.
 
