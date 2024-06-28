@@ -2068,9 +2068,15 @@ public class Utils {
         if (printException) {
             handleError(null, ex, true, stringWriter.toString());
         } else {
-            Alert alert = new Alert(AlertType.ERROR, stringWriter.toString(), ButtonType.OK);
-            if (ex != null)
-                alert.setWidth(3 * alert.getWidth());
+            String errorMessage = stringWriter.toString();
+
+            Alert alert = new Alert(AlertType.ERROR, errorMessage, ButtonType.OK);
+            if (ex != null) {
+                alert.setResizable(true);
+                alert.setWidth(1000);
+                alert.setHeight(750);
+            }
+
             alert.showAndWait();
         }
     }
