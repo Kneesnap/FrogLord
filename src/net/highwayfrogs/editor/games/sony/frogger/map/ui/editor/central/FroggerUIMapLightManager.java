@@ -1,9 +1,7 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central;
 
-import javafx.scene.AmbientLight;
-import javafx.scene.Group;
-import javafx.scene.LightBase;
-import javafx.scene.PointLight;
+import javafx.geometry.Point3D;
+import javafx.scene.*;
 import javafx.scene.control.CheckBox;
 import javafx.scene.image.Image;
 import lombok.Getter;
@@ -136,13 +134,11 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
                 break;
 
             case PARALLEL:
-                // IMPORTANT! JavaFX does NOT support parallel (directional) lights [AndyEder]
-                PointLight parallelLight = fxLight instanceof PointLight ? (PointLight) fxLight : new PointLight();
+                // The way the lighting is applied looks different in-game slightly, as it applies to the polygon in-game,
+                // where in FrogLord it looks more like a fragment shader I think. But, I think this is about as close to accurate as we can expect.
+                DirectionalLight parallelLight = fxLight instanceof DirectionalLight ? (DirectionalLight) fxLight : new DirectionalLight();
                 parallelLight.setColor(Utils.fromBGR(light.getColor()));
-                // Use direction as a vector to set a position to simulate a parallel light as best as we can
-                parallelLight.setTranslateX(-light.getDirection().getFloatX(12) * 1024);
-                parallelLight.setTranslateY(-light.getDirection().getFloatY(12) * 1024);
-                parallelLight.setTranslateZ(-light.getDirection().getFloatZ(12) * 1024);
+                parallelLight.setDirection(new Point3D(light.getDirection().getFloatX(12), light.getDirection().getFloatY(12), light.getDirection().getFloatZ(12)));
                 fxLight = parallelLight;
                 break;
 

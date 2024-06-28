@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
+import javafx.geometry.Point3D;
 import javafx.scene.AmbientLight;
+import javafx.scene.DirectionalLight;
 import javafx.scene.LightBase;
 import javafx.scene.PointLight;
 import lombok.Getter;
@@ -145,13 +147,9 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
                     return ambLight;
                 case PARALLEL:
                     // IMPORTANT! JavaFX does NOT support parallel (directional) lights [AndyEder]
-                    PointLight parallelLight = new PointLight();
+                    DirectionalLight parallelLight = new DirectionalLight();
                     parallelLight.setColor(Utils.fromRGB(this.color.toRGB()));
-                    // Use direction as a vector to set a position to simulate a parallel light with JavaFX.
-                    // This has 12 decimal bits, so by only using 2 we place the light very far away, which approximates a parallel light, albeit inaccurately.
-                    parallelLight.setTranslateX(-this.direction.getFloatX(2));
-                    parallelLight.setTranslateY(-this.direction.getFloatY(2));
-                    parallelLight.setTranslateZ(-this.direction.getFloatZ(2));
+                    parallelLight.setDirection(new Point3D(this.direction.getFloatX(12), this.direction.getFloatY(12), this.direction.getFloatZ(12)));
                     return parallelLight;
                 case POINT:
                     PointLight pointLight = new PointLight();
