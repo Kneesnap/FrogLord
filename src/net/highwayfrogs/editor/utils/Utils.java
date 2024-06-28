@@ -1,16 +1,14 @@
 package net.highwayfrogs.editor.utils;
 
-import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.SubScene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
+import javafx.scene.control.*;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
@@ -33,6 +31,8 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -555,6 +555,13 @@ public class Utils {
     }
 
     /**
+     * Gets the JAR file representing FrogLord.
+     */
+    public static File getFrogLordJar() {
+        return getFileFromURL(Utils.class.getProtectionDomain().getCodeSource().getLocation());
+    }
+
+    /**
      * Get a resource in the JAR.
      * @param resourcePath The resource path.
      * @param includeSubFolders if true, sub folders will be included.
@@ -571,7 +578,7 @@ public class Utils {
             }
 
             String localResourcePath = fullResourcePath.substring(exclamationPos + 1);
-            File frogLordJar = getFileFromURL(Utils.class.getProtectionDomain().getCodeSource().getLocation());
+            File frogLordJar = getFrogLordJar();
             if (!frogLordJar.exists())
                 throw new RuntimeException("Failed to find resource files at '" + localResourcePath + "', we resolved the FrogLord jar file to '" + frogLordJar + "', which did not exist. (" + resourcePath + ")");
 
@@ -583,7 +590,7 @@ public class Utils {
                 // Test the path for resource files.
                 for (Path root : fs.getRootDirectories()) {
                     try (Stream<Path> stream = Files.find(root, Integer.MAX_VALUE, pathValidityCheck)) {
-                        foundResourceUrls.addAll(getUrlsFromPaths(stream, true));
+                        foundResourceUrls.addAll(getUrlsFromPaths(resourcePath, stream, true));
                     } catch (Throwable th) {
                         handleError(null, th, false, "Failed to test the path '%s' for internal resource files.", root);
                     }
@@ -601,14 +608,17 @@ public class Utils {
         try {
             Path path = Paths.get(resourcePath.toURI());
             try (Stream<Path> stream = Files.walk(path, includeSubFolders ? Integer.MAX_VALUE : 1)) {
-                return getUrlsFromPaths(stream, false);
+                return getUrlsFromPaths(resourcePath, stream, false);
             }
         } catch (URISyntaxException | IOException ex) {
             throw new RuntimeException("Failed to get files in resource directory '" + resourcePath + "'", ex);
         }
     }
 
-    private static List<URL> getUrlsFromPaths(Stream<Path> stream, boolean remakeResources) {
+    private static List<URL> getUrlsFromPaths(URL baseUrl, Stream<Path> stream, boolean remakeResources) {
+        String baseUrlFile = baseUrl.getFile();
+        String baseUrlPath = baseUrlFile.contains("!") ? baseUrlFile.substring(baseUrlFile.indexOf('!') + 1) : null;
+
         Stream<URL> urlStream = stream.map(Path::toUri)
                 .map(uri -> {
                     try {
@@ -618,7 +628,8 @@ public class Utils {
                     }
                 })
                 .filter(Objects::nonNull)
-                .filter(url -> !url.getPath().endsWith("/")); // Remove directories.
+                .filter(url -> !url.getPath().endsWith("/")) // Remove directories.
+                .filter(url -> baseUrlPath == null || (!url.getFile().endsWith(baseUrlPath) && !url.getFile().endsWith(baseUrlPath + "/"))); // Prevent including original path.
 
         // This part is necessary since the urls we get from the file walker aren't actually valid for to open for some reason.
         // So, we take the file paths we get, and then feed them back into something we know we can get the paths from.
@@ -1119,7 +1130,7 @@ public class Utils {
         if (folder != null && folder.exists() && folder.isDirectory())
             return folder;
 
-        return folder != null ? getValidFolder(folder.getParentFile()) : new File("./");
+        return folder != null ? getValidFolder(folder.getParentFile()) : new File(GUIMain.getMainApplicationFolder(), "./");
     }
 
     /**
@@ -1562,14 +1573,33 @@ public class Utils {
         });
     }
 
+    private static Method GET_LIST_VIEW_METHOD;
+
     /**
      * Make a combo box scroll to the value it has selected.
+     * This does work sometimes, but it seems fairly inconsistent.
      * @param comboBox The box to scroll.
      */
     @SuppressWarnings("unchecked")
     public static <T> void comboBoxScrollToValue(ComboBox<T> comboBox) {
-        if (comboBox.getSkin() != null)
-            ((ComboBoxListViewSkin<T>) comboBox.getSkin()).getListView().scrollTo(comboBox.getValue());
+        if (GET_LIST_VIEW_METHOD == null) {
+            try {
+                GET_LIST_VIEW_METHOD = ComboBoxListViewSkin.class.getDeclaredMethod("getListView");
+                GET_LIST_VIEW_METHOD.setAccessible(true);
+            } catch (NoSuchMethodException nsme) {
+                Utils.handleError(null, nsme, false);
+            }
+        }
+
+        if (comboBox.getSkin() != null) {
+            try {
+                ListView<T> listView = (ListView<T>) GET_LIST_VIEW_METHOD.invoke(comboBox.getSkin());
+                if (listView != null)
+                    listView.scrollTo(comboBox.getValue());
+            } catch (IllegalAccessException | InvocationTargetException ex) {
+                Utils.handleError(null, ex, false, "Failed to getListView() for the ComboBox skin.");
+            }
+        }
     }
 
     /**

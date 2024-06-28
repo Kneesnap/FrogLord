@@ -180,7 +180,7 @@ public class FileUtils3D {
      * @param map       The map to export.
      * @param directory The directory to export it to.
      */
-    @SneakyThrows
+    //@SneakyThrows
     public static void exportMapToObj(FroggerMapFile map, File directory) {
         /*if (directory == null)
             return;

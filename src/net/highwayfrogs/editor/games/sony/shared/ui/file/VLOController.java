@@ -19,7 +19,7 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
-import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
+import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -84,7 +84,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
         super.onControllerLoad(rootNode);
 
         this.sizeChoiceBox.setItems(FXCollections.observableArrayList(ImageControllerViewSetting.values()));
-        this.sizeChoiceBox.setConverter(new AbstractIndexStringConverter<>(ImageControllerViewSetting.values(), (index, entry) -> entry.getDescription()));
+        this.sizeChoiceBox.setConverter(new AbstractStringConverter<>(ImageControllerViewSetting::getDescription));
         this.sizeChoiceBox.setValue(ImageControllerViewSetting.SCALED_NEAREST_NEIGHBOR);
 
         addFlag("Translucent", GameImage.FLAG_TRANSLUCENT);

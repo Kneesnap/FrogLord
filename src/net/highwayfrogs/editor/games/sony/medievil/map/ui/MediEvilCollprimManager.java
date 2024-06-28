@@ -74,7 +74,7 @@ public class MediEvilCollprimManager extends MediEvilMapListManager<MediEvilMapC
         }
 
         this.collprimTypeFilterComboBox = getMainGrid().addEnumSelector("Type Shown", null, strippedTypes, true, newType -> updateValueVisibility());
-        this.collprimTypeFilterComboBox.setConverter(new AbstractStringConverter<>(value -> value != null ? value.name() : "ALL"));
+        this.collprimTypeFilterComboBox.setConverter(new AbstractStringConverter<>(Enum::name, "ALL"));
 
         // Wireframe preview checkbox.
         this.wireframePreviewCheckBox = getMainGrid().addCheckBox("Wireframe Display", true, this::updateCollprimWireframeState);

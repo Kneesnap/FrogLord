@@ -7,7 +7,7 @@ The images in this folder are licensed under different licenses, specified in th
  - Conversion to a different image file format.
 
 ### Crystal Clear Icon Set
-The original website is gone, but it seems the icons have been archived (here)[https://www.iconarchive.com/show/crystal-clear-icons-by-everaldo.html].  
+The original website is gone, but it seems the icons have been archived [here](https://www.iconarchive.com/show/crystal-clear-icons-by-everaldo.html).  
 
 **License:**  
 ```

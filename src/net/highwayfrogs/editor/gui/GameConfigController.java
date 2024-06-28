@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.awt.*;
 import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
@@ -301,6 +302,12 @@ public class GameConfigController extends GameUIController<GameInstance> {
     public static GameConfigController openGameConfigMenu(Config configRoot) {
         GameConfigController newController = new GameConfigController(configRoot);
         GameUIController.loadController(null, FXML_TEMPLATE_URL, newController);
+
+        // Close the splash screen if there's one active.
+        SplashScreen splash = SplashScreen.getSplashScreen();
+        if (splash != null)
+            splash.close();
+
         GameUIController.openWindow(newController, "FrogLord " + Constants.VERSION, false);
         return newController;
     }

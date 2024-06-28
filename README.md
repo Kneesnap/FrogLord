@@ -7,9 +7,16 @@
 FrogLord is a modding suite for Frogger (1997). It allows fans to create new levels, import 3D models, view unused content, and allow changing all game files.
 To use this tool, you must have a copy of the game.
 
+## Getting Started:
+Download FrogLord [here](https://github.com/Kneesnap/FrogLord/releases).  
+If you need any help, have questions, or want to get in touch, don't hesitate to talk to us on our [website](https://highwayfrogs.net/) or our [discord server](https://discord.gg/GSNCbCN).  
+
+## Join the Community: [![Join the discord server!](https://dcbadge.limes.pink/api/server/https://discord.gg/GSNCbCN)](https://discord.gg/GSNCbCN)
+Need help? Want to find/share mods? Talk with other Frogger fans? Join our [discord server](https://discord.gg/GSNCbCN).  
+
 ## Screenshots:
-![MAP Viewer](https://i.imgur.com/R67Jhao.png)
-![MOF Viewer](https://i.imgur.com/dZJwhUm.png)
+![MAP Viewer](/_repository/level-screenshot.png)
+![MOF Viewer](/_repository/model-screenshot.png)
 
 ## Supported Games
 | Name                     | # of Supported Builds | Support Notes                  |
@@ -22,17 +29,10 @@ To use this tool, you must have a copy of the game.
 | MediEvil II              | PSX: 16               | Support WIP.                   |
 | Moon Warrior             | PSX: 1                | Support WIP.                   |
 
-## Usage:
-Download: [here](https://github.com/Kneesnap/FrogLord/releases)  
-Website: [here](https://highwayfrogs.net/)  
-Discord: [here](https://highwayfrogs.net/thread/26/discord-group)  
-If you need any help, have questions, or want to get in touch, don't hesitate to talk to us on our website or our discord.  
-
 ## Can I Contribute?
 Yes! Pull requests are welcome.  
 
 ## Build Instructions:
-
 ### Using IntelliJ
 
 **Setup:**
@@ -40,34 +40,9 @@ Yes! Pull requests are welcome.
 2. Clone this repository. The URL is: ``https://github.com/Kneesnap/FrogLord.git``.
 3. Install the Lombok IntelliJ Plugin using the steps found [here](https://projectlombok.org/setup/intellij).
 
-**Running:**
-1. ``Run > Run 'FrogLord GUI'``  
-
-**Building:**
-1. ``Build > Build Artifacts... > FrogLord > Build``
-
-### Using Maven
-
-**Requirements:**
-1. Maven:
-    - Download the latest version of [maven](https://maven.apache.org/download.cgi)
-    - Follow the [installation guide](https://maven.apache.org/install.html)
-2. Java JDK:
-    - Make an Oracle account (Unfortunately required for the next step)
-    - Download Java 8 [Java Development Kit](https://www.oracle.com/java/technologies/javase/javase8u211-later-archive-downloads.html)
-    - If you downloaded a bin file run that, otherwise install according to the instructions
-
-**Setup:**
-1. ``git clone https://github.com/Kneesnap/FrogLord.git``
-2. ``cd FrogLord``
-3. ``mvn compile`` - Verify code compiles
-
-**Building:**
-1. ``mvn package``
-
-**Running:**
-1. ``java -jar target/editor-{version}-jar-with-dependencies.jar`` 
-    * `{version}` is the current release
+**Running:** Execute the `gradle run` task.  
+**Building a jar:** Execute the `gradle jar` task.  
+**Building an exe:** Execute the `gradle jpackage` task.  
 
 ## Special Thanks:
  - Andy Eder (Frogger 2 Programmer, Significant FrogLord contributor)

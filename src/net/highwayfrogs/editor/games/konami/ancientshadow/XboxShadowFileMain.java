@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.konami.FroggerBeyondUtil;
 import net.highwayfrogs.editor.games.konami.FroggerBeyondUtil.FroggerBeyondPlatform;
 import net.highwayfrogs.editor.games.konami.rescue.PRS1Unpacker;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -48,7 +49,7 @@ public class XboxShadowFileMain {
         for (List<DummyFile> dummyFiles : hfsFile.getHfsFiles()) {
             for (DummyFile dummyFile : dummyFiles) {
                 boolean compressed = PRS1Unpacker.isCompressedPRS1(dummyFile.getArray());
-                File outputFile = new File("./" + id++ + "-" + (compressed ? "UNPACKED" : "RAW"));
+                File outputFile = new File(GUIMain.getMainApplicationFolder(), "./" + id++ + "-" + (compressed ? "UNPACKED" : "RAW"));
 
                 byte[] data = (compressed ? PRS1Unpacker.decompressPRS1(dummyFile.getArray()) : dummyFile.getArray());
                 Files.write(outputFile.toPath(), data);

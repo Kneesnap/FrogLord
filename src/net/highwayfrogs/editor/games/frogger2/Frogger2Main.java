@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.frogger2;
 
+import net.highwayfrogs.editor.gui.GUIMain;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.util.Scanner;
@@ -21,7 +23,7 @@ public class Frogger2Main {
             return;
         }
 
-        File outputFile = new File("./" + file.getName() + ".unpacked");
+        File outputFile = new File(GUIMain.getMainApplicationFolder(), "./" + file.getName() + ".unpacked");
 
         byte[] packed = Files.readAllBytes(file.toPath());
         byte[] unpacked = FLA2Unpacker.unpackData(packed);
