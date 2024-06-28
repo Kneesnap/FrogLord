@@ -88,6 +88,11 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
     }
 
     @Override
+    public boolean isValueVisibleByUI(FroggerMapLight light) {
+        return super.isValueVisibleByUI(light) && this.applyLightingToEntitiesCheckBox.isSelected();
+    }
+
+    @Override
     protected void onSelectedValueChange(FroggerMapLight oldLight, FroggerMapLightPreview oldLightPreview, FroggerMapLight newLight, FroggerMapLightPreview newLightPreview) {
         // TODO: Position in 3D space display?
     }
