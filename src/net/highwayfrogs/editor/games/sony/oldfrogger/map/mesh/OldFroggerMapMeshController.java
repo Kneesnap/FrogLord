@@ -30,6 +30,10 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
         mainLight.getScope().add(getMeshView());
         mainLight.getScope().addAll(getAxisDisplayList().getNodes());
         getRenderManager().createDisplayList().add(mainLight);
+
+        // Shading should always be enabled.
+        if (getCheckBoxEnablePsxShading() != null)
+            getCheckBoxEnablePsxShading().setDisable(true);
     }
 
     @Override
