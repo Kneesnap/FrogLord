@@ -11,6 +11,7 @@ import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
+import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -236,6 +237,24 @@ public class Scene3DUtils {
         }
 
         node.getTransforms().add(new Translate(x, y, z));
+    }
+
+    /**
+     * Applies the updated position to the node.
+     * @param node the node to apply
+     * @param newX the new x position
+     * @param newY the new y position
+     * @param newZ the new z position
+     * @param flags the translation gizmo flags
+     */
+    public static void updateNodePosition(Node node, double newX, double newY, double newZ, int flags) {
+        Translate nodePos = Scene3DUtils.get3DTranslation(node);
+        if ((flags & TranslationGizmo.X_CHANGED_FLAG) == TranslationGizmo.X_CHANGED_FLAG)
+            nodePos.setX(newX);
+        if ((flags & TranslationGizmo.Y_CHANGED_FLAG) == TranslationGizmo.Y_CHANGED_FLAG)
+            nodePos.setY(newY);
+        if ((flags & TranslationGizmo.Z_CHANGED_FLAG) == TranslationGizmo.Z_CHANGED_FLAG)
+            nodePos.setZ(newZ);
     }
 
     /**

@@ -85,13 +85,14 @@ Zone:
 
 Materials:
  Properties:
-  - Texture ID (Or Not)swqa
+  - Texture ID (Or Not)
   - Flat Shading Color
   - Perhaps a toggle for if the material should be gouraud. (SHOuLD LOOK AT GAME MAPS FIRST TO SEE IF POLYGON TYPE SEEMS CONSISTENT PER MATERIAL)
   - Animation Data
   - Default Grid Flags (Still overridable per-polygon, though the polygon should track if it overrides a value or not)
   - I think this should allow texture rotation. (How did they make this work in CAV1.MAP's walls?)
    -> I say this because the vertex ordering of the walls still appears ordered the same non-wall grid tiles, which suggests some kind of texture rotation feature.
+  - Allow specifying per-material coloring which can override vertex coloring, or blend with it based on a toggle. Uncanny Crusher shows why.
 
 Polygon:
  - Vertices
@@ -106,6 +107,35 @@ Polygon:
 
 Vertex:
  - Position, Color
+
+Our editor centers around the concept of a HeightField.
+A height-field could be a layer of water, the main collision grid, the star polygon layer in the jungle level, etc.
+This height-field is a connected grid. However, not all grid entries are just a single polygon.
+Every height field grid entry has a root vertex, which is what by default the grid polygons are connected to.
+Quads can be extended in the direction of their face (but not tri's). Doing so will add new wall/display polygons, but not change the original vertex.
+Moving vertices (multiple of which can be selected at once) is different, since only vertex positions change.
+ -> Moving vertices will have different shapes / modes (Eg: Spherical pull with fall off)
+ -> There should also be very nice ways of selecting vertices, like a 2D selection rectangle, which could select either face or vertex depending on which keybind was used.
+The reason we model this as a heightfield, and not something else is because of the ability to raise and lower the terrain.
+Consider the big cave land masses in Webs Cavern. If they wanted to LOWER those land masses (as they did during development!!),
+they would need to somehow dynamically figure out which polygons were part of the wall/floor in order to figure out if they should collapse them or create a new wall.
+But with the idea of a grid, these wall vertices are tracked already and can be collapsed just by checking when the height of the connected faces drops below the vertex.
+I believe all collision grid polygons are quads, even if they CAN be split into non-quads.
+
+Peli's Island Feature Showcase:
+ - Both vertex movement and terrain generation from vertex movement.
+ - Static model baking
+ - Vertex coloring (And its ability to not carry over to certain faces)
+ - Splitting quads into tris
+ - Weirdly sized squares which are part of the grid (this feature wasn't actually used by the retail game I think? I wonder if it's still enabled. Probably not)
+ - The ability to add new arbitrary map polygons by connecting existing vertices.
+TODO: It seems like grid squares ARE always quads even if their displayed polygon is split up. (Huh? Is this right?)
+ -> I've gone through all tri polygons in collision grids in the retail PSX version and it appears all of them
+ -> Actually no, I'm wrong here.
+
+TODO: Coloring
+TODO: Extension of non-quads?
+TODO: Vertex extensions?
 
 Grid Stack:
  - Vertices.

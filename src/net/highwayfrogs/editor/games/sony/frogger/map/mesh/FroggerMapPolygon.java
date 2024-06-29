@@ -87,7 +87,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
         // Read vertices:
         for (int i = 0; i < this.vertices.length; i++)
             this.vertices[i] = reader.readUnsignedShortAsInt();
-        reader.align(Constants.INTEGER_SIZE); // Padding. The fourth vertex contains garbage data when it is not present.
+        reader.align(Constants.INTEGER_SIZE); // Padding. The fourth vertex is a duplicate usually, but in some cases such as a polygon from a baked entity model seems to let this value be garbage.
 
         // Read texture data. (if new format)
         boolean oldPolygonFormat = this.mapFile.getMapConfig().isOldMapTexturedPolyFormat();
