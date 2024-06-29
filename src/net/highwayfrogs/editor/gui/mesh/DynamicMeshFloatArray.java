@@ -24,6 +24,7 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
     private final int vertexSize;
     private final int vertexOffset;
     private final int elementsPerUnit;
+    private static final int FACE_ELEMENT_BATCH_REMOVAL_WARNING_LIMIT = 3;
 
     public DynamicMeshFloatArray(DynamicMesh mesh, String unitName, ObservableFloatArray meshArray, int vertexOffset, int elementsPerUnit) {
         super(new FXFloatArray(), meshArray);
@@ -126,14 +127,8 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
             int oldElementIndex = oldDataIndex * this.elementsPerUnit;
 
             // Show warnings if the face array is seen to be using data that was just removed.
-            if (indices.getBit(oldElementIndex)) {
-                errorCount++;
-                if (errorCount == 10) {
-                    getLogger().warning("Omitting remaining batch removal warnings.");
-                } else if (errorCount < 10) {
-                    getLogger().warning("Face Element " + i + " referenced index " + oldDataIndex + ", which was just removed. This will probably create visual corruption.");
-                }
-            }
+            if (indices.getBit(oldElementIndex) && ++errorCount <= FACE_ELEMENT_BATCH_REMOVAL_WARNING_LIMIT)
+                getLogger().warning("Face Element " + i + " referenced index " + oldDataIndex + ", which was just removed. This will probably create visual corruption.");
 
             // Calculate the number of indices removed at/before the current index.
             int removedElements = 0;
@@ -146,8 +141,8 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
                 faceData.set(i, oldDataIndex - (removedElements / this.elementsPerUnit));
         }
 
-        if (errorCount > 10)
-            getLogger().warning(errorCount + " face elements referenced newly removed indices. This will probably create visual corruption.");
+        if (errorCount > FACE_ELEMENT_BATCH_REMOVAL_WARNING_LIMIT)
+            getLogger().warning(errorCount + " total face elements referenced newly removed indices. This will probably create visual corruption.");
 
         getMesh().updateEntryStartIndices();
     }
