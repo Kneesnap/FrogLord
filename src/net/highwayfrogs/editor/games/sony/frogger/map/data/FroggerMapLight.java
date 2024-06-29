@@ -67,7 +67,7 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
     // priority = 128, parentId = Garbage?
     // position = VALID (VERY HIGH UP), direction = VALID (MAY NOT BE NORMALIZED? IT USUALY IS THO Does this suggest it's something other than direction?)
     // attribute0 = Umbra Angle (Near 300 usually. Above 256), attribute1 = ??? (Around 80) ->> IDEA: This could be outerAngle, or falloff.
-
+    // TODO: The size might be hardcoded, and the distance might just control how far away. Not sure. At some point we might just do our own lighting separately.
 
     // TODO: Lights without positions should have their positions set algorithmically starting at 0, 0, 0, but under the minimum map vertex.
 
