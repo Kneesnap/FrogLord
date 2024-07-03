@@ -20,6 +20,8 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
 /**
  * Represents a map file in pre-recode frogger.
+ * Old Frogger maps are two height-field grids with non-uniform spacing.
+ * In Open Inventor, mappy most likely modelled them as a "SoQuadMesh".
  * TODO: Support early format.
  * Created by Kneesnap on 12/8/2023.
  */

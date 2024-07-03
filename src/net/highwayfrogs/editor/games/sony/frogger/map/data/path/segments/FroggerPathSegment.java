@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments;
 
 import javafx.scene.control.TextField;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.FroggerMapConfig;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -41,19 +40,30 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
 
     @Override
     public void load(DataReader reader) {
-        FroggerMapConfig mapConfig = this.path.getMapFile().getMapConfig();
-
-        if (!mapConfig.isOldPathFormat())
+        if (!this.path.isOldPathFormatEnabled())
             this.length = reader.readInt();
         this.loadData(reader);
-        if (mapConfig.isOldPathFormat())
+
+        // Handle length.
+        if (this.path.isOldPathFormatEnabled()) {
             recalculateLength();
+        } else {
+            int newLength = calculateFixedPointLength();
+            int diffLength = newLength - this.length;
+            if (Math.abs(diffLength) > getIncorrectLengthTolerance()) {
+                String extraMessage = getCalculatedIncorrectLengthString();
+                getLogger().warning("calculateFixedPointLength() was inaccurate! [Read Length: " + this.length + "/" + Utils.fixedPointIntToFloat4Bit(this.length)
+                        + ", Calculated Length: " + newLength + "/" + Utils.fixedPointIntToFloat4Bit(this.length)
+                        + ", Diff: " + diffLength + "/" + Utils.fixedPointIntToFloat4Bit(diffLength)
+                        + (extraMessage != null && extraMessage.length() > 0 ? ", " + extraMessage : "") + "]");
+            }
+        }
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(getType().ordinal());
-        if (!this.path.getMapFile().getMapConfig().isOldPathFormat())
+        if (!this.path.isOldPathFormatEnabled())
             writer.writeInt(this.length);
         saveData(writer);
     }
@@ -116,7 +126,24 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
     /**
      * Recalculates the length of this segment.
      */
-    public abstract void recalculateLength();
+    public void recalculateLength() {
+        setLength(calculateFixedPointLength());
+    }
+
+    /**
+     * Calculates the segment length in fixed point form.
+     */
+    public abstract int calculateFixedPointLength();
+
+    /**
+     * Called to warn that we've calculated an incorrect segment length.
+     */
+    protected abstract String getCalculatedIncorrectLengthString();
+
+    /**
+     * Gets the amount of allowed inaccuracy in calculated paths before throwing a warning.
+     */
+    protected abstract int getIncorrectLengthTolerance();
 
     /**
      * Gets the start position of this segment.
@@ -167,13 +194,13 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
 
     /**
      * Sets the length of this segment.
-     * @param newLength The segment length
+     * @param newFixedPointSegmentLength The new segment length in fixed point form
      */
     @SuppressWarnings("ConstantConditions")
-    public void setLength(int newLength) {
-        this.length = newLength;
-        if (this.lengthField != null && this.lengthField.get() != null)
-            this.lengthField.get().setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(newLength)));
+    public void setLength(int newFixedPointSegmentLength) {
+        this.length = newFixedPointSegmentLength;
+        if (this.lengthField != null && this.lengthField.get() != null) // TODO: I think we should do it some other way.
+            this.lengthField.get().setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(newFixedPointSegmentLength)));
     }
 
     /**

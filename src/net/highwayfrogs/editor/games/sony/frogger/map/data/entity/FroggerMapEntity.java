@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity;
 
+import javafx.scene.control.Tooltip;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -213,7 +214,10 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
         editor.addBoldLabel("Flags:");
         for (FroggerMapEntityEntityFlag flag : FroggerMapEntityEntityFlag.values())
-            editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> setFlag(flag, newState));
+            editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> {
+                setFlag(flag, newState);
+                manager.updateEntityPositionRotation(this);
+            }).setTooltip(new Tooltip(flag.getDescription()));
 
         // Copulate entity data editor.
         if (this.entityData != null) {
@@ -369,15 +373,16 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     @Getter
     @AllArgsConstructor
     public enum FroggerMapEntityEntityFlag {
-        NO_LIVE_ENTITY(Constants.BIT_FLAG_0), // Don't create a live entity while this is set.
-        NO_DISPLAY(Constants.BIT_FLAG_1), // Don't display any mesh.
-        NO_MOVEMENT(Constants.BIT_FLAG_2), // Don't allow entity movement.
-        NO_COLLISION(Constants.BIT_FLAG_3), // Collision does not apply to this entity.
-        ALIGN_TO_WORLD(Constants.BIT_FLAG_4), // Entity matrix always aligned to world axes.
-        PROJECT_ON_LAND(Constants.BIT_FLAG_5), // Entity position is projected onto the landscape.
-        LOCAL_ALIGN(Constants.BIT_FLAG_6); // Entity matrix is calculated locally (Using Y part of entity matrix.)
+        NO_LIVE_ENTITY(Constants.BIT_FLAG_0, "Don't create a live entity."),
+        NO_DISPLAY(Constants.BIT_FLAG_1, "Don't display any mesh."),
+        NO_MOVEMENT(Constants.BIT_FLAG_2, "Don't allow entity movement."),
+        NO_COLLISION(Constants.BIT_FLAG_3, "Collision does not apply to this entity."),
+        ALIGN_TO_WORLD(Constants.BIT_FLAG_4, "Do not face the path's direction. (Path Entity Only)"),
+        PROJECT_ON_LAND(Constants.BIT_FLAG_5, "Snap rotation to the grid square polygon. (Path Entity Only)"),
+        LOCAL_ALIGN(Constants.BIT_FLAG_6, "Entity position matrix is calculated \"locally\" (using Y part of previous position?)"); // TODO: Hrm.
 
         private final int bitFlagMask;
+        private final String description;
         public static final int FLAG_VALIDATION_MASK = 0b1111111;
     }
 }

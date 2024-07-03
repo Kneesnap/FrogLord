@@ -39,7 +39,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
     public void load(DataReader reader) {
         // Points to a -1 terminated entity index list of entities using this path. Seems to be invalid data in many cases.
         // Since it appears to only ever be used for the retro beaver, we auto-generate it.
-        this.tempEntityIndexPointer = this.mapFile.getMapConfig().isOldPathFormat() ? 0 : reader.readInt();
+        this.tempEntityIndexPointer = isOldPathFormatEnabled() ? 0 : reader.readInt();
 
         // Prepare to read segments.
         int segmentCount = reader.readInt();
@@ -139,7 +139,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void save(DataWriter writer) {
-        this.tempEntityIndexPointer = this.mapFile.getMapConfig().isOldPathFormat() ? 0 : writer.writeNullPointer();
+        this.tempEntityIndexPointer = isOldPathFormatEnabled() ? 0 : writer.writeNullPointer();
         writer.writeInt(this.segments.size());
 
         // Write pointer table placeholder values.
@@ -285,5 +285,13 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
         for (int i = 0; i < this.segments.size(); i++)
             totalLength += this.segments.get(i).getLength();
         return totalLength;
+    }
+
+    /**
+     * Returns true iff the old path format is used.
+     * The only path format likely was replaced in early May 1997.
+     */
+    public boolean isOldPathFormatEnabled() {
+        return this.mapFile != null && this.mapFile.getMapConfig().isOldPathFormat();
     }
 }
