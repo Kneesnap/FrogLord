@@ -25,6 +25,9 @@ import java.util.List;
 
 /**
  * Represents a Beast Wars Map File
+ * Beast Wars maps are a height-field grid, with uniform spacing.
+ * In Open Inventor, mappy most likely modelled them as a "SoQuadMesh", and only gave access to editing the vertex height.
+ *
  * TODO: We may have orientation wrong. Eg: This may create a mesh aligned to the wrong axis or something. Use Collprims, arch's information, etc.
  * It appears every map tile's world position is similar to Frogger. In other words, 1.0 in fixed point is (1 << 8), and getting the grid position is (worldPos >> 8).
  * Data which probably is in the level but we don't know where:

@@ -1,11 +1,15 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.grid;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.IVector;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameObject;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -23,6 +27,8 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
     @Getter private final List<FroggerGridSquare> gridSquares = new ArrayList<>();
     private short averageHeight; // This is only used for cliff deaths. I'm not sure yet how this is calculated, it's pretty complicated it seems.
     private transient short loadSquareCount = -1;
+
+    public static final int MAX_GRID_DIMENSION = 256;
 
     public FroggerGridStack(FroggerMapFile mapFile, int x, int z) {
         super(mapFile != null ? mapFile.getGameInstance() : null);
@@ -173,5 +179,61 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
 
         // No usable grid squares.
         return -getAverageWorldHeightAsFloat();
+    }
+
+    /**
+     * Reimplementation of GRID.C/GetGridInfoFromWorldXZ
+     */
+    public FroggerGridStackInfo getGridStackInfo() {
+        if (this.gridSquares.isEmpty())
+            return null;
+
+        FroggerGridSquare gridSquare = this.gridSquares.get(0);
+        FroggerMapPolygon polygon = gridSquare.getPolygon();
+        if (polygon == null)
+            return null;
+
+        // GRID_SQUARE points to a map poly, which we take to define two semi-infinite tris.
+        // Work out which one we are over, then project onto it.
+        int dx = this.x % MAX_GRID_DIMENSION;
+        int dz = this.z % MAX_GRID_DIMENSION;
+
+        int gridY;
+        IVector xSlope = new IVector(MAX_GRID_DIMENSION, 0, 0);
+        IVector zSlope = new IVector(0, 0, MAX_GRID_DIMENSION);
+        List<SVector> vertices = getMapFile().getVertexPacket().getVertices();
+        if (dz >= dx) {
+            // Top left tri
+            int mapPolyY0 = vertices.get(polygon.getVertices()[0]).getY();
+            int mapPolyY1 = vertices.get(polygon.getVertices()[1]).getY();
+            int mapPolyY2 = vertices.get(polygon.getVertices()[2]).getY();
+
+            dz = MAX_GRID_DIMENSION - dz;
+            gridY = mapPolyY0 + ((dx * (mapPolyY1 - mapPolyY0)) >> 8) + ((dz * (mapPolyY2 - mapPolyY0)) >> 8);
+            xSlope.setY(mapPolyY1 - mapPolyY0);
+            zSlope.setY(mapPolyY0 - mapPolyY2);
+        } else {
+            // Bottom right tri
+            int mapPolyY1 = vertices.get(polygon.getVertices()[1]).getY();
+            int mapPolyY2 = vertices.get(polygon.getVertices()[2]).getY();
+            int mapPolyY3 = polygon.getPolygonType().isQuad() ? vertices.get(polygon.getVertices()[3]).getY() : mapPolyY2;
+
+            dx = MAX_GRID_DIMENSION - dx;
+            gridY = mapPolyY3 + ((dx * (mapPolyY2 - mapPolyY3)) >> 8) + ((dz * (mapPolyY1 - mapPolyY3)) >> 8);
+            xSlope.setY(mapPolyY3 - mapPolyY2);
+            zSlope.setY(mapPolyY1 - mapPolyY3);
+        }
+
+        xSlope.normalise();
+        zSlope.normalise();
+        return new FroggerGridStackInfo(gridY, xSlope, zSlope);
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class FroggerGridStackInfo {
+        private final int y;
+        private final IVector xSlope;
+        private final IVector zSlope;
     }
 }

@@ -75,6 +75,11 @@ Grid:
 Light:
  - New editor needs to be 3D based.
  - Include information in the baked editor about how lighting will only impact entities, but how this restriction does not apply to the new editor.
+ - There can only be one ambient light, and it's a global scene property basically.
+ - PointLight - location (vec)
+ - DirectionalLight - direction
+ - SpotLight: location (vec), direction (vec), dropOffRate (float 0.0 -> 1.0), cutOffAngle (angle in radians, outside of which light intensity is 0)
+ - /Desktop/Frogger/Frogger/open-inventor-windows/iv-doc/Inventor%20Mentor/ch04.html#id13751
 
 Path:
  - The new editor should be 3D based.
@@ -93,6 +98,31 @@ Materials:
   - I think this should allow texture rotation. (How did they make this work in CAV1.MAP's walls?)
    -> I say this because the vertex ordering of the walls still appears ordered the same non-wall grid tiles, which suggests some kind of texture rotation feature.
   - Allow specifying per-material coloring which can override vertex coloring, or blend with it based on a toggle. Uncanny Crusher shows why.
+ - The reason lighting seems weird on some levels is because each material also needs lighting properties that define how lights interact with it.
+ - Refer to "Material Node" in /Desktop/Frogger/Frogger/open-inventor-windows/iv-doc/Inventor%20Mentor/ch05.html#id16293 for more info.
+  -> Quote "Note: In Inventor, shading (such as Gouraud or flat) is dictated by the combination of the material specification of the object, the lighting model, and the normal bindings. A shading model is not explicitly specified."
+  -> OK!!!! That's HUGE. So this means it was indeed automatically choosing polygon type based on material specification, lighting, etc. Can we figure out the criteria it used?
+  -> INTERESTINGLY... SoMaterial doesn't seem to include a texture by default. That'd be awfully weird though, I'm still like 99% sure the materials they used had the texture set, it's just the SoMaterial base class which didn't define it.
+  -> Materials are most likely SoMaterialBinding::PER_FACE_INDEXED, since that allows each vertex of each face to have a different material
+   -> This is why the lighting system works. On VOL2, the reason the polygons which got the purple lighting got it, and nothing else, is because they're metallic, and were configured as such.
+   -> Where-as, the kitchen tiles, lava, etc, were not configured to show such lighting.
+   -> I don't know if this is a feature we care to keep or not, but I suppose it doesn't hurt.
+  -> It was possible to use a raw color instead of a full material when you wanted to only change the diffuse color.
+
+TODO: Are frogger materials per-index or per-face?
+ -> Vertex coloring exists so it seems per-vertex.
+ -> BUT, textures apply to a collection of vertices, and they have material impacts on a per-face basis.
+ -> It looks like materials are usually per-vertex, and textures are per-face.
+ -> Maybe this isn't fully right, since sometimes there are vertices with different colors on different faces, however this may just be the reaction to lighting.
+ -> Texture UVs are definitely per-face, even though I'm struggling to fully understand the way it works in Open Inventor.
+ -> Hmm, this is interesting. I think we'll need to think about how we want materials to work with lighting.
+
+TODO: Reverse engineer texture names further.
+
+Questions:
+ - How do textures work with materials?
+ - How do the data structures work? map form
+ - What does MF stand for?
 
 Polygon:
  - Vertices
@@ -130,12 +160,9 @@ Peli's Island Feature Showcase:
  - Weirdly sized squares which are part of the grid (this feature wasn't actually used by the retail game I think? I wonder if it's still enabled. Probably not)
  - The ability to add new arbitrary map polygons by connecting existing vertices.
 TODO: It seems like grid squares ARE always quads even if their displayed polygon is split up. (Huh? Is this right?)
- -> I've gone through all tri polygons in collision grids in the retail PSX version and it appears all of them
- -> Actually no, I'm wrong here.
+ -> I guess this isn't guaranteed, but perhaps we can start from this assumption.
 
-TODO: Coloring
-TODO: Extension of non-quads?
-TODO: Vertex extensions?
+TODO: Document the different operations I want to be able to perform.
 
 Grid Stack:
  - Vertices.
@@ -154,3 +181,15 @@ Future Features:
   -> Remember how few polygons of a given type can exist in a map group. 255 max. We need to warn if we go above this limit.
 
 Go over all packets, and look at the data types used. Which ones are at the highest risk of overflow? What precautions do we need to take to ensure we don't exceed this limit?
+
+One day, could I add these features to JavaFX?
+Pretty much everything seen in Open Inventor I'd like ported to JavaFX.
+
+Key Things:
+ - Texture Wrapping Settings (wrapS / wrapT -> REPEAT vs CLAMP)
+ - Vertex Ordering (Might be tough when we consider the auto-generation of meshes like spheres, etc)
+ - Cone shape
+ - Arrow shape
+
+Materials
+Vertex coloring

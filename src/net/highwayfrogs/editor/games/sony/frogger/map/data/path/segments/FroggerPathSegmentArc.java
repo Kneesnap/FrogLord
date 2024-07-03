@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments;
 
 import javafx.scene.control.TextField;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
@@ -15,10 +16,14 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResul
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents PATH_ARC.
+ * This is accurate, even though some Arc paths don't properly connect, such as in FOR2. These disconnected paths can be experienced in-game, and are thus accurate.
+ * TODO: Allow changing start positions of each segment type as always updating the end position of the previous one. For ones which can't update the previous one (which aren't null), don't allow changing it.
+ *  - This should only occur if the start/end of the segments already match exactly. Pressing a checkbox should also allow separation if they match.
  * Created by Kneesnap on 9/16/2018.
  */
 @Getter
@@ -26,9 +31,15 @@ import net.highwayfrogs.editor.utils.Utils;
 public class FroggerPathSegmentArc extends FroggerPathSegment {
     private final SVector start = new SVector();
     private final SVector center = new SVector();
-    private final SVector normal = new SVector();
+    private final SVector normal = FroggerPathSegmentArcOrientation.UP.applyToVector(new SVector()); // This is the "UP" direction of the curve, by default this is towards negative Y. (The circle is flat on the ground)
     private int pitch; // Delta Y in helix frame. (Can be opposite direction of normal)
-    private transient float distance = (float) (Math.PI / 2); // Length of arc (in radians).
+    private double angle = .5; // How much of a full circle is completed. 0.0 is none, 1.0 is a full circle.
+
+    // TODO: From doc "1st order continuity should be imposed. This equates to the centre points of adjacent segments lying in the plane normal
+    //  to the tangent of the arc at that (shared) endpoint. This should also be imposed for arcs joining lines."
+    //  ^^ What does this mean? (Apply these features to FrogLord)
+    //  - It means an arc following another arc which shares the end/start point must use the same tangent line as the end of the previous arc. (Avoids entities snapping directions weirdly)
+    //  - The same thing applies to lines which follow arcs.
 
     public FroggerPathSegmentArc(FroggerPath path) {
         super(path, FroggerPathSegmentType.ARC);
@@ -39,15 +50,37 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         this.start.loadWithPadding(reader);
         this.center.loadWithPadding(reader);
         this.normal.loadWithPadding(reader);
-        int readRadius = reader.readInt();
-        this.pitch = reader.readInt();
 
+        int readRadius;
+        if (getPath().isOldPathFormatEnabled()) {
+            readRadius = reader.readUnsignedShortAsInt();
+            this.pitch = 0; // Doesn't support pitch.
+            this.angle = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 12);
+        } else {
+            // Calculate angle.
+            // 'angle' was how this data was included in the "Frogger map export revision 18-04-97.doc" file.
+            // It is assumed that this is how Mappy stored this data since it's a fairly sensible way to store and edit it,
+            //  and an earlier format document is more likely to have data in the terms of how Mappy treated it.
+            // Length = pitch + Circumference of Partial Circle = angle * (2 * pi * radius)
+            // So, angle = (Length - pitch) / (2 * pi * radius)
+            readRadius = reader.readInt();
+            this.pitch = reader.readInt();
+
+            // Some paths still don't calculate cleanly, but the fact that this is a real recognized stand-in for Pi and works across a good chunk of paths makes me think it's correct.
+            // Though it's possible the ones which don't calculate cleanly were changed via GUI slider, much like what FrogLord supports.
+            // I think this is the case since many of the non-even paths don't look right if you put the clean number in.
+            this.angle = ((getLength() - Math.abs(this.pitch)) / (2 * SCMath.MAPPY_PI_HALF16 * readRadius));
+        }
+
+        // Radius warnings.
         int calculatedRadius = calculateFixedRadius();
         int diff = readRadius - calculatedRadius;
-        if (Math.abs(diff) >= 48) // TODO: Change this to 2 in the future.
-            getLogger().warning("calculateFixedRadius() was too inaccurate! (Read Radius: " + readRadius + "/" + Utils.fixedPointIntToFloat4Bit(readRadius) + ", Calculated Radius: " + calculatedRadius + "/" + Utils.fixedPointIntToFloat4Bit(calculatedRadius) + ", Difference: " + diff + "/" + Utils.fixedPointIntToFloat4Bit(diff) + ").");
+        if (Math.abs(diff) >= 30) // There are only 17 occurrences with a value > 1 in psx-retail-usa. These appear to be outliers, though I don't know why their values are odd.
+            getLogger().warning("calculateFixedRadius() was inaccurate! (Read: " + readRadius + "/" + Utils.fixedPointIntToFloat4Bit(readRadius) + ", Calculated: " + calculatedRadius + "/" + Utils.fixedPointIntToFloat4Bit(calculatedRadius) + ", Difference: " + diff + "/" + Utils.fixedPointIntToFloat4Bit(diff) + ", Pitch: " + this.pitch + "/" + Utils.fixedPointIntToFloat4Bit(this.pitch) + ", Length: " + getLength() + "/" + Utils.fixedPointIntToFloat4Bit(getLength()) + ").");
 
-        this.distance = Utils.fixedPointIntToFloat4Bit(getLength()) / Utils.fixedPointIntToFloat4Bit(calculateFixedRadius());
+        // Normal warnings.
+        if (FroggerPathSegmentArcOrientation.getDirection(this.normal) == null)
+            getLogger().info("Unexpected Arc Normal Vector: " + this.normal + " (Wasn't one of the expected orientations.)");
     }
 
     @Override
@@ -55,16 +88,32 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         this.start.saveWithPadding(writer);
         this.center.saveWithPadding(writer);
         this.normal.saveWithPadding(writer);
-        writer.writeInt(calculateFixedRadius());
-        writer.writeInt(this.pitch);
+        if (getPath().isOldPathFormatEnabled()) {
+            writer.writeUnsignedShort(calculateFixedRadius());
+            writer.writeUnsignedShort(Utils.floatToFixedPointInt((float) this.angle, 12));
+        } else {
+            writer.writeInt(calculateFixedRadius());
+            writer.writeInt(this.pitch);
+        }
+    }
+
+    @Override
+    protected String getCalculatedIncorrectLengthString() {
+        return "Angle Slider: " + this.angle;
+    }
+
+    @Override
+    protected int getIncorrectLengthTolerance() {
+        // There are only 16 occurrences > 6, and all of them appear to be ones where it looks like Mappy made the path too short, potentially suggesting a bug in Mappy, or potentially an intentional manual edit?
+        return 100; // (2 * pi * radius tolerance)
     }
 
     @Override
     public FroggerPathResult calculatePosition(FroggerPathInfo info) {
         int segmentDistance = info.getSegmentDistance();
 
-        IVector vec = new IVector(start.getX() - center.getX(), start.getY() - center.getY(), start.getZ() - center.getZ());
-        final IVector vec2 = new IVector(normal.getX(), normal.getY(), normal.getZ());
+        IVector vec = new IVector(this.start.getX() - this.center.getX(), this.start.getY() - this.center.getY(), this.start.getZ() - this.center.getZ());
+        final IVector vec2 = new IVector(this.normal.getX(), this.normal.getY(), this.normal.getZ());
         IVector vec3 = new IVector();
         SVector svec = new SVector();
 
@@ -101,8 +150,9 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
     }
 
     @Override
-    public void recalculateLength() {
-        setLength(Utils.floatToFixedPointInt4Bit(Utils.fixedPointIntToFloat4Bit(calculateFixedRadius()) * this.distance));
+    public int calculateFixedPointLength() {
+        // Length = pitch + Circumference of Partial Circle = pitch + angle * (2 * pi * radius)
+        return (int) Math.round((this.angle * 2 * SCMath.MAPPY_PI_HALF16 * calculateFixedRadius()) + Math.abs(this.pitch));
     }
 
     @Override
@@ -114,39 +164,56 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
     public void setupEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
         super.setupEditor(pathPreview, editor);
 
-        editor.addDoubleSlider("Arc Length", this.distance, newDistance -> {
-            this.distance = (float) (double) newDistance;
-            onUpdate(pathPreview);
-        }, 0, 2 * Math.PI);
-
         TextField radiusField = editor.addFloatField("Arc Radius:", Utils.fixedPointIntToFloat4Bit(calculateFixedRadius()), null, null); // Read-Only.
-        editor.addFloatVector("Start:", getStart(), () -> {
+        editor.addFloatVector("Start", getStart(), () -> {
             onUpdate(pathPreview);
             radiusField.setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
         }, pathPreview.getController());
-        editor.addFloatVector("Center:", getCenter(), () -> {
+        editor.addFloatVector("Center", getCenter(), () -> {
             onUpdate(pathPreview);
             radiusField.setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
         }, pathPreview.getController());
-        editor.addSVector("Normal:", 12, getNormal(), () -> onUpdate(pathPreview));
 
-        editor.addFloatField("Pitch:", Utils.fixedPointIntToFloat4Bit(getPitch()), newValue -> {
-            this.pitch = Utils.floatToFixedPointInt4Bit(newValue);
+        // Add normal editor.
+        FroggerPathSegmentArcOrientation orientation = FroggerPathSegmentArcOrientation.getDirection(this.normal);
+        if (orientation != null && orientation != FroggerPathSegmentArcOrientation.CUSTOM) { // If the orientation is recognized, .
+            editor.addEnumSelector("Circle Orientation", orientation, FroggerPathSegmentArcOrientation.values(), false, newOrientation -> {
+                newOrientation.applyToVector(this.normal);
+                onUpdate(pathPreview);
+            }).setConverter(new AbstractStringConverter<>(FroggerPathSegmentArcOrientation::getDisplayName));
+        } else {
+            editor.addSVector("Normal:", 12, getNormal(), () -> onUpdate(pathPreview));
+        }
+
+        // Maps such as QB.MAP show Mappy was capable of making the angle go beyond 1.0, so a textbox is necessary to support this.
+        editor.addDoubleField("Angle", this.angle, newAngle -> {
+            this.angle = newAngle;
             onUpdate(pathPreview);
-        }, null);
+        }, newAngle -> newAngle >= 1 / 16D && newAngle <= (16 - (1D / SCMath.FIXED_POINT_ONE)));
+        editor.addDoubleSlider("Angle:", this.angle, newAngle -> {
+            this.angle = newAngle;
+            onUpdate(pathPreview);
+        }, .01, 1, false).setDisable(this.angle > 1D);
+
+        // Old paths don't support pitch.
+        if (!getPath().isOldPathFormatEnabled()) {
+            editor.addFloatField("Pitch:", Utils.fixedPointIntToFloat4Bit(getPitch()), newValue -> {
+                this.pitch = Utils.floatToFixedPointInt4Bit(newValue);
+                onUpdate(pathPreview);
+            }, null);
+        }
     }
 
     /**
      * Calculates the radius for this segment.
-     * TODO: Make accurate.
      * NOTE: This isn't full accurate, but it's close enough for now.
      * @return radius
      */
     public int calculateFixedRadius() {
-        double xDiff = (this.start.getFloatX() - this.center.getFloatX());
-        double yDiff = (this.start.getFloatY() - this.center.getFloatY());
-        double zDiff = (this.start.getFloatZ() - this.center.getFloatZ());
-        return Utils.floatToFixedPointInt4Bit((float) Math.sqrt((xDiff * xDiff) + (zDiff * zDiff) + (yDiff * yDiff)));
+        int xDiff = this.start.getX() - this.center.getX();
+        int yDiff = this.start.getY() - this.center.getY();
+        int zDiff = this.start.getZ() - this.center.getZ();
+        return Utils.fixedSqrt((xDiff * xDiff) + (zDiff * zDiff) + (yDiff * yDiff));
     }
 
     @Override
@@ -162,5 +229,63 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         this.center.add(new SVector(-400, 0, -400));
         this.normal.setFloatY(-1F, 12);
         onUpdate(null);
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public enum FroggerPathSegmentArcOrientation {
+        UP("Up (Clockwise, -Y)", 0, SCMath.FIXED_POINT_ONE, 0),
+        DOWN("Down (Counter-Clockwise, +Y)", 0, -SCMath.FIXED_POINT_ONE, 0),
+        NORTH("North (Counter-Clockwise, +Z)", 0, 0, -SCMath.FIXED_POINT_ONE),
+        EAST("East (Counter-Clockwise, +X)", -SCMath.FIXED_POINT_ONE, 0, 0),
+        SOUTH("South (Clockwise, -Z)", 0, 0, SCMath.FIXED_POINT_ONE),
+        WEST("West (Clockwise, -X)", SCMath.FIXED_POINT_ONE, 0, 0),
+        CUSTOM("Custom (Make your own)", 0, SCMath.FIXED_POINT_ONE >> 2, -SCMath.FIXED_POINT_ONE >> 2);
+
+        private final String displayName;
+        private final short fixedPointX;
+        private final short fixedPointY;
+        private final short fixedPointZ;
+
+        FroggerPathSegmentArcOrientation(String displayName, int fixedPointX, int fixedPointY, int fixedPointZ) {
+            this.displayName = displayName;
+            this.fixedPointX = (short) fixedPointX;
+            this.fixedPointY = (short) fixedPointY;
+            this.fixedPointZ = (short) fixedPointZ;
+        }
+
+        /**
+         * Applies the vector values to the given vector.
+         * @param vector the vector to apply the values to
+         * @return vector
+         */
+        public SVector applyToVector(SVector vector) {
+            vector.setValues(this.fixedPointX, this.fixedPointY, this.fixedPointZ);
+            return vector;
+        }
+
+        /**
+         * Gets the FroggerPathSegmentArcOrientation corresponding to the input SVector, if one exists.
+         * @param input the input vector to find the value from
+         * @return direction or null
+         */
+        public static FroggerPathSegmentArcOrientation getDirection(SVector input) {
+            if (input == null)
+                throw new NullPointerException("input");
+
+            // Some arc path segments use value 4095 instead of 4096.
+            // There doesn't appear to be any difference since it gets normalized as part of path calculations.
+            // So, we might as well treat the vector <0, -4095, 0> the same as <0, -4096, 0>
+            if (input.getX() == 0 && input.getZ() == 0 && input.getY() == 1 - SCMath.FIXED_POINT_ONE)
+                return DOWN;
+
+            for (int i = 0; i < values().length; i++) {
+                FroggerPathSegmentArcOrientation direction = values()[i];
+                if (direction.fixedPointX == input.getX() && direction.fixedPointY == input.getY() && direction.fixedPointZ == input.getZ())
+                    return direction;
+            }
+
+            return null;
+        }
     }
 }

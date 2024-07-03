@@ -26,6 +26,10 @@ public class IVector extends GameObject implements Vector {
     public static final int UNPADDED_BYTE_SIZE = 3 * Constants.INTEGER_SIZE;
     public static final int PADDED_BYTE_SIZE = UNPADDED_BYTE_SIZE + Constants.INTEGER_SIZE;
 
+    public IVector(IVector other) {
+        this(other.x, other.y, other.z);
+    }
+
     @Override
     public void load(DataReader reader) {
         this.x = reader.readInt();
@@ -56,6 +60,58 @@ public class IVector extends GameObject implements Vector {
     public void saveWithPadding(DataWriter writer) {
         save(writer);
         writer.writeNull(Constants.INTEGER_SIZE);
+    }
+
+    /**
+     * Calculates the dot product between this vector and another vector.
+     * @param other the other vector
+     * @return dotProduct
+     */
+    public int dotProduct(IVector other) {
+        return (this.x * other.x) + (this.y * other.y) + (this.z * other.z);
+    }
+
+    /**
+     * Clears the contents of the vector.
+     */
+    public void clear() {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+    }
+
+    /**
+     * Set the values of this vector.
+     * @param copyVector the vector to copy values from
+     */
+    public void setValues(IVector copyVector) {
+        this.x = copyVector.x;
+        this.y = copyVector.y;
+        this.z = copyVector.z;
+    }
+
+    /**
+     * Set the values of this vector.
+     * @param x The x value to set.
+     * @param y The y value to set.
+     * @param z The z value to set.
+     */
+    public void setValues(int x, int y, int z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    /**
+     * Set the values of this vector.
+     * @param x The x value to set.
+     * @param y The y value to set.
+     * @param z The z value to set.
+     */
+    public void setValues(float x, float y, float z, int bits) {
+        this.x = Utils.floatToFixedPointInt(x, bits);
+        this.y = Utils.floatToFixedPointInt(y, bits);
+        this.z = Utils.floatToFixedPointInt(z, bits);
     }
 
     /**

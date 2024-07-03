@@ -230,7 +230,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group();
-        SubScene subScene3D = new SubScene(this.root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.BALANCED);
+        SubScene subScene3D = new SubScene(this.root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.DISABLED);
         subScene3D.setFill(Color.BLACK);
         subScene3D.setCamera(this.firstPersonCamera.getCamera());
 
@@ -250,7 +250,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         uiPane.setCenter(this.subScene2DElements);
 
         // Create and set the scene with antialiasing.
-        this.meshScene = new Scene(uiPane, -1, -1, true, SceneAntialiasing.BALANCED);
+        this.meshScene = new Scene(uiPane, -1, -1, true, SceneAntialiasing.DISABLED);
         this.originalScene = Utils.setSceneKeepPosition(stageToOverride, this.meshScene);
 
         // Handle scaling of SubScene on stage resizing.

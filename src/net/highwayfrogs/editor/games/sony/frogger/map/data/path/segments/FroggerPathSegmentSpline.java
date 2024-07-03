@@ -42,12 +42,12 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
         this.splineMatrix.load(reader);
 
         // Read ps_smooth_t
-        for (int i = 0; i < smoothT.length; i++)
+        for (int i = 0; i < this.smoothT.length; i++)
             this.smoothT[i] = reader.readInt();
 
         // Read ps_smooth_c:
-        for (int i = 0; i < smoothC.length; i++)
-            for (int j = 0; j < smoothC[i].length; j++)
+        for (int i = 0; i < this.smoothC.length; i++)
+            for (int j = 0; j < this.smoothC[i].length; j++)
                 this.smoothC[i][j] = reader.readInt();
     }
 
@@ -55,12 +55,14 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
     protected void saveData(DataWriter writer) {
         this.splineMatrix.save(writer);
 
-        for (int val : this.smoothT)
-            writer.writeInt(val);
+        // Write ps_smooth_t
+        for (int i = 0; i < this.smoothT.length; i++)
+            writer.writeInt(this.smoothT[i]);
 
-        for (int[] arr : this.smoothC)
-            for (int val : arr)
-                writer.writeInt(val);
+        // Write ps_smooth_c:
+        for (int i = 0; i < this.smoothC.length; i++)
+            for (int j = 0; j < this.smoothC[i].length; j++)
+                writer.writeInt(this.smoothC[i][j]);
     }
 
     @Override
@@ -157,7 +159,7 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
     }
 
     @Override
-    public void recalculateLength() {
+    public int calculateFixedPointLength() {
         // TODO: Reimplement.
         // We leave this up to user input, since I've yet to come up with an algorithm which is accurate enough to get this right,
         // and it seems like just leaving it as-is even during changes will create valid results.
@@ -178,7 +180,18 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
             }
         }
 
-        this.setLength(bestLength);
+        return bestLength;
+    }
+
+    @Override
+    protected String getCalculatedIncorrectLengthString() {
+        return null;
+    }
+
+    @Override
+    protected int getIncorrectLengthTolerance() {
+        // TODO: ?
+        return 5; // TODO: RANDOM
     }
 
     // TODO: TOSS

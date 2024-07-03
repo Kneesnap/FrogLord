@@ -72,13 +72,25 @@ public class FroggerPathSegmentLine extends FroggerPathSegment {
     }
 
     @Override
-    public void recalculateLength() {
-        float deltaX = this.end.getFloatX() - this.start.getFloatX();
-        float deltaY = this.end.getFloatY() - this.start.getFloatY();
-        float deltaZ = this.end.getFloatZ() - this.start.getFloatZ();
+    public int calculateFixedPointLength() {
+        // Worst case, this value is off by one from the original value. Most likely the original code used floating point numbers, and we got the fixed point rounded down numbers.
+        // So, the original numbers had enough extra precision to account for one length unit (0.0625) of difference in the original calculations.
+        int deltaX = this.end.getX() - this.start.getX();
+        int deltaY = this.end.getY() - this.start.getY();
+        int deltaZ = this.end.getZ() - this.start.getZ();
+        return Utils.fixedSqrt((deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ));
+    }
 
-        float length = (float)Math.sqrt((deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ));
-        setLength(Utils.floatToFixedPointInt4Bit(length));
+    @Override
+    protected String getCalculatedIncorrectLengthString() {
+        return "Start: " + this.start + ", End: " + this.end;
+    }
+
+    @Override
+    protected int getIncorrectLengthTolerance() {
+        // Worst case, this value is off by one from the original value. Most likely the original code used floating point numbers, and we got the fixed point rounded down numbers.
+        // So, the original numbers had enough extra precision to account for one length unit (0.0625) of difference in the original calculations.
+        return 1;
     }
 
     @Override
