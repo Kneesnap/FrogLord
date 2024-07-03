@@ -200,7 +200,7 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
         FroggerPath path = getPath();
         if (path != null) {
             final float distAlongPath = Utils.fixedPointIntToFloat4Bit(getTotalPathDistance());
-            final float totalPathDist = Utils.fixedPointIntToFloat4Bit(path.getTotalLength());
+            final float totalPathDist = path.calculateTotalLengthFloat();
 
             Slider travDistSlider = editorGrid.addDoubleSlider("Travel Distance:", distAlongPath, newValue -> {
                 setTotalPathDistance(Utils.floatToFixedPointInt4Bit(newValue.floatValue()));

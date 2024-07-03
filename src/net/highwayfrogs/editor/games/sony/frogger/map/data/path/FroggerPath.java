@@ -280,11 +280,19 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
      * Gets the length of all the segments combined.
      * @return totalLength
      */
-    public int getTotalLength() {
+    public int calculateTotalLength() {
         int totalLength = 0;
         for (int i = 0; i < this.segments.size(); i++)
             totalLength += this.segments.get(i).getLength();
         return totalLength;
+    }
+
+    /**
+     * Gets the length of all the segments combined as a floating point number.
+     * @return totalLength
+     */
+    public float calculateTotalLengthFloat() {
+        return Utils.fixedPointIntToFloat4Bit(calculateTotalLength());
     }
 
     /**

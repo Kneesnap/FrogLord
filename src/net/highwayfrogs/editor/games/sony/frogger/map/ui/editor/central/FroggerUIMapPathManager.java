@@ -4,6 +4,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
@@ -15,6 +16,7 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
@@ -28,6 +30,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.SelectionPromptTracker;
+import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.utils.TriConsumer;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -37,16 +40,17 @@ import java.util.List;
 /**
  * Allows editing Frogger map paths.
  * TODO: Allow calculating position and rotation independently, more closely to how the old Frogger system does it? Not sure.
- * TODO: Go over path speed. What kind of unit is this? Create separate editor grid functions for path speed which accurately mimic the behavior. Update entity data, units, etc.
- * TODO: Allow selecting individual segments instead of showing them all at once.
- * TODO: We should allow dragging an entity along the path in 3D space. Eg: Click and hold will let you drag, by finding nearby path parts
- * TODO: Can I make a 3D path editor soon? I bet it's doable.
  * TODO: Allow a toggle to making the entities move along the paths. Eg: You can see when things will / will not line up. TODO: this should also be valid for EntityData & ScriptData, so they can do bobbing & stuff.
+ * TODO: We should allow dragging an entity along the path in 3D space. Eg: Click and hold will let you drag, by finding nearby path parts
+ * TODO: Go over path speed. What kind of unit is this? Create separate editor grid functions for path speed which accurately mimic the behavior. Update entity data, units, etc.
+ * TODO: Allow selecting individual segments instead of showing them all at once, and highlight them.
+ * TODO: Can I make a 3D path editor soon? I bet it's doable.
  * Created by Kneesnap on 6/2/2024.
  */
 public class FroggerUIMapPathManager extends FroggerCentralMapListManager<FroggerPath, FroggerPathPreview> {
     @Getter private final PathSelectionTracker pathSelector;
     private DisplayList pathDisplayList;
+    @Getter private TextField fullPathLengthField;
 
     private static final PhongMaterial MATERIAL_WHITE = Utils.makeUnlitSharpMaterial(Color.WHITE);
     private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
@@ -64,6 +68,13 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
     public void onSetup() {
         super.onSetup();
         this.pathDisplayList = getRenderManager().createDisplayListWithNewGroup();
+    }
+
+    @Override
+    protected void setupMainGridEditor(UISidePanel sidePanel) {
+        super.setupMainGridEditor(sidePanel);
+        this.fullPathLengthField = getMainGrid().addFloatField("Full Path Length", 0, null, null);
+        this.fullPathLengthField.setDisable(true);
     }
 
     @Override
@@ -122,7 +133,7 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
 
     @Override
     protected void onSelectedValueChange(FroggerPath oldPath, FroggerPathPreview oldPathPreview, FroggerPath newPath, FroggerPathPreview newPathPreview) {
-        // Nothing.
+        this.fullPathLengthField.setText(newPath != null ? Float.toString(newPath.calculateTotalLengthFloat()) : "No Path");
     }
 
     @Override
@@ -139,6 +150,7 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
         private final FroggerUIMapPathManager pathManager;
         private final FroggerPath path;
         private final List<Node> nodes = new ArrayList<>();
+        @Setter private TextField pathSegmentLengthField;
 
         private static final int SEGMENT_STEP_SIZE = 32;
 
