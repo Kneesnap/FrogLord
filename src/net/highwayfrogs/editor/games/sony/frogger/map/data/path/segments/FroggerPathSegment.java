@@ -17,7 +17,6 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -30,7 +29,6 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
     private final FroggerPath path;
     private final FroggerPathSegmentType type;
     private int length;
-    private transient WeakReference<TextField> lengthField;
 
     public FroggerPathSegment(FroggerPath path, FroggerPathSegmentType type) {
         super(path.getGameInstance());
@@ -46,7 +44,7 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
 
         // Handle length.
         if (this.path.isOldPathFormatEnabled()) {
-            recalculateLength();
+            recalculateLength(null);
         } else {
             int newLength = calculateFixedPointLength();
             int diffLength = newLength - this.length;
@@ -126,8 +124,8 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
     /**
      * Recalculates the length of this segment.
      */
-    public void recalculateLength() {
-        setLength(calculateFixedPointLength());
+    public void recalculateLength(FroggerPathPreview pathPreview) {
+        setLength(pathPreview, calculateFixedPointLength());
     }
 
     /**
@@ -158,11 +156,13 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
      */
     public void setupEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
         editor.addLabel("Type:", getType().name(), 25);
-        this.lengthField = new WeakReference<>(editor.addFloatField("Segment Length:", Utils.fixedPointIntToFloat4Bit(getLength()), isAllowLengthEdit() ? newVal -> {
-            setLength(Utils.floatToFixedPointShort4Bit(newVal));
+        TextField segmentLengthField = editor.addFloatField("Segment Length:", Utils.fixedPointIntToFloat4Bit(getLength()), isAllowLengthEdit() ? newVal -> {
+            setLength(pathPreview, Utils.floatToFixedPointShort4Bit(newVal));
             onManualLengthUpdate(pathPreview, editor);
             updateDisplay(pathPreview); // Don't call onUpdate because that will recalculate length.
-        } : null, null)); // Read-Only.
+        } : null, null); // Read-Only.
+        segmentLengthField.setDisable(true);
+        pathPreview.setPathSegmentLengthField(segmentLengthField);
     }
 
     /**
@@ -170,7 +170,7 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
      * @param pathPreview the path preview to update the path for
      */
     public void onUpdate(FroggerPathPreview pathPreview) {
-        recalculateLength();
+        recalculateLength(pathPreview);
         if (pathPreview != null)
             updateDisplay(pathPreview);
     }
@@ -197,10 +197,17 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
      * @param newFixedPointSegmentLength The new segment length in fixed point form
      */
     @SuppressWarnings("ConstantConditions")
-    public void setLength(int newFixedPointSegmentLength) {
+    public void setLength(FroggerPathPreview pathPreview, int newFixedPointSegmentLength) {
         this.length = newFixedPointSegmentLength;
-        if (this.lengthField != null && this.lengthField.get() != null) // TODO: I think we should do it some other way.
-            this.lengthField.get().setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(newFixedPointSegmentLength)));
+
+        if (pathPreview != null) {
+            // Update length field.
+            pathPreview.getPathSegmentLengthField().setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(newFixedPointSegmentLength)));
+
+            // Update main path length display.
+            if (pathPreview.getPathManager().getSelectedValue() == getPath())
+                pathPreview.getPathManager().getFullPathLengthField().setText(Float.toString(getPath().calculateTotalLengthFloat()));
+        }
     }
 
     /**
