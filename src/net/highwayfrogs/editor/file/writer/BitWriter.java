@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Getter
 public class BitWriter {
-    private List<Byte> bytes = new ArrayList<>();
+    private final List<Byte> bytes = new ArrayList<>();
     private int currentBit = Constants.BITS_PER_BYTE;
     private byte currentByte;
     @Setter private boolean reverseBytes;

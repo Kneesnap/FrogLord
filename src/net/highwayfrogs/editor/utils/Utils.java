@@ -385,6 +385,7 @@ public class Utils {
 
     /**
      * Convert a short value (fixed point, n fractional bits) into a float.
+     * The inverse of the returned value is guaranteed to be calculable back into shortVal.
      * @param shortVal The short to convert.
      * @param n        The number of fractional bits.
      * @return floatValue
