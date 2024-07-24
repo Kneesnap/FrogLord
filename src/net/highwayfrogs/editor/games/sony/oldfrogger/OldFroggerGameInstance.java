@@ -1,19 +1,20 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWIFile;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.sony.SCUtils.SCForcedLoadSoundFileType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerConfig;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapEntityMarkerPacket;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
@@ -30,6 +31,8 @@ import java.util.*;
  */
 @Getter
 public class OldFroggerGameInstance extends SCGameInstance {
+    public static final int FILE_TYPE_AUDIO_HEADER = 3;
+    public static final int FILE_TYPE_AUDIO_BODY = 4;
     public static final int FILE_TYPE_LANGUAGE = 8;
     public static final int FILE_TYPE_MAP = 9;
 
@@ -61,23 +64,30 @@ public class OldFroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    public SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData) {
-        if (fileEntry.getTypeId() == FILE_TYPE_MAP)
+    public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
+        if (resourceEntry.getTypeId() == FILE_TYPE_MAP) {
             return new OldFroggerMapFile(this);
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_LANGUAGE || resourceEntry.hasExtension("lan")) {
+            return new OldFroggerLanguageFile(this);
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_AUDIO_HEADER || resourceEntry.hasExtension("hed")) {
+            return SCUtils.makeSound(resourceEntry, fileData, SCForcedLoadSoundFileType.HEADER);
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_AUDIO_BODY || resourceEntry.hasExtension("bod")) {
+            return SCUtils.makeSound(resourceEntry, fileData, SCForcedLoadSoundFileType.BODY);
+        }
 
-        return SCUtils.createSharedGameFile(fileEntry, fileData);
+        return SCUtils.createSharedGameFile(resourceEntry, fileData);
     }
 
     @Override
-    protected void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile) {
+    protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
         this.textureRemapsByLevelId.clear();
         if (getConfig().getRemapTableCount() <= 0 || getConfig().getRemapTableAddress() <= 0)
             return; // No remaps.
 
         // Find a list of all the maps.
-        List<FileEntry> mapFileEntries = new ArrayList<>();
-        for (int i = 0; i < mwiFile.getEntries().size(); i++) {
-            FileEntry entry = mwiFile.getEntries().get(i);
+        List<MWIResourceEntry> mapFileEntries = new ArrayList<>();
+        for (int i = 0; i < wadIndex.getEntries().size(); i++) {
+            MWIResourceEntry entry = wadIndex.getEntries().get(i);
             if (entry.getTypeId() == FILE_TYPE_MAP || entry.hasExtension("MAP"))
                 mapFileEntries.add(entry);
         }
@@ -154,15 +164,26 @@ public class OldFroggerGameInstance extends SCGameInstance {
      * @return levelTableEntry, or null
      */
     public OldFroggerLevelTableEntry getLevelTableEntry(int mapResourceId) {
+        MWIResourceEntry mapMwiEntry = getArchiveIndex().getResourceEntryByID(mapResourceId);
+        String mapFilePath = mapMwiEntry != null ? mapMwiEntry.getFullFilePath() : null;
+
         for (int i = 0; i < this.manuallyConfiguredLevelTableEntries.size(); i++) {
             OldFroggerLevelTableEntry entry = this.manuallyConfiguredLevelTableEntries.get(i);
             if (entry.getMapResourceId() == mapResourceId)
+                return entry;
+
+            // Resolves PC maps.
+            if (mapFilePath != null && mapFilePath.equalsIgnoreCase(entry.getFilePath()))
                 return entry;
         }
 
         for (int i = 0; i < this.levelTableEntries.size(); i++) {
             OldFroggerLevelTableEntry entry = this.levelTableEntries.get(i);
             if (entry.getMapResourceId() == mapResourceId)
+                return entry;
+
+            // Resolves PC maps.
+            if (mapFilePath != null && mapFilePath.equalsIgnoreCase(entry.getFilePath()))
                 return entry;
         }
 

@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.DemoFile;
-import net.highwayfrogs.editor.file.MWIFile;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.config.TargetPlatform;
@@ -37,6 +35,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScor
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerGridSquareFlagTester;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
@@ -102,26 +102,26 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    public SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData) {
-        if (fileEntry.getTypeId() == FILE_TYPE_ANY && fileEntry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX)) {
+    public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
+        if (resourceEntry.getTypeId() == FILE_TYPE_ANY && resourceEntry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX)) {
             return new FroggerSkyLand(this);
-        } else if ((fileEntry.getTypeId() == FILE_TYPE_ANY && fileEntry.hasExtension("map")) || Utils.testSignature(fileData, FroggerMapFilePacketHeader.IDENTIFIER)) {
-            return new FroggerMapFile(this, fileEntry);
-        } else if (fileEntry.getTypeId() == FILE_TYPE_PAL || fileEntry.hasExtension("pal")) {
+        } else if ((resourceEntry.getTypeId() == FILE_TYPE_ANY && resourceEntry.hasExtension("map")) || Utils.testSignature(fileData, FroggerMapFilePacketHeader.IDENTIFIER)) {
+            return new FroggerMapFile(this, resourceEntry);
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_PAL || resourceEntry.hasExtension("pal")) {
             return new FroggerPaletteFile(this);
-        } else if (fileEntry.getTypeId() == FILE_TYPE_DEMO_DATA || fileEntry.hasExtension("dat")) {
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_DEMO_DATA || resourceEntry.hasExtension("dat")) {
             return new DemoFile(this);
-        } else if (fileEntry.getTypeId() == FILE_TYPE_SOUND) {
-            return SCUtils.makeSound(fileEntry, fileData, null);
-        } else if (fileEntry.getTypeId() == FILE_TYPE_MOF || fileEntry.getTypeId() == FILE_TYPE_MAPMOF) {
-            return SCUtils.makeMofHolder(fileEntry);
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_SOUND) {
+            return SCUtils.makeSound(resourceEntry, fileData, null);
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_MOF || resourceEntry.getTypeId() == FILE_TYPE_MAPMOF) {
+            return SCUtils.makeMofHolder(resourceEntry);
         } else {
-            return SCUtils.createSharedGameFile(fileEntry, fileData);
+            return SCUtils.createSharedGameFile(resourceEntry, fileData);
         }
     }
 
     @Override
-    protected void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile) {
+    protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
         // Add sky land.
         if (getConfig().getSkyLandTextureAddress() > 0) {
             this.skyLandTextureRemap.setFileOffset(getConfig().getSkyLandTextureAddress());
@@ -142,10 +142,10 @@ public class FroggerGameInstance extends SCGameInstance {
 
         // Hack to read island remap. Build 20 is the last build with the remap present (it's also the last build with the unique textures present.)
         if (remap instanceof FroggerTextureRemap) {
-            FileEntry fileEntry = ((FroggerTextureRemap) remap).getFileEntry();
+            MWIResourceEntry resourceEntry = ((FroggerTextureRemap) remap).getResourceEntry();
 
-            if ((!getConfig().isBeforeBuild1() && getConfig().isAtOrBeforeBuild20()) && fileEntry.getDisplayName().equals("ARN1.MAP")) {
-                FileEntry islandMap = getResourceEntryByName("ISLAND.MAP");
+            if ((!getConfig().isBeforeBuild1() && getConfig().isAtOrBeforeBuild20()) && resourceEntry.getDisplayName().equals("ARN1.MAP")) {
+                MWIResourceEntry islandMap = getResourceEntryByName("ISLAND.MAP");
 
                 // Register island remap
                 if (islandMap != null) {
@@ -156,7 +156,7 @@ public class FroggerGameInstance extends SCGameInstance {
             }
 
             // Hack to read txl_for3 remap.
-            if (!getConfig().isAtLeastRetailWindows() && !getConfig().isAtOrBeforeBuild23() && fileEntry.getDisplayName().equals("FOR2.MAP")) {
+            if (!getConfig().isAtLeastRetailWindows() && !getConfig().isAtOrBeforeBuild23() && resourceEntry.getDisplayName().equals("FOR2.MAP")) {
                 TextureRemapArray forestRemap = new TextureRemapArray(this, "txl_for3");
                 forestRemap.setFileOffset(reader.getIndex());
                 addRemap(forestRemap);
@@ -349,7 +349,7 @@ public class FroggerGameInstance extends SCGameInstance {
 
         HashSet<String> resourceNames = new HashSet<>();
         writer.write("enum {" + Constants.NEWLINE);
-        for (FileEntry entry : getArchiveIndex().getEntries()) {
+        for (MWIResourceEntry entry : getArchiveIndex().getEntries()) {
             String resName = "RES_" + entry.getDisplayName().replace(".", "_");
             while (!resourceNames.add(resName))
                 resName += "_DUPE";
@@ -458,14 +458,14 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    protected void onMWILoad(MWIFile mwi) {
+    protected void onMWILoad(MillenniumWadIndex mwi) {
         super.onMWILoad(mwi);
         readDemoTable(mwi, getExecutableReader());
     }
 
     @Override
-    public void writeExecutableData(DataWriter writer, MWIFile mwiFile) {
-        super.writeExecutableData(writer, mwiFile);
+    public void writeExecutableData(DataWriter writer, MillenniumWadIndex wadIndex) {
+        super.writeExecutableData(writer, wadIndex);
         writeThemeLibrary(writer);
         writeMapLibrary(writer);
         writeScripts(writer);
@@ -591,9 +591,9 @@ public class FroggerGameInstance extends SCGameInstance {
         this.mapLibrary.forEach(book -> book.save(exeWriter));
     }
 
-    private void readDemoTable(MWIFile mwiFile, DataReader reader) {
+    private void readDemoTable(MillenniumWadIndex wadIndex, DataReader reader) {
         if (getConfig().getDemoTableAddress() <= 0) { // The demo table wasn't specified, so we'll search for it ourselves.
-            FileEntry demoEntry = mwiFile.getEntries().stream().filter(file -> file.getDisplayName().startsWith("SUB1DEMO.DAT")).findAny().orElse(null);
+            MWIResourceEntry demoEntry = wadIndex.getEntries().stream().filter(file -> file.getDisplayName().startsWith("SUB1DEMO.DAT")).findAny().orElse(null);
             if (demoEntry == null)
                 return; // Couldn't find a demo by this name, so... skip.
 

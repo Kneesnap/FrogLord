@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.gui;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -65,6 +66,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
             "Once all the information is ready, press the 'Load' button to load the game data.");
 
     private static final URL FXML_TEMPLATE_URL = Utils.getResourceURL("fxml/window-load-game.fxml");
+    private static final FXMLLoader FXML_TEMPLATE_LOADER = new FXMLLoader(FXML_TEMPLATE_URL);
 
     public GameConfigController(Config gameConfigRoot) {
         super(null);
@@ -239,7 +241,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
 
         // Create new game-specific UI.
         if (gameType != null) {
-            GameConfigUIController uiController = gameType.setupConfigUI(this, getOrCreateGameConfig());
+            GameConfigUIController uiController = gameType.setupConfigUI(this, this.gameVersionComboBox.getValue(), getOrCreateGameConfig());
             if (uiController != null) {
                 uiController.addChildControllers(this.bottomBox.getChildren());
                 addController(this.activeConfigController = uiController);
@@ -300,20 +302,23 @@ public class GameConfigController extends GameUIController<GameInstance> {
      */
     public static GameConfigController openGameConfigMenu(Config configRoot) {
         GameConfigController newController = new GameConfigController(configRoot);
-        GameUIController.loadController(null, FXML_TEMPLATE_URL, newController);
+        GameUIController.loadController(null, FXML_TEMPLATE_LOADER, newController);
         GameUIController.openWindow(newController, "FrogLord " + Constants.VERSION, false);
         return newController;
     }
 
     /**
-     * Represents a UI controller for
+     * Represents a UI controller for any game's config screen.
      */
+    @Getter
     public static abstract class GameConfigUIController extends GameUIController<GameInstance> {
         private final GameConfigController parentController;
+        private final GameConfig gameConfig;
 
-        public GameConfigUIController(GameConfigController parentController) {
+        public GameConfigUIController(GameConfigController parentController, GameConfig gameConfig) {
             super(null);
             this.parentController = parentController;
+            this.gameConfig = gameConfig;
         }
 
         /**

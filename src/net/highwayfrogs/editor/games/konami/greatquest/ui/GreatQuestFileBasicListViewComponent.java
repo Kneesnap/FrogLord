@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui;
 
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.GroupedCollectionViewComponent;
 
 /**
@@ -21,8 +20,7 @@ public class GreatQuestFileBasicListViewComponent extends GroupedCollectionViewC
 
     @Override
     protected void onSelect(GreatQuestArchiveFile file) {
-        GameUIController<?> controller = file.makeEditorUI();
-        getGameInstance().getMainMenuController().showEditor(controller);
+        getGameInstance().getMainMenuController().showEditor(file);
     }
 
     @Override

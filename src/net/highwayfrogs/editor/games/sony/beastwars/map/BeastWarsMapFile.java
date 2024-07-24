@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.sony.beastwars.map;
 
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -14,6 +12,8 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.data.*;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapMesh;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapVertex;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsMapMeshController;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
@@ -120,15 +120,18 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
         BeastWarsInstance instance = getGameInstance();
 
         // Search for a texture file with the same file name.
-        FileEntry texFileEntry = instance.getResourceEntryByName(Utils.stripExtension(getFileDisplayName()) + ".TEX");
-        BeastWarsTexFile texFile = instance.getGameFile(texFileEntry);
+        MWIResourceEntry texResourceEntry = instance.getResourceEntryByName(Utils.stripExtension(getFileDisplayName()) + ".TEX");
+        BeastWarsTexFile texFile = instance.getGameFile(texResourceEntry);
         if (texFile != null)
             return texFile;
 
         // Check the file immediately after the .MAP, and use it if it is a texture file.
-        SCGameFile<?> nextFile = instance.getGameFile(getIndexEntry().getResourceId() + 1);
-        if (nextFile instanceof BeastWarsTexFile)
-            return (BeastWarsTexFile) nextFile;
+        MWIResourceEntry mwiEntry = getIndexEntry();
+        if (mwiEntry != null) {
+            SCGameFile<?> nextFile = instance.getGameFile(mwiEntry.getResourceId() + 1);
+            if (nextFile instanceof BeastWarsTexFile)
+                return (BeastWarsTexFile) nextFile;
+        }
 
         // Otherwise, we haven't found it.
         return null;
@@ -397,7 +400,7 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     }
 
     @Override
-    public void exportAlternateFormat(FileEntry entry) {
+    public void exportAlternateFormat() {
         BeastWarsMapObjConverter.exportMapToObj(this);
     }
 }

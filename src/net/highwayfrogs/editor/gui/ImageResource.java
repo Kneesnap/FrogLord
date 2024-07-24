@@ -107,7 +107,8 @@ public enum ImageResource {
     TREASURE_MAP_15(ImageResource.TREASURE_MAP_32, 15),
     GEOMETRIC_SHAPES_15(ImageResource.GEOMETRIC_SHAPES_32, 15),
     ZIPPED_FOLDER_15(ImageResource.ZIPPED_FOLDER_32, 15),
-    QUESTION_MARK_15(ImageResource.QUESTION_MARK_32, 15);
+    QUESTION_MARK_15(ImageResource.QUESTION_MARK_32, 15),
+    GHIDRA_ICON_PAPER_WITH_TEXT_32(GHIDRA_ICON_PAPER_WITH_TEXT_16, 32);
 
     private final String resourcePath;
     private final ImageResource parentImageResource;

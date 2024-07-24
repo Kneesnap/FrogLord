@@ -1,11 +1,10 @@
 package net.highwayfrogs.editor.games.sony.shared.ui;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.components.GroupedCollectionViewComponent;
 
 import java.util.function.BiPredicate;
@@ -28,8 +27,7 @@ public class SCGameFileGroupedListViewComponent<TGameInstance extends SCGameInst
 
     @Override
     protected void onSelect(SCGameFile<?> file) {
-        GameUIController<?> controller = file.makeEditorUI();
-        getGameInstance().getMainMenuController().showEditor(controller);
+        getGameInstance().getMainMenuController().showEditor(file);
     }
 
     @Override
@@ -40,8 +38,12 @@ public class SCGameFileGroupedListViewComponent<TGameInstance extends SCGameInst
     // Categorize other files by file ID.
     @Override
     protected CollectionViewGroup<SCGameFile<?>> createMissingEntryGroup(SCGameFile<?> gameFile) {
-        int id = gameFile.getIndexEntry().getTypeId();
-        return new SCGameFileListTypeIdGroup("Unknown File Type ID " + id, id);
+        MWIResourceEntry mwiEntry = gameFile.getIndexEntry();
+        if (mwiEntry != null) {
+            return new SCGameFileListTypeIdGroup("Unknown File Type ID " + mwiEntry.getTypeId(), mwiEntry.getTypeId());
+        } else {
+            return new LazySCGameFileListGroup("User Files", (file, index) -> index == null, true);
+        }
     }
 
     /**
@@ -58,7 +60,8 @@ public class SCGameFileGroupedListViewComponent<TGameInstance extends SCGameInst
 
         @Override
         public boolean isPartOfGroup(SCGameFile<?> gameFile) {
-            return gameFile.getIndexEntry().getTypeId() == this.typeId;
+            MWIResourceEntry mwiEntry = gameFile.getIndexEntry();
+            return mwiEntry != null && mwiEntry.getTypeId() == this.typeId;
         }
     }
 
@@ -66,16 +69,23 @@ public class SCGameFileGroupedListViewComponent<TGameInstance extends SCGameInst
      * A file group based on whatever criteria is provided to the constructor.
      */
     public static class LazySCGameFileListGroup extends CollectionViewGroup<SCGameFile<?>>  {
-        private final BiPredicate<SCGameFile<?>, FileEntry> predicate;
+        private final BiPredicate<SCGameFile<?>, MWIResourceEntry> predicate;
+        private final boolean allowNullMwiEntry;
 
-        public LazySCGameFileListGroup(String name, BiPredicate<SCGameFile<?>, FileEntry> predicate) {
+        public LazySCGameFileListGroup(String name, BiPredicate<SCGameFile<?>, MWIResourceEntry> predicate) {
+            this(name, predicate, false);
+        }
+
+        public LazySCGameFileListGroup(String name, BiPredicate<SCGameFile<?>, MWIResourceEntry> predicate, boolean allowNullMwiEntry) {
             super(name);
             this.predicate = predicate;
+            this.allowNullMwiEntry = allowNullMwiEntry;
         }
 
         @Override
         public boolean isPartOfGroup(SCGameFile<?> gameFile) {
-            return this.predicate != null && this.predicate.test(gameFile, gameFile.getIndexEntry());
+            MWIResourceEntry mwiEntry = gameFile.getIndexEntry();
+            return this.predicate != null && (this.allowNullMwiEntry || mwiEntry != null) && this.predicate.test(gameFile, mwiEntry);
         }
     }
 }

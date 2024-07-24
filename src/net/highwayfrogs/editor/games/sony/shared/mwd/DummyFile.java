@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file;
+package net.highwayfrogs.editor.games.sony.shared.mwd;
 
 import javafx.scene.image.Image;
 import lombok.Getter;

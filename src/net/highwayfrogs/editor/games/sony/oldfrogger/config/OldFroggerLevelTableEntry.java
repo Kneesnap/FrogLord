@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.config;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -10,6 +8,8 @@ import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 
 /**
  * Represents an entry in the level table.
@@ -17,12 +17,15 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
  */
 @Getter
 public class OldFroggerLevelTableEntry extends SCGameData<OldFroggerGameInstance> {
-    private static final int FILENAME_LENGTH = 20;
+    private static final int PSX_FILENAME_LENGTH = 20;
+    private static final int WINDOWS_FILEPATH_LENGTH = 200;
+    private static final int WINDOWS_FILENAME_LENGTH = 200;
 
     private final int mapIndex;
     private int mapResourceId = -1;
     private int wadResourceId = -1;
     private int ulrResourceId = -1;
+    private String filePath = null;
     private String fileName = "";
 
     public OldFroggerLevelTableEntry(OldFroggerGameInstance instance, int mapIndex) {
@@ -40,18 +43,23 @@ public class OldFroggerLevelTableEntry extends SCGameData<OldFroggerGameInstance
 
     @Override
     public void load(DataReader reader) {
-        this.mapResourceId = reader.readInt();
+        this.filePath = getGameInstance().isPC() ? reader.readTerminatedStringOfLength(WINDOWS_FILEPATH_LENGTH) : null;
+        this.mapResourceId = getGameInstance().isPSX() ? reader.readInt() : -1;
         this.wadResourceId = reader.readInt();
-        this.ulrResourceId = reader.readInt();
-        this.fileName = reader.readTerminatedStringOfLength(FILENAME_LENGTH);
+        this.ulrResourceId = getGameInstance().isPSX() ? reader.readInt() : -1;
+        this.fileName = reader.readTerminatedStringOfLength(getGameInstance().isPC() ? WINDOWS_FILENAME_LENGTH : PSX_FILENAME_LENGTH);
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeInt(this.mapResourceId);
+        if (getGameInstance().isPC())
+            writer.writeTerminatedStringOfLength(this.filePath != null ? this.filePath : "", WINDOWS_FILEPATH_LENGTH);
+        if (getGameInstance().isPSX())
+            writer.writeInt(this.mapResourceId);
         writer.writeInt(this.wadResourceId);
-        writer.writeInt(this.ulrResourceId);
-        writer.writeTerminatedStringOfLength(this.fileName, FILENAME_LENGTH);
+        if (getGameInstance().isPSX())
+            writer.writeInt(this.ulrResourceId);
+        writer.writeTerminatedStringOfLength(this.fileName, getGameInstance().isPC() ? WINDOWS_FILENAME_LENGTH : PSX_FILENAME_LENGTH);
     }
 
     /**
@@ -80,9 +88,20 @@ public class OldFroggerLevelTableEntry extends SCGameData<OldFroggerGameInstance
      * @return The main VLO Archive, if one exists.
      */
     public VLOArchive getMainVLOArchive() {
-        for (WADEntry wadEntry : getUlrFile().getFiles())
-            if (wadEntry.getFile() instanceof VLOArchive)
-                return (VLOArchive) wadEntry.getFile();
+        // PSX has ULR, PC does not.
+        WADFile ulrFile = getUlrFile();
+        if (ulrFile != null)
+            for (WADEntry wadEntry : ulrFile.getFiles())
+                if (wadEntry.getFile() instanceof VLOArchive)
+                    return (VLOArchive) wadEntry.getFile();
+
+        // PC has WAD.
+        WADFile wadFile = getWadFile();
+        if (wadFile != null)
+            for (WADEntry wadEntry : wadFile.getFiles())
+                if (wadEntry.getFile() instanceof VLOArchive)
+                    return (VLOArchive) wadEntry.getFile();
+
         return null;
     }
 

@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.sony.shared.model.staticmesh;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile
 import net.highwayfrogs.editor.games.sony.shared.model.meshview.PTModelMesh;
 import net.highwayfrogs.editor.games.sony.shared.model.meshview.PTModelMeshController;
 import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;

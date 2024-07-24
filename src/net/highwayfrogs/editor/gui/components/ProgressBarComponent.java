@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -36,6 +37,9 @@ public class ProgressBarComponent extends GameUIController<GameInstance> {
     @Getter private int totalProgress;
     @Getter private String status;
     private boolean nextUpdateQueued;
+
+    private static final URL PROGRESS_BAR_FXML_TEMPLATE_URL = Utils.getResourceURL("fxml/window-progress-bar.fxml");;
+    private static final FXMLLoader PROGRESS_BAR_FXML_TEMPLATE_LOADER = new FXMLLoader(PROGRESS_BAR_FXML_TEMPLATE_URL);
 
     public ProgressBarComponent(GameInstance instance) {
         super(instance);
@@ -134,8 +138,7 @@ public class ProgressBarComponent extends GameUIController<GameInstance> {
      * @param task the task to run which controls the progress bar
      */
     public static void openProgressBarWindow(GameInstance gameInstance, String windowTitle, Consumer<ProgressBarComponent> task) {
-        URL templateUrl =  Utils.getFXMLTemplateURL(gameInstance, "window-progress-bar");
-        ProgressBarComponent controller = GameUIController.loadController(gameInstance, templateUrl, new ProgressBarComponent(gameInstance));
+        ProgressBarComponent controller = GameUIController.loadController(gameInstance, PROGRESS_BAR_FXML_TEMPLATE_LOADER, new ProgressBarComponent(gameInstance));
         if (controller == null)
             return;
 

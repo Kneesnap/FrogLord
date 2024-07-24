@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.games.konami.rescue;
 
 
-import net.highwayfrogs.editor.file.DummyFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.renderware.RWSChunk;
 import net.highwayfrogs.editor.games.renderware.RWSFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RWPlatformIndependentTextureDictionaryChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RWPlatformIndependentTextureDictionaryChunk.RWPlatformIndependentTextureEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.DummyFile;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;

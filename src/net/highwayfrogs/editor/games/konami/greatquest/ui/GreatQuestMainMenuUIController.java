@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.utils.Utils;
@@ -58,7 +59,7 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
         TODO: Implement.
         addMenuItem(this.menuBarFile, "Import File", this::importFile); // Ctrl + I
         addMenuItem(this.menuBarFile, "Export File", this::exportFile); // Ctrl + O
-        addMenuItem(this.menuBarFile, "Export File (Alternate Format)", () -> getSelectedFileEntry().exportAlternateFormat(getFileEntry())); // Ctrl + E
+        addMenuItem(this.menuBarFile, "Export File (Alternate Format)", () -> getSelectedFileEntry().exportAlternateFormat(getResourceEntry())); // Ctrl + E
         addMenuItem(this.menuBarFile, "Export All Textures", this::exportBulkTextures);
         addMenuItem(this.menuBarEdit, "Open Hash Playground", () -> HashPlaygroundController.openEditor(getGameInstance()));
          */
@@ -89,5 +90,23 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
      */
     public GreatQuestAssetBinFile getMainArchive() {
         return getGameInstance() != null ? getGameInstance().getMainArchive() : null;
+    }
+
+    /**
+     * Shows the editor for the given file on the main menu.
+     * @param file the file to show
+     */
+    public void showEditor(GreatQuestArchiveFile file) {
+        GameUIController<?> controller = getCurrentEditor();
+        if (controller instanceof GreatQuestFileEditorUIController) {
+            @SuppressWarnings("unchecked")
+            GreatQuestFileEditorUIController<? super GreatQuestArchiveFile> fileController = (GreatQuestFileEditorUIController<? super GreatQuestArchiveFile>) controller;
+            if ((fileController.getFileClass() != null && fileController.getFileClass().isInstance(file))) {
+                fileController.setTargetFile(file);
+                return;
+            }
+        }
+
+        showEditor(file != null ? file.makeEditorUI() : null);
     }
 }

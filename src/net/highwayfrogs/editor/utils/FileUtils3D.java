@@ -60,7 +60,7 @@ public class FileUtils3D {
     public static void exportMofToObj(MOFFile staticMof, File folder, VLOArchive vloTable) {
         boolean exportTextures = vloTable != null;
 
-        String mofName = staticMof.getFileEntry().getDisplayName();
+        String mofName = staticMof.getFileDisplayName();
         String cleanName = Utils.stripExtension(mofName);
         String mtlName = cleanName + ".mtl";
         @Cleanup PrintWriter objWriter = new PrintWriter(new File(folder, cleanName + ".obj"));
@@ -185,7 +185,7 @@ public class FileUtils3D {
         /*if (directory == null)
             return;
 
-        FileEntry entry = map.getIndexEntry();
+        MWIResourceEntry entry = map.getIndexEntry();
         VLOArchive vloArchive = map.getVloFile();
         TextureMap textureMap = TextureMap.newTextureMap(map, ShadingMode.NO_SHADING);
         String cleanName = Utils.getRawFileName(entry.getDisplayName());

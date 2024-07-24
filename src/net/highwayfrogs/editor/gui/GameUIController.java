@@ -16,7 +16,6 @@ import net.highwayfrogs.editor.games.generic.GameObject;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -217,28 +216,29 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
     /**
      * Loads a UI controller from the provided fxml template
      * @param instance the game instance to create the ui template from
-     * @param fxmlResourceLocation the fxml template location
+     * @param fxmlLoader the fxml template loader, caching is recommended for performance
      * @param controller the controller to use
      * @return controller
      * @param <TGameInstance> the type of game instance
      * @param <TUIController> the type of ui controller to create
      */
-    public static <TGameInstance extends GameInstance, TUIController extends GameUIController<?>> TUIController loadController(TGameInstance instance, URL fxmlResourceLocation, TUIController controller) {
-        if (fxmlResourceLocation == null)
-            throw new NullPointerException("fxmlResourceLocation");
+    public static <TGameInstance extends GameInstance, TUIController extends GameUIController<?>> TUIController loadController(TGameInstance instance, FXMLLoader fxmlLoader, TUIController controller) {
+        if (fxmlLoader == null)
+            throw new NullPointerException("fxmlLoader");
         if (controller == null)
             throw new NullPointerException("controller");
 
-        FXMLLoader loader = new FXMLLoader(fxmlResourceLocation);
-
         Node rootNode;
         try {
-            loader.setController(controller);
-            rootNode = loader.load();
+            fxmlLoader.setController(controller);
+            rootNode = fxmlLoader.load();
         } catch (IOException ex) {
             Logger logger = instance != null ? instance.getLogger() : Logger.getLogger(GameUIController.class.getSimpleName());
-            Utils.handleError(logger, ex, true, "Failed to load FXML template '%s'.", fxmlResourceLocation);
+            Utils.handleError(logger, ex, true, "Failed to load FXML template '%s'.", fxmlLoader.getLocation());
             return null;
+        } finally {
+            fxmlLoader.setController(null); // Prevent potential leak.
+            fxmlLoader.setRoot(null);
         }
 
         controller.loadController(rootNode);

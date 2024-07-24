@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -13,6 +12,8 @@ import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.BlackFilter;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.TransparencyFilter;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
+import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 /**
  * A singular game image. MR_TXSETUP struct.
@@ -32,7 +34,7 @@ import java.util.function.Consumer;
 @Getter
 @Setter
 @SuppressWarnings("unused")
-public class GameImage extends GameObject implements Cloneable, TextureSource, ITextureSource {
+public class GameImage extends SCSharedGameData implements Cloneable, TextureSource, ITextureSource {
     private final List<Consumer<BufferedImage>> imageChangeListeners;
     private final VLOArchive parent;
     private short vramX;
@@ -71,6 +73,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource, I
     public static final int FLAG_2D_SPRITE = Constants.BIT_FLAG_15; // Indicates that an animation list should be used when the image is used to create a sprite. I dunno, it seems like every single texture in frogger has this flag set. (Though this is not confirmed, let alone confirmed for all versions)
 
     public GameImage(VLOArchive parent) {
+        super(parent != null ? parent.getGameInstance() : null);
         this.imageChangeListeners = new ArrayList<>();
         this.parent = parent;
     }
@@ -140,7 +143,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource, I
 
         reader.jumpReturn();
         if (readU != getU() || readV != getV())
-            System.out.println(getParent().getFileDisplayName() + "@" + getParent().getImages().size() + " UV Mismatch! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "] -> " + getIngameWidth() + "x" + getIngameHeight() + ", " + getFullWidth() + "x" + getFullHeight() + ", " + getFlags());
+            getLogger().warning("UV Mismatch at image " + Utils.getLoadingIndex(this.parent.getImages(), this) + "! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "] -> " + getIngameWidth() + "x" + getIngameHeight() + ", " + getFullWidth() + "x" + getFullHeight() + ", " + getFlags());
     }
 
     @Override
@@ -170,6 +173,11 @@ public class GameImage extends GameObject implements Cloneable, TextureSource, I
         writer.writeUnsignedByte(getV());
         writer.writeByte(this.ingameWidth);
         writer.writeByte(this.ingameHeight);
+    }
+
+    @Override
+    public Logger getLogger() {
+        return this.parent != null ? this.parent.getLogger() : super.getLogger();
     }
 
     /**
@@ -248,9 +256,14 @@ public class GameImage extends GameObject implements Cloneable, TextureSource, I
     }
 
     private short getPage(int vramX, int vramY) {
-        return getParent().isPsxMode()
-                ? (short) (((vramY / PSX_PAGE_HEIGHT) * PSX_X_PAGES) + (vramX / PSX_PAGE_WIDTH))
-                : (short) (vramY / PC_PAGE_HEIGHT);
+        if (getParent().isPsxMode()) {
+            return (short) (((vramY / PSX_PAGE_HEIGHT) * PSX_X_PAGES) + (vramX / PSX_PAGE_WIDTH));
+        } else if (getGameInstance().getGameType().isAtLeast(SCGameType.FROGGER)) {
+            return (short) (vramY / PC_PAGE_HEIGHT);
+        } else {
+            // Old Frogger PSX Milestone 3 does this.
+            return (short) (vramX / PC_PAGE_WIDTH);
+        }
     }
 
     /**
@@ -278,7 +291,7 @@ public class GameImage extends GameObject implements Cloneable, TextureSource, I
         short u = (short) (getVramX() % (getParent().isPsxMode() ? PSX_PAGE_WIDTH * getWidthMultiplier() : PC_PAGE_WIDTH));
 
         if (getParent().isPsxMode()) { // PS1 logic.
-            if (getFullHeight() != getIngameHeight()) // TODO: This is broken sometimes, when and why?
+            if (getFullHeight() != getIngameHeight()) // TODO: This is broken sometimes, when and why? C-12 Final Resistance
                 u++;
             return u;
         }

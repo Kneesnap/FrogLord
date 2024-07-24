@@ -125,6 +125,15 @@ public abstract class FileOpenBrowseComponent extends GameUIController<GameInsta
     }
 
     /**
+     * Set whether the component is disabled or not
+     * @param disable if true, the component is disabled
+     */
+    public void setDisable(boolean disable) {
+        this.filePathField.setDisable(disable);
+        this.browseButton.setDisable(disable);
+    }
+
+    /**
      * Called when a new file path has been set.
      * @param newFilePath the new file path
      */

@@ -2,13 +2,13 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
@@ -26,7 +26,7 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
     private final Map<OldFroggerMapEntity, Integer> entityFileOffsets = new HashMap<>();
 
     public static final boolean ENABLE_FORM_GENERATOR = false;
-    public static final Map<Integer, Set<FileEntry>> formIdsByMof = new HashMap<>();
+    public static final Map<Integer, Set<MWIResourceEntry>> formIdsByMof = new HashMap<>();
 
     public OldFroggerMapEntityMarkerPacket(OldFroggerMapFile parentFile) {
         super(parentFile, IDENTIFIER);
@@ -162,18 +162,18 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
             return;
 
         StringBuilder builder = new StringBuilder();
-        for (Entry<Integer, Set<FileEntry>> entry : formIdsByMof.entrySet()) {
+        for (Entry<Integer, Set<MWIResourceEntry>> entry : formIdsByMof.entrySet()) {
             builder.append(entry.getKey()).append('=');
 
             boolean firstTime = true;
-            for (FileEntry fileEntry : entry.getValue()) {
+            for (MWIResourceEntry resourceEntry : entry.getValue()) {
                 if (firstTime) {
                     firstTime = false;
                 } else {
                     builder.append(',');
                 }
 
-                builder.append(Utils.stripExtension(fileEntry.getDisplayName()));
+                builder.append(Utils.stripExtension(resourceEntry.getDisplayName()));
             }
 
             System.out.println(builder);

@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.packers;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.writer.BitWriter;
@@ -11,17 +12,17 @@ import java.util.Arrays;
 /**
  * Packs a byte array into PP20 compressed data. PP20 is a LZSS variant.
  * This packer is now a recreation of the reverse engineered original packer.
- * https://github.com/lab313ru/powerpacker_src/blob/master/main.cpp (Thanks lab313ru!)
+ * <a href="https://github.com/lab313ru/powerpacker_src/blob/master/main.cpp"/> (Thanks lab313ru!)
  * This implementation should be accurate to the version used in Frogger: He's Back.
  *
  * Useful Links:
- * - https://en.wikipedia.org/wiki/LZ77_and_LZ78
- * - https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Szymanski
- * - https://eblong.com/zarf/blorb/mod-spec.txt
- * - https://books.google.com/books?id=ujnQogzx_2EC&printsec=frontcover (Specifically, the section about how LzSS improves upon Lz77)
- * - https://www.programcreek.com/java-api-examples/index.php?source_dir=trie4j-master/trie4j/src/kitchensink/java/org/trie4j/lz/LZSS.java
- * - http://michael.dipperstein.com/lzss/
- * - https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm
+ * - <a href="https://en.wikipedia.org/wiki/LZ77_and_LZ78"/>
+ * - <a href="https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Szymanski"/>
+ * - <a href="https://eblong.com/zarf/blorb/mod-spec.txt"/>
+ * - <a href="https://books.google.com/books?id=ujnQogzx_2EC&printsec=frontcover (Specifically, the section about how LzSS improves upon Lz77)
+ * - <a href="https://www.programcreek.com/java-api-examples/index.php?source_dir=trie4j-master/trie4j/src/kitchensink/java/org/trie4j/lz/LZSS.java"/>
+ * - <a href="http://michael.dipperstein.com/lzss/"/>
+ * - <a href="https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm"/>
  * Created by Kneesnap on 8/11/2018.
  */
 public class PP20Packer {
@@ -39,21 +40,33 @@ public class PP20Packer {
     public static final byte[] MARKER_BYTES = MARKER.getBytes();
     public static final int MAX_UNCOMPRESSED_FILE_SIZE = Utils.power(2, 3 * Constants.BITS_PER_BYTE) - 1; // Has 3 bytes to store this info in.
 
+    // To be perfectly honest, I'm not sure what this value is.
+    // The "safety margin" is something of a miracle that we're able to calculate.
+    // Originally, buildwad.exe (A program we do not have in any form) most likely implemented a version of PowerPacker.
+    // But, Millennium Interactive wanted to be able to decompress data in-place due to the low amount of memory available.
+    // So, they use this idea of a safety margin to ensure the decompression read pointer never crosses the decompressed data write pointer.
+    // The MWI contains the safety margin values, but the original algorithm used to generate the values has largely been guessed.
+    // I've managed to create an algorithm which seems to give the same output values as seen in the MWI for Frogger.
+    // This constant is used within the algorithm. I didn't feel comfortable ascribing intent to what the constant is though, so it is named generically.
+    // This method has been tested against Beast Wars PC/PSX, Frogger PC/PSX, MediEvil, MediEvil 2, Moon Warrior, and C-12 Final Resistance and outputs perfect safety margin matches for all of them.
+    public static final int SAFETY_MARGIN_CONSTANT = 4;
+
     /**
      * Packs a byte array using extreme compression settings.
      * @param data The data to pack.
      * @return packedData
      */
-    public static byte[] packData(byte[] data) {
-        return packData(data, false, EXTREME_COMPRESSION_SETTINGS);
+    public static PackResult packData(byte[] data) {
+        return packData(data, true, EXTREME_COMPRESSION_SETTINGS);
     }
 
     /**
      * Pack a byte array into PP20 compressed data.
      * @param data The data to compress.
+     * @param oldVersion whether an older version should be used. Frogger seems to use this for all files.
      * @return packedData
      */
-    public static byte[] packData(byte[] data, boolean oldVersion, byte[] compressionSettings) {
+    public static PackResult packData(byte[] data, boolean oldVersion, byte[] compressionSettings) {
         if (data.length > MAX_UNCOMPRESSED_FILE_SIZE)
             throw new RuntimeException("packData tried to compress data larger than the maximum PP20 file size! (" + data.length + " > " + MAX_UNCOMPRESSED_FILE_SIZE + ")!");
 
@@ -65,7 +78,21 @@ public class PP20Packer {
         System.arraycopy(MARKER_BYTES, 0, compressedData, 0, MARKER_BYTES.length);
         System.arraycopy(compressionSettings, 0, compressedData, 4, compressionSettings.length);
         System.arraycopy(sizeBytes, 1, compressedData, compressedData.length - 4, Constants.INTEGER_SIZE - 1);
-        return compressedData;
+        return new PackResult(compressedData, packerData.getByteMargin());
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class PackResult {
+        private final byte[] packedBytes;
+        private final int minimumByteMargin;
+
+        /**
+         * Get the word offset to ensure the compressed reader never overlaps with the uncompressed writer when unpacking in-place.
+         */
+        public int getSafetyMarginWordCount() {
+            return 2 + (this.minimumByteMargin / Constants.INTEGER_SIZE);
+        }
     }
 
     private static int updateSpeedupLarge(byte[] curr, int curIndex, int next, int count, PackerDataInstance info) {
@@ -201,11 +228,13 @@ public class PP20Packer {
                 if (bits == 0) {
                     writer.writeBit(Utils.flipBit(HAS_RAW_DATA_BIT)); // No Raw Data.
                 } else {
+                    info.updateByteMargin(writer, srcCurrIdx);
                     writeRawDataPackerHeader(writer, bits); // Yes Raw Data.
                     bits = 0;
                 }
 
                 // Write data reference.
+                info.updateByteMargin(writer, srcCurrIdx);
                 if (repeats > COMPRESSING_SETTING_SIZE) {
                     int repeatValue = (repeats - (PP20Packer.COMPRESSING_SETTING_SIZE + 1));
 
@@ -216,7 +245,7 @@ public class PP20Packer {
 
                     boolean largeMode = (dataRefOffset >= 0x80); // Offset small mode vs not.
                     writer.writeBits(dataRefOffset, largeMode ? info.getCompressionSettings()[dataRefCompressionLevel] : PP20Packer.OPTIONAL_BITS_SMALL_OFFSET); // Write offset. (Length is deterministic)
-                    writer.writeBit(Utils.getBit(largeMode)); // Write whether or not small offset mode is used.
+                    writer.writeBit(Utils.getBit(largeMode)); // Write whether small offset mode is used.
                 } else {
                     // Write offset. (Data length is deterministic based on the compression level, which is also written.)
                     writer.writeBits(dataRefOffset, info.getCompressionSettings()[dataRefCompressionLevel]);
@@ -227,6 +256,7 @@ public class PP20Packer {
                 break;
             }
         }
+        info.updateByteMargin(writer, srcCurrIdx);
         writeRawDataPackerHeader(writer, bits);
 
         int skippedBits = writer.finishCurrentByte();
@@ -252,6 +282,7 @@ public class PP20Packer {
         private final short[] maxCompressionOffsets;
         private final short[] windowArray;
         private final int windowMax;
+        private int byteMargin;
         private int windowOffset;
         private int windowLeft;
         private final int[] addrs;
@@ -280,6 +311,17 @@ public class PP20Packer {
             this.windowLeft = this.windowMax;
             Arrays.fill(this.addrs, Integer.MIN_VALUE);
             Arrays.fill(this.windowArray, (short) 0);
+        }
+
+        /**
+         * Updates the byte margin.
+         * @param writer the writer
+         */
+        public void updateByteMargin(BitWriter writer, int srcCurrIdx) {
+            // Check the documentation for SAFETY_MARGIN_CONSTANT to explain what's going on here.
+            int currentByteMargin = (writer.getBytes().size() + 1) + SAFETY_MARGIN_CONSTANT - srcCurrIdx;
+            if (currentByteMargin > this.byteMargin)
+                this.byteMargin = currentByteMargin;
         }
     }
 }

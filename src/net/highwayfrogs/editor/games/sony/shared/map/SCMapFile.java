@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony.shared.map;
 
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
@@ -12,6 +11,7 @@ import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapEntityPacket;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapHeaderPacket;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygonPacket;
 import net.highwayfrogs.editor.games.sony.shared.map.ui.SCMapFileUIController;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;

@@ -19,6 +19,7 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 public class GreatQuestFileEditorUIController<TGameFile extends GreatQuestArchiveFile> extends GameUIController<GreatQuestInstance> {
     @FXML private HBox contentBox;
     private TGameFile file;
+    private Class<? extends TGameFile> fileClass;
     private final PropertyListViewerComponent<GreatQuestInstance> propertyListViewer;
 
     public GreatQuestFileEditorUIController(GreatQuestInstance instance) {
@@ -45,9 +46,13 @@ public class GreatQuestFileEditorUIController<TGameFile extends GreatQuestArchiv
      * Setup this window, by loading a GameFile to edit.
      * @param file The file to load and edit.
      */
+    @SuppressWarnings("unchecked")
     public void setTargetFile(TGameFile file) {
         TGameFile oldFile = this.file;
         if (oldFile != file) {
+            if (file != null && (this.fileClass == null || file.getClass().isAssignableFrom(this.fileClass)))
+                this.fileClass = (Class<? extends TGameFile>) file.getClass();
+
             this.file = file;
             this.propertyListViewer.showProperties(file != null ? file.createPropertyList() : null);
         }

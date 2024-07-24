@@ -6,6 +6,7 @@ import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -26,7 +27,6 @@ import javafx.util.Duration;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
@@ -48,6 +48,7 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
 import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
+import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GUIMain;
@@ -144,7 +145,8 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
         this.camera = new PerspectiveCamera(true);
 
         // Initialise the MOF UI.
-        GameUIController.loadController(getGameInstance(), Utils.getFXMLTemplateURL(getGameInstance(), "scene-mof-viewer-3d"), this.uiController);
+        FXMLLoader fxmlLoader = Utils.getFXMLTemplateLoader(getGameInstance(), "scene-mof-viewer-3d");
+        GameUIController.loadController(getGameInstance(), fxmlLoader, this.uiController);
 
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group(this.camera, meshView);

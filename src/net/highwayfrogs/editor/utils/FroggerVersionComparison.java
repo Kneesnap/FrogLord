@@ -3,9 +3,9 @@ package net.highwayfrogs.editor.utils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 
 import java.io.File;
 import java.io.IOException;
@@ -183,7 +183,7 @@ public class FroggerVersionComparison {
         }
 
         FroggerGameBuild newBuild = new FroggerGameBuild(versionToAdd.getConfig().getInternalName());
-        for (FileEntry entry : versionToAdd.getArchiveIndex().getEntries())
+        for (MWIResourceEntry entry : versionToAdd.getArchiveIndex().getEntries())
             if (entry != null && entry.getFullFilePath() != null)
                 newBuild.getFiles().add(new FroggerGameFileEntry(newBuild, entry.getFullFilePath().replace('/', '\\'), entry.getUnpackedSize(), entry.getSha1Hash()));
 

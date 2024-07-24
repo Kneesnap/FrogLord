@@ -43,8 +43,8 @@ public class MOFAnimationModelSet extends SCSharedGameData {
         int bboxPointer = reader.readInt();
 
         Utils.verify(bboxCount == 0, "The ModelSet has a non-zero BBOX count. (%d, %d)", bboxCount, bboxPointer);
-        if (modelCount != FORCED_MODEL_COUNT && !getParent().getFileEntry().getDisplayName().contains("-FORCED_MODELS"))
-            getParent().getFileEntry().setFilePath(getParent().getFileEntry().getDisplayName() + "-FORCED_MODELS");
+        //if (modelCount != FORCED_MODEL_COUNT && !getParent().getFileDisplayName().contains("-FORCED_MODELS"))
+        //    getParent().getFileEntry().setFilePath(getParent().getFileDisplayName() + "-FORCED_MODELS"); // TODO: Address later.
 
         if (!getGameInstance().isMediEvil())
             Utils.verify(modelCount == FORCED_MODEL_COUNT, "FrogLord does not currently support MOFs with more than one model! (%d)", modelCount);

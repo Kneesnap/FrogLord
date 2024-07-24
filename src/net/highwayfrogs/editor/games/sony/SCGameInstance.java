@@ -2,9 +2,6 @@ package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.MWDFile;
-import net.highwayfrogs.editor.file.MWIFile;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -17,10 +14,12 @@ import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
-import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -37,11 +36,10 @@ import java.util.*;
  * Created by Kneesnap on 9/7/2023.
  */
 public abstract class SCGameInstance extends GameInstance {
-    @Getter private final Map<SCGameFile<?>, FileEntry> fileEntriesByFileObjects;
-    @Getter private final Map<FileEntry, SCGameFile<?>> fileObjectsByFileEntries;
+    @Getter private final Map<MWIResourceEntry, SCGameFile<?>> fileObjectsByFileEntries;
     @Getter private final SCOverlayTable overlayTable;
     @Getter private MWDFile mainArchive;
-    @Getter private MWIFile archiveIndex;
+    @Getter private MillenniumWadIndex archiveIndex;
     @Getter private File mwdFile;
     @Getter private File exeFile;
     @Getter private long ramOffset;
@@ -49,7 +47,7 @@ public abstract class SCGameInstance extends GameInstance {
     // Instance data read from game files:
     private boolean loadingAllRemaps;
     @Getter private final List<TextureRemapArray> textureRemaps = new ArrayList<>();
-    private final Map<FileEntry, LinkedTextureRemap<?>> linkedTextureMaps = new HashMap<>();
+    private final Map<MWIResourceEntry, LinkedTextureRemap<?>> linkedTextureMaps = new HashMap<>();
     @Getter private final List<Long> bmpTexturePointers = new ArrayList<>();
 
     private byte[] cachedExecutableBytes;
@@ -57,7 +55,6 @@ public abstract class SCGameInstance extends GameInstance {
 
     public SCGameInstance(SCGameType gameType) {
         super(gameType);
-        this.fileEntriesByFileObjects = new HashMap<>();
         this.fileObjectsByFileEntries = new HashMap<>();
         this.overlayTable = new SCOverlayTable(this);
     }
@@ -74,18 +71,19 @@ public abstract class SCGameInstance extends GameInstance {
     }
 
     /**
-     * Associate a new object with a FileEntry.
+     * Associate a new object with a MWIResourceEntry.
      * @param entry   The entry to associate the file with.
      * @param newFile The file to associate with the entry.
      * @return The old file associated with the entry.
      */
-    public SCGameFile<?> trackFile(FileEntry entry, SCGameFile<?> newFile) {
+    public SCGameFile<?> trackFile(MWIResourceEntry entry, SCGameFile<?> newFile) {
         SCGameFile<?> oldFile = this.fileObjectsByFileEntries.remove(entry);
         if (oldFile != null)
-            this.fileEntriesByFileObjects.remove(oldFile, entry);
+            oldFile.setFileDefinition(null);
 
         this.fileObjectsByFileEntries.put(entry, newFile);
-        this.fileEntriesByFileObjects.put(newFile, entry);
+        if (newFile != null)
+            newFile.setFileDefinition(entry);
         return oldFile;
     }
 
@@ -101,14 +99,15 @@ public abstract class SCGameInstance extends GameInstance {
             throw new RuntimeException("The game instance has already been loaded.");
 
         // Verify files.
-        if (mwdFile == null || !mwdFile.exists() || !mwdFile.isFile())
-            throw new RuntimeException("The MWD file '" + mwdFile + "' does not exist.");
         if (exeFile == null || !exeFile.exists() || !exeFile.isFile())
             throw new RuntimeException("The executable file '" + exeFile + "' does not exist.");
 
         this.mwdFile = mwdFile;
         this.exeFile = exeFile;
         loadGameConfig(versionConfigName);
+        if (!getConfig().isMwdLooseFiles() && (mwdFile == null || !mwdFile.exists() || !mwdFile.isFile()))
+            throw new RuntimeException("The MWD file '" + mwdFile + "' does not exist.");
+
         this.archiveIndex = this.readMWI();
         this.mainArchive = this.readMWD(progressBar);
     }
@@ -145,15 +144,20 @@ public abstract class SCGameInstance extends GameInstance {
     }
 
     @Override
-    protected MainMenuController<?, SCGameFile<?>> makeMainMenuController() {
+    public SCMainMenuUIController<?> getMainMenuController() {
+        return (SCMainMenuUIController<?>) super.getMainMenuController();
+    }
+
+    @Override
+    protected SCMainMenuUIController<?> makeMainMenuController() {
         return new SCMainMenuUIController<>(this);
     }
 
     /**
      * Called when an MWI file finishes loading using this configuration.
-     * @param mwiFile The mwi file which loaded.
+     * @param wadIndex The mwi file which loaded.
      */
-    protected void onMWILoad(MWIFile mwiFile) {
+    protected void onMWILoad(MillenniumWadIndex wadIndex) {
         readTextureRemaps();
     }
 
@@ -167,18 +171,18 @@ public abstract class SCGameInstance extends GameInstance {
 
     /**
      * Creates a SCGameFile object for the given file entry.
-     * @param fileEntry The file entry to create the file from.
+     * @param resourceEntry The file entry to create the file from.
      * @param fileData  The raw file data to test the file with.
      * @return newFile
      */
-    public abstract SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData);
+    public abstract SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData);
 
     /**
      * Finds and configures texture remap data.
      * @param exeReader The reader to read texture remap data from.
-     * @param mwiFile   The index to use for file access.
+     * @param wadIndex   The index to use for file access.
      */
-    protected abstract void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile);
+    protected abstract void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex);
 
     /**
      * Reads texture remap data.
@@ -212,7 +216,7 @@ public abstract class SCGameInstance extends GameInstance {
      * @param file the file which has an associated remap to lookup.
      * @return remapTable
      */
-    public LinkedTextureRemap<?> getLinkedTextureRemap(FileEntry file) {
+    public LinkedTextureRemap<?> getLinkedTextureRemap(MWIResourceEntry file) {
         return this.linkedTextureMaps.get(file);
     }
 
@@ -345,9 +349,9 @@ public abstract class SCGameInstance extends GameInstance {
     protected void onRemapRegistered(TextureRemapArray remap) {
         if (remap instanceof LinkedTextureRemap<?>) {
             LinkedTextureRemap<?> linkedRemap = (LinkedTextureRemap<?>) remap;
-            LinkedTextureRemap<?> oldLinkedRemap = this.linkedTextureMaps.put(linkedRemap.getFileEntry(), linkedRemap);
+            LinkedTextureRemap<?> oldLinkedRemap = this.linkedTextureMaps.put(linkedRemap.getResourceEntry(), linkedRemap);
             if (oldLinkedRemap != null)
-                getLogger().warning("A remap (" + oldLinkedRemap + ") that was previously linked to '" + linkedRemap.getFileEntry().getDisplayName() + "' has been overwritten by " + linkedRemap + ".");
+                getLogger().warning("A remap (" + oldLinkedRemap + ") that was previously linked to '" + linkedRemap.getResourceEntry().getDisplayName() + "' has been overwritten by " + linkedRemap + ".");
         }
     }
 
@@ -367,11 +371,11 @@ public abstract class SCGameInstance extends GameInstance {
     public abstract void setupFileGroups(SCGameFileGroupedListViewComponent<? extends SCGameInstance> fileListView);
 
     /**
-     * Get the FileEntry for a given resource id.
+     * Get the MWIResourceEntry for a given resource id.
      * @param resourceId The resource id.
      * @return fileEntry
      */
-    public FileEntry getResourceEntryByID(int resourceId) {
+    public MWIResourceEntry getResourceEntryByID(int resourceId) {
         if (this.archiveIndex == null)
             throw new RuntimeException("The MWI was not loaded, so we cannot yet search.");
 
@@ -383,7 +387,7 @@ public abstract class SCGameInstance extends GameInstance {
      * @param name The name to lookup.
      * @return foundEntry, if any.
      */
-    public FileEntry getResourceEntryByName(String name) {
+    public MWIResourceEntry getResourceEntryByName(String name) {
         if (this.archiveIndex == null)
             throw new RuntimeException("The MWI was not loaded, so we cannot yet search.");
 
@@ -391,12 +395,12 @@ public abstract class SCGameInstance extends GameInstance {
     }
 
     /**
-     * Get the FileEntry name for a given resource id.
+     * Get the MWIResourceEntry name for a given resource id.
      * @param resourceId The resource id.
      * @return fileEntryName
      */
     public String getResourceName(int resourceId) {
-        FileEntry entry = this.archiveIndex.getResourceEntryByID(resourceId);
+        MWIResourceEntry entry = this.archiveIndex.getResourceEntryByID(resourceId);
         if (entry == null)
             return "NULL/" + resourceId;
 
@@ -419,20 +423,20 @@ public abstract class SCGameInstance extends GameInstance {
      * @return gameFile
      */
     public <T extends SCGameFile<?>> T getGameFileByResourceID(int resourceId, Class<T> fileClass, boolean allowNull) {
-        FileEntry fileEntry = getResourceEntryByID(resourceId);
-        if (fileEntry == null) {
+        MWIResourceEntry resourceEntry = getResourceEntryByID(resourceId);
+        if (resourceEntry == null) {
             if (allowNull)
                 return null;
 
             throw new IllegalArgumentException("There was no file entry for resource ID: " + resourceId);
         }
 
-        SCGameFile<?> gameFile = this.fileObjectsByFileEntries.get(fileEntry);
-        if (gameFile == null || !fileClass.isInstance(gameFile)) {
+        SCGameFile<?> gameFile = this.fileObjectsByFileEntries.get(resourceEntry);
+        if (!fileClass.isInstance(gameFile)) {
             if (allowNull)
                 return null;
 
-            throw new ClassCastException("The file '" + fileEntry.getDisplayName() + "'/" + resourceId + " was expected to be " + Utils.getSimpleName(fileClass) + ", but was actually " + Utils.getSimpleName(gameFile));
+            throw new ClassCastException("The file '" + resourceEntry.getDisplayName() + "'/" + resourceId + " was expected to be " + Utils.getSimpleName(fileClass) + ", but was actually " + Utils.getSimpleName(gameFile));
         }
 
         return fileClass.cast(gameFile);
@@ -440,12 +444,12 @@ public abstract class SCGameInstance extends GameInstance {
 
     /**
      * Gets a GameFile by its resource entry.
-     * @param fileEntry The file resource entry.
+     * @param resourceEntry The file resource entry.
      * @return gameFile
      */
     @SuppressWarnings("unchecked")
-    public <T extends SCGameFile<?>> T getGameFile(FileEntry fileEntry) {
-        return (T) this.fileObjectsByFileEntries.get(fileEntry);
+    public <T extends SCGameFile<?>> T getGameFile(MWIResourceEntry resourceEntry) {
+        return (T) this.fileObjectsByFileEntries.get(resourceEntry);
     }
 
     /**
@@ -618,7 +622,7 @@ public abstract class SCGameInstance extends GameInstance {
     /**
      * Read the MWI file from the executable.
      */
-    public MWIFile readMWI() {
+    public MillenniumWadIndex readMWI() {
         if (getConfig().getMWIOffset() <= 0)
             throw new RuntimeException("The MWI cannot be read because either no MWI offset was specified or the configuration hasn't been loaded yet.");
 
@@ -629,22 +633,22 @@ public abstract class SCGameInstance extends GameInstance {
 
         // Load an MWI file.
         DataReader arrayReader = new DataReader(new ArraySource(mwiBytes));
-        MWIFile mwiFile = new MWIFile(this);
-        this.archiveIndex = mwiFile;
-        mwiFile.load(arrayReader);
-        this.onMWILoad(mwiFile);
-        return mwiFile;
+        MillenniumWadIndex wadIndex = new MillenniumWadIndex(this);
+        this.archiveIndex = wadIndex;
+        wadIndex.load(arrayReader);
+        this.onMWILoad(wadIndex);
+        return wadIndex;
     }
 
     /**
      * Write the MWI to the provided writer.
      * @param writer  The writer to write the MWI to.
-     * @param mwiFile The MWI file to save.
+     * @param wadIndex The MWI file to save.
      */
-    public void writeMWI(DataWriter writer, MWIFile mwiFile) {
+    public void writeMWI(DataWriter writer, MillenniumWadIndex wadIndex) {
         ArrayReceiver receiver = new ArrayReceiver();
         DataWriter mwiWriter = new DataWriter(receiver);
-        mwiFile.save(mwiWriter);
+        wadIndex.save(mwiWriter);
         mwiWriter.closeReceiver();
 
         // Verify MWI size ok.
@@ -664,19 +668,25 @@ public abstract class SCGameInstance extends GameInstance {
         if (getConfig().getMWIOffset() <= 0)
             throw new RuntimeException("The MWI cannot be read because either no MWI offset was specified or the configuration hasn't been loaded yet.");
 
-        FileSource fileSource;
-
-        try {
-            fileSource = new FileSource(this.mwdFile);
-        } catch (IOException ex) {
-            throw new RuntimeException("Failed to read MWD file '" + this.mwdFile + "'.");
-        }
-
-        // Load the MWD file.
-        DataReader arrayReader = new DataReader(fileSource);
         MWDFile mwdFile = new MWDFile(this);
         this.mainArchive = mwdFile;
-        mwdFile.load(arrayReader, progressBar);
+
+        // Read the MWD.
+        if (getConfig().isMwdLooseFiles()) {
+            mwdFile.loadFilesFromDirectory(progressBar);
+        } else {
+            FileSource fileSource;
+
+            try {
+                fileSource = new FileSource(this.mwdFile);
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to read MWD file '" + this.mwdFile + "'.");
+            }
+
+            // Load the MWD file.
+            mwdFile.loadMwdFile(new DataReader(fileSource), progressBar);
+        }
+
         this.onMWDLoad(mwdFile);
         return mwdFile;
     }
@@ -701,12 +711,12 @@ public abstract class SCGameInstance extends GameInstance {
 
     /**
      * Write potentially modified data from the instance object to the executable.
-     * @param mwiFile The mwi file to write.
+     * @param wadIndex The mwi file to write.
      */
-    public void writeExecutableData(MWIFile mwiFile) {
+    public void writeExecutableData(MillenniumWadIndex wadIndex) {
         DataWriter writer = createExecutableWriter();
         try {
-            this.writeExecutableData(writer, mwiFile);
+            this.writeExecutableData(writer, wadIndex);
         } catch (Throwable th) {
             throw new RuntimeException("Failed to write instance data to the executable.", th);
         }
@@ -717,11 +727,11 @@ public abstract class SCGameInstance extends GameInstance {
     /**
      * Write potentially modified data from the instance object to the executable.
      * @param writer  The writer to write the data to.
-     * @param mwiFile The mwi file to write.
+     * @param wadIndex The mwi file to write.
      */
-    public void writeExecutableData(DataWriter writer, MWIFile mwiFile) {
-        if (mwiFile != null)
-            this.writeMWI(writer, mwiFile);
+    public void writeExecutableData(DataWriter writer, MillenniumWadIndex wadIndex) {
+        if (wadIndex != null)
+            this.writeMWI(writer, wadIndex);
 
         this.writeBmpPointerData(writer);
         this.writeTextureRemaps(writer);

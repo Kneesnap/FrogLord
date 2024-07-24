@@ -45,7 +45,7 @@ public class MOFAnimationCels extends SCSharedGameData {
         int flags = reader.readUnsignedShortAsInt();
         this.interpolationEnabled = (flags == FLAG_VIRTUAL_INTERPOLATION);
         if (flags > (FLAG_VIRTUAL_INTERPOLATION | FLAG_VIRTUAL_STANDARD))
-            System.out.println("Model cel-set for " + getParent().getFileEntry().getDisplayName() + " has unsupported flags (" + Utils.toHexString(flags) + ")");
+            System.out.println("Model cel-set for " + getParent().getFileDisplayName() + " has unsupported flags (" + Utils.toHexString(flags) + ")");
 
         int celNumberPointer = reader.readInt();
         int indicePointer = reader.readInt();

@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map;
 
 import javafx.scene.control.Alert.AlertType;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsTexFile;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.BeastWarsMapCollprim;
@@ -30,8 +29,7 @@ public class BeastWarsMapObjConverter {
      * @param map The map file to export to obj.
      */
     public static void exportMapToObj(BeastWarsMapFile map) {
-        FileEntry entry = map.getIndexEntry();
-        String strippedName = Utils.stripExtension(entry.getDisplayName());
+        String strippedName = Utils.stripExtension(map.getFileDisplayName());
         exportMapToObj(new File(GUIMain.getWorkingDirectory(), strippedName), strippedName, map);
     }
 
@@ -43,7 +41,6 @@ public class BeastWarsMapObjConverter {
      */
     @SuppressWarnings("unchecked")
     public static void exportMapToObj(File folder, String exportName, BeastWarsMapFile map) {
-        FileEntry entry = map.getIndexEntry();
         Logger logger = map.getLogger();
 
         // Find the corresponding texture file.
@@ -159,9 +156,9 @@ public class BeastWarsMapObjConverter {
         try {
             Files.write(new File(folder, "Map.obj").toPath(), Arrays.asList(objWriter.toString().split("\n")));
             Files.write(new File(folder, "Map.mtl").toPath(), Arrays.asList(mtlWriter.toString().split("\n")));
-            logger.info("Exported '" + entry.getDisplayName() + " to " + exportName + "/Map.obj");
+            logger.info("Exported '" + map.getFileDisplayName() + " to " + exportName + "/Map.obj");
         } catch (IOException ex) {
-            throw new RuntimeException("Failed to export " + entry.getDisplayName() + " to " + exportName + "/Map.obj", ex);
+            throw new RuntimeException("Failed to export " + map.getFileDisplayName() + " to " + exportName + "/Map.obj", ex);
         }
 
         // TODO: TOSS (Data seen in MS1_P_01.MAP)

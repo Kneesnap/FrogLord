@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui.components;
 
 import javafx.scene.Node;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
@@ -9,9 +10,11 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Allows viewing a list of properties.
@@ -57,6 +60,33 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
         clear();
         this.tableColumnKey.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnValue.setCellValueFactory(new PropertyValueFactory<>("value"));
+        if (getRootNode().getRowFactory() == null) {
+            getRootNode().setRowFactory(tableView -> {
+                TableRow<NameValuePair> row = new TableRow<>();
+                row.setOnMouseClicked(event -> {
+                    if (event.getClickCount() != 2)
+                        return;
+
+                    if (!(row.getItem() instanceof PropertyListPair))
+                        return;
+
+                    PropertyListPair pair = (PropertyListPair) row.getItem();
+                    if (pair.getOnClickBehavior() != null) {
+                        try {
+                            Object result = pair.getOnClickBehavior().get();
+                            if (result != null) {
+                                pair.setValue(String.valueOf(result));
+                                showProperties(propertyList); // Refresh the UI.
+                            }
+                        } catch (Throwable th) {
+                            Utils.handleError(getGameInstance().getLogger(), th, true, "Failed to run click handler for '%s'.", pair.getName());
+                        }
+                    }
+                });
+
+                return row;
+            });
+        }
 
         List<NameValuePair> properties = propertyList.getEntries();
         if (properties != null && properties.size() > 0)
@@ -88,12 +118,32 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
         }
 
         /**
+         * Adds a new property to the property list.
+         * @param key the key to add
+         * @param value the value to add
+         * @param onClickBehavior behavior to run when the property is clicked
+         */
+        public <TObject> void add(String key, TObject value, Supplier<TObject> onClickBehavior) {
+            this.entries.add(new PropertyListPair(key, String.valueOf(value), onClickBehavior));
+        }
+
+        /**
          * Apply the property list to the given table.
          * @param tableFileData the table to apply to
          */
         public void apply(TableView<NameValuePair> tableFileData) {
             tableFileData.getItems().clear();
             tableFileData.getItems().addAll(this.entries);
+        }
+    }
+
+    @Getter
+    public static class PropertyListPair extends NameValuePair {
+        private final Supplier<?> onClickBehavior;
+
+        public PropertyListPair(String name, String value, Supplier<?> onClickBehavior) {
+            super(name, value);
+            this.onClickBehavior = onClickBehavior;
         }
     }
 

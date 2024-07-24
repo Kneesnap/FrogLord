@@ -12,9 +12,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -22,6 +19,9 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.NameValuePair;
@@ -127,9 +127,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
                 return;
             }
         } else if (fileName.endsWith(".vlo") || fileName.endsWith(".xar") || fileName.endsWith(".xmr")) {
-            WADFile.CURRENT_FILE_NAME = selectedEntry.getFileEntry().getDisplayName();
-            this.selectedEntry.setFile(getFile().getArchive().replaceFile(newBytes, selectedEntry.getFileEntry(), selectedEntry.getFile(), true));
-            WADFile.CURRENT_FILE_NAME = null;
+            this.selectedEntry.setFile(getFile().getArchive().replaceFile(newBytes, this.selectedEntry.getFileEntry(), this.selectedEntry.getFile(), true));
         } else {
             Utils.makePopUp("Don't know how to import this file type. Aborted.", AlertType.WARNING);
             return;
@@ -147,11 +145,9 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
         if (selectedFile == null)
             return; // Cancelled.
 
-        WADFile.CURRENT_FILE_NAME = selectedEntry.getFileEntry().getDisplayName();
         DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
         this.selectedEntry.getFile().save(writer);
         writer.closeReceiver();
-        WADFile.CURRENT_FILE_NAME = null;
     }
 
     @FXML
@@ -162,23 +158,21 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
             return; // Cancelled.
 
         for (WADEntry wadEntry : getFile().getFiles()) {
-            FileEntry fileEntry = wadEntry.getFileEntry();
-            WADFile.CURRENT_FILE_NAME = fileEntry.getDisplayName();
+            MWIResourceEntry resourceEntry = wadEntry.getFileEntry();
 
-            File save = Utils.getNonExistantFile(new File(selectedFolder, fileEntry.getDisplayName()));
-            getLogger().info("Saving: " + fileEntry.getDisplayName());
+            File save = Utils.getNonExistantFile(new File(selectedFolder, resourceEntry.getDisplayName()));
+            getLogger().info("Saving: " + resourceEntry.getDisplayName());
 
             DataWriter writer = new DataWriter(new FileReceiver(save));
             wadEntry.getFile().save(writer);
             writer.closeReceiver();
         }
-        WADFile.CURRENT_FILE_NAME = null;
     }
 
     @FXML
     @SneakyThrows
     private void exportAlternate(ActionEvent event) {
-        this.selectedEntry.getFile().exportAlternateFormat(this.selectedEntry.getFileEntry());
+        this.selectedEntry.getFile().exportAlternateFormat();
     }
 
     @FXML

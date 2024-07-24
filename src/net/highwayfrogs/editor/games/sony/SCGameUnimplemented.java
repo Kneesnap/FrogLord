@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.sony;
 
-import net.highwayfrogs.editor.file.MWIFile;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 
 /**
@@ -15,12 +15,12 @@ public class SCGameUnimplemented extends SCGameInstance {
     }
 
     @Override
-    public SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData) {
-        return SCUtils.createSharedGameFile(fileEntry, fileData);
+    public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
+        return SCUtils.createSharedGameFile(resourceEntry, fileData);
     }
 
     @Override
-    protected void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile) {
+    protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
 
     }
 

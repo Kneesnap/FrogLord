@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.games.sony.beastwars;
 
-import net.highwayfrogs.editor.file.MWIFile;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.utils.Utils;
@@ -36,20 +36,20 @@ public class BeastWarsInstance extends SCGameInstance {
     }
 
     @Override
-    public SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData) {
-        if (fileEntry.getTypeId() == FILE_TYPE_MAP || Utils.testSignature(fileData, BeastWarsMapFile.FILE_SIGNATURE))
+    public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
+        if (resourceEntry.getTypeId() == FILE_TYPE_MAP || Utils.testSignature(fileData, BeastWarsMapFile.FILE_SIGNATURE))
             return new BeastWarsMapFile(this);
-        if (fileEntry.getTypeId() == FILE_TYPE_TEX || Utils.testSignature(fileData, BeastWarsTexFile.SIGNATURE))
+        if (resourceEntry.getTypeId() == FILE_TYPE_TEX || Utils.testSignature(fileData, BeastWarsTexFile.SIGNATURE))
             return new BeastWarsTexFile(this);
-        if (fileEntry.getTypeId() == FILE_TYPE_PLT || fileEntry.hasExtension("plt"))
+        if (resourceEntry.getTypeId() == FILE_TYPE_PLT || resourceEntry.hasExtension("plt"))
             return new PLTFile(this);
 
 
-        return SCUtils.createSharedGameFile(fileEntry, fileData);
+        return SCUtils.createSharedGameFile(resourceEntry, fileData);
     }
 
     @Override
-    protected void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile) {
+    protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
         // This game does not appear to contain texture remap data.
     }
 

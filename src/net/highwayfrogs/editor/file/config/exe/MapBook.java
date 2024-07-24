@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.file.config.exe;
 
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerTextureRemap;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Locale;
@@ -58,7 +58,7 @@ public abstract class MapBook extends ExeStruct {
         if (mapResourceId <= 0 || remapPointer <= 0)
             return; // Invalid.
 
-        FileEntry entry = instance.getResourceEntryByID(mapResourceId);
+        MWIResourceEntry entry = instance.getResourceEntryByID(mapResourceId);
         if (entry == null) {
             instance.getLogger().warning("Couldn't find map with resource ID " + mapResourceId);
             return;

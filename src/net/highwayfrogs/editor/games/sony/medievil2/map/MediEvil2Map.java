@@ -30,8 +30,8 @@ public class MediEvil2Map extends SCMapFile<MediEvil2GameInstance>  {
     @Override
     public IMediEvil2LevelTableEntry getLevelTableEntry() {
         // Search & cache the level table entry.
-        int resourceId = getIndexEntry().getResourceId();
-        if (this.cachedLevelTableEntry == null || this.cachedLevelTableEntry.getMapFile() == null || this.cachedLevelTableEntry.getMapFile().getIndexEntry().getResourceId() != resourceId) {
+        int resourceId = getFileResourceId();
+        if (this.cachedLevelTableEntry == null || this.cachedLevelTableEntry.getMapFile() == null || this.cachedLevelTableEntry.getMapFile().getFileResourceId() != resourceId) {
             for (int i = 0; i < getGameInstance().getLevelTable().size(); i++) {
                 MediEvil2LevelDefinition levelDefinition = getGameInstance().getLevelTable().get(i);
 

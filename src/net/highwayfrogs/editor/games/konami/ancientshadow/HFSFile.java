@@ -2,13 +2,13 @@ package net.highwayfrogs.editor.games.konami.ancientshadow;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.DummyFile;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.konami.rescue.PRS1Unpacker;
+import net.highwayfrogs.editor.games.sony.shared.mwd.DummyFile;
 
 import java.io.File;
 import java.util.ArrayList;
