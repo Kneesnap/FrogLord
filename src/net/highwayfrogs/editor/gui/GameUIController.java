@@ -283,7 +283,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
         GameInstance gameInstance = controller.getGameInstance();
         GameUIController<?> mainMenuController = gameInstance != null ? gameInstance.getMainMenuController() : null;
         if (mainMenuController != null && mainMenuController != controller) {
-            newStage.initModality(Modality.WINDOW_MODAL);
+            newStage.initModality(waitUntilClose ? Modality.APPLICATION_MODAL : Modality.NONE);
             newStage.initOwner(mainMenuController.getStage());
         }
 

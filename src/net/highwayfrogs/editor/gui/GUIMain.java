@@ -33,6 +33,9 @@ import java.util.logging.*;
  *  - CollectionViewComponent.java
  *  - CollectionEditorComponent.java
  *  - SCGameFileListEditor.java
+ *
+ * TODO: Globus's computer seems to have different text settings than mine, so many of the UI buttons are just too small for the text.
+ *  -> What do I need to make the FrogLord UI appear consistent across systems?
  */
 public class GUIMain extends Application {
     @Getter private static Config mainConfig;

@@ -137,15 +137,16 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         if (selectedFile == null)
             return; // Cancelled.
 
+        FileEntry mwiEntry = getFileEntry(); // Gets the file entry before we reroute files, to avoid resolving the old file's MWI.
         byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
         SCGameFile<?> oldFile = getSelectedFileEntry();
-        SCGameFile<?> newFile = getArchive().replaceFile(fileBytes, getFileEntry(), oldFile, false);
-        newFile.onImport(oldFile, getFileEntry().getDisplayName(), selectedFile.getName());
+        SCGameFile<?> newFile = getArchive().replaceFile(fileBytes, mwiEntry, oldFile, false);
+        newFile.onImport(oldFile, mwiEntry.getDisplayName(), selectedFile.getName());
         showEditor(newFile.makeEditorUI()); // Open the editor for the new file.
         if (getFileListComponent() != null) // Update the file list.
             getFileListComponent().getCollectionViewComponent().refreshDisplay();
 
-        getLogger().info("Imported " + selectedFile.getName() + " as " + getFileEntry().getDisplayName() + ".");
+        getLogger().info("Imported " + selectedFile.getName() + " as " + mwiEntry.getDisplayName() + ".");
     }
 
     /**
