@@ -56,6 +56,19 @@ public class DictionaryStringGenerator implements IHashStringGenerator {
         allLoadedWords.clear();
         allLoadedWords.addAll(Files.readAllLines(file.toPath()));
 
+        char[] characters = "_0123456789abcdefghijklmnopqrstuvwxyz".toCharArray();
+        for (char i = 0; i < characters.length; i++) {
+            String temp = "" + characters[i];
+            if (!allLoadedWords.contains(temp))
+                allLoadedWords.add(temp);
+
+            for (char j = 0; j < characters.length; j++) {
+                String temp2 = temp + characters[j];
+                if (!allLoadedWords.contains(temp2))
+                    allLoadedWords.add(temp2);
+            }
+        }
+
         wordsByHash.values().forEach(List::clear);
         for (String word : allLoadedWords)
             wordsByHash.computeIfAbsent(FroggerHashUtil.getLinkerHash(word), key -> new ArrayList<>()).add(word);

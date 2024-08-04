@@ -157,8 +157,6 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         if (selectedFile == null)
             return; // Cancelled.
 
-        byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
-
         // Load old data.
         SCGameFile<?> oldFile = getSelectedFileEntry();
         if (oldFile == null) {
@@ -170,9 +168,10 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         String fileDisplayName = oldFile.getFileDisplayName();
 
         // Import to file.
+        byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
         SCGameFile<?> newFile = getArchive().replaceFile(fileBytes, mwiEntry, oldFile, false);
         newFile.onImport(oldFile, fileDisplayName, selectedFile.getName());
-        showEditor(newFile); // Open the editor for the new file.
+        showEditor(newFile.makeEditorUI()); // Open the editor for the new file.
         if (getFileListComponent() != null) // Update the file list.
             getFileListComponent().getCollectionViewComponent().refreshDisplay();
 

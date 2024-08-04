@@ -11,6 +11,7 @@ import javafx.scene.control.TextField;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.extra.hash.tree.HashTreeStringGenerator;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -29,16 +30,25 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
     @FXML private TextField prefixTextField;
     @FXML private TextField suffixTextField;
     @FXML private TextField targetLinkerHashField;
-    @FXML private TextField searchQueryField;
+    @FXML private TextField maxWordSizeField;
+    @FXML private TextField searchFilterField;
     @FXML private Label stringListLabel;
     @FXML private ListView<String> stringsListView;
     private final IHashStringGenerator stringGenerator;
 
     private HashPlaygroundController(SCGameInstance gameInstance) {
         super(gameInstance);
-        DictionaryStringGenerator gen = new DictionaryStringGenerator(); // TODO: This is temporary.
-        gen.loadDictionaryFromFile(new File(GUIMain.getMainApplicationFolder(), "dictionary.txt"));
-        this.stringGenerator = gen;
+
+        File dictionaryFile = new File(GUIMain.getMainApplicationFolder(), "dictionary.txt");
+        if (dictionaryFile.exists() && dictionaryFile.isFile()) {
+            DictionaryStringGenerator gen = new DictionaryStringGenerator();
+            gen.loadDictionaryFromFile(dictionaryFile);
+            this.stringGenerator = gen;
+        } else {
+            Utils.makePopUp("Could not file 'dictionary.txt'. No dictionary will be used for autocompletes.\n"
+                    + "Any text file with one word per line can be used as dictionary.txt.", AlertType.ERROR);
+            this.stringGenerator = new HashTreeStringGenerator();
+        }
     }
 
     @Override
@@ -46,8 +56,9 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
         this.generateNewString();
         this.prefixTextField.textProperty().addListener((observable, oldValue, newValue) -> this.generateNewString());
         this.suffixTextField.textProperty().addListener((observable, oldValue, newValue) -> this.generateNewString());
-        this.searchQueryField.textProperty().addListener((observable, oldValue, newValue) -> this.generateStrings(null));
+        this.searchFilterField.textProperty().addListener((observable, oldValue, newValue) -> this.generateStrings(null));
         this.targetLinkerHashField.textProperty().addListener((observable, oldValue, newValue) -> this.generateStrings(null));
+        this.maxWordSizeField.textProperty().addListener((observable, oldValue, newValue) -> this.generateStrings(null));
     }
 
     private void generateNewString() {
@@ -76,6 +87,8 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
             return;
         }
 
+        int maxWordSize = Utils.isInteger(this.maxWordSizeField.getText()) ? Integer.parseInt(this.maxWordSizeField.getText()) : 0;
+
         String prefix = this.prefixTextField.getText();
         String suffix = this.suffixTextField.getText();
         if (prefix != null)
@@ -83,7 +96,9 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
         if (suffix != null)
             targetLinkerHash = FroggerHashUtil.getLinkerHashWithoutSubstring(suffix, targetLinkerHash);
 
-        List<String> output = this.stringGenerator.generateStrings(targetLinkerHash, this.searchQueryField.getText());
+        List<String> output = this.stringGenerator.generateStrings(targetLinkerHash, this.searchFilterField.getText());
+        if (maxWordSize > 0)
+            output.removeIf(word -> word.length() > maxWordSize);
         this.stringsListView.setItems(FXCollections.observableArrayList(output));
     }
 
@@ -106,6 +121,6 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
      * Open the level info controller.
      */
     public static void openEditor(SCGameInstance gameInstance) {
-        Utils.createWindowFromFXMLTemplate("window-hash-playground", new HashPlaygroundController(gameInstance), "Hash Playground", true);
+        Utils.createWindowFromFXMLTemplate("window-hash-playground", new HashPlaygroundController(gameInstance), "Hash Playground", false);
     }
 }

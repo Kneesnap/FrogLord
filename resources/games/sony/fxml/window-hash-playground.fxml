@@ -72,9 +72,13 @@
                 <TextField fx:id="targetLinkerHashField" layoutX="294.0" layoutY="23.0" prefHeight="25.0"
                            prefWidth="42.0" promptText="Eg. 9" AnchorPane.rightAnchor="14.0"
                            AnchorPane.topAnchor="26.0"/>
-                <Label layoutX="230.0" layoutY="37.0" prefHeight="17.0" prefWidth="42.0" text="Query:"
+                <Label layoutX="220.0" layoutY="47.0" prefHeight="17.0" prefWidth="69.0" text="Max Word Size:"
+                       AnchorPane.rightAnchor="91.0" AnchorPane.topAnchor="55.0"/>
+                <TextField fx:id="maxWordSizeField" layoutX="294.0" layoutY="43.0" prefHeight="25.0" prefWidth="42.0"
+                           promptText="Eg. 0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="51.0"/>
+                <Label layoutX="230.0" layoutY="37.0" prefHeight="17.0" prefWidth="42.0" text="Filter:"
                        AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="30.0"/>
-                <TextField fx:id="searchQueryField" layoutX="304.0" layoutY="33.0" prefHeight="25.0" prefWidth="85.0"
+                <TextField fx:id="searchFilterField" layoutX="304.0" layoutY="33.0" prefHeight="25.0" prefWidth="85.0"
                            AnchorPane.leftAnchor="50.0" AnchorPane.topAnchor="26.0"/>
             </children>
         </AnchorPane>
