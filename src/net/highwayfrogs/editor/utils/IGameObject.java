@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.utils;
 
+import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 
 import java.util.logging.Logger;
@@ -44,10 +45,21 @@ public interface IGameObject {
             return true;
 
         if (target != null) {
-            getLogger().warning(target + " had bit flag value " + Utils.toHexString(value) + ", which contained unhandled bits.");
+            getLogger().warning(target + " had bit flag value " + Utils.toHexString(value) + ", which contained unhandled bits. (Mask: " + Utils.toHexString(mask) + ")");
         } else {
-            getLogger().warning("Bit flag value " + Utils.toHexString(value) + " had unexpected bits set!");
+            getLogger().warning("Bit flag value " + Utils.toHexString(value) + " had unexpected bits set! (Mask: " + Utils.toHexString(mask) + ")");
         }
         return false;
+    }
+
+    /**
+     * Requires the reader to be at a given index without creating an unnecessary Logger object.
+     * @param reader the reader to warn if not at the index.
+     * @param desiredIndex the index to require.
+     * @param messagePrefix The message to print for a warning.
+     */
+    default void requireReaderIndex(DataReader reader, int desiredIndex, String messagePrefix) {
+        if (reader.getIndex() != desiredIndex)
+            reader.requireIndex(getLogger(), desiredIndex, messagePrefix);
     }
 }

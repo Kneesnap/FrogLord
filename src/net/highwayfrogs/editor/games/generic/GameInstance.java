@@ -148,6 +148,25 @@ public abstract class GameInstance {
     }
 
     /**
+     * Load and setup game config data relating to the game such as version configuration and game files.
+     * @param config the already loaded config file
+     */
+    protected void loadGameConfig(GameConfig config) {
+        if (config == null)
+            throw new NullPointerException("config");
+        if (this.config != null)
+            throw new IllegalStateException("Cannot load the game configuration '" + config.getInternalName() + "' because it has already been loaded.");
+
+        // Register to GUIMain and log.
+        GUIMain.getActiveGameInstances().add(this);
+        getLogger().info("Hello! FrogLord is loading config '" + config.getInternalName() + "'.");
+
+        // Create & load config.
+        this.config = config;
+        this.onConfigLoad(config.getConfig());
+    }
+
+    /**
      * Called when configuration data is loaded.
      * @param configObj The config object which data is loaded from.
      */

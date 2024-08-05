@@ -11,8 +11,6 @@ import javafx.scene.layout.VBox;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.GameObject;
-import net.highwayfrogs.editor.games.sony.SCGameFile;
-import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.utils.Utils;
@@ -79,7 +77,7 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
      * @param fileToEdit the file to edit
      * @return editor
      */
-    public static <TGameInstance extends SCGameInstance, TGameFile extends SCGameFile<?>, TUIController extends DefaultFileUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, TUIController controller, TGameFile fileToEdit) {
+    public static <TGameInstance extends GameInstance, TGameFile extends GameObject<?> & IPropertyListCreator, TUIController extends DefaultFileUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, TUIController controller, TGameFile fileToEdit) {
         return loadEditor(gameInstance, TEMPLATE_URL, controller, fileToEdit);
     }
 
@@ -91,7 +89,7 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
      * @param fileToEdit the file to edit
      * @return editor
      */
-    public static <TGameInstance extends SCGameInstance, TGameFile extends SCGameFile<?>, TUIController extends DefaultFileUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
+    public static <TGameInstance extends GameInstance, TGameFile extends GameObject<?> & IPropertyListCreator, TUIController extends DefaultFileUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
             URL templateUrl = Utils.getFXMLTemplateURL(gameInstance, template);
             GameUIController.loadController(gameInstance, templateUrl, controller);
