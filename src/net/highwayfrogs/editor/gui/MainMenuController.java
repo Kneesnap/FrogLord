@@ -10,11 +10,13 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -143,6 +145,12 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
 
     @FXML
     private void actionSaveMain(ActionEvent evt) {
+        File baseFolder = getGameInstance().getMainGameFolder();
+        if (baseFolder == null || !baseFolder.canWrite()) {
+            Utils.makePopUp("Can't write to the game folder." + Constants.NEWLINE + "Does FrogLord need admin permissions to save to this folder?", AlertType.ERROR);
+            return;
+        }
+
         try {
             saveMainGameData();
         } catch (Throwable th) {

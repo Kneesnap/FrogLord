@@ -1039,7 +1039,7 @@ public class Utils {
 
         List<String> allExtensions = new ArrayList<>();
         for (String ext : extensions) {
-            String type = "*." + ext; // Unix is case-sensitive, so we add both lower-case and upper-case.
+            String type = ext.contains(".") ? ext : "*." + ext; // Unix is case-sensitive, so we add both lower-case and upper-case.
             String lowerCase = type.toLowerCase();
             String upperCase = type.toUpperCase();
 
@@ -2573,6 +2573,104 @@ public class Utils {
         } catch (Throwable e) {
             handleError(null, e, false);
         }
+    }
+
+    /**
+     * Tests if a file is located within a folder. Restricts directory escalation.
+     * @param targetFile The target file to test.
+     * @param holdingFolder The folder which must hold the file.
+     * @return Whether the file is held.
+     */
+    public static boolean isFileWithinParent(File targetFile, File holdingFolder) {
+        if (targetFile == null)
+            throw new RuntimeException("The folder to test is null.");
+        if (holdingFolder == null)
+            throw new RuntimeException("The holding folder is null.");
+        if (!holdingFolder.isDirectory() || holdingFolder.isFile())
+            throw new RuntimeException("The holding folder '" + holdingFolder.getName() + "' is actually not a folder.");
+
+        // Note: Make sure that if holdingFolder == targetFile, that still returns false.
+        File testFile;
+        try {
+            testFile = targetFile.getCanonicalFile().getParentFile(); // Evaluates everything like '..\', drive letters, etc.
+            holdingFolder = holdingFolder.getCanonicalFile(); // Necessary to make .equals() work.
+        } catch (IOException ex) {
+            // Probably not accessible due to permissions, or, it's an invalid file path which by definition can't be evaluated.
+            return false;
+        }
+
+        // Search parent files.
+        while (testFile != null) {
+            if (testFile.equals(holdingFolder))
+                return true;
+
+            testFile = testFile.getParentFile();
+        }
+
+        // Didn't find a match.
+        return false;
+    }
+
+    /**
+     * Gets the file as a path local to the server root. This is mainly for displays.
+     * @param rootFolder The folder to treat as the root.
+     * @param file The file to get the path of.
+     * @return localPathString
+     */
+    public static String toLocalPath(File rootFolder, File file, boolean allowOutsideRoot) {
+        if (file == null)
+            return "NULL FILE";
+        if (rootFolder == null)
+            throw new NullPointerException("rootFolder");
+        if (!rootFolder.isDirectory())
+            throw new RuntimeException("The provided rootFolder: '" + rootFolder + "' was not a directory!");
+
+        if (!isFileWithinParent(file, rootFolder)) {
+            if (allowOutsideRoot)
+                return file.getPath();
+
+            throw new RuntimeException("File '" + file + "' was not found within '" + rootFolder + "'.");
+        }
+
+        String rootPath;
+        try {
+            rootPath = rootFolder.getCanonicalPath();
+        } catch (IOException ex) {
+            getLogger().severe("Failure path: '" + rootFolder + "'");
+            throw new RuntimeException("Failed to get canonical path of file.", ex);
+        }
+
+        String targetPath;
+        try {
+            targetPath = file.getCanonicalPath();
+        } catch (IOException ex) {
+            getLogger().severe("Failure path: '" + rootFolder + "'");
+            throw new RuntimeException("Failed to get canonical path of target file.", ex);
+        }
+
+        // Strip file path.
+        String resultPath = targetPath;
+        if (resultPath.startsWith(rootPath))
+            resultPath = resultPath.substring(rootPath.length() + 1);
+
+        return resultPath;
+    }
+
+    /**
+     * Adds a suffix to the file name, before the extension.
+     * @param file the file to add a suffix to
+     * @param suffix the suffix to add
+     * @return the new file with the suffix applied
+     */
+    public static File addFileNameSuffix(File file, String suffix) {
+        if (file == null)
+            throw new NullPointerException("file");
+        if (suffix == null || suffix.isEmpty())
+            return file;
+
+        String inputFileName = file.getName();
+        String strippedInputName = Utils.stripExtension(inputFileName);
+        return new File(file.getParentFile(), strippedInputName + suffix + inputFileName.substring(strippedInputName.length() + 1));
     }
 
     /**

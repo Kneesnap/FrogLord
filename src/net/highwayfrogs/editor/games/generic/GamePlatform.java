@@ -7,5 +7,7 @@ package net.highwayfrogs.editor.games.generic;
 public enum GamePlatform {
     PLAYSTATION,
     PLAYSTATION_2,
+    GAMECUBE,
+    XBOX,
     WINDOWS;
 }
