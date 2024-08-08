@@ -39,7 +39,7 @@ public class RwImageChunk extends RwStreamChunk {
         //if (bitDepth == 0)
         //    bitDepth =
         // C:\Program Files (x86)\Konami\Frogger's Adventures\dvd\win\area07.hfs
-        System.err.println("Image (Depth: " + bitDepth + ", Dimensions: [" + width + ", " + height + "], Stride: " + lineStride + ", Remaining: " + reader.getRemaining() + ")");
+        getLogger().warning("Image (Depth: " + bitDepth + ", Dimensions: [" + width + ", " + height + "], Stride: " + lineStride + ", Remaining: " + reader.getRemaining() + ")");
 
         if (bitDepth != 0 && bitDepth != 8 && bitDepth != 4 && bitDepth != 32)
             throw new UnsupportedOperationException("Bit depth not supported! (Depth: " + bitDepth + ", Dimensions: [" + width + ", " + height + "], Stride: " + lineStride + ", Remaining: " + reader.getRemaining() + ")");

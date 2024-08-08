@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Getter
 public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
-    private final List<RWPlatformIndependentTextureEntry> entries = new ArrayList<>();
+    private final List<RwPlatformIndependentTextureEntry> entries = new ArrayList<>();
 
     public static final int TYPE_ID = 0x23;
 
@@ -33,11 +33,13 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
             // _rtpitexdImage2TextureReadLegacy / RtPITexDictionaryStreamRead (rpitexd.o)
 
             for (int i = 0; i < imageCount; i++) {
-                RWPlatformIndependentTextureEntry entry = new RWPlatformIndependentTextureEntry(this);
+                RwPlatformIndependentTextureEntry entry = new RwPlatformIndependentTextureEntry(this);
                 entry.load(reader);
                 this.entries.add(entry);
             }
         } else if (creatorVersion == (short) 1){
+            getLogger().warning("Unknown texture format! Skipping!!!");
+            reader.skipBytes(Math.min(dataLength, reader.getRemaining()));
             // _rtpitexdImage2TextureRead (rpitexd.o)
             // TODO: IMPLEMENT.
         } else {
@@ -56,14 +58,14 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
     }
 
     @Getter
-    public static class RWPlatformIndependentTextureEntry extends GameObject {
+    public static class RwPlatformIndependentTextureEntry extends GameObject {
         private final RwPlatformIndependentTextureDictionaryChunk parentChunk;
         private String name;
         private String mask;
         private int flags;
         private final List<RwImageChunk> mipLevelImages = new ArrayList<>();
 
-        public RWPlatformIndependentTextureEntry(RwPlatformIndependentTextureDictionaryChunk chunk) {
+        public RwPlatformIndependentTextureEntry(RwPlatformIndependentTextureDictionaryChunk chunk) {
             this.parentChunk = chunk;
         }
 

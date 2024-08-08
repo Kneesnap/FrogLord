@@ -1,10 +1,9 @@
-package net.highwayfrogs.editor.games.konami.ancientshadow;
+package net.highwayfrogs.editor.games.konami.hudson;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.konami.ancientshadow.ui.AncientShadowFileEditorUIController;
-import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
+import net.highwayfrogs.editor.games.konami.hudson.ui.HudsonFileEditorUIController;
 import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
@@ -17,17 +16,17 @@ import java.net.URL;
 import java.util.logging.Logger;
 
 /**
- * Represents a game file found in Frogger Ancient Shadow
- * Created by Kneesnap on 8/4/2024.
+ * Represents a game file found in a game using the same engine as Frogger's Adventures: The Rescue and Frogger Ancient Shadow.
+ * Created by Kneesnap on 8/8/2024.
  */
-public abstract class AncientShadowGameFile extends GameData<AncientShadowInstance> implements ICollectionViewEntry, IPropertyListCreator {
-    @Getter private IHudsonFileDefinition fileDefinition;
+public abstract class HudsonGameFile extends GameData<HudsonGameInstance> implements ICollectionViewEntry, IPropertyListCreator {
+    @Getter private final IHudsonFileDefinition fileDefinition;
     @Getter @Setter private byte[] rawData;
     @Getter @Setter private boolean compressionEnabled;
     private Logger cachedLogger;
 
-    public AncientShadowGameFile(IHudsonFileDefinition fileDefinition) {
-        super((AncientShadowInstance) fileDefinition.getGameInstance());
+    public HudsonGameFile(IHudsonFileDefinition fileDefinition) {
+        super(fileDefinition.getGameInstance());
         this.fileDefinition = fileDefinition;
     }
 
@@ -107,7 +106,7 @@ public abstract class AncientShadowGameFile extends GameData<AncientShadowInstan
      * @param fileToEdit the file to edit
      * @return editor
      */
-    public static <TGameFile extends AncientShadowGameFile, TUIController extends AncientShadowFileEditorUIController<TGameFile>> TUIController loadEditor(AncientShadowInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
+    public static <TGameFile extends HudsonGameFile, TUIController extends HudsonFileEditorUIController<TGameFile>> TUIController loadEditor(HudsonGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
             URL templateUrl = Utils.getFXMLTemplateURL(gameInstance, template);
             GameUIController.loadController(gameInstance, templateUrl, controller);

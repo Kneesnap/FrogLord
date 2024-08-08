@@ -118,7 +118,7 @@ public abstract class RwStreamChunk extends SharedGameData {
      * Gets information used for the logger.
      */
     protected String getLoggerInfo() {
-        return (this.rawReadData != null ? "size=" + this.rawReadData.length + "," : "") + "ver=" + Utils.toHexString(this.version);
+        return (this.rawReadData != null ? "size=" + this.rawReadData.length + "," : "") + "ver=" + RwVersion.convertVersionToString(this.version);
     }
 
     @Override
@@ -132,9 +132,16 @@ public abstract class RwStreamChunk extends SharedGameData {
         return cachedLogger;
     }
 
+    /**
+     * Gets a string describing the chunk.
+     */
+    public String getChunkDescriptor() {
+        return getClass().getSimpleName() + "{" + getLoggerInfo() + "}";
+    }
+
     @Override
     public String toString() {
         String locationName = this.streamFile != null ? this.streamFile.getLocationName() : null;
-        return (locationName != null ? locationName + "@" : "") + getClass().getSimpleName() + "{" + getLoggerInfo() + "}";
+        return (locationName != null ? locationName + "@" : "") + getChunkDescriptor();
     }
 }

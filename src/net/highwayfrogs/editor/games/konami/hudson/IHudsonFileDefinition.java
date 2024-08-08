@@ -9,6 +9,11 @@ import net.highwayfrogs.editor.utils.IGameObject;
 public interface IHudsonFileDefinition extends IGameObject {
 
     /**
+     * Gets the game instance for the file.
+     */
+    HudsonGameInstance getGameInstance();
+
+    /**
      * Gets the individual file name.
      */
     String getFileName();

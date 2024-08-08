@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.konami.hudson;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.GameObject;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -12,11 +11,11 @@ import java.io.File;
  * Represents a Hudson file definition which came from the user's filesystem.
  * Created by Kneesnap on 8/4/2024.
  */
-public class HudsonFileUserFSDefinition extends GameObject<GameInstance> implements IHudsonFileDefinition {
+public class HudsonFileUserFSDefinition extends GameObject<HudsonGameInstance> implements IHudsonFileDefinition {
     @Getter @NonNull private final File file;
     private String cachedFullFileName;
 
-    public HudsonFileUserFSDefinition(GameInstance instance, @NonNull File file) {
+    public HudsonFileUserFSDefinition(HudsonGameInstance instance, @NonNull File file) {
         super(instance);
         this.file = file;
     }

@@ -1,26 +1,26 @@
-package net.highwayfrogs.editor.games.konami.ancientshadow.ui;
+package net.highwayfrogs.editor.games.konami.hudson.ui;
 
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.ancientshadow.AncientShadowGameFile;
-import net.highwayfrogs.editor.games.konami.ancientshadow.AncientShadowInstance;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 
 /**
- * Represents editor UI for an Ancient Shadow game file.
- * Created by Kneesnap on 8/4/2024.
+ * Represents editor UI for an HudsonSoft game file.
+ * Created by Kneesnap on 8/8/2024.
  */
 @Getter
-public class AncientShadowFileEditorUIController<TGameFile extends AncientShadowGameFile> extends GameUIController<AncientShadowInstance> {
+public class HudsonFileEditorUIController<TGameFile extends HudsonGameFile> extends GameUIController<HudsonGameInstance> {
     @FXML private HBox contentBox;
     private TGameFile file;
-    private final PropertyListViewerComponent<AncientShadowInstance> propertyListViewer;
+    private final PropertyListViewerComponent<HudsonGameInstance> propertyListViewer;
 
-    public AncientShadowFileEditorUIController(AncientShadowInstance instance) {
+    public HudsonFileEditorUIController(HudsonGameInstance instance) {
         super(instance);
         this.propertyListViewer = new PropertyListViewerComponent<>(instance);
     }

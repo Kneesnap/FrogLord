@@ -3,23 +3,27 @@ package net.highwayfrogs.editor.games.konami.ancientshadow;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.generic.GameObject;
-import net.highwayfrogs.editor.games.konami.ancientshadow.file.AncientShadowDummyFile;
-import net.highwayfrogs.editor.games.konami.ancientshadow.file.AncientShadowRenderwareFile;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
 import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
-import net.highwayfrogs.editor.games.konami.hudson.PRS1Unpacker;
-import net.highwayfrogs.editor.games.renderware.RwStreamFile;
+import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileSystem;
+import net.highwayfrogs.editor.games.konami.hudson.file.HudsonRwStreamFile;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
@@ -27,9 +31,9 @@ import java.util.logging.Logger;
  * Created by Kneesnap on 6/7/2020.
  */
 @Getter
-public class HFSFile extends AncientShadowGameFile {
-    private final List<List<AncientShadowGameFile>> hfsFiles = new ArrayList<>();
-    private static final String MAGIC = "hfs\n";
+public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
+    private final List<List<HudsonGameFile>> hfsFiles = new ArrayList<>();
+    public static final String SIGNATURE = "hfs\n"; // Version 11?
 
     public HFSFile(IHudsonFileDefinition fileDefinition) {
         super(fileDefinition);
@@ -40,11 +44,7 @@ public class HFSFile extends AncientShadowGameFile {
         load(reader, null);
     }
 
-    /**
-     * Loads the contents of the HFS file while updating the progress bar.
-     * @param reader the reader to read data from
-     * @param progressBar the progress bar to update, if not null
-     */
+    @Override
     public void load(DataReader reader, ProgressBarComponent progressBar) {
         // Read HFS headers.
         int fullFileCount = 0;
@@ -67,7 +67,7 @@ public class HFSFile extends AncientShadowGameFile {
         this.hfsFiles.clear();
         for (int i = 0; i < headers.size(); i++) {
             HFSHeader header = headers.get(i);
-            List<AncientShadowGameFile> localFileGroup = new ArrayList<>(header.getFileEntries().size());
+            List<HudsonGameFile> localFileGroup = new ArrayList<>(header.getFileEntries().size());
             header.requireReaderIndex(reader, header.getFileDataStartAddress(), "Expected file data start position");
 
             // Read files.
@@ -75,38 +75,11 @@ public class HFSFile extends AncientShadowGameFile {
                 HFSHeaderFileEntry fileEntry = header.getFileEntries().get(j);
                 IHudsonFileDefinition fileDefinition = new HFSFileDefinition(this, i, j);
 
-                // Read data.
+                // Read file contents.
                 fileEntry.requireReaderIndex(reader, header.getFileDataStartAddress() + (fileEntry.getCdSector() * Constants.CD_SECTOR_SIZE), "Expected file data");
-                byte[] rawFileData = reader.readBytes(fileEntry.getFileDataLength());
-                byte[] readFileData = fileEntry.isCompressed() ? PRS1Unpacker.decompressPRS1(rawFileData) : rawFileData;
-
-                // Setup new file.
-                AncientShadowGameFile newGameFile = createGameFile(fileDefinition, readFileData);
-                newGameFile.setRawData(readFileData);
-                newGameFile.setCompressionEnabled(fileEntry.isCompressed());
-                if (progressBar != null)
-                    progressBar.setStatusMessage("Reading '" + newGameFile.getDisplayName() + "'...");
-
-                // Load file.
-                DataReader fileReader = new DataReader(new ArraySource(readFileData));
-                try {
-                    newGameFile.load(fileReader);
-                } catch (Exception ex) {
-                    Utils.handleError(getLogger(), ex, true, "Failed to load '%s'.", newGameFile.getDisplayName());
-
-                    // Setup dummy instead.
-                    newGameFile = new AncientShadowDummyFile(fileDefinition);
-                    newGameFile.setRawData(readFileData);
-                    newGameFile.setCompressionEnabled(fileEntry.isCompressed());
-                    fileReader.setIndex(0);
-                    newGameFile.load(fileReader);
-                }
-
-                localFileGroup.add(newGameFile);
+                HudsonGameFile newGameFile = getGameInstance().readGameFile(reader, fileEntry, fileDefinition, progressBar);
                 reader.alignRequireEmpty(Constants.CD_SECTOR_SIZE);
-
-                if (progressBar != null)
-                    progressBar.addCompletedProgress(1);
+                localFileGroup.add(newGameFile);
             }
 
             this.hfsFiles.add(localFileGroup);
@@ -118,17 +91,13 @@ public class HFSFile extends AncientShadowGameFile {
         this.save(writer, null);
     }
 
-    /**
-     * Saves the contents of the HFS file while updating the progress bar.
-     * @param writer writer to write data to
-     * @param progressBar the progress bar to update, if not null
-     */
+    @Override
     public void save(DataWriter writer, ProgressBarComponent progressBar) {
         // Create HFS headers.
         int fullFileCount = 0;
         List<HFSHeader> headers = new ArrayList<>();
         for (int i = 0; i < this.hfsFiles.size(); i++) {
-            List<AncientShadowGameFile> gameFiles = this.hfsFiles.get(i);
+            List<HudsonGameFile> gameFiles = this.hfsFiles.get(i);
 
             HFSHeader newHeader = new HFSHeader(this);
             for (int j = 0; j < gameFiles.size(); j++)
@@ -140,51 +109,27 @@ public class HFSFile extends AncientShadowGameFile {
 
         // Write HFS headers. (Writes invalid data, but creates the space which will later contain the correct values.)
         if (progressBar != null)
-            progressBar.update(0, fullFileCount, "Reading '" + getDisplayName() + "'...");
+            progressBar.update(0, fullFileCount, "Saving '" + getDisplayName() + "'...");
 
         int headerStartIndex = writer.getIndex();
         writeHeaders(writer, headers);
 
         // Write game files.
         for (int i = 0; i < this.hfsFiles.size(); i++) {
-            List<AncientShadowGameFile> gameFiles = this.hfsFiles.get(i);
+            List<HudsonGameFile> gameFiles = this.hfsFiles.get(i);
             HFSHeader header = headers.get(i);
             header.fileDataStartAddress = writer.getIndex();
 
             // Write file contents.
             for (int j = 0; j < gameFiles.size(); j++) {
-                AncientShadowGameFile gameFile = gameFiles.get(j);
+                HudsonGameFile gameFile = gameFiles.get(j);
                 HFSHeaderFileEntry fileEntry = header.getFileEntries().get(j);
-                if (progressBar != null)
-                    progressBar.setStatusMessage("Writing '" + gameFile.getDisplayName() + "'...");
 
                 fileEntry.cdSectorWithFlags = (writer.getIndex() - header.fileDataStartAddress) / Constants.CD_SECTOR_SIZE;
-
-
-                ArrayReceiver fileByteArray = new ArrayReceiver();
-                DataWriter fileWriter = new DataWriter(fileByteArray);
-
-                try {
-                    gameFile.save(fileWriter);
-                } catch (Throwable th) {
-                    Utils.handleError(getLogger(), th, true, "Failed to save file '%s' to HFS.", gameFile.getDisplayName());
+                if (!getGameInstance().saveGameFile(writer, gameFile, fileEntry, progressBar))
                     return;
-                }
 
-                byte[] writtenFileBytes = fileByteArray.toArray();
-                if (gameFile.isCompressionEnabled()) {
-                    // TODO: Add compression behavior, and apply the flag.
-                    if (PRS1Unpacker.isCompressedPRS1(writtenFileBytes))
-                        fileEntry.cdSectorWithFlags |= HFSHeaderFileEntry.FLAG_IS_COMPRESSED;
-                }
-
-                // Write file contents.
-                fileEntry.fileDataLength = writtenFileBytes.length;
-                writer.writeBytes(writtenFileBytes);
                 writer.align(Constants.CD_SECTOR_SIZE);
-
-                if (progressBar != null)
-                    progressBar.addCompletedProgress(1);
             }
 
             header.fullFileSize = writer.getIndex() - header.fileDataStartAddress;
@@ -213,30 +158,49 @@ public class HFSFile extends AncientShadowGameFile {
         return ImageResource.ZIPPED_FOLDER_15.getFxImage();
     }
 
-    /**
-     * Gets all game files tracked within this HFS file.
-     */
-    public List<AncientShadowGameFile> getGameFiles() {
-        List<AncientShadowGameFile> gameFiles = new ArrayList<>();
+    @Override
+    public List<HudsonGameFile> getGameFiles() {
+        List<HudsonGameFile> gameFiles = new ArrayList<>();
         for (int i = 0; i < this.hfsFiles.size(); i++)
             gameFiles.addAll(this.hfsFiles.get(i));
 
         return gameFiles;
     }
 
-    /**
-     * Creates a game file.
-     * @param fileDefinition the definition to create the file with.
-     * @param rawData the raw file bytes to test file signatures with
-     * @return gameFile
-     */
-    public static AncientShadowGameFile createGameFile(IHudsonFileDefinition fileDefinition, byte[] rawData) {
-        if (Utils.testSignature(rawData, MAGIC)) {
-            return new HFSFile(fileDefinition);
-        } else if (RwStreamFile.isRwStreamFile(rawData)) {
-            return new AncientShadowRenderwareFile(fileDefinition);
-        } else {
-            return new AncientShadowDummyFile(fileDefinition);
+    @Override
+    public void export(File exportFolder) {
+        File filesExportDir = new File(exportFolder, "Files [" + getDisplayName() + "]");
+        Utils.makeDirectory(filesExportDir);
+
+        for (int i = 0; i < this.hfsFiles.size(); i++) {
+            File groupFolder = new File(filesExportDir, "GROUP" + String.format("%02d", i));
+            List<HudsonGameFile> groupFiles = this.hfsFiles.get(i);
+            Utils.makeDirectory(groupFolder);
+
+            for (int j = 0; j < groupFiles.size(); j++) {
+                File outputFile = new File(groupFolder, "FILE" + String.format("%03d", j));
+
+                try {
+                    Files.write(outputFile.toPath(), groupFiles.get(j).getRawData());
+                } catch (IOException ex) {
+                    Utils.handleError(getLogger(), ex, false, "Failed to export file '%s'.", Utils.toLocalPath(exportFolder, outputFile, true));
+                }
+            }
+        }
+
+        File imagesExportDir = new File(exportFolder, "Images [" + getDisplayName() + "]");
+        Utils.makeDirectory(imagesExportDir);
+
+        Map<String, AtomicInteger> nameCountMap = new HashMap<>();
+        for (int i = 0; i < this.hfsFiles.size(); i++) {
+            File groupFolder = new File(filesExportDir, "GROUP" + String.format("%02d", i));
+            List<HudsonGameFile> groupFiles = this.hfsFiles.get(i);
+
+            for (int j = 0; j < groupFiles.size(); j++) {
+                HudsonGameFile gameFile = groupFiles.get(j);
+                if (gameFile instanceof HudsonRwStreamFile)
+                    ((HudsonRwStreamFile) gameFile).exportTextures(groupFolder, nameCountMap);
+            }
         }
     }
 
@@ -244,7 +208,7 @@ public class HFSFile extends AncientShadowGameFile {
      * Represents an HFS header chunk.
      */
     @Getter
-    public static class HFSHeader extends GameData<AncientShadowInstance> {
+    public static class HFSHeader extends GameData<HudsonGameInstance> {
         private final HFSFile parent;
         private final List<HFSHeaderFileEntry> fileEntries = new ArrayList<>();
         private int fullFileSize = -1; // Amount of bytes covered by the file entries.
@@ -257,7 +221,7 @@ public class HFSFile extends AncientShadowGameFile {
 
         @Override
         public void load(DataReader reader) {
-            reader.verifyString(MAGIC);
+            reader.verifyString(SIGNATURE);
             this.fullFileSize = reader.readInt();
             int fileEntryCount = reader.readInt();
             this.fileDataStartAddress = reader.readInt();
@@ -273,7 +237,7 @@ public class HFSFile extends AncientShadowGameFile {
 
         @Override
         public void save(DataWriter writer) {
-            writer.writeStringBytes(MAGIC);
+            writer.writeStringBytes(SIGNATURE);
             writer.writeInt(this.fullFileSize);
             writer.writeInt(this.fileEntries.size());
             writer.writeInt(this.fileDataStartAddress);
@@ -300,14 +264,8 @@ public class HFSFile extends AncientShadowGameFile {
     /**
      * Represents an HFS header file entry.
      */
-    public static class HFSHeaderFileEntry extends GameData<AncientShadowInstance> {
+    public static class HFSHeaderFileEntry extends net.highwayfrogs.editor.games.konami.hudson.HFSHeaderFileEntry {
         private final HFSHeader parent;
-        private int cdSectorWithFlags = -1;
-        @Getter private int fileDataLength = -1;
-
-        public static final int CD_SECTOR_FLAG_MASK = 0xFFFFFF;
-        public static final int FLAG_IS_COMPRESSED = Constants.BIT_FLAG_24;
-        public static final int VALIDATION_FLAG_MASK = FLAG_IS_COMPRESSED | CD_SECTOR_FLAG_MASK; // Lower 24 bits are valid.
 
         public HFSHeaderFileEntry(HFSHeader parent) {
             super(parent.getGameInstance());
@@ -326,42 +284,15 @@ public class HFSFile extends AncientShadowGameFile {
         public Logger getLogger() {
             return this.parent != null ? Logger.getLogger(getLoggerString()) : super.getLogger();
         }
-
-        @Override
-        public void load(DataReader reader) {
-            this.cdSectorWithFlags = reader.readInt();
-            this.fileDataLength = reader.readInt();
-            warnAboutInvalidBitFlags(this.cdSectorWithFlags, VALIDATION_FLAG_MASK, "HFSHeaderFileEntry");
-        }
-
-        @Override
-        public void save(DataWriter writer) {
-            writer.writeInt(this.cdSectorWithFlags);
-            writer.writeInt(this.fileDataLength);
-        }
-
-        /**
-         * Returns the CD sector with the flags removed.
-         */
-        public int getCdSector() {
-            return this.cdSectorWithFlags & CD_SECTOR_FLAG_MASK;
-        }
-
-        /**
-         * Returns true iff compression is enabled for this entry.
-         */
-        public boolean isCompressed() {
-            return (this.cdSectorWithFlags & FLAG_IS_COMPRESSED) == FLAG_IS_COMPRESSED;
-        }
     }
 
     @Getter
-    public static class HFSFileDefinition extends GameObject<AncientShadowInstance> implements IHudsonFileDefinition {
-        private final HFSFile hfsFile;
+    public static class HFSFileDefinition extends GameObject<HudsonGameInstance> implements IHudsonFileDefinition {
+        private final IHudsonFileSystem hfsFile;
         private final int groupIndex;
         private final int fileIndex;
 
-        public HFSFileDefinition(HFSFile hfsFile, int groupIndex, int fileIndex) {
+        public HFSFileDefinition(IHudsonFileSystem hfsFile, int groupIndex, int fileIndex) {
             super(hfsFile.getGameInstance());
             this.hfsFile = hfsFile;
             this.groupIndex = groupIndex;
@@ -379,7 +310,7 @@ public class HFSFile extends AncientShadowGameFile {
         }
 
         private String getNameSuffix() {
-            if (this.groupIndex == 0 && this.hfsFile.getHfsFiles().size() == 1) {
+            if (this.groupIndex == 0 && this.hfsFile.getGameFiles().size() == 1) {
                 return "{file=" + this.fileIndex + "}";
             } else {
                 return "{group=" + this.groupIndex + ",file=" + this.fileIndex + "}";
