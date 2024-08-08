@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.konami.rescue;
+package net.highwayfrogs.editor.games.konami.hudson;
 
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -32,7 +32,8 @@ public class PRS1Unpacker {
 
     /**
      * Decompresses raw PRS1 data.
-     * Reverse engineered from "Frogger's Adventures: The Rescue".
+     * Reverse engineered from "Frogger's Adventures: The Rescue" PC.
+     * This algorithm was also found in the Mario Party 4 decomp and likely exists in more games too.
      * @param reader         The reader to read data from.
      * @param compressedSize The size of the compressed data.
      * @return decompressedData

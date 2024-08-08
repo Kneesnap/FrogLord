@@ -4,8 +4,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.renderware.RWSChunk;
-import net.highwayfrogs.editor.games.renderware.RWSChunkManager;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,48 +15,55 @@ import java.util.List;
  * Created by Kneesnap on 6/9/2020.
  */
 @Getter
-public class RWPlatformIndependentTextureDictionaryChunk extends RWSChunk {
+public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
     private final List<RWPlatformIndependentTextureEntry> entries = new ArrayList<>();
 
     public static final int TYPE_ID = 0x23;
 
-    public RWPlatformIndependentTextureDictionaryChunk(int renderwareVersion, RWSChunk parentChunk) {
-        super(TYPE_ID, renderwareVersion, parentChunk);
+    public RwPlatformIndependentTextureDictionaryChunk(RwStreamFile streamFile, int renderwareVersion, RwStreamChunk parentChunk) {
+        super(streamFile, TYPE_ID, renderwareVersion, parentChunk);
     }
 
     @Override
-    public void loadChunkData(DataReader reader) {
+    public void loadChunkData(DataReader reader, int dataLength, int version) {
         short imageCount = reader.readShort(); // Might be number of textures, might be number of frames.
         short creatorVersion = reader.readShort(); // Supported: 0
 
         if (creatorVersion == (short) 0) {
-            // _rtpitexdImage2TextureReadLegacy
+            // _rtpitexdImage2TextureReadLegacy / RtPITexDictionaryStreamRead (rpitexd.o)
 
             for (int i = 0; i < imageCount; i++) {
                 RWPlatformIndependentTextureEntry entry = new RWPlatformIndependentTextureEntry(this);
                 entry.load(reader);
                 this.entries.add(entry);
             }
-
+        } else if (creatorVersion == (short) 1){
+            // _rtpitexdImage2TextureRead (rpitexd.o)
+            // TODO: IMPLEMENT.
         } else {
             throw new UnsupportedOperationException("Texture Dictionary with creator version " + creatorVersion + " is unsupported!");
         }
     }
+    @Override
+    protected String getLoggerInfo() {
+        return super.getLoggerInfo() + ",entries=" + this.entries.size();
+    }
+
 
     @Override
     public void saveChunkData(DataWriter writer) {
-
+        // TODO: Implement.
     }
 
     @Getter
     public static class RWPlatformIndependentTextureEntry extends GameObject {
-        private final RWPlatformIndependentTextureDictionaryChunk parentChunk;
+        private final RwPlatformIndependentTextureDictionaryChunk parentChunk;
         private String name;
         private String mask;
         private int flags;
-        private final List<RWImageChunk> mipLevelImages = new ArrayList<>();
+        private final List<RwImageChunk> mipLevelImages = new ArrayList<>();
 
-        public RWPlatformIndependentTextureEntry(RWPlatformIndependentTextureDictionaryChunk chunk) {
+        public RWPlatformIndependentTextureEntry(RwPlatformIndependentTextureDictionaryChunk chunk) {
             this.parentChunk = chunk;
         }
 
@@ -67,7 +74,7 @@ public class RWPlatformIndependentTextureDictionaryChunk extends RWSChunk {
             int mipLevelCount = reader.readInt();
             this.flags = reader.readInt();
             for (int i = 0; i < mipLevelCount; i++)
-                this.mipLevelImages.add((RWImageChunk) RWSChunkManager.readChunk(reader, this.parentChunk));
+                this.mipLevelImages.add(this.parentChunk.readChunk(reader, RwImageChunk.class));
         }
 
         @Override

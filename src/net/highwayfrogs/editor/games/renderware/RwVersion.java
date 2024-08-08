@@ -1,19 +1,26 @@
 package net.highwayfrogs.editor.games.renderware;
 
+import net.highwayfrogs.editor.utils.Utils;
+
 /**
  * This handles utilities for version-related
- * https://www.grandtheftwiki.com/RenderWare This documentation was misleading, but I figured it out.
+ * <a ref="https://www.grandtheftwiki.com/RenderWare"/> This documentation was misleading, but I figured it out.
  * This code is likely only useful for Renderware version 3. (RW2 and RW2 use vastly different file formats supposedly, Source: https://gamicus.gamepedia.com/RenderWare )
  * Some Game Info:
- * Frogger Beyond: Engine is RW 3.3, Files: 3.3.0.2
- * Frogger's Adventures: The Rescue. Engine is RW 3.6, Files appear to have been created in 3.4.0.3
- * GTA SA - RW 3.6
+ * Frogger Beyond: Engine is RW 3.3, Files report 3.3.0.2
+ * Frogger's Adventures: The Rescue. Engine is RW 3.6, but the files report version in 3.4.0.3
+ * 3.0.0.3 - 0x0003FFFF
+ * 3.?.?.? - 0x0800FFFF (GTA III)
+ * 3.1.0.0 - 0x00000310 (GTA III)
+ * 3.3.0.2 - 0x0C02FFFF (GTA VC, Frogger Beyond)
+ * 3.4.0.3 - 0x1003FFFF (GTA VC, Frogger's Adventures The Rescue)
+ * 3.6.0.3 - 0x1803FFFF (GTA SA, Frogger Ancient Shadow)
  * To test if a version is after another, use normal > math. It's formatted in a way where that actually works, presuming Renderware version 5 doesn't use this format. (I don't know if it exists, but if it does it doesn't use this format, since 4 doesn't either). The reason why 5 wouldn't work is because it would flip the negative bit, inverting the check.
  * Created by Kneesnap on 6/9/2020.
  */
-public class RWVersion {
+public class RwVersion {
     /**
-     * Makes a library version with all of the given information that goes into one.
+     * Makes a library version with the given information that goes into one.
      * @param version   The RenderWare version.
      * @param major     The major version.
      * @param minor     The minor version.
@@ -31,11 +38,39 @@ public class RWVersion {
         if (revision < 0 || revision > 0x3F)
             throw new RuntimeException("Build Revision was out of the valid range [0,63]. (Was " + revision + ")");
 
+        if (version == 3 && ((major == 1 && minor == 0 && revision == 0) || major == 0)) // Write in the old format if we're in that version range.
+            return (version << 8) | (major << 4) | minor;
+
         return (((version - 3) & 0b11) << 30)
                 | ((major & 0x0F) << 26)
                 | ((minor & 0x0F) << 22)
                 | ((revision & 0x3F) << 16)
                 | (binaryVer & 0xFFFF);
+    }
+
+
+    /**
+     * Check if a version ID appears valid.
+     * @param version the version to test
+     * @return true iff the version appears valid
+     */
+    public static boolean doesVersionAppearValid(int version) {
+        // According to https://gtamods.com/wiki/RenderWare_binary_stream_file,
+        // RenderWare 4.x dropped support for v3's format, so we should never see anything beyond v3.
+        // Also, RenderWare 2.x used a different format.
+
+        // According to the 2007 archive.org backup of renderware.com, RW 3.7 was the last version of RenderWare Graphics.
+        // I've never seen a minor version which isn't zero, but I'll leave some wiggle room.
+        return getVersion(version) == 3 && getMajorVersion(version) <= 7 && getMinorVersion(version) <= 4;
+    }
+
+    /**
+     * Gets a version id as a debug string from the version number.
+     * @param version The version id to get the string from.
+     * @return debug string
+     */
+    public static String getDebugString(int version) {
+        return convertVersionToString(version) + "/" + Utils.toHexString(version);
     }
 
     /**
@@ -48,12 +83,30 @@ public class RWVersion {
     }
 
     /**
+     * RenderWare 3 had two different versioning formats.
+     * @param versionId the version ID to test
+     * @return true iff the version provided appears to be in the old format.
+     */
+    public static boolean isOldFormat(int versionId) {
+        // Taken from https://gtamods.com/wiki/RenderWare,
+        // 3.1.0.0 and before had no binary version and the library ID stamp was just 0x00000VJN (no 0x30000 subtracted).
+        // Version 3.1.0.0 for instance would be encoded as 0x00000310.
+        // To find out what version a file has when reading, RW checks the upper 16 bits and assumes the old format when they're zero.
+        // Version 3.1.0.1 (used in some GTA III files, build FFFF) on the other hand is encoded as 0x0401FFFF.
+        return (versionId & 0xFFFF0000) == 0;
+    }
+
+    /**
      * Gets the renderware version from the library id.
      * @param libraryId The library id to read from.
      * @return readVersion
      */
     public static int getVersion(int libraryId) {
-        return 3 + ((libraryId >> 30) & 0b11);
+        if (isOldFormat(libraryId)) {
+            return (libraryId >> 8) & 0b1111;
+        } else {
+            return 3 + ((libraryId >> 30) & 0b11);
+        }
     }
 
     /**
@@ -62,7 +115,11 @@ public class RWVersion {
      * @return majorVersion
      */
     public static int getMajorVersion(int libraryId) {
-        return ((libraryId >> 26) & 0x0F);
+        if (isOldFormat(libraryId)) {
+            return (libraryId >> 4) & 0b1111;
+        } else {
+            return ((libraryId >> 26) & 0x0F);
+        }
     }
 
     /**
@@ -71,7 +128,11 @@ public class RWVersion {
      * @return minorVersion
      */
     public static int getMinorVersion(int libraryId) {
-        return ((libraryId >> 22) & 0x0F);
+        if (isOldFormat(libraryId)) {
+            return libraryId & 0b1111;
+        } else {
+            return ((libraryId >> 22) & 0x0F);
+        }
     }
 
     /**
@@ -80,7 +141,11 @@ public class RWVersion {
      * @return revision
      */
     public static int getRevision(int libraryId) {
-        return ((libraryId >> 16) & 0x3F);
+        if (isOldFormat(libraryId)) {
+            return 0; // Wasn't set in the old format.
+        } else {
+            return ((libraryId >> 16) & 0x3F);
+        }
     }
 
     /**
@@ -89,19 +154,24 @@ public class RWVersion {
      * @return binaryVersion
      */
     public static short getBinaryVersion(int libraryId) {
-        return (short) (libraryId & 0xFFFF);
+        if (isOldFormat(libraryId)) {
+            return (short) 0; // Wasn't set in the old format.
+        } else {
+            return (short) (libraryId & 0xFFFF);
+        }
     }
 
     /**
      * Runs tests to make sure this works.
+     * TODO: At some point we should probably import unit tests from MTF, and this should be moved to a unit test package.
      */
     @SuppressWarnings("unused")
     public static void runTests() {
         // A) getVersionInformation tests.
         System.out.println("Running Renderware version tests...");
-        boolean passA1 = RWVersion.convertVersionToString(0x1003FFFF).equals("3.4.0.3");
-        boolean passA2 = RWVersion.convertVersionToString(0x0401FFFF).equals("3.1.0.1") && RWVersion.getBinaryVersion(0x0401FFFF) == (short) -1;
-        boolean passA3 = RWVersion.convertVersionToString(0x1C02002D).equals("3.7.0.2") && RWVersion.getBinaryVersion(0x1C02002D) == (short) 45;
+        boolean passA1 = RwVersion.convertVersionToString(0x1003FFFF).equals("3.4.0.3");
+        boolean passA2 = RwVersion.convertVersionToString(0x0401FFFF).equals("3.1.0.1") && RwVersion.getBinaryVersion(0x0401FFFF) == (short) -1;
+        boolean passA3 = RwVersion.convertVersionToString(0x1C02002D).equals("3.7.0.2") && RwVersion.getBinaryVersion(0x1C02002D) == (short) 45;
         boolean passA = (passA1 && passA2 && passA3);
         if (!passA) {
             System.out.println("Test A1: " + (passA1 ? "PASSED" : "FAILED"));
@@ -111,9 +181,9 @@ public class RWVersion {
         }
 
         // B) Test creating library ids.
-        boolean passB1 = RWVersion.makeLibraryVersion(3, 4, 0, 3, (short) -1) == 0x1003FFFF;
-        boolean passB2 = RWVersion.makeLibraryVersion(3, 1, 0, 1, (short) -1) == 0x0401FFFF;
-        boolean passB3 = RWVersion.makeLibraryVersion(3, 7, 0, 2, (short) 45) == 0x1C02002D;
+        boolean passB1 = RwVersion.makeLibraryVersion(3, 4, 0, 3, (short) -1) == 0x1003FFFF;
+        boolean passB2 = RwVersion.makeLibraryVersion(3, 1, 0, 1, (short) -1) == 0x0401FFFF;
+        boolean passB3 = RwVersion.makeLibraryVersion(3, 7, 0, 2, (short) 45) == 0x1C02002D;
         boolean passB = (passB1 && passB2 && passB3);
         if (!passB) {
             System.out.println("Test B1: " + (passB1 ? "PASSED" : "FAILED"));
