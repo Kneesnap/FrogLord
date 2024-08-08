@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
 import net.highwayfrogs.editor.games.konami.ancientshadow.AncientShadowGameFile;
 import net.highwayfrogs.editor.games.konami.ancientshadow.AncientShadowInstance;
 import net.highwayfrogs.editor.games.konami.ancientshadow.HFSFile;
+import net.highwayfrogs.editor.games.konami.ancientshadow.file.AncientShadowRenderwareFile;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
@@ -16,7 +17,10 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages the main menu UI for Frogger Ancient Shadow.
@@ -38,11 +42,11 @@ public class AncientShadowMainMenuUIController extends MainMenuController<Ancien
                 return; // Cancel.
 
             HFSFile hfsFile = getGameInstance().getMainHfs();
-            File exportDir = new File(exportFolder, "Export [" + hfsFile.getDisplayName() + "]");
-            Utils.makeDirectory(exportDir);
+            File filesExportDir = new File(exportFolder, "Files [" + hfsFile.getDisplayName() + "]");
+            Utils.makeDirectory(filesExportDir);
 
             for (int i = 0; i < hfsFile.getHfsFiles().size(); i++) {
-                File groupFolder = new File(exportDir, "GROUP" + String.format("%02d", i));
+                File groupFolder = new File(filesExportDir, "GROUP" + String.format("%02d", i));
                 List<AncientShadowGameFile> groupFiles = hfsFile.getHfsFiles().get(i);
                 Utils.makeDirectory(groupFolder);
 
@@ -54,6 +58,21 @@ public class AncientShadowMainMenuUIController extends MainMenuController<Ancien
                     } catch (IOException ex) {
                         handleError(ex, false, "Failed to export file '%s'.", Utils.toLocalPath(exportFolder, outputFile, true));
                     }
+                }
+            }
+
+            File imagesExportDir = new File(exportFolder, "Images [" + hfsFile.getDisplayName() + "]");
+            Utils.makeDirectory(imagesExportDir);
+
+            Map<String, AtomicInteger> nameCountMap = new HashMap<>();
+            for (int i = 0; i < hfsFile.getHfsFiles().size(); i++) {
+                File groupFolder = new File(filesExportDir, "GROUP" + String.format("%02d", i));
+                List<AncientShadowGameFile> groupFiles = hfsFile.getHfsFiles().get(i);
+
+                for (int j = 0; j < groupFiles.size(); j++) {
+                    AncientShadowGameFile gameFile = groupFiles.get(j);
+                    if (gameFile instanceof AncientShadowRenderwareFile)
+                        ((AncientShadowRenderwareFile) gameFile).exportTextures(groupFolder, nameCountMap);
                 }
             }
 

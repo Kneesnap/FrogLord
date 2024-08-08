@@ -4,8 +4,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.renderware.RWSChunk;
-import net.highwayfrogs.editor.games.renderware.RWSChunkManager;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
@@ -14,16 +14,18 @@ import java.awt.image.BufferedImage;
  * Created by Kneesnap on 6/9/2020.
  */
 @Getter
-public class RWImageChunk extends RWSChunk {
+public class RwImageChunk extends RwStreamChunk {
     private BufferedImage image;
 
-    public RWImageChunk(int renderwareVersion, RWSChunk parentChunk) {
-        super(0x18, renderwareVersion, parentChunk);
+    public static final int PLUGIN_ID = 0x18;
+
+    public RwImageChunk(RwStreamFile streamFile, int renderwareVersion, RwStreamChunk parentChunk) {
+        super(streamFile, PLUGIN_ID, renderwareVersion, parentChunk);
     }
 
     @Override
-    public void loadChunkData(DataReader reader) {
-        RWStructChunk structChunk = (RWStructChunk) RWSChunkManager.readChunk(reader, this);
+    public void loadChunkData(DataReader reader, int dataLength, int version) {
+        RwStructChunk structChunk = readChunk(reader, RwStructChunk.class);
 
         DataReader structReader = structChunk.getReader();
         int width = structReader.readInt();
@@ -75,6 +77,6 @@ public class RWImageChunk extends RWSChunk {
 
     @Override
     public void saveChunkData(DataWriter writer) {
-
+        // TODO: IMPLEMENT.
     }
 }

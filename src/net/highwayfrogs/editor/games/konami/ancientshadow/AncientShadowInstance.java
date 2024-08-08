@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.konami.ancientshadow.ui.AncientShadowMainMenuUIController;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonFileUserFSDefinition;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunkTypeRegistry;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.Utils;
@@ -22,6 +23,7 @@ import java.util.List;
 public class AncientShadowInstance extends GameInstance {
     private HFSFile mainHfs;
     private File mainHfsFile;
+    @Getter private static final RwStreamChunkTypeRegistry rwStreamChunkTypeRegistry = RwStreamChunkTypeRegistry.getDefaultRegistry().clone();
 
     public AncientShadowInstance() {
         super(AncientShadowGameType.INSTANCE);

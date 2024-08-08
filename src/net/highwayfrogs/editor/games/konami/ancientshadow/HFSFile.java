@@ -10,9 +10,10 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.generic.GameObject;
 import net.highwayfrogs.editor.games.konami.ancientshadow.file.AncientShadowDummyFile;
-import net.highwayfrogs.editor.games.konami.hudson.HudsonFileUserFSDefinition;
+import net.highwayfrogs.editor.games.konami.ancientshadow.file.AncientShadowRenderwareFile;
 import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
-import net.highwayfrogs.editor.games.konami.rescue.PRS1Unpacker;
+import net.highwayfrogs.editor.games.konami.hudson.PRS1Unpacker;
+import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.Utils;
@@ -30,7 +31,7 @@ public class HFSFile extends AncientShadowGameFile {
     private final List<List<AncientShadowGameFile>> hfsFiles = new ArrayList<>();
     private static final String MAGIC = "hfs\n";
 
-    public HFSFile(HudsonFileUserFSDefinition fileDefinition) {
+    public HFSFile(IHudsonFileDefinition fileDefinition) {
         super(fileDefinition);
     }
 
@@ -72,26 +73,33 @@ public class HFSFile extends AncientShadowGameFile {
             // Read files.
             for (int j = 0; j < header.getFileEntries().size(); j++) {
                 HFSHeaderFileEntry fileEntry = header.getFileEntries().get(j);
-
-                // Setup new file.
-                AncientShadowGameFile newGameFile = new AncientShadowDummyFile(new HFSFileDefinition(this, i, j));
-                newGameFile.setCompressionEnabled(fileEntry.isCompressed());
-
-                if (progressBar != null)
-                    progressBar.setStatusMessage("Reading '" + newGameFile.getDisplayName() + "'...");
+                IHudsonFileDefinition fileDefinition = new HFSFileDefinition(this, i, j);
 
                 // Read data.
                 fileEntry.requireReaderIndex(reader, header.getFileDataStartAddress() + (fileEntry.getCdSector() * Constants.CD_SECTOR_SIZE), "Expected file data");
                 byte[] rawFileData = reader.readBytes(fileEntry.getFileDataLength());
                 byte[] readFileData = fileEntry.isCompressed() ? PRS1Unpacker.decompressPRS1(rawFileData) : rawFileData;
-                newGameFile.setRawData(readFileData);
-                DataReader fileReader = new DataReader(new ArraySource(readFileData));
 
+                // Setup new file.
+                AncientShadowGameFile newGameFile = createGameFile(fileDefinition, readFileData);
+                newGameFile.setRawData(readFileData);
+                newGameFile.setCompressionEnabled(fileEntry.isCompressed());
+                if (progressBar != null)
+                    progressBar.setStatusMessage("Reading '" + newGameFile.getDisplayName() + "'...");
+
+                // Load file.
+                DataReader fileReader = new DataReader(new ArraySource(readFileData));
                 try {
-                    // Load file.
                     newGameFile.load(fileReader);
                 } catch (Exception ex) {
                     Utils.handleError(getLogger(), ex, true, "Failed to load '%s'.", newGameFile.getDisplayName());
+
+                    // Setup dummy instead.
+                    newGameFile = new AncientShadowDummyFile(fileDefinition);
+                    newGameFile.setRawData(readFileData);
+                    newGameFile.setCompressionEnabled(fileEntry.isCompressed());
+                    fileReader.setIndex(0);
+                    newGameFile.load(fileReader);
                 }
 
                 localFileGroup.add(newGameFile);
@@ -214,6 +222,22 @@ public class HFSFile extends AncientShadowGameFile {
             gameFiles.addAll(this.hfsFiles.get(i));
 
         return gameFiles;
+    }
+
+    /**
+     * Creates a game file.
+     * @param fileDefinition the definition to create the file with.
+     * @param rawData the raw file bytes to test file signatures with
+     * @return gameFile
+     */
+    public static AncientShadowGameFile createGameFile(IHudsonFileDefinition fileDefinition, byte[] rawData) {
+        if (Utils.testSignature(rawData, MAGIC)) {
+            return new HFSFile(fileDefinition);
+        } else if (RwStreamFile.isRwStreamFile(rawData)) {
+            return new AncientShadowRenderwareFile(fileDefinition);
+        } else {
+            return new AncientShadowDummyFile(fileDefinition);
+        }
     }
 
     /**
@@ -346,12 +370,20 @@ public class HFSFile extends AncientShadowGameFile {
 
         @Override
         public String getFileName() {
-            return this.hfsFile.getDisplayName() + "{group=" + this.groupIndex + ",file=" + this.fileIndex + "}";
+            return this.hfsFile.getDisplayName() + getNameSuffix();
         }
 
         @Override
         public String getFullFileName() {
-            return this.hfsFile.getFullDisplayName() + "{group=" + this.groupIndex + ",file=" + this.fileIndex + "}";
+            return this.hfsFile.getFullDisplayName() + getNameSuffix();
+        }
+
+        private String getNameSuffix() {
+            if (this.groupIndex == 0 && this.hfsFile.getHfsFiles().size() == 1) {
+                return "{file=" + this.fileIndex + "}";
+            } else {
+                return "{group=" + this.groupIndex + ",file=" + this.fileIndex + "}";
+            }
         }
     }
 }

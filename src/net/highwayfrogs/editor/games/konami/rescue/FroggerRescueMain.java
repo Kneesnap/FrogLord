@@ -3,10 +3,12 @@ package net.highwayfrogs.editor.games.konami.rescue;
 
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.games.renderware.RWSChunk;
-import net.highwayfrogs.editor.games.renderware.RWSFile;
-import net.highwayfrogs.editor.games.renderware.chunks.RWPlatformIndependentTextureDictionaryChunk;
-import net.highwayfrogs.editor.games.renderware.chunks.RWPlatformIndependentTextureDictionaryChunk.RWPlatformIndependentTextureEntry;
+import net.highwayfrogs.editor.games.konami.hudson.PRS1Unpacker;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunkTypeRegistry;
+import net.highwayfrogs.editor.games.renderware.RwStreamFile;
+import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
+import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.RWPlatformIndependentTextureEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.DummyFile;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.Utils;
@@ -98,16 +100,16 @@ public class FroggerRescueMain {
             boolean compressed = PRS1Unpacker.isCompressedPRS1(dummyFile.getArray());
             byte[] data = (compressed ? PRS1Unpacker.decompressPRS1(dummyFile.getArray()) : dummyFile.getArray());
 
-            RWSFile rwsFile = new RWSFile();
+            RwStreamFile rwStreamFile = new RwStreamFile(null, RwStreamChunkTypeRegistry.getDefaultRegistry());
             try {
-                rwsFile.load(new DataReader(new ArraySource(data)));
+                rwStreamFile.load(new DataReader(new ArraySource(data)));
             } catch (Exception ex) {
                 if (!tryExportProprietaryImage(textureFolder, data, file))
                     System.err.println("Skipping due to error!");
                 continue;
             }
 
-            exportChunk(textureFolder, rwsFile, fileNames);
+            exportChunk(textureFolder, rwStreamFile, fileNames);
         }
     }
 
@@ -157,12 +159,12 @@ public class FroggerRescueMain {
         return true;
     }
 
-    private static void exportChunk(File textureFolder, RWSFile rwsFile, Map<String, AtomicInteger> fileNames) throws IOException {
-        for (RWSChunk chunk : rwsFile.getChunks()) {
-            if (!(chunk instanceof RWPlatformIndependentTextureDictionaryChunk))
+    private static void exportChunk(File textureFolder, RwStreamFile rwStreamFile, Map<String, AtomicInteger> fileNames) throws IOException {
+        for (RwStreamChunk chunk : rwStreamFile.getChunks()) {
+            if (!(chunk instanceof RwPlatformIndependentTextureDictionaryChunk))
                 continue;
 
-            RWPlatformIndependentTextureDictionaryChunk textureDictionaryChunk = (RWPlatformIndependentTextureDictionaryChunk) chunk;
+            RwPlatformIndependentTextureDictionaryChunk textureDictionaryChunk = (RwPlatformIndependentTextureDictionaryChunk) chunk;
             for (RWPlatformIndependentTextureEntry entry : textureDictionaryChunk.getEntries()) {
                 for (int i = 0; i < entry.getMipLevelImages().size(); i++) {
                     String baseName = entry.makeFileName(i);
