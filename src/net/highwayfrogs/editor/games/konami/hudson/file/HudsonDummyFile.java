@@ -1,18 +1,18 @@
-package net.highwayfrogs.editor.games.konami.ancientshadow.file;
+package net.highwayfrogs.editor.games.konami.hudson.file;
 
 import javafx.scene.image.Image;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.ancientshadow.AncientShadowGameFile;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
 import net.highwayfrogs.editor.gui.ImageResource;
 
 /**
- * Represents a file which is treated as raw bytes.
- * Created by Kneesnap on 8/4/2024.
+ * Represents a hudson file which is treated as raw bytes.
+ * Created by Kneesnap on 8/8/2024.
  */
-public class AncientShadowDummyFile extends AncientShadowGameFile {
-    public AncientShadowDummyFile(IHudsonFileDefinition fileDefinition) {
+public class HudsonDummyFile extends HudsonGameFile {
+    public HudsonDummyFile(IHudsonFileDefinition fileDefinition) {
         super(fileDefinition);
     }
 

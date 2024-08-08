@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.StreamHandler;
 
@@ -25,7 +26,7 @@ public class ConsoleOutputHandler extends StreamHandler {
             return;
 
         synchronized (this.outputStream) {
-            this.outputStream.setError(record.getThrown() != null);
+            this.outputStream.setError(record.getThrown() != null || record.getLevel() == Level.SEVERE || record.getLevel() == Level.WARNING);
             super.publish(record); // Write to System.out/System.err
             this.flush();
         }

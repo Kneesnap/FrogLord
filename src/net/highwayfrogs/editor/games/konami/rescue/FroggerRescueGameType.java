@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.konami.ancientshadow;
+package net.highwayfrogs.editor.games.konami.rescue;
 
 import javafx.scene.Node;
 import net.highwayfrogs.editor.games.generic.GameConfig;
@@ -14,39 +14,40 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.io.File;
 
 /**
- * Represents the game "Frogger Ancient Shadow".
- * Created by Kneesnap on 8/4/2024.
+ * Represents the game "Frogger's Adventures: The Rescue".
+ * Created by Kneesnap on 8/8/2024.
  */
-public class AncientShadowGameType implements IGameType {
-    public static final AncientShadowGameType INSTANCE = new AncientShadowGameType();
-    private static final String CONFIG_MAIN_FILE_PATH = "mainFilePath"; // gamedata.bin (console versions) or any HFS file. (In the future we'll probably want to support reading all HFS files in a directory as seen in the PC version.)
+public class FroggerRescueGameType implements IGameType {
+    // TODO: I'd like to support loading a list of game files, instead of a single main hfs file.
+    public static final FroggerRescueGameType INSTANCE = new FroggerRescueGameType();
+    private static final String CONFIG_MAIN_FILE_PATH = "mainFilePath";
 
     @Override
     public String getDisplayName() {
-        return "Frogger Ancient Shadow";
+        return "Frogger's Adventures: The Rescue";
     }
 
     @Override
     public String getIdentifier() {
-        return "ancientshadow";
+        return "rescue";
     }
 
     @Override
     public GameInstance createGameInstance() {
-        return new AncientShadowInstance();
+        return new FroggerRescueInstance();
     }
 
     @Override
     public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, ProgressBarComponent progressBar) {
-        if (!(instance instanceof AncientShadowInstance))
-            throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", when " + AncientShadowInstance.class.getSimpleName() + " was required.");
+        if (!(instance instanceof FroggerRescueInstance))
+            throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", when " + FroggerRescueInstance.class.getSimpleName() + " was required.");
 
         String mainFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_MAIN_FILE_PATH).getAsString();
         if (Utils.isNullOrWhiteSpace(mainFilePath))
             throw new IllegalArgumentException("Invalid mainFilePath.");
 
         File mainFile = new File(mainFilePath);
-        ((AncientShadowInstance) instance).loadGame(gameVersionConfigName, mainFile, progressBar);
+        ((FroggerRescueInstance) instance).loadGame(gameVersionConfigName, mainFile, progressBar);
     }
 
     @Override
@@ -55,19 +56,19 @@ public class AncientShadowGameType implements IGameType {
     }
 
     @Override
-    public AncientShadowGameConfigUI setupConfigUI(GameConfigController controller, Config config) {
-        return new AncientShadowGameConfigUI(controller, config);
+    public FroggerRescueGameConfigUI setupConfigUI(GameConfigController controller, Config config) {
+        return new FroggerRescueGameConfigUI(controller, config);
     }
 
     /**
      * The UI definition for the game.
      */
-    public static class AncientShadowGameConfigUI extends GameConfigUIController {
+    public static class FroggerRescueGameConfigUI extends GameConfigUIController {
         private final GameConfigFileOpenBrowseComponent binFileBrowseComponent;
 
-        public AncientShadowGameConfigUI(GameConfigController controller, Config config) {
+        public FroggerRescueGameConfigUI(GameConfigController controller, Config config) {
             super(controller);
-            this.binFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_MAIN_FILE_PATH, "Game Archive (gamedata.bin/*.hfs)", "Please locate and open 'gamedata.bin' (Or a .HFS file)", "Frogger Ancient Shadow Data", "gamedata.bin", "hfs");
+            this.binFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_MAIN_FILE_PATH, "Game Archive (*.hfs)", "Please locate and open a .HFS file", "Frogger's Adventures: The Rescue Data", "hfs");
             loadController(null);
         }
 

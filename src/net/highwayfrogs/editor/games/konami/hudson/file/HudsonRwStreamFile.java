@@ -1,16 +1,15 @@
-package net.highwayfrogs.editor.games.konami.ancientshadow.file;
+package net.highwayfrogs.editor.games.konami.hudson.file;
 
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.ancientshadow.AncientShadowGameFile;
-import net.highwayfrogs.editor.games.konami.ancientshadow.AncientShadowInstance;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
-import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.RWPlatformIndependentTextureEntry;
+import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.RwPlatformIndependentTextureEntry;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
@@ -22,16 +21,16 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Represents a Renderware file.
- * Created by Kneesnap on 8/4/2024.
+ * Represents a hudson game file which is a RenderWare stream file.
+ * Created by Kneesnap on 8/8/2024.
  */
 @Getter
-public class AncientShadowRenderwareFile extends AncientShadowGameFile {
+public class HudsonRwStreamFile extends HudsonGameFile {
     private final RwStreamFile rwStreamFile;
 
-    public AncientShadowRenderwareFile(IHudsonFileDefinition fileDefinition) {
+    public HudsonRwStreamFile(IHudsonFileDefinition fileDefinition) {
         super(fileDefinition);
-        this.rwStreamFile = new RwStreamFile(getGameInstance(), AncientShadowInstance.getRwStreamChunkTypeRegistry(), fileDefinition.getFileName());
+        this.rwStreamFile = new RwStreamFile(getGameInstance(), getGameInstance().getRwStreamChunkTypeRegistry(), fileDefinition.getFileName());
     }
 
     @Override
@@ -55,7 +54,7 @@ public class AncientShadowRenderwareFile extends AncientShadowGameFile {
         propertyList.add("Chunks", this.rwStreamFile.getChunks().size());
 
         for (int i = 0; i < this.rwStreamFile.getChunks().size(); i++)
-            propertyList.add("Chunk " + i, this.rwStreamFile.getChunks().get(i));
+            propertyList.add("Chunk " + i, this.rwStreamFile.getChunks().get(i).getChunkDescriptor());
 
         return propertyList;
     }
@@ -66,12 +65,12 @@ public class AncientShadowRenderwareFile extends AncientShadowGameFile {
      * @param fileNameCountMap the file-name count map to use.
      */
     public void exportTextures(File outputFolder, Map<String, AtomicInteger> fileNameCountMap) {
-        for (RwStreamChunk chunk : rwStreamFile.getChunks()) {
+        for (RwStreamChunk chunk : this.rwStreamFile.getChunks()) {
             if (!(chunk instanceof RwPlatformIndependentTextureDictionaryChunk))
                 continue;
 
             RwPlatformIndependentTextureDictionaryChunk textureDictionaryChunk = (RwPlatformIndependentTextureDictionaryChunk) chunk;
-            for (RWPlatformIndependentTextureEntry entry : textureDictionaryChunk.getEntries()) {
+            for (RwPlatformIndependentTextureEntry entry : textureDictionaryChunk.getEntries()) {
                 for (int i = 0; i < entry.getMipLevelImages().size(); i++) {
                     String baseName = entry.makeFileName(i);
                     int num = fileNameCountMap.computeIfAbsent(baseName, key -> new AtomicInteger()).getAndIncrement();

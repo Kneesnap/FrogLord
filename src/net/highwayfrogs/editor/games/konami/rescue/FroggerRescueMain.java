@@ -1,15 +1,15 @@
 package net.highwayfrogs.editor.games.konami.rescue;
 
 
-import net.highwayfrogs.editor.file.DummyFile;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.games.konami.hudson.PRS1Unpacker;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonFileUserFSDefinition;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkTypeRegistry;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
-import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.RWPlatformIndependentTextureEntry;
+import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.RwPlatformIndependentTextureEntry;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -68,7 +68,7 @@ public class FroggerRescueMain {
 
     private static HFSFile loadHfsFile(File file) throws IOException {
         byte[] packed = Files.readAllBytes(file.toPath());
-        HFSFile hfsFile = new HFSFile();
+        HFSFile hfsFile = new HFSFile(new HudsonFileUserFSDefinition(null, file));
         hfsFile.load(new DataReader(new ArraySource(packed)));
         return hfsFile;
     }
@@ -78,12 +78,9 @@ public class FroggerRescueMain {
         Utils.makeDirectory(extractFolder);
 
         int id = 0;
-        for (DummyFile dummyFile : hfsFile.getFileData()) {
-            boolean compressed = PRS1Unpacker.isCompressedPRS1(dummyFile.getArray());
-            File outputFile = new File(extractFolder, "./" + id++ + "-" + (compressed ? "UNPACKED" : "RAW"));
-
-            byte[] data = (compressed ? PRS1Unpacker.decompressPRS1(dummyFile.getArray()) : dummyFile.getArray());
-            Files.write(outputFile.toPath(), data);
+        for (HudsonGameFile dummyFile : hfsFile.getHfsFiles()) {
+            File outputFile = new File(extractFolder, "./" + id++);
+            Files.write(outputFile.toPath(), dummyFile.getRawData());
         }
     }
 
@@ -95,11 +92,10 @@ public class FroggerRescueMain {
 
         int file = 0;
         Map<String, AtomicInteger> fileNames = new HashMap<>();
-        for (DummyFile dummyFile : hfsFile.getFileData()) {
+        for (HudsonGameFile dummyFile : hfsFile.getHfsFiles()) {
             System.out.println("File Entry #" + (file++));
-            boolean compressed = PRS1Unpacker.isCompressedPRS1(dummyFile.getArray());
-            byte[] data = (compressed ? PRS1Unpacker.decompressPRS1(dummyFile.getArray()) : dummyFile.getArray());
 
+            byte[] data = dummyFile.getRawData();
             RwStreamFile rwStreamFile = new RwStreamFile(null, RwStreamChunkTypeRegistry.getDefaultRegistry());
             try {
                 rwStreamFile.load(new DataReader(new ArraySource(data)));
@@ -113,6 +109,8 @@ public class FroggerRescueMain {
         }
     }
 
+    // TODO: Maybe this isn't proprietary? Perhaps this is just version 1 instead of version 0?
+    //  - Once we get this outta here we can fully delete this class.
     private static boolean tryExportProprietaryImage(File textureFolder, byte[] data, int id) throws IOException {
         DataReader reader = new DataReader(new ArraySource(data));
         short val1 = reader.readShort();
@@ -165,7 +163,7 @@ public class FroggerRescueMain {
                 continue;
 
             RwPlatformIndependentTextureDictionaryChunk textureDictionaryChunk = (RwPlatformIndependentTextureDictionaryChunk) chunk;
-            for (RWPlatformIndependentTextureEntry entry : textureDictionaryChunk.getEntries()) {
+            for (RwPlatformIndependentTextureEntry entry : textureDictionaryChunk.getEntries()) {
                 for (int i = 0; i < entry.getMipLevelImages().size(); i++) {
                     String baseName = entry.makeFileName(i);
                     int num = fileNames.computeIfAbsent(baseName, key -> new AtomicInteger()).getAndIncrement();
