@@ -142,11 +142,11 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
 
     @Override
     public void export(File exportFolder) {
-        File filesExportDir = new File(exportFolder, "Files [" + getDisplayName() + "]");
-        Utils.makeDirectory(filesExportDir);
+        File rawFilesFolder = new File(exportFolder, "Raw Files");
+        Utils.makeDirectory(rawFilesFolder);
 
         for (int i = 0; i < this.hfsFiles.size(); i++) {
-            File outputFile = new File(filesExportDir, "FILE" + String.format("%03d", i));
+            File outputFile = new File(rawFilesFolder, "FILE" + String.format("%03d", i));
 
             try {
                 Files.write(outputFile.toPath(), this.hfsFiles.get(i).getRawData());
@@ -155,13 +155,17 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
             }
         }
 
-        File imagesExportDir = new File(exportFolder, "Images [" + getDisplayName() + "]");
+        File imagesFolder = new File(exportFolder, "Images");
         Map<String, AtomicInteger> nameCountMap = new HashMap<>();
         for (int i = 0; i < this.hfsFiles.size(); i++) {
             HudsonGameFile gameFile = this.hfsFiles.get(i);
             if (gameFile instanceof HudsonRwStreamFile)
-                ((HudsonRwStreamFile) gameFile).exportTextures(imagesExportDir, nameCountMap);
+                ((HudsonRwStreamFile) gameFile).exportTextures(imagesFolder, nameCountMap);
         }
+
+        // Export others.
+        for (int i = 0; i < this.hfsFiles.size(); i++)
+            this.hfsFiles.get(i).export(exportFolder);
     }
 
     @Getter

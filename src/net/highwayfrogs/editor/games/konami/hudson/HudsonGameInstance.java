@@ -72,7 +72,7 @@ public abstract class HudsonGameInstance extends GameInstance {
         while (files.size() > 0) {
             File file = files.remove(0);
             if (file.isFile()) {
-                if (file.getName().endsWith("hfs")) // TODO: More generic test once we've further along.
+                if (file.getName().endsWith("hfs") || file.getName().endsWith("bnk")) // TODO: More generic test once we've further along.
                     loadFiles.add(file);
             } else if (file.isDirectory()) {
                 File[] directoryFiles = file.listFiles();
