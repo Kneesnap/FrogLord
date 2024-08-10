@@ -107,7 +107,8 @@ public enum ImageResource {
     TREASURE_MAP_15(ImageResource.TREASURE_MAP_32, 15),
     GEOMETRIC_SHAPES_15(ImageResource.GEOMETRIC_SHAPES_32, 15),
     ZIPPED_FOLDER_15(ImageResource.ZIPPED_FOLDER_32, 15),
-    QUESTION_MARK_15(ImageResource.QUESTION_MARK_32, 15);
+    QUESTION_MARK_15(ImageResource.QUESTION_MARK_32, 15),
+    MUSIC_NOTE_16(ImageResource.MUSIC_NOTE_32, 16);
 
     private final String resourcePath;
     private final ImageResource parentImageResource;

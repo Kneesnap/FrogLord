@@ -74,7 +74,7 @@ public abstract class HudsonGameFile extends GameData<HudsonGameInstance> implem
      * @param exportFolder the root export folder
      */
     public void export(File exportFolder) {
-        getLogger().info("Skipping export of '" + getDisplayName() + "', as there is no export behavior defined.");
+        // Skip export by default.
     }
 
     @Override

@@ -42,7 +42,7 @@ public class HudsonMainMenuUIController<TGameInstance extends HudsonGameInstance
                         continue;
                     }
 
-                    file.export(exportFolder);
+                    file.export(new File(exportFolder, "Export [" + file.getDisplayName() + "]"));
                 }
 
                 getLogger().info("Export complete.");
