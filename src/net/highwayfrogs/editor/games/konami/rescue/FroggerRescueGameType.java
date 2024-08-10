@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
-import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfigFileOpenBrowseComponent;
+import net.highwayfrogs.editor.gui.components.FolderBrowseComponent.GameConfigFolderBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.Utils;
@@ -18,9 +18,8 @@ import java.io.File;
  * Created by Kneesnap on 8/8/2024.
  */
 public class FroggerRescueGameType implements IGameType {
-    // TODO: I'd like to support loading a list of game files, instead of a single main hfs file.
     public static final FroggerRescueGameType INSTANCE = new FroggerRescueGameType();
-    private static final String CONFIG_MAIN_FILE_PATH = "mainFilePath";
+    private static final String CONFIG_MAIN_FOLDER_PATH = "mainFolderPath";
 
     @Override
     public String getDisplayName() {
@@ -42,9 +41,9 @@ public class FroggerRescueGameType implements IGameType {
         if (!(instance instanceof FroggerRescueInstance))
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", when " + FroggerRescueInstance.class.getSimpleName() + " was required.");
 
-        String mainFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_MAIN_FILE_PATH).getAsString();
+        String mainFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_MAIN_FOLDER_PATH).getAsString();
         if (Utils.isNullOrWhiteSpace(mainFilePath))
-            throw new IllegalArgumentException("Invalid mainFilePath.");
+            throw new IllegalArgumentException("Invalid mainFolderPath.");
 
         File mainFile = new File(mainFilePath);
         ((FroggerRescueInstance) instance).loadGame(gameVersionConfigName, mainFile, progressBar);
@@ -64,17 +63,17 @@ public class FroggerRescueGameType implements IGameType {
      * The UI definition for the game.
      */
     public static class FroggerRescueGameConfigUI extends GameConfigUIController {
-        private final GameConfigFileOpenBrowseComponent binFileBrowseComponent;
+        private final GameConfigFolderBrowseComponent binFileBrowseComponent;
 
         public FroggerRescueGameConfigUI(GameConfigController controller, Config config) {
             super(controller);
-            this.binFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_MAIN_FILE_PATH, "Game Archive (*.hfs)", "Please locate and open a .HFS file", "Frogger's Adventures: The Rescue Data", "hfs");
+            this.binFileBrowseComponent = new GameConfigFolderBrowseComponent(this, config, CONFIG_MAIN_FOLDER_PATH, "Game Data Folder", "Please locate and open the folder containing game data", false);
             loadController(null);
         }
 
         @Override
         public boolean isLoadButtonDisabled() {
-            return Utils.isNullOrWhiteSpace(this.binFileBrowseComponent.getCurrentFilePath());
+            return Utils.isNullOrWhiteSpace(this.binFileBrowseComponent.getCurrentFolderPath());
         }
 
         @Override

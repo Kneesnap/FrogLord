@@ -24,6 +24,11 @@ public interface IHudsonFileSystem extends IGameObject {
     List<HudsonGameFile> getGameFiles();
 
     /**
+     * Gets the file definition, if there is one.
+     */
+    IHudsonFileDefinition getFileDefinition();
+
+    /**
      * Loads the contents of the HFS file while updating the progress bar.
      * @param reader the reader to read data from
      * @param progressBar the progress bar to update, if not null

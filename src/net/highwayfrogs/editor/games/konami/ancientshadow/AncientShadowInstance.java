@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.konami.ancientshadow;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
 import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
-import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileSystem;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkTypeRegistry;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -16,11 +15,6 @@ public class AncientShadowInstance extends HudsonGameInstance {
 
     public AncientShadowInstance() {
         super(AncientShadowGameType.INSTANCE);
-    }
-
-    @Override
-    protected IHudsonFileSystem createHfsFile(IHudsonFileDefinition fileDefinition) {
-        return new HFSFile(fileDefinition);
     }
 
     @Override

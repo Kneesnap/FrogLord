@@ -4,10 +4,11 @@ import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonFileUserFSDefinition;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
-import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileSystem;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
@@ -35,7 +36,15 @@ public class HudsonMainMenuUIController<TGameInstance extends HudsonGameInstance
                 return; // Cancel.
 
             try {
-                getGameInstance().getMainHfs().export(exportFolder);
+                for (HudsonGameFile file : getGameInstance().getFiles()) {
+                    if (!(file.getFileDefinition() instanceof HudsonFileUserFSDefinition)) {
+                        getLogger().severe("File '" + file.getDisplayName() + "' was defined by a(n) " + Utils.getSimpleName(file) + ", which should not have been possible.");
+                        continue;
+                    }
+
+                    file.export(exportFolder);
+                }
+
                 getLogger().info("Export complete.");
             } catch (Throwable th) {
                 Utils.handleError(getLogger(), th, true, "Failed to export files.");
@@ -51,21 +60,24 @@ public class HudsonMainMenuUIController<TGameInstance extends HudsonGameInstance
 
     @Override
     protected void saveMainGameData() {
-        ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files",
-                progressBar -> saveHfsFile(progressBar, getGameInstance().getMainHfsFile(), getMainHfs(), true));
-    }
+        ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> {
+            progressBar.update(0, getGameInstance().getFiles().size(), "");
 
-    private void saveHfsFile(ProgressBarComponent progressBar, File hfsFile, IHudsonFileSystem loadedHfs, boolean overwriteOriginal) {
-        File outputFile;
-        if (overwriteOriginal) {
-            outputFile = hfsFile;
-        } else {
-            outputFile = Utils.addFileNameSuffix(hfsFile, "-modified");
-        }
+            for (HudsonGameFile file : getGameInstance().getFiles()) {
+                if (!(file.getFileDefinition() instanceof HudsonFileUserFSDefinition)) {
+                    getLogger().severe("File '" + file.getDisplayName() + "' was defined by a(n) " + Utils.getSimpleName(file) + ", which should not have been possible.");
+                    continue;
+                }
 
-        DataWriter writer = new DataWriter(new LargeFileReceiver(outputFile));
-        loadedHfs.save(writer, progressBar);
-        writer.closeReceiver();
+                HudsonFileUserFSDefinition fileDefinition = (HudsonFileUserFSDefinition) file.getFileDefinition();
+                progressBar.setStatusMessage("Saving '" + fileDefinition.getFileName() + "'");
+                DataWriter writer = new DataWriter(fileDefinition.getFileName().equalsIgnoreCase("gamedata.bin") ? new LargeFileReceiver(fileDefinition.getFile()) : new FileReceiver(fileDefinition.getFile()));
+                file.save(writer);
+                writer.closeReceiver();
+
+                progressBar.addCompletedProgress(1);
+            }
+        });
     }
 
     @Override
@@ -78,12 +90,5 @@ public class HudsonMainMenuUIController<TGameInstance extends HudsonGameInstance
         menuItem.setOnAction(event -> Utils.reportErrorIfFails(action));
         menuBar.getItems().add(menuItem);
         return menuItem;
-    }
-
-    /**
-     * Gets the main file archive.
-     */
-    public IHudsonFileSystem getMainHfs() {
-        return getGameInstance() != null ? getGameInstance().getMainHfs() : null;
     }
 }

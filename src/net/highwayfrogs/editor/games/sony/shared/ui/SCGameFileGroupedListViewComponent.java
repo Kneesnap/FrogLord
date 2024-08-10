@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.components.GroupedCollectionViewComponent;
 
+import java.util.Collection;
 import java.util.function.BiPredicate;
 
 /**
@@ -31,7 +32,7 @@ public class SCGameFileGroupedListViewComponent<TGameInstance extends SCGameInst
     }
 
     @Override
-    public Iterable<SCGameFile<?>> getViewEntries() {
+    public Collection<SCGameFile<?>> getViewEntries() {
         return getGameInstance().getMainArchive().getFiles();
     }
 

@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 
+import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -89,7 +90,7 @@ public abstract class CollectionViewComponent<TGameInstance extends GameInstance
     /**
      * Gets the view entries to be visible in the collection view
      */
-    public abstract Iterable<TViewEntry> getViewEntries();
+    public abstract Collection<TViewEntry> getViewEntries();
 
     public interface ICollectionViewEntry {
         /**

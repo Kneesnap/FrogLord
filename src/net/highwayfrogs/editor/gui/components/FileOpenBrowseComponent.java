@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * Represents a file path
+ * Represents a file path selection component.
  * Created by Kneesnap on 4/26/2024.
  */
 @Getter
