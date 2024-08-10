@@ -15,11 +15,12 @@ import java.io.File;
 
 /**
  * Represents the game "Frogger Ancient Shadow".
+ * TODO: Once we merge in the changes on another branch, we should use the new changes to make this allow folders/gamedata.bin based on the version of the game we're loading.
  * Created by Kneesnap on 8/4/2024.
  */
 public class AncientShadowGameType implements IGameType {
     public static final AncientShadowGameType INSTANCE = new AncientShadowGameType();
-    private static final String CONFIG_MAIN_FILE_PATH = "mainFilePath"; // gamedata.bin (console versions) or any HFS file. (In the future we'll probably want to support reading all HFS files in a directory as seen in the PC version.)
+    private static final String CONFIG_MAIN_FILE_PATH = "mainFilePath"; // gamedata.bin (console versions) or the folder containing hfs files on PC.
 
     @Override
     public String getDisplayName() {

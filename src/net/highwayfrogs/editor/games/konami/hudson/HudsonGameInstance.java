@@ -19,6 +19,8 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,8 +29,9 @@ import java.util.List;
  */
 @Getter
 public abstract class HudsonGameInstance extends GameInstance {
-    private IHudsonFileSystem mainHfs;
-    private File mainHfsFile;
+    private final List<HudsonGameFile> files = new ArrayList<>();
+    private final List<HudsonGameFile> allFiles = new ArrayList<>(); // Includes nested files.
+    private File rootFolder;
 
     protected HudsonGameInstance(IGameType gameType) {
         super(gameType);
@@ -41,23 +44,72 @@ public abstract class HudsonGameInstance extends GameInstance {
      * @param progressBar the progress bar to display load progress on, if it exists
      */
     public void loadGame(String gameVersionConfigName, File mainFile, ProgressBarComponent progressBar) {
-        if (this.mainHfs != null)
+        if (this.rootFolder != null)
             throw new RuntimeException("The game instance has already been loaded.");
 
         if (mainFile == null || !mainFile.exists())
-            throw new RuntimeException("The main archive file '" + mainFile + "' does not exist.");
+            throw new RuntimeException("The main file '" + mainFile + "' does not exist.");
 
-        this.mainHfsFile = mainFile;
-        loadGameConfig(gameVersionConfigName);
+        if (mainFile.isDirectory()) {
+            this.rootFolder = mainFile;
+            loadGameConfig(gameVersionConfigName);
 
-        // Load the main file.
-        try {
-            DataReader reader = new DataReader(new FileSource(mainFile));
-            this.mainHfs = createHfsFile(new HudsonFileUserFSDefinition(this, mainFile));
-            this.mainHfs.load(reader, progressBar);
-        } catch (IOException ex) {
-            Utils.handleError(getLogger(), ex, true, "Failed to load the bin file.");
+            loadFilesFromFolderRecursive(mainFile, progressBar);
+        } else if (mainFile.isFile()) {
+            this.rootFolder = mainFile.getParentFile();
+            loadGameConfig(gameVersionConfigName);
+            loadFile(mainFile, true, progressBar);
+        } else {
+            throw new RuntimeException("Don't know how to load '" + mainFile + "', which reported as neither a directory nor a file!");
         }
+    }
+
+    private void loadFilesFromFolderRecursive(File folder, ProgressBarComponent progressBar) {
+        List<File> files = new ArrayList<>();
+        files.add(folder);
+
+        List<File> loadFiles = new ArrayList<>();
+        while (files.size() > 0) {
+            File file = files.remove(0);
+            if (file.isFile()) {
+                if (file.getName().endsWith("hfs")) // TODO: More generic test once we've further along.
+                    loadFiles.add(file);
+            } else if (file.isDirectory()) {
+                File[] directoryFiles = file.listFiles();
+                if (directoryFiles != null)
+                    Collections.addAll(files, directoryFiles);
+            }
+        }
+
+        if (progressBar != null)
+            progressBar.update(0, loadFiles.size(), "");
+
+        for (File file : loadFiles)
+            loadFile(file, false, progressBar);
+    }
+
+    private void loadFile(File file, boolean showError, ProgressBarComponent progressBar) {
+        IHudsonFileDefinition fileDefinition = new HudsonFileUserFSDefinition(this, file);
+
+        if (progressBar != null)
+            progressBar.setStatusMessage("Loading '" + file.getName() + "'...");
+
+        try {
+            FileSource fileSource = new FileSource(file);
+            DataReader reader = new DataReader(fileSource);
+
+            HudsonGameFile gameFile = createGameFile(fileDefinition, fileSource.getFileData());
+            gameFile.load(reader);
+            this.files.add(gameFile);
+            this.allFiles.add(gameFile);
+            if (gameFile instanceof IHudsonFileSystem)
+                this.allFiles.addAll(((IHudsonFileSystem) gameFile).getGameFiles());
+        } catch (IOException ex) {
+            Utils.handleError(getLogger(), ex, showError, "Failed to load file '%s'.", Utils.toLocalPath(this.rootFolder, file, true));
+        }
+
+        if (progressBar != null)
+            progressBar.addCompletedProgress(1);
     }
 
     @Override
@@ -67,26 +119,12 @@ public abstract class HudsonGameInstance extends GameInstance {
 
     @Override
     public File getMainGameFolder() {
-        if (this.mainHfsFile != null) {
-            return this.mainHfsFile.getParentFile();
+        if (this.rootFolder != null) {
+            return this.rootFolder;
         } else {
             throw new IllegalStateException("The folder is not known since the game has not been loaded yet.");
         }
     }
-
-    /**
-     * Gets all game files tracked for the game instance.
-     */
-    public List<HudsonGameFile> getAllGameFiles() {
-        return this.mainHfs.getGameFiles();
-    }
-
-    /**
-     * Creates an HFS file for the current game instance based on the given definition.
-     * @param fileDefinition the definition to create the hfs file for
-     * @return newHfsFile
-     */
-    protected abstract IHudsonFileSystem createHfsFile(IHudsonFileDefinition fileDefinition);
 
     /**
      * Gets the RenderWare stream chunk type registry to use to load files.
@@ -130,6 +168,7 @@ public abstract class HudsonGameInstance extends GameInstance {
         if (progressBar != null)
             progressBar.addCompletedProgress(1);
 
+        this.allFiles.add(newGameFile);
         return newGameFile;
     }
 

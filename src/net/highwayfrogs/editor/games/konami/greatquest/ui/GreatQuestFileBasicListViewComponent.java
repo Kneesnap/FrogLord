@@ -5,6 +5,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.GroupedCollectionViewComponent;
 
+import java.util.Collection;
+
 /**
  * A view component for the GreatQuestArchiveFiles in a game instance.
  * Created by Kneesnap on 4/14/2024.
@@ -26,7 +28,7 @@ public class GreatQuestFileBasicListViewComponent extends GroupedCollectionViewC
     }
 
     @Override
-    public Iterable<GreatQuestArchiveFile> getViewEntries() {
+    public Collection<GreatQuestArchiveFile> getViewEntries() {
         return getGameInstance().getMainArchive().getFiles();
     }
 }

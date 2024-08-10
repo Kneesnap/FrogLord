@@ -5,11 +5,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Accordion;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
@@ -185,7 +183,7 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
 
             ObservableList<TViewEntry> fxFilesList = FXCollections.observableArrayList(this.entries);
             ListView<TViewEntry> listView = new ListView<>(fxFilesList);
-            listView.setCellFactory(param -> new AttachmentListCell<>());
+            listView.setCellFactory(param -> new CollectionViewEntryListCell<>());
             listView.setItems(fxFilesList);
 
             pane.setContent(listView);
@@ -254,26 +252,6 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
         @Override
         public boolean isPartOfGroup(TViewEntry viewEntry) {
             return this.predicate != null && this.predicate.test(viewEntry);
-        }
-    }
-
-    private static class AttachmentListCell<TViewEntry extends ICollectionViewEntry> extends ListCell<TViewEntry> {
-        @Override
-        public void updateItem(TViewEntry view, boolean empty) {
-            super.updateItem(view, empty);
-            if (empty) {
-                setGraphic(null);
-                setText(null);
-                return;
-            }
-
-            // Apply icon.
-            Image iconImage = view.getCollectionViewIcon();
-            setGraphic(iconImage != null ? new ImageView(iconImage) : null);
-
-            // Update text.
-            setStyle(view.getCollectionViewDisplayStyle());
-            setText(view.getCollectionViewDisplayName());
         }
     }
 }

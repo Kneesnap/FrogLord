@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.GroupedCollectionViewComponent;
 
+import java.util.Collection;
 import java.util.function.BiPredicate;
 
 /**
@@ -33,7 +34,7 @@ public class SCGameFileGroupedListViewComponent<TGameInstance extends SCGameInst
     }
 
     @Override
-    public Iterable<SCGameFile<?>> getViewEntries() {
+    public Collection<SCGameFile<?>> getViewEntries() {
         return getGameInstance().getMainArchive().getFiles();
     }
 

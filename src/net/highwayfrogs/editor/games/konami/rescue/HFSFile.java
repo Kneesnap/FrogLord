@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.generic.GameObject;
 import net.highwayfrogs.editor.games.konami.hudson.*;
 import net.highwayfrogs.editor.games.konami.hudson.file.HudsonRwStreamFile;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.CollectionTreeViewComponent.CollectionViewTreeNode;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -165,10 +166,10 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
 
     @Getter
     public static class HFSFileDefinition extends GameObject<HudsonGameInstance> implements IHudsonFileDefinition {
-        private final IHudsonFileSystem hfsFile;
+        private final HFSFile hfsFile;
         private final int fileIndex;
 
-        public HFSFileDefinition(IHudsonFileSystem hfsFile, int fileIndex) {
+        public HFSFileDefinition(HFSFile hfsFile, int fileIndex) {
             super(hfsFile.getGameInstance());
             this.hfsFile = hfsFile;
             this.fileIndex = fileIndex;
@@ -176,16 +177,19 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
 
         @Override
         public String getFileName() {
-            return this.hfsFile.getDisplayName() + getNameSuffix();
+            return "{file=" + this.fileIndex + "}";
         }
 
         @Override
         public String getFullFileName() {
-            return this.hfsFile.getFullDisplayName() + getNameSuffix();
+            return this.hfsFile.getFullDisplayName() + getFileName();
         }
 
-        private String getNameSuffix() {
-            return "{file=" + this.fileIndex + "}";
+        @Override
+        public CollectionViewTreeNode<HudsonGameFile> getOrCreateTreePath(CollectionViewTreeNode<HudsonGameFile> rootNode, HudsonGameFile gameFile) {
+            IHudsonFileDefinition fileDefinition = this.hfsFile.getFileDefinition();
+            CollectionViewTreeNode<HudsonGameFile> hfsNode = fileDefinition != null ? fileDefinition.getOrCreateTreePath(rootNode, this.hfsFile) : rootNode;
+            return hfsNode.addChildNode(gameFile);
         }
     }
 }

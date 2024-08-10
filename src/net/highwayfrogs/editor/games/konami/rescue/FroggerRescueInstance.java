@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.konami.rescue;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
 import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
-import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileSystem;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkTypeRegistry;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -19,11 +18,6 @@ public class FroggerRescueInstance extends HudsonGameInstance {
     }
 
     @Override
-    protected IHudsonFileSystem createHfsFile(IHudsonFileDefinition fileDefinition) {
-        return new HFSFile(fileDefinition);
-    }
-
-    @Override
     public RwStreamChunkTypeRegistry getRwStreamChunkTypeRegistry() {
         return rwStreamChunkTypeRegistry;
     }
@@ -31,7 +25,7 @@ public class FroggerRescueInstance extends HudsonGameInstance {
     @Override
     public HudsonGameFile createGameFile(IHudsonFileDefinition fileDefinition, byte[] rawData) {
         if (Utils.testSignature(rawData, HFSFile.SIGNATURE)) {
-            return new net.highwayfrogs.editor.games.konami.ancientshadow.HFSFile(fileDefinition);
+            return new HFSFile(fileDefinition);
         } else {
             return super.createGameFile(fileDefinition, rawData);
         }

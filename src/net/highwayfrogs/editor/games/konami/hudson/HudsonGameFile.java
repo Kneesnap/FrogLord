@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.io.File;
 import java.net.URL;
 import java.util.logging.Logger;
 
@@ -67,6 +68,15 @@ public abstract class HudsonGameFile extends GameData<HudsonGameInstance> implem
         return this.fileDefinition.getFullFileName();
     }
 
+    /**
+     * Exports the file to the given folder. This export is usually not the form in which the data is originally stored.
+     * This is often used for debugging purposes, or to get files in some standard format like .bmp.
+     * @param exportFolder the root export folder
+     */
+    public void export(File exportFolder) {
+        getLogger().info("Skipping export of '" + getDisplayName() + "', as there is no export behavior defined.");
+    }
+
     @Override
     public ICollectionViewEntry getCollectionViewParentEntry() {
         return null;
@@ -74,7 +84,11 @@ public abstract class HudsonGameFile extends GameData<HudsonGameInstance> implem
 
     @Override
     public String getCollectionViewDisplayName() {
-        return getFileDefinition().getFullFileName() + " [Compressed: " + this.compressionEnabled + "]";
+        String displayName = getFileDefinition().getFileName();
+        if (this.compressionEnabled)
+            displayName += " (Compressed)";
+
+        return displayName;
     }
 
     @Override
