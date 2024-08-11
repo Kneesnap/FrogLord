@@ -22,6 +22,7 @@ import java.util.List;
 
 /**
  * Represents a sound bank as seen on the Windows version.
+ * The file "sound\sfx_frogger.bin" seen on the PC version appears unused, it doesn't look like the buffer the file is read into is ever used. Also, it's mostly constant data anyways, as there's a function which can make/write the file if it does not exist?
  * Created by Kneesnap on 8/9/2024.
  */
 public class FroggerRescueSoundBank extends HudsonGameFile {
