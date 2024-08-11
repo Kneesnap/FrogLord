@@ -3,10 +3,7 @@ package net.highwayfrogs.editor.games.renderware;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.games.renderware.chunks.RwImageChunk;
-import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
-import net.highwayfrogs.editor.games.renderware.chunks.RwStructChunk;
-import net.highwayfrogs.editor.games.renderware.chunks.RwUnsupportedChunk;
+import net.highwayfrogs.editor.games.renderware.chunks.*;
 import net.highwayfrogs.editor.system.TriFunction;
 
 import java.util.HashMap;
@@ -117,6 +114,7 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
 
         defaultRegistry.registerChunkType(RwStructChunk::new);
         defaultRegistry.registerChunkType(RwImageChunk::new);
+        defaultRegistry.registerChunkType(RwTableOfContentsChunk::new);
         defaultRegistry.registerChunkType(RwPlatformIndependentTextureDictionaryChunk::new);
 
         // First, Table of Contents - 0x24.
