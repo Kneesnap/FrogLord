@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.gui;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
@@ -46,6 +47,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
 
     @Getter private GameUIController<?> currentEditor;
     public static final URL MAIN_MENU_FXML_TEMPLATE_URL = Utils.getResourceURL("fxml/window-main.fxml");
+    public static final FXMLLoader MAIN_MENU_FXML_TEMPLATE_LOADER = new FXMLLoader(MAIN_MENU_FXML_TEMPLATE_URL);
 
     public MainMenuController(TGameInstance instance) {
         super(instance);

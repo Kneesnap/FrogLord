@@ -31,7 +31,7 @@ public class BitReader {
         int readBitPos = isReverseBits() ? (MAX_BIT - this.bitPos) : this.bitPos;
         int readBytePos = isReverseBytes() ? (this.data.length - 1 - this.bytePos) : this.bytePos;
 
-        if (bitPos == MAX_BIT) { // Reached the end of the bit.
+        if (this.bitPos == MAX_BIT) { // Reached the end of the bit.
             this.bitPos = 0;
             this.bytePos++;
         } else {
@@ -59,5 +59,15 @@ public class BitReader {
      */
     public boolean hasRemaining() {
         return this.data.length > this.bytePos;
+    }
+
+    /**
+     * Gets the number of remaining bits.
+     */
+    public int getRemainingBits() {
+        if (this.bytePos >= this.data.length)
+            return 0;
+
+        return (Constants.BITS_PER_BYTE * (this.data.length - this.bytePos - 1)) + (MAX_BIT - this.bitPos);
     }
 }

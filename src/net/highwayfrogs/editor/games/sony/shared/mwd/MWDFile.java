@@ -1,29 +1,30 @@
-package net.highwayfrogs.editor.file;
+package net.highwayfrogs.editor.games.sony.shared.mwd;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.packers.PP20Packer;
 import net.highwayfrogs.editor.file.packers.PP20Unpacker;
+import net.highwayfrogs.editor.file.packers.PP20Unpacker.UnpackResult;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
-import net.highwayfrogs.editor.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Consumer;
@@ -42,7 +43,6 @@ public class MWDFile extends SCSharedGameData {
 
     private final transient Map<FroggerMapTheme, VLOArchive> vloThemeCache = new HashMap<>();
 
-    public static String CURRENT_FILE_NAME = null;
     private static final String MARKER = "DAWM";
     private static final int BUILD_NOTES_SIZE = 2040;
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEEE, d MMMM yyyy");
@@ -55,16 +55,16 @@ public class MWDFile extends SCSharedGameData {
 
     @Override
     public void load(DataReader reader) {
-        load(reader, null);
+        loadMwdFile(reader, null);
     }
 
     /**
-     * Loads the file with a progress bar to show progress.
+     * Loads the MWD file with a progress bar to show progress.
      * @param reader the reader to read from
      * @param progressBar the progress bar to update, if exists
      */
-    public void load(DataReader reader, ProgressBarComponent progressBar) {
-        List<FileEntry> mwiEntries = getGameInstance().getArchiveIndex().getEntries();
+    public void loadMwdFile(DataReader reader, ProgressBarComponent progressBar) {
+        List<MWIResourceEntry> mwiEntries = getGameInstance().getArchiveIndex().getEntries();
         if (progressBar != null)
             progressBar.setTotalProgress(mwiEntries.size());
 
@@ -72,48 +72,133 @@ public class MWDFile extends SCSharedGameData {
         reader.verifyString(MARKER);
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE);
         this.buildNotes = reader.readTerminatedStringOfLength(BUILD_NOTES_SIZE);
-        getGameInstance().getLogger().info("Build Notes: \n" + this.buildNotes);
+        getGameInstance().getLogger().info("Build Notes: \n" + this.buildNotes + (this.buildNotes.endsWith("\n") ? "" : "\n"));
 
-        for (FileEntry entry : mwiEntries) {
-            if (entry.testFlag(FileEntry.FLAG_GROUP_ACCESS)) {
+        boolean lastFileLoadSuccess = false;
+        for (MWIResourceEntry entry : mwiEntries) {
+            if (entry.testFlag(MWIResourceEntry.FLAG_GROUP_ACCESS)) {
                 if (progressBar != null)
                     progressBar.addCompletedProgress(1);
                 continue; // This file is part of a WAD archive, and isn't a file entry in the MWD, so we can't load it here.
             }
 
-            if (progressBar != null)
-                progressBar.setStatusMessage("Reading '" + entry.getDisplayName() + "'");
-            reader.setIndex(entry.getArchiveOffset()); // TODO: We should warn if we miss data / this isn't the expected offset.
+            // Validate position.
+            if (lastFileLoadSuccess) {
+                reader.requireIndex(getLogger(), entry.getArchiveOffset(), "Expected file contents for '" + entry.getDisplayName() + "'");
+            } else {
+                reader.setIndex(entry.getArchiveOffset());
+            }
 
-            // Read the file. Decompress if it is PP20 compression.
+            // Read next file.
             byte[] fileBytes = reader.readBytes(entry.getArchiveSize());
-            if (entry.isCompressed()) {
-                if (PP20Unpacker.isCompressed(fileBytes)) {
-                    fileBytes = PP20Unpacker.unpackData(fileBytes);
-                } else {
-                    getLogger().severe("ERROR: File is compressed, but not using PowerPacker (PP20) compression.");
-                }
-            }
-
-            // Calculate the SHA1 hash.
-            if (FroggerVersionComparison.isEnabled() && entry.getSha1Hash() == null)
-                entry.setSha1Hash(Utils.calculateSHA1Hash(fileBytes));
-
-            SCGameFile<?> file = loadFile(fileBytes, entry);
-            this.files.add(file);
-
-            try {
-                DataReader singleFileReader = new DataReader(new ArraySource(fileBytes));
-                file.load(singleFileReader);
-                if (singleFileReader.hasMore() && file.warnIfEndNotReached()) // Warn if the full file is not read.
-                    file.getLogger().warning("File contents were read to index " + Utils.toHexString(singleFileReader.getIndex()) + ", leaving " + singleFileReader.getRemaining() + " bytes unread. (Length: " + Utils.toHexString(reader.getSize()) + ")");
-            } catch (Exception ex) {
-                Utils.handleError(getLogger(), ex, false, "Failed to load %s (%d)", entry.getDisplayName(), entry.getResourceId());
-            }
-
-            if (progressBar != null)
-                progressBar.addCompletedProgress(1);
+            lastFileLoadSuccess = loadNextFile(fileBytes, entry, progressBar);
+            reader.align(Constants.CD_SECTOR_SIZE);
         }
+    }
+
+    /**
+     * Loads the file entries from a local folder with a progress bar to show progress.
+     * Seen in the Frogger PC Milestone 3 build.
+     * @param progressBar the progress bar to update, if exists
+     */
+    public void loadFilesFromDirectory(ProgressBarComponent progressBar) {
+        List<MWIResourceEntry> mwiEntries = getGameInstance().getArchiveIndex().getEntries();
+        if (progressBar != null)
+            progressBar.setTotalProgress(mwiEntries.size());
+
+        this.buildNotes = "";
+        for (MWIResourceEntry entry : mwiEntries) {
+            if (entry.testFlag(MWIResourceEntry.FLAG_GROUP_ACCESS)) {
+                if (progressBar != null)
+                    progressBar.addCompletedProgress(1);
+                continue; // This file is part of a WAD archive, and isn't a file entry in the MWD, so we can't load it here.
+            }
+
+            if (!entry.hasFullFilePath() || entry.getFullFilePath().isEmpty()) {
+                getLogger().warning("When loading files by file name, the MWIResourceEntry with resource ID " + entry.getResourceId() + " did not have a file path!");
+                if (progressBar != null)
+                    progressBar.addCompletedProgress(1);
+                continue; // This file is part of a WAD archive, and isn't a file entry in the MWD, so we can't load it here.
+            }
+
+            if (entry.getArchiveOffset() != 0)
+                getLogger().warning("Expected archiveOffset to be zero for entry '" + entry.getDisplayName() + "', but it was: " + entry.getSectorOffset() + "/" + Utils.toHexString(entry.getArchiveOffset()) + ".");
+
+            // NOTE: The file names are fully upper-case in the MWI, which may not match the correct file casing.
+            // So, on case-sensitive file-systems (eg: Linux), this will fail to find the files. Not sure what we can do about that.
+            // Perhaps we can make a function to handle it.
+            String localFilePath = Utils.ensureValidPathSeparator(entry.getFullFilePath(), true);
+            File localFile = new File(getGameInstance().getMainGameFolder(), localFilePath);
+            if (!localFile.exists() || !localFile.isFile()) {
+                getLogger().severe("Could not find the file '" + localFilePath + "'. If you are on Linux");
+                getLogger().severe("If you are using Linux and have the file, rename the folders & files to match the exact case (test vs TEST).");
+                if (progressBar != null)
+                    progressBar.addCompletedProgress(1);
+
+                continue; // Couldn't find the file.
+            }
+
+            // Read file contents.
+            byte[] fileBytes;
+            try {
+                fileBytes = Files.readAllBytes(localFile.toPath());
+            } catch (IOException ex) {
+                Utils.handleError(getLogger(), ex, true, "Failed to read file '%s'.", localFilePath);
+                if (progressBar != null)
+                    progressBar.addCompletedProgress(1);
+                continue; // Couldn't find the file.
+            }
+
+            loadNextFile(fileBytes, entry, progressBar);
+        }
+    }
+
+    /**
+     * Loads the next file corresponding to the MWI resource.
+     * @param fileBytes the bytes of the file to load. May be compressed.
+     * @param mwiEntry the MWI entry corresponding to the file
+     * @param progressBar the progress bar to update, if there is one.
+     */
+    private boolean loadNextFile(byte[] fileBytes, MWIResourceEntry mwiEntry, ProgressBarComponent progressBar) {
+        if (progressBar != null)
+            progressBar.setStatusMessage("Reading '" + mwiEntry.getDisplayName() + "'");
+
+        // Read the file. Decompress if it is PP20 compression.
+        int safetyMarginWordCount = 0;
+        byte[] compressedBytes = null;
+        if (mwiEntry.isCompressed()) {
+            if (PP20Unpacker.isCompressed(fileBytes)) {
+                compressedBytes = fileBytes;
+                UnpackResult unpackResult = PP20Unpacker.unpackData(fileBytes);
+                fileBytes = unpackResult.getUnpackedBytes();
+                safetyMarginWordCount = unpackResult.getSafetyMarginWordCount();
+            } else {
+                getLogger().severe("ERROR: File is marked as compressed, but does not appear to be using PowerPacker (PP20) compression.");
+            }
+        }
+
+        if (mwiEntry.getUnpackedSize() != fileBytes.length)
+            getLogger().severe("ERROR: File is marked as being " + mwiEntry.getUnpackedSize() + " bytes large, but is actually " + fileBytes.length + " bytes large.");
+
+        mwiEntry.onLoadData(fileBytes, compressedBytes, safetyMarginWordCount);
+        SCGameFile<?> file = loadFile(fileBytes, mwiEntry);
+        this.files.add(file);
+
+        boolean success = true;
+        try {
+            DataReader singleFileReader = new DataReader(new ArraySource(fileBytes));
+            file.load(singleFileReader);
+            if (singleFileReader.hasMore() && file.warnIfEndNotReached()) // Warn if the full file is not read.
+                file.getLogger().warning("File contents were read to index " + Utils.toHexString(singleFileReader.getIndex()) + ", leaving " + singleFileReader.getRemaining() + " bytes unread. (Length: " + Utils.toHexString(fileBytes.length) + ")");
+        } catch (Exception ex) {
+            success = false;
+            Utils.handleError(getLogger(), ex, false, "Failed to load %s (%d)", mwiEntry.getDisplayName(), mwiEntry.getResourceId());
+        }
+
+        if (progressBar != null)
+            progressBar.addCompletedProgress(1);
+
+        return success;
     }
 
     /**
@@ -123,7 +208,7 @@ public class MWDFile extends SCSharedGameData {
      * @return replacementFile
      */
     @SuppressWarnings("unchecked")
-    public <T extends SCGameFile<?>> T replaceFile(byte[] fileBytes, FileEntry entry, SCGameFile<?> oldFile, boolean isInsideWadFile) {
+    public <T extends SCGameFile<?>> T replaceFile(byte[] fileBytes, MWIResourceEntry entry, SCGameFile<?> oldFile, boolean isInsideWadFile) {
         T newFile;
 
         if (oldFile instanceof MOFHolder) {
@@ -135,12 +220,11 @@ public class MWDFile extends SCSharedGameData {
 
         if (oldFile != null) {
             getGameInstance().getFileObjectsByFileEntries().remove(entry, oldFile);
-            getGameInstance().getFileEntriesByFileObjects().remove(oldFile, entry);
+            oldFile.setFileDefinition(null);
         }
 
         getGameInstance().getFileObjectsByFileEntries().put(entry, newFile);
-        getGameInstance().getFileEntriesByFileObjects().put(newFile, entry);
-        CURRENT_FILE_NAME = entry.getDisplayName();
+        newFile.setFileDefinition(entry);
 
         // Replace file.
         if (!isInsideWadFile) {
@@ -166,15 +250,14 @@ public class MWDFile extends SCSharedGameData {
      * @return loadedFile
      */
     @SuppressWarnings("unchecked")
-    public <T extends SCGameFile<?>> T loadFile(byte[] fileBytes, FileEntry entry) {
+    public <T extends SCGameFile<?>> T loadFile(byte[] fileBytes, MWIResourceEntry entry) {
         // Turn the byte data into the appropriate game-file.
         SCGameFile<?> file = getGameInstance().createFile(entry, fileBytes);
         if (file == null)
             file = new DummyFile(getGameInstance(), fileBytes.length);
 
         getGameInstance().getFileObjectsByFileEntries().put(entry, file);
-        getGameInstance().getFileEntriesByFileObjects().put(file, entry);
-        CURRENT_FILE_NAME = entry.getDisplayName();
+        file.setFileDefinition(entry);
         file.setRawFileData(fileBytes);
         return (T) file;
     }
@@ -205,55 +288,23 @@ public class MWDFile extends SCSharedGameData {
                 + "\ngameVersion=" + getGameInstance().getConfig().getInternalName()
                 + "\nversion=1"
                 + "\n");
+        writer.align(Constants.CD_SECTOR_SIZE);
 
-        int sectorOffset = 0;
         long mwdStart = System.currentTimeMillis();
         for (SCGameFile<?> file : this.files) {
-            FileEntry entry = file.getIndexEntry();
+            if ((writer.getIndex() % Constants.CD_SECTOR_SIZE) != 0)
+                throw new RuntimeException("Writer index (" + Utils.toHexString(writer.getIndex()) + ") was not aligned to CD sector size!");
 
-            do { // Find the next unused sector, to write the next entry.
-                entry.setSectorOffset(++sectorOffset);
-            } while (writer.getIndex() > entry.getArchiveOffset());
-            writer.jumpTo(entry.getArchiveOffset());
+            MWIResourceEntry entry = file.getIndexEntry();
+            int currentSector = writer.getIndex() / Constants.CD_SECTOR_SIZE;
+            entry.setSectorOffset(currentSector);
 
-            // Debug.
-            CURRENT_FILE_NAME = entry.getDisplayName();
-            if (progressBar != null)
-                progressBar.setStatusMessage("Saving '" + entry.getDisplayName() + "'");
-            long startTime = System.currentTimeMillis();
-
-            try {
-                // Save the file contents to a byte array.
-                ArrayReceiver receiver = new ArrayReceiver();
-                file.save(new DataWriter(receiver));
-
-                // Potentially compress the saved byte array.
-                byte[] transfer = receiver.toArray();
-                entry.setUnpackedSize(transfer.length);
-                if (entry.isCompressed())
-                    transfer = PP20Packer.packData(transfer);
-
-                // Write resulting data.
-                entry.setPackedSize(transfer.length);
-                writer.writeBytes(transfer);
-            } catch (Throwable th) {
-                Utils.handleError(getLogger(), th, true, "Failed to save file '%s' to MWD.", entry.getDisplayName());
-                return;
-            }
-
-            // Report timing.
-            long endTime = System.currentTimeMillis();
-            if (progressBar != null)
-                progressBar.addCompletedProgress(1);
-            long timeTaken = (endTime - startTime);
-            if (timeTaken >= 10)
-                getLogger().warning("Saving the file '" + entry.getDisplayName() + "' took " + timeTaken + " ms.");
+            file.saveFile(writer, progressBar);
         }
         getLogger().info("MWD Built. Total Time: " + (System.currentTimeMillis() - mwdStart) + " ms.");
 
         // Fill the rest of the file with null bytes.
-        SCGameFile<?> lastFile = this.files.get(this.files.size() - 1);
-        writer.writeNull(Constants.CD_SECTOR_SIZE - (lastFile.getIndexEntry().getArchiveSize() % Constants.CD_SECTOR_SIZE));
+        writer.align(Constants.CD_SECTOR_SIZE);
     }
 
     /**
@@ -283,7 +334,7 @@ public class MWDFile extends SCSharedGameData {
         if (theme != null) {
             List<VLOArchive> movedVLOs = allVLOs.stream()
                     .filter(vlo -> {
-                        FileEntry entry = vlo != null ? vlo.getIndexEntry() : null;
+                        MWIResourceEntry entry = vlo != null ? vlo.getIndexEntry() : null;
                         return entry != null && entry.getDisplayName().startsWith(theme.getInternalName());
                     })
                     .collect(Collectors.toList());
@@ -397,11 +448,11 @@ public class MWDFile extends SCSharedGameData {
         return null;
     }
 
-    private static boolean matchesFileName(FileEntry fileEntry, String fileName) {
-        if (fileEntry == null)
+    private static boolean matchesFileName(MWIResourceEntry resourceEntry, String fileName) {
+        if (resourceEntry == null)
             return false;
 
-        String fileDisplayName = fileEntry.getDisplayName();
+        String fileDisplayName = resourceEntry.getDisplayName();
         if (fileDisplayName != null && fileDisplayName.equalsIgnoreCase(fileName))
             return true;
 
@@ -409,7 +460,7 @@ public class MWDFile extends SCSharedGameData {
         if (fileNameWithoutExtension != null && fileNameWithoutExtension.equalsIgnoreCase(fileName))
             return true;
 
-        String fullFilePath = fileEntry.getFullFilePath();
+        String fullFilePath = resourceEntry.getFullFilePath();
         return fullFilePath != null && fullFilePath.equalsIgnoreCase(fileName);
     }
 

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.generic;
 
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -12,6 +13,8 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -27,6 +30,8 @@ public abstract class GameInstance {
     @Getter private MainMenuController<?, ?> mainMenuController;
     private Logger cachedLogger;
     private StringBuilder cachedLogging;
+
+    private static final Map<IGameType, Map<String, FXMLLoader>> knownResourcePaths = new HashMap<>();
 
     public GameInstance(IGameType gameType) {
         if (gameType == null)
@@ -73,7 +78,7 @@ public abstract class GameInstance {
         this.mainMenuController = makeMainMenuController();
         if (this.mainMenuController != null) {
             String versionName = (this.config.getDisplayName() != null ? this.config.getDisplayName() : this.config.getInternalName());
-            GameUIController.loadController(this, MainMenuController.MAIN_MENU_FXML_TEMPLATE_URL, this.mainMenuController);
+            GameUIController.loadController(this, MainMenuController.MAIN_MENU_FXML_TEMPLATE_LOADER, this.mainMenuController);
             Stage stage = GameUIController.openWindow(this.mainMenuController, "FrogLord " + Constants.VERSION + " -- " + this.gameType.getDisplayName() + " " + versionName, false);
             stage.setResizable(true);
         }
@@ -221,5 +226,23 @@ public abstract class GameInstance {
      */
     public URL getFXMLTemplateURL(String template) {
         return this.gameType.getEmbeddedResourceURL("fxml/" + template + ".fxml");
+    }
+
+    /**
+     * Gets the fxml template URL by its name.
+     * @param template The template name.
+     * @return fxmlTemplateUrl
+     */
+    public FXMLLoader getFXMLTemplateLoader(String template) {
+        Map<String, FXMLLoader> resourcePaths = knownResourcePaths.computeIfAbsent(this.gameType, key -> new HashMap<>());
+        FXMLLoader fxmlLoader = resourcePaths.get(template);
+        if (!resourcePaths.containsKey(template)) {
+            URL url = getFXMLTemplateURL(template);
+            if (url != null)
+                fxmlLoader = new FXMLLoader(url);
+            resourcePaths.put(template, fxmlLoader);
+        }
+
+        return fxmlLoader;
     }
 }

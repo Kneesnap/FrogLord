@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony.medievil.map;
 
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapGraphic
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapHeaderPacket;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -70,7 +70,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
      * @return levelTableEntry
      */
     public MediEvilLevelTableEntry getLevelTableEntry() {
-        return getGameInstance().getLevelTableEntry(getIndexEntry().getResourceId());
+        return getGameInstance().getLevelTableEntry(getFileResourceId());
     }
 
     @Override

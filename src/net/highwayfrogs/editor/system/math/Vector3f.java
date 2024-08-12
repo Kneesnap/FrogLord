@@ -3,6 +3,9 @@ package net.highwayfrogs.editor.system.math;
 import javafx.geometry.Point3D;
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.IBinarySerializable;
 
 /**
  * Represents a vector with three 32 bit floating point values.
@@ -11,7 +14,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class Vector3f {
+public class Vector3f implements IBinarySerializable {
     private float x;
     private float y;
     private float z;
@@ -55,6 +58,20 @@ public class Vector3f {
 
     public Vector3f(Vector3f vec) {
         this(vec.x, vec.y, vec.z);
+    }
+
+    @Override
+    public void load(DataReader reader) {
+        this.x = reader.readFloat();
+        this.y = reader.readFloat();
+        this.z = reader.readFloat();
+    }
+
+    @Override
+    public void save(DataWriter writer) {
+        writer.writeFloat(this.x);
+        writer.writeFloat(this.y);
+        writer.writeFloat(this.z);
     }
 
     /**

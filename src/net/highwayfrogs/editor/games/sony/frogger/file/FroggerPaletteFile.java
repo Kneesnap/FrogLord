@@ -4,7 +4,6 @@ import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
@@ -129,11 +128,10 @@ public class FroggerPaletteFile extends SCSharedGameFile {
 
     /**
      * Save palette data to an .act file for processing in Photoshop.
-     * @param fileEntry     The palette to export.
      */
     @Override
-    public void exportAlternateFormat(FileEntry fileEntry) {
-        File file = Utils.promptFileSave(getGameInstance(), "Save the Color Palette.", Utils.stripExtension(fileEntry.getDisplayName()), "ACT File", "act");
+    public void exportAlternateFormat() {
+        File file = Utils.promptFileSave(getGameInstance(), "Save the Color Palette.", Utils.stripExtension(getFileDisplayName()), "ACT File", "act");
         if (file != null) {
             final int redMask = 0xFF0000, greenMask = 0xFF00, blueMask = 0xFF;
 

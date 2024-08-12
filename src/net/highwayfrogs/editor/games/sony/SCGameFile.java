@@ -1,20 +1,26 @@
 package net.highwayfrogs.editor.games.sony;
 
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
+import net.highwayfrogs.editor.file.packers.PP20Packer;
+import net.highwayfrogs.editor.file.packers.PP20Packer.PackResult;
+import net.highwayfrogs.editor.file.writer.ArrayReceiver;
+import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.ISCFileDefinition;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.net.URL;
 import java.util.logging.Logger;
 
 /**
@@ -23,7 +29,9 @@ import java.util.logging.Logger;
  * Created by Kneesnap on 9/8/2023.
  */
 public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends SCGameData<TGameInstance> implements ICollectionViewEntry, IPropertyListCreator {
-    @Setter @Getter private byte[] rawFileData;
+    @Getter @Setter private byte[] rawFileData;
+    @Getter @Setter private ISCFileDefinition fileDefinition;
+
     public SCGameFile(TGameInstance instance) {
         super(instance);
     }
@@ -37,7 +45,7 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
 
     @Override
     public Logger getLogger() {
-        return getIndexEntry().getLogger();
+        return getFileDefinition().getLogger();
     }
 
     /**
@@ -53,7 +61,12 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
 
     @Override
     public String getCollectionViewDisplayName() {
-        return getFileDisplayName() + " [" + getIndexEntry().getResourceId() + "]";
+        MWIResourceEntry entry = getIndexEntry();
+        if (entry != null) {
+            return getFileDisplayName() + " [" + entry.getResourceId() + "]";
+        } else {
+            return getFileDisplayName();
+        }
     }
 
     @Override
@@ -95,10 +108,11 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
 
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
-        FileEntry fileEntry = getIndexEntry();
-        propertyList.add("File Type ID", fileEntry.getTypeId());
-        if (fileEntry.hasFilePath()) // Show path from MWI, not faked one.
-            propertyList.add("File Path", fileEntry.getFilePath());
+        MWIResourceEntry mwiEntry = getIndexEntry();
+        if (mwiEntry != null)
+            propertyList.add("File Type ID", mwiEntry.getTypeId());
+        if (getFileDefinition().hasFullFilePath())
+            propertyList.add("File Path", getFileDefinition().getFullFilePath());
 
         return propertyList;
     }
@@ -108,30 +122,71 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      * This is designed to always work, even during the load process.
      * @return fileEntry
      */
-    public FileEntry getIndexEntry() {
-        TGameInstance instance = getGameInstance();
-        if (instance == null)
-            throw new RuntimeException("The game instance is null.");
+    public MWIResourceEntry getIndexEntry() {
+        return getFileDefinition().getIndexEntry();
+    }
 
-        FileEntry entry = instance.getFileEntriesByFileObjects().get(this);
-        if (entry == null) // Shouldn't occur.
-            throw new RuntimeException("The SCGameFile was not registered in the MWI entry mapping.");
+    /**
+     * Gets the file resource ID, if it has one.
+     */
+    public int getFileResourceId() {
+        MWIResourceEntry mwiEntry = getIndexEntry();
+        if (mwiEntry == null)
+            throw new RuntimeException("'" + getFileDisplayName() + "' does not have an MWI Entry, therefore it has no resource ID!");
 
-        return entry;
+        return mwiEntry.getResourceId();
     }
 
     /**
      * Gets the display name of this file.
      */
     public String getFileDisplayName() {
-        return getIndexEntry().getDisplayName();
+        return getFileDefinition().getDisplayName();
     }
 
     /**
      * Export this file in a non-Frogger format.
      */
-    public void exportAlternateFormat(FileEntry entry) {
+    public void exportAlternateFormat() {
         getLogger().warning("The file (" + getClass().getSimpleName() + ") does not have an alternate file-type it can export as.");
+    }
+
+    /**
+     * Writes the file contents as a binary data stream to the provided DataWriter.
+     * @param writer The data writer to write the data to.
+     * @param progressBar The progress bar to update, if there is one.
+     */
+    public void saveFile(DataWriter writer, ProgressBarComponent progressBar) {
+        if (progressBar != null)
+            progressBar.setStatusMessage("Saving '" + getFileDisplayName() + "'");
+        long startTime = System.currentTimeMillis();
+
+        try {
+            // Save the file contents to a byte array.
+            ArrayReceiver receiver = new ArrayReceiver();
+            this.save(new DataWriter(receiver));
+
+            // Potentially compress the saved byte array.
+            byte[] fileBytes = receiver.toArray();
+            PackResult packResult = getFileDefinition().isCompressed() ? PP20Packer.packData(fileBytes) : null;
+
+            MWIResourceEntry mwiEntry = getIndexEntry();
+            if (mwiEntry != null)
+                mwiEntry.onSaveData(fileBytes, packResult);
+
+            writer.writeBytes(packResult != null ? packResult.getPackedBytes() : fileBytes);
+        } catch (Throwable th) {
+            Utils.handleError(getLogger(), th, true, "Failed to save file '%s' to MWD.", getFileDisplayName());
+            return;
+        }
+
+        // Report timing.
+        long endTime = System.currentTimeMillis();
+        if (progressBar != null)
+            progressBar.addCompletedProgress(1);
+        long timeTaken = (endTime - startTime);
+        if (timeTaken >= 10)
+            getLogger().warning("Saving the file '" + getFileDisplayName() + "' took " + timeTaken + " ms.");
     }
 
     /**
@@ -144,8 +199,8 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      */
     public static <TGameInstance extends SCGameInstance, TGameFile extends SCGameFile<?>, TUIController extends SCFileEditorUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
-            URL templateUrl = Utils.getFXMLTemplateURL(gameInstance, template);
-            GameUIController.loadController(gameInstance, templateUrl, controller);
+            FXMLLoader templateLoader = Utils.getFXMLTemplateLoader(gameInstance, template);
+            GameUIController.loadController(gameInstance, templateLoader, controller);
             controller.setTargetFile(fileToEdit);
         } catch (Throwable th) {
             Utils.handleError(fileToEdit.getLogger(), th, true, "Failed to create editor UI.");

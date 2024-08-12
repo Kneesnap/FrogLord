@@ -104,7 +104,7 @@ public abstract class SCPolygonAdapterNode<TPolygon> extends DynamicMeshAdapterN
             if (vertices == null || localVertexIndex >= vertices.size())
                 throw new RuntimeException("Invalid vertex ID: " + localVertexIndex);
 
-            SVector vertexPos = getAllVertices().get(localVertexIndex);
+            SVector vertexPos = vertices.get(localVertexIndex);
             entry.writeVertexXYZ(localVertexIndex, vertexPos.getFloatX(), vertexPos.getFloatY(), vertexPos.getFloatZ());
         } else {
             // Do nothing else, no other entries are given vertices. If we do this in a subclass, override this method.

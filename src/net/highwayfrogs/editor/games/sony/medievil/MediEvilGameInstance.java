@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.sony.medievil;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWIFile;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
@@ -14,6 +12,8 @@ import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityTable;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVBFile;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVHFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
@@ -58,12 +58,12 @@ public class MediEvilGameInstance extends SCGameInstance {
     }
 
     @Override
-    public SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData) {
-        if (fileEntry.getTypeId() == FILE_TYPE_MAP || fileEntry.hasExtension("map"))
+    public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
+        if (resourceEntry.getTypeId() == FILE_TYPE_MAP || resourceEntry.hasExtension("map"))
             return new MediEvilMapFile(this);
 
         // TODO FILE_TYPE_VLO
-        return SCUtils.createSharedGameFile(fileEntry, fileData);
+        return SCUtils.createSharedGameFile(resourceEntry, fileData);
     }
 
     @Override
@@ -104,7 +104,7 @@ public class MediEvilGameInstance extends SCGameInstance {
     }
 
     @Override
-    protected void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile) {
+    protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
         for (int i = 0; i < this.levelTable.size(); i++) {
             MediEvilLevelTableEntry entry = this.levelTable.get(i);
             if (entry.getTextureRemapPointer() < 0)
@@ -145,7 +145,7 @@ public class MediEvilGameInstance extends SCGameInstance {
             MediEvilLevelTableEntry entry = this.levelTable.get(i);
             if (mapResourceId > entry.getWadResourceId()) {
                 MediEvilMapFile levelTableMapFile = entry.getMapFile();
-                if (levelTableMapFile != null && levelTableMapFile.getIndexEntry().getResourceId() == mapResourceId)
+                if (levelTableMapFile != null && levelTableMapFile.getFileResourceId() == mapResourceId)
                     return entry;
             }
         }

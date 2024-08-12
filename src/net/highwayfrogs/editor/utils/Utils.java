@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.utils;
 
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.SubScene;
@@ -68,6 +69,7 @@ public class Utils {
     private static final Map<Color, java.awt.Color> awtColorCacheMap = new HashMap<>();
     private static final long IMAGE_CACHE_EXPIRE = TimeUnit.MINUTES.toMillis(5);
     private static final Map<Integer, List<Integer>> integerLists = new HashMap<>();
+    private static final Map<String, FXMLLoader> CACHED_RESOURCE_PATH_FXML_LOADERS = new HashMap<>();
     private static Logger logger;
 
     /**
@@ -385,6 +387,7 @@ public class Utils {
 
     /**
      * Convert a short value (fixed point, n fractional bits) into a float.
+     * The inverse of the returned value is guaranteed to be calculable back into shortVal.
      * @param shortVal The short to convert.
      * @param n        The number of fractional bits.
      * @return floatValue
@@ -1185,14 +1188,14 @@ public class Utils {
             throw new NullPointerException("controller");
 
         GameInstance instance = controller.getGameInstance();
-        URL fxmlTemplateUrl = getFXMLTemplateURL(instance, template);
-        if (fxmlTemplateUrl == null) {
+        FXMLLoader fxmlTemplateLoader = getFXMLTemplateLoader(instance, template);
+        if (fxmlTemplateLoader == null) {
             makePopUp("The UI template '" + template + "' was not found.", AlertType.ERROR);
             return false;
         }
 
         // Load fxml data.
-        if (GameUIController.loadController(instance, fxmlTemplateUrl, controller) == null)
+        if (GameUIController.loadController(instance, fxmlTemplateLoader, controller) == null)
             return false;
 
         // Open a window.
@@ -1205,17 +1208,21 @@ public class Utils {
      * @param template The template name.
      * @return fxmlTemplateUrl
      */
-    public static URL getFXMLTemplateURL(GameInstance gameInstance, String template) {
-        URL url = gameInstance != null ? gameInstance.getFXMLTemplateURL(template) : null;
+    public static FXMLLoader getFXMLTemplateLoader(GameInstance gameInstance, String template) {
+         FXMLLoader fxmlLoader = gameInstance != null ? gameInstance.getFXMLTemplateLoader(template) : null;
+         if (fxmlLoader != null)
+             return fxmlLoader;
 
-        String localPath = "fxml/" + template + ".fxml";
-        if (url == null)
-            url = Utils.getResourceURL(localPath);
+         fxmlLoader = CACHED_RESOURCE_PATH_FXML_LOADERS.get(template);
+         if (fxmlLoader == null) {
+             String localPath = "fxml/" + template + ".fxml";
+             URL url = Utils.getResourceURL(localPath);
+             if (url == null)
+                 throw new RuntimeException("Could not find resource '" + localPath + "' for " + Utils.getSimpleName(gameInstance) + ".");
+             CACHED_RESOURCE_PATH_FXML_LOADERS.put(template, fxmlLoader = new FXMLLoader(url));
+         }
 
-        if (url == null)
-            throw new RuntimeException("Could not find resource '" + localPath + "' for " + Utils.getSimpleName(gameInstance) + ".");
-
-        return url;
+         return fxmlLoader;
     }
 
     /**
@@ -2694,5 +2701,49 @@ public class Utils {
         String inputFileName = file.getName();
         String strippedInputName = Utils.stripExtension(inputFileName);
         return new File(file.getParentFile(), strippedInputName + suffix + inputFileName.substring(strippedInputName.length() + 1));
+    }
+
+    /**
+     * Ensures input string is using the path separator for the system currently running FrogLord.
+     * @param input the string containing potentially incorrect path separators
+     * @param removeLeadingSeparator if true, any path separators at the start of the string will be removed.
+     * @return processed string
+     */
+    public static String ensureValidPathSeparator(String input, boolean removeLeadingSeparator) {
+        if (input == null || input.length() == 0)
+            return input;
+
+        String result = input;
+        if (File.separatorChar != '\\')
+            result = result.replace('\\', File.separatorChar);
+        if (File.separatorChar != '/')
+            result = result.replace('/', File.separatorChar);
+
+        if (removeLeadingSeparator)
+            while (result.length() > 0 && result.charAt(0) == File.separatorChar)
+                result = result.substring(1);
+
+        return result;
+    }
+
+    /**
+     * Gets the index of the value in the list.
+     * If the value is not seen in the list, an index at the end of the list will be provided.
+     * This is primarily used for identifying indices when debugging.
+     * @param list the list to find the index from
+     * @param value the value to lookup
+     * @return index
+     * @param <TElement> the type of elements in the list.
+     */
+    public static <TElement> int getLoadingIndex(List<TElement> list, TElement value) {
+        if (list == null)
+            return -1;
+
+        int index = list.indexOf(value);
+        if (index == -1) {
+            return list.size();
+        } else {
+            return index;
+        }
     }
 }

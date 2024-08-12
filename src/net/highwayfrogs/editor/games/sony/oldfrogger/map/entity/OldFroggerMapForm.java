@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.entity;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -17,6 +15,8 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEditorUtils;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerFormUIManager;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.utils.Utils;
@@ -235,7 +235,8 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
             return null;
         }
 
-        return wadFile.getFiles().get(this.mofId);
+        // The PC version is off by one since it includes the VLOs in the wads.
+        return wadFile.getFiles().get(this.mofId + (getGameInstance().isPC() ? 1 : 0));
     }
 
     /**

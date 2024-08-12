@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.games.sony.shared;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -12,24 +12,24 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 @Getter
 public class LinkedTextureRemap<TFile extends SCGameFile<?>> extends TextureRemapArray {
-    private final FileEntry fileEntry;
+    private final MWIResourceEntry resourceEntry;
     private final Class<TFile> fileClass;
 
-    public LinkedTextureRemap(SCGameInstance instance, FileEntry fileEntry, Class<TFile> fileClass) {
-        this(instance, fileEntry, fileClass, null, 0);
+    public LinkedTextureRemap(SCGameInstance instance, MWIResourceEntry resourceEntry, Class<TFile> fileClass) {
+        this(instance, resourceEntry, fileClass, null, 0);
     }
 
-    public LinkedTextureRemap(SCGameInstance instance, FileEntry fileEntry, Class<TFile> fileClass, String name) {
-        this(instance, fileEntry, fileClass, name, 0);
+    public LinkedTextureRemap(SCGameInstance instance, MWIResourceEntry resourceEntry, Class<TFile> fileClass, String name) {
+        this(instance, resourceEntry, fileClass, name, 0);
     }
 
-    public LinkedTextureRemap(SCGameInstance instance, FileEntry fileEntry, Class<TFile> fileClass, long loadAddress) {
-        this(instance, fileEntry, fileClass, null, loadAddress);
+    public LinkedTextureRemap(SCGameInstance instance, MWIResourceEntry resourceEntry, Class<TFile> fileClass, long loadAddress) {
+        this(instance, resourceEntry, fileClass, null, loadAddress);
     }
 
-    public LinkedTextureRemap(SCGameInstance instance, FileEntry fileEntry, Class<TFile> fileClass, String name, long loadAddress) {
+    public LinkedTextureRemap(SCGameInstance instance, MWIResourceEntry resourceEntry, Class<TFile> fileClass, String name, long loadAddress) {
         super(instance, name, loadAddress);
-        this.fileEntry = fileEntry;
+        this.resourceEntry = resourceEntry;
         this.fileClass = fileClass;
     }
 
@@ -38,7 +38,7 @@ public class LinkedTextureRemap<TFile extends SCGameFile<?>> extends TextureRema
      * @return file
      */
     public TFile getFile() {
-        SCGameFile<?> file = getArchive().getFiles().get(this.fileEntry.getResourceId());
+        SCGameFile<?> file = getArchive().getFiles().get(this.resourceEntry.getResourceId());
         if (file == null)
             return null;
 

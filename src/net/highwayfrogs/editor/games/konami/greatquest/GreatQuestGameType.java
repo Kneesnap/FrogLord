@@ -55,8 +55,8 @@ public class GreatQuestGameType implements IGameType {
     }
 
     @Override
-    public GreatQuestGameConfigUI setupConfigUI(GameConfigController controller, Config config) {
-        return new GreatQuestGameConfigUI(controller, config);
+    public GreatQuestGameConfigUI setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
+        return new GreatQuestGameConfigUI(controller, gameConfig, config);
     }
 
     /**
@@ -65,8 +65,8 @@ public class GreatQuestGameType implements IGameType {
     public static class GreatQuestGameConfigUI extends GameConfigUIController {
         private final GameConfigFileOpenBrowseComponent binFileBrowseComponent;
 
-        public GreatQuestGameConfigUI(GameConfigController controller, Config config) {
-            super(controller);
+        public GreatQuestGameConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
+            super(controller, gameConfig);
             this.binFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_BIN_PATH, "Game Archive (.bin)", "Please locate and open 'data.bin'", "Frogger The Great Quest Data", "bin");
             loadController(null);
         }

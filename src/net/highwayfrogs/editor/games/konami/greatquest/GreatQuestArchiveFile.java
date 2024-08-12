@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
+import javafx.fxml.FXMLLoader;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
@@ -14,7 +15,6 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
@@ -244,8 +244,8 @@ public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance>
      */
     public static <TGameFile extends GreatQuestArchiveFile, TUIController extends GreatQuestFileEditorUIController<TGameFile>> TUIController loadEditor(GreatQuestInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
-            URL templateUrl = Utils.getFXMLTemplateURL(gameInstance, template);
-            GameUIController.loadController(gameInstance, templateUrl, controller);
+            FXMLLoader templateLoader = Utils.getFXMLTemplateLoader(gameInstance, template);
+            GameUIController.loadController(gameInstance, templateLoader, controller);
             controller.setTargetFile(fileToEdit);
         } catch (Throwable th) {
             Utils.handleError(fileToEdit.getLogger(), th, true, "Failed to create editor UI.");

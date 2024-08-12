@@ -13,6 +13,7 @@ import java.util.Stack;
 
 /**
  * Allows writing data to a receiver.
+ * TODO: Go over this and error when we write stuff outside of the expected values.
  * Created by Kneesnap on 8/10/2018.
  */
 @Getter
@@ -74,17 +75,6 @@ public class DataWriter {
             for (int i = 0; i < alignment - offsetAmount; i++)
                 writeByte(padding); // Alignment.
     }
-
-    /**
-     * Jump to a given write offset, leaving null-bytes in between.
-     * @param address The address to jump to.
-     */
-    public void jumpTo(int address) {
-        int index = getIndex();
-        Utils.verify(address >= index, "Tried to jump to %s, which is before the current writer address (%s).", Integer.toHexString(address), Integer.toHexString(index));
-        writeNull(address - index);
-    }
-
     /**
      * Write null bytes to a given address.
      * @param address The address to end at.

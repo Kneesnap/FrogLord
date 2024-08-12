@@ -2,11 +2,11 @@ package net.highwayfrogs.editor.file.config.exe;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.data.WorldId;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 
@@ -82,7 +82,7 @@ public class LevelInfo extends ExeStruct {
     }
 
     @Override
-    public boolean isEntry(FileEntry test) {
+    public boolean isEntry(SCGameFile<?> file) {
         return false;
     }
 

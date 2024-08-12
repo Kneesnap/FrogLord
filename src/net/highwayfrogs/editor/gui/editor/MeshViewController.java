@@ -120,6 +120,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private AmbientLight mainLight;
 
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
+    private static final FXMLLoader BASIC_MESH_VIEW_FXML_LOADER = new FXMLLoader(MeshViewController.class.getResource("/fxml/scene-basic-3d.fxml"));
 
     protected MeshViewController() {
         this(null);
@@ -614,7 +615,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         }
 
         // Load FXML for UI layout.
-        FXMLLoader fxmlLoader = new FXMLLoader(MeshViewController.class.getResource("/fxml/scene-basic-3d.fxml"));
+        FXMLLoader fxmlLoader = BASIC_MESH_VIEW_FXML_LOADER;
         fxmlLoader.setController(controller);
 
         // Load template.
@@ -623,6 +624,9 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             loadRoot = fxmlLoader.load();
         } catch (IOException ex) {
             throw new RuntimeException("Failed to load base mesh view fxml template.", ex);
+        } finally {
+            fxmlLoader.setController(null);
+            fxmlLoader.setRoot(null);
         }
 
         // Setup UI.

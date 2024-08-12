@@ -4,7 +4,6 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -146,8 +145,8 @@ public class VLOArchive extends SCSharedGameFile {
 
     @Override
     @SneakyThrows
-    public void exportAlternateFormat(FileEntry fileEntry) {
-        ImageIO.write(makeVRAMImage(), "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(fileEntry.getDisplayName()) + ".png"));
+    public void exportAlternateFormat() {
+        ImageIO.write(makeVRAMImage(), "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(getFileDisplayName()) + ".png"));
         System.out.println("Exported VRAM Image.");
     }
 

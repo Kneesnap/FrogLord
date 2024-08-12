@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.konami.ancientshadow;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.DummyFile;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -13,6 +12,7 @@ import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.konami.FroggerBeyondUtil;
 import net.highwayfrogs.editor.games.konami.FroggerBeyondUtil.FroggerBeyondPlatform;
 import net.highwayfrogs.editor.games.konami.hudson.PRS1Unpacker;
+import net.highwayfrogs.editor.games.sony.shared.mwd.DummyFile;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.Utils;
 

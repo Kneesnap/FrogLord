@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.medievil2;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWIFile;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
@@ -17,6 +16,8 @@ import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile;
 import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonFile;
 import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
@@ -52,26 +53,26 @@ public class MediEvil2GameInstance extends SCGameInstance {
     private static final int FILE_TYPE_VB_ALTERNATE = 10;
 
     @Override
-    public SCGameFile<?> createFile(MWIFile.FileEntry fileEntry, byte[] fileData) {
-        if (fileEntry.getTypeId() == FILE_TYPE_STAT) {
+    public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
+        if (resourceEntry.getTypeId() == FILE_TYPE_STAT) {
             return new PTStaticFile(this);
-        } else if (fileEntry.getTypeId() == FILE_TYPE_SKEL) {
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_SKEL) {
             return new PTSkeletonFile(this);
-        } else if (fileEntry.getTypeId() == FILE_TYPE_ANIM) {
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_ANIM) {
             return new PTActionSetFile(this);
-        } else if (fileEntry.getTypeId() == FILE_TYPE_MAP || fileEntry.getTypeId() == FILE_TYPE_MAP_ALTERNATE) {
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_MAP || resourceEntry.getTypeId() == FILE_TYPE_MAP_ALTERNATE) {
             return new MediEvil2Map(this);
-        } else if (fileEntry.getTypeId() == FILE_TYPE_VB || fileEntry.getTypeId() == FILE_TYPE_VB_ALTERNATE) {
-            return SCUtils.makeSound(fileEntry, fileData, SCForcedLoadSoundFileType.BODY);
-        } else if (fileEntry.getTypeId() == FILE_TYPE_VH) {
-            return SCUtils.makeSound(fileEntry, fileData, SCForcedLoadSoundFileType.HEADER);
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_VB || resourceEntry.getTypeId() == FILE_TYPE_VB_ALTERNATE) {
+            return SCUtils.makeSound(resourceEntry, fileData, SCForcedLoadSoundFileType.BODY);
+        } else if (resourceEntry.getTypeId() == FILE_TYPE_VH) {
+            return SCUtils.makeSound(resourceEntry, fileData, SCForcedLoadSoundFileType.HEADER);
         } else {
-            return SCUtils.createSharedGameFile(fileEntry, fileData);
+            return SCUtils.createSharedGameFile(resourceEntry, fileData);
         }
     }
 
     @Override
-    protected void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile) {
+    protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
         for (int i = 0; i < this.levelTable.size(); i++) {
             MediEvil2LevelDefinition levelDefinition = this.levelTable.get(i);
             for (int j = 0; j < levelDefinition.getLevelSections().size(); j++) {

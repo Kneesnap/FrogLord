@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui.mesh;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.system.math.Vector2f;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.logging.Logger;
@@ -125,6 +126,15 @@ public class DynamicMeshDataEntry {
 
         // Mark this entry as no longer active.
         this.active = false;
+    }
+
+    /**
+     * Adds a new vertex position.
+     * @param position the position vector to add
+     * @return the index into the mesh vertex array which the vertex data starts.
+     */
+    public int addVertexValue(Vector3f position) {
+        return addVertexValue(position.getX(), position.getY(), position.getZ());
     }
 
     /**

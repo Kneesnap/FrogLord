@@ -1,15 +1,15 @@
 package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 
 import java.util.function.Function;
 
@@ -93,24 +93,25 @@ public class PCThemeBook extends ThemeBook {
     }
 
     @Override
-    public boolean isEntry(FileEntry test) {
-        return lowWadId == test.getResourceId()
-                || lowVloId == test.getResourceId()
-                || highWadId == test.getResourceId()
-                || highVloId == test.getResourceId()
-                || lowMultiplayerWadId == test.getResourceId()
-                || lowMultiplayerVloId == test.getResourceId()
-                || highMultiplayerWadId == test.getResourceId()
-                || highMultiplayerVloId == test.getResourceId();
+    public boolean isEntry(SCGameFile<?> file) {
+        int resourceId = file.getFileResourceId();
+        return this.lowWadId == resourceId
+                || this.lowVloId == resourceId
+                || this.highWadId == resourceId
+                || this.highVloId == resourceId
+                || this.lowMultiplayerWadId == resourceId
+                || this.lowMultiplayerVloId == resourceId
+                || this.highMultiplayerWadId == resourceId
+                || this.highMultiplayerVloId == resourceId;
     }
 
     @Override
     public String toString() {
-        return "WAD[Hi: " + getGameInstance().getResourceName(highWadId) + ",Lo: " + getGameInstance().getResourceName(lowWadId)
-                + "] VLO[Hi: " + getGameInstance().getResourceName(highVloId) + ",Lo: " + getGameInstance().getResourceName(lowVloId)
-                + "] mWAD[Hi: " + getGameInstance().getResourceName(highMultiplayerWadId) + ",Lo: " + getGameInstance().getResourceName(lowMultiplayerWadId)
-                + "] mVLO[Hi: " + getGameInstance().getResourceName(highMultiplayerVloId) + ",Lo: " + getGameInstance().getResourceName(lowMultiplayerVloId)
-                + "] Death Height: " + deathHeight;
+        return "WAD[Hi: " + getGameInstance().getResourceName(this.highWadId) + ",Lo: " + getGameInstance().getResourceName(this.lowWadId)
+                + "] VLO[Hi: " + getGameInstance().getResourceName(this.highVloId) + ",Lo: " + getGameInstance().getResourceName(this.lowVloId)
+                + "] mWAD[Hi: " + getGameInstance().getResourceName(this.highMultiplayerWadId) + ",Lo: " + getGameInstance().getResourceName(this.lowMultiplayerWadId)
+                + "] mVLO[Hi: " + getGameInstance().getResourceName(this.highMultiplayerVloId) + ",Lo: " + getGameInstance().getResourceName(this.lowMultiplayerVloId)
+                + "] Death Height: " + this.deathHeight;
     }
 
     @Override

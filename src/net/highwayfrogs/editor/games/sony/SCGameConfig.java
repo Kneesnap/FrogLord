@@ -20,6 +20,7 @@ public class SCGameConfig extends GameConfig {
     private int MWIOffset;
     private int MWILength;
     private int bmpPointerAddress;
+    private boolean mwdLooseFiles;
     private SCGameRegion region;
     private NameBank soundBank;
     private NameBank animationBank;
@@ -55,6 +56,7 @@ public class SCGameConfig extends GameConfig {
     }
 
     private void readBasicConfigData(Config config) {
+        this.mwdLooseFiles = config.getBoolean("mwdLooseFiles", false);
         this.region = config.getEnum("region", SCGameRegion.UNSPECIFIED);
         this.MWIOffset = config.getInt("mwiOffset");
         this.MWILength = config.getInt("mwiLength");

@@ -1,14 +1,15 @@
 package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Function;
@@ -82,11 +83,16 @@ public class PCMapBook extends MapBook {
     }
 
     @Override
-    public boolean isEntry(FileEntry test) {
-        return this.lowMapId == test.getResourceId()
-                || this.lowWadId == test.getResourceId()
-                || this.highMapId == test.getResourceId()
-                || this.highWadId == test.getResourceId();
+    public boolean isEntry(SCGameFile<?> file) {
+        MWIResourceEntry mwiEntry = file.getIndexEntry();
+        if (mwiEntry == null)
+            return false; // There is no MWI entry.
+
+        int fileResourceId = mwiEntry.getResourceId();
+        return this.lowMapId == fileResourceId
+                || this.lowWadId == fileResourceId
+                || this.highMapId == fileResourceId
+                || this.highWadId == fileResourceId;
     }
 
     @Override
@@ -96,10 +102,11 @@ public class PCMapBook extends MapBook {
 
     @Override
     public WADFile getWad(FroggerMapFile map) {
-        if (this.lowMapId == map.getIndexEntry().getResourceId())
+        int fileResourceId = map.getFileResourceId();
+        if (this.lowMapId == fileResourceId)
             return getGameInstance().getGameFile(this.lowWadId);
 
-        if (this.highMapId == map.getIndexEntry().getResourceId())
+        if (this.highMapId == fileResourceId)
             return getGameInstance().getGameFile(this.highWadId);
 
         return null;

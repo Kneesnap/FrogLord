@@ -10,6 +10,7 @@ import javafx.scene.input.KeyCode;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -33,6 +34,16 @@ public class InputMenu {
      */
     public static void promptInput(GameInstance instance, String prompt, String defaultText, Consumer<String> handler) {
         Utils.createWindowFromFXMLTemplate("window-wait-for-user-input", new InputController(instance, prompt, handler, defaultText), "Waiting for user input...", true);
+    }
+
+    /**
+     * Require the user to perform a selection.
+     * @param prompt The prompt to display the user.
+     */
+    public static String promptInput(GameInstance instance, String prompt, String defaultText) {
+        AtomicReference<String> resultHolder = new AtomicReference<>(null);
+        promptInput(instance, prompt, defaultText, resultHolder::set);
+        return resultHolder.get();
     }
 
     public static class InputController extends GameUIController<GameInstance> {
@@ -62,7 +73,7 @@ public class InputMenu {
                     attemptSubmit();
             });
 
-            Platform.runLater(textField::requestFocus);
+            Platform.runLater(this.textField::requestFocus);
         }
 
         @FXML
@@ -76,7 +87,7 @@ public class InputMenu {
                 return;
 
             closeWindow();
-            handler.accept(response);
+            this.handler.accept(response);
         }
 
         @FXML

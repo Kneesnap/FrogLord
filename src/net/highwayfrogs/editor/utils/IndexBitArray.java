@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.utils;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -8,7 +10,7 @@ import java.util.Arrays;
  * An array of indices, stored using bits.
  * Created by Kneesnap on 12/26/2023.
  */
-public class IndexBitArray {
+public class IndexBitArray implements IBinarySerializable {
     private int[] array;
     @Getter private int bitCount; // The number of bits set.
     @Getter private int lastBitIndex; // The ID of the highest bit set.
@@ -25,6 +27,39 @@ public class IndexBitArray {
     public IndexBitArray(int expectedBitCount) {
         this.array = new int[getArraySize(expectedBitCount)];
         clear();
+    }
+
+    @Override
+    public void load(DataReader reader) {
+        this.bitCount = 0;
+        this.lastBitIndex = 0;
+        int arrayLength = reader.readInt();
+        if (this.array == null || arrayLength != this.array.length)
+            this.array = arrayLength > 0 ? new int[arrayLength] : EMPTY_ARRAY;
+
+        for (int i = 0; i < arrayLength; i++) {
+            int value = reader.readInt();
+            this.array[i] = value;
+            if (value == 0)
+                continue;
+
+            // Calculate bitCount and lastBitIndex.
+            for (int bit = 0; bit < BITS_PER_ELEMENT; bit++) {
+                int bitMask = 1 << bit;
+                if ((value & bitMask) != bitMask)
+                    continue;
+
+                this.bitCount++;
+                this.lastBitIndex = (i << ELEMENT_BIT_SHIFT) | bit;
+            }
+        }
+    }
+
+    @Override
+    public void save(DataWriter writer) {
+        writer.writeInt(this.array.length);
+        for (int i = 0; i < this.array.length; i++)
+            writer.writeInt(this.array[i]);
     }
 
     /**
@@ -225,7 +260,12 @@ public class IndexBitArray {
             this.array = Arrays.copyOf(this.array, (int) newArraySize);
     }
 
-    private static int getArraySize(int bitCount) {
-        return (bitCount >> ELEMENT_BIT_SHIFT) + ((bitCount % BITS_PER_ELEMENT > 0) ? 1 : 0);
+    /**
+     * Gets the size of the array required to store the given number of bits.
+     * @param bitCount the bit count kept by the array
+     * @return requiredArrayLength
+     */
+    public static int getArraySize(int bitCount) {
+        return ((bitCount + BITS_PER_ELEMENT - 1) >> ELEMENT_BIT_SHIFT);
     }
 }

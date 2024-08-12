@@ -4,8 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
@@ -19,6 +17,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 
 /**
  * Represents an entry in a form book.
@@ -162,24 +162,51 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
     }
 
     /**
+     * Gets the wad file which the form entry points to a WAD within.
+     * @param mapFile the map file to resolve the wad file for
+     * @return wadFile
+     */
+    public WADFile getWadFile(FroggerMapFile mapFile) {
+        WADFile wadFile;
+        boolean isGeneralTheme = getTheme() == FroggerMapTheme.GENERAL;
+
+        // The game will not use the map book if general is the theme.
+        if (!isGeneralTheme && mapFile.getIndexEntry() != null) { // There is an MWI entry, so try to do what the game does.
+            for (MapBook mapBook : getGameInstance().getMapLibrary()) {
+                if (mapBook != null && mapBook.isEntry(mapFile)) {
+                    wadFile = mapBook.getWad(mapFile);
+                    if (wadFile != null)
+                        return wadFile;
+                }
+            }
+        }
+
+        // If the theme is GENERAL, the game will use the general theme book.
+        // But, we also are using this as a fallback option for if there's no way to find the map book.
+        ThemeBook themeBook = getGameInstance().getThemeBook(getTheme());
+        wadFile = themeBook != null ? themeBook.getWAD(mapFile) : null;
+        if (wadFile != null)
+            return wadFile;
+
+        // This here is a failsafe, and is not something the game does.
+        // At this point, we're going to just get the theme book for the map theme, and use that.
+        // This shouldn't really happen, but it doesn't hurt to include.
+        themeBook = getGameInstance().getThemeBook(mapFile.getMapTheme());
+        wadFile = themeBook != null ? themeBook.getWAD(mapFile) : null;
+        if (wadFile != null)
+            return wadFile;
+
+        throw new RuntimeException("Failed to find the WADFile for the form entry!");
+    }
+
+    /**
      * Gets the MOF for this particular form.
      */
     public WADEntry getModel(FroggerMapFile mapFile) {
         if (testFlag(FormLibFlag.NO_MODEL))
             return null;
 
-        boolean isGeneralTheme = getTheme() == FroggerMapTheme.GENERAL;
-
-        WADFile wadFile = null;
-        if (isGeneralTheme) {
-            ThemeBook themeBook = getGameInstance().getThemeBook(getTheme());
-            wadFile = themeBook != null ? themeBook.getWAD(mapFile) : null;
-        } else {
-            MapBook mapBook = mapFile.getIndexEntry().getMapBook();
-            if (mapBook != null)
-                wadFile = mapBook.getWad(mapFile);
-        }
-
+        WADFile wadFile = getWadFile(mapFile);
         int wadIndex = getWadIndex();
         if (wadFile != null && wadFile.getFiles().size() > wadIndex && wadIndex >= 0) { // Test if there's an associated WAD.
             WADEntry wadEntry = wadFile.getFiles().get(wadIndex);

@@ -50,7 +50,7 @@ public class MOFFile extends MOFBase {
             reader.jumpReturn();
 
             String oldName = Utils.stripExtensionWin95(getHolder().getCompleteMOF().getFileDisplayName());
-            String newName = Utils.stripExtensionWin95(getFileEntry().getDisplayName());
+            String newName = Utils.stripExtensionWin95(getFileDisplayName());
             getConfig().getAnimationBank().linkChildBank(oldName, newName); // Link animation names.
         }
 
@@ -157,6 +157,6 @@ public class MOFFile extends MOFBase {
      * If there are none configured, null is returned.
      */
     public int[] getConfiguredPartsHiddenByDefault() {
-        return getConfig().getHiddenPartIds().get(getFileEntry().getDisplayName());
+        return getConfig().getHiddenPartIds().get(getFileDisplayName());
     }
 }

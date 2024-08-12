@@ -1,11 +1,8 @@
 package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWDFile;
 import net.highwayfrogs.editor.games.generic.GameObject;
-import net.highwayfrogs.editor.utils.Utils;
-
-import java.util.logging.Logger;
+import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 
 /**
  * Represents an object used by a Sony Cambridge / Millennium Interactive game.

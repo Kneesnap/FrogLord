@@ -57,7 +57,7 @@ public interface IGameType {
      * @param controller the UI controller to create the UI under
      * @param config the config used to load data
      */
-    GameConfigUIController setupConfigUI(GameConfigController controller, Config config);
+    GameConfigUIController setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config);
 
     /**
      * Gets an InputStream to files included for this specific game.

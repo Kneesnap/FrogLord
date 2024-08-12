@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.gui;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -14,8 +15,6 @@ import net.highwayfrogs.editor.games.generic.GameObject;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.utils.Utils;
-
-import java.net.URL;
 
 /**
  * Represents editor UI for a GameFile.
@@ -91,8 +90,8 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
      */
     public static <TGameInstance extends GameInstance, TGameFile extends GameObject<?> & IPropertyListCreator, TUIController extends DefaultFileUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
-            URL templateUrl = Utils.getFXMLTemplateURL(gameInstance, template);
-            GameUIController.loadController(gameInstance, templateUrl, controller);
+            FXMLLoader templateLoader = Utils.getFXMLTemplateLoader(gameInstance, template);
+            GameUIController.loadController(gameInstance, templateLoader, controller);
             controller.setTargetFile(fileToEdit);
         } catch (Throwable th) {
             Utils.handleError(fileToEdit.getLogger(), th, true, "Failed to create editor UI.");

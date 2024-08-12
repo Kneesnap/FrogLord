@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.utils;
 
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.mof.MOFFile;
@@ -17,6 +16,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 
 import java.util.ArrayList;
 import java.util.HashSet;

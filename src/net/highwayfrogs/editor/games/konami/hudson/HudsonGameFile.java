@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.hudson;
 
+import javafx.fxml.FXMLLoader;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.generic.GameData;
@@ -13,7 +14,6 @@ import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
-import java.net.URL;
 import java.util.logging.Logger;
 
 /**
@@ -122,8 +122,8 @@ public abstract class HudsonGameFile extends GameData<HudsonGameInstance> implem
      */
     public static <TGameFile extends HudsonGameFile, TUIController extends HudsonFileEditorUIController<TGameFile>> TUIController loadEditor(HudsonGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
-            URL templateUrl = Utils.getFXMLTemplateURL(gameInstance, template);
-            GameUIController.loadController(gameInstance, templateUrl, controller);
+            FXMLLoader templateLoader = Utils.getFXMLTemplateLoader(gameInstance, template);
+            GameUIController.loadController(gameInstance, templateLoader, controller);
             controller.setTargetFile(fileToEdit);
         } catch (Throwable th) {
             Utils.handleError(fileToEdit.getLogger(), th, true, "Failed to create editor UI.");

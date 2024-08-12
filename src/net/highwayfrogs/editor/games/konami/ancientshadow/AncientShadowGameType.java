@@ -56,8 +56,8 @@ public class AncientShadowGameType implements IGameType {
     }
 
     @Override
-    public AncientShadowGameConfigUI setupConfigUI(GameConfigController controller, Config config) {
-        return new AncientShadowGameConfigUI(controller, config);
+    public AncientShadowGameConfigUI setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
+        return new AncientShadowGameConfigUI(controller, gameConfig, config);
     }
 
     /**
@@ -66,8 +66,8 @@ public class AncientShadowGameType implements IGameType {
     public static class AncientShadowGameConfigUI extends GameConfigUIController {
         private final GameConfigFileOpenBrowseComponent binFileBrowseComponent;
 
-        public AncientShadowGameConfigUI(GameConfigController controller, Config config) {
-            super(controller);
+        public AncientShadowGameConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
+            super(controller, gameConfig);
             this.binFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_MAIN_FILE_PATH, "Game Archive (gamedata.bin/*.hfs)", "Please locate and open 'gamedata.bin' (Or a .HFS file)", "Frogger Ancient Shadow Data", "gamedata.bin", "hfs");
             loadController(null);
         }

@@ -9,8 +9,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
@@ -29,6 +27,8 @@ import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFMainController;
 import net.highwayfrogs.editor.gui.GUIMain;
@@ -59,7 +59,7 @@ public class MOFHolder extends SCSharedGameFile {
     private MOFAnimation animatedFile;
 
     private transient FroggerMapTheme theme; // TODO: We may want to change how we track this to instead maybe know the parent WAD file and calculate it from that. This is in the interest of supporting other games.
-    private transient VLOArchive vloFile;
+    private transient VLOArchive vloFile; // TODO: Change this later, I think we want to change how this is tracked.
     private MOFHolder completeMOF; // This is the last MOF which was not incomplete.
 
     public static final int FLAG_ANIMATION_FILE = Constants.BIT_FLAG_3; // This is an animation MOF file.
@@ -74,9 +74,9 @@ public class MOFHolder extends SCSharedGameFile {
 
     @Override
     @SneakyThrows
-    public void exportAlternateFormat(FileEntry entry) {
+    public void exportAlternateFormat() {
         // TODO: TOSS
-        File outputFile = new File(GUIMain.getWorkingDirectory(), entry.getDisplayName());
+        File outputFile = new File(GUIMain.getWorkingDirectory(), getFileDisplayName());
         if (this.rawBytes != null)
             Files.write(outputFile.toPath(), this.rawBytes);
     }
@@ -327,7 +327,7 @@ public class MOFHolder extends SCSharedGameFile {
     public MOFHolder getOverride() {
         String mofOverride = getConfig().getMofRenderOverrides().get(getFileDisplayName());
         if (mofOverride != null) {
-            FileEntry entry = getGameInstance().getResourceEntryByName(mofOverride);
+            MWIResourceEntry entry = getGameInstance().getResourceEntryByName(mofOverride);
             if (entry != null) {
                 SCGameFile<?> file = getGameInstance().getGameFile(entry);
                 if (file instanceof MOFHolder)

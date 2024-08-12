@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.sony.moonwarrior;
 
-import net.highwayfrogs.editor.file.MWIFile;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
@@ -26,15 +26,15 @@ public class MoonWarriorInstance extends SCGameInstance {
     }
 
     @Override
-    public SCGameFile<?> createFile(FileEntry fileEntry, byte[] fileData) {
-        if (fileEntry.getTypeId() == FILE_TYPE_MAP)
+    public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
+        if (resourceEntry.getTypeId() == FILE_TYPE_MAP)
             return new MoonWarriorMap(this);
 
-        return SCUtils.createSharedGameFile(fileEntry, fileData);
+        return SCUtils.createSharedGameFile(resourceEntry, fileData);
     }
 
     @Override
-    protected void setupTextureRemaps(DataReader exeReader, MWIFile mwiFile) {
+    protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
         // It doesn't appear Moon Warrior has any texture remaps, unless you consider the VLO itself a texture remap.
     }
 

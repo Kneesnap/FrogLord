@@ -5,7 +5,6 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestMainMenuUIController;
-import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -59,7 +58,12 @@ public class GreatQuestInstance extends GameInstance {
     }
 
     @Override
-    protected MainMenuController<?, ?> makeMainMenuController() {
+    public GreatQuestMainMenuUIController getMainMenuController() {
+        return (GreatQuestMainMenuUIController) super.getMainMenuController();
+    }
+
+    @Override
+    protected GreatQuestMainMenuUIController makeMainMenuController() {
         return new GreatQuestMainMenuUIController(this);
     }
 

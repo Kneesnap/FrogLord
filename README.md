@@ -9,10 +9,10 @@ To use this tool, you must have a copy of the game.
 
 ## Getting Started:
 Download FrogLord [here](https://github.com/Kneesnap/FrogLord/releases).  
-If you need any help, have questions, or want to get in touch, don't hesitate to talk to us on our [website](https://highwayfrogs.net/) or our [discord server](https://discord.gg/GSNCbCN).  
+If you need any help, have questions, or want to get in touch, don't hesitate to talk to us on our [website](https://highwayfrogs.net/) or our [discord server](https://discord.gg/GSNCbCN).
 
 ## Join the Community: [![Join the discord server!](https://dcbadge.limes.pink/api/server/https://discord.gg/GSNCbCN)](https://discord.gg/GSNCbCN)
-Need help? Want to find/share mods? Talk with other Frogger fans? Join our [discord server](https://discord.gg/GSNCbCN).  
+Need help? Want to find/share mods? Talk with other Frogger fans? Join our [discord server](https://discord.gg/GSNCbCN).
 
 ## Screenshots:
 ![MAP Viewer](/_repository/level-screenshot.png)

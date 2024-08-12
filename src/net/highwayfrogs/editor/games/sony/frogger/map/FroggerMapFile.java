@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.games.sony.frogger.map;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.FroggerMapConfig;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
@@ -30,6 +28,8 @@ import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -79,7 +79,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
     private transient VLOArchive cachedVloFile;
     private transient LinkedTextureRemap<FroggerMapFile> cachedTextureRemap;
 
-    public FroggerMapFile(FroggerGameInstance instance, FileEntry fileEntry) {
+    public FroggerMapFile(FroggerGameInstance instance, MWIResourceEntry resourceEntry) {
         super(instance, true);
         addFilePacket(this.headerPacket = new FroggerMapFilePacketHeader(this));
         addFilePacket(this.generalPacket = new FroggerMapFilePacketGeneral(this));
@@ -93,7 +93,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         addFilePacket(this.polygonPacket = new FroggerMapFilePacketPolygon(this));
         addFilePacket(this.vertexPacket = new FroggerMapFilePacketVertex(this));
         addFilePacket(this.gridPacket = new FroggerMapFilePacketGrid(this));
-        addFilePacket(this.animationPacket = new FroggerMapFilePacketAnimation(this, getMapConfig(fileEntry).isMapAnimationSupported()));
+        addFilePacket(this.animationPacket = new FroggerMapFilePacketAnimation(this, getMapConfig(resourceEntry).isMapAnimationSupported()));
     }
 
     @Override
@@ -143,7 +143,12 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         if (this.cachedTextureRemap != null)
             return this.cachedTextureRemap;
 
-        return this.cachedTextureRemap = (LinkedTextureRemap<FroggerMapFile>) getGameInstance().getLinkedTextureRemap(getIndexEntry());
+        // Try to get the remap from the MWI Entry.
+        MWIResourceEntry mwiEntry = getIndexEntry();
+        if (mwiEntry != null)
+            return this.cachedTextureRemap = (LinkedTextureRemap<FroggerMapFile>) getGameInstance().getLinkedTextureRemap(mwiEntry);
+
+        return null;
     }
 
     /**
@@ -185,8 +190,8 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
      * Gets the map config usable by this map.
      * @return mapConfig
      */
-    protected FroggerMapConfig getMapConfig(FileEntry fileEntry) {
-        FroggerMapConfig mapConfig = fileEntry != null ? getConfig().getMapConfigs().get(fileEntry.getDisplayName()) : null;
+    protected FroggerMapConfig getMapConfig(MWIResourceEntry resourceEntry) {
+        FroggerMapConfig mapConfig = resourceEntry != null ? getConfig().getMapConfigs().get(resourceEntry.getDisplayName()) : null;
         return mapConfig != null ? mapConfig : getConfig().getDefaultMapConfig();
     }
 

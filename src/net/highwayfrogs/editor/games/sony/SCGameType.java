@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony;
 
 import javafx.scene.Node;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsConfig;
@@ -33,29 +34,31 @@ import java.util.function.Supplier;
  */
 public enum SCGameType implements IGameType {
     //HEADRUSH(null), // Aka Brains In Planes
-    OLD_FROGGER("Old Frogger (Pre-Recode)", OldFroggerGameInstance::new, OldFroggerConfig::new),
-    BEAST_WARS("Beast Wars: Transformers", BeastWarsInstance::new, BeastWarsConfig::new),
-    FROGGER("Frogger: He's Back", FroggerGameInstance::new, FroggerConfig::new),
+    OLD_FROGGER("Old Frogger (Pre-Recode)", OldFroggerGameInstance::new, OldFroggerConfig::new, true),
+    BEAST_WARS("Beast Wars: Transformers", BeastWarsInstance::new, BeastWarsConfig::new, true),
+    FROGGER("Frogger: He's Back", FroggerGameInstance::new, FroggerConfig::new, false),
     //TAX_MAN(null),
-    MEDIEVIL("MediEvil", MediEvilGameInstance::new, MediEvilConfig::new),
+    MEDIEVIL("MediEvil", MediEvilGameInstance::new, MediEvilConfig::new, true),
     //COMMON_TALES(null),
-    MOONWARRIOR("Moon Warrior", MoonWarriorInstance::new, null),
-    MEDIEVIL2("MediEvil II", MediEvil2GameInstance::new, MediEvil2Config::new),
-    C12("C-12: Final Resistance", null, null);
+    MOONWARRIOR("Moon Warrior", MoonWarriorInstance::new, null, true),
+    MEDIEVIL2("MediEvil II", MediEvil2GameInstance::new, MediEvil2Config::new, true),
+    C12("C-12: Final Resistance", null, null, true);
 
     @Getter private final String displayName;
     private final Supplier<SCGameInstance> instanceMaker;
     private final Function<String, SCGameConfig> configMaker;
     @Getter private final String identifier;
+    @Getter private final boolean showSaveWarning;
 
     public static final String CONFIG_MWD_PATH = "mwdFilePath";
     public static final String CONFIG_EXE_PATH = "executableFilePath";
 
-    SCGameType(String displayName, Supplier<SCGameInstance> instanceMaker, Function<String, SCGameConfig> configMaker) {
+    SCGameType(String displayName, Supplier<SCGameInstance> instanceMaker, Function<String, SCGameConfig> configMaker, boolean showSaveWarning) {
         this.displayName = displayName;
         this.instanceMaker = instanceMaker;
         this.configMaker = configMaker;
         this.identifier = name().toLowerCase(Locale.ROOT).replace("_", "");
+        this.showSaveWarning = showSaveWarning;
     }
 
     /**
@@ -68,6 +71,18 @@ public enum SCGameType implements IGameType {
         if (otherType == null)
             throw new RuntimeException("Cannot compare to null game type.");
         return ordinal() >= otherType.ordinal();
+    }
+
+    /**
+     * Test if this game was developed at/before the provided game.
+     * This may not work perfectly with prototypes, but the general use of this is testing technical capabilities.
+     * @param otherType The other game to test.
+     * @return True iff the game was developed before the provided game.
+     */
+    public boolean isAtOrBefore(SCGameType otherType) {
+        if (otherType == null)
+            throw new RuntimeException("Cannot compare to null game type.");
+        return otherType.ordinal() >= ordinal();
     }
 
     /**
@@ -92,14 +107,15 @@ public enum SCGameType implements IGameType {
         if (!(instance instanceof SCGameInstance))
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", which was not " + SCGameInstance.class.getSimpleName() + ".");
 
-        String mwdFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_MWD_PATH).getValue();
         String exeFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_EXE_PATH).getValue();
-        if (Utils.isNullOrWhiteSpace(mwdFilePath))
-            throw new RuntimeException("Invalid mwdFilePath.");
         if (Utils.isNullOrWhiteSpace(exeFilePath))
             throw new RuntimeException("Invalid exeFilePath.");
 
-        File mwdFile = new File(mwdFilePath);
+        String mwdFilePath = gameSetupConfig.hasKeyValueNode(CONFIG_MWD_PATH) ? gameSetupConfig.getKeyValueNodeOrError(CONFIG_MWD_PATH).getValue() : null;
+        File mwdFile = mwdFilePath != null && mwdFilePath.length() > 0 ? new File(mwdFilePath) : null;
+        if (mwdFile != null && (!mwdFile.exists() || !mwdFile.isFile()))
+            throw new RuntimeException("Invalid mwdFilePath.");
+
         File exeFile = new File(exeFilePath);
         ((SCGameInstance) instance).loadGame(gameVersionConfigName, mwdFile, exeFile, progressBar);
     }
@@ -117,8 +133,9 @@ public enum SCGameType implements IGameType {
     }
 
     @Override
-    public GameConfigUIController setupConfigUI(GameConfigController controller, Config config) {
-        return new SCGameConfigUI(controller, config);
+    public GameConfigUIController setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
+        SCGameConfig scGameConfig = gameConfig instanceof SCGameConfig ? (SCGameConfig) gameConfig : null;
+        return new SCGameConfigUI(controller, scGameConfig, config);
     }
 
     /**
@@ -128,23 +145,29 @@ public enum SCGameType implements IGameType {
         private final GameConfigFileOpenBrowseComponent mwdFileBrowseComponent;
         private final GameConfigFileOpenBrowseComponent exeFileBrowseComponent;
 
-        public SCGameConfigUI(GameConfigController controller, Config config) {
-            super(controller);
+        public SCGameConfigUI(GameConfigController controller, SCGameConfig gameConfig, Config config) {
+            super(controller, gameConfig);
             this.mwdFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_MWD_PATH, "Millennium WAD (.MWD)", "Please select a Millennium WAD", "Millennium WAD", "MWD");
             this.exeFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_EXE_PATH, "Game Executable (.EXE, SLUS, etc.)", "Please select the main executable", "Game Executable", "EXE", "dat", "04", "06", "26", "64", "65", "66", "99");
             loadController(null);
         }
 
         @Override
+        public SCGameConfig getGameConfig() {
+            return (SCGameConfig) super.getGameConfig();
+        }
+
+        @Override
         public boolean isLoadButtonDisabled() {
-            return Utils.isNullOrWhiteSpace(this.mwdFileBrowseComponent.getCurrentFilePath())
+            return (Utils.isNullOrWhiteSpace(this.mwdFileBrowseComponent.getCurrentFilePath()) && (getGameConfig() == null || !getGameConfig().isMwdLooseFiles()))
                     || Utils.isNullOrWhiteSpace(this.exeFileBrowseComponent.getCurrentFilePath());
         }
 
         @Override
         protected void onControllerLoad(Node rootNode) {
             super.onControllerLoad(rootNode);
-            addController(this.mwdFileBrowseComponent);
+            if (getGameConfig() == null || !getGameConfig().isMwdLooseFiles())
+                addController(this.mwdFileBrowseComponent);
             addController(this.exeFileBrowseComponent);
         }
     }

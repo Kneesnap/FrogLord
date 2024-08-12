@@ -1,15 +1,15 @@
 package net.highwayfrogs.editor.file.config.exe.psx;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.MWIFile.FileEntry;
-import net.highwayfrogs.editor.file.WADFile;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Function;
@@ -60,8 +60,9 @@ public class PSXMapBook extends MapBook {
     }
 
     @Override
-    public boolean isEntry(FileEntry test) {
-        return this.mapId == test.getResourceId() || this.wadId == test.getResourceId();
+    public boolean isEntry(SCGameFile<?> file) {
+        int resourceId = file.getFileResourceId();
+        return this.mapId == resourceId || this.wadId == resourceId;
     }
 
     @Override

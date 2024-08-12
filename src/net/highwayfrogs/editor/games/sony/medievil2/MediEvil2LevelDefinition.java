@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.sony.medievil2;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.WADFile;
-import net.highwayfrogs.editor.file.WADFile.WADEntry;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -11,6 +9,8 @@ import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.medievil2.map.MediEvil2Map;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -149,7 +149,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
      * Gets the .VLO file associated with this entry, if it exists.
      */
     public VLOArchive getVloFile() {
-        if (this.cachedVloFile != null && this.cachedVloFile.getIndexEntry().getResourceId() == this.vloResourceId)
+        if (this.cachedVloFile != null && this.cachedVloFile.getFileResourceId() == this.vloResourceId)
             return this.cachedVloFile;
 
         return this.vloResourceId > 0 ? this.cachedVloFile = getGameInstance().getGameFile(this.vloResourceId) : null;
@@ -159,7 +159,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
      * Gets the .TIM file associated with this entry, if it exists.
      */
     public PSXTIMFile getTimFile() {
-        if (this.cachedTimFile != null && this.cachedTimFile.getIndexEntry().getResourceId() == this.timResourceId)
+        if (this.cachedTimFile != null && this.cachedTimFile.getFileResourceId() == this.timResourceId)
             return this.cachedTimFile;
 
         return this.timResourceId > 0 ? this.cachedTimFile = getGameInstance().getGameFile(this.timResourceId) : null;
@@ -169,7 +169,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
      * Gets the .WAD file associated with this entry, if it exists.
      */
     public WADFile getWadFile() {
-        if (this.cachedWadFile != null && this.cachedWadFile.getIndexEntry().getResourceId() == this.wadResourceId)
+        if (this.cachedWadFile != null && this.cachedWadFile.getFileResourceId() == this.wadResourceId)
             return this.cachedWadFile;
 
         return this.wadResourceId > 0 ? this.cachedWadFile = getGameInstance().getGameFile(this.wadResourceId) : null;
@@ -221,7 +221,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
         public TextureRemapArray getRemap() {
             if (this.textureRemap == null) {
                 MediEvil2Map mapFile = getMapFile();
-                String mapName = (mapFile != null ? Utils.stripExtension(mapFile.getIndexEntry().getDisplayName()).toLowerCase() : "map" + this.mapResourceId);
+                String mapName = (mapFile != null ? Utils.stripExtension(mapFile.getFileDisplayName()).toLowerCase() : "map" + this.mapResourceId);
                 if (this.textureRemapPointer > 0)
                     this.textureRemap = new TextureRemapArray(getGameInstance(), "txl_" + mapName, this.textureRemapPointer);
             }
@@ -231,7 +231,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
 
         @Override
         public VLOArchive getVloFile() {
-            if (this.cachedVloFile != null && this.cachedVloFile.getIndexEntry().getResourceId() == this.vloResourceId)
+            if (this.cachedVloFile != null && this.cachedVloFile.getFileResourceId() == this.vloResourceId)
                 return this.cachedVloFile;
 
             return this.vloResourceId > 0 ? this.cachedVloFile = getGameInstance().getGameFile(this.vloResourceId) : null;
@@ -239,7 +239,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
 
         @Override
         public MediEvil2Map getMapFile() {
-            if (this.cachedMapFile != null && this.cachedMapFile.getIndexEntry().getResourceId() == this.mapResourceId)
+            if (this.cachedMapFile != null && this.cachedMapFile.getFileResourceId() == this.mapResourceId)
                 return this.cachedMapFile;
 
             SCGameFile<?> gameFile =  this.mapResourceId > 0 ? getGameInstance().getGameFile(this.mapResourceId) : null;

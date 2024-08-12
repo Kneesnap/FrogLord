@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.shared.sound.EditableAudioFormat;
 import net.highwayfrogs.editor.games.shared.sound.ISoundSample;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
@@ -75,12 +76,14 @@ public class SCWindowsSoundBankHeader<TBodyEntry extends SCSplitSoundBankBodyEnt
             this.dataStartOffset = reader.readInt();
             this.dataSize = reader.readInt();
 
-            int unk1 = reader.readInt();
-            Utils.verify(unk1 == UNKNOWN_VALUE, "Unknown Value #1 was not correct. (%d)", unk1);
-            int unk2 = reader.readInt();
-            Utils.verify(unk2 == UNKNOWN_VALUE, "Unknown Value #2 was not correct. (%d)", unk2);
-            this.audioFormat.setSampleRate(reader.readInt());
-            this.audioFormat.setSampleSizeInBits(reader.readInt());
+            if (!isOldFormat()) {
+                int unk1 = reader.readInt();
+                Utils.verify(unk1 == UNKNOWN_VALUE, "Unknown Value #1 was not correct. (%d)", unk1);
+                int unk2 = reader.readInt();
+                Utils.verify(unk2 == UNKNOWN_VALUE, "Unknown Value #2 was not correct. (%d)", unk2);
+                this.audioFormat.setSampleRate(reader.readInt());
+                this.audioFormat.setSampleSizeInBits(reader.readInt());
+            }
         }
 
         @Override
@@ -88,16 +91,26 @@ public class SCWindowsSoundBankHeader<TBodyEntry extends SCSplitSoundBankBodyEnt
             writer.writeInt(this.audioPresent ? HAS_AUDIO : 0);
             writer.writeInt(this.dataStartOffset);
             writer.writeInt(this.dataSize);
-            writer.writeInt(UNKNOWN_VALUE);
-            writer.writeInt(UNKNOWN_VALUE);
-            writer.writeInt((int) this.audioFormat.getSampleRate());
-            writer.writeInt(this.audioFormat.getSampleSizeInBits());
+            if (!isOldFormat()) {
+                writer.writeInt(UNKNOWN_VALUE);
+                writer.writeInt(UNKNOWN_VALUE);
+                writer.writeInt((int) this.audioFormat.getSampleRate());
+                writer.writeInt(this.audioFormat.getSampleSizeInBits());
+            }
         }
 
         @Override
         public String toString() {
             return "[Data: (" + Utils.toHexString(this.dataStartOffset) + "->" + Utils.toHexString(this.dataStartOffset + this.dataSize)
                     + "), Sample Rate: " + (int) this.audioFormat.getSampleRate() + ", Bit-Width: " + this.audioFormat.getSampleSizeInBits() + ", Has Audio: " + this.audioPresent + "]";
+        }
+
+        /**
+         * Returns true if this is the old format, seen in pre-recode Frogger's Milestone 3 PC build.
+         * This format is not seen in the June 1997 PC build of Frogger, so it is likely this format was changed between the two builds.
+         */
+        public boolean isOldFormat() {
+            return getGameInstance().getGameType().isAtOrBefore(SCGameType.OLD_FROGGER);
         }
     }
 }
