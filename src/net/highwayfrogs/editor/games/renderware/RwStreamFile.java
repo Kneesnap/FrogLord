@@ -8,10 +8,17 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData.SharedGameData;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
+import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.RwPlatformIndependentTextureEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represents a RWS (Renderware Stream) file. Can have different extensions such as: rws, dff, bin, etc.
@@ -55,6 +62,36 @@ public class RwStreamFile extends SharedGameData {
     public void save(DataWriter writer) {
         for (RwStreamChunk chunk : this.chunks)
             chunk.save(writer);
+    }
+
+    /**
+     * Export all textures in the file.
+     * TODO: Toss this later once we have better support.
+     * @param outputFolder the file to export textures to
+     * @param fileNameCountMap the file-name count map to use.
+     */
+    public void exportTextures(File outputFolder, Map<String, AtomicInteger> fileNameCountMap) {
+        for (RwStreamChunk chunk : this.chunks) {
+            if (!(chunk instanceof RwPlatformIndependentTextureDictionaryChunk))
+                continue;
+
+            RwPlatformIndependentTextureDictionaryChunk textureDictionaryChunk = (RwPlatformIndependentTextureDictionaryChunk) chunk;
+            for (RwPlatformIndependentTextureEntry entry : textureDictionaryChunk.getEntries()) {
+                for (int i = 0; i < entry.getMipLevelImages().size(); i++) {
+                    String baseName = entry.makeFileName(i);
+                    int num = fileNameCountMap.computeIfAbsent(baseName, key -> new AtomicInteger()).getAndIncrement();
+
+                    Utils.makeDirectory(outputFolder);
+                    File imageOutputFile = new File(outputFolder, String.format("%s_%02d.png", baseName, num));
+
+                    try {
+                        ImageIO.write(entry.getMipLevelImages().get(i).getImage(), "png", imageOutputFile);
+                    } catch (IOException ex) {
+                        Utils.handleError(getLogger(), ex, false, "Failed to save '%s'.", imageOutputFile.getName());
+                    }
+                }
+            }
+        }
     }
 
     /**

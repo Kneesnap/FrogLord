@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.konami;
+package net.highwayfrogs.editor.games.konami.beyond;
 
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;

@@ -1,18 +1,17 @@
-package net.highwayfrogs.editor.games.konami.hudson.file;
+package net.highwayfrogs.editor.games.konami.beyond.file;
 
 import javafx.scene.image.Image;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.ImageResource;
 
 /**
- * Represents a hudson file which is treated as raw bytes.
- * Created by Kneesnap on 8/8/2024.
+ * Represents a dummy file.
+ * Created by Kneesnap on 8/12/2024.
  */
-public class HudsonDummyFile extends HudsonGameFile {
-    public HudsonDummyFile(IGameFileDefinition fileDefinition) {
+public class FroggerBeyondDummyFile extends FroggerBeyondFile {
+    public FroggerBeyondDummyFile(IGameFileDefinition fileDefinition) {
         super(fileDefinition);
     }
 

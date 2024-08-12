@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.konami.hudson.ui;
+package net.highwayfrogs.editor.games.shared.basic.ui;
 
 import javafx.scene.Node;
 import javafx.scene.control.Menu;
@@ -6,9 +6,8 @@ import javafx.scene.control.MenuItem;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
-import net.highwayfrogs.editor.games.konami.hudson.HudsonFileUserFSDefinition;
-import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
-import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
+import net.highwayfrogs.editor.games.shared.basic.BasicGameInstance;
+import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
@@ -17,11 +16,11 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.io.File;
 
 /**
- * Manages the main menu UI for a Hudson game.
- * Created by Kneesnap on 8/8/2024.
+ * Manages the main menu UI for a basic game instance.
+ * Created by Kneesnap on 8/12/2024.
  */
-public class HudsonMainMenuUIController<TGameInstance extends HudsonGameInstance> extends MainMenuController<TGameInstance, HudsonGameFile> {
-    public HudsonMainMenuUIController(TGameInstance instance) {
+public class BasicMainMenuUIController<TGameInstance extends BasicGameInstance> extends MainMenuController<TGameInstance, BasicGameFile<?>> {
+    public BasicMainMenuUIController(TGameInstance instance) {
         super(instance);
     }
 
@@ -36,8 +35,8 @@ public class HudsonMainMenuUIController<TGameInstance extends HudsonGameInstance
                 return; // Cancel.
 
             try {
-                for (HudsonGameFile file : getGameInstance().getFiles()) {
-                    if (!(file.getFileDefinition() instanceof HudsonFileUserFSDefinition)) {
+                for (BasicGameFile<?> file : getGameInstance().getFiles()) {
+                    if (file.getFileDefinition().getFile() == null) {
                         getLogger().severe("File '" + file.getDisplayName() + "' was defined by a(n) " + Utils.getSimpleName(file) + ", which should not have been possible.");
                         continue;
                     }
@@ -63,15 +62,15 @@ public class HudsonMainMenuUIController<TGameInstance extends HudsonGameInstance
         ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> {
             progressBar.update(0, getGameInstance().getFiles().size(), "");
 
-            for (HudsonGameFile file : getGameInstance().getFiles()) {
-                if (!(file.getFileDefinition() instanceof HudsonFileUserFSDefinition)) {
+            for (BasicGameFile<?> file : getGameInstance().getFiles()) {
+                if (file.getFileDefinition().getFile() == null) {
                     getLogger().severe("File '" + file.getDisplayName() + "' was defined by a(n) " + Utils.getSimpleName(file) + ", which should not have been possible.");
                     continue;
                 }
 
-                HudsonFileUserFSDefinition fileDefinition = (HudsonFileUserFSDefinition) file.getFileDefinition();
-                progressBar.setStatusMessage("Saving '" + fileDefinition.getFileName() + "'");
-                DataWriter writer = new DataWriter(fileDefinition.getFileName().equalsIgnoreCase("gamedata.bin") ? new LargeFileReceiver(fileDefinition.getFile()) : new FileReceiver(fileDefinition.getFile()));
+                File targetFile = file.getFileDefinition().getFile();
+                progressBar.setStatusMessage("Saving '" + targetFile.getName() + "'");
+                DataWriter writer = new DataWriter(targetFile.getName().equalsIgnoreCase("gamedata.bin") ? new LargeFileReceiver(targetFile) : new FileReceiver(targetFile)); // TODO: Allow specifying if it needs a large receiver.
                 file.save(writer);
                 writer.closeReceiver();
 
@@ -81,8 +80,8 @@ public class HudsonMainMenuUIController<TGameInstance extends HudsonGameInstance
     }
 
     @Override
-    protected CollectionEditorComponent<TGameInstance, HudsonGameFile> createFileListEditor() {
-        return new CollectionEditorComponent<>(getGameInstance(), new HudsonFileBasicListViewComponent<>(getGameInstance()));
+    protected CollectionEditorComponent<TGameInstance, BasicGameFile<?>> createFileListEditor() {
+        return new CollectionEditorComponent<>(getGameInstance(), new BasicFileListViewComponent<>(getGameInstance()));
     }
 
     protected static MenuItem addMenuItem(Menu menuBar, String title, Runnable action) {

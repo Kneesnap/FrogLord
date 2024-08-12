@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -24,14 +23,14 @@ import java.util.logging.Logger;
  *  TODO: I think there's some kind of caching bug with shading. It happened on "Time Device", where none of the shading in the world was right. Then, after I toggled shading off/on, it was fine. I suspect there's probably some tracking issue then.
  * Created by Kneesnap on 4/10/2024.
  */
-public abstract class GameInstance {
+public abstract class GameInstance implements IGameInstance {
     @Getter private final IGameType gameType;
     @Getter private GameConfig config;
     @Getter private MainMenuController<?, ?> mainMenuController;
     private Logger cachedLogger;
     private StringBuilder cachedLogging;
 
-    private static final Map<IGameType, Map<String, FXMLLoader>> knownResourcePaths = new HashMap<>();
+    static final Map<IGameType, Map<String, FXMLLoader>> knownResourcePaths = new HashMap<>();
 
     public GameInstance(IGameType gameType) {
         if (gameType == null)
@@ -177,72 +176,5 @@ public abstract class GameInstance {
      */
     protected void onConfigLoad(Config configObj) {
         // Does nothing by default.
-    }
-
-    /**
-     * Get the target platform this game version runs on.
-     */
-    public GamePlatform getPlatform() {
-        return this.config != null ? this.config.getPlatform() : null;
-    }
-
-    /**
-     * Test if this is a game version intended for Windows.
-     * @return isPCRelease
-     */
-    public boolean isPC() {
-        return getPlatform() == GamePlatform.WINDOWS;
-    }
-
-    /**
-     * Test if this is a game version intended for the PlayStation.
-     * @return isPSXRelease
-     */
-    public boolean isPSX() {
-        return getPlatform() == GamePlatform.PLAYSTATION;
-    }
-
-    /**
-     * Test if this is a game version intended for the PlayStation 2.
-     * @return isPS2Release
-     */
-    public boolean isPS2() {
-        return getPlatform() == GamePlatform.PLAYSTATION_2;
-    }
-
-    /**
-     * Tests if a given unsigned 32-bit number passed as a long looks like a valid pointer to memory present in the executable.
-     * @param testPointer The pointer to test.
-     * @return If it looks good or not.
-     */
-    public boolean isValidLookingPointer(long testPointer) {
-        return GameUtils.isValidLookingPointer(getPlatform(), testPointer);
-    }
-
-    /**
-     * Gets the FXMLLoader by its name.
-     * @param template The template name.
-     * @return loader
-     */
-    public URL getFXMLTemplateURL(String template) {
-        return this.gameType.getEmbeddedResourceURL("fxml/" + template + ".fxml");
-    }
-
-    /**
-     * Gets the fxml template URL by its name.
-     * @param template The template name.
-     * @return fxmlTemplateUrl
-     */
-    public FXMLLoader getFXMLTemplateLoader(String template) {
-        Map<String, FXMLLoader> resourcePaths = knownResourcePaths.computeIfAbsent(this.gameType, key -> new HashMap<>());
-        FXMLLoader fxmlLoader = resourcePaths.get(template);
-        if (!resourcePaths.containsKey(template)) {
-            URL url = getFXMLTemplateURL(template);
-            if (url != null)
-                fxmlLoader = new FXMLLoader(url);
-            resourcePaths.put(template, fxmlLoader);
-        }
-
-        return fxmlLoader;
     }
 }

@@ -6,10 +6,9 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.konami.hudson.HudsonFileUserFSDefinition;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
-import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
 import net.highwayfrogs.editor.games.konami.rescue.FroggerRescueInstance;
+import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
@@ -30,7 +29,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
 
     public static final String SIGNATURE = "SBNK";
 
-    public FroggerRescueSoundBank(IHudsonFileDefinition fileDefinition) {
+    public FroggerRescueSoundBank(IGameFileDefinition fileDefinition) {
         super(fileDefinition);
     }
 
@@ -97,7 +96,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
 
     @Override
     public void export(File exportFolder) {
-        if (!(getFileDefinition() instanceof HudsonFileUserFSDefinition))
+        if (getFileDefinition().getFile() == null)
             exportFolder = new File(exportFolder, "Sounds [" + getDisplayName() + "]");
         Utils.makeDirectory(exportFolder);
 

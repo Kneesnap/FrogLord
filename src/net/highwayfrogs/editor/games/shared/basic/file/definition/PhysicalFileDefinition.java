@@ -1,8 +1,10 @@
-package net.highwayfrogs.editor.games.konami.hudson;
+package net.highwayfrogs.editor.games.shared.basic.file.definition;
 
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.shared.basic.BasicGameInstance;
+import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
 import net.highwayfrogs.editor.gui.components.CollectionTreeViewComponent.CollectionViewTreeNode;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -12,15 +14,15 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Represents a Hudson file definition which came from the user's filesystem.
- * Created by Kneesnap on 8/4/2024.
+ * Represents a file which exists accessible via the java.io.File object, which is pretty much always local to the user's file-system.
+ * Created by Kneesnap on 8/12/2024.
  */
-public class HudsonFileUserFSDefinition extends GameObject<HudsonGameInstance> implements IHudsonFileDefinition {
+public class PhysicalFileDefinition extends GameObject<BasicGameInstance> implements IGameFileDefinition {
     @Getter @NonNull private final File file;
-    private String cachedFullFileName;
-    private CollectionViewTreeNode<HudsonGameFile> cachedTreePath;
+    private String cachedFullFilePath;
+    private CollectionViewTreeNode<BasicGameFile<?>> cachedTreePath;
 
-    public HudsonFileUserFSDefinition(HudsonGameInstance instance, @NonNull File file) {
+    public PhysicalFileDefinition(BasicGameInstance instance, @NonNull File file) {
         super(instance);
         this.file = file;
     }
@@ -31,15 +33,15 @@ public class HudsonFileUserFSDefinition extends GameObject<HudsonGameInstance> i
     }
 
     @Override
-    public String getFullFileName() {
-        if (this.cachedFullFileName == null)
-            this.cachedFullFileName = Utils.toLocalPath(getGameInstance().getMainGameFolder(), this.file, false);
+    public String getFullFilePath() {
+        if (this.cachedFullFilePath == null)
+            this.cachedFullFilePath = Utils.toLocalPath(getGameInstance().getMainGameFolder(), this.file, false);
 
-        return this.cachedFullFileName;
+        return this.cachedFullFilePath;
     }
 
     @Override
-    public CollectionViewTreeNode<HudsonGameFile> getOrCreateTreePath(CollectionViewTreeNode<HudsonGameFile> rootNode, HudsonGameFile gameFile) {
+    public CollectionViewTreeNode<BasicGameFile<?>> getOrCreateTreePath(CollectionViewTreeNode<BasicGameFile<?>> rootNode, BasicGameFile<?> gameFile) {
         if (this.cachedTreePath != null && this.cachedTreePath.isActive())
             return this.cachedTreePath;
 
@@ -54,7 +56,7 @@ public class HudsonFileUserFSDefinition extends GameObject<HudsonGameInstance> i
         }
 
         // Get tree nodes.
-        CollectionViewTreeNode<HudsonGameFile> treeNode = rootNode;
+        CollectionViewTreeNode<BasicGameFile<?>> treeNode = rootNode;
         for (int i = folderPaths.size() - 1; i >= 0; i--)
             treeNode = treeNode.getOrCreateChildNode(folderPaths.get(i));
 

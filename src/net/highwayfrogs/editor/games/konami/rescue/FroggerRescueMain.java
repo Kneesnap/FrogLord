@@ -3,13 +3,13 @@ package net.highwayfrogs.editor.games.konami.rescue;
 
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.games.konami.hudson.HudsonFileUserFSDefinition;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkTypeRegistry;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.RwPlatformIndependentTextureEntry;
+import net.highwayfrogs.editor.games.shared.basic.file.definition.PhysicalFileDefinition;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -68,7 +68,7 @@ public class FroggerRescueMain {
 
     private static HFSFile loadHfsFile(File file) throws IOException {
         byte[] packed = Files.readAllBytes(file.toPath());
-        HFSFile hfsFile = new HFSFile(new HudsonFileUserFSDefinition(null, file));
+        HFSFile hfsFile = new HFSFile(new PhysicalFileDefinition(null, file));
         hfsFile.load(new DataReader(new ArraySource(packed)));
         return hfsFile;
     }

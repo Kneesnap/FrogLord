@@ -6,8 +6,13 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameObject;
-import net.highwayfrogs.editor.games.konami.hudson.*;
+import net.highwayfrogs.editor.games.konami.hudson.HFSHeaderFileEntry;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
 import net.highwayfrogs.editor.games.konami.hudson.file.HudsonRwStreamFile;
+import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
+import net.highwayfrogs.editor.games.shared.basic.file.IVirtualFileSystem;
+import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionTreeViewComponent.CollectionViewTreeNode;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
@@ -27,11 +32,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by Kneesnap on 6/7/2020.
  */
 @Getter
-public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
+public class HFSFile extends HudsonGameFile implements IVirtualFileSystem {
     private final List<HudsonGameFile> hfsFiles = new ArrayList<>();
     public static final String SIGNATURE = "hfs\7"; // Version 7
 
-    public HFSFile(IHudsonFileDefinition fileDefinition) {
+    public HFSFile(IGameFileDefinition fileDefinition) {
         super(fileDefinition);
     }
 
@@ -67,7 +72,7 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
         reader.align(Constants.CD_SECTOR_SIZE);
         for (int i = 0; i < fileEntries.size(); i++) {
             HFSHeaderFileEntry fileEntry = fileEntries.get(i);
-            IHudsonFileDefinition fileDefinition = new HFSFileDefinition(this, i);
+            IGameFileDefinition fileDefinition = new HFSFileDefinition(this, i);
 
             // Read data.
             fileEntry.requireReaderIndex(reader, (fileEntry.getCdSector() * Constants.CD_SECTOR_SIZE), "Expected file data");
@@ -160,7 +165,7 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
         for (int i = 0; i < this.hfsFiles.size(); i++) {
             HudsonGameFile gameFile = this.hfsFiles.get(i);
             if (gameFile instanceof HudsonRwStreamFile)
-                ((HudsonRwStreamFile) gameFile).exportTextures(imagesFolder, nameCountMap);
+                ((HudsonRwStreamFile) gameFile).getRwStreamFile().exportTextures(imagesFolder, nameCountMap);
         }
 
         // Export others.
@@ -169,7 +174,7 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
     }
 
     @Getter
-    public static class HFSFileDefinition extends GameObject<HudsonGameInstance> implements IHudsonFileDefinition, Comparable<HFSFileDefinition> {
+    public static class HFSFileDefinition extends GameObject<HudsonGameInstance> implements IGameFileDefinition, Comparable<HFSFileDefinition> {
         private final HFSFile hfsFile;
         private final int fileIndex;
 
@@ -185,14 +190,19 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
         }
 
         @Override
-        public String getFullFileName() {
+        public String getFullFilePath() {
             return this.hfsFile.getFullDisplayName() + getFileName();
         }
 
         @Override
-        public CollectionViewTreeNode<HudsonGameFile> getOrCreateTreePath(CollectionViewTreeNode<HudsonGameFile> rootNode, HudsonGameFile gameFile) {
-            IHudsonFileDefinition fileDefinition = this.hfsFile.getFileDefinition();
-            CollectionViewTreeNode<HudsonGameFile> hfsNode = fileDefinition != null ? fileDefinition.getOrCreateTreePath(rootNode, this.hfsFile) : rootNode;
+        public File getFile() {
+            return null; // This is virtual and returns no file.
+        }
+
+        @Override
+        public CollectionViewTreeNode<BasicGameFile<?>> getOrCreateTreePath(CollectionViewTreeNode<BasicGameFile<?>> rootNode, BasicGameFile<?> gameFile) {
+            IGameFileDefinition fileDefinition = this.hfsFile.getFileDefinition();
+            CollectionViewTreeNode<BasicGameFile<?>> hfsNode = fileDefinition != null ? fileDefinition.getOrCreateTreePath(rootNode, this.hfsFile) : rootNode;
             return hfsNode.addChildNode(gameFile);
         }
 
