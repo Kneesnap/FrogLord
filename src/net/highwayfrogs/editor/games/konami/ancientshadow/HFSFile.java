@@ -152,7 +152,7 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
     /*@Override
     public GameUIController<?> makeEditorUI() {
         return null;
-    }*/ // TODO: IMPLEMENT.
+    }*/ // TODO: IMPLEMENT. (Share UI options with a RenderWareStream list?)
 
     @Override
     public Image getCollectionViewIcon() {
@@ -252,7 +252,6 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
          * Gets the logger string.
          */
         public String getLoggerString() {
-            // TODO: Use new Utils indexOf method once it's been merged.
             return this.parent != null ? this.parent.getLoggerString() + "/HFSHeader{" + this.parent.hfsFiles.size() + "}" : Utils.getSimpleName(this);
         }
 
@@ -277,8 +276,7 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
          * Gets the logger string.
          */
         public String getLoggerString() {
-            // TODO: Use new Utils indexOf method once it's been merged.
-            return this.parent != null ? this.parent.getLoggerString() + "/FileEntry{" + this.parent.fileEntries.indexOf(this) + "}" : Utils.getSimpleName(this);
+            return this.parent != null ? this.parent.getLoggerString() + "/FileEntry{" + Utils.getLoadingIndex(this.parent.fileEntries, this) + "}" : Utils.getSimpleName(this);
         }
 
         @Override
@@ -302,7 +300,7 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
 
         @Override
         public String getFileName() {
-            return this.hfsFile.getDisplayName() + getNameSuffix();
+            return getNameSuffix();
         }
 
         @Override
@@ -314,14 +312,14 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
         public CollectionViewTreeNode<HudsonGameFile> getOrCreateTreePath(CollectionViewTreeNode<HudsonGameFile> rootNode, HudsonGameFile gameFile) {
             IHudsonFileDefinition fileDefinition = this.hfsFile.getFileDefinition();
             CollectionViewTreeNode<HudsonGameFile> hfsNode = fileDefinition != null ? fileDefinition.getOrCreateTreePath(rootNode, this.hfsFile) : rootNode;
-            if (this.groupIndex != 0 || this.hfsFile.getGameFiles().size() > 1)
+            if (this.groupIndex != 0 || this.hfsFile.getHfsFiles().size() > 1)
                 hfsNode = hfsNode.getOrCreateChildNode("subHfsFile=" + this.groupIndex);
 
             return hfsNode.addChildNode(gameFile);
         }
 
         private String getNameSuffix() {
-            if (this.groupIndex == 0 && this.hfsFile.getGameFiles().size() == 1) {
+            if (this.groupIndex == 0 && this.hfsFile.getHfsFiles().size() == 1) {
                 return "{file=" + this.fileIndex + "}";
             } else {
                 return "{group=" + this.groupIndex + ",file=" + this.fileIndex + "}";

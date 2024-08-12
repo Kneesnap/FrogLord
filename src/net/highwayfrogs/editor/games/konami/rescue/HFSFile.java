@@ -128,7 +128,7 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
     /*@Override
     public GameUIController<?> makeEditorUI() {
         return null;
-    }*/ // TODO: IMPLEMENT.
+    }*/ // TODO: IMPLEMENT. (Share UI options with a RenderWareStream list?)
 
     @Override
     public Image getCollectionViewIcon() {
