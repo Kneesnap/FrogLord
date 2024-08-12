@@ -55,8 +55,8 @@ public class FroggerRescueGameType implements IGameType {
     }
 
     @Override
-    public FroggerRescueGameConfigUI setupConfigUI(GameConfigController controller, Config config) {
-        return new FroggerRescueGameConfigUI(controller, config);
+    public FroggerRescueGameConfigUI setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
+        return new FroggerRescueGameConfigUI(controller, gameConfig, config);
     }
 
     /**
@@ -65,8 +65,8 @@ public class FroggerRescueGameType implements IGameType {
     public static class FroggerRescueGameConfigUI extends GameConfigUIController {
         private final GameConfigFolderBrowseComponent binFileBrowseComponent;
 
-        public FroggerRescueGameConfigUI(GameConfigController controller, Config config) {
-            super(controller);
+        public FroggerRescueGameConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
+            super(controller, gameConfig);
             this.binFileBrowseComponent = new GameConfigFolderBrowseComponent(this, config, CONFIG_MAIN_FOLDER_PATH, "Game Data Folder", "Please locate and open the folder containing game data", false);
             loadController(null);
         }

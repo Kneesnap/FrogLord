@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.konami.FroggerBeyondUtil;
 import net.highwayfrogs.editor.games.konami.FroggerBeyondUtil.FroggerBeyondPlatform;
 import net.highwayfrogs.editor.games.konami.hudson.PRS1Unpacker;
+import net.highwayfrogs.editor.games.sony.shared.mwd.DummyFile;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.Utils;
 

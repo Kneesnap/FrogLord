@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.renderware.ui;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
@@ -44,6 +45,7 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
     private RwStreamChunk shownChunk;
 
     private static final URL FXML_TEMPLATE_URL = Utils.getResourceURL("fxml/edit-file-renderware-stream.fxml");
+    private static final FXMLLoader FXML_TEMPLATE_LOADER = new FXMLLoader(FXML_TEMPLATE_URL);
 
     @SuppressWarnings("unchecked")
     public RenderWareStreamEditorUIController(RwStreamFile streamFile) {
@@ -125,7 +127,7 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
         if (instance != streamFile.getGameInstance())
             throw new RuntimeException("The provided game instance did not match the stream file's game instance.");
 
-        return loadController(instance, FXML_TEMPLATE_URL, new RenderWareStreamEditorUIController<>(streamFile));
+        return loadController(instance, FXML_TEMPLATE_LOADER, new RenderWareStreamEditorUIController<>(streamFile));
     }
 
     /**
