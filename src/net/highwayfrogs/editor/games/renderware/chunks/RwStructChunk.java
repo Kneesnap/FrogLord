@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
+import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
 
 /**
  * Represents a struct with arbitrary contents.
@@ -14,10 +15,8 @@ import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 public class RwStructChunk extends RwStreamChunk {
     private transient DataReader reader;
 
-    public static final int PLUGIN_ID = 1;
-
     public RwStructChunk(RwStreamFile streamFile, int renderwareVersion, RwStreamChunk parentChunk) {
-        super(streamFile, PLUGIN_ID, renderwareVersion, parentChunk);
+        super(streamFile, RwStreamSectionType.STRUCT, renderwareVersion, parentChunk);
     }
 
     /**

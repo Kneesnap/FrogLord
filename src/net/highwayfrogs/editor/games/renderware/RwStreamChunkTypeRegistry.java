@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.renderware;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.renderware.chunks.*;
@@ -14,14 +15,14 @@ import java.util.Map;
  * Created by Kneesnap on 6/9/2020.
  */
 public class RwStreamChunkTypeRegistry implements Cloneable {
-    private final Map<Integer, TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk>> registeredChunkTypes;
+    private final Map<Integer, RwStreamSectionTypeEntry> registeredChunkTypes;
     @Getter private static final RwStreamChunkTypeRegistry defaultRegistry = new RwStreamChunkTypeRegistry();
 
     public RwStreamChunkTypeRegistry() {
         this(new HashMap<>());
     }
 
-    private RwStreamChunkTypeRegistry(Map<Integer, TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk>> registryMap) {
+    private RwStreamChunkTypeRegistry(Map<Integer, RwStreamSectionTypeEntry> registryMap) {
         this.registeredChunkTypes = registryMap;
     }
 
@@ -36,31 +37,32 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
      * @param chunkCreator The constructor to create a chunk.
      */
     public void registerChunkType(TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk> chunkCreator) {
-        registeredChunkTypes.put(chunkCreator.apply(null, 0, null).getTypeId(), chunkCreator);
+        IRwStreamSectionType sectionType = chunkCreator.apply(null, 0, null).getSectionType();
+        registerChunkType(sectionType, chunkCreator);
     }
 
     /**
      * Registers a chunk type.
-     * @param chunkId      The chunk's id.
+     * @param sectionType The section's type.
      * @param chunkCreator The constructor to create a chunk.
      */
-    public void registerChunkType(int chunkId, TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk> chunkCreator) {
-        registeredChunkTypes.put(chunkId, chunkCreator);
+    public void registerChunkType(IRwStreamSectionType sectionType, TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk> chunkCreator) {
+        this.registeredChunkTypes.put(sectionType.getTypeId(), new RwStreamSectionTypeEntry(sectionType, chunkCreator));
     }
 
     /**
      * Creates a chunk based on the magic id supplied.
      * @param streamFile the stream file which the chunk belongs to
-     * @param chunkId the id of the chunk to create
+     * @param sectionId the id of the chunk to create
      * @param rwVersion The renderware version the chunk was built with.
      * @return newChunk
      */
-    public RwStreamChunk createChunk(RwStreamFile streamFile, int chunkId, int rwVersion, RwStreamChunk parentChunk) {
-        TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk> chunkCreator = registeredChunkTypes.get(chunkId);
-        if (chunkCreator != null) {
-            return chunkCreator.apply(streamFile, rwVersion, parentChunk);
+    public RwStreamChunk createSection(RwStreamFile streamFile, int sectionId, int rwVersion, RwStreamChunk parentChunk) {
+        RwStreamSectionTypeEntry sectionEntry = this.registeredChunkTypes.get(sectionId);
+        if (sectionEntry != null) {
+            return sectionEntry.getConstructor().apply(streamFile, rwVersion, parentChunk);
         } else {
-            return new RwUnsupportedChunk(streamFile, chunkId, rwVersion, parentChunk);
+            return new RwUnsupportedChunk(streamFile, sectionId, rwVersion, parentChunk);
         }
     }
 
@@ -103,9 +105,16 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
         int version = reader.readInt();
         reader.jumpReturn();
 
-        RwStreamChunk newChunk = createChunk(streamFile, chunkType, version, parentChunk); // Version will be loaded during the .load call too.
+        RwStreamChunk newChunk = createSection(streamFile, chunkType, version, parentChunk); // Version will be loaded during the .load call too.
         newChunk.load(reader);
         return newChunk;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    private static class RwStreamSectionTypeEntry {
+        private final IRwStreamSectionType sectionType;
+        private final TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk> constructor;
     }
 
     static {

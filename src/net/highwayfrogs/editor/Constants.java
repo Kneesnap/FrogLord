@@ -89,6 +89,7 @@ public class Constants {
     public static final String SOURCE_CODE_REPOSITORY_URL = "https://github.com/Kneesnap/FrogLord/";
 
     public static final String FX_STYLE_INVALID_TEXT = "-fx-text-inner-color: red;";
+    public static final double RECOMMENDED_TREE_VIEW_FIXED_CELL_SIZE = 24; // Recommended by https://docs.oracle.com/javase/8/javafx/api/javafx/scene/control/TreeView.html for performance, which was an issue.
 
     /**
      * Log exe info if the option is enabled.

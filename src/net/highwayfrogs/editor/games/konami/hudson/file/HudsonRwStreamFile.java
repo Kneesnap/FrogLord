@@ -10,6 +10,8 @@ import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.RwPlatformIndependentTextureEntry;
+import net.highwayfrogs.editor.games.renderware.ui.RenderWareStreamEditorUIController;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
@@ -57,6 +59,11 @@ public class HudsonRwStreamFile extends HudsonGameFile {
             propertyList.add("Chunk " + i, this.rwStreamFile.getChunks().get(i).getChunkDescriptor());
 
         return propertyList;
+    }
+
+    @Override
+    public GameUIController<?> makeEditorUI() {
+        return RenderWareStreamEditorUIController.loadController(getGameInstance(), this.rwStreamFile);
     }
 
     /**
