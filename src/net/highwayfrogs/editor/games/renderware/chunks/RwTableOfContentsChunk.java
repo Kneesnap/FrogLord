@@ -7,8 +7,11 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -42,6 +45,16 @@ public class RwTableOfContentsChunk extends RwStreamChunk {
             this.entries.get(i).save(writer);
     }
 
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Entry Count", this.entries.size());
+        for (int i = 0; i < this.entries.size(); i++)
+            propertyList.add("Entry #" + (i + 1), this.entries.get(i));
+
+        return propertyList;
+    }
+
     public static class RwTableOfContentsChunkEntry extends SharedGameData {
         private int chunkId; // Lookup in the chunk type registry.
         private int gameId; // TODO: What is this?
@@ -73,6 +86,12 @@ public class RwTableOfContentsChunk extends RwStreamChunk {
             writer.writeInt(this.gameId);
             writer.writeInt(this.offset);
             writer.writeBytes(this.guid);
+        }
+
+        @Override
+        public String toString() {
+            return "SectionDef{offset=" + Utils.toHexString(this.offset) + ",game=" + Integer.toHexString(this.gameId).toUpperCase()
+                    + ",type=" + Integer.toHexString(this.chunkId).toUpperCase() + ",guid=" + Arrays.toString(this.guid) + "}";
         }
     }
 }
