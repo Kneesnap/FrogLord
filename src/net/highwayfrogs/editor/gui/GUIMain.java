@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.utils.logging.LogFormatter;
 import net.highwayfrogs.editor.utils.logging.UIConsoleHandler;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
@@ -36,12 +37,13 @@ import java.util.logging.*;
 public class GUIMain extends Application {
     @Getter private static Config mainConfig;
     @Getter private static File mainConfigFile;
+    @Getter private static File mainApplicationFolder;
     @Getter private static File workingDirectory = new File("./");
     @Getter private static GUIMain application;
     @Getter private static final List<GameInstance> activeGameInstances = new CopyOnWriteArrayList<>();
 
     public static void main(String[] args) {
-        launch(args);
+        launch(GUIMain.class, args);
     }
 
     @Override
@@ -49,6 +51,7 @@ public class GUIMain extends Application {
         Thread.setDefaultUncaughtExceptionHandler(GUIMain::handleFxThreadError);
 
         application = this;
+        resolveMainFolder(); // Run before setting up the logger.
         setupLogger();
         Runtime.getRuntime().addShutdownHook(new Thread(GUIMain::onShutdown));
 
@@ -59,10 +62,34 @@ public class GUIMain extends Application {
                     + "FrogLord has only been given " + DataSizeUnit.formatSize(availableMemory) + " Memory.\n"
                     + "Proceed at your own risk. Things may not work properly.", AlertType.WARNING);
 
-        // Start.
-        mainConfigFile = new File("main.cfg");
+        mainConfigFile = new File(mainApplicationFolder, "main.cfg");
         mainConfig = Config.loadConfigFromTextFile(mainConfigFile, true);
         openLoadGameSettingsMenu();
+    }
+
+    @SuppressWarnings("ThrowFromFinallyBlock")
+    private static void resolveMainFolder() {
+        // Can we write file data to the working directory?
+        // If not, we probably also can't write to main.cfg, or other files we tend to store in the FrogLord directory.
+        // For example, if FrogLord is installed using the installed (eg: "C:\Program Files\FrogLord\"), Windows will not let us write there.
+        // So, we'll default to a folder in the home directory instead.
+        mainApplicationFolder = new File(System.getProperty("user.home"), "FrogLord");
+
+        File testFile = new File("_working_directory_test_");
+        try {
+            if (testFile.exists() && !testFile.delete())
+                throw new RuntimeException("Failed to delete pre-existing working directory test file '" + testFile + "'.");
+
+            if (testFile.createNewFile())
+                mainApplicationFolder = new File(".");
+        } catch (IOException exception) {
+            // Ignored.
+        } finally {
+            if (testFile.exists() && !testFile.delete())
+                throw new RuntimeException("Failed to delete working directory test file '" + testFile + "'.");
+        }
+
+        Utils.makeDirectory(mainApplicationFolder);
     }
 
     private static void handleFxThreadError(Thread thread, Throwable throwable) {
@@ -123,7 +150,7 @@ public class GUIMain extends Application {
     }
 
     private static void setupLogger() {
-        Utils.makeDirectory(new File("logs")); // Ensure the logs directory exists.
+        Utils.makeDirectory(new File(getMainApplicationFolder(), "logs")); // Ensure the logs directory exists.
 
         // Setup global logger.
         Logger logger = Logger.getGlobal();
@@ -169,12 +196,12 @@ public class GUIMain extends Application {
         File logFile;
         do {
             logFileName = dateStr + "-" + (id++) + ".log";
-            logFile = new File("logs" + File.separator + logFileName);
+            logFile = new File(getMainApplicationFolder(), "logs" + File.separator + logFileName);
         } while (logFile.exists() && logFile.isFile());
 
         // Setup logging.
         try {
-            FileHandler fileHandler = new FileHandler("logs/" + logFileName.replace("%", "%%"), true);
+            FileHandler fileHandler = new FileHandler(getMainApplicationFolder().getAbsolutePath().replace('\\', '/') + "/" + "logs/" + logFileName.replace("%", "%%"), true);
             fileHandler.setFormatter(formatter);
             fileHandler.setFilter(record -> !LogFormatter.isJavaFXMessage(record));
             logger.addHandler(fileHandler);

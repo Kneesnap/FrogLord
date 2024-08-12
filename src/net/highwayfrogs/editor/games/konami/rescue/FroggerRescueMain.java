@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.renderware.RWSFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RWPlatformIndependentTextureDictionaryChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RWPlatformIndependentTextureDictionaryChunk.RWPlatformIndependentTextureEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.DummyFile;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -47,7 +48,7 @@ public class FroggerRescueMain {
             if (!dirFile.isFile() || dirFile.getName().contains("dummy"))
                 continue;
 
-            File outputFolder = new File("RescueOutput/" + Utils.stripExtension(dirFile.getName()) + "/");
+            File outputFolder = new File(GUIMain.getMainApplicationFolder(), "RescueOutput/" + Utils.stripExtension(dirFile.getName()) + "/");
             Utils.makeDirectory(outputFolder);
 
             HFSFile hfsFile = loadHfsFile(dirFile);

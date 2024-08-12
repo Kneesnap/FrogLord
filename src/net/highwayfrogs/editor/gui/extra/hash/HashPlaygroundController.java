@@ -9,6 +9,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -36,7 +37,7 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
     private HashPlaygroundController(SCGameInstance gameInstance) {
         super(gameInstance);
         DictionaryStringGenerator gen = new DictionaryStringGenerator(); // TODO: This is temporary.
-        gen.loadDictionaryFromFile(new File("dictionary.txt"));
+        gen.loadDictionaryFromFile(new File(GUIMain.getMainApplicationFolder(), "dictionary.txt"));
         this.stringGenerator = gen;
     }
 

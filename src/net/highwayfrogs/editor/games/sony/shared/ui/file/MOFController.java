@@ -886,7 +886,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
                     if (!entryLists.contains(entryList))
                         entryLists.add(entryList);
             this.animationListChoiceBox.setItems(FXCollections.observableArrayList(entryLists));
-            this.animationListChoiceBox.setConverter(new AbstractIndexStringConverter<>(entryLists, (index, val) -> val != null ? "Animation #" + (index + 1) + ", Part #" + val.getParent().getPartID() : "None"));
+            this.animationListChoiceBox.setConverter(new AbstractIndexStringConverter<>(entryLists, (index, val) -> "Animation #" + (index + 1) + ", Part #" + val.getParent().getPartID(), "None"));
         }
 
         /**

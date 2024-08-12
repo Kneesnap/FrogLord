@@ -252,7 +252,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         List<FroggerCameraRotation> cameraRotations = new ArrayList<>(Arrays.asList(FroggerCameraRotation.values()));
         cameraRotations.add(0, null);
         this.forcedCameraDirectionComboBox.setItems(FXCollections.observableArrayList(cameraRotations));
-        this.forcedCameraDirectionComboBox.setConverter(new AbstractIndexStringConverter<>(cameraRotations, (index, rotation) -> rotation != null ? rotation.getDisplayString() : "None"));
+        this.forcedCameraDirectionComboBox.setConverter(new AbstractIndexStringConverter<>(cameraRotations, (index, rotation) -> rotation.getDisplayString(), "None"));
         this.forcedCameraDirectionComboBox.setPlaceholder(new AbstractAttachmentCell<>((rotation, index) -> "None"));
         this.forcedCameraDirectionComboBox.setCellFactory(param -> new AbstractAttachmentCell<>((rotation, index) -> rotation != null ? rotation.getDisplayString() : "None"));
         this.forcedCameraDirectionComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
@@ -263,7 +263,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         });
 
         // Setup zone UI.
-        this.zoneSelector.setConverter(new AbstractStringConverter<>(zone -> zone != null ? "Camera Zone " + zone.getZoneIndex() : "None"));
+        this.zoneSelector.setConverter(new AbstractStringConverter<>(zone -> "Camera Zone " + zone.getZoneIndex(), "None"));
         this.zoneSelector.setPlaceholder(new AbstractAttachmentCell<>((rotation, index) -> "None"));
         this.zoneSelector.setCellFactory(param -> new AbstractAttachmentCell<>((zone, index) -> zone != null ? "Camera Zone " + zone.getZoneIndex() : "None"));
         updateZoneList();
