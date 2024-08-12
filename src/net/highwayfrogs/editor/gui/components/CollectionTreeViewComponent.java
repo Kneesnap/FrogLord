@@ -45,12 +45,19 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
 
         this.rootNode = new CollectionViewTreeNode<>(null, this, "root");
         TreeItem<CollectionViewTreeNode<TViewEntry>> rootTreeItem = this.rootNode.createFxTreeItem();
-        rootTreeItem.setExpanded(true);
         treeView.setRoot(rootTreeItem);
         treeView.getSelectionModel().selectedItemProperty().addListener(this::onSelectionChange);
 
         super.onControllerLoad(treeView);
         setAnchorPaneStretch(treeView);
+
+        // Expand nodes until reaching files.
+        // This is not only a nice QoL feature, but also makes FrogLord much easier to navigate for a first-time user.
+        CollectionViewTreeNode<TViewEntry> tempNode = this.rootNode;
+        do {
+            tempNode.getFxTreeItem().setExpanded(true);
+            tempNode = tempNode.getChildNodes().size() == 1 ? tempNode.getChildNodes().get(0) : null;
+        } while (tempNode != null);
     }
 
     private void onSelectionChange(ObservableValue<? extends TreeItem<CollectionViewTreeNode<TViewEntry>>> observableValue, TreeItem<CollectionViewTreeNode<TViewEntry>> oldViewEntry, TreeItem<CollectionViewTreeNode<TViewEntry>> newViewEntry) {
