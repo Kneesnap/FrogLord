@@ -169,7 +169,7 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
     }
 
     @Getter
-    public static class HFSFileDefinition extends GameObject<HudsonGameInstance> implements IHudsonFileDefinition {
+    public static class HFSFileDefinition extends GameObject<HudsonGameInstance> implements IHudsonFileDefinition, Comparable<HFSFileDefinition> {
         private final HFSFile hfsFile;
         private final int fileIndex;
 
@@ -194,6 +194,14 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
             IHudsonFileDefinition fileDefinition = this.hfsFile.getFileDefinition();
             CollectionViewTreeNode<HudsonGameFile> hfsNode = fileDefinition != null ? fileDefinition.getOrCreateTreePath(rootNode, this.hfsFile) : rootNode;
             return hfsNode.addChildNode(gameFile);
+        }
+
+        @Override
+        public int compareTo(HFSFileDefinition other) {
+            if (other == null)
+                return 1;
+
+            return Integer.compare(this.fileIndex, other.fileIndex);
         }
     }
 }

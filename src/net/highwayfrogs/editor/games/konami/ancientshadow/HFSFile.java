@@ -286,7 +286,7 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
     }
 
     @Getter
-    public static class HFSFileDefinition extends GameObject<HudsonGameInstance> implements IHudsonFileDefinition {
+    public static class HFSFileDefinition extends GameObject<HudsonGameInstance> implements IHudsonFileDefinition, Comparable<HFSFileDefinition> {
         private final HFSFile hfsFile;
         private final int groupIndex;
         private final int fileIndex;
@@ -300,12 +300,12 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
 
         @Override
         public String getFileName() {
-            return getNameSuffix();
+            return getNameSuffix(false);
         }
 
         @Override
         public String getFullFileName() {
-            return this.hfsFile.getFullDisplayName() + getNameSuffix();
+            return this.hfsFile.getFullDisplayName() + getNameSuffix(true);
         }
 
         @Override
@@ -318,12 +318,24 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
             return hfsNode.addChildNode(gameFile);
         }
 
-        private String getNameSuffix() {
-            if (this.groupIndex == 0 && this.hfsFile.getHfsFiles().size() == 1) {
+        private String getNameSuffix(boolean includeGroup) {
+            if (!includeGroup || (this.groupIndex == 0 && this.hfsFile.getHfsFiles().size() == 1)) {
                 return "{file=" + this.fileIndex + "}";
             } else {
                 return "{group=" + this.groupIndex + ",file=" + this.fileIndex + "}";
             }
+        }
+
+        @Override
+        public int compareTo(HFSFileDefinition other) {
+            if (other == null)
+                return 1;
+
+            int value = Integer.compare(this.groupIndex, other.groupIndex);
+            if (value != 0)
+                return value;
+
+            return Integer.compare(this.fileIndex, other.fileIndex);
         }
     }
 }

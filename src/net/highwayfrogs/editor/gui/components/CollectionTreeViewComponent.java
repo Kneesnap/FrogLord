@@ -16,7 +16,7 @@ import java.util.*;
 
 /**
  * Allows displaying a collection of values as a tree.
- * TODO: Searching isn't working now, support it!
+ * TODO: Searching still seems semi-broken.
  * Created by Kneesnap on 8/9/2024.
  */
 public abstract class CollectionTreeViewComponent<TGameInstance extends GameInstance, TViewEntry extends ICollectionViewEntry> extends CollectionViewComponent<TGameInstance, TViewEntry> implements Comparator<TViewEntry> {
@@ -91,18 +91,6 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
             if (treeNodeEntry == null)
                 throw new IllegalStateException("No tree node was returned for the view entry '" + viewEntry + "'.");
         }
-    }
-
-    @Override
-    public int compare(TViewEntry o1, TViewEntry o2) {
-        String o1Name = o1 != null ? o1.getCollectionViewDisplayName() : null;
-        String o2Name = o2 != null ? o2.getCollectionViewDisplayName() : null;
-        if (o1Name == null)
-            o1Name = "{unnamed}";
-        if (o2Name == null)
-            o2Name = "{unnamed}";
-
-        return o1Name.compareTo(o2Name);
     }
 
     /**
@@ -313,15 +301,37 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
         @Override
         public int compareTo(CollectionViewTreeNode<TViewEntry> other) {
             if (this.name == null && other.name != null) {
-                return 1; // Nodes without names are ordered after ones with.
+                return 1; // Nodes with names are ordered before ones with. (Folders come first, files come second)
             } else if (this.name != null && other.name == null) {
-                return -1; // Nodes with names are ordered before ones without.
+                return -1; // Nodes without names are ordered after ones without. (Files come after folders)
             } else if (this.name != null) {
                 // Both names aren't null, so compare names alphabetically.
                 return this.name.compareTo(other.name);
-            } else {
+            } else if (this.value != null && other.value != null) {
+                TViewEntry o1 = this.value;
+                TViewEntry o2 = other.value;
+
                 // Both names are null, so compare values.
-                return this.viewComponent.compare(this.value, other.value);
+                int result = this.viewComponent.compare(o1, o2);
+                if (result != 0)
+                    return result;
+
+                // Even the custom tiebreaker matched, so try to sort using default string sorting behavior.
+                String o1Name = o1.getCollectionViewDisplayName();
+                String o2Name = o2.getCollectionViewDisplayName();
+                if (o1Name == null)
+                    o1Name = "{unnamed}";
+                if (o2Name == null)
+                    o2Name = "{unnamed}";
+
+                result = o1Name.compareTo(o2Name);
+                if (result != 0)
+                    return result;
+
+                // If all else fails, we will compare their hash codes.
+                return Integer.compare(o1.hashCode(), o2.hashCode());
+            } else {
+                throw new NullPointerException("Either this.value or other.value was null! This should not be possible!");
             }
         }
     }

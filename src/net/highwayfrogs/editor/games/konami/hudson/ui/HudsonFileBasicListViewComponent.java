@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.hudson.ui;
 
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
+import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionTreeViewComponent;
 
@@ -30,5 +31,19 @@ public class HudsonFileBasicListViewComponent<TGameInstance extends HudsonGameIn
     @Override
     public Collection<HudsonGameFile> getViewEntries() {
         return getGameInstance().getAllFiles();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public int compare(HudsonGameFile o1, HudsonGameFile o2) {
+        IHudsonFileDefinition fileDefinition1 = o1.getFileDefinition();
+        if (!(fileDefinition1 instanceof Comparable))
+            return 0;
+
+        IHudsonFileDefinition fileDefinition2 = o2.getFileDefinition();
+        if (!fileDefinition1.getClass().isInstance(fileDefinition2))
+            return 0;
+
+        return ((Comparable<IHudsonFileDefinition>) fileDefinition1).compareTo(fileDefinition2);
     }
 }
