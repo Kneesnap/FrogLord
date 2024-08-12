@@ -67,7 +67,7 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
         Iterator<TViewEntry> iterator = this.activeEntries.iterator();
         while (iterator.hasNext()) {
             TViewEntry viewEntry = iterator.next();
-            if (!sourceViewEntries.contains(viewEntry)) {
+            if (!sourceViewEntries.contains(viewEntry) || !matchesSearchQuery(viewEntry)) {
                 iterator.remove();
 
                 // Update the UI.
@@ -75,14 +75,14 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
                 if (treeNodeEntry == null)
                     throw new IllegalStateException("No tree node was returned for the view entry '" + viewEntry + "'.");
 
-                if (treeNodeEntry.removeChildNode(viewEntry) == null)
+                if (treeNodeEntry.getParent().removeChildNode(viewEntry) == null)
                     getLogger().severe("Failed to remove the child node for view entry '" + viewEntry + "'.");
             }
         }
 
         // Add new entries.
         for (TViewEntry viewEntry : sourceViewEntries) {
-            if (!this.activeEntries.add(viewEntry))
+            if (!matchesSearchQuery(viewEntry) || !this.activeEntries.add(viewEntry))
                 continue;
 
             CollectionViewTreeNode<TViewEntry> treeNodeEntry = getOrCreateTreePath(this.rootNode, viewEntry);
@@ -140,6 +140,13 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
         }
 
         /**
+         * Returns true if the component is active. A component becomes inactive when it is unregistered and is no longer valid to keep cached.
+         */
+        public boolean isActive() {
+            return this.fxTreeItem != null;
+        }
+
+        /**
          * Adds a child node for a particular view entry.
          * @param value the view entry to add
          * @return newTreeNode
@@ -179,16 +186,20 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
             this.childNodes.remove(foundIndex);
             if (this.fxTreeItem != null)
                 this.fxTreeItem.getChildren().remove(foundIndex);
+            childNode.onRemove();
 
             tryRemoveIfEmpty();
             return childNode;
+        }
+
+        private void onRemove() {
+            this.fxTreeItem = null;
         }
 
         private void tryRemoveIfEmpty() {
             if (!this.childNodes.isEmpty())
                 return;
 
-            removeFxTreeItem();
             if (this.parent != null) {
                 if (this.name != null) {
                     this.parent.removeChildNode(this.name);
@@ -247,22 +258,10 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
             this.childNodes.remove(foundIndex);
             if (this.fxTreeItem != null)
                 this.fxTreeItem.getChildren().remove(foundIndex);
+            childNode.onRemove();
 
             tryRemoveIfEmpty();
             return childNode;
-        }
-
-        /**
-         * Removes the tree item from existence.
-         */
-        private void removeFxTreeItem() {
-            if (this.fxTreeItem == null)
-                return;
-
-            // Prevent memory leak.
-            if (this.fxTreeItem.getParent() != null)
-                this.fxTreeItem.getParent().getChildren().remove(this.fxTreeItem);
-            this.fxTreeItem = null;
         }
 
         /**

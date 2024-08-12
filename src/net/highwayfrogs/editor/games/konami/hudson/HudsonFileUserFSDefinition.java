@@ -40,7 +40,7 @@ public class HudsonFileUserFSDefinition extends GameObject<HudsonGameInstance> i
 
     @Override
     public CollectionViewTreeNode<HudsonGameFile> getOrCreateTreePath(CollectionViewTreeNode<HudsonGameFile> rootNode, HudsonGameFile gameFile) {
-        if (this.cachedTreePath != null)
+        if (this.cachedTreePath != null && this.cachedTreePath.isActive())
             return this.cachedTreePath;
 
         File mainGameFolder = getGameInstance().getMainGameFolder();
