@@ -67,7 +67,7 @@ public class FroggerRescueGameType implements IGameType {
 
         public FroggerRescueGameConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
             super(controller, gameConfig);
-            this.binFileBrowseComponent = new GameConfigFolderBrowseComponent(this, config, CONFIG_MAIN_FOLDER_PATH, "Game Data Folder", "Please locate and open the folder containing game data", false);
+            this.binFileBrowseComponent = new GameConfigFolderBrowseComponent(this, config, CONFIG_MAIN_FOLDER_PATH, "Game Data Folder", "Please locate the folder containing game data", false);
             loadController(null);
         }
 

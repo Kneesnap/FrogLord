@@ -2716,4 +2716,17 @@ public class Utils {
             return index;
         }
     }
+
+    /**
+     * Gets the file name extension from the file name.
+     * @param fileName the file name to get the extension from
+     * @return fileNameExtension, if there is one
+     */
+    public static String getFileNameExtension(String fileName) {
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex < 0)
+            return null;
+
+        return fileName.substring(dotIndex + 1);
+    }
 }

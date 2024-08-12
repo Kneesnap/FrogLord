@@ -64,6 +64,17 @@ public abstract class HudsonGameInstance extends GameInstance {
         }
     }
 
+    /**
+     * Tests if the given file should be loaded as a game file for the game.
+     * @param file the file to load
+     * @param fileName the name of the file
+     * @param extension the file extension, if there is one
+     * @return should the file be loaded as a game file?
+     */
+    protected boolean shouldLoadAsGameFile(File file, String fileName, String extension) {
+        return "hfs".equalsIgnoreCase(extension);
+    }
+
     private void loadFilesFromFolderRecursive(File folder, ProgressBarComponent progressBar) {
         List<File> files = new ArrayList<>();
         files.add(folder);
@@ -72,7 +83,9 @@ public abstract class HudsonGameInstance extends GameInstance {
         while (files.size() > 0) {
             File file = files.remove(0);
             if (file.isFile()) {
-                if (file.getName().endsWith("hfs") || file.getName().endsWith("bnk")) // TODO: More generic test once we've further along.
+                String fileName = file.getName();
+                String extension = Utils.getFileNameExtension(fileName);
+                if (shouldLoadAsGameFile(file, fileName, extension))
                     loadFiles.add(file);
             } else if (file.isDirectory()) {
                 File[] directoryFiles = file.listFiles();
