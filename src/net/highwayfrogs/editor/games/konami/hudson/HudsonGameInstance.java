@@ -101,10 +101,10 @@ public abstract class HudsonGameInstance extends GameInstance {
             loadFile(file, false, progressBar);
     }
 
-    private void loadFile(File file, boolean showError, ProgressBarComponent progressBar) {
+    private void loadFile(File file, boolean singleGameDataFile, ProgressBarComponent progressBar) {
         IHudsonFileDefinition fileDefinition = new HudsonFileUserFSDefinition(this, file);
 
-        if (progressBar != null)
+        if (progressBar != null && !singleGameDataFile)
             progressBar.setStatusMessage("Loading '" + file.getName() + "'...");
 
         try {
@@ -112,16 +112,21 @@ public abstract class HudsonGameInstance extends GameInstance {
             DataReader reader = new DataReader(fileSource);
 
             HudsonGameFile gameFile = createGameFile(fileDefinition, fileSource.getFileData());
-            gameFile.load(reader);
+            if (singleGameDataFile && gameFile instanceof IHudsonFileSystem) {
+                ((IHudsonFileSystem) gameFile).load(reader, progressBar);
+            } else {
+                gameFile.load(reader);
+            }
+
             this.files.add(gameFile);
             this.allFiles.add(gameFile);
             if (gameFile instanceof IHudsonFileSystem)
                 this.allFiles.addAll(((IHudsonFileSystem) gameFile).getGameFiles());
         } catch (IOException ex) {
-            Utils.handleError(getLogger(), ex, showError, "Failed to load file '%s'.", Utils.toLocalPath(this.rootFolder, file, true));
+            Utils.handleError(getLogger(), ex, singleGameDataFile, "Failed to load file '%s'.", Utils.toLocalPath(this.rootFolder, file, true));
         }
 
-        if (progressBar != null)
+        if (progressBar != null && !singleGameDataFile)
             progressBar.addCompletedProgress(1);
     }
 
