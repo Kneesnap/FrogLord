@@ -23,6 +23,11 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
  * Old Frogger maps are two height-field grids with non-uniform spacing.
  * In Open Inventor, mappy most likely modelled them as a "SoQuadMesh".
  * TODO: Support early format.
+ *
+ * Early Formats:
+ *  - swamp.old 3/14/1997 -> Contains a slightly older version of swamp.map. Loads fine. Texturing is less
+ *  - desert_test.map 2/14/1997 -> Blue lighting for some reason. The GRID doesn't load, and the vertices seem corrupted. because it's labelled test maybe this isn't a valid map.
+ *  - multiplayer.map 2/14/1997 -> Early multiplayer1 (Missing lilypads, texture remap doesn't align)
  * Created by Kneesnap on 12/8/2023.
  */
 @Getter
