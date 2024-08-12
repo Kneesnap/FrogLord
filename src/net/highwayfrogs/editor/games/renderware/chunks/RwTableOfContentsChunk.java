@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
+import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +19,8 @@ import java.util.List;
 public class RwTableOfContentsChunk extends RwStreamChunk {
     private final List<RwTableOfContentsChunkEntry> entries = new ArrayList<>();
 
-    public static final int PLUGIN_ID = 0x24;
-
     public RwTableOfContentsChunk(RwStreamFile streamFile, int version, RwStreamChunk parentChunk) {
-        super(streamFile, PLUGIN_ID, version, parentChunk);
+        super(streamFile, RwStreamSectionType.TOC, version, parentChunk);
     }
 
     @Override
@@ -33,7 +32,6 @@ public class RwTableOfContentsChunk extends RwStreamChunk {
             RwTableOfContentsChunkEntry newEntry = new RwTableOfContentsChunkEntry(getGameInstance());
             newEntry.load(reader);
             this.entries.add(newEntry);
-
         }
     }
 

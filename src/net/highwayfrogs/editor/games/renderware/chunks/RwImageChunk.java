@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
+import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
@@ -17,10 +18,8 @@ import java.awt.image.BufferedImage;
 public class RwImageChunk extends RwStreamChunk {
     private BufferedImage image;
 
-    public static final int PLUGIN_ID = 0x18;
-
     public RwImageChunk(RwStreamFile streamFile, int renderwareVersion, RwStreamChunk parentChunk) {
-        super(streamFile, PLUGIN_ID, renderwareVersion, parentChunk);
+        super(streamFile, RwStreamSectionType.IMAGE, renderwareVersion, parentChunk);
     }
 
     @Override

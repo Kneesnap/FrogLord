@@ -7,6 +7,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
@@ -39,6 +40,7 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
         TreeView<CollectionViewTreeNode<TViewEntry>> treeView = (TreeView<CollectionViewTreeNode<TViewEntry>>) rootNode;
         treeView.setEditable(false);
         treeView.setShowRoot(false); // Hide the root node.
+        treeView.setFixedCellSize(Constants.RECOMMENDED_TREE_VIEW_FIXED_CELL_SIZE); // Fixes performance issues. Recommended by https://docs.oracle.com/javase/8/javafx/api/javafx/scene/control/TreeView.html#fixedCellSizeProperty--
         treeView.setCellFactory(treeViewParam -> new CollectionViewEntryTreeCell<>());
 
         this.rootNode = new CollectionViewTreeNode<>(null, this, "root");

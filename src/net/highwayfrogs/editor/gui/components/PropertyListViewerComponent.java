@@ -24,6 +24,8 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
     private TableColumn<NameValuePair, String> tableColumnKey;
     private TableColumn<NameValuePair, String> tableColumnValue;
 
+    private static final int PIXEL_WIDTH_OFFSET = 5; // Pixels included in the table which aren't part of a column.
+
     public PropertyListViewerComponent(TGameInstance instance) {
         super(instance);
         loadController(new TableView<>());
@@ -92,6 +94,41 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
         if (properties != null && properties.size() > 0)
             for (NameValuePair pair : properties)
                 getRootNode().getItems().add(pair);
+    }
+
+    /**
+     * Binds the column widths to the table size.
+     */
+    public void bindSize() {
+        double oneThirdWidth = getRootNode().getWidth() / 3D;
+        this.tableColumnKey.setPrefWidth(oneThirdWidth);
+        this.tableColumnValue.setPrefWidth(oneThirdWidth * 2);
+        this.tableColumnKey.maxWidthProperty().bind(getRootNode().widthProperty()); // Could restrict this to be widthProperty() - PIXEL_WIDTH_OFFSET
+
+        // Only allow resizing the key.
+        this.tableColumnKey.setResizable(true);
+        this.tableColumnValue.setResizable(false);
+
+        this.tableColumnKey.widthProperty().addListener((observable, oldValue, newValue) -> {
+            double tableWidth = getRootNode().getWidth();
+            double columnWidth = newValue.doubleValue();
+            if (!Double.isFinite(tableWidth) || Math.abs(tableWidth) <= .001)
+                return;
+
+            double newWidth = Math.max(0D, Math.min(tableWidth - PIXEL_WIDTH_OFFSET, columnWidth));
+            this.tableColumnValue.setPrefWidth(tableWidth - newWidth);
+        });
+
+        getRootNode().widthProperty().addListener((observable, oldValue, newValue) -> {
+            double newWidth = newValue.doubleValue();
+            if (!Double.isFinite(newWidth) || Math.abs(newWidth) <= .001 || Math.abs(this.tableColumnKey.getWidth()) <= .001)
+                return;
+
+            double oldWidth = oldValue.doubleValue();
+            double oldKeyPercent = Double.isFinite(oldWidth) && Math.abs(oldWidth) > .001 ? Math.max(0D, Math.min(1D, this.tableColumnKey.getWidth() / oldWidth)) : (1 / 3D);
+            this.tableColumnKey.setPrefWidth(oldKeyPercent * newWidth);
+            this.tableColumnValue.setPrefWidth(Math.max(0, ((1D - oldKeyPercent) * newWidth) - PIXEL_WIDTH_OFFSET));
+        });
     }
 
     /**

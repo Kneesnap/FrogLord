@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
+import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +19,8 @@ import java.util.List;
 public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
     private final List<RwPlatformIndependentTextureEntry> entries = new ArrayList<>();
 
-    public static final int TYPE_ID = 0x23;
-
     public RwPlatformIndependentTextureDictionaryChunk(RwStreamFile streamFile, int renderwareVersion, RwStreamChunk parentChunk) {
-        super(streamFile, TYPE_ID, renderwareVersion, parentChunk);
+        super(streamFile, RwStreamSectionType.PITEX_DICTIONARY, renderwareVersion, parentChunk);
     }
 
     @Override
