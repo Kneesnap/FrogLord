@@ -22,7 +22,7 @@ public class HudsonRwStreamFile extends HudsonGameFile {
 
     public HudsonRwStreamFile(IGameFileDefinition fileDefinition) {
         super(fileDefinition);
-        this.rwStreamFile = new RwStreamFile(getGameInstance(), getGameInstance().getRwStreamChunkTypeRegistry(), fileDefinition.getFileName());
+        this.rwStreamFile = new RwStreamFile(getGameInstance(), getGameInstance().getRwStreamChunkTypeRegistry(), fileDefinition.getFullFilePath());
     }
 
     @Override

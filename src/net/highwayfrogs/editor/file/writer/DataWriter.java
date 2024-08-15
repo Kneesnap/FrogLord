@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Stack;
 
@@ -276,7 +278,17 @@ public class DataWriter {
      * @return byteCount
      */
     public int writeStringBytes(String str) {
-        byte[] bytes = str.getBytes();
+        return writeStringBytes(str, StandardCharsets.US_ASCII);
+    }
+
+    /**
+     * Write the bytes to a string, then return the amount of bytes written.
+     * WARNING: This has no terminator or length, so only use this if you know what you're doing.
+     * @param str The string to write.
+     * @return byteCount
+     */
+    public int writeStringBytes(String str, Charset charset) {
+        byte[] bytes = str.getBytes(charset);
         writeBytes(bytes);
         return bytes.length;
     }

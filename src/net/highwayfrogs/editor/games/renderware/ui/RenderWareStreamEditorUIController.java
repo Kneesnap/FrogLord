@@ -4,6 +4,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
@@ -29,7 +30,6 @@ import java.util.List;
 
 /**
  * Allows the exploration of a RenderWare stream file.
- * TODO: I'd like to make it so the RwStreamChunk can optionally provide a UI controller. When that happens, we'll add a separator on the right-side, and add the provided UI controller under the property list.
  * Created by Kneesnap on 8/11/2024.
  */
 public class RenderWareStreamEditorUIController<TGameInstance extends GameInstance> extends GameUIController<TGameInstance> {
@@ -39,10 +39,13 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
     @FXML private HBox contentBox;
     @FXML private ImageView iconImageView;
     @FXML private Label fileNameLabel;
-    @FXML private TreeView<RwStreamChunk> treeView;
+    @FXML private TreeView<IRwStreamSectionUIEntry> treeView;
     @FXML private HBox extraOptionsBox; // This is where we should put UI for stuff like a button to view the World.
+    @FXML private VBox rightSidePanelFreeArea;
+    private Separator rightSideSeparator;
+    private GameUIController<?> sectionUiController;
     private final RwStreamFile streamFile;
-    private RwStreamChunk shownChunk;
+    private IRwStreamSectionUIEntry shownChunk;
 
     private static final URL FXML_TEMPLATE_URL = Utils.getResourceURL("fxml/edit-file-renderware-stream.fxml");
     private static final FXMLLoader FXML_TEMPLATE_LOADER = new FXMLLoader(FXML_TEMPLATE_URL);
@@ -58,19 +61,19 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
     protected void onControllerLoad(Node rootNode) {
         this.treeView.setCellFactory(treeViewParam -> new ContextMenuTreeCell());
 
-        TreeItem<RwStreamChunk> treeRootNode = new TreeItem<>(null);
+        TreeItem<IRwStreamSectionUIEntry> treeRootNode = new TreeItem<>(null);
         treeRootNode.setExpanded(true);
         this.treeView.setRoot(treeRootNode);
         this.treeView.setFixedCellSize(Constants.RECOMMENDED_TREE_VIEW_FIXED_CELL_SIZE);
         this.treeView.getSelectionModel().selectedItemProperty().addListener(this::onSelectionChange);
         createFxTreeItems(this.streamFile);
 
-        if (this.contentBox != null) {
+        if (this.rightSidePanelFreeArea != null) {
             TableView<NameValuePair> propertyListViewRootNode = this.propertyListViewer.getRootNode();
             HBox.setHgrow(propertyListViewRootNode, Priority.ALWAYS);
             this.propertyListViewer.bindSize();
 
-            this.contentBox.getChildren().add(propertyListViewRootNode);
+            this.rightSidePanelFreeArea.getChildren().add(propertyListViewRootNode);
             addController(this.propertyListViewer);
         }
     }
@@ -78,26 +81,26 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
     private void createFxTreeItems(RwStreamFile file) {
         this.treeView.getRoot().getChildren().clear();
 
-        List<TreeItem<RwStreamChunk>> queue = new ArrayList<>();
+        List<TreeItem<IRwStreamSectionUIEntry>> queue = new ArrayList<>();
         queue.add(this.treeView.getRoot());
 
         while (queue.size() > 0) {
-            TreeItem<RwStreamChunk> node = queue.remove(0);
-            RwStreamChunk chunk = node.getValue();
+            TreeItem<IRwStreamSectionUIEntry> node = queue.remove(0);
+            IRwStreamSectionUIEntry chunk = node.getValue();
 
-            List<RwStreamChunk> childChunks = chunk != null ? chunk.getChildChunks() : file.getChunks();
-            ObservableList<TreeItem<RwStreamChunk>> fxChildNodes = node.getChildren();
+            List<? extends IRwStreamSectionUIEntry> childChunks = chunk != null ? chunk.getChildUISections() : file.getChunks();
+            ObservableList<TreeItem<IRwStreamSectionUIEntry>> fxChildNodes = node.getChildren();
             for (int i = 0; i < childChunks.size(); i++) {
-                RwStreamChunk childChunk = childChunks.get(i);
-                TreeItem<RwStreamChunk> newTreeItem = new TreeItem<>(childChunk);
+                IRwStreamSectionUIEntry childChunk = childChunks.get(i);
+                TreeItem<IRwStreamSectionUIEntry> newTreeItem = new TreeItem<>(childChunk);
                 fxChildNodes.add(newTreeItem);
-                if (!childChunk.getChildChunks().isEmpty())
+                if (!childChunk.getChildUISections().isEmpty())
                     queue.add(newTreeItem);
             }
         }
     }
 
-    private void onSelectionChange(ObservableValue<? extends TreeItem<RwStreamChunk>> observableValue, TreeItem<RwStreamChunk> oldChunk, TreeItem<RwStreamChunk> newChunk) {
+    private void onSelectionChange(ObservableValue<? extends TreeItem<IRwStreamSectionUIEntry>> observableValue, TreeItem<IRwStreamSectionUIEntry> oldChunk, TreeItem<IRwStreamSectionUIEntry> newChunk) {
         showChunkEditor(newChunk != null ? newChunk.getValue() : null);
     }
 
@@ -105,7 +108,7 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
      * Shows the editor UI for a particular chunk.
      * @param chunk The chunk to display.
      */
-    public void showChunkEditor(RwStreamChunk chunk) {
+    public void showChunkEditor(IRwStreamSectionUIEntry chunk) {
         if (chunk == this.shownChunk)
             return;
 
@@ -114,6 +117,29 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
 
         this.propertyListViewer.showProperties(chunk != null ? chunk.createPropertyList() : null);
         this.shownChunk = chunk;
+
+        GameUIController<?> newUiController = chunk != null ? chunk.makeEditorUI() : null;
+
+        // Setup UI.
+        if (this.sectionUiController != null) {
+            this.rightSidePanelFreeArea.getChildren().remove(this.sectionUiController.getRootNode());
+            this.removeController(this.sectionUiController);
+            this.sectionUiController = null;
+        }
+
+        if (this.rightSideSeparator != null && newUiController == null) {
+            this.rightSidePanelFreeArea.getChildren().remove(this.rightSideSeparator);
+            this.rightSideSeparator = null;
+        } else if (this.rightSideSeparator == null && newUiController != null) {
+            this.rightSideSeparator = new Separator(Orientation.HORIZONTAL);
+            this.rightSidePanelFreeArea.getChildren().add(this.rightSideSeparator);
+        }
+
+        if (newUiController != null) {
+            this.sectionUiController = newUiController;
+            this.rightSidePanelFreeArea.getChildren().add(newUiController.getRootNode());
+            this.addController(newUiController);
+        }
     }
 
     /**
@@ -134,9 +160,9 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
      * Applies collection view entry display properties to a JavaFX TreeCell.
      * Created by Kneesnap on 8/9/2024.
      */
-    private static class ContextMenuTreeCell extends CollectionViewEntryTreeCell<RwStreamChunk> {
+    private static class ContextMenuTreeCell extends CollectionViewEntryTreeCell<IRwStreamSectionUIEntry> {
         @Override
-        public void updateItem(RwStreamChunk streamChunk, boolean empty) {
+        public void updateItem(IRwStreamSectionUIEntry streamChunk, boolean empty) {
             super.updateItem(streamChunk, empty);
             if (empty) {
                 setOnContextMenuRequested(null);
@@ -147,20 +173,24 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
             setOnContextMenuRequested(evt -> {
                 ContextMenu contextMenu = new ContextMenu();
 
-                MenuItem menuItem = new MenuItem("Export Raw Chunk Data");
-                contextMenu.getItems().add(menuItem);
-                menuItem.setOnAction(event -> {
-                    File outputFile = Utils.promptFileSave(streamChunk.getGameInstance(), "Specify the file to save the chunk data as...", "raw-chunk-data", "Raw RenderWare Stream", "rawrws");
-                    if (outputFile != null) {
-                        try {
-                            Files.write(outputFile.toPath(), streamChunk.getRawReadData());
-                        } catch (IOException ex) {
-                            Utils.handleError(streamChunk.getLogger(), ex, true, "Failed to save file '%s'.", outputFile);
+                if (streamChunk instanceof RwStreamChunk) {
+                    RwStreamChunk streamSection = (RwStreamChunk) streamChunk;
+                    MenuItem menuItem = new MenuItem("Export Raw Chunk Data");
+                    contextMenu.getItems().add(menuItem);
+                    menuItem.setOnAction(event -> {
+                        File outputFile = Utils.promptFileSave(streamSection.getGameInstance(), "Specify the file to save the chunk data as...", "raw-chunk-data", "Raw RenderWare Stream", "rawrws");
+                        if (outputFile != null) {
+                            try {
+                                Files.write(outputFile.toPath(), streamSection.getRawReadData());
+                            } catch (IOException ex) {
+                                Utils.handleError(streamSection.getLogger(), ex, true, "Failed to save file '%s'.", outputFile);
+                            }
                         }
-                    }
-                });
+                    });
+                }
 
-                contextMenu.show((Node) evt.getSource(), evt.getScreenX(), evt.getScreenY());
+                if (!contextMenu.getItems().isEmpty())
+                    contextMenu.show((Node) evt.getSource(), evt.getScreenX(), evt.getScreenY());
             });
         }
     }

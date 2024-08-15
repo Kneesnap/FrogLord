@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.rescue.FroggerRescueInstance;
+import net.highwayfrogs.editor.games.renderware.RwUtils;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
@@ -28,6 +29,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
     private final List<FroggerRescueSoundBankEntry> entries = new ArrayList<>();
 
     public static final String SIGNATURE = "SBNK";
+    private static final int ALIGNMENT = 16;
 
     public FroggerRescueSoundBank(IGameFileDefinition fileDefinition) {
         super(fileDefinition);
@@ -56,7 +58,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
         // Read raw file contents.
         for (int i = 0; i < this.entries.size(); i++) {
             this.entries.get(i).readFileContents(reader);
-            reader.alignRequireEmpty(16);
+            reader.skipBytes(ALIGNMENT - (reader.getIndex() % ALIGNMENT)); // NOTE: DO NOT replace this with alignRequireEmpty(), because this should skip the bytes when already aligned.
         }
 
         requireReaderIndex(reader, fileLength, "Expected end of file");
@@ -72,7 +74,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
         // Read entries.
         for (int i = 0; i < this.entries.size(); i++) {
             this.entries.get(i).save(writer);
-            writer.align(16);
+            writer.skipBytes(ALIGNMENT - (writer.getIndex() % ALIGNMENT)); // Do not use the align method, as this should skip the bytes if already aligned to the boundary.
         }
 
         // Read raw file contents.
@@ -113,7 +115,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
 
     public static class FroggerRescueSoundBankEntry extends GameData<FroggerRescueInstance> {
         private int fileSize = -1;
-        private int alwaysOne = 1; // This is NOT channel count, since some stereo wavs still have this as one.
+        private boolean unknown = true; // This is NOT channel count, since some stereo wavs still have this as one. Always seen as either 0 or 1.
         @Getter private int unknownValue; // TODO: SOLVE THIS -> Could it be related to the .bin file?
         private int startAddress = -1;
         @Getter private byte[] rawFileContents;
@@ -125,10 +127,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
         @Override
         public void load(DataReader reader) {
             this.fileSize = reader.readInt();
-            this.alwaysOne = reader.readInt(); // This isn't the channel count.
-            if (this.alwaysOne != 1)
-                getLogger().warning("Value thought to always be one was read as " + this.alwaysOne + ".");
-
+            this.unknown = RwUtils.readRwBool(reader);
             this.unknownValue = reader.readInt();
             this.startAddress = reader.readInt();
         }
@@ -136,7 +135,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
         @Override
         public void save(DataWriter writer) {
             writer.writeInt(this.rawFileContents != null ? this.rawFileContents.length : 0);
-            writer.writeInt(this.alwaysOne);
+            RwUtils.writeRwBool(writer, this.unknown);
             writer.writeInt(this.unknownValue);
             this.startAddress = writer.writeNullPointer();
         }

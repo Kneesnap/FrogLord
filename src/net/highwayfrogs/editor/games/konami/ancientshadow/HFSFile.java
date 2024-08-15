@@ -319,7 +319,7 @@ public class HFSFile extends HudsonGameFile implements IVirtualFileSystem {
             IGameFileDefinition fileDefinition = this.hfsFile.getFileDefinition();
             CollectionViewTreeNode<BasicGameFile<?>> hfsNode = fileDefinition != null ? fileDefinition.getOrCreateTreePath(rootNode, this.hfsFile) : rootNode;
             if (this.groupIndex != 0 || this.hfsFile.getHfsFiles().size() > 1)
-                hfsNode = hfsNode.getOrCreateChildNode("subHfsFile=" + this.groupIndex);
+                hfsNode = hfsNode.getOrCreateChildNode(String.format("subHfsFile%03d", this.groupIndex));
 
             return hfsNode.addChildNode(gameFile);
         }

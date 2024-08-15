@@ -2,14 +2,13 @@ package net.highwayfrogs.editor.games.renderware;
 
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData.SharedGameData;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
-import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.RwPlatformIndependentTextureEntry;
+import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -19,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 /**
  * Represents a RWS (Renderware Stream) file. Can have different extensions such as: rws, dff, bin, etc.
@@ -33,11 +33,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  *  - <a ref="https://rwsreader.sourceforge.net/"/>
  * Created by Kneesnap on 6/9/2020.
  */
-@Getter
 public class RwStreamFile extends SharedGameData {
-    @NonNull private final RwStreamChunkTypeRegistry chunkTypeRegistry;
-    private final List<RwStreamChunk> chunks = new ArrayList<>();
-    @Setter private String locationName;
+    @Getter @NonNull private final RwStreamChunkTypeRegistry chunkTypeRegistry;
+    @Getter private final List<RwStreamChunk> chunks = new ArrayList<>();
+    @Getter private final String locationName;
+    private Logger cachedLogger;
 
     public static final int HEADER_SIZE_IN_BYTES = 3 * Constants.INTEGER_SIZE;
 
@@ -49,6 +49,17 @@ public class RwStreamFile extends SharedGameData {
         super(instance);
         this.chunkTypeRegistry = chunkTypeRegistry;
         this.locationName = locationName;
+    }
+
+    @Override
+    public Logger getLogger() {
+        if (this.locationName == null)
+            return super.getLogger();
+
+        if (this.cachedLogger == null)
+            this.cachedLogger = Logger.getLogger("RwStreamFile{" + this.locationName + "}");
+
+        return this.cachedLogger;
     }
 
     @Override
@@ -76,8 +87,8 @@ public class RwStreamFile extends SharedGameData {
                 continue;
 
             RwPlatformIndependentTextureDictionaryChunk textureDictionaryChunk = (RwPlatformIndependentTextureDictionaryChunk) chunk;
-            for (RwPlatformIndependentTextureEntry entry : textureDictionaryChunk.getEntries()) {
-                for (int i = 0; i < entry.getMipLevelImages().size(); i++) {
+            for (IRwPlatformIndependentTexturePrefix entry : textureDictionaryChunk.getEntries()) {
+                for (int i = 0; i < entry.getMipMapImages().size(); i++) {
                     String baseName = entry.makeFileName(i);
                     int num = fileNameCountMap.computeIfAbsent(baseName, key -> new AtomicInteger()).getAndIncrement();
 
@@ -85,7 +96,7 @@ public class RwStreamFile extends SharedGameData {
                     File imageOutputFile = new File(outputFolder, String.format("%s_%02d.png", baseName, num));
 
                     try {
-                        ImageIO.write(entry.getMipLevelImages().get(i).getImage(), "png", imageOutputFile);
+                        ImageIO.write(entry.getMipMapImages().get(i).getImage(), "png", imageOutputFile);
                     } catch (IOException ex) {
                         Utils.handleError(getLogger(), ex, false, "Failed to save '%s'.", imageOutputFile.getName());
                     }

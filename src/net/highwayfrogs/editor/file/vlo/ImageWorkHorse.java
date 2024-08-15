@@ -284,17 +284,7 @@ public class ImageWorkHorse {
             throw new IllegalArgumentException("Cannot paste image of dimensions " + awtImage.getWidth() + "x" + awtImage.getHeight() + " at position (" + x + ", " + y + ") for an FX image of dimensions " + fxImage.getWidth() + "x" + fxImage.getHeight() + ".");
 
         // Ensure the image is the appropriate format.
-        if (awtImage.getType() != BufferedImage.TYPE_INT_ARGB) {
-            BufferedImage oldAwtImage = awtImage;
-            awtImage = new BufferedImage(oldAwtImage.getWidth(), oldAwtImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
-
-            Graphics2D graphics = awtImage.createGraphics();
-            try {
-                graphics.drawImage(oldAwtImage, 0, 0, oldAwtImage.getWidth(), oldAwtImage.getHeight(), null);
-            } finally {
-                graphics.dispose();
-            }
-        }
+        awtImage = convertBufferedImageToFormat(awtImage, BufferedImage.TYPE_INT_ARGB);
 
         // Converting the BufferedImage to an IntBuffer.
         int[] intArgbBuffer = getPixelIntegerArray(awtImage);
@@ -312,5 +302,30 @@ public class ImageWorkHorse {
      */
     public static int[] getPixelIntegerArray(BufferedImage awtImage) {
         return awtImage != null ? ((DataBufferInt) awtImage.getRaster().getDataBuffer()).getData() : null;
+    }
+
+    /**
+     * Writes the buffered image to the desired format.
+     * Performs no operations if the image is already the desired type.
+     * @param oldAwtImage the BufferedImage to convert
+     * @param imageType the image type to convert it to.
+     */
+    public static BufferedImage convertBufferedImageToFormat(BufferedImage oldAwtImage, int imageType) {
+        if (oldAwtImage == null)
+            throw new NullPointerException("oldAwtImage");
+
+        if (oldAwtImage.getType() == imageType)
+            return oldAwtImage;
+
+        // Convert the image to the new format.
+        BufferedImage newAwtImage = new BufferedImage(oldAwtImage.getWidth(), oldAwtImage.getHeight(), imageType);
+        Graphics2D graphics = newAwtImage.createGraphics();
+        try {
+            graphics.drawImage(oldAwtImage, 0, 0, oldAwtImage.getWidth(), oldAwtImage.getHeight(), null);
+        } finally {
+            graphics.dispose();
+        }
+
+        return newAwtImage;
     }
 }

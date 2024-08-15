@@ -34,6 +34,7 @@ public class Constants {
     public static final int BIT_FALSE = 0;
 
     public static final int BITS_PER_BYTE = 8;
+    public static final int BITS_PER_INTEGER = BITS_PER_BYTE * INTEGER_SIZE;
 
     public static final String SKY_LAND_PREFIX = "SKY_LAND";
 
@@ -91,6 +92,7 @@ public class Constants {
 
     public static final String FX_STYLE_INVALID_TEXT = "-fx-text-inner-color: red;";
     public static final double RECOMMENDED_TREE_VIEW_FIXED_CELL_SIZE = 24; // Recommended by https://docs.oracle.com/javase/8/javafx/api/javafx/scene/control/TreeView.html for performance, which was an issue.
+    public static final String[] IMAGE_EXTENSIONS = {"bmp", "png", "jpg", "jpeg"};
 
     /**
      * Log exe info if the option is enabled.

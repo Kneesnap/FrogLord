@@ -19,6 +19,55 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 6/9/2020.
  */
 public class RwVersion {
+    public static final int VERSION_3302 = 0x0C02FFFF; // Frogger Beyond
+    public static final int VERSION_3403 = 0x1003FFFF; // Frogger's Adventures: The Rescue
+    public static final int VERSION_3603 = 0x1803FFFF; // Frogger Ancient Shadow
+
+    /**
+     * Tests if the first version provided is at or before the second version provided.
+     * @param version1 the first version to test
+     * @param version2 the second version to test
+     * @return true iff version1 <= version2
+     */
+    public static boolean isAtOrBefore(int version1, int version2) {
+        if (isOldFormat(version1) == isOldFormat(version2))
+            return version1 <= version2; // Don't mix the old format with the new format.
+
+        int rwVersion1 = getVersion(version1);
+        int rwVersion2 = getVersion(version2);
+        if (rwVersion1 != rwVersion2)
+            return rwVersion1 < rwVersion2;
+
+        int rwMajorVersion1 = getMajorVersion(version1);
+        int rwMajorVersion2 = getMajorVersion(version2);
+        if (rwMajorVersion1 != rwMajorVersion2)
+            return rwMajorVersion1 < rwMajorVersion2;
+
+        int rwMinorVersion1 = getMinorVersion(version1);
+        int rwMinorVersion2 = getMinorVersion(version2);
+        if (rwMinorVersion1 != rwMinorVersion2)
+            return rwMinorVersion1 < rwMinorVersion2;
+
+        int rwRevision1 = getRevision(version1);
+        int rwRevision2 = getRevision(version2);
+        if (rwRevision1 != rwRevision2)
+            return rwRevision1 < rwRevision2;
+
+        int rwBuild1 = getBinaryVersion(version1);
+        int rwBuild2 = getBinaryVersion(version2);
+        return (rwBuild1 == (short) 0xFFFF || rwBuild2 == (short) 0xFFFF) || rwBuild1 <= rwBuild2;
+    }
+
+    /**
+     * Tests if the first version provided is at least the second version provided.
+     * @param version1 the first version to test
+     * @param version2 the second version to test
+     * @return true iff version1 >= version2
+     */
+    public static boolean isAtLeast(int version1, int version2) {
+        return isAtOrBefore(version2, version1);
+    }
+
     /**
      * Makes a library version with the given information that goes into one.
      * @param version   The RenderWare version.
@@ -45,7 +94,7 @@ public class RwVersion {
                 | ((major & 0x0F) << 26)
                 | ((minor & 0x0F) << 22)
                 | ((revision & 0x3F) << 16)
-                | (binaryVer & 0xFFFF);
+                | (binaryVer & 0xFFFF); // I think this was FFFF for all non-internal builds of RenderWare. Complete guess on my part, but doing so would allow the version to be tested with a simple > or < check.
     }
 
 

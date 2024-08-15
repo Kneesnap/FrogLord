@@ -5,6 +5,8 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Stack;
 import java.util.logging.Logger;
 
@@ -181,8 +183,18 @@ public class DataReader {
      * @return readStr
      */
     public String readString(int length) {
-        return new String(readBytes(length));
+        return readString(length, StandardCharsets.US_ASCII);
     }
+
+    /**
+     * Read a string of a pre-specified length.
+     * @param length The length of the string.
+     * @return readStr
+     */
+    public String readString(int length, Charset charset) {
+        return new String(readBytes(length), charset);
+    }
+
 
     /**
      * Verify the next few bytes match a string.

@@ -22,7 +22,7 @@ public class FroggerBeyondRwStreamFile extends FroggerBeyondFile {
 
     public FroggerBeyondRwStreamFile(IGameFileDefinition fileDefinition) {
         super(fileDefinition);
-        this.rwStreamFile = new RwStreamFile(getGameInstance(), getGameInstance().getRwStreamChunkTypeRegistry(), fileDefinition.getFileName());
+        this.rwStreamFile = new RwStreamFile(getGameInstance(), getGameInstance().getRwStreamChunkTypeRegistry(), fileDefinition.getFullFilePath());
     }
 
     @Override

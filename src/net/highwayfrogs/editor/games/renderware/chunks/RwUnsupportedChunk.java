@@ -33,6 +33,7 @@ public class RwUnsupportedChunk extends RwStreamChunk {
     protected String getLoggerInfo() {
         return "id=" + Integer.toHexString(getSectionType().getTypeId()).toUpperCase() + "," + super.getLoggerInfo();
     }
+
     @Getter
     @RequiredArgsConstructor
     private static class RwUnsupportedChunkType implements IRwStreamSectionType {

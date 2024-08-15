@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkTypeRegistry;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
-import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.RwPlatformIndependentTextureEntry;
+import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.PhysicalFileDefinition;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.Utils;
@@ -163,13 +163,13 @@ public class FroggerRescueMain {
                 continue;
 
             RwPlatformIndependentTextureDictionaryChunk textureDictionaryChunk = (RwPlatformIndependentTextureDictionaryChunk) chunk;
-            for (RwPlatformIndependentTextureEntry entry : textureDictionaryChunk.getEntries()) {
-                for (int i = 0; i < entry.getMipLevelImages().size(); i++) {
+            for (IRwPlatformIndependentTexturePrefix entry : textureDictionaryChunk.getEntries()) {
+                for (int i = 0; i < entry.getMipMapImages().size(); i++) {
                     String baseName = entry.makeFileName(i);
                     int num = fileNames.computeIfAbsent(baseName, key -> new AtomicInteger()).getAndIncrement();
 
                     File imageOutputFile = new File(textureFolder, baseName + "_" + Utils.padNumberString(num, 2) + ".png");
-                    ImageIO.write(entry.getMipLevelImages().get(i).getImage(), "png", imageOutputFile);
+                    ImageIO.write(entry.getMipMapImages().get(i).getImage(), "png", imageOutputFile);
                 }
             }
         }

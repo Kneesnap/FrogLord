@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.renderware.chunks.*;
+import net.highwayfrogs.editor.games.renderware.struct.RwUnsupportedStruct;
 import net.highwayfrogs.editor.system.TriFunction;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -110,6 +112,27 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
         return newChunk;
     }
 
+    /**
+     * Reads an already existing section object from a DataReader.
+     * If an unexpected chunk is loaded instead, an IllegalArgumentException will be thrown.
+     * @param reader The reader to read the chunk from.
+     * @param section the section to attempt to read
+     * @return section
+     */
+    public RwStreamChunk readSectionObject(DataReader reader, RwStreamChunk section) {
+        if (reader == null)
+            throw new NullPointerException("reader");
+        if (section == null)
+            throw new NullPointerException("section");
+
+        int typeId = reader.readInt();
+        if (typeId != section.getSectionType().getTypeId())
+            throw new IllegalArgumentException("Expected the stream type ID to be " + Utils.toHexString(section.getSectionType().getTypeId()) + " to read the provided " + Utils.getSimpleName(section) + ", but got " + Utils.toHexString(typeId) + " instead!");
+
+        section.load(reader);
+        return section;
+    }
+
     @Getter
     @RequiredArgsConstructor
     private static class RwStreamSectionTypeEntry {
@@ -121,10 +144,15 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
         // Register chunks.
         // TODO: Support many more chunks.
 
-        defaultRegistry.registerChunkType(RwStructChunk::new);
+        defaultRegistry.registerChunkType((gameInstance, version, parentChunk) -> new RwStructChunk<>(gameInstance, version, parentChunk, RwUnsupportedStruct.class)); // By default, treat structs as unsupported, since we can't identify them without extra info.
+        defaultRegistry.registerChunkType(RwStringChunk::new);
+        defaultRegistry.registerChunkType(RwExtensionChunk::new);
+        defaultRegistry.registerChunkType(RwTextureChunk::new);
+        defaultRegistry.registerChunkType(RwWorldSection::new);
+        defaultRegistry.registerChunkType(RwUnicodeStringChunk::new);
         defaultRegistry.registerChunkType(RwImageChunk::new);
-        defaultRegistry.registerChunkType(RwTableOfContentsChunk::new);
         defaultRegistry.registerChunkType(RwPlatformIndependentTextureDictionaryChunk::new);
+        defaultRegistry.registerChunkType(RwTableOfContentsChunk::new);
 
         // First, Table of Contents - 0x24.
         // Platform Independent Texture Dictionary, 0x23.
