@@ -5,7 +5,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.gui.ImageResource;
 
 /**
- * A registry of structs readable by RwStructSection.
+ * A registry of structs readable by RwStructChunk.
  * Created by Kneesnap on 8/12/2024.
  */
 @Getter

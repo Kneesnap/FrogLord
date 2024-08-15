@@ -4,8 +4,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
-import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwStreamTexture;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
@@ -22,7 +22,7 @@ public class RwTextureChunk extends RwStreamChunk {
     private RwExtensionChunk extensionData;
 
     public RwTextureChunk(RwStreamFile streamFile, int version, RwStreamChunk parentChunk) {
-        super(streamFile, RwStreamSectionType.TEXTURE, version, parentChunk);
+        super(streamFile, RwStreamChunkType.TEXTURE, version, parentChunk);
     }
 
     @Override
@@ -40,10 +40,10 @@ public class RwTextureChunk extends RwStreamChunk {
     @Override
     protected void saveChunkData(DataWriter writer) {
         writeStruct(writer, new RwStreamTexture(getGameInstance(), this.texFiltAddr));
-        writeSection(writer, new RwStringChunk(getStreamFile(), getVersion(), this, this.name));
-        writeSection(writer, new RwStringChunk(getStreamFile(), getVersion(), this, this.mask));
+        writeChunk(writer, new RwStringChunk(getStreamFile(), getVersion(), this, this.name));
+        writeChunk(writer, new RwStringChunk(getStreamFile(), getVersion(), this, this.mask));
         if (this.extensionData != null)
-            writeSection(writer, this.extensionData);
+            writeChunk(writer, this.extensionData);
     }
 
     @Override

@@ -12,6 +12,7 @@ import java.io.File;
 
 /**
  * Represents an instance of "Frogger Beyond".
+ * TODO: Notice how all the files fail to continue loading upon reaching the '40543767' length. It's consistent across all. @T7g I think we should figure out what it doing. It looks like this might be a custom stream packet. Not sure tho.
  * Created by Kneesnap on 8/12/2024.
  */
 public class FroggerBeyondInstance extends BasicGameInstance {

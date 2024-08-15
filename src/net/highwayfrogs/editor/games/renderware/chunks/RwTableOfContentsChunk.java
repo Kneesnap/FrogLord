@@ -5,8 +5,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
-import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -23,7 +23,7 @@ public class RwTableOfContentsChunk extends RwStreamChunk {
     private final List<RwTableOfContentsChunkEntry> entries = new ArrayList<>();
 
     public RwTableOfContentsChunk(RwStreamFile streamFile, int version, RwStreamChunk parentChunk) {
-        super(streamFile, RwStreamSectionType.TOC, version, parentChunk);
+        super(streamFile, RwStreamChunkType.TOC, version, parentChunk);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class RwTableOfContentsChunk extends RwStreamChunk {
 
         @Override
         public String toString() {
-            return "SectionDef{offset=" + Utils.toHexString(this.offset) + ",game=" + Integer.toHexString(this.gameId).toUpperCase()
+            return "ChunkDef{offset=" + Utils.toHexString(this.offset) + ",game=" + Integer.toHexString(this.gameId).toUpperCase()
                     + ",type=" + Integer.toHexString(this.chunkId).toUpperCase() + ",guid=" + Arrays.toString(this.guid) + "}";
         }
     }

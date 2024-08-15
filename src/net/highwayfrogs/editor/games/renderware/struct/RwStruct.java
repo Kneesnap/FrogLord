@@ -41,7 +41,7 @@ public abstract class RwStruct extends SharedGameObject implements ICollectionVi
     public abstract void save(DataWriter writer, int version);
 
     /**
-     * Returns a UI controller specific to this section, if one exists.
+     * Returns a UI controller specific to this chunk, if one exists.
      */
     public GameUIController<?> makeEditorUI() {
         return null; // By default, there is no UI.

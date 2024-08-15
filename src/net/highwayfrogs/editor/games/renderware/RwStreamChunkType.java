@@ -5,12 +5,12 @@ import lombok.Getter;
 import net.highwayfrogs.editor.gui.ImageResource;
 
 /**
- * A registry of the stream section types which ship with RenderWare.
+ * A registry of the stream chunk types which ship with RenderWare.
  * Created by Kneesnap on 8/11/2024.
  */
 @Getter
 @AllArgsConstructor
-public enum RwStreamSectionType implements IRwStreamSectionType {
+public enum RwStreamChunkType implements IRwStreamChunkType {
     STRUCT(0x01, "Struct", ImageResource.GHIDRA_ICON_TEXT_ALIGN_JUSTIFY_16),
     STRING(0x02, "String", ImageResource.GHIDRA_ICON_INFORMATION_16),
     EXTENSION(0x03, "Extension", ImageResource.GHIDRA_ICON_LOCATION_OUT_16),

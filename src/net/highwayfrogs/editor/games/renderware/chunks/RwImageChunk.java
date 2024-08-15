@@ -15,8 +15,8 @@ import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
-import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwImage;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -49,14 +49,14 @@ public class RwImageChunk extends RwStreamChunk {
     }
 
     public RwImageChunk(RwStreamFile streamFile, int renderwareVersion, RwStreamChunk parentChunk, IRwPlatformIndependentTexturePrefix texturePrefix, int mipMapLevelId) {
-        super(streamFile, RwStreamSectionType.IMAGE, renderwareVersion, parentChunk);
+        super(streamFile, RwStreamChunkType.IMAGE, renderwareVersion, parentChunk);
         this.texturePrefix = texturePrefix;
         this.mipMapLevelId = mipMapLevelId;
     }
 
     @Override
     public void loadChunkData(DataReader reader, int dataLength, int version) {
-        int sectionStartIndex = reader.getIndex();
+        int chunkStartIndex = reader.getIndex();
 
         RwImage imageDef = readStruct(reader, RwImage.class);
         int bitDepth = imageDef.getDepth();
@@ -71,7 +71,7 @@ public class RwImageChunk extends RwStreamChunk {
         if (imageHeight == 0) { // Seen in Frogger Rescue, but not Frogger Beyond.
             if (imageDef.getDepth() != 0 && imageDef.getWidth() != 0) {
                 int paletteSize = getPaletteSize(imageDef.getDepth());
-                int imageDataSizeInBytes = dataLength - (reader.getIndex() - sectionStartIndex) - (paletteSize * COLOR_SIZE_IN_BYTES);
+                int imageDataSizeInBytes = dataLength - (reader.getIndex() - chunkStartIndex) - (paletteSize * COLOR_SIZE_IN_BYTES);
                 if ((imageDataSizeInBytes % imageDef.getWidth()) == 0) {
                     imageHeight = (imageDataSizeInBytes / imageDef.getWidth()) / Math.max(1, imageDef.getDepth() / Constants.BITS_PER_BYTE);
                     //getLogger().info("Calculated missing image height to be " + imageHeight + ". " + imageDef);
@@ -88,7 +88,7 @@ public class RwImageChunk extends RwStreamChunk {
         }
 
         if (bitDepth == 0) { // Seen in Frogger Rescue, but not Frogger Beyond.
-            int remainingDataSizeInBytes = dataLength - (reader.getIndex() - sectionStartIndex);
+            int remainingDataSizeInBytes = dataLength - (reader.getIndex() - chunkStartIndex);
 
             if (imageDef.getWidth() != 0 && imageDef.getHeight() != 0) {
                 int pixelCount = imageWidth * imageHeight;

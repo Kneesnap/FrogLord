@@ -6,8 +6,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
-import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
@@ -29,13 +29,13 @@ public class RwStructChunk<TStruct extends RwStruct> extends RwStreamChunk {
     private static final Map<Class<? extends RwStruct>, Constructor<? extends RwStruct>> CONSTRUCTOR_CACHE = new HashMap<>();
 
     public RwStructChunk(RwStreamFile streamFile, int renderwareVersion, RwStreamChunk parentChunk, Class<? extends TStruct> structClass) {
-        super(streamFile, RwStreamSectionType.STRUCT, renderwareVersion, parentChunk);
+        super(streamFile, RwStreamChunkType.STRUCT, renderwareVersion, parentChunk);
         this.structClass = structClass;
     }
 
     @SuppressWarnings("unchecked")
     public RwStructChunk(RwStreamFile streamFile, int renderwareVersion, RwStreamChunk parentChunk, TStruct value) {
-        super(streamFile, RwStreamSectionType.STRUCT, renderwareVersion, parentChunk);
+        super(streamFile, RwStreamChunkType.STRUCT, renderwareVersion, parentChunk);
         if (value == null)
             throw new NullPointerException("value");
         this.structClass = (Class<? extends TStruct>) value.getClass();

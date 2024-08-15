@@ -17,14 +17,14 @@ import java.util.Map;
  * Created by Kneesnap on 6/9/2020.
  */
 public class RwStreamChunkTypeRegistry implements Cloneable {
-    private final Map<Integer, RwStreamSectionTypeEntry> registeredChunkTypes;
+    private final Map<Integer, RwStreamChunkTypeEntry> registeredChunkTypes;
     @Getter private static final RwStreamChunkTypeRegistry defaultRegistry = new RwStreamChunkTypeRegistry();
 
     public RwStreamChunkTypeRegistry() {
         this(new HashMap<>());
     }
 
-    private RwStreamChunkTypeRegistry(Map<Integer, RwStreamSectionTypeEntry> registryMap) {
+    private RwStreamChunkTypeRegistry(Map<Integer, RwStreamChunkTypeEntry> registryMap) {
         this.registeredChunkTypes = registryMap;
     }
 
@@ -39,32 +39,32 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
      * @param chunkCreator The constructor to create a chunk.
      */
     public void registerChunkType(TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk> chunkCreator) {
-        IRwStreamSectionType sectionType = chunkCreator.apply(null, 0, null).getSectionType();
-        registerChunkType(sectionType, chunkCreator);
+        IRwStreamChunkType chunkType = chunkCreator.apply(null, 0, null).getChunkType();
+        registerChunkType(chunkType, chunkCreator);
     }
 
     /**
      * Registers a chunk type.
-     * @param sectionType The section's type.
+     * @param chunkType The chunk's type.
      * @param chunkCreator The constructor to create a chunk.
      */
-    public void registerChunkType(IRwStreamSectionType sectionType, TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk> chunkCreator) {
-        this.registeredChunkTypes.put(sectionType.getTypeId(), new RwStreamSectionTypeEntry(sectionType, chunkCreator));
+    public void registerChunkType(IRwStreamChunkType chunkType, TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk> chunkCreator) {
+        this.registeredChunkTypes.put(chunkType.getTypeId(), new RwStreamChunkTypeEntry(chunkType, chunkCreator));
     }
 
     /**
      * Creates a chunk based on the magic id supplied.
      * @param streamFile the stream file which the chunk belongs to
-     * @param sectionId the id of the chunk to create
+     * @param chunkId the id of the chunk to create
      * @param rwVersion The renderware version the chunk was built with.
      * @return newChunk
      */
-    public RwStreamChunk createSection(RwStreamFile streamFile, int sectionId, int rwVersion, RwStreamChunk parentChunk) {
-        RwStreamSectionTypeEntry sectionEntry = this.registeredChunkTypes.get(sectionId);
-        if (sectionEntry != null) {
-            return sectionEntry.getConstructor().apply(streamFile, rwVersion, parentChunk);
+    public RwStreamChunk createChunk(RwStreamFile streamFile, int chunkId, int rwVersion, RwStreamChunk parentChunk) {
+        RwStreamChunkTypeEntry chunkEntry = this.registeredChunkTypes.get(chunkId);
+        if (chunkEntry != null) {
+            return chunkEntry.getConstructor().apply(streamFile, rwVersion, parentChunk);
         } else {
-            return new RwUnsupportedChunk(streamFile, sectionId, rwVersion, parentChunk);
+            return new RwUnsupportedChunk(streamFile, chunkId, rwVersion, parentChunk);
         }
     }
 
@@ -107,36 +107,36 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
         int version = reader.readInt();
         reader.jumpReturn();
 
-        RwStreamChunk newChunk = createSection(streamFile, chunkType, version, parentChunk); // Version will be loaded during the .load call too.
+        RwStreamChunk newChunk = createChunk(streamFile, chunkType, version, parentChunk); // Version will be loaded during the .load call too.
         newChunk.load(reader);
         return newChunk;
     }
 
     /**
-     * Reads an already existing section object from a DataReader.
+     * Reads an already existing chunk object from a DataReader.
      * If an unexpected chunk is loaded instead, an IllegalArgumentException will be thrown.
      * @param reader The reader to read the chunk from.
-     * @param section the section to attempt to read
-     * @return section
+     * @param chunk the chunk to attempt to read
+     * @return chunk
      */
-    public RwStreamChunk readSectionObject(DataReader reader, RwStreamChunk section) {
+    public RwStreamChunk readChunkObject(DataReader reader, RwStreamChunk chunk) {
         if (reader == null)
             throw new NullPointerException("reader");
-        if (section == null)
-            throw new NullPointerException("section");
+        if (chunk == null)
+            throw new NullPointerException("chunk");
 
         int typeId = reader.readInt();
-        if (typeId != section.getSectionType().getTypeId())
-            throw new IllegalArgumentException("Expected the stream type ID to be " + Utils.toHexString(section.getSectionType().getTypeId()) + " to read the provided " + Utils.getSimpleName(section) + ", but got " + Utils.toHexString(typeId) + " instead!");
+        if (typeId != chunk.getChunkType().getTypeId())
+            throw new IllegalArgumentException("Expected the stream type ID to be " + Utils.toHexString(chunk.getChunkType().getTypeId()) + " to read the provided " + Utils.getSimpleName(chunk) + ", but got " + Utils.toHexString(typeId) + " instead!");
 
-        section.load(reader);
-        return section;
+        chunk.load(reader);
+        return chunk;
     }
 
     @Getter
     @RequiredArgsConstructor
-    private static class RwStreamSectionTypeEntry {
-        private final IRwStreamSectionType sectionType;
+    private static class RwStreamChunkTypeEntry {
+        private final IRwStreamChunkType chunkType;
         private final TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk> constructor;
     }
 
@@ -148,7 +148,7 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
         defaultRegistry.registerChunkType(RwStringChunk::new);
         defaultRegistry.registerChunkType(RwExtensionChunk::new);
         defaultRegistry.registerChunkType(RwTextureChunk::new);
-        defaultRegistry.registerChunkType(RwWorldSection::new);
+        defaultRegistry.registerChunkType(RwWorldChunk::new);
         defaultRegistry.registerChunkType(RwUnicodeStringChunk::new);
         defaultRegistry.registerChunkType(RwImageChunk::new);
         defaultRegistry.registerChunkType(RwPlatformIndependentTextureDictionaryChunk::new);

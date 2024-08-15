@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.renderware.chunks.RwStringChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwStructChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwUnicodeStringChunk;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
-import net.highwayfrogs.editor.games.renderware.ui.IRwStreamSectionUIEntry;
+import net.highwayfrogs.editor.games.renderware.ui.IRwStreamChunkUIEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
@@ -27,25 +27,26 @@ import java.util.logging.Logger;
 
 /**
  * Represents a Renderware stream chunk.
- * TODO: Rename to RwStreamSection.
+ * These are officially called "chunks". Unofficially, the GTA community sometimes calls them "sections".
+ * Both terms may be used here and refer to this idea. Sometimes called "chunk sections" too.
  * <a href="https://gtamods.com/wiki/RenderWare_binary_stream_file"/>
  * Created by Kneesnap on 6/9/2020.
  */
-public abstract class RwStreamChunk extends SharedGameData implements IRwStreamSectionUIEntry {
+public abstract class RwStreamChunk extends SharedGameData implements IRwStreamChunkUIEntry {
     @Getter private final RwStreamFile streamFile;
     @Getter private final RwStreamChunk parentChunk;
-    @Getter @NonNull private final IRwStreamSectionType sectionType;
+    @Getter @NonNull private final IRwStreamChunkType chunkType;
     @Getter protected int version; // RwVersion
     @Getter private byte[] rawReadData;
     @Getter private final List<RwStreamChunk> childChunks = new ArrayList<>();
-    @Getter protected final List<IRwStreamSectionUIEntry> childUISections = new ArrayList<>();
+    @Getter protected final List<IRwStreamChunkUIEntry> childUISections = new ArrayList<>();
     @Getter private ChunkReadResult readResult;
     private transient SoftReference<Logger> logger;
 
-    public RwStreamChunk(RwStreamFile streamFile, @NonNull IRwStreamSectionType sectionType, int version, RwStreamChunk parentChunk) {
+    public RwStreamChunk(RwStreamFile streamFile, @NonNull IRwStreamChunkType chunkType, int version, RwStreamChunk parentChunk) {
         super(streamFile != null ? streamFile.getGameInstance() : null);
         this.streamFile = streamFile;
-        this.sectionType = sectionType;
+        this.chunkType = chunkType;
         this.version = version;
         this.parentChunk = parentChunk;
     }
@@ -60,9 +61,9 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
         this.version = reader.readInt();
 
         if (readSize > reader.getRemaining())
-            throw new RuntimeException("Cannot read section " + Utils.getSimpleName(this) + " of size " + readSize + " when there are only " + reader.getRemaining() + " bytes left.");
+            throw new RuntimeException("Cannot read chunk " + Utils.getSimpleName(this) + " of size " + readSize + " when there are only " + reader.getRemaining() + " bytes left.");
         if (this.parentChunk != null && this.parentChunk.getVersion() != this.version) // This can happen, but doesn't necessarily seem to indicate a problem, unless it doesn't look like a valid version.
-            getLogger().info("The section version is " + RwVersion.getDebugString(this.version) + ", but its parent was " + RwVersion.getDebugString(this.parentChunk.getVersion()) + ".");
+            getLogger().info("The chunk version is " + RwVersion.getDebugString(this.version) + ", but its parent was " + RwVersion.getDebugString(this.parentChunk.getVersion()) + ".");
 
         /*if (this.parentChunk != null && this.parentChunk.getReadSize() == this.readSize) {
             loadChunkData(reader);
@@ -75,7 +76,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
         try {
             loadChunkData(chunkReader, readSize, this.version);
             if (chunkReader.hasMore()) { // Warn if we're leaving data unread.
-                getLogger().warning("The section left " + chunkReader.getRemaining() + " bytes of data unread!");
+                getLogger().warning("The chunk left " + chunkReader.getRemaining() + " bytes of data unread!");
                 this.readResult = ChunkReadResult.DID_NOT_REACH_END;
             } else {
                 this.readResult = ChunkReadResult.SUCCESSFUL;
@@ -91,7 +92,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
         this.childChunks.clear(); // We've got new chunks to display.
         this.childUISections.clear();
 
-        writer.writeInt(this.sectionType.getTypeId());
+        writer.writeInt(this.chunkType.getTypeId());
         int chunkDataSizeAddress = writer.writeNullPointer();
         writer.writeInt(this.version);
 
@@ -110,7 +111,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
     }
 
     /**
-     * Returns a UI controller specific to this section, if one exists.
+     * Returns a UI controller specific to this chunk, if one exists.
      */
     public GameUIController<?> makeEditorUI() {
         return null; // By default, there is no UI.
@@ -130,7 +131,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
      */
     protected abstract void saveChunkData(DataWriter writer);
 
-    private <TStreamChunk extends RwStreamChunk> TStreamChunk registerChildSection(TStreamChunk chunk, boolean showInUI) {
+    private <TStreamChunk extends RwStreamChunk> TStreamChunk registerChildChunk(TStreamChunk chunk, boolean showInUI) {
         this.childChunks.add(chunk);
         if (showInUI)
             this.childUISections.add(chunk);
@@ -169,7 +170,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
         if (!chunkClass.isInstance(newChunk))
             throw new ClassCastException("Expected to read a(n) " + chunkClass.getSimpleName() + ", but instead got " + Utils.getSimpleName(newChunk) + "/" + newChunk + ".");
 
-        registerChildSection(newChunk, showInUI);
+        registerChildChunk(newChunk, showInUI);
         return chunkClass.cast(newChunk);
     }
 
@@ -177,31 +178,31 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
      * Reads an RwStreamChunk from the reader.
      * If an unexpected chunk is loaded instead, an IllegalArgumentException will be thrown.
      * @param reader the reader to read the chunk data from
-     * @param section the section object to read
+     * @param chunk the chunk object to read
      * @return newChunk
      * @param <TStreamChunk> the type of chunk expected.
      */
-    protected <TStreamChunk extends RwStreamChunk> TStreamChunk readChunk(DataReader reader, TStreamChunk section) {
-        return readChunk(reader, section, true);
+    protected <TStreamChunk extends RwStreamChunk> TStreamChunk readChunk(DataReader reader, TStreamChunk chunk) {
+        return readChunk(reader, chunk, true);
     }
 
     /**
      * Reads an RwStreamChunk from the reader.
      * If an unexpected chunk is loaded instead, an IllegalArgumentException will be thrown.
      * @param reader the reader to read the chunk data from
-     * @param section the section object to read
+     * @param chunk the chunk object to read
      * @param showInUI Whether it should be shown in the UI. This is rarely false.
      * @return newChunk
      * @param <TStreamChunk> the type of chunk expected.
      */
-    protected <TStreamChunk extends RwStreamChunk> TStreamChunk readChunk(DataReader reader, TStreamChunk section, boolean showInUI) {
-        if (section == null)
-            throw new RuntimeException("section");
+    protected <TStreamChunk extends RwStreamChunk> TStreamChunk readChunk(DataReader reader, TStreamChunk chunk, boolean showInUI) {
+        if (chunk == null)
+            throw new RuntimeException("chunk");
         if (this.streamFile == null)
             throw new IllegalStateException("Cannot read a stream chunk because the current chunk's stream file is null, meaning we cannot resolve which chunk registry to use.");
 
-        this.streamFile.getChunkTypeRegistry().readSectionObject(reader, section);
-        return registerChildSection(section, showInUI);
+        this.streamFile.getChunkTypeRegistry().readChunkObject(reader, chunk);
+        return registerChildChunk(chunk, showInUI);
     }
 
     /**
@@ -212,8 +213,8 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
      * @return newChunk
      * @param <TStruct> the type of struct expected.
      */
-    protected <TStruct extends RwStruct> RwStructChunk<TStruct> readStructSection(DataReader reader, Class<TStruct> structClass) {
-        return readStructSection(reader, structClass, true);
+    protected <TStruct extends RwStruct> RwStructChunk<TStruct> readStructChunk(DataReader reader, Class<TStruct> structClass) {
+        return readStructChunk(reader, structClass, true);
     }
 
     /**
@@ -225,23 +226,23 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
      * @return newChunk
      * @param <TStruct> the type of struct expected.
      */
-    protected <TStruct extends RwStruct> RwStructChunk<TStruct> readStructSection(DataReader reader, Class<TStruct> structClass, boolean showInUI) {
+    protected <TStruct extends RwStruct> RwStructChunk<TStruct> readStructChunk(DataReader reader, Class<TStruct> structClass, boolean showInUI) {
         if (structClass == null)
             throw new RuntimeException("structClass");
         if (this.streamFile == null)
             throw new IllegalStateException("Cannot read a stream chunk because the current chunk's stream file is null, meaning we cannot resolve which chunk registry to use.");
 
         int typeId = reader.readInt();
-        if (typeId != RwStreamSectionType.STRUCT.getTypeId())
-            throw new IllegalArgumentException("Expected the stream type ID to be " + Utils.toHexString(RwStreamSectionType.STRUCT.getTypeId()) + " for a struct, but got " + Utils.toHexString(typeId) + " instead!");
+        if (typeId != RwStreamChunkType.STRUCT.getTypeId())
+            throw new IllegalArgumentException("Expected the stream type ID to be " + Utils.toHexString(RwStreamChunkType.STRUCT.getTypeId()) + " for a struct, but got " + Utils.toHexString(typeId) + " instead!");
 
         reader.jumpTemp(reader.getIndex() + Constants.INTEGER_SIZE);
         int version = reader.readInt();
         reader.jumpReturn();
 
-        RwStructChunk<TStruct> structSection = new RwStructChunk<>(this.streamFile, version, this, structClass);
-        structSection.load(reader);
-        return registerChildSection(structSection, showInUI);
+        RwStructChunk<TStruct> structChunk = new RwStructChunk<>(this.streamFile, version, this, structClass);
+        structChunk.load(reader);
+        return registerChildChunk(structChunk, showInUI);
     }
 
     /**
@@ -266,13 +267,13 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
      * @param <TStruct> the type of struct expected.
      */
     protected <TStruct extends RwStruct> TStruct readStruct(DataReader reader, Class<TStruct> structClass, boolean showInUI) {
-        return readStructSection(reader, structClass, showInUI).getValue();
+        return readStructChunk(reader, structClass, showInUI).getValue();
     }
 
     /**
      * Reads an RwStringChunk from the reader, and returns the resulting string.
      * If an unexpected chunk is loaded instead, a ClassCastException will be thrown.
-     * This follows the behavior of _rwStringStreamFindAndRead in rwstring.c, meaning non-string sections will be skipped.
+     * This follows the behavior of _rwStringStreamFindAndRead in rwstring.c, meaning non-string chunks will be skipped.
      * @param reader the reader to read the chunk data from
      * @return stringValue
      */
@@ -283,7 +284,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
     /**
      * Reads an RwStringChunk from the reader, and returns the resulting string.
      * If an unexpected chunk is loaded instead, a ClassCastException will be thrown.
-     * This follows the behavior of _rwStringStreamFindAndRead in rwstring.c, meaning non-string sections will be skipped.
+     * This follows the behavior of _rwStringStreamFindAndRead in rwstring.c, meaning non-string chunks will be skipped.
      * @param reader the reader to read the chunk data from
      * @param showInUI Whether it should be shown in the UI. This is rarely false.
      * @return stringValue
@@ -292,46 +293,46 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
         while (reader.hasMore()) {
             RwStreamChunk nextChunk = this.streamFile.getChunkTypeRegistry().readChunk(reader, this);
             if (nextChunk instanceof RwStringChunk) {
-                registerChildSection(nextChunk, showInUI);
+                registerChildChunk(nextChunk, showInUI);
                 return ((RwStringChunk) nextChunk).getValue();
             } else if (nextChunk instanceof RwUnicodeStringChunk) {
-                registerChildSection(nextChunk, showInUI);
+                registerChildChunk(nextChunk, showInUI);
                 return ((RwUnicodeStringChunk) nextChunk).getValue();
             } else {
-                registerChildSection(nextChunk, true);
+                registerChildChunk(nextChunk, true);
             }
         }
 
-        throw new IllegalStateException("Did not find any string sections before reaching end of data.");
+        throw new IllegalStateException("Did not find any string chunks before reaching end of data.");
     }
 
     /**
      * Writes an RwStreamChunk to the writer.
-     * @param writer the writer to write the section data to
-     * @param streamSection the stream section to write
+     * @param writer the writer to write the chunk data to
+     * @param streamChunk the stream chunk to write
      */
-    protected void writeSection(DataWriter writer, RwStreamChunk streamSection) {
-        writeSection(writer, streamSection, true);
+    protected void writeChunk(DataWriter writer, RwStreamChunk streamChunk) {
+        writeChunk(writer, streamChunk, true);
     }
 
 
     /**
      * Writes an RwStreamChunk to the writer.
-     * @param writer the writer to write the section data to
-     * @param streamSection the stream section to write
+     * @param writer the writer to write the chunk data to
+     * @param streamChunk the stream chunk to write
      * @param showInUI Whether it should be shown in the UI. This is rarely false.
      */
-    protected void writeSection(DataWriter writer, RwStreamChunk streamSection, boolean showInUI) {
-        if (streamSection == null)
-            throw new RuntimeException("streamSection");
+    protected void writeChunk(DataWriter writer, RwStreamChunk streamChunk, boolean showInUI) {
+        if (streamChunk == null)
+            throw new RuntimeException("streamChunk");
 
-        streamSection.save(writer);
-        registerChildSection(streamSection, showInUI);
+        streamChunk.save(writer);
+        registerChildChunk(streamChunk, showInUI);
     }
 
     /**
      * Writes an RwStructChunk to the writer.
-     * @param writer the writer to write the section data to
+     * @param writer the writer to write the chunk data to
      * @param value the struct to write
      */
     protected <TStruct extends RwStruct> void writeStruct(DataWriter writer, TStruct value) {
@@ -340,7 +341,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
 
     /**
      * Writes an RwStructChunk to the writer.
-     * @param writer the writer to write the section data to
+     * @param writer the writer to write the chunk data to
      * @param value the struct to write
      * @param showInUI Whether it should be shown in the UI. This is rarely false.
      */
@@ -348,7 +349,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
         if (value == null)
             throw new RuntimeException("value");
 
-        writeSection(writer, new RwStructChunk<>(this.streamFile, this.version, this, value), showInUI);
+        writeChunk(writer, new RwStructChunk<>(this.streamFile, this.version, this, value), showInUI);
     }
 
     /**
@@ -389,7 +390,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
 
     @Override
     public String getCollectionViewDisplayName() {
-        return this.sectionType.getDisplayName();
+        return this.chunkType.getDisplayName();
     }
 
     @Override
@@ -401,7 +402,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
                 return ImageResource.GHIDRA_ICON_WARNING_TRIANGLE_YELLOW_16.getFxImage();
             case SUCCESSFUL:
             default:
-                return this.sectionType.getIcon().getFxImage();
+                return this.chunkType.getIcon().getFxImage();
         }
     }
 
@@ -420,7 +421,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamS
 
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList.add("Type ID", Utils.toHexString(this.sectionType.getTypeId()) + " (" + Utils.getSimpleName(this) + ")");
+        propertyList.add("Type ID", Utils.toHexString(this.chunkType.getTypeId()) + " (" + Utils.getSimpleName(this) + ")");
         propertyList.add("RenderWare Version", RwVersion.getDebugString(this.version));
         if (this.rawReadData != null)
             propertyList.add("Size (In Bytes)", this.rawReadData.length + " (" + DataSizeUnit.formatSize(this.rawReadData.length) + ")");

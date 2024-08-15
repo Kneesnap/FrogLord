@@ -5,11 +5,11 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
-import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
 import net.highwayfrogs.editor.games.renderware.RwVersion;
 import net.highwayfrogs.editor.games.renderware.chunks.RwImageChunk.RwImageViewUIController;
-import net.highwayfrogs.editor.games.renderware.ui.IRwStreamSectionUIEntry;
+import net.highwayfrogs.editor.games.renderware.ui.IRwStreamChunkUIEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
@@ -30,7 +30,7 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
     private int textureFormatVersion;
 
     public RwPlatformIndependentTextureDictionaryChunk(RwStreamFile streamFile, int renderwareVersion, RwStreamChunk parentChunk) {
-        super(streamFile, RwStreamSectionType.PITEX_DICTIONARY, renderwareVersion, parentChunk);
+        super(streamFile, RwStreamChunkType.PITEX_DICTIONARY, renderwareVersion, parentChunk);
         this.textureFormatVersion = RwVersion.isAtLeast(renderwareVersion, RwVersion.VERSION_3603) ? 1 : 0; // As seen in Frogger. This check can probably be changed.
     }
 
@@ -88,7 +88,7 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
         return super.getLoggerInfo() + ",entries=" + this.entries.size();
     }
 
-    public interface IRwPlatformIndependentTexturePrefix extends IBinarySerializable, IRwStreamSectionUIEntry {
+    public interface IRwPlatformIndependentTexturePrefix extends IBinarySerializable, IRwStreamChunkUIEntry {
         /**
          * Gets the mip map images at different levels of detail.
          */
@@ -177,7 +177,7 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
         }
 
         @Override
-        public List<? extends IRwStreamSectionUIEntry> getChildUISections() {
+        public List<? extends IRwStreamChunkUIEntry> getChildUISections() {
             return this.mipMapImages;
         }
 
@@ -269,7 +269,7 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
             writer.writeInt(this.mipMapImages.size());
             writer.writeInt(this.flags);
             for (int i = 0; i < this.mipMapImages.size(); i++)
-                this.parentChunk.writeSection(writer, this.mipMapImages.get(i));
+                this.parentChunk.writeChunk(writer, this.mipMapImages.get(i));
         }
     }
 
@@ -295,8 +295,8 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
         public void save(DataWriter writer) {
             writer.writeInt(this.mipMapImages.size());
             for (int i = 0; i < this.mipMapImages.size(); i++)
-                this.parentChunk.writeSection(writer, this.mipMapImages.get(i));
-            this.parentChunk.writeSection(writer, this.texture);
+                this.parentChunk.writeChunk(writer, this.mipMapImages.get(i));
+            this.parentChunk.writeChunk(writer, this.texture);
         }
 
         @Override

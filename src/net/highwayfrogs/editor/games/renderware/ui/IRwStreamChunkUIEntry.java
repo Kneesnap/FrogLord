@@ -12,19 +12,19 @@ import java.util.List;
  * Represents a target for display in the RwStream tree user interface.
  * Created by Kneesnap on 8/14/2024.
  */
-public interface IRwStreamSectionUIEntry extends IGameObject, IPropertyListCreator, ICollectionViewEntry {
+public interface IRwStreamChunkUIEntry extends IGameObject, IPropertyListCreator, ICollectionViewEntry {
     /**
-     * Gets child sections (child tree nodes).
+     * Gets child chunks (child tree nodes).
      */
-    List<? extends IRwStreamSectionUIEntry> getChildUISections();
+    List<? extends IRwStreamChunkUIEntry> getChildUISections();
 
     /**
-     * Gets the stream file holding this section.
+     * Gets the stream file holding this chunk.
      */
     RwStreamFile getStreamFile();
 
     /**
-     * Create any special UI to go along with this section.
+     * Create any special UI to go along with this chunk.
      */
     GameUIController<?> makeEditorUI();
 }

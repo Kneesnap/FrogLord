@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.renderware.chunks;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
-import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
 
 /**
  * Represents the rwEXTENSION data.
@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
  */
 public class RwExtensionChunk extends RwStreamChunk {
     public RwExtensionChunk(RwStreamFile streamFile, int version, RwStreamChunk parentChunk) {
-        super(streamFile, RwStreamSectionType.EXTENSION, version, parentChunk);
+        super(streamFile, RwStreamChunkType.EXTENSION, version, parentChunk);
     }
 
     @Override
