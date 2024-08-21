@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
  *  - Allow creating a class to define editing certain things.
  *  - Allow updating other UI components potentially? Not sure yet.
  *  - This editor should use a standardized vector interface between games.
+ * TODO: Use Fxyz3D's Capsule mesh instead of sphere for capsules.
  * Created by Kneesnap on 4/14/2024.
  */
 @Getter

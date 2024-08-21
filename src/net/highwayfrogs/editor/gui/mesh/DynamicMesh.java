@@ -24,6 +24,7 @@ import java.util.logging.Logger;
  */
 public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     private final String meshName;
+    @Getter private final DynamicMeshTextureQuality textureQuality;
     @Getter private final TextureAtlas textureAtlas;
     @Getter private final FXIntArrayBatcher editableFaces;
     @Getter private final DynamicMeshFloatArray editableTexCoords;
@@ -40,16 +41,17 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     // Apply this to a mesh and smoothing should be disabled.
     private static final int[] SMOOTHING_ARRAY_DISABLE_SMOOTHING = new int[0];
 
-    public DynamicMesh(TextureAtlas atlas) {
-        this(atlas, VertexFormat.POINT_TEXCOORD, null);
+    public DynamicMesh(TextureAtlas atlas, DynamicMeshTextureQuality textureQuality) {
+        this(atlas, textureQuality, VertexFormat.POINT_TEXCOORD, null);
     }
 
-    public DynamicMesh(TextureAtlas atlas, String meshName) {
-        this(atlas, VertexFormat.POINT_TEXCOORD, meshName);
+    public DynamicMesh(TextureAtlas atlas, DynamicMeshTextureQuality textureQuality, String meshName) {
+        this(atlas, textureQuality, VertexFormat.POINT_TEXCOORD, meshName);
     }
 
-    public DynamicMesh(TextureAtlas atlas, VertexFormat format, String meshName) {
+    public DynamicMesh(TextureAtlas atlas, DynamicMeshTextureQuality textureQuality, VertexFormat format, String meshName) {
         super(format);
+        this.textureQuality = textureQuality;
         this.meshName = meshName;
         this.textureAtlas = atlas;
         if (atlas != null) {
@@ -305,12 +307,12 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     }
 
     /**
-     * Apply a new image to the material
+     * Apply a new image to the material.
      * @param newFxImage the image to apply
      */
     protected PhongMaterial updateMaterial(Image newFxImage) {
         if (this.material == null) {
-            this.material = Utils.makeDiffuseMaterial(this.materialFxImage = newFxImage);
+            this.material = Utils.makePhongMaterial(this.materialFxImage = newFxImage, this.textureQuality);
 
             // Apply newly created material to meshes.
             for (int i = 0; i < this.meshViews.size(); i++)
@@ -320,8 +322,10 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         }
 
         // Update material image.
-        if (this.materialFxImage != newFxImage)
-            this.material.setDiffuseMap(this.materialFxImage = newFxImage);
+        if (this.materialFxImage != newFxImage) {
+            this.material = Utils.updatePhongMaterial(this.material, newFxImage, this.textureQuality);
+            this.materialFxImage = newFxImage;
+        }
         return this.material;
     }
 
@@ -381,5 +385,10 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
      */
     public static boolean tryRemoveMesh(MeshView meshView) {
         return meshView != null && meshView.getMesh() instanceof DynamicMesh && ((DynamicMesh) meshView.getMesh()).removeView(meshView);
+    }
+
+    public enum DynamicMeshTextureQuality {
+        LIT_BLURRY,
+        UNLIT_SHARP
     }
 }

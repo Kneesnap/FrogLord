@@ -23,7 +23,7 @@ public class GreatQuestMapMaterialMesh extends DynamicMesh {
     private final DynamicMeshOverlayNode highlightedPolygonNode;
 
     public GreatQuestMapMaterialMesh(GreatQuestChunkedFile mapFile, kcMaterial material) {
-        super(null);
+        super(null, DynamicMeshTextureQuality.LIT_BLURRY);
         this.map = mapFile;
         this.mapMaterial = material;
 

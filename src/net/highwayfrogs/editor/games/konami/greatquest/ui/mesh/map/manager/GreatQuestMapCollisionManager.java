@@ -156,7 +156,7 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
         }
 
         public GreatQuestMapCollisionMesh(GreatQuestMapCollisionManager manager, List<kcCTriMesh> triMeshes, String name) {
-            super(new SequentialTextureAtlas(32, 32, true), name);
+            super(new SequentialTextureAtlas(32, 32, true), DynamicMeshTextureQuality.LIT_BLURRY, name);
             this.manager = manager;
             this.triMeshes = triMeshes;
             getTextureAtlas().startBulkOperations();

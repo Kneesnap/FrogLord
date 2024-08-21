@@ -29,6 +29,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.mesh.DynamicMesh.DynamicMeshTextureQuality;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -1693,34 +1694,99 @@ public class Utils {
     }
 
     /**
-     * Creates an unlit PhongMaterial which uses nearest-neighbor texture display and is unaffected by lighting.
+     * Creates an PhongMaterial which uses nearest-neighbor texture display and is unaffected by lighting.
      * When the transparency outlines look poorly, the solution is to resize the image to use a higher resolution (while also using nearest neighbor)
      * @param texture The texture to create.
      * @return phongMaterial
      */
     public static PhongMaterial makeUnlitSharpMaterial(Image texture) {
-        return makeUnlitMaterial(texture, false);
+        return updateUnlitSharpMaterial(new PhongMaterial(), texture);
     }
 
     /**
-     * Creates an unlit PhongMaterial which uses nearest-neighbor texture display and is unaffected by lighting.
+     * Updates a PhongMaterial which uses nearest-neighbor texture display and is unaffected by lighting.
      * When the transparency outlines look poorly, the solution is to resize the image to use a higher resolution (while also using nearest neighbor)
+     * @param material The material to update.
+     * @param texture The texture to apply to the material.
+     * @return phongMaterial
+     */
+    public static PhongMaterial updateUnlitSharpMaterial(PhongMaterial material, Image texture) {
+        // DirectX / Direct3D
+        // When the alpha in the diffuse map is zero, "discard" occurs, causing the pixel to be transparent, regardless of what the self-illumination map says.
+        // At the end Mtl1PS.hlsl in JavaFX is when the pixel RGB from the self-illumination map is added, but importantly it ignores the self-illumination alpha.
+        // Since the RGB value is added and not overridden, the color should be zero (black) so that the self-illumination map can provide the color.
+        // To achieve this, we set the diffuse color to be black, to multiply out the RGB values while keeping alpha intact.
+        // The alpha is obtained from the previous multiplication between the diffuse texture pixel and the diffuse color.
+        // I assume that the reason self-illumination is not blurry but diffuse is blurry probably means the textures are configured differently.
+
+        if (material.getDiffuseColor() != Color.BLACK)
+            material.setDiffuseColor(Color.BLACK); // When this is set to the default (WHITE), the coloring looks wrong when combined with a self-illumination map, since it's combining the light from both sources.
+        if (material.getDiffuseMap() != texture)
+            material.setDiffuseMap(texture); // Setting the diffuse map this seems to enable transparency, where-as it will be the diffuse color if not set.
+        if (material.getSelfIlluminationMap() != texture)
+            material.setSelfIlluminationMap(texture); // When this is not present, the material becomes fully black, because the diffuse color is off. If the color is changed to white, then the image does display but it's blurry and still has the same transparency problems.
+        return material;
+    }
+
+    /**
+     * Make the phong material with the given quality setting.
+     * @param texture the texture to create a material for
+     * @param quality the quality of the material
+     * @return newMaterial
+     */
+    public static PhongMaterial makePhongMaterial(Image texture, DynamicMeshTextureQuality quality) {
+        switch (quality) {
+            case LIT_BLURRY:
+                return makeLitBlurryMaterial(texture);
+            case UNLIT_SHARP:
+                return makeUnlitSharpMaterial(texture);
+            default:
+                throw new IllegalArgumentException("Unsupported texture quality: " + quality);
+        }
+    }
+
+    /**
+     * Update the phong material with the given quality setting.
+     * @param material the material to update
+     * @param texture the texture to update the material with
+     * @param quality the quality of the material
+     * @return material
+     */
+    public static PhongMaterial updatePhongMaterial(PhongMaterial material, Image texture, DynamicMeshTextureQuality quality) {
+        switch (quality) {
+            case LIT_BLURRY:
+                return updateLitBlurryMaterial(material, texture);
+            case UNLIT_SHARP:
+                return updateUnlitSharpMaterial(material, texture);
+            default:
+                throw new IllegalArgumentException("Unsupported texture quality: " + quality);
+        }
+    }
+
+    /**
+     * Creates a lit PhongMaterial which uses some kind of blurring/smoothing for the texture but is impacted by lighting.
      * @param texture The texture to create.
      * @return phongMaterial
      */
-    public static PhongMaterial makeUnlitMaterial(Image texture, boolean blurry) {
-        PhongMaterial material = new PhongMaterial();
-        if (blurry) {
-            // The following is what would seem to intuitively work, and it does. However, it results in the same transparency problems, but the image is also blurry.
-            // I'm not entirely sure why adding a self-illumination map seems to disable blending.
-            material.setDiffuseColor(Color.WHITE);
-            material.setDiffuseMap(texture);
-        } else {
-            material.setDiffuseColor(Color.BLACK); // When this is set to the default (WHITE), the coloring looks wrong when combined with a self-illumination map, since it's combining the light from both sources.
-            material.setDiffuseMap(texture); // Setting the diffuse map this seems to enable transparency, where-as it will be the diffuse color if not set.
-            material.setSelfIlluminationMap(texture); // When this is not present, the material becomes fully black, because the diffuse color is off. If the color is changed to white, then the image does display but it's blurry and still has the same transparency problems.
-        }
+    public static PhongMaterial makeLitBlurryMaterial(Image texture) {
+        return updateLitBlurryMaterial(new PhongMaterial(), texture);
+    }
 
+    /**
+     * Updates a lit PhongMaterial which uses some kind of blurring/smoothing for the texture but is impacted by lighting.
+     * @param texture The texture to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial updateLitBlurryMaterial(PhongMaterial material, Image texture) {
+        // The following is what would seem to intuitively work, and it does. But the image is also blurry, which doesn't seem to be the case with self-illumination.
+        // However, self-illumination is unaffected by lighting.
+
+        if (material.getDiffuseColor() != Color.WHITE)
+            material.setDiffuseColor(Color.WHITE); // The default PhongMaterial diffuseColor is WHITE, which is what we want.
+        if (material.getDiffuseMap() != texture)
+            material.setDiffuseMap(texture);
+        if (material.getSelfIlluminationMap() != null)
+            material.setSelfIlluminationMap(null);
         return material;
     }
 
@@ -1731,9 +1797,6 @@ public class Utils {
      */
     public static PhongMaterial makeDiffuseMaterial(Image texture) {
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(Color.WHITE);
-        material.setSpecularColor(Color.BLACK);
-        material.setSpecularPower(0.0);
         material.setDiffuseMap(texture);
         return material;
     }

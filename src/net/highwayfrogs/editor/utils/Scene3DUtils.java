@@ -553,7 +553,7 @@ public class Scene3DUtils {
         }
 
         if (material == null) {
-            material = Utils.makeUnlitMaterial(Utils.toFXImage(highlightedImage, false), true);
+            material = Utils.makeLitBlurryMaterial(Utils.toFXImage(highlightedImage, false));
             return material;
         }
 

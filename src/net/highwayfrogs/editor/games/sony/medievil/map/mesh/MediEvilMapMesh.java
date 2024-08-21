@@ -36,7 +36,7 @@ public class MediEvilMapMesh extends PSXShadedDynamicMesh<MediEvilMapPolygon, Me
     public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
 
     public MediEvilMapMesh(MediEvilMapFile mapFile) {
-        super(new TreeTextureAtlas(64, 64, true), false);
+        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, false);
         this.map = mapFile;
 
         // Add textures.

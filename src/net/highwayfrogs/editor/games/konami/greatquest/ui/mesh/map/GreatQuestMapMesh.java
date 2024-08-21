@@ -17,7 +17,7 @@ public class GreatQuestMapMesh extends DynamicMesh {
     private final DynamicMeshCollection<GreatQuestMapMaterialMesh> actualMesh;
 
     public GreatQuestMapMesh(GreatQuestChunkedFile mapFile) {
-        super(null, mapFile.getExportName());
+        super(null, DynamicMeshTextureQuality.LIT_BLURRY, mapFile.getExportName());
         this.map = mapFile;
         this.actualMesh = new DynamicMeshCollection<>(getMeshName());
 

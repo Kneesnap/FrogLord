@@ -30,7 +30,7 @@ public class GreatQuestModelMesh extends DynamicMesh {
     }
 
     public GreatQuestModelMesh(kcModelWrapper modelWrapper, String meshName, boolean swapAxis) {
-        super(null, meshName);
+        super(null, DynamicMeshTextureQuality.LIT_BLURRY, meshName);
         this.modelWrapper = modelWrapper;
         this.actualMesh = new DynamicMeshCollection<>(getMeshName());
         this.swapAxis = swapAxis;

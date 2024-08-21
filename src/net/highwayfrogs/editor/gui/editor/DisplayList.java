@@ -245,7 +245,7 @@ public class DisplayList {
      * @return The newly created/added cylinder
      */
     public Cylinder addCylinder(double x, double y, double z, double radius, double height, PhongMaterial material, boolean useWireframe) {
-        Cylinder cylinder = new Cylinder(radius, height);
+        Cylinder cylinder = new Cylinder(radius, height); // TODO: Replace lines with FXyz3D's PolyLines3D or maybe even TexturedMeshes/BezierMeshes
         cylinder.setMaterial(material);
         cylinder.setDrawMode(useWireframe ? DrawMode.LINE : DrawMode.FILL);
         cylinder.setCullFace(CullFace.BACK);

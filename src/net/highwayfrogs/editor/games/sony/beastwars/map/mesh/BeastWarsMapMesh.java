@@ -26,7 +26,7 @@ public class BeastWarsMapMesh extends DynamicMesh {
     public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
 
     public BeastWarsMapMesh(BeastWarsMapFile mapFile) {
-        super(new SequentialTextureAtlas(64, 64, true));
+        super(new SequentialTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP);
         this.map = mapFile;
 
         // Add textures.

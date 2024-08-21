@@ -99,7 +99,7 @@ public class TranslationGizmo extends DynamicMesh {
     }
 
     public TranslationGizmo(boolean xAxisEnabled, boolean yAxisEnabled, boolean zAxisEnabled) {
-        super(new SequentialTextureAtlas(32, 32, false));
+        super(new SequentialTextureAtlas(32, 32, false), DynamicMeshTextureQuality.LIT_BLURRY);
         this.xAxisEnabled = xAxisEnabled;
         this.yAxisEnabled = yAxisEnabled;
         this.zAxisEnabled = zAxisEnabled;

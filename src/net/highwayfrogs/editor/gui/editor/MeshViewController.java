@@ -463,7 +463,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             this.checkBoxEnablePsxShading.setDisable(true);
         }
 
-        if (getMesh().getMaterialFxImage() != null)
+        if (getMesh().getMaterial() != null)
             this.textureSheetDebugView.imageProperty().bind(getMesh().getMaterial().diffuseMapProperty());
 
         // Must be called after FroggerMapInfoUIController is passed.

@@ -32,7 +32,7 @@ public class GreatQuestModelMaterialMesh extends DynamicMesh {
     }
 
     public GreatQuestModelMaterialMesh(GreatQuestModelMesh fullMesh, kcModel model, kcMaterial material, String modelName, boolean swapAxis) {
-        super(null, modelName != null ? modelName + "-" + (material != null ? material.getMaterialName() : "unknown") : null);
+        super(null, DynamicMeshTextureQuality.LIT_BLURRY, modelName != null ? modelName + "-" + (material != null ? material.getMaterialName() : "unknown") : null);
         this.fullMesh = fullMesh;
         this.model = model;
         this.swapAxis = swapAxis;

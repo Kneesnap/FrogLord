@@ -36,7 +36,7 @@ public class FroggerMapMesh extends PSXShadedDynamicMesh<FroggerMapPolygon, Frog
     public static final CursorVertexColor BLUE_COLOR = new CursorVertexColor(Color.BLUE, Color.BLACK);
 
     public FroggerMapMesh(FroggerMapFile mapFile) {
-        super(new TreeTextureAtlas(64, 64, true), true);
+        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, true);
         this.map = mapFile;
 
         // Add textures.
