@@ -103,7 +103,7 @@ public class TextureMap extends SCSharedGameObject {
      */
     public PhongMaterial getDiffuseMaterial() {
         if (this.material == null)
-            this.material = Utils.makeDiffuseMaterial(Utils.toFXImage(getTextureTree().getImage(), false));
+            this.material = Utils.makeUnlitSharpMaterial(Utils.toFXImage(getTextureTree().getImage(), false));
         return this.material;
     }
 
@@ -136,7 +136,7 @@ public class TextureMap extends SCSharedGameObject {
      */
     public PhongMaterial getDiffuseHighlightedMaterial() {
         if (this.highlightedMaterial == null)
-            this.highlightedMaterial = Utils.makeDiffuseMaterial(Utils.toFXImage(makeHighlightedImage(), false));
+            this.highlightedMaterial = Utils.makeLitBlurryMaterial(Utils.toFXImage(makeHighlightedImage(), false));
 
         return this.highlightedMaterial;
     }
