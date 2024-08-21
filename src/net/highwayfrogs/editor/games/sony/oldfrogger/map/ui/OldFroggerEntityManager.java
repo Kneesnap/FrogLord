@@ -90,6 +90,7 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
 
             // Update MeshView.
             MOFMesh modelMesh = this.meshCache.computeIfAbsent(holder, MOFHolder::makeMofMesh);
+            entityMesh.setCullFace(CullFace.BACK);
             entityMesh.setMesh(modelMesh);
 
             // Update material.

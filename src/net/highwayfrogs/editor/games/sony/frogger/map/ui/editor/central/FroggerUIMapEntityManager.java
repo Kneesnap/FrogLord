@@ -188,6 +188,7 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             if (modelMesh.getFaceCount() > 0) {
                 DynamicMesh.tryRemoveMesh(entityMeshView);
                 entityMeshView.setMesh(modelMesh);
+                entityMeshView.setCullFace(CullFace.BACK);
                 // TODO: Future: Register mesh properly once we redo MOF support to use the new system. (DynamicMesh.addMeshView)
 
                 // Update entity display material and such.
