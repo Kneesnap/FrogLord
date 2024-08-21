@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.konami.ancientshadow.AncientShadowGameType;
 import net.highwayfrogs.editor.games.konami.beyond.FroggerBeyondGameType;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestGameType;
 import net.highwayfrogs.editor.games.konami.rescue.FroggerRescueGameType;
+import net.highwayfrogs.editor.games.renderware.game.RwGenericGameType;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 
 import java.awt.*;
@@ -109,6 +110,7 @@ public class Constants {
         gameTypes.add(AncientShadowGameType.INSTANCE);
         gameTypes.add(FroggerBeyondGameType.INSTANCE);
         gameTypes.add(FroggerRescueGameType.INSTANCE);
+        gameTypes.add(RwGenericGameType.INSTANCE);
         gameTypes.sort(Comparator.comparing(IGameType::getDisplayName)); // Sort alphabetically.
     }
 }
